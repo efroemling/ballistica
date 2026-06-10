@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, override
 from bauiv1lib.popup import PopupMenuWindow
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -363,7 +364,7 @@ class GamepadSettingsWindow(bui.MainWindow):
             pos=(self._width * 0.5, v),
             color=(0.4, 0.4, 0.6),
             button='buttonStart' + self._ext,
-            texture=bui.gettexture('startButton'),
+            texture=builtinassets.textures.start_button,
             scale=0.7,
         )
 

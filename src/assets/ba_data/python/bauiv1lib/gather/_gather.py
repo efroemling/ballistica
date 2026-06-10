@@ -11,6 +11,7 @@ from typing import override, TYPE_CHECKING
 
 from bauiv1lib.tabs import TabRow
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from bauiv1lib.play import PlaylistSelectContext
@@ -249,7 +250,7 @@ class GatherWindow(bui.MainWindow):
                 self._width * 0.5 - self._scroll_width * 0.5,
                 self._scroll_bottom,
             ),
-            texture=bui.gettexture('scrollWidget'),
+            texture=builtinassets.textures.scroll_widget,
             mesh_transparent=bui.getmesh('softEdgeOutside'),
             opacity=0.4,
         )

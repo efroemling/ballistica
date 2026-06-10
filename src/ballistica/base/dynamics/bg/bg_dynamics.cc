@@ -197,7 +197,7 @@ void BGDynamics::Draw(FrameDef* frame_def) {
     c.SetColor(2.0f, 2.0f, 2.0f, 1.0f);
     c.SetOverlay(draw_in_overlay);
     c.SetTexture(
-        g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kSparks));
+        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesSparks));
     c.DrawMesh(sparks_mesh_.get(), kMeshDrawFlagNoReflection);
     c.Submit();
   }
@@ -213,7 +213,7 @@ void BGDynamics::Draw(FrameDef* frame_def) {
         Object::Ref<MeshBuffer<VertexSprite>>(ds->light_vertices));
     SpriteComponent c(frame_def->light_shadow_pass());
     c.SetTexture(
-        g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kLightSoft));
+        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesLightSoft));
     c.DrawMesh(lights_mesh_.get());
     c.Submit();
   }
@@ -229,7 +229,7 @@ void BGDynamics::Draw(FrameDef* frame_def) {
         Object::Ref<MeshBuffer<VertexSprite>>(ds->shadow_vertices));
     SpriteComponent c(frame_def->light_shadow_pass());
     c.SetTexture(
-        g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kLight));
+        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesLight));
     c.DrawMesh(shadows_mesh_.get());
     c.Submit();
   }
@@ -282,7 +282,7 @@ void BGDynamics::Draw(FrameDef* frame_def) {
     {  // Draw!
       ObjectComponent c(frame_def->beauty_pass());
       c.SetTexture(
-          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kFuse));
+          g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesFuse));
       c.DrawMesh(fuses_mesh_.get(), kMeshDrawFlagNoReflection);
       c.Submit();
     }
@@ -317,23 +317,23 @@ void BGDynamics::DrawChunks(FrameDef* frame_def,
   // Set up shading.
   switch (chunk_type) {
     case BGDynamicsChunkType::kRock: {
-      c.SetTexture(
-          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kShrapnel1));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesShrapnel1Color));
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.2f, 0.2f, 0.2f);
       c.SetColor(0.6f, 0.6f, 0.5f);
       break;
     }
     case BGDynamicsChunkType::kIce: {
-      c.SetTexture(
-          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kShrapnel1));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesShrapnel1Color));
       c.SetReflection(ReflectionType::kSharp);
       c.SetAddColor(0.5f, 0.5f, 0.9f);
       break;
     }
     case BGDynamicsChunkType::kSlime: {
-      c.SetTexture(
-          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kShrapnel1));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesShrapnel1Color));
       c.SetReflection(ReflectionType::kSharper);
       c.SetReflectionScale(3.0f, 3.0f, 3.0f);
       c.SetColor(0.0f, 0.0f, 0.0f);
@@ -341,15 +341,15 @@ void BGDynamics::DrawChunks(FrameDef* frame_def,
       break;
     }
     case BGDynamicsChunkType::kMetal: {
-      c.SetTexture(
-          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kShrapnel1));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesShrapnel1Color));
       c.SetReflection(ReflectionType::kPowerup);
       c.SetColor(0.5f, 0.5f, 0.55f);
       break;
     }
     case BGDynamicsChunkType::kSpark: {
-      c.SetTexture(
-          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kShrapnel1));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesShrapnel1Color));
       c.SetReflection(ReflectionType::kSharp);
       c.SetColor(0.0f, 0.0f, 0.0f, 1.0f);
       c.SetReflectionScale(4.0f, 3.0f, 2.0f);
@@ -357,8 +357,8 @@ void BGDynamics::DrawChunks(FrameDef* frame_def,
       break;
     }
     case BGDynamicsChunkType::kSplinter: {
-      c.SetTexture(
-          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kShrapnel1));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesShrapnel1Color));
       c.SetReflection(ReflectionType::kSoft);
       c.SetColor(1.0f, 0.8f, 0.5f);
       break;
@@ -367,8 +367,8 @@ void BGDynamics::DrawChunks(FrameDef* frame_def,
       c.SetTransparent(true);
       c.SetPremultiplied(true);
       c.SetLightShadow(LightShadowType::kNone);
-      c.SetTexture(
-          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kShrapnel1));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesShrapnel1Color));
       c.SetReflection(ReflectionType::kSharp);
       c.SetReflectionScale(0.5f, 0.4f, 0.3f);
       c.SetColor(0.2f, 0.15f, 0.15f, 0.07f);
@@ -376,8 +376,8 @@ void BGDynamics::DrawChunks(FrameDef* frame_def,
       break;
     }
     case BGDynamicsChunkType::kFlagStand: {
-      c.SetTexture(
-          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kFlagPole));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesFlagPoleColor));
       c.SetReflection(ReflectionType::kSharp);
       c.SetColor(0.9f, 0.6f, 0.3f, 1.0f);
       break;

@@ -91,7 +91,7 @@ auto SceneV1Context::GetTime(TimeType timetype) -> millisecs_t {
 
 auto SceneV1Context::GetTexture(const std::string& name)
     -> Object::Ref<SceneTexture> {
-  throw Exception("BuiltinTextureOld() not supported in this context_ref");
+  throw Exception("GetTexture() not supported in this context_ref");
 }
 
 auto SceneV1Context::GetSound(const std::string& name)

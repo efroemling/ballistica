@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, override
 
 from efro.error import CleanError
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 from bauiv1lib.docui import DocUIWindow, DocUIController
 
@@ -19,6 +20,11 @@ if TYPE_CHECKING:
     import bacommon.docui.v1
 
     from bauiv1lib.docui import DocUILocalAction
+
+
+def _btex(name: str) -> str:
+    """Qualified ref for a texture in the builtin asset-package."""
+    return f'{builtinassets.__asset_package__}:textures/{name}'
 
 
 def show_test_doc_ui_window() -> None:
@@ -271,7 +277,7 @@ def _test_page_root(
                             debug=debug,
                         ),
                         dui1.Image(
-                            'nub', position=(0, -58 + 20), size=(60, 60)
+                            _btex('nub'), position=(0, -58 + 20), size=(60, 60)
                         ),
                     ],
                     header_decorations_right=[
@@ -550,7 +556,7 @@ def _test_page_root(
                         # Testing custom button images and opacity.
                         dui1.Button(
                             label='Test3',
-                            texture='buttonSquareWide',
+                            texture=_btex('button_square_wide'),
                             padding_left=10.0,
                             padding_right=10.0,
                             color=(1, 1, 1, 0.3),
@@ -559,7 +565,7 @@ def _test_page_root(
                         # Testing image drawing vs bounds
                         dui1.Button(
                             label='BoundsTest',
-                            texture='white',
+                            texture=_btex('white'),
                             color=(1, 1, 1, 0.3),
                             size=(150, 100),
                             debug=debug,
@@ -601,7 +607,7 @@ def _test_page_root(
                                     tint_texture='zoeIconColorMask',
                                     tint_color=(1, 0, 0),
                                     tint2_color=(0, 1, 0),
-                                    mask_texture='characterIconMask',
+                                    mask_texture=_btex('character_icon_mask'),
                                 ),
                             ],
                         ),
@@ -906,21 +912,21 @@ def _test_bounds(
                         dui1.Button(
                             'Hello',
                             size=(300, 300),
-                            texture='white',
+                            texture=_btex('white'),
                             color=(1, 0, 0, 0.3),
                             debug=True,
                         ),
                         dui1.Button(
                             'Hello',
                             size=(200, 200),
-                            texture='white',
+                            texture=_btex('white'),
                             color=(1, 0, 0, 0.3),
                             debug=True,
                         ),
                         dui1.Button(
                             'Hello',
                             size=(100, 100),
-                            texture='white',
+                            texture=_btex('white'),
                             color=(1, 0, 0, 0.3),
                             debug=True,
                         ),

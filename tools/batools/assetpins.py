@@ -63,6 +63,7 @@ from typing import TYPE_CHECKING
 
 from efro.error import CleanError
 from efro.terminal import Clr
+from efrotools.code import format_python_str
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -536,12 +537,37 @@ def do_update(projroot: Path, target_str: str, version_str: str) -> None:
             projectconfig_changed = True
         pin.apverid = new_apverid
 
-    # If the projectconfig pin moved, refresh the local bundle
-    # manifests + regenerate the C++ wrapper splice. (Wrapper
-    # pins don't trigger this — they're per-package references
-    # used at runtime, and the construct-mode pin in projectconfig
-    # is what drives the build's bundled assets.)
-    if projectconfig_changed:
+    # Refresh the local bundle manifests + regenerate the C++ wrapper
+    # splice whenever the projectconfig pin moved OR the existing splice
+    # is out of sync with it. (Wrapper pins don't drive this — they're
+    # per-package runtime references; the construct-mode pin in
+    # projectconfig is what drives the build's bundled assets.)
+    #
+    # The second condition makes this self-healing. The splice regen
+    # depends on the master (the bundle resolve), so an update that
+    # advanced the pin but died before regenerating — e.g. the server was
+    # briefly unreachable — leaves the pin "already at" the target. A bare
+    # ``projectconfig_changed`` check would then never retry, and the
+    # half-applied state (pin new, splice stale) sticks until a manual
+    # fix. Comparing the splice's embedded apverid to the pin lets any
+    # re-run of ``assetpins update`` converge to a consistent state.
+    projectconfig_pins = [p for p in matched if p.kind == 'projectconfig']
+    splice_stale = False
+    pc_apverid = ''
+    if projectconfig_pins:
+        pc_apverid = projectconfig_pins[0].apverid
+        # The splice embeds the pin as ``kBuiltinAssetsApverid = "<id>";``;
+        # a quoted-substring check is insensitive to clang-format wrapping
+        # (mirrors check_builtin_asset_ids in batools/project/_checks.py).
+        base_h = (projroot / 'src/ballistica/base/base.h').read_text()
+        splice_stale = f'"{pc_apverid}"' not in base_h
+
+    if projectconfig_changed or splice_stale:
+        if splice_stale and not projectconfig_changed:
+            print(
+                f'{Clr.YLW}Builtin-asset splice is stale vs the pin'
+                f' ({pc_apverid}); regenerating.{Clr.RST}'
+            )
         for profile in ('gui-minimal', 'headless-minimal'):
             _run_pcommand(projroot, 'asset_bundle_build', profile)
         from batools.builtinassetids import generate
@@ -1112,6 +1138,11 @@ def _writeback_wrapper(projroot: Path, pin: Pin, new_apverid: str) -> None:
     """
     assert pin.wrapper_type is not None
     content = _fetch_wrapper(projroot, new_apverid, pin.wrapper_type)
+    # Land it format-clean: the server generator doesn't guarantee our
+    # line-length rules (a long asset path can overflow), and the
+    # on-disk copy is always formatted, so formatting first also keeps
+    # the no-change comparison below meaningful.
+    content = format_python_str(projroot, content)
     full = projroot / pin.file_path
     if full.read_text() != content:
         full.write_text(content)

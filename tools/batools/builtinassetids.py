@@ -315,9 +315,12 @@ def render_enum_block(result: BuildResult) -> str:
         else:
             lines.append(f'enum class {kind.cpp_enum_name} : uint16_t {{')
             for entry in entries:
+                # Comment with the logical name (not the full bundle
+                # path) — it matches wrapper/compat-table keys and
+                # stays inside cpplint's 80-col limit even after
+                # clang-format aligns the comment block.
                 lines.append(
-                    f'  {entry.cpp_enum_entry},  '
-                    f'// {entry.full_logical_path}'
+                    f'  {entry.cpp_enum_entry},  ' f'// {entry.logical_name}'
                 )
             lines.append('};')
         lines.append('')

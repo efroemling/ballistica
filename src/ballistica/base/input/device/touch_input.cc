@@ -440,8 +440,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
       if (movement_control_type_ == MovementControlType::kSwipe) sc2 *= 0.6f;
 
       if (movement_control_type_ == MovementControlType::kSwipe) {
-        c.SetTexture(g_base->assets->BuiltinTextureOld(
-            BuiltinTextureOldID::kTouchArrows));
+        c.SetTexture(g_base->assets->BuiltinTexture(
+            BuiltinTextureID::kTexturesTouchArrows));
         if (editing_) {
           float val = 1.5f + sinf(static_cast<float>(real_time) * 0.02f);
           c.SetColor(val, val, 1.0f, 1.0f);
@@ -455,7 +455,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
         }
         c.SetColor(0.5f, 0.3f, 0.8f, val);
         c.SetTexture(
-            g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kCircle));
+            g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircle));
       }
 
       float x_offs =
@@ -492,8 +492,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
     if (!buttons_touch_ && action_control_type_ == ActionControlType::kSwipe
         && !swipe_controls_hidden_) {
       float sc2{sc_actions * 0.6f};
-      c.SetTexture(g_base->assets->BuiltinTextureOld(
-          BuiltinTextureOldID::kTouchArrowsActions));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesTouchArrowsActions));
       if (editing_) {
         float val = 1.5f + sinf(static_cast<float>(real_time) * 0.02f);
         c.SetColor(val, val, 1.0f, 1.0f);
@@ -545,8 +545,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
       base_fade = 0.25f;
     } else {
       base_fade = 0.8f;
-      c.SetTexture(g_base->assets->BuiltinTextureOld(
-          BuiltinTextureOldID::kActionButtons));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesActionButtons));
     }
 
     float x_offs;
@@ -736,7 +736,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
       // Center point.
       if (buttons_touch_ && action_control_type_ == ActionControlType::kSwipe) {
         c.SetTexture(
-            g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kCircle));
+            g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircle));
         c.SetColor(1.0f, 1.0f, 0.0f, 0.8f);
         {
           auto xf = c.ScopedTransform();
@@ -805,7 +805,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
     }
 
     c2.SetTexture(
-        g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kArrow));
+        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesArrow));
     Matrix44f orient =
         Matrix44fOrient(d_pad_draw_dir_, Vector3f(0.0f, 1.0f, 0.0f));
     {

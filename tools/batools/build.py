@@ -267,6 +267,20 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 # rules that depend on it directly.
                 'pconfig/projectconfig.json',
             ],
+            # The asset bundle under .cache/asset_bundle is an OUTPUT of
+            # this build, and lazybuild otherwise keys only on input
+            # srcpaths (by mtime, which can't even see a deletion) -- so
+            # blowing it away (e.g. a manual `rm -rf .cache/asset_bundle`)
+            # wouldn't re-trigger the build: the inner Makefile bundle rule
+            # that regenerates the manifests never runs, and staging then
+            # dies on the missing manifest. srcpaths_exist rebuilds when a
+            # listed path is gone; point it at the dir itself rather than
+            # enumerating each profile's manifest, so it guards the `rm -rf`
+            # case without needing updates as new bundle profiles are added,
+            # and -- since the dir exists as long as ANY profile is built --
+            # it doesn't spuriously re-trigger a single-variant build whose
+            # sibling profile was never built.
+            srcpaths_exist=['.cache/asset_bundle'],
             command=command,
             filefilter=_filefilter,
             # Force a rebuild when re-fetching bundled assets: a

@@ -1214,6 +1214,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetColor(r, g, b, a);
             p->SetColorTexture(buffer->GetTexture());
             p->SetFlatness(flatness);
+            p->SetTexPremultiplied(premult ? 1.0f : 0.0f);
             break;
           }
           case ShadingType::kSimpleTextureModulatedTransparentShadow: {
@@ -1260,6 +1261,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
                          std::max(0.0f, shadow_blur), shadow_opacity);
             p->SetMaskUV2Texture(t_mask);
             p->SetFlatness(flatness);
+            p->SetTexPremultiplied(premult ? 1.0f : 0.0f);
             break;
           }
           case ShadingType::kSimpleTextureModulatedTransparentGlow: {

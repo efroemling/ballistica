@@ -8,6 +8,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -65,10 +66,15 @@ class Image(bs.Actor):
 
             # Assume we're dealing with a character icon but allow
             # overriding.
-            mask_tex_name = texture.get('mask_texture', 'characterIconMask')
-            mask_texture = (
-                None if mask_tex_name is None else bs.gettexture(mask_tex_name)
-            )
+            if 'mask_texture' in texture:
+                mask_tex_name = texture['mask_texture']
+                mask_texture = (
+                    None
+                    if mask_tex_name is None
+                    else bs.gettexture(mask_tex_name)
+                )
+            else:
+                mask_texture = builtinassets.textures.character_icon_mask
             texture = texture['texture']
         else:
             tint_color = (1, 1, 1)

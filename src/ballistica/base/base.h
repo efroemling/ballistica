@@ -430,91 +430,6 @@ enum class ShadingType : uint8_t {
   kCount
 };
 
-enum class BuiltinTextureOldID : uint8_t {
-  kUIAtlas,
-  kButtonSquare,
-  kWhite,
-  kFontSmall0,
-  kFontBig,
-  kCursor,
-  kBoxingGlove,
-  kShield,
-  kExplosion,
-  kTextClearButton,
-  kWindowHSmallVMed,
-  kWindowHSmallVSmall,
-  kGlow,
-  kScrollWidget,
-  kScrollWidgetGlow,
-  kFlagPole,
-  kScorch,
-  kScorchBig,
-  kShadow,
-  kLight,
-  kShadowSharp,
-  kLightSharp,
-  kShadowSoft,
-  kLightSoft,
-  kSparks,
-  kEye,
-  kEyeTint,
-  kFuse,
-  kShrapnel1,
-  kSmoke,
-  kCircle,
-  kCircleOutline,
-  kCircleNoAlpha,
-  kCircleOutlineNoAlpha,
-  kCircleShadow,
-  kSoftRect,
-  kSoftRect2,
-  kSoftRectVertical,
-  kStartButton,
-  kBombButton,
-  kOuyaAButton,
-  kBackIcon,
-  kNub,
-  kArrow,
-  kMenuButton,
-  kUsersButton,
-  kActionButtons,
-  kTouchArrows,
-  kTouchArrowsActions,
-  kRGBStripes,
-  kUIAtlas2,
-  kFontSmall1,
-  kFontSmall2,
-  kFontSmall3,
-  kFontSmall4,
-  kFontSmall5,
-  kFontSmall6,
-  kFontSmall7,
-  kFontExtras,
-  kFontExtras2,
-  kFontExtras3,
-  kFontExtras4,
-  kCharacterIconMask,
-  kBlack,
-  kWings,
-  kSpinner,
-  kSpinner0,
-  kSpinner1,
-  kSpinner2,
-  kSpinner3,
-  kSpinner4,
-  kSpinner5,
-  kSpinner6,
-  kSpinner7,
-  kSpinner8,
-  kSpinner9,
-  kSpinner10,
-  kSpinner11,
-  kCircleSoft,
-  kButtonSquareWide,
-  kPageLeftRight,
-  kFontExtras5,
-};
-
 enum class BuiltinCubeMapTextureOldID : uint8_t {
   kReflectionChar,
   kReflectionPowerup,
@@ -636,10 +551,91 @@ enum class BuiltinMeshOldID : uint8_t {
 // above retire one at a time as their callsites migrate.
 
 inline constexpr const char* kBuiltinAssetsApverid =
-    "a-0.babuiltinassets.260606";
+    "a-0.babuiltinassets.260610";
 
 enum class BuiltinTextureID : uint16_t {
-  kMydirHelloworld,  // ba_data/textures/mydir/helloworld.ktx2
+  kTexturesActionButtons,         // textures/action_buttons
+  kTexturesArrow,                 // textures/arrow
+  kTexturesBackIcon,              // textures/back_icon
+  kTexturesBlack,                 // textures/black
+  kTexturesBombButton,            // textures/bomb_button
+  kTexturesBoxingGlovesColor,     // textures/boxing_gloves_color
+  kTexturesButtonSquare,          // textures/button_square
+  kTexturesButtonSquareWide,      // textures/button_square_wide
+  kTexturesCharacterIconMask,     // textures/character_icon_mask
+  kTexturesCircle,                // textures/circle
+  kTexturesCircleNoAlpha,         // textures/circle_no_alpha
+  kTexturesCircleOutline,         // textures/circle_outline
+  kTexturesCircleOutlineNoAlpha,  // textures/circle_outline_no_alpha
+  kTexturesCircleShadow,          // textures/circle_shadow
+  kTexturesCircleSoft,            // textures/circle_soft
+  kTexturesCursor,                // textures/cursor
+  kTexturesExplosion,             // textures/explosion
+  kTexturesEyeColor,              // textures/eye_color
+  kTexturesEyeColorTintMask,      // textures/eye_color_tint_mask
+  kTexturesFlagPoleColor,         // textures/flag_pole_color
+  kTexturesFontBig,               // textures/font_big
+  kTexturesFontExtras,            // textures/font_extras
+  kTexturesFontExtras2,           // textures/font_extras2
+  kTexturesFontExtras3,           // textures/font_extras3
+  kTexturesFontExtras4,           // textures/font_extras4
+  kTexturesFontExtras5,           // textures/font_extras5
+  kTexturesFontSmall0,            // textures/font_small0
+  kTexturesFontSmall1,            // textures/font_small1
+  kTexturesFontSmall2,            // textures/font_small2
+  kTexturesFontSmall3,            // textures/font_small3
+  kTexturesFontSmall4,            // textures/font_small4
+  kTexturesFontSmall5,            // textures/font_small5
+  kTexturesFontSmall6,            // textures/font_small6
+  kTexturesFontSmall7,            // textures/font_small7
+  kTexturesFuse,                  // textures/fuse
+  kTexturesGlow,                  // textures/glow
+  kTexturesLight,                 // textures/light
+  kTexturesLightSharp,            // textures/light_sharp
+  kTexturesLightSoft,             // textures/light_soft
+  kTexturesMenuButton,            // textures/menu_button
+  kTexturesNub,                   // textures/nub
+  kTexturesOuyaAbutton,           // textures/ouya_abutton
+  kTexturesPageLeftRight,         // textures/page_left_right
+  kTexturesRgbStripes,            // textures/rgb_stripes
+  kTexturesScorch,                // textures/scorch
+  kTexturesScorchBig,             // textures/scorch_big
+  kTexturesScrollWidget,          // textures/scroll_widget
+  kTexturesScrollWidgetGlow,      // textures/scroll_widget_glow
+  kTexturesShadow,                // textures/shadow
+  kTexturesShadowSharp,           // textures/shadow_sharp
+  kTexturesShadowSoft,            // textures/shadow_soft
+  kTexturesShield,                // textures/shield
+  kTexturesShrapnel1Color,        // textures/shrapnel1_color
+  kTexturesSmoke,                 // textures/smoke
+  kTexturesSoftRect,              // textures/soft_rect
+  kTexturesSoftRect2,             // textures/soft_rect2
+  kTexturesSoftRectVertical,      // textures/soft_rect_vertical
+  kTexturesSparks,                // textures/sparks
+  kTexturesSpinner,               // textures/spinner
+  kTexturesSpinner0,              // textures/spinner0
+  kTexturesSpinner1,              // textures/spinner1
+  kTexturesSpinner10,             // textures/spinner10
+  kTexturesSpinner11,             // textures/spinner11
+  kTexturesSpinner2,              // textures/spinner2
+  kTexturesSpinner3,              // textures/spinner3
+  kTexturesSpinner4,              // textures/spinner4
+  kTexturesSpinner5,              // textures/spinner5
+  kTexturesSpinner6,              // textures/spinner6
+  kTexturesSpinner7,              // textures/spinner7
+  kTexturesSpinner8,              // textures/spinner8
+  kTexturesSpinner9,              // textures/spinner9
+  kTexturesStartButton,           // textures/start_button
+  kTexturesTextClearButton,       // textures/text_clear_button
+  kTexturesTouchArrows,           // textures/touch_arrows
+  kTexturesTouchArrowsActions,    // textures/touch_arrows_actions
+  kTexturesUiAtlas,               // textures/ui_atlas
+  kTexturesUiAtlas2,              // textures/ui_atlas2
+  kTexturesUsersButton,           // textures/users_button
+  kTexturesWhite,                 // textures/white
+  kTexturesWindowHsmallVmed,      // textures/window_hsmall_vmed
+  kTexturesWindowHsmallVsmall,    // textures/window_hsmall_vsmall
+  kTexturesWings,                 // textures/wings
 };
 
 enum class BuiltinCubeMapTextureID : uint16_t {};

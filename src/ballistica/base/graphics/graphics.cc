@@ -937,8 +937,8 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
     // Beauty.
     if (explicit_bool(false)) {
       ObjectComponent c(frame_def->beauty_pass());
-      c.SetTexture(
-          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kBoxingGlove));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesBoxingGlovesColor));
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
       {
@@ -1175,7 +1175,7 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
       c.SetTransparent(true);
       float csize = 50.0f;
       c.SetTexture(
-          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kCursor));
+          g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCursor));
       {
         auto xf = c.ScopedTransform();
 
@@ -1204,7 +1204,7 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
         blotch_verts_.size(), &blotch_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
     c.SetTexture(
-        g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kLight));
+        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesLight));
     c.DrawMesh(shadow_blotch_mesh_.get());
     c.Submit();
   }
@@ -1218,7 +1218,7 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
         blotch_soft_verts_.size(), &blotch_soft_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
     c.SetTexture(
-        g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kLightSoft));
+        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesLightSoft));
     c.DrawMesh(shadow_blotch_soft_mesh_.get());
     c.Submit();
   }
@@ -1232,7 +1232,7 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
         blotch_soft_obj_verts_.size(), &blotch_soft_obj_verts_[0]));
     SpriteComponent c(frame_def->light_pass());
     c.SetTexture(
-        g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kLightSoft));
+        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesLightSoft));
     c.DrawMesh(shadow_blotch_soft_obj_mesh_.get());
     c.Submit();
   }

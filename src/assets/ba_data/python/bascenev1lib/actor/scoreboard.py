@@ -8,6 +8,7 @@ import weakref
 from typing import TYPE_CHECKING
 
 import bascenev1 as bs
+from bascenev1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -35,7 +36,7 @@ class _Entry:
         self._bar_width = 2.0 * self._scale
         self._bar_height = 32.0 * self._scale
         self._bar_tex = self._backing_tex = bs.gettexture('bar')
-        self._cover_tex = bs.gettexture('uiAtlas')
+        self._cover_tex = builtinassets.textures.ui_atlas
         self._mesh = bs.getmesh('meterTransparent')
         self._pos: Sequence[float] | None = None
         self._flash_timer: bs.Timer | None = None

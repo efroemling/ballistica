@@ -17,6 +17,7 @@ from collections import deque
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import builtinassets
 
 from bascenev1lib.actor.spaz import Spaz
 
@@ -794,7 +795,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self._stick_base_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('nub'),
+                'texture': builtinassets.textures.nub,
                 'absolute_scale': True,
                 'vr_depth': -40,
                 'position': p,
@@ -807,7 +808,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self._stick_nub_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('nub'),
+                'texture': builtinassets.textures.nub,
                 'absolute_scale': True,
                 'position': p,
                 'scale': (nub_size, nub_size),

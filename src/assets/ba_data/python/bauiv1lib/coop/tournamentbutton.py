@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import copy
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -75,7 +76,7 @@ class TournamentButton:
             size=(image_width, image_width * 0.5),
             mesh_transparent=self.lsbt,
             mesh_opaque=self.lsbo,
-            texture=bui.gettexture('black'),
+            texture=builtinassets.textures.black,
             opacity=0.2,
             mask_texture=bui.gettexture('mapPreviewMask'),
         )
@@ -224,7 +225,7 @@ class TournamentButton:
         self.prize_chest_1_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            texture=bui.gettexture('white'),
+            texture=builtinassets.textures.white,
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(self._chestsz, self._chestsz),
             opacity=0.0,
@@ -258,7 +259,7 @@ class TournamentButton:
         self.prize_chest_2_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            texture=bui.gettexture('white'),
+            texture=builtinassets.textures.white,
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(self._chestsz, self._chestsz),
             opacity=0.0,
@@ -292,7 +293,7 @@ class TournamentButton:
         self.prize_chest_3_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            texture=bui.gettexture('white'),
+            texture=builtinassets.textures.white,
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(self._chestsz, self._chestsz),
             opacity=0.0,
@@ -660,7 +661,9 @@ class TournamentButton:
         # if self.game is None:
         #     bui.textwidget(edit=self.button_text, text='-')
         #     bui.imagewidget(
-        #         edit=self.image, texture=bui.gettexture('black'), opacity=0.2
+        #         edit=self.image,
+        #         texture=builtinassets.textures.black,
+        #         opacity=0.2,
         #     )
         # else:
         max_players = bui.app.classic.accounts.tournament_info[

@@ -748,3 +748,59 @@ def check_misc(self: ProjectUpdater) -> None:
             'DUMMYVAL',
             count=7,
         )
+
+
+def check_asset_name_compat(self: ProjectUpdater) -> None:
+    """Verify asset_name_compat rows against the wrapper modules.
+
+    The compat table (``base/assets/asset_name_compat.cc``) maps frozen
+    legacy asset names to ``(package_key, logical_path)`` asset-package
+    homes. The legacy side never changes, but the asset-package side
+    can silently drift if a logical path is renamed inside a package
+    without the table being updated — so cross-reference every row's
+    path against the package's wrapper module and fail loudly on a
+    stale one.
+    """
+    import re
+
+    if not self.check:
+        return
+
+    # Core-repo only (same rationale as check_builtin_asset_ids).
+    if 'ballistica' + 'kit' != 'ballisticakit':
+        return
+
+    projroot = Path(self.projroot)
+    table = (
+        projroot / 'src/ballistica/base/assets/asset_name_compat.cc'
+    ).read_text()
+    rows = re.findall(r'\{"([^"]+)", "([^"]+)", "([^"]+)"\},', table)
+    if not rows:
+        raise CleanError(
+            'No rows parsed from asset_name_compat.cc; the check regex'
+            ' is likely stale.'
+        )
+
+    wrapper_dir = projroot / 'src/assets/ba_data/python/bascenev1'
+    wrapper_for_key = {
+        'builtinassets': wrapper_dir / 'builtinassets.py',
+        'stdassets': wrapper_dir / 'stdassets.py',
+    }
+    wrapper_texts = {
+        key: path.read_text() for key, path in wrapper_for_key.items()
+    }
+    for legacy, package_key, logical_path in rows:
+        wrapper_text = wrapper_texts.get(package_key)
+        if wrapper_text is None:
+            raise CleanError(
+                f"asset_name_compat row '{legacy}' references unknown"
+                f" package key '{package_key}'."
+            )
+        if f":{logical_path}'" not in wrapper_text:
+            raise CleanError(
+                f"asset_name_compat row '{legacy}' maps to"
+                f" '{package_key}:{logical_path}' but that logical path"
+                f' is not present in'
+                f' {wrapper_for_key[package_key].relative_to(projroot)};'
+                f' the package side of the table is stale.'
+            )

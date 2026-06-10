@@ -1,4 +1,6 @@
-### 1.7.63 (build 22869, api 9, 2026-06-07)
+### 1.8.0a1 (build 22872, api 9, 2026-06-10)
+
+### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Upgraded from SDL2 to SDL3.
 - Fixed mouse-wheel zooming in manual camera mode.
 - Now using `uv` instead of `pip`. So now you'll need to install `uv` before

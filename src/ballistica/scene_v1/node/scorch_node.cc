@@ -71,9 +71,9 @@ void ScorchNode::Draw(base::FrameDef* frame_def) {
   base::SimpleComponent c(frame_def->light_shadow_pass());
   c.SetTransparent(true);
   c.SetColor(color_[0], color_[1], color_[2], o * 0.35f);
-  c.SetTexture(g_base->assets->BuiltinTextureOld(
-      big_ ? base::BuiltinTextureOldID::kScorchBig
-           : base::BuiltinTextureOldID::kScorch));
+  c.SetTexture(g_base->assets->BuiltinTexture(
+      big_ ? base::BuiltinTextureID::kTexturesScorchBig
+           : base::BuiltinTextureID::kTexturesScorch));
   {
     auto xf = c.ScopedTransform();
     c.Translate(position_[0], position_[1], position_[2]);

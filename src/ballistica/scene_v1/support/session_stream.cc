@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/base/assets/asset_name_compat.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/classic/support/classic_app_mode.h"
@@ -632,7 +633,10 @@ void SessionStream::AddTexture(SceneTexture* t) {
   assert(IsValidScene(sg));
   WriteCommandInt64_2(SessionCommand::kAddTexture, sg->stream_id(),
                       t->stream_id());
-  WriteString(t->name());
+  // The scene_v1 wire stays permanently legacy-named; rewrite
+  // asset-package refs down to the legacy name old peers (and
+  // replays) expect.
+  WriteString(base::AssetNameCompat::ToLegacy(t->name()));
   EndCommand();
 }
 
@@ -654,7 +658,10 @@ void SessionStream::AddMesh(SceneMesh* t) {
   assert(IsValidScene(sg));
   WriteCommandInt64_2(SessionCommand::kAddMesh, sg->stream_id(),
                       t->stream_id());
-  WriteString(t->name());
+  // The scene_v1 wire stays permanently legacy-named; rewrite
+  // asset-package refs down to the legacy name old peers (and
+  // replays) expect.
+  WriteString(base::AssetNameCompat::ToLegacy(t->name()));
   EndCommand();
 }
 
@@ -676,7 +683,10 @@ void SessionStream::AddSound(SceneSound* t) {
   assert(IsValidScene(sg));
   WriteCommandInt64_2(SessionCommand::kAddSound, sg->stream_id(),
                       t->stream_id());
-  WriteString(t->name());
+  // The scene_v1 wire stays permanently legacy-named; rewrite
+  // asset-package refs down to the legacy name old peers (and
+  // replays) expect.
+  WriteString(base::AssetNameCompat::ToLegacy(t->name()));
   EndCommand();
 }
 
@@ -698,7 +708,10 @@ void SessionStream::AddData(SceneDataAsset* t) {
   assert(IsValidScene(sg));
   WriteCommandInt64_2(SessionCommand::kAddData, sg->stream_id(),
                       t->stream_id());
-  WriteString(t->name());
+  // The scene_v1 wire stays permanently legacy-named; rewrite
+  // asset-package refs down to the legacy name old peers (and
+  // replays) expect.
+  WriteString(base::AssetNameCompat::ToLegacy(t->name()));
   EndCommand();
 }
 
@@ -719,7 +732,10 @@ void SessionStream::AddCollisionMesh(SceneCollisionMesh* t) {
   assert(IsValidScene(sg));
   WriteCommandInt64_2(SessionCommand::kAddCollisionMesh, sg->stream_id(),
                       t->stream_id());
-  WriteString(t->name());
+  // The scene_v1 wire stays permanently legacy-named; rewrite
+  // asset-package refs down to the legacy name old peers (and
+  // replays) expect.
+  WriteString(base::AssetNameCompat::ToLegacy(t->name()));
   EndCommand();
 }
 

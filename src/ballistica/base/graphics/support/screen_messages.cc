@@ -112,9 +112,9 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
         SimpleComponent c(pass);
         c.SetTransparent(true);
         c.SetTexture(
-            // g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kSoftRectVertical));
-            g_base->assets->BuiltinTextureOld(
-                BuiltinTextureOldID::kShadowSharp));
+            // g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesSoftRectVertical));
+            g_base->assets->BuiltinTexture(
+                BuiltinTextureID::kTexturesShadowSharp));
 
         float screen_width = g_base->graphics->screen_virtual_width();
 
@@ -287,11 +287,22 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
               continue;
             }
             c.SetTexture(t);
-            if (i->GetText().GetElementCanColor(e)) {
-              c.SetColor(r, g, b, a);
-            } else {
-              c.SetColor(1, 1, 1, a);
+            bool can_color = i->GetText().GetElementCanColor(e);
+            float cr = can_color ? r : 1.0f;
+            float cg = can_color ? g : 1.0f;
+            float cb = can_color ? b : 1.0f;
+            // Premultiplied glyph textures (KTX2 builtin fonts and OS-rendered
+            // text alike) blend with glBlendFunc(GL_ONE,
+            // GL_ONE_MINUS_SRC_ALPHA), so the fade must scale RGB as well as
+            // alpha; premultiply the modulate color by its alpha. Any
+            // straight-alpha texture keeps the raw color and fades via alpha as
+            // before.
+            if (t->premultiplied()) {
+              cr *= a;
+              cg *= a;
+              cb *= a;
             }
+            c.SetColor(cr, cg, cb, a);
             c.SetFlatness(i->GetText().GetElementMaxFlatness(e));
             {
               auto xf = c.ScopedTransform();
@@ -397,8 +408,8 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
             c2.SetColorizeTexture(i->tint_texture.get());
             c2.SetColorizeColor(i->tint.x, i->tint.y, i->tint.z);
             c2.SetColorizeColor2(i->tint2.x, i->tint2.y, i->tint2.z);
-            c2.SetMaskTexture(g_base->assets->BuiltinTextureOld(
-                BuiltinTextureOldID::kCharacterIconMask));
+            c2.SetMaskTexture(g_base->assets->BuiltinTexture(
+                BuiltinTextureID::kTexturesCharacterIconMask));
           }
           c2.SetColor(1, 1, 1, a);
           {

@@ -216,9 +216,13 @@ class App:
             self._load_state()
 
         if self._api_key is not None and VERBOSE:
+            # Diagnostics go to stderr so they never pollute captured
+            # stdout (callers parse stdout as the command result -- e.g.
+            # `assetpins` reads a resolved apverid from it).
             print(
                 f'{Clr.BLU}bacloud: authenticating with API key'
-                f' ({self._api_key[:8]}\u2026){Clr.RST}'
+                f' ({self._api_key[:8]}\u2026){Clr.RST}',
+                file=sys.stderr,
             )
 
         self._server = self._resolve_server()
@@ -251,7 +255,8 @@ class App:
         except Exception:
             print(
                 f'{Clr.RED}Error loading {TOOL_NAME} data;'
-                f' resetting to defaults.{Clr.RST}'
+                f' resetting to defaults.{Clr.RST}',
+                file=sys.stderr,
             )
 
     def _save_state(self) -> None:
@@ -306,7 +311,10 @@ class App:
                 f'bacloud_node ({BA_FLEET}): missing hostname in response.'
             )
         if VERBOSE:
-            print(f'{Clr.BLU}bacloud: fleet {BA_FLEET!r} -> {host}{Clr.RST}')
+            print(
+                f'{Clr.BLU}bacloud: fleet {BA_FLEET!r} -> {host}{Clr.RST}',
+                file=sys.stderr,
+            )
         return host
 
     def _servercmd(self, cmd: str, payload: dict, stream: bool) -> ResponseData:
@@ -830,7 +838,7 @@ class App:
     def _handle_open_url(self, url: str) -> None:
         import webbrowser
 
-        print(f'{Clr.CYN}(url: {url}){Clr.RST}')
+        print(f'{Clr.CYN}(url: {url}){Clr.RST}', file=sys.stderr)
         webbrowser.open(url)
 
     def _handle_input_prompt(self, prompt: str, as_password: bool) -> None:

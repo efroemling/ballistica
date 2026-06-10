@@ -421,6 +421,22 @@ class App:
 
     # __FEATURESET_APP_SUBSYSTEM_PROPERTIES_END__
 
+    @property
+    def shutting_down(self) -> bool:
+        """Whether the app has begun (or completed) shutting down.
+
+        Becomes True once the app reaches
+        :attr:`~AppState.SHUTTING_DOWN` and remains True through
+        :attr:`~AppState.SHUTDOWN_COMPLETE`. Useful for long-running
+        async work that should bow out quietly instead of erroring when
+        app-level facilities (the threadpool, network, etc.) start
+        getting torn down out from under it.
+        """
+        return self.state in (
+            AppState.SHUTTING_DOWN,
+            AppState.SHUTDOWN_COMPLETE,
+        )
+
     def register_subsystem[T: AppSubsystem](self, subsystem: T) -> T:
         """Register an :class:`~babase.AppSubsystem` instance with the app.
 

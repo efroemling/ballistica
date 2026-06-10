@@ -195,12 +195,17 @@ class Chooser:
         sessionplayer: bascenev1.SessionPlayer,
         lobby: 'Lobby',
     ) -> None:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import builtinassets
+
         self._deek_sound = _bascenev1.getsound('deek')
         self._click_sound = _bascenev1.getsound('click01')
         self._punchsound = _bascenev1.getsound('punch01')
         self._swish_sound = _bascenev1.getsound('punchSwish')
         self._errorsound = _bascenev1.getsound('error')
-        self._mask_texture = _bascenev1.gettexture('characterIconMask')
+        self._mask_texture = builtinassets.textures.character_icon_mask
         self._vpos = vpos
         self._lobby = weakref.ref(lobby)
         self._sessionplayer = sessionplayer
@@ -933,10 +938,15 @@ class Chooser:
         return self._sessionplayer
 
     def _update_icon(self) -> None:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import builtinassets
+
         assert babase.app.classic is not None
         if self._profilenames[self._profileindex] == '_edit':
-            tex = _bascenev1.gettexture('black')
-            tint_tex = _bascenev1.gettexture('black')
+            tex = builtinassets.textures.black
+            tint_tex = builtinassets.textures.black
             self.icon.color = (1, 1, 1)
             self.icon.texture = tex
             self.icon.tint_texture = tint_tex

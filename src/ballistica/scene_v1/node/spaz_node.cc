@@ -3966,11 +3966,11 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
   if (blink_smooth_ < 0.9f) {
     if (shading) {
       oc->SetLightShadow(base::LightShadowType::kObject);
-      oc->SetTexture(
-          g_base->assets->BuiltinTextureOld(base::BuiltinTextureOldID::kEye));
+      oc->SetTexture(g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesEyeColor));
       oc->SetColorizeColor(eye_color_red_, eye_color_green_, eye_color_blue_);
-      oc->SetColorizeTexture(g_base->assets->BuiltinTextureOld(
-          base::BuiltinTextureOldID::kEyeTint));
+      oc->SetColorizeTexture(g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesEyeColorTintMask));
       oc->SetReflection(base::ReflectionType::kSharpest);
       oc->SetReflectionScale(3, 3, 3);
       oc->SetAddColor(add_color[0], add_color[1], add_color[2]);
@@ -4037,8 +4037,8 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
 
 void SpazNode::SetupEyeLidShading(base::ObjectComponent* c, float death_fade,
                                   float* add_color) {
-  c->SetTexture(
-      g_base->assets->BuiltinTextureOld(base::BuiltinTextureOldID::kEye));
+  c->SetTexture(g_base->assets->BuiltinTexture(
+      base::BuiltinTextureID::kTexturesEyeColor));
   c->SetColorizeTexture(nullptr);
   float r, g, b;
   r = eye_lid_color_red_;
@@ -5192,7 +5192,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     c.SetReflection(base::ReflectionType::kSoft);
     c.SetReflectionScale(0.4f, 0.4f, 0.4f);
     c.SetTexture(
-        g_base->assets->BuiltinTextureOld(base::BuiltinTextureOldID::kWings));
+        g_base->assets->BuiltinTexture(base::BuiltinTextureID::kTexturesWings));
 
     // Fade to reddish on death.
     if (dead_ && !frozen_) {
@@ -5329,8 +5329,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       }
     }
     c.SetLightShadow(base::LightShadowType::kObject);
-    c.SetTexture(g_base->assets->BuiltinTextureOld(
-        base::BuiltinTextureOldID::kBoxingGlove));
+    c.SetTexture(g_base->assets->BuiltinTexture(
+        base::BuiltinTextureID::kTexturesBoxingGlovesColor));
 
     {
       auto xf = c.ScopedTransform();

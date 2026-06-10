@@ -306,8 +306,8 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
   if (false) {
     ObjectComponent c(frame_def->beauty_pass());
     c.SetColor(1, 0, 0);
-    c.SetTexture(
-        g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kBoxingGlove));
+    c.SetTexture(g_base->assets->BuiltinTexture(
+        BuiltinTextureID::kTexturesBoxingGlovesColor));
     c.SetReflection(ReflectionType::kSoft);
     c.SetReflectionScale(0.4f, 0.4f, 0.4f);
     {
@@ -329,8 +329,8 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
     case VRHandType::kDaydreamRemote: {
       ObjectComponent c(frame_def->beauty_pass());
       c.SetColor(0, 1, 0);
-      c.SetTexture(
-          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kBoxingGlove));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesBoxingGlovesColor));
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
       {
@@ -351,8 +351,8 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
     case VRHandType::kOculusTouchL: {
       ObjectComponent c(frame_def->beauty_pass());
       c.SetColor(0, 0, 1);
-      c.SetTexture(
-          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kBoxingGlove));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesBoxingGlovesColor));
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
       {

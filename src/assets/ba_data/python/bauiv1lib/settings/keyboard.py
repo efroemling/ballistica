@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupMenuWindow
 import bauiv1 as bui
+from bauiv1 import builtinassets
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -208,7 +209,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
                 pos=(self._width * 0.5, v + 0.1 * dist),
                 color=(0.4, 0.4, 0.6),
                 button='buttonStart',
-                texture=bui.gettexture('startButton'),
+                texture=builtinassets.textures.start_button,
                 scale=0.8,
             )
 

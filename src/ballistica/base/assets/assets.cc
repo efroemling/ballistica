@@ -10,6 +10,7 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/base/assets/asset_name_compat.h"
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/assets/collision_mesh_asset.h"
 #include "ballistica/base/assets/data_asset.h"
@@ -56,12 +57,6 @@ Assets::Assets() {
   }
 
   InitSpecialChars();
-}
-
-void Assets::LoadBuiltinTextureOld(BuiltinTextureOldID id, const char* name) {
-  assert(asset_lists_locked_);
-  builtin_textures_old_.push_back(GetTexture(name));
-  assert(builtin_textures_old_.size() == static_cast<int>(id) + 1);
 }
 
 void Assets::LoadBuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID id,
@@ -168,99 +163,6 @@ void Assets::StartLoading() {
 
   // Just grab the lock once for all this stuff for efficiency.
   AssetListLock lock;
-
-  // System textures:
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kUIAtlas, "uiAtlas");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kButtonSquare, "buttonSquare");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kWhite, "white");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall0, "fontSmall0");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontBig, "fontBig");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kCursor, "cursor");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kBoxingGlove, "boxingGlovesColor");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kShield, "shield");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kExplosion, "explosion");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kTextClearButton,
-                        "textClearButton");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kWindowHSmallVMed,
-                        "windowHSmallVMed");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kWindowHSmallVSmall,
-                        "windowHSmallVSmall");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kGlow, "glow");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kScrollWidget, "scrollWidget");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kScrollWidgetGlow,
-                        "scrollWidgetGlow");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFlagPole, "flagPoleColor");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kScorch, "scorch");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kScorchBig, "scorchBig");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kShadow, "shadow");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kLight, "light");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kShadowSharp, "shadowSharp");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kLightSharp, "lightSharp");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kShadowSoft, "shadowSoft");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kLightSoft, "lightSoft");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSparks, "sparks");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kEye, "eyeColor");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kEyeTint, "eyeColorTintMask");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFuse, "fuse");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kShrapnel1, "shrapnel1Color");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSmoke, "smoke");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kCircle, "circle");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kCircleOutline, "circleOutline");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kCircleNoAlpha, "circleNoAlpha");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kCircleOutlineNoAlpha,
-                        "circleOutlineNoAlpha");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kCircleShadow, "circleShadow");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSoftRect, "softRect");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSoftRect2, "softRect2");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSoftRectVertical,
-                        "softRectVertical");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kStartButton, "startButton");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kBombButton, "bombButton");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kOuyaAButton, "ouyaAButton");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kBackIcon, "backIcon");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kNub, "nub");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kArrow, "arrow");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kMenuButton, "menuButton");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kUsersButton, "usersButton");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kActionButtons, "actionButtons");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kTouchArrows, "touchArrows");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kTouchArrowsActions,
-                        "touchArrowsActions");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kRGBStripes, "rgbStripes");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kUIAtlas2, "uiAtlas2");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall1, "fontSmall1");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall2, "fontSmall2");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall3, "fontSmall3");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall4, "fontSmall4");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall5, "fontSmall5");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall6, "fontSmall6");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontSmall7, "fontSmall7");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontExtras, "fontExtras");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontExtras2, "fontExtras2");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontExtras3, "fontExtras3");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontExtras4, "fontExtras4");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kCharacterIconMask,
-                        "characterIconMask");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kBlack, "black");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kWings, "wings");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner, "spinner");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner0, "spinner0");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner1, "spinner1");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner2, "spinner2");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner3, "spinner3");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner4, "spinner4");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner5, "spinner5");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner6, "spinner6");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner7, "spinner7");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner8, "spinner8");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner9, "spinner9");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner10, "spinner10");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kSpinner11, "spinner11");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kCircleSoft, "circleSoft");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kButtonSquareWide,
-                        "buttonSquareWide");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kPageLeftRight, "pageLeftRight");
-  LoadBuiltinTextureOld(BuiltinTextureOldID::kFontExtras5, "fontExtras5");
 
   // System cube map textures:
   LoadBuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID::kReflectionChar,
@@ -411,8 +313,173 @@ void Assets::StartLoading() {
   // in base.h. Rerun ``make update`` to regenerate.
   // __AUTOGENERATED_BUILTIN_ASSET_LOAD_BEGIN__
   // textures
-  LoadBuiltinTexture(BuiltinTextureID::kMydirHelloworld,
-                     "a-0.babuiltinassets.260606:mydir/helloworld");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesActionButtons,
+                     "a-0.babuiltinassets.260610:textures/action_buttons");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesArrow,
+                     "a-0.babuiltinassets.260610:textures/arrow");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesBackIcon,
+                     "a-0.babuiltinassets.260610:textures/back_icon");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesBlack,
+                     "a-0.babuiltinassets.260610:textures/black");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesBombButton,
+                     "a-0.babuiltinassets.260610:textures/bomb_button");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesBoxingGlovesColor,
+                     "a-0.babuiltinassets.260610:textures/boxing_gloves_color");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesButtonSquare,
+                     "a-0.babuiltinassets.260610:textures/button_square");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesButtonSquareWide,
+                     "a-0.babuiltinassets.260610:textures/button_square_wide");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesCharacterIconMask,
+                     "a-0.babuiltinassets.260610:textures/character_icon_mask");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesCircle,
+                     "a-0.babuiltinassets.260610:textures/circle");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesCircleNoAlpha,
+                     "a-0.babuiltinassets.260610:textures/circle_no_alpha");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesCircleOutline,
+                     "a-0.babuiltinassets.260610:textures/circle_outline");
+  LoadBuiltinTexture(
+      BuiltinTextureID::kTexturesCircleOutlineNoAlpha,
+      "a-0.babuiltinassets.260610:textures/circle_outline_no_alpha");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesCircleShadow,
+                     "a-0.babuiltinassets.260610:textures/circle_shadow");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesCircleSoft,
+                     "a-0.babuiltinassets.260610:textures/circle_soft");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesCursor,
+                     "a-0.babuiltinassets.260610:textures/cursor");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesExplosion,
+                     "a-0.babuiltinassets.260610:textures/explosion");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesEyeColor,
+                     "a-0.babuiltinassets.260610:textures/eye_color");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesEyeColorTintMask,
+                     "a-0.babuiltinassets.260610:textures/eye_color_tint_mask");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFlagPoleColor,
+                     "a-0.babuiltinassets.260610:textures/flag_pole_color");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFontBig,
+                     "a-0.babuiltinassets.260610:textures/font_big");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFontExtras,
+                     "a-0.babuiltinassets.260610:textures/font_extras");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFontExtras2,
+                     "a-0.babuiltinassets.260610:textures/font_extras2");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFontExtras3,
+                     "a-0.babuiltinassets.260610:textures/font_extras3");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFontExtras4,
+                     "a-0.babuiltinassets.260610:textures/font_extras4");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFontExtras5,
+                     "a-0.babuiltinassets.260610:textures/font_extras5");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall0,
+                     "a-0.babuiltinassets.260610:textures/font_small0");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall1,
+                     "a-0.babuiltinassets.260610:textures/font_small1");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall2,
+                     "a-0.babuiltinassets.260610:textures/font_small2");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall3,
+                     "a-0.babuiltinassets.260610:textures/font_small3");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall4,
+                     "a-0.babuiltinassets.260610:textures/font_small4");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall5,
+                     "a-0.babuiltinassets.260610:textures/font_small5");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall6,
+                     "a-0.babuiltinassets.260610:textures/font_small6");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall7,
+                     "a-0.babuiltinassets.260610:textures/font_small7");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesFuse,
+                     "a-0.babuiltinassets.260610:textures/fuse");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesGlow,
+                     "a-0.babuiltinassets.260610:textures/glow");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesLight,
+                     "a-0.babuiltinassets.260610:textures/light");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesLightSharp,
+                     "a-0.babuiltinassets.260610:textures/light_sharp");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesLightSoft,
+                     "a-0.babuiltinassets.260610:textures/light_soft");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesMenuButton,
+                     "a-0.babuiltinassets.260610:textures/menu_button");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesNub,
+                     "a-0.babuiltinassets.260610:textures/nub");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesOuyaAbutton,
+                     "a-0.babuiltinassets.260610:textures/ouya_abutton");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesPageLeftRight,
+                     "a-0.babuiltinassets.260610:textures/page_left_right");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesRgbStripes,
+                     "a-0.babuiltinassets.260610:textures/rgb_stripes");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesScorch,
+                     "a-0.babuiltinassets.260610:textures/scorch");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesScorchBig,
+                     "a-0.babuiltinassets.260610:textures/scorch_big");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesScrollWidget,
+                     "a-0.babuiltinassets.260610:textures/scroll_widget");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesScrollWidgetGlow,
+                     "a-0.babuiltinassets.260610:textures/scroll_widget_glow");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesShadow,
+                     "a-0.babuiltinassets.260610:textures/shadow");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesShadowSharp,
+                     "a-0.babuiltinassets.260610:textures/shadow_sharp");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesShadowSoft,
+                     "a-0.babuiltinassets.260610:textures/shadow_soft");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesShield,
+                     "a-0.babuiltinassets.260610:textures/shield");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesShrapnel1Color,
+                     "a-0.babuiltinassets.260610:textures/shrapnel1_color");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSmoke,
+                     "a-0.babuiltinassets.260610:textures/smoke");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSoftRect,
+                     "a-0.babuiltinassets.260610:textures/soft_rect");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSoftRect2,
+                     "a-0.babuiltinassets.260610:textures/soft_rect2");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSoftRectVertical,
+                     "a-0.babuiltinassets.260610:textures/soft_rect_vertical");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSparks,
+                     "a-0.babuiltinassets.260610:textures/sparks");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner,
+                     "a-0.babuiltinassets.260610:textures/spinner");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner0,
+                     "a-0.babuiltinassets.260610:textures/spinner0");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner1,
+                     "a-0.babuiltinassets.260610:textures/spinner1");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner10,
+                     "a-0.babuiltinassets.260610:textures/spinner10");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner11,
+                     "a-0.babuiltinassets.260610:textures/spinner11");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner2,
+                     "a-0.babuiltinassets.260610:textures/spinner2");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner3,
+                     "a-0.babuiltinassets.260610:textures/spinner3");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner4,
+                     "a-0.babuiltinassets.260610:textures/spinner4");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner5,
+                     "a-0.babuiltinassets.260610:textures/spinner5");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner6,
+                     "a-0.babuiltinassets.260610:textures/spinner6");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner7,
+                     "a-0.babuiltinassets.260610:textures/spinner7");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner8,
+                     "a-0.babuiltinassets.260610:textures/spinner8");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner9,
+                     "a-0.babuiltinassets.260610:textures/spinner9");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesStartButton,
+                     "a-0.babuiltinassets.260610:textures/start_button");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesTextClearButton,
+                     "a-0.babuiltinassets.260610:textures/text_clear_button");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesTouchArrows,
+                     "a-0.babuiltinassets.260610:textures/touch_arrows");
+  LoadBuiltinTexture(
+      BuiltinTextureID::kTexturesTouchArrowsActions,
+      "a-0.babuiltinassets.260610:textures/touch_arrows_actions");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesUiAtlas,
+                     "a-0.babuiltinassets.260610:textures/ui_atlas");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesUiAtlas2,
+                     "a-0.babuiltinassets.260610:textures/ui_atlas2");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesUsersButton,
+                     "a-0.babuiltinassets.260610:textures/users_button");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesWhite,
+                     "a-0.babuiltinassets.260610:textures/white");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesWindowHsmallVmed,
+                     "a-0.babuiltinassets.260610:textures/window_hsmall_vmed");
+  LoadBuiltinTexture(
+      BuiltinTextureID::kTexturesWindowHsmallVsmall,
+      "a-0.babuiltinassets.260610:textures/window_hsmall_vsmall");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesWings,
+                     "a-0.babuiltinassets.260610:textures/wings");
   // __AUTOGENERATED_BUILTIN_ASSET_LOAD_END__
 
   sys_assets_loaded_ = true;
@@ -734,10 +801,14 @@ auto Assets::GetCubeMapTexture(const std::string& file_name)
 
 // Eww; can't recycle GetComponent here since we need extra stuff (quality
 // settings, etc). Should fix.
-auto Assets::GetTexture(const std::string& file_name)
+auto Assets::GetTexture(const std::string& file_name_in)
     -> Object::Ref<TextureAsset> {
   assert(g_base->InLogicThread());
   assert(asset_lists_locked_);
+  // Anything handing us a possibly-legacy bare name (old peers over
+  // the scene_v1 wire, old replays, server-driven docui content,
+  // modder code) gets routed to its asset-package home if it has one.
+  std::string file_name = AssetNameCompat::FromLegacy(file_name_in);
   auto i = textures_.find(file_name);
   if (i != textures_.end()) {
     return Object::Ref<TextureAsset>(i->second.get());
@@ -752,14 +823,13 @@ auto Assets::GetTexture(const std::string& file_name)
       quality_maps_inited = true;
       quality_map_medium = new std::set<std::string>();
       quality_map_high = new std::set<std::string>();
-      const char* vals_med[] = {
-          "fontSmall0", "fontSmall1", "fontSmall2", "fontSmall3", "fontSmall4",
-          "fontSmall5", "fontSmall6", "fontSmall7", "fontExtras", nullptr};
+      // (All former medium entries have migrated to asset-packages,
+      // which handle quality themselves.)
+      const char* vals_med[] = {nullptr};
 
       const char* vals_high[] = {"frostyIcon", "jackIcon",  "melIcon",
                                  "santaIcon",  "ninjaIcon", "neoSpazIcon",
-                                 "zoeIcon",    "kronkIcon", "scrollWidgetGlow",
-                                 "glow",       nullptr};
+                                 "zoeIcon",    "kronkIcon", nullptr};
 
       for (const char** val3 = vals_med; *val3 != nullptr; val3++) {
         quality_map_medium->insert(*val3);
@@ -1355,10 +1425,16 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
     g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
                          "Unable to load audio: '" + name + "'.");
     return FindAssetFile(type, "blank");
-  } else if (type == FileType::kTexture && name != "white") {
-    g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
-                         "Unable to load texture: '" + name + "'.");
-    return FindAssetFile(type, "white");
+  } else if (type == FileType::kTexture) {
+    // The legacy bare-name white texture is gone; fall back to the
+    // builtin asset-package's copy.
+    std::string fallback =
+        std::string(kBuiltinAssetsApverid) + ":textures/white";
+    if (name != fallback) {
+      g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
+                           "Unable to load texture: '" + name + "'.");
+      return FindAssetFile(type, fallback);
+    }
   }
 
   throw Exception("Can't find asset: \"" + name + "\"");
@@ -1891,13 +1967,6 @@ Assets::AssetListLock::~AssetListLock() {
   assert(g_base->assets->asset_lists_locked_);
   g_base->assets->asset_lists_locked_ = false;
   g_base->assets->asset_lists_mutex_.unlock();
-}
-
-auto Assets::BuiltinTextureOld(BuiltinTextureOldID id) -> TextureAsset* {
-  assert(asset_loads_allowed_ && sys_assets_loaded_);
-  assert(g_base->InLogicThread());
-  assert(static_cast<size_t>(id) < builtin_textures_old_.size());
-  return builtin_textures_old_[static_cast<int>(id)].get();
 }
 
 auto Assets::BuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID id)

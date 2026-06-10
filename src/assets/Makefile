@@ -3660,7 +3660,6 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/achievementTeamPlayer.dds \
   $(BUILD_DIR)/ba_data/textures/achievementWall.dds \
   $(BUILD_DIR)/ba_data/textures/achievementsIcon.dds \
-  $(BUILD_DIR)/ba_data/textures/actionButtons.dds \
   $(BUILD_DIR)/ba_data/textures/actionHeroColor.dds \
   $(BUILD_DIR)/ba_data/textures/actionHeroColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/actionHeroIcon.dds \
@@ -3683,13 +3682,11 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/alwaysLandLevelColor.dds \
   $(BUILD_DIR)/ba_data/textures/alwaysLandPreview.dds \
   $(BUILD_DIR)/ba_data/textures/analogStick.dds \
-  $(BUILD_DIR)/ba_data/textures/arrow.dds \
   $(BUILD_DIR)/ba_data/textures/assassinColor.dds \
   $(BUILD_DIR)/ba_data/textures/assassinColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/assassinIcon.dds \
   $(BUILD_DIR)/ba_data/textures/assassinIconColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/audioIcon.dds \
-  $(BUILD_DIR)/ba_data/textures/backIcon.dds \
   $(BUILD_DIR)/ba_data/textures/bar.dds \
   $(BUILD_DIR)/ba_data/textures/bearColor.dds \
   $(BUILD_DIR)/ba_data/textures/bearColorMask.dds \
@@ -3698,8 +3695,6 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/bg.dds \
   $(BUILD_DIR)/ba_data/textures/bigG.dds \
   $(BUILD_DIR)/ba_data/textures/bigGPreview.dds \
-  $(BUILD_DIR)/ba_data/textures/black.dds \
-  $(BUILD_DIR)/ba_data/textures/bombButton.dds \
   $(BUILD_DIR)/ba_data/textures/bombColor.dds \
   $(BUILD_DIR)/ba_data/textures/bombColorIce.dds \
   $(BUILD_DIR)/ba_data/textures/bombStickyColor.dds \
@@ -3707,7 +3702,6 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/bonesColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/bonesIcon.dds \
   $(BUILD_DIR)/ba_data/textures/bonesIconColorMask.dds \
-  $(BUILD_DIR)/ba_data/textures/boxingGlovesColor.dds \
   $(BUILD_DIR)/ba_data/textures/bridgitLevelColor.dds \
   $(BUILD_DIR)/ba_data/textures/bridgitPreview.dds \
   $(BUILD_DIR)/ba_data/textures/bunnyColor.dds \
@@ -3718,26 +3712,17 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonJump.dds \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp.dds \
   $(BUILD_DIR)/ba_data/textures/buttonPunch.dds \
-  $(BUILD_DIR)/ba_data/textures/buttonSquare.dds \
-  $(BUILD_DIR)/ba_data/textures/buttonSquareWide.dds \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1.dds \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2.dds \
   $(BUILD_DIR)/ba_data/textures/chTitleChar3.dds \
   $(BUILD_DIR)/ba_data/textures/chTitleChar4.dds \
   $(BUILD_DIR)/ba_data/textures/chTitleChar5.dds \
-  $(BUILD_DIR)/ba_data/textures/characterIconMask.dds \
   $(BUILD_DIR)/ba_data/textures/chestIcon.dds \
   $(BUILD_DIR)/ba_data/textures/chestIconEmpty.dds \
   $(BUILD_DIR)/ba_data/textures/chestIconMulti.dds \
   $(BUILD_DIR)/ba_data/textures/chestIconTint.dds \
   $(BUILD_DIR)/ba_data/textures/chestOpenIcon.dds \
   $(BUILD_DIR)/ba_data/textures/chestOpenIconTint.dds \
-  $(BUILD_DIR)/ba_data/textures/circle.dds \
-  $(BUILD_DIR)/ba_data/textures/circleNoAlpha.dds \
-  $(BUILD_DIR)/ba_data/textures/circleOutline.dds \
-  $(BUILD_DIR)/ba_data/textures/circleOutlineNoAlpha.dds \
-  $(BUILD_DIR)/ba_data/textures/circleShadow.dds \
-  $(BUILD_DIR)/ba_data/textures/circleSoft.dds \
   $(BUILD_DIR)/ba_data/textures/circleZigZag.dds \
   $(BUILD_DIR)/ba_data/textures/clayStroke.dds \
   $(BUILD_DIR)/ba_data/textures/coin.dds \
@@ -3752,7 +3737,6 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cragCastlePreview.dds \
   $(BUILD_DIR)/ba_data/textures/crossOut.dds \
   $(BUILD_DIR)/ba_data/textures/crossOutMask.dds \
-  $(BUILD_DIR)/ba_data/textures/cursor.dds \
   $(BUILD_DIR)/ba_data/textures/cuteSpaz.dds \
   $(BUILD_DIR)/ba_data/textures/cyborgColor.dds \
   $(BUILD_DIR)/ba_data/textures/cyborgColorMask.dds \
@@ -3773,27 +3757,9 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/eggTex2.dds \
   $(BUILD_DIR)/ba_data/textures/eggTex3.dds \
   $(BUILD_DIR)/ba_data/textures/empty.dds \
-  $(BUILD_DIR)/ba_data/textures/explosion.dds \
-  $(BUILD_DIR)/ba_data/textures/eyeColor.dds \
-  $(BUILD_DIR)/ba_data/textures/eyeColorTintMask.dds \
   $(BUILD_DIR)/ba_data/textures/file.dds \
   $(BUILD_DIR)/ba_data/textures/flagColor.dds \
-  $(BUILD_DIR)/ba_data/textures/flagPoleColor.dds \
   $(BUILD_DIR)/ba_data/textures/folder.dds \
-  $(BUILD_DIR)/ba_data/textures/fontBig.dds \
-  $(BUILD_DIR)/ba_data/textures/fontExtras.dds \
-  $(BUILD_DIR)/ba_data/textures/fontExtras2.dds \
-  $(BUILD_DIR)/ba_data/textures/fontExtras3.dds \
-  $(BUILD_DIR)/ba_data/textures/fontExtras4.dds \
-  $(BUILD_DIR)/ba_data/textures/fontExtras5.dds \
-  $(BUILD_DIR)/ba_data/textures/fontSmall0.dds \
-  $(BUILD_DIR)/ba_data/textures/fontSmall1.dds \
-  $(BUILD_DIR)/ba_data/textures/fontSmall2.dds \
-  $(BUILD_DIR)/ba_data/textures/fontSmall3.dds \
-  $(BUILD_DIR)/ba_data/textures/fontSmall4.dds \
-  $(BUILD_DIR)/ba_data/textures/fontSmall5.dds \
-  $(BUILD_DIR)/ba_data/textures/fontSmall6.dds \
-  $(BUILD_DIR)/ba_data/textures/fontSmall7.dds \
   $(BUILD_DIR)/ba_data/textures/footballStadium.dds \
   $(BUILD_DIR)/ba_data/textures/footballStadiumPreview.dds \
   $(BUILD_DIR)/ba_data/textures/frameInset.dds \
@@ -3801,14 +3767,12 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/frostyColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/frostyIcon.dds \
   $(BUILD_DIR)/ba_data/textures/frostyIconColorMask.dds \
-  $(BUILD_DIR)/ba_data/textures/fuse.dds \
   $(BUILD_DIR)/ba_data/textures/gameCenterIcon.dds \
   $(BUILD_DIR)/ba_data/textures/githubLogo.dds \
   $(BUILD_DIR)/ba_data/textures/gladiatorColor.dds \
   $(BUILD_DIR)/ba_data/textures/gladiatorColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon.dds \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask.dds \
-  $(BUILD_DIR)/ba_data/textures/glow.dds \
   $(BUILD_DIR)/ba_data/textures/goldPass.dds \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon.dds \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon.dds \
@@ -3844,9 +3808,6 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/leaderboardsIcon.dds \
   $(BUILD_DIR)/ba_data/textures/leftButton.dds \
   $(BUILD_DIR)/ba_data/textures/levelIcon.dds \
-  $(BUILD_DIR)/ba_data/textures/light.dds \
-  $(BUILD_DIR)/ba_data/textures/lightSharp.dds \
-  $(BUILD_DIR)/ba_data/textures/lightSoft.dds \
   $(BUILD_DIR)/ba_data/textures/lock.dds \
   $(BUILD_DIR)/ba_data/textures/logIcon.dds \
   $(BUILD_DIR)/ba_data/textures/logo.dds \
@@ -3861,7 +3822,6 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/melIcon.dds \
   $(BUILD_DIR)/ba_data/textures/melIconColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/menuBG.dds \
-  $(BUILD_DIR)/ba_data/textures/menuButton.dds \
   $(BUILD_DIR)/ba_data/textures/menuIcon.dds \
   $(BUILD_DIR)/ba_data/textures/merch.dds \
   $(BUILD_DIR)/ba_data/textures/meter.dds \
@@ -3878,7 +3838,6 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/ninjaColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/ninjaIcon.dds \
   $(BUILD_DIR)/ba_data/textures/ninjaIconColorMask.dds \
-  $(BUILD_DIR)/ba_data/textures/nub.dds \
   $(BUILD_DIR)/ba_data/textures/null.dds \
   $(BUILD_DIR)/ba_data/textures/oldLadyColor.dds \
   $(BUILD_DIR)/ba_data/textures/oldLadyColorMask.dds \
@@ -3888,12 +3847,10 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/operaSingerColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/operaSingerIcon.dds \
   $(BUILD_DIR)/ba_data/textures/operaSingerIconColorMask.dds \
-  $(BUILD_DIR)/ba_data/textures/ouyaAButton.dds \
   $(BUILD_DIR)/ba_data/textures/ouyaIcon.dds \
   $(BUILD_DIR)/ba_data/textures/ouyaOButton.dds \
   $(BUILD_DIR)/ba_data/textures/ouyaUButton.dds \
   $(BUILD_DIR)/ba_data/textures/ouyaYButton.dds \
-  $(BUILD_DIR)/ba_data/textures/pageLeftRight.dds \
   $(BUILD_DIR)/ba_data/textures/penguinColor.dds \
   $(BUILD_DIR)/ba_data/textures/penguinColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/penguinIcon.dds \
@@ -3957,7 +3914,6 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/reflectionSoft_-y.dds \
   $(BUILD_DIR)/ba_data/textures/reflectionSoft_-z.dds \
   $(BUILD_DIR)/ba_data/textures/replayIcon.dds \
-  $(BUILD_DIR)/ba_data/textures/rgbStripes.dds \
   $(BUILD_DIR)/ba_data/textures/rightButton.dds \
   $(BUILD_DIR)/ba_data/textures/robotColor.dds \
   $(BUILD_DIR)/ba_data/textures/robotColorMask.dds \
@@ -3969,37 +3925,9 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/santaColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/santaIcon.dds \
   $(BUILD_DIR)/ba_data/textures/santaIconColorMask.dds \
-  $(BUILD_DIR)/ba_data/textures/scorch.dds \
-  $(BUILD_DIR)/ba_data/textures/scorchBig.dds \
-  $(BUILD_DIR)/ba_data/textures/scrollWidget.dds \
-  $(BUILD_DIR)/ba_data/textures/scrollWidgetGlow.dds \
   $(BUILD_DIR)/ba_data/textures/settingsIcon.dds \
-  $(BUILD_DIR)/ba_data/textures/shadow.dds \
-  $(BUILD_DIR)/ba_data/textures/shadowSharp.dds \
-  $(BUILD_DIR)/ba_data/textures/shadowSoft.dds \
-  $(BUILD_DIR)/ba_data/textures/shield.dds \
-  $(BUILD_DIR)/ba_data/textures/shrapnel1Color.dds \
   $(BUILD_DIR)/ba_data/textures/slash.dds \
-  $(BUILD_DIR)/ba_data/textures/smoke.dds \
-  $(BUILD_DIR)/ba_data/textures/softRect.dds \
-  $(BUILD_DIR)/ba_data/textures/softRect2.dds \
-  $(BUILD_DIR)/ba_data/textures/softRectVertical.dds \
-  $(BUILD_DIR)/ba_data/textures/sparks.dds \
-  $(BUILD_DIR)/ba_data/textures/spinner.dds \
-  $(BUILD_DIR)/ba_data/textures/spinner0.dds \
-  $(BUILD_DIR)/ba_data/textures/spinner1.dds \
-  $(BUILD_DIR)/ba_data/textures/spinner10.dds \
-  $(BUILD_DIR)/ba_data/textures/spinner11.dds \
-  $(BUILD_DIR)/ba_data/textures/spinner2.dds \
-  $(BUILD_DIR)/ba_data/textures/spinner3.dds \
-  $(BUILD_DIR)/ba_data/textures/spinner4.dds \
-  $(BUILD_DIR)/ba_data/textures/spinner5.dds \
-  $(BUILD_DIR)/ba_data/textures/spinner6.dds \
-  $(BUILD_DIR)/ba_data/textures/spinner7.dds \
-  $(BUILD_DIR)/ba_data/textures/spinner8.dds \
-  $(BUILD_DIR)/ba_data/textures/spinner9.dds \
   $(BUILD_DIR)/ba_data/textures/star.dds \
-  $(BUILD_DIR)/ba_data/textures/startButton.dds \
   $(BUILD_DIR)/ba_data/textures/stepRightUpLevelColor.dds \
   $(BUILD_DIR)/ba_data/textures/stepRightUpPreview.dds \
   $(BUILD_DIR)/ba_data/textures/storeCharacter.dds \
@@ -4010,7 +3938,6 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/superheroColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/superheroIcon.dds \
   $(BUILD_DIR)/ba_data/textures/superheroIconColorMask.dds \
-  $(BUILD_DIR)/ba_data/textures/textClearButton.dds \
   $(BUILD_DIR)/ba_data/textures/thePadLevelColor.dds \
   $(BUILD_DIR)/ba_data/textures/thePadPreview.dds \
   $(BUILD_DIR)/ba_data/textures/ticketRoll.dds \
@@ -4027,27 +3954,18 @@ TEX2D_DDS_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tokens2.dds \
   $(BUILD_DIR)/ba_data/textures/tokens3.dds \
   $(BUILD_DIR)/ba_data/textures/tokens4.dds \
-  $(BUILD_DIR)/ba_data/textures/touchArrows.dds \
-  $(BUILD_DIR)/ba_data/textures/touchArrowsActions.dds \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor.dds \
   $(BUILD_DIR)/ba_data/textures/towerDPreview.dds \
   $(BUILD_DIR)/ba_data/textures/treesColor.dds \
   $(BUILD_DIR)/ba_data/textures/trophy.dds \
   $(BUILD_DIR)/ba_data/textures/tv.dds \
-  $(BUILD_DIR)/ba_data/textures/uiAtlas.dds \
-  $(BUILD_DIR)/ba_data/textures/uiAtlas2.dds \
   $(BUILD_DIR)/ba_data/textures/upButton.dds \
-  $(BUILD_DIR)/ba_data/textures/usersButton.dds \
   $(BUILD_DIR)/ba_data/textures/vrFillMound.dds \
   $(BUILD_DIR)/ba_data/textures/warriorColor.dds \
   $(BUILD_DIR)/ba_data/textures/warriorColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/warriorIcon.dds \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask.dds \
-  $(BUILD_DIR)/ba_data/textures/white.dds \
   $(BUILD_DIR)/ba_data/textures/windowBottomCap.dds \
-  $(BUILD_DIR)/ba_data/textures/windowHSmallVMed.dds \
-  $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall.dds \
-  $(BUILD_DIR)/ba_data/textures/wings.dds \
   $(BUILD_DIR)/ba_data/textures/witchColor.dds \
   $(BUILD_DIR)/ba_data/textures/witchColorMask.dds \
   $(BUILD_DIR)/ba_data/textures/witchIcon.dds \
@@ -4093,7 +4011,6 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/achievementTeamPlayer.pvr \
   $(BUILD_DIR)/ba_data/textures/achievementWall.pvr \
   $(BUILD_DIR)/ba_data/textures/achievementsIcon.pvr \
-  $(BUILD_DIR)/ba_data/textures/actionButtons.pvr \
   $(BUILD_DIR)/ba_data/textures/actionHeroColor.pvr \
   $(BUILD_DIR)/ba_data/textures/actionHeroColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/actionHeroIcon.pvr \
@@ -4116,13 +4033,11 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/alwaysLandLevelColor.pvr \
   $(BUILD_DIR)/ba_data/textures/alwaysLandPreview.pvr \
   $(BUILD_DIR)/ba_data/textures/analogStick.pvr \
-  $(BUILD_DIR)/ba_data/textures/arrow.pvr \
   $(BUILD_DIR)/ba_data/textures/assassinColor.pvr \
   $(BUILD_DIR)/ba_data/textures/assassinColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/assassinIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/assassinIconColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/audioIcon.pvr \
-  $(BUILD_DIR)/ba_data/textures/backIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/bar.pvr \
   $(BUILD_DIR)/ba_data/textures/bearColor.pvr \
   $(BUILD_DIR)/ba_data/textures/bearColorMask.pvr \
@@ -4131,8 +4046,6 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/bg.pvr \
   $(BUILD_DIR)/ba_data/textures/bigG.pvr \
   $(BUILD_DIR)/ba_data/textures/bigGPreview.pvr \
-  $(BUILD_DIR)/ba_data/textures/black.pvr \
-  $(BUILD_DIR)/ba_data/textures/bombButton.pvr \
   $(BUILD_DIR)/ba_data/textures/bombColor.pvr \
   $(BUILD_DIR)/ba_data/textures/bombColorIce.pvr \
   $(BUILD_DIR)/ba_data/textures/bombStickyColor.pvr \
@@ -4140,7 +4053,6 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/bonesColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/bonesIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/bonesIconColorMask.pvr \
-  $(BUILD_DIR)/ba_data/textures/boxingGlovesColor.pvr \
   $(BUILD_DIR)/ba_data/textures/bridgitLevelColor.pvr \
   $(BUILD_DIR)/ba_data/textures/bridgitPreview.pvr \
   $(BUILD_DIR)/ba_data/textures/bunnyColor.pvr \
@@ -4151,26 +4063,17 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonJump.pvr \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp.pvr \
   $(BUILD_DIR)/ba_data/textures/buttonPunch.pvr \
-  $(BUILD_DIR)/ba_data/textures/buttonSquare.pvr \
-  $(BUILD_DIR)/ba_data/textures/buttonSquareWide.pvr \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1.pvr \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2.pvr \
   $(BUILD_DIR)/ba_data/textures/chTitleChar3.pvr \
   $(BUILD_DIR)/ba_data/textures/chTitleChar4.pvr \
   $(BUILD_DIR)/ba_data/textures/chTitleChar5.pvr \
-  $(BUILD_DIR)/ba_data/textures/characterIconMask.pvr \
   $(BUILD_DIR)/ba_data/textures/chestIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/chestIconEmpty.pvr \
   $(BUILD_DIR)/ba_data/textures/chestIconMulti.pvr \
   $(BUILD_DIR)/ba_data/textures/chestIconTint.pvr \
   $(BUILD_DIR)/ba_data/textures/chestOpenIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/chestOpenIconTint.pvr \
-  $(BUILD_DIR)/ba_data/textures/circle.pvr \
-  $(BUILD_DIR)/ba_data/textures/circleNoAlpha.pvr \
-  $(BUILD_DIR)/ba_data/textures/circleOutline.pvr \
-  $(BUILD_DIR)/ba_data/textures/circleOutlineNoAlpha.pvr \
-  $(BUILD_DIR)/ba_data/textures/circleShadow.pvr \
-  $(BUILD_DIR)/ba_data/textures/circleSoft.pvr \
   $(BUILD_DIR)/ba_data/textures/circleZigZag.pvr \
   $(BUILD_DIR)/ba_data/textures/clayStroke.pvr \
   $(BUILD_DIR)/ba_data/textures/coin.pvr \
@@ -4185,7 +4088,6 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cragCastlePreview.pvr \
   $(BUILD_DIR)/ba_data/textures/crossOut.pvr \
   $(BUILD_DIR)/ba_data/textures/crossOutMask.pvr \
-  $(BUILD_DIR)/ba_data/textures/cursor.pvr \
   $(BUILD_DIR)/ba_data/textures/cuteSpaz.pvr \
   $(BUILD_DIR)/ba_data/textures/cyborgColor.pvr \
   $(BUILD_DIR)/ba_data/textures/cyborgColorMask.pvr \
@@ -4206,27 +4108,9 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/eggTex2.pvr \
   $(BUILD_DIR)/ba_data/textures/eggTex3.pvr \
   $(BUILD_DIR)/ba_data/textures/empty.pvr \
-  $(BUILD_DIR)/ba_data/textures/explosion.pvr \
-  $(BUILD_DIR)/ba_data/textures/eyeColor.pvr \
-  $(BUILD_DIR)/ba_data/textures/eyeColorTintMask.pvr \
   $(BUILD_DIR)/ba_data/textures/file.pvr \
   $(BUILD_DIR)/ba_data/textures/flagColor.pvr \
-  $(BUILD_DIR)/ba_data/textures/flagPoleColor.pvr \
   $(BUILD_DIR)/ba_data/textures/folder.pvr \
-  $(BUILD_DIR)/ba_data/textures/fontBig.pvr \
-  $(BUILD_DIR)/ba_data/textures/fontExtras.pvr \
-  $(BUILD_DIR)/ba_data/textures/fontExtras2.pvr \
-  $(BUILD_DIR)/ba_data/textures/fontExtras3.pvr \
-  $(BUILD_DIR)/ba_data/textures/fontExtras4.pvr \
-  $(BUILD_DIR)/ba_data/textures/fontExtras5.pvr \
-  $(BUILD_DIR)/ba_data/textures/fontSmall0.pvr \
-  $(BUILD_DIR)/ba_data/textures/fontSmall1.pvr \
-  $(BUILD_DIR)/ba_data/textures/fontSmall2.pvr \
-  $(BUILD_DIR)/ba_data/textures/fontSmall3.pvr \
-  $(BUILD_DIR)/ba_data/textures/fontSmall4.pvr \
-  $(BUILD_DIR)/ba_data/textures/fontSmall5.pvr \
-  $(BUILD_DIR)/ba_data/textures/fontSmall6.pvr \
-  $(BUILD_DIR)/ba_data/textures/fontSmall7.pvr \
   $(BUILD_DIR)/ba_data/textures/footballStadium.pvr \
   $(BUILD_DIR)/ba_data/textures/footballStadiumPreview.pvr \
   $(BUILD_DIR)/ba_data/textures/frameInset.pvr \
@@ -4234,14 +4118,12 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/frostyColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/frostyIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/frostyIconColorMask.pvr \
-  $(BUILD_DIR)/ba_data/textures/fuse.pvr \
   $(BUILD_DIR)/ba_data/textures/gameCenterIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/githubLogo.pvr \
   $(BUILD_DIR)/ba_data/textures/gladiatorColor.pvr \
   $(BUILD_DIR)/ba_data/textures/gladiatorColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask.pvr \
-  $(BUILD_DIR)/ba_data/textures/glow.pvr \
   $(BUILD_DIR)/ba_data/textures/goldPass.pvr \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon.pvr \
@@ -4277,9 +4159,6 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/leaderboardsIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/leftButton.pvr \
   $(BUILD_DIR)/ba_data/textures/levelIcon.pvr \
-  $(BUILD_DIR)/ba_data/textures/light.pvr \
-  $(BUILD_DIR)/ba_data/textures/lightSharp.pvr \
-  $(BUILD_DIR)/ba_data/textures/lightSoft.pvr \
   $(BUILD_DIR)/ba_data/textures/lock.pvr \
   $(BUILD_DIR)/ba_data/textures/logIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/logo.pvr \
@@ -4294,7 +4173,6 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/melIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/melIconColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/menuBG.pvr \
-  $(BUILD_DIR)/ba_data/textures/menuButton.pvr \
   $(BUILD_DIR)/ba_data/textures/menuIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/merch.pvr \
   $(BUILD_DIR)/ba_data/textures/meter.pvr \
@@ -4311,7 +4189,6 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/ninjaColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/ninjaIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/ninjaIconColorMask.pvr \
-  $(BUILD_DIR)/ba_data/textures/nub.pvr \
   $(BUILD_DIR)/ba_data/textures/null.pvr \
   $(BUILD_DIR)/ba_data/textures/oldLadyColor.pvr \
   $(BUILD_DIR)/ba_data/textures/oldLadyColorMask.pvr \
@@ -4321,12 +4198,10 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/operaSingerColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/operaSingerIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/operaSingerIconColorMask.pvr \
-  $(BUILD_DIR)/ba_data/textures/ouyaAButton.pvr \
   $(BUILD_DIR)/ba_data/textures/ouyaIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/ouyaOButton.pvr \
   $(BUILD_DIR)/ba_data/textures/ouyaUButton.pvr \
   $(BUILD_DIR)/ba_data/textures/ouyaYButton.pvr \
-  $(BUILD_DIR)/ba_data/textures/pageLeftRight.pvr \
   $(BUILD_DIR)/ba_data/textures/penguinColor.pvr \
   $(BUILD_DIR)/ba_data/textures/penguinColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/penguinIcon.pvr \
@@ -4390,7 +4265,6 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/reflectionSoft_-y.pvr \
   $(BUILD_DIR)/ba_data/textures/reflectionSoft_-z.pvr \
   $(BUILD_DIR)/ba_data/textures/replayIcon.pvr \
-  $(BUILD_DIR)/ba_data/textures/rgbStripes.pvr \
   $(BUILD_DIR)/ba_data/textures/rightButton.pvr \
   $(BUILD_DIR)/ba_data/textures/robotColor.pvr \
   $(BUILD_DIR)/ba_data/textures/robotColorMask.pvr \
@@ -4402,37 +4276,9 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/santaColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/santaIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/santaIconColorMask.pvr \
-  $(BUILD_DIR)/ba_data/textures/scorch.pvr \
-  $(BUILD_DIR)/ba_data/textures/scorchBig.pvr \
-  $(BUILD_DIR)/ba_data/textures/scrollWidget.pvr \
-  $(BUILD_DIR)/ba_data/textures/scrollWidgetGlow.pvr \
   $(BUILD_DIR)/ba_data/textures/settingsIcon.pvr \
-  $(BUILD_DIR)/ba_data/textures/shadow.pvr \
-  $(BUILD_DIR)/ba_data/textures/shadowSharp.pvr \
-  $(BUILD_DIR)/ba_data/textures/shadowSoft.pvr \
-  $(BUILD_DIR)/ba_data/textures/shield.pvr \
-  $(BUILD_DIR)/ba_data/textures/shrapnel1Color.pvr \
   $(BUILD_DIR)/ba_data/textures/slash.pvr \
-  $(BUILD_DIR)/ba_data/textures/smoke.pvr \
-  $(BUILD_DIR)/ba_data/textures/softRect.pvr \
-  $(BUILD_DIR)/ba_data/textures/softRect2.pvr \
-  $(BUILD_DIR)/ba_data/textures/softRectVertical.pvr \
-  $(BUILD_DIR)/ba_data/textures/sparks.pvr \
-  $(BUILD_DIR)/ba_data/textures/spinner.pvr \
-  $(BUILD_DIR)/ba_data/textures/spinner0.pvr \
-  $(BUILD_DIR)/ba_data/textures/spinner1.pvr \
-  $(BUILD_DIR)/ba_data/textures/spinner10.pvr \
-  $(BUILD_DIR)/ba_data/textures/spinner11.pvr \
-  $(BUILD_DIR)/ba_data/textures/spinner2.pvr \
-  $(BUILD_DIR)/ba_data/textures/spinner3.pvr \
-  $(BUILD_DIR)/ba_data/textures/spinner4.pvr \
-  $(BUILD_DIR)/ba_data/textures/spinner5.pvr \
-  $(BUILD_DIR)/ba_data/textures/spinner6.pvr \
-  $(BUILD_DIR)/ba_data/textures/spinner7.pvr \
-  $(BUILD_DIR)/ba_data/textures/spinner8.pvr \
-  $(BUILD_DIR)/ba_data/textures/spinner9.pvr \
   $(BUILD_DIR)/ba_data/textures/star.pvr \
-  $(BUILD_DIR)/ba_data/textures/startButton.pvr \
   $(BUILD_DIR)/ba_data/textures/stepRightUpLevelColor.pvr \
   $(BUILD_DIR)/ba_data/textures/stepRightUpPreview.pvr \
   $(BUILD_DIR)/ba_data/textures/storeCharacter.pvr \
@@ -4443,7 +4289,6 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/superheroColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/superheroIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/superheroIconColorMask.pvr \
-  $(BUILD_DIR)/ba_data/textures/textClearButton.pvr \
   $(BUILD_DIR)/ba_data/textures/thePadLevelColor.pvr \
   $(BUILD_DIR)/ba_data/textures/thePadPreview.pvr \
   $(BUILD_DIR)/ba_data/textures/ticketRoll.pvr \
@@ -4460,27 +4305,18 @@ TEX2D_PVR_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tokens2.pvr \
   $(BUILD_DIR)/ba_data/textures/tokens3.pvr \
   $(BUILD_DIR)/ba_data/textures/tokens4.pvr \
-  $(BUILD_DIR)/ba_data/textures/touchArrows.pvr \
-  $(BUILD_DIR)/ba_data/textures/touchArrowsActions.pvr \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor.pvr \
   $(BUILD_DIR)/ba_data/textures/towerDPreview.pvr \
   $(BUILD_DIR)/ba_data/textures/treesColor.pvr \
   $(BUILD_DIR)/ba_data/textures/trophy.pvr \
   $(BUILD_DIR)/ba_data/textures/tv.pvr \
-  $(BUILD_DIR)/ba_data/textures/uiAtlas.pvr \
-  $(BUILD_DIR)/ba_data/textures/uiAtlas2.pvr \
   $(BUILD_DIR)/ba_data/textures/upButton.pvr \
-  $(BUILD_DIR)/ba_data/textures/usersButton.pvr \
   $(BUILD_DIR)/ba_data/textures/vrFillMound.pvr \
   $(BUILD_DIR)/ba_data/textures/warriorColor.pvr \
   $(BUILD_DIR)/ba_data/textures/warriorColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/warriorIcon.pvr \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask.pvr \
-  $(BUILD_DIR)/ba_data/textures/white.pvr \
   $(BUILD_DIR)/ba_data/textures/windowBottomCap.pvr \
-  $(BUILD_DIR)/ba_data/textures/windowHSmallVMed.pvr \
-  $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall.pvr \
-  $(BUILD_DIR)/ba_data/textures/wings.pvr \
   $(BUILD_DIR)/ba_data/textures/witchColor.pvr \
   $(BUILD_DIR)/ba_data/textures/witchColorMask.pvr \
   $(BUILD_DIR)/ba_data/textures/witchIcon.pvr \
@@ -4526,7 +4362,6 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/achievementTeamPlayer.ktx \
   $(BUILD_DIR)/ba_data/textures/achievementWall.ktx \
   $(BUILD_DIR)/ba_data/textures/achievementsIcon.ktx \
-  $(BUILD_DIR)/ba_data/textures/actionButtons.ktx \
   $(BUILD_DIR)/ba_data/textures/actionHeroColor.ktx \
   $(BUILD_DIR)/ba_data/textures/actionHeroColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/actionHeroIcon.ktx \
@@ -4549,13 +4384,11 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/alwaysLandLevelColor.ktx \
   $(BUILD_DIR)/ba_data/textures/alwaysLandPreview.ktx \
   $(BUILD_DIR)/ba_data/textures/analogStick.ktx \
-  $(BUILD_DIR)/ba_data/textures/arrow.ktx \
   $(BUILD_DIR)/ba_data/textures/assassinColor.ktx \
   $(BUILD_DIR)/ba_data/textures/assassinColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/assassinIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/assassinIconColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/audioIcon.ktx \
-  $(BUILD_DIR)/ba_data/textures/backIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/bar.ktx \
   $(BUILD_DIR)/ba_data/textures/bearColor.ktx \
   $(BUILD_DIR)/ba_data/textures/bearColorMask.ktx \
@@ -4564,8 +4397,6 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/bg.ktx \
   $(BUILD_DIR)/ba_data/textures/bigG.ktx \
   $(BUILD_DIR)/ba_data/textures/bigGPreview.ktx \
-  $(BUILD_DIR)/ba_data/textures/black.ktx \
-  $(BUILD_DIR)/ba_data/textures/bombButton.ktx \
   $(BUILD_DIR)/ba_data/textures/bombColor.ktx \
   $(BUILD_DIR)/ba_data/textures/bombColorIce.ktx \
   $(BUILD_DIR)/ba_data/textures/bombStickyColor.ktx \
@@ -4573,7 +4404,6 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/bonesColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/bonesIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/bonesIconColorMask.ktx \
-  $(BUILD_DIR)/ba_data/textures/boxingGlovesColor.ktx \
   $(BUILD_DIR)/ba_data/textures/bridgitLevelColor.ktx \
   $(BUILD_DIR)/ba_data/textures/bridgitPreview.ktx \
   $(BUILD_DIR)/ba_data/textures/bunnyColor.ktx \
@@ -4584,26 +4414,17 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonJump.ktx \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp.ktx \
   $(BUILD_DIR)/ba_data/textures/buttonPunch.ktx \
-  $(BUILD_DIR)/ba_data/textures/buttonSquare.ktx \
-  $(BUILD_DIR)/ba_data/textures/buttonSquareWide.ktx \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1.ktx \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2.ktx \
   $(BUILD_DIR)/ba_data/textures/chTitleChar3.ktx \
   $(BUILD_DIR)/ba_data/textures/chTitleChar4.ktx \
   $(BUILD_DIR)/ba_data/textures/chTitleChar5.ktx \
-  $(BUILD_DIR)/ba_data/textures/characterIconMask.ktx \
   $(BUILD_DIR)/ba_data/textures/chestIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/chestIconEmpty.ktx \
   $(BUILD_DIR)/ba_data/textures/chestIconMulti.ktx \
   $(BUILD_DIR)/ba_data/textures/chestIconTint.ktx \
   $(BUILD_DIR)/ba_data/textures/chestOpenIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/chestOpenIconTint.ktx \
-  $(BUILD_DIR)/ba_data/textures/circle.ktx \
-  $(BUILD_DIR)/ba_data/textures/circleNoAlpha.ktx \
-  $(BUILD_DIR)/ba_data/textures/circleOutline.ktx \
-  $(BUILD_DIR)/ba_data/textures/circleOutlineNoAlpha.ktx \
-  $(BUILD_DIR)/ba_data/textures/circleShadow.ktx \
-  $(BUILD_DIR)/ba_data/textures/circleSoft.ktx \
   $(BUILD_DIR)/ba_data/textures/circleZigZag.ktx \
   $(BUILD_DIR)/ba_data/textures/clayStroke.ktx \
   $(BUILD_DIR)/ba_data/textures/coin.ktx \
@@ -4618,7 +4439,6 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cragCastlePreview.ktx \
   $(BUILD_DIR)/ba_data/textures/crossOut.ktx \
   $(BUILD_DIR)/ba_data/textures/crossOutMask.ktx \
-  $(BUILD_DIR)/ba_data/textures/cursor.ktx \
   $(BUILD_DIR)/ba_data/textures/cuteSpaz.ktx \
   $(BUILD_DIR)/ba_data/textures/cyborgColor.ktx \
   $(BUILD_DIR)/ba_data/textures/cyborgColorMask.ktx \
@@ -4639,27 +4459,9 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/eggTex2.ktx \
   $(BUILD_DIR)/ba_data/textures/eggTex3.ktx \
   $(BUILD_DIR)/ba_data/textures/empty.ktx \
-  $(BUILD_DIR)/ba_data/textures/explosion.ktx \
-  $(BUILD_DIR)/ba_data/textures/eyeColor.ktx \
-  $(BUILD_DIR)/ba_data/textures/eyeColorTintMask.ktx \
   $(BUILD_DIR)/ba_data/textures/file.ktx \
   $(BUILD_DIR)/ba_data/textures/flagColor.ktx \
-  $(BUILD_DIR)/ba_data/textures/flagPoleColor.ktx \
   $(BUILD_DIR)/ba_data/textures/folder.ktx \
-  $(BUILD_DIR)/ba_data/textures/fontBig.ktx \
-  $(BUILD_DIR)/ba_data/textures/fontExtras.ktx \
-  $(BUILD_DIR)/ba_data/textures/fontExtras2.ktx \
-  $(BUILD_DIR)/ba_data/textures/fontExtras3.ktx \
-  $(BUILD_DIR)/ba_data/textures/fontExtras4.ktx \
-  $(BUILD_DIR)/ba_data/textures/fontExtras5.ktx \
-  $(BUILD_DIR)/ba_data/textures/fontSmall0.ktx \
-  $(BUILD_DIR)/ba_data/textures/fontSmall1.ktx \
-  $(BUILD_DIR)/ba_data/textures/fontSmall2.ktx \
-  $(BUILD_DIR)/ba_data/textures/fontSmall3.ktx \
-  $(BUILD_DIR)/ba_data/textures/fontSmall4.ktx \
-  $(BUILD_DIR)/ba_data/textures/fontSmall5.ktx \
-  $(BUILD_DIR)/ba_data/textures/fontSmall6.ktx \
-  $(BUILD_DIR)/ba_data/textures/fontSmall7.ktx \
   $(BUILD_DIR)/ba_data/textures/footballStadium.ktx \
   $(BUILD_DIR)/ba_data/textures/footballStadiumPreview.ktx \
   $(BUILD_DIR)/ba_data/textures/frameInset.ktx \
@@ -4667,14 +4469,12 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/frostyColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/frostyIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/frostyIconColorMask.ktx \
-  $(BUILD_DIR)/ba_data/textures/fuse.ktx \
   $(BUILD_DIR)/ba_data/textures/gameCenterIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/githubLogo.ktx \
   $(BUILD_DIR)/ba_data/textures/gladiatorColor.ktx \
   $(BUILD_DIR)/ba_data/textures/gladiatorColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask.ktx \
-  $(BUILD_DIR)/ba_data/textures/glow.ktx \
   $(BUILD_DIR)/ba_data/textures/goldPass.ktx \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon.ktx \
@@ -4710,9 +4510,6 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/leaderboardsIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/leftButton.ktx \
   $(BUILD_DIR)/ba_data/textures/levelIcon.ktx \
-  $(BUILD_DIR)/ba_data/textures/light.ktx \
-  $(BUILD_DIR)/ba_data/textures/lightSharp.ktx \
-  $(BUILD_DIR)/ba_data/textures/lightSoft.ktx \
   $(BUILD_DIR)/ba_data/textures/lock.ktx \
   $(BUILD_DIR)/ba_data/textures/logIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/logo.ktx \
@@ -4727,7 +4524,6 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/melIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/melIconColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/menuBG.ktx \
-  $(BUILD_DIR)/ba_data/textures/menuButton.ktx \
   $(BUILD_DIR)/ba_data/textures/menuIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/merch.ktx \
   $(BUILD_DIR)/ba_data/textures/meter.ktx \
@@ -4744,7 +4540,6 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/ninjaColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/ninjaIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/ninjaIconColorMask.ktx \
-  $(BUILD_DIR)/ba_data/textures/nub.ktx \
   $(BUILD_DIR)/ba_data/textures/null.ktx \
   $(BUILD_DIR)/ba_data/textures/oldLadyColor.ktx \
   $(BUILD_DIR)/ba_data/textures/oldLadyColorMask.ktx \
@@ -4754,12 +4549,10 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/operaSingerColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/operaSingerIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/operaSingerIconColorMask.ktx \
-  $(BUILD_DIR)/ba_data/textures/ouyaAButton.ktx \
   $(BUILD_DIR)/ba_data/textures/ouyaIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/ouyaOButton.ktx \
   $(BUILD_DIR)/ba_data/textures/ouyaUButton.ktx \
   $(BUILD_DIR)/ba_data/textures/ouyaYButton.ktx \
-  $(BUILD_DIR)/ba_data/textures/pageLeftRight.ktx \
   $(BUILD_DIR)/ba_data/textures/penguinColor.ktx \
   $(BUILD_DIR)/ba_data/textures/penguinColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/penguinIcon.ktx \
@@ -4823,7 +4616,6 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/reflectionSoft_-y.ktx \
   $(BUILD_DIR)/ba_data/textures/reflectionSoft_-z.ktx \
   $(BUILD_DIR)/ba_data/textures/replayIcon.ktx \
-  $(BUILD_DIR)/ba_data/textures/rgbStripes.ktx \
   $(BUILD_DIR)/ba_data/textures/rightButton.ktx \
   $(BUILD_DIR)/ba_data/textures/robotColor.ktx \
   $(BUILD_DIR)/ba_data/textures/robotColorMask.ktx \
@@ -4835,37 +4627,9 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/santaColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/santaIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/santaIconColorMask.ktx \
-  $(BUILD_DIR)/ba_data/textures/scorch.ktx \
-  $(BUILD_DIR)/ba_data/textures/scorchBig.ktx \
-  $(BUILD_DIR)/ba_data/textures/scrollWidget.ktx \
-  $(BUILD_DIR)/ba_data/textures/scrollWidgetGlow.ktx \
   $(BUILD_DIR)/ba_data/textures/settingsIcon.ktx \
-  $(BUILD_DIR)/ba_data/textures/shadow.ktx \
-  $(BUILD_DIR)/ba_data/textures/shadowSharp.ktx \
-  $(BUILD_DIR)/ba_data/textures/shadowSoft.ktx \
-  $(BUILD_DIR)/ba_data/textures/shield.ktx \
-  $(BUILD_DIR)/ba_data/textures/shrapnel1Color.ktx \
   $(BUILD_DIR)/ba_data/textures/slash.ktx \
-  $(BUILD_DIR)/ba_data/textures/smoke.ktx \
-  $(BUILD_DIR)/ba_data/textures/softRect.ktx \
-  $(BUILD_DIR)/ba_data/textures/softRect2.ktx \
-  $(BUILD_DIR)/ba_data/textures/softRectVertical.ktx \
-  $(BUILD_DIR)/ba_data/textures/sparks.ktx \
-  $(BUILD_DIR)/ba_data/textures/spinner.ktx \
-  $(BUILD_DIR)/ba_data/textures/spinner0.ktx \
-  $(BUILD_DIR)/ba_data/textures/spinner1.ktx \
-  $(BUILD_DIR)/ba_data/textures/spinner10.ktx \
-  $(BUILD_DIR)/ba_data/textures/spinner11.ktx \
-  $(BUILD_DIR)/ba_data/textures/spinner2.ktx \
-  $(BUILD_DIR)/ba_data/textures/spinner3.ktx \
-  $(BUILD_DIR)/ba_data/textures/spinner4.ktx \
-  $(BUILD_DIR)/ba_data/textures/spinner5.ktx \
-  $(BUILD_DIR)/ba_data/textures/spinner6.ktx \
-  $(BUILD_DIR)/ba_data/textures/spinner7.ktx \
-  $(BUILD_DIR)/ba_data/textures/spinner8.ktx \
-  $(BUILD_DIR)/ba_data/textures/spinner9.ktx \
   $(BUILD_DIR)/ba_data/textures/star.ktx \
-  $(BUILD_DIR)/ba_data/textures/startButton.ktx \
   $(BUILD_DIR)/ba_data/textures/stepRightUpLevelColor.ktx \
   $(BUILD_DIR)/ba_data/textures/stepRightUpPreview.ktx \
   $(BUILD_DIR)/ba_data/textures/storeCharacter.ktx \
@@ -4876,7 +4640,6 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/superheroColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/superheroIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/superheroIconColorMask.ktx \
-  $(BUILD_DIR)/ba_data/textures/textClearButton.ktx \
   $(BUILD_DIR)/ba_data/textures/thePadLevelColor.ktx \
   $(BUILD_DIR)/ba_data/textures/thePadPreview.ktx \
   $(BUILD_DIR)/ba_data/textures/ticketRoll.ktx \
@@ -4893,27 +4656,18 @@ TEX2D_KTX_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tokens2.ktx \
   $(BUILD_DIR)/ba_data/textures/tokens3.ktx \
   $(BUILD_DIR)/ba_data/textures/tokens4.ktx \
-  $(BUILD_DIR)/ba_data/textures/touchArrows.ktx \
-  $(BUILD_DIR)/ba_data/textures/touchArrowsActions.ktx \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor.ktx \
   $(BUILD_DIR)/ba_data/textures/towerDPreview.ktx \
   $(BUILD_DIR)/ba_data/textures/treesColor.ktx \
   $(BUILD_DIR)/ba_data/textures/trophy.ktx \
   $(BUILD_DIR)/ba_data/textures/tv.ktx \
-  $(BUILD_DIR)/ba_data/textures/uiAtlas.ktx \
-  $(BUILD_DIR)/ba_data/textures/uiAtlas2.ktx \
   $(BUILD_DIR)/ba_data/textures/upButton.ktx \
-  $(BUILD_DIR)/ba_data/textures/usersButton.ktx \
   $(BUILD_DIR)/ba_data/textures/vrFillMound.ktx \
   $(BUILD_DIR)/ba_data/textures/warriorColor.ktx \
   $(BUILD_DIR)/ba_data/textures/warriorColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/warriorIcon.ktx \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask.ktx \
-  $(BUILD_DIR)/ba_data/textures/white.ktx \
   $(BUILD_DIR)/ba_data/textures/windowBottomCap.ktx \
-  $(BUILD_DIR)/ba_data/textures/windowHSmallVMed.ktx \
-  $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall.ktx \
-  $(BUILD_DIR)/ba_data/textures/wings.ktx \
   $(BUILD_DIR)/ba_data/textures/witchColor.ktx \
   $(BUILD_DIR)/ba_data/textures/witchColorMask.ktx \
   $(BUILD_DIR)/ba_data/textures/witchIcon.ktx \
@@ -4959,7 +4713,6 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/achievementTeamPlayer_preview.png \
   $(BUILD_DIR)/ba_data/textures/achievementWall_preview.png \
   $(BUILD_DIR)/ba_data/textures/achievementsIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/actionButtons_preview.png \
   $(BUILD_DIR)/ba_data/textures/actionHeroColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/actionHeroColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/actionHeroIconColorMask_preview.png \
@@ -4982,13 +4735,11 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/alwaysLandLevelColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/alwaysLandPreview_preview.png \
   $(BUILD_DIR)/ba_data/textures/analogStick_preview.png \
-  $(BUILD_DIR)/ba_data/textures/arrow_preview.png \
   $(BUILD_DIR)/ba_data/textures/assassinColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/assassinColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/assassinIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/assassinIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/audioIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/backIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/bar_preview.png \
   $(BUILD_DIR)/ba_data/textures/bearColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/bearColor_preview.png \
@@ -4997,8 +4748,6 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/bg_preview.png \
   $(BUILD_DIR)/ba_data/textures/bigGPreview_preview.png \
   $(BUILD_DIR)/ba_data/textures/bigG_preview.png \
-  $(BUILD_DIR)/ba_data/textures/black_preview.png \
-  $(BUILD_DIR)/ba_data/textures/bombButton_preview.png \
   $(BUILD_DIR)/ba_data/textures/bombColorIce_preview.png \
   $(BUILD_DIR)/ba_data/textures/bombColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/bombStickyColor_preview.png \
@@ -5006,7 +4755,6 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/bonesColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/bonesIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/bonesIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/boxingGlovesColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/bridgitLevelColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/bridgitPreview_preview.png \
   $(BUILD_DIR)/ba_data/textures/bunnyColorMask_preview.png \
@@ -5017,27 +4765,18 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/buttonJump_preview.png \
   $(BUILD_DIR)/ba_data/textures/buttonPickUp_preview.png \
   $(BUILD_DIR)/ba_data/textures/buttonPunch_preview.png \
-  $(BUILD_DIR)/ba_data/textures/buttonSquareWide_preview.png \
-  $(BUILD_DIR)/ba_data/textures/buttonSquare_preview.png \
   $(BUILD_DIR)/ba_data/textures/chTitleChar1_preview.png \
   $(BUILD_DIR)/ba_data/textures/chTitleChar2_preview.png \
   $(BUILD_DIR)/ba_data/textures/chTitleChar3_preview.png \
   $(BUILD_DIR)/ba_data/textures/chTitleChar4_preview.png \
   $(BUILD_DIR)/ba_data/textures/chTitleChar5_preview.png \
-  $(BUILD_DIR)/ba_data/textures/characterIconMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/chestIconEmpty_preview.png \
   $(BUILD_DIR)/ba_data/textures/chestIconMulti_preview.png \
   $(BUILD_DIR)/ba_data/textures/chestIconTint_preview.png \
   $(BUILD_DIR)/ba_data/textures/chestIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/chestOpenIconTint_preview.png \
   $(BUILD_DIR)/ba_data/textures/chestOpenIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/circleNoAlpha_preview.png \
-  $(BUILD_DIR)/ba_data/textures/circleOutlineNoAlpha_preview.png \
-  $(BUILD_DIR)/ba_data/textures/circleOutline_preview.png \
-  $(BUILD_DIR)/ba_data/textures/circleShadow_preview.png \
-  $(BUILD_DIR)/ba_data/textures/circleSoft_preview.png \
   $(BUILD_DIR)/ba_data/textures/circleZigZag_preview.png \
-  $(BUILD_DIR)/ba_data/textures/circle_preview.png \
   $(BUILD_DIR)/ba_data/textures/clayStroke_preview.png \
   $(BUILD_DIR)/ba_data/textures/coin_preview.png \
   $(BUILD_DIR)/ba_data/textures/controllerIcon_preview.png \
@@ -5051,7 +4790,6 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/cragCastlePreview_preview.png \
   $(BUILD_DIR)/ba_data/textures/crossOutMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/crossOut_preview.png \
-  $(BUILD_DIR)/ba_data/textures/cursor_preview.png \
   $(BUILD_DIR)/ba_data/textures/cuteSpaz_preview.png \
   $(BUILD_DIR)/ba_data/textures/cyborgColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/cyborgColor_preview.png \
@@ -5072,27 +4810,9 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/eggTex2_preview.png \
   $(BUILD_DIR)/ba_data/textures/eggTex3_preview.png \
   $(BUILD_DIR)/ba_data/textures/empty_preview.png \
-  $(BUILD_DIR)/ba_data/textures/explosion_preview.png \
-  $(BUILD_DIR)/ba_data/textures/eyeColorTintMask_preview.png \
-  $(BUILD_DIR)/ba_data/textures/eyeColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/file_preview.png \
   $(BUILD_DIR)/ba_data/textures/flagColor_preview.png \
-  $(BUILD_DIR)/ba_data/textures/flagPoleColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/folder_preview.png \
-  $(BUILD_DIR)/ba_data/textures/fontBig_preview.png \
-  $(BUILD_DIR)/ba_data/textures/fontExtras2_preview.png \
-  $(BUILD_DIR)/ba_data/textures/fontExtras3_preview.png \
-  $(BUILD_DIR)/ba_data/textures/fontExtras4_preview.png \
-  $(BUILD_DIR)/ba_data/textures/fontExtras5_preview.png \
-  $(BUILD_DIR)/ba_data/textures/fontExtras_preview.png \
-  $(BUILD_DIR)/ba_data/textures/fontSmall0_preview.png \
-  $(BUILD_DIR)/ba_data/textures/fontSmall1_preview.png \
-  $(BUILD_DIR)/ba_data/textures/fontSmall2_preview.png \
-  $(BUILD_DIR)/ba_data/textures/fontSmall3_preview.png \
-  $(BUILD_DIR)/ba_data/textures/fontSmall4_preview.png \
-  $(BUILD_DIR)/ba_data/textures/fontSmall5_preview.png \
-  $(BUILD_DIR)/ba_data/textures/fontSmall6_preview.png \
-  $(BUILD_DIR)/ba_data/textures/fontSmall7_preview.png \
   $(BUILD_DIR)/ba_data/textures/footballStadiumPreview_preview.png \
   $(BUILD_DIR)/ba_data/textures/footballStadium_preview.png \
   $(BUILD_DIR)/ba_data/textures/frameInset_preview.png \
@@ -5100,14 +4820,12 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/frostyColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/frostyIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/frostyIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/fuse_preview.png \
   $(BUILD_DIR)/ba_data/textures/gameCenterIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/githubLogo_preview.png \
   $(BUILD_DIR)/ba_data/textures/gladiatorColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/gladiatorColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/gladiatorIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/gladiatorIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/glow_preview.png \
   $(BUILD_DIR)/ba_data/textures/goldPass_preview.png \
   $(BUILD_DIR)/ba_data/textures/googlePlayAchievementsIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/googlePlayGamesIcon_preview.png \
@@ -5143,9 +4861,6 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/leaderboardsIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/leftButton_preview.png \
   $(BUILD_DIR)/ba_data/textures/levelIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/lightSharp_preview.png \
-  $(BUILD_DIR)/ba_data/textures/lightSoft_preview.png \
-  $(BUILD_DIR)/ba_data/textures/light_preview.png \
   $(BUILD_DIR)/ba_data/textures/lock_preview.png \
   $(BUILD_DIR)/ba_data/textures/logIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/logoEaster_preview.png \
@@ -5160,7 +4875,6 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/melIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/melIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/menuBG_preview.png \
-  $(BUILD_DIR)/ba_data/textures/menuButton_preview.png \
   $(BUILD_DIR)/ba_data/textures/menuIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/merch_preview.png \
   $(BUILD_DIR)/ba_data/textures/meter_preview.png \
@@ -5177,7 +4891,6 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/ninjaColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/ninjaIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/ninjaIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/nub_preview.png \
   $(BUILD_DIR)/ba_data/textures/null_preview.png \
   $(BUILD_DIR)/ba_data/textures/oldLadyColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/oldLadyColor_preview.png \
@@ -5187,12 +4900,10 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/operaSingerColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/operaSingerIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/operaSingerIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/ouyaAButton_preview.png \
   $(BUILD_DIR)/ba_data/textures/ouyaIcon_preview.png \
   $(BUILD_DIR)/ba_data/textures/ouyaOButton_preview.png \
   $(BUILD_DIR)/ba_data/textures/ouyaUButton_preview.png \
   $(BUILD_DIR)/ba_data/textures/ouyaYButton_preview.png \
-  $(BUILD_DIR)/ba_data/textures/pageLeftRight_preview.png \
   $(BUILD_DIR)/ba_data/textures/penguinColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/penguinColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/penguinIconColorMask_preview.png \
@@ -5256,7 +4967,6 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/reflectionSoft_-y_preview.png \
   $(BUILD_DIR)/ba_data/textures/reflectionSoft_-z_preview.png \
   $(BUILD_DIR)/ba_data/textures/replayIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/rgbStripes_preview.png \
   $(BUILD_DIR)/ba_data/textures/rightButton_preview.png \
   $(BUILD_DIR)/ba_data/textures/robotColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/robotColor_preview.png \
@@ -5268,37 +4978,9 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/santaColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/santaIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/santaIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/scorchBig_preview.png \
-  $(BUILD_DIR)/ba_data/textures/scorch_preview.png \
-  $(BUILD_DIR)/ba_data/textures/scrollWidgetGlow_preview.png \
-  $(BUILD_DIR)/ba_data/textures/scrollWidget_preview.png \
   $(BUILD_DIR)/ba_data/textures/settingsIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/shadowSharp_preview.png \
-  $(BUILD_DIR)/ba_data/textures/shadowSoft_preview.png \
-  $(BUILD_DIR)/ba_data/textures/shadow_preview.png \
-  $(BUILD_DIR)/ba_data/textures/shield_preview.png \
-  $(BUILD_DIR)/ba_data/textures/shrapnel1Color_preview.png \
   $(BUILD_DIR)/ba_data/textures/slash_preview.png \
-  $(BUILD_DIR)/ba_data/textures/smoke_preview.png \
-  $(BUILD_DIR)/ba_data/textures/softRect2_preview.png \
-  $(BUILD_DIR)/ba_data/textures/softRectVertical_preview.png \
-  $(BUILD_DIR)/ba_data/textures/softRect_preview.png \
-  $(BUILD_DIR)/ba_data/textures/sparks_preview.png \
-  $(BUILD_DIR)/ba_data/textures/spinner0_preview.png \
-  $(BUILD_DIR)/ba_data/textures/spinner10_preview.png \
-  $(BUILD_DIR)/ba_data/textures/spinner11_preview.png \
-  $(BUILD_DIR)/ba_data/textures/spinner1_preview.png \
-  $(BUILD_DIR)/ba_data/textures/spinner2_preview.png \
-  $(BUILD_DIR)/ba_data/textures/spinner3_preview.png \
-  $(BUILD_DIR)/ba_data/textures/spinner4_preview.png \
-  $(BUILD_DIR)/ba_data/textures/spinner5_preview.png \
-  $(BUILD_DIR)/ba_data/textures/spinner6_preview.png \
-  $(BUILD_DIR)/ba_data/textures/spinner7_preview.png \
-  $(BUILD_DIR)/ba_data/textures/spinner8_preview.png \
-  $(BUILD_DIR)/ba_data/textures/spinner9_preview.png \
-  $(BUILD_DIR)/ba_data/textures/spinner_preview.png \
   $(BUILD_DIR)/ba_data/textures/star_preview.png \
-  $(BUILD_DIR)/ba_data/textures/startButton_preview.png \
   $(BUILD_DIR)/ba_data/textures/stepRightUpLevelColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/stepRightUpPreview_preview.png \
   $(BUILD_DIR)/ba_data/textures/storeCharacterEaster_preview.png \
@@ -5309,7 +4991,6 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/superheroColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/superheroIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/superheroIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/textClearButton_preview.png \
   $(BUILD_DIR)/ba_data/textures/thePadLevelColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/thePadPreview_preview.png \
   $(BUILD_DIR)/ba_data/textures/ticketRollBig_preview.png \
@@ -5326,27 +5007,18 @@ TEX2D_PREVIEW_PNG_TARGETS = \
   $(BUILD_DIR)/ba_data/textures/tokens2_preview.png \
   $(BUILD_DIR)/ba_data/textures/tokens3_preview.png \
   $(BUILD_DIR)/ba_data/textures/tokens4_preview.png \
-  $(BUILD_DIR)/ba_data/textures/touchArrowsActions_preview.png \
-  $(BUILD_DIR)/ba_data/textures/touchArrows_preview.png \
   $(BUILD_DIR)/ba_data/textures/towerDLevelColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/towerDPreview_preview.png \
   $(BUILD_DIR)/ba_data/textures/treesColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/trophy_preview.png \
   $(BUILD_DIR)/ba_data/textures/tv_preview.png \
-  $(BUILD_DIR)/ba_data/textures/uiAtlas2_preview.png \
-  $(BUILD_DIR)/ba_data/textures/uiAtlas_preview.png \
   $(BUILD_DIR)/ba_data/textures/upButton_preview.png \
-  $(BUILD_DIR)/ba_data/textures/usersButton_preview.png \
   $(BUILD_DIR)/ba_data/textures/vrFillMound_preview.png \
   $(BUILD_DIR)/ba_data/textures/warriorColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/warriorColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/warriorIconColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/warriorIcon_preview.png \
-  $(BUILD_DIR)/ba_data/textures/white_preview.png \
   $(BUILD_DIR)/ba_data/textures/windowBottomCap_preview.png \
-  $(BUILD_DIR)/ba_data/textures/windowHSmallVMed_preview.png \
-  $(BUILD_DIR)/ba_data/textures/windowHSmallVSmall_preview.png \
-  $(BUILD_DIR)/ba_data/textures/wings_preview.png \
   $(BUILD_DIR)/ba_data/textures/witchColorMask_preview.png \
   $(BUILD_DIR)/ba_data/textures/witchColor_preview.png \
   $(BUILD_DIR)/ba_data/textures/witchIconColorMask_preview.png \

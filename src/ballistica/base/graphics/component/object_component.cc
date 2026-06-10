@@ -11,7 +11,7 @@ void ObjectComponent::WriteConfig() {
   // This is not a common case and easier than forking all our shaders to
   // create non-textured versions.
   if (!texture_.exists()) {
-    texture_ = g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kWhite);
+    texture_ = g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesWhite);
   }
   // A premultiplied-alpha texture (KTX2 DFD flag; decision #23) forces
   // premult-blend, OR'd with the caller's manual flag (which still

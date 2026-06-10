@@ -93,7 +93,7 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.SetPremultiplied(true);
     c.SetColor(0.25f * m, 0.3f * m, 0, 0.3f * m);
     c.SetTexture(
-        g_base->assets->BuiltinTextureOld(base::BuiltinTextureOldID::kGlow));
+        g_base->assets->BuiltinTexture(base::BuiltinTextureID::kTexturesGlow));
     {
       auto xf = c.ScopedTransform();
       c.Translate(highlight_center_x_, highlight_center_y_);
@@ -139,8 +139,8 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.SetTransparent(draw_transparent);
       c.SetColor(glow_amt * color_r_, glow_amt * color_g_, glow_amt * color_b_,
                  1);
-      c.SetTexture(g_base->assets->BuiltinTextureOld(
-          base::BuiltinTextureOldID::kUIAtlas));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesUiAtlas));
       {
         auto xf = c.ScopedTransform();
         c.Translate(box_center_x_ + extra_offs_x, box_center_y_ + extra_offs_y,
@@ -180,11 +180,11 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       base::SimpleComponent c(pass);
       c.SetTransparent(draw_transparent);
       if (is_radio_button_) {
-        c.SetTexture(
-            g_base->assets->BuiltinTextureOld(base::BuiltinTextureOldID::kNub));
+        c.SetTexture(g_base->assets->BuiltinTexture(
+            base::BuiltinTextureID::kTexturesNub));
       } else {
-        c.SetTexture(g_base->assets->BuiltinTextureOld(
-            base::BuiltinTextureOldID::kUIAtlas));
+        c.SetTexture(g_base->assets->BuiltinTexture(
+            base::BuiltinTextureID::kTexturesUiAtlas));
       }
 
       if (mouse_over_ && g_core->platform->IsRunningOnDesktop()) {

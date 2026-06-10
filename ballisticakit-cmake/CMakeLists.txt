@@ -298,6 +298,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/app_platform/windows/app_platform_windows.h
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.h
+  ${BA_SRC_ROOT}/ballistica/base/assets/asset_name_compat.cc
+  ${BA_SRC_ROOT}/ballistica/base/assets/asset_name_compat.h
   ${BA_SRC_ROOT}/ballistica/base/assets/asset_package_registry.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/asset_package_registry.h
   ${BA_SRC_ROOT}/ballistica/base/assets/assets.cc

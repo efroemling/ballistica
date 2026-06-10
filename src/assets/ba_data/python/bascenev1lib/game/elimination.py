@@ -12,6 +12,7 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import builtinassets
 
 from bascenev1lib.actor.spazfactory import SpazFactory
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -42,7 +43,7 @@ class Icon(bs.Actor):
         self._show_lives = show_lives
         self._show_death = show_death
         self._name_scale = name_scale
-        self._outline_tex = bs.gettexture('characterIconMask')
+        self._outline_tex = builtinassets.textures.character_icon_mask
 
         icon = player.get_icon()
         self.node = bs.newnode(

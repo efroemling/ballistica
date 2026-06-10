@@ -9,6 +9,7 @@ from typing import override
 import random
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 
 class HelpWindow(bui.MainWindow):
@@ -636,7 +637,7 @@ class HelpWindow(bui.MainWindow):
         t_big = 1.1
         t_small = 0.65
 
-        shadow_tex = bui.gettexture('shadowSharp')
+        shadow_tex = builtinassets.textures.shadow_sharp
 
         for tex in [
             'powerupPunch',

@@ -14,6 +14,7 @@ from baclassic._chest import (
 )
 import babase
 import bascenev1
+from bascenev1 import builtinassets
 import bauiv1
 
 if TYPE_CHECKING:
@@ -1252,7 +1253,7 @@ class Achievement:
         y_offs = 110 * self._completion_banner_slot
         objs: list[bascenev1.Actor] = []
         obj = Image(
-            bascenev1.gettexture('shadow'),
+            builtinassets.textures.shadow,
             position=(-30, 30 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,
@@ -1267,7 +1268,7 @@ class Achievement:
         assert obj.node
         obj.node.host_only = True
         obj = Image(
-            bascenev1.gettexture('light'),
+            builtinassets.textures.light,
             position=(-180, 60 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,

@@ -140,8 +140,8 @@ void SimpleComponent::WriteConfig() {
                       colorize_color_g_, colorize_color_b_, colorize_color2_r_,
                       colorize_color2_g_, colorize_color2_b_);
                   cmd_buffer_->PutTexture(texture_);
-                  cmd_buffer_->PutTexture(g_base->assets->BuiltinTextureOld(
-                      BuiltinTextureOldID::kBlack));
+                  cmd_buffer_->PutTexture(g_base->assets->BuiltinTexture(
+                      BuiltinTextureID::kTexturesBlack));
                   cmd_buffer_->PutTexture(mask_texture_);
                 } else {
                   ConfigForShading(
@@ -213,7 +213,7 @@ void SimpleComponent::WriteConfig() {
                                  colorize_color2_g_, colorize_color2_b_);
           cmd_buffer_->PutTexture(texture_);
           cmd_buffer_->PutTexture(
-              g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kBlack));
+              g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesBlack));
           cmd_buffer_->PutTexture(mask_texture_);
         } else {
           // If no color was provided, we can do a super-cheap version.

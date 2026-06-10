@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, override
 import logging
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -340,7 +341,7 @@ class MainMenuWindow(bui.MainWindow):
                 + 0.65 * side_button_height * side_button_scale
                 - 0.5 * icon_size,
             ),
-            texture=bui.gettexture('usersButton'),
+            texture=builtinassets.textures.users_button,
         )
         thistdelay = self._tdelay + td1 * self._t_delay_inc
 

@@ -205,8 +205,8 @@ void ExplosionNode::Draw(base::FrameDef* frame_def) {
     c.SetTransparent(true);
     c.SetLightShadow(base::LightShadowType::kNone);
     c.SetPremultiplied(true);
-    c.SetTexture(g_base->assets->BuiltinTextureOld(
-        base::BuiltinTextureOldID::kExplosion));
+    c.SetTexture(g_base->assets->BuiltinTexture(
+        base::BuiltinTextureID::kTexturesExplosion));
     c.SetColor(1.3f * o * color_[0] * b, o * color_[1] * b, o * color_[2] * b,
                0.0f);
     {

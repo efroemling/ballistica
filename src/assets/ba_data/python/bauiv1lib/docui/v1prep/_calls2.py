@@ -15,6 +15,7 @@ from efro.util import pairs_from_flat
 import bacommon.displayitem as ditm
 import bacommon.docui.v1 as dui1
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 from bauiv1lib.docui.v1prep._types import DecorationPrep
 
@@ -22,6 +23,11 @@ if TYPE_CHECKING:
     from typing import Callable
 
     from bauiv1lib.docui import DocUIWindow
+
+
+def _btex(name: str) -> str:
+    """Qualified ref for a texture in the builtin asset-package."""
+    return f'{builtinassets.__asset_package__}:textures/{name}'
 
 
 def prep_decorations(
@@ -169,7 +175,7 @@ def prep_text(
                     transition_delay=tdelay,
                     transition_type='scale',
                 ),
-                textures={'texture': 'white'},
+                textures={'texture': _btex('white')},
                 meshes={},
                 highlight=True,
             )
@@ -251,7 +257,7 @@ def prep_row_debug(
 ) -> None:
     """Prep debug decorations for a row."""
 
-    textures: dict[str, str] = {'texture': 'white'}
+    textures: dict[str, str] = {'texture': _btex('white')}
 
     # Shrink the square we draw a tiny bit so rows butted up to
     # eachother can be seen.
@@ -285,7 +291,7 @@ def prep_row_debug_button(
     xoffs = bcorner[0]
     yoffs = bcorner[1]
 
-    textures: dict[str, str] = {'texture': 'white'}
+    textures: dict[str, str] = {'texture': _btex('white')}
 
     out_decoration_preps.append(
         DecorationPrep(
@@ -312,7 +318,7 @@ def prep_button_debug(
     out_decoration_preps: list[DecorationPrep],
 ) -> None:
     """Prep debug decorations for a button."""
-    textures: dict[str, str] = {'texture': 'white'}
+    textures: dict[str, str] = {'texture': _btex('white')}
 
     out_decoration_preps.append(
         DecorationPrep(
@@ -379,7 +385,7 @@ def prep_display_item(
                     transition_delay=tdelay,
                     transition_type='scale',
                 ),
-                textures={'texture': 'white'},
+                textures={'texture': _btex('white')},
                 meshes={},
                 highlight=highlight and display_item.highlight,
             )
@@ -426,7 +432,7 @@ def prep_display_item(
                     transition_delay=tdelay,
                     transition_type='scale',
                 ),
-                textures={'texture': 'white'},
+                textures={'texture': _btex('white')},
                 meshes={},
                 highlight=highlight and display_item.highlight,
             )

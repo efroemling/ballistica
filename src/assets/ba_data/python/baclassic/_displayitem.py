@@ -10,6 +10,7 @@ from efro.util import pairs_from_flat
 import bacommon.displayitem as ditm
 import bacommon.classic
 import bauiv1
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     pass
@@ -91,7 +92,7 @@ def show_display_item(
                 pos[1] - height * 0.5,
             ),
             size=(width, height),
-            texture=bauiv1.gettexture('white'),
+            texture=builtinassets.textures.white,
             color=(0, 1, 0),
             opacity=0.1,
         )

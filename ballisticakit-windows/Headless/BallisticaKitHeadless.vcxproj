@@ -209,6 +209,8 @@
     <ClInclude Include="..\..\src\ballistica\base\app_platform\windows\app_platform_windows.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\asset.cc" />
     <ClInclude Include="..\..\src\ballistica\base\assets\asset.h" />
+    <ClCompile Include="..\..\src\ballistica\base\assets\asset_name_compat.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\assets\asset_name_compat.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\asset_package_registry.cc" />
     <ClInclude Include="..\..\src\ballistica\base\assets\asset_package_registry.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\assets.cc" />

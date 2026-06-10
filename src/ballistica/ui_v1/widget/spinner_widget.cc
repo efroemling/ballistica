@@ -51,53 +51,53 @@ void SpinnerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   c.SetColor(1.0f, 1.0f, 1.0f, alpha);
 
   if (style_ == Style::kSimple) {
-    c.SetTexture(
-        g_base->assets->BuiltinTextureOld(base::BuiltinTextureOldID::kSpinner));
+    c.SetTexture(g_base->assets->BuiltinTexture(
+        base::BuiltinTextureID::kTexturesSpinner));
   } else {
     assert(style_ == Style::kBomb);
     // Advance through our 12 frames at 24fps.
     auto frame{
         static_cast<int>(std::floor(std::fmod(current_time * 24.0, 12.0)))};
-    base::BuiltinTextureOldID tex;
+    base::BuiltinTextureID tex;
     switch (frame) {
       case 0:
-        tex = base::BuiltinTextureOldID::kSpinner0;
+        tex = base::BuiltinTextureID::kTexturesSpinner0;
         break;
       case 1:
-        tex = base::BuiltinTextureOldID::kSpinner1;
+        tex = base::BuiltinTextureID::kTexturesSpinner1;
         break;
       case 2:
-        tex = base::BuiltinTextureOldID::kSpinner2;
+        tex = base::BuiltinTextureID::kTexturesSpinner2;
         break;
       case 3:
-        tex = base::BuiltinTextureOldID::kSpinner3;
+        tex = base::BuiltinTextureID::kTexturesSpinner3;
         break;
       case 4:
-        tex = base::BuiltinTextureOldID::kSpinner4;
+        tex = base::BuiltinTextureID::kTexturesSpinner4;
         break;
       case 5:
-        tex = base::BuiltinTextureOldID::kSpinner5;
+        tex = base::BuiltinTextureID::kTexturesSpinner5;
         break;
       case 6:
-        tex = base::BuiltinTextureOldID::kSpinner6;
+        tex = base::BuiltinTextureID::kTexturesSpinner6;
         break;
       case 7:
-        tex = base::BuiltinTextureOldID::kSpinner7;
+        tex = base::BuiltinTextureID::kTexturesSpinner7;
         break;
       case 8:
-        tex = base::BuiltinTextureOldID::kSpinner8;
+        tex = base::BuiltinTextureID::kTexturesSpinner8;
         break;
       case 9:
-        tex = base::BuiltinTextureOldID::kSpinner9;
+        tex = base::BuiltinTextureID::kTexturesSpinner9;
         break;
       case 10:
-        tex = base::BuiltinTextureOldID::kSpinner10;
+        tex = base::BuiltinTextureID::kTexturesSpinner10;
         break;
       default:
-        tex = base::BuiltinTextureOldID::kSpinner11;
+        tex = base::BuiltinTextureID::kTexturesSpinner11;
         break;
     }
-    c.SetTexture(g_base->assets->BuiltinTextureOld(tex));
+    c.SetTexture(g_base->assets->BuiltinTexture(tex));
   }
 
   {

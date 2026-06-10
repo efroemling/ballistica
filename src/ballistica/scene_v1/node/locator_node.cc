@@ -121,15 +121,15 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
     mesh = base::BuiltinMeshOldID::kLocator;
   }
 
-  base::BuiltinTextureOldID texture;
+  base::BuiltinTextureID texture;
   if (shape_ == Shape::kCircle) {
-    texture = additive_ ? base::BuiltinTextureOldID::kCircleNoAlpha
-                        : base::BuiltinTextureOldID::kCircle;
+    texture = additive_ ? base::BuiltinTextureID::kTexturesCircleNoAlpha
+                        : base::BuiltinTextureID::kTexturesCircle;
   } else if (shape_ == Shape::kCircleOutline) {
-    texture = additive_ ? base::BuiltinTextureOldID::kCircleOutlineNoAlpha
-                        : base::BuiltinTextureOldID::kCircleOutline;
+    texture = additive_ ? base::BuiltinTextureID::kTexturesCircleOutlineNoAlpha
+                        : base::BuiltinTextureID::kTexturesCircleOutline;
   } else {
-    texture = base::BuiltinTextureOldID::kRGBStripes;
+    texture = base::BuiltinTextureID::kTexturesRgbStripes;
   }
 
   bool transparent = false;
@@ -144,7 +144,7 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
       c.SetTransparent(true);
     }
     c.SetColor(color_[0], color_[1], color_[2], opacity_);
-    c.SetTexture(g_base->assets->BuiltinTextureOld(texture));
+    c.SetTexture(g_base->assets->BuiltinTexture(texture));
     {
       auto xf = c.ScopedTransform();
       c.Translate(position_[0], position_[1], position_[2]);
@@ -169,7 +169,7 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
       } else {
         c.SetColor(color_[0], color_[1], color_[2], opacity_);
       }
-      c.SetTexture(g_base->assets->BuiltinTextureOld(texture));
+      c.SetTexture(g_base->assets->BuiltinTexture(texture));
       {
         auto xf = c.ScopedTransform();
         c.Translate(position_[0], position_[1], position_[2]);

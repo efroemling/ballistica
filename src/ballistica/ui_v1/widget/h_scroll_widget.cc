@@ -912,8 +912,8 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetColor(1, 1, 1, border_opacity_);
-      c.SetTexture(g_base->assets->BuiltinTextureOld(
-          base::BuiltinTextureOldID::kUIAtlas));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesUiAtlas));
       {
         auto xf = c.ScopedTransform();
         c.Translate(trough_center_x_, trough_center_y_, 0.7f);
@@ -947,8 +947,8 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
       c.SetColor(brightness, brightness, brightness,
                  page_left_button_presence_);
-      c.SetTexture(g_base->assets->BuiltinTextureOld(
-          base::BuiltinTextureOldID::kPageLeftRight));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesPageLeftRight));
 
       {
         auto xf = c.ScopedTransform();
@@ -982,8 +982,8 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
       c.SetColor(brightness, brightness, brightness,
                  page_right_button_presence_);
-      c.SetTexture(g_base->assets->BuiltinTextureOld(
-          base::BuiltinTextureOldID::kPageLeftRight));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesPageLeftRight));
       {
         auto xf = c.ScopedTransform();
         c.Translate(width() - kPageButtonInset - kPageButtonSize * 0.5f,
@@ -1108,8 +1108,8 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     base::SimpleComponent c(pass);
     c.SetTransparent(true);
     c.SetColor(1.0f, 1.0f, 1.0f, border_opacity_);
-    c.SetTexture(g_base->assets->BuiltinTextureOld(
-        base::BuiltinTextureOldID::kScrollWidget));
+    c.SetTexture(g_base->assets->BuiltinTexture(
+        base::BuiltinTextureID::kTexturesScrollWidget));
     {
       auto xf = c.ScopedTransform();
       c.Translate(outline_center_x_, outline_center_y_, 0.9f);
@@ -1150,8 +1150,8 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.SetTransparent(true);
     c.SetPremultiplied(true);
     c.SetColor(0.4f * m, 0.5f * m, 0.05f * m, 0.0f);
-    c.SetTexture(g_base->assets->BuiltinTextureOld(
-        base::BuiltinTextureOldID::kScrollWidgetGlow));
+    c.SetTexture(g_base->assets->BuiltinTexture(
+        base::BuiltinTextureID::kTexturesScrollWidgetGlow));
     {
       auto xf = c.ScopedTransform();
       c.Translate(glow_center_x_, glow_center_y_, 0.9f);

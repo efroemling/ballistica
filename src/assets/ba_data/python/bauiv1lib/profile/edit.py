@@ -13,6 +13,7 @@ from bauiv1lib.characterpicker import CharacterPickerDelegate
 from bauiv1lib.iconpicker import IconPickerDelegate
 from bauiv1lib.connectivity import wait_for_connectivity
 import bauiv1 as bui
+from bauiv1 import builtinassets
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -448,7 +449,7 @@ class EditProfileWindow(
             size=(b_size_2, b_size_2),
             label='',
             color=(1, 1, 1),
-            mask_texture=bui.gettexture('characterIconMask'),
+            mask_texture=builtinassets.textures.character_icon_mask,
         )
         if not self._is_account_profile and not self._global:
             bui.containerwidget(

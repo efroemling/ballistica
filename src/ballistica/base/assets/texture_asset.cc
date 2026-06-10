@@ -33,30 +33,6 @@ namespace ballistica::base {
 // whether DXT compression is the source of visual artifacts on ANGLE/Windows.
 static constexpr bool kForceUncompressedDDS = false;
 
-static void Rgba8888UnpremultiplyInPlace_(uint8_t* src, size_t cb) {
-  // Compute the actual number of pixel elements in the buffer.
-  size_t cpel = cb / 4;
-  auto* psrc = src;
-  auto* pdst = src;
-  for (size_t i = 0; i < cpel; i++) {
-    int r = *psrc++;
-    int g = *psrc++;
-    int b = *psrc++;
-    int a = *psrc++;
-    if (a == 0) {
-      *pdst++ = 255;
-      *pdst++ = 255;
-      *pdst++ = 255;
-      *pdst++ = 0;
-    } else {
-      *pdst++ = static_cast_check_fit<uint8_t>(std::min(255, r * 255 / a));
-      *pdst++ = static_cast_check_fit<uint8_t>(std::min(255, g * 255 / a));
-      *pdst++ = static_cast_check_fit<uint8_t>(std::min(255, b * 255 / a));
-      *pdst++ = static_cast_check_fit<uint8_t>(a);
-    }
-  }
-}
-
 TextureAsset::TextureAsset() = default;
 
 TextureAsset::TextureAsset(const std::string& file_in, TextureType type_in,
@@ -201,8 +177,12 @@ void TextureAsset::DoPreload() {
     // For now just copy it over to our local 32 bit buffer.
     // As an optimization we could convert it to RGBA4444 on the fly or perhaps
     // even just alpha if there's no non-white colors present.
-    // NOTE: This data is also coming in premultiplied (on apple at least) so we
-    // need to take care of that.
+    // All platforms (Apple/Android/Windows) hand us premultiplied-alpha data,
+    // so we keep it premultiplied and flag the texture as such. This matches
+    // the migrated KTX2 builtin fonts, so OS-rendered glyphs (accents, CJK,
+    // emoji, the ellipsis, etc.) blend and fade uniformly with the rest of our
+    // text (decision #23). Premult also avoids color-fringing from transparent
+    // texels under bilinear filtering.
     preload_datas_.resize(1);
     assert(width >= 0 && height >= 0);
     size_t buffer_size =
@@ -210,7 +190,7 @@ void TextureAsset::DoPreload() {
     auto* buffer = static_cast<uint8_t*>(malloc(buffer_size));
     preload_datas_[0].buffers[0] = buffer;
     memcpy(buffer, pixels, buffer_size);
-    Rgba8888UnpremultiplyInPlace_(buffer, buffer_size);
+    preload_datas_[0].premultiplied = true;
     preload_datas_[0].widths[0] = width;
     preload_datas_[0].heights[0] = height;
     preload_datas_[0].formats[0] = TextureFormat::kRGBA_8888;

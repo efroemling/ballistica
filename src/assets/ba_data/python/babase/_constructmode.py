@@ -15,6 +15,7 @@ from babase._logging import assetmanagerlog as logger
 from babase._assetsubsystem import (
     AssetAuthRequiredError,
     AssetAccessDeniedError,
+    AssetResolveAbortedError,
     make_screenmessage_progress_reporter,
 )
 
@@ -42,6 +43,9 @@ class _ResolveOutcome(Enum):
     AUTH_REQUIRED = 'auth_required'
     #: Failed; a user-facing message was already shown.
     FAILED = 'failed'
+    #: Abandoned because the app is shutting down. Benign -- no message
+    #: shown, no failure exit-code set; the caller just stops quietly.
+    ABORTED = 'aborted'
 
 
 def _primary_signed_in() -> bool:
@@ -86,6 +90,11 @@ class ConstructAppMode(AppMode):
         # / an error); a clean no-download boot passes straight through
         # and lets the real app-mode drive the fade-in.
         self._faded_in = False
+
+        # Whether we showed the 'Updating assets…' message (a real
+        # download happened); if so we follow up with 'Assets updated.'
+        # on success. A clean no-download boot shows neither.
+        self._showed_updating_message = False
 
     @override
     @classmethod
@@ -186,6 +195,10 @@ class ConstructAppMode(AppMode):
             # real app-mode renders at the ideal flavor, behind a progress
             # bar. Cheap no-op when nothing changed (the warm path).
             _babase.reload_changed_media()
+            # Close the loop on 'Updating assets…' if we showed it (a
+            # clean no-download boot shows neither message).
+            if self._showed_updating_message:
+                self._screenmessage('Assets updated.')
             self._hand_off()
         # Else: _attempt already surfaced the failure message; stay put.
 
@@ -273,6 +286,16 @@ class ConstructAppMode(AppMode):
             )
             self._fail(f'{detail} Remove these mods/changes and try again.')
             return _ResolveOutcome.FAILED
+        except AssetResolveAbortedError:
+            # The app started shutting down mid-resolve (e.g. the user
+            # quit while a download/cloud-build was still in flight).
+            # That's not a real failure -- bow out quietly without a
+            # screenmessage or failure exit-code.
+            logger.debug(
+                'Construct-mode asset bring-up aborted; app is shutting'
+                ' down.'
+            )
+            return _ResolveOutcome.ABORTED
         except Exception:
             logger.exception(
                 'Construct-mode asset bring-up failed; staying put.'
@@ -321,6 +344,7 @@ class ConstructAppMode(AppMode):
         """
         self._begin_visible()
         self._screenmessage('Updating assets…')
+        self._showed_updating_message = True
 
     def _begin_visible(self) -> None:
         """Fade the screen up from the boot black-out (idempotent, gui).

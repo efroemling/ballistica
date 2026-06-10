@@ -10,6 +10,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -263,7 +264,7 @@ class PartyQueueWindow(bui.Window):
         )
         self._line_image: bui.Widget | None = None
         self.eyes_mesh: bui.Mesh = bui.getmesh('plasticEyesTransparent')
-        self._white_tex = bui.gettexture('white')
+        self._white_tex = builtinassets.textures.white
         uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(

@@ -240,8 +240,8 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
     c.SetLightShadow(base::LightShadowType::kNone);
     c.SetReflection(base::ReflectionType::kSharp);
     c.SetReflectionScale(0.34f * o, 0.34f * o, 0.34f * o);
-    c.SetTexture(
-        g_base->assets->BuiltinTextureOld(base::BuiltinTextureOldID::kShield));
+    c.SetTexture(g_base->assets->BuiltinTexture(
+        base::BuiltinTextureID::kTexturesShield));
     c.SetColor(col[0], col[1], col[2], 0.13f * o);
     Vector3f to_cam =
         Vector3f(cx - position_[0], cy - position_[1], cz - position_[2])

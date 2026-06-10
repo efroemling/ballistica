@@ -636,7 +636,7 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
   SimpleComponent c(frame_def->overlay_front_pass());
   c.SetTransparent(true);
   c.SetTexture(
-      g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kCircleShadow));
+      g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircleShadow));
   if (dev_console_button_pressed_) {
     c.SetColor(1.0f, 1.0f, 1.0f, 0.8f);
   } else {

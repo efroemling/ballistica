@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, override
 from efro.error import CommunicationError
 import bacommon.clienteffect as clfx
 import bacommon.classic
+import babase
 from babase import AppMode
 import bauiv1 as bui
 from bauiv1lib.connectivity import wait_for_connectivity
@@ -76,6 +77,20 @@ class ClassicAppMode(AppMode):
 
     @override
     def on_activate(self) -> None:
+        # Register the asset-package versions backing our asset
+        # wrapper modules so legacy bare asset names arriving from old
+        # peers, old replays, server-driven docui content, or modder
+        # code get mapped to their asset-package homes (see
+        # AssetNameCompat in the native layer). Sourcing these from
+        # the wrappers means a modder-swapped package keeps working.
+        from bascenev1 import builtinassets, stdassets
+
+        babase.set_asset_name_compat_versions(
+            {
+                'builtinassets': builtinassets.__asset_package__,
+                'stdassets': stdassets.__asset_package__,
+            }
+        )
 
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_activate()

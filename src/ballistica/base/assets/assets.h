@@ -88,7 +88,6 @@ class Assets {
 
   // Get system assets. These are loaded at startup so are always instantly
   // available.
-  auto BuiltinTextureOld(BuiltinTextureOldID id) -> TextureAsset*;
   auto BuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID id) -> TextureAsset*;
   auto IsValidBuiltinSoundOld(BuiltinSoundOldID id) -> bool;
   auto BuiltinSoundOld(BuiltinSoundOldID id) -> SoundAsset*;
@@ -193,7 +192,6 @@ class Assets {
                          size_t colon_pos) -> std::string;
 
   static void MarkAssetForLoad(Asset* c);
-  void LoadBuiltinTextureOld(BuiltinTextureOldID id, const char* name);
   void LoadBuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID id,
                                     const char* name);
   void LoadBuiltinSoundOld(BuiltinSoundOldID id, const char* name);
@@ -235,7 +233,6 @@ class Assets {
   // For use by AssetListLock; don't manually acquire.
   std::mutex asset_lists_mutex_;
 
-  std::vector<Object::Ref<TextureAsset> > builtin_textures_old_;
   std::vector<Object::Ref<TextureAsset> > builtin_cube_map_textures_old_;
   std::vector<Object::Ref<SoundAsset> > builtin_sounds_old_;
   std::vector<Object::Ref<DataAsset> > system_datas_;

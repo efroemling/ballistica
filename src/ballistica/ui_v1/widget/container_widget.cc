@@ -974,14 +974,14 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // Update bg vals if need be (we may need these even if bg is turned off
   // so always calc them).
   if (bg_dirty_) {
-    base::BuiltinTextureOldID tex_id;
+    base::BuiltinTextureID tex_id;
     float l_border, r_border, b_border, t_border;
     [[maybe_unused]] float center_x_amt;
     [[maybe_unused]] float center_y_amt;
     float width = r - l;
     float height = t - b;
     if (height > width * 0.6f) {
-      tex_id = base::BuiltinTextureOldID::kWindowHSmallVMed;
+      tex_id = base::BuiltinTextureID::kTexturesWindowHsmallVmed;
       bg_mesh_transparent_id_ =
           base::BuiltinMeshOldID::kWindowHSmallVMedTransparent;
       bg_mesh_opaque_id_ = base::BuiltinMeshOldID::kWindowHSmallVMedOpaque;
@@ -994,7 +994,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       bg_center_fudge_x_ = -0.05f;
       bg_center_fudge_y_ = 0.0f;
     } else {
-      tex_id = base::BuiltinTextureOldID::kWindowHSmallVSmall;
+      tex_id = base::BuiltinTextureID::kTexturesWindowHsmallVsmall;
       bg_mesh_transparent_id_ =
           base::BuiltinMeshOldID::kWindowHSmallVSmallTransparent;
       bg_mesh_opaque_id_ = base::BuiltinMeshOldID::kWindowHSmallVSmallOpaque;
@@ -1012,7 +1012,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     bg_center_x_ = l - l_border + bg_width_ * 0.5f;
     bg_center_y_ = b - b_border + bg_height_ * 0.5f;
     if (background_) {
-      tex_ = g_base->assets->BuiltinTextureOld(tex_id);
+      tex_ = g_base->assets->BuiltinTexture(tex_id);
     }
     bg_dirty_ = false;
   }
@@ -1073,8 +1073,8 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             amt = 1.0f;
           }
           c.SetColor(0.0f, 0.0f, 0.0f, 0.6 * amt);
-          c.SetTexture(g_base->assets->BuiltinTextureOld(
-              base::BuiltinTextureOldID::kCircleSoft));
+          c.SetTexture(g_base->assets->BuiltinTexture(
+              base::BuiltinTextureID::kTexturesCircleSoft));
           auto s{8.0f * std::max(bg_width_, bg_height_)};
           {
             auto xf = c.ScopedTransform();
@@ -1131,8 +1131,8 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetPremultiplied(true);
-      c.SetTexture(
-          g_base->assets->BuiltinTextureOld(base::BuiltinTextureOldID::kGlow));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesGlow));
       c.SetColor(0.25f * m, 0.25f * m, 0, 0.3f * m);
       {
         auto xf = c.ScopedTransform();

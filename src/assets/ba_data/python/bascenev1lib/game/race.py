@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, override
 from dataclasses import dataclass
 
 import bascenev1 as bs
+from bascenev1 import builtinassets
 
 from bascenev1lib.actor.bomb import Bomb
 from bascenev1lib.actor.playerspaz import PlayerSpaz
@@ -158,7 +159,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
         self._swipsound = bs.getsound('swip')
         self._last_team_time: float | None = None
         self._front_race_region: int | None = None
-        self._nub_tex = bs.gettexture('nub')
+        self._nub_tex = builtinassets.textures.nub
         self._beep_1_sound = bs.getsound('raceBeep1')
         self._beep_2_sound = bs.getsound('raceBeep2')
         self.race_region_material: bs.Material | None = None
@@ -528,7 +529,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             lnub = bs.newnode(
                 'image',
                 attrs={
-                    'texture': bs.gettexture('nub'),
+                    'texture': builtinassets.textures.nub,
                     'opacity': 1.0,
                     'absolute_scale': True,
                     'position': (-75 + i * 50, light_y),

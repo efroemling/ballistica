@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, override
 
 import bacommon.classic
 import bauiv1 as bui
+from bauiv1 import builtinassets
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 from bauiv1lib.popup import PopupMenu
 
@@ -652,7 +653,7 @@ class LeagueRankWindow(bui.MainWindow):
             label='',
             position=(self._xoffs + h2 - 60, v2 - 100),
             color=(0.7, 0.55, 0.9),
-            texture=bui.gettexture('buttonSquareWide'),
+            texture=builtinassets.textures.button_square_wide,
             opacity=0.3,
             size=(200, 80),
             autoselect=True,

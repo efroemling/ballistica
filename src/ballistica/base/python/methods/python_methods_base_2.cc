@@ -10,6 +10,7 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_platform/app_platform.h"
+#include "ballistica/base/assets/asset_name_compat.h"
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics.h"
@@ -1233,6 +1234,46 @@ static PyMethodDef PyRegisterAssetPackageBucketsDef = {
     "sees a half-registered package. Safe to call while other threads are\n"
     "doing asset lookups."};
 
+// ---------------- set_asset_name_compat_versions -----------------------------
+
+static auto PySetAssetNameCompatVersions(PyObject* self, PyObject* args,
+                                         PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* versions_obj;
+  static const char* kwlist[] = {"versions", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O!",
+                                   const_cast<char**>(kwlist), &PyDict_Type,
+                                   &versions_obj)) {
+    return nullptr;
+  }
+  PyObject* key;
+  PyObject* value;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(versions_obj, &pos, &key, &value)) {
+    if (!PyUnicode_Check(key) || !PyUnicode_Check(value)) {
+      throw Exception("Expected a dict[str, str].", PyExcType::kType);
+    }
+    AssetNameCompat::SetPackageVersion(PyUnicode_AsUTF8(key),
+                                       PyUnicode_AsUTF8(value));
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetAssetNameCompatVersionsDef = {
+    "set_asset_name_compat_versions",           // name
+    (PyCFunction)PySetAssetNameCompatVersions,  // method
+    METH_VARARGS | METH_KEYWORDS,               // flags
+
+    "set_asset_name_compat_versions(versions: dict[str, str]) -> None\n"
+    "\n"
+    "(internal) Register the asset-package version ids backing the\n"
+    "legacy asset-name compat table, keyed by package key\n"
+    "('builtinassets' / 'stdassets'). Until a package key is\n"
+    "registered, legacy names mapping into it pass through unmapped.\n"
+    "Called at classic-app-mode activation with values sourced from\n"
+    "the asset-package wrapper modules."};
+
 // ---------------- preferred_texture_profile ----------------------------------
 
 static auto PyPreferredTextureProfile(PyObject* self, PyObject* args,
@@ -1271,6 +1312,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
   return {
       PyRegisterAssetPackageBucketDef,
       PyRegisterAssetPackageBucketsDef,
+      PySetAssetNameCompatVersionsDef,
       PyPreferredTextureProfileDef,
       PyOpenURLDef,
       PyOverlayWebBrowserIsSupportedDef,

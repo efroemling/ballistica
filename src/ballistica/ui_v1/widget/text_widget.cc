@@ -227,8 +227,8 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.SetTransparent(true);
         c.SetPremultiplied(true);
         c.SetColor(0.25f * m, 0.3f * m, 0, 0.3f * m);
-        c.SetTexture(g_base->assets->BuiltinTextureOld(
-            base::BuiltinTextureOldID::kGlow));
+        c.SetTexture(g_base->assets->BuiltinTexture(
+            base::BuiltinTextureID::kTexturesGlow));
         {
           auto xf = c.ScopedTransform();
           c.Translate(highlight_center_x_, highlight_center_y_, 0.1f);
@@ -241,8 +241,8 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         base::SimpleComponent c(pass);
         c.SetTransparent(true);
         c.SetColor(0.9 * m, 1.0f * m, 0, 0.3f * m);
-        c.SetTexture(g_base->assets->BuiltinTextureOld(
-            base::BuiltinTextureOldID::kShadowSharp));
+        c.SetTexture(g_base->assets->BuiltinTexture(
+            base::BuiltinTextureID::kTexturesShadowSharp));
         {
           auto xf = c.ScopedTransform();
           c.Translate(bound_l, bound_b, 0.1f);
@@ -267,8 +267,8 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetColor(1, 1, 1, 1);
-      c.SetTexture(g_base->assets->BuiltinTextureOld(
-          base::BuiltinTextureOldID::kUIAtlas));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesUiAtlas));
       {
         auto xf = c.ScopedTransform();
         c.Translate(outline_center_x_, outline_center_y_, 0.1f);
@@ -290,8 +290,8 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       } else {
         c.SetColor(0.5f, 0.5f, 0.5f, 1);
       }
-      c.SetTexture(g_base->assets->BuiltinTextureOld(
-          base::BuiltinTextureOldID::kTextClearButton));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesTextClearButton));
       {
         auto xf = c.ScopedTransform();
         c.Translate(r - 20, b * 0.5f + t * 0.5f, 0.1f);

@@ -17,6 +17,7 @@ import bacommon.clouddialog.basic as bcdlg
 import bacommon.classic
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     import datetime
@@ -1029,7 +1030,7 @@ class InboxWindow(bui.MainWindow):
             claims_up_down=True,
         )
 
-        backing_tex = bui.gettexture('buttonSquareWide')
+        backing_tex = builtinassets.textures.button_square_wide
 
         assert bui.app.classic is not None
 

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, override
 import logging
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 from bauiv1lib.popup import PopupWindow, PopupMenuWindow
 
@@ -293,8 +294,8 @@ class AccountViewerWindow(PopupWindow):
                                 )
                                 icon_tex = character.icon_texture
                                 tint_tex = character.icon_mask_texture
-                                mask_texture = bui.gettexture(
-                                    'characterIconMask'
+                                mask_texture = (
+                                    builtinassets.textures.character_icon_mask
                                 )
                                 bui.imagewidget(
                                     parent=self._subcontainer,

@@ -185,7 +185,8 @@ static void DrawRect(RenderPass* pass, Mesh* mesh, float x, float y,
   SimpleComponent c(pass);
   c.SetTransparent(true);
   c.SetColor(bgcolor.x, bgcolor.y, bgcolor.z, alpha);
-  c.SetTexture(g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kCircle));
+  c.SetTexture(
+      g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircle));
   // Draw mesh bg.
   if (mesh) {
     auto xf = c.ScopedTransform();
@@ -1551,8 +1552,8 @@ void DevConsole::Draw(FrameDef* frame_def) {
     SimpleComponent c(pass);
     c.SetTransparent(true);
     c.SetColor(0.03, 0, 0.09, 0.9f);
-    c.SetTexture(g_base->assets->BuiltinTextureOld(
-        BuiltinTextureOldID::kSoftRectVertical));
+    c.SetTexture(g_base->assets->BuiltinTexture(
+        BuiltinTextureID::kTexturesSoftRectVertical));
     {
       auto scissor = c.ScopedScissor({0.0f, 0.0f, pass->virtual_width(),
                                       bottom - (border_height * 0.75f) * bs});
@@ -1639,7 +1640,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
       SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetTexture(
-          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kShadow));
+          g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesShadow));
       c.SetColor(0.8, 0.0, 1.0, 0.3f);
       {
         auto xf = c.ScopedTransform();
@@ -1649,8 +1650,8 @@ void DevConsole::Draw(FrameDef* frame_def) {
         c.Translate(carat_x, 0.0f, 0.0f);
         c.DrawMesh(carat_glow_mesh_.get());
       }
-      c.SetTexture(
-          g_base->assets->BuiltinTextureOld(BuiltinTextureOldID::kShadowSharp));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesShadowSharp));
       c.SetColor(1.0, 1.0, 1.0, 1.0f);
       {
         auto xf = c.ScopedTransform();

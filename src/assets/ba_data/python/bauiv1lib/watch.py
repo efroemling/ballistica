@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -170,7 +171,7 @@ class WatchWindow(bui.MainWindow):
                 self._width * 0.5 - self._scroll_width * 0.5,
                 self._scroll_y,
             ),
-            texture=bui.gettexture('scrollWidget'),
+            texture=builtinassets.textures.scroll_widget,
             mesh_transparent=bui.getmesh('softEdgeOutside'),
             opacity=0.4,
         )

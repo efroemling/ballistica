@@ -161,6 +161,8 @@ assets-android: env codegen
 # Clean all assets.
 assets-clean:
 	@rm -f $(LAZYBUILDDIR)/assets*
+	@rm -rf .cache/asset_bundle
+	@rm -rf .cache/assets
 	cd src/assets && $(MAKE) clean
 
 # Build resources.

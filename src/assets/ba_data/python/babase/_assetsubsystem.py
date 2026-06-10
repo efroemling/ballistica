@@ -32,6 +32,7 @@ import base64
 import hashlib
 import asyncio
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Annotated, override
@@ -40,6 +41,7 @@ import _babase
 from babase._appsubsystem import AppSubsystem
 from babase._logging import assetmanagerlog as logger
 
+from efro.error import CommunicationError
 from efro.dataclassio import (
     ioprepped,
     IOAttrs,
@@ -69,6 +71,24 @@ _ResolveAccum = tuple[
     dict[str, dict[str, str]],
     dict[str, str],
 ]
+
+#: Max concurrent CAS-blob downloads, run on a dedicated thread pool (NOT the
+#: shared app threadpool). Kept deliberately low: each in-flight download
+#: buffers its whole blob in RAM, so peak download memory is roughly this times
+#: blob-size -- and the target is low-end Android (scarce RAM + an aggressive
+#: low-memory killer, weak CPUs, and often slow/flaky links where a handful of
+#: connections already saturate bandwidth). 4 hides per-request latency well
+#: while staying under the urllib3 pool's per-host maxsize, so connections get
+#: reused rather than churned. Raise later if real-world numbers show downloads
+#: are bandwidth-starved on good connections (and bump that maxsize to match if
+#: you go above it).
+_BLOB_DOWNLOAD_CONCURRENCY = 4
+
+
+def _init_blob_download_thread() -> None:
+    """Name dedicated blob-download threads for profiling clarity."""
+    _babase.set_thread_name('ballistica asset-dl')
+
 
 #: Grace period a second resolve waits for an in-flight one to finish
 #: before erroring out (single-in-flight guard).
@@ -158,6 +178,17 @@ class AssetAccessDeniedError(AssetResolveError):
     The account is authenticated but isn't the owner / on the package's
     dev team. Raised when the server returns
     :attr:`~bacommon.cloud.AssetPackageResolveError.ACCESS_DENIED`.
+    """
+
+
+class AssetResolveAbortedError(AssetResolveError):
+    """An asset-subsystem operation was abandoned because we're shutting down.
+
+    Raised when off-thread work can no longer be dispatched because the
+    app has begun shutting down (e.g. the threadpool was torn down out
+    from under an in-flight resolve or GC). It is a benign, expected
+    outcome -- not a real failure -- so callers should bow out quietly
+    rather than logging it as an error.
     """
 
 
@@ -359,11 +390,13 @@ def make_screenmessage_progress_reporter(
                 remaining = max(total - done, 0)
                 message = f'Building {pkg} assets ({remaining} remaining)…'
             else:
-                # Counts not reported yet (the initial 'preparing' step).
-                # Drop the word "assets" when there's no count -- it reads
-                # cleaner ("Building <pkg>…"); with a count, "assets" gives
-                # the number something to refer to.
-                message = f'Building {pkg}…'
+                # Counts not reported yet (the initial 'preparing' step:
+                # workspace compile + leaf-build queue, before any leaf
+                # build reports). A distinct "Preparing to build…" verb
+                # (vs. the counted "Building … (N remaining)…" line) so a
+                # stuck/looping prepare reads as stuck rather than
+                # masquerading as build progress.
+                message = f'Preparing to build {pkg}…'
         elif downloading and progress.blobs_total:
             # Single running total across the whole resolve (all packages).
             remaining = max(progress.blobs_total - progress.blobs_done, 0)
@@ -488,6 +521,23 @@ class AssetSubsystem(AppSubsystem):
         # BA_ASSET_NO_BUNDLE_REUSE=1 (test_game_run --asset-no-bundle-reuse).
         self._reuse_bundle = os.environ.get('BA_ASSET_NO_BUNDLE_REUSE') != '1'
 
+        # Dedicated, deliberately-small pool for CAS-blob downloads, kept
+        # separate from the shared app threadpool so a big download burst can't
+        # starve other background work (and vice versa). Bounded at
+        # _BLOB_DOWNLOAD_CONCURRENCY -- see that constant for why low.
+        #
+        # Created on demand per resolve (see _download_executor) and torn down
+        # in resolve()'s finally, so its worker threads exist ONLY while a
+        # download batch is actually in flight -- nothing lingers idle between
+        # our infrequent, bursty downloads (construct-mode boot + occasional
+        # acquisition). Keeps the steady-state footprint minimal on the
+        # low-end-Android target this pool is tuned for, and sidesteps the
+        # leftover-threads-at-shutdown problem entirely (no app-lifetime pool
+        # to spin down -- which matters on mobile, where clean shutdowns are
+        # rare and a hook might not fire). The re-spawn cost per download batch
+        # is negligible next to the network IO it wraps.
+        self._download_pool: ThreadPoolExecutor | None = None
+
     @override
     def on_app_running(self) -> None:
         # Register the GC pass as a shutdown task. It runs concurrently
@@ -496,6 +546,22 @@ class AssetSubsystem(AppSubsystem):
         # home). v1 trigger is shutdown-only; a future on_app_suspend()
         # trigger will matter on mobile where clean shutdowns are rare.
         _babase.app.add_shutdown_task(self._run_gc())
+
+    def _download_executor(self) -> ThreadPoolExecutor:
+        """Return the CAS-blob download pool, creating it on first use.
+
+        Lazily spun up the first time a resolve needs to download, and
+        torn down in resolve()'s finally (see __init__ for the rationale),
+        so worker threads exist only while a batch is in flight. Resolves
+        are single-in-flight, so there's no concurrency on this attribute.
+        """
+        if self._download_pool is None:
+            self._download_pool = ThreadPoolExecutor(
+                max_workers=_BLOB_DOWNLOAD_CONCURRENCY,
+                thread_name_prefix='baassetdl',
+                initializer=_init_blob_download_thread,
+            )
+        return self._download_pool
 
     # ---------------------------------------------------------------------
     # Paths.
@@ -656,6 +722,15 @@ class AssetSubsystem(AppSubsystem):
                 apverids, allow_downloads, on_download_starting
             )
         finally:
+            # Tear down the per-resolve download pool (if this resolve
+            # created one) so its worker threads don't outlive the batch.
+            # cancel_futures drops any unstarted fetches; idle workers (the
+            # state once the fetch gather has drained) exit immediately.
+            # Done before releasing the busy-lock so the pool is fully gone
+            # before any next resolve could spin up a fresh one.
+            if self._download_pool is not None:
+                self._download_pool.shutdown(wait=True, cancel_futures=True)
+                self._download_pool = None
             self._progress_cb = None
             self._busy_lock.release()
 
@@ -668,6 +743,48 @@ class AssetSubsystem(AppSubsystem):
         cb = self._progress_cb
         if cb is not None:
             cb(replace(self._progress))
+
+    async def _run_in_pool[T](
+        self,
+        call: Callable[..., T],
+        *args: object,
+        executor: ThreadPoolExecutor | None = None,
+    ) -> T:
+        """Dispatch a blocking call to a thread pool (app pool by default).
+
+        Pass ``executor`` to target a dedicated pool (e.g. the bounded
+        blob-download pool) instead of the shared app threadpool.
+
+        Central chokepoint for all our off-thread work so the shutdown
+        race is handled in one place. Shutdown tears down the facilities
+        this work relies on -- the threadpool (dispatch then raises
+        ``cannot schedule new futures after shutdown``), the cloud
+        transport and its event loop (an in-flight send gets cancelled,
+        surfacing as :class:`~efro.error.CommunicationError`), etc. Any
+        such failure once we're shutting down is collateral damage of
+        teardown, not a real resolve/GC failure, so we translate it into
+        a clean :class:`AssetResolveAbortedError` -- both proactively
+        (skip the dispatch entirely if we already know we're shutting
+        down) and as a backstop for the dispatch-vs-shutdown race -- so
+        callers can bow out quietly. A failure raised while *not*
+        shutting down is a real error and propagates unchanged.
+        (``CancelledError`` is a ``BaseException``, so a genuine task
+        cancellation still propagates rather than being swallowed here.)
+        """
+        if _babase.app.shutting_down:
+            raise AssetResolveAbortedError(
+                'Asset operation skipped; app is shutting down.'
+            )
+        loop = _babase.app.asyncio_loop
+        pool = executor if executor is not None else _babase.app.threadpool
+        try:
+            return await loop.run_in_executor(pool, call, *args)
+        except Exception as exc:
+            if _babase.app.shutting_down:
+                raise AssetResolveAbortedError(
+                    'Asset operation aborted; app is shutting down.'
+                ) from exc
+            raise
 
     def _apply_build_progress(
         self, apverid: str, bp: AssetPackageBuildProgress
@@ -751,16 +868,14 @@ class AssetSubsystem(AppSubsystem):
             allow_downloads,
             ', '.join(apverids),
         )
-        loop = _babase.app.asyncio_loop
-        pool = _babase.app.threadpool
         t_start = _babase.apptime()
 
         # Warm fast-path: if every desired flavor is already local, resolve
         # the whole set in a single off-thread pass — no per-package round-
         # trips, no download machinery, no network. The per-package async
         # path below is used only when something must actually be fetched.
-        offline = await loop.run_in_executor(
-            pool, self._resolve_offline_sync, apverids, language
+        offline = await self._run_in_pool(
+            self._resolve_offline_sync, apverids, language
         )
         if offline is not None:
             register_specs, manifest_pkgs, fell_back = offline
@@ -782,9 +897,7 @@ class AssetSubsystem(AppSubsystem):
         # Pin everything we just told the engine about — never retracted
         # this process lifetime (GC-/cap-immune).
         self._pin(manifest_pkgs)
-        await loop.run_in_executor(
-            pool, self._commit_manifest, manifest_pkgs, now
-        )
+        await self._run_in_pool(self._commit_manifest, manifest_pkgs, now)
 
         logger.info(
             'Resolved %d package(s): %d bucket(s) registered%s (%s, %.0f ms).',
@@ -880,8 +993,6 @@ class AssetSubsystem(AppSubsystem):
         desired-if-complete, else (builtin only) bundled-fallback, else
         fail.
         """
-        loop = _babase.app.asyncio_loop
-        pool = _babase.app.threadpool
         is_builtin = self._is_builtin(apverid)
         desired = self._desired_coords(language)
 
@@ -895,8 +1006,8 @@ class AssetSubsystem(AppSubsystem):
 
         # Scan local state (off-thread): which desired coords are already
         # complete on disk, and the full local coord→hash map.
-        local_coords, missing_buckets = await loop.run_in_executor(
-            pool, self._scan_local, apverid, desired
+        local_coords, missing_buckets = await self._run_in_pool(
+            self._scan_local, apverid, desired
         )
 
         # If any desired flavor isn't local and downloads are allowed, do
@@ -905,6 +1016,10 @@ class AssetSubsystem(AppSubsystem):
         if allow_downloads and missing_buckets:
             try:
                 downloaded = await self._tier1_download(apverid, language)
+            except AssetResolveAbortedError:
+                # App is shutting down -- not a resolve failure; don't
+                # fall back to bundled, just abandon the whole resolve.
+                raise
             except AssetResolveError as exc:
                 # The builtin/bootstrap package must still come up offline;
                 # other packages are exact-or-fail. Log the underlying
@@ -916,8 +1031,8 @@ class AssetSubsystem(AppSubsystem):
         # Finalize per-bucket selection + read registry entries (off-thread).
         # local ∪ just-downloaded — what's actually available to choose from.
         available = {**local_coords, **downloaded}
-        return await loop.run_in_executor(
-            pool, self._finalize_one, apverid, desired, available, is_builtin
+        return await self._run_in_pool(
+            self._finalize_one, apverid, desired, available, is_builtin
         )
 
     def _resolve_one_local(
@@ -1065,8 +1180,6 @@ class AssetSubsystem(AppSubsystem):
         fetched (those not already present) before returning. Raises
         :class:`AssetResolveError` on any resolve/fetch failure.
         """
-        loop = _babase.app.asyncio_loop
-        pool = _babase.app.threadpool
         # Downloads route through the connected node, which comes up a beat
         # after boot; wait briefly for it rather than failing a resolve
         # that raced the connection.
@@ -1081,8 +1194,8 @@ class AssetSubsystem(AppSubsystem):
         # render the progress and re-send the same resolve (same nonce)
         # after a short wait until it resolves to a manifest (or errors).
         while True:
-            response = await loop.run_in_executor(
-                pool, self._resolve_tier1, apverid, language, primary
+            response = await self._run_in_pool(
+                self._resolve_tier1, apverid, language, primary
             )
             if response.build_progress is None:
                 break
@@ -1121,7 +1234,7 @@ class AssetSubsystem(AppSubsystem):
         if fm_writes:
             await asyncio.gather(
                 *[
-                    loop.run_in_executor(pool, self._cas_write, h, d)
+                    self._run_in_pool(self._cas_write, h, d)
                     for h, d in fm_writes.items()
                 ]
             )
@@ -1151,8 +1264,13 @@ class AssetSubsystem(AppSubsystem):
             self._emit_progress()
 
             async def _fetch(h: str, s: int) -> None:
-                await loop.run_in_executor(
-                    pool, self._acquire_data_blob, host, token_header, h, s
+                await self._run_in_pool(
+                    self._acquire_data_blob,
+                    host,
+                    token_header,
+                    h,
+                    s,
+                    executor=self._download_executor(),
                 )
                 self._progress.blobs_done += 1
                 self._progress.bytes_done += s
@@ -1189,11 +1307,23 @@ class AssetSubsystem(AppSubsystem):
             texture_profile=self._texture_profile,
             texture_tier=self._texture_tier,
         )
-        if primary is not None:
-            with primary:
+        # A transport-level hiccup (node mid-rollout, flaky link, etc.)
+        # surfaces as CommunicationError. Convert it to an AssetResolveError
+        # so the per-package handler can do the right thing -- fall back to
+        # bundled flavors for the builtin/bootstrap package, exact-or-fail
+        # for the rest -- with a clean logged reason rather than an
+        # unhandled traceback. (Server-side resolve errors arrive as
+        # structured fields on the response and are handled by the caller.)
+        try:
+            if primary is not None:
+                with primary:
+                    response = plus.cloud.send_message(msg)
+            else:
                 response = plus.cloud.send_message(msg)
-        else:
-            response = plus.cloud.send_message(msg)
+        except CommunicationError as exc:
+            raise AssetResolveError(
+                f'{apverid}: communication error during resolve: {exc}'
+            ) from exc
         assert isinstance(response, ResolveAssetPackageResponse)
         return response
 
@@ -1395,7 +1525,10 @@ class AssetSubsystem(AppSubsystem):
 
         Holds the single-in-flight guard (best-effort: skips if a resolve
         is somehow still running) and dispatches the blocking mark+sweep to
-        the threadpool, which is still alive during the shutdown-task phase.
+        the threadpool. The threadpool is normally still alive during the
+        shutdown-task phase, but a fast shutdown can tear it down first; in
+        that case the dispatch surfaces as :class:`AssetResolveAbortedError`
+        and we abandon the pass quietly (the next launch's GC resumes it).
         """
         try:
             try:
@@ -1407,11 +1540,13 @@ class AssetSubsystem(AppSubsystem):
                 logger.warning('Asset GC skipped: subsystem busy.')
                 return
             try:
-                loop = _babase.app.asyncio_loop
-                pool = _babase.app.threadpool
-                await loop.run_in_executor(pool, self._gc_blocking)
+                await self._run_in_pool(self._gc_blocking)
             finally:
                 self._busy_lock.release()
+        except AssetResolveAbortedError:
+            # Threadpool went away mid-GC because we're shutting down --
+            # benign; the next launch's GC picks up where this left off.
+            logger.debug('Asset GC abandoned; app is shutting down.')
         except Exception:
             logger.exception('Error during asset GC.')
 

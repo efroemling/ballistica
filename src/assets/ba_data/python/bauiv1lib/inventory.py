@@ -11,6 +11,7 @@ from typing import override, TYPE_CHECKING
 from efro.util import asserttype
 import bacommon.docui.v1 as dui1
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 from bauiv1lib.docui import DocUIController
 
@@ -20,6 +21,11 @@ if TYPE_CHECKING:
     from bacommon.docui import DocUIRequest, DocUIResponse
 
     from bauiv1lib.docui import DocUILocalAction, DocUIWindow
+
+
+def _btex(name: str) -> str:
+    """Qualified ref for a texture in the builtin asset-package."""
+    return f'{builtinassets.__asset_package__}:textures/{name}'
 
 
 class InventoryUIController(DocUIController):
@@ -80,7 +86,7 @@ class InventoryUIController(DocUIController):
                                             else inv_only_online_t
                                         ),
                                         label_is_lstr=True,
-                                        texture='white',
+                                        texture=_btex('white'),
                                         size=(600, 100),
                                         color=(1, 1, 1, 0.0),
                                         label_scale=0.7,
@@ -266,7 +272,7 @@ class InventoryUIController(DocUIController):
 
             buttons.append(
                 dui1.Button(
-                    texture='white',
+                    texture=_btex('white'),
                     size=(145, 175),
                     action=dui1.Local(
                         default_sound=False,
@@ -281,7 +287,7 @@ class InventoryUIController(DocUIController):
                             appearance.icon_texture,
                             position=(0, 15),
                             size=(140, 140),
-                            mask_texture='characterIconMask',
+                            mask_texture=_btex('character_icon_mask'),
                             tint_texture=appearance.icon_mask_texture,
                             tint_color=color,
                             tint2_color=highlight,

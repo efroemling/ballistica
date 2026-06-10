@@ -209,6 +209,18 @@ def _worker_main(outpath: str) -> None:
             # shows the annotation.
             del entry['type_qual']
 
+    # Tag each entry with its completion 'group' (layer) so consumers
+    # can compose per-workspace-type subsets: 'ballistica' for the
+    # game-API modules, 'stdlib' for the curated standard-library set.
+    # Classified by top-level root module — _RUNTIME_MODULES and
+    # _STDLIB_MODULES never share a root, so this is unambiguous, and
+    # since those two lists are the only things walked, every entry's
+    # root falls in one of them.
+    _runtime_roots = {m.split('.', 1)[0] for m in _RUNTIME_MODULES}
+    for entry in entries:
+        root = entry['label'].split('.', 1)[0]
+        entry['group'] = 'ballistica' if root in _runtime_roots else 'stdlib'
+
     # Stable order so JSON diffs are reviewable when this is checked
     # into bamaster.
     entries.sort(key=lambda e: e['label'])

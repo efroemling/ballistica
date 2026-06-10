@@ -32,6 +32,12 @@
 
 namespace ballistica::ui_v1 {
 
+// Builtin textures now live in the builtin asset-package; this builds
+// the qualified ref for one so name-based lookups find it.
+static auto BuiltinTexRef(const char* path) -> std::string {
+  return std::string(base::kBuiltinAssetsApverid) + ":textures/" + path;
+}
+
 static const float kBotLeftColorR{0.6f};
 static const float kBotLeftColorG{0.6f};
 static const float kBotLeftColorB{0.8f};
@@ -267,7 +273,7 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
     bd.height = 36.0f;
     bd.y = -36.0f + 10.0f - y_offs_small;
     bd.y_offs_small = y_offs_small;
-    bd.img = "uiAtlas2";
+    bd.img = BuiltinTexRef("ui_atlas2");
     bd.mesh_transparent = "currencyMeter";
     bd.selectable = true;
 
@@ -498,7 +504,7 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
     bd.width = bd.height = 45.0f;
     bd.y = -36.0f + 11.0f - y_offs_small;
     bd.y_offs_small = y_offs_small;
-    bd.img = "uiAtlas2";
+    bd.img = BuiltinTexRef("ui_atlas2");
     bd.mesh_transparent = "currencyPlusButton";
     bd.color_r = kGetTokensButtonColorR;
     bd.color_g = kGetTokensButtonColorG;
@@ -551,7 +557,7 @@ void RootWidget::Setup() {
     bd.color_g = 0.4f;
     bd.color_b = 0.35f;
     bd.y = -40.0f;
-    bd.img = "nub";
+    bd.img = BuiltinTexRef("nub");
     bd.call = UIV1Python::ObjID::kRootUIBackButtonPressCall;
     bd.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimal)
@@ -587,7 +593,7 @@ void RootWidget::Setup() {
     bd.height = 90.0f;
     bd.x = 256.0f;
     bd.y = -20.0f;
-    bd.img = "uiAtlas2";
+    bd.img = BuiltinTexRef("ui_atlas2");
     bd.mesh_transparent = "toolbarBackingTop2";
     bd.selectable = false;
     bd.color_r = 0.44f;
@@ -611,7 +617,7 @@ void RootWidget::Setup() {
     bd.height = 90.0f;
     bd.x = 0.0f;
     bd.y = -20.0f;
-    bd.img = "uiAtlas2";
+    bd.img = BuiltinTexRef("ui_atlas2");
     bd.mesh_transparent = "toolbarBackingTop2";
     bd.selectable = false;
     bd.color_r = 0.44f;
@@ -682,7 +688,7 @@ void RootWidget::Setup() {
     b.v_align = VAlign_::kTop;
     b.width = b.height = 65.0f;
     b.y = b.height * -0.48f;
-    b.img = "menuButton";
+    b.img = BuiltinTexRef("menu_button");
     b.call = UIV1Python::ObjID::kRootUIMenuButtonPressCall;
     b.color_r = 0.3f;
     b.color_g = 0.5f;
@@ -712,7 +718,7 @@ void RootWidget::Setup() {
     b.v_align = VAlign_::kTop;
     b.width = b.height = 70.0f;
     b.y = b.height * -0.41f;
-    b.img = "usersButton";
+    b.img = BuiltinTexRef("users_button");
     b.call = UIV1Python::ObjID::kRootUISquadButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kInGame)
@@ -767,7 +773,7 @@ void RootWidget::Setup() {
       bd.height = 100.0f;
       bd.x = 0.0f;
       bd.y = 41.0f;
-      bd.img = "uiAtlas2";
+      bd.img = BuiltinTexRef("ui_atlas2");
       bd.mesh_transparent = "toolbarBackingBottom2";
       bd.selectable = false;
       bd.color_r = 0.473f;
@@ -935,7 +941,7 @@ void RootWidget::Setup() {
       imgd.y = 24.0f;
       imgd.width = 32.0f;
       imgd.height = 32.0f;
-      imgd.img = "circle";
+      imgd.img = BuiltinTexRef("circle");
       imgd.depth_min = 0.3f;
       imgd.color_r = 1.0f;
       imgd.color_g = 0.0f;
@@ -1119,7 +1125,7 @@ void RootWidget::Setup() {
     imgd.y = 50.0f;
     imgd.width = 50.0f;
     imgd.height = 50.0f;
-    imgd.img = "white";
+    imgd.img = BuiltinTexRef("white");
     // imgd.depth_min = 0.3f;
 
     imgd.button = store_button_;
@@ -2882,7 +2888,7 @@ void RootWidget::UpdateChests_() {
             &chest_color, &chest_tint, &chest_tint2);
       } else {
         chest_tex_closed = "chestIcon";
-        chest_tex_closed_tint = "white";
+        chest_tex_closed_tint = BuiltinTexRef("white");
         chest_color = Vector3f{1.0f, 1.0f, 1.0f};
         chest_tint = Vector3f{1.0f, 1.0f, 1.0f};
         chest_tint2 = Vector3f{1.0f, 1.0f, 1.0f};
