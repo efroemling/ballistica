@@ -721,6 +721,14 @@ class AssetSubsystem(AppSubsystem):
             return await self._resolve(
                 apverids, allow_downloads, on_download_starting
             )
+        except Exception as exc:
+            # TLS cert-verify failures against our own nodes are
+            # generally either a wrong system clock or something
+            # *between* us and the node (TLS-intercepting antivirus/
+            # proxy/DPI) — log context that lets a pasted user log
+            # distinguish those before the error continues upward.
+            await self._maybe_log_tls_diagnostics(exc)
+            raise
         finally:
             # Tear down the per-resolve download pool (if this resolve
             # created one) so its worker threads don't outlive the batch.
@@ -1247,8 +1255,8 @@ class AssetSubsystem(AppSubsystem):
                 raise AssetResolveError(
                     f'{apverid}: resolve returned no download token.'
                 )
-            host = self._node_host()
-            if host is None:
+            base_url = self._node_base_url()
+            if base_url is None:
                 raise AssetResolveError(
                     f'{apverid}: not connected to a node; cannot download.'
                 )
@@ -1266,7 +1274,7 @@ class AssetSubsystem(AppSubsystem):
             async def _fetch(h: str, s: int) -> None:
                 await self._run_in_pool(
                     self._acquire_data_blob,
-                    host,
+                    base_url,
                     token_header,
                     h,
                     s,
@@ -1327,15 +1335,21 @@ class AssetSubsystem(AppSubsystem):
         assert isinstance(response, ResolveAssetPackageResponse)
         return response
 
-    def _node_host(self) -> str | None:
-        """Address of the connected basn node, or None if not connected."""
+    def _node_base_url(self) -> str | None:
+        """Base url for fetches from the connected basn node, or None.
+
+        Scheme mirrors the transport session's security (``https`` for
+        wss, ``http`` for insecure ws) so blob fetches avoid TLS exactly
+        when the transport does; blob integrity comes from CAS sha256
+        verification, not the channel.
+        """
         plus = _babase.app.plus
         if plus is None:
             return None
         # plus.cloud is a soft-loaded interface (Any to the base layer),
         # so pin the expected type here to satisfy mypy's return-Any check.
-        addr: str | None = plus.cloud.get_connected_node_address()
-        return addr
+        url: str | None = plus.cloud.get_connected_node_base_url()
+        return url
 
     async def _wait_for_node(self) -> None:
         """Wait (up to a timeout) for a connected node to download through.
@@ -1345,7 +1359,7 @@ class AssetSubsystem(AppSubsystem):
         connects. On timeout we return anyway and let the subsequent
         resolve/fetch fail with a clear "not connected" error.
         """
-        if self._node_host() is not None:
+        if self._node_base_url() is not None:
             return
         plus = _babase.app.plus
         if plus is None:
@@ -1357,14 +1371,14 @@ class AssetSubsystem(AppSubsystem):
             # When connectivity comes up the node address is already set
             # (the connected primary session is assigned before the
             # connectivity-changed signal fires).
-            if connected and self._node_host() is not None:
+            if connected and self._node_base_url() is not None:
                 event.set()
 
         reg = plus.cloud.on_connectivity_changed_callbacks.register(_on_changed)
         try:
             # Re-check now that we're registered, in case it connected
             # between the initial check and the registration.
-            if self._node_host() is None:
+            if self._node_base_url() is None:
                 await asyncio.wait_for(event.wait(), timeout=_NODE_WAIT_SECONDS)
         except asyncio.TimeoutError:
             pass
@@ -1373,6 +1387,113 @@ class AssetSubsystem(AppSubsystem):
             # whole wait; dropping it unregisters (CallbackSet is
             # weakref-based).
             del reg
+
+    async def _maybe_log_tls_diagnostics(self, exc: Exception) -> None:
+        """Log one-shot diagnostics if a resolve died on TLS cert verify.
+
+        Our node certs are renewed weekly, so 'certificate verify
+        failed' from a client almost always means a wrong system clock
+        or a TLS-intercepting middlebox (antivirus 'https scanning',
+        school/work proxies, DPI). Both are invisible in the bare
+        traceback; log absolute clock values, the node's clock fetched
+        over plain http (immune to the TLS tampering itself), and the
+        TLS environment so a pasted user log can tell them apart.
+        Best-effort; never raises.
+        """
+        import ssl
+
+        # Walk the cause/context chain for a cert-verify error.
+        seen: set[int] = set()
+        cur: BaseException | None = exc
+        found: ssl.SSLCertVerificationError | None = None
+        while cur is not None and id(cur) not in seen:
+            seen.add(id(cur))
+            if isinstance(cur, ssl.SSLCertVerificationError):
+                found = cur
+                break
+            cur = cur.__cause__ or cur.__context__
+        if found is None:
+            return
+
+        base_url = self._node_base_url()
+        try:
+            details = await self._run_in_pool(
+                self._tls_diagnostics_blocking, base_url
+            )
+        except Exception as diagexc:
+            from efro.util import strip_exception_tracebacks
+
+            details = f'diagnostics gathering failed: {diagexc!r}'
+            strip_exception_tracebacks(diagexc)
+        logger.warning(
+            'TLS certificate verification failed talking to'
+            ' node %s (%s). Diagnostics: %s.',
+            base_url,
+            found,
+            details,
+        )
+
+    @staticmethod
+    def _tls_diagnostics_blocking(base_url: str | None) -> str:
+        """Gather TLS-failure diagnostic info. Off-thread; blocking.
+
+        Returns a single human-readable summary string: local clock
+        (UTC + local timezone), local-minus-node clock skew measured
+        via a plain-http Date header from the node (nodes are
+        NTP-synced, and plain http works even on networks where TLS is
+        being tampered with), and the OpenSSL/root-cert setup in use.
+        """
+        import ssl
+        from datetime import datetime, UTC
+        from email.utils import parsedate_to_datetime
+
+        from efro.util import strip_exception_tracebacks
+
+        bits: list[str] = []
+        now = datetime.now(UTC)
+        bits.append(f'utc-now={now.isoformat(timespec='seconds')}')
+        bits.append(
+            f'local-now={now.astimezone().isoformat(timespec='seconds')}'
+        )
+        if base_url is not None:
+            try:
+                host = base_url.split('://', 1)[-1]
+                response = _babase.app.net.urllib3pool.request(
+                    'GET', f'http://{host}/', timeout=5.0, retries=False
+                )
+                # getlist, not get: duplicate Date headers happen in the
+                # wild (our own nodes currently send two) and get() would
+                # comma-join them into an unparseable mess.
+                date_headers = response.headers.getlist('Date')
+                if date_headers:
+                    nodetime = parsedate_to_datetime(date_headers[0])
+                    if nodetime.tzinfo is None:
+                        # RFC 5322 '-0000' parses as naive but means UTC.
+                        nodetime = nodetime.replace(tzinfo=UTC)
+                    # Compare against a fresh local reading (the request
+                    # itself may have taken a while). Date-header
+                    # granularity is 1s, which is plenty: we care about
+                    # minutes-to-years of skew, not sub-second.
+                    skew = (datetime.now(UTC) - nodetime).total_seconds()
+                    bits.append(f'local-clock-minus-node-clock={skew:+.1f}s')
+                else:
+                    bits.append('node-clock=unavailable (no Date header)')
+            except Exception as exc:
+                bits.append(f'node-clock=unavailable ({exc!r})')
+                strip_exception_tracebacks(exc)
+        bits.append(f'openssl={ssl.OPENSSL_VERSION}')
+        bits.append(f'ssl-cert-file={os.environ.get('SSL_CERT_FILE')}')
+        try:
+            import certifi
+
+            # getattr: __version__ exists at runtime but not in some
+            # type-stub sets, and a diagnostics line isn't worth a hard
+            # dependency on either.
+            certifi_ver = getattr(certifi, '__version__', '?')
+            bits.append(f'certifi={certifi_ver}')
+        except ImportError:
+            bits.append('certifi=unavailable')
+        return '; '.join(bits)
 
     @staticmethod
     def _encode_token(token: securedata.Archive) -> str:
@@ -1413,16 +1534,19 @@ class AssetSubsystem(AppSubsystem):
         return False
 
     def _acquire_data_blob(
-        self, host: str, token_header: str, filehash: str, size: int
+        self, base_url: str, token_header: str, filehash: str, size: int
     ) -> None:
         """Fetch one data blob from the node and atomically write it.
 
-        ``GET https://{host}/casblob/{hash}?size={size}`` with the
+        ``GET {base_url}/casblob/{hash}?size={size}`` with the
         capability token; the bytes are verified + written by the shared
-        atomic writer. Off-thread; blocking.
+        atomic writer. ``base_url``'s scheme mirrors the transport
+        session's security (see :meth:`_node_base_url`) — integrity is
+        guaranteed by the CAS sha256 check in :meth:`_cas_write` either
+        way. Off-thread; blocking.
         """
         pool = _babase.app.net.urllib3pool
-        url = f'https://{host}/casblob/{filehash}?size={size}'
+        url = f'{base_url}/casblob/{filehash}?size={size}'
         response = pool.request(
             'GET', url, headers={'X-Asset-Token': token_header}
         )

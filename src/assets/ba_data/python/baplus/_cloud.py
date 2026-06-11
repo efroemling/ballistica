@@ -135,14 +135,18 @@ class CloudSubsystem(babase.AppSubsystem):
         """
         raise NotImplementedError()
 
-    def get_connected_node_address(self) -> str | None:
-        """Return the ``host:port`` of the basn node we're connected to.
+    def get_connected_node_base_url(self) -> str | None:
+        """Return a base url for fetches from our connected basn node.
 
         Used by the asset-download path to issue ``GET /casblob/{hash}``
         requests to the same node serving our transport session (the
         node's aiohttp app serves both the WebSocket transport and plain
-        HTTPS at this address). Returns ``None`` when not connected (or
-        in implementations without a node-based transport).
+        http(s)). The scheme mirrors the transport session's security:
+        ``https://host`` normally, ``http://host`` when the session
+        connected via insecure ws:// (insecure-connections mode means
+        TLS can't be trusted on this network, so fetches must avoid it
+        too). Returns ``None`` when not connected (or in implementations
+        without a node-based transport).
 
         :meta private:
         """
