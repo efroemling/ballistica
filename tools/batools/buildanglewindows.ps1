@@ -26,12 +26,14 @@ function Find-Git {
         'C:\Program Files (x86)\Git\cmd\git.exe',
         (Join-Path $env:LOCALAPPDATA 'Programs\Git\cmd\git.exe')
     )
-    foreach ($vsEdition in @('Community', 'Professional', 'Enterprise', 'BuildTools')) {
-        $candidates += (
-            "C:\Program Files\Microsoft Visual Studio\2022\$vsEdition\" +
-            'Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\' +
-            'Team Explorer\Git\cmd\git.exe'
-        )
+    foreach ($vsVersion in @('18', '2022')) {
+        foreach ($vsEdition in @('Community', 'Professional', 'Enterprise', 'BuildTools')) {
+            $candidates += (
+                "C:\Program Files\Microsoft Visual Studio\$vsVersion\$vsEdition\" +
+                'Common7\IDE\CommonExtensions\Microsoft\TeamFoundation\' +
+                'Team Explorer\Git\cmd\git.exe'
+            )
+        }
     }
     foreach ($c in $candidates) {
         if (Test-Path $c) { return $c }
@@ -106,6 +108,10 @@ try {
             $Dst = "$StagingDir\include\$dir"
             if (-not (Test-Path $Src)) { throw "Expected header dir not found: $Src" }
             Write-Host "  Staging headers: $dir"
+            # Remove any existing destination first; Copy-Item copies *into*
+            # an existing dir (yielding nested EGL\EGL\ from the 2nd/3rd
+            # triplets) rather than replacing it.
+            if (Test-Path $Dst) { Remove-Item $Dst -Recurse -Force }
             Copy-Item $Src $Dst -Recurse -Force
         }
 

@@ -1,9 +1,13 @@
 ### 1.8.0a1 (build 22878, api 9, 2026-06-11)
+- Windows builds are now made with Visual Studio 2026 (platform toolset v145).
+  The bundled redist installers have been updated to match; if you get errors
+  running an updated build, install the bundled redist libs and try again.
 - Fully implemented asset packages (more on this soon)
 - Upgraded from SDL2 to SDL3.
 - Finally got rid of the weird square textures containing non-square contents
   split into two pieces. This was a long-obsolete artifact of targeting pvrtc
   texture compression which was limited to square dimensions.
+- Upgraded Windows builds from VS2022 to VS2026.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

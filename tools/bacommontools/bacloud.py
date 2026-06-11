@@ -866,6 +866,33 @@ class App:
         bearer = self._api_key or self._state.login_token
         return consume_via_ws(response, bearer=bearer, host=self._server)
 
+    def _servercmd_chained(
+        self, call: tuple[str, dict, bool], retry_window: float
+    ) -> ResponseData:
+        """Run a chained server command, retrying transient failures.
+
+        ``retry_window`` comes from the previous response's
+        ``retry_window_seconds``: when > 0 the server has declared this
+        chained step idempotent/safe to repeat, so any failure
+        (transport or server-reported) is retried with backoff until
+        the window elapses, then surfaced normally. A zero window
+        behaves exactly like a direct ``_servercmd`` call.
+        """
+        deadline = time.monotonic() + retry_window
+        while True:
+            try:
+                return self._servercmd(*call)
+            except CleanError:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0.0:
+                    raise
+                print(
+                    f'{Clr.YLW}Server hiccup; retrying...{Clr.RST}',
+                    file=sys.stderr,
+                    flush=True,
+                )
+                time.sleep(min(3.0, remaining))
+
     def run_interactive_command(self, cwd: str, args: list[str]) -> None:
         """Run a single user command to completion."""
         # pylint: disable=too-many-branches
@@ -878,10 +905,12 @@ class App:
 
         # Now talk to the server in a loop until there's nothing left to
         # do.
+        retry_window = 0.0
         while nextcall is not None:
             self._end_command_args = {}
-            response = self._servercmd(*nextcall)
+            response = self._servercmd_chained(nextcall, retry_window)
             nextcall = None
+            retry_window = 0.0
 
             # Phase 2: if the kickoff response carries ``stream_ws``,
             # drain the stream over WebSocket (basn-hosted). WS
@@ -918,6 +947,7 @@ class App:
                     # envelopes).
                     if response.end_command is not None:
                         nextcall = response.end_command
+                        retry_window = response.retry_window_seconds
                         for key, val in self._end_command_args.items():
                             nextcall[1][key] = val
                     continue
@@ -1009,6 +1039,7 @@ class App:
                 )
             if response.end_command is not None:
                 nextcall = response.end_command
+                retry_window = response.retry_window_seconds
                 for key, val in self._end_command_args.items():
                     nextcall[1][key] = val
 

@@ -568,6 +568,22 @@ class ResponseData:
     #: be useful when waiting for server progress in a loop).
     delay_seconds: Annotated[float, IOAttrs('d', store_default=False)] = 0.0
 
+    #: When > 0, the chained ``end_command`` this response carries is an
+    #: idempotent polling step the client may safely RETRY on failure
+    #: (transport errors and server-reported errors alike), with
+    #: backoff, for up to this many seconds before surfacing the
+    #: failure. Lets long polling loops (e.g. asset-package bundle
+    #: assembles) ride out transient proxy timeouts / server hiccups
+    #: instead of dying mid-flight. Servers must set this only on
+    #: chains where a repeat call is always safe; the cost of the
+    #: blanket any-failure retry policy is just that a genuine error
+    #: on such a chain surfaces after the window elapses rather than
+    #: instantly. Older clients ignore this field (no retry — the
+    #: behavior before it existed).
+    retry_window_seconds: Annotated[
+        float, IOAttrs('rw', store_default=False)
+    ] = 0.0
+
     #: If present, a token that should be stored client-side and passed
     #: with subsequent commands.
     login: Annotated[str | None, IOAttrs('l', store_default=False)] = None
