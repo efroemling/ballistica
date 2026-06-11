@@ -175,6 +175,10 @@ class AudioServer::ThreadSource_ : public Object {
   bool is_actually_playing_{};
   bool want_to_play_{};
   bool is_streamed_{};
+  /// Most recently requested positional state (as opposed to whatever
+  /// we've actually applied to the AL source; we override requests in
+  /// some cases such as pre-mixed or stereo sounds).
+  bool positional_{true};
   /// Whether we should be designated as "music" next time we play.
   bool is_music_{};
   /// Whether currently playing as music.
@@ -1486,11 +1490,37 @@ void AudioServer::ThreadSource_::SetLooping(bool loop) {
 #endif
 }
 
+#if BA_ENABLE_AUDIO
+// Warn (once per asset) that a positional play was requested on a
+// pre-mixed sound; such sounds always play listener-space.
+static void WarnPreMixedPositional(SoundAsset* sound) {
+  assert(g_base->InAudioThread());
+  if (sound->pre_mixed_positional_warned()) {
+    return;
+  }
+  sound->set_pre_mixed_positional_warned(true);
+  g_core->logging->Log(
+      LogName::kBaAudio, LogLevel::kWarning,
+      "Positional play requested for pre-mixed sound '" + sound->GetName()
+          + "'; pre-mixed sounds always play listener-space. "
+            "Playing non-positionally.");
+}
+#endif  // BA_ENABLE_AUDIO
+
 void AudioServer::ThreadSource_::SetPositional(bool p) {
 #if BA_ENABLE_AUDIO
+  positional_ = p;
   if (g_base->audio_server->using_null_device_
       || g_base->audio_server->suspended_
       || g_base->audio_server->shutting_down_) {
+    return;
+  }
+  // Deny positional requests on a playing pre-mixed sound (they always
+  // play listener-space; a request gets a once-per-asset warning).
+  if (p && is_actually_playing_ && source_sound_ != nullptr
+      && source_sound_->exists() && (**source_sound_).pre_mixed()
+      && !g_core->vr_mode()) {
+    WarnPreMixedPositional(source_sound_->get());
     return;
   }
   // TODO(ericf): Don't allow setting of positional on stereo sounds - we
@@ -1610,6 +1640,15 @@ void AudioServer::ThreadSource_::ExecPlay() {
   assert(!is_actually_playing_);
   CHECK_AL_ERROR;
 
+  // Pre-mixed sounds (authored mixes) always play listener-space
+  // regardless of channel count; a positional play request gets a
+  // once-per-asset warning and proceeds non-spatial. (Skip the warning
+  // in vr mode, where the engine itself repositions plays in space.)
+  bool pre_mixed = (**source_sound_).pre_mixed();
+  if (pre_mixed && positional_ && !g_core->vr_mode()) {
+    WarnPreMixedPositional(source_sound_->get());
+  }
+
   if (is_streamed_) {
     // Turn off looping on the source - the streamer handles looping for us.
     alSourcei(source_, AL_LOOPING, false);
@@ -1624,10 +1663,6 @@ void AudioServer::ThreadSource_::ExecPlay() {
     }
     audio_server_->streaming_sources_.push_back(this);
 
-    // Make sure stereo sounds aren't positional. This is default behavior
-    // on Mac/Win, but we enforce it for linux. (though currently linux
-    // stereo sounds play in mono... eww))
-
     bool do_normal = true;
     // In vr mode, play non-positional sounds positionally in space roughly
     // where the menu is.
@@ -1637,7 +1672,10 @@ void AudioServer::ThreadSource_::ExecPlay() {
       SetPosition(0.0f, 4.5f, -3.0f);
     }
 
-    if (do_normal) {
+    if (do_normal && (pre_mixed || !positional_)) {
+      // Streaming is a memory policy, not a spatialization one, so honor
+      // the requested positional state here just like the non-streamed
+      // path (pre-mixed sounds always play listener-space though).
       SetPositional(false);
       SetPosition(0, 0, 0);
     }
@@ -1650,10 +1688,10 @@ void AudioServer::ThreadSource_::ExecPlay() {
   } else {
     // Not streamed.
     //
-    // Make sure stereo sounds aren't positional. This is default behavior
-    // on Mac/Win, but we enforce it for linux. (though currently linux
-    // stereo sounds play in mono... eww))
-    if ((**source_sound_).format() == AL_FORMAT_STEREO16) {
+    // Make sure stereo and pre-mixed sounds aren't positional. For stereo
+    // this is default behavior on Mac/Win, but we enforce it for linux.
+    // (though currently linux stereo sounds play in mono... eww))
+    if ((**source_sound_).format() == AL_FORMAT_STEREO16 || pre_mixed) {
       SetPositional(false);
       SetPosition(0, 0, 0);
     }

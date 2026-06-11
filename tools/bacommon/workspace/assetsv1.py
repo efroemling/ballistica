@@ -136,6 +136,7 @@ class AssetsV1PathValsTypeID(Enum):
 
     TEX_V1 = 'tex_v1'
     STR_V1 = 'str_v1'
+    AUDIO_V1 = 'audio_v1'
 
 
 class AssetsV1PathVals(IOMultiType[AssetsV1PathValsTypeID]):
@@ -167,6 +168,9 @@ class AssetsV1PathVals(IOMultiType[AssetsV1PathValsTypeID]):
 
         if type_id is t.STR_V1:
             return AssetsV1PathValsStrV1
+
+        if type_id is t.AUDIO_V1:
+            return AssetsV1PathValsAudioV1
 
         # Important to make sure we provide all types.
         assert_never(type_id)
@@ -403,3 +407,64 @@ class AssetsV1PathValsStrV1(AssetsV1PathVals):
     @classmethod
     def get_type_id(cls) -> AssetsV1PathValsTypeID:
         return AssetsV1PathValsTypeID.STR_V1
+
+
+class AudioRole(Enum):
+    """A sound's channel/encode contract (asset-packages decision #25).
+
+    Names the *technical* contract, not a content category — "music"
+    deliberately does not exist as a build-time concept (volume routing
+    stays a runtime play-flag; streaming is a length-derived engine
+    policy).
+
+    - ``DEFAULT`` — spatialization-ready: downmixed to mono at encode
+      (OpenAL only spatializes mono; a hard requirement, not a size
+      optimization). The vast majority of sounds.
+    - ``PRE_MIXED`` — an authored mix: channels preserved (≤2) and the
+      sound always plays listener-space. The recipe stamps a
+      ``BA_ROLE=pre_mixed`` vorbis comment tag so the engine knows at
+      load time (channel count alone can't carry the bit — a mono
+      pre-mixed source stays mono). Music, plus any intentionally
+      stereo (or otherwise authored-mix) sound.
+    """
+
+    DEFAULT = 'default'
+    PRE_MIXED = 'pre_mixed'
+
+
+class AudioQuality(Enum):
+    """Per-sound authoring quality knob (asset-packages decision #25).
+
+    Mirrors the texture knob's LOW/DEFAULT/HIGH pattern. Defined from
+    day one as the escape hatch for content whose default encode budget
+    doesn't fit (e.g. a short pre-mixed UI sound sharing music's
+    bitrate), but nothing consumes it yet — the recipe carries it in
+    its cache key only, so wiring it up later rebuilds correctly.
+    """
+
+    LOW = 'low'
+    DEFAULT = 'default'
+    HIGH = 'high'
+
+
+@ioprepped
+@dataclass
+class AssetsV1PathValsAudioV1(AssetsV1PathVals):
+    """Path-specific values for an audio source in an assets_v1 workspace.
+
+    The per-sound authoring knobs (:class:`AudioRole`,
+    :class:`AudioQuality`) are module-level types in this module.
+    """
+
+    audio_role: Annotated[
+        AudioRole, IOAttrs('audio_role', store_default=False)
+    ] = AudioRole.DEFAULT
+
+    audio_quality: Annotated[
+        AudioQuality, IOAttrs('audio_quality', store_default=False)
+    ] = AudioQuality.DEFAULT
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AssetsV1PathValsTypeID:
+        return AssetsV1PathValsTypeID.AUDIO_V1

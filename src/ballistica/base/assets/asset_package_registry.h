@@ -95,6 +95,11 @@ class AssetPackageRegistry {
   auto LookupCubeMapTextureBucketId(const std::string& apverid) const
       -> std::string;
 
+  /// Audio analog of :meth:`LookupTextureBucketId`: the ``audio/...``
+  /// bucket id registered for ``apverid`` (decision #25). Empty if the
+  /// package isn't registered or has no audio bucket.
+  auto LookupAudioBucketId(const std::string& apverid) const -> std::string;
+
   /// Single chokepoint for "where is this CAS blob on disk?". Probes
   /// the writable CAS root (``<cache_dir>/assets/<aa>/<rest>``, where
   /// downloaded-on-the-fly blobs land) and falls through to the bundle

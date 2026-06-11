@@ -194,6 +194,13 @@ class Assets {
   /// isn't a CAS ref, the asset/part is absent, or in headless mode.
   auto FindCasCubeMapTexturePath(const std::string& name) -> std::string;
 
+  /// Audio analog of :meth:`FindCasTexturePartPath` (decision #25):
+  /// resolve a sound qualified-ref to its single ogg-vorbis CAS blob
+  /// (part ``"a"`` in the package's resolved ``audio/...`` bucket).
+  /// Returns ``""`` if the name isn't a CAS ref, the asset/part is
+  /// absent, or in headless mode.
+  auto FindCasSoundPath(const std::string& name) -> std::string;
+
  private:
   /// Resolve a qualified-ref name (``<apverid>:<asset_name>``) into a
   /// CAS blob path via :class:`AssetPackageRegistry`. Called from the

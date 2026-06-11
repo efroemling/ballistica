@@ -34,6 +34,17 @@ namespace ballistica::base {
 
 const int kReadBufferSize = 32768;  // 32 KB buffers
 
+// Decoded-PCM-size threshold above which a sound plays via the streaming
+// path instead of being fully decoded into a static buffer at preload.
+// Byte-based rather than duration-based since memory footprint is the
+// concern (stereo hits the same footprint at half the duration). 1.75 MB
+// is roughly 20s of mono or 10s of stereo at 16-bit 44.1kHz; it also
+// sits in the gap between our largest legacy non-music sound (crowdChant,
+// 1.64 MB decoded) and our smallest legacy music (charSelectMusic,
+// 2.18 MB decoded) with ~12% margin each way, reproducing the legacy
+// music-streams/sounds-preload classification exactly.
+const size_t kStreamDecodedSizeThreshold = 1792 * 1024;
+
 static auto CallbackRead(void* ptr, size_t size, size_t nmemb,
                          void* data_source) -> size_t {
   return fread(ptr, size, nmemb, static_cast<FILE*>(data_source));
@@ -164,6 +175,61 @@ static auto LoadOgg(const char* file_name, std::vector<char>* buffer,
   return !fallback;
 }
 
+// Probes an ogg's headers to classify how it should load: sounds whose
+// fully-decoded PCM size crosses our threshold play via the streaming
+// path, and a BA_ROLE=pre_mixed vorbis comment tag (stamped by the asset
+// pipeline on authored mixes) marks the sound as always-listener-space.
+// Returns false without logging if the file can't be opened or parsed;
+// the full load paths downstream own error reporting and fallbacks.
+static auto ProbeOgg(const char* file_name, bool* is_streamed, bool* pre_mixed)
+    -> bool {
+  *is_streamed = false;
+  *pre_mixed = false;
+
+  FILE* f = g_core->platform->FOpen(file_name, "rb");
+  if (f == nullptr) {
+    return false;
+  }
+
+  ov_callbacks callbacks;
+  callbacks.read_func = CallbackRead;
+  callbacks.seek_func = CallbackSeek;
+  callbacks.close_func = CallbackClose;
+  callbacks.tell_func = CallbackTell;
+
+  OggVorbis_File ogg_file;
+  if (ov_open_callbacks(f, &ogg_file, nullptr, 0, callbacks) != 0) {
+    fclose(f);
+    return false;
+  }
+
+  // We always decode to 16-bit samples, so decoded size is simply
+  // frames * channels * 2.
+  vorbis_info* p_info = ov_info(&ogg_file, -1);
+  ogg_int64_t pcm_frames = ov_pcm_total(&ogg_file, -1);
+  if (p_info != nullptr && p_info->channels > 0 && pcm_frames > 0) {
+    ogg_int64_t decoded_size = pcm_frames * p_info->channels * 2;
+    *is_streamed =
+        decoded_size > static_cast<ogg_int64_t>(kStreamDecodedSizeThreshold);
+  }
+
+  // Our pipeline stamps the tag with this exact casing, so a plain
+  // compare suffices (and stays portable; no strncasecmp on MSVC).
+  vorbis_comment* comment = ov_comment(&ogg_file, -1);
+  if (comment != nullptr) {
+    for (int i = 0; i < comment->comments; ++i) {
+      const char* entry = comment->user_comments[i];
+      if (entry != nullptr && strcmp(entry, "BA_ROLE=pre_mixed") == 0) {
+        *pre_mixed = true;
+        break;
+      }
+    }
+  }
+
+  ov_clear(&ogg_file);
+  return true;
+}
+
 static void LoadCachedOgg(const char* file_name, std::vector<char>* buffer,
                           ALenum* format, ALsizei* freq) {
   std::string sound_cache_dir =
@@ -271,17 +337,24 @@ auto SoundAsset::GetName() const -> std::string {
 void SoundAsset::DoPreload() {
 #if BA_ENABLE_AUDIO
 
-  // Its an ogg sound file.
-  // if it has 'music' in its name, we'll stream it;
-  // otherwise we load it in its entirety into our load-buffer.
-  if (strstr(file_name_full_.c_str(), "Music.ogg")) {
-    is_streamed_ = true;
-  } else if (strstr(file_name_full_.c_str(), ".ogg")) {
-    is_streamed_ = false;
-    LoadCachedOgg(file_name_full_.c_str(), &load_buffer_, &format_, &freq_);
-  } else {
+  if (!strstr(file_name_full_.c_str(), ".ogg")) {
     throw Exception("Unsupported sound file (needs to end in .ogg): '"
                     + file_name_full_ + "'");
+  }
+
+  // Probe the headers: long sounds (by decoded size) play via the
+  // streaming path; everything else gets fully decoded into our
+  // load-buffer here. Probe failures classify as non-streamed and fall
+  // through to the full load path, which owns error reporting and
+  // fallbacks.
+  ProbeOgg(file_name_full_.c_str(), &is_streamed_, &pre_mixed_);
+  g_core->logging->Log(LogName::kBaAudio, LogLevel::kDebug, [this] {
+    return "Classified sound '" + file_name_
+           + "' (streamed=" + std::to_string(is_streamed_)
+           + " pre_mixed=" + std::to_string(pre_mixed_) + ").";
+  });
+  if (!is_streamed_) {
+    LoadCachedOgg(file_name_full_.c_str(), &load_buffer_, &format_, &freq_);
   }
 #endif  // BA_ENABLE_AUDIO
 }

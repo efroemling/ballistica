@@ -31,6 +31,20 @@ class SoundAsset : public Asset {
   }
 #endif  // BA_ENABLE_AUDIO
   auto is_streamed() const { return is_streamed_; }
+
+  /// Whether this is an authored mix (BA_ROLE=pre_mixed vorbis comment
+  /// tag); such sounds always play listener-space.
+  auto pre_mixed() const { return pre_mixed_; }
+
+  /// Audio-server-side flag for warning once per asset when a positional
+  /// play is requested on a pre-mixed sound (audio thread only).
+  auto pre_mixed_positional_warned() const {
+    return pre_mixed_positional_warned_;
+  }
+  void set_pre_mixed_positional_warned(bool val) {
+    pre_mixed_positional_warned_ = val;
+  }
+
   const auto& file_name() const { return file_name_; }
   const auto& file_name_full() const { return file_name_full_; }
   void UpdatePlayTime();
@@ -40,6 +54,8 @@ class SoundAsset : public Asset {
   std::string file_name_;
   std::string file_name_full_;
   bool is_streamed_{};
+  bool pre_mixed_{};
+  bool pre_mixed_positional_warned_{};
 #if BA_ENABLE_AUDIO
   ALuint buffer_{};
   ALenum format_{};

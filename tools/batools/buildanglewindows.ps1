@@ -91,13 +91,32 @@ try {
     & "$VcpkgDir\bootstrap-vcpkg.bat" -disableMetrics
     if ($LASTEXITCODE -ne 0) { throw "vcpkg bootstrap failed." }
 
+    # Set up overlay triplets: identical to the stock ones except zlib is
+    # linked statically. Our staged ANGLE DLLs must not carry an external
+    # zlib runtime dependency — we ship only libEGL.dll/libGLESv2.dll, and
+    # vcpkg's zlib DLL name is not stable (it changed zlib1.dll -> z.dll in
+    # 2026, which broke shipped builds; the old name was only ever
+    # accidentally satisfied by the Python distribution's zlib1.dll).
+    $TripletDir = Join-Path $TempDir 'triplets'
+    New-Item -ItemType Directory -Path $TripletDir -Force | Out-Null
+    foreach ($triplet in $Triplets) {
+        $name = $triplet.Name
+        Copy-Item "$VcpkgDir\triplets\$name.cmake" "$TripletDir\$name.cmake"
+        Add-Content "$TripletDir\$name.cmake" @"
+
+if(PORT STREQUAL "zlib")
+    set(VCPKG_LIBRARY_LINKAGE static)
+endif()
+"@
+    }
+
     foreach ($triplet in $Triplets) {
         $name = $triplet.Name
         Write-Host ""
         Write-Host "=== Building ANGLE for $name ==="
         Write-Host ""
 
-        & "$VcpkgDir\vcpkg.exe" install "angle:$name" --no-binarycaching --no-print-usage --clean-after-build
+        & "$VcpkgDir\vcpkg.exe" install "angle:$name" --overlay-triplets "$TripletDir" --no-binarycaching --no-print-usage --clean-after-build
         if ($LASTEXITCODE -ne 0) { throw "ANGLE build failed for $name." }
 
         $InstallDir = "$VcpkgDir\installed\$name"

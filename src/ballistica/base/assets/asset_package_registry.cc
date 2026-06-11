@@ -109,6 +109,11 @@ auto AssetPackageRegistry::LookupCubeMapTextureBucketId(
   return LookupBucketIdWithPrefix_(apverid, "cube_map_textures/");
 }
 
+auto AssetPackageRegistry::LookupAudioBucketId(const std::string& apverid) const
+    -> std::string {
+  return LookupBucketIdWithPrefix_(apverid, "audio/");
+}
+
 auto AssetPackageRegistry::CasBlobPath(const std::string& hash) const
     -> std::string {
   // sha256 hex is 64 chars; bail on anything shorter than the

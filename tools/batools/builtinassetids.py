@@ -138,7 +138,9 @@ def _pascal_case(segment: str) -> str:
 _FIXED_BUCKET_KIND: dict[str, AssetKind] = {
     'cube_map_textures': AssetKind.CUBE_MAP_TEXTURE,
     'meshes': AssetKind.MESH,
-    'sounds': AssetKind.SOUND,
+    # All sounds live in one ``audio/<profile>.<tier>`` bucket
+    # (decision #25).
+    'audio': AssetKind.SOUND,
 }
 
 # Bucket-id heads that contribute no entries to the four asset enums.

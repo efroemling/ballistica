@@ -1414,19 +1414,35 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
 
 auto Assets::FindAssetFileCas_(FileType type, const std::string& name,
                                size_t colon_pos) -> std::string {
-  // v1: only textures + cube maps are CAS-routed. Other asset
-  // categories land here as their buckets come online (strings, audio,
-  // meshes, etc.).
-  if (type != FileType::kTexture && type != FileType::kCubeMapTexture) {
-    throw Exception("CAS asset refs only support textures in v1: '" + name
-                    + "'");
+  // Textures, cube maps, and sounds are CAS-routed so far. Other asset
+  // categories land here as their buckets come online (strings, meshes,
+  // etc.).
+  if (type != FileType::kTexture && type != FileType::kCubeMapTexture
+      && type != FileType::kSound) {
+    throw Exception("CAS asset refs not yet supported for this asset type: '"
+                    + name + "'");
   }
 
-  // Headless builds use the NULL texture profile; they don't actually
-  // sample image bytes. Match the legacy headless short-circuit and
-  // return a dummy path so the renderer-stub path is consistent.
+  // Headless builds use the NULL profiles; they don't actually load
+  // texture/audio bytes. Match the legacy headless short-circuits and
+  // return type-appropriate dummy paths so the stub paths stay
+  // consistent.
   if (g_core->HeadlessMode()) {
+    if (type == FileType::kSound) {
+      return "headless_dummy_path.sound";
+    }
     return "headless_dummy_path.nop";
+  }
+
+  if (type == FileType::kSound) {
+    // Sounds are a single ogg-vorbis blob under part 'a' in the
+    // package's audio bucket (decision #25).
+    auto sound_path = FindCasSoundPath(name);
+    if (sound_path.empty()) {
+      throw Exception("Sound asset not found in package: '" + name
+                      + "' (part=a).");
+    }
+    return sound_path;
   }
 
   if (type == FileType::kCubeMapTexture) {
@@ -1521,6 +1537,41 @@ auto Assets::FindCasCubeMapTexturePath(const std::string& name) -> std::string {
 
   auto hash =
       package_registry_.LookupAssetHash(apverid, bucket_id, logical_path, "t");
+  if (hash.empty()) {
+    return "";
+  }
+  return package_registry_.CasBlobPath(hash);
+}
+
+auto Assets::FindCasSoundPath(const std::string& name) -> std::string {
+  assert(g_base->InLogicThread());
+
+  auto colon_pos = name.find(':');
+  if (colon_pos == std::string::npos) {
+    return "";
+  }
+
+  // Headless builds use the NULL audio profile and never load audio
+  // bytes; nothing to resolve here.
+  if (g_core->HeadlessMode()) {
+    return "";
+  }
+
+  std::string apverid = name.substr(0, colon_pos);
+  std::string asset_name = name.substr(colon_pos + 1);
+
+  // Mirror of the texture lookups above: find the audio bucket THIS
+  // package actually resolved to (decision #25; same per-package
+  // flavor-tracking rationale). All audio profiles ship a single
+  // ``.ogg`` blob per sound under part 'a'.
+  std::string bucket_id = package_registry_.LookupAudioBucketId(apverid);
+  if (bucket_id.empty()) {
+    return "";
+  }
+  std::string logical_path = "ba_data/audio/" + asset_name + ".ogg";
+
+  auto hash =
+      package_registry_.LookupAssetHash(apverid, bucket_id, logical_path, "a");
   if (hash.empty()) {
     return "";
   }
