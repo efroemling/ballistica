@@ -28,6 +28,7 @@
 #include <cstdio>
 #include <cstring>
 #include <functional>
+#include <iterator>
 #include <list>
 #include <mutex>
 #include <string>
@@ -183,7 +184,31 @@ auto PlatformWindows::FormatWinStackTraceForDisplay(WinStackTrace* stack_trace)
     // Docs say to do this only once.
     if (!win_sym_inited_) {
       win_sym_process_ = GetCurrentProcess();
-      SymInitialize(win_sym_process_, NULL, TRUE);
+
+      // Load line-number info along with symbols (not on by default)
+      // and don't pop system error dialogs over bad symbol files.
+      SymSetOptions(SymGetOptions() | SYMOPT_LOAD_LINES
+                    | SYMOPT_FAIL_CRITICAL_ERRORS);
+
+      // Use an explicit symbol search path of exe-dir + cwd. The
+      // default (passing NULL) covers only cwd + _NT_SYMBOL_PATH and
+      // NOT the directory containing the executable - which is exactly
+      // where 'make prefab-windows-symbols' drops fetched PDBs. Without
+      // this, a .pdb sitting next to the exe is only found when the
+      // process happens to be launched from that directory.
+      std::wstring search_path{L"."};
+      wchar_t exe_path[4096];
+      auto exe_path_len =
+          GetModuleFileNameW(nullptr, exe_path, std::size(exe_path));
+      if (exe_path_len > 0 && exe_path_len < std::size(exe_path)) {
+        std::wstring exe_dir{exe_path};
+        auto slashpos = exe_dir.find_last_of(L"\\/");
+        if (slashpos != std::wstring::npos && slashpos > 0) {
+          exe_dir.resize(slashpos);
+          search_path = exe_dir + L";" + search_path;
+        }
+      }
+      SymInitializeW(win_sym_process_, search_path.c_str(), TRUE);
       win_sym_inited_ = true;
     }
 

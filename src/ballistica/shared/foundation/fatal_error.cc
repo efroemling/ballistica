@@ -54,7 +54,7 @@ void FatalErrorHandling::ReportFatalError(const std::string& message,
   // they aren't silently lost along with whatever context they'd
   // provide.
   if (g_core && g_core->python) {
-    g_core->python->DrainEarlyLogsToStderr();
+    g_core->python->DrainHeldLogsToStderr();
   }
 
   // Our main goal here varies based off whether we are an unmodified

@@ -6,7 +6,10 @@
 #include <marshal.h>
 
 #include <cstdio>
+#include <list>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "ballistica/core/generated/python_modules_monolithic.h"
@@ -262,6 +265,11 @@ void CorePython::FinalizePython() {
   auto pre_finalize_result{objs().Get(ObjID::kBaEnvPreFinalizeCall).Call()};
   assert(pre_finalize_result.exists() && pre_finalize_result.get() == Py_None);
 
+  // The async log-delivery thread can't safely talk to Python once
+  // finalization begins; deliver anything still queued and park it
+  // (subsequent C++ log calls fall back to stderr).
+  ShutdownLogDelivery_();
+
   auto result{Py_FinalizeEx()};
 
   if (result != 0) {
@@ -359,11 +367,11 @@ void CorePython::EnablePythonLoggingCalls() {
   assert(objs().Exists(ObjID::kEmitHeldLogCall));
 
   // If the caller plans to bring up a Python LogHandler later (the full
-  // app path), keep buffering for now; OnLogHandlerReady() will do the
-  // flush once the handler is actually wired up. Otherwise flip now so
-  // log calls flow straight through to Python's bare logging tree.
+  // app path), keep queueing for now; OnLogHandlerReady() will begin
+  // delivery once the handler is actually wired up. Otherwise begin now
+  // so log calls flow through to Python's bare logging tree.
   if (!g_core->core_config().expect_log_handler_setup) {
-    FlushEarlyLogs_();
+    BeginPythonLogDelivery_();
   }
 }
 
@@ -375,65 +383,154 @@ void CorePython::OnLogHandlerReady() {
   // bypass it entirely, which don't exist today; guard just in case.
   assert(objs().Exists(ObjID::kEmitHeldLogCall));
   auto gil{Python::ScopedInterpreterLock()};
-  FlushEarlyLogs_();
+  BeginPythonLogDelivery_();
 }
 
-void CorePython::FlushEarlyLogs_() {
+void CorePython::BeginPythonLogDelivery_() {
   // Caller must hold the GIL.
   assert(Python::HaveGIL());
-  std::scoped_lock lock(early_log_lock_);
-  python_logging_calls_enabled_ = true;
-  for (auto&& entry : early_logs_) {
-    auto logname = std::get<0>(entry);
-    auto loglevel = std::get<1>(entry);
-    const auto& msg = std::get<2>(entry);
-    auto created = std::get<3>(entry);
 
-    auto lognameidx = static_cast<size_t>(logname);
-    ObjID logger_objid;
-    if (lognameidx >= std::size(kLoggerEntries)) {
-      logger_objid = ObjID::kLoggerRoot;
-      fprintf(stderr, "Unexpected LogName %d in held log.\n",
-              static_cast<int>(logname));
-    } else {
-      logger_objid = kLoggerEntries[lognameidx].logger_id;
-    }
-
-    ObjID loglevelobjid;
-    switch (loglevel) {
-      case LogLevel::kDebug:
-        loglevelobjid = ObjID::kLoggingLevelDebug;
-        break;
-      case LogLevel::kInfo:
-        loglevelobjid = ObjID::kLoggingLevelInfo;
-        break;
-      case LogLevel::kWarning:
-        loglevelobjid = ObjID::kLoggingLevelWarning;
-        break;
-      case LogLevel::kError:
-        loglevelobjid = ObjID::kLoggingLevelError;
-        break;
-      case LogLevel::kCritical:
-        loglevelobjid = ObjID::kLoggingLevelCritical;
-        break;
-      default:
-        loglevelobjid = ObjID::kLoggingLevelInfo;
-        fprintf(stderr, "Unexpected LogLevel %d in held log.\n",
-                static_cast<int>(loglevel));
-        break;
-    }
-    PythonRef args(
-        Py_BuildValue("(OOsd)", objs().Get(logger_objid).get(),
-                      objs().Get(loglevelobjid).get(), msg.c_str(), created),
-        PythonRef::kSteal);
-    objs().Get(ObjID::kEmitHeldLogCall).Call(args);
+  // Flip on Python-side delivery and grab whatever has queued up.
+  std::list<HeldLogEntry_> backlog;
+  {
+    std::scoped_lock lock(held_log_lock_);
+    assert(!python_logging_calls_enabled_);
+    python_logging_calls_enabled_ = true;
+    backlog.swap(held_logs_);
   }
-  early_logs_.clear();
+
+  // Replay the backlog inline (we hold the GIL) so that, by the time we
+  // return, everything logged before this moment has gone through
+  // Python's logging system in order. Anything logged *during* this
+  // replay queues up behind us and stays queued until the delivery
+  // thread spins up below, preserving overall ordering.
+  for (auto&& entry : backlog) {
+    EmitHeldLog_(entry);
+  }
+
+  // Fire up async delivery for everything from here on out.
+  {
+    std::scoped_lock lock(held_log_lock_);
+    assert(!held_log_delivery_started_);
+    held_log_delivery_started_ = true;
+  }
+  std::thread(&CorePython::LogDeliveryThreadMain_, this).detach();
 }
 
-void CorePython::DrainEarlyLogsToStderr() {
-  std::scoped_lock lock(early_log_lock_);
-  for (auto&& entry : early_logs_) {
+void CorePython::EmitHeldLog_(const HeldLogEntry_& entry) {
+  assert(Python::HaveGIL());
+  auto logname = std::get<0>(entry);
+  auto loglevel = std::get<1>(entry);
+  const auto& msg = std::get<2>(entry);
+  auto created = std::get<3>(entry);
+
+  auto lognameidx = static_cast<size_t>(logname);
+  ObjID logger_objid;
+  if (lognameidx >= std::size(kLoggerEntries)) {
+    logger_objid = ObjID::kLoggerRoot;
+    fprintf(stderr, "Unexpected LogName %d in held log.\n",
+            static_cast<int>(logname));
+  } else {
+    logger_objid = kLoggerEntries[lognameidx].logger_id;
+  }
+
+  ObjID loglevelobjid;
+  switch (loglevel) {
+    case LogLevel::kDebug:
+      loglevelobjid = ObjID::kLoggingLevelDebug;
+      break;
+    case LogLevel::kInfo:
+      loglevelobjid = ObjID::kLoggingLevelInfo;
+      break;
+    case LogLevel::kWarning:
+      loglevelobjid = ObjID::kLoggingLevelWarning;
+      break;
+    case LogLevel::kError:
+      loglevelobjid = ObjID::kLoggingLevelError;
+      break;
+    case LogLevel::kCritical:
+      loglevelobjid = ObjID::kLoggingLevelCritical;
+      break;
+    default:
+      loglevelobjid = ObjID::kLoggingLevelInfo;
+      fprintf(stderr, "Unexpected LogLevel %d in held log.\n",
+              static_cast<int>(loglevel));
+      break;
+  }
+  PythonRef args(
+      Py_BuildValue("(OOsd)", objs().Get(logger_objid).get(),
+                    objs().Get(loglevelobjid).get(), msg.c_str(), created),
+      PythonRef::kSteal);
+  objs().Get(ObjID::kEmitHeldLogCall).Call(args);
+}
+
+void CorePython::LogDeliveryThreadMain_() {
+  assert(g_core && g_core->platform);
+  g_core->platform->SetCurrentThreadName("ballistica log-delivery");
+  while (true) {
+    std::list<HeldLogEntry_> batch;
+    {
+      std::unique_lock lock(held_log_lock_);
+      held_log_cv_.wait(lock, [this] {
+        return !held_logs_.empty() || held_log_delivery_parked_;
+      });
+      if (held_log_delivery_parked_) {
+        // ShutdownLogDelivery_ delivered everything queued at park
+        // time itself; anything still here raced in just after. Send
+        // it via stderr (Python may no longer be usable) and bow out.
+        for (auto&& entry : held_logs_) {
+          fprintf(stderr, "[held-log] %s\n", std::get<2>(entry).c_str());
+        }
+        held_logs_.clear();
+        return;
+      }
+      batch.swap(held_logs_);
+    }
+
+    // Modular-build safety: there the interpreter belongs to someone
+    // else and can finalize without our monolithic shutdown hook ever
+    // running; never try to take the GIL once that starts. (A finalize
+    // beginning *between* this check and the GIL acquire below can
+    // still catch us; Python answers that by permanently parking this
+    // thread - losing the batch in hand but nothing unsafe.)
+    if (Py_IsFinalizing()) {
+      for (auto&& entry : batch) {
+        fprintf(stderr, "[held-log] %s\n", std::get<2>(entry).c_str());
+      }
+      continue;
+    }
+
+    Python::ScopedInterpreterLock gil;
+    for (auto&& entry : batch) {
+      EmitHeldLog_(entry);
+    }
+  }
+}
+
+void CorePython::ShutdownLogDelivery_() {
+  // We deliver the final batch through Python ourself, so the GIL is
+  // required.
+  assert(Python::HaveGIL());
+  std::list<HeldLogEntry_> batch;
+  {
+    std::scoped_lock lock(held_log_lock_);
+    held_log_delivery_parked_ = true;
+    batch.swap(held_logs_);
+    held_log_cv_.notify_one();
+  }
+  // Narrow race note: the delivery thread may have just swapped out a
+  // batch of its own and be blocked acquiring the GIL we hold; once
+  // finalization begins Python permanently parks it and that batch is
+  // lost to Python-side handlers. Anything that matters at shutdown is
+  // logged well before FinalizePython runs, so we accept that.
+  for (auto&& entry : batch) {
+    EmitHeldLog_(entry);
+  }
+}
+
+void CorePython::DrainHeldLogsToStderr() {
+  std::scoped_lock lock(held_log_lock_);
+  for (auto&& entry : held_logs_) {
     auto loglevel = std::get<1>(entry);
     const auto& msg = std::get<2>(entry);
     fprintf(stderr, "[held-log] %s\n", msg.c_str());
@@ -441,7 +538,7 @@ void CorePython::DrainEarlyLogsToStderr() {
       g_core->platform->EmitPlatformLog("root", loglevel, msg);
     }
   }
-  early_logs_.clear();
+  held_logs_.clear();
 }
 
 void CorePython::ImportPythonObjs() {
@@ -656,60 +753,32 @@ void CorePython::MonolithicModeBaEnvConfigure() {
 
 void CorePython::LoggingCall(LogName logname, LogLevel loglevel,
                              const char* msg) {
-  // If we're not yet sending logs to Python, store this one away (along
-  // with a wall-clock capture time) until we are. On the normal path
-  // these will be replayed through Python logging via
-  // FlushEarlyLogs_()/emit_held_log with their original timestamps. On
-  // abnormal-exit paths FatalErrorHandling::DrainHeldLogs_() dumps them
-  // to stderr so nothing is silently lost.
-  if (!python_logging_calls_enabled_) {
-    auto captured = Platform::TimeSinceEpochSeconds();
-    std::scoped_lock lock(early_log_lock_);
-    early_logs_.emplace_back(logname, loglevel, msg, captured);
-    return;
+  // Delivery to Python is asynchronous: capture the message plus its
+  // wall-clock time and queue it; the dedicated delivery thread ships
+  // queued messages to Python (with their captured timestamps) within
+  // milliseconds. This keeps log calls cheap and - more importantly -
+  // safe from any context: we never block on the GIL here, so logging
+  // is allowed even under leaf locks such as Asset locks where
+  // acquiring the GIL risks deadlock (see the lock-ordering invariant
+  // on Asset::Lock). Before BeginPythonLogDelivery_ runs, messages
+  // simply accumulate and get replayed at that point; on abnormal-exit
+  // paths FatalErrorHandling drains pending messages to stderr
+  // (DrainHeldLogsToStderr) so nothing is silently lost.
+  auto captured = Platform::TimeSinceEpochSeconds();
+  {
+    std::scoped_lock lock(held_log_lock_);
+    if (!held_log_delivery_parked_) {
+      held_logs_.emplace_back(logname, loglevel, msg, captured);
+      held_log_cv_.notify_one();
+      return;
+    }
   }
-
-  // Make sure we're good to go from any thread.
-  Python::ScopedInterpreterLock lock;
-
-  // Look up the logger's .log method via the kLoggerEntries table. The
-  // ordering invariant (entries[i].logname == LogName(i)) is enforced by
-  // UpdateInternalLoggerLevels, so a direct index is safe.
-  auto lognameidx{static_cast<size_t>(logname)};
-  ObjID logcallobj;
-  if (lognameidx >= std::size(kLoggerEntries)) {
-    logcallobj = ObjID::kLoggerRootLogCall;
-    fprintf(stderr, "Unexpected LogName %d\n", static_cast<int>(logname));
-  } else {
-    logcallobj = kLoggerEntries[lognameidx].logcall_id;
-    assert(kLoggerEntries[lognameidx].logname == logname);
+  // Parked means the interpreter is going (or has gone) down; emit
+  // directly to stderr and the platform log instead.
+  fprintf(stderr, "[held-log] %s\n", msg);
+  if (g_core && g_core->platform) {
+    g_core->platform->EmitPlatformLog("root", loglevel, msg);
   }
-
-  ObjID loglevelobjid;
-  switch (loglevel) {
-    case LogLevel::kDebug:
-      loglevelobjid = ObjID::kLoggingLevelDebug;
-      break;
-    case LogLevel::kInfo:
-      loglevelobjid = ObjID::kLoggingLevelInfo;
-      break;
-    case LogLevel::kWarning:
-      loglevelobjid = ObjID::kLoggingLevelWarning;
-      break;
-    case LogLevel::kError:
-      loglevelobjid = ObjID::kLoggingLevelError;
-      break;
-    case LogLevel::kCritical:
-      loglevelobjid = ObjID::kLoggingLevelCritical;
-      break;
-    default:
-      loglevelobjid = ObjID::kLoggingLevelInfo;
-      fprintf(stderr, "Unexpected LogLevel %d\n", static_cast<int>(loglevel));
-      break;
-  }
-  PythonRef args(Py_BuildValue("(Os)", objs().Get(loglevelobjid).get(), msg),
-                 PythonRef::kSteal);
-  objs().Get(logcallobj).Call(args);
 }
 
 auto CorePython::WasModularMainCalled() -> bool {
