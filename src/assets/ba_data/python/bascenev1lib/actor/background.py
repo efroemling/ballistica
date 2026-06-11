@@ -10,6 +10,7 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -39,7 +40,7 @@ class Background(bs.Actor):
                 delegate=self,
                 attrs={
                     'fill_screen': True,
-                    'texture': bs.gettexture('bg'),
+                    'texture': stdassets.textures.bg,
                     'tilt_translate': -0.3,
                     'has_alpha_channel': False,
                     'color': (1, 1, 1),
@@ -53,7 +54,7 @@ class Background(bs.Actor):
                     loop=False,
                 )
             if show_logo:
-                logo_texture = bs.gettexture('logo')
+                logo_texture = stdassets.textures.logo
                 logo_mesh = bs.getmesh('logo')
                 logo_mesh_transparent = bs.getmesh('logoTransparent')
                 self.logo = bs.newnode(

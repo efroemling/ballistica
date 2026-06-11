@@ -18,10 +18,13 @@ namespace ballistica::base {
 // Vulkan format constants we recognize. Just the ones the asset-package
 // recipes emit today; expand as new TextureProfile variants come online.
 static constexpr uint32_t kVkFormatR8G8B8A8SRGB = 43;
-static constexpr uint32_t kVkFormatBC7SRGBBlock = 146;      // DESKTOP_V1
-static constexpr uint32_t kVkFormatASTC4x4SRGBBlock = 158;  // MOBILE_V1
-static constexpr uint32_t kVkFormatASTC6x6SRGBBlock = 166;  // MOBILE_V1
-static constexpr uint32_t kVkFormatASTC8x8SRGBBlock = 172;  // MOBILE_V1
+static constexpr uint32_t kVkFormatBC7SRGBBlock = 146;        // DESKTOP_V1
+static constexpr uint32_t kVkFormatASTC4x4SRGBBlock = 158;    // MOBILE_V1
+static constexpr uint32_t kVkFormatASTC5x5SRGBBlock = 162;    // MOBILE_V1
+static constexpr uint32_t kVkFormatASTC6x6SRGBBlock = 166;    // MOBILE_V1
+static constexpr uint32_t kVkFormatASTC8x8SRGBBlock = 172;    // MOBILE_V1
+static constexpr uint32_t kVkFormatASTC10x10SRGBBlock = 180;  // MOBILE_V1
+static constexpr uint32_t kVkFormatASTC12x12SRGBBlock = 184;  // MOBILE_V1
 
 // Translate a ``vkFormat`` to our engine's ``TextureFormat`` enum.
 // Throws on anything unsupported so the caller surfaces a clear error.
@@ -38,6 +41,12 @@ static auto VkFormatToInternal(uint32_t vk_format, const std::string& file_name)
       return TextureFormat::kASTC_6x6;
     case kVkFormatASTC8x8SRGBBlock:
       return TextureFormat::kASTC_8x8;
+    case kVkFormatASTC5x5SRGBBlock:
+      return TextureFormat::kASTC_5x5;
+    case kVkFormatASTC10x10SRGBBlock:
+      return TextureFormat::kASTC_10x10;
+    case kVkFormatASTC12x12SRGBBlock:
+      return TextureFormat::kASTC_12x12;
     default:
       throw Exception("Unsupported KTX2 vkFormat " + std::to_string(vk_format)
                       + " in \"" + file_name + "\".");

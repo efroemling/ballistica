@@ -12,9 +12,15 @@ from typing import TYPE_CHECKING, assert_never, override
 import bacommon.cloud
 import bacommon.classic
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
+
+
+def _tex(name: str) -> str:
+    """Qualified stdassets ref for a button image texture."""
+    return f'{stdassets.__asset_package__}:textures/{name}'
 
 
 @dataclass
@@ -89,14 +95,14 @@ class GetTokensWindow(bui.MainWindow):
                 color=ycolor,
                 imgdefs=[
                     _ImgDef(
-                        'tokens1',
+                        _tex('tokens1'),
                         pos=(-3, 85),
                         size=(172, 172),
                         opacity=1.0,
                         draw_controller_mult=0.5,
                     ),
                     _ImgDef(
-                        'windowBottomCap',
+                        _tex('window_bottom_cap'),
                         pos=(1.5, 4),
                         size=(bwidthstd * 0.960, 100),
                         color=bcapcol1,
@@ -134,14 +140,14 @@ class GetTokensWindow(bui.MainWindow):
                 color=ycolor,
                 imgdefs=[
                     _ImgDef(
-                        'tokens2',
+                        _tex('tokens2'),
                         pos=(-3, 85),
                         size=(172, 172),
                         opacity=1.0,
                         draw_controller_mult=0.5,
                     ),
                     _ImgDef(
-                        'windowBottomCap',
+                        _tex('window_bottom_cap'),
                         pos=(1.5, 4),
                         size=(bwidthstd * 0.960, 100),
                         color=bcapcol1,
@@ -179,14 +185,14 @@ class GetTokensWindow(bui.MainWindow):
                 color=ycolor,
                 imgdefs=[
                     _ImgDef(
-                        'tokens3',
+                        _tex('tokens3'),
                         pos=(-3, 85),
                         size=(172, 172),
                         opacity=1.0,
                         draw_controller_mult=0.5,
                     ),
                     _ImgDef(
-                        'windowBottomCap',
+                        _tex('window_bottom_cap'),
                         pos=(1.5, 4),
                         size=(bwidthstd * 0.960, 100),
                         color=bcapcol1,
@@ -224,14 +230,14 @@ class GetTokensWindow(bui.MainWindow):
                 color=ycolor,
                 imgdefs=[
                     _ImgDef(
-                        'tokens4',
+                        _tex('tokens4'),
                         pos=(-3, 85),
                         size=(172, 172),
                         opacity=1.0,
                         draw_controller_mult=0.5,
                     ),
                     _ImgDef(
-                        'windowBottomCap',
+                        _tex('window_bottom_cap'),
                         pos=(1.5, 4),
                         size=(bwidthstd * 0.960, 100),
                         color=bcapcol1,
@@ -269,13 +275,13 @@ class GetTokensWindow(bui.MainWindow):
                 color=pcolor,
                 imgdefs=[
                     _ImgDef(
-                        'goldPass',
+                        _tex('gold_pass'),
                         pos=(-7, 102),
                         size=(312, 156),
                         draw_controller_mult=0.3,
                     ),
                     _ImgDef(
-                        'windowBottomCap',
+                        _tex('window_bottom_cap'),
                         pos=(8, 4),
                         size=(bwidthwide * 0.923, 116),
                         color=(0.25, 0.12, 0.15),

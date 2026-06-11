@@ -17,6 +17,7 @@ from collections import deque
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 from bascenev1 import builtinassets
 
 from bascenev1lib.actor.spaz import Spaz
@@ -615,10 +616,10 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self._issued_warning = False
         self._map_type = Rampage
         self._map_type.preload()
-        self._jump_button_tex = bs.gettexture('buttonJump')
-        self._pick_up_button_tex = bs.gettexture('buttonPickUp')
-        self._bomb_button_tex = bs.gettexture('buttonBomb')
-        self._punch_button_tex = bs.gettexture('buttonPunch')
+        self._jump_button_tex = stdassets.textures.button_jump
+        self._pick_up_button_tex = stdassets.textures.button_pick_up
+        self._bomb_button_tex = stdassets.textures.button_bomb
+        self._punch_button_tex = stdassets.textures.button_punch
         self._r = 'tutorial'
         self._have_skipped = False
         self.stick_image_position_x = self.stick_image_position_y = 0.0
@@ -753,7 +754,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self.punch_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('buttonPunch'),
+                'texture': stdassets.textures.button_punch,
                 'absolute_scale': True,
                 'vr_depth': -20,
                 'position': p,
@@ -766,7 +767,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self.bomb_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('buttonBomb'),
+                'texture': stdassets.textures.button_bomb,
                 'absolute_scale': True,
                 'vr_depth': -20,
                 'position': p,
@@ -781,7 +782,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self.pickup_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('buttonPickUp'),
+                'texture': stdassets.textures.button_pick_up,
                 'absolute_scale': True,
                 'vr_depth': -20,
                 'position': p,

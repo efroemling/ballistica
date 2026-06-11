@@ -934,3 +934,17 @@ def cst_test() -> None:
         f.write(modified_tree.code)
 
     print('Success!')
+
+
+def prefab_symbols_fetch() -> None:
+    """Fetch debug symbols for the Windows prefab binaries present.
+
+    Looks up symbols by each binary's content hash from the master
+    server's recent-build archives and drops the .pdb next to its exe,
+    after which native stack traces in fatal-error output come out
+    fully symbolicated. Symbols are retained for recent builds only.
+    Honors ``BA_FLEET`` for developer setups (default prod).
+    """
+    from batools.prefabsymbols import fetch_prefab_symbols
+
+    fetch_prefab_symbols()

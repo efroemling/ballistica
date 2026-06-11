@@ -8,6 +8,7 @@ import copy
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -142,7 +143,7 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
                 position=(50, v),
                 label=bui.Lstr(resource=f'{self._r}.useMusicFileText'),
                 on_activate_call=self._on_music_file_press,
-                icon=bui.gettexture('file'),
+                icon=stdassets.textures.file,
             )
             if current_entry_type == 'musicFile':
                 bui.containerwidget(edit=self._root_widget, selected_child=btn)
@@ -155,7 +156,7 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
                 position=(50, v),
                 label=bui.Lstr(resource=f'{self._r}.useMusicFolderText'),
                 on_activate_call=self._on_music_folder_press,
-                icon=bui.gettexture('folder'),
+                icon=stdassets.textures.folder,
                 icon_color=(1.1, 0.8, 0.2),
             )
             if current_entry_type == 'musicFolder':

@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -27,8 +28,8 @@ class SoundtrackEditWindow(bui.MainWindow):
 
         appconfig = bui.app.config
         self._r = 'editSoundtrackWindow'
-        self._folder_tex = bui.gettexture('folder')
-        self._file_tex = bui.gettexture('file')
+        self._folder_tex = stdassets.textures.folder
+        self._file_tex = stdassets.textures.file
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         self._width = 1200 if uiscale is bui.UIScale.SMALL else 648

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 from bascenev1lib.gameutils import SharedObjects
 
@@ -99,7 +100,7 @@ class FlagFactory:
             ),
         )
 
-        self.flag_texture = bs.gettexture('flagColor')
+        self.flag_texture = stdassets.textures.flag_color
 
     @classmethod
     def get(cls) -> FlagFactory:

@@ -1138,6 +1138,16 @@ def _writeback_wrapper(projroot: Path, pin: Pin, new_apverid: str) -> None:
     """
     assert pin.wrapper_type is not None
     content = _fetch_wrapper(projroot, new_apverid, pin.wrapper_type)
+    # Big packages overflow pylint's module-line budget and asset names
+    # can collide with its disallowed-name list ('bar'), so widen the
+    # generated header's suppressions until the server generator emits
+    # these itself (followup filed there).
+    content = content.replace(
+        '# pylint: disable=too-many-public-methods, useless-suppression',
+        '# pylint: disable=too-many-public-methods, too-many-lines'
+        '\n# pylint: disable=disallowed-name, useless-suppression',
+        1,
+    )
     # Land it format-clean: the server generator doesn't guarantee our
     # line-length rules (a long asset path can overflow), and the
     # on-disk copy is always formatted, so formatting first also keeps

@@ -8,6 +8,7 @@ from typing import override
 
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 
 class AchievementsWindow(bui.MainWindow):
@@ -255,7 +256,7 @@ class AchievementsWindow(bui.MainWindow):
                     ),
                     size=(28, 28),
                     color=(2, 1.4, 0),
-                    texture=bui.gettexture('achievementOutline'),
+                    texture=stdassets.textures.achievement_outline,
                 )
             bui.textwidget(
                 parent=self._subcontainer,

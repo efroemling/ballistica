@@ -12,6 +12,7 @@ from typing import override, TYPE_CHECKING
 import bascenev1 as bs
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 if TYPE_CHECKING:
     from bauiv1lib.play import PlaylistSelectContext
@@ -479,7 +480,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
 
         mesh_opaque = bui.getmesh('level_select_button_opaque')
         mesh_transparent = bui.getmesh('level_select_button_transparent')
-        mask_tex = bui.gettexture('mapPreviewMask')
+        mask_tex = stdassets.textures.map_preview_mask
 
         # h_offs = 225 if count == 1 else 115 if count == 2 else 0
         h_offs = 2
@@ -687,7 +688,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                                         parent=self._subcontainer,
                                         size=(scl * 100.0, scl * 100.0),
                                         position=(h + scl * 75, v + scl * 10),
-                                        texture=bui.gettexture('lock'),
+                                        texture=stdassets.textures.lock,
                                         draw_controller=btn,
                                     )
                         if v is not None:

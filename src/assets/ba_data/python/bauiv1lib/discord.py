@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 
 class DiscordWindow(bui.Window):
@@ -87,7 +88,7 @@ class DiscordWindow(bui.Window):
             parent=self._root_widget,
             position=(40, -15),
             size=(min_size, min_size),
-            texture=bui.gettexture('discordServer'),
+            texture=stdassets.textures.discord_server,
         )
 
         # Hmm should we translate this? The discord server is mostly

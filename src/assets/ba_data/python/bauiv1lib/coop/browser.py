@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, override
 
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 from bauiv1lib.utils import scroll_fade_top, scroll_fade_bottom
 from bauiv1lib.connectivity import wait_for_connectivity
@@ -66,10 +67,10 @@ class CoopBrowserWindow(bui.MainWindow):
         self._tournament_button_count = app.config.get('Tournament Rows', 0)
         assert isinstance(self._tournament_button_count, int)
 
-        self.star_tex = bui.gettexture('star')
+        self.star_tex = stdassets.textures.star
         self.lsbt = bui.getmesh('level_select_button_transparent')
         self.lsbo = bui.getmesh('level_select_button_opaque')
-        self.a_outline_tex = bui.gettexture('achievementOutline')
+        self.a_outline_tex = stdassets.textures.achievement_outline
         self.a_outline_mesh = bui.getmesh('achievementOutline')
         self._campaign_sub_container: bui.Widget | None = None
         self._tournament_info_button: bui.Widget | None = None
@@ -556,7 +557,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 selected_child=self._easy_button,
                 visible_child=self._easy_button,
             )
-        lock_tex = bui.gettexture('lock')
+        lock_tex = stdassets.textures.lock
 
         self._hard_button = bui.buttonwidget(
             parent=parent_widget,

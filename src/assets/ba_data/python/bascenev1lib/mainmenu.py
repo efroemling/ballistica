@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, override
 
 from bacommon.locale import LocaleResolved
 import bascenev1 as bs
+from bascenev1 import stdassets
 from bascenev1 import builtinassets
 import bauiv1 as bui
 
@@ -20,6 +21,11 @@ if TYPE_CHECKING:
     import bacommon.classic
 
     from bascenev1lib.actor.spazbot import DemoSpazBotSet
+
+
+def _tex(name: str) -> str:
+    """Qualified stdassets ref for a logo texture name."""
+    return f'{stdassets.__asset_package__}:textures/{name}'
 
 
 class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
@@ -112,7 +118,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 bs.animate(self.beta_info.node, 'opacity', {1.3: 0, 1.8: 1.0})
 
         trees_mesh = bs.getmesh('trees')
-        trees_texture = bs.gettexture('treesColor')
+        trees_texture = stdassets.textures.trees_color
 
         gnode = self.globalsnode
         gnode.camera_mode = 'rotate'
@@ -166,7 +172,9 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             if custom_texture != self._custom_logo_tex_name:
                 self._custom_logo_tex_name = custom_texture
                 self._logo_node.texture = bs.gettexture(
-                    custom_texture if custom_texture is not None else 'logo'
+                    custom_texture
+                    if custom_texture is not None
+                    else _tex('logo')
                 )
                 self._logo_node.mesh_opaque = (
                     None if custom_texture is not None else bs.getmesh('logo')
@@ -210,7 +218,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     113 + y + 1.2 * y_extra,
                     0.34 * base_scale,
                     delay=base_delay + 0.1,
-                    custom_texture='chTitleChar1',
+                    custom_texture=_tex('ch_title_char1'),
                     jitter_scale=2.0,
                     vr_depth_offset=-30,
                 )
@@ -221,7 +229,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     110 + y + 1.2 * y_extra,
                     0.31 * base_scale,
                     delay=base_delay + 0.15,
-                    custom_texture='chTitleChar2',
+                    custom_texture=_tex('ch_title_char2'),
                     jitter_scale=2.0,
                     vr_depth_offset=-30,
                 )
@@ -232,7 +240,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     110 + y + 1.2 * y_extra,
                     0.3 * base_scale,
                     delay=base_delay + 0.25,
-                    custom_texture='chTitleChar3',
+                    custom_texture=_tex('ch_title_char3'),
                     jitter_scale=2.0,
                     vr_depth_offset=-30,
                 )
@@ -243,7 +251,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     110 + y + 1.2 * y_extra,
                     0.31 * base_scale,
                     delay=base_delay + 0.3,
-                    custom_texture='chTitleChar4',
+                    custom_texture=_tex('ch_title_char4'),
                     jitter_scale=2.0,
                     vr_depth_offset=-30,
                 )
@@ -254,7 +262,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     105 + y + 1.2 * y_extra,
                     0.34 * base_scale,
                     delay=base_delay + 0.35,
-                    custom_texture='chTitleChar5',
+                    custom_texture=_tex('ch_title_char5'),
                     jitter_scale=2.0,
                     vr_depth_offset=-30,
                 )
@@ -487,7 +495,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         assert plus is not None
 
         if plus.get_v1_account_misc_read_val('easter', False):
-            return 'logoEaster'
+            return _tex('logo_easter')
         return None
 
     # Pop the logo and menu in.
@@ -507,7 +515,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             custom_texture = self._get_custom_logo_tex_name()
         self._custom_logo_tex_name = custom_texture
         ltex = bs.gettexture(
-            custom_texture if custom_texture is not None else 'logo'
+            custom_texture if custom_texture is not None else _tex('logo')
         )
         mopaque = None if custom_texture is not None else bs.getmesh('logo')
         mtrans = (
@@ -818,16 +826,13 @@ def _preload1() -> None:
         'windowBGBlotch',
     ]:
         bs.getmesh(mname)
-    for tname in ['playerLineup', 'lock']:
-        bs.gettexture(tname)
-    for tex in [
-        'iconRunaround',
-        'iconOnslaught',
-    ]:
-        bs.gettexture(tex)
     # Asset-package textures warm up through their wrappers.
     _ = builtinassets.textures.character_icon_mask
-    bs.gettexture('bg')
+    _ = stdassets.textures.player_lineup
+    _ = stdassets.textures.lock
+    _ = stdassets.textures.icon_runaround
+    _ = stdassets.textures.icon_onslaught
+    _ = stdassets.textures.bg
     from bascenev1lib.actor.powerupbox import PowerupBoxFactory
 
     PowerupBoxFactory.get()
@@ -840,17 +845,14 @@ def _preload2() -> None:
     #  (even if the actual result is cached).
     for mname in ['powerup', 'powerupSimple']:
         bs.getmesh(mname)
-    for tname in [
-        'powerupBomb',
-        'powerupSpeed',
-        'powerupPunch',
-        'powerupIceBombs',
-        'powerupStickyBombs',
-        'powerupShield',
-        'powerupImpactBombs',
-        'powerupHealth',
-    ]:
-        bs.gettexture(tname)
+    _ = stdassets.textures.powerup_bomb
+    _ = stdassets.textures.powerup_speed
+    _ = stdassets.textures.powerup_punch
+    _ = stdassets.textures.powerup_ice_bombs
+    _ = stdassets.textures.powerup_sticky_bombs
+    _ = stdassets.textures.powerup_shield
+    _ = stdassets.textures.powerup_impact_bombs
+    _ = stdassets.textures.powerup_health
     for sname in [
         'powerup01',
         'boxDrop',
@@ -873,14 +875,11 @@ def _preload3() -> None:
 
     for mname in ['bomb', 'bombSticky', 'impactBomb']:
         bs.getmesh(mname)
-    for tname in [
-        'bombColor',
-        'bombColorIce',
-        'bombStickyColor',
-        'impactBombColor',
-        'impactBombColorLit',
-    ]:
-        bs.gettexture(tname)
+    _ = stdassets.textures.bomb_color
+    _ = stdassets.textures.bomb_color_ice
+    _ = stdassets.textures.bomb_sticky_color
+    _ = stdassets.textures.impact_bomb_color
+    _ = stdassets.textures.impact_bomb_color_lit
     for sname in ['freeze', 'fuse01', 'activateBeep', 'warnBeep']:
         bs.getsound(sname)
     SpazFactory.get()
@@ -888,8 +887,10 @@ def _preload3() -> None:
 
 
 def _preload4() -> None:
-    for tname in ['bar', 'null', 'flagColor', 'achievementOutline']:
-        bs.gettexture(tname)
+    _ = stdassets.textures.bar
+    _ = stdassets.textures.null
+    _ = stdassets.textures.flag_color
+    _ = stdassets.textures.achievement_outline
     for mname in ['frameInset', 'meterTransparent', 'achievementOutline']:
         bs.getmesh(mname)
     for sname in ['metalHit', 'metalSkid', 'refWhistle', 'achievement']:

@@ -10,6 +10,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 import bascenev1 as bs
 
@@ -240,7 +241,7 @@ class PartyQueueWindow(bui.Window):
         self._line_left = 40.0
         self._line_width = self._width - 190
         self._line_bottom = self._height * 0.4
-        self.lineup_tex: bui.Texture = bui.gettexture('playerLineup')
+        self.lineup_tex: bui.Texture = stdassets.textures.player_lineup
         self._smoothing = 0.0
         self._initial_offset = 0.0
         self._boost_tickets = 0

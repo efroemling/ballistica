@@ -8,6 +8,7 @@ import weakref
 from typing import TYPE_CHECKING
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 from bascenev1 import builtinassets
 
 if TYPE_CHECKING:
@@ -35,7 +36,7 @@ class _Entry:
         self._height = (32.0 if height is None else height) * self._scale
         self._bar_width = 2.0 * self._scale
         self._bar_height = 32.0 * self._scale
-        self._bar_tex = self._backing_tex = bs.gettexture('bar')
+        self._bar_tex = self._backing_tex = stdassets.textures.bar
         self._cover_tex = builtinassets.textures.ui_atlas
         self._mesh = bs.getmesh('meterTransparent')
         self._pos: Sequence[float] | None = None
@@ -386,7 +387,7 @@ class Scoreboard:
         show up on boards if provided.
         """
         # pylint: disable=too-many-positional-arguments
-        self._flat_tex = bs.gettexture('null')
+        self._flat_tex = stdassets.textures.null
         self._entries: dict[int, _Entry] = {}
         self._label = label
         self.score_split = score_split

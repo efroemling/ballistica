@@ -8,6 +8,7 @@ import random
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 from bascenev1lib.gameutils import SharedObjects
 
@@ -91,15 +92,15 @@ class PowerupBoxFactory:
         self._lastpoweruptype: str | None = None
         self.mesh = bs.getmesh('powerup')
         self.mesh_simple = bs.getmesh('powerupSimple')
-        self.tex_bomb = bs.gettexture('powerupBomb')
-        self.tex_punch = bs.gettexture('powerupPunch')
-        self.tex_ice_bombs = bs.gettexture('powerupIceBombs')
-        self.tex_sticky_bombs = bs.gettexture('powerupStickyBombs')
-        self.tex_shield = bs.gettexture('powerupShield')
-        self.tex_impact_bombs = bs.gettexture('powerupImpactBombs')
-        self.tex_health = bs.gettexture('powerupHealth')
-        self.tex_land_mines = bs.gettexture('powerupLandMines')
-        self.tex_curse = bs.gettexture('powerupCurse')
+        self.tex_bomb = stdassets.textures.powerup_bomb
+        self.tex_punch = stdassets.textures.powerup_punch
+        self.tex_ice_bombs = stdassets.textures.powerup_ice_bombs
+        self.tex_sticky_bombs = stdassets.textures.powerup_sticky_bombs
+        self.tex_shield = stdassets.textures.powerup_shield
+        self.tex_impact_bombs = stdassets.textures.powerup_impact_bombs
+        self.tex_health = stdassets.textures.powerup_health
+        self.tex_land_mines = stdassets.textures.powerup_land_mines
+        self.tex_curse = stdassets.textures.powerup_curse
         self.health_powerup_sound = bs.getsound('healthPowerup')
         self.powerup_sound = bs.getsound('powerup01')
         self.powerdown_sound = bs.getsound('powerdown01')

@@ -105,6 +105,15 @@
 #ifndef GL_COMPRESSED_RGBA_ASTC_8x8_KHR
 #define GL_COMPRESSED_RGBA_ASTC_8x8_KHR 0x93B7
 #endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_5x5_KHR
+#define GL_COMPRESSED_RGBA_ASTC_5x5_KHR 0x93B2
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_10x10_KHR
+#define GL_COMPRESSED_RGBA_ASTC_10x10_KHR 0x93BB
+#endif
+#ifndef GL_COMPRESSED_RGBA_ASTC_12x12_KHR
+#define GL_COMPRESSED_RGBA_ASTC_12x12_KHR 0x93BD
+#endif
 
 // Anisotropic texturing is still an extension in GL 3 and ES 3.2, so
 // define its values if need be (they seem to exist in desktop glext.h

@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, override
 
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 from bauiv1lib.popup import PopupWindow
 
@@ -167,7 +168,7 @@ class TournamentEntryWindow(PopupWindow):
             draw_controller=btn,
             size=(80, 80),
             position=self._ticket_img_pos,
-            texture=bui.gettexture('tickets'),
+            texture=stdassets.textures.tickets,
         )
         self._ticket_cost_text_position = (87 + x_offs, 88 + off_p)
         self._ticket_cost_text_position_free = (87 + x_offs, 120 + off_p)
@@ -212,7 +213,7 @@ class TournamentEntryWindow(PopupWindow):
                 draw_controller=btn,
                 size=(80, 80),
                 position=(210, 94 + off_p),
-                texture=bui.gettexture('tv'),
+                texture=stdassets.textures.tv,
             )
 
             self._ad_text_position = (251, 88 + off_p)

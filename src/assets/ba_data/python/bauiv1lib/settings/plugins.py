@@ -8,6 +8,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, assert_never, override
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1lib import popup
 
 if TYPE_CHECKING:
@@ -173,7 +174,7 @@ class PluginWindow(bui.MainWindow):
             position=(settings_button_x + 3, button_row_yoffs - 57),
             draw_controller=self._settings_button,
             size=(35, 35),
-            texture=bui.gettexture('settingsIcon'),
+            texture=stdassets.textures.settings_icon,
         )
 
         bui.widget(

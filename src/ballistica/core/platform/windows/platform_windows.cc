@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstring>
 #include <functional>
 #include <list>
 #include <mutex>
@@ -199,6 +200,7 @@ auto PlatformWindows::FormatWinStackTraceForDisplay(WinStackTrace* stack_trace)
     std::string build_src_dir = g_core ? g_core->build_src_dir() : "";
 
     char linebuf[kTraceMaxFunctionNameLength + 128];
+    IMAGEHLP_MODULE64 modinfo;
     for (int i = 0; i < stack_trace->number_of_frames(); i++) {
       DWORD64 address = (DWORD64)(stack_trace->stack()[i]);
       std::string symbol_name_s;
@@ -212,6 +214,27 @@ auto PlatformWindows::FormatWinStackTraceForDisplay(WinStackTrace* stack_trace)
         symbol_name_s = "(unknown symbol name)";
       }
       const char* symbol_name = symbol_name_s.c_str();
+
+      // Module-relative form of the frame address (e.g.
+      // "BallisticaKit.exe+0x1a2b3c"). When symbolication fails (no PDB
+      // present, as with public prefab builds) this is the part of the
+      // line that lets the trace be symbolicated after the fact against
+      // an archived PDB; absolute addresses alone are useless across
+      // runs due to ASLR.
+      char modbuf[160];
+      memset(&modinfo, 0, sizeof(modinfo));
+      modinfo.SizeOfStruct = sizeof(modinfo);
+      if (SymGetModuleInfo64(win_sym_process_, address, &modinfo)
+          && modinfo.BaseOfImage != 0) {
+        // Note: ModuleName is TCHAR (wide here) like the rest of our
+        // dbghelp usage; route through UTF8Encode for printing.
+        snprintf(modbuf, sizeof(modbuf), "%s+0x%llx",
+                 UTF8Encode(modinfo.ModuleName).c_str(),
+                 static_cast<uint64_t>(address - modinfo.BaseOfImage));
+      } else {
+        snprintf(modbuf, sizeof(modbuf), "0x%llx",
+                 static_cast<uint64_t>(address));
+      }
 
       if (SymGetLineFromAddr64(win_sym_process_, address, &l_displacement,
                                &line)) {
@@ -232,15 +255,11 @@ auto PlatformWindows::FormatWinStackTraceForDisplay(WinStackTrace* stack_trace)
         }
 
         snprintf(linebuf, sizeof(linebuf),
-                 "%-3d %s in %s: line: %lu: address: 0x%p\n", i, symbol_name,
-                 filename, line.LineNumber,
-                 reinterpret_cast<void*>(symbol->Address));
+                 "%-3d %s in %s: line: %lu: address: %s\n", i, symbol_name,
+                 filename, line.LineNumber, modbuf);
       } else {
-        snprintf(linebuf, sizeof(linebuf),
-                 "SymGetLineFromAddr64 returned error code %lu.\n",
-                 GetLastError());
-        snprintf(linebuf, sizeof(linebuf), "%-3d %s, address 0x%p.\n", i,
-                 symbol_name, reinterpret_cast<void*>(symbol->Address));
+        snprintf(linebuf, sizeof(linebuf), "%-3d %s, address %s.\n", i,
+                 symbol_name, modbuf);
       }
       out += linebuf;
     }

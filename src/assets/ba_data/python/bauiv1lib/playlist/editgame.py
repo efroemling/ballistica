@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -244,7 +245,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             texture=map_tex,
             mesh_opaque=bui.getmesh('level_select_button_opaque'),
             mesh_transparent=bui.getmesh('level_select_button_transparent'),
-            mask_texture=bui.gettexture('mapPreviewMask'),
+            mask_texture=stdassets.textures.map_preview_mask,
         )
         map_button = btn = bui.buttonwidget(
             parent=self._subcontainer,

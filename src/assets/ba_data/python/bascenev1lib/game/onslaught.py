@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 from bascenev1lib.actor.popuptext import PopupText
 from bascenev1lib.actor.bomb import TNTSpawner
@@ -238,7 +239,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 self.tips = [
                     bs.GameTip(
                         'Land-mines are a good way to stop speedy enemies.',
-                        icon=bs.gettexture('powerupLandMines'),
+                        icon=stdassets.textures.powerup_land_mines,
                         sound=bs.getsound('ding'),
                     )
                 ]
@@ -252,7 +253,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     bs.GameTip(
                         'Take out a group of enemies by\n'
                         'setting off a bomb near a TNT box.',
-                        icon=bs.gettexture('tnt'),
+                        icon=stdassets.textures.tnt,
                         sound=bs.getsound('ding'),
                     )
                 ]
@@ -266,7 +267,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     bs.GameTip(
                         'Curse boxes turn you into a ticking time bomb.\n'
                         'The only cure is to quickly grab a health-pack.',
-                        icon=bs.gettexture('powerupCurse'),
+                        icon=stdassets.textures.powerup_curse,
                         sound=bs.getsound('ding'),
                     )
                 ]

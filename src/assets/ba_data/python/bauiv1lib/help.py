@@ -9,6 +9,7 @@ from typing import override
 import random
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 
 
@@ -182,7 +183,7 @@ class HelpWindow(bui.MainWindow):
         if uiscale is bui.UIScale.SMALL:
             v -= inline_title_height
 
-        logo_tex = bui.gettexture('logo')
+        logo_tex = stdassets.textures.logo
         icon_buffer = 1.1
         header = (0.7, 1.0, 0.7, 1.0)
         header2 = (0.8, 0.8, 1.0, 1.0)
@@ -444,7 +445,7 @@ class HelpWindow(bui.MainWindow):
             label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
-            texture=bui.gettexture('buttonPunch'),
+            texture=stdassets.textures.button_punch,
             color=(1, 0.7, 0.3),
             selectable=False,
             enable_sound=False,
@@ -474,7 +475,7 @@ class HelpWindow(bui.MainWindow):
             label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
-            texture=bui.gettexture('buttonBomb'),
+            texture=stdassets.textures.button_bomb,
             color=(1, 0.3, 0.3),
             selectable=False,
             enable_sound=False,
@@ -505,7 +506,7 @@ class HelpWindow(bui.MainWindow):
             label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
-            texture=bui.gettexture('buttonPickUp'),
+            texture=stdassets.textures.button_pick_up,
             color=(0.5, 0.5, 1),
             selectable=False,
             enable_sound=False,
@@ -535,7 +536,7 @@ class HelpWindow(bui.MainWindow):
             label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
-            texture=bui.gettexture('buttonJump'),
+            texture=stdassets.textures.button_jump,
             color=(0.4, 1, 0.4),
             selectable=False,
             enable_sound=False,
@@ -639,19 +640,19 @@ class HelpWindow(bui.MainWindow):
 
         shadow_tex = builtinassets.textures.shadow_sharp
 
-        for tex in [
-            'powerupPunch',
-            'powerupShield',
-            'powerupBomb',
-            'powerupHealth',
-            'powerupIceBombs',
-            'powerupImpactBombs',
-            'powerupStickyBombs',
-            'powerupLandMines',
-            'powerupCurse',
+        for reskey, tex in [
+            ('powerupPunch', stdassets.textures.powerup_punch),
+            ('powerupShield', stdassets.textures.powerup_shield),
+            ('powerupBomb', stdassets.textures.powerup_bomb),
+            ('powerupHealth', stdassets.textures.powerup_health),
+            ('powerupIceBombs', stdassets.textures.powerup_ice_bombs),
+            ('powerupImpactBombs', stdassets.textures.powerup_impact_bombs),
+            ('powerupStickyBombs', stdassets.textures.powerup_sticky_bombs),
+            ('powerupLandMines', stdassets.textures.powerup_land_mines),
+            ('powerupCurse', stdassets.textures.powerup_curse),
         ]:
-            name = bui.Lstr(resource=f'{self._r}.' + tex + 'NameText')
-            desc = bui.Lstr(resource=f'{self._r}.' + tex + 'DescriptionText')
+            name = bui.Lstr(resource=f'{self._r}.' + reskey + 'NameText')
+            desc = bui.Lstr(resource=f'{self._r}.' + reskey + 'DescriptionText')
 
             v -= spacing * 60.0
 
@@ -670,7 +671,7 @@ class HelpWindow(bui.MainWindow):
                 parent=self._subcontainer,
                 size=(icon_size, icon_size),
                 position=(h + mm1 - 0.5 * icon_size, v - 0.5 * icon_size),
-                texture=bui.gettexture(tex),
+                texture=tex,
             )
 
             txt_scale = t_big

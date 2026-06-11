@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, override
 from bauiv1lib.popup import PopupMenuWindow
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -315,7 +316,7 @@ class GamepadSettingsWindow(bui.MainWindow):
             pos=(h_offs, v + scly * dist),
             color=d_color,
             button='buttonUp' + self._ext,
-            texture=bui.gettexture('upButton'),
+            texture=stdassets.textures.up_button,
             scale=1.0,
             message=dpm,
             message2=dpm2,
@@ -324,7 +325,7 @@ class GamepadSettingsWindow(bui.MainWindow):
             pos=(h_offs - sclx * dist, v),
             color=d_color,
             button='buttonLeft' + self._ext,
-            texture=bui.gettexture('leftButton'),
+            texture=stdassets.textures.left_button,
             scale=1.0,
             message=dpm,
             message2=dpm2,
@@ -333,7 +334,7 @@ class GamepadSettingsWindow(bui.MainWindow):
             pos=(h_offs + sclx * dist, v),
             color=d_color,
             button='buttonRight' + self._ext,
-            texture=bui.gettexture('rightButton'),
+            texture=stdassets.textures.right_button,
             scale=1.0,
             message=dpm,
             message2=dpm2,
@@ -342,7 +343,7 @@ class GamepadSettingsWindow(bui.MainWindow):
             pos=(h_offs, v - scly * dist),
             color=d_color,
             button='buttonDown' + self._ext,
-            texture=bui.gettexture('downButton'),
+            texture=stdassets.textures.down_button,
             scale=1.0,
             message=dpm,
             message2=dpm2,
@@ -354,7 +355,7 @@ class GamepadSettingsWindow(bui.MainWindow):
             color=(0.4, 0.4, 0.6),
             button='analogStickLR' + self._ext,
             maxwidth=140,
-            texture=bui.gettexture('analogStick'),
+            texture=stdassets.textures.analog_stick,
             scale=1.2,
             message=bui.Lstr(resource=f'{self._r}.pressLeftRightText'),
             message2=dpm3,
@@ -374,28 +375,28 @@ class GamepadSettingsWindow(bui.MainWindow):
             pos=(h_offs, v + scly * dist),
             color=(0.6, 0.4, 0.8),
             button='buttonPickUp' + self._ext,
-            texture=bui.gettexture('buttonPickUp'),
+            texture=stdassets.textures.button_pick_up,
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs - sclx * dist, v),
             color=(0.7, 0.5, 0.1),
             button='buttonPunch' + self._ext,
-            texture=bui.gettexture('buttonPunch'),
+            texture=stdassets.textures.button_punch,
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs + sclx * dist, v),
             color=(0.5, 0.2, 0.1),
             button='buttonBomb' + self._ext,
-            texture=bui.gettexture('buttonBomb'),
+            texture=stdassets.textures.button_bomb,
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs, v - scly * dist),
             color=(0.2, 0.5, 0.2),
             button='buttonJump' + self._ext,
-            texture=bui.gettexture('buttonJump'),
+            texture=stdassets.textures.button_jump,
             scale=1.0,
         )
 

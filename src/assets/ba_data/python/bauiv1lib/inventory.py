@@ -12,6 +12,7 @@ from efro.util import asserttype
 import bacommon.docui.v1 as dui1
 import bauiv1 as bui
 from bauiv1 import builtinassets
+from bauiv1 import stdassets
 
 from bauiv1lib.docui import DocUIController
 
@@ -21,6 +22,11 @@ if TYPE_CHECKING:
     from bacommon.docui import DocUIRequest, DocUIResponse
 
     from bauiv1lib.docui import DocUILocalAction, DocUIWindow
+
+
+def _stex(name: str) -> str:
+    """Qualified stdassets texture ref."""
+    return f'{stdassets.__asset_package__}:textures/{name}'
 
 
 def _btex(name: str) -> str:
@@ -139,7 +145,7 @@ class InventoryUIController(DocUIController):
                             default_sound=False,
                             immediate_local_action='new_profile',
                         ),
-                        icon='plusButton',
+                        icon=_stex('plus_button'),
                         icon_scale=1.3,
                         icon_color=(0.7, 0.6, 0.9, 1),
                         label_is_lstr=True,

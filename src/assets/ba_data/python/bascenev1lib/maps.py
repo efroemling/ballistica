@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 from bascenev1lib.gameutils import SharedObjects
 
@@ -40,6 +41,11 @@ def register_all_maps() -> None:
         bs.register_map(maptype)
 
 
+def _tex(name: str) -> str:
+    """Qualified stdassets ref for a map texture name."""
+    return f'{stdassets.__asset_package__}:textures/{name}'
+
+
 class HockeyStadium(bs.Map):
     """Stadium map used for ice hockey games."""
 
@@ -56,7 +62,7 @@ class HockeyStadium(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'hockeyStadiumPreview'
+        return _tex('hockey_stadium_preview')
 
     @override
     @classmethod
@@ -69,8 +75,8 @@ class HockeyStadium(bs.Map):
             ),
             'vr_fill_mesh': bs.getmesh('footballStadiumVRFill'),
             'collision_mesh': bs.getcollisionmesh('hockeyStadiumCollide'),
-            'tex': bs.gettexture('hockeyStadium'),
-            'stands_tex': bs.gettexture('footballStadium'),
+            'tex': stdassets.textures.hockey_stadium,
+            'stands_tex': stdassets.textures.football_stadium,
         }
         mat = bs.Material()
         mat.add_actions(actions=('modify_part_collision', 'friction', 0.01))
@@ -151,7 +157,7 @@ class FootballStadium(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'footballStadiumPreview'
+        return _tex('football_stadium_preview')
 
     @override
     @classmethod
@@ -160,7 +166,7 @@ class FootballStadium(bs.Map):
             'mesh': bs.getmesh('footballStadium'),
             'vr_fill_mesh': bs.getmesh('footballStadiumVRFill'),
             'collision_mesh': bs.getcollisionmesh('footballStadiumCollide'),
-            'tex': bs.gettexture('footballStadium'),
+            'tex': stdassets.textures.football_stadium,
         }
         return data
 
@@ -222,7 +228,7 @@ class Bridgit(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'bridgitPreview'
+        return _tex('bridgit_preview')
 
     @override
     @classmethod
@@ -233,8 +239,8 @@ class Bridgit(bs.Map):
             'mesh_bg': bs.getmesh('natureBackground'),
             'bg_vr_fill_mesh': bs.getmesh('natureBackgroundVRFill'),
             'collision_mesh': bs.getcollisionmesh('bridgitLevelCollide'),
-            'tex': bs.gettexture('bridgitLevelColor'),
-            'mesh_bg_tex': bs.gettexture('natureBackgroundColor'),
+            'tex': stdassets.textures.bridgit_level_color,
+            'mesh_bg_tex': stdassets.textures.nature_background_color,
             'collide_bg': bs.getcollisionmesh('natureBackgroundCollide'),
             'railing_collision_mesh': (
                 bs.getcollisionmesh('bridgitLevelRailingCollide')
@@ -335,7 +341,7 @@ class BigG(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'bigGPreview'
+        return _tex('big_gpreview')
 
     @override
     @classmethod
@@ -346,8 +352,8 @@ class BigG(bs.Map):
             'mesh_bg': bs.getmesh('natureBackground'),
             'bg_vr_fill_mesh': bs.getmesh('natureBackgroundVRFill'),
             'collision_mesh': bs.getcollisionmesh('bigGCollide'),
-            'tex': bs.gettexture('bigG'),
-            'mesh_bg_tex': bs.gettexture('natureBackgroundColor'),
+            'tex': stdassets.textures.big_g,
+            'mesh_bg_tex': stdassets.textures.nature_background_color,
             'collide_bg': bs.getcollisionmesh('natureBackgroundCollide'),
             'bumper_collision_mesh': bs.getcollisionmesh('bigGBumper'),
             'bg_material': bs.Material(),
@@ -441,7 +447,7 @@ class Roundabout(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'roundaboutPreview'
+        return _tex('roundabout_preview')
 
     @override
     @classmethod
@@ -452,8 +458,8 @@ class Roundabout(bs.Map):
             'mesh_bg': bs.getmesh('natureBackground'),
             'bg_vr_fill_mesh': bs.getmesh('natureBackgroundVRFill'),
             'collision_mesh': bs.getcollisionmesh('roundaboutLevelCollide'),
-            'tex': bs.gettexture('roundaboutLevelColor'),
-            'mesh_bg_tex': bs.gettexture('natureBackgroundColor'),
+            'tex': stdassets.textures.roundabout_level_color,
+            'mesh_bg_tex': stdassets.textures.nature_background_color,
             'collide_bg': bs.getcollisionmesh('natureBackgroundCollide'),
             'railing_collision_mesh': (
                 bs.getcollisionmesh('roundaboutLevelBumper')
@@ -548,7 +554,7 @@ class MonkeyFace(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'monkeyFacePreview'
+        return _tex('monkey_face_preview')
 
     @override
     @classmethod
@@ -559,8 +565,8 @@ class MonkeyFace(bs.Map):
             'mesh_bg': bs.getmesh('natureBackground'),
             'bg_vr_fill_mesh': bs.getmesh('natureBackgroundVRFill'),
             'collision_mesh': bs.getcollisionmesh('monkeyFaceLevelCollide'),
-            'tex': bs.gettexture('monkeyFaceLevelColor'),
-            'mesh_bg_tex': bs.gettexture('natureBackgroundColor'),
+            'tex': stdassets.textures.monkey_face_level_color,
+            'mesh_bg_tex': stdassets.textures.nature_background_color,
             'collide_bg': bs.getcollisionmesh('natureBackgroundCollide'),
             'railing_collision_mesh': (
                 bs.getcollisionmesh('monkeyFaceLevelBumper')
@@ -661,7 +667,7 @@ class ZigZag(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'zigzagPreview'
+        return _tex('zigzag_preview')
 
     @override
     @classmethod
@@ -672,8 +678,8 @@ class ZigZag(bs.Map):
             'mesh_bg': bs.getmesh('natureBackground'),
             'bg_vr_fill_mesh': bs.getmesh('natureBackgroundVRFill'),
             'collision_mesh': bs.getcollisionmesh('zigZagLevelCollide'),
-            'tex': bs.gettexture('zigZagLevelColor'),
-            'mesh_bg_tex': bs.gettexture('natureBackgroundColor'),
+            'tex': stdassets.textures.zig_zag_level_color,
+            'mesh_bg_tex': stdassets.textures.nature_background_color,
             'collide_bg': bs.getcollisionmesh('natureBackgroundCollide'),
             'railing_collision_mesh': bs.getcollisionmesh('zigZagLevelBumper'),
             'bg_material': bs.Material(),
@@ -765,7 +771,7 @@ class ThePad(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'thePadPreview'
+        return _tex('the_pad_preview')
 
     @override
     @classmethod
@@ -774,12 +780,12 @@ class ThePad(bs.Map):
             'mesh': bs.getmesh('thePadLevel'),
             'bottom_mesh': bs.getmesh('thePadLevelBottom'),
             'collision_mesh': bs.getcollisionmesh('thePadLevelCollide'),
-            'tex': bs.gettexture('thePadLevelColor'),
-            'bgtex': bs.gettexture('menuBG'),
+            'tex': stdassets.textures.the_pad_level_color,
+            'bgtex': stdassets.textures.menu_bg,
             'bgmesh': bs.getmesh('thePadBG'),
             'railing_collision_mesh': bs.getcollisionmesh('thePadLevelBumper'),
             'vr_fill_mound_mesh': bs.getmesh('thePadVRFillMound'),
-            'vr_fill_mound_tex': bs.gettexture('vrFillMound'),
+            'vr_fill_mound_tex': stdassets.textures.vr_fill_mound,
         }
         # fixme should chop this into vr/non-vr sections for efficiency
         return data
@@ -877,7 +883,7 @@ class DoomShroom(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'doomShroomPreview'
+        return _tex('doom_shroom_preview')
 
     @override
     @classmethod
@@ -885,8 +891,8 @@ class DoomShroom(bs.Map):
         data: dict[str, Any] = {
             'mesh': bs.getmesh('doomShroomLevel'),
             'collision_mesh': bs.getcollisionmesh('doomShroomLevelCollide'),
-            'tex': bs.gettexture('doomShroomLevelColor'),
-            'bgtex': bs.gettexture('doomShroomBGColor'),
+            'tex': stdassets.textures.doom_shroom_level_color,
+            'bgtex': stdassets.textures.doom_shroom_bgcolor,
             'bgmesh': bs.getmesh('doomShroomBG'),
             'vr_fill_mesh': bs.getmesh('doomShroomVRFill'),
             'stem_mesh': bs.getmesh('doomShroomStem'),
@@ -976,7 +982,7 @@ class LakeFrigid(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'lakeFrigidPreview'
+        return _tex('lake_frigid_preview')
 
     @override
     @classmethod
@@ -986,8 +992,8 @@ class LakeFrigid(bs.Map):
             'mesh_top': bs.getmesh('lakeFrigidTop'),
             'mesh_reflections': bs.getmesh('lakeFrigidReflections'),
             'collision_mesh': bs.getcollisionmesh('lakeFrigidCollide'),
-            'tex': bs.gettexture('lakeFrigid'),
-            'tex_reflections': bs.gettexture('lakeFrigidReflections'),
+            'tex': stdassets.textures.lake_frigid,
+            'tex_reflections': stdassets.textures.lake_frigid_reflections,
             'vr_fill_mesh': bs.getmesh('lakeFrigidVRFill'),
         }
         mat = bs.Material()
@@ -1065,7 +1071,7 @@ class TipTop(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'tipTopPreview'
+        return _tex('tip_top_preview')
 
     @override
     @classmethod
@@ -1074,8 +1080,8 @@ class TipTop(bs.Map):
             'mesh': bs.getmesh('tipTopLevel'),
             'bottom_mesh': bs.getmesh('tipTopLevelBottom'),
             'collision_mesh': bs.getcollisionmesh('tipTopLevelCollide'),
-            'tex': bs.gettexture('tipTopLevelColor'),
-            'bgtex': bs.gettexture('tipTopBGColor'),
+            'tex': stdassets.textures.tip_top_level_color,
+            'bgtex': stdassets.textures.tip_top_bgcolor,
             'bgmesh': bs.getmesh('tipTopBG'),
             'railing_collision_mesh': bs.getcollisionmesh('tipTopLevelBumper'),
         }
@@ -1145,7 +1151,7 @@ class CragCastle(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'cragCastlePreview'
+        return _tex('crag_castle_preview')
 
     @override
     @classmethod
@@ -1154,14 +1160,14 @@ class CragCastle(bs.Map):
             'mesh': bs.getmesh('cragCastleLevel'),
             'bottom_mesh': bs.getmesh('cragCastleLevelBottom'),
             'collision_mesh': bs.getcollisionmesh('cragCastleLevelCollide'),
-            'tex': bs.gettexture('cragCastleLevelColor'),
-            'bgtex': bs.gettexture('menuBG'),
+            'tex': stdassets.textures.crag_castle_level_color,
+            'bgtex': stdassets.textures.menu_bg,
             'bgmesh': bs.getmesh('thePadBG'),
             'railing_collision_mesh': (
                 bs.getcollisionmesh('cragCastleLevelBumper')
             ),
             'vr_fill_mound_mesh': bs.getmesh('cragCastleVRFillMound'),
-            'vr_fill_mound_tex': bs.gettexture('vrFillMound'),
+            'vr_fill_mound_tex': stdassets.textures.vr_fill_mound,
         }
         # fixme should chop this into vr/non-vr sections
         return data
@@ -1241,7 +1247,7 @@ class TowerD(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'towerDPreview'
+        return _tex('tower_dpreview')
 
     @override
     @classmethod
@@ -1250,8 +1256,8 @@ class TowerD(bs.Map):
             'mesh': bs.getmesh('towerDLevel'),
             'mesh_bottom': bs.getmesh('towerDLevelBottom'),
             'collision_mesh': bs.getcollisionmesh('towerDLevelCollide'),
-            'tex': bs.gettexture('towerDLevelColor'),
-            'bgtex': bs.gettexture('menuBG'),
+            'tex': stdassets.textures.tower_dlevel_color,
+            'bgtex': stdassets.textures.menu_bg,
             'bgmesh': bs.getmesh('thePadBG'),
             'player_wall_collision_mesh': bs.getcollisionmesh(
                 'towerDPlayerWall'
@@ -1272,7 +1278,7 @@ class TowerD(bs.Map):
             actions=('modify_part_collision', 'collide', False),
         )
         data['vr_fill_mound_mesh'] = bs.getmesh('stepRightUpVRFillMound')
-        data['vr_fill_mound_tex'] = bs.gettexture('vrFillMound')
+        data['vr_fill_mound_tex'] = stdassets.textures.vr_fill_mound
         return data
 
     def __init__(self) -> None:
@@ -1373,7 +1379,7 @@ class HappyThoughts(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'alwaysLandPreview'
+        return _tex('always_land_preview')
 
     @override
     @classmethod
@@ -1383,10 +1389,10 @@ class HappyThoughts(bs.Map):
             'bottom_mesh': bs.getmesh('alwaysLandLevelBottom'),
             'bgmesh': bs.getmesh('alwaysLandBG'),
             'collision_mesh': bs.getcollisionmesh('alwaysLandLevelCollide'),
-            'tex': bs.gettexture('alwaysLandLevelColor'),
-            'bgtex': bs.gettexture('alwaysLandBGColor'),
+            'tex': stdassets.textures.always_land_level_color,
+            'bgtex': stdassets.textures.always_land_bgcolor,
             'vr_fill_mound_mesh': bs.getmesh('alwaysLandVRFillMound'),
-            'vr_fill_mound_tex': bs.gettexture('vrFillMound'),
+            'vr_fill_mound_tex': stdassets.textures.vr_fill_mound,
         }
         return data
 
@@ -1486,7 +1492,7 @@ class StepRightUp(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'stepRightUpPreview'
+        return _tex('step_right_up_preview')
 
     @override
     @classmethod
@@ -1495,11 +1501,11 @@ class StepRightUp(bs.Map):
             'mesh': bs.getmesh('stepRightUpLevel'),
             'mesh_bottom': bs.getmesh('stepRightUpLevelBottom'),
             'collision_mesh': bs.getcollisionmesh('stepRightUpLevelCollide'),
-            'tex': bs.gettexture('stepRightUpLevelColor'),
-            'bgtex': bs.gettexture('menuBG'),
+            'tex': stdassets.textures.step_right_up_level_color,
+            'bgtex': stdassets.textures.menu_bg,
             'bgmesh': bs.getmesh('thePadBG'),
             'vr_fill_mound_mesh': bs.getmesh('stepRightUpVRFillMound'),
-            'vr_fill_mound_tex': bs.gettexture('vrFillMound'),
+            'vr_fill_mound_tex': stdassets.textures.vr_fill_mound,
         }
         # fixme should chop this into vr/non-vr chunks
         return data
@@ -1569,7 +1575,7 @@ class Courtyard(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'courtyardPreview'
+        return _tex('courtyard_preview')
 
     @override
     @classmethod
@@ -1578,8 +1584,8 @@ class Courtyard(bs.Map):
             'mesh': bs.getmesh('courtyardLevel'),
             'mesh_bottom': bs.getmesh('courtyardLevelBottom'),
             'collision_mesh': bs.getcollisionmesh('courtyardLevelCollide'),
-            'tex': bs.gettexture('courtyardLevelColor'),
-            'bgtex': bs.gettexture('menuBG'),
+            'tex': stdassets.textures.courtyard_level_color,
+            'bgtex': stdassets.textures.menu_bg,
             'bgmesh': bs.getmesh('thePadBG'),
             'player_wall_collision_mesh': (
                 bs.getcollisionmesh('courtyardPlayerWall')
@@ -1600,7 +1606,7 @@ class Courtyard(bs.Map):
             actions=('modify_part_collision', 'collide', False),
         )
         data['vr_fill_mound_mesh'] = bs.getmesh('stepRightUpVRFillMound')
-        data['vr_fill_mound_tex'] = bs.gettexture('vrFillMound')
+        data['vr_fill_mound_tex'] = stdassets.textures.vr_fill_mound
         return data
 
     def __init__(self) -> None:
@@ -1689,7 +1695,7 @@ class Rampage(bs.Map):
     @override
     @classmethod
     def get_preview_texture_name(cls) -> str:
-        return 'rampagePreview'
+        return _tex('rampage_preview')
 
     @override
     @classmethod
@@ -1698,9 +1704,9 @@ class Rampage(bs.Map):
             'mesh': bs.getmesh('rampageLevel'),
             'bottom_mesh': bs.getmesh('rampageLevelBottom'),
             'collision_mesh': bs.getcollisionmesh('rampageLevelCollide'),
-            'tex': bs.gettexture('rampageLevelColor'),
-            'bgtex': bs.gettexture('rampageBGColor'),
-            'bgtex2': bs.gettexture('rampageBGColor2'),
+            'tex': stdassets.textures.rampage_level_color,
+            'bgtex': stdassets.textures.rampage_bgcolor,
+            'bgtex2': stdassets.textures.rampage_bgcolor2,
             'bgmesh': bs.getmesh('rampageBG'),
             'bgmesh2': bs.getmesh('rampageBG2'),
             'vr_fill_mesh': bs.getmesh('rampageVRFill'),

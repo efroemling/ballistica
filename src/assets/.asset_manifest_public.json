@@ -92,6 +92,7 @@
  "ba_data/python/bacommon/restapi/__init__.py",
  "ba_data/python/bacommon/restapi/v1/__init__.py",
  "ba_data/python/bacommon/restapi/v1/accounts.py",
+ "ba_data/python/bacommon/restapi/v1/prefabs.py",
  "ba_data/python/bacommon/restapi/v1/workspaces.py",
  "ba_data/python/bacommon/securedata.py",
  "ba_data/python/bacommon/servermanager.py",

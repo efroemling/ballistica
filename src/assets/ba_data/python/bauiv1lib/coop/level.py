@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 
 class CoopLevelLockedWindow(bui.Window):
@@ -13,7 +14,7 @@ class CoopLevelLockedWindow(bui.Window):
     def __init__(self, name: bui.Lstr, dep_name: bui.Lstr):
         width = 550.0
         height = 250.0
-        lock_tex = bui.gettexture('lock')
+        lock_tex = stdassets.textures.lock
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         super().__init__(

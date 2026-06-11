@@ -719,6 +719,15 @@ build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.lib: .efrocachemap
 build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
 	@$(PCOMMANDBATCH) efrocache_get $@
 
+# Fetch debug symbols (.pdb files) for any Windows prefab binaries
+# currently present under build/prefab/full. Symbols are looked up by
+# exe hash from the master server's recent push-public artifact
+# archives, so this works for recent builds only. With a .pdb sitting
+# next to its exe, native stack traces in fatal-error output come out
+# fully symbolicated.
+prefab-windows-symbols: env
+	@$(PCOMMAND) prefab_symbols_fetch
+
 # Tell make which of these targets don't represent files.
 .PHONY: prefab-gui-debug prefab-gui-release prefab-gui-debug-build						\
         prefab-gui-release-build prefab-server-debug prefab-server-release		\
@@ -751,7 +760,8 @@ build/prefab/lib/windows/Release_%/BallisticaKitHeadlessPlus.pdb: .efrocachemap
         prefab-windows-x86-64-server-debug	                                  \
         prefab-windows-x86-64-server-debug-build                              \
         prefab-windows-x86-64-server-release                                  \
-        prefab-windows-x86-64-server-release-build
+        prefab-windows-x86-64-server-release-build                            \
+        prefab-windows-symbols _prefab-windows-pdbs
 
 
 ################################################################################

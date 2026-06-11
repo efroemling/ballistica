@@ -13,6 +13,7 @@ from bacommon.cloud import WebLocation
 from bacommon.login import LoginType
 import bacommon.cloud
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 from bauiv1lib.connectivity import wait_for_connectivity
@@ -923,7 +924,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 size=(button_width, 60),
                 label=bui.Lstr(resource=f'{self._r}.manageAccountText'),
                 color=(0.55, 0.5, 0.6),
-                icon=bui.gettexture('settingsIcon'),
+                icon=stdassets.textures.settings_icon,
                 textcolor=(0.75, 0.7, 0.8),
                 on_activate_call=bui.WeakCallStrict(
                     self._on_manage_account_press
@@ -1027,7 +1028,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
-                icon=bui.gettexture('googlePlayLeaderboardsIcon'),
+                icon=stdassets.textures.google_play_leaderboards_icon,
                 icon_color=(0.8, 0.95, 0.7),
                 on_activate_call=self._on_leaderboards_press,
                 size=(button_width, 50),

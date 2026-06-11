@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -98,7 +99,7 @@ class ControlsGuide(bs.Actor):
         self._jump_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('buttonJump'),
+                'texture': stdassets.textures.button_jump,
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,
@@ -126,7 +127,7 @@ class ControlsGuide(bs.Actor):
         self._punch_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('buttonPunch'),
+                'texture': stdassets.textures.button_punch,
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,
@@ -154,7 +155,7 @@ class ControlsGuide(bs.Actor):
         self._bomb_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('buttonBomb'),
+                'texture': stdassets.textures.button_bomb,
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,
@@ -182,7 +183,7 @@ class ControlsGuide(bs.Actor):
         self._pickup_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('buttonPickUp'),
+                'texture': stdassets.textures.button_pick_up,
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,

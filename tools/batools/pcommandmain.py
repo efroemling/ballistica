@@ -143,6 +143,7 @@ from batools.pcommands2 import (
     assetpins,
     asset_bundle_build,
     cst_test,
+    prefab_symbols_fetch,
 )
 from batools.pcommands3 import (
     test_game_run,

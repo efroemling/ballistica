@@ -11,6 +11,7 @@ import random
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 from bascenev1lib.gameutils import SharedObjects
 
@@ -155,14 +156,14 @@ class BombFactory:
         self.land_mine_mesh = bs.getmesh('landMine')
         self.tnt_mesh = bs.getmesh('tnt')
 
-        self.regular_tex = bs.gettexture('bombColor')
-        self.ice_tex = bs.gettexture('bombColorIce')
-        self.sticky_tex = bs.gettexture('bombStickyColor')
-        self.impact_tex = bs.gettexture('impactBombColor')
-        self.impact_lit_tex = bs.gettexture('impactBombColorLit')
-        self.land_mine_tex = bs.gettexture('landMine')
-        self.land_mine_lit_tex = bs.gettexture('landMineLit')
-        self.tnt_tex = bs.gettexture('tnt')
+        self.regular_tex = stdassets.textures.bomb_color
+        self.ice_tex = stdassets.textures.bomb_color_ice
+        self.sticky_tex = stdassets.textures.bomb_sticky_color
+        self.impact_tex = stdassets.textures.impact_bomb_color
+        self.impact_lit_tex = stdassets.textures.impact_bomb_color_lit
+        self.land_mine_tex = stdassets.textures.land_mine
+        self.land_mine_lit_tex = stdassets.textures.land_mine_lit
+        self.tnt_tex = stdassets.textures.tnt
 
         self.hiss_sound = bs.getsound('hiss')
         self.debris_fall_sound = bs.getsound('debrisFall')

@@ -8,6 +8,7 @@ import math
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -206,7 +207,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             background=False,
         )
         index = 0
-        mask_texture = bui.gettexture('mapPreviewMask')
+        mask_texture = stdassets.textures.map_preview_mask
         h_offs = 130 if len(self._maps) == 1 else 0
         for y in range(rows):
             for x in range(columns):

@@ -14,7 +14,9 @@ from efro.util import strict_partial
 import bacommon.classic
 from bacommon.login import LoginType
 import bascenev1 as bs
+from bascenev1 import stdassets
 import bauiv1 as bui
+from bauiv1 import stdassets as uistdassets
 
 from bascenev1lib.actor.text import Text
 from bascenev1lib.actor.zoomtext import ZoomText
@@ -47,9 +49,9 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         self.drum_roll_sound = bs.getsound('drumRoll')
         self.cymbal_sound = bs.getsound('cymbal')
 
-        self._replay_icon_texture = bui.gettexture('replayIcon')
-        self._menu_icon_texture = bui.gettexture('menuIcon')
-        self._next_level_icon_texture = bui.gettexture('nextLevelIcon')
+        self._replay_icon_texture = uistdassets.textures.replay_icon
+        self._menu_icon_texture = uistdassets.textures.menu_icon
+        self._next_level_icon_texture = uistdassets.textures.next_level_icon
 
         self._campaign: bs.Campaign = settings['campaign']
 
@@ -74,17 +76,17 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
         if game_center_active:
             self._game_service_icon_color = (1.0, 1.0, 1.0)
-            icon = bui.gettexture('gameCenterIcon')
+            icon = uistdassets.textures.game_center_icon
             self._game_service_achievements_texture = icon
             self._game_service_leaderboards_texture = icon
             self._account_has_achievements = True
         elif gpgs_active:
             self._game_service_icon_color = (0.8, 1.0, 0.6)
-            self._game_service_achievements_texture = bui.gettexture(
-                'googlePlayAchievementsIcon'
+            self._game_service_achievements_texture = (
+                uistdassets.textures.google_play_achievements_icon
             )
-            self._game_service_leaderboards_texture = bui.gettexture(
-                'googlePlayLeaderboardsIcon'
+            self._game_service_leaderboards_texture = (
+                uistdassets.textures.google_play_leaderboards_icon
             )
             self._account_has_achievements = True
         else:
@@ -1723,7 +1725,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     stars = 1
                 else:
                     stars = 0
-                star_tex = bs.gettexture('star')
+                star_tex = stdassets.textures.star
                 star_x = 135 + offs_x
                 for _i in range(stars):
                     img = bs.NodeActor(

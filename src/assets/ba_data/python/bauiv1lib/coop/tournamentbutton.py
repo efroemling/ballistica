@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 import copy
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -78,7 +79,7 @@ class TournamentButton:
             mesh_opaque=self.lsbo,
             texture=builtinassets.textures.black,
             opacity=0.2,
-            mask_texture=bui.gettexture('mapPreviewMask'),
+            mask_texture=stdassets.textures.map_preview_mask,
         )
 
         self.lock_image = bui.imagewidget(
@@ -86,7 +87,7 @@ class TournamentButton:
             draw_controller=btn,
             position=(x + 21 + sclx * 0.5 - image_width * 0.15, y + scly - 130),
             size=(image_width * 0.3, image_width * 0.3),
-            texture=bui.gettexture('lock'),
+            texture=stdassets.textures.lock,
             opacity=0.0,
         )
 
@@ -170,7 +171,7 @@ class TournamentButton:
                 draw_controller=btn,
                 position=(x + 360 - 20, y + scly - 140),
                 opacity=0.0,
-                texture=bui.gettexture('tv'),
+                texture=stdassets.textures.tv,
             )
 
         x_offs += 50

@@ -14,6 +14,7 @@ from baclassic._chest import (
 )
 import babase
 import bascenev1
+from bascenev1 import stdassets
 from bascenev1 import builtinassets
 import bauiv1
 
@@ -71,6 +72,11 @@ ACH_LEVEL_NAMES = {
 }
 
 
+def _tex(name: str) -> str:
+    """Qualified stdassets ref for an achievement icon name."""
+    return f'{stdassets.__asset_package__}:textures/{name}'
+
+
 class AchievementSubsystem:
     """Subsystem for achievement handling.
 
@@ -93,56 +99,56 @@ class AchievementSubsystem:
         self.achievements += [
             Achievement(
                 'In Control',
-                'achievementInControl',
+                _tex('achievement_in_control'),
                 (1, 1, 1),
                 '',
                 award=5,
             ),
             Achievement(
                 'Sharing is Caring',
-                'achievementSharingIsCaring',
+                _tex('achievement_sharing_is_caring'),
                 (1, 1, 1),
                 '',
                 award=15,
             ),
             Achievement(
                 'Dual Wielding',
-                'achievementDualWielding',
+                _tex('achievement_dual_wielding'),
                 (1, 1, 1),
                 '',
                 award=10,
             ),
             Achievement(
                 'Free Loader',
-                'achievementFreeLoader',
+                _tex('achievement_free_loader'),
                 (1, 1, 1),
                 '',
                 award=10,
             ),
             Achievement(
                 'Team Player',
-                'achievementTeamPlayer',
+                _tex('achievement_team_player'),
                 (1, 1, 1),
                 '',
                 award=20,
             ),
             Achievement(
                 'Onslaught Training Victory',
-                'achievementOnslaught',
+                _tex('achievement_onslaught'),
                 (1, 1, 1),
                 'Default:Onslaught Training',
                 award=5,
             ),
             Achievement(
                 'Off You Go Then',
-                'achievementOffYouGo',
+                _tex('achievement_off_you_go'),
                 (1, 1.1, 1.3),
                 'Default:Onslaught Training',
                 award=5,
             ),
             Achievement(
                 'Boxer',
-                'achievementBoxer',
+                _tex('achievement_boxer'),
                 (1, 0.6, 0.6),
                 'Default:Onslaught Training',
                 award=10,
@@ -150,21 +156,21 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Rookie Onslaught Victory',
-                'achievementOnslaught',
+                _tex('achievement_onslaught'),
                 (0.5, 1.4, 0.6),
                 'Default:Rookie Onslaught',
                 award=10,
             ),
             Achievement(
                 'Mine Games',
-                'achievementMine',
+                _tex('achievement_mine'),
                 (1, 1, 1.4),
                 'Default:Rookie Onslaught',
                 award=10,
             ),
             Achievement(
                 'Flawless Victory',
-                'achievementFlawlessVictory',
+                _tex('achievement_flawless_victory'),
                 (1, 1, 1),
                 'Default:Rookie Onslaught',
                 award=15,
@@ -172,21 +178,21 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Rookie Football Victory',
-                'achievementFootballVictory',
+                _tex('achievement_football_victory'),
                 (1.0, 1, 0.6),
                 'Default:Rookie Football',
                 award=10,
             ),
             Achievement(
                 'Super Punch',
-                'achievementSuperPunch',
+                _tex('achievement_super_punch'),
                 (1, 1, 1.8),
                 'Default:Rookie Football',
                 award=10,
             ),
             Achievement(
                 'Rookie Football Shutout',
-                'achievementFootballShutout',
+                _tex('achievement_football_shutout'),
                 (1, 1, 1),
                 'Default:Rookie Football',
                 award=15,
@@ -194,21 +200,21 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Pro Onslaught Victory',
-                'achievementOnslaught',
+                _tex('achievement_onslaught'),
                 (0.3, 1, 2.0),
                 'Default:Pro Onslaught',
                 award=15,
             ),
             Achievement(
                 'Boom Goes the Dynamite',
-                'achievementTNT',
+                _tex('achievement_tnt'),
                 (1.4, 1.2, 0.8),
                 'Default:Pro Onslaught',
                 award=15,
             ),
             Achievement(
                 'Pro Boxer',
-                'achievementBoxer',
+                _tex('achievement_boxer'),
                 (2, 2, 0),
                 'Default:Pro Onslaught',
                 award=20,
@@ -216,21 +222,21 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Pro Football Victory',
-                'achievementFootballVictory',
+                _tex('achievement_football_victory'),
                 (1.3, 1.3, 2.0),
                 'Default:Pro Football',
                 award=15,
             ),
             Achievement(
                 'Super Mega Punch',
-                'achievementSuperPunch',
+                _tex('achievement_super_punch'),
                 (2, 1, 0.6),
                 'Default:Pro Football',
                 award=15,
             ),
             Achievement(
                 'Pro Football Shutout',
-                'achievementFootballShutout',
+                _tex('achievement_football_shutout'),
                 (0.7, 0.7, 2.0),
                 'Default:Pro Football',
                 award=20,
@@ -238,14 +244,14 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Pro Runaround Victory',
-                'achievementRunaround',
+                _tex('achievement_runaround'),
                 (1, 1, 1),
                 'Default:Pro Runaround',
                 award=15,
             ),
             Achievement(
                 'Precision Bombing',
-                'achievementCrossHair',
+                _tex('achievement_cross_hair'),
                 (1, 1, 1.3),
                 'Default:Pro Runaround',
                 award=20,
@@ -253,7 +259,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'The Wall',
-                'achievementWall',
+                _tex('achievement_wall'),
                 (1, 0.7, 0.7),
                 'Default:Pro Runaround',
                 award=25,
@@ -261,14 +267,14 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Uber Onslaught Victory',
-                'achievementOnslaught',
+                _tex('achievement_onslaught'),
                 (2, 2, 1),
                 'Default:Uber Onslaught',
                 award=30,
             ),
             Achievement(
                 'Gold Miner',
-                'achievementMine',
+                _tex('achievement_mine'),
                 (2, 1.6, 0.2),
                 'Default:Uber Onslaught',
                 award=30,
@@ -276,7 +282,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'TNT Terror',
-                'achievementTNT',
+                _tex('achievement_tnt'),
                 (2, 1.8, 0.3),
                 'Default:Uber Onslaught',
                 award=30,
@@ -284,14 +290,14 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Uber Football Victory',
-                'achievementFootballVictory',
+                _tex('achievement_football_victory'),
                 (1.8, 1.4, 0.3),
                 'Default:Uber Football',
                 award=30,
             ),
             Achievement(
                 'Got the Moves',
-                'achievementGotTheMoves',
+                _tex('achievement_got_the_moves'),
                 (2, 1, 0),
                 'Default:Uber Football',
                 award=30,
@@ -299,7 +305,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Uber Football Shutout',
-                'achievementFootballShutout',
+                _tex('achievement_football_shutout'),
                 (2, 2, 0),
                 'Default:Uber Football',
                 award=40,
@@ -307,14 +313,14 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Uber Runaround Victory',
-                'achievementRunaround',
+                _tex('achievement_runaround'),
                 (1.5, 1.2, 0.2),
                 'Default:Uber Runaround',
                 award=30,
             ),
             Achievement(
                 'The Great Wall',
-                'achievementWall',
+                _tex('achievement_wall'),
                 (2, 1.7, 0.4),
                 'Default:Uber Runaround',
                 award=40,
@@ -322,7 +328,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Stayin\' Alive',
-                'achievementStayinAlive',
+                _tex('achievement_stayin_alive'),
                 (2, 2, 1),
                 'Default:Uber Runaround',
                 award=40,
@@ -330,7 +336,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Last Stand Master',
-                'achievementMedalSmall',
+                _tex('achievement_medal_small'),
                 (2, 1.5, 0.3),
                 'Default:The Last Stand',
                 award=20,
@@ -338,7 +344,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Last Stand Wizard',
-                'achievementMedalMedium',
+                _tex('achievement_medal_medium'),
                 (2, 1.5, 0.3),
                 'Default:The Last Stand',
                 award=40,
@@ -346,7 +352,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Last Stand God',
-                'achievementMedalLarge',
+                _tex('achievement_medal_large'),
                 (2, 1.5, 0.3),
                 'Default:The Last Stand',
                 award=60,
@@ -354,42 +360,42 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Onslaught Master',
-                'achievementMedalSmall',
+                _tex('achievement_medal_small'),
                 (0.7, 1, 0.7),
                 'Challenges:Infinite Onslaught',
                 award=5,
             ),
             Achievement(
                 'Onslaught Wizard',
-                'achievementMedalMedium',
+                _tex('achievement_medal_medium'),
                 (0.7, 1.0, 0.7),
                 'Challenges:Infinite Onslaught',
                 award=15,
             ),
             Achievement(
                 'Onslaught God',
-                'achievementMedalLarge',
+                _tex('achievement_medal_large'),
                 (0.7, 1.0, 0.7),
                 'Challenges:Infinite Onslaught',
                 award=30,
             ),
             Achievement(
                 'Runaround Master',
-                'achievementMedalSmall',
+                _tex('achievement_medal_small'),
                 (1.0, 1.0, 1.2),
                 'Challenges:Infinite Runaround',
                 award=5,
             ),
             Achievement(
                 'Runaround Wizard',
-                'achievementMedalMedium',
+                _tex('achievement_medal_medium'),
                 (1.0, 1.0, 1.2),
                 'Challenges:Infinite Runaround',
                 award=15,
             ),
             Achievement(
                 'Runaround God',
-                'achievementMedalLarge',
+                _tex('achievement_medal_large'),
                 (1.0, 1.0, 1.2),
                 'Challenges:Infinite Runaround',
                 award=30,
@@ -563,13 +569,13 @@ class Achievement:
     def get_icon_ui_texture(self, complete: bool) -> bauiv1.Texture:
         """Return the icon texture to display for this achievement"""
         return bauiv1.gettexture(
-            self._icon_name if complete else 'achievementEmpty'
+            self._icon_name if complete else _tex('achievement_empty')
         )
 
     def get_icon_texture(self, complete: bool) -> bascenev1.Texture:
         """Return the icon texture to display for this achievement"""
         return bascenev1.gettexture(
-            self._icon_name if complete else 'achievementEmpty'
+            self._icon_name if complete else _tex('achievement_empty')
         )
 
     def get_icon_color(self, complete: bool) -> Sequence[float]:
@@ -1026,10 +1032,10 @@ class Achievement:
             if complete:
                 objs.append(
                     Image(
-                        bascenev1.gettexture('achievementOutline'),
+                        stdassets.textures.achievement_outline,
                         host_only=True,
                         mesh_transparent=bascenev1.getmesh(
-                            'achievementOutline'
+                            _tex('achievement_outline')
                         ),
                         color=(2, 1.4, 0.4, 1),
                         vr_depth=8,
@@ -1357,8 +1363,8 @@ class Achievement:
         combine.connectattr('output', obj.node, 'color')
 
         obj = Image(
-            bascenev1.gettexture('achievementOutline'),
-            mesh_transparent=bascenev1.getmesh('achievementOutline'),
+            stdassets.textures.achievement_outline,
+            mesh_transparent=bascenev1.getmesh(_tex('achievement_outline')),
             position=(-180, 60 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,

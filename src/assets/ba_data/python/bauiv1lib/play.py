@@ -9,6 +9,7 @@ from typing import override, TYPE_CHECKING
 
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 if TYPE_CHECKING:
     from bauiv1 import MainWindowState
@@ -164,7 +165,7 @@ class PlayWindow(bui.MainWindow):
         )
         hoffs = (width - total_b_width) * 0.5
 
-        self._lineup_tex = bui.gettexture('playerLineup')
+        self._lineup_tex = stdassets.textures.player_lineup
         angry_computer_transparent_mesh = bui.getmesh(
             'angryComputerTransparent'
         )

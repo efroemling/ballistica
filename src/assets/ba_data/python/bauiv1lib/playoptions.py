@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, override
 from bacommon.analytics import ClassicAnalyticsEvent
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 from bauiv1lib.popup import PopupWindow
 
@@ -67,7 +68,7 @@ class PlayOptionsWindow(PopupWindow):
         # Grab our maps to display.
         mesh_opaque = bui.getmesh('level_select_button_opaque')
         mesh_transparent = bui.getmesh('level_select_button_transparent')
-        mask_tex = bui.gettexture('mapPreviewMask')
+        mask_tex = stdassets.textures.map_preview_mask
 
         # Poke into this playlist and see if we can display some of its
         # maps.
@@ -237,7 +238,11 @@ class PlayOptionsWindow(PopupWindow):
                         parent=self.root_widget,
                         size=(scl * 240.0, scl * 120.0),
                         position=(h, v),
-                        texture=bui.gettexture(tex_name if owned else 'empty'),
+                        texture=(
+                            bui.gettexture(tex_name)
+                            if owned
+                            else stdassets.textures.empty
+                        ),
                         mesh_opaque=mesh_opaque if owned else None,
                         on_activate_call=bui.CallStrict(
                             bui.screenmessage, desc, desc_color
@@ -277,7 +282,7 @@ class PlayOptionsWindow(PopupWindow):
                             size=(scl * 100, scl * 100),
                             draw_controller=btn,
                             position=(h + scl * 70, v + scl * 10),
-                            texture=bui.gettexture('lock'),
+                            texture=stdassets.textures.lock,
                         )
 
         y_offs = 50 if show_shuffle_check_box else 0

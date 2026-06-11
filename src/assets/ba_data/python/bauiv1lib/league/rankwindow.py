@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, override
 
 import bacommon.classic
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 from bauiv1lib.popup import PopupMenu
@@ -482,7 +483,7 @@ class LeagueRankWindow(bui.MainWindow):
             id=f'{self.main_window_id_prefix}|ach',
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 80),
-            icon=bui.gettexture('achievementsIcon'),
+            icon=stdassets.textures.achievements_icon,
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(self._on_achievements_press),
             up_widget=self._back_button,
@@ -513,7 +514,7 @@ class LeagueRankWindow(bui.MainWindow):
             id=f'{self.main_window_id_prefix}|trophies',
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 80),
-            icon=bui.gettexture('medalSilver'),
+            icon=stdassets.textures.medal_silver,
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(self._on_trophies_press),
             left_widget=self._back_button,
@@ -558,7 +559,7 @@ class LeagueRankWindow(bui.MainWindow):
                 id=f'{self.main_window_id_prefix}|amult',
                 position=(self._xoffs + h2 - 60, v2 + 10),
                 size=(200, 60),
-                icon=bui.gettexture('heart'),
+                icon=stdassets.textures.heart,
                 icon_color=(0.5, 0, 0.5),
                 label=bui.Lstr(resource='coopSelectWindow.activityText'),
                 autoselect=True,
@@ -592,7 +593,7 @@ class LeagueRankWindow(bui.MainWindow):
             id=f'{self.main_window_id_prefix}|uptodatebonus',
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 60),
-            icon=bui.gettexture('logo'),
+            icon=stdassets.textures.logo,
             icon_color=(0.3, 0, 0.3),
             label=bui.Lstr(resource='league.upToDateBonusText'),
             autoselect=True,
@@ -689,7 +690,7 @@ class LeagueRankWindow(bui.MainWindow):
         self._president_star1 = bui.imagewidget(
             parent=w_parent,
             draw_controller=self._president_button,
-            texture=bui.gettexture('star'),
+            texture=stdassets.textures.star,
             color=(0.7, 0.55, 0.9),
             opacity=0.2,
             position=(self._xoffs + h2 - 60 + 5, v2 - 100 + 17),
@@ -698,7 +699,7 @@ class LeagueRankWindow(bui.MainWindow):
         self._president_star1 = bui.imagewidget(
             parent=w_parent,
             draw_controller=self._president_button,
-            texture=bui.gettexture('star'),
+            texture=stdassets.textures.star,
             color=(0.7, 0.55, 0.9),
             opacity=0.2,
             position=(self._xoffs + h2 - 60 + 200 - 5 - 32, v2 - 100 + 17),

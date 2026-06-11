@@ -8,9 +8,15 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from bacommon.classic import ClassicChestAppearance
+from bascenev1 import stdassets
 
 if TYPE_CHECKING:
     pass
+
+
+def _tex(name: str) -> str:
+    """Qualified stdassets ref for a chest texture name."""
+    return f'{stdassets.__asset_package__}:textures/{name}'
 
 
 @dataclass
@@ -33,10 +39,10 @@ class ChestAppearanceDisplayInfo:
 #: declared appearance has no entry in
 #: :data:`CHEST_APPEARANCE_DISPLAY_INFOS`.
 CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT = ChestAppearanceDisplayInfo(
-    texclosed='chestIcon',
-    texclosedtint='chestIconTint',
-    texopen='chestOpenIcon',
-    texopentint='chestOpenIconTint',
+    texclosed=_tex('chest_icon'),
+    texclosedtint=_tex('chest_icon_tint'),
+    texopen=_tex('chest_open_icon'),
+    texopentint=_tex('chest_open_icon_tint'),
     color=(1, 1, 1),
     tint=(1, 1, 1),
     tint2=(1, 1, 1),
@@ -49,46 +55,46 @@ CHEST_APPEARANCE_DISPLAY_INFOS: dict[
     ClassicChestAppearance, ChestAppearanceDisplayInfo
 ] = {
     ClassicChestAppearance.L2: ChestAppearanceDisplayInfo(
-        texclosed='chestIcon',
-        texclosedtint='chestIconTint',
-        texopen='chestOpenIcon',
-        texopentint='chestOpenIconTint',
+        texclosed=_tex('chest_icon'),
+        texclosedtint=_tex('chest_icon_tint'),
+        texopen=_tex('chest_open_icon'),
+        texopentint=_tex('chest_open_icon_tint'),
         color=(0.8, 1.0, 0.93),
         tint=(0.65, 1.0, 0.8),
         tint2=(0.65, 1.0, 0.8),
     ),
     ClassicChestAppearance.L3: ChestAppearanceDisplayInfo(
-        texclosed='chestIcon',
-        texclosedtint='chestIconTint',
-        texopen='chestOpenIcon',
-        texopentint='chestOpenIconTint',
+        texclosed=_tex('chest_icon'),
+        texclosedtint=_tex('chest_icon_tint'),
+        texopen=_tex('chest_open_icon'),
+        texopentint=_tex('chest_open_icon_tint'),
         color=(0.75, 0.9, 1.3),
         tint=(0.7, 1, 1.9),
         tint2=(0.7, 1, 1.9),
     ),
     ClassicChestAppearance.L4: ChestAppearanceDisplayInfo(
-        texclosed='chestIcon',
-        texclosedtint='chestIconTint',
-        texopen='chestOpenIcon',
-        texopentint='chestOpenIconTint',
+        texclosed=_tex('chest_icon'),
+        texclosedtint=_tex('chest_icon_tint'),
+        texopen=_tex('chest_open_icon'),
+        texopentint=_tex('chest_open_icon_tint'),
         color=(0.7, 1.0, 1.4),
         tint=(1.4, 1.6, 2.0),
         tint2=(1.4, 1.6, 2.0),
     ),
     ClassicChestAppearance.L5: ChestAppearanceDisplayInfo(
-        texclosed='chestIcon',
-        texclosedtint='chestIconTint',
-        texopen='chestOpenIcon',
-        texopentint='chestOpenIconTint',
+        texclosed=_tex('chest_icon'),
+        texclosedtint=_tex('chest_icon_tint'),
+        texopen=_tex('chest_open_icon'),
+        texopentint=_tex('chest_open_icon_tint'),
         color=(0.75, 0.5, 2.4),
         tint=(1.0, 0.8, 0.0),
         tint2=(1.0, 0.8, 0.0),
     ),
     ClassicChestAppearance.L6: ChestAppearanceDisplayInfo(
-        texclosed='chestIcon',
-        texclosedtint='chestIconTint',
-        texopen='chestOpenIcon',
-        texopentint='chestOpenIconTint',
+        texclosed=_tex('chest_icon'),
+        texclosedtint=_tex('chest_icon_tint'),
+        texopen=_tex('chest_open_icon'),
+        texopentint=_tex('chest_open_icon_tint'),
         color=(1.1, 0.8, 0.0),
         tint=(2, 2, 2),
         tint2=(2, 2, 2),

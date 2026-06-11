@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 if TYPE_CHECKING:
     from collections.abc import Container
@@ -101,6 +102,11 @@ def get_appearances(
     ]
 
 
+def _tex(name: str) -> str:
+    """Qualified stdassets ref for an appearance texture field."""
+    return f'{stdassets.__asset_package__}:textures/{name}'
+
+
 class Appearance:
     """Create and fill out one of these suckers to define a spaz appearance."""
 
@@ -145,10 +151,10 @@ def register_appearances() -> None:
 
     # Spaz #######################################
     t = Appearance('Spaz')
-    t.color_texture = 'neoSpazColor'
-    t.color_mask_texture = 'neoSpazColorMask'
-    t.icon_texture = 'neoSpazIcon'
-    t.icon_mask_texture = 'neoSpazIconColorMask'
+    t.color_texture = _tex('neo_spaz_color')
+    t.color_mask_texture = _tex('neo_spaz_color_mask')
+    t.icon_texture = _tex('neo_spaz_icon')
+    t.icon_mask_texture = _tex('neo_spaz_icon_color_mask')
     t.head_mesh = 'neoSpazHead'
     t.torso_mesh = 'neoSpazTorso'
     t.pelvis_mesh = 'neoSpazPelvis'
@@ -178,10 +184,10 @@ def register_appearances() -> None:
 
     # Zoe #####################################
     t = Appearance('Zoe')
-    t.color_texture = 'zoeColor'
-    t.color_mask_texture = 'zoeColorMask'
-    t.icon_texture = 'zoeIcon'
-    t.icon_mask_texture = 'zoeIconColorMask'
+    t.color_texture = _tex('zoe_color')
+    t.color_mask_texture = _tex('zoe_color_mask')
+    t.icon_texture = _tex('zoe_icon')
+    t.icon_mask_texture = _tex('zoe_icon_color_mask')
     t.head_mesh = 'zoeHead'
     t.torso_mesh = 'zoeTorso'
     t.pelvis_mesh = 'zoePelvis'
@@ -213,10 +219,10 @@ def register_appearances() -> None:
 
     # Ninja ##########################################
     t = Appearance('Snake Shadow')
-    t.color_texture = 'ninjaColor'
-    t.color_mask_texture = 'ninjaColorMask'
-    t.icon_texture = 'ninjaIcon'
-    t.icon_mask_texture = 'ninjaIconColorMask'
+    t.color_texture = _tex('ninja_color')
+    t.color_mask_texture = _tex('ninja_color_mask')
+    t.icon_texture = _tex('ninja_icon')
+    t.icon_mask_texture = _tex('ninja_icon_color_mask')
     t.head_mesh = 'ninjaHead'
     t.torso_mesh = 'ninjaTorso'
     t.pelvis_mesh = 'ninjaPelvis'
@@ -241,10 +247,10 @@ def register_appearances() -> None:
 
     # Barbarian #####################################
     t = Appearance('Kronk')
-    t.color_texture = 'kronk'
-    t.color_mask_texture = 'kronkColorMask'
-    t.icon_texture = 'kronkIcon'
-    t.icon_mask_texture = 'kronkIconColorMask'
+    t.color_texture = _tex('kronk')
+    t.color_mask_texture = _tex('kronk_color_mask')
+    t.icon_texture = _tex('kronk_icon')
+    t.icon_mask_texture = _tex('kronk_icon_color_mask')
     t.head_mesh = 'kronkHead'
     t.torso_mesh = 'kronkTorso'
     t.pelvis_mesh = 'kronkPelvis'
@@ -278,10 +284,10 @@ def register_appearances() -> None:
 
     # Chef ###########################################
     t = Appearance('Mel')
-    t.color_texture = 'melColor'
-    t.color_mask_texture = 'melColorMask'
-    t.icon_texture = 'melIcon'
-    t.icon_mask_texture = 'melIconColorMask'
+    t.color_texture = _tex('mel_color')
+    t.color_mask_texture = _tex('mel_color_mask')
+    t.icon_texture = _tex('mel_icon')
+    t.icon_mask_texture = _tex('mel_icon_color_mask')
     t.head_mesh = 'melHead'
     t.torso_mesh = 'melTorso'
     t.pelvis_mesh = 'kronkPelvis'
@@ -315,10 +321,10 @@ def register_appearances() -> None:
 
     # Pirate #######################################
     t = Appearance('Jack Morgan')
-    t.color_texture = 'jackColor'
-    t.color_mask_texture = 'jackColorMask'
-    t.icon_texture = 'jackIcon'
-    t.icon_mask_texture = 'jackIconColorMask'
+    t.color_texture = _tex('jack_color')
+    t.color_mask_texture = _tex('jack_color_mask')
+    t.icon_texture = _tex('jack_icon')
+    t.icon_mask_texture = _tex('jack_icon_color_mask')
     t.head_mesh = 'jackHead'
     t.torso_mesh = 'jackTorso'
     t.pelvis_mesh = 'kronkPelvis'
@@ -350,10 +356,10 @@ def register_appearances() -> None:
 
     # Santa ######################################
     t = Appearance('Santa Claus')
-    t.color_texture = 'santaColor'
-    t.color_mask_texture = 'santaColorMask'
-    t.icon_texture = 'santaIcon'
-    t.icon_mask_texture = 'santaIconColorMask'
+    t.color_texture = _tex('santa_color')
+    t.color_mask_texture = _tex('santa_color_mask')
+    t.icon_texture = _tex('santa_icon')
+    t.icon_mask_texture = _tex('santa_icon_color_mask')
     t.head_mesh = 'santaHead'
     t.torso_mesh = 'santaTorso'
     t.pelvis_mesh = 'kronkPelvis'
@@ -377,10 +383,10 @@ def register_appearances() -> None:
 
     # Snowman ###################################
     t = Appearance('Frosty')
-    t.color_texture = 'frostyColor'
-    t.color_mask_texture = 'frostyColorMask'
-    t.icon_texture = 'frostyIcon'
-    t.icon_mask_texture = 'frostyIconColorMask'
+    t.color_texture = _tex('frosty_color')
+    t.color_mask_texture = _tex('frosty_color_mask')
+    t.icon_texture = _tex('frosty_icon')
+    t.icon_mask_texture = _tex('frosty_icon_color_mask')
     t.head_mesh = 'frostyHead'
     t.torso_mesh = 'frostyTorso'
     t.pelvis_mesh = 'frostyPelvis'
@@ -404,10 +410,10 @@ def register_appearances() -> None:
 
     # Skeleton ################################
     t = Appearance('Bones')
-    t.color_texture = 'bonesColor'
-    t.color_mask_texture = 'bonesColorMask'
-    t.icon_texture = 'bonesIcon'
-    t.icon_mask_texture = 'bonesIconColorMask'
+    t.color_texture = _tex('bones_color')
+    t.color_mask_texture = _tex('bones_color_mask')
+    t.icon_texture = _tex('bones_icon')
+    t.icon_mask_texture = _tex('bones_icon_color_mask')
     t.head_mesh = 'bonesHead'
     t.torso_mesh = 'bonesTorso'
     t.pelvis_mesh = 'bonesPelvis'
@@ -431,10 +437,10 @@ def register_appearances() -> None:
 
     # Bear ###################################
     t = Appearance('Bernard')
-    t.color_texture = 'bearColor'
-    t.color_mask_texture = 'bearColorMask'
-    t.icon_texture = 'bearIcon'
-    t.icon_mask_texture = 'bearIconColorMask'
+    t.color_texture = _tex('bear_color')
+    t.color_mask_texture = _tex('bear_color_mask')
+    t.icon_texture = _tex('bear_icon')
+    t.icon_mask_texture = _tex('bear_icon_color_mask')
     t.head_mesh = 'bearHead'
     t.torso_mesh = 'bearTorso'
     t.pelvis_mesh = 'bearPelvis'
@@ -457,10 +463,10 @@ def register_appearances() -> None:
 
     # Penguin ###################################
     t = Appearance('Pascal')
-    t.color_texture = 'penguinColor'
-    t.color_mask_texture = 'penguinColorMask'
-    t.icon_texture = 'penguinIcon'
-    t.icon_mask_texture = 'penguinIconColorMask'
+    t.color_texture = _tex('penguin_color')
+    t.color_mask_texture = _tex('penguin_color_mask')
+    t.icon_texture = _tex('penguin_icon')
+    t.icon_mask_texture = _tex('penguin_icon_color_mask')
     t.head_mesh = 'penguinHead'
     t.torso_mesh = 'penguinTorso'
     t.pelvis_mesh = 'penguinPelvis'
@@ -484,10 +490,10 @@ def register_appearances() -> None:
 
     # Ali ###################################
     t = Appearance('Taobao Mascot')
-    t.color_texture = 'aliColor'
-    t.color_mask_texture = 'aliColorMask'
-    t.icon_texture = 'aliIcon'
-    t.icon_mask_texture = 'aliIconColorMask'
+    t.color_texture = _tex('ali_color')
+    t.color_mask_texture = _tex('ali_color_mask')
+    t.icon_texture = _tex('ali_icon')
+    t.icon_mask_texture = _tex('ali_icon_color_mask')
     t.head_mesh = 'aliHead'
     t.torso_mesh = 'aliTorso'
     t.pelvis_mesh = 'aliPelvis'
@@ -511,10 +517,10 @@ def register_appearances() -> None:
 
     # Cyborg ###################################
     t = Appearance('B-9000')
-    t.color_texture = 'cyborgColor'
-    t.color_mask_texture = 'cyborgColorMask'
-    t.icon_texture = 'cyborgIcon'
-    t.icon_mask_texture = 'cyborgIconColorMask'
+    t.color_texture = _tex('cyborg_color')
+    t.color_mask_texture = _tex('cyborg_color_mask')
+    t.icon_texture = _tex('cyborg_icon')
+    t.icon_mask_texture = _tex('cyborg_icon_color_mask')
     t.head_mesh = 'cyborgHead'
     t.torso_mesh = 'cyborgTorso'
     t.pelvis_mesh = 'cyborgPelvis'
@@ -538,10 +544,10 @@ def register_appearances() -> None:
 
     # Agent ###################################
     t = Appearance('Agent Johnson')
-    t.color_texture = 'agentColor'
-    t.color_mask_texture = 'agentColorMask'
-    t.icon_texture = 'agentIcon'
-    t.icon_mask_texture = 'agentIconColorMask'
+    t.color_texture = _tex('agent_color')
+    t.color_mask_texture = _tex('agent_color_mask')
+    t.icon_texture = _tex('agent_icon')
+    t.icon_mask_texture = _tex('agent_icon_color_mask')
     t.head_mesh = 'agentHead'
     t.torso_mesh = 'agentTorso'
     t.pelvis_mesh = 'agentPelvis'
@@ -565,10 +571,10 @@ def register_appearances() -> None:
 
     # Jumpsuit ###################################
     t = Appearance('Lee')
-    t.color_texture = 'jumpsuitColor'
-    t.color_mask_texture = 'jumpsuitColorMask'
-    t.icon_texture = 'jumpsuitIcon'
-    t.icon_mask_texture = 'jumpsuitIconColorMask'
+    t.color_texture = _tex('jumpsuit_color')
+    t.color_mask_texture = _tex('jumpsuit_color_mask')
+    t.icon_texture = _tex('jumpsuit_icon')
+    t.icon_mask_texture = _tex('jumpsuit_icon_color_mask')
     t.head_mesh = 'jumpsuitHead'
     t.torso_mesh = 'jumpsuitTorso'
     t.pelvis_mesh = 'jumpsuitPelvis'
@@ -592,10 +598,10 @@ def register_appearances() -> None:
 
     # ActionHero ###################################
     t = Appearance('Todd McBurton')
-    t.color_texture = 'actionHeroColor'
-    t.color_mask_texture = 'actionHeroColorMask'
-    t.icon_texture = 'actionHeroIcon'
-    t.icon_mask_texture = 'actionHeroIconColorMask'
+    t.color_texture = _tex('action_hero_color')
+    t.color_mask_texture = _tex('action_hero_color_mask')
+    t.icon_texture = _tex('action_hero_icon')
+    t.icon_mask_texture = _tex('action_hero_icon_color_mask')
     t.head_mesh = 'actionHeroHead'
     t.torso_mesh = 'actionHeroTorso'
     t.pelvis_mesh = 'actionHeroPelvis'
@@ -627,10 +633,10 @@ def register_appearances() -> None:
     # Note: repurposing assassin slot. Lucky is not actually an
     # assassin. He is a good and friendly Leprechaun.
     t = Appearance('Zola')
-    t.color_texture = 'assassinColor'
-    t.color_mask_texture = 'assassinColorMask'
-    t.icon_texture = 'assassinIcon'
-    t.icon_mask_texture = 'assassinIconColorMask'
+    t.color_texture = _tex('assassin_color')
+    t.color_mask_texture = _tex('assassin_color_mask')
+    t.icon_texture = _tex('assassin_icon')
+    t.icon_mask_texture = _tex('assassin_icon_color_mask')
     t.head_mesh = 'assassinHead'
     t.torso_mesh = 'assassinTorso'
     t.pelvis_mesh = 'assassinPelvis'
@@ -654,10 +660,10 @@ def register_appearances() -> None:
 
     # Wizard ###################################
     t = Appearance('Grumbledorf')
-    t.color_texture = 'wizardColor'
-    t.color_mask_texture = 'wizardColorMask'
-    t.icon_texture = 'wizardIcon'
-    t.icon_mask_texture = 'wizardIconColorMask'
+    t.color_texture = _tex('wizard_color')
+    t.color_mask_texture = _tex('wizard_color_mask')
+    t.icon_texture = _tex('wizard_icon')
+    t.icon_mask_texture = _tex('wizard_icon_color_mask')
     t.head_mesh = 'wizardHead'
     t.torso_mesh = 'wizardTorso'
     t.pelvis_mesh = 'wizardPelvis'
@@ -681,10 +687,10 @@ def register_appearances() -> None:
 
     # Cowboy ###################################
     t = Appearance('Butch')
-    t.color_texture = 'cowboyColor'
-    t.color_mask_texture = 'cowboyColorMask'
-    t.icon_texture = 'cowboyIcon'
-    t.icon_mask_texture = 'cowboyIconColorMask'
+    t.color_texture = _tex('cowboy_color')
+    t.color_mask_texture = _tex('cowboy_color_mask')
+    t.icon_texture = _tex('cowboy_icon')
+    t.icon_mask_texture = _tex('cowboy_icon_color_mask')
     t.head_mesh = 'cowboyHead'
     t.torso_mesh = 'cowboyTorso'
     t.pelvis_mesh = 'cowboyPelvis'
@@ -708,10 +714,10 @@ def register_appearances() -> None:
 
     # Witch ###################################
     t = Appearance('Witch')
-    t.color_texture = 'witchColor'
-    t.color_mask_texture = 'witchColorMask'
-    t.icon_texture = 'witchIcon'
-    t.icon_mask_texture = 'witchIconColorMask'
+    t.color_texture = _tex('witch_color')
+    t.color_mask_texture = _tex('witch_color_mask')
+    t.icon_texture = _tex('witch_icon')
+    t.icon_mask_texture = _tex('witch_icon_color_mask')
     t.head_mesh = 'witchHead'
     t.torso_mesh = 'witchTorso'
     t.pelvis_mesh = 'witchPelvis'
@@ -735,10 +741,10 @@ def register_appearances() -> None:
 
     # Warrior ###################################
     t = Appearance('Warrior')
-    t.color_texture = 'warriorColor'
-    t.color_mask_texture = 'warriorColorMask'
-    t.icon_texture = 'warriorIcon'
-    t.icon_mask_texture = 'warriorIconColorMask'
+    t.color_texture = _tex('warrior_color')
+    t.color_mask_texture = _tex('warrior_color_mask')
+    t.icon_texture = _tex('warrior_icon')
+    t.icon_mask_texture = _tex('warrior_icon_color_mask')
     t.head_mesh = 'warriorHead'
     t.torso_mesh = 'warriorTorso'
     t.pelvis_mesh = 'warriorPelvis'
@@ -762,10 +768,10 @@ def register_appearances() -> None:
 
     # Superhero ###################################
     t = Appearance('Middle-Man')
-    t.color_texture = 'superheroColor'
-    t.color_mask_texture = 'superheroColorMask'
-    t.icon_texture = 'superheroIcon'
-    t.icon_mask_texture = 'superheroIconColorMask'
+    t.color_texture = _tex('superhero_color')
+    t.color_mask_texture = _tex('superhero_color_mask')
+    t.icon_texture = _tex('superhero_icon')
+    t.icon_mask_texture = _tex('superhero_icon_color_mask')
     t.head_mesh = 'superheroHead'
     t.torso_mesh = 'superheroTorso'
     t.pelvis_mesh = 'superheroPelvis'
@@ -789,10 +795,10 @@ def register_appearances() -> None:
 
     # Alien ###################################
     t = Appearance('Alien')
-    t.color_texture = 'alienColor'
-    t.color_mask_texture = 'alienColorMask'
-    t.icon_texture = 'alienIcon'
-    t.icon_mask_texture = 'alienIconColorMask'
+    t.color_texture = _tex('alien_color')
+    t.color_mask_texture = _tex('alien_color_mask')
+    t.icon_texture = _tex('alien_icon')
+    t.icon_mask_texture = _tex('alien_icon_color_mask')
     t.head_mesh = 'alienHead'
     t.torso_mesh = 'alienTorso'
     t.pelvis_mesh = 'alienPelvis'
@@ -816,10 +822,10 @@ def register_appearances() -> None:
 
     # OldLady ###################################
     t = Appearance('OldLady')
-    t.color_texture = 'oldLadyColor'
-    t.color_mask_texture = 'oldLadyColorMask'
-    t.icon_texture = 'oldLadyIcon'
-    t.icon_mask_texture = 'oldLadyIconColorMask'
+    t.color_texture = _tex('old_lady_color')
+    t.color_mask_texture = _tex('old_lady_color_mask')
+    t.icon_texture = _tex('old_lady_icon')
+    t.icon_mask_texture = _tex('old_lady_icon_color_mask')
     t.head_mesh = 'oldLadyHead'
     t.torso_mesh = 'oldLadyTorso'
     t.pelvis_mesh = 'oldLadyPelvis'
@@ -843,10 +849,10 @@ def register_appearances() -> None:
 
     # Gladiator ###################################
     t = Appearance('Gladiator')
-    t.color_texture = 'gladiatorColor'
-    t.color_mask_texture = 'gladiatorColorMask'
-    t.icon_texture = 'gladiatorIcon'
-    t.icon_mask_texture = 'gladiatorIconColorMask'
+    t.color_texture = _tex('gladiator_color')
+    t.color_mask_texture = _tex('gladiator_color_mask')
+    t.icon_texture = _tex('gladiator_icon')
+    t.icon_mask_texture = _tex('gladiator_icon_color_mask')
     t.head_mesh = 'gladiatorHead'
     t.torso_mesh = 'gladiatorTorso'
     t.pelvis_mesh = 'gladiatorPelvis'
@@ -870,10 +876,10 @@ def register_appearances() -> None:
 
     # Wrestler ###################################
     t = Appearance('Wrestler')
-    t.color_texture = 'wrestlerColor'
-    t.color_mask_texture = 'wrestlerColorMask'
-    t.icon_texture = 'wrestlerIcon'
-    t.icon_mask_texture = 'wrestlerIconColorMask'
+    t.color_texture = _tex('wrestler_color')
+    t.color_mask_texture = _tex('wrestler_color_mask')
+    t.icon_texture = _tex('wrestler_icon')
+    t.icon_mask_texture = _tex('wrestler_icon_color_mask')
     t.head_mesh = 'wrestlerHead'
     t.torso_mesh = 'wrestlerTorso'
     t.pelvis_mesh = 'wrestlerPelvis'
@@ -897,10 +903,10 @@ def register_appearances() -> None:
 
     # OperaSinger ###################################
     t = Appearance('Gretel')
-    t.color_texture = 'operaSingerColor'
-    t.color_mask_texture = 'operaSingerColorMask'
-    t.icon_texture = 'operaSingerIcon'
-    t.icon_mask_texture = 'operaSingerIconColorMask'
+    t.color_texture = _tex('opera_singer_color')
+    t.color_mask_texture = _tex('opera_singer_color_mask')
+    t.icon_texture = _tex('opera_singer_icon')
+    t.icon_mask_texture = _tex('opera_singer_icon_color_mask')
     t.head_mesh = 'operaSingerHead'
     t.torso_mesh = 'operaSingerTorso'
     t.pelvis_mesh = 'operaSingerPelvis'
@@ -929,10 +935,10 @@ def register_appearances() -> None:
 
     # Pixie ###################################
     t = Appearance('Pixel')
-    t.color_texture = 'pixieColor'
-    t.color_mask_texture = 'pixieColorMask'
-    t.icon_texture = 'pixieIcon'
-    t.icon_mask_texture = 'pixieIconColorMask'
+    t.color_texture = _tex('pixie_color')
+    t.color_mask_texture = _tex('pixie_color_mask')
+    t.icon_texture = _tex('pixie_icon')
+    t.icon_mask_texture = _tex('pixie_icon_color_mask')
     t.head_mesh = 'pixieHead'
     t.torso_mesh = 'pixieTorso'
     t.pelvis_mesh = 'pixiePelvis'
@@ -956,10 +962,10 @@ def register_appearances() -> None:
 
     # Robot ###################################
     t = Appearance('Robot')
-    t.color_texture = 'robotColor'
-    t.color_mask_texture = 'robotColorMask'
-    t.icon_texture = 'robotIcon'
-    t.icon_mask_texture = 'robotIconColorMask'
+    t.color_texture = _tex('robot_color')
+    t.color_mask_texture = _tex('robot_color_mask')
+    t.icon_texture = _tex('robot_icon')
+    t.icon_mask_texture = _tex('robot_icon_color_mask')
     t.head_mesh = 'robotHead'
     t.torso_mesh = 'robotTorso'
     t.pelvis_mesh = 'robotPelvis'
@@ -983,10 +989,10 @@ def register_appearances() -> None:
 
     # Bunny ###################################
     t = Appearance('Easter Bunny')
-    t.color_texture = 'bunnyColor'
-    t.color_mask_texture = 'bunnyColorMask'
-    t.icon_texture = 'bunnyIcon'
-    t.icon_mask_texture = 'bunnyIconColorMask'
+    t.color_texture = _tex('bunny_color')
+    t.color_mask_texture = _tex('bunny_color_mask')
+    t.icon_texture = _tex('bunny_icon')
+    t.icon_mask_texture = _tex('bunny_icon_color_mask')
     t.head_mesh = 'bunnyHead'
     t.torso_mesh = 'bunnyTorso'
     t.pelvis_mesh = 'bunnyPelvis'

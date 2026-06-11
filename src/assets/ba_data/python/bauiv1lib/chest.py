@@ -13,6 +13,7 @@ from efro.util import strict_partial
 import bacommon.classic
 import bacommon.displayitem as ditm
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 if TYPE_CHECKING:
     import datetime
@@ -20,6 +21,11 @@ if TYPE_CHECKING:
     import baclassic
 
 _g_open_voices: list[tuple[float, str, float]] = []
+
+
+def _stex(name: str) -> str:
+    """Qualified stdassets texture ref."""
+    return f'{stdassets.__asset_package__}:textures/{name}'
 
 
 class ChestWindow(bui.MainWindow):
@@ -41,7 +47,7 @@ class ChestWindow(bui.MainWindow):
         self._uiopenstate = bui.UIOpenState(f'classicchest{index}')
 
         # Get this loading before we need it.
-        self._quote_bubble_tex = bui.gettexture('quoteBubble')
+        self._quote_bubble_tex = stdassets.textures.quote_bubble
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -356,7 +362,7 @@ class ChestWindow(bui.MainWindow):
                     self._chest_yoffs + 27.0,
                 ),
                 size=(lsize, lsize),
-                texture=bui.gettexture('lock'),
+                texture=stdassets.textures.lock,
             )
 
         # Time string.
@@ -477,7 +483,7 @@ class ChestWindow(bui.MainWindow):
                             self._yoffs + bposy + bheight * 0.35,
                         ),
                         draw_controller=self._open_now_button,
-                        texture=bui.gettexture('coin'),
+                        texture=stdassets.textures.coin,
                     )
                 )
                 self._open_now_texts.append(
@@ -549,7 +555,7 @@ class ChestWindow(bui.MainWindow):
                 ),
                 draw_controller=self._watch_ad_button,
                 color=(1.5, 1.0, 2.0),
-                texture=bui.gettexture('tv'),
+                texture=stdassets.textures.tv,
             )
             # Note to self: AdMob requires rewarded ad usage
             # specifically says 'Ad' in it.
@@ -799,13 +805,13 @@ class ChestWindow(bui.MainWindow):
                 x += 5.0
                 if isinstance(item.item, ditm.Tickets):
                     _mktxt(str(item.item.count))
-                    _mkicon('tickets')
+                    _mkicon(_stex('tickets'))
                 elif isinstance(item.item, ditm.PurpleTickets):
                     _mktxt(str(item.item.count))
-                    _mkicon('ticketsPurple')
+                    _mkicon(_stex('tickets_purple'))
                 elif isinstance(item.item, ditm.Tokens):
                     _mktxt(str(item.item.count))
-                    _mkicon('coin')
+                    _mkicon(_stex('coin'))
                 else:
                     # For other cases just fall back on text desc.
                     #

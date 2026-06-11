@@ -11,9 +11,15 @@ import bacommon.displayitem as ditm
 import bacommon.classic
 import bauiv1
 from bauiv1 import builtinassets
+from bauiv1 import stdassets
 
 if TYPE_CHECKING:
     pass
+
+
+def _stex(name: str) -> str:
+    """Qualified stdassets texture ref."""
+    return f'{stdassets.__asset_package__}:textures/{name}'
 
 
 # FIXME - migrate to use the doc-ui rendering for these instead.
@@ -41,15 +47,15 @@ def show_display_item(
     itemtype = itemwrapper.item.get_type_id()
 
     if itemtype is ditm.ItemTypeID.TICKETS:
-        img = 'tickets'
+        img = _stex('tickets')
         img_y_offs = width * 0.11
         text_y_offs = width * -0.15
     elif itemtype is ditm.ItemTypeID.TICKETS_PURPLE:
-        img = 'ticketsPurple'
+        img = _stex('tickets_purple')
         img_y_offs = width * 0.11
         text_y_offs = width * -0.15
     elif itemtype is ditm.ItemTypeID.TOKENS:
-        img = 'coin'
+        img = _stex('coin')
         img_y_offs = width * 0.11
         text_y_offs = width * -0.15
     elif itemtype is ditm.ItemTypeID.CHEST:

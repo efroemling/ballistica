@@ -941,7 +941,7 @@ class Chooser:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets
+        from bascenev1 import builtinassets, stdassets
 
         assert babase.app.classic is not None
         if self._profilenames[self._profileindex] == '_edit':
@@ -962,8 +962,11 @@ class Chooser:
             ].icon_mask_texture
         except Exception:
             logging.exception('Error updating char icon list')
-            tex_name = 'neoSpazIcon'
-            tint_tex_name = 'neoSpazIconColorMask'
+            tex_name = f'{stdassets.__asset_package__}:textures/neo_spaz_icon'
+            tint_tex_name = (
+                f'{stdassets.__asset_package__}'
+                ':textures/neo_spaz_icon_color_mask'
+            )
 
         tex = _bascenev1.gettexture(tex_name)
         tint_tex = _bascenev1.gettexture(tint_tex_name)

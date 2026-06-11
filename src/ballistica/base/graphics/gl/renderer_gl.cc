@@ -608,6 +608,15 @@ auto RendererGL::GetGLTextureFormat(TextureFormat f) -> GLenum {
     case TextureFormat::kASTC_8x8:
       return GL_COMPRESSED_RGBA_ASTC_8x8_KHR;
       break;
+    case TextureFormat::kASTC_5x5:
+      return GL_COMPRESSED_RGBA_ASTC_5x5_KHR;
+      break;
+    case TextureFormat::kASTC_10x10:
+      return GL_COMPRESSED_RGBA_ASTC_10x10_KHR;
+      break;
+    case TextureFormat::kASTC_12x12:
+      return GL_COMPRESSED_RGBA_ASTC_12x12_KHR;
+      break;
     default:
       throw Exception("Invalid TextureFormat: "
                       + std::to_string(static_cast<int>(f)));

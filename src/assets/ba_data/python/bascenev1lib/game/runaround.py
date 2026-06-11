@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast, Sequence, override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 from bascenev1lib.actor.popuptext import PopupText
 from bascenev1lib.actor.bomb import TNTSpawner
@@ -143,7 +144,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         self._winsound = bs.getsound('score')
         self._cashregistersound = bs.getsound('cashRegister')
         self._bad_guy_score_sound = bs.getsound('shieldDown')
-        self._heart_tex = bs.gettexture('heart')
+        self._heart_tex = stdassets.textures.heart
         self._heart_mesh_opaque = bs.getmesh('heartOpaque')
         self._heart_mesh_transparent = bs.getmesh('heartTransparent')
 

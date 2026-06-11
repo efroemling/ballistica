@@ -3,7 +3,6 @@
 #include "ballistica/base/assets/assets.h"
 
 #include <cstdio>
-#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -813,40 +812,11 @@ auto Assets::GetTexture(const std::string& file_name_in)
   if (i != textures_.end()) {
     return Object::Ref<TextureAsset>(i->second.get());
   } else {
-    static std::set<std::string>* quality_map_medium = nullptr;
-    static std::set<std::string>* quality_map_high = nullptr;
-    static bool quality_maps_inited = false;
-
-    // TEMP - we currently set min quality based on filename;
-    // in the future this will be stored with the texture package or whatnot
-    if (!quality_maps_inited) {
-      quality_maps_inited = true;
-      quality_map_medium = new std::set<std::string>();
-      quality_map_high = new std::set<std::string>();
-      // (All former medium entries have migrated to asset-packages,
-      // which handle quality themselves.)
-      const char* vals_med[] = {nullptr};
-
-      const char* vals_high[] = {"frostyIcon", "jackIcon",  "melIcon",
-                                 "santaIcon",  "ninjaIcon", "neoSpazIcon",
-                                 "zoeIcon",    "kronkIcon", nullptr};
-
-      for (const char** val3 = vals_med; *val3 != nullptr; val3++) {
-        quality_map_medium->insert(*val3);
-      }
-      for (const char** val2 = vals_high; *val2 != nullptr; val2++) {
-        quality_map_high->insert(*val2);
-      }
-    }
-
-    TextureMinQuality min_quality = TextureMinQuality::kLow;
-    if (quality_map_medium->find(file_name) != quality_map_medium->end()) {
-      min_quality = TextureMinQuality::kMedium;
-    } else if (quality_map_high->find(file_name) != quality_map_high->end()) {
-      min_quality = TextureMinQuality::kHigh;
-    }
-
-    auto d(Object::New<TextureAsset>(file_name, TextureType::k2D, min_quality));
+    // (The old name-keyed min-quality map lived here; every entry in it
+    // has migrated to asset-packages, which handle quality themselves —
+    // asset-packages decision #18.)
+    auto d(Object::New<TextureAsset>(file_name, TextureType::k2D,
+                                     TextureMinQuality::kLow));
     textures_[file_name] = d;
     {
       Asset::LockGuard lock(d.get());

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -212,7 +213,7 @@ class ColorPickerExact(PopupWindow):
             parent=self.root_widget,
             position=(width * 0.5 - 65 + 5, height - 95),
             size=(130, 115),
-            texture=bui.gettexture('clayStroke'),
+            texture=stdassets.textures.clay_stroke,
             color=(1, 0, 0),
         )
         self._hex_textbox = bui.textwidget(

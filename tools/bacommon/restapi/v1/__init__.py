@@ -20,8 +20,9 @@ to parse or construct values::
 
     account = dataclass_from_json(AccountResponse, response_json_str)
 
-All endpoints require an ``Authorization: Bearer <api-key>`` header. Responses
-are JSON; any non-200 response has an
+Unless noted otherwise in their descriptions, all endpoints require an
+``Authorization: Bearer <api-key>`` header. Responses are JSON; any
+non-200 response has an
 :class:`~bacommon.restapi.v1.ErrorResponse` body regardless of
 which endpoint was called.
 
@@ -151,3 +152,13 @@ class Endpoint(StrEnum):
     #: :class:`~bacommon.restapi.v1.workspaces.WorkspaceResponse`
     #: or ``null``.
     WORKSPACES_ACTIVE = '/api/v1/workspaces/active'
+
+    #: ``GET`` — look up debug symbols for a prefab binary by the
+    #: binary's SHA-256 hash (``exe_sha256``; 64 lowercase hex chars).
+    #: No authentication required.
+    #: Returns :class:`~bacommon.restapi.v1.prefabs.PrefabSymbolsResponse`
+    #: containing a time-limited download URL, or a 404
+    #: :class:`~bacommon.restapi.v1.ErrorResponse` if no symbols are
+    #: available for that binary (symbols are retained for recent
+    #: builds only).
+    PREFAB_SYMBOLS = '/api/v1/prefab-symbols/{exe_sha256}'

@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 if TYPE_CHECKING:
     from typing import Callable
@@ -181,7 +182,7 @@ class AllSettingsWindow(bui.MainWindow):
             position=(x, y),
             label=bui.Lstr(resource=f'{self._r}.controllersText'),
             call=self._do_controllers,
-            texture=bui.gettexture('controllerIcon'),
+            texture=stdassets.textures.controller_icon,
             imgsize=150,
             imgoffs=(-2.0, 2.0),
         )
@@ -192,7 +193,7 @@ class AllSettingsWindow(bui.MainWindow):
             position=(x, y),
             label=bui.Lstr(resource=f'{self._r}.graphicsText'),
             call=self._do_graphics,
-            texture=bui.gettexture('graphicsIcon'),
+            texture=stdassets.textures.graphics_icon,
             imgsize=135,
             imgoffs=(0, 4.0),
         )
@@ -203,7 +204,7 @@ class AllSettingsWindow(bui.MainWindow):
             position=(x, y),
             label=bui.Lstr(resource=f'{self._r}.audioText'),
             call=self._do_audio,
-            texture=bui.gettexture('audioIcon'),
+            texture=stdassets.textures.audio_icon,
             imgsize=150,
             color=(1, 1, 0),
         )
@@ -214,7 +215,7 @@ class AllSettingsWindow(bui.MainWindow):
             position=(x, y),
             label=bui.Lstr(resource=f'{self._r}.advancedText'),
             call=self._do_advanced,
-            texture=bui.gettexture('advancedIcon'),
+            texture=stdassets.textures.advanced_icon,
             imgsize=150,
             color=(0.8, 0.95, 1),
             imgoffs=(0, 5.0),

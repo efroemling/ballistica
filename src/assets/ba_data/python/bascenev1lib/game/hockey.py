@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -176,7 +177,7 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
         self._swipsound = bs.getsound('swip')
         self._whistle_sound = bs.getsound('refWhistle')
         self.puck_mesh = bs.getmesh('puck')
-        self.puck_tex = bs.gettexture('puckColor')
+        self.puck_tex = stdassets.textures.puck_color
         self._puck_sound = bs.getsound('metalHit')
         self.puck_material = bs.Material()
         self.puck_material.add_actions(

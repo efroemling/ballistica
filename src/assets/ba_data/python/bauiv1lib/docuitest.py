@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, override
 from efro.error import CleanError
 import bauiv1 as bui
 from bauiv1 import builtinassets
+from bauiv1 import stdassets
 
 from bauiv1lib.docui import DocUIWindow, DocUIController
 
@@ -25,6 +26,11 @@ if TYPE_CHECKING:
 def _btex(name: str) -> str:
     """Qualified ref for a texture in the builtin asset-package."""
     return f'{builtinassets.__asset_package__}:textures/{name}'
+
+
+def _stex(name: str) -> str:
+    """Qualified stdassets texture ref."""
+    return f'{stdassets.__asset_package__}:textures/{name}'
 
 
 def show_test_doc_ui_window() -> None:
@@ -446,13 +452,13 @@ def _test_page_root(
                             size=(180, 200),
                             decorations=[
                                 dui1.Image(
-                                    'powerupPunch',
+                                    _stex('powerup_punch'),
                                     position=(-70, 0),
                                     size=(40, 40),
                                     h_align=dui1.HAlign.LEFT,
                                 ),
                                 dui1.Image(
-                                    'powerupSpeed',
+                                    _stex('powerup_speed'),
                                     position=(0, 75),
                                     size=(35, 35),
                                     v_align=dui1.VAlign.TOP,
@@ -508,13 +514,13 @@ def _test_page_root(
                             debug=debug,  # Show bounds.
                             decorations=[
                                 dui1.Image(
-                                    'powerupPunch',
+                                    _stex('powerup_punch'),
                                     position=(-70, 0),
                                     size=(40, 40),
                                     h_align=dui1.HAlign.LEFT,
                                 ),
                                 dui1.Image(
-                                    'powerupSpeed',
+                                    _stex('powerup_speed'),
                                     position=(0, 75),
                                     size=(35, 35),
                                     v_align=dui1.VAlign.TOP,
@@ -601,10 +607,10 @@ def _test_page_root(
                             size=(150, 100),
                             decorations=[
                                 dui1.Image(
-                                    'zoeIcon',
+                                    _stex('zoe_icon'),
                                     position=(0, 0),
                                     size=(70, 70),
-                                    tint_texture='zoeIconColorMask',
+                                    tint_texture=_stex('zoe_icon_color_mask'),
                                     tint_color=(1, 0, 0),
                                     tint2_color=(0, 1, 0),
                                     mask_texture=_btex('character_icon_mask'),
@@ -615,10 +621,10 @@ def _test_page_root(
                             size=(150, 100),
                             decorations=[
                                 dui1.Image(
-                                    'bridgitPreview',
+                                    _stex('bridgit_preview'),
                                     position=(0, 10),
                                     size=(120, 60),
-                                    mask_texture='mapPreviewMask',
+                                    mask_texture=_stex('map_preview_mask'),
                                     mesh_opaque='level_select_button_opaque',
                                     mesh_transparent=(
                                         'level_select_button_transparent'
@@ -665,7 +671,7 @@ def _test_page_root(
                             size=(300, 80),
                             style=dui1.ButtonStyle.MEDIUM,
                             color=(0.8, 0.8, 0.8, 1),
-                            icon='buttonPunch',
+                            icon=_stex('button_punch'),
                             icon_color=(0.5, 0.3, 1.0, 1.0),
                             icon_scale=1.2,
                         ),

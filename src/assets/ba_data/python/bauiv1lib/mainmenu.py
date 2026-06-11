@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, override
 import logging
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 import bascenev1 as bs
 
@@ -438,7 +439,7 @@ class MainMenuWindow(bui.MainWindow):
                 + 0.65 * side_button_height * side_button_scale
                 - 0.5 * icon_size,
             ),
-            texture=bui.gettexture('tv'),
+            texture=stdassets.textures.tv,
         )
 
         # Credits button.

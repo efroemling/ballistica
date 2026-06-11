@@ -16,6 +16,7 @@ import bacommon.displayitem as ditm
 import bacommon.docui.v1 as dui1
 import bauiv1 as bui
 from bauiv1 import builtinassets
+from bauiv1 import stdassets
 
 from bauiv1lib.docui.v1prep._types import DecorationPrep
 
@@ -28,6 +29,11 @@ if TYPE_CHECKING:
 def _btex(name: str) -> str:
     """Qualified ref for a texture in the builtin asset-package."""
     return f'{builtinassets.__asset_package__}:textures/{name}'
+
+
+def _stex(name: str) -> str:
+    """Qualified stdassets texture ref."""
+    return f'{stdassets.__asset_package__}:textures/{name}'
 
 
 def prep_decorations(
@@ -503,17 +509,17 @@ def prep_display_item(
     ):
         if itemtype is ditm.ItemTypeID.TOKENS:
             assert isinstance(item, ditm.Tokens)
-            img = 'coin'
+            img = _stex('coin')
             if compact:
                 text = str(item.count)
         elif itemtype is ditm.ItemTypeID.TICKETS:
             assert isinstance(item, ditm.Tickets)
-            img = 'tickets'
+            img = _stex('tickets')
             if compact:
                 text = str(item.count)
         elif itemtype is ditm.ItemTypeID.TICKETS_PURPLE:
             assert isinstance(item, ditm.PurpleTickets)
-            img = 'ticketsPurple'
+            img = _stex('tickets_purple')
             if compact:
                 text = str(item.count)
         else:

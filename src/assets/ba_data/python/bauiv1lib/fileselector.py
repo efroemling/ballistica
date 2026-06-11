@@ -11,6 +11,7 @@ from threading import Thread
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
@@ -110,9 +111,9 @@ class FileSelectorWindow(bui.MainWindow):
             on_activate_call=self._on_back_press,
         )
 
-        self._folder_tex = bui.gettexture('folder')
+        self._folder_tex = stdassets.textures.folder
         self._folder_color = (1.1, 0.8, 0.2)
-        self._file_tex = bui.gettexture('file')
+        self._file_tex = stdassets.textures.file
         self._file_color = (1, 1, 1)
         self._use_folder_button: bui.Widget | None = None
         self._folder_center = self._width * 0.5 + 15
