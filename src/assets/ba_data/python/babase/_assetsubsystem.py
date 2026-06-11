@@ -121,7 +121,7 @@ _GC_BUSY_TIMEOUT_SECONDS = 2.0
 _CAS_SHARD_COUNT = 256
 
 #: The canonical asset-package buckets, in registration order.
-_BUCKETS = ('constant', 'language', 'textures')
+_BUCKETS = ('constant', 'language', 'textures', 'cube_map_textures')
 
 #: Per-bucket fallback flavor coord (or None) — used ONLY for the
 #: builtin/projectconfig bootstrap package, whose fallbacks are
@@ -132,6 +132,7 @@ _BUCKET_FALLBACKS: dict[str, str | None] = {
     'constant': None,  # No flavor dimension; 'constant' is always present.
     'language': 'language/eng',
     'textures': 'textures/fallback_v1.gamma.regular',
+    'cube_map_textures': 'cube_map_textures/fallback_v1.gamma.regular',
 }
 
 
@@ -639,6 +640,13 @@ class AssetSubsystem(AppSubsystem):
             'language': f'language/{language.value}',
             'textures': (
                 f'textures/{self._texture_profile}'
+                f'.{self._render_space}'
+                f'.{self._texture_tier}'
+            ),
+            # Cube maps ride the same dimensions as 2D textures in
+            # their own bucket (decision #24).
+            'cube_map_textures': (
+                f'cube_map_textures/{self._texture_profile}'
                 f'.{self._render_space}'
                 f'.{self._texture_tier}'
             ),

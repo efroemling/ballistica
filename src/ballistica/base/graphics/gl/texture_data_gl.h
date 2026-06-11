@@ -269,13 +269,23 @@ class RendererGL::TextureDataGL : public TextureAssetRendererData {
         while (preload_data->buffers[src_level] != nullptr
                && !generating_remaining_mips) {
           switch (preload_data->formats[src_level]) {
-            case TextureFormat::kRGBA_8888:
+            case TextureFormat::kRGBA_8888: {
               glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, level, GL_RGBA,
                            preload_data->widths[src_level],
                            preload_data->heights[src_level], 0, GL_RGBA,
                            GL_UNSIGNED_BYTE, preload_data->buffers[src_level]);
-              generating_remaining_mips = do_generate_mips = true;
+              // Mirror the 2D path: if the source carries its own mip
+              // chain (KTX2 asset-package cube maps; recipe-built
+              // gamma-correct mips) upload every provided level;
+              // otherwise (single-image legacy faces) let GL generate.
+              const bool have_more_levels =
+                  (base_src_level + 1 < kMaxTextureLevels)
+                  && preload_data->buffers[base_src_level + 1] != nullptr;
+              if (!have_more_levels) {
+                generating_remaining_mips = do_generate_mips = true;
+              }
               break;
+            }
             case TextureFormat::kRGBA_4444:
               glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, level, GL_RGBA,
                            preload_data->widths[src_level],

@@ -1,4 +1,4 @@
-### 1.8.0a1 (build 22877, api 9, 2026-06-10)
+### 1.8.0a1 (build 22878, api 9, 2026-06-11)
 - Fully implemented asset packages (more on this soon)
 - Upgraded from SDL2 to SDL3.
 - Finally got rid of the weird square textures containing non-square contents

@@ -78,12 +78,36 @@ static_assert(sizeof(KTX2LevelIndex) == 24,
 /// #23). It is data-only for now — fed in but not yet consumed by the
 /// renderer/blend path; a future premult-aware renderer reads it.
 ///
-/// Throws on parse error, unsupported ``vkFormat``, or
-/// non-zero ``supercompressionScheme`` (BasisU/zstd not implemented
-/// for v1 — see initiative decision #12).
+/// Throws on parse error, unsupported ``vkFormat``, a cube/array/3D
+/// layout (use :func:`LoadKTX2CubeMap` for cube maps), or non-zero
+/// ``supercompressionScheme`` (BasisU/zstd not implemented for v1 —
+/// see initiative decision #12).
 void LoadKTX2(const std::string& file_name, unsigned char** buffers,
               int* widths, int* heights, TextureFormat* formats, size_t* sizes,
               int* base_level, bool* premultiplied);
+
+/// One face's output destination for a cube-map KTX2 load — the same
+/// array set :func:`LoadKTX2` fills for a single 2D image.
+struct KTX2FaceTarget {
+  unsigned char** buffers;
+  int* widths;
+  int* heights;
+  TextureFormat* formats;
+  size_t* sizes;
+  int* base_level;
+  bool* premultiplied;
+};
+
+/// Load a ``faceCount=6`` cube-map KTX 2.0 file (asset-packages decision
+/// #24) into six per-face mip-buffer sets. ``faces`` must point at
+/// exactly six targets, ordered +X, -X, +Y, -Y, +Z, -Z — the KTX2 spec
+/// face order, which also matches the engine's
+/// ``GL_TEXTURE_CUBE_MAP_POSITIVE_X + i`` upload convention. Each face
+/// receives the file's full mip chain (faces within a level are tightly
+/// packed equal-size slices). Same loading rules/throws as
+/// :func:`LoadKTX2`; additionally throws if the file is not a
+/// six-face cube map.
+void LoadKTX2CubeMap(const std::string& file_name, KTX2FaceTarget* faces);
 
 }  // namespace ballistica::base
 

@@ -38,7 +38,14 @@ class Assets {
   /// This function takes a newly allocated pointer which
   /// is deleted once the load is completed.
   void AddPendingLoad(Object::Ref<Asset>* c);
-  enum class FileType { kMesh, kCollisionMesh, kTexture, kSound, kData };
+  enum class FileType {
+    kMesh,
+    kCollisionMesh,
+    kTexture,
+    kSound,
+    kData,
+    kCubeMapTexture
+  };
   auto FindAssetFile(FileType fileType, const std::string& file_in)
       -> std::string;
 
@@ -88,7 +95,6 @@ class Assets {
 
   // Get system assets. These are loaded at startup so are always instantly
   // available.
-  auto BuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID id) -> TextureAsset*;
   auto IsValidBuiltinSoundOld(BuiltinSoundOldID id) -> bool;
   auto BuiltinSoundOld(BuiltinSoundOldID id) -> SoundAsset*;
   auto BuiltinMeshOld(BuiltinMeshOldID id) -> MeshAsset*;
@@ -181,6 +187,13 @@ class Assets {
   auto FindCasTexturePartPath(const std::string& name, const std::string& part)
       -> std::string;
 
+  /// Cube-map analog of :meth:`FindCasTexturePartPath` (decision #24):
+  /// resolve a cube-map qualified-ref to its single ``faceCount=6``
+  /// KTX2 CAS blob (part ``"t"`` in the package's resolved
+  /// ``cube_map_textures/...`` bucket). Returns ``""`` if the name
+  /// isn't a CAS ref, the asset/part is absent, or in headless mode.
+  auto FindCasCubeMapTexturePath(const std::string& name) -> std::string;
+
  private:
   /// Resolve a qualified-ref name (``<apverid>:<asset_name>``) into a
   /// CAS blob path via :class:`AssetPackageRegistry`. Called from the
@@ -192,8 +205,6 @@ class Assets {
                          size_t colon_pos) -> std::string;
 
   static void MarkAssetForLoad(Asset* c);
-  void LoadBuiltinCubeMapTextureOld(BuiltinCubeMapTextureOldID id,
-                                    const char* name);
   void LoadBuiltinSoundOld(BuiltinSoundOldID id, const char* name);
   void LoadSystemData(SystemDataID id, const char* name);
   void LoadBuiltinMeshOld(BuiltinMeshOldID id, const char* name);
@@ -233,7 +244,6 @@ class Assets {
   // For use by AssetListLock; don't manually acquire.
   std::mutex asset_lists_mutex_;
 
-  std::vector<Object::Ref<TextureAsset> > builtin_cube_map_textures_old_;
   std::vector<Object::Ref<SoundAsset> > builtin_sounds_old_;
   std::vector<Object::Ref<DataAsset> > system_datas_;
   std::vector<Object::Ref<MeshAsset> > builtin_meshes_old_;

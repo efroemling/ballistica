@@ -1,13 +1,14 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Asset-package wrapper for ``a-0.babuiltinassets.260610`` (bauiv1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260611`` (bauiv1).
 
 Auto-generated; do not edit by hand.
 """
 
-# ba_meta require asset-package a-0.babuiltinassets.260610
+# ba_meta require asset-package a-0.babuiltinassets.260611
 # pylint: disable=missing-function-docstring
 # pylint: disable=too-many-public-methods, useless-suppression
+# pylint: disable=too-many-lines, disallowed-name
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -15,7 +16,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import bauiv1
 
-__asset_package__ = 'a-0.babuiltinassets.260610'
+__asset_package__ = 'a-0.babuiltinassets.260611'
 _APVERID = __asset_package__
 
 

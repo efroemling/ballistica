@@ -88,6 +88,13 @@ class AssetPackageRegistry {
   /// to its bundled fallback_v1).
   auto LookupTextureBucketId(const std::string& apverid) const -> std::string;
 
+  /// Cube-map analog of :meth:`LookupTextureBucketId`: the
+  /// ``cube_map_textures/...`` bucket id registered for ``apverid``
+  /// (decision #24). Empty if the package isn't registered or has no
+  /// cube-map bucket.
+  auto LookupCubeMapTextureBucketId(const std::string& apverid) const
+      -> std::string;
+
   /// Single chokepoint for "where is this CAS blob on disk?". Probes
   /// the writable CAS root (``<cache_dir>/assets/<aa>/<rest>``, where
   /// downloaded-on-the-fly blobs land) and falls through to the bundle
@@ -104,6 +111,11 @@ class AssetPackageRegistry {
   /// Return the current immutable snapshot (never null). Briefly takes
   /// the write lock to copy the shared_ptr.
   auto Snapshot_() const -> std::shared_ptr<const PackagesMap>;
+
+  /// Shared impl for the per-asset-type bucket-id lookups: the single
+  /// bucket registered for ``apverid`` whose id starts with ``prefix``.
+  auto LookupBucketIdWithPrefix_(const std::string& apverid,
+                                 const char* prefix) const -> std::string;
 
   mutable std::mutex mutex_;
   // Immutable published snapshot; replaced wholesale on each

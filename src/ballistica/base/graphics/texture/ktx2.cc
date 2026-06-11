@@ -65,14 +65,21 @@ static auto BytesPerPixelForFormat(TextureFormat fmt) -> size_t {
   }
 }
 
-void LoadKTX2(const std::string& file_name, unsigned char** buffers,
-              int* widths, int* heights, TextureFormat* formats, size_t* sizes,
-              int* base_level, bool* premultiplied) {
+// Shared loader core for 2D (1 face) and cube-map (6 face) KTX2 files.
+// ``targets`` must hold ``expected_face_count`` entries; each face gets
+// the full mip chain. Within a level, faces are tightly packed
+// equal-size slices in spec face order (+X,-X,+Y,-Y,+Z,-Z).
+static void LoadKTX2Impl(const std::string& file_name,
+                         uint32_t expected_face_count,
+                         KTX2FaceTarget* targets) {
   // Asset-package textures always load every mip in the chosen flavor;
   // the legacy texture-quality mip-skip knob does not apply here (see
   // the header and initiative §7 texture-quality decoupling).
-  *base_level = 0;
-  *premultiplied = false;
+  bool premultiplied{};
+  for (uint32_t fi = 0; fi < expected_face_count; ++fi) {
+    *targets[fi].base_level = 0;
+    *targets[fi].premultiplied = false;
+  }
 
   FILE* f = g_core->platform->FOpen(file_name.c_str(), "rb");
   if (!f) {
@@ -102,14 +109,17 @@ void LoadKTX2(const std::string& file_name, unsigned char** buffers,
         + file_name + "\".");
   }
 
-  // 2D-only for v1. faceCount > 1 = cube map; layerCount > 0 = array
-  // texture; pixelDepth > 0 = 3D. These need separate code paths
-  // (and additional ``TextureType`` enum values for arrays); not in
-  // scope for the first KTX2 milestone.
-  if (hdr.face_count != 1 || hdr.layer_count != 0 || hdr.pixel_depth != 0) {
+  // 2D + cube-map only. layerCount > 0 = array texture; pixelDepth > 0
+  // = 3D — those would need additional ``TextureType`` enum values and
+  // separate code paths; not in scope. A face-count mismatch (2D file
+  // through the cube path or vice versa) is a recipe/loader bug.
+  if (hdr.face_count != expected_face_count || hdr.layer_count != 0
+      || hdr.pixel_depth != 0) {
     fclose(f);
-    throw Exception("KTX2 cube/array/3D textures not yet supported: \""
-                    + file_name + "\".");
+    throw Exception("KTX2 layout unsupported (faceCount="
+                    + std::to_string(hdr.face_count) + " expected "
+                    + std::to_string(expected_face_count)
+                    + "; arrays/3D unsupported): \"" + file_name + "\".");
   }
 
   if (hdr.level_count == 0) {
@@ -137,16 +147,19 @@ void LoadKTX2(const std::string& file_name, unsigned char** buffers,
   // The flags byte is word2's high byte; KHR_DF_FLAG_ALPHA_PREMULTIPLIED
   // is its bit 0. KTX2 is little-endian, matching all our targets (same
   // assumption as the raw header struct read above). A malformed/missing
-  // DFD just leaves *premultiplied false (straight).
+  // DFD just leaves premultiplied false (straight).
   if (hdr.dfd_byte_offset != 0 && hdr.dfd_byte_length >= 16) {
     if (fseek(f, static_cast<long>(hdr.dfd_byte_offset) + 12,  // NOLINT
               SEEK_SET)
         == 0) {
       uint32_t dfd_word2{};
       if (fread(&dfd_word2, sizeof(dfd_word2), 1, f) == 1) {
-        *premultiplied = ((dfd_word2 >> 24u) & 1u) != 0u;
+        premultiplied = ((dfd_word2 >> 24u) & 1u) != 0u;
       }
     }
+  }
+  for (uint32_t fi = 0; fi < expected_face_count; ++fi) {
+    *targets[fi].premultiplied = premultiplied;
   }
 
   // No quality-driven base_level bump: asset-package textures load all
@@ -154,62 +167,71 @@ void LoadKTX2(const std::string& file_name, unsigned char** buffers,
   // into the bytes, not a load-time mip dropdown).
 
   // Walk levels 0..N-1 (mip-major, level 0 = largest). For each
-  // level: compute width/height by halving, allocate + read bytes
-  // if at-or-above base_level, otherwise leave buffer nullptr.
+  // level: compute width/height by halving, then allocate + read each
+  // face's equal-size slice of the level data.
   int mip_count = static_cast<int>(hdr.level_count);
   auto x = static_cast<unsigned int>(hdr.pixel_width);
   auto y = static_cast<unsigned int>(hdr.pixel_height);
   for (int ix = 0; ix < mip_count; ++ix) {
     auto byte_length = static_cast<size_t>(level_index[ix].byte_length);
 
+    if (byte_length % expected_face_count != 0) {
+      fclose(f);
+      throw Exception("KTX2 mip " + std::to_string(ix) + " byte length "
+                      + std::to_string(byte_length) + " not divisible by "
+                      + std::to_string(expected_face_count) + " faces: \""
+                      + file_name + "\".");
+    }
+    size_t face_bytes = byte_length / expected_face_count;
+
     // Cross-check the on-disk byte_length against what we expect from
     // the format + dimensions. Catches malformed files / mismatched
     // recipes early rather than surfacing as garbage texel data.
     if (bpp != 0) {
       size_t expected = static_cast<size_t>(x) * static_cast<size_t>(y) * bpp;
-      if (expected != byte_length) {
+      if (expected != face_bytes) {
         fclose(f);
-        throw Exception("KTX2 mip " + std::to_string(ix) + " byte length "
-                        + std::to_string(byte_length) + " != expected "
-                        + std::to_string(expected) + " for " + std::to_string(x)
-                        + "x" + std::to_string(y) + ": \"" + file_name + "\".");
+        throw Exception("KTX2 mip " + std::to_string(ix)
+                        + " per-face byte length " + std::to_string(face_bytes)
+                        + " != expected " + std::to_string(expected) + " for "
+                        + std::to_string(x) + "x" + std::to_string(y) + ": \""
+                        + file_name + "\".");
       }
     }
 
-    widths[ix] = static_cast<int>(x);
-    heights[ix] = static_cast<int>(y);
-    formats[ix] = fmt;
-    sizes[ix] = byte_length;
+    for (uint32_t fi = 0; fi < expected_face_count; ++fi) {
+      auto&& target = targets[fi];
+      target.widths[ix] = static_cast<int>(x);
+      target.heights[ix] = static_cast<int>(y);
+      target.formats[ix] = fmt;
+      target.sizes[ix] = face_bytes;
 
-    if (ix >= *base_level) {
-      // fseek + fread for each level — level offsets aren't guaranteed
-      // to be in file order (spec recommends smallest-mip-first
-      // layout), so we can't stream sequentially.
-      buffers[ix] = static_cast<unsigned char*>(malloc(byte_length));
-      if (buffers[ix] == nullptr) {
+      // fseek + fread for each face slice — level offsets aren't
+      // guaranteed to be in file order (spec recommends
+      // smallest-mip-first layout), so we can't stream sequentially.
+      target.buffers[ix] = static_cast<unsigned char*>(malloc(face_bytes));
+      if (target.buffers[ix] == nullptr) {
         fclose(f);
         throw Exception("malloc failed for KTX2 mip " + std::to_string(ix)
-                        + " (" + std::to_string(byte_length) + " bytes): \""
+                        + " (" + std::to_string(face_bytes) + " bytes): \""
                         + file_name + "\".");
       }
-      if (fseek(f, static_cast<long>(level_index[ix].byte_offset),  // NOLINT
-                SEEK_SET)
-          != 0) {
-        free(buffers[ix]);
-        buffers[ix] = nullptr;
+      auto offset = static_cast<long>(level_index[ix].byte_offset  // NOLINT
+                                      + static_cast<uint64_t>(fi) * face_bytes);
+      if (fseek(f, offset, SEEK_SET) != 0) {
+        free(target.buffers[ix]);
+        target.buffers[ix] = nullptr;
         fclose(f);
         throw Exception("fseek failed on KTX2 mip " + std::to_string(ix)
                         + ": \"" + file_name + "\".");
       }
-      if (fread(buffers[ix], byte_length, 1, f) != 1) {
-        free(buffers[ix]);
-        buffers[ix] = nullptr;
+      if (fread(target.buffers[ix], face_bytes, 1, f) != 1) {
+        free(target.buffers[ix]);
+        target.buffers[ix] = nullptr;
         fclose(f);
         throw Exception("Short read on KTX2 mip " + std::to_string(ix) + ": \""
                         + file_name + "\".");
       }
-    } else {
-      buffers[ix] = nullptr;
     }
 
     x = std::max(1u, x >> 1u);
@@ -217,6 +239,18 @@ void LoadKTX2(const std::string& file_name, unsigned char** buffers,
   }
 
   fclose(f);
+}
+
+void LoadKTX2(const std::string& file_name, unsigned char** buffers,
+              int* widths, int* heights, TextureFormat* formats, size_t* sizes,
+              int* base_level, bool* premultiplied) {
+  KTX2FaceTarget target{buffers, widths,     heights,      formats,
+                        sizes,   base_level, premultiplied};
+  LoadKTX2Impl(file_name, 1, &target);
+}
+
+void LoadKTX2CubeMap(const std::string& file_name, KTX2FaceTarget* faces) {
+  LoadKTX2Impl(file_name, 6, faces);
 }
 
 }  // namespace ballistica::base

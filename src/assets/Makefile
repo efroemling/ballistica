@@ -3636,156 +3636,16 @@ AUDIO_TARGETS = \
   $(BUILD_DIR)/ba_data/audio/zoeScream01.ogg
 
 TEX2D_DDS_TARGETS = \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_+x.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_+y.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_+z.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_-x.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_-y.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_-z.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_+x.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_+y.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_+z.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_-x.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_-y.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_-z.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_+x.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_+y.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_+z.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_-x.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_-y.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_-z.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_+x.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_+y.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_+z.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_-x.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_-y.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_-z.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_+x.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_+y.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_+z.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_-x.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_-y.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_-z.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_+x.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_+y.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_+z.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_-x.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_-y.dds \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_-z.dds
+  
 
 TEX2D_PVR_TARGETS = \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_+x.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_+y.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_+z.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_-x.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_-y.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_-z.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_+x.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_+y.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_+z.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_-x.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_-y.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_-z.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_+x.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_+y.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_+z.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_-x.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_-y.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_-z.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_+x.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_+y.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_+z.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_-x.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_-y.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_-z.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_+x.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_+y.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_+z.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_-x.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_-y.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_-z.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_+x.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_+y.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_+z.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_-x.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_-y.pvr \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_-z.pvr
+  
 
 TEX2D_KTX_TARGETS = \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_+x.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_+y.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_+z.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_-x.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_-y.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_-z.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_+x.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_+y.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_+z.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_-x.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_-y.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_-z.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_+x.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_+y.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_+z.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_-x.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_-y.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_-z.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_+x.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_+y.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_+z.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_-x.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_-y.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_-z.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_+x.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_+y.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_+z.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_-x.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_-y.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_-z.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_+x.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_+y.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_+z.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_-x.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_-y.ktx \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_-z.ktx
+  
 
 TEX2D_PREVIEW_PNG_TARGETS = \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_+x_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_+y_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_+z_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_-x_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_-y_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionChar_-z_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_+x_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_+y_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_+z_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_-x_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_-y_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionPowerup_-z_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_+x_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_+y_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_+z_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_-x_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_-y_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharp_-z_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_+x_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_+y_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_+z_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_-x_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_-y_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharper_-z_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_+x_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_+y_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_+z_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_-x_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_-y_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSharpest_-z_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_+x_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_+y_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_+z_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_-x_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_-y_preview.png \
-  $(BUILD_DIR)/ba_data/textures/reflectionSoft_-z_preview.png
+  
 
 EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/DLLs/_asyncio.pyd \

@@ -433,15 +433,6 @@ enum class ShadingType : uint8_t {
   kCount
 };
 
-enum class BuiltinCubeMapTextureOldID : uint8_t {
-  kReflectionChar,
-  kReflectionPowerup,
-  kReflectionSoft,
-  kReflectionSharp,
-  kReflectionSharper,
-  kReflectionSharpest
-};
-
 enum class BuiltinSoundOldID {
   kDeek,
   kBlip,
@@ -554,7 +545,7 @@ enum class BuiltinMeshOldID : uint8_t {
 // above retire one at a time as their callsites migrate.
 
 inline constexpr const char* kBuiltinAssetsApverid =
-    "a-0.babuiltinassets.260610";
+    "a-0.babuiltinassets.260611";
 
 enum class BuiltinTextureID : uint16_t {
   kTexturesActionButtons,         // textures/action_buttons
@@ -641,7 +632,14 @@ enum class BuiltinTextureID : uint16_t {
   kTexturesWings,                 // textures/wings
 };
 
-enum class BuiltinCubeMapTextureID : uint16_t {};
+enum class BuiltinCubeMapTextureID : uint16_t {
+  kTexturesReflectionChar,      // textures/reflection_char
+  kTexturesReflectionPowerup,   // textures/reflection_powerup
+  kTexturesReflectionSharp,     // textures/reflection_sharp
+  kTexturesReflectionSharper,   // textures/reflection_sharper
+  kTexturesReflectionSharpest,  // textures/reflection_sharpest
+  kTexturesReflectionSoft,      // textures/reflection_soft
+};
 
 enum class BuiltinSoundID : uint16_t {};
 

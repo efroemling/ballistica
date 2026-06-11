@@ -1654,20 +1654,20 @@ void Graphics::UpdateScreen_() {
 }
 
 auto Graphics::CubeMapFromReflectionType(ReflectionType reflection_type)
-    -> BuiltinCubeMapTextureOldID {
+    -> BuiltinCubeMapTextureID {
   switch (reflection_type) {
     case ReflectionType::kChar:
-      return BuiltinCubeMapTextureOldID::kReflectionChar;
+      return BuiltinCubeMapTextureID::kTexturesReflectionChar;
     case ReflectionType::kPowerup:
-      return BuiltinCubeMapTextureOldID::kReflectionPowerup;
+      return BuiltinCubeMapTextureID::kTexturesReflectionPowerup;
     case ReflectionType::kSoft:
-      return BuiltinCubeMapTextureOldID::kReflectionSoft;
+      return BuiltinCubeMapTextureID::kTexturesReflectionSoft;
     case ReflectionType::kSharp:
-      return BuiltinCubeMapTextureOldID::kReflectionSharp;
+      return BuiltinCubeMapTextureID::kTexturesReflectionSharp;
     case ReflectionType::kSharper:
-      return BuiltinCubeMapTextureOldID::kReflectionSharper;
+      return BuiltinCubeMapTextureID::kTexturesReflectionSharper;
     case ReflectionType::kSharpest:
-      return BuiltinCubeMapTextureOldID::kReflectionSharpest;
+      return BuiltinCubeMapTextureID::kTexturesReflectionSharpest;
     default:
       throw Exception();
   }

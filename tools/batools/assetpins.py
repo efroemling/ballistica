@@ -1142,10 +1142,14 @@ def _writeback_wrapper(projroot: Path, pin: Pin, new_apverid: str) -> None:
     # can collide with its disallowed-name list ('bar'), so widen the
     # generated header's suppressions until the server generator emits
     # these itself (followup filed there).
+    # Keep ``useless-suppression`` on the FIRST line: pylint only mutes
+    # I0021 for suppressions at-or-after the line disabling it, and the
+    # added blanket suppressions are genuinely useless on small wrappers
+    # (e.g. ``too-many-lines`` on a sub-1000-line package).
     content = content.replace(
         '# pylint: disable=too-many-public-methods, useless-suppression',
-        '# pylint: disable=too-many-public-methods, too-many-lines'
-        '\n# pylint: disable=disallowed-name, useless-suppression',
+        '# pylint: disable=too-many-public-methods, useless-suppression'
+        '\n# pylint: disable=too-many-lines, disallowed-name',
         1,
     )
     # Land it format-clean: the server generator doesn't guarantee our

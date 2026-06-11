@@ -78,22 +78,35 @@ auto AssetPackageRegistry::LookupAssetHash(const std::string& apverid,
   return part_it->second;
 }
 
-auto AssetPackageRegistry::LookupTextureBucketId(
-    const std::string& apverid) const -> std::string {
+auto AssetPackageRegistry::LookupBucketIdWithPrefix_(const std::string& apverid,
+                                                     const char* prefix) const
+    -> std::string {
   auto snapshot = Snapshot_();
   auto pkg_it = snapshot->find(apverid);
   if (pkg_it == snapshot->end()) {
     return "";
   }
-  // Each package registers exactly one textures bucket — its resolved
-  // flavor, e.g. "textures/desktop_v1.gamma.regular" or
-  // "textures/fallback_v1.gamma.regular". Find it by prefix.
+  // Each package registers exactly one bucket per asset-type head — its
+  // resolved flavor, e.g. "textures/desktop_v1.gamma.regular" or
+  // "textures/fallback_v1.gamma.regular". Find it by prefix. (Note the
+  // heads can't shadow each other: "cube_map_textures/" does not start
+  // with "textures/".)
   for (auto&& bucket : pkg_it->second) {
-    if (bucket.first.rfind("textures/", 0) == 0) {
+    if (bucket.first.rfind(prefix, 0) == 0) {
       return bucket.first;
     }
   }
   return "";
+}
+
+auto AssetPackageRegistry::LookupTextureBucketId(
+    const std::string& apverid) const -> std::string {
+  return LookupBucketIdWithPrefix_(apverid, "textures/");
+}
+
+auto AssetPackageRegistry::LookupCubeMapTextureBucketId(
+    const std::string& apverid) const -> std::string {
+  return LookupBucketIdWithPrefix_(apverid, "cube_map_textures/");
 }
 
 auto AssetPackageRegistry::CasBlobPath(const std::string& hash) const
