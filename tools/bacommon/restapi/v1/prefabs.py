@@ -20,8 +20,8 @@ class PrefabSymbolsResponse:
     Returned by :attr:`~bacommon.restapi.v1.Endpoint.PREFAB_SYMBOLS`.
     """
 
-    #: Suggested local file name for the symbols file (e.g.
-    #: ``'BallisticaKit.pdb'``). Place the downloaded file under this
+    #: Suggested local file name for the symbols file (the app's
+    #: ``.pdb`` name). Place the downloaded file under this
     #: name next to the binary it was looked up for; debuggers and the
     #: engine's own stack-trace symbolication will then find it
     #: automatically.
