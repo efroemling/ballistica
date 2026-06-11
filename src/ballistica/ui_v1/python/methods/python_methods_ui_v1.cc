@@ -482,7 +482,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     b->SetTextResScale(Python::GetFloat(text_res_scale_obj));
   }
   if (enabled_obj != Py_None) {
-    b->set_enabled(Python::GetBool(selectable_obj));
+    b->set_enabled(Python::GetBool(enabled_obj));
   }
   if (opacity_obj != Py_None) {
     b->set_opacity(Python::GetFloat(opacity_obj));
