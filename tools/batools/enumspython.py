@@ -9,8 +9,6 @@ or source code ast is more foolproof than the text based parsing we
 are doing here.
 """
 
-from __future__ import annotations
-
 import re
 import os
 from typing import TYPE_CHECKING

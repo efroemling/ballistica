@@ -10,9 +10,15 @@ model, this system:
 - Stores hashes and state in a central ``~/.efrosync/`` directory.
 - Supports glob patterns for worktree directories.
 - Syncs when exactly one copy has changed; errors on ambiguity.
+- Only ever updates the *contents* of existing files; it never
+  creates or deletes them. Adding a shared file means manually
+  placing a copy in every repo (after which syncs manage it);
+  removing one means manually deleting it everywhere. This is
+  deliberate: silently materializing or deleting files in repos the
+  user may be actively working in would be far more surprising than
+  the one-time manual setup, so presence mismatches are reported as
+  errors and the placement/removal is left to the user.
 """
-
-from __future__ import annotations
 
 import fcntl
 import hashlib
@@ -355,7 +361,14 @@ def _check_file_presence(
     all_files: list[str],
     errors: list[str],
 ) -> None:
-    """Check that every file exists in all locations."""
+    """Check that every file exists in all locations.
+
+    Presence mismatches are errors by design — the sync system never
+    creates or deletes files on its own (see module docstring). To
+    introduce a new shared file, manually copy it to every repo's
+    synced dir and then run a sync to register it; to retire one,
+    manually delete it everywhere.
+    """
     for rel_file in all_files:
         present_in = [
             loc.label

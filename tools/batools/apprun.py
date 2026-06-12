@@ -5,8 +5,6 @@
 Manages constructing or downloading it as well as running it.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 import os
 import platform

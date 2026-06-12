@@ -20,8 +20,6 @@ format is identical (``[automation] <tag> <status> <payload>`` via
 :func:`babase._automation.screenshot`.
 """
 
-from __future__ import annotations
-
 import babase
 import _bauiv1
 

@@ -5,8 +5,6 @@
 # ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
-from __future__ import annotations
-
 import logging
 from enum import Enum
 from typing import TYPE_CHECKING, override

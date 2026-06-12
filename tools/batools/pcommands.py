@@ -2,8 +2,6 @@
 #
 """A nice collection of ready-to-use pcommands for this package."""
 
-from __future__ import annotations
-
 # Note: import as little as possible here at the module level to
 # keep launch times fast for small snippets.
 import sys
@@ -149,43 +147,6 @@ def lazy_increment_build() -> None:
         os.makedirs(os.path.dirname(hashfilename), exist_ok=True)
         with open(hashfilename, 'w', encoding='utf-8') as outfile:
             outfile.write(codehash)
-
-
-def get_master_asset_src_dir() -> None:
-    """Print master-asset-source dir for this repo."""
-    import socket
-    import os
-
-    hostname = socket.gethostname()
-
-    master_assets_dir = '/Users/ericf/Documents/ballisticakit_master_assets'
-    dummy_dir = '/__DUMMY_MASTER_SRC_DISABLED_PATH__'
-
-    # Only apply this on my primary setup.
-    # if os.path.exists(master_assets_dir) and os.path.exists('.git'):
-    if os.path.exists(master_assets_dir) and hostname == 'MacBook-Fro.local':
-        # Ok, for now lets simply use our hard-coded master-src
-        # path if we're on master in and not otherwise.  Should
-        # probably make this configurable.
-        # output = subprocess.check_output(
-        #     ['git', 'status', '--branch', '--porcelain']
-        # ).decode()
-
-        # Also compare repo name to split version of itself to
-        # see if we're outside of core (filtering will cause mismatch if so).
-        # pylint: disable=useless-suppression
-        # pylint: disable=simplifiable-condition
-        # pylint: disable=condition-evals-to-constant
-        # if (
-        #     'origin/main' in output.splitlines()[0]
-        #     and 'ballistica' + 'kit' == 'ballisticakit'
-        # ):
-        # We seem to be in master in core repo; lets do it.
-        print(master_assets_dir)
-        return
-
-    # Still need to supply dummy path for makefile if not..
-    print(dummy_dir)
 
 
 def androidaddr() -> None:
@@ -509,8 +470,6 @@ def efrocache_get() -> None:
 def warm_start_asset_build() -> None:
     """Prep asset builds to run faster."""
     import os
-    import subprocess
-    from pathlib import Path
 
     from efrotools.project import getprojectconfig
     from efro.error import CleanError
@@ -527,17 +486,10 @@ def warm_start_asset_build() -> None:
 
         os.chdir(pcommand.PROJROOT)
         warm_start_cache(cachetype)
-    else:
-        # For internal builds we don't use efrocache but we do use an
-        # internal build cache. Download an initial cache/etc. if need be.
-        subprocess.run(
-            [
-                str(Path(pcommand.PROJROOT, 'tools/pcommand')),
-                'convert_util',
-                '--init-asset-cache',
-            ],
-            check=True,
-        )
+
+    # In the internal repo there's currently nothing to warm up; the old
+    # convert cache went away when converted asset kinds (textures, audio,
+    # meshes) moved to asset-packages.
 
 
 def gen_docs_sphinx() -> None:

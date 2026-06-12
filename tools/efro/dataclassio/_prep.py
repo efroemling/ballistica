@@ -7,8 +7,6 @@
 #
 # pylint: disable=unidiomatic-typecheck
 
-from __future__ import annotations
-
 import logging
 from enum import Enum
 import dataclasses
@@ -55,13 +53,14 @@ def ioprep(cls: type, globalns: dict | None = None) -> None:
     early in a process to ensure any invalid types or configuration are caught
     immediately.
 
-    Prepping a dataclass involves evaluating its type annotations, which,
-    as of PEP 563, are stored simply as strings. This evaluation is done
-    with localns set to the class dict (so that types defined in the class
-    can be used) and globalns set to the containing module's class.
-    It is possible to override globalns for special cases such as when
-    prepping happens as part of an execed string instead of within a
-    module.
+    Prepping a dataclass involves evaluating its type annotations
+    (deferred under PEP 649/749 semantics as of Python 3.14, or stored
+    as strings for any remaining PEP 563 / explicitly-quoted cases).
+    This evaluation is done with localns set to the class dict (so that
+    types defined in the class can be used) and globalns set to the
+    containing module's dict. It is possible to override globalns for
+    special cases such as when prepping happens as part of an execed
+    string instead of within a module.
     """
     PrepSession(explicit=True, globalns=globalns).prep_dataclass(
         cls, recursion_level=0

@@ -2,8 +2,6 @@
 #
 """XCode related functionality."""
 
-from __future__ import annotations
-
 import os
 import hashlib
 from typing import TYPE_CHECKING

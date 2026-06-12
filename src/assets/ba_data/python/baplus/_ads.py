@@ -2,8 +2,6 @@
 #
 """Functionality related to ads."""
 
-from __future__ import annotations
-
 import time
 import asyncio
 import logging

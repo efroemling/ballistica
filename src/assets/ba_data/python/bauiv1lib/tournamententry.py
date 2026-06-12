@@ -2,8 +2,6 @@
 #
 """Defines a popup window for entering tournaments."""
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING, override
 

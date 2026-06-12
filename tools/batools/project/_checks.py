@@ -2,8 +2,6 @@
 #
 """Checks we can run on the overall project state."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 from pathlib import Path
 import subprocess
@@ -377,7 +375,23 @@ def _check_python_file(self: ProjectUpdater, fname: str) -> None:
 
     _check_python_file_shebang(self, fname, contents)
     _check_python_file_license(self, fname, lines)
+    _check_python_file_future_imports(self, fname, lines)
     _check_python_file_imports(self, fname, lines)
+
+
+def _check_python_file_future_imports(
+    self: ProjectUpdater, fname: str, lines: list[str]
+) -> None:
+    """Run the shared cross-project future-import ban on one file.
+
+    The actual logic lives in :mod:`efrotools.projectchecks` so all
+    efro projects enforce the same rule; we call the per-file form
+    here since we've already got the file's lines loaded.
+    """
+    from efrotools.projectchecks import check_no_future_imports
+
+    del self  # Unused.
+    check_no_future_imports(fname, lines)
 
 
 def _check_python_file_imports(
@@ -714,12 +728,13 @@ def check_misc(self: ProjectUpdater) -> None:
         _ = replace_exact(contents, f'libpython{PYVER}d.a', 'DUMMYVAL')
         _ = replace_exact(contents, f'libpython{PYVER}.a', 'DUMMYVAL')
 
-    # Make sure staged wrapper script is invoking current Python version
-    # on modular builds.
+    # Make sure staged wrapper script is invoking the project Python
+    # version on modular builds (the line in staging.py derives it from
+    # PYVER via an f-string; just verify that form is intact).
     contents = readfile(os.path.join(self.projroot, 'tools/batools/staging.py'))
     _ = replace_exact(
         contents,
-        f'exec python{PYVER} ba_data/python/baenv.py "$@"\\n',
+        'exec python{PYVER} ba_data/python/baenv.py "$@"\\n',
         'DUMMYVAL',
     )
 

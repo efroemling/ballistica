@@ -2,8 +2,6 @@
 #
 """Version 1 doc-ui types."""
 
-from __future__ import annotations
-
 from enum import Enum
 from dataclasses import dataclass, field
 from typing import Annotated, override, assert_never

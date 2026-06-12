@@ -9,8 +9,6 @@
 # pylint: disable=missing-function-docstring, missing-class-docstring
 # pylint: disable=unused-argument
 
-from __future__ import annotations
-
 import math
 import logging
 from collections import deque

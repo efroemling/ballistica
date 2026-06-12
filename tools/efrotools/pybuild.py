@@ -3,7 +3,6 @@
 """Functionality related to building python for ios, android, etc."""
 
 # pylint: disable=too-many-lines
-from __future__ import annotations
 
 import os
 import subprocess

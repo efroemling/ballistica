@@ -15,8 +15,6 @@ order to integrate it in arbitrary Python environments, but this may
 cause some features to be disabled or behave differently than expected.
 """
 
-from __future__ import annotations
-
 import os
 import sys
 import time
@@ -57,8 +55,8 @@ logger = logging.getLogger('ba.env')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22886
-TARGET_BALLISTICA_VERSION = '1.8.0a4'
+TARGET_BALLISTICA_BUILD = 22888
+TARGET_BALLISTICA_VERSION = '1.8.0a5'
 
 
 @dataclass

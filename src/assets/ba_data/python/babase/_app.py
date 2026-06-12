@@ -3,8 +3,6 @@
 # pylint: disable=too-many-lines
 """Functionality related to the high level state of the app."""
 
-from __future__ import annotations
-
 import io
 import os
 import time

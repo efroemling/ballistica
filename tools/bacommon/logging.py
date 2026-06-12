@@ -2,8 +2,6 @@
 #
 """Logging functionality."""
 
-from __future__ import annotations
-
 import logging
 from enum import Enum
 from typing import TYPE_CHECKING, assert_never

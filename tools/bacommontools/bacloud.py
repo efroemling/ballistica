@@ -5,8 +5,6 @@
 This facilitates workflows such as creating asset-packages, etc.
 """
 
-from __future__ import annotations
-
 import os
 import sys
 import zlib

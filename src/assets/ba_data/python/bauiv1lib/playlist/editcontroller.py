@@ -2,8 +2,6 @@
 #
 """Defines a controller for wrangling playlist edit UIs."""
 
-from __future__ import annotations
-
 import copy
 from typing import TYPE_CHECKING
 

@@ -2,8 +2,6 @@
 #
 """Functionality related to running the game in server-mode."""
 
-from __future__ import annotations
-
 import sys
 import time
 import logging

@@ -2,8 +2,6 @@
 #
 """Functionality related to running client-effects from the master server."""
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING, assert_never
 

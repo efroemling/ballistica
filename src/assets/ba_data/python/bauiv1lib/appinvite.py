@@ -2,8 +2,6 @@
 #
 """UI functionality related to inviting people to try the game."""
 
-from __future__ import annotations
-
 import copy
 import time
 from typing import TYPE_CHECKING

@@ -2,8 +2,6 @@
 #
 """Defined Actor(s)."""
 
-from __future__ import annotations
-
 import random
 import logging
 from typing import TYPE_CHECKING, override

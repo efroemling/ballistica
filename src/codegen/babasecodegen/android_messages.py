@@ -19,8 +19,6 @@ etc.) which don't have ``tools/batoolsinternal/``. See
 ``docs/design/spinoff.md`` for the rationale.
 """
 
-from __future__ import annotations
-
 from batools.android_messages import (
     BOOL,
     Dir,

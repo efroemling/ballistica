@@ -2,8 +2,6 @@
 #
 """Communication from a sandboxed task to its owning basn process."""
 
-from __future__ import annotations
-
 from enum import Enum
 from typing import Annotated
 from dataclasses import dataclass

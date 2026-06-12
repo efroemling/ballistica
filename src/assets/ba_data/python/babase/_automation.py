@@ -36,8 +36,6 @@ parse free-form output. ``[automation]`` is the stable marker; the
 choice of logger is incidental.
 """
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING
 

@@ -26,8 +26,6 @@ differs from what's on disk, so steady-state ``make update`` calls
 leave both files (and their mtimes) untouched.
 """
 
-from __future__ import annotations
-
 import json
 import re
 from dataclasses import dataclass, field

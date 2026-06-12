@@ -2,8 +2,6 @@
 #
 """Utility functionality related to the overall operation of the app."""
 
-from __future__ import annotations
-
 import gc
 import os
 import time

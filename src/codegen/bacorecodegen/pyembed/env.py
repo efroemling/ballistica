@@ -4,8 +4,6 @@
 
 # This code runs in the logic thread to bootstrap ballistica.
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 import sys
 

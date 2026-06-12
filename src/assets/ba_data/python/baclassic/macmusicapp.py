@@ -2,8 +2,6 @@
 #
 """Music playback functionality using the Mac Music (formerly iTunes) app."""
 
-from __future__ import annotations
-
 import logging
 import threading
 from collections import deque

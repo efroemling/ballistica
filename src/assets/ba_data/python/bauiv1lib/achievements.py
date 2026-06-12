@@ -2,8 +2,6 @@
 #
 """Provides a popup window to view achievements."""
 
-from __future__ import annotations
-
 from typing import override
 
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top

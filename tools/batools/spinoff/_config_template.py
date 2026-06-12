@@ -8,8 +8,6 @@
 # This file is exec'ed by tools/spinoff, allowing us to customize
 # how the parent project is filtered into ours.
 
-from __future__ import annotations
-
 from batools.spinoff import SpinoffContext
 
 ctx = SpinoffContext.get_active()

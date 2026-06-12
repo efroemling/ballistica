@@ -2,8 +2,6 @@
 #
 """UI functionality related to accounts."""
 
-from __future__ import annotations
-
 import bauiv1 as bui
 
 

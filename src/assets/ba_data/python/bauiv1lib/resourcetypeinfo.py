@@ -2,8 +2,6 @@
 #
 """Provides a window which shows info about resource types."""
 
-from __future__ import annotations
-
 from typing import override, TYPE_CHECKING, assert_never
 
 from bauiv1lib.popup import PopupWindow

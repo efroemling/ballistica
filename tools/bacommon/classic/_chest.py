@@ -2,8 +2,6 @@
 #
 """BombSquad specific bits."""
 
-from __future__ import annotations
-
 from enum import Enum
 from typing import assert_never, Annotated, override
 from dataclasses import dataclass

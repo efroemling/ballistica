@@ -2,8 +2,6 @@
 #
 """Provides UI for selecting maps in playlists."""
 
-from __future__ import annotations
-
 import math
 from typing import TYPE_CHECKING, override
 

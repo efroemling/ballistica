@@ -2,8 +2,6 @@
 #
 """Provides UI for editing a soundtrack."""
 
-from __future__ import annotations
-
 import copy
 import os
 from typing import TYPE_CHECKING, cast, override

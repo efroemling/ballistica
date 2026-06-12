@@ -2,8 +2,6 @@
 #
 """My nifty ssh/mosh/rsync mishmash."""
 
-from __future__ import annotations
-
 from enum import Enum
 from dataclasses import dataclass
 

@@ -3,8 +3,6 @@
 # pylint: disable=too-many-lines
 """Defines the public tab in the gather UI."""
 
-from __future__ import annotations
-
 import copy
 import time
 from threading import Thread

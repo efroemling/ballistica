@@ -2,8 +2,6 @@
 #
 """Provides help related ui."""
 
-from __future__ import annotations
-
 from typing import override
 
 import random

@@ -9,7 +9,6 @@ Auto-generated; do not edit by hand.
 # pylint: disable=missing-function-docstring
 # pylint: disable=too-many-public-methods, useless-suppression
 # pylint: disable=too-many-lines, disallowed-name
-from __future__ import annotations
 
 from typing import TYPE_CHECKING
 

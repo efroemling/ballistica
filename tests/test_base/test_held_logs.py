@@ -18,8 +18,6 @@ env var, capture its output, and assert that the drain emitted the
 known lines with the expected prefix.
 """
 
-from __future__ import annotations
-
 import os
 import subprocess
 

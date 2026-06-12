@@ -2,8 +2,6 @@
 #
 """UI functionality for creating radio groups of buttons."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui

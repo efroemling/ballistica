@@ -2,8 +2,6 @@
 #
 """Live-server tests for public REST API v1 endpoints."""
 
-from __future__ import annotations
-
 import hashlib
 import json
 import os
@@ -11,8 +9,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from bacommon.restapi.v1 import Endpoint
 from restapi_test_fixtures import make_pool
+
+from bacommon.restapi.v1 import Endpoint
 
 if TYPE_CHECKING:
     import urllib3

@@ -86,13 +86,13 @@ Specializing JSON object encoding::
     '[2.0, 1.0]'
 
 
-Using json.tool from the shell to validate and pretty-print::
+Using json from the shell to validate and pretty-print::
 
-    $ echo '{"json":"obj"}' | python -m json.tool
+    $ echo '{"json":"obj"}' | python -m json
     {
         "json": "obj"
     }
-    $ echo '{ 1.2:3.4}' | python -m json.tool
+    $ echo '{ 1.2:3.4}' | python -m json
     Expecting property name enclosed in double quotes: line 1 column 3 (char 2)
 """
 __version__ = '2.0.9'
@@ -143,8 +143,8 @@ def dump(obj, fp, *, skipkeys=False, ensure_ascii=True, check_circular=True,
 
     If ``indent`` is a non-negative integer, then JSON array elements and
     object members will be pretty-printed with that indent level. An indent
-    level of 0 will only insert newlines. ``None`` is the most compact
-    representation.
+    level of 0 will only insert newlines. ``None`` is the default and gives
+    a representation with no newlines inserted.
 
     If specified, ``separators`` should be an ``(item_separator,
     key_separator)`` tuple.  The default is ``(', ', ': ')`` if *indent* is
@@ -207,8 +207,8 @@ def dumps(obj, *, skipkeys=False, ensure_ascii=True, check_circular=True,
 
     If ``indent`` is a non-negative integer, then JSON array elements and
     object members will be pretty-printed with that indent level. An indent
-    level of 0 will only insert newlines. ``None`` is the most compact
-    representation.
+    level of 0 will only insert newlines. ``None`` is the default and gives
+    a representation with no newlines inserted.
 
     If specified, ``separators`` should be an ``(item_separator,
     key_separator)`` tuple.  The default is ``(', ', ': ')`` if *indent* is

@@ -2,8 +2,6 @@
 #
 """Playlist ui functionality."""
 
-from __future__ import annotations
-
 import bascenev1 as bs
 
 

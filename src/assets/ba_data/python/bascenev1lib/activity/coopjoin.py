@@ -2,8 +2,6 @@
 #
 """Functionality related to the co-op join screen."""
 
-from __future__ import annotations
-
 from typing import override
 
 import bascenev1 as bs

@@ -2,8 +2,6 @@
 #
 """UI functionality for Modding Tools."""
 
-from __future__ import annotations
-
 from typing import override
 
 import babase

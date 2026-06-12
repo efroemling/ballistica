@@ -2,8 +2,6 @@
 #
 """Shiny new doc-ui based store."""
 
-from __future__ import annotations
-
 from typing import override, TYPE_CHECKING
 
 from bauiv1lib.docui import DocUIController

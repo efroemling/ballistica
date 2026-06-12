@@ -2,8 +2,6 @@
 #
 """Provides a window to display game credits."""
 
-from __future__ import annotations
-
 import os
 import json
 import logging

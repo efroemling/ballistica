@@ -2,8 +2,6 @@
 #
 """UI functionality related to URLs."""
 
-from __future__ import annotations
-
 import bauiv1 as bui
 
 

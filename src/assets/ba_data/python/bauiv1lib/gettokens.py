@@ -2,8 +2,6 @@
 #
 """UI functionality for purchasing/acquiring currency."""
 
-from __future__ import annotations
-
 import time
 from enum import Enum
 from dataclasses import dataclass

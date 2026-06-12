@@ -2,8 +2,6 @@
 #
 """Functionality to build the openal library."""
 
-from __future__ import annotations
-
 import os
 import subprocess
 from typing import TYPE_CHECKING

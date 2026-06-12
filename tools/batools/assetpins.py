@@ -52,8 +52,6 @@ other. Track-switching is an explicit, deliberate operation.
 # splitting it would scatter tightly-related logic.
 # pylint: disable=too-many-lines
 
-from __future__ import annotations
-
 import re
 import enum
 import subprocess
@@ -64,6 +62,7 @@ from typing import TYPE_CHECKING
 from efro.error import CleanError
 from efro.terminal import Clr
 from efrotools.code import format_python_str
+from batools.version import get_current_api_version
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -1138,20 +1137,22 @@ def _writeback_wrapper(projroot: Path, pin: Pin, new_apverid: str) -> None:
     """
     assert pin.wrapper_type is not None
     content = _fetch_wrapper(projroot, new_apverid, pin.wrapper_type)
-    # Big packages overflow pylint's module-line budget and asset names
-    # can collide with its disallowed-name list ('bar'), so widen the
-    # generated header's suppressions until the server generator emits
-    # these itself (followup filed there).
-    # Keep ``useless-suppression`` on the FIRST line: pylint only mutes
-    # I0021 for suppressions at-or-after the line disabling it, and the
-    # added blanket suppressions are genuinely useless on small wrappers
-    # (e.g. ``too-many-lines`` on a sub-1000-line package).
-    content = content.replace(
-        '# pylint: disable=too-many-public-methods, useless-suppression',
-        '# pylint: disable=too-many-public-methods, useless-suppression'
-        '\n# pylint: disable=too-many-lines, disallowed-name',
-        1,
-    )
+    # The server stamps wrappers with its notion of the current
+    # client api version (so they load as standalone mods-dir
+    # modules); make sure that matches ours. A mismatch means the
+    # server-side constant (bamaster ``src/bamaster/clientapi.py``)
+    # needs a bump before wrappers can be refreshed — this is the
+    # cross-repo tripwire for api version bumps.
+    ourapi = get_current_api_version(str(projroot))
+    apimatch = re.search(r'# ba_meta require api (\d+)', content)
+    if apimatch is None or int(apimatch.group(1)) != ourapi:
+        found = 'no api line' if apimatch is None else apimatch.group(1)
+        raise CleanError(
+            f'Fetched wrapper for {new_apverid} declares client api'
+            f' {found} but this project is on api {ourapi}; bump'
+            f' CLIENT_API_VERSION in bamaster src/bamaster/clientapi.py'
+            f' (and deploy) before refreshing wrappers.'
+        )
     # Land it format-clean: the server generator doesn't guarantee our
     # line-length rules (a long asset path can overflow), and the
     # on-disk copy is always formatted, so formatting first also keeps

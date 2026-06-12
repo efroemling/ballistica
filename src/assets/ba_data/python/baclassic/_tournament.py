@@ -2,8 +2,6 @@
 #
 """Functionality related to classic tournament play."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from bacommon.classic import ClassicChestAppearance

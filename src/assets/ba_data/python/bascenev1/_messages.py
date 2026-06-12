@@ -2,8 +2,6 @@
 #
 """Defines some standard message objects for use with handlemessage() calls."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from enum import Enum

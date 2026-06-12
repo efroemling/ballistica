@@ -2,8 +2,6 @@
 #
 """V2 account ui bits."""
 
-from __future__ import annotations
-
 import time
 import logging
 

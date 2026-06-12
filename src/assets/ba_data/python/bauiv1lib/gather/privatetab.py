@@ -3,8 +3,6 @@
 # pylint: disable=too-many-lines
 """Defines the Private tab in the gather UI."""
 
-from __future__ import annotations
-
 import os
 import copy
 import time

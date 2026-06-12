@@ -3,8 +3,6 @@
 # pylint: disable=too-many-lines
 """Provides chest related ui."""
 
-from __future__ import annotations
-
 import math
 import random
 from typing import override, TYPE_CHECKING

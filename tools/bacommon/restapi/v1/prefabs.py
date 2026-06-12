@@ -4,8 +4,6 @@
 
 # See CLAUDE.md in this directory for contributor conventions.
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Annotated
 

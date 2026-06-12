@@ -2,8 +2,6 @@
 #
 """Provides a popup window for viewing trophies."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 from bauiv1lib import popup

@@ -2,8 +2,6 @@
 #
 """Spinoff system for spawning child projects from a ballistica project."""
 
-from __future__ import annotations
-
 import os
 import sys
 import subprocess

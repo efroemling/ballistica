@@ -10,8 +10,6 @@
 # Code within our package should import things directly from their
 # submodules.
 
-from __future__ import annotations
-
 # pylint: disable=redefined-builtin
 
 from babase import (

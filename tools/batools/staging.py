@@ -2,8 +2,6 @@
 #
 """Stage files for builds."""
 
-from __future__ import annotations
-
 import os
 import sys
 import subprocess
@@ -369,10 +367,12 @@ class BuildStager:
                 'ogg.dll',
                 'OpenAL32.dll',
                 'SDL3.dll',
-                # zlib1.dll lives in DLLs/ (Python dependency) but also needs
-                # to be at the top level because ANGLE (libGLESv2.dll) depends
-                # on it for shader blob caching.
-                'DLLs/zlib1.dll',
+                # ANGLE (libGLESv2.dll) depends on zlib1.dll for shader
+                # blob caching. Through Python 3.13 we borrowed the copy
+                # in Python's DLLs/; 3.14 links zlib statically and no
+                # longer ships the dll, so we now stage our own top-level
+                # copy alongside the other ANGLE bits.
+                'zlib1.dll',
             ]
         elif self.win_type == 'winserver':
             toplevelfiles += [f'python{dbgsfx}.exe']
@@ -772,7 +772,7 @@ class BuildStager:
                 '# Basically this will do:\n'
                 '#   import baenv; baenv.configure();'
                 ' import babase; babase.app.run().\n'
-                'exec python3.13 ba_data/python/baenv.py "$@"\n'
+                f'exec python{PYVER} ba_data/python/baenv.py "$@"\n'
             )
         subprocess.run(['chmod', '+x', path], check=True)
 

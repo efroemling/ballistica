@@ -8,8 +8,6 @@ everything everywhere manually. It also provides a centralized location
 for some tool defaults across all my projects.
 """
 
-from __future__ import annotations
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 

@@ -4,8 +4,6 @@
 Supports static typing for message types and possible return types.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 from efro.message._protocol import MessageProtocol

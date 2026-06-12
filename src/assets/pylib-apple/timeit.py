@@ -1,5 +1,3 @@
-#! /usr/bin/env python3
-
 """Tool for measuring execution time of small code snippets.
 
 This module avoids a number of common traps for measuring execution
@@ -46,7 +44,6 @@ Functions:
     timeit(string, string) -> float
     repeat(string, string) -> list
     default_timer() -> float
-
 """
 
 import gc
@@ -304,7 +301,7 @@ def main(args=None, *, _wrap_timer=None):
                 precision += 1
             verbose += 1
         if o in ("-h", "--help"):
-            print(__doc__, end=' ')
+            print(__doc__, end="")
             return 0
     setup = "\n".join(setup) or "pass"
 
@@ -322,7 +319,7 @@ def main(args=None, *, _wrap_timer=None):
         callback = None
         if verbose:
             def callback(number, time_taken):
-                msg = "{num} loop{s} -> {secs:.{prec}g} secs"
+                msg = "{num} loop{s} -> {secs:.{prec}g} sec"
                 plural = (number != 1)
                 print(msg.format(num=number, s='s' if plural else '',
                                  secs=time_taken, prec=precision))

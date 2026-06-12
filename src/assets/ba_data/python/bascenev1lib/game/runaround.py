@@ -8,8 +8,6 @@
 # ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
-from __future__ import annotations
-
 import random
 import logging
 from enum import Enum

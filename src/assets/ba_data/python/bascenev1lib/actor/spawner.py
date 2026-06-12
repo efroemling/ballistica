@@ -2,8 +2,6 @@
 #
 """Defines some lovely Actor(s)."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 import bascenev1 as bs

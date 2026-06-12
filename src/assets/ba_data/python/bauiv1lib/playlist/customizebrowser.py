@@ -2,8 +2,6 @@
 #
 """Provides UI for viewing/creating/editing playlists."""
 
-from __future__ import annotations
-
 import copy
 import time
 

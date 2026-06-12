@@ -2,8 +2,6 @@
 #
 """Utility snippets applying to generic Python code."""
 
-from __future__ import annotations
-
 import sys
 import types
 import weakref

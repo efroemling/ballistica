@@ -9,8 +9,6 @@ up the engine, and also allows external scripts to import game scripts
 successfully (albeit with limited functionality).
 """
 
-from __future__ import annotations
-
 import os
 
 import types
@@ -938,8 +936,6 @@ class Generator:
             '# pylint: disable=no-value-for-parameter\n'
             '# pylint: disable=unused-import\n'
             '# pylint: disable=too-many-positional-arguments\n'
-            '\n'
-            'from __future__ import annotations\n'
             '\n'
             f'from typing import {typing_imports}\n'
             '\n'

@@ -2,8 +2,6 @@
 #
 """Defines Actors related to controls guides."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs

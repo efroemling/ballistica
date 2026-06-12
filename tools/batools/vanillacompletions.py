@@ -15,13 +15,12 @@ import the real runtime Python under
 ``inspect.getmembers``.
 """
 
-from __future__ import annotations
-
 import os
 import sys
 import ast
 import json
 import inspect
+import annotationlib
 import subprocess
 import importlib
 from typing import TYPE_CHECKING
@@ -441,14 +440,19 @@ def _emit_class_members(
         if entry is not None:
             out.append(entry)
 
-    # Class-level annotations. PEP 563 (``from __future__ import
-    # annotations``) is used throughout the tree, so values here
-    # are already strings. Skip non-string values defensively.
-    annotations = getattr(cls, '__annotations__', None) or {}
+    # Class-level annotations. Under PEP 649 (deferred annotations,
+    # the 3.14+ default) raw ``__annotations__`` values are objects,
+    # so explicitly ask annotationlib for the string form (this also
+    # gracefully handles annotations whose names can't resolve at
+    # runtime, e.g. TYPE_CHECKING-only imports).
+    try:
+        annotations = annotationlib.get_annotations(
+            cls, format=annotationlib.Format.STRING
+        )
+    except Exception:
+        annotations = {}
     for name, ann in annotations.items():
         if _should_skip(name) or name in seen:
-            continue
-        if not isinstance(ann, str):
             continue
         seen.add(name)
         out.append(
@@ -626,13 +630,18 @@ def _build_entry(qualname: str, value: object) -> dict[str, Any] | None:
 def _property_return_annotation(prop: property) -> str | None:
     """Extract a property's getter return annotation, if any.
 
-    Uses ``__future__`` annotations semantics so values come back
-    as strings; nothing to ``eval``.
+    Asks annotationlib for PEP 649 STRING format so we get the
+    source-ish text form without needing to ``eval`` anything.
     """
     fget = prop.fget
     if fget is None:
         return None
-    ann = getattr(fget, '__annotations__', None)
+    try:
+        ann = annotationlib.get_annotations(
+            fget, format=annotationlib.Format.STRING
+        )
+    except Exception:
+        return None
     if not ann:
         return None
     ret = ann.get('return')

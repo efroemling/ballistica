@@ -2,8 +2,6 @@
 #
 """Settings UI functionality related to the remote app."""
 
-from __future__ import annotations
-
 from typing import override
 
 import bauiv1 as bui

@@ -47,7 +47,7 @@ endif()  # APPLE
 
 set(Python3_FIND_FRAMEWORK NEVER)
 # TODO: Look into using Development.Module/Development.Embed here.
-find_package(Python3 3.13 EXACT REQUIRED COMPONENTS Development)
+find_package(Python3 3.14 EXACT REQUIRED COMPONENTS Development)
 
   
 if(HEADLESS)

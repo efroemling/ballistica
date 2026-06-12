@@ -40,11 +40,9 @@
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "iphlpapi.lib")
 #pragma comment(lib, "ole32.lib")
-#if BA_DEBUG_BUILD
-#pragma comment(lib, "python313_d.lib")
-#else
-#pragma comment(lib, "python313.lib")
-#endif
+// Note: no explicit python lib pragma here — pyconfig.h auto-links the
+// correct pythonXY[_d].lib in every translation unit that includes
+// Python.h, and a hardcoded copy here just breaks Python upgrades.
 #pragma comment(lib, "DbgHelp.lib")
 
 // GUI Only Stuff.

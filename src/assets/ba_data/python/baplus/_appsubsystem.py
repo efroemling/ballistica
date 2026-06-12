@@ -2,8 +2,6 @@
 #
 """Provides plus app subsystem."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 from babase import AppSubsystem

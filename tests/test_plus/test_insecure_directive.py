@@ -18,8 +18,6 @@ Cloud-Run HTTPS-only), so these tests hardcode the prod bootstrap
 host and skip otherwise.
 """
 
-from __future__ import annotations
-
 import os
 import json
 import asyncio

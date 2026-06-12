@@ -11,8 +11,6 @@ them).
 # launch times fast; most imports should happen within individual
 # command functions.
 
-from __future__ import annotations
-
 from efrotools import pcommand
 
 # Pull in commands we want to expose. Its more efficient to define them
@@ -77,7 +75,6 @@ from batools.pcommands import (
     check_clean_safety,
     archive_old_builds,
     lazy_increment_build,
-    get_master_asset_src_dir,
     androidaddr,
     push_ipa,
     printcolors,

@@ -23,8 +23,6 @@ selection (step 5) layer on top of this in later steps.
 # we keep it as one primary module rather than fracturing the class.
 # pylint: disable=too-many-lines
 
-from __future__ import annotations
-
 import os
 import json
 import time
@@ -44,6 +42,7 @@ from babase._appsubsystem import AppSubsystem
 from babase._logging import assetmanagerlog as logger
 
 from efro.error import CommunicationError
+from efro.util import strip_exception_tracebacks
 from efro.dataclassio import (
     ioprepped,
     IOAttrs,
@@ -1106,6 +1105,7 @@ class AssetSubsystem(AppSubsystem):
                 logger.warning('%s: online resolve failed (%s).', apverid, exc)
                 if not is_builtin:
                     raise
+                strip_exception_tracebacks(exc)
 
         # Finalize per-bucket selection + read registry entries (off-thread).
         # local ∪ just-downloaded — what's actually available to choose from.
@@ -1208,8 +1208,9 @@ class AssetSubsystem(AppSubsystem):
                 manifest = json.load(infile)
         except FileNotFoundError:
             return {}
-        except Exception:
+        except Exception as exc:
             logger.exception('Error reading bundle manifest %s.', path)
+            strip_exception_tracebacks(exc)
             return {}
         return {
             apv: entry.get('flavor_manifests', {})
@@ -1224,8 +1225,9 @@ class AssetSubsystem(AppSubsystem):
         try:
             with open(fm_path, 'rb') as infile:
                 parsed = json.loads(infile.read())
-        except Exception:
+        except Exception as exc:
             logger.exception('Error reading flavor-manifest %s.', fm_hash)
+            strip_exception_tracebacks(exc)
             return False
         return all(
             self._present(comp['h'], comp['s'])
@@ -1342,15 +1344,31 @@ class AssetSubsystem(AppSubsystem):
             self._progress.bytes_total += sum(s for _h, s in to_fetch)
             self._emit_progress()
 
+            # gather() surfaces only the first failure to our caller;
+            # sibling fetches failing after that get consumed *inside*
+            # gather with tracebacks (and thus ref cycles) intact. So
+            # be the terminal consumer for those ourselves: first
+            # failure propagates untouched, later ones are stripped and
+            # swallowed (the resolve is already doomed at that point).
+            have_failure = False
+
             async def _fetch(h: str, s: int) -> None:
-                await self._run_in_pool(
-                    self._acquire_data_blob,
-                    base_url,
-                    token_header,
-                    h,
-                    s,
-                    executor=self._download_executor(),
-                )
+                nonlocal have_failure
+                try:
+                    await self._run_in_pool(
+                        self._acquire_data_blob,
+                        base_url,
+                        token_header,
+                        h,
+                        s,
+                        executor=self._download_executor(),
+                    )
+                except Exception as exc:
+                    if have_failure:
+                        strip_exception_tracebacks(exc)
+                        return
+                    have_failure = True
+                    raise
                 self._progress.blobs_done += 1
                 self._progress.bytes_done += s
                 self._emit_progress()
@@ -1492,8 +1510,6 @@ class AssetSubsystem(AppSubsystem):
                 self._tls_diagnostics_blocking, base_url
             )
         except Exception as diagexc:
-            from efro.util import strip_exception_tracebacks
-
             details = f'diagnostics gathering failed: {diagexc!r}'
             strip_exception_tracebacks(diagexc)
         logger.warning(
@@ -1517,8 +1533,6 @@ class AssetSubsystem(AppSubsystem):
         import ssl
         from datetime import datetime, UTC
         from email.utils import parsedate_to_datetime
-
-        from efro.util import strip_exception_tracebacks
 
         bits: list[str] = []
         now = datetime.now(UTC)
@@ -1671,10 +1685,11 @@ class AssetSubsystem(AppSubsystem):
                 return dataclass_from_json(_CacheManifest, infile.read())
         except FileNotFoundError:
             return _CacheManifest()
-        except Exception:
+        except Exception as exc:
             logger.exception(
                 'Error loading asset cache manifest %s; starting fresh.', path
             )
+            strip_exception_tracebacks(exc)
             return _CacheManifest()
 
     def _commit_manifest(
@@ -1734,19 +1749,22 @@ class AssetSubsystem(AppSubsystem):
                     self._busy_lock.acquire(),
                     timeout=_GC_BUSY_TIMEOUT_SECONDS,
                 )
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError as exc:
                 logger.warning('Asset GC skipped: subsystem busy.')
+                strip_exception_tracebacks(exc)
                 return
             try:
                 await self._run_in_pool(self._gc_blocking)
             finally:
                 self._busy_lock.release()
-        except AssetResolveAbortedError:
+        except AssetResolveAbortedError as exc:
             # Threadpool went away mid-GC because we're shutting down --
             # benign; the next launch's GC picks up where this left off.
             logger.debug('Asset GC abandoned; app is shutting down.')
-        except Exception:
+            strip_exception_tracebacks(exc)
+        except Exception as exc:
             logger.exception('Error during asset GC.')
+            strip_exception_tracebacks(exc)
 
     def _gc_blocking(self) -> None:
         """The whole GC pass (mark + manifest rewrite + sweep). Off-thread.
@@ -1871,11 +1889,12 @@ class AssetSubsystem(AppSubsystem):
                 for info in parsed['e'].values():
                     for comp in info.values():
                         live.add(comp['h'])
-            except Exception:
+            except Exception as exc:
                 logger.exception(
                     'Asset GC: error reading flavor-manifest %s; skipping.',
                     fm_hash,
                 )
+                strip_exception_tracebacks(exc)
         return live
 
     def _gc_sweep(

@@ -2,8 +2,6 @@
 #
 """Provides a window for editing individual game playlists."""
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING, cast, override
 

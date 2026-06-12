@@ -99,8 +99,6 @@ android:
 	@$(MAKE) assets-android
 	@$(PCOMMAND) clean_orphaned_assets
 
-MAKE_AUDIO = 1
-MAKE_TEXTURES = 1
 MAKE_SCRIPTS = 1
 MAKE_FONTS = 1
 MAKE_DATA = 1
@@ -117,10 +115,12 @@ ASSET_TARGETS_WIN_SERVER_X64 =
 ASSET_TARGETS_IOS =
 ASSET_TARGETS_ANDROID =
 
-# Audio.
-ifeq ($(MAKE_AUDIO),1)
-ASSET_TARGETS_COMMON_GUI += $(AUDIO_TARGETS)
-endif
+# (The legacy Maya master -> src .obj export flow lived here until
+# 2026-06-12; mesh sources now live in the asset-package workspaces
+# (decision #26), so the maya dependency scan + export rules are
+# retired. Future Maya exports should target workspace checkouts.
+# Audio/texture/mesh compiles followed in the same sweep once those
+# kinds finished migrating to asset-packages.)
 
 # FontData.
 ifeq ($(MAKE_FONTS),1)
@@ -133,19 +133,6 @@ ifeq ($(MAKE_DATA),1)
 ASSET_TARGETS_COMMON_GUI += $(DATA_TARGETS)
 ASSET_TARGETS_COMMON_SERVER += $(DATA_TARGETS)
 endif
-
-# Textures.
-ifeq ($(MAKE_TEXTURES),1)
-
-ASSET_TARGETS_CMAKE += $(TEXTURE_TARGETS_CMAKE)
-ASSET_TARGETS_MAC += $(TEXTURE_TARGETS_MAC)
-ASSET_TARGETS_WIN_WIN32 += $(TEXTURE_TARGETS_WIN)
-ASSET_TARGETS_WIN_X64 += $(TEXTURE_TARGETS_WIN)
-ASSET_TARGETS_IOS += $(TEXTURE_TARGETS_IOS)
-ASSET_TARGETS_ANDROID += $(TEXTURE_TARGETS_ANDROID)
-ASSET_TARGETS_COMMON_GUI += $(TEXTURE_TARGETS_COMMON)
-
-endif # Textures
 
 # Scripts
 ifeq ($(MAKE_SCRIPTS),1)
@@ -167,6 +154,13 @@ ASSET_TARGETS_WIN_WIN32 += $(EXTRAS_TARGETS_WIN_WIN32)
 ASSET_TARGETS_WIN_X64 += $(EXTRAS_TARGETS_WIN_X64)
 ASSET_TARGETS_WIN_SERVER_WIN32 += $(EXTRAS_TARGETS_WIN_WIN32)
 ASSET_TARGETS_WIN_SERVER_X64 += $(EXTRAS_TARGETS_WIN_X64)
+
+# Windows ARM64 asset staging (future windows-arm64 builds). Not
+# pulled into any gui/server aggregate yet; the win-arm64-staging
+# target (defined near the end of this file, after the generated
+# lists it consumes) builds it on demand.
+ASSET_TARGETS_WIN_ARM64 = $(SCRIPT_TARGETS_WIN_ARM64) \
+ $(EXTRAS_TARGETS_WIN_ARM64)
 
 # Asset bundle (the construct-mode minimum: an English language
 # bucket + a regular-quality texture bucket + the constant
@@ -603,28 +597,28 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE_MAC = \
   $(BUILD_DIR)/pylib-apple/_aix_support.py \
   $(BUILD_DIR)/pylib-apple/_android_support.py \
   $(BUILD_DIR)/pylib-apple/_apple_support.py \
+  $(BUILD_DIR)/pylib-apple/_ast_unparse.py \
   $(BUILD_DIR)/pylib-apple/_collections_abc.py \
   $(BUILD_DIR)/pylib-apple/_colorize.py \
   $(BUILD_DIR)/pylib-apple/_compat_pickle.py \
-  $(BUILD_DIR)/pylib-apple/_compression.py \
   $(BUILD_DIR)/pylib-apple/_ios_support.py \
   $(BUILD_DIR)/pylib-apple/_markupbase.py \
   $(BUILD_DIR)/pylib-apple/_opcode_metadata.py \
   $(BUILD_DIR)/pylib-apple/_osx_support.py \
   $(BUILD_DIR)/pylib-apple/_py_abc.py \
+  $(BUILD_DIR)/pylib-apple/_py_warnings.py \
   $(BUILD_DIR)/pylib-apple/_pydatetime.py \
   $(BUILD_DIR)/pylib-apple/_pydecimal.py \
   $(BUILD_DIR)/pylib-apple/_pyio.py \
   $(BUILD_DIR)/pylib-apple/_pylong.py \
   $(BUILD_DIR)/pylib-apple/_pyrepl/__init__.py \
   $(BUILD_DIR)/pylib-apple/_pyrepl/__main__.py \
-  $(BUILD_DIR)/pylib-apple/_pyrepl/_minimal_curses.py \
+  $(BUILD_DIR)/pylib-apple/_pyrepl/_module_completer.py \
   $(BUILD_DIR)/pylib-apple/_pyrepl/_threading_handler.py \
   $(BUILD_DIR)/pylib-apple/_pyrepl/base_eventqueue.py \
   $(BUILD_DIR)/pylib-apple/_pyrepl/commands.py \
   $(BUILD_DIR)/pylib-apple/_pyrepl/completing_reader.py \
   $(BUILD_DIR)/pylib-apple/_pyrepl/console.py \
-  $(BUILD_DIR)/pylib-apple/_pyrepl/curses.py \
   $(BUILD_DIR)/pylib-apple/_pyrepl/fancy_termios.py \
   $(BUILD_DIR)/pylib-apple/_pyrepl/historical_reader.py \
   $(BUILD_DIR)/pylib-apple/_pyrepl/input.py \
@@ -634,6 +628,7 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE_MAC = \
   $(BUILD_DIR)/pylib-apple/_pyrepl/reader.py \
   $(BUILD_DIR)/pylib-apple/_pyrepl/readline.py \
   $(BUILD_DIR)/pylib-apple/_pyrepl/simple_interact.py \
+  $(BUILD_DIR)/pylib-apple/_pyrepl/terminfo.py \
   $(BUILD_DIR)/pylib-apple/_pyrepl/trace.py \
   $(BUILD_DIR)/pylib-apple/_pyrepl/types.py \
   $(BUILD_DIR)/pylib-apple/_pyrepl/unix_console.py \
@@ -655,6 +650,7 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE_MAC = \
   $(BUILD_DIR)/pylib-apple/_threading_local.py \
   $(BUILD_DIR)/pylib-apple/_weakrefset.py \
   $(BUILD_DIR)/pylib-apple/abc.py \
+  $(BUILD_DIR)/pylib-apple/annotationlib.py \
   $(BUILD_DIR)/pylib-apple/antigravity.py \
   $(BUILD_DIR)/pylib-apple/argparse.py \
   $(BUILD_DIR)/pylib-apple/ast.py \
@@ -670,6 +666,7 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE_MAC = \
   $(BUILD_DIR)/pylib-apple/asyncio/exceptions.py \
   $(BUILD_DIR)/pylib-apple/asyncio/format_helpers.py \
   $(BUILD_DIR)/pylib-apple/asyncio/futures.py \
+  $(BUILD_DIR)/pylib-apple/asyncio/graph.py \
   $(BUILD_DIR)/pylib-apple/asyncio/locks.py \
   $(BUILD_DIR)/pylib-apple/asyncio/log.py \
   $(BUILD_DIR)/pylib-apple/asyncio/mixins.py \
@@ -686,6 +683,7 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE_MAC = \
   $(BUILD_DIR)/pylib-apple/asyncio/tasks.py \
   $(BUILD_DIR)/pylib-apple/asyncio/threads.py \
   $(BUILD_DIR)/pylib-apple/asyncio/timeouts.py \
+  $(BUILD_DIR)/pylib-apple/asyncio/tools.py \
   $(BUILD_DIR)/pylib-apple/asyncio/transports.py \
   $(BUILD_DIR)/pylib-apple/asyncio/trsock.py \
   $(BUILD_DIR)/pylib-apple/asyncio/unix_events.py \
@@ -704,11 +702,24 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE_MAC = \
   $(BUILD_DIR)/pylib-apple/collections/__init__.py \
   $(BUILD_DIR)/pylib-apple/colorsys.py \
   $(BUILD_DIR)/pylib-apple/compileall.py \
+  $(BUILD_DIR)/pylib-apple/compression/__init__.py \
+  $(BUILD_DIR)/pylib-apple/compression/_common/__init__.py \
+  $(BUILD_DIR)/pylib-apple/compression/_common/_streams.py \
+  $(BUILD_DIR)/pylib-apple/compression/bz2.py \
+  $(BUILD_DIR)/pylib-apple/compression/gzip.py \
+  $(BUILD_DIR)/pylib-apple/compression/lzma.py \
+  $(BUILD_DIR)/pylib-apple/compression/zlib.py \
+  $(BUILD_DIR)/pylib-apple/compression/zstd/__init__.py \
+  $(BUILD_DIR)/pylib-apple/compression/zstd/_zstdfile.py \
   $(BUILD_DIR)/pylib-apple/concurrent/__init__.py \
   $(BUILD_DIR)/pylib-apple/concurrent/futures/__init__.py \
   $(BUILD_DIR)/pylib-apple/concurrent/futures/_base.py \
+  $(BUILD_DIR)/pylib-apple/concurrent/futures/interpreter.py \
   $(BUILD_DIR)/pylib-apple/concurrent/futures/process.py \
   $(BUILD_DIR)/pylib-apple/concurrent/futures/thread.py \
+  $(BUILD_DIR)/pylib-apple/concurrent/interpreters/__init__.py \
+  $(BUILD_DIR)/pylib-apple/concurrent/interpreters/_crossinterp.py \
+  $(BUILD_DIR)/pylib-apple/concurrent/interpreters/_queues.py \
   $(BUILD_DIR)/pylib-apple/configparser.py \
   $(BUILD_DIR)/pylib-apple/contextlib.py \
   $(BUILD_DIR)/pylib-apple/contextvars.py \
@@ -718,6 +729,7 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE_MAC = \
   $(BUILD_DIR)/pylib-apple/ctypes/__init__.py \
   $(BUILD_DIR)/pylib-apple/ctypes/_aix.py \
   $(BUILD_DIR)/pylib-apple/ctypes/_endian.py \
+  $(BUILD_DIR)/pylib-apple/ctypes/_layout.py \
   $(BUILD_DIR)/pylib-apple/ctypes/macholib/__init__.py \
   $(BUILD_DIR)/pylib-apple/ctypes/macholib/dyld.py \
   $(BUILD_DIR)/pylib-apple/ctypes/macholib/dylib.py \
@@ -765,6 +777,7 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE_MAC = \
   $(BUILD_DIR)/pylib-apple/email/quoprimime.py \
   $(BUILD_DIR)/pylib-apple/email/utils.py \
   $(BUILD_DIR)/pylib-apple/encodings/__init__.py \
+  $(BUILD_DIR)/pylib-apple/encodings/_win_cp_codecs.py \
   $(BUILD_DIR)/pylib-apple/encodings/aliases.py \
   $(BUILD_DIR)/pylib-apple/encodings/ascii.py \
   $(BUILD_DIR)/pylib-apple/encodings/base64_codec.py \
@@ -940,6 +953,7 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE_MAC = \
   $(BUILD_DIR)/pylib-apple/io.py \
   $(BUILD_DIR)/pylib-apple/ipaddress.py \
   $(BUILD_DIR)/pylib-apple/json/__init__.py \
+  $(BUILD_DIR)/pylib-apple/json/__main__.py \
   $(BUILD_DIR)/pylib-apple/json/decoder.py \
   $(BUILD_DIR)/pylib-apple/json/encoder.py \
   $(BUILD_DIR)/pylib-apple/json/scanner.py \
@@ -963,8 +977,9 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE_MAC = \
   $(BUILD_DIR)/pylib-apple/optparse.py \
   $(BUILD_DIR)/pylib-apple/os.py \
   $(BUILD_DIR)/pylib-apple/pathlib/__init__.py \
-  $(BUILD_DIR)/pylib-apple/pathlib/_abc.py \
   $(BUILD_DIR)/pylib-apple/pathlib/_local.py \
+  $(BUILD_DIR)/pylib-apple/pathlib/_os.py \
+  $(BUILD_DIR)/pylib-apple/pathlib/types.py \
   $(BUILD_DIR)/pylib-apple/pdb.py \
   $(BUILD_DIR)/pylib-apple/pickle.py \
   $(BUILD_DIR)/pylib-apple/pickletools.py \
@@ -1012,7 +1027,8 @@ SCRIPT_TARGETS_PY_PRIVATE_APPLE_MAC = \
   $(BUILD_DIR)/pylib-apple/ssl.py \
   $(BUILD_DIR)/pylib-apple/stat.py \
   $(BUILD_DIR)/pylib-apple/statistics.py \
-  $(BUILD_DIR)/pylib-apple/string.py \
+  $(BUILD_DIR)/pylib-apple/string/__init__.py \
+  $(BUILD_DIR)/pylib-apple/string/templatelib.py \
   $(BUILD_DIR)/pylib-apple/stringprep.py \
   $(BUILD_DIR)/pylib-apple/struct.py \
   $(BUILD_DIR)/pylib-apple/subprocess.py \
@@ -1100,28 +1116,28 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/_aix_support.py \
   $(BUILD_DIR)/pylib-android/_android_support.py \
   $(BUILD_DIR)/pylib-android/_apple_support.py \
+  $(BUILD_DIR)/pylib-android/_ast_unparse.py \
   $(BUILD_DIR)/pylib-android/_collections_abc.py \
   $(BUILD_DIR)/pylib-android/_colorize.py \
   $(BUILD_DIR)/pylib-android/_compat_pickle.py \
-  $(BUILD_DIR)/pylib-android/_compression.py \
   $(BUILD_DIR)/pylib-android/_ios_support.py \
   $(BUILD_DIR)/pylib-android/_markupbase.py \
   $(BUILD_DIR)/pylib-android/_opcode_metadata.py \
   $(BUILD_DIR)/pylib-android/_osx_support.py \
   $(BUILD_DIR)/pylib-android/_py_abc.py \
+  $(BUILD_DIR)/pylib-android/_py_warnings.py \
   $(BUILD_DIR)/pylib-android/_pydatetime.py \
   $(BUILD_DIR)/pylib-android/_pydecimal.py \
   $(BUILD_DIR)/pylib-android/_pyio.py \
   $(BUILD_DIR)/pylib-android/_pylong.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/__init__.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/__main__.py \
-  $(BUILD_DIR)/pylib-android/_pyrepl/_minimal_curses.py \
+  $(BUILD_DIR)/pylib-android/_pyrepl/_module_completer.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/_threading_handler.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/base_eventqueue.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/commands.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/completing_reader.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/console.py \
-  $(BUILD_DIR)/pylib-android/_pyrepl/curses.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/fancy_termios.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/historical_reader.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/input.py \
@@ -1131,6 +1147,7 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/_pyrepl/reader.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/readline.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/simple_interact.py \
+  $(BUILD_DIR)/pylib-android/_pyrepl/terminfo.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/trace.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/types.py \
   $(BUILD_DIR)/pylib-android/_pyrepl/unix_console.py \
@@ -1151,6 +1168,7 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/_threading_local.py \
   $(BUILD_DIR)/pylib-android/_weakrefset.py \
   $(BUILD_DIR)/pylib-android/abc.py \
+  $(BUILD_DIR)/pylib-android/annotationlib.py \
   $(BUILD_DIR)/pylib-android/antigravity.py \
   $(BUILD_DIR)/pylib-android/argparse.py \
   $(BUILD_DIR)/pylib-android/ast.py \
@@ -1166,6 +1184,7 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/asyncio/exceptions.py \
   $(BUILD_DIR)/pylib-android/asyncio/format_helpers.py \
   $(BUILD_DIR)/pylib-android/asyncio/futures.py \
+  $(BUILD_DIR)/pylib-android/asyncio/graph.py \
   $(BUILD_DIR)/pylib-android/asyncio/locks.py \
   $(BUILD_DIR)/pylib-android/asyncio/log.py \
   $(BUILD_DIR)/pylib-android/asyncio/mixins.py \
@@ -1182,6 +1201,7 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/asyncio/tasks.py \
   $(BUILD_DIR)/pylib-android/asyncio/threads.py \
   $(BUILD_DIR)/pylib-android/asyncio/timeouts.py \
+  $(BUILD_DIR)/pylib-android/asyncio/tools.py \
   $(BUILD_DIR)/pylib-android/asyncio/transports.py \
   $(BUILD_DIR)/pylib-android/asyncio/trsock.py \
   $(BUILD_DIR)/pylib-android/asyncio/unix_events.py \
@@ -1200,11 +1220,24 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/collections/__init__.py \
   $(BUILD_DIR)/pylib-android/colorsys.py \
   $(BUILD_DIR)/pylib-android/compileall.py \
+  $(BUILD_DIR)/pylib-android/compression/__init__.py \
+  $(BUILD_DIR)/pylib-android/compression/_common/__init__.py \
+  $(BUILD_DIR)/pylib-android/compression/_common/_streams.py \
+  $(BUILD_DIR)/pylib-android/compression/bz2.py \
+  $(BUILD_DIR)/pylib-android/compression/gzip.py \
+  $(BUILD_DIR)/pylib-android/compression/lzma.py \
+  $(BUILD_DIR)/pylib-android/compression/zlib.py \
+  $(BUILD_DIR)/pylib-android/compression/zstd/__init__.py \
+  $(BUILD_DIR)/pylib-android/compression/zstd/_zstdfile.py \
   $(BUILD_DIR)/pylib-android/concurrent/__init__.py \
   $(BUILD_DIR)/pylib-android/concurrent/futures/__init__.py \
   $(BUILD_DIR)/pylib-android/concurrent/futures/_base.py \
+  $(BUILD_DIR)/pylib-android/concurrent/futures/interpreter.py \
   $(BUILD_DIR)/pylib-android/concurrent/futures/process.py \
   $(BUILD_DIR)/pylib-android/concurrent/futures/thread.py \
+  $(BUILD_DIR)/pylib-android/concurrent/interpreters/__init__.py \
+  $(BUILD_DIR)/pylib-android/concurrent/interpreters/_crossinterp.py \
+  $(BUILD_DIR)/pylib-android/concurrent/interpreters/_queues.py \
   $(BUILD_DIR)/pylib-android/configparser.py \
   $(BUILD_DIR)/pylib-android/contextlib.py \
   $(BUILD_DIR)/pylib-android/contextvars.py \
@@ -1214,6 +1247,7 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/ctypes/__init__.py \
   $(BUILD_DIR)/pylib-android/ctypes/_aix.py \
   $(BUILD_DIR)/pylib-android/ctypes/_endian.py \
+  $(BUILD_DIR)/pylib-android/ctypes/_layout.py \
   $(BUILD_DIR)/pylib-android/ctypes/macholib/__init__.py \
   $(BUILD_DIR)/pylib-android/ctypes/macholib/dyld.py \
   $(BUILD_DIR)/pylib-android/ctypes/macholib/dylib.py \
@@ -1261,6 +1295,7 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/email/quoprimime.py \
   $(BUILD_DIR)/pylib-android/email/utils.py \
   $(BUILD_DIR)/pylib-android/encodings/__init__.py \
+  $(BUILD_DIR)/pylib-android/encodings/_win_cp_codecs.py \
   $(BUILD_DIR)/pylib-android/encodings/aliases.py \
   $(BUILD_DIR)/pylib-android/encodings/ascii.py \
   $(BUILD_DIR)/pylib-android/encodings/base64_codec.py \
@@ -1436,6 +1471,7 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/io.py \
   $(BUILD_DIR)/pylib-android/ipaddress.py \
   $(BUILD_DIR)/pylib-android/json/__init__.py \
+  $(BUILD_DIR)/pylib-android/json/__main__.py \
   $(BUILD_DIR)/pylib-android/json/decoder.py \
   $(BUILD_DIR)/pylib-android/json/encoder.py \
   $(BUILD_DIR)/pylib-android/json/scanner.py \
@@ -1459,8 +1495,9 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/optparse.py \
   $(BUILD_DIR)/pylib-android/os.py \
   $(BUILD_DIR)/pylib-android/pathlib/__init__.py \
-  $(BUILD_DIR)/pylib-android/pathlib/_abc.py \
   $(BUILD_DIR)/pylib-android/pathlib/_local.py \
+  $(BUILD_DIR)/pylib-android/pathlib/_os.py \
+  $(BUILD_DIR)/pylib-android/pathlib/types.py \
   $(BUILD_DIR)/pylib-android/pdb.py \
   $(BUILD_DIR)/pylib-android/pickle.py \
   $(BUILD_DIR)/pylib-android/pickletools.py \
@@ -1508,7 +1545,8 @@ SCRIPT_TARGETS_PY_PRIVATE_ANDROID = \
   $(BUILD_DIR)/pylib-android/ssl.py \
   $(BUILD_DIR)/pylib-android/stat.py \
   $(BUILD_DIR)/pylib-android/statistics.py \
-  $(BUILD_DIR)/pylib-android/string.py \
+  $(BUILD_DIR)/pylib-android/string/__init__.py \
+  $(BUILD_DIR)/pylib-android/string/templatelib.py \
   $(BUILD_DIR)/pylib-android/stringprep.py \
   $(BUILD_DIR)/pylib-android/struct.py \
   $(BUILD_DIR)/pylib-android/subprocess.py \
@@ -1696,27 +1734,28 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/_aix_support.py \
   $(BUILD_DIR)/windows/Win32/Lib/_android_support.py \
   $(BUILD_DIR)/windows/Win32/Lib/_apple_support.py \
+  $(BUILD_DIR)/windows/Win32/Lib/_ast_unparse.py \
   $(BUILD_DIR)/windows/Win32/Lib/_collections_abc.py \
   $(BUILD_DIR)/windows/Win32/Lib/_colorize.py \
   $(BUILD_DIR)/windows/Win32/Lib/_compat_pickle.py \
-  $(BUILD_DIR)/windows/Win32/Lib/_compression.py \
   $(BUILD_DIR)/windows/Win32/Lib/_ios_support.py \
   $(BUILD_DIR)/windows/Win32/Lib/_markupbase.py \
   $(BUILD_DIR)/windows/Win32/Lib/_opcode_metadata.py \
   $(BUILD_DIR)/windows/Win32/Lib/_osx_support.py \
   $(BUILD_DIR)/windows/Win32/Lib/_py_abc.py \
+  $(BUILD_DIR)/windows/Win32/Lib/_py_warnings.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pydatetime.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pydecimal.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyio.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pylong.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/__init__.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/__main__.py \
-  $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/_minimal_curses.py \
+  $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/_module_completer.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/_threading_handler.py \
+  $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/base_eventqueue.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/commands.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/completing_reader.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/console.py \
-  $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/curses.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/fancy_termios.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/historical_reader.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/input.py \
@@ -1726,17 +1765,20 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/reader.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/readline.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/simple_interact.py \
+  $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/terminfo.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/trace.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/types.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/unix_console.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/unix_eventqueue.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/utils.py \
   $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/windows_console.py \
+  $(BUILD_DIR)/windows/Win32/Lib/_pyrepl/windows_eventqueue.py \
   $(BUILD_DIR)/windows/Win32/Lib/_sitebuiltins.py \
   $(BUILD_DIR)/windows/Win32/Lib/_strptime.py \
   $(BUILD_DIR)/windows/Win32/Lib/_threading_local.py \
   $(BUILD_DIR)/windows/Win32/Lib/_weakrefset.py \
   $(BUILD_DIR)/windows/Win32/Lib/abc.py \
+  $(BUILD_DIR)/windows/Win32/Lib/annotationlib.py \
   $(BUILD_DIR)/windows/Win32/Lib/antigravity.py \
   $(BUILD_DIR)/windows/Win32/Lib/argparse.py \
   $(BUILD_DIR)/windows/Win32/Lib/ast.py \
@@ -1752,6 +1794,7 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/exceptions.py \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/format_helpers.py \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/futures.py \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/graph.py \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/locks.py \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/log.py \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/mixins.py \
@@ -1768,6 +1811,7 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/tasks.py \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/threads.py \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/timeouts.py \
+  $(BUILD_DIR)/windows/Win32/Lib/asyncio/tools.py \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/transports.py \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/trsock.py \
   $(BUILD_DIR)/windows/Win32/Lib/asyncio/unix_events.py \
@@ -1786,11 +1830,24 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/collections/__init__.py \
   $(BUILD_DIR)/windows/Win32/Lib/colorsys.py \
   $(BUILD_DIR)/windows/Win32/Lib/compileall.py \
+  $(BUILD_DIR)/windows/Win32/Lib/compression/__init__.py \
+  $(BUILD_DIR)/windows/Win32/Lib/compression/_common/__init__.py \
+  $(BUILD_DIR)/windows/Win32/Lib/compression/_common/_streams.py \
+  $(BUILD_DIR)/windows/Win32/Lib/compression/bz2.py \
+  $(BUILD_DIR)/windows/Win32/Lib/compression/gzip.py \
+  $(BUILD_DIR)/windows/Win32/Lib/compression/lzma.py \
+  $(BUILD_DIR)/windows/Win32/Lib/compression/zlib.py \
+  $(BUILD_DIR)/windows/Win32/Lib/compression/zstd/__init__.py \
+  $(BUILD_DIR)/windows/Win32/Lib/compression/zstd/_zstdfile.py \
   $(BUILD_DIR)/windows/Win32/Lib/concurrent/__init__.py \
   $(BUILD_DIR)/windows/Win32/Lib/concurrent/futures/__init__.py \
   $(BUILD_DIR)/windows/Win32/Lib/concurrent/futures/_base.py \
+  $(BUILD_DIR)/windows/Win32/Lib/concurrent/futures/interpreter.py \
   $(BUILD_DIR)/windows/Win32/Lib/concurrent/futures/process.py \
   $(BUILD_DIR)/windows/Win32/Lib/concurrent/futures/thread.py \
+  $(BUILD_DIR)/windows/Win32/Lib/concurrent/interpreters/__init__.py \
+  $(BUILD_DIR)/windows/Win32/Lib/concurrent/interpreters/_crossinterp.py \
+  $(BUILD_DIR)/windows/Win32/Lib/concurrent/interpreters/_queues.py \
   $(BUILD_DIR)/windows/Win32/Lib/configparser.py \
   $(BUILD_DIR)/windows/Win32/Lib/contextlib.py \
   $(BUILD_DIR)/windows/Win32/Lib/contextvars.py \
@@ -1800,6 +1857,7 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/ctypes/__init__.py \
   $(BUILD_DIR)/windows/Win32/Lib/ctypes/_aix.py \
   $(BUILD_DIR)/windows/Win32/Lib/ctypes/_endian.py \
+  $(BUILD_DIR)/windows/Win32/Lib/ctypes/_layout.py \
   $(BUILD_DIR)/windows/Win32/Lib/ctypes/macholib/__init__.py \
   $(BUILD_DIR)/windows/Win32/Lib/ctypes/macholib/dyld.py \
   $(BUILD_DIR)/windows/Win32/Lib/ctypes/macholib/dylib.py \
@@ -1847,6 +1905,7 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/email/quoprimime.py \
   $(BUILD_DIR)/windows/Win32/Lib/email/utils.py \
   $(BUILD_DIR)/windows/Win32/Lib/encodings/__init__.py \
+  $(BUILD_DIR)/windows/Win32/Lib/encodings/_win_cp_codecs.py \
   $(BUILD_DIR)/windows/Win32/Lib/encodings/aliases.py \
   $(BUILD_DIR)/windows/Win32/Lib/encodings/ascii.py \
   $(BUILD_DIR)/windows/Win32/Lib/encodings/base64_codec.py \
@@ -2022,6 +2081,7 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/io.py \
   $(BUILD_DIR)/windows/Win32/Lib/ipaddress.py \
   $(BUILD_DIR)/windows/Win32/Lib/json/__init__.py \
+  $(BUILD_DIR)/windows/Win32/Lib/json/__main__.py \
   $(BUILD_DIR)/windows/Win32/Lib/json/decoder.py \
   $(BUILD_DIR)/windows/Win32/Lib/json/encoder.py \
   $(BUILD_DIR)/windows/Win32/Lib/json/scanner.py \
@@ -2045,8 +2105,9 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/optparse.py \
   $(BUILD_DIR)/windows/Win32/Lib/os.py \
   $(BUILD_DIR)/windows/Win32/Lib/pathlib/__init__.py \
-  $(BUILD_DIR)/windows/Win32/Lib/pathlib/_abc.py \
   $(BUILD_DIR)/windows/Win32/Lib/pathlib/_local.py \
+  $(BUILD_DIR)/windows/Win32/Lib/pathlib/_os.py \
+  $(BUILD_DIR)/windows/Win32/Lib/pathlib/types.py \
   $(BUILD_DIR)/windows/Win32/Lib/pdb.py \
   $(BUILD_DIR)/windows/Win32/Lib/pickle.py \
   $(BUILD_DIR)/windows/Win32/Lib/pickletools.py \
@@ -2094,7 +2155,8 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/Lib/ssl.py \
   $(BUILD_DIR)/windows/Win32/Lib/stat.py \
   $(BUILD_DIR)/windows/Win32/Lib/statistics.py \
-  $(BUILD_DIR)/windows/Win32/Lib/string.py \
+  $(BUILD_DIR)/windows/Win32/Lib/string/__init__.py \
+  $(BUILD_DIR)/windows/Win32/Lib/string/templatelib.py \
   $(BUILD_DIR)/windows/Win32/Lib/stringprep.py \
   $(BUILD_DIR)/windows/Win32/Lib/struct.py \
   $(BUILD_DIR)/windows/Win32/Lib/subprocess.py \
@@ -2182,27 +2244,28 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/_aix_support.py \
   $(BUILD_DIR)/windows/x64/Lib/_android_support.py \
   $(BUILD_DIR)/windows/x64/Lib/_apple_support.py \
+  $(BUILD_DIR)/windows/x64/Lib/_ast_unparse.py \
   $(BUILD_DIR)/windows/x64/Lib/_collections_abc.py \
   $(BUILD_DIR)/windows/x64/Lib/_colorize.py \
   $(BUILD_DIR)/windows/x64/Lib/_compat_pickle.py \
-  $(BUILD_DIR)/windows/x64/Lib/_compression.py \
   $(BUILD_DIR)/windows/x64/Lib/_ios_support.py \
   $(BUILD_DIR)/windows/x64/Lib/_markupbase.py \
   $(BUILD_DIR)/windows/x64/Lib/_opcode_metadata.py \
   $(BUILD_DIR)/windows/x64/Lib/_osx_support.py \
   $(BUILD_DIR)/windows/x64/Lib/_py_abc.py \
+  $(BUILD_DIR)/windows/x64/Lib/_py_warnings.py \
   $(BUILD_DIR)/windows/x64/Lib/_pydatetime.py \
   $(BUILD_DIR)/windows/x64/Lib/_pydecimal.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyio.py \
   $(BUILD_DIR)/windows/x64/Lib/_pylong.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/__init__.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/__main__.py \
-  $(BUILD_DIR)/windows/x64/Lib/_pyrepl/_minimal_curses.py \
+  $(BUILD_DIR)/windows/x64/Lib/_pyrepl/_module_completer.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/_threading_handler.py \
+  $(BUILD_DIR)/windows/x64/Lib/_pyrepl/base_eventqueue.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/commands.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/completing_reader.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/console.py \
-  $(BUILD_DIR)/windows/x64/Lib/_pyrepl/curses.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/fancy_termios.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/historical_reader.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/input.py \
@@ -2212,17 +2275,20 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/reader.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/readline.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/simple_interact.py \
+  $(BUILD_DIR)/windows/x64/Lib/_pyrepl/terminfo.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/trace.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/types.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/unix_console.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/unix_eventqueue.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/utils.py \
   $(BUILD_DIR)/windows/x64/Lib/_pyrepl/windows_console.py \
+  $(BUILD_DIR)/windows/x64/Lib/_pyrepl/windows_eventqueue.py \
   $(BUILD_DIR)/windows/x64/Lib/_sitebuiltins.py \
   $(BUILD_DIR)/windows/x64/Lib/_strptime.py \
   $(BUILD_DIR)/windows/x64/Lib/_threading_local.py \
   $(BUILD_DIR)/windows/x64/Lib/_weakrefset.py \
   $(BUILD_DIR)/windows/x64/Lib/abc.py \
+  $(BUILD_DIR)/windows/x64/Lib/annotationlib.py \
   $(BUILD_DIR)/windows/x64/Lib/antigravity.py \
   $(BUILD_DIR)/windows/x64/Lib/argparse.py \
   $(BUILD_DIR)/windows/x64/Lib/ast.py \
@@ -2238,6 +2304,7 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/exceptions.py \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/format_helpers.py \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/futures.py \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/graph.py \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/locks.py \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/log.py \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/mixins.py \
@@ -2254,6 +2321,7 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/tasks.py \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/threads.py \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/timeouts.py \
+  $(BUILD_DIR)/windows/x64/Lib/asyncio/tools.py \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/transports.py \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/trsock.py \
   $(BUILD_DIR)/windows/x64/Lib/asyncio/unix_events.py \
@@ -2272,11 +2340,24 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/collections/__init__.py \
   $(BUILD_DIR)/windows/x64/Lib/colorsys.py \
   $(BUILD_DIR)/windows/x64/Lib/compileall.py \
+  $(BUILD_DIR)/windows/x64/Lib/compression/__init__.py \
+  $(BUILD_DIR)/windows/x64/Lib/compression/_common/__init__.py \
+  $(BUILD_DIR)/windows/x64/Lib/compression/_common/_streams.py \
+  $(BUILD_DIR)/windows/x64/Lib/compression/bz2.py \
+  $(BUILD_DIR)/windows/x64/Lib/compression/gzip.py \
+  $(BUILD_DIR)/windows/x64/Lib/compression/lzma.py \
+  $(BUILD_DIR)/windows/x64/Lib/compression/zlib.py \
+  $(BUILD_DIR)/windows/x64/Lib/compression/zstd/__init__.py \
+  $(BUILD_DIR)/windows/x64/Lib/compression/zstd/_zstdfile.py \
   $(BUILD_DIR)/windows/x64/Lib/concurrent/__init__.py \
   $(BUILD_DIR)/windows/x64/Lib/concurrent/futures/__init__.py \
   $(BUILD_DIR)/windows/x64/Lib/concurrent/futures/_base.py \
+  $(BUILD_DIR)/windows/x64/Lib/concurrent/futures/interpreter.py \
   $(BUILD_DIR)/windows/x64/Lib/concurrent/futures/process.py \
   $(BUILD_DIR)/windows/x64/Lib/concurrent/futures/thread.py \
+  $(BUILD_DIR)/windows/x64/Lib/concurrent/interpreters/__init__.py \
+  $(BUILD_DIR)/windows/x64/Lib/concurrent/interpreters/_crossinterp.py \
+  $(BUILD_DIR)/windows/x64/Lib/concurrent/interpreters/_queues.py \
   $(BUILD_DIR)/windows/x64/Lib/configparser.py \
   $(BUILD_DIR)/windows/x64/Lib/contextlib.py \
   $(BUILD_DIR)/windows/x64/Lib/contextvars.py \
@@ -2286,6 +2367,7 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/ctypes/__init__.py \
   $(BUILD_DIR)/windows/x64/Lib/ctypes/_aix.py \
   $(BUILD_DIR)/windows/x64/Lib/ctypes/_endian.py \
+  $(BUILD_DIR)/windows/x64/Lib/ctypes/_layout.py \
   $(BUILD_DIR)/windows/x64/Lib/ctypes/macholib/__init__.py \
   $(BUILD_DIR)/windows/x64/Lib/ctypes/macholib/dyld.py \
   $(BUILD_DIR)/windows/x64/Lib/ctypes/macholib/dylib.py \
@@ -2333,6 +2415,7 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/email/quoprimime.py \
   $(BUILD_DIR)/windows/x64/Lib/email/utils.py \
   $(BUILD_DIR)/windows/x64/Lib/encodings/__init__.py \
+  $(BUILD_DIR)/windows/x64/Lib/encodings/_win_cp_codecs.py \
   $(BUILD_DIR)/windows/x64/Lib/encodings/aliases.py \
   $(BUILD_DIR)/windows/x64/Lib/encodings/ascii.py \
   $(BUILD_DIR)/windows/x64/Lib/encodings/base64_codec.py \
@@ -2508,6 +2591,7 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/io.py \
   $(BUILD_DIR)/windows/x64/Lib/ipaddress.py \
   $(BUILD_DIR)/windows/x64/Lib/json/__init__.py \
+  $(BUILD_DIR)/windows/x64/Lib/json/__main__.py \
   $(BUILD_DIR)/windows/x64/Lib/json/decoder.py \
   $(BUILD_DIR)/windows/x64/Lib/json/encoder.py \
   $(BUILD_DIR)/windows/x64/Lib/json/scanner.py \
@@ -2531,8 +2615,9 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/optparse.py \
   $(BUILD_DIR)/windows/x64/Lib/os.py \
   $(BUILD_DIR)/windows/x64/Lib/pathlib/__init__.py \
-  $(BUILD_DIR)/windows/x64/Lib/pathlib/_abc.py \
   $(BUILD_DIR)/windows/x64/Lib/pathlib/_local.py \
+  $(BUILD_DIR)/windows/x64/Lib/pathlib/_os.py \
+  $(BUILD_DIR)/windows/x64/Lib/pathlib/types.py \
   $(BUILD_DIR)/windows/x64/Lib/pdb.py \
   $(BUILD_DIR)/windows/x64/Lib/pickle.py \
   $(BUILD_DIR)/windows/x64/Lib/pickletools.py \
@@ -2580,7 +2665,8 @@ SCRIPT_TARGETS_PY_PRIVATE_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/Lib/ssl.py \
   $(BUILD_DIR)/windows/x64/Lib/stat.py \
   $(BUILD_DIR)/windows/x64/Lib/statistics.py \
-  $(BUILD_DIR)/windows/x64/Lib/string.py \
+  $(BUILD_DIR)/windows/x64/Lib/string/__init__.py \
+  $(BUILD_DIR)/windows/x64/Lib/string/templatelib.py \
   $(BUILD_DIR)/windows/x64/Lib/stringprep.py \
   $(BUILD_DIR)/windows/x64/Lib/struct.py \
   $(BUILD_DIR)/windows/x64/Lib/subprocess.py \
@@ -2662,11 +2748,515 @@ $(SCRIPT_TARGETS_PY_PRIVATE_WIN_X64) : ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
 
-COB_TARGETS = \
+SCRIPT_TARGETS_PY_PRIVATE_WIN_ARM64 = \
+  $(BUILD_DIR)/windows/ARM64/Lib/__future__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/__hello__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_aix_support.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_android_support.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_apple_support.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_ast_unparse.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_collections_abc.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_colorize.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_compat_pickle.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_ios_support.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_markupbase.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_opcode_metadata.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_osx_support.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_py_abc.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_py_warnings.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pydatetime.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pydecimal.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyio.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pylong.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/__main__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/_module_completer.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/_threading_handler.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/base_eventqueue.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/commands.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/completing_reader.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/console.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/fancy_termios.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/historical_reader.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/input.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/keymap.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/main.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/pager.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/reader.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/readline.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/simple_interact.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/terminfo.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/trace.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/types.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/unix_console.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/unix_eventqueue.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/utils.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/windows_console.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_pyrepl/windows_eventqueue.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_sitebuiltins.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_strptime.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_threading_local.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/_weakrefset.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/abc.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/annotationlib.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/antigravity.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/argparse.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/ast.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/__main__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/base_events.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/base_futures.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/base_subprocess.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/base_tasks.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/constants.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/coroutines.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/events.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/exceptions.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/format_helpers.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/futures.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/graph.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/locks.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/log.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/mixins.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/proactor_events.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/protocols.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/queues.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/runners.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/selector_events.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/sslproto.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/staggered.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/streams.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/subprocess.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/taskgroups.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/tasks.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/threads.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/timeouts.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/tools.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/transports.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/trsock.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/unix_events.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/windows_events.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/asyncio/windows_utils.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/base64.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/bdb.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/bisect.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/bz2.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/cProfile.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/calendar.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/cmd.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/code.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/codecs.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/codeop.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/collections/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/colorsys.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/compileall.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/compression/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/compression/_common/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/compression/_common/_streams.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/compression/bz2.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/compression/gzip.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/compression/lzma.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/compression/zlib.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/compression/zstd/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/compression/zstd/_zstdfile.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/concurrent/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/concurrent/futures/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/concurrent/futures/_base.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/concurrent/futures/interpreter.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/concurrent/futures/process.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/concurrent/futures/thread.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/concurrent/interpreters/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/concurrent/interpreters/_crossinterp.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/concurrent/interpreters/_queues.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/configparser.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/contextlib.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/contextvars.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/copy.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/copyreg.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/csv.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/ctypes/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/ctypes/_aix.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/ctypes/_endian.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/ctypes/_layout.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/ctypes/macholib/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/ctypes/macholib/dyld.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/ctypes/macholib/dylib.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/ctypes/macholib/framework.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/ctypes/util.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/ctypes/wintypes.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/curses/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/curses/ascii.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/curses/has_key.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/curses/panel.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/curses/textpad.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/dataclasses.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/datetime.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/decimal.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/difflib.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/dis.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/doctest.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/_encoded_words.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/_header_value_parser.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/_parseaddr.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/_policybase.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/base64mime.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/charset.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/contentmanager.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/encoders.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/errors.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/feedparser.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/generator.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/header.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/headerregistry.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/iterators.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/message.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/mime/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/mime/application.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/mime/audio.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/mime/base.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/mime/image.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/mime/message.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/mime/multipart.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/mime/nonmultipart.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/mime/text.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/parser.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/policy.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/quoprimime.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/utils.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/_win_cp_codecs.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/aliases.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/ascii.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/base64_codec.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/big5.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/big5hkscs.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/bz2_codec.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/charmap.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp037.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp1006.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp1026.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp1125.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp1140.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp1250.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp1251.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp1252.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp1253.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp1254.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp1255.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp1256.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp1257.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp1258.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp273.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp424.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp437.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp500.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp720.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp737.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp775.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp850.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp852.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp855.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp856.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp857.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp858.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp860.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp861.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp862.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp863.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp864.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp865.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp866.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp869.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp874.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp875.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp932.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp949.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/cp950.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/euc_jis_2004.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/euc_jisx0213.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/euc_jp.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/euc_kr.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/gb18030.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/gb2312.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/gbk.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/hex_codec.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/hp_roman8.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/hz.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/idna.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso2022_jp.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso2022_jp_1.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso2022_jp_2.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso2022_jp_2004.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso2022_jp_3.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso2022_jp_ext.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso2022_kr.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso8859_1.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso8859_10.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso8859_11.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso8859_13.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso8859_14.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso8859_15.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso8859_16.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso8859_2.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso8859_3.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso8859_4.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso8859_5.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso8859_6.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso8859_7.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso8859_8.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/iso8859_9.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/johab.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/koi8_r.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/koi8_t.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/koi8_u.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/kz1048.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/latin_1.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/mac_arabic.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/mac_croatian.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/mac_cyrillic.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/mac_farsi.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/mac_greek.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/mac_iceland.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/mac_latin2.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/mac_roman.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/mac_romanian.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/mac_turkish.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/mbcs.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/oem.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/palmos.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/ptcp154.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/punycode.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/quopri_codec.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/raw_unicode_escape.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/rot_13.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/shift_jis.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/shift_jis_2004.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/shift_jisx0213.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/tis_620.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/undefined.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/unicode_escape.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/utf_16.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/utf_16_be.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/utf_16_le.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/utf_32.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/utf_32_be.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/utf_32_le.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/utf_7.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/utf_8.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/utf_8_sig.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/uu_codec.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/encodings/zlib_codec.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/enum.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/filecmp.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/fileinput.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/fnmatch.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/fractions.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/ftplib.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/functools.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/genericpath.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/getopt.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/getpass.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/gettext.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/glob.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/graphlib.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/gzip.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/hashlib.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/heapq.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/hmac.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/html/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/html/entities.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/html/parser.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/http/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/http/client.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/http/cookiejar.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/http/cookies.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/http/server.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/_abc.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/_bootstrap.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/_bootstrap_external.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/abc.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/machinery.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/metadata/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/metadata/_adapters.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/metadata/_collections.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/metadata/_functools.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/metadata/_itertools.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/metadata/_meta.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/metadata/_text.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/metadata/diagnose.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/readers.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/resources/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/resources/_adapters.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/resources/_common.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/resources/_functional.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/resources/_itertools.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/resources/abc.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/resources/readers.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/resources/simple.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/simple.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/importlib/util.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/inspect.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/io.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/ipaddress.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/json/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/json/__main__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/json/decoder.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/json/encoder.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/json/scanner.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/json/tool.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/keyword.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/linecache.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/locale.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/logging/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/logging/config.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/logging/handlers.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/lzma.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/mailbox.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/mimetypes.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/modulefinder.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/netrc.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/ntpath.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/nturl2path.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/numbers.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/opcode.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/operator.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/optparse.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/os.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/pathlib/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/pathlib/_local.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/pathlib/_os.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/pathlib/types.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/pdb.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/pickle.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/pickletools.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/pkgutil.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/platform.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/plistlib.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/poplib.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/posixpath.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/pprint.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/profile.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/pstats.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/pty.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/py_compile.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/pyclbr.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/pydoc.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/queue.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/quopri.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/random.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/re/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/re/_casefix.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/re/_compiler.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/re/_constants.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/re/_parser.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/reprlib.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/rlcompleter.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/runpy.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/sched.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/secrets.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/selectors.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/shelve.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/shlex.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/shutil.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/signal.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/site.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/smtplib.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/socket.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/socketserver.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/sqlite3/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/sqlite3/__main__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/sqlite3/dbapi2.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/sqlite3/dump.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/sre_compile.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/sre_constants.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/sre_parse.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/ssl.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/stat.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/statistics.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/string/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/string/templatelib.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/stringprep.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/struct.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/subprocess.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/symtable.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/sysconfig/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/sysconfig/__main__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/tabnanny.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/tarfile.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/tempfile.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/textwrap.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/this.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/threading.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/timeit.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/token.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/tokenize.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/tomllib/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/tomllib/_parser.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/tomllib/_re.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/tomllib/_types.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/trace.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/traceback.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/tracemalloc.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/tty.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/types.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/typing.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/urllib/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/urllib/error.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/urllib/parse.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/urllib/request.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/urllib/response.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/urllib/robotparser.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/uuid.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/warnings.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/wave.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/weakref.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/webbrowser.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/dom/NodeFilter.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/dom/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/dom/domreg.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/dom/expatbuilder.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/dom/minicompat.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/dom/minidom.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/dom/pulldom.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/dom/xmlbuilder.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/etree/ElementInclude.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/etree/ElementPath.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/etree/ElementTree.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/etree/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/etree/cElementTree.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/parsers/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/parsers/expat.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/sax/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/sax/_exceptions.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/sax/expatreader.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/sax/handler.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/sax/saxutils.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xml/sax/xmlreader.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xmlrpc/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xmlrpc/client.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/xmlrpc/server.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/zipapp.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/zipfile/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/zipfile/__main__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/zipfile/_path/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/zipfile/_path/glob.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/zipimport.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/zoneinfo/__init__.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/zoneinfo/_common.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/zoneinfo/_tzpath.py \
+  $(BUILD_DIR)/windows/ARM64/Lib/zoneinfo/_zoneinfo.py
+
+SCRIPT_TARGETS_SO_PRIVATE_WIN_ARM64 = \
   
 
-BOB_TARGETS = \
-  
+# Rule to copy src asset scripts to dst.
+# (and make non-writable so I'm less likely to accidentally edit them there)
+$(SCRIPT_TARGETS_PY_PRIVATE_WIN_ARM64) : ../../.efrocachemap
+	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
+
 
 FONT_TARGETS = \
   $(BUILD_DIR)/ba_data/fonts/fontSmall0.fdata \
@@ -2742,21 +3332,6 @@ DATA_TARGETS = \
   $(BUILD_DIR)/ba_data/data/maps/tower_d.json \
   $(BUILD_DIR)/ba_data/data/maps/zig_zag.json
 
-AUDIO_TARGETS = \
-  
-
-TEX2D_DDS_TARGETS = \
-  
-
-TEX2D_PVR_TARGETS = \
-  
-
-TEX2D_KTX_TARGETS = \
-  
-
-TEX2D_PREVIEW_PNG_TARGETS = \
-  
-
 EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/DLLs/_asyncio.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_asyncio_d.pyd \
@@ -2764,8 +3339,6 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/DLLs/_bz2_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_ctypes.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_ctypes_d.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_ctypes_test.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_ctypes_test_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_decimal.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_decimal_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_elementtree.pyd \
@@ -2780,41 +3353,22 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/DLLs/_overlapped_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_queue.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_queue_d.pyd \
+  $(BUILD_DIR)/windows/Win32/DLLs/_remote_debugging.pyd \
+  $(BUILD_DIR)/windows/Win32/DLLs/_remote_debugging_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_socket.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_socket_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_sqlite3.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_sqlite3_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_ssl.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_ssl_d.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testbuffer.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testbuffer_d.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testcapi.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testcapi_d.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testclinic.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testclinic_d.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testclinic_limited.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testclinic_limited_d.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testconsole.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testconsole_d.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testimportmultiple.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testimportmultiple_d.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testinternalcapi.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testinternalcapi_d.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testlimitedcapi.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testlimitedcapi_d.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testmultiphase.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testmultiphase_d.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testsinglephase.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_testsinglephase_d.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_tkinter.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/_tkinter_d.lib \
-  $(BUILD_DIR)/windows/Win32/DLLs/_tkinter_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_uuid.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_uuid_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_wmi.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_wmi_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_zoneinfo.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/_zoneinfo_d.pyd \
+  $(BUILD_DIR)/windows/Win32/DLLs/_zstd.pyd \
+  $(BUILD_DIR)/windows/Win32/DLLs/_zstd_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/libcrypto-3.dll \
   $(BUILD_DIR)/windows/Win32/DLLs/libffi-8.dll \
   $(BUILD_DIR)/windows/Win32/DLLs/libssl-3.dll \
@@ -2825,13 +3379,13 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/DLLs/select_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/sqlite3.dll \
   $(BUILD_DIR)/windows/Win32/DLLs/sqlite3_d.dll \
-  $(BUILD_DIR)/windows/Win32/DLLs/tcl86t.dll \
-  $(BUILD_DIR)/windows/Win32/DLLs/tk86t.dll \
   $(BUILD_DIR)/windows/Win32/DLLs/unicodedata.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/unicodedata_d.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/winsound.pyd \
   $(BUILD_DIR)/windows/Win32/DLLs/winsound_d.pyd \
-  $(BUILD_DIR)/windows/Win32/DLLs/zlib1.dll \
+  $(BUILD_DIR)/windows/Win32/Lib/ctypes/macholib/README.ctypes \
+  $(BUILD_DIR)/windows/Win32/Lib/ctypes/macholib/fetch_macholib \
+  $(BUILD_DIR)/windows/Win32/Lib/ctypes/macholib/fetch_macholib.bat \
   $(BUILD_DIR)/windows/Win32/Lib/email/architecture.rst \
   $(BUILD_DIR)/windows/Win32/OpenAL32.dll \
   $(BUILD_DIR)/windows/Win32/SDL3.dll \
@@ -2841,12 +3395,13 @@ EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/libvorbisfile.dll \
   $(BUILD_DIR)/windows/Win32/ogg.dll \
   $(BUILD_DIR)/windows/Win32/python.exe \
-  $(BUILD_DIR)/windows/Win32/python313.dll \
-  $(BUILD_DIR)/windows/Win32/python313_d.dll \
+  $(BUILD_DIR)/windows/Win32/python314.dll \
+  $(BUILD_DIR)/windows/Win32/python314_d.dll \
   $(BUILD_DIR)/windows/Win32/python_d.exe \
   $(BUILD_DIR)/windows/Win32/pythonw.exe \
   $(BUILD_DIR)/windows/Win32/pythonw_d.exe \
-  $(BUILD_DIR)/windows/Win32/vc_redist.x86.exe
+  $(BUILD_DIR)/windows/Win32/vc_redist.x86.exe \
+  $(BUILD_DIR)/windows/Win32/zlib1.dll
 
 # Rule to copy src extras to build.
 $(EXTRAS_TARGETS_WIN_WIN32) : ../../.efrocachemap
@@ -2860,8 +3415,6 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/DLLs/_bz2_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_ctypes.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_ctypes_d.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_ctypes_test.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_ctypes_test_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_decimal.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_decimal_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_elementtree.pyd \
@@ -2876,41 +3429,22 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/DLLs/_overlapped_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_queue.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_queue_d.pyd \
+  $(BUILD_DIR)/windows/x64/DLLs/_remote_debugging.pyd \
+  $(BUILD_DIR)/windows/x64/DLLs/_remote_debugging_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_socket.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_socket_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_sqlite3.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_sqlite3_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_ssl.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_ssl_d.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testbuffer.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testbuffer_d.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testcapi.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testcapi_d.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testclinic.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testclinic_d.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testclinic_limited.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testclinic_limited_d.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testconsole.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testconsole_d.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testimportmultiple.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testimportmultiple_d.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testinternalcapi.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testinternalcapi_d.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testlimitedcapi.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testlimitedcapi_d.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testmultiphase.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testmultiphase_d.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testsinglephase.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_testsinglephase_d.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_tkinter.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/_tkinter_d.lib \
-  $(BUILD_DIR)/windows/x64/DLLs/_tkinter_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_uuid.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_uuid_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_wmi.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_wmi_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_zoneinfo.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/_zoneinfo_d.pyd \
+  $(BUILD_DIR)/windows/x64/DLLs/_zstd.pyd \
+  $(BUILD_DIR)/windows/x64/DLLs/_zstd_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/libcrypto-3.dll \
   $(BUILD_DIR)/windows/x64/DLLs/libffi-8.dll \
   $(BUILD_DIR)/windows/x64/DLLs/libssl-3.dll \
@@ -2921,13 +3455,13 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/DLLs/select_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/sqlite3.dll \
   $(BUILD_DIR)/windows/x64/DLLs/sqlite3_d.dll \
-  $(BUILD_DIR)/windows/x64/DLLs/tcl86t.dll \
-  $(BUILD_DIR)/windows/x64/DLLs/tk86t.dll \
   $(BUILD_DIR)/windows/x64/DLLs/unicodedata.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/unicodedata_d.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/winsound.pyd \
   $(BUILD_DIR)/windows/x64/DLLs/winsound_d.pyd \
-  $(BUILD_DIR)/windows/x64/DLLs/zlib1.dll \
+  $(BUILD_DIR)/windows/x64/Lib/ctypes/macholib/README.ctypes \
+  $(BUILD_DIR)/windows/x64/Lib/ctypes/macholib/fetch_macholib \
+  $(BUILD_DIR)/windows/x64/Lib/ctypes/macholib/fetch_macholib.bat \
   $(BUILD_DIR)/windows/x64/Lib/email/architecture.rst \
   $(BUILD_DIR)/windows/x64/OpenAL32.dll \
   $(BUILD_DIR)/windows/x64/SDL3.dll \
@@ -2937,30 +3471,90 @@ EXTRAS_TARGETS_WIN_X64 = \
   $(BUILD_DIR)/windows/x64/libvorbisfile.dll \
   $(BUILD_DIR)/windows/x64/ogg.dll \
   $(BUILD_DIR)/windows/x64/python.exe \
-  $(BUILD_DIR)/windows/x64/python313.dll \
-  $(BUILD_DIR)/windows/x64/python313_d.dll \
+  $(BUILD_DIR)/windows/x64/python314.dll \
+  $(BUILD_DIR)/windows/x64/python314_d.dll \
   $(BUILD_DIR)/windows/x64/python_d.exe \
   $(BUILD_DIR)/windows/x64/pythonw.exe \
   $(BUILD_DIR)/windows/x64/pythonw_d.exe \
-  $(BUILD_DIR)/windows/x64/vc_redist.x64.exe
+  $(BUILD_DIR)/windows/x64/vc_redist.x64.exe \
+  $(BUILD_DIR)/windows/x64/zlib1.dll
 
 # Rule to copy src extras to build.
 $(EXTRAS_TARGETS_WIN_X64) : ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
+
+EXTRAS_TARGETS_WIN_ARM64 = \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_asyncio.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_asyncio_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_bz2.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_bz2_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_ctypes.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_ctypes_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_decimal.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_decimal_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_elementtree.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_elementtree_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_hashlib.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_hashlib_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_lzma.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_lzma_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_multiprocessing.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_multiprocessing_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_overlapped.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_overlapped_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_queue.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_queue_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_remote_debugging.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_remote_debugging_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_socket.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_socket_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_sqlite3.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_sqlite3_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_ssl.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_ssl_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_uuid.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_uuid_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_wmi.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_wmi_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_zoneinfo.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_zoneinfo_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_zstd.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/_zstd_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/libcrypto-3-arm64.dll \
+  $(BUILD_DIR)/windows/ARM64/DLLs/libffi-8.dll \
+  $(BUILD_DIR)/windows/ARM64/DLLs/libssl-3-arm64.dll \
+  $(BUILD_DIR)/windows/ARM64/DLLs/pyexpat.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/pyexpat_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/python_lib.cat \
+  $(BUILD_DIR)/windows/ARM64/DLLs/select.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/select_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/sqlite3.dll \
+  $(BUILD_DIR)/windows/ARM64/DLLs/sqlite3_d.dll \
+  $(BUILD_DIR)/windows/ARM64/DLLs/unicodedata.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/unicodedata_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/winsound.pyd \
+  $(BUILD_DIR)/windows/ARM64/DLLs/winsound_d.pyd \
+  $(BUILD_DIR)/windows/ARM64/Lib/ctypes/macholib/README.ctypes \
+  $(BUILD_DIR)/windows/ARM64/Lib/ctypes/macholib/fetch_macholib \
+  $(BUILD_DIR)/windows/ARM64/Lib/ctypes/macholib/fetch_macholib.bat \
+  $(BUILD_DIR)/windows/ARM64/Lib/email/architecture.rst \
+  $(BUILD_DIR)/windows/ARM64/SDL3.dll \
+  $(BUILD_DIR)/windows/ARM64/libEGL.dll \
+  $(BUILD_DIR)/windows/ARM64/libGLESv2.dll \
+  $(BUILD_DIR)/windows/ARM64/python.exe \
+  $(BUILD_DIR)/windows/ARM64/python314.dll \
+  $(BUILD_DIR)/windows/ARM64/python314_d.dll \
+  $(BUILD_DIR)/windows/ARM64/python_d.exe \
+  $(BUILD_DIR)/windows/ARM64/pythonw.exe \
+  $(BUILD_DIR)/windows/ARM64/pythonw_d.exe \
+  $(BUILD_DIR)/windows/ARM64/vc_redist.arm64.exe
+
+# Rule to copy src extras to build.
+$(EXTRAS_TARGETS_WIN_ARM64) : ../../.efrocachemap
+	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
+
 # __AUTOGENERATED_PRIVATE_END__
-
-ASSET_TARGETS_COMMON_GUI += $(MESH_TARGETS) $(COLLISION_MESH_TARGETS)
-ASSET_TARGETS_COMMON_SERVER += $(COLLISION_MESH_TARGETS)
-
-$(BUILD_DIR)/%.bob : ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-$(BUILD_DIR)/%.cob : ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-$(BUILD_DIR)/%.ogg : ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
 $(BUILD_DIR)/%.fdata : ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
@@ -2980,43 +3574,6 @@ $(BUILD_DIR)/ba_data/data/languages/%.json : ../../.efrocachemap
 $(BUILD_DIR)/ba_data/data/maps/%.json : ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
-# ba_data/%.tex2d.png : ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-# ba_data/%_+x.tex2d.png : ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-# ba_data/%_-x.tex2d.png: ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-# ba_data/%_+y.tex2d.png: ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-# ba_data/%_-y.tex2d.png: ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-# ba_data/%_+z.tex2d.png: ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-# ba_data/%_-z.tex2d.png: ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-$(BUILD_DIR)/ba_data/%_preview.png : ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-$(BUILD_DIR)/%.dds : ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-$(BUILD_DIR)/%.pvr : ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-$(BUILD_DIR)/%.ktx : ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-audio: $(AUDIO_TARGETS)
-audio-clean:
-	rm -rf $(BUILD_DIR)/ba_data/audio
-
 data: $(DATA_TARGETS)
 
 data-clean:
@@ -3026,33 +3583,20 @@ fonts: $(FONT_TARGETS)
 fonts-clean:
 	rm -rf $(BUILD_DIR)/ba_data/fonts
 
-# Mesh targets needed for all platforms.
-MESH_TARGETS = $(BOB_TARGETS)
-COLLISION_MESH_TARGETS = $(COB_TARGETS)
-
-meshes: $(MESH_TARGETS) $(COLLISION_MESH_TARGETS)
-meshes-clean:
-	rm -rf $(BUILD_DIR)/ba_data/meshes
-
-# Texture targets needed per-platform (may overlap)
-TEXTURE_TARGETS_CMAKE = $(TEX2D_DDS_TARGETS)
-TEXTURE_TARGETS_WIN = $(TEX2D_DDS_TARGETS)
-TEXTURE_TARGETS_MAC = $(TEX2D_DDS_TARGETS)
-TEXTURE_TARGETS_IOS = $(TEX2D_PVR_TARGETS)
-TEXTURE_TARGETS_ANDROID = $(TEX2D_KTX_TARGETS)
-
-# Texture targets needed for all platforms.
-TEXTURE_TARGETS_COMMON = $(TEX2D_PREVIEW_PNG_TARGETS) \
- $(TEX2D_PREVIEW_PNG_TARGETS_2)
-
-textures-clean:
-	rm -rf $(BUILD_DIR)/ba_data/textures
-
 # Script targets needed per-platform (may overlap)
 SCRIPT_TARGETS_CMAKE =
 SCRIPT_TARGETS_SERVER =
-SCRIPT_TARGETS_WIN_WIN32 = $(SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32) 
-SCRIPT_TARGETS_WIN_X64 = $(SCRIPT_TARGETS_PY_PRIVATE_WIN_X64) 
+SCRIPT_TARGETS_WIN_WIN32 = $(SCRIPT_TARGETS_PY_PRIVATE_WIN_WIN32)
+SCRIPT_TARGETS_WIN_X64 = $(SCRIPT_TARGETS_PY_PRIVATE_WIN_X64)
+# Note: ARM64 is staged for future windows-arm64 builds; nothing
+# aggregates it into gui/server builds yet.
+SCRIPT_TARGETS_WIN_ARM64 = $(SCRIPT_TARGETS_PY_PRIVATE_WIN_ARM64)
+
+# Explicit on-demand staging of the windows ARM64 asset set. (Must
+# live after the generated lists it consumes so prereqs expand
+# non-empty at rule-parse time.)
+.PHONY: win-arm64-staging
+win-arm64-staging: $(ASSET_TARGETS_WIN_ARM64)
 SCRIPT_TARGETS_MAC = $(SCRIPT_TARGETS_PY_PRIVATE_APPLE_MAC) \
  $(SCRIPT_TARGETS_SO_PRIVATE_APPLE_MAC)
 SCRIPT_TARGETS_IOS = $(SCRIPT_TARGETS_PY_PRIVATE_APPLE_MAC) \
@@ -3137,9 +3681,8 @@ $(PROJ_DIR)/.cache/asset_bundle/headless-minimal/manifest.json: \
 	@$(PCOMMAND) asset_bundle_build headless-minimal
 
 # These targets don't correspond to actual files; make sure make knows that.
-.PHONY: cmake win mac ios android audio audio-clean fonts fonts-clean data	\
-        data-clean meshes meshes-clean textures-clean scripts scripts-clean	\
-        assets assets-cmake assets-server assets-win-Win32 assets-win-x64		\
-        win-server-Win32 win-server-x64 assets-win-server-Win32				\
-        assets-win-server-x64 assets-mac assets-ios assets-android			\
-        asset_sources clean
+.PHONY: cmake win mac ios android fonts fonts-clean data data-clean			\
+        scripts scripts-clean assets assets-cmake assets-server				\
+        assets-win-Win32 assets-win-x64 win-server-Win32 win-server-x64		\
+        assets-win-server-Win32 assets-win-server-x64 assets-mac				\
+        assets-ios assets-android clean

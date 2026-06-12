@@ -30,8 +30,6 @@ See :class:`Endpoint` for the full list of available endpoints and
 their usage.
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Annotated

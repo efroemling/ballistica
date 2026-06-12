@@ -2,8 +2,6 @@
 #
 """Provides UI for graphics settings."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, cast, override
 
 from bauiv1lib.popup import PopupMenu

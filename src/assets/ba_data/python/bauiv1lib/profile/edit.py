@@ -3,8 +3,6 @@
 # pylint: disable=too-many-lines
 """Provides UI to edit a player profile."""
 
-from __future__ import annotations
-
 import random
 from typing import cast, override, TYPE_CHECKING
 

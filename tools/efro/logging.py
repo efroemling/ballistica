@@ -4,8 +4,6 @@
 
 # pylint: disable=too-many-lines
 
-from __future__ import annotations
-
 import sys
 import time
 import asyncio

@@ -24,8 +24,6 @@ or chain-verify wrong — still fails loudly. Phase-3 stream-call
 foundation work depends on this flow being healthy end-to-end.
 """
 
-from __future__ import annotations
-
 import os
 import re
 from typing import TYPE_CHECKING

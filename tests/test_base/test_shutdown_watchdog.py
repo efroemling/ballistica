@@ -41,8 +41,6 @@ an ``--exec`` snippet that deliberately wedges the relevant phase and
 then asserts on markers in the combined output.
 """
 
-from __future__ import annotations
-
 import os
 import subprocess
 

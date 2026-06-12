@@ -26,8 +26,6 @@ expansion of legacy export-type shortcuts, deprecation warnings —
 live in the consumer.
 """
 
-from __future__ import annotations
-
 import os
 import time
 import logging

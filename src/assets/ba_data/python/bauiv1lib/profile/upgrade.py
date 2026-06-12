@@ -2,8 +2,6 @@
 #
 """UI for player profile upgrades."""
 
-from __future__ import annotations
-
 import time
 import weakref
 from typing import TYPE_CHECKING

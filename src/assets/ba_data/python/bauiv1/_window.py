@@ -2,8 +2,6 @@
 #
 """Window related UI bits."""
 
-from __future__ import annotations
-
 import logging
 import warnings
 from typing import TYPE_CHECKING, override

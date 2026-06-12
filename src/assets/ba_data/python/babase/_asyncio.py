@@ -10,8 +10,6 @@ from other threads — ``run_in_executor`` completions in particular —
 wakes the logic thread immediately rather than waiting for a poll.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 import asyncio
 import logging

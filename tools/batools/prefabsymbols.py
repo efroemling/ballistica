@@ -14,8 +14,6 @@ platforms either embed their debug info in the binary itself (Linux)
 or are not yet covered (macOS).
 """
 
-from __future__ import annotations
-
 import hashlib
 import json
 import os

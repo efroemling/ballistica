@@ -2,8 +2,6 @@
 #
 """Plugin related functionality."""
 
-from __future__ import annotations
-
 import logging
 import importlib.util
 from typing import TYPE_CHECKING, override

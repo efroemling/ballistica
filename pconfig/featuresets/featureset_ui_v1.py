@@ -1,7 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # pylint: disable=useless-suppression, missing-docstring, invalid-name
-from __future__ import annotations
 
 # This file is exec'ed by the spinoff system, allowing us to define
 # values and behavior for this feature-set here in a programmatic way

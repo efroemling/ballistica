@@ -2,8 +2,6 @@
 #
 """Provides a window to customize team names and colors."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, cast, override
 
 from bauiv1lib.popup import PopupWindow

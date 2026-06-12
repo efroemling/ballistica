@@ -2,8 +2,6 @@
 #
 """UI related to reporting bad behavior/etc."""
 
-from __future__ import annotations
-
 import bauiv1 as bui
 
 

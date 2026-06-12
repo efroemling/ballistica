@@ -9,8 +9,6 @@ can run anywhere it gets efrosynced to (game repo asset builds now,
 master-server cloud-build recipes later).
 """
 
-from __future__ import annotations
-
 import math
 import struct
 from pathlib import Path

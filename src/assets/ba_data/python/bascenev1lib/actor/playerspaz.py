@@ -2,8 +2,6 @@
 #
 """Functionality related to player-controlled Spazzes."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, overload, override
 
 import bascenev1 as bs

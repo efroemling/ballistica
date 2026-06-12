@@ -2,11 +2,11 @@
 #
 """Provides ConstructAppMode."""
 
-from __future__ import annotations
-
 import asyncio
 from enum import Enum
 from typing import TYPE_CHECKING, override
+
+from efro.util import strip_exception_tracebacks
 
 import _babase
 from bacommon.app import ExitCode
@@ -265,14 +265,16 @@ class ConstructAppMode(AppMode):
                 ),
             )
             return _ResolveOutcome.SUCCESS
-        except AssetAuthRequiredError:
+        except AssetAuthRequiredError as exc:
             if auth_recoverable:
+                strip_exception_tracebacks(exc)
                 return _ResolveOutcome.AUTH_REQUIRED
             # Already signed in (or tried to) yet auth still failed.
             logger.exception(
                 'Construct-mode asset bring-up failed; staying put.'
             )
             self._fail('An error occurred loading assets; see log for details.')
+            strip_exception_tracebacks(exc)
             return _ResolveOutcome.FAILED
         except AssetAccessDeniedError as exc:
             # Surface the server's own message — it names the account
@@ -285,8 +287,9 @@ class ConstructAppMode(AppMode):
                 or 'You do not have permission to load these assets.'
             )
             self._fail(f'{detail} Remove these mods/changes and try again.')
+            strip_exception_tracebacks(exc)
             return _ResolveOutcome.FAILED
-        except AssetResolveAbortedError:
+        except AssetResolveAbortedError as exc:
             # The app started shutting down mid-resolve (e.g. the user
             # quit while a download/cloud-build was still in flight).
             # That's not a real failure -- bow out quietly without a
@@ -295,12 +298,14 @@ class ConstructAppMode(AppMode):
                 'Construct-mode asset bring-up aborted; app is shutting'
                 ' down.'
             )
+            strip_exception_tracebacks(exc)
             return _ResolveOutcome.ABORTED
-        except Exception:
+        except Exception as exc:
             logger.exception(
                 'Construct-mode asset bring-up failed; staying put.'
             )
             self._fail('An error occurred loading assets; see log for details.')
+            strip_exception_tracebacks(exc)
             return _ResolveOutcome.FAILED
 
     @staticmethod
@@ -384,8 +389,9 @@ class ConstructAppMode(AppMode):
             babase.screenmessage(
                 message, color=(1.0, 0.0, 0.0) if error else (1.0, 1.0, 1.0)
             )
-        except Exception:
+        except Exception as exc:
             logger.exception('Error showing construct-mode message.')
+            strip_exception_tracebacks(exc)
 
     def _fail(self, message: str) -> None:
         """Surface a terminal bring-up failure.

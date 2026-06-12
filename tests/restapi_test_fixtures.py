@@ -2,16 +2,15 @@
 #
 """Shared pytest fixtures for REST live-server tests."""
 
-from __future__ import annotations
-
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 import urllib3
-from efro.error import CleanError
 from efrotools.project import getlocalconfig
+
+from efro.error import CleanError
 
 if TYPE_CHECKING:
     from typing import Any

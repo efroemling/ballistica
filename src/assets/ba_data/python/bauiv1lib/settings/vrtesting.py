@@ -2,8 +2,6 @@
 #
 """Provides UI for testing vr settings."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui

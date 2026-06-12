@@ -1,11 +1,14 @@
-### 1.8.0 (build 22886, api 9, 2026-06-11)
+### 1.8.0 (build 22888, api 9, 2026-06-12)
+- Fully implemented asset packages (more on this soon)
+- Upgraded to Python 3.14. This gives us a few nice useful bits such as zstd
+  compression to help speed up online stuff and also means we can get rid of all
+  the annoying `from __future__ import annotations` lines. Woohoo!
 - Fixed a 'z.dll missing' error on Windows builds (the refreshed ANGLE
   graphics libs had picked up an external zlib dll dependency; zlib is now
   linked statically into them).
 - Windows builds are now made with Visual Studio 2026 (platform toolset v145).
   The bundled redist installers have been updated to match; if you get errors
   running an updated build, install the bundled redist libs and try again.
-- Fully implemented asset packages (more on this soon)
 - Upgraded from SDL2 to SDL3.
 - Finally got rid of the weird square textures containing non-square contents
   split into two pieces. This was a long-obsolete artifact of targeting pvrtc

@@ -649,10 +649,12 @@ auto CorePython::WarmStart1Completed() -> bool {
 }
 
 void CorePython::VerifyPythonEnvironment() {
-  // Make sure we're running the Python version we require.
-  const char* ver = Py_GetVersion();
-  if (strncmp(ver, "3.13", 4) != 0) {
-    FatalError("We require Python 3.13.x; instead found " + std::string(ver));
+  // Make sure the Python we're running against matches the major.minor
+  // version we were compiled against (micro differences are fine).
+  if ((Py_Version & 0xFFFF0000u)
+      != (static_cast<uint32_t>(PY_VERSION_HEX) & 0xFFFF0000u)) {
+    FatalError(std::string("We require Python ") + PY_VERSION
+               + " (major.minor); instead found " + Py_GetVersion());
   }
 }
 
@@ -880,6 +882,15 @@ void PyembedExec(const uint8_t* bytes, size_t n, const char* filename,
     PyErr_PrintEx(0);
     FatalError(std::string("Failed to unmarshal pyembed ") + filename
                + "; see log for details.");
+  }
+
+  // Make sure __builtins__ is present in our exec context. The eval
+  // loop implicitly provides builtins for the frame itself, but Python
+  // 3.14's deferred-annotation machinery (PEP 649) does an explicit
+  // __builtins__ lookup in globals when building annotated classes,
+  // which KeyErrors on a bare dict from PyDict_New().
+  if (PyDict_GetItemString(ctx, "__builtins__") == nullptr) {
+    PyDict_SetItemString(ctx, "__builtins__", PyEval_GetBuiltins());
   }
 
   PyObject* result = PyEval_EvalCode(code_obj, ctx, ctx);

@@ -2,8 +2,6 @@
 #
 """Provides UI for inviting/joining friends."""
 
-from __future__ import annotations
-
 import weakref
 import logging
 from enum import Enum

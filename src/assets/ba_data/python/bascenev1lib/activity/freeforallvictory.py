@@ -2,8 +2,6 @@
 #
 """Functionality related to the final screen in free-for-all games."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs

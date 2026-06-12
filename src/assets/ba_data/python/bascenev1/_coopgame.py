@@ -2,8 +2,6 @@
 #
 """Functionality related to co-op games."""
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING, override
 

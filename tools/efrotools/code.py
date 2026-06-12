@@ -3,8 +3,6 @@
 # pylint: disable=too-many-lines
 """Functionality for formatting, linting, etc. code."""
 
-from __future__ import annotations
-
 import os
 import sys
 import time
@@ -252,6 +250,16 @@ def black_base_args(projroot: Path) -> list[str]:
     pyver = 'py' + PYVER.replace('.', '')
     if len(pyver) != 5:
         raise RuntimeError('Py version filtering err.')
+
+    # TEMP: cap black's target at py313 while the 3.14 transition
+    # settles. With a py314 target, black rewrites multi-exception
+    # clauses to PEP 758 unparenthesized form ('except OSError,
+    # ValueError:'), which is a hard SyntaxError for anything still
+    # parsing our shared tools code with Python <= 3.13 (stale CI
+    # workspace venvs, not-yet-upgraded consumers, etc). Revisit
+    # once nothing 3.13 touches this code anymore.
+    if pyver == 'py314':
+        pyver = 'py313'
 
     return [
         get_project_python_executable(projroot),

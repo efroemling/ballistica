@@ -2,8 +2,6 @@
 #
 """Pcommands for bacommontools."""
 
-from __future__ import annotations
-
 
 def bacurl() -> None:
     """Run curl with the Ballistica API key injected.

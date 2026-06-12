@@ -2,8 +2,6 @@
 #
 """Provides a window for selecting a game type to add to a playlist."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs

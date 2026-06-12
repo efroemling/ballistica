@@ -2,8 +2,6 @@
 #
 """Implements a flag used for marking bases, capture-the-flag games, etc."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 

@@ -2,8 +2,6 @@
 #
 """Functionality for editing config values and applying them to the game."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui

@@ -6,8 +6,6 @@ We do all layout math and bake out partial ui calls in a background
 thread so there's as little work to do in the ui thread as possible.
 """
 
-from __future__ import annotations
-
 import copy
 from functools import partial
 from typing import TYPE_CHECKING, assert_never

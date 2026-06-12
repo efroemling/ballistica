@@ -6,8 +6,6 @@ This abstracts native edit dialogs as well as ones implemented via our
 own ui toolkits.
 """
 
-from __future__ import annotations
-
 import time
 import logging
 import weakref

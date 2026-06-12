@@ -2,8 +2,6 @@
 #
 """An asyncio event loop backed by the logic thread's C++ EventLoop."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 import asyncio
 

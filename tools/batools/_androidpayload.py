@@ -8,8 +8,6 @@ their hashes. Split out of :mod:`batools.staging` to keep that module
 under the line limit.
 """
 
-from __future__ import annotations
-
 import os
 import hashlib
 from functools import partial

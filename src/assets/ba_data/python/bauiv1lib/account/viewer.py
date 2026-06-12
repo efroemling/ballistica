@@ -2,8 +2,6 @@
 #
 """Provides a popup for displaying info about any account."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 import logging
 

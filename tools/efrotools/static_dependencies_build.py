@@ -7,8 +7,6 @@ clean, in-tree build that owns all build logic directly.
 No external repo dependency.
 """
 
-from __future__ import annotations
-
 import os
 import shutil
 import subprocess

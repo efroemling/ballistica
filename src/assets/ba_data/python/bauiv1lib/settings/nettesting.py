@@ -2,8 +2,6 @@
 #
 """Provides ui for network related testing."""
 
-from __future__ import annotations
-
 import time
 import copy
 import weakref

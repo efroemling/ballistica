@@ -2,8 +2,6 @@
 #
 """UIs provided by the cloud (similar-ish to html in concept)."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override, assert_never
 
 import bauiv1 as bui

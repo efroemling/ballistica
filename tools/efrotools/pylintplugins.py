@@ -2,7 +2,7 @@
 #
 """Plugins for pylint"""
 
-from __future__ import annotations
+import os
 
 from typing import TYPE_CHECKING
 
@@ -14,6 +14,10 @@ if TYPE_CHECKING:
     from typing import Any
 
 VERBOSE = False
+
+# Calced once at import; pylint runs with cwd at the project root in
+# all of our setups (make pylint, checkenv, etc).
+_PROJECT_ROOT = os.path.realpath(os.getcwd()) + os.sep
 
 
 failed_imports: set[str] = set()
@@ -115,41 +119,41 @@ def ignore_reveal_type_call(node: astroid.nodes.NodeNG) -> astroid.nodes.NodeNG:
     return node
 
 
-def using_future_annotations(
-    node: astroid.nodes.NodeNG,
-) -> astroid.nodes.NodeNG:
-    """Return whether postponed annotation evaluation is enabled (PEP 563)."""
+def _is_first_party_module(node: astroid.nodes.NodeNG) -> bool:
+    """Return whether a node hails from our own code.
 
-    # Find the module.
-    mnode = node
-    while mnode.parent is not None:
-        mnode = mnode.parent
-
-    # Look for 'from __future__ import annotations' to decide if we
-    # should assume all annotations are defer-eval'ed. NOTE: this will
-    # become default at some point within a few years..
-    annotations_set = mnode.locals.get('annotations')
-    if (
-        annotations_set
-        and isinstance(annotations_set[0], astroid.ImportFrom)
-        and annotations_set[0].modname == '__future__'
-    ):
-        return True
-    return False
+    Our annotation filters should only apply to first-party code;
+    wiping annotations in stdlib/third-party modules breaks pylint
+    inference that depends on them (e.g. ``typing.assert_never``'s
+    ``Never`` return informing inconsistent-return-statements).
+    Previously this scoping happened implicitly because filters keyed
+    off the presence of ``from __future__ import annotations``, which
+    stdlib/most-third-party code never used.
+    """
+    mnode = node.root()
+    fpath = getattr(mnode, 'file', None)
+    if not isinstance(fpath, str):
+        return False
+    if 'site-packages' in fpath:
+        return False
+    # First-party means living under the project we're being run on
+    # (pylint runs from the project root in all our setups). Checking
+    # against the prefix the interpreter lives under is unreliable
+    # here (symlinked installs like Homebrew report stdlib paths that
+    # don't match sys.base_prefix).
+    return os.path.realpath(fpath).startswith(_PROJECT_ROOT)
 
 
 def func_annotations_filter(node: astroid.nodes.NodeNG) -> astroid.nodes.NodeNG:
     """Filter annotated function args/retvals.
 
-    This accounts for deferred evaluation available in in Python 3.7+
-    via 'from __future__ import annotations'. In this case we don't want
-    Pylint to complain about missing symbols in annotations when they
-    aren't actually needed at runtime. And we strip out stuff under
-    TYPE_CHECKING blocks which means they'd often be seen as missing.
+    Annotations are deferred-eval'ed (PEP 649/749, the Python 3.14+
+    language default), so we don't want Pylint to complain about
+    missing symbols in annotations when they aren't actually needed
+    at runtime. And we strip out stuff under TYPE_CHECKING blocks
+    which means they'd often be seen as missing.
     """
-
-    # Only run if deferred annotations are on.
-    if not using_future_annotations(node):
+    if not _is_first_party_module(node):
         return node
 
     assert isinstance(
@@ -199,6 +203,11 @@ def func_annotations_filter(node: astroid.nodes.NodeNG) -> astroid.nodes.NodeNG:
             ) and dnode.attrname in {'register', 'handler'}:
                 return node  # Leave annotations intact.
 
+    # Some function nodes (certain builtin/extension shims) model an
+    # unknown signature as args=None; nothing to filter there.
+    if node.args.args is None:
+        return node
+
     node.args.annotations = [None for _ in node.args.args]
     node.args.varargannotation = None
     node.args.kwargannotation = None
@@ -216,9 +225,7 @@ def class_annotations_filter(
     node: astroid.nodes.NodeNG,
 ) -> astroid.nodes.NodeNG:
     """Filter annotations in class declarations."""
-
-    # Only do this if deferred annotations are on.
-    if not using_future_annotations(node):
+    if not _is_first_party_module(node):
         return node
 
     assert isinstance(node, astroid.nodes.ClassDef)
@@ -262,76 +269,53 @@ def class_annotations_filter(
 def var_annotations_filter(node: astroid.nodes.NodeNG) -> astroid.nodes.NodeNG:
     """Filter annotated function variable assigns.
 
-    This accounts for deferred evaluation.
+    This accounts for deferred annotation evaluation (PEP 649/749,
+    the Python 3.14+ language default).
+
+    Annotated assigns under functions are not evaluated. Class and
+    module vars are normally not either. However we *do* evaluate
+    if we come across an 'ioprepped' dataclass decorator. (the
+    'ioprepped' decorator explicitly evaluates dataclass
+    annotations).
     """
-    # pylint: disable=too-many-nested-blocks
+    if not _is_first_party_module(node):
+        return node
 
-    if using_future_annotations(node):
-
-        # Future behavior:
-        #
-        # Annotated assigns under functions are not evaluated. Class and
-        # module vars are normally not either. However we *do* evaluate
-        # if we come across an 'ioprepped' dataclass decorator. (the
-        # 'ioprepped' decorator explicitly evaluates dataclass
-        # annotations).
-
-        fnode = node
-        willeval = False
-        while fnode is not None:
-            if isinstance(fnode, astroid.nodes.FunctionDef):
-                # Assigns within functions never eval.
-                break
-            if isinstance(fnode, astroid.nodes.ClassDef):
-                # Ok; the assign seems to be at the class level. See if
-                # its an ioprepped dataclass.
-                if fnode.decorators is not None:
-                    found_ioprepped = False
-                    for dec in fnode.decorators.nodes:
-                        # Look for dataclassio.ioprepped.
-                        if (
-                            isinstance(dec, astroid.nodes.Attribute)
-                            and dec.attrname in {'ioprepped', 'will_ioprep'}
-                            and isinstance(dec.expr, astroid.nodes.Name)
-                            and dec.expr.name == 'dataclassio'
-                        ):
-                            found_ioprepped = True
-                            break
-
-                        # Look for simply 'ioprepped'.
-                        if isinstance(dec, astroid.nodes.Name) and dec.name in {
-                            'ioprepped',
-                            'will_ioprep',
-                        }:
-                            found_ioprepped = True
-                            break
-
-                    if found_ioprepped:
-                        willeval = True
+    fnode = node
+    willeval = False
+    while fnode is not None:
+        if isinstance(fnode, astroid.nodes.FunctionDef):
+            # Assigns within functions never eval.
+            break
+        if isinstance(fnode, astroid.nodes.ClassDef):
+            # Ok; the assign seems to be at the class level. See if
+            # its an ioprepped dataclass.
+            if fnode.decorators is not None:
+                found_ioprepped = False
+                for dec in fnode.decorators.nodes:
+                    # Look for dataclassio.ioprepped.
+                    if (
+                        isinstance(dec, astroid.nodes.Attribute)
+                        and dec.attrname in {'ioprepped', 'will_ioprep'}
+                        and isinstance(dec.expr, astroid.nodes.Name)
+                        and dec.expr.name == 'dataclassio'
+                    ):
+                        found_ioprepped = True
                         break
 
-            fnode = fnode.parent
+                    # Look for simply 'ioprepped'.
+                    if isinstance(dec, astroid.nodes.Name) and dec.name in {
+                        'ioprepped',
+                        'will_ioprep',
+                    }:
+                        found_ioprepped = True
+                        break
 
-    else:
+                if found_ioprepped:
+                    willeval = True
+                    break
 
-        # Legacy behavior: Annotated assigns under functions are not
-        # evaluated, but class or module vars are.
-        fnode = node
-        willeval = True
-        while fnode is not None:
-            if isinstance(
-                fnode,
-                (
-                    astroid.nodes.FunctionDef,
-                    astroid.nodes.AsyncFunctionDef,
-                ),
-            ):
-                willeval = False
-                break
-            if isinstance(fnode, astroid.nodes.ClassDef):
-                willeval = True
-                break
-            fnode = fnode.parent
+        fnode = fnode.parent
 
     # If this annotation won't be eval'ed, replace its annotation with
     # a dummy value.
@@ -501,10 +485,10 @@ def register_plugins(manager: astroid.Manager) -> None:
     # we don't see an ugly error there.
     manager.register_transform(astroid.nodes.Call, ignore_reveal_type_call)
 
-    # We make use of 'from __future__ import annotations' which causes
-    # Python to receive annotations as strings, and also 'if
-    # TYPE_CHECKING:' blocks, which lets us do imports and whatnot that
-    # are limited to type-checking. Let's make Pylint understand these.
+    # Annotations are deferred-eval'ed (PEP 649/749; the language
+    # default as of Python 3.14), and we also use 'if TYPE_CHECKING:'
+    # blocks, which lets us do imports and whatnot that are limited to
+    # type-checking. Let's make Pylint understand these.
     manager.register_transform(astroid.nodes.AnnAssign, var_annotations_filter)
     manager.register_transform(
         astroid.nodes.FunctionDef, func_annotations_filter

@@ -8,8 +8,6 @@ dependency management and organization than would be possible through
 filtering alone.
 """
 
-from __future__ import annotations
-
 import os
 from typing import TYPE_CHECKING
 

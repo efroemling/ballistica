@@ -2,8 +2,6 @@
 #
 """Documentation generation functionality."""
 
-from __future__ import annotations
-
 import os
 import re
 import json
@@ -635,6 +633,33 @@ def _sphinx_pre_filter_file(path: str) -> None:
             'from pathlib import Path\n'
             'from enum import Enum\n'
         )
+
+    # Docs-generation hack: force PEP 563 string annotations in these
+    # filtered copies (the real tree uses PEP 649 deferred evaluation,
+    # the 3.14+ default). Sphinx evaluates annotations when documenting,
+    # and TYPE_CHECKING-only names that can't resolve at runtime come
+    # back as ugly '__annotationlib_name_N__' placeholders under
+    # deferred evaluation; with stringized annotations sphinx just
+    # renders the source text and links what it can resolve (helped by
+    # the hack-imports appended above).
+    import ast as _ast
+
+    _mod = _ast.parse(final_code)
+    _insert_line = 0
+    if (
+        _mod.body
+        and isinstance(_mod.body[0], _ast.Expr)
+        and isinstance(_mod.body[0].value, _ast.Constant)
+        and isinstance(_mod.body[0].value.value, str)
+        and _mod.body[0].end_lineno is not None
+    ):
+        _insert_line = _mod.body[0].end_lineno
+    _lines = final_code.splitlines(keepends=True)
+    _lines.insert(
+        _insert_line,
+        '\nfrom __future__ import annotations  # Docs-generation hack.\n',
+    )
+    final_code = ''.join(_lines)
 
     with open(filenameout, 'w', encoding='utf-8') as f:
         f.write(final_code)

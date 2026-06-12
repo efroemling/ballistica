@@ -2,8 +2,6 @@
 #
 """Defines the nearby tab in the gather UI."""
 
-from __future__ import annotations
-
 import weakref
 from typing import TYPE_CHECKING, override
 

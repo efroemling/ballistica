@@ -2,8 +2,6 @@
 #
 """Provides a window for browsing and launching game playlists."""
 
-from __future__ import annotations
-
 import copy
 import math
 import logging

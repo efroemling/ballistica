@@ -12,8 +12,6 @@ the resolved ``logical_path → CAS hash`` mappings into the C++
 GIL-free in C++.
 """
 
-from __future__ import annotations
-
 import json
 import logging
 import os

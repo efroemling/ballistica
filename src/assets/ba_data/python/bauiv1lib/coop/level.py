@@ -2,8 +2,6 @@
 #
 """Bits of utility functionality related to co-op levels."""
 
-from __future__ import annotations
-
 import bauiv1 as bui
 from bauiv1 import builtinassets
 from bauiv1 import stdassets

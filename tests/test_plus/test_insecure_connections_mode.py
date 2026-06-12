@@ -39,8 +39,6 @@ anyway." The directive-present rows additionally grep for the
 the directive actually reached the client.
 """
 
-from __future__ import annotations
-
 import json
 import os
 import re

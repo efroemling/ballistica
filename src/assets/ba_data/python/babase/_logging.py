@@ -2,8 +2,6 @@
 #
 """Logging functionality."""
 
-from __future__ import annotations
-
 import logging
 
 from bacommon.logging import ClientLoggerName

@@ -2,8 +2,6 @@
 #
 """UI functionality related to master-server connectivity."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui

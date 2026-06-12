@@ -2,8 +2,6 @@
 #
 """Popup window/menu related functionality."""
 
-from __future__ import annotations
-
 import weakref
 from typing import TYPE_CHECKING, override
 

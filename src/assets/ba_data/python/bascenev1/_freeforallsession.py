@@ -2,8 +2,6 @@
 #
 """Functionality related to free-for-all sessions."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 import babase

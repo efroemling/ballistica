@@ -2,8 +2,6 @@
 #
 """Music playback using OS functionality exposed through the C++ layer."""
 
-from __future__ import annotations
-
 import os
 import random
 import logging

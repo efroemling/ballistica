@@ -2,8 +2,6 @@
 #
 """Login related functionality."""
 
-from __future__ import annotations
-
 import time
 import logging
 from functools import partial

@@ -2,8 +2,6 @@
 #
 """UI functionality for the Discord window."""
 
-from __future__ import annotations
-
 import bauiv1 as bui
 from bauiv1 import stdassets
 

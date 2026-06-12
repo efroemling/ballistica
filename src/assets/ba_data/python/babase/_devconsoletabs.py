@@ -2,8 +2,6 @@
 #
 """Predefined tabs for the dev console."""
 
-from __future__ import annotations
-
 import math
 import random
 import logging

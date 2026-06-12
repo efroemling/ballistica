@@ -5,8 +5,6 @@
 # ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui

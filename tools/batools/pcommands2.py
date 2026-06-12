@@ -2,8 +2,6 @@
 #
 """A nice collection of ready-to-use pcommands for this package."""
 
-from __future__ import annotations
-
 # Note: import as little as possible here at the module level to
 # keep launch times fast for small snippets.
 import sys

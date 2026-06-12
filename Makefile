@@ -1550,21 +1550,21 @@ ENV_SRC = tools/batools/build.py .venv/.efro_venv_complete
 # This is an env dependency so should not itself depend on env.
 tools/pcommand: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 	@echo Generating tools/pcommand...
-	@PYTHONPATH=tools python3 -m \
+	@PYTHONPATH=tools .venv/bin/$(VENV_PYTHON) -m \
  efrotools.genwrapper pcommand batools.pcommandmain tools/pcommand
 
 # Generate a cloudshell script hard-coded to use our virtual environment.
 # This is an env dependency so should not itself depend on env.
 tools/cloudshell: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 	@echo Generating tools/cloudshell...
-	@PYTHONPATH=tools python3 -m \
+	@PYTHONPATH=tools .venv/bin/$(VENV_PYTHON) -m \
  efrotools.genwrapper cloudshell efrotoolsinternal.cloudshell tools/cloudshell
 
 # Generate a bacloud script hard-coded to use our virtual environment.
 # This is an env dependency so should not itself depend on env.
 tools/bacloud: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 	@echo Generating tools/bacloud...
-	@PYTHONPATH=tools python3 -m \
+	@PYTHONPATH=tools .venv/bin/$(VENV_PYTHON) -m \
  efrotools.genwrapper bacloud bacommontools.bacloud tools/bacloud
 
 .clang-format: pconfig/toolconfigsrc/clang-format $(TOOL_CFG_SRC)
@@ -1594,7 +1594,7 @@ tools/bacloud: tools/efrotools/genwrapper.py .venv/.efro_venv_complete
 # Set this to 1 to skip environment checks.
 SKIP_ENV_CHECKS ?= 0
 
-VENV_PYTHON ?= python3.13
+VENV_PYTHON ?= python3.14
 
 # Increment this to force all downstream venvs to fully rebuild. Useful after
 # removing requirements since upgrading venvs in place will never uninstall

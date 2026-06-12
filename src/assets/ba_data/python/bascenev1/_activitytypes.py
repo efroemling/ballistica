@@ -2,8 +2,6 @@
 #
 """Some handy base class and special purpose Activity types."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 import babase

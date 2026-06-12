@@ -2,8 +2,6 @@
 #
 """Updates src/assets/Makefile based on source assets present."""
 
-from __future__ import annotations
-
 import json
 import os
 from typing import TYPE_CHECKING
@@ -130,6 +128,8 @@ def _get_py_targets(
                 in_subset = 'private-windows-x64'
             elif proot.startswith(f'{ASSETS_SRC}/windows/Win32'):
                 in_subset = 'private-windows-Win32'
+            elif proot.startswith(f'{ASSETS_SRC}/windows/ARM64'):
+                in_subset = 'private-windows-ARM64'
             elif proot.startswith(f'{ASSETS_SRC}/pylib-apple'):
                 in_subset = 'private-apple-mac'
             elif proot.startswith(f'{ASSETS_SRC}/pylib-android'):
@@ -546,19 +546,13 @@ def generate_assets_makefile(
                 subset='private-windows-x64',
                 suffix='_PRIVATE_WIN_X64',
             ),
-            _get_targets(
+            _get_py_targets_subset(
                 projroot,
-                'COB_TARGETS',
-                '.collisionmesh.obj',
-                '.cob',
+                codegen_manifests,
+                explicit_sources,
                 all_targets_private,
-            ),
-            _get_targets(
-                projroot,
-                'BOB_TARGETS',
-                '.mesh.obj',
-                '.bob',
-                all_targets_private,
+                subset='private-windows-ARM64',
+                suffix='_PRIVATE_WIN_ARM64',
             ),
             _get_targets(
                 projroot,
@@ -582,43 +576,9 @@ def generate_assets_makefile(
                 all_targets_private,
                 limit_to_prefix='ba_data/data',
             ),
-            _get_targets(
-                projroot,
-                'AUDIO_TARGETS',
-                '.wav',
-                '.ogg',
-                all_targets_private,
-            ),
-            _get_targets(
-                projroot,
-                'TEX2D_DDS_TARGETS',
-                '.tex2d.png',
-                '.dds',
-                all_targets_private,
-            ),
-            _get_targets(
-                projroot,
-                'TEX2D_PVR_TARGETS',
-                '.tex2d.png',
-                '.pvr',
-                all_targets_private,
-            ),
-            _get_targets(
-                projroot,
-                'TEX2D_KTX_TARGETS',
-                '.tex2d.png',
-                '.ktx',
-                all_targets_private,
-            ),
-            _get_targets(
-                projroot,
-                'TEX2D_PREVIEW_PNG_TARGETS',
-                '.tex2d.png',
-                '_preview.png',
-                all_targets_private,
-            ),
             _get_extras_targets_win(projroot, all_targets_private, 'Win32'),
             _get_extras_targets_win(projroot, all_targets_private, 'x64'),
+            _get_extras_targets_win(projroot, all_targets_private, 'ARM64'),
         ]
     filtered = (
         lines[: auto_start_public + 1]

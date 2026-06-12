@@ -2,8 +2,6 @@
 #
 """UI for upgrading V1 accounts to V2."""
 
-from __future__ import annotations
-
 import bauiv1 as bui
 from bauiv1 import builtinassets
 

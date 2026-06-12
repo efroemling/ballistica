@@ -7,8 +7,6 @@ some focused task. This module is a repository of common snippets that can
 be imported into projects' pcommand script for easy reuse.
 """
 
-from __future__ import annotations
-
 import sys
 from typing import TYPE_CHECKING
 

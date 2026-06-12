@@ -2,8 +2,6 @@
 #
 """Functionality related to teams sessions."""
 
-from __future__ import annotations
-
 import copy
 import random
 import logging

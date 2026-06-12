@@ -2,8 +2,6 @@
 #
 """Provides functionality for displaying QR codes."""
 
-from __future__ import annotations
-
 from typing import override
 
 import bauiv1 as bui

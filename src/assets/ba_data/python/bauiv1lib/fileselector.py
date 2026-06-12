@@ -2,8 +2,6 @@
 #
 """UI functionality for selecting files."""
 
-from __future__ import annotations
-
 import os
 import time
 import logging

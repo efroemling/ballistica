@@ -2,8 +2,6 @@
 #
 """Provides a popup telling the user about the BSRemote app."""
 
-from __future__ import annotations
-
 from typing import override
 
 from bauiv1lib.popup import PopupWindow

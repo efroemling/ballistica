@@ -19,8 +19,6 @@ its canonical home. Forces every public instance to be documented
 rather than silently producing a stub.
 """
 
-from __future__ import annotations
-
 import os
 import sys
 import ast

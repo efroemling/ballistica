@@ -8,8 +8,6 @@ for use in client-side workspace modification tools. There may be
 advanced settings that are not accessible through the UI/etc.
 """
 
-from __future__ import annotations
-
 import datetime
 from enum import Enum
 from dataclasses import dataclass, field

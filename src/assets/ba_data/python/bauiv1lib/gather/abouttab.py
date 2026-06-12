@@ -2,8 +2,6 @@
 #
 """Defines the about tab in the gather UI."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 from bauiv1lib.gather import GatherTab

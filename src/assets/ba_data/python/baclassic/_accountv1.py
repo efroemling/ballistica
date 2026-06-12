@@ -2,8 +2,6 @@
 #
 """Account related functionality."""
 
-from __future__ import annotations
-
 import copy
 import time
 from typing import TYPE_CHECKING

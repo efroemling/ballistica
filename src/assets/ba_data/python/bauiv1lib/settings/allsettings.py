@@ -2,8 +2,6 @@
 #
 """UI for top level settings categories."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui

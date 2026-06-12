@@ -5,8 +5,6 @@
 Used for various code-generation applications.
 """
 
-from __future__ import annotations
-
 import os
 import marshal
 from typing import TYPE_CHECKING

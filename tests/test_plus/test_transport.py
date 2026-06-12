@@ -14,8 +14,6 @@ provides a headless-server binary (locally built by default; set
 sufficient for transport tests.
 """
 
-from __future__ import annotations
-
 import os
 import signal
 import subprocess

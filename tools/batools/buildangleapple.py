@@ -23,8 +23,6 @@ iOS build exists (a patched port or a native gn build) -- pass
 ``include_ios=True`` to attempt them once that lands.
 """
 
-from __future__ import annotations
-
 import shutil
 import subprocess
 from pathlib import Path

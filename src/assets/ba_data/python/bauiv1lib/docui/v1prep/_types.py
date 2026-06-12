@@ -7,8 +7,6 @@ pre-pass (generally run in a background thread) so that the actual calls
 made to instantiate the ui are as fast and minimal as possible.
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 

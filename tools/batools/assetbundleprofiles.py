@@ -19,8 +19,6 @@ so carrying additional packages needs no code changes -- only a new
 entry below (and, for a new package, its projectconfig pin).
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 

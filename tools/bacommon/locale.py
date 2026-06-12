@@ -2,8 +2,6 @@
 #
 """Functionality for wrangling locale info."""
 
-from __future__ import annotations
-
 import logging
 from enum import Enum
 from functools import cached_property, lru_cache

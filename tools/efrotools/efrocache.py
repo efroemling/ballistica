@@ -9,8 +9,6 @@ original build commands. Cached files are gathered and uploaded as part
 of the pubsync process.
 """
 
-from __future__ import annotations
-
 import os
 import json
 import zlib
@@ -313,7 +311,6 @@ def update_cache(makefile_dirs: list[str]) -> None:
         'build/assets/ba_data/data',
         'build/assets/ba_data/python',
         'build/assets/ba_data/python-site-packages',
-        'build/assets/ba_data/meshes',
     }
 
     # Never add binaries to starter caches since those are specific to
@@ -328,10 +325,6 @@ def update_cache(makefile_dirs: list[str]) -> None:
         '.so',
         '.pyd',
     }
-
-    # We do include model dirs for server starters but want to filter out
-    # display meshes there.
-    never_add_to_starter_endings_server = {'.bob'}
 
     for path in makefile_dirs:
         cdp = f'cd {path} && ' if path else ''
@@ -398,14 +391,6 @@ def update_cache(makefile_dirs: list[str]) -> None:
             # Server starter cuts out everything not explicitly
             # always-included.
             if not always_include:
-                continue
-
-            # Server starter also exclude some things from within
-            # always-included dirs.
-            if any(
-                fullpath.endswith(ending)
-                for ending in never_add_to_starter_endings_server
-            ):
                 continue
 
             # If it made it this far, add it to the server cache.

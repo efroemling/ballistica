@@ -8,8 +8,6 @@ clean, in-tree build that owns all build logic directly.
 No external repo dependency.
 """
 
-from __future__ import annotations
-
 import glob
 import os
 import subprocess
@@ -32,11 +30,12 @@ if TYPE_CHECKING:
 # ``--out`` paths follow automatically.
 #
 # Both 3.13.12 and 3.14.4 have been verified building all 8 slices
-# end-to-end on linbeast as of 2026-05-03. To switch:
-#   PY_VER = '3.14'
-#   PY_VER_EXACT = '3.14.4'
-PY_VER = '3.13'
-PY_VER_EXACT = '3.13.12'
+# end-to-end on linbeast as of 2026-05-03; 3.14.6 is the active
+# version as of 2026-06-12. To switch back:
+#   PY_VER = '3.13'
+#   PY_VER_EXACT = '3.13.12'
+PY_VER = '3.14'
+PY_VER_EXACT = '3.14.6'
 ANDROID_API_VER = 24
 OPENSSL_VER = '3.0.19'
 ZLIB_VER = '1.3.2'
@@ -764,7 +763,22 @@ def build(rootdir: str, arch: str, debug: bool) -> None:
         check=True,
     )
 
-    # 7. Verify no shared extension modules slipped through.
+    # 7. Python 3.14+ links the static _hmac module against the bundled
+    # HACL* crypto objects via MODULE__HMAC_LDFLAGS instead of archiving
+    # them into libpython.a, leaving undefined _Py_LibHacl_* symbols for
+    # downstream static links. Append the built HACL objects into the
+    # installed libpython archive. No-op if absent (pre-3.14).
+    hacl_objs = sorted(glob.glob(os.path.join(pydir, 'Modules/_hacl/*.o')))
+    if hacl_objs:
+        print(f'Appending {len(hacl_objs)} HACL objects to libpython...')
+        dbgsfx = 'd' if debug else ''
+        libpython_a = os.path.join(
+            installdir, f'usr/lib/libpython{PY_VER}{dbgsfx}.a'
+        )
+        assert os.path.isfile(libpython_a), libpython_a
+        subprocess.run([env['AR'], '-q', libpython_a] + hacl_objs, check=True)
+
+    # 8. Verify no shared extension modules slipped through.
     print('Checking for shared extension modules...')
     _check_no_shared_modules(installdir, arch)
 

@@ -6,11 +6,9 @@ Tools that need to do some work or regenerate files when this changes can
 add this submodule file as a dependency.
 """
 
-from __future__ import annotations
-
 from pathlib import Path
 
-PYVER = '3.13'
+PYVER = '3.14'
 PYVERNODOT = PYVER.replace('.', '')
 
 _g_checked_valid_sys_executable = False

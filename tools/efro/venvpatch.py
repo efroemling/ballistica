@@ -32,8 +32,6 @@ robust as upstream files evolve around them, as long as the
 specific lines we touch don't change.
 """
 
-from __future__ import annotations
-
 import logging
 import sysconfig
 from pathlib import Path

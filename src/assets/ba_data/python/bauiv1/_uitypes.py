@@ -2,8 +2,6 @@
 #
 """Misc UI related types."""
 
-from __future__ import annotations
-
 import warnings
 from typing import TYPE_CHECKING, override
 

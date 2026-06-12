@@ -2,8 +2,6 @@
 #
 """Functionality related to the cloud."""
 
-from __future__ import annotations
-
 import time
 import logging
 from typing import TYPE_CHECKING, overload

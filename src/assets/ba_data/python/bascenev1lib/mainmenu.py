@@ -2,8 +2,6 @@
 #
 """Session and Activity for displaying the main menu bg."""
 
-from __future__ import annotations
-
 import time
 import random
 import weakref

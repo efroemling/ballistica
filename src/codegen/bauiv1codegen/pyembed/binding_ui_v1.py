@@ -2,7 +2,6 @@
 # This code is used to grab a bunch of Python objects for use in C++.
 # Python objects should be added here along with their associated c++ enum.
 # pylint: disable=useless-suppression, missing-module-docstring, line-too-long
-from __future__ import annotations
 
 import bauiv1.onscreenkeyboard
 from bauiv1 import _hooks

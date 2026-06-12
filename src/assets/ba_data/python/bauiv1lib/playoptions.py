@@ -2,8 +2,6 @@
 #
 """Provides a window for configuring play options."""
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING, override
 

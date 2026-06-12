@@ -2,8 +2,6 @@
 #
 """UI functionality related to using the macOS Music app for soundtracks."""
 
-from __future__ import annotations
-
 import copy
 from typing import TYPE_CHECKING, override
 

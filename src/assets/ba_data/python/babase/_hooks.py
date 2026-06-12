@@ -12,7 +12,6 @@ and type-checking magic to happen and most issues will be caught immediately.
 
 # (most of these are self-explanatory)
 # pylint: disable=missing-function-docstring
-from __future__ import annotations
 
 import time
 import logging

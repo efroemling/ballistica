@@ -2,8 +2,6 @@
 #
 """Team related functionality."""
 
-from __future__ import annotations
-
 import weakref
 import logging
 from typing import TYPE_CHECKING

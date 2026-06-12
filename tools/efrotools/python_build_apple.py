@@ -2,13 +2,12 @@
 #
 """Self-contained Apple Python build script.
 
-Builds a static libpython3.13.a for each Apple platform slice
+Builds a static libpython3.14.a for each Apple platform slice
 (macOS, iOS, tvOS, visionOS) and assembles them into a Python.xcframework.
 Uses BeeWare's Python.patch and prebuilt cpython-apple-source-deps.
 """
 
 # pylint: disable=too-many-lines
-from __future__ import annotations
 
 import glob
 import os
@@ -49,27 +48,28 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 # Both 3.13.11 and 3.14.2 have been verified on this pipeline as of
-# 2026-05-03 (all 10 slices + gather). To switch active version,
-# change all three constants together (they must agree). Per-version
-# differences in module sets etc. live in
-# ``efrotools.pybuild.patch_modules_setup`` keyed off PY_VER. The
-# BeeWare branch's Makefile pins PYTHON_VERSION exactly, and
-# ``_check_beeware_versions()`` will fail loudly on a mismatch — so
-# bumping the patch version requires matching what BeeWare currently
-# pins (or pinning BEEWARE_COMMIT to override).
+# 2026-05-03 (all 10 slices + gather); 3.14.6 is the active version as
+# of 2026-06-12. To switch active version, change all three constants
+# together (they must agree). Per-version differences in module sets
+# etc. live in ``efrotools.pybuild.patch_modules_setup`` keyed off
+# PY_VER. The BeeWare branch's Makefile pins PYTHON_VERSION exactly,
+# and ``_check_beeware_versions()`` will fail loudly on a mismatch —
+# so bumping the patch version requires matching what BeeWare
+# currently pins (or pinning BEEWARE_COMMIT to override).
 #
-# To switch to 3.14:
-#   PY_VER = '3.14'
-#   PY_VER_EXACT = '3.14.2'   # whatever BeeWare's 3.14 branch pins
-#   BEEWARE_BRANCH = '3.14'
-PY_VER = '3.13'
-PY_VER_EXACT = '3.13.11'
-BEEWARE_BRANCH = '3.13'
+# To switch back to 3.13:
+#   PY_VER = '3.13'
+#   PY_VER_EXACT = '3.13.11'  # whatever BeeWare's 3.13 branch pins
+#   BEEWARE_BRANCH = '3.13'
+#   OPENSSL_VER = '3.0.18-1'
+PY_VER = '3.14'
+PY_VER_EXACT = '3.14.6'
+BEEWARE_BRANCH = '3.14'
 # BEEWARE_COMMIT: str | None = None  # Pin to a commit hash to override branch.
 BEEWARE_COMMIT: str | None = None
 
 # Prebuilt dep versions from beeware/cpython-apple-source-deps.
-OPENSSL_VER = '3.0.18-1'
+OPENSSL_VER = '3.5.7-1'
 LIBFFI_VER = '3.4.7-2'
 XZ_VER = '5.6.4-2'
 BZIP2_VER = '1.0.8-2'
@@ -429,9 +429,22 @@ def _build_env_apple(sdk: str, _triple: str, pydir: str) -> dict[str, str]:
         'xrsimulator': 'visionOS',
     }
     platform_name = sdk_to_platform[sdk]
+    # BeeWare moved the patched-in platform support from Apple/ to
+    # Platforms/Apple/ somewhere between 3.14.2 and 3.14.6; support
+    # both layouts (upstream CPython's own iOS bits still live at
+    # Apple/iOS).
     wrapper_bin = os.path.join(
-        pydir, 'Apple', platform_name, 'Resources', 'bin'
+        pydir, 'Platforms', 'Apple', platform_name, 'Resources', 'bin'
     )
+    if not os.path.isdir(wrapper_bin):
+        wrapper_bin = os.path.join(
+            pydir, 'Apple', platform_name, 'Resources', 'bin'
+        )
+    if not os.path.isdir(wrapper_bin):
+        raise RuntimeError(
+            f'BeeWare toolchain wrapper bin dir not found for sdk {sdk}'
+            f' (looked under Platforms/Apple and Apple in {pydir}).'
+        )
     env = dict(os.environ)
     # Prepend the wrapper bin dir to PATH.
     cur_path = env.get('PATH', '/usr/local/bin:/usr/bin:/bin')
@@ -754,7 +767,7 @@ def _patch_embedded_makefile(pydir: str) -> None:
        path 'no-framework/' — a nonexistent directory that the linker rejects.
 
     2. build_all dependencies: $(BUILDPYTHON) is replaced with $(LIBRARY)
-       (libpython3.13.a) so the static library is still built, but the python
+       (libpython3.14.a) so the static library is still built, but the python
        executable link step is skipped — it fails for cross-compiled embedded
        targets because macOS-only Homebrew dylibs (e.g. libb2) get pulled in.
        Programs/_testembed, checksharedmods, and rundsymutil are also removed
@@ -794,7 +807,7 @@ def _patch_embedded_makefile(pydir: str) -> None:
     # rundsymutil all fail to link or are meaningless for cross-compiled
     # embedded targets (macOS-only Homebrew dylibs like libb2 get pulled in).
     # We run our own _check_no_shared_modules check after install instead.
-    # Replace $(BUILDPYTHON) with $(LIBRARY): we need libpython3.13.a but not
+    # Replace $(BUILDPYTHON) with $(LIBRARY): we need libpython3.14.a but not
     # the python executable (which fails to link for cross-compiled targets
     # because Homebrew libraries like libb2 are macOS-only).
     new_txt = txt.replace(
@@ -968,9 +981,13 @@ def build(rootdir: str, slice_name: str) -> None:
     del compliance_patch
 
     # patch(1) does not restore the executable bit on newly created files.
-    # Make all wrapper scripts under Apple/*/Resources/bin/ executable.
+    # Make all wrapper scripts under {Platforms/,}Apple/*/Resources/bin/
+    # executable (BeeWare moved these under Platforms/ between 3.14.2
+    # and 3.14.6; cover both layouts).
     for wrapper_bin_glob in glob.glob(
         os.path.join(pydir, 'Apple', '*', 'Resources', 'bin', '*')
+    ) + glob.glob(
+        os.path.join(pydir, 'Platforms', 'Apple', '*', 'Resources', 'bin', '*')
     ):
         if os.path.isfile(wrapper_bin_glob):
             os.chmod(wrapper_bin_glob, 0o755)
@@ -1133,7 +1150,7 @@ def build(rootdir: str, slice_name: str) -> None:
             check=True,
         )
     else:
-        # libainstall: libpython3.13.a and config-*/Makefile etc.
+        # libainstall: libpython3.14.a and config-*/Makefile etc.
         # libinstall:  stdlib .py files + app-store compliance patch.
         # inclinstall: headers (standalone, no build_all dep).
         # altbininstall / bininstall / maninstall are skipped — we don't need
@@ -1187,14 +1204,27 @@ def build(rootdir: str, slice_name: str) -> None:
     dep_lib_dir = os.path.join(deps_dir, 'lib')
     dep_libs_a = sorted(glob.glob(os.path.join(dep_lib_dir, '*.a')))
 
+    # Python 3.14+ links the static _hmac module against the bundled
+    # HACL* crypto objects via MODULE__HMAC_LDFLAGS instead of archiving
+    # them into libpython.a, so the install tree's libpython lacks them
+    # (undefined _Py_LibHacl_* symbols at app link time). Pull the built
+    # HACL objects into our merged archive ourselves. No-op if absent.
+    hacl_objs = sorted(
+        glob.glob(os.path.join(pydir, 'Modules', '_hacl', '*.o'))
+    )
+
     merged_lib = os.path.join(build_dir, 'libpython_merged.a')
-    libtool_cmd = [
-        'libtool',
-        '-static',
-        '-o',
-        merged_lib,
-        src_lib,
-    ] + dep_libs_a
+    libtool_cmd = (
+        [
+            'libtool',
+            '-static',
+            '-o',
+            merged_lib,
+            src_lib,
+        ]
+        + dep_libs_a
+        + hacl_objs
+    )
     subprocess.run(libtool_cmd, check=True)
     assert os.path.isfile(merged_lib)
 

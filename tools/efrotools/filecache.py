@@ -2,8 +2,6 @@
 #
 """Provides a system for caching linting/formatting operations."""
 
-from __future__ import annotations
-
 import json
 import os
 import sys

@@ -2,8 +2,6 @@
 #
 """Networking related functionality."""
 
-from __future__ import annotations
-
 import zlib
 import copy
 import time
@@ -52,7 +50,9 @@ class MasterServerV1CallThread(threading.Thread):
         self._response_type = response_type
         self._data = {} if data is None else copy.deepcopy(data)
         self._callback: MasterServerCallback | None = callback
-        self._context = babase.ContextRef()
+        # (Name must not collide with threading.Thread._context,
+        # which Python 3.14+ uses for contextvars propagation.)
+        self._context_ref = babase.ContextRef()
 
         appstate = babase.app.state
         if appstate.value < type(appstate).LOADING.value:
@@ -78,9 +78,9 @@ class MasterServerV1CallThread(threading.Thread):
 
         # Technically we could do the same check for session contexts,
         # but not gonna worry about it for now.
-        assert self._context is not None
+        assert self._context_ref is not None
         assert self._callback is not None
-        with self._context:
+        with self._context_ref:
             self._callback(arg)
 
     @override

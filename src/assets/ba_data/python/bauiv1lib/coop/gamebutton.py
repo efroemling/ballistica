@@ -2,8 +2,6 @@
 #
 """Defines button for co-op games."""
 
-from __future__ import annotations
-
 import random
 import weakref
 from typing import TYPE_CHECKING

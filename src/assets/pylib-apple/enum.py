@@ -1,6 +1,5 @@
 import sys
 import builtins as bltns
-from functools import partial
 from types import MappingProxyType, DynamicClassAttribute
 
 
@@ -38,7 +37,7 @@ def _is_descriptor(obj):
     """
     Returns True if obj is a descriptor, False otherwise.
     """
-    return not isinstance(obj, partial) and (
+    return (
             hasattr(obj, '__get__') or
             hasattr(obj, '__set__') or
             hasattr(obj, '__delete__')
@@ -130,7 +129,7 @@ def show_flag_values(value):
 def bin(num, max_bits=None):
     """
     Like built-in bin(), except negative values are represented in
-    twos-compliment, and the leading bit always indicates sign
+    twos-complement, and the leading bit always indicates sign
     (0=positive, 1=negative).
 
     >>> bin(10)
@@ -139,6 +138,7 @@ def bin(num, max_bits=None):
     '0b1 0101'
     """
 
+    num = num.__index__()
     ceiling = 2 ** (num).bit_length()
     if num >= 0:
         s = bltns.bin(num + ceiling).replace('1', '0', 1)
@@ -150,18 +150,6 @@ def bin(num, max_bits=None):
         if len(digits) < max_bits:
             digits = (sign[-1] * max_bits + digits)[-max_bits:]
     return "%s %s" % (sign, digits)
-
-def _dedent(text):
-    """
-    Like textwrap.dedent.  Rewritten because we cannot import textwrap.
-    """
-    lines = text.split('\n')
-    for i, ch in enumerate(lines[0]):
-        if ch != ' ':
-            break
-    for j, l in enumerate(lines):
-        lines[j] = l[i:]
-    return '\n'.join(lines)
 
 class _not_given:
     def __repr__(self):
@@ -208,7 +196,7 @@ class property(DynamicClassAttribute):
             # use previous enum.property
             return self.fget(instance)
         elif self._attr_type == 'attr':
-            # look up previous attibute
+            # look up previous attribute
             return getattr(self._cls_type, self.name)
         elif self._attr_type == 'desc':
             # use previous descriptor
@@ -406,12 +394,6 @@ class EnumDict(dict):
         elif isinstance(value, nonmember):
             # unwrap value here; it won't be processed by the below `else`
             value = value.value
-        elif isinstance(value, partial):
-            import warnings
-            warnings.warn('functools.partial will be a method descriptor '
-                          'in future Python versions; wrap it in '
-                          'enum.member() if you want to preserve the '
-                          'old behavior', FutureWarning, stacklevel=2)
         elif _is_descriptor(value):
             pass
         elif self._cls_name is not None and _is_internal_class(self._cls_name, value):
@@ -696,9 +678,9 @@ class EnumType(type):
         """
         Either returns an existing member, or creates a new enum class.
 
-        This method is used both when an enum class is given a value to match
-        to an enumeration member (i.e. Color(3)) and for the functional API
-        (i.e. Color = Enum('Color', names='RED GREEN BLUE')).
+        This method is used both when an enum class is given a value to
+        match to an enumeration member (i.e. Color(3)) and for the
+        functional API (i.e. Color = Enum('Color', names='RED GREEN BLUE')).
 
         The value lookup branch is chosen if the enum is final.
 
@@ -706,16 +688,17 @@ class EnumType(type):
 
         `value` will be the name of the new class.
 
-        `names` should be either a string of white-space/comma delimited names
-        (values will start at `start`), or an iterator/mapping of name, value pairs.
+        `names` should be either a string of white-space/comma delimited
+        names (values will start at `start`), or an iterator/mapping of
+        name, value pairs.
 
         `module` should be set to the module this class is being created in;
-        if it is not set, an attempt to find that module will be made, but if
-        it fails the class will not be picklable.
+        if it is not set, an attempt to find that module will be made, but
+        if it fails the class will not be picklable.
 
-        `qualname` should be set to the actual location this class can be found
-        at in its module; by default it is set to the global scope.  If this is
-        not correct, unpickling will fail in some circumstances.
+        `qualname` should be set to the actual location this class can be
+        found at in its module; by default it is set to the global scope.
+        If this is not correct, unpickling will fail in some circumstances.
 
         `type`, if set, will be mixed in as the first base class.
         """
@@ -809,8 +792,8 @@ class EnumType(type):
         """
         Returns a mapping of member name->value.
 
-        This mapping lists all enum members, including aliases. Note that this
-        is a read-only view of the internal mapping.
+        This mapping lists all enum members, including aliases.  Note that
+        this is a read-only view of the internal mapping.
         """
         return MappingProxyType(cls._member_map_)
 
@@ -1103,6 +1086,21 @@ class EnumType(type):
         # now add to _member_map_ (even aliases)
         cls._member_map_[name] = member
 
+    @property
+    def __signature__(cls):
+        from inspect import Parameter, Signature
+        if cls._member_names_:
+            return Signature([Parameter('values', Parameter.VAR_POSITIONAL)])
+        else:
+            return Signature([Parameter('new_class_name', Parameter.POSITIONAL_ONLY),
+                              Parameter('names', Parameter.POSITIONAL_OR_KEYWORD),
+                              Parameter('module', Parameter.KEYWORD_ONLY, default=None),
+                              Parameter('qualname', Parameter.KEYWORD_ONLY, default=None),
+                              Parameter('type', Parameter.KEYWORD_ONLY, default=None),
+                              Parameter('start', Parameter.KEYWORD_ONLY, default=1),
+                              Parameter('boundary', Parameter.KEYWORD_ONLY, default=None)])
+
+
 EnumMeta = EnumType         # keep EnumMeta name for backwards compatibility
 
 
@@ -1145,13 +1143,6 @@ class Enum(metaclass=EnumType):
     Methods can be added to enumerations, and members can have their own
     attributes -- see the documentation for details.
     """
-
-    @classmethod
-    def __signature__(cls):
-        if cls._member_names_:
-            return '(*values)'
-        else:
-            return '(new_class_name, /, names, *, module=None, qualname=None, type=None, start=1, boundary=None)'
 
     def __new__(cls, value):
         # all enum instances are actually created during class construction
@@ -1213,9 +1204,6 @@ class Enum(metaclass=EnumType):
             # ensure all variables that could hold an exception are destroyed
             exc = None
             ve_exc = None
-
-    def __init__(self, *args, **kwds):
-        pass
 
     def _add_alias_(self, name):
         self.__class__._add_member_(name, self)

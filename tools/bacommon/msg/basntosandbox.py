@@ -2,8 +2,6 @@
 #
 """Communication from basn to one of its sandboxed tasks."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 from efro.dataclassio import ioprepped

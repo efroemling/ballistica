@@ -3,7 +3,6 @@
 """Functionality related to Xcode on Apple platforms."""
 
 # pylint: disable=too-many-lines
-from __future__ import annotations
 
 import json
 import os

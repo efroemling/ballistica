@@ -2,8 +2,6 @@
 #
 """Functionality related to game results."""
 
-from __future__ import annotations
-
 import copy
 import weakref
 from dataclasses import dataclass

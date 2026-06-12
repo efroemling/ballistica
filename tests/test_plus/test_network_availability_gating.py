@@ -32,8 +32,6 @@ The test stops as soon as it sees the recovery WS-connect attempt
 typically completing in ~5.5 seconds.
 """
 
-from __future__ import annotations
-
 import os
 import re
 import shutil

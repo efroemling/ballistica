@@ -2,8 +2,6 @@
 #
 """Functionality used in codegen-builds (dynamically generated sources)."""
 
-from __future__ import annotations
-
 import os
 
 from efro.terminal import Clr

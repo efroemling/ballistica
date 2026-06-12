@@ -4,8 +4,6 @@
 Supports static typing for message types and possible return types.
 """
 
-from __future__ import annotations
-
 from efro.message._protocol import MessageProtocol
 from efro.message._sender import MessageSender, BoundMessageSender
 from efro.message._receiver import MessageReceiver, BoundMessageReceiver

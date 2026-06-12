@@ -9,8 +9,6 @@
 # pylint: disable=invalid-name, redefined-builtin
 # pylint: disable=missing-module-docstring
 
-from __future__ import annotations
-
 import os
 import types
 import logging

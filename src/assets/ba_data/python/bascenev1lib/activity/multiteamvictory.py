@@ -2,8 +2,6 @@
 #
 """Functionality related to the final screen in multi-teams sessions."""
 
-from __future__ import annotations
-
 from typing import override, TYPE_CHECKING, Any, cast
 
 import bascenev1 as bs

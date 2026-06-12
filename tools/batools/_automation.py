@@ -22,8 +22,6 @@ change, the only other file you should need to look at is the C++
 ``Automation`` class.
 """
 
-from __future__ import annotations
-
 import os
 import sys
 

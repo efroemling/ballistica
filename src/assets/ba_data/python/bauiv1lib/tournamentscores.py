@@ -2,8 +2,6 @@
 #
 """Provides a popup for viewing tournament scores."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupWindow

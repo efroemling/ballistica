@@ -2,8 +2,6 @@
 #
 """Util to get ballisticakit versions."""
 
-from __future__ import annotations
-
 import os
 from enum import Enum
 from typing import TYPE_CHECKING, assert_never
@@ -69,10 +67,11 @@ def get_current_version(projroot: str = '') -> tuple[str, int]:
     return version, build_number
 
 
-def get_current_api_version() -> int:
+def get_current_api_version(projroot: str = '') -> int:
     """Pull current api version from the project."""
     with open(
-        'src/ballistica/shared/ballistica.cc', encoding='utf-8'
+        os.path.join(projroot, 'src/ballistica/shared/ballistica.cc'),
+        encoding='utf-8',
     ) as infile:
         lines = infile.readlines()
     linestart = 'const int kEngineApiVersion = '

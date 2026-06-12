@@ -2,8 +2,6 @@
 #
 """Core components of dataclassio."""
 
-from __future__ import annotations
-
 import dataclasses
 import typing
 import warnings

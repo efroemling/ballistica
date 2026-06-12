@@ -2,8 +2,6 @@
 #
 """Functionality related to individual levels in a campaign."""
 
-from __future__ import annotations
-
 import copy
 import weakref
 from typing import TYPE_CHECKING, override

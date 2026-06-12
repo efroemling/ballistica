@@ -2,8 +2,6 @@
 #
 """Functionality related to dynamic discoverability of classes."""
 
-from __future__ import annotations
-
 import time
 import logging
 from threading import Thread

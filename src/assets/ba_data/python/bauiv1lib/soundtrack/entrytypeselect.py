@@ -2,8 +2,6 @@
 #
 """Provides UI for selecting soundtrack entry types."""
 
-from __future__ import annotations
-
 import copy
 from typing import TYPE_CHECKING, override
 

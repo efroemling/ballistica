@@ -8,8 +8,6 @@ unrecognized attribute data, allowing older clients to interact with newer
 data formats in a nondestructive manner.
 """
 
-from __future__ import annotations
-
 # from efro.util import set_canonical_module_names
 from efro.dataclassio._base import (
     Codec,

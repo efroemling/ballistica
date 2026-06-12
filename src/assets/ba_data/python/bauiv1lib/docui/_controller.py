@@ -2,8 +2,6 @@
 #
 """Controller functionality for DocUI."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, assert_never
 from dataclasses import dataclass
 from enum import Enum

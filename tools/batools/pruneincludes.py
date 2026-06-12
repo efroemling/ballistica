@@ -2,8 +2,6 @@
 #
 """Utility to scan for unnecessary includes in c++ files."""
 
-from __future__ import annotations
-
 import os
 import json
 import tempfile

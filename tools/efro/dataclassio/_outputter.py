@@ -6,8 +6,6 @@
 # frowned upon (stuff like isinstance() is usually encouraged).
 # pylint: disable=unidiomatic-typecheck
 
-from __future__ import annotations
-
 from enum import Enum
 import dataclasses
 import typing

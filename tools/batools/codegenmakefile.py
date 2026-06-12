@@ -7,8 +7,6 @@ node types, etc). Outputs land in ``generated/`` / ``_generated/`` dirs per
 feature-set; see docs/design/codegen.md for why that's the convention.
 """
 
-from __future__ import annotations
-
 import os
 import json
 from pathlib import Path

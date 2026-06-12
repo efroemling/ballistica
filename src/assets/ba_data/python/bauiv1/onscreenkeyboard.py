@@ -2,8 +2,6 @@
 #
 """Provides the built-in on screen keyboard UI."""
 
-from __future__ import annotations
-
 import logging
 from typing import cast
 

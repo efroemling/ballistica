@@ -8,8 +8,9 @@ extern "C" {
 #  error "this header requires Py_BUILD_CORE define"
 #endif
 
-#include "pycore_identifier.h"    // _Py_Identifier
+#include "pycore_code.h"          // EVAL_CALL_STAT_INC_IF_FUNCTION()
 #include "pycore_pystate.h"       // _PyThreadState_GET()
+#include "pycore_stats.h"
 
 /* Suggested size (number of positional arguments) for arrays of PyObject*
    allocated on a C stack to avoid allocating memory on the heap memory. Such
@@ -96,6 +97,14 @@ _PyObject_CallMethodIdOneArg(PyObject *self, _Py_Identifier *name, PyObject *arg
     return _PyObject_VectorcallMethodId(name, args, nargsf, _Py_NULL);
 }
 
+
+extern PyObject *_PyObject_VectorcallPrepend(
+    PyThreadState *tstate,
+    PyObject *callable,
+    PyObject *arg,
+    PyObject *const *args,
+    size_t nargsf,
+    PyObject *kwnames);
 
 /* === Vectorcall protocol (PEP 590) ============================= */
 

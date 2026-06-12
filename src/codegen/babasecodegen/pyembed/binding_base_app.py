@@ -2,7 +2,6 @@
 # Where most of our python-c++ binding happens.
 # Python objects should be added here along with their associated c++ enum.
 # pylint: disable=useless-suppression, missing-module-docstring, line-too-long
-from __future__ import annotations
 from babase import app
 from babase._asset_packages import load_bundled_asset_packages
 

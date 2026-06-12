@@ -2,8 +2,6 @@
 #
 """Provides the top level play window."""
 
-from __future__ import annotations
-
 # import logging
 from typing import override, TYPE_CHECKING
 

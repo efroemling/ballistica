@@ -2,8 +2,6 @@
 #
 """Implements respawn icon actor."""
 
-from __future__ import annotations
-
 import weakref
 
 import bascenev1 as bs

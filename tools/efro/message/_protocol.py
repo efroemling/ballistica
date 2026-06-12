@@ -4,8 +4,6 @@
 Supports static typing for message types and possible return types.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 import traceback
 import json
@@ -407,8 +405,6 @@ class MessageProtocol:
             '# Released under the MIT License. See LICENSE for details.\n'
             f'#\n'
             f'"""Auto-generated {part} module. Do not edit by hand."""\n'
-            f'\n'
-            f'from __future__ import annotations\n'
             f'\n'
             f'from typing import TYPE_CHECKING{ovld}{ovld2}\n'
             f'\n'

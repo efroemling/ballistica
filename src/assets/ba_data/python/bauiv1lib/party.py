@@ -2,8 +2,6 @@
 #
 """Provides party related UI."""
 
-from __future__ import annotations
-
 import math
 import logging
 from typing import TYPE_CHECKING, cast

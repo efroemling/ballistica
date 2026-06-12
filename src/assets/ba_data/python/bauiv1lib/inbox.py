@@ -3,8 +3,6 @@
 # pylint: disable=too-many-lines
 """Provides a popup window to view achievements."""
 
-from __future__ import annotations
-
 import weakref
 from functools import partial
 from dataclasses import dataclass

@@ -170,6 +170,32 @@ of the patterns above, depending on whether the dangling reference
 is in types (invert), generation rules (gate), or call sites (mark
 inline).
 
+## Propagating changes to dst projects
+
+How a real dst project receives src changes — a standalone
+operation, independent of any other pipeline.
+
+A dst project pins its parent via a git submodule at
+`submodules/ballistica`; `tools/spinoff` in the dst is a symlink
+into that submodule (not into any sibling checkout). The sync
+targets, all run **in the dst**:
+
+- `make spinoff-update` — sync from the parent at the currently
+  pinned submodule commit. Deterministic; what CI and fresh
+  checkouts use.
+- `make spinoff-upgrade` — move the pin to the latest parent
+  `main` (`git checkout main && git pull` in the submodule), then
+  sync.
+- `make spinoff-upgrade-push` — `spinoff-upgrade`, then commit and
+  push the dst.
+
+Both upgrade flavors read the parent's **pushed origin `main`** —
+never a local working tree. To exercise uncommitted parent changes,
+use spinofftest (above) rather than upgrading a real dst.
+
+Every sync ends with an automatic `make update-check` to verify
+the dst landed in a consistent state.
+
 ## Reference
 
 - `pconfig/featuresets/README.md` — naming + locations.

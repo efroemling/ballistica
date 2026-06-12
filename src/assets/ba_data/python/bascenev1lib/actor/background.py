@@ -2,8 +2,6 @@
 #
 """Defines Actor(s)."""
 
-from __future__ import annotations
-
 import random
 import weakref
 import logging

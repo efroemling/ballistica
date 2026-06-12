@@ -8,8 +8,6 @@
   it in mod code.
 """
 
-from __future__ import annotations
-
 from enum import Enum
 from dataclasses import dataclass
 from typing import Annotated, override, assert_never

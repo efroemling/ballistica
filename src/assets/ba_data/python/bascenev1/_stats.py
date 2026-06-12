@@ -2,8 +2,6 @@
 #
 """Functionality related to scores and statistics."""
 
-from __future__ import annotations
-
 import random
 import weakref
 import logging
