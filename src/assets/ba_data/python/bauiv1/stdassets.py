@@ -1,11 +1,11 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Asset-package wrapper for ``a-0.bastdassets.260611`` (bauiv1).
+"""Asset-package wrapper for ``a-0.bastdassets.260612`` (bauiv1).
 
 Auto-generated; do not edit by hand.
 """
 
-# ba_meta require asset-package a-0.bastdassets.260611
+# ba_meta require asset-package a-0.bastdassets.260612
 # pylint: disable=missing-function-docstring
 # pylint: disable=too-many-public-methods, useless-suppression
 # pylint: disable=too-many-lines, disallowed-name
@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import bauiv1
 
-__asset_package__ = 'a-0.bastdassets.260611'
+__asset_package__ = 'a-0.bastdassets.260612'
 _APVERID = __asset_package__
 
 
@@ -2497,6 +2497,2173 @@ class _Audio:
 
 
 audio = _Audio()
+
+
+class _Meshes:
+    @property
+    def achievement_outline(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/achievement_outline')
+
+    @property
+    def action_hero_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/action_hero_fore_arm')
+
+    @property
+    def action_hero_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/action_hero_hand')
+
+    @property
+    def action_hero_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/action_hero_head')
+
+    @property
+    def action_hero_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/action_hero_lower_leg')
+
+    @property
+    def action_hero_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/action_hero_pelvis')
+
+    @property
+    def action_hero_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/action_hero_toes')
+
+    @property
+    def action_hero_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/action_hero_torso')
+
+    @property
+    def action_hero_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/action_hero_upper_arm')
+
+    @property
+    def action_hero_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/action_hero_upper_leg')
+
+    @property
+    def agent_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/agent_fore_arm')
+
+    @property
+    def agent_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/agent_hand')
+
+    @property
+    def agent_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/agent_head')
+
+    @property
+    def agent_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/agent_lower_leg')
+
+    @property
+    def agent_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/agent_pelvis')
+
+    @property
+    def agent_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/agent_toes')
+
+    @property
+    def agent_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/agent_torso')
+
+    @property
+    def agent_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/agent_upper_arm')
+
+    @property
+    def agent_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/agent_upper_leg')
+
+    @property
+    def ali_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ali_fore_arm')
+
+    @property
+    def ali_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ali_hand')
+
+    @property
+    def ali_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ali_head')
+
+    @property
+    def ali_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ali_lower_leg')
+
+    @property
+    def ali_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ali_pelvis')
+
+    @property
+    def ali_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ali_toes')
+
+    @property
+    def ali_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ali_torso')
+
+    @property
+    def ali_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ali_upper_arm')
+
+    @property
+    def ali_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ali_upper_leg')
+
+    @property
+    def alien_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/alien_fore_arm')
+
+    @property
+    def alien_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/alien_hand')
+
+    @property
+    def alien_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/alien_head')
+
+    @property
+    def alien_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/alien_lower_leg')
+
+    @property
+    def alien_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/alien_pelvis')
+
+    @property
+    def alien_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/alien_toes')
+
+    @property
+    def alien_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/alien_torso')
+
+    @property
+    def alien_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/alien_upper_arm')
+
+    @property
+    def alien_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/alien_upper_leg')
+
+    @property
+    def always_land_bg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/always_land_bg')
+
+    @property
+    def always_land_level(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/always_land_level')
+
+    @property
+    def always_land_level_bottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/always_land_level_bottom')
+
+    @property
+    def always_land_vrfill_mound(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/always_land_vrfill_mound')
+
+    @property
+    def angry_computer_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/angry_computer_transparent')
+
+    @property
+    def assassin_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/assassin_fore_arm')
+
+    @property
+    def assassin_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/assassin_hand')
+
+    @property
+    def assassin_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/assassin_head')
+
+    @property
+    def assassin_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/assassin_lower_leg')
+
+    @property
+    def assassin_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/assassin_pelvis')
+
+    @property
+    def assassin_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/assassin_toes')
+
+    @property
+    def assassin_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/assassin_torso')
+
+    @property
+    def assassin_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/assassin_upper_arm')
+
+    @property
+    def assassin_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/assassin_upper_leg')
+
+    @property
+    def bear_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bear_fore_arm')
+
+    @property
+    def bear_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bear_hand')
+
+    @property
+    def bear_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bear_head')
+
+    @property
+    def bear_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bear_lower_leg')
+
+    @property
+    def bear_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bear_pelvis')
+
+    @property
+    def bear_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bear_toes')
+
+    @property
+    def bear_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bear_torso')
+
+    @property
+    def bear_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bear_upper_arm')
+
+    @property
+    def bear_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bear_upper_leg')
+
+    @property
+    def big_g(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/big_g')
+
+    @property
+    def big_gbottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/big_gbottom')
+
+    @property
+    def bomb(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bomb')
+
+    @property
+    def bomb_sticky(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bomb_sticky')
+
+    @property
+    def bones_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bones_fore_arm')
+
+    @property
+    def bones_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bones_hand')
+
+    @property
+    def bones_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bones_head')
+
+    @property
+    def bones_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bones_lower_leg')
+
+    @property
+    def bones_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bones_pelvis')
+
+    @property
+    def bones_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bones_toes')
+
+    @property
+    def bones_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bones_torso')
+
+    @property
+    def bones_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bones_upper_arm')
+
+    @property
+    def bones_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bones_upper_leg')
+
+    @property
+    def bridgit_level_bottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bridgit_level_bottom')
+
+    @property
+    def bridgit_level_top(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bridgit_level_top')
+
+    @property
+    def bunny_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bunny_fore_arm')
+
+    @property
+    def bunny_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bunny_hand')
+
+    @property
+    def bunny_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bunny_head')
+
+    @property
+    def bunny_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bunny_lower_leg')
+
+    @property
+    def bunny_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bunny_pelvis')
+
+    @property
+    def bunny_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bunny_toes')
+
+    @property
+    def bunny_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bunny_torso')
+
+    @property
+    def bunny_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bunny_upper_arm')
+
+    @property
+    def bunny_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/bunny_upper_leg')
+
+    @property
+    def button_null(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_null')
+
+    @property
+    def courtyard_level(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/courtyard_level')
+
+    @property
+    def courtyard_level_bottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/courtyard_level_bottom')
+
+    @property
+    def cowboy_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cowboy_fore_arm')
+
+    @property
+    def cowboy_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cowboy_hand')
+
+    @property
+    def cowboy_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cowboy_head')
+
+    @property
+    def cowboy_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cowboy_lower_leg')
+
+    @property
+    def cowboy_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cowboy_pelvis')
+
+    @property
+    def cowboy_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cowboy_toes')
+
+    @property
+    def cowboy_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cowboy_torso')
+
+    @property
+    def cowboy_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cowboy_upper_arm')
+
+    @property
+    def cowboy_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cowboy_upper_leg')
+
+    @property
+    def crag_castle_level(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/crag_castle_level')
+
+    @property
+    def crag_castle_level_bottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/crag_castle_level_bottom')
+
+    @property
+    def crag_castle_vrfill_mound(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/crag_castle_vrfill_mound')
+
+    @property
+    def currency_meter(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/currency_meter')
+
+    @property
+    def currency_plus_button(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/currency_plus_button')
+
+    @property
+    def cyborg_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cyborg_fore_arm')
+
+    @property
+    def cyborg_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cyborg_hand')
+
+    @property
+    def cyborg_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cyborg_head')
+
+    @property
+    def cyborg_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cyborg_lower_leg')
+
+    @property
+    def cyborg_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cyborg_pelvis')
+
+    @property
+    def cyborg_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cyborg_toes')
+
+    @property
+    def cyborg_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cyborg_torso')
+
+    @property
+    def cyborg_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cyborg_upper_arm')
+
+    @property
+    def cyborg_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cyborg_upper_leg')
+
+    @property
+    def doom_shroom_bg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/doom_shroom_bg')
+
+    @property
+    def doom_shroom_level(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/doom_shroom_level')
+
+    @property
+    def doom_shroom_stem(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/doom_shroom_stem')
+
+    @property
+    def doom_shroom_vrfill(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/doom_shroom_vrfill')
+
+    @property
+    def egg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/egg')
+
+    @property
+    def football_stadium(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/football_stadium')
+
+    @property
+    def football_stadium_vrfill(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/football_stadium_vrfill')
+
+    @property
+    def frame_inset(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/frame_inset')
+
+    @property
+    def frosty_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/frosty_fore_arm')
+
+    @property
+    def frosty_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/frosty_hand')
+
+    @property
+    def frosty_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/frosty_head')
+
+    @property
+    def frosty_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/frosty_lower_leg')
+
+    @property
+    def frosty_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/frosty_pelvis')
+
+    @property
+    def frosty_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/frosty_toes')
+
+    @property
+    def frosty_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/frosty_torso')
+
+    @property
+    def frosty_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/frosty_upper_arm')
+
+    @property
+    def frosty_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/frosty_upper_leg')
+
+    @property
+    def gladiator_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/gladiator_fore_arm')
+
+    @property
+    def gladiator_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/gladiator_hand')
+
+    @property
+    def gladiator_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/gladiator_head')
+
+    @property
+    def gladiator_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/gladiator_lower_leg')
+
+    @property
+    def gladiator_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/gladiator_pelvis')
+
+    @property
+    def gladiator_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/gladiator_toes')
+
+    @property
+    def gladiator_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/gladiator_torso')
+
+    @property
+    def gladiator_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/gladiator_upper_arm')
+
+    @property
+    def gladiator_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/gladiator_upper_leg')
+
+    @property
+    def heart_opaque(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/heart_opaque')
+
+    @property
+    def heart_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/heart_transparent')
+
+    @property
+    def hockey_stadium_inner(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/hockey_stadium_inner')
+
+    @property
+    def hockey_stadium_outer(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/hockey_stadium_outer')
+
+    @property
+    def hockey_stadium_stands(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/hockey_stadium_stands')
+
+    @property
+    def image2x1_vertical(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/image2x1_vertical')
+
+    @property
+    def impact_bomb(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/impact_bomb')
+
+    @property
+    def jack_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jack_fore_arm')
+
+    @property
+    def jack_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jack_hand')
+
+    @property
+    def jack_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jack_head')
+
+    @property
+    def jack_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jack_lower_leg')
+
+    @property
+    def jack_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jack_toes')
+
+    @property
+    def jack_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jack_torso')
+
+    @property
+    def jack_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jack_upper_arm')
+
+    @property
+    def jack_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jack_upper_leg')
+
+    @property
+    def jumpsuit_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jumpsuit_fore_arm')
+
+    @property
+    def jumpsuit_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jumpsuit_hand')
+
+    @property
+    def jumpsuit_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jumpsuit_head')
+
+    @property
+    def jumpsuit_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jumpsuit_lower_leg')
+
+    @property
+    def jumpsuit_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jumpsuit_pelvis')
+
+    @property
+    def jumpsuit_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jumpsuit_toes')
+
+    @property
+    def jumpsuit_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jumpsuit_torso')
+
+    @property
+    def jumpsuit_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jumpsuit_upper_arm')
+
+    @property
+    def jumpsuit_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/jumpsuit_upper_leg')
+
+    @property
+    def kronk_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/kronk_fore_arm')
+
+    @property
+    def kronk_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/kronk_hand')
+
+    @property
+    def kronk_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/kronk_head')
+
+    @property
+    def kronk_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/kronk_lower_leg')
+
+    @property
+    def kronk_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/kronk_pelvis')
+
+    @property
+    def kronk_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/kronk_toes')
+
+    @property
+    def kronk_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/kronk_torso')
+
+    @property
+    def kronk_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/kronk_upper_arm')
+
+    @property
+    def kronk_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/kronk_upper_leg')
+
+    @property
+    def lake_frigid(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/lake_frigid')
+
+    @property
+    def lake_frigid_reflections(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/lake_frigid_reflections')
+
+    @property
+    def lake_frigid_top(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/lake_frigid_top')
+
+    @property
+    def lake_frigid_vrfill(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/lake_frigid_vrfill')
+
+    @property
+    def land_mine(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/land_mine')
+
+    @property
+    def level_select_button_opaque(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/level_select_button_opaque')
+
+    @property
+    def level_select_button_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(
+            f'{_APVERID}:meshes/level_select_button_transparent'
+        )
+
+    @property
+    def logo(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/logo')
+
+    @property
+    def logo_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/logo_transparent')
+
+    @property
+    def mel_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/mel_fore_arm')
+
+    @property
+    def mel_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/mel_hand')
+
+    @property
+    def mel_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/mel_head')
+
+    @property
+    def mel_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/mel_lower_leg')
+
+    @property
+    def mel_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/mel_toes')
+
+    @property
+    def mel_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/mel_torso')
+
+    @property
+    def mel_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/mel_upper_arm')
+
+    @property
+    def mel_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/mel_upper_leg')
+
+    @property
+    def meter_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/meter_transparent')
+
+    @property
+    def monkey_face_level(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/monkey_face_level')
+
+    @property
+    def monkey_face_level_bottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/monkey_face_level_bottom')
+
+    @property
+    def nature_background(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/nature_background')
+
+    @property
+    def nature_background_vrfill(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/nature_background_vrfill')
+
+    @property
+    def neo_spaz_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/neo_spaz_fore_arm')
+
+    @property
+    def neo_spaz_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/neo_spaz_hand')
+
+    @property
+    def neo_spaz_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/neo_spaz_head')
+
+    @property
+    def neo_spaz_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/neo_spaz_lower_leg')
+
+    @property
+    def neo_spaz_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/neo_spaz_pelvis')
+
+    @property
+    def neo_spaz_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/neo_spaz_toes')
+
+    @property
+    def neo_spaz_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/neo_spaz_torso')
+
+    @property
+    def neo_spaz_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/neo_spaz_upper_arm')
+
+    @property
+    def neo_spaz_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/neo_spaz_upper_leg')
+
+    @property
+    def ninja_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ninja_fore_arm')
+
+    @property
+    def ninja_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ninja_hand')
+
+    @property
+    def ninja_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ninja_head')
+
+    @property
+    def ninja_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ninja_lower_leg')
+
+    @property
+    def ninja_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ninja_pelvis')
+
+    @property
+    def ninja_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ninja_toes')
+
+    @property
+    def ninja_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ninja_torso')
+
+    @property
+    def ninja_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ninja_upper_arm')
+
+    @property
+    def ninja_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/ninja_upper_leg')
+
+    @property
+    def old_lady_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/old_lady_fore_arm')
+
+    @property
+    def old_lady_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/old_lady_hand')
+
+    @property
+    def old_lady_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/old_lady_head')
+
+    @property
+    def old_lady_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/old_lady_lower_leg')
+
+    @property
+    def old_lady_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/old_lady_pelvis')
+
+    @property
+    def old_lady_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/old_lady_toes')
+
+    @property
+    def old_lady_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/old_lady_torso')
+
+    @property
+    def old_lady_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/old_lady_upper_arm')
+
+    @property
+    def old_lady_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/old_lady_upper_leg')
+
+    @property
+    def opera_singer_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/opera_singer_fore_arm')
+
+    @property
+    def opera_singer_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/opera_singer_hand')
+
+    @property
+    def opera_singer_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/opera_singer_head')
+
+    @property
+    def opera_singer_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/opera_singer_lower_leg')
+
+    @property
+    def opera_singer_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/opera_singer_pelvis')
+
+    @property
+    def opera_singer_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/opera_singer_toes')
+
+    @property
+    def opera_singer_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/opera_singer_torso')
+
+    @property
+    def opera_singer_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/opera_singer_upper_arm')
+
+    @property
+    def opera_singer_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/opera_singer_upper_leg')
+
+    @property
+    def penguin_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/penguin_fore_arm')
+
+    @property
+    def penguin_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/penguin_hand')
+
+    @property
+    def penguin_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/penguin_head')
+
+    @property
+    def penguin_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/penguin_lower_leg')
+
+    @property
+    def penguin_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/penguin_pelvis')
+
+    @property
+    def penguin_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/penguin_toes')
+
+    @property
+    def penguin_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/penguin_torso')
+
+    @property
+    def penguin_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/penguin_upper_arm')
+
+    @property
+    def penguin_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/penguin_upper_leg')
+
+    @property
+    def pixie_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/pixie_fore_arm')
+
+    @property
+    def pixie_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/pixie_hand')
+
+    @property
+    def pixie_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/pixie_head')
+
+    @property
+    def pixie_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/pixie_lower_leg')
+
+    @property
+    def pixie_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/pixie_pelvis')
+
+    @property
+    def pixie_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/pixie_toes')
+
+    @property
+    def pixie_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/pixie_torso')
+
+    @property
+    def pixie_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/pixie_upper_arm')
+
+    @property
+    def pixie_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/pixie_upper_leg')
+
+    @property
+    def plastic_eyes_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/plastic_eyes_transparent')
+
+    @property
+    def player_lineup1_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/player_lineup1_transparent')
+
+    @property
+    def player_lineup2_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/player_lineup2_transparent')
+
+    @property
+    def player_lineup3_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/player_lineup3_transparent')
+
+    @property
+    def player_lineup4_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/player_lineup4_transparent')
+
+    @property
+    def powerup(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/powerup')
+
+    @property
+    def powerup_simple(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/powerup_simple')
+
+    @property
+    def puck(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/puck')
+
+    @property
+    def rampage_bg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/rampage_bg')
+
+    @property
+    def rampage_bg2(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/rampage_bg2')
+
+    @property
+    def rampage_level(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/rampage_level')
+
+    @property
+    def rampage_level_bottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/rampage_level_bottom')
+
+    @property
+    def rampage_vrfill(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/rampage_vrfill')
+
+    @property
+    def robot_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/robot_fore_arm')
+
+    @property
+    def robot_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/robot_hand')
+
+    @property
+    def robot_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/robot_head')
+
+    @property
+    def robot_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/robot_lower_leg')
+
+    @property
+    def robot_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/robot_pelvis')
+
+    @property
+    def robot_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/robot_toes')
+
+    @property
+    def robot_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/robot_torso')
+
+    @property
+    def robot_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/robot_upper_arm')
+
+    @property
+    def robot_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/robot_upper_leg')
+
+    @property
+    def roundabout_level(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/roundabout_level')
+
+    @property
+    def roundabout_level_bottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/roundabout_level_bottom')
+
+    @property
+    def running_shoes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/running_shoes')
+
+    @property
+    def santa_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/santa_fore_arm')
+
+    @property
+    def santa_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/santa_hand')
+
+    @property
+    def santa_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/santa_head')
+
+    @property
+    def santa_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/santa_lower_leg')
+
+    @property
+    def santa_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/santa_toes')
+
+    @property
+    def santa_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/santa_torso')
+
+    @property
+    def santa_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/santa_upper_arm')
+
+    @property
+    def santa_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/santa_upper_leg')
+
+    @property
+    def scroll_widget_short(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/scroll_widget_short')
+
+    @property
+    def step_right_up_level(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/step_right_up_level')
+
+    @property
+    def step_right_up_level_bottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/step_right_up_level_bottom')
+
+    @property
+    def step_right_up_vrfill_mound(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/step_right_up_vrfill_mound')
+
+    @property
+    def superhero_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/superhero_fore_arm')
+
+    @property
+    def superhero_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/superhero_hand')
+
+    @property
+    def superhero_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/superhero_head')
+
+    @property
+    def superhero_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/superhero_lower_leg')
+
+    @property
+    def superhero_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/superhero_pelvis')
+
+    @property
+    def superhero_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/superhero_toes')
+
+    @property
+    def superhero_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/superhero_torso')
+
+    @property
+    def superhero_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/superhero_upper_arm')
+
+    @property
+    def superhero_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/superhero_upper_leg')
+
+    @property
+    def the_pad_bg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/the_pad_bg')
+
+    @property
+    def the_pad_bgsmall(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/the_pad_bgsmall')
+
+    @property
+    def the_pad_level(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/the_pad_level')
+
+    @property
+    def the_pad_level_bottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/the_pad_level_bottom')
+
+    @property
+    def the_pad_vrfill_bottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/the_pad_vrfill_bottom')
+
+    @property
+    def the_pad_vrfill_mound(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/the_pad_vrfill_mound')
+
+    @property
+    def the_pad_vrfill_top(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/the_pad_vrfill_top')
+
+    @property
+    def tip_top_bg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/tip_top_bg')
+
+    @property
+    def tip_top_level(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/tip_top_level')
+
+    @property
+    def tip_top_level_bottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/tip_top_level_bottom')
+
+    @property
+    def tnt(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/tnt')
+
+    @property
+    def toolbar_backing(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/toolbar_backing')
+
+    @property
+    def toolbar_backing_bottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/toolbar_backing_bottom')
+
+    @property
+    def toolbar_backing_bottom2(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/toolbar_backing_bottom2')
+
+    @property
+    def toolbar_backing_opaque(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/toolbar_backing_opaque')
+
+    @property
+    def toolbar_backing_top(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/toolbar_backing_top')
+
+    @property
+    def toolbar_backing_top2(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/toolbar_backing_top2')
+
+    @property
+    def toolbar_backing_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/toolbar_backing_transparent')
+
+    @property
+    def tower_dlevel(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/tower_dlevel')
+
+    @property
+    def tower_dlevel_bottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/tower_dlevel_bottom')
+
+    @property
+    def trees(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/trees')
+
+    @property
+    def warrior_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/warrior_fore_arm')
+
+    @property
+    def warrior_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/warrior_hand')
+
+    @property
+    def warrior_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/warrior_head')
+
+    @property
+    def warrior_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/warrior_lower_leg')
+
+    @property
+    def warrior_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/warrior_pelvis')
+
+    @property
+    def warrior_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/warrior_toes')
+
+    @property
+    def warrior_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/warrior_torso')
+
+    @property
+    def warrior_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/warrior_upper_arm')
+
+    @property
+    def warrior_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/warrior_upper_leg')
+
+    @property
+    def window_bgblotch(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/window_bgblotch')
+
+    @property
+    def witch_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/witch_fore_arm')
+
+    @property
+    def witch_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/witch_hand')
+
+    @property
+    def witch_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/witch_head')
+
+    @property
+    def witch_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/witch_lower_leg')
+
+    @property
+    def witch_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/witch_pelvis')
+
+    @property
+    def witch_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/witch_toes')
+
+    @property
+    def witch_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/witch_torso')
+
+    @property
+    def witch_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/witch_upper_arm')
+
+    @property
+    def witch_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/witch_upper_leg')
+
+    @property
+    def wizard_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wizard_fore_arm')
+
+    @property
+    def wizard_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wizard_hand')
+
+    @property
+    def wizard_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wizard_head')
+
+    @property
+    def wizard_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wizard_lower_leg')
+
+    @property
+    def wizard_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wizard_pelvis')
+
+    @property
+    def wizard_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wizard_toes')
+
+    @property
+    def wizard_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wizard_torso')
+
+    @property
+    def wizard_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wizard_upper_arm')
+
+    @property
+    def wizard_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wizard_upper_leg')
+
+    @property
+    def wrestler_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wrestler_fore_arm')
+
+    @property
+    def wrestler_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wrestler_hand')
+
+    @property
+    def wrestler_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wrestler_head')
+
+    @property
+    def wrestler_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wrestler_lower_leg')
+
+    @property
+    def wrestler_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wrestler_pelvis')
+
+    @property
+    def wrestler_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wrestler_toes')
+
+    @property
+    def wrestler_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wrestler_torso')
+
+    @property
+    def wrestler_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wrestler_upper_arm')
+
+    @property
+    def wrestler_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wrestler_upper_leg')
+
+    @property
+    def zig_zag_level(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/zig_zag_level')
+
+    @property
+    def zig_zag_level_bottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/zig_zag_level_bottom')
+
+    @property
+    def zoe_fore_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/zoe_fore_arm')
+
+    @property
+    def zoe_hand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/zoe_hand')
+
+    @property
+    def zoe_head(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/zoe_head')
+
+    @property
+    def zoe_lower_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/zoe_lower_leg')
+
+    @property
+    def zoe_pelvis(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/zoe_pelvis')
+
+    @property
+    def zoe_toes(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/zoe_toes')
+
+    @property
+    def zoe_torso(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/zoe_torso')
+
+    @property
+    def zoe_upper_arm(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/zoe_upper_arm')
+
+    @property
+    def zoe_upper_leg(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/zoe_upper_leg')
+
+
+meshes = _Meshes()
 
 
 class _Textures:

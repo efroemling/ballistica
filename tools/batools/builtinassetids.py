@@ -85,8 +85,6 @@ class AssetKind(Enum):
 # ``constant``. The first path-segment of the bucket id (before the
 # slash, if any) drives the dispatch.
 _TEXTURE_EXTS = {'.dds', '.ktx', '.ktx2', '.pvr'}
-_MESH_EXTS = {'.bob', '.bmsh'}
-_SOUND_EXTS = {'.ogg', '.wav'}
 
 
 @dataclass
@@ -163,13 +161,12 @@ def _kind_for(bucket_id: str, logical_path: str) -> AssetKind | None:
             )
         return AssetKind.TEXTURE
     if head == 'constant':
-        # Constant bucket can hold sounds + collision-meshes; partition
-        # by extension. Anything we don't recognize gets skipped silently
-        # — generator stays forward-compatible with future kinds.
-        if ext in _SOUND_EXTS:
-            return AssetKind.SOUND
-        if ext in _MESH_EXTS:
-            return AssetKind.MESH
+        # The constant bucket carries collision meshes (decision #26),
+        # which deliberately have NO C++ ID enum — nothing in
+        # StartLoading() loads them (all by-name from Python map defs)
+        # — so they're skipped here. Anything else unrecognized is
+        # skipped silently too; the generator stays forward-compatible
+        # with future kinds.
         return None
     if head in _SKIP_BUCKET_HEADS:
         return None
@@ -316,14 +313,22 @@ def render_enum_block(result: BuildResult) -> str:
             lines.append(f'enum class {kind.cpp_enum_name} : uint16_t {{}};')
         else:
             lines.append(f'enum class {kind.cpp_enum_name} : uint16_t {{')
-            for entry in entries:
-                # Comment with the logical name (not the full bundle
-                # path) — it matches wrapper/compat-table keys and
-                # stays inside cpplint's 80-col limit even after
-                # clang-format aligns the comment block.
-                lines.append(
-                    f'  {entry.cpp_enum_entry},  ' f'// {entry.logical_name}'
-                )
+            # Comment with the logical name (not the full bundle
+            # path) — it matches wrapper/compat-table keys.
+            # clang-format aligns each run of trailing comments to
+            # its longest member, so place the comment on its own
+            # line above the entry whenever the aligned trailing
+            # form could exceed cpplint's 80-col limit (long mesh
+            # names hit this).
+            entry_parts = [f'  {e.cpp_enum_entry},' for e in entries]
+            align_col = max(len(p) for p in entry_parts) + 2
+            for entry, part in zip(entries, entry_parts):
+                comment = f'// {entry.logical_name}'
+                if align_col + len(comment) > 80:
+                    lines.append(f'  {comment}')
+                    lines.append(part)
+                else:
+                    lines.append(f'{part}  {comment}')
             lines.append('};')
         lines.append('')
     # Drop the trailing blank line so the closing marker sits flush.

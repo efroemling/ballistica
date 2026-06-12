@@ -16,8 +16,9 @@ from typing import TYPE_CHECKING, override, assert_never, final
 from efro.dataclassio import dataclass_from_dict
 import babase
 import bauiv1
-import bascenev1
 from bauiv1 import builtinassets
+from bauiv1 import stdassets as uistdassets
+import bascenev1
 from bascenev1 import stdassets
 
 import _baclassic
@@ -921,8 +922,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     def preload_map_preview_media(self) -> None:
         """Preload media needed for map preview UIs."""
         try:
-            bauiv1.getmesh('level_select_button_opaque')
-            bauiv1.getmesh('level_select_button_transparent')
+            _ = uistdassets.meshes.level_select_button_opaque
+            _ = uistdassets.meshes.level_select_button_transparent
             for maptype in list(self.maps.values()):
                 map_tex_name = maptype.get_preview_texture_name()
                 if map_tex_name is not None:

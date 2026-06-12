@@ -32,8 +32,12 @@ class AssetNameCompat {
   /// Given a possibly-legacy bare asset name, return the qualified
   /// asset-package ref it now lives at (if it has a known home and
   /// that package's version has been registered); otherwise return
-  /// the name unchanged.
-  static auto FromLegacy(const std::string& name) -> std::string;
+  /// the name unchanged. ``kind`` is the logical-path head the caller
+  /// wants ('textures', 'audio', 'meshes', ...) — legacy names were
+  /// only unique per asset type ('shield' names both a texture and a
+  /// mesh), so lookups are kind-scoped.
+  static auto FromLegacy(const std::string& name, const char* kind)
+      -> std::string;
 
   /// Given a possibly-qualified asset-package ref, return the legacy
   /// bare name old peers expect (if its package and logical path have

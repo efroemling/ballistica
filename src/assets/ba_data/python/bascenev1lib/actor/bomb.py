@@ -150,11 +150,11 @@ class BombFactory:
         """
         shared = SharedObjects.get()
 
-        self.bomb_mesh = bs.getmesh('bomb')
-        self.sticky_bomb_mesh = bs.getmesh('bombSticky')
-        self.impact_bomb_mesh = bs.getmesh('impactBomb')
-        self.land_mine_mesh = bs.getmesh('landMine')
-        self.tnt_mesh = bs.getmesh('tnt')
+        self.bomb_mesh = stdassets.meshes.bomb
+        self.sticky_bomb_mesh = stdassets.meshes.bomb_sticky
+        self.impact_bomb_mesh = stdassets.meshes.impact_bomb
+        self.land_mine_mesh = stdassets.meshes.land_mine
+        self.tnt_mesh = stdassets.meshes.tnt
 
         self.regular_tex = stdassets.textures.bomb_color
         self.ice_tex = stdassets.textures.bomb_color_ice

@@ -300,16 +300,16 @@ void BGDynamics::DrawChunks(FrameDef* frame_def,
   MeshAsset* mesh;
   switch (chunk_type) {
     case BGDynamicsChunkType::kFlagStand:
-      mesh = g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kFlagStand);
+      mesh = g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesFlagStand);
       break;
     case BGDynamicsChunkType::kSplinter:
-      mesh = g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kShrapnelBoard);
+      mesh = g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesShrapnelBoard);
       break;
     case BGDynamicsChunkType::kSlime:
-      mesh = g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kShrapnelSlime);
+      mesh = g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesShrapnelSlime);
       break;
     default:
-      mesh = g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kShrapnel1);
+      mesh = g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesShrapnel1);
       break;
   }
   ObjectComponent c(frame_def->beauty_pass());

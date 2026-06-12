@@ -100,6 +100,18 @@ class AssetPackageRegistry {
   /// package isn't registered or has no audio bucket.
   auto LookupAudioBucketId(const std::string& apverid) const -> std::string;
 
+  /// Display-mesh analog of :meth:`LookupTextureBucketId`: the
+  /// ``meshes/...`` bucket id registered for ``apverid`` (decision
+  /// #26). Empty if the package isn't registered or has no mesh
+  /// bucket.
+  auto LookupMeshBucketId(const std::string& apverid) const -> std::string;
+
+  /// The flavor-invariant ``constant`` bucket id for ``apverid``
+  /// (exact-match; the constant bucket has no dimensions). Collision
+  /// meshes live there (decision #26). Empty if the package isn't
+  /// registered or has no constant bucket.
+  auto LookupConstantBucketId(const std::string& apverid) const -> std::string;
+
   /// Single chokepoint for "where is this CAS blob on disk?". Probes
   /// the writable CAS root (``<cache_dir>/assets/<aa>/<rest>``, where
   /// downloaded-on-the-fly blobs land) and falls through to the bundle

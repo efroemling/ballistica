@@ -73,7 +73,7 @@ class EasterEggHuntGame(bs.TeamGameActivity[Player, Team]):
         shared = SharedObjects.get()
         self._last_player_death_time = None
         self._scoreboard = Scoreboard()
-        self.egg_mesh = bs.getmesh('egg')
+        self.egg_mesh = stdassets.meshes.egg
         self.egg_tex_1 = stdassets.textures.egg_tex1
         self.egg_tex_2 = stdassets.textures.egg_tex2
         self.egg_tex_3 = stdassets.textures.egg_tex3

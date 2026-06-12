@@ -343,19 +343,19 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
   if (!mesh_opaque_.exists() && !mesh_transparent_.exists()) {
     if (vr && fill_screen_) {
 #if BA_VR_BUILD
-      mesh_opaque_used = g_base->assets->BuiltinMeshOld(
-          base::BuiltinMeshOldID::kImage1x1VRFullScreen);
+      mesh_opaque_used = g_base->assets->BuiltinMesh(
+          base::BuiltinMeshID::kMeshesImage1x1VrfullScreen);
 #else
       throw Exception();
 #endif  // BA_VR_BUILD
     } else {
-      base::BuiltinMeshOldID m =
-          fill_screen_ ? base::BuiltinMeshOldID::kImage1x1FullScreen
-                       : base::BuiltinMeshOldID::kImage1x1;
+      base::BuiltinMeshID m =
+          fill_screen_ ? base::BuiltinMeshID::kMeshesImage1x1FullScreen
+                       : base::BuiltinMeshID::kMeshesImage1x1;
       if (has_alpha_channel) {
-        mesh_transparent_used = g_base->assets->BuiltinMeshOld(m);
+        mesh_transparent_used = g_base->assets->BuiltinMesh(m);
       } else {
-        mesh_opaque_used = g_base->assets->BuiltinMeshOld(m);
+        mesh_opaque_used = g_base->assets->BuiltinMesh(m);
       }
     }
   }

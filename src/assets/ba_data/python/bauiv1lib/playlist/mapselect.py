@@ -167,8 +167,8 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         if self._subcontainer is not None:
             self._subcontainer.delete()
 
-        mesh_opaque = bui.getmesh('level_select_button_opaque')
-        mesh_transparent = bui.getmesh('level_select_button_transparent')
+        mesh_opaque = stdassets.meshes.level_select_button_opaque
+        mesh_transparent = stdassets.meshes.level_select_button_transparent
 
         self._maps = []
         map_list = self._gametype.get_supported_maps(self._sessiontype)

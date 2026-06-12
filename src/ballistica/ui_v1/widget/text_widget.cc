@@ -233,8 +233,8 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           auto xf = c.ScopedTransform();
           c.Translate(highlight_center_x_, highlight_center_y_, 0.1f);
           c.Scale(highlight_width_, highlight_height_);
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
       } else {
         assert(glow_type_ == GlowType::kUniform);
@@ -273,8 +273,8 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         auto xf = c.ScopedTransform();
         c.Translate(outline_center_x_, outline_center_y_, 0.1f);
         c.Scale(outline_width_, outline_height_);
-        c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-            base::BuiltinMeshOldID::kTextBoxTransparent));
+        c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+            base::BuiltinMeshID::kMeshesTextBoxTransparent));
       }
       c.Submit();
     }
@@ -301,7 +301,7 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           c.Scale(25, 25);
         }
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage1x1));
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
       }
       c.Submit();
     }
@@ -513,11 +513,11 @@ void TextWidget::DoDrawCarat_(base::RenderPass* pass,
         c.Translate(h + 4, v + 17.0f);
         c.Scale(6, 27);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage1x1));
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
         c.SetColor(1, 1, 1, 0);
         c.Scale(0.3f, 0.8f);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage1x1));
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
       }
       c.Submit();
     }

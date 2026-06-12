@@ -38,7 +38,7 @@ class _Entry:
         self._bar_height = 32.0 * self._scale
         self._bar_tex = self._backing_tex = stdassets.textures.bar
         self._cover_tex = builtinassets.textures.ui_atlas
-        self._mesh = bs.getmesh('meterTransparent')
+        self._mesh = stdassets.meshes.meter_transparent
         self._pos: Sequence[float] | None = None
         self._flash_timer: bs.Timer | None = None
         self._flash_counter: int | None = None

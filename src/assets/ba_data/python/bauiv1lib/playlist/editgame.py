@@ -243,8 +243,8 @@ class PlaylistEditGameWindow(bui.MainWindow):
             size=(256 * 0.7, 125 * 0.7),
             position=(h + 261 - 128 + 128.0 * 0.56, v - 90),
             texture=map_tex,
-            mesh_opaque=bui.getmesh('level_select_button_opaque'),
-            mesh_transparent=bui.getmesh('level_select_button_transparent'),
+            mesh_opaque=stdassets.meshes.level_select_button_opaque,
+            mesh_transparent=stdassets.meshes.level_select_button_transparent,
             mask_texture=stdassets.textures.map_preview_mask,
         )
         map_button = btn = bui.buttonwidget(

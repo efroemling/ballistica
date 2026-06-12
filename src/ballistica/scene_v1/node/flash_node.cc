@@ -56,7 +56,7 @@ void FlashNode::Draw(base::FrameDef* frame_def) {
     c.Scale(size_, size_, size_);
     c.Rotate(RandomFloat() * 360.0f, 1, 1, 0);
     c.DrawMeshAsset(
-        g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kFlash));
+        g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesFlash));
   }
   c.Submit();
 }

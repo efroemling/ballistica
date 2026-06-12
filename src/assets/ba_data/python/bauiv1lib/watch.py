@@ -173,7 +173,7 @@ class WatchWindow(bui.MainWindow):
                 self._scroll_y,
             ),
             texture=builtinassets.textures.scroll_widget,
-            mesh_transparent=bui.getmesh('softEdgeOutside'),
+            mesh_transparent=builtinassets.meshes.soft_edge_outside,
             opacity=0.4,
         )
         self._tab_container: bui.Widget | None = None

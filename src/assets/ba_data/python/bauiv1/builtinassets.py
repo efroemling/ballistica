@@ -1,11 +1,11 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Asset-package wrapper for ``a-0.babuiltinassets.260611a`` (bauiv1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260612`` (bauiv1).
 
 Auto-generated; do not edit by hand.
 """
 
-# ba_meta require asset-package a-0.babuiltinassets.260611a
+# ba_meta require asset-package a-0.babuiltinassets.260612
 # pylint: disable=missing-function-docstring
 # pylint: disable=too-many-public-methods, useless-suppression
 # pylint: disable=too-many-lines, disallowed-name
@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import bauiv1
 
-__asset_package__ = 'a-0.babuiltinassets.260611a'
+__asset_package__ = 'a-0.babuiltinassets.260612'
 _APVERID = __asset_package__
 
 
@@ -143,6 +143,457 @@ class _Audio:
 
 
 audio = _Audio()
+
+
+class _Meshes:
+    @property
+    def action_button_bottom(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/action_button_bottom')
+
+    @property
+    def action_button_left(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/action_button_left')
+
+    @property
+    def action_button_right(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/action_button_right')
+
+    @property
+    def action_button_top(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/action_button_top')
+
+    @property
+    def arrow_back(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/arrow_back')
+
+    @property
+    def arrow_front(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/arrow_front')
+
+    @property
+    def box(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/box')
+
+    @property
+    def boxing_glove(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/boxing_glove')
+
+    @property
+    def button_back_opaque(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_back_opaque')
+
+    @property
+    def button_back_small_opaque(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_back_small_opaque')
+
+    @property
+    def button_back_small_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(
+            f'{_APVERID}:meshes/button_back_small_transparent'
+        )
+
+    @property
+    def button_back_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_back_transparent')
+
+    @property
+    def button_large_opaque(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_large_opaque')
+
+    @property
+    def button_large_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_large_transparent')
+
+    @property
+    def button_larger_opaque(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_larger_opaque')
+
+    @property
+    def button_larger_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_larger_transparent')
+
+    @property
+    def button_medium_opaque(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_medium_opaque')
+
+    @property
+    def button_medium_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_medium_transparent')
+
+    @property
+    def button_small_opaque(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_small_opaque')
+
+    @property
+    def button_small_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_small_transparent')
+
+    @property
+    def button_square_opaque(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_square_opaque')
+
+    @property
+    def button_square_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_square_transparent')
+
+    @property
+    def button_tab_opaque(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_tab_opaque')
+
+    @property
+    def button_tab_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/button_tab_transparent')
+
+    @property
+    def check_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/check_transparent')
+
+    @property
+    def cross_out(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cross_out')
+
+    @property
+    def cylinder(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/cylinder')
+
+    @property
+    def eye_ball(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/eye_ball')
+
+    @property
+    def eye_ball_iris(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/eye_ball_iris')
+
+    @property
+    def eye_lid(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/eye_lid')
+
+    @property
+    def flag_pole(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/flag_pole')
+
+    @property
+    def flag_stand(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/flag_stand')
+
+    @property
+    def flash(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/flash')
+
+    @property
+    def hair_tuft1(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/hair_tuft1')
+
+    @property
+    def hair_tuft1b(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/hair_tuft1b')
+
+    @property
+    def hair_tuft2(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/hair_tuft2')
+
+    @property
+    def hair_tuft3(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/hair_tuft3')
+
+    @property
+    def hair_tuft4(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/hair_tuft4')
+
+    @property
+    def image16x1(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/image16x1')
+
+    @property
+    def image1x1(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/image1x1')
+
+    @property
+    def image1x1_full_screen(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/image1x1_full_screen')
+
+    @property
+    def image1x1_vrfull_screen(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/image1x1_vrfull_screen')
+
+    @property
+    def image2x1(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/image2x1')
+
+    @property
+    def image4x1(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/image4x1')
+
+    @property
+    def locator(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/locator')
+
+    @property
+    def locator_box(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/locator_box')
+
+    @property
+    def locator_circle(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/locator_circle')
+
+    @property
+    def locator_circle_outline(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/locator_circle_outline')
+
+    @property
+    def overlay_guide(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/overlay_guide')
+
+    @property
+    def scorch(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/scorch')
+
+    @property
+    def scroll_bar_thumb_opaque(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/scroll_bar_thumb_opaque')
+
+    @property
+    def scroll_bar_thumb_short_opaque(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(
+            f'{_APVERID}:meshes/scroll_bar_thumb_short_opaque'
+        )
+
+    @property
+    def scroll_bar_thumb_short_simple(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(
+            f'{_APVERID}:meshes/scroll_bar_thumb_short_simple'
+        )
+
+    @property
+    def scroll_bar_thumb_short_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(
+            f'{_APVERID}:meshes/scroll_bar_thumb_short_transparent'
+        )
+
+    @property
+    def scroll_bar_thumb_simple(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/scroll_bar_thumb_simple')
+
+    @property
+    def scroll_bar_thumb_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/scroll_bar_thumb_transparent')
+
+    @property
+    def scroll_bar_trough_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(
+            f'{_APVERID}:meshes/scroll_bar_trough_transparent'
+        )
+
+    @property
+    def shield(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/shield')
+
+    @property
+    def shock_wave(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/shock_wave')
+
+    @property
+    def shrapnel1(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/shrapnel1')
+
+    @property
+    def shrapnel_board(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/shrapnel_board')
+
+    @property
+    def shrapnel_slime(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/shrapnel_slime')
+
+    @property
+    def soft_edge_inside(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/soft_edge_inside')
+
+    @property
+    def soft_edge_outside(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/soft_edge_outside')
+
+    @property
+    def text_box_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/text_box_transparent')
+
+    @property
+    def vr_fade(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/vr_fade')
+
+    @property
+    def vr_overlay(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/vr_overlay')
+
+    @property
+    def window_hsmall_vmed_opaque(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/window_hsmall_vmed_opaque')
+
+    @property
+    def window_hsmall_vmed_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(
+            f'{_APVERID}:meshes/window_hsmall_vmed_transparent'
+        )
+
+    @property
+    def window_hsmall_vsmall_opaque(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/window_hsmall_vsmall_opaque')
+
+    @property
+    def window_hsmall_vsmall_transparent(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(
+            f'{_APVERID}:meshes/window_hsmall_vsmall_transparent'
+        )
+
+    @property
+    def wing(self) -> bauiv1.Mesh:
+        import bauiv1
+
+        return bauiv1.getmesh(f'{_APVERID}:meshes/wing')
+
+
+meshes = _Meshes()
 
 
 class _Textures:

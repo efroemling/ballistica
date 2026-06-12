@@ -17,7 +17,6 @@
                                 "src/assets/pylib-android/"
                                 "src/assets/pylib-apple/"
                                 "src/assets/windows/"
-                                "tools/make_bob/"
                                 "tools/mali_texture_compression_tool/"
                                 "tools/nvidia_texture_tools/"
                                 "tools/powervr_tools/"

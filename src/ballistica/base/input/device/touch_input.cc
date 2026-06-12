@@ -468,7 +468,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
         c.Translate(d_pad_base_x_ + x_offs, d_pad_base_y_ + y_offs, kDrawDepth);
         c.Scale(sc2, sc2);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
       }
 
       if (movement_control_type_ == MovementControlType::kJoystick) {
@@ -484,7 +484,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
           c.Translate(d_pad_x_ + x_offs, d_pad_y_ + y_offs, kDrawDepth);
           c.Scale(sc_move * 0.5f, sc_move * 0.5f);
           c.DrawMeshAsset(
-              g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
+              g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
         }
       }
     }
@@ -509,7 +509,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
         c.Translate(buttons_x_ + x_offs, buttons_y_ + y_offs, kDrawDepth);
         c.Scale(sc2, sc2);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
       }
     }
     c.Submit();
@@ -641,8 +641,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              BuiltinMeshOldID::kActionButtonRight));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              BuiltinMeshID::kMeshesActionButtonRight));
         }
       }
 
@@ -670,8 +670,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              BuiltinMeshOldID::kActionButtonLeft));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              BuiltinMeshID::kMeshesActionButtonLeft));
         }
       }
 
@@ -698,8 +698,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              BuiltinMeshOldID::kActionButtonBottom));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              BuiltinMeshID::kMeshesActionButtonBottom));
         }
       }
 
@@ -728,8 +728,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              BuiltinMeshOldID::kActionButtonTop));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              BuiltinMeshID::kMeshesActionButtonTop));
         }
       }
 
@@ -764,7 +764,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
           }
           c.Scale(b_width * 0.3f, b_width * 0.3f);
           c.DrawMeshAsset(
-              g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
+              g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
         }
       }
     }
@@ -840,7 +840,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
         c2.Translate(0.0f, dist * -0.5f, 0.0f);
         c2.Scale(0.15f, dist, 0.2f);
         c2.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kArrowBack));
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesArrowBack));
       }
 
       {
@@ -848,7 +848,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
         c2.Translate(0.0f, dist * -1.0f - 0.15f, 0.0f);
         c2.Scale(0.45f, 0.3f, 0.3f);
         c2.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kArrowFront));
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesArrowFront));
       }
     }
     c2.Submit();

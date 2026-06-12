@@ -121,7 +121,14 @@ _GC_BUSY_TIMEOUT_SECONDS = 2.0
 _CAS_SHARD_COUNT = 256
 
 #: The canonical asset-package buckets, in registration order.
-_BUCKETS = ('constant', 'language', 'textures', 'cube_map_textures', 'audio')
+_BUCKETS = (
+    'constant',
+    'language',
+    'textures',
+    'cube_map_textures',
+    'audio',
+    'meshes',
+)
 
 #: Per-bucket fallback flavor coord (or None) — used ONLY for the
 #: builtin/projectconfig bootstrap package, whose fallbacks are
@@ -137,6 +144,9 @@ _BUCKET_FALLBACKS: dict[str, str | None] = {
     # == fallback for GUI builds today; this entry matters only if a
     # non-bundled audio dimension (e.g. an ultra tier) appears later.
     'audio': 'audio/vorbis_v1.regular',
+    # Same story for meshes (decision #26): bob_v1 is the only real
+    # profile, so desired == fallback for GUI builds today.
+    'meshes': 'meshes/bob_v1.regular',
 }
 
 
@@ -519,6 +529,12 @@ class AssetSubsystem(AppSubsystem):
         # (headless-aware).
         self._audio_tier = 'regular'
 
+        # Mesh tier is likewise hard-coded for now (decision #26;
+        # REGULAR is the only tier — the dimension exists for a future
+        # subdiv ULTRA). The mesh profile comes from the _mesh_profile
+        # property (headless-aware).
+        self._mesh_tier = 'regular'
+
         # Render-space (compositing space) flavor dimension (decision
         # #23). Hard-coded to 'gamma' — the only space the renderer
         # composites in today. Becomes runtime-toggleable when the
@@ -645,6 +661,17 @@ class AssetSubsystem(AppSubsystem):
         """
         return 'null' if self._texture_profile == 'null' else 'vorbis_v1'
 
+    @property
+    def _mesh_profile(self) -> str:
+        """The active display-mesh profile for resolves (decision #26).
+
+        Rides the texture profile's NULL-ness exactly like audio:
+        headless builds never load display-mesh bytes (collision
+        meshes ride the constant bucket instead). Mirrors the
+        server-side derivation in ``standard_bucket_requests()``.
+        """
+        return 'null' if self._texture_profile == 'null' else 'bob_v1'
+
     def _desired_coords(self, language: Locale) -> dict[str, str]:
         """The desired ``bucket -> coord`` for the active dimensions.
 
@@ -673,6 +700,9 @@ class AssetSubsystem(AppSubsystem):
             ),
             # Audio has its own profile/tier dimensions (decision #25).
             'audio': f'audio/{self._audio_profile}.{self._audio_tier}',
+            # Display meshes likewise (decision #26); collision meshes
+            # need no entry — they ride 'constant'.
+            'meshes': f'meshes/{self._mesh_profile}.{self._mesh_tier}',
         }
 
     @staticmethod

@@ -183,32 +183,32 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate(0.5f, half_height);
           c.Scale(1.1f, height + 0.1f);
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
         c.SetColor(0.4f * o, 0.4f * o, 0.8f * o, 0.0f * o);
         {
           auto xf = c.ScopedTransform();
           c.Translate(p_left * 0.5f, half_height);
           c.Scale(p_left, height);
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
         c.SetColor(1.0f * o, 1.0f * o, 1.0f * o, 0.0f);
         {
           auto xf = c.ScopedTransform();
           c.Translate((p_left + p_right) * 0.5f, half_height);
           c.Scale(p_right - p_left, height);
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
         c.SetColor(0.1f * o, 0.1f * o, 0.2f * o, 0.4f * o);
         {
           auto xf = c.ScopedTransform();
           c.Translate((p_right + 1.0f) * 0.5f, half_height);
           c.Scale(1.0f - p_right, height);
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
       }
       c.Submit();
@@ -264,7 +264,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
                1, 0);
       c.Scale(r2, r2, r2);
       c.DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kShield),
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesShield),
           base::kMeshDrawFlagNoReflection);
     }
     c.Submit();
@@ -280,7 +280,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
                   0, 1, 0);
         c2.Scale(r2, r2, r2);
         c2.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kShield));
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesShield));
       }
       c2.Submit();
     }
@@ -296,7 +296,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
         float sc = r2 * 1.1f;
         c2.Scale(sc, sc, sc);
         c2.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kShield));
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesShield));
       }
       c2.Submit();
     }

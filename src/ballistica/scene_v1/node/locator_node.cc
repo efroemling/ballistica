@@ -110,15 +110,15 @@ void LocatorNode::SetSize(const std::vector<float>& vals) {
 }
 
 void LocatorNode::Draw(base::FrameDef* frame_def) {
-  base::BuiltinMeshOldID mesh;
+  base::BuiltinMeshID mesh;
   if (shape_ == Shape::kBox) {
-    mesh = base::BuiltinMeshOldID::kLocatorBox;
+    mesh = base::BuiltinMeshID::kMeshesLocatorBox;
   } else if (shape_ == Shape::kCircle) {
-    mesh = base::BuiltinMeshOldID::kLocatorCircle;
+    mesh = base::BuiltinMeshID::kMeshesLocatorCircle;
   } else if (shape_ == Shape::kCircleOutline) {
-    mesh = base::BuiltinMeshOldID::kLocatorCircleOutline;
+    mesh = base::BuiltinMeshID::kMeshesLocatorCircleOutline;
   } else {
-    mesh = base::BuiltinMeshOldID::kLocator;
+    mesh = base::BuiltinMeshID::kMeshesLocator;
   }
 
   base::BuiltinTextureID texture;
@@ -149,7 +149,7 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
       auto xf = c.ScopedTransform();
       c.Translate(position_[0], position_[1], position_[2]);
       c.Scale(size_[0], size_[1], size_[2]);
-      c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(mesh));
+      c.DrawMeshAsset(g_base->assets->BuiltinMesh(mesh));
     }
     c.Submit();
   }
@@ -174,7 +174,7 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(position_[0], position_[1], position_[2]);
         c.Scale(size_[0], size_[1], size_[2]);
-        c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(mesh));
+        c.DrawMeshAsset(g_base->assets->BuiltinMesh(mesh));
       }
       c.Submit();
     } else {
@@ -186,7 +186,7 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(position_[0], position_[1], position_[2]);
         c.Scale(size_[0], size_[1], size_[2]);
-        c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(mesh));
+        c.DrawMeshAsset(g_base->assets->BuiltinMesh(mesh));
       }
       c.Submit();
     }

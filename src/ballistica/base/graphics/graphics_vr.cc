@@ -79,7 +79,7 @@ void GraphicsVR::DoDrawFade(FrameDef* frame_def, float amt) {
     float inv_a = 1.0f - amt;
     float s = 100.0f * inv_a + 5.0f * amt;
     c.Scale(s, s, s);
-    c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kVRFade));
+    c.DrawMeshAsset(g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesVrFade));
   }
   c.Submit();
 }
@@ -287,7 +287,7 @@ void GraphicsVR::DrawVROverlay(FrameDef* frame_def) {
               kBaseVirtualResY * (1.0f + kVRBorder),
               kBaseVirtualResX * (1.0f + kVRBorder));
       c.DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kVROverlay));
+          g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesVrOverlay));
     }
     c.Submit();
   }
@@ -316,7 +316,7 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
       c.Translate(0, 0, 5);
       c.Scale(2, 2, 2);
       c.DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kBoxingGlove));
+          g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove));
     }
     c.Submit();
   }
@@ -338,7 +338,7 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
         c.VRTransformToRightHand();
         c.Scale(10, 10, 10);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kBoxingGlove));
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove));
       }
       c.Submit();
       break;
@@ -360,7 +360,7 @@ void GraphicsVR::DrawVRControllers(FrameDef* frame_def) {
         c.VRTransformToLeftHand();
         c.Scale(10, 10, 10);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kBoxingGlove));
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove));
       }
       c.Submit();
       break;

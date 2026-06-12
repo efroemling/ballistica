@@ -1561,7 +1561,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
       c.Translate(pass->virtual_width() * 0.5f, bottom + 160.0f);
       c.Scale(pass->virtual_width() * 1.2f, 600.0f);
       c.DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
+          g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
     }
   }
 

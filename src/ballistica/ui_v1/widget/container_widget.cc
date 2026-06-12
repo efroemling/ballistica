@@ -983,8 +983,8 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     if (height > width * 0.6f) {
       tex_id = base::BuiltinTextureID::kTexturesWindowHsmallVmed;
       bg_mesh_transparent_id_ =
-          base::BuiltinMeshOldID::kWindowHSmallVMedTransparent;
-      bg_mesh_opaque_id_ = base::BuiltinMeshOldID::kWindowHSmallVMedOpaque;
+          base::BuiltinMeshID::kMeshesWindowHsmallVmedTransparent;
+      bg_mesh_opaque_id_ = base::BuiltinMeshID::kMeshesWindowHsmallVmedOpaque;
       l_border = width * 0.07f;
       r_border = width * 0.19f;
       b_border = height * 0.1f;
@@ -996,8 +996,8 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     } else {
       tex_id = base::BuiltinTextureID::kTexturesWindowHsmallVsmall;
       bg_mesh_transparent_id_ =
-          base::BuiltinMeshOldID::kWindowHSmallVSmallTransparent;
-      bg_mesh_opaque_id_ = base::BuiltinMeshOldID::kWindowHSmallVSmallOpaque;
+          base::BuiltinMeshID::kMeshesWindowHsmallVsmallTransparent;
+      bg_mesh_opaque_id_ = base::BuiltinMeshID::kMeshesWindowHsmallVsmallOpaque;
       l_border = width * 0.12f;
       r_border = width * 0.19f;
       b_border = height * 0.45f;
@@ -1080,8 +1080,8 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             auto xf = c.ScopedTransform();
             c.Translate(bg_center_x_, bg_center_y_);
             c.Scale(s, s);
-            c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-                base::BuiltinMeshOldID::kImage1x1));
+            c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+                base::BuiltinMeshID::kMeshesImage1x1));
           }
           c.Submit();
         }
@@ -1100,7 +1100,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         auto xf = c.ScopedTransform();
         c.Translate(bg_center_x_, bg_center_y_, zoffs);
         c.Scale(bg_width_ * transition_scale_, bg_height_ * transition_scale_);
-        c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+        c.DrawMeshAsset(g_base->assets->BuiltinMesh(
             draw_transparent ? bg_mesh_transparent_id_ : bg_mesh_opaque_id_));
       }
       c.Submit();
@@ -1139,7 +1139,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.Translate(glow_center_x_, glow_center_y_);
         c.Scale(glow_width_, glow_height_);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage1x1));
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
       }
       c.Submit();
     }

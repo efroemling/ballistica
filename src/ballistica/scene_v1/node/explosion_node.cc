@@ -147,8 +147,8 @@ void ExplosionNode::Draw(base::FrameDef* frame_def) {
                     1.0f + s * 0.8f * 0.0015f * age,
                     1.0f + s * 0.8f * 0.025f * age);
             c.Scale(0.7f, 0.7f, 0.7f);
-            c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-                                base::BuiltinMeshOldID::kShockWave),
+            c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+                                base::BuiltinMeshID::kMeshesShockWave),
                             base::kMeshDrawFlagNoReflection);
           }
           c.Submit();
@@ -167,8 +167,8 @@ void ExplosionNode::Draw(base::FrameDef* frame_def) {
                     1.0f + s * 0.8f * 0.0015f * age,
                     1.0f + s * 0.8f * 0.025f * age);
             c.Scale(0.7f, 0.7f, 0.7f);
-            c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-                                base::BuiltinMeshOldID::kShockWave),
+            c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+                                base::BuiltinMeshID::kMeshesShockWave),
                             base::kMeshDrawFlagNoReflection);
           }
           c.Submit();
@@ -222,14 +222,14 @@ void ExplosionNode::Draw(base::FrameDef* frame_def) {
       c.MultMatrix((om * m).m);
       c.Scale(0.9f * s, 0.9f * s, 0.9f * s);
       c.DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kShield),
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesShield),
           base::kMeshDrawFlagNoReflection);
       c.Scale(0.6f, 0.6f, 0.6f);
       c.Rotate(33, 0, 1, 0);
       c.SetColor(o * 7.0f * color_[0], o * 7.0f * color_[1],
                  o * 7.0f * color_[2], 0);
       c.DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kShield),
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesShield),
           base::kMeshDrawFlagNoReflection);
     }
     c.Submit();

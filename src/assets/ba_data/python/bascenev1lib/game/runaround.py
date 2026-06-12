@@ -146,8 +146,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         self._cashregistersound = builtinassets.audio.cash_register
         self._bad_guy_score_sound = stdassets.audio.shield_down
         self._heart_tex = stdassets.textures.heart
-        self._heart_mesh_opaque = bs.getmesh('heartOpaque')
-        self._heart_mesh_transparent = bs.getmesh('heartTransparent')
+        self._heart_mesh_opaque = stdassets.meshes.heart_opaque
+        self._heart_mesh_transparent = stdassets.meshes.heart_transparent
 
         self._a_player_has_been_killed = False
         self._spawn_center = self._map_type.defs.points['spawn1'][0:3]

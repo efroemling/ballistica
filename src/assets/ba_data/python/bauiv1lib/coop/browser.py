@@ -69,10 +69,10 @@ class CoopBrowserWindow(bui.MainWindow):
         assert isinstance(self._tournament_button_count, int)
 
         self.star_tex = stdassets.textures.star
-        self.lsbt = bui.getmesh('level_select_button_transparent')
-        self.lsbo = bui.getmesh('level_select_button_opaque')
+        self.lsbt = stdassets.meshes.level_select_button_transparent
+        self.lsbo = stdassets.meshes.level_select_button_opaque
         self.a_outline_tex = stdassets.textures.achievement_outline
-        self.a_outline_mesh = bui.getmesh('achievementOutline')
+        self.a_outline_mesh = stdassets.meshes.achievement_outline
         self._campaign_sub_container: bui.Widget | None = None
         self._tournament_info_button: bui.Widget | None = None
         self._easy_button: bui.Widget | None = None

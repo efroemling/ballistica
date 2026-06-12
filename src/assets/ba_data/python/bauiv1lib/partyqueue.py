@@ -246,25 +246,25 @@ class PartyQueueWindow(bui.Window):
         self._initial_offset = 0.0
         self._boost_tickets = 0
         self._boost_strength = 0.0
-        self._angry_computer_transparent_mesh = bui.getmesh(
-            'angryComputerTransparent'
+        self._angry_computer_transparent_mesh = (
+            stdassets.meshes.angry_computer_transparent
         )
         self._angry_computer_image: bui.Widget | None = None
-        self.lineup_1_transparent_mesh: bui.Mesh = bui.getmesh(
-            'playerLineup1Transparent'
+        self.lineup_1_transparent_mesh: bui.Mesh = (
+            stdassets.meshes.player_lineup1_transparent
         )
-        self._lineup_2_transparent_mesh: bui.Mesh = bui.getmesh(
-            'playerLineup2Transparent'
+        self._lineup_2_transparent_mesh: bui.Mesh = (
+            stdassets.meshes.player_lineup2_transparent
         )
 
-        self._lineup_3_transparent_mesh = bui.getmesh(
-            'playerLineup3Transparent'
+        self._lineup_3_transparent_mesh = (
+            stdassets.meshes.player_lineup3_transparent
         )
-        self._lineup_4_transparent_mesh = bui.getmesh(
-            'playerLineup4Transparent'
+        self._lineup_4_transparent_mesh = (
+            stdassets.meshes.player_lineup4_transparent
         )
         self._line_image: bui.Widget | None = None
-        self.eyes_mesh: bui.Mesh = bui.getmesh('plasticEyesTransparent')
+        self.eyes_mesh: bui.Mesh = stdassets.meshes.plastic_eyes_transparent
         self._white_tex = builtinassets.textures.white
         uiscale = bui.app.ui_v1.uiscale
         super().__init__(

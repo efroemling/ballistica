@@ -55,8 +55,8 @@ class Background(bs.Actor):
                 )
             if show_logo:
                 logo_texture = stdassets.textures.logo
-                logo_mesh = bs.getmesh('logo')
-                logo_mesh_transparent = bs.getmesh('logoTransparent')
+                logo_mesh = stdassets.meshes.logo
+                logo_mesh_transparent = stdassets.meshes.logo_transparent
                 self.logo = bs.newnode(
                     'image',
                     owner=self.node,

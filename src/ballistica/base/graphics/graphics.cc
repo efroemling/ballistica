@@ -929,7 +929,7 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
         c.Scale(10, 10, 10);
         c.Rotate(a, 0, 0, 1);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kBoxingGlove));
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove));
       }
       c.Submit();
     }
@@ -947,7 +947,7 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
         c.Scale(10.0f, 10.0f, 10.0f);
         c.Rotate(a, 0.0f, 0.0f, 1.0f);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kBoxingGlove));
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove));
       }
       c.Submit();
     }
@@ -963,7 +963,7 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
         c.Scale(10.0f, 10.0f, 10.0f);
         c.Rotate(a, 0.0f, 0.0f, 1.0f);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kBoxingGlove));
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove));
       }
       c.Submit();
     }
@@ -980,7 +980,7 @@ void Graphics::DrawDebugBuffers(RenderPass* pass) {
         c.Translate(70, 400, kDebugImgZDepth);
         c.Scale(csize, csize);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
       }
       c.Submit();
     }
@@ -992,7 +992,7 @@ void Graphics::DrawDebugBuffers(RenderPass* pass) {
         c.Translate(70, 250, kDebugImgZDepth);
         c.Scale(csize, csize);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
       }
       c.Submit();
     }
@@ -1186,7 +1186,7 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
         c.Translate(csize * 0.40f, csize * -0.38f, kCursorZDepth);
         c.Scale(csize, csize);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
       }
       c.Submit();
     }
@@ -1825,7 +1825,7 @@ void Graphics::DrawVirtualSafeAreaBounds(RenderPass* pass) {
                   0.0f);
       c.Scale(width, height, 0.01f);
       c.DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kOverlayGuide));
+          g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesOverlayGuide));
     }
     c.Submit();
   }

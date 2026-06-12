@@ -63,11 +63,6 @@ void Assets::LoadSystemData(SystemDataID id, const char* name) {
   assert(system_datas_.size() == static_cast<int>(id) + 1);
 }
 
-void Assets::LoadBuiltinMeshOld(BuiltinMeshOldID id, const char* name) {
-  builtin_meshes_old_.push_back(GetMesh(name));
-  assert(builtin_meshes_old_.size() == static_cast<int>(id) + 1);
-}
-
 // Bring-up note: the four LoadBuiltin* loaders below catch lookup
 // failures so a stale local cached manifest (or in-progress workspace
 // migration) doesn't crash engine startup. They push a null Ref on
@@ -157,108 +152,8 @@ void Assets::StartLoading() {
   // (crickets)
 
   // System meshes:
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonSmallTransparent,
-                     "buttonSmallTransparent");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonSmallOpaque, "buttonSmallOpaque");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonMediumTransparent,
-                     "buttonMediumTransparent");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonMediumOpaque,
-                     "buttonMediumOpaque");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonBackTransparent,
-                     "buttonBackTransparent");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonBackOpaque, "buttonBackOpaque");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonBackSmallTransparent,
-                     "buttonBackSmallTransparent");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonBackSmallOpaque,
-                     "buttonBackSmallOpaque");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonTabTransparent,
-                     "buttonTabTransparent");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonTabOpaque, "buttonTabOpaque");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonLargeTransparent,
-                     "buttonLargeTransparent");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonLargeOpaque, "buttonLargeOpaque");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonLargerTransparent,
-                     "buttonLargerTransparent");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonLargerOpaque,
-                     "buttonLargerOpaque");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonSquareTransparent,
-                     "buttonSquareTransparent");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kButtonSquareOpaque,
-                     "buttonSquareOpaque");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kCheckTransparent, "checkTransparent");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kScrollBarThumbTransparent,
-                     "scrollBarThumbTransparent");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kScrollBarThumbOpaque,
-                     "scrollBarThumbOpaque");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kScrollBarThumbSimple,
-                     "scrollBarThumbSimple");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kScrollBarThumbShortTransparent,
-                     "scrollBarThumbShortTransparent");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kScrollBarThumbShortOpaque,
-                     "scrollBarThumbShortOpaque");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kScrollBarThumbShortSimple,
-                     "scrollBarThumbShortSimple");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kScrollBarTroughTransparent,
-                     "scrollBarTroughTransparent");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kTextBoxTransparent,
-                     "textBoxTransparent");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kImage1x1, "image1x1");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kImage1x1FullScreen,
-                     "image1x1FullScreen");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kImage2x1, "image2x1");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kImage4x1, "image4x1");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kImage16x1, "image16x1");
 #if BA_VR_BUILD
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kImage1x1VRFullScreen,
-                     "image1x1VRFullScreen");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kVROverlay, "vrOverlay");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kVRFade, "vrFade");
 #endif  // BA_VR_BUILD
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kOverlayGuide, "overlayGuide");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kWindowHSmallVMedTransparent,
-                     "windowHSmallVMedTransparent");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kWindowHSmallVMedOpaque,
-                     "windowHSmallVMedOpaque");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kWindowHSmallVSmallTransparent,
-                     "windowHSmallVSmallTransparent");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kWindowHSmallVSmallOpaque,
-                     "windowHSmallVSmallOpaque");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kSoftEdgeOutside, "softEdgeOutside");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kSoftEdgeInside, "softEdgeInside");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kBoxingGlove, "boxingGlove");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kShield, "shield");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kFlagPole, "flagPole");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kFlagStand, "flagStand");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kScorch, "scorch");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kEyeBall, "eyeBall");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kEyeBallIris, "eyeBallIris");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kEyeLid, "eyeLid");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kHairTuft1, "hairTuft1");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kHairTuft1b, "hairTuft1b");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kHairTuft2, "hairTuft2");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kHairTuft3, "hairTuft3");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kHairTuft4, "hairTuft4");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kShrapnel1, "shrapnel1");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kShrapnelSlime, "shrapnelSlime");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kShrapnelBoard, "shrapnelBoard");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kShockWave, "shockWave");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kFlash, "flash");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kCylinder, "cylinder");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kArrowFront, "arrowFront");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kArrowBack, "arrowBack");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kActionButtonLeft, "actionButtonLeft");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kActionButtonTop, "actionButtonTop");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kActionButtonRight, "actionButtonRight");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kActionButtonBottom,
-                     "actionButtonBottom");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kBox, "box");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kLocator, "locator");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kLocatorBox, "locatorBox");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kLocatorCircle, "locatorCircle");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kLocatorCircleOutline,
-                     "locatorCircleOutline");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kCrossOut, "crossOut");
-  LoadBuiltinMeshOld(BuiltinMeshOldID::kWing, "wing");
 
   // CAS-backed builtin loads. The block below is auto-generated;
   // each line corresponds to one entry in ``BuiltinTextureID`` /
@@ -267,235 +162,390 @@ void Assets::StartLoading() {
   // __AUTOGENERATED_BUILTIN_ASSET_LOAD_BEGIN__
   // textures
   LoadBuiltinTexture(BuiltinTextureID::kTexturesActionButtons,
-                     "a-0.babuiltinassets.260611a:textures/action_buttons");
+                     "a-0.babuiltinassets.260612:textures/action_buttons");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesArrow,
-                     "a-0.babuiltinassets.260611a:textures/arrow");
+                     "a-0.babuiltinassets.260612:textures/arrow");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesBackIcon,
-                     "a-0.babuiltinassets.260611a:textures/back_icon");
+                     "a-0.babuiltinassets.260612:textures/back_icon");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesBlack,
-                     "a-0.babuiltinassets.260611a:textures/black");
+                     "a-0.babuiltinassets.260612:textures/black");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesBombButton,
-                     "a-0.babuiltinassets.260611a:textures/bomb_button");
-  LoadBuiltinTexture(
-      BuiltinTextureID::kTexturesBoxingGlovesColor,
-      "a-0.babuiltinassets.260611a:textures/boxing_gloves_color");
+                     "a-0.babuiltinassets.260612:textures/bomb_button");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesBoxingGlovesColor,
+                     "a-0.babuiltinassets.260612:textures/boxing_gloves_color");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesButtonSquare,
-                     "a-0.babuiltinassets.260611a:textures/button_square");
+                     "a-0.babuiltinassets.260612:textures/button_square");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesButtonSquareWide,
-                     "a-0.babuiltinassets.260611a:textures/button_square_wide");
-  LoadBuiltinTexture(
-      BuiltinTextureID::kTexturesCharacterIconMask,
-      "a-0.babuiltinassets.260611a:textures/character_icon_mask");
+                     "a-0.babuiltinassets.260612:textures/button_square_wide");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesCharacterIconMask,
+                     "a-0.babuiltinassets.260612:textures/character_icon_mask");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesCircle,
-                     "a-0.babuiltinassets.260611a:textures/circle");
+                     "a-0.babuiltinassets.260612:textures/circle");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesCircleNoAlpha,
-                     "a-0.babuiltinassets.260611a:textures/circle_no_alpha");
+                     "a-0.babuiltinassets.260612:textures/circle_no_alpha");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesCircleOutline,
-                     "a-0.babuiltinassets.260611a:textures/circle_outline");
+                     "a-0.babuiltinassets.260612:textures/circle_outline");
   LoadBuiltinTexture(
       BuiltinTextureID::kTexturesCircleOutlineNoAlpha,
-      "a-0.babuiltinassets.260611a:textures/circle_outline_no_alpha");
+      "a-0.babuiltinassets.260612:textures/circle_outline_no_alpha");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesCircleShadow,
-                     "a-0.babuiltinassets.260611a:textures/circle_shadow");
+                     "a-0.babuiltinassets.260612:textures/circle_shadow");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesCircleSoft,
-                     "a-0.babuiltinassets.260611a:textures/circle_soft");
+                     "a-0.babuiltinassets.260612:textures/circle_soft");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesCursor,
-                     "a-0.babuiltinassets.260611a:textures/cursor");
+                     "a-0.babuiltinassets.260612:textures/cursor");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesExplosion,
-                     "a-0.babuiltinassets.260611a:textures/explosion");
+                     "a-0.babuiltinassets.260612:textures/explosion");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesEyeColor,
-                     "a-0.babuiltinassets.260611a:textures/eye_color");
-  LoadBuiltinTexture(
-      BuiltinTextureID::kTexturesEyeColorTintMask,
-      "a-0.babuiltinassets.260611a:textures/eye_color_tint_mask");
+                     "a-0.babuiltinassets.260612:textures/eye_color");
+  LoadBuiltinTexture(BuiltinTextureID::kTexturesEyeColorTintMask,
+                     "a-0.babuiltinassets.260612:textures/eye_color_tint_mask");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFlagPoleColor,
-                     "a-0.babuiltinassets.260611a:textures/flag_pole_color");
+                     "a-0.babuiltinassets.260612:textures/flag_pole_color");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontBig,
-                     "a-0.babuiltinassets.260611a:textures/font_big");
+                     "a-0.babuiltinassets.260612:textures/font_big");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontExtras,
-                     "a-0.babuiltinassets.260611a:textures/font_extras");
+                     "a-0.babuiltinassets.260612:textures/font_extras");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontExtras2,
-                     "a-0.babuiltinassets.260611a:textures/font_extras2");
+                     "a-0.babuiltinassets.260612:textures/font_extras2");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontExtras3,
-                     "a-0.babuiltinassets.260611a:textures/font_extras3");
+                     "a-0.babuiltinassets.260612:textures/font_extras3");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontExtras4,
-                     "a-0.babuiltinassets.260611a:textures/font_extras4");
+                     "a-0.babuiltinassets.260612:textures/font_extras4");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontExtras5,
-                     "a-0.babuiltinassets.260611a:textures/font_extras5");
+                     "a-0.babuiltinassets.260612:textures/font_extras5");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall0,
-                     "a-0.babuiltinassets.260611a:textures/font_small0");
+                     "a-0.babuiltinassets.260612:textures/font_small0");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall1,
-                     "a-0.babuiltinassets.260611a:textures/font_small1");
+                     "a-0.babuiltinassets.260612:textures/font_small1");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall2,
-                     "a-0.babuiltinassets.260611a:textures/font_small2");
+                     "a-0.babuiltinassets.260612:textures/font_small2");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall3,
-                     "a-0.babuiltinassets.260611a:textures/font_small3");
+                     "a-0.babuiltinassets.260612:textures/font_small3");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall4,
-                     "a-0.babuiltinassets.260611a:textures/font_small4");
+                     "a-0.babuiltinassets.260612:textures/font_small4");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall5,
-                     "a-0.babuiltinassets.260611a:textures/font_small5");
+                     "a-0.babuiltinassets.260612:textures/font_small5");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall6,
-                     "a-0.babuiltinassets.260611a:textures/font_small6");
+                     "a-0.babuiltinassets.260612:textures/font_small6");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFontSmall7,
-                     "a-0.babuiltinassets.260611a:textures/font_small7");
+                     "a-0.babuiltinassets.260612:textures/font_small7");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesFuse,
-                     "a-0.babuiltinassets.260611a:textures/fuse");
+                     "a-0.babuiltinassets.260612:textures/fuse");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesGlow,
-                     "a-0.babuiltinassets.260611a:textures/glow");
+                     "a-0.babuiltinassets.260612:textures/glow");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesLight,
-                     "a-0.babuiltinassets.260611a:textures/light");
+                     "a-0.babuiltinassets.260612:textures/light");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesLightSharp,
-                     "a-0.babuiltinassets.260611a:textures/light_sharp");
+                     "a-0.babuiltinassets.260612:textures/light_sharp");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesLightSoft,
-                     "a-0.babuiltinassets.260611a:textures/light_soft");
+                     "a-0.babuiltinassets.260612:textures/light_soft");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesMenuButton,
-                     "a-0.babuiltinassets.260611a:textures/menu_button");
+                     "a-0.babuiltinassets.260612:textures/menu_button");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesNub,
-                     "a-0.babuiltinassets.260611a:textures/nub");
+                     "a-0.babuiltinassets.260612:textures/nub");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesOuyaAbutton,
-                     "a-0.babuiltinassets.260611a:textures/ouya_abutton");
+                     "a-0.babuiltinassets.260612:textures/ouya_abutton");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesPageLeftRight,
-                     "a-0.babuiltinassets.260611a:textures/page_left_right");
+                     "a-0.babuiltinassets.260612:textures/page_left_right");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesRgbStripes,
-                     "a-0.babuiltinassets.260611a:textures/rgb_stripes");
+                     "a-0.babuiltinassets.260612:textures/rgb_stripes");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesScorch,
-                     "a-0.babuiltinassets.260611a:textures/scorch");
+                     "a-0.babuiltinassets.260612:textures/scorch");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesScorchBig,
-                     "a-0.babuiltinassets.260611a:textures/scorch_big");
+                     "a-0.babuiltinassets.260612:textures/scorch_big");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesScrollWidget,
-                     "a-0.babuiltinassets.260611a:textures/scroll_widget");
+                     "a-0.babuiltinassets.260612:textures/scroll_widget");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesScrollWidgetGlow,
-                     "a-0.babuiltinassets.260611a:textures/scroll_widget_glow");
+                     "a-0.babuiltinassets.260612:textures/scroll_widget_glow");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesShadow,
-                     "a-0.babuiltinassets.260611a:textures/shadow");
+                     "a-0.babuiltinassets.260612:textures/shadow");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesShadowSharp,
-                     "a-0.babuiltinassets.260611a:textures/shadow_sharp");
+                     "a-0.babuiltinassets.260612:textures/shadow_sharp");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesShadowSoft,
-                     "a-0.babuiltinassets.260611a:textures/shadow_soft");
+                     "a-0.babuiltinassets.260612:textures/shadow_soft");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesShield,
-                     "a-0.babuiltinassets.260611a:textures/shield");
+                     "a-0.babuiltinassets.260612:textures/shield");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesShrapnel1Color,
-                     "a-0.babuiltinassets.260611a:textures/shrapnel1_color");
+                     "a-0.babuiltinassets.260612:textures/shrapnel1_color");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSmoke,
-                     "a-0.babuiltinassets.260611a:textures/smoke");
+                     "a-0.babuiltinassets.260612:textures/smoke");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSoftRect,
-                     "a-0.babuiltinassets.260611a:textures/soft_rect");
+                     "a-0.babuiltinassets.260612:textures/soft_rect");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSoftRect2,
-                     "a-0.babuiltinassets.260611a:textures/soft_rect2");
+                     "a-0.babuiltinassets.260612:textures/soft_rect2");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSoftRectVertical,
-                     "a-0.babuiltinassets.260611a:textures/soft_rect_vertical");
+                     "a-0.babuiltinassets.260612:textures/soft_rect_vertical");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSparks,
-                     "a-0.babuiltinassets.260611a:textures/sparks");
+                     "a-0.babuiltinassets.260612:textures/sparks");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner,
-                     "a-0.babuiltinassets.260611a:textures/spinner");
+                     "a-0.babuiltinassets.260612:textures/spinner");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner0,
-                     "a-0.babuiltinassets.260611a:textures/spinner0");
+                     "a-0.babuiltinassets.260612:textures/spinner0");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner1,
-                     "a-0.babuiltinassets.260611a:textures/spinner1");
+                     "a-0.babuiltinassets.260612:textures/spinner1");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner10,
-                     "a-0.babuiltinassets.260611a:textures/spinner10");
+                     "a-0.babuiltinassets.260612:textures/spinner10");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner11,
-                     "a-0.babuiltinassets.260611a:textures/spinner11");
+                     "a-0.babuiltinassets.260612:textures/spinner11");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner2,
-                     "a-0.babuiltinassets.260611a:textures/spinner2");
+                     "a-0.babuiltinassets.260612:textures/spinner2");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner3,
-                     "a-0.babuiltinassets.260611a:textures/spinner3");
+                     "a-0.babuiltinassets.260612:textures/spinner3");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner4,
-                     "a-0.babuiltinassets.260611a:textures/spinner4");
+                     "a-0.babuiltinassets.260612:textures/spinner4");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner5,
-                     "a-0.babuiltinassets.260611a:textures/spinner5");
+                     "a-0.babuiltinassets.260612:textures/spinner5");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner6,
-                     "a-0.babuiltinassets.260611a:textures/spinner6");
+                     "a-0.babuiltinassets.260612:textures/spinner6");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner7,
-                     "a-0.babuiltinassets.260611a:textures/spinner7");
+                     "a-0.babuiltinassets.260612:textures/spinner7");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner8,
-                     "a-0.babuiltinassets.260611a:textures/spinner8");
+                     "a-0.babuiltinassets.260612:textures/spinner8");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesSpinner9,
-                     "a-0.babuiltinassets.260611a:textures/spinner9");
+                     "a-0.babuiltinassets.260612:textures/spinner9");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesStartButton,
-                     "a-0.babuiltinassets.260611a:textures/start_button");
+                     "a-0.babuiltinassets.260612:textures/start_button");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesTextClearButton,
-                     "a-0.babuiltinassets.260611a:textures/text_clear_button");
+                     "a-0.babuiltinassets.260612:textures/text_clear_button");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesTouchArrows,
-                     "a-0.babuiltinassets.260611a:textures/touch_arrows");
+                     "a-0.babuiltinassets.260612:textures/touch_arrows");
   LoadBuiltinTexture(
       BuiltinTextureID::kTexturesTouchArrowsActions,
-      "a-0.babuiltinassets.260611a:textures/touch_arrows_actions");
+      "a-0.babuiltinassets.260612:textures/touch_arrows_actions");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesUiAtlas,
-                     "a-0.babuiltinassets.260611a:textures/ui_atlas");
+                     "a-0.babuiltinassets.260612:textures/ui_atlas");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesUiAtlas2,
-                     "a-0.babuiltinassets.260611a:textures/ui_atlas2");
+                     "a-0.babuiltinassets.260612:textures/ui_atlas2");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesUsersButton,
-                     "a-0.babuiltinassets.260611a:textures/users_button");
+                     "a-0.babuiltinassets.260612:textures/users_button");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesWhite,
-                     "a-0.babuiltinassets.260611a:textures/white");
+                     "a-0.babuiltinassets.260612:textures/white");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesWindowHsmallVmed,
-                     "a-0.babuiltinassets.260611a:textures/window_hsmall_vmed");
+                     "a-0.babuiltinassets.260612:textures/window_hsmall_vmed");
   LoadBuiltinTexture(
       BuiltinTextureID::kTexturesWindowHsmallVsmall,
-      "a-0.babuiltinassets.260611a:textures/window_hsmall_vsmall");
+      "a-0.babuiltinassets.260612:textures/window_hsmall_vsmall");
   LoadBuiltinTexture(BuiltinTextureID::kTexturesWings,
-                     "a-0.babuiltinassets.260611a:textures/wings");
+                     "a-0.babuiltinassets.260612:textures/wings");
   // cube_map_textures
   LoadBuiltinCubeMapTexture(
       BuiltinCubeMapTextureID::kTexturesReflectionChar,
-      "a-0.babuiltinassets.260611a:textures/reflection_char");
+      "a-0.babuiltinassets.260612:textures/reflection_char");
   LoadBuiltinCubeMapTexture(
       BuiltinCubeMapTextureID::kTexturesReflectionPowerup,
-      "a-0.babuiltinassets.260611a:textures/reflection_powerup");
+      "a-0.babuiltinassets.260612:textures/reflection_powerup");
   LoadBuiltinCubeMapTexture(
       BuiltinCubeMapTextureID::kTexturesReflectionSharp,
-      "a-0.babuiltinassets.260611a:textures/reflection_sharp");
+      "a-0.babuiltinassets.260612:textures/reflection_sharp");
   LoadBuiltinCubeMapTexture(
       BuiltinCubeMapTextureID::kTexturesReflectionSharper,
-      "a-0.babuiltinassets.260611a:textures/reflection_sharper");
+      "a-0.babuiltinassets.260612:textures/reflection_sharper");
   LoadBuiltinCubeMapTexture(
       BuiltinCubeMapTextureID::kTexturesReflectionSharpest,
-      "a-0.babuiltinassets.260611a:textures/reflection_sharpest");
+      "a-0.babuiltinassets.260612:textures/reflection_sharpest");
   LoadBuiltinCubeMapTexture(
       BuiltinCubeMapTextureID::kTexturesReflectionSoft,
-      "a-0.babuiltinassets.260611a:textures/reflection_soft");
+      "a-0.babuiltinassets.260612:textures/reflection_soft");
   // sounds
   LoadBuiltinSound(BuiltinSoundID::kAudioBlank,
-                   "a-0.babuiltinassets.260611a:audio/blank");
+                   "a-0.babuiltinassets.260612:audio/blank");
   LoadBuiltinSound(BuiltinSoundID::kAudioBlip,
-                   "a-0.babuiltinassets.260611a:audio/blip");
+                   "a-0.babuiltinassets.260612:audio/blip");
   LoadBuiltinSound(BuiltinSoundID::kAudioCashRegister,
-                   "a-0.babuiltinassets.260611a:audio/cash_register");
+                   "a-0.babuiltinassets.260612:audio/cash_register");
   LoadBuiltinSound(BuiltinSoundID::kAudioClick01,
-                   "a-0.babuiltinassets.260611a:audio/click01");
+                   "a-0.babuiltinassets.260612:audio/click01");
   LoadBuiltinSound(BuiltinSoundID::kAudioCorkPop,
-                   "a-0.babuiltinassets.260611a:audio/cork_pop");
+                   "a-0.babuiltinassets.260612:audio/cork_pop");
   LoadBuiltinSound(BuiltinSoundID::kAudioDeek,
-                   "a-0.babuiltinassets.260611a:audio/deek");
+                   "a-0.babuiltinassets.260612:audio/deek");
   LoadBuiltinSound(BuiltinSoundID::kAudioDing,
-                   "a-0.babuiltinassets.260611a:audio/ding");
+                   "a-0.babuiltinassets.260612:audio/ding");
   LoadBuiltinSound(BuiltinSoundID::kAudioError,
-                   "a-0.babuiltinassets.260611a:audio/error");
+                   "a-0.babuiltinassets.260612:audio/error");
   LoadBuiltinSound(BuiltinSoundID::kAudioGunCocking,
-                   "a-0.babuiltinassets.260611a:audio/gun_cocking");
+                   "a-0.babuiltinassets.260612:audio/gun_cocking");
   LoadBuiltinSound(BuiltinSoundID::kAudioPowerdown01,
-                   "a-0.babuiltinassets.260611a:audio/powerdown01");
+                   "a-0.babuiltinassets.260612:audio/powerdown01");
   LoadBuiltinSound(BuiltinSoundID::kAudioPunch01,
-                   "a-0.babuiltinassets.260611a:audio/punch01");
+                   "a-0.babuiltinassets.260612:audio/punch01");
   LoadBuiltinSound(BuiltinSoundID::kAudioScoreIncrease,
-                   "a-0.babuiltinassets.260611a:audio/score_increase");
+                   "a-0.babuiltinassets.260612:audio/score_increase");
   LoadBuiltinSound(BuiltinSoundID::kAudioSparkle01,
-                   "a-0.babuiltinassets.260611a:audio/sparkle01");
+                   "a-0.babuiltinassets.260612:audio/sparkle01");
   LoadBuiltinSound(BuiltinSoundID::kAudioSparkle02,
-                   "a-0.babuiltinassets.260611a:audio/sparkle02");
+                   "a-0.babuiltinassets.260612:audio/sparkle02");
   LoadBuiltinSound(BuiltinSoundID::kAudioSparkle03,
-                   "a-0.babuiltinassets.260611a:audio/sparkle03");
+                   "a-0.babuiltinassets.260612:audio/sparkle03");
   LoadBuiltinSound(BuiltinSoundID::kAudioSwish,
-                   "a-0.babuiltinassets.260611a:audio/swish");
+                   "a-0.babuiltinassets.260612:audio/swish");
   LoadBuiltinSound(BuiltinSoundID::kAudioSwish2,
-                   "a-0.babuiltinassets.260611a:audio/swish2");
+                   "a-0.babuiltinassets.260612:audio/swish2");
   LoadBuiltinSound(BuiltinSoundID::kAudioSwish3,
-                   "a-0.babuiltinassets.260611a:audio/swish3");
+                   "a-0.babuiltinassets.260612:audio/swish3");
   LoadBuiltinSound(BuiltinSoundID::kAudioTap,
-                   "a-0.babuiltinassets.260611a:audio/tap");
+                   "a-0.babuiltinassets.260612:audio/tap");
   LoadBuiltinSound(BuiltinSoundID::kAudioTickingCrazy,
-                   "a-0.babuiltinassets.260611a:audio/ticking_crazy");
+                   "a-0.babuiltinassets.260612:audio/ticking_crazy");
+  // meshs
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesActionButtonBottom,
+                  "a-0.babuiltinassets.260612:meshes/action_button_bottom");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesActionButtonLeft,
+                  "a-0.babuiltinassets.260612:meshes/action_button_left");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesActionButtonRight,
+                  "a-0.babuiltinassets.260612:meshes/action_button_right");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesActionButtonTop,
+                  "a-0.babuiltinassets.260612:meshes/action_button_top");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesArrowBack,
+                  "a-0.babuiltinassets.260612:meshes/arrow_back");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesArrowFront,
+                  "a-0.babuiltinassets.260612:meshes/arrow_front");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesBox,
+                  "a-0.babuiltinassets.260612:meshes/box");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove,
+                  "a-0.babuiltinassets.260612:meshes/boxing_glove");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonBackOpaque,
+                  "a-0.babuiltinassets.260612:meshes/button_back_opaque");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonBackSmallOpaque,
+                  "a-0.babuiltinassets.260612:meshes/button_back_small_opaque");
+  LoadBuiltinMesh(
+      BuiltinMeshID::kMeshesButtonBackSmallTransparent,
+      "a-0.babuiltinassets.260612:meshes/button_back_small_transparent");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonBackTransparent,
+                  "a-0.babuiltinassets.260612:meshes/button_back_transparent");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonLargeOpaque,
+                  "a-0.babuiltinassets.260612:meshes/button_large_opaque");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonLargeTransparent,
+                  "a-0.babuiltinassets.260612:meshes/button_large_transparent");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonLargerOpaque,
+                  "a-0.babuiltinassets.260612:meshes/button_larger_opaque");
+  LoadBuiltinMesh(
+      BuiltinMeshID::kMeshesButtonLargerTransparent,
+      "a-0.babuiltinassets.260612:meshes/button_larger_transparent");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonMediumOpaque,
+                  "a-0.babuiltinassets.260612:meshes/button_medium_opaque");
+  LoadBuiltinMesh(
+      BuiltinMeshID::kMeshesButtonMediumTransparent,
+      "a-0.babuiltinassets.260612:meshes/button_medium_transparent");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonSmallOpaque,
+                  "a-0.babuiltinassets.260612:meshes/button_small_opaque");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonSmallTransparent,
+                  "a-0.babuiltinassets.260612:meshes/button_small_transparent");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonSquareOpaque,
+                  "a-0.babuiltinassets.260612:meshes/button_square_opaque");
+  LoadBuiltinMesh(
+      BuiltinMeshID::kMeshesButtonSquareTransparent,
+      "a-0.babuiltinassets.260612:meshes/button_square_transparent");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonTabOpaque,
+                  "a-0.babuiltinassets.260612:meshes/button_tab_opaque");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesButtonTabTransparent,
+                  "a-0.babuiltinassets.260612:meshes/button_tab_transparent");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesCheckTransparent,
+                  "a-0.babuiltinassets.260612:meshes/check_transparent");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesCrossOut,
+                  "a-0.babuiltinassets.260612:meshes/cross_out");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesCylinder,
+                  "a-0.babuiltinassets.260612:meshes/cylinder");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesEyeBall,
+                  "a-0.babuiltinassets.260612:meshes/eye_ball");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesEyeBallIris,
+                  "a-0.babuiltinassets.260612:meshes/eye_ball_iris");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesEyeLid,
+                  "a-0.babuiltinassets.260612:meshes/eye_lid");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesFlagPole,
+                  "a-0.babuiltinassets.260612:meshes/flag_pole");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesFlagStand,
+                  "a-0.babuiltinassets.260612:meshes/flag_stand");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesFlash,
+                  "a-0.babuiltinassets.260612:meshes/flash");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesHairTuft1,
+                  "a-0.babuiltinassets.260612:meshes/hair_tuft1");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesHairTuft1b,
+                  "a-0.babuiltinassets.260612:meshes/hair_tuft1b");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesHairTuft2,
+                  "a-0.babuiltinassets.260612:meshes/hair_tuft2");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesHairTuft3,
+                  "a-0.babuiltinassets.260612:meshes/hair_tuft3");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesHairTuft4,
+                  "a-0.babuiltinassets.260612:meshes/hair_tuft4");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesImage16x1,
+                  "a-0.babuiltinassets.260612:meshes/image16x1");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesImage1x1,
+                  "a-0.babuiltinassets.260612:meshes/image1x1");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesImage1x1FullScreen,
+                  "a-0.babuiltinassets.260612:meshes/image1x1_full_screen");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesImage1x1VrfullScreen,
+                  "a-0.babuiltinassets.260612:meshes/image1x1_vrfull_screen");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesImage2x1,
+                  "a-0.babuiltinassets.260612:meshes/image2x1");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesImage4x1,
+                  "a-0.babuiltinassets.260612:meshes/image4x1");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesLocator,
+                  "a-0.babuiltinassets.260612:meshes/locator");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesLocatorBox,
+                  "a-0.babuiltinassets.260612:meshes/locator_box");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesLocatorCircle,
+                  "a-0.babuiltinassets.260612:meshes/locator_circle");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesLocatorCircleOutline,
+                  "a-0.babuiltinassets.260612:meshes/locator_circle_outline");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesOverlayGuide,
+                  "a-0.babuiltinassets.260612:meshes/overlay_guide");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesScorch,
+                  "a-0.babuiltinassets.260612:meshes/scorch");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesScrollBarThumbOpaque,
+                  "a-0.babuiltinassets.260612:meshes/scroll_bar_thumb_opaque");
+  LoadBuiltinMesh(
+      BuiltinMeshID::kMeshesScrollBarThumbShortOpaque,
+      "a-0.babuiltinassets.260612:meshes/scroll_bar_thumb_short_opaque");
+  LoadBuiltinMesh(
+      BuiltinMeshID::kMeshesScrollBarThumbShortSimple,
+      "a-0.babuiltinassets.260612:meshes/scroll_bar_thumb_short_simple");
+  LoadBuiltinMesh(
+      BuiltinMeshID::kMeshesScrollBarThumbShortTransparent,
+      "a-0.babuiltinassets.260612:meshes/scroll_bar_thumb_short_transparent");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesScrollBarThumbSimple,
+                  "a-0.babuiltinassets.260612:meshes/scroll_bar_thumb_simple");
+  LoadBuiltinMesh(
+      BuiltinMeshID::kMeshesScrollBarThumbTransparent,
+      "a-0.babuiltinassets.260612:meshes/scroll_bar_thumb_transparent");
+  LoadBuiltinMesh(
+      BuiltinMeshID::kMeshesScrollBarTroughTransparent,
+      "a-0.babuiltinassets.260612:meshes/scroll_bar_trough_transparent");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesShield,
+                  "a-0.babuiltinassets.260612:meshes/shield");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesShockWave,
+                  "a-0.babuiltinassets.260612:meshes/shock_wave");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesShrapnel1,
+                  "a-0.babuiltinassets.260612:meshes/shrapnel1");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesShrapnelBoard,
+                  "a-0.babuiltinassets.260612:meshes/shrapnel_board");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesShrapnelSlime,
+                  "a-0.babuiltinassets.260612:meshes/shrapnel_slime");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesSoftEdgeInside,
+                  "a-0.babuiltinassets.260612:meshes/soft_edge_inside");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesSoftEdgeOutside,
+                  "a-0.babuiltinassets.260612:meshes/soft_edge_outside");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesTextBoxTransparent,
+                  "a-0.babuiltinassets.260612:meshes/text_box_transparent");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesVrFade,
+                  "a-0.babuiltinassets.260612:meshes/vr_fade");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesVrOverlay,
+                  "a-0.babuiltinassets.260612:meshes/vr_overlay");
+  LoadBuiltinMesh(
+      BuiltinMeshID::kMeshesWindowHsmallVmedOpaque,
+      "a-0.babuiltinassets.260612:meshes/window_hsmall_vmed_opaque");
+  LoadBuiltinMesh(
+      BuiltinMeshID::kMeshesWindowHsmallVmedTransparent,
+      "a-0.babuiltinassets.260612:meshes/window_hsmall_vmed_transparent");
+  LoadBuiltinMesh(
+      BuiltinMeshID::kMeshesWindowHsmallVsmallOpaque,
+      "a-0.babuiltinassets.260612:meshes/window_hsmall_vsmall_opaque");
+  LoadBuiltinMesh(
+      BuiltinMeshID::kMeshesWindowHsmallVsmallTransparent,
+      "a-0.babuiltinassets.260612:meshes/window_hsmall_vsmall_transparent");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesWing,
+                  "a-0.babuiltinassets.260612:meshes/wing");
   // __AUTOGENERATED_BUILTIN_ASSET_LOAD_END__
 
   sys_assets_loaded_ = true;
@@ -702,14 +752,17 @@ auto Assets::UnloadReloadPendingRendererBits() -> bool {
 }
 
 auto Assets::GetMesh(const std::string& file_name) -> Object::Ref<MeshAsset> {
-  return GetAsset(file_name, &meshes_);
+  // Anything handing us a possibly-legacy bare name (old peers over the
+  // scene_v1 wire, old replays, modder code) gets routed to its
+  // asset-package home if it has one (mirrors GetTexture's hook).
+  return GetAsset(AssetNameCompat::FromLegacy(file_name, "meshes"), &meshes_);
 }
 
 auto Assets::GetSound(const std::string& file_name) -> Object::Ref<SoundAsset> {
   // Anything handing us a possibly-legacy bare name (old peers over the
   // scene_v1 wire, old replays, modder code) gets routed to its
   // asset-package home if it has one (mirrors GetTexture's hook).
-  return GetAsset(AssetNameCompat::FromLegacy(file_name), &sounds_);
+  return GetAsset(AssetNameCompat::FromLegacy(file_name, "audio"), &sounds_);
 }
 
 auto Assets::GetDataAsset(const std::string& file_name)
@@ -719,7 +772,10 @@ auto Assets::GetDataAsset(const std::string& file_name)
 
 auto Assets::GetCollisionMesh(const std::string& file_name)
     -> Object::Ref<CollisionMeshAsset> {
-  return GetAsset(file_name, &collision_meshes_);
+  // Same legacy-name routing as GetMesh above; collision meshes cross
+  // the scene_v1 wire too (kAddCollisionMesh).
+  return GetAsset(AssetNameCompat::FromLegacy(file_name, "meshes"),
+                  &collision_meshes_);
 }
 
 template <typename T>
@@ -805,7 +861,7 @@ auto Assets::GetTexture(const std::string& file_name_in)
   // Anything handing us a possibly-legacy bare name (old peers over
   // the scene_v1 wire, old replays, server-driven docui content,
   // modder code) gets routed to its asset-package home if it has one.
-  std::string file_name = AssetNameCompat::FromLegacy(file_name_in);
+  std::string file_name = AssetNameCompat::FromLegacy(file_name_in, "textures");
   auto i = textures_.find(file_name);
   if (i != textures_.end()) {
     return Object::Ref<TextureAsset>(i->second.get());
@@ -1446,22 +1502,39 @@ auto Assets::FindAssetFile(FileType type, const std::string& name)
 
 auto Assets::FindAssetFileCas_(FileType type, const std::string& name,
                                size_t colon_pos) -> std::string {
-  // Textures, cube maps, and sounds are CAS-routed so far. Other asset
-  // categories land here as their buckets come online (strings, meshes,
-  // etc.).
+  // Textures, cube maps, sounds, and meshes (display + collision) are
+  // CAS-routed so far. Other asset categories land here as their
+  // buckets come online (strings, fonts, etc.).
   if (type != FileType::kTexture && type != FileType::kCubeMapTexture
-      && type != FileType::kSound) {
+      && type != FileType::kSound && type != FileType::kMesh
+      && type != FileType::kCollisionMesh) {
     throw Exception("CAS asset refs not yet supported for this asset type: '"
                     + name + "'");
   }
 
+  // Collision meshes are the one kind headless builds genuinely load
+  // (physics), so they skip the headless short-circuit below — their
+  // bytes live in the flavor-invariant constant bucket, which every
+  // build including headless resolves (decision #26).
+  if (type == FileType::kCollisionMesh) {
+    auto cob_path = FindCasCollisionMeshPath(name);
+    if (cob_path.empty()) {
+      throw Exception("Collision-mesh asset not found in package: '" + name
+                      + "' (part=c).");
+    }
+    return cob_path;
+  }
+
   // Headless builds use the NULL profiles; they don't actually load
-  // texture/audio bytes. Match the legacy headless short-circuits and
-  // return type-appropriate dummy paths so the stub paths stay
-  // consistent.
+  // texture/audio/display-mesh bytes. Match the legacy headless
+  // short-circuits and return type-appropriate dummy paths so the stub
+  // paths stay consistent.
   if (g_core->HeadlessMode()) {
     if (type == FileType::kSound) {
       return "headless_dummy_path.sound";
+    }
+    if (type == FileType::kMesh) {
+      return "headless_dummy_path.mesh";
     }
     return "headless_dummy_path.nop";
   }
@@ -1475,6 +1548,17 @@ auto Assets::FindAssetFileCas_(FileType type, const std::string& name,
                       + "' (part=a).");
     }
     return sound_path;
+  }
+
+  if (type == FileType::kMesh) {
+    // Display meshes are a single bob blob under part 'm' in the
+    // package's meshes bucket (decision #26).
+    auto mesh_path = FindCasMeshPath(name);
+    if (mesh_path.empty()) {
+      throw Exception("Mesh asset not found in package: '" + name
+                      + "' (part=m).");
+    }
+    return mesh_path;
   }
 
   if (type == FileType::kCubeMapTexture) {
@@ -1604,6 +1688,70 @@ auto Assets::FindCasSoundPath(const std::string& name) -> std::string {
 
   auto hash =
       package_registry_.LookupAssetHash(apverid, bucket_id, logical_path, "a");
+  if (hash.empty()) {
+    return "";
+  }
+  return package_registry_.CasBlobPath(hash);
+}
+
+auto Assets::FindCasMeshPath(const std::string& name) -> std::string {
+  assert(g_base->InLogicThread());
+
+  auto colon_pos = name.find(':');
+  if (colon_pos == std::string::npos) {
+    return "";
+  }
+
+  // Headless builds use the NULL mesh profile and never load
+  // display-mesh bytes; nothing to resolve here.
+  if (g_core->HeadlessMode()) {
+    return "";
+  }
+
+  std::string apverid = name.substr(0, colon_pos);
+  std::string asset_name = name.substr(colon_pos + 1);
+
+  // Mirror of the audio lookup above: find the meshes bucket THIS
+  // package actually resolved to (decision #26). All mesh profiles
+  // ship a single ``.bob`` blob per display mesh under part 'm'.
+  std::string bucket_id = package_registry_.LookupMeshBucketId(apverid);
+  if (bucket_id.empty()) {
+    return "";
+  }
+  std::string logical_path = "ba_data/meshes/" + asset_name + ".bob";
+
+  auto hash =
+      package_registry_.LookupAssetHash(apverid, bucket_id, logical_path, "m");
+  if (hash.empty()) {
+    return "";
+  }
+  return package_registry_.CasBlobPath(hash);
+}
+
+auto Assets::FindCasCollisionMeshPath(const std::string& name) -> std::string {
+  assert(g_base->InLogicThread());
+
+  auto colon_pos = name.find(':');
+  if (colon_pos == std::string::npos) {
+    return "";
+  }
+
+  // NOTE: no headless short-circuit here — collision meshes are the
+  // one kind headless genuinely loads; their bytes ride the
+  // flavor-invariant constant bucket which every build resolves
+  // (decision #26).
+
+  std::string apverid = name.substr(0, colon_pos);
+  std::string asset_name = name.substr(colon_pos + 1);
+
+  std::string bucket_id = package_registry_.LookupConstantBucketId(apverid);
+  if (bucket_id.empty()) {
+    return "";
+  }
+  std::string logical_path = "ba_data/meshes/" + asset_name + ".cob";
+
+  auto hash =
+      package_registry_.LookupAssetHash(apverid, bucket_id, logical_path, "c");
   if (hash.empty()) {
     return "";
   }
@@ -2070,13 +2218,6 @@ Assets::AssetListLock::~AssetListLock() {
   assert(g_base->assets->asset_lists_locked_);
   g_base->assets->asset_lists_locked_ = false;
   g_base->assets->asset_lists_mutex_.unlock();
-}
-
-auto Assets::BuiltinMeshOld(BuiltinMeshOldID id) -> MeshAsset* {
-  assert(asset_loads_allowed_ && sys_assets_loaded_);
-  assert(g_base->InLogicThread());
-  assert(static_cast<size_t>(id) < builtin_meshes_old_.size());
-  return builtin_meshes_old_[static_cast<int>(id)].get();
 }
 
 auto Assets::BuiltinTexture(BuiltinTextureID id) -> TextureAsset* {

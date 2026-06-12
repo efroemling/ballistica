@@ -137,6 +137,7 @@ class AssetsV1PathValsTypeID(Enum):
     TEX_V1 = 'tex_v1'
     STR_V1 = 'str_v1'
     AUDIO_V1 = 'audio_v1'
+    MESH_V1 = 'mesh_v1'
 
 
 class AssetsV1PathVals(IOMultiType[AssetsV1PathValsTypeID]):
@@ -171,6 +172,9 @@ class AssetsV1PathVals(IOMultiType[AssetsV1PathValsTypeID]):
 
         if type_id is t.AUDIO_V1:
             return AssetsV1PathValsAudioV1
+
+        if type_id is t.MESH_V1:
+            return AssetsV1PathValsMeshV1
 
         # Important to make sure we provide all types.
         assert_never(type_id)
@@ -468,3 +472,41 @@ class AssetsV1PathValsAudioV1(AssetsV1PathVals):
     @classmethod
     def get_type_id(cls) -> AssetsV1PathValsTypeID:
         return AssetsV1PathValsTypeID.AUDIO_V1
+
+
+class MeshRole(Enum):
+    """What a mesh ``.obj`` source builds (asset-packages decision #26).
+
+    - ``DEFAULT`` — a display mesh: compiled to the engine's binary
+      ``.bob`` format (welded/quantized verts, vertex-cache-optimized
+      index order) and served from the flavor-varying ``meshes`` bucket
+      (headless builds get none).
+    - ``COLLISION`` — a collision mesh: compiled to the engine's binary
+      ``.cob`` format (positions + indices for the physics trimesh) and
+      served from the flavor-invariant ``constant`` bucket — every
+      build including headless gets it, and the bytes are identical
+      across all flavors (networked sims/replays must agree on
+      collision geometry).
+    """
+
+    DEFAULT = 'default'
+    COLLISION = 'collision'
+
+
+@ioprepped
+@dataclass
+class AssetsV1PathValsMeshV1(AssetsV1PathVals):
+    """Path-specific values for a mesh source in an assets_v1 workspace.
+
+    The per-mesh authoring knob (:class:`MeshRole`) is a module-level
+    type in this module.
+    """
+
+    mesh_role: Annotated[
+        MeshRole, IOAttrs('mesh_role', store_default=False)
+    ] = MeshRole.DEFAULT
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AssetsV1PathValsTypeID:
+        return AssetsV1PathValsTypeID.MESH_V1

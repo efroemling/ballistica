@@ -82,7 +82,7 @@ void ScorchNode::Draw(base::FrameDef* frame_def) {
     c.Rotate(Utils::precalc_rand_1(id() % kPrecalcRandsCount) * 360.0f, 0, 1,
              0);
     c.DrawMeshAsset(
-        g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kScorch));
+        g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesScorch));
   }
   c.Submit();
 }

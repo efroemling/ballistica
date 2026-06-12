@@ -114,6 +114,29 @@ auto AssetPackageRegistry::LookupAudioBucketId(const std::string& apverid) const
   return LookupBucketIdWithPrefix_(apverid, "audio/");
 }
 
+auto AssetPackageRegistry::LookupMeshBucketId(const std::string& apverid) const
+    -> std::string {
+  return LookupBucketIdWithPrefix_(apverid, "meshes/");
+}
+
+auto AssetPackageRegistry::LookupConstantBucketId(
+    const std::string& apverid) const -> std::string {
+  // The constant bucket has no dimensions, so its id is the bare head
+  // (no trailing slash) and prefix-matching degenerates to an exact
+  // match — which is what we want anyway.
+  auto snapshot = Snapshot_();
+  auto pkg_it = snapshot->find(apverid);
+  if (pkg_it == snapshot->end()) {
+    return "";
+  }
+  for (auto&& bucket : pkg_it->second) {
+    if (bucket.first == "constant") {
+      return bucket.first;
+    }
+  }
+  return "";
+}
+
 auto AssetPackageRegistry::CasBlobPath(const std::string& hash) const
     -> std::string {
   // sha256 hex is 64 chars; bail on anything shorter than the

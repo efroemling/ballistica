@@ -67,8 +67,8 @@ class PlayOptionsWindow(PopupWindow):
         self._row_height = 45.0
 
         # Grab our maps to display.
-        mesh_opaque = bui.getmesh('level_select_button_opaque')
-        mesh_transparent = bui.getmesh('level_select_button_transparent')
+        mesh_opaque = stdassets.meshes.level_select_button_opaque
+        mesh_transparent = stdassets.meshes.level_select_button_transparent
         mask_tex = stdassets.textures.map_preview_mask
 
         # Poke into this playlist and see if we can display some of its

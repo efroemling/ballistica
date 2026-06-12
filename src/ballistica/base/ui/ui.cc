@@ -647,7 +647,7 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
     c.Translate(vwidth - bsz * 0.5f, vheight * 0.5f, kDevConsoleZDepth + 0.01f);
     c.Scale(bsz, bsz, 1.0f);
     c.DrawMeshAsset(
-        g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
+        g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
     {
       auto xf = c.ScopedTransform();
       c.Scale(0.017f, 0.017f, 1.0f);

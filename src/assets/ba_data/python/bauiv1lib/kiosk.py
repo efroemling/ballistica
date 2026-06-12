@@ -58,8 +58,8 @@ class KioskWindow(bui.MainWindow):
             t_delay_base = 1.0
             t_delay_scale = 1.0
 
-        mesh_opaque = bui.getmesh('level_select_button_opaque')
-        mesh_transparent = bui.getmesh('level_select_button_transparent')
+        mesh_opaque = stdassets.meshes.level_select_button_opaque
+        mesh_transparent = stdassets.meshes.level_select_button_transparent
         mask_tex = stdassets.textures.map_preview_mask
 
         y_extra = 130.0 + (0.0 if self._show_multiplayer else -130.0)

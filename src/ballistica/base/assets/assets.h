@@ -93,10 +93,6 @@ class Assets {
   /// Enable asset-loads and start loading sys-assets.
   void StartLoading();
 
-  // Get system assets. These are loaded at startup so are always instantly
-  // available.
-  auto BuiltinMeshOld(BuiltinMeshOldID id) -> MeshAsset*;
-
   // Same as above but for the new CAS-backed asset-package path. Enum
   // values + load-bindings are generated from the projectconfig
   // ``"assets"`` package by tools/batools/builtinassetids.py.
@@ -199,6 +195,19 @@ class Assets {
   /// absent, or in headless mode.
   auto FindCasSoundPath(const std::string& name) -> std::string;
 
+  /// Display-mesh analog of :meth:`FindCasSoundPath` (decision #26):
+  /// resolve a mesh qualified-ref to its single bob CAS blob (part
+  /// ``"m"`` in the package's resolved ``meshes/...`` bucket).
+  /// Returns ``""`` if the name isn't a CAS ref, the asset/part is
+  /// absent, or in headless mode.
+  auto FindCasMeshPath(const std::string& name) -> std::string;
+
+  /// Collision-mesh CAS resolve (decision #26): part ``"c"`` in the
+  /// package's ``constant`` bucket. Unlike the other kinds this works
+  /// in headless mode too — collision geometry is the one asset kind
+  /// headless builds genuinely load.
+  auto FindCasCollisionMeshPath(const std::string& name) -> std::string;
+
  private:
   /// Resolve a qualified-ref name (``<apverid>:<asset_name>``) into a
   /// CAS blob path via :class:`AssetPackageRegistry`. Called from the
@@ -211,7 +220,6 @@ class Assets {
 
   static void MarkAssetForLoad(Asset* c);
   void LoadSystemData(SystemDataID id, const char* name);
-  void LoadBuiltinMeshOld(BuiltinMeshOldID id, const char* name);
   // CAS-backed builtin loaders; called from the autogen section
   // inside ``Assets::StartLoading()``. ``name`` is the
   // qualified-ref form ``<apverid>:<logical_name>`` baked in by
@@ -249,7 +257,6 @@ class Assets {
   std::mutex asset_lists_mutex_;
 
   std::vector<Object::Ref<DataAsset> > system_datas_;
-  std::vector<Object::Ref<MeshAsset> > builtin_meshes_old_;
 
   std::vector<Object::Ref<TextureAsset> > builtin_textures_;
   std::vector<Object::Ref<TextureAsset> > builtin_cube_map_textures_;

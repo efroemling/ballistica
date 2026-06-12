@@ -386,7 +386,7 @@ void FlagNode::Draw(base::FrameDef* frame_def) {
       auto xf = c.ScopedTransform();
       body_->ApplyToRenderComponent(&c);
       c.DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kFlagPole));
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesFlagPole));
     }
     c.Submit();
   }

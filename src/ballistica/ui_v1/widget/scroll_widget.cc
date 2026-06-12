@@ -942,8 +942,8 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           auto xf = c.ScopedTransform();
           c.Translate(trough_center_x_, trough_center_y_, 0.05f);
           c.Scale(trough_width_, trough_height_, 0.1f);
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kScrollBarTroughTransparent));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesScrollBarTroughTransparent));
         }
         c.Submit();
       }
@@ -1008,15 +1008,16 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           c.Translate(thumb_center_x_, thumb_center_y_, 0.8f);
           c.Scale(thumb_width_, thumb_height_, 0.1f);
           if (draw_transparent) {
-            c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+            c.DrawMeshAsset(g_base->assets->BuiltinMesh(
                 sb_thumb_height > 100
-                    ? base::BuiltinMeshOldID::kScrollBarThumbTransparent
-                    : base::BuiltinMeshOldID::kScrollBarThumbShortTransparent));
+                    ? base::BuiltinMeshID::kMeshesScrollBarThumbTransparent
+                    : base::BuiltinMeshID::
+                          kMeshesScrollBarThumbShortTransparent));
           } else {
-            c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+            c.DrawMeshAsset(g_base->assets->BuiltinMesh(
                 sb_thumb_height > 100
-                    ? base::BuiltinMeshOldID::kScrollBarThumbOpaque
-                    : base::BuiltinMeshOldID::kScrollBarThumbShortOpaque));
+                    ? base::BuiltinMeshID::kMeshesScrollBarThumbOpaque
+                    : base::BuiltinMeshID::kMeshesScrollBarThumbShortOpaque));
           }
         }
       }
@@ -1051,8 +1052,8 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         auto xf = c.ScopedTransform();
         c.Translate(outline_center_x_, outline_center_y_, 0.9f);
         c.Scale(outline_width_, outline_height_, 0.1f);
-        c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-            base::BuiltinMeshOldID::kSoftEdgeOutside));
+        c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+            base::BuiltinMeshID::kMeshesSoftEdgeOutside));
       }
     }
   }
@@ -1092,8 +1093,8 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       auto xf = c.ScopedTransform();
       c.Translate(glow_center_x_, glow_center_y_, 0.9f);
       c.Scale(glow_width_, glow_height_, 0.1f);
-      c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-          base::BuiltinMeshOldID::kSoftEdgeOutside));
+      c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+          base::BuiltinMeshID::kMeshesSoftEdgeOutside));
     }
     c.Submit();
   }

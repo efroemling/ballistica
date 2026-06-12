@@ -319,7 +319,6 @@ def check_python_files(self: ProjectUpdater) -> None:
     # EXCEPT for the following specifics.
     ignores: dict[str, set[str]] = {
         'tools': {
-            'make_bob',
             'mali_texture_compression_tool',
             'nvidia_texture_tools',
             'powervr_tools',

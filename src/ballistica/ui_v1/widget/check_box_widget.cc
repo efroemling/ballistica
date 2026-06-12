@@ -99,7 +99,7 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.Translate(highlight_center_x_, highlight_center_y_);
       c.Scale(highlight_width_, highlight_height_);
       c.DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage1x1));
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
     }
     c.Submit();
   }
@@ -146,9 +146,10 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.Translate(box_center_x_ + extra_offs_x, box_center_y_ + extra_offs_y,
                     0.1f);
         c.Scale(box_width_, box_height_, 0.4f);
-        c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-            draw_transparent ? base::BuiltinMeshOldID::kButtonSmallTransparent
-                             : base::BuiltinMeshOldID::kButtonSmallOpaque));
+        c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+            draw_transparent
+                ? base::BuiltinMeshID::kMeshesButtonSmallTransparent
+                : base::BuiltinMeshID::kMeshesButtonSmallOpaque));
       }
       c.Submit();
     }
@@ -199,14 +200,14 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                       check_center_y_ + 2 + 3.0f * extra_offs_y, 0.5f);
           c.Scale(check_width_ * 0.45f, check_height_ * 0.45f, 0.5f);
           c.Translate(-0.17f, -0.17f, 0.5f);
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         } else {
           c.Translate(check_center_x_ + 3.0f * extra_offs_x,
                       check_center_y_ + 3.0f * extra_offs_y, 0.5f);
           c.Scale(check_width_, check_height_, 0.5f);
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kCheckTransparent));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesCheckTransparent));
         }
       }
       c.Submit();

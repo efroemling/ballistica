@@ -110,7 +110,7 @@ void SpinnerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.Rotate(-360.0f * std::fmod(current_time * 2.0, 1.0), 0.0f, 0.0f, 1.0f);
     }
     c.DrawMeshAsset(
-        g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage1x1));
+        g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
   }
   c.Submit();
 }

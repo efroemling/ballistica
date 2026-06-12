@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -88,7 +89,7 @@ def _scroll_fade(
     bimg = bui.imagewidget(
         parent=container,
         texture=builtinassets.textures.ui_atlas,
-        mesh_transparent=bui.getmesh('windowBGBlotch'),
+        mesh_transparent=stdassets.meshes.window_bgblotch,
         position=(
             scrollleft + 60.0 - blotchwidth * 0.5,
             scrollbottom + yoffs - yscale * blotchheight * 0.5,
@@ -100,7 +101,7 @@ def _scroll_fade(
     bimg = bui.imagewidget(
         parent=container,
         texture=builtinassets.textures.ui_atlas,
-        mesh_transparent=bui.getmesh('windowBGBlotch'),
+        mesh_transparent=stdassets.meshes.window_bgblotch,
         position=(
             scrollleft + scrollwidth - 60.0 - blotchwidth * 0.5,
             scrollbottom + yoffs - yscale * blotchheight * 0.5,
@@ -114,7 +115,7 @@ def _scroll_fade(
         bimg = bui.imagewidget(
             parent=container,
             texture=builtinassets.textures.ui_atlas,
-            mesh_transparent=bui.getmesh('windowBGBlotch'),
+            mesh_transparent=stdassets.meshes.window_bgblotch,
             position=(
                 scrollleft + scrollwidth * 0.5 - blotchwidth * 0.5,
                 scrollbottom + yoffs - yscale * blotchheight * 0.5,

@@ -91,8 +91,8 @@ class PowerupBoxFactory:
 
         shared = SharedObjects.get()
         self._lastpoweruptype: str | None = None
-        self.mesh = bs.getmesh('powerup')
-        self.mesh_simple = bs.getmesh('powerupSimple')
+        self.mesh = stdassets.meshes.powerup
+        self.mesh_simple = stdassets.meshes.powerup_simple
         self.tex_bomb = stdassets.textures.powerup_bomb
         self.tex_punch = stdassets.textures.powerup_punch
         self.tex_ice_bombs = stdassets.textures.powerup_ice_bombs

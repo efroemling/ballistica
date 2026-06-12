@@ -3995,14 +3995,14 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
         }
         if (!frosty_ && !eyeless_) {
           c->DrawMeshAsset(
-              g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kEyeBall));
+              g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeBall));
           if (shading) {
             oc->SetReflectionScale(2, 2, 2);
           }
           if (death_scale != 1.0f)
             c->Scale(death_scale, death_scale, death_scale);
-          c->DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kEyeBallIris));
+          c->DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesEyeBallIris));
         }
       }
 
@@ -4020,15 +4020,15 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
             c->Scale(death_scale, death_scale, death_scale);
           }
           c->DrawMeshAsset(
-              g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kEyeBall));
+              g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeBall));
           if (death_scale != 1.0f) {
             c->Scale(death_scale, death_scale, death_scale);
           }
           if (shading) {
             oc->SetReflectionScale(2, 2, 2);
           }
-          c->DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kEyeBallIris));
+          c->DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesEyeBallIris));
         }
       }
     }
@@ -4086,7 +4086,7 @@ void SpazNode::DrawEyeLids(base::RenderComponent* c, float death_fade,
 
     if (!frosty_ && !eyeless_) {
       c->DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kEyeLid));
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeLid));
     }
   }
 
@@ -4112,7 +4112,7 @@ void SpazNode::DrawEyeLids(base::RenderComponent* c, float death_fade,
     }
     if (!pirate_ && !frosty_ && !eyeless_) {
       c->DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kEyeLid));
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeLid));
     }
   }
   c->FlipCullFace();  // back to normal
@@ -4182,7 +4182,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
         c->Scale(death_scale, death_scale, death_scale);
       }
       c->DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kHairTuft1));
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft1));
     }
 
     // Hair tuft 1b; just reuse tuft 1 with some extra translating.
@@ -4198,7 +4198,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
         c->Scale(death_scale, death_scale, death_scale);
       }
       c->DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kHairTuft1b));
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft1b));
     }
   }
 
@@ -4209,7 +4209,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       hair_front_left_body_->ApplyToRenderComponent(c);
       if (death_scale != 1.0f) c->Scale(death_scale, death_scale, death_scale);
       c->DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kHairTuft2));
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft2));
     }
   }
 
@@ -4222,7 +4222,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
         c->Scale(death_scale, death_scale, death_scale);
       }
       c->DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kHairTuft3));
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft3));
     }
   }
 
@@ -4235,7 +4235,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
         c->Scale(death_scale, death_scale, death_scale);
       }
       c->DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kHairTuft4));
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft4));
     }
   }
 
@@ -4935,7 +4935,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
                     torso_pos[2] - 0.2f);
         c.Scale(1.5f * 0.2f, 1.5f * 0.2f, 1.5f * 0.2f);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage1x1));
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
       }
       c.Submit();
     }
@@ -5046,7 +5046,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       c.Translate(pos[0], pos[1] + 1.6f, pos[2] - 0.2f);
       c.Scale(2.3f * 0.2f * s, 2.3f * 0.2f * s, 2.3f * 0.2f * s);
       c.DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kImage1x1));
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
     }
     c.Submit();
 
@@ -5062,7 +5062,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         c2.Translate(pos[0], pos[1] + 1.6f, pos[2] - 0.2f);
         c2.Scale(2.3f * 0.2f * s, 2.3f * 0.2f * s, 2.3f * 0.2f * s);
         c2.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kCrossOut));
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesCrossOut));
       }
       c2.Submit();
     }
@@ -5114,8 +5114,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate(0.5f, half_height);
           c.Scale(1.1f, height + 0.1f);
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
 
         c.SetColor(0, 0.35f * o, 0, 0.3f * o);
@@ -5124,8 +5124,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate(p_left * 0.5f, half_height);
           c.Scale(p_left, height);
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
 
         if (dead_ && scene()->stepnum() % 10 < 5) {
@@ -5138,8 +5138,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate((p_left + p_right) * 0.5f, half_height);
           c.Scale(p_right - p_left, height);
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
 
         c.SetColor(
@@ -5150,8 +5150,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate((p_right + 1.0f) * 0.5f, half_height);
           c.Scale(1.0f - p_right, height);
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
       }
       c.Submit();
@@ -5214,7 +5214,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         c.Translate(p_wing_l[0], p_wing_l[1], p_wing_l[2]);
         c.Scale(0.05f, 0.05f, 0.05f);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kBox));
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
       }
 
       // Draw wing point.
@@ -5223,7 +5223,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         c.Translate(wing_pos_left_.x, wing_pos_left_.y, wing_pos_left_.z);
         c.Scale(0.1f, 0.1f, 0.1f);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kBox));
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
       }
 
       // Draw target.
@@ -5234,7 +5234,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         c.Translate(p_wing_r[0], p_wing_r[1], p_wing_r[2]);
         c.Scale(0.05f, 0.05f, 0.05f);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kBox));
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
       }
 
       // Draw wing point.
@@ -5243,7 +5243,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         c.Translate(wing_pos_right_.x, wing_pos_right_.y, wing_pos_right_.z);
         c.Scale(0.1f, 0.1f, 0.1f);
         c.DrawMeshAsset(
-            g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kBox));
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
       }
     }
 
@@ -5272,7 +5272,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         c.Scale(death_scale, death_scale, death_scale);
       }
       c.DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kWing));
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesWing));
     }
 
     Vector3f to_right_wing = wing_pos_right_ - torso_pos2;
@@ -5292,7 +5292,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         c.Scale(death_scale, death_scale, death_scale);
       }
       c.DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kWing));
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesWing));
     }
     c.Submit();
   }
@@ -5339,7 +5339,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         c.Scale(death_scale, death_scale, death_scale);
       }
       c.DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kBoxingGlove));
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBoxingGlove));
     }
 
     c.FlipCullFace();
@@ -5351,7 +5351,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         c.Scale(death_scale, death_scale, death_scale);
       }
       c.DrawMeshAsset(
-          g_base->assets->BuiltinMeshOld(base::BuiltinMeshOldID::kBoxingGlove));
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBoxingGlove));
       c.FlipCullFace();
     }
     c.Submit();

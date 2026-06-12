@@ -166,22 +166,22 @@ class PlayWindow(bui.MainWindow):
         hoffs = (width - total_b_width) * 0.5
 
         self._lineup_tex = stdassets.textures.player_lineup
-        angry_computer_transparent_mesh = bui.getmesh(
-            'angryComputerTransparent'
+        angry_computer_transparent_mesh = (
+            stdassets.meshes.angry_computer_transparent
         )
-        self._lineup_1_transparent_mesh = bui.getmesh(
-            'playerLineup1Transparent'
+        self._lineup_1_transparent_mesh = (
+            stdassets.meshes.player_lineup1_transparent
         )
-        self._lineup_2_transparent_mesh = bui.getmesh(
-            'playerLineup2Transparent'
+        self._lineup_2_transparent_mesh = (
+            stdassets.meshes.player_lineup2_transparent
         )
-        self._lineup_3_transparent_mesh = bui.getmesh(
-            'playerLineup3Transparent'
+        self._lineup_3_transparent_mesh = (
+            stdassets.meshes.player_lineup3_transparent
         )
-        self._lineup_4_transparent_mesh = bui.getmesh(
-            'playerLineup4Transparent'
+        self._lineup_4_transparent_mesh = (
+            stdassets.meshes.player_lineup4_transparent
         )
-        self._eyes_mesh = bui.getmesh('plasticEyesTransparent')
+        self._eyes_mesh = stdassets.meshes.plastic_eyes_transparent
 
         self._coop_button: bui.Widget | None = None
 

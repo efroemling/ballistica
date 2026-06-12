@@ -42,7 +42,6 @@ from efrotools.pcommands import (
     compile_python_file,
     copy_python_file,
     compile_language_file,
-    compile_mesh_file,
     compile_font_file,
     pyver,
     try_repeat,
@@ -70,6 +69,7 @@ from efrotools.pcommands2 import (
 from bacommontools.pcommands import (
     bacurl,
     compile_collision_mesh,
+    compile_mesh,
     require_ballistica_api_key,
 )
 from batools.pcommands import (

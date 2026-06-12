@@ -36,8 +36,8 @@ class TournamentButton:
         sclx = 300
         scly = 195.0
         self.on_pressed = on_pressed
-        self.lsbt = bui.getmesh('level_select_button_transparent')
-        self.lsbo = bui.getmesh('level_select_button_opaque')
+        self.lsbt = stdassets.meshes.level_select_button_transparent
+        self.lsbo = stdassets.meshes.level_select_button_opaque
         self.allow_ads = False
         self.tournament_id: str | None = None
         self.game: str | None = None

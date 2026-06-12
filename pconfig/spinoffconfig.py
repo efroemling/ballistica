@@ -221,7 +221,6 @@ ctx.no_filter_file_names = {
     'etcpack',
     'astcenc',
     'convert',
-    'make_bob',
     'nvcompress',
     'INSTALL',
     'install-sh',

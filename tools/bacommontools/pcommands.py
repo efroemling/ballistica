@@ -73,6 +73,37 @@ def require_ballistica_api_key() -> None:
     )
 
 
+def compile_mesh() -> None:
+    """Compile a display mesh from .obj to our binary .bob format.
+
+    Usage: compile_mesh <src.obj> <dst.bob>
+    """
+    import os
+
+    from efro.error import CleanError
+    from efrotools import pcommand
+
+    from bacommontools import meshcompile
+
+    args = pcommand.get_args()
+    if len(args) != 2:
+        raise CleanError('Expected 2 args (src and dst paths).')
+
+    src, dst = args
+
+    # Show project-relative paths when possible.
+    relpath = os.path.abspath(dst).removeprefix(f'{pcommand.PROJROOT}/')
+    pcommand.clientprint(f'Compiling mesh: {relpath}')
+
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    try:
+        meshcompile.compile_mesh(src, dst)
+    except ValueError as exc:
+        raise CleanError(f'Mesh compile failed: {exc}') from exc
+
+    assert os.path.exists(dst)
+
+
 def compile_collision_mesh() -> None:
     """Compile a collision mesh from .obj to our binary .cob format.
 
@@ -96,6 +127,9 @@ def compile_collision_mesh() -> None:
     pcommand.clientprint(f'Compiling collision mesh: {relpath}')
 
     os.makedirs(os.path.dirname(dst), exist_ok=True)
-    meshcompile.compile_collision_mesh(src, dst)
+    try:
+        meshcompile.compile_collision_mesh(src, dst)
+    except ValueError as exc:
+        raise CleanError(f'Collision-mesh compile failed: {exc}') from exc
 
     assert os.path.exists(dst)

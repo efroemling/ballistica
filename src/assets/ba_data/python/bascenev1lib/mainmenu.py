@@ -117,7 +117,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 assert self.beta_info.node
                 bs.animate(self.beta_info.node, 'opacity', {1.3: 0, 1.8: 1.0})
 
-        trees_mesh = bs.getmesh('trees')
+        trees_mesh = stdassets.meshes.trees
         trees_texture = stdassets.textures.trees_color
 
         gnode = self.globalsnode
@@ -177,12 +177,14 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                     else _tex('logo')
                 )
                 self._logo_node.mesh_opaque = (
-                    None if custom_texture is not None else bs.getmesh('logo')
+                    None
+                    if custom_texture is not None
+                    else stdassets.meshes.logo
                 )
                 self._logo_node.mesh_transparent = (
                     None
                     if custom_texture is not None
-                    else bs.getmesh('logoTransparent')
+                    else stdassets.meshes.logo_transparent
                 )
 
         # If language has changed, recreate our logo text/graphics.
@@ -517,11 +519,11 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         ltex = bs.gettexture(
             custom_texture if custom_texture is not None else _tex('logo')
         )
-        mopaque = None if custom_texture is not None else bs.getmesh('logo')
+        mopaque = None if custom_texture is not None else stdassets.meshes.logo
         mtrans = (
             None
             if custom_texture is not None
-            else bs.getmesh('logoTransparent')
+            else stdassets.meshes.logo_transparent
         )
         logo_attrs = {
             'position': (x, y),

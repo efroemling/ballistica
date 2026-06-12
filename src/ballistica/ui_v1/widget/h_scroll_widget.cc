@@ -919,8 +919,8 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.Translate(trough_center_x_, trough_center_y_, 0.7f);
         c.Scale(trough_width_, trough_height_, 0.1f);
         c.Rotate(-90, 0, 0, 1);
-        c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-            base::BuiltinMeshOldID::kScrollBarTroughTransparent));
+        c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+            base::BuiltinMeshID::kMeshesScrollBarTroughTransparent));
       }
       c.Submit();
     }
@@ -957,8 +957,8 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.Scale(scale_ex * kPageButtonSize, scale_ex * kPageButtonSize, 0.1f);
         c.Rotate(180.0f, 0.0f, 0.0f, 1.0f);
         if (draw_transparent) {
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
         c.Submit();
       }
@@ -990,8 +990,8 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                     height() * 0.5 + kPageButtonYOffs, 0.9f);
         c.Scale(scale_ex * kPageButtonSize, scale_ex * kPageButtonSize, 0.1f);
         if (draw_transparent) {
-          c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-              base::BuiltinMeshOldID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
         c.Submit();
       }
@@ -1075,10 +1075,10 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           c.Rotate(-90.0f, 0.0f, 0.0f, 1.0f);
 
           if (draw_transparent) {
-            c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
+            c.DrawMeshAsset(g_base->assets->BuiltinMesh(
                 sb_thumb_width > 100.0f
-                    ? base::BuiltinMeshOldID::kScrollBarThumbSimple
-                    : base::BuiltinMeshOldID::kScrollBarThumbShortSimple));
+                    ? base::BuiltinMeshID::kMeshesScrollBarThumbSimple
+                    : base::BuiltinMeshID::kMeshesScrollBarThumbShortSimple));
           }
           c.FlipCullFace();
           c.Submit();
@@ -1114,8 +1114,8 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       auto xf = c.ScopedTransform();
       c.Translate(outline_center_x_, outline_center_y_, 0.9f);
       c.Scale(outline_width_, outline_height_, 0.1f);
-      c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-          base::BuiltinMeshOldID::kSoftEdgeOutside));
+      c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+          base::BuiltinMeshID::kMeshesSoftEdgeOutside));
     }
     c.Submit();
   }
@@ -1156,8 +1156,8 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       auto xf = c.ScopedTransform();
       c.Translate(glow_center_x_, glow_center_y_, 0.9f);
       c.Scale(glow_width_, glow_height_, 0.1f);
-      c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(
-          base::BuiltinMeshOldID::kSoftEdgeOutside));
+      c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+          base::BuiltinMeshID::kMeshesSoftEdgeOutside));
     }
     c.Submit();
   }

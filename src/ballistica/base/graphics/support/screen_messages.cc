@@ -223,7 +223,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
               // Align our bottom with where we just scaled from.
               c.Translate(0, 0.5f, 0);
             }
-            // c.DrawMeshAsset(g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
+            // c.DrawMeshAsset(g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
             assert(i->shadow_mesh_.exists());
             c.DrawMesh(i->shadow_mesh_.get());
           }
@@ -418,7 +418,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
                          kScreenMessageZDepth);
             c2.Scale(22.0f * s_extra, 22.0f * s_extra);
             c2.DrawMeshAsset(
-                g_base->assets->BuiltinMeshOld(BuiltinMeshOldID::kImage1x1));
+                g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
           }
           c2.Submit();
         }

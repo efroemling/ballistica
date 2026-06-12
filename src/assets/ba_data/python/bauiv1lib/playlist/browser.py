@@ -478,8 +478,8 @@ class PlaylistBrowserWindow(bui.MainWindow):
         index = 0
         appconfig = bui.app.config
 
-        mesh_opaque = bui.getmesh('level_select_button_opaque')
-        mesh_transparent = bui.getmesh('level_select_button_transparent')
+        mesh_opaque = stdassets.meshes.level_select_button_opaque
+        mesh_transparent = stdassets.meshes.level_select_button_transparent
         mask_tex = stdassets.textures.map_preview_mask
 
         # h_offs = 225 if count == 1 else 115 if count == 2 else 0
