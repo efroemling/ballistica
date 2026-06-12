@@ -17,7 +17,7 @@ runs:
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
-        python-version: "3.13"
+        python-version: "3.14"
     # ``make env`` builds the project venv via uv (uv venv +
     # uv pip install ...), so uv must be on PATH before that runs.
     # ``setup-uv`` is the official Astral-published action; it

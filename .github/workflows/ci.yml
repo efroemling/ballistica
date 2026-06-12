@@ -101,7 +101,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: "3.14"
       # The Windows job doesn't go through ``make env``, so it
       # doesn't get the uv-built project venv. We still want uv
       # available for the ad-hoc dependency install below — same
