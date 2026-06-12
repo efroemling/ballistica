@@ -37,6 +37,8 @@ from enum import Enum
 from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Annotated, override
 
+import urllib3
+
 import _babase
 from babase._appsubsystem import AppSubsystem
 from babase._logging import assetmanagerlog as logger
@@ -83,6 +85,14 @@ _ResolveAccum = tuple[
 #: are bandwidth-starved on good connections (and bump that maxsize to match if
 #: you go above it).
 _BLOB_DOWNLOAD_CONCURRENCY = 4
+
+#: Per-request timeout for individual CAS-blob downloads. The shared
+#: urllib3 pool's default total timeout (10s) is sized for small API
+#: calls; blob fetches can legitimately take longer when the node is
+#: cold for a blob (cache miss -> upstream fetch before headers) or the
+#: link is slow, so they get their own more generous budget. Still a
+#: *total* cap so a wedged request can't hang a resolve indefinitely.
+_BLOB_DOWNLOAD_TIMEOUT_SECONDS = 60.0
 
 
 def _init_blob_download_thread() -> None:
@@ -1609,7 +1619,10 @@ class AssetSubsystem(AppSubsystem):
         pool = _babase.app.net.urllib3pool
         url = f'{base_url}/casblob/{filehash}?size={size}'
         response = pool.request(
-            'GET', url, headers={'X-Asset-Token': token_header}
+            'GET',
+            url,
+            headers={'X-Asset-Token': token_header},
+            timeout=urllib3.util.Timeout(total=_BLOB_DOWNLOAD_TIMEOUT_SECONDS),
         )
         if response.status != 200:
             raise AssetResolveError(
