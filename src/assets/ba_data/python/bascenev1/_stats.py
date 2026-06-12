@@ -280,10 +280,15 @@ class Stats:
         return self._activity()
 
     def _load_activity_media(self) -> None:
-        self.orchestrahitsound1 = _bascenev1.getsound('orchestraHit')
-        self.orchestrahitsound2 = _bascenev1.getsound('orchestraHit2')
-        self.orchestrahitsound3 = _bascenev1.getsound('orchestraHit3')
-        self.orchestrahitsound4 = _bascenev1.getsound('orchestraHit4')
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import stdassets
+
+        self.orchestrahitsound1 = stdassets.audio.orchestra_hit
+        self.orchestrahitsound2 = stdassets.audio.orchestra_hit2
+        self.orchestrahitsound3 = stdassets.audio.orchestra_hit3
+        self.orchestrahitsound4 = stdassets.audio.orchestra_hit4
 
     def reset(self) -> None:
         """Reset the stats instance completely."""

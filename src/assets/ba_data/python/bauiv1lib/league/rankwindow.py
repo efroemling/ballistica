@@ -284,7 +284,7 @@ class LeagueRankWindow(bui.MainWindow):
                 ),
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
 
     def _on_activity_mult_press(self) -> None:
         from bauiv1lib import confirm
@@ -354,7 +354,7 @@ class LeagueRankWindow(bui.MainWindow):
                 data=info,
             )
         else:
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
 
     def _on_power_ranking_query_response(
         self, data: dict[str, Any] | None
@@ -876,7 +876,7 @@ class LeagueRankWindow(bui.MainWindow):
             bui.screenmessage(
                 bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         # Wait for connectivity if need be, then bring up a cloud based
@@ -901,7 +901,7 @@ class LeagueRankWindow(bui.MainWindow):
 
         our_login_id = plus.get_v1_account_public_login_id()
         if not self._can_do_more_button or our_login_id is None:
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             bui.screenmessage(
                 bui.Lstr(resource='unavailableText'), color=(1, 0, 0)
             )
@@ -1363,7 +1363,7 @@ class LeagueRankWindow(bui.MainWindow):
     ) -> None:
         from bauiv1lib.account.viewer import AccountViewerWindow
 
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.play()
         AccountViewerWindow(
             account_id=account_id, position=textwidget.get_screen_space_center()
         )

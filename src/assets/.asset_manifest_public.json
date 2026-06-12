@@ -102,6 +102,7 @@
  "ba_data/python/bacommon/workspace/assetsv1.py",
  "ba_data/python/bacommontools/__init__.py",
  "ba_data/python/bacommontools/bacloud.py",
+ "ba_data/python/bacommontools/meshcompile.py",
  "ba_data/python/bacommontools/pcommands.py",
  "ba_data/python/bacommontools/streamws.py",
  "ba_data/python/baenv.py",

@@ -1280,7 +1280,7 @@ void ClassicAppMode::LocalDisplayChatMessage(
         g_scene_v1->python->HandleLocalChatMessage(final_message);
       }
       if (!chat_muted_) {
-        g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kTap);
+        g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
       }
     }
   }

@@ -91,7 +91,7 @@ ConnectionToClient::~ConnectionToClient() {
     Utils::StringReplaceOne(&s, "${NAME}", peer_spec().GetDisplayString());
     g_base->ScreenMessage(s, {1, 0.5f, 0.0f});
     if (g_base->assets->sys_assets_loaded()) {
-      g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kCorkPop);
+      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioCorkPop);
     }
   }
 }
@@ -415,8 +415,8 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
                                   peer_spec().GetDisplayString());
           g_base->ScreenMessage(s, {0.5f, 1, 0.5f});
           if (g_base->assets->sys_assets_loaded()) {
-            g_base->audio->SafePlayBuiltinSoundOld(
-                base::BuiltinSoundOldID::kGunCock);
+            g_base->audio->SafePlayBuiltinSound(
+                base::BuiltinSoundID::kAudioGunCocking);
           }
         }
 

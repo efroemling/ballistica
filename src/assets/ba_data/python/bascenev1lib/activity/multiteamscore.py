@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 from bascenev1lib.actor.text import Text
 from bascenev1lib.actor.image import Image
@@ -17,8 +18,8 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
 
     def __init__(self, settings: dict):
         super().__init__(settings=settings)
-        self._score_display_sound = bs.getsound('scoreHit01')
-        self._score_display_sound_small = bs.getsound('scoreHit02')
+        self._score_display_sound = stdassets.audio.score_hit01
+        self._score_display_sound_small = stdassets.audio.score_hit02
 
         self._show_up_next: bool = True
 

@@ -11,6 +11,7 @@ from threading import Thread
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
 from bauiv1 import stdassets
 
 if TYPE_CHECKING:
@@ -175,11 +176,11 @@ class FileSelectorWindow(bui.MainWindow):
 
     def _on_back_press(self) -> None:
         if len(self._recent_paths) > 1:
-            bui.getsound('swish').play()
+            builtinassets.audio.swish.play()
             self._recent_paths.pop()
             self._set_path(self._recent_paths.pop())
         else:
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
 
     def _on_folder_entry_activated(self) -> None:
         if self._callback is not None:
@@ -197,22 +198,22 @@ class FileSelectorWindow(bui.MainWindow):
                     if new_path == '':
                         new_path = '/'
                 else:
-                    bui.getsound('error').play()
+                    builtinassets.audio.error.play()
             else:
                 if self._path == '/':
                     test_path = self._path + entry
                 else:
                     test_path = self._path + '/' + entry
                 if os.path.isdir(test_path):
-                    bui.getsound('swish').play()
+                    builtinassets.audio.swish.play()
                     new_path = test_path
                 elif os.path.isfile(test_path):
                     if self._is_valid_file_path(test_path):
-                        bui.getsound('swish').play()
+                        builtinassets.audio.swish.play()
                         if self._callback is not None:
                             self._callback(test_path)
                     else:
-                        bui.getsound('error').play()
+                        builtinassets.audio.error.play()
                 else:
                     print(
                         (

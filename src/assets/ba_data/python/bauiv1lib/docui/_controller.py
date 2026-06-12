@@ -21,6 +21,7 @@ from bacommon.docui import (
     DocUIWebResponse,
 )
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 from bauiv1lib.docui._window import DocUIWindow
 
@@ -559,7 +560,7 @@ class DocUIController:
 
         # If locked, been and tell them to try again.
         if window.locked:
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             bui.screenmessage(
                 bui.Lstr(resource='pageRefreshingTryAgainText'), color=(1, 0, 0)
             )
@@ -582,7 +583,7 @@ class DocUIController:
         # Play error beeps on buttons with no actions assigned to let
         # the user know nothing is supposed to happen.
         if action is None:
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         action_type = action.get_type_id()
@@ -597,7 +598,7 @@ class DocUIController:
                 )
             else:
                 if action.default_sound:
-                    bui.getsound('swish').play()
+                    builtinassets.audio.swish.play()
                 window.main_window_replace(
                     lambda: self.create_window(
                         action.request,
@@ -622,7 +623,7 @@ class DocUIController:
             # Play default click sound only if this is coming from a
             # button.
             if widget is not None and action.default_sound:
-                bui.getsound('click01').play()
+                builtinassets.audio.click01.play()
 
             # Force a state save so if our UI gets rebuilt with the same
             # IDs we'll wind up with the same selection and whatnot.
@@ -644,11 +645,11 @@ class DocUIController:
                 if action.close_window:
                     # Always play close-window swish, even if we don't have
                     # a source button.
-                    bui.getsound('swish').play()
+                    builtinassets.audio.swish.play()
                 else:
                     # Only play click sound if this is coming from a button.
                     if widget is not None:
-                        bui.getsound('click01').play()
+                        builtinassets.audio.click01.play()
             if action.close_window:
                 window.main_window_back()
 
@@ -663,7 +664,7 @@ class DocUIController:
         elif action_type is dui.ActionTypeID.UNKNOWN:
             assert isinstance(action, dui.UnknownAction)
             bui.screenmessage('Unknown action.', color=(1, 0, 0))
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
         else:
             # Make sure we handle all options.
             assert_never(action_type)

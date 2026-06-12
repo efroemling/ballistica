@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
+from bascenev1 import builtinassets
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.bomb import TNTSpawner
@@ -76,9 +78,9 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
     def __init__(self, settings: dict):
         settings['map'] = 'Rampage'
         super().__init__(settings)
-        self._new_wave_sound = bs.getsound('scoreHit01')
-        self._winsound = bs.getsound('score')
-        self._cashregistersound = bs.getsound('cashRegister')
+        self._new_wave_sound = stdassets.audio.score_hit01
+        self._winsound = stdassets.audio.score
+        self._cashregistersound = builtinassets.audio.cash_register
         self._spawn_center = (0, 5.5, -4.14)
         self._tntspawnpos = (0, 5.5, -6)
         self._powerup_center = (0, 7, -4.14)
@@ -88,8 +90,8 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
         self._scoreboard: Scoreboard | None = None
         self._score = 0
         self._bots = SpazBotSet()
-        self._dingsound = bs.getsound('dingSmall')
-        self._dingsoundhigh = bs.getsound('dingSmallHigh')
+        self._dingsound = stdassets.audio.ding_small
+        self._dingsoundhigh = stdassets.audio.ding_small_high
         self._tntspawner: TNTSpawner | None = None
         self._bot_update_interval: float | None = None
         self._bot_update_timer: bs.Timer | None = None

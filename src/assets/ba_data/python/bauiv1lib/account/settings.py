@@ -13,6 +13,7 @@ from bacommon.cloud import WebLocation
 from bacommon.login import LoginType
 import bacommon.cloud
 import bauiv1 as bui
+from bauiv1 import builtinassets
 from bauiv1 import stdassets
 
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
@@ -1220,7 +1221,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 'Got error in manage-account-response: %s.', response
             )
             bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         bui.open_url(response.url)
@@ -1419,7 +1420,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 bui.Lstr(resource='internal.signInNoConnectionText'),
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
         else:
             # Success! Plug in these credentials which will begin
             # verifying them and set our primary account-handle when
@@ -1483,7 +1484,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 bui.Lstr(resource='internal.signInNoConnectionText'),
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
         else:
             plus = bui.app.plus
             assert plus is not None

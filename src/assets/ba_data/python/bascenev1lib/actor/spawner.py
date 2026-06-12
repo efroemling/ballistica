@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Callable
@@ -59,7 +60,7 @@ class Spawner:
         """
         self._spawn_callback = spawn_callback
         self._send_spawn_message = send_spawn_message
-        self._spawner_sound = bs.getsound('swip2')
+        self._spawner_sound = stdassets.audio.swip2
         self._data = data
         self._pt = pt
         # create a light where the spawn will happen

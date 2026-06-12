@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, overload, override
 
 import bascenev1 as bs
+from bascenev1 import builtinassets
 
 from bascenev1lib.actor.spaz import Spaz
 
@@ -223,7 +224,7 @@ class PlayerSpaz(Spaz):
                             ),
                             color=(1, 0.5, 0),
                         )
-                        bs.getsound('error').play()
+                        builtinassets.audio.error.play()
         else:
             self._turbo_filter_times = {}
             self._turbo_filter_time_bucket = t_bucket

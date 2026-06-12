@@ -30,6 +30,8 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
         thread_name_prefix: str = '',
         initializer: Callable[[], None] | None = None,
         max_no_wait_count: int | None = None,
+        *,
+        allow_submit_no_wait: bool = True,
     ) -> None:
         super().__init__(
             max_workers=max_workers,
@@ -37,6 +39,15 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
             initializer=initializer,
         )
         self.no_wait_count = 0
+
+        #: Whether submit_no_wait() may be used on this pool. Pass
+        #: False on hosts with no background CPU (e.g. Cloud Run
+        #: request-based billing), where fire-and-forget work would
+        #: stall between requests; submit_no_wait() then raises
+        #: RuntimeError so offending call sites surface loudly.
+        #: Callers with legitimate fire-and-forget needs can branch
+        #: on this attr to do the work synchronously instead.
+        self.allow_submit_no_wait = allow_submit_no_wait
 
         self._max_no_wait_count = (
             max_no_wait_count
@@ -56,7 +67,17 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
         their own error handling for fire-and-forget work. This call will
         block and log a warning if the threadpool reaches its max queued
         no-wait call count.
+
+        Raises RuntimeError if the pool was created with
+        ``allow_submit_no_wait=False`` (hosts with no background CPU).
         """
+        if not self.allow_submit_no_wait:
+            raise RuntimeError(
+                'submit_no_wait() is disabled for this threadpool'
+                ' (no background processing available on this host).'
+                ' Do the work synchronously instead; see the'
+                ' allow_submit_no_wait attr.'
+            )
         # If we're too backlogged, issue a warning and block until we
         # aren't. We don't bother with the lock here since this can be
         # slightly inexact. In general we should aim to not hit this

@@ -8,6 +8,7 @@ from typing import override
 
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 
 class ControlsSettingsWindow(bui.MainWindow):
@@ -317,7 +318,7 @@ class ControlsSettingsWindow(bui.MainWindow):
                     bui.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
                     color=(1, 1, 0),
                 )
-                bui.getsound('gunCocking').play()
+                builtinassets.audio.gun_cocking.play()
                 bui.set_low_level_config_value('enablexinput', not value)
 
             xinput_checkbox = bui.checkboxwidget(

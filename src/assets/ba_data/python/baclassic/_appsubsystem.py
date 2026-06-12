@@ -17,6 +17,8 @@ from efro.dataclassio import dataclass_from_dict
 import babase
 import bauiv1
 import bascenev1
+from bauiv1 import builtinassets
+from bascenev1 import stdassets
 
 import _baclassic
 from baclassic._music import MusicSubsystem
@@ -405,7 +407,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             with activity.context:
                 globs = activity.globalsnode
                 if not globs.paused:
-                    bascenev1.getsound('refWhistle').play()
+                    stdassets.audio.ref_whistle.play()
                     globs.paused = True
 
                 # FIXME: This should not be an attr on Actor.
@@ -435,7 +437,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             with activity.context:
                 globs = activity.globalsnode
                 if globs.paused:
-                    bascenev1.getsound('refWhistle').play()
+                    stdassets.audio.ref_whistle.play()
                     globs.paused = False
 
                     # FIXME: This should not be an actor attr.
@@ -938,7 +940,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # Play explicit swish sound so it occurs due to keypresses/etc.
         # This means we have to disable it for any button or else we get
         # double.
-        bauiv1.getsound('swish').play()
+        builtinassets.audio.swish.play()
 
         # If it exists, dismiss it; otherwise make a new one.
         party_window = (
@@ -960,7 +962,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             # need to make sure to disable swish sounds for any buttons
             # that lead us here.
             if babase.app.env.gui:
-                bauiv1.getsound('swish').play()
+                builtinassets.audio.swish.play()
 
             # Pause gameplay.
             self.pause()

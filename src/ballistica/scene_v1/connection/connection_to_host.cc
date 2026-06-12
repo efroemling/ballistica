@@ -99,7 +99,7 @@ ConnectionToHost::~ConnectionToHost() {
         Utils::StringReplaceOne(&s, "${NAME}", peer_spec().GetDisplayString());
       }
       g_base->ScreenMessage(s, {1, 0.5f, 0.0f});
-      g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kCorkPop);
+      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioCorkPop);
     } else {
       g_base->ScreenMessage(
           g_base->assets->GetResourceString("connectionRejectedText"),
@@ -591,8 +591,8 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         Utils::StringReplaceOne(
             &s, "${NAME}", PlayerSpec(str_buffer.data()).GetDisplayString());
         g_base->ScreenMessage(s, {0.5f, 1.0f, 0.5f});
-        g_base->audio->SafePlayBuiltinSoundOld(
-            base::BuiltinSoundOldID::kGunCock);
+        g_base->audio->SafePlayBuiltinSound(
+            base::BuiltinSoundID::kAudioGunCocking);
       }
       break;
     }
@@ -608,8 +608,8 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         Utils::StringReplaceOne(
             &s, "${NAME}", PlayerSpec(&(str_buffer[0])).GetDisplayString());
         g_base->ScreenMessage(s, {1, 0.5f, 0.0f});
-        g_base->audio->SafePlayBuiltinSoundOld(
-            base::BuiltinSoundOldID::kCorkPop);
+        g_base->audio->SafePlayBuiltinSound(
+            base::BuiltinSoundID::kAudioCorkPop);
       }
       break;
     }
@@ -767,7 +767,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
       Utils::StringReplaceOne(&s, "${NAME}", peer_spec().GetDisplayString());
     }
     g_base->ScreenMessage(s, {0.5f, 1, 0.5f});
-    g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kGunCock);
+    g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioGunCocking);
 
     printed_connect_message_ = true;
   }

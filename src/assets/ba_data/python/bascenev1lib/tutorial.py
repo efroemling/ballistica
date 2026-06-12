@@ -623,7 +623,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self._r = 'tutorial'
         self._have_skipped = False
         self.stick_image_position_x = self.stick_image_position_y = 0.0
-        self.spawn_sound = bs.getsound('spawn')
+        self.spawn_sound = stdassets.audio.spawn
         self.map: bs.Map | None = None
         self.text: bs.Node | None = None
         self._skip_text: bs.Node | None = None
@@ -2476,7 +2476,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
             bs.increment_analytics_count('Tutorial skip')
             bs.set_analytics_screen('Tutorial Skip')
             self._have_skipped = True
-            bs.getsound('swish').play()
+            builtinassets.audio.swish.play()
             # self._skip_count_text.text = self._r.skippingText
             self._skip_count_text.text = bs.Lstr(
                 resource=f'{self._r}.skippingText'

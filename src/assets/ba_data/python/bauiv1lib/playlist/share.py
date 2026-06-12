@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, override
 from efro.util import strict_partial
 from bauiv1lib.sendinfo import SendInfoWindowLegacyModal
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -29,7 +30,7 @@ class SharePlaylistImportWindow(SendInfoWindowLegacyModal):
     def _on_import_response(self, response: dict[str, Any] | None) -> None:
         if response is None:
             bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         if response['playlistType'] == 'Team Tournament':
@@ -49,7 +50,7 @@ class SharePlaylistImportWindow(SendInfoWindowLegacyModal):
             ),
             color=(0, 1, 0),
         )
-        bui.getsound('gunCocking').play()
+        builtinassets.audio.gun_cocking.play()
         if self._on_success_callback is not None:
             self._on_success_callback()
         bui.containerwidget(
@@ -97,8 +98,8 @@ class SharePlaylistResultsWindow(bui.Window):
                 darken_behind=True,
             )
         )
-        bui.getsound('cashRegister').play()
-        bui.getsound('swish').play()
+        builtinassets.audio.cash_register.play()
+        builtinassets.audio.swish.play()
 
         self._cancel_button = bui.buttonwidget(
             parent=self._root_widget,

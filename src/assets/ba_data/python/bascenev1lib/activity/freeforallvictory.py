@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 
@@ -22,7 +23,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
         # Keep prev activity alive while we fade in.
         self.transition_time = 0.5
-        self._cymbal_sound = bs.getsound('cymbal')
+        self._cymbal_sound = stdassets.audio.cymbal
 
     @override
     def on_begin(self) -> None:

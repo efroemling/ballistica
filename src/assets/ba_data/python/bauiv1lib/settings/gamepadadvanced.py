@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -557,7 +558,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
                                 control
                             ),
                         )
-                    bui.getsound('gunCocking').play()
+                    builtinassets.audio.gun_cocking.play()
                     dialog.die()
         else:
             if event['type'] == 'BUTTONDOWN':
@@ -571,7 +572,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
                             control
                         ),
                     )
-                bui.getsound('gunCocking').play()
+                builtinassets.audio.gun_cocking.play()
                 dialog.die()
 
     def _done(self) -> None:

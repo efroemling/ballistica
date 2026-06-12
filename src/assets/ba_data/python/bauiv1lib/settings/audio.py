@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     pass
@@ -207,7 +208,7 @@ class AudioSettingsWindow(bui.MainWindow):
         # We require disk access for soundtracks; request it if we don't
         # have it.
         if not bui.have_permission(bui.Permission.STORAGE):
-            bui.getsound('ding').play()
+            builtinassets.audio.ding.play()
             bui.screenmessage(
                 bui.Lstr(resource='storagePermissionAccessText'),
                 color=(0.5, 1, 0.5),

@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, cast, override
 from bauiv1lib.popup import PopupWindow
 from bauiv1lib.colorpicker import ColorPicker
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Sequence
@@ -188,7 +189,7 @@ class TeamNamesColorsWindow(PopupWindow):
                 bui.screenmessage(
                     bui.Lstr(resource='nameNotEmptyText'), color=(1, 0, 0)
                 )
-                bui.getsound('error').play()
+                builtinassets.audio.error.play()
                 return
             new_names.append(name)
 
@@ -223,7 +224,7 @@ class TeamNamesColorsWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.play()
         self._transition_out()
 
     def _on_cancel_press(self) -> None:

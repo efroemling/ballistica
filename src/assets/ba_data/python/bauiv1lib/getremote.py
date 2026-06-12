@@ -8,6 +8,7 @@ from typing import override
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
+from bauiv1 import builtinassets
 from bauiv1 import stdassets
 
 
@@ -79,5 +80,5 @@ class GetBSRemoteWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.play()
         self._transition_out()

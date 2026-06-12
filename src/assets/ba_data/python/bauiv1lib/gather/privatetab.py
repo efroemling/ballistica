@@ -28,6 +28,7 @@ from bauiv1lib.play import PlaylistSelectContext
 from bauiv1lib.gettokens import show_get_tokens_prompt
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -436,7 +437,7 @@ class PrivateGatherTab(GatherTab):
     def _set_sub_tab(self, value: SubTabType, playsound: bool = False) -> None:
         assert self._container
         if playsound:
-            bui.getsound('click01').play()
+            builtinassets.audio.click01.play()
 
         # If switching from join to host, force some refreshes.
         if self._state.sub_tab is SubTabType.JOIN and value is SubTabType.HOST:
@@ -993,15 +994,15 @@ class PrivateGatherTab(GatherTab):
 
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(bui.Lstr(resource='notSignedInErrorText'))
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             self._refresh_sub_tab()
             return
 
         if self._hostingstate.unavailable_error is not None:
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
-        bui.getsound('click01').play()
+        builtinassets.audio.click01.play()
 
         # We need our v2 info for this.
         if self._v2state is None or self._v2state.datacode is None:
@@ -1009,7 +1010,7 @@ class PrivateGatherTab(GatherTab):
                 bui.Lstr(resource='internal.unavailableNoConnectionText'),
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         # If we're not hosting, start.
@@ -1024,7 +1025,7 @@ class PrivateGatherTab(GatherTab):
                     < self._hostingstate.tokens_to_host_now
                 ):
                     show_get_tokens_prompt()
-                    bui.getsound('error').play()
+                    builtinassets.audio.error.play()
                     return
 
             self._last_action_send_time = time.time()
@@ -1050,7 +1051,7 @@ class PrivateGatherTab(GatherTab):
                 callback=bui.WeakCallPartial(self._hosting_state_response),
             )
             plus.run_v1_account_transactions()
-        bui.getsound('click01').play()
+        builtinassets.audio.click01.play()
 
         self._waiting_for_start_stop_response = True
         self._refresh_sub_tab()
@@ -1065,7 +1066,7 @@ class PrivateGatherTab(GatherTab):
                 bui.Lstr(translate=('serverResponses', 'Invalid code.')),
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         self._connect_to_party_code(code)
@@ -1084,7 +1085,7 @@ class PrivateGatherTab(GatherTab):
                     bui.Lstr(translate=('serverResponses', cresult.error)),
                     (1, 0, 0),
                 )
-                bui.getsound('error').play()
+                builtinassets.audio.error.play()
                 return
             self._debug_server_comm('got valid connect response')
             assert cresult.address4 is not None and cresult.port is not None
@@ -1096,7 +1097,7 @@ class PrivateGatherTab(GatherTab):
             bs.connect_to_party(cresult.address4, port=cresult.port)
         except Exception:
             self._debug_server_comm('got connect response error')
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
 
     @override
     def save_state(self) -> None:

@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -374,7 +375,7 @@ class WatchWindow(bui.MainWindow):
             bui.Lstr(resource=f'{self._r}.noReplaySelectedErrorText'),
             color=(1, 0, 0),
         )
-        bui.getsound('error').play()
+        builtinassets.audio.error.play()
 
     def _on_my_replay_play_press(self) -> None:
         if self._my_replay_selected is None:
@@ -506,7 +507,7 @@ class WatchWindow(bui.MainWindow):
                 # False alarm; bui.textwidget can return non-None val.
                 # pylint: disable=unsupported-membership-test
                 if os.path.exists(new_name_full):
-                    bui.getsound('error').play()
+                    builtinassets.audio.error.play()
                     bui.screenmessage(
                         bui.Lstr(
                             resource=self._r
@@ -515,7 +516,7 @@ class WatchWindow(bui.MainWindow):
                         color=(1, 0, 0),
                     )
                 elif any(char in new_name_raw for char in ['/', '\\', ':']):
-                    bui.getsound('error').play()
+                    builtinassets.audio.error.play()
                     bui.screenmessage(
                         bui.Lstr(
                             resource=f'{self._r}.replayRenameErrorInvalidName'
@@ -526,12 +527,12 @@ class WatchWindow(bui.MainWindow):
                     bui.increment_analytics_count('Replay rename')
                     os.rename(old_name_full, new_name_full)
                     self._refresh_my_replays()
-                    bui.getsound('gunCocking').play()
+                    builtinassets.audio.gun_cocking.play()
         except Exception:
             logging.exception(
                 "Error renaming replay '%s' to '%s'.", replay, new_name
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             bui.screenmessage(
                 bui.Lstr(resource=f'{self._r}.replayRenameErrorText'),
                 color=(1, 0, 0),
@@ -574,12 +575,12 @@ class WatchWindow(bui.MainWindow):
             bui.increment_analytics_count('Replay delete')
             os.remove((bui.get_replays_dir() + '/' + replay).encode('utf-8'))
             self._refresh_my_replays()
-            bui.getsound('shieldDown').play()
+            stdassets.audio.shield_down.play()
             if replay == self._my_replay_selected:
                 self._my_replay_selected = None
         except Exception:
             logging.exception("Error deleting replay '%s'.", replay)
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             bui.screenmessage(
                 bui.Lstr(resource=f'{self._r}.replayDeleteErrorText'),
                 color=(1, 0, 0),

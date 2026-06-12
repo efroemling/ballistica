@@ -494,7 +494,7 @@ auto UI::RequestMainUIControl(InputDevice* input_device) -> bool {
     // they're not the chosen one.
     if (time - last_widget_input_reject_err_sound_time_ > 5000) {
       last_widget_input_reject_err_sound_time_ = time;
-      g_base->audio->SafePlayBuiltinSoundOld(BuiltinSoundOldID::kErrorBeep);
+      g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioError);
       print_ui_owner = true;
     }
     ret_val = false;  // Rejected!

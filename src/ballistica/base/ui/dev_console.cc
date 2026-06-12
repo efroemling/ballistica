@@ -1408,7 +1408,7 @@ void DevConsole::CycleState(bool backwards) {
       g_base->logic->event_loop()->PushCall([this] { RefreshTabContents_(); });
     }
   }
-  g_base->audio->SafePlayBuiltinSoundOld(BuiltinSoundOldID::kBlip);
+  g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioBlip);
   transition_start_ = g_base->logic->display_time();
 }
 
@@ -1775,8 +1775,7 @@ auto DevConsole::PasteFromClipboard() -> bool {
           }
 
           if (strstr(text.c_str(), "\n") || strstr(text.c_str(), "\r")) {
-            g_base->audio->SafePlayBuiltinSoundOld(
-                BuiltinSoundOldID::kErrorBeep);
+            g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioError);
             g_base->ScreenMessage("Can only paste single lines of text.",
                                   Vector3f(1.0f, 0.0f, 0.0f));
           } else {

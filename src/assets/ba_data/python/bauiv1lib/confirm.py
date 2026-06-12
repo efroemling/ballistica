@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -179,7 +180,7 @@ class QuitWindow:
             ui.quit_window.delete()
             ui.quit_window = None
         if swish:
-            bui.getsound('swish').play()
+            builtinassets.audio.swish.play()
 
         # Generally Macs say Quit and other stuff says Exit
         quit_resource = (

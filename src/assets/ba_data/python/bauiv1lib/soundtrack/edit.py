@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import builtinassets
 from bauiv1 import stdassets
 
 if TYPE_CHECKING:
@@ -390,7 +391,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             None if musictype not in soundtrack else soundtrack[musictype]
         )
         if existing_entry != entry:
-            bui.getsound('gunCocking').play()
+            builtinassets.audio.gun_cocking.play()
 
         # Make sure this doesn't get mucked with after we get it.
         if entry is not None:
@@ -448,7 +449,7 @@ class SoundtrackEditWindow(bui.MainWindow):
 
         # Warn if volume is zero.
         if bui.app.config.resolve('Music Volume') < 0.01:
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             bui.screenmessage(
                 bui.Lstr(resource=f'{self._r}.musicVolumeZeroWarning'),
                 color=(1, 0.5, 0),
@@ -512,10 +513,10 @@ class SoundtrackEditWindow(bui.MainWindow):
             bui.screenmessage(
                 bui.Lstr(resource=f'{self._r}.cantSaveAlreadyExistsText')
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
         if not new_name:
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
         if (
             new_name
@@ -526,7 +527,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             bui.screenmessage(
                 bui.Lstr(resource=f'{self._r}.cantOverwriteDefaultText')
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         # Make sure config exists.
@@ -543,7 +544,7 @@ class SoundtrackEditWindow(bui.MainWindow):
         cfg['Soundtrack'] = new_name
 
         cfg.commit()
-        bui.getsound('gunCocking').play()
+        builtinassets.audio.gun_cocking.play()
 
         # Resets music back to normal.
         music.set_music_play_mode(
@@ -553,5 +554,5 @@ class SoundtrackEditWindow(bui.MainWindow):
         self.main_window_back()
 
     def _do_it_with_sound(self) -> None:
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.play()
         self._do_it()

@@ -757,11 +757,11 @@ void ButtonWidget::DoActivate(bool is_repeat) {
   if (sound_enabled_) {
     int r = rand() % 3;  // NOLINT
     if (r == 0) {
-      g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kSwish);
+      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioSwish);
     } else if (r == 1) {
-      g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kSwish2);
+      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioSwish2);
     } else {
-      g_base->audio->SafePlayBuiltinSoundOld(base::BuiltinSoundOldID::kSwish3);
+      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioSwish3);
     }
   }
   if (auto* call = on_activate_call_.get()) {

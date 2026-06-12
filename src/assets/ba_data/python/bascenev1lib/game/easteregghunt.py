@@ -77,7 +77,7 @@ class EasterEggHuntGame(bs.TeamGameActivity[Player, Team]):
         self.egg_tex_1 = stdassets.textures.egg_tex1
         self.egg_tex_2 = stdassets.textures.egg_tex2
         self.egg_tex_3 = stdassets.textures.egg_tex3
-        self._collect_sound = bs.getsound('powerup01')
+        self._collect_sound = stdassets.audio.powerup01
         self._pro_mode = settings.get('Pro Mode', False)
         self._epic_mode = settings.get('Epic Mode', False)
         self._max_eggs = 1.0

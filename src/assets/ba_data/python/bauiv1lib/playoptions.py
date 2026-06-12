@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, override
 from bacommon.analytics import ClassicAnalyticsEvent
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import builtinassets
 from bauiv1 import stdassets
 
 from bauiv1lib.popup import PopupWindow
@@ -473,7 +474,7 @@ class PlayOptionsWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.play()
         self._transition_out()
 
     def _on_cancel_press(self) -> None:
@@ -490,7 +491,7 @@ class PlayOptionsWindow(PopupWindow):
 
         # Disallow if we have no unlocked games.
         if not self._have_at_least_one_owned:
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             bui.screenmessage(
                 bui.Lstr(resource='playlistNoValidGamesErrorText'),
                 color=(1, 0, 0),
@@ -510,7 +511,7 @@ class PlayOptionsWindow(PopupWindow):
             else:
                 raise RuntimeError('Only teams and ffa currently supported')
             cfg['Private Party Host Session Type'] = typename
-            bui.getsound('gunCocking').play()
+            builtinassets.audio.gun_cocking.play()
 
             self._transition_out(transition='out_left')
             if self._delegate is not None:

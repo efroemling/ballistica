@@ -337,7 +337,15 @@ auto SoundAsset::GetName() const -> std::string {
 void SoundAsset::DoPreload() {
 #if BA_ENABLE_AUDIO
 
-  if (!strstr(file_name_full_.c_str(), ".ogg")) {
+  // Guard against non-ogg sources slipping in — but only when the path
+  // visibly carries an extension. CAS blob paths are bare content
+  // hashes (no extension); the probe below handles those (and anything
+  // else that isn't really ogg-vorbis) gracefully.
+  auto slash_pos = file_name_full_.rfind('/');
+  auto base_start = slash_pos == std::string::npos ? 0 : slash_pos + 1;
+  bool has_extension =
+      file_name_full_.find('.', base_start) != std::string::npos;
+  if (has_extension && !strstr(file_name_full_.c_str(), ".ogg")) {
     throw Exception("Unsupported sound file (needs to end in .ogg): '"
                     + file_name_full_ + "'");
   }

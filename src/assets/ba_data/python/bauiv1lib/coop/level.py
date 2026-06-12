@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
 from bauiv1 import stdassets
 
 
@@ -72,7 +73,7 @@ class CoopLevelLockedWindow(bui.Window):
         bui.containerwidget(
             edit=self._root_widget, selected_child=btn, start_button=btn
         )
-        bui.getsound('error').play()
+        builtinassets.audio.error.play()
 
     def _ok(self) -> None:
         bui.containerwidget(edit=self._root_widget, transition='out_left')

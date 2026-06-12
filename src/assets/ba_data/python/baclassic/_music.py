@@ -12,7 +12,7 @@ from enum import Enum
 
 import babase
 import bascenev1
-from bascenev1 import MusicType
+from bascenev1 import MusicType, stdassets
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -36,39 +36,74 @@ class AssetSoundtrackEntry:
     loop: bool = True
 
 
+def _audioref(name: str) -> str:
+    """Qualified asset-package ref for a stdassets audio asset."""
+    return f'{stdassets.__asset_package__}:audio/{name}'
+
+
 # What gets played by default for our different music types:
 ASSET_SOUNDTRACK_ENTRIES: dict[MusicType, AssetSoundtrackEntry] = {
-    MusicType.MENU: AssetSoundtrackEntry('menuMusic'),
+    MusicType.MENU: AssetSoundtrackEntry(_audioref('menu_music')),
     MusicType.VICTORY: AssetSoundtrackEntry(
-        'victoryMusic', volume=1.2, loop=False
+        _audioref('victory_music'), volume=1.2, loop=False
     ),
-    MusicType.CHAR_SELECT: AssetSoundtrackEntry('charSelectMusic', volume=0.4),
-    MusicType.RUN_AWAY: AssetSoundtrackEntry('runAwayMusic', volume=1.2),
-    MusicType.ONSLAUGHT: AssetSoundtrackEntry('runAwayMusic', volume=1.2),
-    MusicType.KEEP_AWAY: AssetSoundtrackEntry('runAwayMusic', volume=1.2),
-    MusicType.RACE: AssetSoundtrackEntry('runAwayMusic', volume=1.2),
-    MusicType.EPIC_RACE: AssetSoundtrackEntry('slowEpicMusic', volume=1.2),
+    MusicType.CHAR_SELECT: AssetSoundtrackEntry(
+        _audioref('char_select_music'), volume=0.4
+    ),
+    MusicType.RUN_AWAY: AssetSoundtrackEntry(
+        _audioref('run_away_music'), volume=1.2
+    ),
+    MusicType.ONSLAUGHT: AssetSoundtrackEntry(
+        _audioref('run_away_music'), volume=1.2
+    ),
+    MusicType.KEEP_AWAY: AssetSoundtrackEntry(
+        _audioref('run_away_music'), volume=1.2
+    ),
+    MusicType.RACE: AssetSoundtrackEntry(
+        _audioref('run_away_music'), volume=1.2
+    ),
+    MusicType.EPIC_RACE: AssetSoundtrackEntry(
+        _audioref('slow_epic_music'), volume=1.2
+    ),
     MusicType.SCORES: AssetSoundtrackEntry(
-        'scoresEpicMusic', volume=0.6, loop=False
+        _audioref('scores_epic_music'), volume=0.6, loop=False
     ),
-    MusicType.GRAND_ROMP: AssetSoundtrackEntry('grandRompMusic', volume=1.2),
-    MusicType.TO_THE_DEATH: AssetSoundtrackEntry('toTheDeathMusic', volume=1.2),
-    MusicType.CHOSEN_ONE: AssetSoundtrackEntry('survivalMusic', volume=0.8),
+    MusicType.GRAND_ROMP: AssetSoundtrackEntry(
+        _audioref('grand_romp_music'), volume=1.2
+    ),
+    MusicType.TO_THE_DEATH: AssetSoundtrackEntry(
+        _audioref('to_the_death_music'), volume=1.2
+    ),
+    MusicType.CHOSEN_ONE: AssetSoundtrackEntry(
+        _audioref('survival_music'), volume=0.8
+    ),
     MusicType.FORWARD_MARCH: AssetSoundtrackEntry(
-        'forwardMarchMusic', volume=0.8
+        _audioref('forward_march_music'), volume=0.8
     ),
     MusicType.FLAG_CATCHER: AssetSoundtrackEntry(
-        'flagCatcherMusic', volume=1.2
+        _audioref('flag_catcher_music'), volume=1.2
     ),
-    MusicType.SURVIVAL: AssetSoundtrackEntry('survivalMusic', volume=0.8),
-    MusicType.EPIC: AssetSoundtrackEntry('slowEpicMusic', volume=1.2),
-    MusicType.SPORTS: AssetSoundtrackEntry('sportsMusic', volume=0.8),
-    MusicType.HOCKEY: AssetSoundtrackEntry('sportsMusic', volume=0.8),
-    MusicType.FOOTBALL: AssetSoundtrackEntry('sportsMusic', volume=0.8),
-    MusicType.FLYING: AssetSoundtrackEntry('flyingMusic', volume=0.8),
-    MusicType.SCARY: AssetSoundtrackEntry('scaryMusic', volume=0.8),
+    MusicType.SURVIVAL: AssetSoundtrackEntry(
+        _audioref('survival_music'), volume=0.8
+    ),
+    MusicType.EPIC: AssetSoundtrackEntry(
+        _audioref('slow_epic_music'), volume=1.2
+    ),
+    MusicType.SPORTS: AssetSoundtrackEntry(
+        _audioref('sports_music'), volume=0.8
+    ),
+    MusicType.HOCKEY: AssetSoundtrackEntry(
+        _audioref('sports_music'), volume=0.8
+    ),
+    MusicType.FOOTBALL: AssetSoundtrackEntry(
+        _audioref('sports_music'), volume=0.8
+    ),
+    MusicType.FLYING: AssetSoundtrackEntry(
+        _audioref('flying_music'), volume=0.8
+    ),
+    MusicType.SCARY: AssetSoundtrackEntry(_audioref('scary_music'), volume=0.8),
     MusicType.MARCHING: AssetSoundtrackEntry(
-        'whenJohnnyComesMarchingHomeMusic', volume=0.8
+        _audioref('when_johnny_comes_marching_home_music'), volume=0.8
     ),
 }
 

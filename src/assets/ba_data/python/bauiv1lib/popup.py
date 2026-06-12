@@ -8,6 +8,7 @@ import weakref
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Callable, Literal
@@ -269,7 +270,7 @@ class PopupMenuWindow(PopupWindow):
             self._current_choice = self._choices[index]
 
     def _activate(self) -> None:
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.play()
         bui.apptimer(0.05, self._transition_out)
         delegate = self._getdelegate()
         if delegate is not None:
@@ -296,7 +297,7 @@ class PopupMenuWindow(PopupWindow):
     @override
     def on_popup_cancel(self) -> None:
         if not self._transitioning_out:
-            bui.getsound('swish').play()
+            builtinassets.audio.swish.play()
         self._transition_out()
 
 

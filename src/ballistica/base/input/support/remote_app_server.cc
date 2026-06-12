@@ -172,7 +172,7 @@ void RemoteAppServer::HandleData(int socket, uint8_t* buffer, size_t amt,
                 s, false, Vector3f(1, 1, 1));
           });
           g_base->logic->event_loop()->PushCall([] {
-            g_base->audio->SafePlayBuiltinSoundOld(BuiltinSoundOldID::kCorkPop);
+            g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioCorkPop);
           });
           g_base->input->PushRemoveInputDeviceCall(client->joystick_, false);
           client->joystick_ = nullptr;
@@ -382,7 +382,8 @@ auto RemoteAppServer::GetClient(int request_id, struct sockaddr* addr,
         });
         g_base->logic->event_loop()->PushCall([] {
           if (g_base->assets->asset_loads_allowed()) {
-            g_base->audio->SafePlayBuiltinSoundOld(BuiltinSoundOldID::kGunCock);
+            g_base->audio->SafePlayBuiltinSound(
+                BuiltinSoundID::kAudioGunCocking);
           }
         });
       }
@@ -433,7 +434,7 @@ auto RemoteAppServer::GetClient(int request_id, struct sockaddr* addr,
 
       g_base->logic->event_loop()->PushCall([] {
         if (g_base->assets->asset_loads_allowed()) {
-          g_base->audio->SafePlayBuiltinSoundOld(BuiltinSoundOldID::kGunCock);
+          g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioGunCocking);
         }
       });
 

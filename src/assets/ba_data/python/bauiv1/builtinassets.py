@@ -1,11 +1,11 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Asset-package wrapper for ``a-0.babuiltinassets.260611`` (bauiv1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260611a`` (bauiv1).
 
 Auto-generated; do not edit by hand.
 """
 
-# ba_meta require asset-package a-0.babuiltinassets.260611
+# ba_meta require asset-package a-0.babuiltinassets.260611a
 # pylint: disable=missing-function-docstring
 # pylint: disable=too-many-public-methods, useless-suppression
 # pylint: disable=too-many-lines, disallowed-name
@@ -16,8 +16,133 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import bauiv1
 
-__asset_package__ = 'a-0.babuiltinassets.260611'
+__asset_package__ = 'a-0.babuiltinassets.260611a'
 _APVERID = __asset_package__
+
+
+class _Audio:
+    @property
+    def blank(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/blank')
+
+    @property
+    def blip(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/blip')
+
+    @property
+    def cash_register(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/cash_register')
+
+    @property
+    def click01(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/click01')
+
+    @property
+    def cork_pop(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/cork_pop')
+
+    @property
+    def deek(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/deek')
+
+    @property
+    def ding(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/ding')
+
+    @property
+    def error(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/error')
+
+    @property
+    def gun_cocking(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/gun_cocking')
+
+    @property
+    def powerdown01(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/powerdown01')
+
+    @property
+    def punch01(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/punch01')
+
+    @property
+    def score_increase(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/score_increase')
+
+    @property
+    def sparkle01(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/sparkle01')
+
+    @property
+    def sparkle02(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/sparkle02')
+
+    @property
+    def sparkle03(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/sparkle03')
+
+    @property
+    def swish(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/swish')
+
+    @property
+    def swish2(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/swish2')
+
+    @property
+    def swish3(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/swish3')
+
+    @property
+    def tap(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/tap')
+
+    @property
+    def ticking_crazy(self) -> bauiv1.Sound:
+        import bauiv1
+
+        return bauiv1.getsound(f'{_APVERID}:audio/ticking_crazy')
+
+
+audio = _Audio()
 
 
 class _Textures:

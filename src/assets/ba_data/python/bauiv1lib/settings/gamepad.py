@@ -705,7 +705,7 @@ class GamepadSettingsWindow(bui.MainWindow):
                     edit=self._textwidgets['buttonDown' + ext],
                     text=self.get_control_value_name('buttonDown' + ext),
                 )
-                bui.getsound('gunCocking').play()
+                builtinassets.audio.gun_cocking.play()
                 dialog.die()
 
         elif control == 'analogStickLR' + ext:
@@ -719,7 +719,7 @@ class GamepadSettingsWindow(bui.MainWindow):
                         edit=self._textwidgets['analogStickLR' + ext],
                         text=self.get_control_value_name('analogStickLR' + ext),
                     )
-                    bui.getsound('gunCocking').play()
+                    builtinassets.audio.gun_cocking.play()
                     dialog.die()
 
                     # Now launch the up/down listener.
@@ -750,7 +750,7 @@ class GamepadSettingsWindow(bui.MainWindow):
                                 'analogStickLR' + ext
                             ),
                         )
-                        bui.getsound('gunCocking').play()
+                        builtinassets.audio.gun_cocking.play()
                         dialog.die()
         else:
             # For other buttons we just want a button-press.
@@ -763,7 +763,7 @@ class GamepadSettingsWindow(bui.MainWindow):
                     edit=self._textwidgets[control],
                     text=self.get_control_value_name(control),
                 )
-                bui.getsound('gunCocking').play()
+                builtinassets.audio.gun_cocking.play()
                 dialog.die()
 
     def _capture_button(
@@ -871,7 +871,7 @@ class GamepadSettingsWindow(bui.MainWindow):
             pass
 
         self._rebuild_ui(is_reset=True)
-        bui.getsound('gunCocking').play()
+        builtinassets.audio.gun_cocking.play()
 
     def _do_more(self) -> None:
         """Show a burger menu with extra settings."""
@@ -960,9 +960,9 @@ class GamepadSettingsWindow(bui.MainWindow):
                 },
             )
             bui.app.config.apply_and_commit()
-            bui.getsound('gunCocking').play()
+            builtinassets.audio.gun_cocking.play()
         else:
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
 
         if self._modal:
             bui.containerwidget(
@@ -1073,5 +1073,5 @@ class AwaitGamepadInputWindow(bui.Window):
                     edit=self._count_down_text, text=str(self._counter)
                 )
         else:
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             self.die()

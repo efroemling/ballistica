@@ -13,6 +13,7 @@ from efro.util import strict_partial
 import bacommon.classic
 import bacommon.displayitem as ditm
 import bauiv1 as bui
+from bauiv1 import builtinassets
 from bauiv1 import stdassets
 
 if TYPE_CHECKING:
@@ -835,14 +836,14 @@ class ChestWindow(bui.MainWindow):
     def _open_press(self, user_tokens: int, token_payment: int) -> None:
         from bauiv1lib.gettokens import show_get_tokens_prompt
 
-        bui.getsound('click01').play()
+        builtinassets.audio.click01.play()
 
         # Allow only one in-flight action at once.
         if self._action_in_flight:
             bui.screenmessage(
                 bui.Lstr(resource='pleaseWaitText'), color=(1, 0, 0)
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         plus = bui.app.plus
@@ -856,7 +857,7 @@ class ChestWindow(bui.MainWindow):
         if user_tokens < token_payment:
             # Hack: We disable normal swish for the open button and it
             # seems weird without a swish here, so explicitly do one.
-            bui.getsound('swish').play()
+            builtinassets.audio.swish.play()
             show_get_tokens_prompt(origin_widget=self._open_now_button)
             return
 
@@ -887,14 +888,14 @@ class ChestWindow(bui.MainWindow):
 
     def _watch_ad_press(self) -> None:
 
-        bui.getsound('click01').play()
+        builtinassets.audio.click01.play()
 
         # Allow only one in-flight action at once.
         if self._action_in_flight:
             bui.screenmessage(
                 bui.Lstr(resource='pleaseWaitText'), color=(1, 0, 0)
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         assert bui.app.plus is not None
@@ -930,7 +931,7 @@ class ChestWindow(bui.MainWindow):
             bui.screenmessage(
                 bui.Lstr(resource='pleaseWaitText'), color=(1, 0, 0)
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         plus = bui.app.plus
@@ -1010,7 +1011,7 @@ class ChestWindow(bui.MainWindow):
         tendoffs = tincr * 4.0
         toffs = 0.0
 
-        bui.getsound('revUp').play(volume=2.0)
+        stdassets.audio.rev_up.play(volume=2.0)
 
         # Show nothing but the chest icon and animate it shaking.
         self._reset()
@@ -1061,7 +1062,7 @@ class ChestWindow(bui.MainWindow):
         xspacing = 100
         xoffs = -0.5 * (len(response.contents) - 1) * xspacing
         bui.apptimer(
-            toffs - 0.2, lambda: bui.getsound('corkPop2').play(volume=4.0)
+            toffs - 0.2, lambda: stdassets.audio.cork_pop2.play(volume=4.0)
         )
         # Play a variety of voice sounds.
 
@@ -1099,9 +1100,7 @@ class ChestWindow(bui.MainWindow):
 
         for item in response.contents:
             toffs += tincr
-            bui.apptimer(
-                toffs - 0.1, lambda: bui.getsound('cashRegister').play()
-            )
+            bui.apptimer(toffs - 0.1, builtinassets.audio.cash_register.play)
             bui.apptimer(
                 toffs,
                 strict_partial(
@@ -1159,7 +1158,7 @@ class ChestWindow(bui.MainWindow):
 
         self._reset()
         imgsize = 145
-        bui.getsound('hiss').play()
+        stdassets.audio.hiss.play()
         assert self._chestdisplayinfo is not None
         img = bui.imagewidget(
             parent=self._root_widget,

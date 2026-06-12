@@ -71,3 +71,31 @@ def require_ballistica_api_key() -> None:
         'Set the BALLISTICA_API_KEY env var or add'
         ' ballistica_api_key to pconfig/localconfig.json.'
     )
+
+
+def compile_collision_mesh() -> None:
+    """Compile a collision mesh from .obj to our binary .cob format.
+
+    Usage: compile_collision_mesh <src.obj> <dst.cob>
+    """
+    import os
+
+    from efro.error import CleanError
+    from efrotools import pcommand
+
+    from bacommontools import meshcompile
+
+    args = pcommand.get_args()
+    if len(args) != 2:
+        raise CleanError('Expected 2 args (src and dst paths).')
+
+    src, dst = args
+
+    # Show project-relative paths when possible.
+    relpath = os.path.abspath(dst).removeprefix(f'{pcommand.PROJROOT}/')
+    pcommand.clientprint(f'Compiling collision mesh: {relpath}')
+
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    meshcompile.compile_collision_mesh(src, dst)
+
+    assert os.path.exists(dst)

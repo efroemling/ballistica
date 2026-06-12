@@ -343,7 +343,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
         self._settings = {}
         self._get_config_mapping(default=True)
         self._rebuild_ui(is_reset=True)
-        bui.getsound('gunCocking').play()
+        builtinassets.audio.gun_cocking.play()
 
     def _do_more(self) -> None:
         """Show a burger menu with extra settings."""
@@ -390,7 +390,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
             return
 
         assert bui.app.classic is not None
-        bui.getsound('gunCocking').play()
+        builtinassets.audio.gun_cocking.play()
 
         # There's a chance the device disappeared; handle that
         # gracefully.
@@ -486,7 +486,7 @@ class AwaitKeyboardInputWindow(bui.Window):
         if event['type'] == 'BUTTONDOWN':
             bname = event['input_device'].get_button_name(event['button'])
             bui.textwidget(edit=self._capture_key_ui, text=bname)
-            bui.getsound('gunCocking').play()
+            builtinassets.audio.gun_cocking.play()
             self._die()
 
     def _decrement(self) -> None:

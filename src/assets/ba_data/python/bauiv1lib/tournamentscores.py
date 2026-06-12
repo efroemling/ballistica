@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Callable
@@ -213,9 +214,9 @@ class TournamentScoresWindow(PopupWindow):
         # For the moment we only work if a single player-info is
         # present.
         if len(entry[2]) != 1:
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.play()
         AccountViewerWindow(
             account_id=entry[2][0].get('a', None),
             profile_id=entry[2][0].get('p', None),
@@ -233,5 +234,5 @@ class TournamentScoresWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.play()
         self._transition_out()

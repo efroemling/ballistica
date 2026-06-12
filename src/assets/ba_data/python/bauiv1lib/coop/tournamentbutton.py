@@ -431,9 +431,9 @@ class TournamentButton:
             or self.leader is None
             or len(self.leader[2]) != 1
         ):
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.play()
         AccountViewerWindow(
             account_id=self.leader[2][0].get('a', None),
             profile_id=self.leader[2][0].get('p', None),
@@ -446,7 +446,7 @@ class TournamentButton:
 
         tournament_id = self.tournament_id
         if tournament_id is None:
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         TournamentScoresWindow(

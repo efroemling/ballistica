@@ -8,6 +8,7 @@ import random
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import builtinassets
 from bascenev1 import stdassets
 
 from bascenev1lib.gameutils import SharedObjects
@@ -101,10 +102,10 @@ class PowerupBoxFactory:
         self.tex_health = stdassets.textures.powerup_health
         self.tex_land_mines = stdassets.textures.powerup_land_mines
         self.tex_curse = stdassets.textures.powerup_curse
-        self.health_powerup_sound = bs.getsound('healthPowerup')
-        self.powerup_sound = bs.getsound('powerup01')
-        self.powerdown_sound = bs.getsound('powerdown01')
-        self.drop_sound = bs.getsound('boxDrop')
+        self.health_powerup_sound = stdassets.audio.health_powerup
+        self.powerup_sound = stdassets.audio.powerup01
+        self.powerdown_sound = builtinassets.audio.powerdown01
+        self.drop_sound = stdassets.audio.box_drop
 
         # Material for powerups.
         self.powerup_material = bs.Material()

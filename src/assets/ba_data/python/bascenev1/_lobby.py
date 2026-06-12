@@ -198,13 +198,13 @@ class Chooser:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets
+        from bascenev1 import builtinassets, stdassets
 
-        self._deek_sound = _bascenev1.getsound('deek')
-        self._click_sound = _bascenev1.getsound('click01')
-        self._punchsound = _bascenev1.getsound('punch01')
-        self._swish_sound = _bascenev1.getsound('punchSwish')
-        self._errorsound = _bascenev1.getsound('error')
+        self._deek_sound = builtinassets.audio.deek
+        self._click_sound = builtinassets.audio.click01
+        self._punchsound = builtinassets.audio.punch01
+        self._swish_sound = stdassets.audio.punch_swish
+        self._errorsound = builtinassets.audio.error
         self._mask_texture = builtinassets.textures.character_icon_mask
         self._vpos = vpos
         self._lobby = weakref.ref(lobby)
@@ -798,6 +798,10 @@ class Chooser:
 
     def handlemessage(self, msg: Any) -> Any:
         """Standard generic message handler."""
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import builtinassets
 
         if isinstance(msg, ChangeMessage):
             self._handle_repeat_message_attack()
@@ -826,7 +830,7 @@ class Chooser:
                 if len(self._profilenames) == 1:
                     # This should be pretty hard to hit now with
                     # automatic local accounts.
-                    _bascenev1.getsound('error').play()
+                    builtinassets.audio.error.play()
                 else:
                     # Pick the next player profile and assign our name
                     # and character based on that.

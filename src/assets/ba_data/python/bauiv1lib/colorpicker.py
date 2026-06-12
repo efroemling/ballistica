@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
+from bauiv1 import builtinassets
 from bauiv1 import stdassets
 
 if TYPE_CHECKING:
@@ -153,7 +154,7 @@ class ColorPicker(PopupWindow):
     @override
     def on_popup_cancel(self) -> None:
         if not self._transitioning_out:
-            bui.getsound('swish').play()
+            builtinassets.audio.swish.play()
         self._transition_out()
 
 
@@ -378,7 +379,7 @@ class ColorPickerExact(PopupWindow):
     @override
     def on_popup_cancel(self) -> None:
         if not self._transitioning_out:
-            bui.getsound('swish').play()
+            builtinassets.audio.swish.play()
         self._transition_out()
 
 

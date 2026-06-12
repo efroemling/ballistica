@@ -64,8 +64,8 @@ class FlagFactory:
             ),
         )
 
-        self.impact_sound = bs.getsound('metalHit')
-        self.skid_sound = bs.getsound('metalSkid')
+        self.impact_sound = stdassets.audio.metal_hit
+        self.skid_sound = stdassets.audio.metal_skid
         self.flagmaterial.add_actions(
             conditions=(
                 'they_have_material',

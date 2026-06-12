@@ -1,14 +1,14 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Asset-package wrapper for ``a-0.bastdassets.260610a`` (bascenev1).
+"""Asset-package wrapper for ``a-0.bastdassets.260611`` (bascenev1).
 
 Auto-generated; do not edit by hand.
 """
 
-# ba_meta require asset-package a-0.bastdassets.260610a
+# ba_meta require asset-package a-0.bastdassets.260611
 # pylint: disable=missing-function-docstring
-# pylint: disable=too-many-public-methods, too-many-lines
-# pylint: disable=disallowed-name, useless-suppression
+# pylint: disable=too-many-public-methods, useless-suppression
+# pylint: disable=too-many-lines, disallowed-name
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -16,8 +16,2487 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import bascenev1
 
-__asset_package__ = 'a-0.bastdassets.260610a'
+__asset_package__ = 'a-0.bastdassets.260611'
 _APVERID = __asset_package__
+
+
+class _Audio:
+    @property
+    def achievement(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/achievement')
+
+    @property
+    def action_hero1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/action_hero1')
+
+    @property
+    def action_hero2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/action_hero2')
+
+    @property
+    def action_hero3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/action_hero3')
+
+    @property
+    def action_hero4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/action_hero4')
+
+    @property
+    def action_hero_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/action_hero_death')
+
+    @property
+    def action_hero_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/action_hero_fall')
+
+    @property
+    def action_hero_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/action_hero_hit1')
+
+    @property
+    def action_hero_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/action_hero_hit2')
+
+    @property
+    def activate_beep(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/activate_beep')
+
+    @property
+    def agent1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/agent1')
+
+    @property
+    def agent2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/agent2')
+
+    @property
+    def agent3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/agent3')
+
+    @property
+    def agent4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/agent4')
+
+    @property
+    def agent_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/agent_death')
+
+    @property
+    def agent_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/agent_fall')
+
+    @property
+    def agent_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/agent_hit1')
+
+    @property
+    def agent_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/agent_hit2')
+
+    @property
+    def alarm(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/alarm')
+
+    @property
+    def ali1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ali1')
+
+    @property
+    def ali2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ali2')
+
+    @property
+    def ali3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ali3')
+
+    @property
+    def ali4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ali4')
+
+    @property
+    def ali_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ali_death')
+
+    @property
+    def ali_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ali_fall')
+
+    @property
+    def ali_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ali_hit1')
+
+    @property
+    def ali_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ali_hit2')
+
+    @property
+    def alien1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/alien1')
+
+    @property
+    def alien2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/alien2')
+
+    @property
+    def alien3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/alien3')
+
+    @property
+    def alien4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/alien4')
+
+    @property
+    def alien_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/alien_death')
+
+    @property
+    def alien_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/alien_fall')
+
+    @property
+    def alien_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/alien_hit1')
+
+    @property
+    def alien_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/alien_hit2')
+
+    @property
+    def announce_eight(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/announce_eight')
+
+    @property
+    def announce_five(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/announce_five')
+
+    @property
+    def announce_four(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/announce_four')
+
+    @property
+    def announce_nine(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/announce_nine')
+
+    @property
+    def announce_one(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/announce_one')
+
+    @property
+    def announce_seven(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/announce_seven')
+
+    @property
+    def announce_six(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/announce_six')
+
+    @property
+    def announce_ten(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/announce_ten')
+
+    @property
+    def announce_three(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/announce_three')
+
+    @property
+    def announce_two(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/announce_two')
+
+    @property
+    def assassin1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/assassin1')
+
+    @property
+    def assassin2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/assassin2')
+
+    @property
+    def assassin3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/assassin3')
+
+    @property
+    def assassin4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/assassin4')
+
+    @property
+    def assassin_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/assassin_death')
+
+    @property
+    def assassin_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/assassin_fall')
+
+    @property
+    def assassin_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/assassin_hit1')
+
+    @property
+    def assassin_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/assassin_hit2')
+
+    @property
+    def aww(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/aww')
+
+    @property
+    def bear1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bear1')
+
+    @property
+    def bear2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bear2')
+
+    @property
+    def bear3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bear3')
+
+    @property
+    def bear4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bear4')
+
+    @property
+    def bear_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bear_death')
+
+    @property
+    def bear_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bear_fall')
+
+    @property
+    def bear_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bear_hit1')
+
+    @property
+    def bear_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bear_hit2')
+
+    @property
+    def bell_high(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bell_high')
+
+    @property
+    def bell_low(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bell_low')
+
+    @property
+    def bell_med(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bell_med')
+
+    @property
+    def big_impact(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/big_impact')
+
+    @property
+    def big_impact2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/big_impact2')
+
+    @property
+    def block(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/block')
+
+    @property
+    def bomb_drop01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bomb_drop01')
+
+    @property
+    def bomb_drop02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bomb_drop02')
+
+    @property
+    def bomb_roll01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bomb_roll01')
+
+    @property
+    def bones1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bones1')
+
+    @property
+    def bones2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bones2')
+
+    @property
+    def bones3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bones3')
+
+    @property
+    def bones_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bones_death')
+
+    @property
+    def bones_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bones_fall')
+
+    @property
+    def boo(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/boo')
+
+    @property
+    def box_drop(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/box_drop')
+
+    @property
+    def boxing_bell(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/boxing_bell')
+
+    @property
+    def bunny1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bunny1')
+
+    @property
+    def bunny2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bunny2')
+
+    @property
+    def bunny3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bunny3')
+
+    @property
+    def bunny4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bunny4')
+
+    @property
+    def bunny_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bunny_death')
+
+    @property
+    def bunny_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bunny_fall')
+
+    @property
+    def bunny_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bunny_hit1')
+
+    @property
+    def bunny_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bunny_hit2')
+
+    @property
+    def bunny_jump(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/bunny_jump')
+
+    @property
+    def cash_register2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cash_register2')
+
+    @property
+    def char_select_music(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/char_select_music')
+
+    @property
+    def cheer(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cheer')
+
+    @property
+    def cork_pop2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cork_pop2')
+
+    @property
+    def cowboy1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cowboy1')
+
+    @property
+    def cowboy2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cowboy2')
+
+    @property
+    def cowboy3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cowboy3')
+
+    @property
+    def cowboy4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cowboy4')
+
+    @property
+    def cowboy_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cowboy_death')
+
+    @property
+    def cowboy_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cowboy_fall')
+
+    @property
+    def cowboy_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cowboy_hit1')
+
+    @property
+    def cowboy_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cowboy_hit2')
+
+    @property
+    def crowd_chant(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/crowd_chant')
+
+    @property
+    def cyborg1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cyborg1')
+
+    @property
+    def cyborg2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cyborg2')
+
+    @property
+    def cyborg3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cyborg3')
+
+    @property
+    def cyborg4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cyborg4')
+
+    @property
+    def cyborg_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cyborg_death')
+
+    @property
+    def cyborg_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cyborg_fall')
+
+    @property
+    def cyborg_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cyborg_hit1')
+
+    @property
+    def cyborg_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cyborg_hit2')
+
+    @property
+    def cymbal(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cymbal')
+
+    @property
+    def debris_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/debris_fall')
+
+    @property
+    def deek2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/deek2')
+
+    @property
+    def ding_small(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ding_small')
+
+    @property
+    def ding_small_high(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ding_small_high')
+
+    @property
+    def dripity(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/dripity')
+
+    @property
+    def drum_roll(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/drum_roll')
+
+    @property
+    def drum_roll_short(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/drum_roll_short')
+
+    @property
+    def explosion01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/explosion01')
+
+    @property
+    def explosion02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/explosion02')
+
+    @property
+    def explosion03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/explosion03')
+
+    @property
+    def explosion04(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/explosion04')
+
+    @property
+    def explosion05(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/explosion05')
+
+    @property
+    def fanfare(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/fanfare')
+
+    @property
+    def flag_catcher_music(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/flag_catcher_music')
+
+    @property
+    def flying_music(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/flying_music')
+
+    @property
+    def foghorn(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/foghorn')
+
+    @property
+    def foot_impact01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/foot_impact01')
+
+    @property
+    def foot_impact02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/foot_impact02')
+
+    @property
+    def foot_impact03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/foot_impact03')
+
+    @property
+    def forward_march_music(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/forward_march_music')
+
+    @property
+    def freeze(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/freeze')
+
+    @property
+    def frosty01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/frosty01')
+
+    @property
+    def frosty02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/frosty02')
+
+    @property
+    def frosty03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/frosty03')
+
+    @property
+    def frosty04(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/frosty04')
+
+    @property
+    def frosty05(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/frosty05')
+
+    @property
+    def frosty_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/frosty_death')
+
+    @property
+    def frosty_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/frosty_fall')
+
+    @property
+    def frosty_hit01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/frosty_hit01')
+
+    @property
+    def frosty_hit02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/frosty_hit02')
+
+    @property
+    def frosty_hit03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/frosty_hit03')
+
+    @property
+    def fuse01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/fuse01')
+
+    @property
+    def gasp(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/gasp')
+
+    @property
+    def gladiator1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/gladiator1')
+
+    @property
+    def gladiator2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/gladiator2')
+
+    @property
+    def gladiator3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/gladiator3')
+
+    @property
+    def gladiator4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/gladiator4')
+
+    @property
+    def gladiator_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/gladiator_death')
+
+    @property
+    def gladiator_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/gladiator_fall')
+
+    @property
+    def gladiator_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/gladiator_hit1')
+
+    @property
+    def gladiator_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/gladiator_hit2')
+
+    @property
+    def gong(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/gong')
+
+    @property
+    def grand_romp_music(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/grand_romp_music')
+
+    @property
+    def gravel_skid(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/gravel_skid')
+
+    @property
+    def health_powerup(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/health_powerup')
+
+    @property
+    def hiss(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/hiss')
+
+    @property
+    def impact_hard(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/impact_hard')
+
+    @property
+    def impact_hard2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/impact_hard2')
+
+    @property
+    def impact_hard3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/impact_hard3')
+
+    @property
+    def impact_medium(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/impact_medium')
+
+    @property
+    def impact_medium2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/impact_medium2')
+
+    @property
+    def jack01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jack01')
+
+    @property
+    def jack02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jack02')
+
+    @property
+    def jack03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jack03')
+
+    @property
+    def jack04(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jack04')
+
+    @property
+    def jack05(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jack05')
+
+    @property
+    def jack06(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jack06')
+
+    @property
+    def jack_death01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jack_death01')
+
+    @property
+    def jack_fall01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jack_fall01')
+
+    @property
+    def jack_hit01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jack_hit01')
+
+    @property
+    def jack_hit02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jack_hit02')
+
+    @property
+    def jack_hit03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jack_hit03')
+
+    @property
+    def jack_hit04(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jack_hit04')
+
+    @property
+    def jack_hit05(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jack_hit05')
+
+    @property
+    def jack_hit06(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jack_hit06')
+
+    @property
+    def jack_hit07(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jack_hit07')
+
+    @property
+    def jumpsuit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit1')
+
+    @property
+    def jumpsuit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit2')
+
+    @property
+    def jumpsuit3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit3')
+
+    @property
+    def jumpsuit4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit4')
+
+    @property
+    def jumpsuit_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit_death')
+
+    @property
+    def jumpsuit_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit_fall')
+
+    @property
+    def jumpsuit_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit_hit1')
+
+    @property
+    def jumpsuit_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit_hit2')
+
+    @property
+    def kronk1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/kronk1')
+
+    @property
+    def kronk10(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/kronk10')
+
+    @property
+    def kronk2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/kronk2')
+
+    @property
+    def kronk3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/kronk3')
+
+    @property
+    def kronk4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/kronk4')
+
+    @property
+    def kronk5(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/kronk5')
+
+    @property
+    def kronk6(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/kronk6')
+
+    @property
+    def kronk7(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/kronk7')
+
+    @property
+    def kronk8(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/kronk8')
+
+    @property
+    def kronk9(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/kronk9')
+
+    @property
+    def kronk_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/kronk_death')
+
+    @property
+    def kronk_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/kronk_fall')
+
+    @property
+    def laser(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/laser')
+
+    @property
+    def laser_reverse(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/laser_reverse')
+
+    @property
+    def mel01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/mel01')
+
+    @property
+    def mel02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/mel02')
+
+    @property
+    def mel03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/mel03')
+
+    @property
+    def mel04(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/mel04')
+
+    @property
+    def mel05(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/mel05')
+
+    @property
+    def mel06(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/mel06')
+
+    @property
+    def mel07(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/mel07')
+
+    @property
+    def mel08(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/mel08')
+
+    @property
+    def mel09(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/mel09')
+
+    @property
+    def mel10(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/mel10')
+
+    @property
+    def mel_death01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/mel_death01')
+
+    @property
+    def mel_fall01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/mel_fall01')
+
+    @property
+    def menu_music(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/menu_music')
+
+    @property
+    def metal_hit(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/metal_hit')
+
+    @property
+    def metal_skid(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/metal_skid')
+
+    @property
+    def nice(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/nice')
+
+    @property
+    def ninja_attack1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_attack1')
+
+    @property
+    def ninja_attack2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_attack2')
+
+    @property
+    def ninja_attack3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_attack3')
+
+    @property
+    def ninja_attack4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_attack4')
+
+    @property
+    def ninja_attack5(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_attack5')
+
+    @property
+    def ninja_attack6(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_attack6')
+
+    @property
+    def ninja_attack7(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_attack7')
+
+    @property
+    def ninja_death1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_death1')
+
+    @property
+    def ninja_fall1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_fall1')
+
+    @property
+    def ninja_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit1')
+
+    @property
+    def ninja_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit2')
+
+    @property
+    def ninja_hit3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit3')
+
+    @property
+    def ninja_hit4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit4')
+
+    @property
+    def ninja_hit5(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit5')
+
+    @property
+    def ninja_hit6(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit6')
+
+    @property
+    def ninja_hit7(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit7')
+
+    @property
+    def ninja_hit8(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit8')
+
+    @property
+    def old_lady1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/old_lady1')
+
+    @property
+    def old_lady2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/old_lady2')
+
+    @property
+    def old_lady3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/old_lady3')
+
+    @property
+    def old_lady4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/old_lady4')
+
+    @property
+    def old_lady_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/old_lady_death')
+
+    @property
+    def old_lady_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/old_lady_fall')
+
+    @property
+    def old_lady_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/old_lady_hit1')
+
+    @property
+    def old_lady_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/old_lady_hit2')
+
+    @property
+    def ooh(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ooh')
+
+    @property
+    def opera_singer1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer1')
+
+    @property
+    def opera_singer2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer2')
+
+    @property
+    def opera_singer3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer3')
+
+    @property
+    def opera_singer4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer4')
+
+    @property
+    def opera_singer_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer_death')
+
+    @property
+    def opera_singer_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer_fall')
+
+    @property
+    def opera_singer_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer_hit1')
+
+    @property
+    def opera_singer_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer_hit2')
+
+    @property
+    def orchestra_hit(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/orchestra_hit')
+
+    @property
+    def orchestra_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/orchestra_hit2')
+
+    @property
+    def orchestra_hit3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/orchestra_hit3')
+
+    @property
+    def orchestra_hit4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/orchestra_hit4')
+
+    @property
+    def orchestra_hit_big1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/orchestra_hit_big1')
+
+    @property
+    def orchestra_hit_big2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/orchestra_hit_big2')
+
+    @property
+    def penguin1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/penguin1')
+
+    @property
+    def penguin2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/penguin2')
+
+    @property
+    def penguin3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/penguin3')
+
+    @property
+    def penguin4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/penguin4')
+
+    @property
+    def penguin_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/penguin_death')
+
+    @property
+    def penguin_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/penguin_fall')
+
+    @property
+    def penguin_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/penguin_hit1')
+
+    @property
+    def penguin_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/penguin_hit2')
+
+    @property
+    def pixie1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/pixie1')
+
+    @property
+    def pixie2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/pixie2')
+
+    @property
+    def pixie3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/pixie3')
+
+    @property
+    def pixie4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/pixie4')
+
+    @property
+    def pixie_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/pixie_death')
+
+    @property
+    def pixie_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/pixie_fall')
+
+    @property
+    def pixie_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/pixie_hit1')
+
+    @property
+    def pixie_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/pixie_hit2')
+
+    @property
+    def player_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/player_death')
+
+    @property
+    def player_left(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/player_left')
+
+    @property
+    def pop01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/pop01')
+
+    @property
+    def powerup01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/powerup01')
+
+    @property
+    def punch_strong01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/punch_strong01')
+
+    @property
+    def punch_strong02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/punch_strong02')
+
+    @property
+    def punch_swish(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/punch_swish')
+
+    @property
+    def punch_weak01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/punch_weak01')
+
+    @property
+    def race_beep1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/race_beep1')
+
+    @property
+    def race_beep2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/race_beep2')
+
+    @property
+    def ref_whistle(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ref_whistle')
+
+    @property
+    def rev_up(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/rev_up')
+
+    @property
+    def robot1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/robot1')
+
+    @property
+    def robot2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/robot2')
+
+    @property
+    def robot3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/robot3')
+
+    @property
+    def robot4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/robot4')
+
+    @property
+    def robot_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/robot_death')
+
+    @property
+    def robot_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/robot_fall')
+
+    @property
+    def robot_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/robot_hit1')
+
+    @property
+    def robot_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/robot_hit2')
+
+    @property
+    def run_away_music(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/run_away_music')
+
+    @property
+    def santa01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/santa01')
+
+    @property
+    def santa02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/santa02')
+
+    @property
+    def santa03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/santa03')
+
+    @property
+    def santa04(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/santa04')
+
+    @property
+    def santa05(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/santa05')
+
+    @property
+    def santa_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/santa_death')
+
+    @property
+    def santa_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/santa_fall')
+
+    @property
+    def santa_hit01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/santa_hit01')
+
+    @property
+    def santa_hit02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/santa_hit02')
+
+    @property
+    def santa_hit03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/santa_hit03')
+
+    @property
+    def santa_hit04(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/santa_hit04')
+
+    @property
+    def scamper01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/scamper01')
+
+    @property
+    def scary_music(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/scary_music')
+
+    @property
+    def score(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/score')
+
+    @property
+    def score_hit01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/score_hit01')
+
+    @property
+    def score_hit02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/score_hit02')
+
+    @property
+    def scores_epic_music(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/scores_epic_music')
+
+    @property
+    def shatter(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/shatter')
+
+    @property
+    def shield_down(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/shield_down')
+
+    @property
+    def shield_hit(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/shield_hit')
+
+    @property
+    def shield_up(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/shield_up')
+
+    @property
+    def skid01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/skid01')
+
+    @property
+    def slow_epic_music(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/slow_epic_music')
+
+    @property
+    def spawn(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spawn')
+
+    @property
+    def spaz_attack01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_attack01')
+
+    @property
+    def spaz_attack02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_attack02')
+
+    @property
+    def spaz_attack03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_attack03')
+
+    @property
+    def spaz_attack04(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_attack04')
+
+    @property
+    def spaz_death01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_death01')
+
+    @property
+    def spaz_eff(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_eff')
+
+    @property
+    def spaz_fall01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_fall01')
+
+    @property
+    def spaz_impact01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_impact01')
+
+    @property
+    def spaz_impact02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_impact02')
+
+    @property
+    def spaz_impact03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_impact03')
+
+    @property
+    def spaz_impact04(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_impact04')
+
+    @property
+    def spaz_jump01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_jump01')
+
+    @property
+    def spaz_jump02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_jump02')
+
+    @property
+    def spaz_jump03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_jump03')
+
+    @property
+    def spaz_jump04(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_jump04')
+
+    @property
+    def spaz_ow(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_ow')
+
+    @property
+    def spaz_pickup01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_pickup01')
+
+    @property
+    def spaz_scream01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/spaz_scream01')
+
+    @property
+    def splatter(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/splatter')
+
+    @property
+    def sports_music(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/sports_music')
+
+    @property
+    def sticky_impact(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/sticky_impact')
+
+    @property
+    def super_punch(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/super_punch')
+
+    @property
+    def superhero1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/superhero1')
+
+    @property
+    def superhero2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/superhero2')
+
+    @property
+    def superhero3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/superhero3')
+
+    @property
+    def superhero4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/superhero4')
+
+    @property
+    def superhero_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/superhero_death')
+
+    @property
+    def superhero_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/superhero_fall')
+
+    @property
+    def superhero_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/superhero_hit1')
+
+    @property
+    def superhero_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/superhero_hit2')
+
+    @property
+    def survival_music(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/survival_music')
+
+    @property
+    def swip(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/swip')
+
+    @property
+    def swip2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/swip2')
+
+    @property
+    def techno_hit01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/techno_hit01')
+
+    @property
+    def tick(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/tick')
+
+    @property
+    def ticking(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ticking')
+
+    @property
+    def to_the_death_music(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/to_the_death_music')
+
+    @property
+    def trash_rummage(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/trash_rummage')
+
+    @property
+    def victory_music(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/victory_music')
+
+    @property
+    def warn_beep(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/warn_beep')
+
+    @property
+    def warn_beeps(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/warn_beeps')
+
+    @property
+    def warrior1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/warrior1')
+
+    @property
+    def warrior2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/warrior2')
+
+    @property
+    def warrior3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/warrior3')
+
+    @property
+    def warrior4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/warrior4')
+
+    @property
+    def warrior_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/warrior_death')
+
+    @property
+    def warrior_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/warrior_fall')
+
+    @property
+    def warrior_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/warrior_hit1')
+
+    @property
+    def warrior_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/warrior_hit2')
+
+    @property
+    def when_johnny_comes_marching_home_music(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(
+            f'{_APVERID}:audio/when_johnny_comes_marching_home_music'
+        )
+
+    @property
+    def witch1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/witch1')
+
+    @property
+    def witch2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/witch2')
+
+    @property
+    def witch3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/witch3')
+
+    @property
+    def witch4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/witch4')
+
+    @property
+    def witch_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/witch_death')
+
+    @property
+    def witch_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/witch_fall')
+
+    @property
+    def witch_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/witch_hit1')
+
+    @property
+    def witch_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/witch_hit2')
+
+    @property
+    def wizard1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wizard1')
+
+    @property
+    def wizard2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wizard2')
+
+    @property
+    def wizard3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wizard3')
+
+    @property
+    def wizard4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wizard4')
+
+    @property
+    def wizard_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wizard_death')
+
+    @property
+    def wizard_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wizard_fall')
+
+    @property
+    def wizard_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wizard_hit1')
+
+    @property
+    def wizard_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wizard_hit2')
+
+    @property
+    def woo(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/woo')
+
+    @property
+    def woo2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/woo2')
+
+    @property
+    def woo3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/woo3')
+
+    @property
+    def wood_debris_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wood_debris_fall')
+
+    @property
+    def wow(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wow')
+
+    @property
+    def wrestler1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wrestler1')
+
+    @property
+    def wrestler2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wrestler2')
+
+    @property
+    def wrestler3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wrestler3')
+
+    @property
+    def wrestler4(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wrestler4')
+
+    @property
+    def wrestler_death(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wrestler_death')
+
+    @property
+    def wrestler_fall(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wrestler_fall')
+
+    @property
+    def wrestler_hit1(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wrestler_hit1')
+
+    @property
+    def wrestler_hit2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/wrestler_hit2')
+
+    @property
+    def yeah(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/yeah')
+
+    @property
+    def zoe_attack01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_attack01')
+
+    @property
+    def zoe_attack02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_attack02')
+
+    @property
+    def zoe_attack03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_attack03')
+
+    @property
+    def zoe_attack04(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_attack04')
+
+    @property
+    def zoe_death01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_death01')
+
+    @property
+    def zoe_eff(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_eff')
+
+    @property
+    def zoe_fall01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_fall01')
+
+    @property
+    def zoe_impact01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_impact01')
+
+    @property
+    def zoe_impact02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_impact02')
+
+    @property
+    def zoe_impact03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_impact03')
+
+    @property
+    def zoe_impact04(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_impact04')
+
+    @property
+    def zoe_jump01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_jump01')
+
+    @property
+    def zoe_jump02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_jump02')
+
+    @property
+    def zoe_jump03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_jump03')
+
+    @property
+    def zoe_ow(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_ow')
+
+    @property
+    def zoe_pickup01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_pickup01')
+
+    @property
+    def zoe_scream01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/zoe_scream01')
+
+
+audio = _Audio()
 
 
 class _Textures:

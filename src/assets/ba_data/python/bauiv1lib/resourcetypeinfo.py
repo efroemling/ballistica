@@ -8,6 +8,7 @@ from typing import override, TYPE_CHECKING, assert_never
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
+from bauiv1 import builtinassets
 from bauiv1 import stdassets
 
 if TYPE_CHECKING:
@@ -143,5 +144,5 @@ class ResourceTypeInfoWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.play()
         self._transition_out()

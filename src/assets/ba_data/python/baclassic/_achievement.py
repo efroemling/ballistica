@@ -1228,10 +1228,10 @@ class Achievement:
             return
 
         if sound:
-            bascenev1.getsound('achievement').play(host_only=True)
+            stdassets.audio.achievement.play(host_only=True)
         else:
             bascenev1.timer(
-                0.5, lambda: bascenev1.getsound('ding').play(host_only=True)
+                0.5, lambda: builtinassets.audio.ding.play(host_only=True)
             )
 
         in_time = 0.300

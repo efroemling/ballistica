@@ -145,6 +145,11 @@ class TeamGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         (for results without a single most-important winner).
         """
         # pylint: disable=arguments-renamed
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import stdassets
+
         from bascenev1._coopsession import CoopSession
         from bascenev1._multiteamsession import MultiTeamSession
 
@@ -178,5 +183,5 @@ class TeamGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                 delay = 0.0
             else:
                 delay = 2.0
-                _bascenev1.timer(0.1, _bascenev1.getsound('boxingBell').play)
+                _bascenev1.timer(0.1, stdassets.audio.boxing_bell.play)
             super().end(results, delay=delay, force=force)

@@ -12,6 +12,7 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -164,10 +165,10 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
     def __init__(self, settings: dict):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        self._alarmsound = bs.getsound('alarm')
-        self._ticking_sound = bs.getsound('ticking')
-        self._score_sound = bs.getsound('score')
-        self._swipsound = bs.getsound('swip')
+        self._alarmsound = stdassets.audio.alarm
+        self._ticking_sound = stdassets.audio.ticking
+        self._score_sound = stdassets.audio.score
+        self._swipsound = stdassets.audio.swip
         self._last_score_time = 0
         self._all_bases_material = bs.Material()
         self._last_home_flag_notice_print_time = 0.0

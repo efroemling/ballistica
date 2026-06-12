@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast, Sequence, override
 
 import bascenev1 as bs
+from bascenev1 import builtinassets
 from bascenev1 import stdassets
 
 from bascenev1lib.actor.popuptext import PopupText
@@ -139,11 +140,11 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         shared = SharedObjects.get()
         self._preset = Preset(settings.get('preset', 'pro'))
 
-        self._player_death_sound = bs.getsound('playerDeath')
-        self._new_wave_sound = bs.getsound('scoreHit01')
-        self._winsound = bs.getsound('score')
-        self._cashregistersound = bs.getsound('cashRegister')
-        self._bad_guy_score_sound = bs.getsound('shieldDown')
+        self._player_death_sound = stdassets.audio.player_death
+        self._new_wave_sound = stdassets.audio.score_hit01
+        self._winsound = stdassets.audio.score
+        self._cashregistersound = builtinassets.audio.cash_register
+        self._bad_guy_score_sound = stdassets.audio.shield_down
         self._heart_tex = stdassets.textures.heart
         self._heart_mesh_opaque = bs.getmesh('heartOpaque')
         self._heart_mesh_transparent = bs.getmesh('heartTransparent')
@@ -176,8 +177,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         self._score = 0
         self._time_bonus = 0
         self._score_region: bs.Actor | None = None
-        self._dingsound = bs.getsound('dingSmall')
-        self._dingsoundhigh = bs.getsound('dingSmallHigh')
+        self._dingsound = stdassets.audio.ding_small
+        self._dingsoundhigh = stdassets.audio.ding_small_high
         self._exclude_powerups: list[str] | None = None
         self._have_tnt: bool | None = None
         self._waves: list[Wave] | None = None

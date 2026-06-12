@@ -8,6 +8,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, assert_never, override
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
 from bauiv1 import stdassets
 from bauiv1lib import popup
 
@@ -213,7 +214,7 @@ class PluginWindow(bui.MainWindow):
             bui.screenmessage(
                 'Still scanning plugins; please try again.', color=(1, 0, 0)
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
         plugspecs = bui.app.plugins.plugin_specs
         plugstates: dict[str, dict] = bui.app.config.get('Plugins', {})
         assert isinstance(plugstates, dict)

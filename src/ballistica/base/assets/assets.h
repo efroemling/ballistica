@@ -95,8 +95,6 @@ class Assets {
 
   // Get system assets. These are loaded at startup so are always instantly
   // available.
-  auto IsValidBuiltinSoundOld(BuiltinSoundOldID id) -> bool;
-  auto BuiltinSoundOld(BuiltinSoundOldID id) -> SoundAsset*;
   auto BuiltinMeshOld(BuiltinMeshOldID id) -> MeshAsset*;
 
   // Same as above but for the new CAS-backed asset-package path. Enum
@@ -212,7 +210,6 @@ class Assets {
                          size_t colon_pos) -> std::string;
 
   static void MarkAssetForLoad(Asset* c);
-  void LoadBuiltinSoundOld(BuiltinSoundOldID id, const char* name);
   void LoadSystemData(SystemDataID id, const char* name);
   void LoadBuiltinMeshOld(BuiltinMeshOldID id, const char* name);
   // CAS-backed builtin loaders; called from the autogen section
@@ -251,7 +248,6 @@ class Assets {
   // For use by AssetListLock; don't manually acquire.
   std::mutex asset_lists_mutex_;
 
-  std::vector<Object::Ref<SoundAsset> > builtin_sounds_old_;
   std::vector<Object::Ref<DataAsset> > system_datas_;
   std::vector<Object::Ref<MeshAsset> > builtin_meshes_old_;
 

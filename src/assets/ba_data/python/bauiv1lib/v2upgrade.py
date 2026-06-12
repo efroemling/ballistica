@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 
 class V2UpgradeWindow(bui.Window):
@@ -31,7 +32,7 @@ class V2UpgradeWindow(bui.Window):
                 ),
             )
         )
-        bui.getsound('error').play()
+        builtinassets.audio.error.play()
 
         bui.textwidget(
             parent=self._root_widget,

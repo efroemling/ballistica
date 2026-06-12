@@ -853,17 +853,14 @@ def _preload2() -> None:
     _ = stdassets.textures.powerup_shield
     _ = stdassets.textures.powerup_impact_bombs
     _ = stdassets.textures.powerup_health
-    for sname in [
-        'powerup01',
-        'boxDrop',
-        'boxingBell',
-        'scoreHit01',
-        'scoreHit02',
-        'dripity',
-        'spawn',
-        'gong',
-    ]:
-        bs.getsound(sname)
+    _ = stdassets.audio.powerup01
+    _ = stdassets.audio.box_drop
+    _ = stdassets.audio.boxing_bell
+    _ = stdassets.audio.score_hit01
+    _ = stdassets.audio.score_hit02
+    _ = stdassets.audio.dripity
+    _ = stdassets.audio.spawn
+    _ = stdassets.audio.gong
     from bascenev1lib.actor.bomb import BombFactory
 
     BombFactory.get()
@@ -880,8 +877,10 @@ def _preload3() -> None:
     _ = stdassets.textures.bomb_sticky_color
     _ = stdassets.textures.impact_bomb_color
     _ = stdassets.textures.impact_bomb_color_lit
-    for sname in ['freeze', 'fuse01', 'activateBeep', 'warnBeep']:
-        bs.getsound(sname)
+    _ = stdassets.audio.freeze
+    _ = stdassets.audio.fuse01
+    _ = stdassets.audio.activate_beep
+    _ = stdassets.audio.warn_beep
     SpazFactory.get()
     bui.apptimer(0.2, _preload4)
 
@@ -893,8 +892,10 @@ def _preload4() -> None:
     _ = stdassets.textures.achievement_outline
     for mname in ['frameInset', 'meterTransparent', 'achievementOutline']:
         bs.getmesh(mname)
-    for sname in ['metalHit', 'metalSkid', 'refWhistle', 'achievement']:
-        bs.getsound(sname)
+    _ = stdassets.audio.metal_hit
+    _ = stdassets.audio.metal_skid
+    _ = stdassets.audio.ref_whistle
+    _ = stdassets.audio.achievement
     from bascenev1lib.actor.flag import FlagFactory
 
     FlagFactory.get()

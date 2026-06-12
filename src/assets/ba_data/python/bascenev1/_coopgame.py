@@ -44,6 +44,11 @@ class CoopGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         return issubclass(sessiontype, CoopSession)
 
     def __init__(self, settings: dict):
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import stdassets
+
         super().__init__(settings)
 
         # Cache these for efficiency.
@@ -51,7 +56,7 @@ class CoopGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
 
         self._life_warning_beep: bascenev1.Actor | None = None
         self._life_warning_beep_timer: bascenev1.Timer | None = None
-        self._warn_beeps_sound = _bascenev1.getsound('warnBeeps')
+        self._warn_beeps_sound = stdassets.audio.warn_beeps
 
     @override
     def on_begin(self) -> None:

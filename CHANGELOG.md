@@ -1,4 +1,4 @@
-### 1.8.0a1 (build 22880, api 9, 2026-06-11)
+### 1.8.0 (build 22882, api 9, 2026-06-11)
 - Fixed a 'z.dll missing' error on Windows builds (the refreshed ANGLE
   graphics libs had picked up an external zlib dll dependency; zlib is now
   linked statically into them).

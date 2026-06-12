@@ -165,22 +165,22 @@ class BombFactory:
         self.land_mine_lit_tex = stdassets.textures.land_mine_lit
         self.tnt_tex = stdassets.textures.tnt
 
-        self.hiss_sound = bs.getsound('hiss')
-        self.debris_fall_sound = bs.getsound('debrisFall')
-        self.wood_debris_fall_sound = bs.getsound('woodDebrisFall')
+        self.hiss_sound = stdassets.audio.hiss
+        self.debris_fall_sound = stdassets.audio.debris_fall
+        self.wood_debris_fall_sound = stdassets.audio.wood_debris_fall
 
         self.explode_sounds = (
-            bs.getsound('explosion01'),
-            bs.getsound('explosion02'),
-            bs.getsound('explosion03'),
-            bs.getsound('explosion04'),
-            bs.getsound('explosion05'),
+            stdassets.audio.explosion01,
+            stdassets.audio.explosion02,
+            stdassets.audio.explosion03,
+            stdassets.audio.explosion04,
+            stdassets.audio.explosion05,
         )
 
-        self.freeze_sound = bs.getsound('freeze')
-        self.fuse_sound = bs.getsound('fuse01')
-        self.activate_sound = bs.getsound('activateBeep')
-        self.warn_sound = bs.getsound('warnBeep')
+        self.freeze_sound = stdassets.audio.freeze
+        self.fuse_sound = stdassets.audio.fuse01
+        self.activate_sound = stdassets.audio.activate_beep
+        self.warn_sound = stdassets.audio.warn_beep
 
         # Set up our material so new bombs don't collide with objects
         # that they are initially overlapping.
@@ -267,11 +267,11 @@ class BombFactory:
         )
 
         self.dink_sounds = (
-            bs.getsound('bombDrop01'),
-            bs.getsound('bombDrop02'),
+            stdassets.audio.bomb_drop01,
+            stdassets.audio.bomb_drop02,
         )
-        self.sticky_impact_sound = bs.getsound('stickyImpact')
-        self.roll_sound = bs.getsound('bombRoll01')
+        self.sticky_impact_sound = stdassets.audio.sticky_impact
+        self.roll_sound = stdassets.audio.bomb_roll01
 
         # Collision sounds.
         self.normal_sound_material.add_actions(

@@ -1,11 +1,11 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Asset-package wrapper for ``a-0.babuiltinassets.260611`` (bascenev1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260611a`` (bascenev1).
 
 Auto-generated; do not edit by hand.
 """
 
-# ba_meta require asset-package a-0.babuiltinassets.260611
+# ba_meta require asset-package a-0.babuiltinassets.260611a
 # pylint: disable=missing-function-docstring
 # pylint: disable=too-many-public-methods, useless-suppression
 # pylint: disable=too-many-lines, disallowed-name
@@ -16,8 +16,133 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     import bascenev1
 
-__asset_package__ = 'a-0.babuiltinassets.260611'
+__asset_package__ = 'a-0.babuiltinassets.260611a'
 _APVERID = __asset_package__
+
+
+class _Audio:
+    @property
+    def blank(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/blank')
+
+    @property
+    def blip(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/blip')
+
+    @property
+    def cash_register(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cash_register')
+
+    @property
+    def click01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/click01')
+
+    @property
+    def cork_pop(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/cork_pop')
+
+    @property
+    def deek(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/deek')
+
+    @property
+    def ding(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ding')
+
+    @property
+    def error(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/error')
+
+    @property
+    def gun_cocking(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/gun_cocking')
+
+    @property
+    def powerdown01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/powerdown01')
+
+    @property
+    def punch01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/punch01')
+
+    @property
+    def score_increase(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/score_increase')
+
+    @property
+    def sparkle01(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/sparkle01')
+
+    @property
+    def sparkle02(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/sparkle02')
+
+    @property
+    def sparkle03(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/sparkle03')
+
+    @property
+    def swish(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/swish')
+
+    @property
+    def swish2(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/swish2')
+
+    @property
+    def swish3(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/swish3')
+
+    @property
+    def tap(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/tap')
+
+    @property
+    def ticking_crazy(self) -> bascenev1.Sound:
+        import bascenev1
+
+        return bascenev1.getsound(f'{_APVERID}:audio/ticking_crazy')
+
+
+audio = _Audio()
 
 
 class _Textures:

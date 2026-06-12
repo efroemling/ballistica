@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, override
 
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
+from bauiv1 import builtinassets
 from bauiv1 import stdassets
 
 from bauiv1lib.utils import scroll_fade_top, scroll_fade_bottom
@@ -488,7 +489,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         assert bui.app.classic is not None
         if difficulty != self._campaign_difficulty:
-            bui.getsound('gunCocking').play()
+            builtinassets.audio.gun_cocking.play()
             if difficulty not in ('easy', 'hard'):
                 print('ERROR: invalid campaign difficulty:', difficulty)
                 difficulty = 'easy'
@@ -502,7 +503,7 @@ class CoopBrowserWindow(bui.MainWindow):
             )
             self._refresh_campaign_row()
         else:
-            bui.getsound('click01').play()
+            builtinassets.audio.click01.play()
 
     def _refresh_campaign_row(self) -> None:
         # pylint: disable=cyclic-import
@@ -1154,7 +1155,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 bui.Lstr(resource='tournamentsDisabledWorkspaceText'),
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         if not self._tourney_data_up_to_date:
@@ -1162,7 +1163,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 bui.Lstr(resource='tournamentCheckingStateText'),
                 color=(1, 1, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         if tournament_button.tournament_id is None:
@@ -1170,7 +1171,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 bui.Lstr(resource='internal.unavailableNoConnectionText'),
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         if tournament_button.required_league is not None:
@@ -1191,7 +1192,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 ),
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         if tournament_button.game is not None and not classic.is_game_unlocked(
@@ -1244,7 +1245,7 @@ class CoopBrowserWindow(bui.MainWindow):
             bui.screenmessage(
                 bui.Lstr(resource='tournamentEndedText'), color=(1, 0, 0)
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         self._save_state()

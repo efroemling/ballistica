@@ -1817,16 +1817,16 @@ void SpazNode::DoFlyPress() {
         const dReal* p_torso = dGeomGetPosition(body_torso_->geom());
         s->SetPosition(p_torso[0], p_torso[1], p_torso[2]);
         s->SetGain(0.3f);
-        base::BuiltinSoundOldID s_id;
+        base::BuiltinSoundID s_id;
         int r = rand() % 100;  // NOLINT
         if (r < 33) {
-          s_id = base::BuiltinSoundOldID::kSparkle;
+          s_id = base::BuiltinSoundID::kAudioSparkle01;
         } else if (r < 66) {
-          s_id = base::BuiltinSoundOldID::kSparkle2;
+          s_id = base::BuiltinSoundID::kAudioSparkle02;
         } else {
-          s_id = base::BuiltinSoundOldID::kSparkle3;
+          s_id = base::BuiltinSoundID::kAudioSparkle03;
         }
-        s->Play(g_base->assets->BuiltinSoundOld(s_id));
+        s->Play(g_base->assets->BuiltinSound(s_id));
         s->End();
       }
     }
@@ -6271,8 +6271,8 @@ void SpazNode::SetCurseDeathTime(millisecs_t val) {
         s->SetLooping(true);
         const dReal* p_head = dGeomGetPosition(body_head_->geom());
         s->SetPosition(p_head[0], p_head[1], p_head[2]);
-        tick_play_id_ = s->Play(g_base->assets->BuiltinSoundOld(
-            base::BuiltinSoundOldID::kTickingCrazy));
+        tick_play_id_ = s->Play(g_base->assets->BuiltinSound(
+            base::BuiltinSoundID::kAudioTickingCrazy));
         s->End();
       }
     }

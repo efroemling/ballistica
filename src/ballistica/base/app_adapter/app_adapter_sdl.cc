@@ -962,6 +962,14 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
 
     SDL_SetWindowTitle(sdl_window_, "BallisticaKit");
 
+    // Unlike SDL2, SDL3 delivers no SDL_EVENT_TEXT_INPUT events until text
+    // input is explicitly started, so turn it on permanently to match our
+    // old SDL2 behavior. This is fine for desktop, but if we ever use SDL
+    // in mobile-type situations (where starting text input can summon an
+    // on-screen keyboard) we should revise this to start/stop based on
+    // text-widget focus instead.
+    SDL_StartTextInput(sdl_window_);
+
     UpdateScreenSizes_();
 
     // Now assign a GL renderer to the graphics-server to do its work.

@@ -534,7 +534,7 @@ class InboxWindow(bui.MainWindow):
         if display is None:
             return
 
-        bui.getsound('click01').play()
+        builtinassets.audio.click01.play()
 
         self._neuter_entry_display(display)
 
@@ -551,7 +551,7 @@ class InboxWindow(bui.MainWindow):
             bui.screenmessage(
                 bui.Lstr(resource='notSignedInText'), color=(1, 0, 0)
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         # Pause the root ui so stuff like token counts don't change
@@ -596,7 +596,7 @@ class InboxWindow(bui.MainWindow):
         self.main_window_back()
 
     def _neuter_entry_display(self, entry: _EntryDisplay) -> None:
-        errsound = bui.getsound('error')
+        errsound = builtinassets.audio.error
         if entry.button_positive is not None:
             bui.buttonwidget(
                 edit=entry.button_positive,
@@ -672,7 +672,7 @@ class InboxWindow(bui.MainWindow):
         # Show error message if so.
         if error_message is not None:
             bui.screenmessage(error_message, color=(1, 0, 0))
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             if button is not None:
                 bui.buttonwidget(
                     edit=button, label=bui.Lstr(resource='errorText')

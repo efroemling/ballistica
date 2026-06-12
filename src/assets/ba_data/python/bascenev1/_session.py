@@ -216,6 +216,11 @@ class Session:
 
         This should return True or False to accept/reject.
         """
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import builtinassets, stdassets
+
         # Limit player counts *unless* we're in a stress test.
         if (
             babase.app.classic is not None
@@ -224,7 +229,7 @@ class Session:
             if len(self.sessionplayers) >= self.max_players >= 0:
                 # Print a rejection message *only* to the client trying to
                 # join (prevents spamming everyone else in the game).
-                _bascenev1.getsound('error').play()
+                builtinassets.audio.error.play()
                 _bascenev1.broadcastmessage(
                     babase.Lstr(
                         resource='playerLimitReachedText',
@@ -263,11 +268,15 @@ class Session:
                 return False
             self._player_requested_identifiers[player.id] = identifier
 
-        _bascenev1.getsound('dripity').play()
+        stdassets.audio.dripity.play()
         return True
 
     def on_player_leave(self, sessionplayer: bascenev1.SessionPlayer) -> None:
         """Called when a previously-accepted bascenev1.SessionPlayer leaves."""
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import stdassets
 
         if sessionplayer not in self.sessionplayers:
             print(
@@ -276,7 +285,7 @@ class Session:
             )
             return
 
-        _bascenev1.getsound('playerLeft').play()
+        stdassets.audio.player_left.play()
 
         activity = self._activity_weak()
 
@@ -654,6 +663,11 @@ class Session:
 
     def _on_player_ready(self, chooser: bascenev1.Chooser) -> None:
         """Called when a bascenev1.Player has checked themself ready."""
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import builtinassets
+
         lobby = chooser.lobby
         activity = self._activity_weak()
 
@@ -686,7 +700,7 @@ class Session:
                     ),
                     color=(1, 1, 0),
                 )
-                _bascenev1.getsound('error').play()
+                builtinassets.audio.error.play()
 
         # Otherwise just add players on the fly.
         else:

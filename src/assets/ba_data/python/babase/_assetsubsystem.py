@@ -121,7 +121,7 @@ _GC_BUSY_TIMEOUT_SECONDS = 2.0
 _CAS_SHARD_COUNT = 256
 
 #: The canonical asset-package buckets, in registration order.
-_BUCKETS = ('constant', 'language', 'textures', 'cube_map_textures')
+_BUCKETS = ('constant', 'language', 'textures', 'cube_map_textures', 'audio')
 
 #: Per-bucket fallback flavor coord (or None) — used ONLY for the
 #: builtin/projectconfig bootstrap package, whose fallbacks are
@@ -133,6 +133,10 @@ _BUCKET_FALLBACKS: dict[str, str | None] = {
     'language': 'language/eng',
     'textures': 'textures/fallback_v1.gamma.regular',
     'cube_map_textures': 'cube_map_textures/fallback_v1.gamma.regular',
+    # vorbis_v1 is audio's only real profile (decision #25), so desired
+    # == fallback for GUI builds today; this entry matters only if a
+    # non-bundled audio dimension (e.g. an ultra tier) appears later.
+    'audio': 'audio/vorbis_v1.regular',
 }
 
 
@@ -509,6 +513,12 @@ class AssetSubsystem(AppSubsystem):
         # _texture_profile property (headless-aware).
         self._texture_tier = 'regular'
 
+        # Audio tier is likewise hard-coded for now (decision #25; no
+        # preview tier — vorbis encodes are too cheap to need one). The
+        # audio profile comes from the _audio_profile property
+        # (headless-aware).
+        self._audio_tier = 'regular'
+
         # Render-space (compositing space) flavor dimension (decision
         # #23). Hard-coded to 'gamma' — the only space the renderer
         # composites in today. Becomes runtime-toggleable when the
@@ -624,6 +634,17 @@ class AssetSubsystem(AppSubsystem):
         """
         return _babase.preferred_texture_profile()
 
+    @property
+    def _audio_profile(self) -> str:
+        """The active audio profile for resolves (decision #25).
+
+        Rides the texture profile's NULL-ness: headless builds (null
+        textures) want no audio bytes either; everything else gets
+        ``vorbis_v1``, the only real audio profile today. Mirrors the
+        server-side derivation in ``standard_bucket_requests()``.
+        """
+        return 'null' if self._texture_profile == 'null' else 'vorbis_v1'
+
     def _desired_coords(self, language: Locale) -> dict[str, str]:
         """The desired ``bucket -> coord`` for the active dimensions.
 
@@ -650,6 +671,8 @@ class AssetSubsystem(AppSubsystem):
                 f'.{self._render_space}'
                 f'.{self._texture_tier}'
             ),
+            # Audio has its own profile/tier dimensions (decision #25).
+            'audio': f'audio/{self._audio_profile}.{self._audio_tier}',
         }
 
     @staticmethod

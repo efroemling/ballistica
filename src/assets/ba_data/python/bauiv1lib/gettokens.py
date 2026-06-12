@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, assert_never, override
 import bacommon.cloud
 import bacommon.classic
 import bauiv1 as bui
+from bauiv1 import builtinassets
 from bauiv1 import stdassets
 
 if TYPE_CHECKING:
@@ -807,7 +808,7 @@ class GetTokensWindow(bui.MainWindow):
                 errmsg = bui.Lstr(resource='purchaseNeverAvailableText')
 
             bui.screenmessage(errmsg, color=(1, 0.5, 0))
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         assert plus is not None

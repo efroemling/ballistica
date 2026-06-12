@@ -43,7 +43,6 @@ from efrotools.pcommands import (
     copy_python_file,
     compile_language_file,
     compile_mesh_file,
-    compile_collision_mesh_file,
     compile_font_file,
     pyver,
     try_repeat,
@@ -68,7 +67,11 @@ from efrotools.pcommands2 import (
     pcommandbatch_speed_test,
     null,
 )
-from bacommontools.pcommands import bacurl, require_ballistica_api_key
+from bacommontools.pcommands import (
+    bacurl,
+    compile_collision_mesh,
+    require_ballistica_api_key,
+)
 from batools.pcommands import (
     resize_image,
     check_clean_safety,

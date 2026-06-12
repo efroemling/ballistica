@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -48,16 +49,16 @@ class OnScreenCountdown(bs.Actor):
         )
         self.inputnode.connectattr('output', self.node, 'text')
         self._countdownsounds = {
-            10: bs.getsound('announceTen'),
-            9: bs.getsound('announceNine'),
-            8: bs.getsound('announceEight'),
-            7: bs.getsound('announceSeven'),
-            6: bs.getsound('announceSix'),
-            5: bs.getsound('announceFive'),
-            4: bs.getsound('announceFour'),
-            3: bs.getsound('announceThree'),
-            2: bs.getsound('announceTwo'),
-            1: bs.getsound('announceOne'),
+            10: stdassets.audio.announce_ten,
+            9: stdassets.audio.announce_nine,
+            8: stdassets.audio.announce_eight,
+            7: stdassets.audio.announce_seven,
+            6: stdassets.audio.announce_six,
+            5: stdassets.audio.announce_five,
+            4: stdassets.audio.announce_four,
+            3: stdassets.audio.announce_three,
+            2: stdassets.audio.announce_two,
+            1: stdassets.audio.announce_one,
         }
         self._timer: bs.Timer | None = None
 
@@ -97,7 +98,7 @@ class OnScreenCountdown(bs.Actor):
             bs.animate(cmb, 'input2', {0: 0.1, 0.15: 0.0}, loop=True)
             cmb.input3 = 1.0
         if tval <= 10 and not self._ended:
-            bs.getsound('tick').play()
+            stdassets.audio.tick.play()
         if tval in self._countdownsounds:
             self._countdownsounds[tval].play()
         if tval <= 0 and not self._ended:

@@ -465,8 +465,17 @@ extern const int kEngineApiVersion;
 const int kDefaultPort = 43210;
 
 // Magic numbers at the start of our file types.
+// Python source of truth for cob compilation is
+// tools/bacommontools/meshcompile.py; keep the cob values in sync
+// with it.
 const int kBobFileID = 45623;
+// Legacy cob format (positions + indices + face normals).
 const int kCobFileID = 13466;
+// Current cob format: drops the face-normals block (it was consumed
+// only by ODE's trimesh-vs-trimesh collider, which we can never hit
+// since our trimeshes are static and only collide against moving
+// bodies).
+const int kCobFileID2 = 13467;
 
 const float kPi = 3.1415926535897932384626433832795028841971693993751f;
 const float kPiDeg = kPi / 180.0f;

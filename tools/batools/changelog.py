@@ -6,10 +6,25 @@ import os
 import subprocess
 
 
+def changelog_version(version: str) -> str:
+    """Map a build version to its changelog section version.
+
+    Pre-release suffixes (``1.8.0a1``, ``1.8.0b3``) collapse to their
+    base version (``1.8.0``) so all alphas/betas of a release
+    accumulate in a single changelog section rather than each getting
+    its own.
+    """
+    import re
+
+    return re.sub(r'(a|b)\d+$', '', version)
+
+
 def get_version_changelog(version: str, projroot: str) -> list[str]:
     """Get changelog text for a given version from CHANGELOG.md."""
     import re
     from efro.error import CleanError
+
+    version = changelog_version(version)
 
     changelog_path = os.path.join(projroot, 'CHANGELOG.md')
     if not os.path.exists(changelog_path):

@@ -17,6 +17,7 @@ import bacommon.classic
 import babase
 from babase import AppMode
 import bauiv1 as bui
+from bauiv1 import builtinassets
 from bauiv1lib.connectivity import wait_for_connectivity
 
 import _baclassic
@@ -83,7 +84,10 @@ class ClassicAppMode(AppMode):
         # code get mapped to their asset-package homes (see
         # AssetNameCompat in the native layer). Sourcing these from
         # the wrappers means a modder-swapped package keeps working.
-        from bascenev1 import builtinassets, stdassets
+        # (The bauiv1 and bascenev1 wrapper flavors carry identical
+        # __asset_package__ ids; builtinassets here is our module-level
+        # bauiv1 import.)
+        from bauiv1 import stdassets
 
         babase.set_asset_name_compat_versions(
             {
@@ -303,7 +307,7 @@ class ClassicAppMode(AppMode):
                 color=(0, 1, 0),
             )
             if bui.asset_loads_allowed():
-                bui.getsound('cashRegister').play()
+                builtinassets.audio.cash_register.play()
 
         else:
 
@@ -319,7 +323,7 @@ class ClassicAppMode(AppMode):
                 color=(0, 1, 0),
             )
             if bui.asset_loads_allowed():
-                bui.getsound('cashRegister').play()
+                builtinassets.audio.cash_register.play()
 
     def on_engine_will_reset(self) -> None:
         """Called just before classic resets the engine.
@@ -697,7 +701,7 @@ class ClassicAppMode(AppMode):
         old_window = ui.get_main_window()
         if old_window is not None:
 
-            bui.getsound('swish').play()
+            builtinassets.audio.swish.play()
 
             classic = bui.app.classic
             assert classic is not None
@@ -855,7 +859,7 @@ class ClassicAppMode(AppMode):
         plus = bui.app.plus
         if plus is None:
             bui.screenmessage('This requires plus.', color=(1, 0, 0))
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return False
         if plus.accounts.primary is None:
             show_sign_in_prompt(origin_widget=origin_widget)
@@ -999,13 +1003,13 @@ class ClassicAppMode(AppMode):
                 ' Open a menu or whatnot first.',
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         # Unintuitively, swish sounds come from buttons, not windows.
         # And dev-console buttons don't make sounds. So we need to
         # explicitly do so here.
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.play()
 
         show_template_main_window()
 
@@ -1019,12 +1023,12 @@ class ClassicAppMode(AppMode):
                 ' Open a menu or whatnot first.',
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.play()
             return
 
         # Unintuitively, swish sounds come from buttons, not windows.
         # And dev-console buttons don't make sounds. So we need to
         # explicitly do so here.
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.play()
 
         show_test_doc_ui_window()

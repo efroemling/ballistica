@@ -210,6 +210,11 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
 
     def __init__(self, settings: dict):
         """Instantiate the Activity."""
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import stdassets
+
         super().__init__(settings)
 
         #: Holds some flattened info about the player set at the point
@@ -219,7 +224,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         # Go ahead and get our map loading.
         self._map_type = _map.get_map_class(self._calc_map_name(settings))
 
-        self._spawn_sound = _bascenev1.getsound('spawn')
+        self._spawn_sound = stdassets.audio.spawn
         self._map_type.preload()
         self._map: bascenev1.Map | None = None
         self._powerup_drop_timer: bascenev1.Timer | None = None
@@ -529,6 +534,11 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
 
     def _show_info(self) -> None:
         """Show the game description."""
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import stdassets
+
         from bascenev1._gameutils import animate
         from bascenev1lib.actor.zoomtext import ZoomText
 
@@ -543,9 +553,9 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
             color=(0.93 * 1.25, 0.9 * 1.25, 1.0 * 1.25),
             trailcolor=(0.15, 0.05, 1.0, 0.0),
         ).autoretain()
-        _bascenev1.timer(0.2, _bascenev1.getsound('gong').play)
+        _bascenev1.timer(0.2, stdassets.audio.gong.play)
         # _bascenev1.timer(
-        #     0.2, Call(_bascenev1.playsound, _bascenev1.getsound('gong'))
+        #     0.2, Call(_bascenev1.playsound, stdassets.audio.gong)
         # )
 
         # The description can be either a string or a sequence with args
@@ -956,6 +966,11 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         )
 
     def _standard_time_limit_tick(self) -> None:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import stdassets
+
         from bascenev1._gameutils import animate
 
         assert self._standard_time_limit_time is not None
@@ -978,7 +993,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                 animate(cnode, 'input1', {0: 1, 0.15: 0.5}, loop=True)
                 animate(cnode, 'input2', {0: 0.1, 0.15: 0.0}, loop=True)
                 cnode.input3 = 1.0
-            _bascenev1.getsound('tick').play()
+            stdassets.audio.tick.play()
         if self._standard_time_limit_time <= 0:
             self._standard_time_limit_timer = None
             self.end_game()
@@ -994,7 +1009,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                     'text': babase.Lstr(resource='timeExpiredText'),
                 },
             )
-            _bascenev1.getsound('refWhistle').play()
+            stdassets.audio.ref_whistle.play()
             animate(node, 'scale', {0.0: 0.0, 0.1: 1.4, 0.15: 1.2})
 
     def _setup_tournament_time_limit(self, duration: float) -> None:
@@ -1070,6 +1085,11 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         )
 
     def _tournament_time_limit_tick(self) -> None:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import stdassets
+
         from bascenev1._gameutils import animate
 
         assert self._tournament_time_limit is not None
@@ -1101,7 +1121,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                 animate(cnode, 'input1', {0: 1, 0.15: 0.5}, loop=True)
                 animate(cnode, 'input2', {0: 0.1, 0.15: 0.0}, loop=True)
                 cnode.input3 = 1.0
-            _bascenev1.getsound('tick').play()
+            stdassets.audio.tick.play()
         if self._tournament_time_limit <= 0:
             self._tournament_time_limit_timer = None
             self.end_game()
@@ -1121,7 +1141,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                     'text': tval,
                 },
             )
-            _bascenev1.getsound('refWhistle').play()
+            stdassets.audio.ref_whistle.play()
             animate(node, 'scale', {0: 0.0, 0.1: 1.4, 0.15: 1.2})
 
         # Normally we just connect this to time, but since this is a bit of a

@@ -118,7 +118,7 @@ class MainMenuWindow(bui.MainWindow):
                         try:
                             from bauiv1lib.getremote import GetBSRemoteWindow
 
-                            bui.getsound('swish').play()
+                            builtinassets.audio.swish.play()
                             GetBSRemoteWindow()
                         except Exception:
                             logging.exception(

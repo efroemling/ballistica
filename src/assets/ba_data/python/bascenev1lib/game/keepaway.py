@@ -12,6 +12,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -105,19 +106,19 @@ class KeepAwayGame(bs.TeamGameActivity[Player, Team]):
     def __init__(self, settings: dict):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        self._swipsound = bs.getsound('swip')
-        self._tick_sound = bs.getsound('tick')
+        self._swipsound = stdassets.audio.swip
+        self._tick_sound = stdassets.audio.tick
         self._countdownsounds = {
-            10: bs.getsound('announceTen'),
-            9: bs.getsound('announceNine'),
-            8: bs.getsound('announceEight'),
-            7: bs.getsound('announceSeven'),
-            6: bs.getsound('announceSix'),
-            5: bs.getsound('announceFive'),
-            4: bs.getsound('announceFour'),
-            3: bs.getsound('announceThree'),
-            2: bs.getsound('announceTwo'),
-            1: bs.getsound('announceOne'),
+            10: stdassets.audio.announce_ten,
+            9: stdassets.audio.announce_nine,
+            8: stdassets.audio.announce_eight,
+            7: stdassets.audio.announce_seven,
+            6: stdassets.audio.announce_six,
+            5: stdassets.audio.announce_five,
+            4: stdassets.audio.announce_four,
+            3: stdassets.audio.announce_three,
+            2: stdassets.audio.announce_two,
+            1: stdassets.audio.announce_one,
         }
         self._flag_spawn_pos: Sequence[float] | None = None
         self._update_timer: bs.Timer | None = None
