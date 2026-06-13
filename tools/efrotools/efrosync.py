@@ -558,6 +558,30 @@ def run_efrosync(
     if config is None:
         return
 
+    # Efrosync is inherently a client-side, multi-repo-local
+    # operation: comparing/propagating a file across repos only means
+    # anything when the sibling peer clones actually sit alongside us,
+    # which is exactly when we're standing in the root of one of the
+    # configured synced repos. Anywhere else — a Jenkins cloud-check
+    # workspace (which syncs only one project's files into an isolated
+    # dir), a git worktree, etc. — there are no peers to reconcile
+    # against, so silently no-op rather than comparing against
+    # whatever unrelated clones the config happens to point at. This
+    # keeps the sync check out of per-repo CI deploys (where it was
+    # checking the wrong tree and tripping on unrelated repos'
+    # in-flight changes) and out of worktrees.
+    cwd = os.path.realpath(os.getcwd())
+    repo_roots = {
+        os.path.realpath(os.path.expanduser(r.path))
+        for r in config.repos.values()
+    }
+    if cwd not in repo_roots:
+        print(
+            f'{Clr.YLW}efrosync: not in a synced project root'
+            f' ({cwd}); skipping.{Clr.RST}'
+        )
+        return
+
     # Run formatting in all repos first so synced files are in
     # their final form. This avoids the round-trip where sync
     # propagates unformatted code and then preflight reformats it.

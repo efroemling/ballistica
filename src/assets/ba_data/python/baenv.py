@@ -55,8 +55,8 @@ logger = logging.getLogger('ba.env')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22893
-TARGET_BALLISTICA_VERSION = '1.8.0a8'
+TARGET_BALLISTICA_BUILD = 22894
+TARGET_BALLISTICA_VERSION = '1.8.0a9'
 
 
 @dataclass
@@ -326,7 +326,7 @@ def _cache_ninja_rampage(cache_dir: str) -> None:
             if random.random() < 0.001:
                 fullpath = os.path.join(basename, fname)
                 logging.getLogger('ba.cache').debug(
-                    "Cache-ninja assasinated '%s'.", fullpath
+                    "Cache-ninja assassinated '%s'.", fullpath
                 )
                 # The whole point of this feature is that downstream
                 # code must handle missing cache files; the kill itself

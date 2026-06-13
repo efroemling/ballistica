@@ -174,6 +174,7 @@ nitpick_ignore = [
     # 3rd party stuff we don't gen docs for (could look into intersphinx).
     ('py:class', 'astroid.nodes.node_ng.NodeNG'),
     ('py:class', 'astroid.Manager'),
+    ('py:class', 'PyLinter'),
     #
     # TypeVars have no docs.
     ('py:class', 'T'),

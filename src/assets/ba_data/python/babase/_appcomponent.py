@@ -78,10 +78,10 @@ class AppComponentSubsystem:
 
         del baseclass  # Unused.
 
-        # FIXME - I think our pylint plugin is doing the wrong thing
-        # here and clearing all func generic params when it should just
-        # be clearing their type annotations.
-        return cast(T, None)  # pylint: disable=undefined-variable
+        # Use a string forward-ref for the cast target so our pylint
+        # plugin's type-param stripping doesn't leave a bare ``T`` that
+        # reads as an undefined variable. Mypy still resolves it.
+        return cast('T', None)
 
     def register_change_callback[T: type](
         self, baseclass: T, callback: Callable[[T], None]

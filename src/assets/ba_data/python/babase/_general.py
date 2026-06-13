@@ -8,7 +8,7 @@ import weakref
 import random
 import logging
 import inspect
-from typing import TYPE_CHECKING, TypeVar, Protocol, NewType, override
+from typing import TYPE_CHECKING, Protocol, NewType, override
 
 # ``deprecated`` is available from the stdlib in Python 3.13+, but
 # mypy's type stubs currently point at typing_extensions for
@@ -23,7 +23,7 @@ import _babase
 
 if TYPE_CHECKING:
     import functools
-    from typing import Any, Callable
+    from typing import Any, Callable, TypeAlias
 
 
 # Declare distinct types for different time measurements we use so the
@@ -86,7 +86,7 @@ def getclass[T](
     modulename = '.'.join(splits[:-1])
     classname = splits[-1]
     if modulename in sys.stdlib_module_names and check_sdlib_modulename_clash:
-        raise Exception(f'{modulename} is an inbuilt module.')
+        raise ValueError(f'{modulename} is an inbuilt module.')
     module = importlib.import_module(modulename)
     cls: type = getattr(module, classname)
 
@@ -100,19 +100,26 @@ def get_type_name(cls: type) -> str:
     return f'{cls.__module__}.{cls.__qualname__}'
 
 
-# Note: Something here is wonky with pylint, possibly related to our
-# custom pylint plugin. Disabling all checks seems to fix it.
-# pylint: disable=all
 if TYPE_CHECKING:
     # For type-checking, we point WeakCall and Call at
     # functools.partial. This gives decent type-checking considering the
     # open-ended nature of these calls (args being supplied at create
     # time and/or at call time). Just remember that we're slightly lying
     # to the type-checker here.
-    WeakCallPartial = functools.partial
-    CallPartial = functools.partial
-    WeakCall = functools.partial
-    Call = functools.partial
+    #
+    # Note: These are written as annotated (``: TypeAlias``) assignments
+    # on purpose. Our custom pylint plugin wipes this ``if
+    # TYPE_CHECKING`` block but leaves the assigned names in module
+    # locals, which made pylint's class-redefinition checker choke on the
+    # real class defs below (an internal astroid crash, which previously
+    # forced a blanket ``disable=all``/``enable=all`` wrapper around the
+    # whole block). pylint's redefinition check explicitly skips
+    # *annotated* simple assignments, so the annotation sidesteps the
+    # crash with no suppression needed.
+    WeakCallPartial: TypeAlias = functools.partial
+    CallPartial: TypeAlias = functools.partial
+    WeakCall: TypeAlias = functools.partial
+    Call: TypeAlias = functools.partial
 else:
 
     class WeakCallPartial:
@@ -173,7 +180,6 @@ else:
             if hasattr(call, '__func__'):
                 self._call = WeakMethod(call)
             else:
-                app = _babase.app
                 if not self._did_invalid_call_warning:
                     logging.warning(
                         'Warning: callable passed to WeakCall() is not'
@@ -257,8 +263,8 @@ else:
         @override
         def __repr__(self) -> str:
             return (
-                f'<babase.Call object; _call={self.call!r}'
-                f' _args={self.args!r} _keywds={self.keywds!r}>'
+                f'<babase.Call object; _call={self._call!r}'
+                f' _args={self._args!r} _keywds={self._keywds!r}>'
             )
 
     @deprecated(
@@ -293,7 +299,6 @@ else:
             if hasattr(call, '__func__'):
                 self._call = WeakMethod(call)
             else:
-                app = _babase.app
                 if not self._did_invalid_call_warning:
                     logging.warning(
                         'Warning: callable passed to WeakCall() is not'
@@ -375,12 +380,9 @@ else:
         @override
         def __repr__(self) -> str:
             return (
-                f'<babase.Call object; _call={self.call!r}'
-                f' _args={self.args!r} _keywds={self.keywds!r}>'
+                f'<babase.Call object; _call={self._call!r}'
+                f' _args={self._args!r} _keywds={self._keywds!r}>'
             )
-
-
-# pylint: enable=all
 
 
 class CallStrict[**P, T]:
@@ -433,7 +435,6 @@ class WeakCallStrict[**P, T]:
         if hasattr(call, '__func__'):
             self.call: Any = WeakMethod(call)  # type: ignore
         else:
-            app = _babase.app
             if not self._did_invalid_call_warning:
                 logging.warning(
                     'Warning: callable passed to WeakCallStrict() is not'
