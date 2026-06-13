@@ -668,11 +668,18 @@ def _format_detail_module(qualname: str) -> str:
 
 
 def _format_detail_callable(qualname: str, value: object) -> str:
+    # Ask for PEP 649 STRING format so annotations whose names can't
+    # resolve at runtime (e.g. TYPE_CHECKING-only imports) don't blow
+    # up signature evaluation; unquote so the detail reads like source.
     try:
-        sig = inspect.signature(value)  # type: ignore[arg-type]
+        sig = inspect.signature(
+            value,  # type: ignore[arg-type]
+            annotation_format=annotationlib.Format.STRING,
+        )
     except (TypeError, ValueError):
         return qualname
-    return f"{qualname.rsplit('.', 1)[-1]}{sig}"
+    sigstr = sig.format(quote_annotation_strings=False)
+    return f"{qualname.rsplit('.', 1)[-1]}{sigstr}"
 
 
 def _short_doc(value: object) -> str:
