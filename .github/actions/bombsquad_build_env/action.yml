@@ -45,9 +45,25 @@ runs:
       run: make env
     - name: Update assets
       shell: bash
+      # These targets assemble bundled builtin assets by calling the
+      # live bacloud server, and ephemeral runners hit a cold cache
+      # every time. A cold asset-package meta-build can occasionally
+      # surface a transient "Unable to reach bacloud server." from the
+      # basn proxy before the server-side build warms up (the proxy
+      # collapses distinct upstream conditions into that one message --
+      # see ballistica-server-node docs/followups.md). Both targets are
+      # idempotent and cache-backed, so a bounded retry absorbs that
+      # hiccup; a genuine break still fails all attempts.
       run: |
-        make assets-cmake
-        make assets-windows
+        for attempt in 1 2 3; do
+          if make assets-cmake && make assets-windows; then
+            exit 0
+          fi
+          echo "::warning::Asset assembly failed (attempt ${attempt}/3); retrying in 20s..."
+          sleep 20
+        done
+        echo "::error::Asset assembly failed after 3 attempts." >&2
+        exit 1
     # Following steps only run for inputs.using-cmake == 'true'
     - name: Install build packgages
       if: ${{ inputs.using-cmake == 'true' }}
