@@ -101,6 +101,37 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
             self.no_wait_count += 1
         fut.add_done_callback(self._no_wait_done)
 
+    def submit_no_wait_or_run(
+        self, call: Callable[P, Any], *args: P.args, **keywds: P.kwargs
+    ) -> None:
+        """Fire-and-forget ``call`` off-thread, or run it inline.
+
+        Equivalent to :meth:`submit_no_wait` on pools that allow it, but
+        on pools that don't (``allow_submit_no_wait=False`` — hosts with
+        no background CPU, e.g. Cloud Run request-based billing / BEEF) it
+        runs ``call`` synchronously instead of raising. Either way the work
+        is **best-effort**: exceptions are caught and logged, never
+        propagated (the inline path mirrors ``submit_no_wait``'s
+        off-thread handling).
+
+        This is the one-call form of the common
+        "``if pool.allow_submit_no_wait: submit_no_wait(...) else: <run
+        inline>``" branch. Use it for cheap, latency-shaving side effects
+        (e.g. cache writes) where the inline fallback's brief synchronous
+        cost is acceptable; for heavier work, branch explicitly so you
+        notice when you're blocking a request.
+        """
+        if self.allow_submit_no_wait:
+            self.submit_no_wait(call, *args, **keywds)
+            return
+        # No background CPU on this pool -- run inline, best-effort.
+        try:
+            call(*args, **keywds)
+        except Exception as exc:
+            logger.exception('Error in work run via submit_no_wait_or_run().')
+            # Terminal consumer of this exception; strip to avoid cycles.
+            strip_exception_tracebacks(exc)
+
     def _no_wait_done(self, fut: Future) -> None:
         with self._no_wait_count_lock:
             self.no_wait_count -= 1

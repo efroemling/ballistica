@@ -340,8 +340,10 @@ void SoundAsset::DoPreload() {
   // Guard against non-ogg sources slipping in — but only when the path
   // visibly carries an extension. CAS blob paths are bare content
   // hashes (no extension); the probe below handles those (and anything
-  // else that isn't really ogg-vorbis) gracefully.
-  auto slash_pos = file_name_full_.rfind('/');
+  // else that isn't really ogg-vorbis) gracefully. Match either slash
+  // flavor; Windows blob paths use backslashes and a leading '.\' which
+  // a forward-slash-only search would mistake for an extension.
+  auto slash_pos = file_name_full_.find_last_of("/\\");
   auto base_start = slash_pos == std::string::npos ? 0 : slash_pos + 1;
   bool has_extension =
       file_name_full_.find('.', base_start) != std::string::npos;
