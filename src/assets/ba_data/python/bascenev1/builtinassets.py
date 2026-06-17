@@ -1,21 +1,21 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Asset-package wrapper for ``a-0.babuiltinassets.260612`` (bascenev1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260617`` (bascenev1).
 
 Auto-generated; do not edit by hand.
 """
 
-# ba_meta require asset-package a-0.babuiltinassets.260612
+# ba_meta require api 9
+# ba_meta require asset-package a-0.babuiltinassets.260617
 # pylint: disable=missing-function-docstring
 # pylint: disable=too-many-public-methods, useless-suppression
 # pylint: disable=too-many-lines, disallowed-name
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import bascenev1
 
-__asset_package__ = 'a-0.babuiltinassets.260612'
+__asset_package__ = 'a-0.babuiltinassets.260617'
 _APVERID = __asset_package__
 
 

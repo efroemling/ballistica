@@ -452,6 +452,8 @@
     <ClInclude Include="..\..\src\ballistica\base\support\stdio_console.h" />
     <ClCompile Include="..\..\src\ballistica\base\ui\dev_console.cc" />
     <ClInclude Include="..\..\src\ballistica\base\ui\dev_console.h" />
+    <ClCompile Include="..\..\src\ballistica\base\ui\simple_dialog.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\ui\simple_dialog.h" />
     <ClCompile Include="..\..\src\ballistica\base\ui\ui.cc" />
     <ClInclude Include="..\..\src\ballistica\base\ui\ui.h" />
     <ClInclude Include="..\..\src\ballistica\base\ui\ui_delegate.h" />

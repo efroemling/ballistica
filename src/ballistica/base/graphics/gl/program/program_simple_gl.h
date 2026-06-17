@@ -56,6 +56,11 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     if (flags & SHD_FLATNESS) {
       flatness_location = glGetUniformLocation(program(), "flatness");
       assert(flatness_location != -1);
+    }
+    // texPremultiplied selects premult-vs-straight handling in both the
+    // flatness lerp and the shadow-compositing path, so it exists whenever
+    // either is present.
+    if ((flags & SHD_FLATNESS) || (flags & SHD_SHADOW)) {
       tex_premultiplied_location_ =
           glGetUniformLocation(program(), "texPremultiplied");
       assert(tex_premultiplied_location_ != -1);
@@ -140,10 +145,10 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   }
 
   // 1.0 if the bound color texture is premultiplied-alpha, else 0.0. Selects
-  // the flatness lerp target so premult and straight-alpha textures both
-  // flatten correctly (see GetFragmentCode).
+  // the flatness lerp target and the shadow-compositing path so premult and
+  // straight-alpha textures both render correctly (see GetFragmentCode).
   void SetTexPremultiplied(float premultiplied) {
-    assert(flags_ & SHD_FLATNESS);
+    assert((flags_ & SHD_FLATNESS) || (flags_ & SHD_SHADOW));
     assert(IsBound());
     if (premultiplied != tex_premultiplied_) {
       tex_premultiplied_ = premultiplied;
@@ -278,8 +283,10 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
       s += BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUV2;\n";
     }
     if (flags & SHD_FLATNESS) {
-      s += "uniform " BA_GLSL_MEDIUMP "float flatness;\n"
-           "uniform " BA_GLSL_MEDIUMP "float texPremultiplied;\n";
+      s += "uniform " BA_GLSL_MEDIUMP "float flatness;\n";
+    }
+    if ((flags & SHD_FLATNESS) || (flags & SHD_SHADOW)) {
+      s += "uniform " BA_GLSL_MEDIUMP "float texPremultiplied;\n";
     }
     if (flags & SHD_SHADOW) {
       s += BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUVShadow;\n"
@@ -383,17 +390,30 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
             s += " * " BA_GLSL_TEXTURE2D "(maskUV2Tex, vUV2).a";
           }
           s += ";\n";
+          // Composite the glyph over a soft black drop-shadow. Two cases,
+          // selected by texPremultiplied (decision #23):
+          //   * Straight-alpha (legacy): the running fragColor is straight
+          //     color. Premultiply it, lay it over the premultiplied black
+          //     shadow, then un-premultiply back to straight -- straight-alpha
+          //     textures use straight-alpha blending.
+          //   * Premultiplied: fragColor is already premultiplied (the caller
+          //     premultiplies the modulate color by its alpha for premult
+          //     textures), so just composite the shadow into alpha and leave
+          //     the result premultiplied to match the active premult blend (no
+          //     premultiply, no divide).
+          s += "   " BA_GLSL_MEDIUMP "vec4 shadowPremultComposite = vec4("
+               BA_GLSL_FRAGCOLOR ".rgb * " BA_GLSL_FRAGCOLOR ".a, "
+               BA_GLSL_FRAGCOLOR ".a) + (1.0 - " BA_GLSL_FRAGCOLOR
+               ".a) * vec4(0.0, 0.0, 0.0, shadowA);\n";
+          s += "   " BA_GLSL_MEDIUMP
+               "vec4 shadowStraight = vec4(shadowPremultComposite.rgb"
+               " / max(0.001, shadowPremultComposite.a),"
+               " shadowPremultComposite.a);\n";
+          s += "   " BA_GLSL_MEDIUMP "vec4 shadowPremult = vec4("
+               BA_GLSL_FRAGCOLOR ".rgb, " BA_GLSL_FRAGCOLOR
+               ".a + (1.0 - " BA_GLSL_FRAGCOLOR ".a) * shadowA);\n";
           s += "   " BA_GLSL_FRAGCOLOR
-               " = "
-               "vec4(" BA_GLSL_FRAGCOLOR ".rgb * " BA_GLSL_FRAGCOLOR
-               ".a," BA_GLSL_FRAGCOLOR
-               ".a) + "
-               "(1.0 - " BA_GLSL_FRAGCOLOR ".a) * vec4(0, 0, 0, shadowA);\n";
-          s += "   " BA_GLSL_FRAGCOLOR
-                      " = "
-                     "vec4(" BA_GLSL_FRAGCOLOR
-                     ".rgb / max(0.001, " BA_GLSL_FRAGCOLOR ".a), "
-                     BA_GLSL_FRAGCOLOR ".a);\n";
+               " = mix(shadowStraight, shadowPremult, texPremultiplied);\n";
         }
       }
 

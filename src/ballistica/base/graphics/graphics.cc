@@ -847,6 +847,11 @@ void Graphics::BuildAndPushFrameDef() {
     RenderPass* overlay_pass = frame_def->overlay_pass();
     DrawMiscOverlays(frame_def);
 
+    // SimpleDialogs (asset-resolve progress, dead-in-the-water errors, etc.):
+    // over all game/UI but under the dev console (which DrawDevUI submits next,
+    // at a depth just above ours).
+    g_base->ui->DrawSimpleDialogs(frame_def);
+
     // Let UI draw dev console and whatever else.
     DrawDevUI(frame_def);
 

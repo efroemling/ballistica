@@ -64,6 +64,7 @@ class Camera;
 class ClassicSoftInterface;
 class CollisionMeshAsset;
 class CollisionCache;
+class SimpleDialog;
 class DevConsole;
 class DisplayTimer;
 class Context;
@@ -445,7 +446,7 @@ enum class SystemDataID : uint8_t {};
 // above retire one at a time as their callsites migrate.
 
 inline constexpr const char* kBuiltinAssetsApverid =
-    "a-0.babuiltinassets.260612";
+    "a-0.babuiltinassets.260617";
 
 enum class BuiltinTextureID : uint16_t {
   kTexturesActionButtons,         // textures/action_buttons

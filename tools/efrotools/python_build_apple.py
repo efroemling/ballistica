@@ -773,11 +773,14 @@ def _patch_embedded_makefile(pydir: str) -> None:
        Programs/_testembed, checksharedmods, and rundsymutil are also removed
        from build_all because they all have transitive deps on $(BUILDPYTHON).
 
-    3. MODULE__BLAKE2_LDFLAGS: Cleared so the build uses Python 3.13's
-       built-in HACL* blake2 instead of Homebrew libb2. If left set,
-       blake2b_*/blake2s_* symbols from libb2 end up as unresolved externals
-       in the resulting static library because libb2 is a macOS-only dylib
-       that cannot be statically merged or used on iOS/tvOS.
+    3. MODULE__BLAKE2_LDFLAGS: Cleared so the (unused) shared-module link
+       rule for _blake2 can't pull in Homebrew libb2 (a macOS-only dylib
+       that can't be used on iOS/tvOS). We build only the static
+       $(LIBRARY), so this value is never consumed, but clearing it is
+       belt-and-suspenders. NOTE: MODULE__BLAKE2_CFLAGS is deliberately
+       NOT cleared — _blake2 is enabled and its CFLAGS carry the
+       -I.../Modules/_hacl include paths that blake2module.c needs to
+       find the HACL headers; blanking them breaks the compile.
     """
     mk = os.path.join(pydir, 'Makefile')
     with open(mk, encoding='utf-8') as fh:
@@ -839,25 +842,21 @@ def _patch_embedded_makefile(pydir: str) -> None:
         )
     txt = new_txt
 
-    # Fix 3: Clear MODULE__BLAKE2_CFLAGS and MODULE__BLAKE2_LDFLAGS so the
-    # build uses Python 3.13's built-in HACL* blake2 instead of Homebrew
-    # libb2. With PKG_CONFIG isolation in _build_env_apple these should
-    # already be empty after configure, but clearing them here too is
-    # belt-and-suspenders for any pre-existing build directories. Warning
-    # only: if already empty (because PKG_CONFIG isolation worked) the
-    # substitution count will be 0, which is fine.
-    txt, n_blake2_cflags = re.subn(
-        r'^(MODULE__BLAKE2_CFLAGS=).*$',
-        r'\1',
-        txt,
-        flags=re.MULTILINE,
-    )
-    if n_blake2_cflags == 0:
-        print(
-            '  Note: MODULE__BLAKE2_CFLAGS not found in Makefile — Python'
-            ' may have renamed it. Verify no Homebrew libb2 is being used'
-            ' and update _patch_embedded_makefile() if needed.'
-        )
+    # Fix 3: Clear MODULE__BLAKE2_LDFLAGS so the (unused) shared-module
+    # link rule for _blake2 can't pull in an arch-incompatible Homebrew
+    # libb2. We build only the static $(LIBRARY), so this value is never
+    # consumed, but clearing it is belt-and-suspenders. PKG_CONFIG
+    # isolation in _build_env_apple already steers configure to the
+    # built-in HACL* blake2, so the value is usually empty anyway (a
+    # substitution count of 0 is fine).
+    #
+    # We must NOT clear MODULE__BLAKE2_CFLAGS. _blake2 is enabled (it is
+    # the only source of hashlib.blake2{b,s} — see
+    # pybuild.patch_modules_setup) and its CFLAGS carry the
+    # -I.../Modules/_hacl include paths that blake2module.c needs to find
+    # the HACL headers (krml/...). The natural configure value matches
+    # the other HACL modules (_md5/_sha*/_hmac) and contains no libb2
+    # references, so leaving it intact is both necessary and safe.
     txt, n_blake2 = re.subn(
         r'^(MODULE__BLAKE2_LDFLAGS=).*$',
         r'\1',

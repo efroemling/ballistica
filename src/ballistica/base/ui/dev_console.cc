@@ -1641,7 +1641,12 @@ void DevConsole::Draw(FrameDef* frame_def) {
       c.SetTransparent(true);
       c.SetTexture(
           g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesShadow));
-      c.SetColor(0.8, 0.0, 1.0, 0.3f);
+      // kTexturesShadow is now a premultiplied-alpha texture, so this draws
+      // with premult (additive) blend. Premultiply the modulate rgb by its
+      // alpha (0.3) so the glow keeps its original brightness instead of
+      // blowing out (premult-blend adds rgb directly rather than weighting it
+      // by alpha).
+      c.SetColor(0.8f * 0.3f, 0.0f * 0.3f, 1.0f * 0.3f, 0.3f);
       {
         auto xf = c.ScopedTransform();
         auto carat_x = GetCaratX_();

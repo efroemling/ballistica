@@ -10,6 +10,7 @@ No external repo dependency.
 
 import glob
 import os
+import re
 import subprocess
 import tarfile
 import urllib.request
@@ -592,6 +593,57 @@ def _patch_ctypes(pydir: str) -> None:
     writefile(fname, txt)
 
 
+def _patch_android_makefile(pydir: str) -> None:
+    """Patch the configure-generated Makefile for static-link correctness.
+
+    Clears MODULE__BLAKE2_LDFLAGS (Python 3.14+ only). Both the _blake2 and
+    _hmac static modules list the bundled HACL* Blake2 objects in their link
+    flags -- MODULE__HMAC_LDFLAGS pulls the full HACL* backend (MD5/SHA*/
+    Blake2/Memzero) unconditionally, and MODULE__BLAKE2_LDFLAGS pulls Blake2 +
+    Memzero again. With both modules enabled (we need _blake2 for
+    hashlib.blake2{b,s} -- OpenSSL is blocked for them -- and _hmac is
+    mandatory in 3.14), the python-executable link lists
+    Hacl_Hash_Blake2{b,s}.o and Lib_Memzero0.o twice and ld fails with
+    duplicate-symbol errors. Clearing _blake2's link flags leaves _hmac as the
+    sole provider of those objects; blake2module.o's references resolve against
+    that single copy. Unlike the Apple build (which skips the executable link
+    entirely), the Android build links the python executable during ``make``,
+    so this duplication is fatal here.
+
+    This only affects the throwaway executable link: libpython.a is archived
+    from the module objects (no HACL* objects) and then gets every HACL* object
+    appended exactly once afterwards (see build() step 7), so downstream app
+    static-links are unaffected either way.
+
+    No-op before 3.14 (there is no _hmac module then, so _blake2 is the only
+    provider and must keep its link flags).
+    """
+    if PY_VER == '3.13':
+        return
+    assert PY_VER == '3.14'
+
+    mk = os.path.join(pydir, 'Makefile')
+    with open(mk, encoding='utf-8') as fh:
+        txt = fh.read()
+    txt, n = re.subn(
+        r'^(MODULE__BLAKE2_LDFLAGS=).*$',
+        r'\1',
+        txt,
+        flags=re.MULTILINE,
+    )
+    if n == 0:
+        print(
+            '  Note: MODULE__BLAKE2_LDFLAGS not found in Makefile -- Python'
+            ' may have renamed it. Verify the python executable still links'
+            ' (no duplicate HACL Blake2 symbols) and update'
+            ' _patch_android_makefile() if needed.'
+        )
+    else:
+        print(f'  Cleared MODULE__BLAKE2_LDFLAGS ({n} occurrence(s)).')
+    with open(mk, 'w', encoding='utf-8') as fh:
+        fh.write(txt)
+
+
 # ---------------------------------------------------------------------------
 # Python configure + build
 # ---------------------------------------------------------------------------
@@ -749,6 +801,11 @@ def build(rootdir: str, arch: str, debug: bool) -> None:
     _configure_python(
         pydir, arch, ANDROID_API_VER, dep_sysroot, env, debug, build_python
     )
+
+    # 4b. Patch the generated Makefile (3.14+: avoid duplicate HACL Blake2
+    # objects in the python-executable link now that _blake2 is enabled
+    # alongside the mandatory _hmac).
+    _patch_android_makefile(pydir)
 
     # 5. Build Python.
     print('Building Python...')

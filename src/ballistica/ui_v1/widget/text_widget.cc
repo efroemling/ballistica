@@ -450,10 +450,15 @@ void TextWidget::DoDrawText_(base::RenderPass* pass, float x_offset,
     c.SetShadow(-0.004f * text_group_->GetElementUScale(e),
                 -0.004f * text_group_->GetElementVScale(e), 0.0f,
                 shadow_ * color_a_);
+    // Premultiply rgb by the (faded/disabled) alpha for premultiplied textures
+    // so semi-transparent text composites 'over' under premult blend instead
+    // of showing full-brightness rgb. Straight-alpha textures keep raw rgb.
+    float cmul = t2->premultiplied() ? fin_a : 1.0f;
     if (text_group_->GetElementCanColor(e)) {
-      c.SetColor(fin_color_r, fin_color_g, fin_color_b, fin_a);
+      c.SetColor(fin_color_r * cmul, fin_color_g * cmul, fin_color_b * cmul,
+                 fin_a);
     } else {
-      c.SetColor(1, 1, 1, fin_a);
+      c.SetColor(cmul, cmul, cmul, fin_a);
     }
 
     // In VR, draw everything flat because it's generally harder to read.

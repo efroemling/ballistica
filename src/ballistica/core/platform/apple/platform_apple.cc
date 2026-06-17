@@ -6,6 +6,7 @@
 
 #if BA_XCODE_BUILD
 #include <CoreServices/CoreServices.h>
+#include <os/log.h>
 #include <unistd.h>
 #endif
 
@@ -209,9 +210,45 @@ void PlatformApple::EmitPlatformLog(std::string_view name, LogLevel level,
                                     std::string_view msg) {
 #if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
 
-  // HMM: do we want to use proper logging APIs here or simple printing?
-  // base::AppleUtils::NSLogStr(msg);
-  Platform::EmitPlatformLog(name, level, msg);
+  // On Apple GUI (Xcode) builds there's no attached terminal, so route
+  // engine logs to Apple's unified logging system (os_log). That makes
+  // them visible in Console.app, Xcode's console, and on the simulator
+  // via `xcrun simctl spawn <device> log stream --predicate
+  // 'subsystem == "net.froemling.ballistica"'`. Also mirror to stderr,
+  // which Xcode's console and `simctl launch --console` can capture.
+  // Engine logs already also go to the in-app dev-console via EmitLog.
+  static os_log_t ba_oslog{os_log_create("net.froemling.ballistica", "engine")};
+  os_log_type_t ostype;
+  switch (level) {
+    case LogLevel::kDebug:
+      ostype = OS_LOG_TYPE_DEBUG;
+      break;
+    case LogLevel::kInfo:
+      ostype = OS_LOG_TYPE_INFO;
+      break;
+    case LogLevel::kWarning:
+      ostype = OS_LOG_TYPE_DEFAULT;
+      break;
+    case LogLevel::kError:
+    case LogLevel::kCritical:
+      ostype = OS_LOG_TYPE_ERROR;
+      break;
+  }
+  // os_log and stderr both want null-terminated strings; string_views
+  // are not guaranteed to be.
+  std::string msgstr{msg};
+  if (name == "stdout" || name == "stderr") {
+    // Raw stdout/stderr passthrough; emit as-is.
+    os_log_with_type(ba_oslog, ostype, "%{public}s", msgstr.c_str());
+    fprintf(stderr, "%s\n", msgstr.c_str());
+  } else {
+    // Prefix with the logger name for context.
+    std::string namestr{name};
+    os_log_with_type(ba_oslog, ostype, "%{public}s: %{public}s",
+                     namestr.c_str(), msgstr.c_str());
+    fprintf(stderr, "%s: %s\n", namestr.c_str(), msgstr.c_str());
+  }
+  fflush(stderr);
 #else
 
   // Fall back to default handler...

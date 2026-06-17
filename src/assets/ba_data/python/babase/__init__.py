@@ -219,6 +219,7 @@ from babase._assetsubsystem import (
 from babase._env import DEFAULT_REQUEST_TIMEOUT_SECONDS
 from babase._net import get_ip_address_type, NetworkSubsystem
 from babase._plugin import PluginSpec, Plugin, PluginSubsystem
+from babase._simpledialog import SimpleDialog
 from babase._stringedit import StringEditAdapter, StringEditSubsystem
 from babase._text import timestring
 from babase._workspace import WorkspaceSubsystem
@@ -403,6 +404,7 @@ __all__ = [
     'shutdown_suppress_begin',
     'shutdown_suppress_end',
     'shutdown_suppress_count',
+    'SimpleDialog',
     'SimpleSound',
     'suppress_config_and_state_writes',
     'SpecialChar',

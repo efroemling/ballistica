@@ -1022,7 +1022,8 @@ void Input::HandleKeyPress_(const BAKeysym& keysym) {
   switch (keysym.sym) {
       // Menu button on android/etc. pops up the menu.
     case BAK_MENU: {
-      if (!g_base->ui->IsMainUIVisible()) {
+      if (!g_base->ui->IsMainUIVisible()
+          && !g_base->ui->HasModalSimpleDialog()) {
         g_base->ui->RequestMainUI(GetFuzzyInputDeviceForMenuButton());
       }
       handled = true;
@@ -1080,11 +1081,14 @@ void Input::HandleKeyPress_(const BAKeysym& keysym) {
       break;
 
     case BAK_ESCAPE:
-      if (!g_base->ui->IsMainUIVisible()) {
+      if (!g_base->ui->IsMainUIVisible()
+          && !g_base->ui->HasModalSimpleDialog()) {
         // There's no main menu up. Ask for one.
         g_base->ui->RequestMainUI(GetFuzzyInputDeviceForEscapeKey());
       } else {
-        // Ok there *is* a main ui up. Send it a cancel message.
+        // Ok there *is* a main ui up (or a modal SimpleDialog). Send a cancel
+        // message -- a modal SimpleDialog swallows it; otherwise the main ui
+        // handles it.
         g_base->ui->SendWidgetMessage(
             WidgetMessage(WidgetMessage::Type::kCancel));
       }

@@ -246,6 +246,18 @@ nitpick_ignore = [
     ('py:attr', 'cert'),
     ('py:class', 'PowerupBoxFactory.powerup_accept_material'),
     ('py:attr', 'batools.featureset.FeatureSet.has_python_app_subsystem'),
+    #
+    # efro.threadpool's ``Future[T]`` API surfaces a module-qualified
+    # TypeVar and the private stdlib ``Future`` path; neither resolves
+    # to docs (cf. ``concurrent.futures.thread.ThreadPoolExecutor``
+    # above, ignored for the same reason).
+    ('py:class', 'efro.threadpool.T'),
+    ('py:class', 'concurrent.futures._base.Future'),
+    #
+    # babase._simpledialog uses a private ``_Unset`` sentinel in its
+    # public signatures (``str | Lstr | _Unset``) to distinguish an
+    # unset arg from None; the private class has no doc target.
+    ('py:class', 'babase._simpledialog._Unset'),
 ]
 
 # Regex-based nitpick ignores for whole categories of references.
@@ -270,6 +282,10 @@ nitpick_ignore_regex = [
     ('py:class', r'dict\[.*'),
     ('py:class', r'list\[.*'),
     ('py:class', r'Literal\[.*'),
+    # Same Sphinx truncation bug, but emitted as a ``py:obj`` ref when
+    # the generic resolves to a qualified name (e.g. a
+    # ``Callable[[], None]`` annotation surfaces ``typing.Callable[[]``).
+    ('py:obj', r'.*Callable\[.*'),
 ]
 
 # Gives us links to common Python types.

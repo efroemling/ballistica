@@ -1246,6 +1246,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetShadow(shadow_offset_x, shadow_offset_y,
                          std::max(0.0f, shadow_blur), shadow_opacity);
             p->SetMaskUV2Texture(t_mask);
+            p->SetTexPremultiplied(premult ? 1.0f : 0.0f);
             break;
           }
           case ShadingType::kSimpleTexModulatedTransShadowFlatness: {

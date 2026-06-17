@@ -611,8 +611,11 @@ void JoystickInput::HandleSDLEvent(const BAEvent* e) {
   if (e->type == BA_JOYBUTTONDOWN) {
     if (e->jbutton.button == start_button_
         || e->jbutton.button == start_button_2_) {
-      // If there's no main ui up, request one with us as owner.
-      if (!g_base->ui->IsMainUIVisible()) {
+      // If there's no main ui up, request one with us as owner. (Unless a
+      // modal SimpleDialog is up -- then swallow it; the start press still
+      // falls through below to fire the dialog's button via a widget message.)
+      if (!g_base->ui->IsMainUIVisible()
+          && !g_base->ui->HasModalSimpleDialog()) {
         g_base->ui->RequestMainUI(this);
         return;
       }

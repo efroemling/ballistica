@@ -541,6 +541,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/support/stdio_console.h
   ${BA_SRC_ROOT}/ballistica/base/ui/dev_console.cc
   ${BA_SRC_ROOT}/ballistica/base/ui/dev_console.h
+  ${BA_SRC_ROOT}/ballistica/base/ui/simple_dialog.cc
+  ${BA_SRC_ROOT}/ballistica/base/ui/simple_dialog.h
   ${BA_SRC_ROOT}/ballistica/base/ui/ui.cc
   ${BA_SRC_ROOT}/ballistica/base/ui/ui.h
   ${BA_SRC_ROOT}/ballistica/base/ui/ui_delegate.h

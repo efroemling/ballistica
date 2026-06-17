@@ -514,7 +514,6 @@ void TextNode::Draw(base::FrameDef* frame_def) {
 
         base::SimpleComponent c(&pass);
         c.SetTransparent(true);
-        c.SetColor(color_[0], color_[1], color_[2], color_[3] * opacity_);
 
         int elem_count = text_group_.GetElementCount();
         bool did_submit = false;
@@ -523,6 +522,12 @@ void TextNode::Draw(base::FrameDef* frame_def) {
           base::TextureAsset* t = text_group_.GetElementTexture(e);
           if (!t->preloaded()) continue;
           c.SetTexture(t);
+          // Premultiply rgb by alpha for premultiplied textures so faded text
+          // composites 'over' under premult blend instead of showing
+          // full-brightness rgb. Straight-alpha textures keep raw rgb.
+          float cmul = t->premultiplied() ? (color_[3] * opacity_) : 1.0f;
+          c.SetColor(color_[0] * cmul, color_[1] * cmul, color_[2] * cmul,
+                     color_[3] * opacity_);
           float shadow_opacity = shadow_;
           if (opacity_scales_shadow_) {
             float o = color_[3] * opacity_;
@@ -633,10 +638,15 @@ void TextNode::Draw(base::FrameDef* frame_def) {
       } else {
         c.ClearMaskUV2Texture();
       }
+      // Premultiply rgb by the (faded) alpha for premultiplied textures so
+      // semi-transparent text composites 'over' under premult blend instead of
+      // showing full-brightness rgb (and never fading out). Straight-alpha
+      // textures keep raw rgb and fade via alpha as before.
+      float cmul = t->premultiplied() ? fin_a : 1.0f;
       if (text_group_.GetElementCanColor(e)) {
-        c.SetColor(color_[0], color_[1], color_[2], fin_a);
+        c.SetColor(color_[0] * cmul, color_[1] * cmul, color_[2] * cmul, fin_a);
       } else {
-        c.SetColor(1, 1, 1, fin_a);
+        c.SetColor(cmul, cmul, cmul, fin_a);
       }
       if (g_core->vr_mode()) {
         c.SetFlatness(text_group_.GetElementMaxFlatness(e));

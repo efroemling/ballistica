@@ -2277,6 +2277,96 @@ static PyMethodDef PyVerifyEd25519Def = {
     "Python ``cryptography`` package) verify correctly.",
 };
 
+// --------------------------- simpledialog_create -----------------------------
+
+static auto PySimpleDialogCreate(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  int id = g_base->ui->CreateSimpleDialog();
+  return PyLong_FromLong(id);
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySimpleDialogCreateDef = {
+    "simpledialog_create",              // name
+    (PyCFunction)PySimpleDialogCreate,  // method
+    METH_NOARGS,                        // flags
+
+    "simpledialog_create() -> int\n"
+    "\n"
+    "Create a SimpleDialog and return its id.\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- simpledialog_update -----------------------------
+
+static auto PySimpleDialogUpdate(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  int dialog_id;
+  const char* title;
+  const char* message;
+  float progress;
+  const char* button_label;
+  static const char* kwlist[] = {"dialog_id", "title",        "message",
+                                 "progress",  "button_label", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "issfs", const_cast<char**>(kwlist), &dialog_id, &title,
+          &message, &progress, &button_label)) {
+    return nullptr;
+  }
+  g_base->ui->SetSimpleDialogState(dialog_id, title, message, progress,
+                                   button_label);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySimpleDialogUpdateDef = {
+    "simpledialog_update",              // name
+    (PyCFunction)PySimpleDialogUpdate,  // method
+    METH_VARARGS | METH_KEYWORDS,       // flags
+
+    "simpledialog_update(dialog_id: int, title: str, message: str,\n"
+    "  progress: float, button_label: str) -> None\n"
+    "\n"
+    "Set a SimpleDialog's full visible state. A negative ``progress``\n"
+    "hides the bar; an empty ``button_label`` hides the button.\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- simpledialog_dismiss ----------------------------
+
+static auto PySimpleDialogDismiss(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  int dialog_id;
+  static const char* kwlist[] = {"dialog_id", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
+                                   const_cast<char**>(kwlist), &dialog_id)) {
+    return nullptr;
+  }
+  g_base->ui->DismissSimpleDialog(dialog_id);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySimpleDialogDismissDef = {
+    "simpledialog_dismiss",              // name
+    (PyCFunction)PySimpleDialogDismiss,  // method
+    METH_VARARGS | METH_KEYWORDS,        // flags
+
+    "simpledialog_dismiss(dialog_id: int) -> None\n"
+    "\n"
+    "Dismiss (remove) a SimpleDialog.\n"
+    "\n"
+    ":meta private:",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
@@ -2360,6 +2450,9 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PySuppressConfigAndStateWritesDef,
       PyGetSuppressConfigAndStateWritesDef,
       PyReloadHooksDef,
+      PySimpleDialogCreateDef,
+      PySimpleDialogUpdateDef,
+      PySimpleDialogDismissDef,
   };
 }
 

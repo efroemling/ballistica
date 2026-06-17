@@ -189,10 +189,10 @@ auto AppAdapterApple::ShouldUseCursor() -> bool {
 }
 
 auto AppAdapterApple::HasHardwareCursor() -> bool {
-  // Mac should be only build getting called here (see ShouldUseCursor).
-  assert(g_buildconfig.platform_macos());
-
-  return true;
+  // Only the Mac build uses a hardware (OS) cursor; iOS/tvOS/etc. have
+  // none (DrawCursor() calls this unconditionally to pick the hardware-
+  // vs software-cursor path, so we must answer for all Apple builds).
+  return g_buildconfig.platform_macos();
 }
 
 void AppAdapterApple::SetHardwareCursorVisible(bool visible) {

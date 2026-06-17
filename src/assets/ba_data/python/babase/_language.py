@@ -223,6 +223,8 @@ class LanguageSubsystem(AppSubsystem):
             'replayWriteErrorText',
             'replayVersionErrorText',
             'replayReadErrorText',
+            'cancelText',
+            'retryText',
         ]:
             internal_vals.append((value, lfull[value]))
         internal_vals.append(

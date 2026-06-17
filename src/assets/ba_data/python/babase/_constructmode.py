@@ -11,12 +11,14 @@ from efro.util import strip_exception_tracebacks
 import _babase
 from bacommon.app import ExitCode
 from babase._appmode import AppMode
+from babase._language import Lstr
 from babase._logging import assetmanagerlog as logger
+from babase._simpledialog import SimpleDialog
 from babase._assetsubsystem import (
     AssetAuthRequiredError,
     AssetAccessDeniedError,
     AssetResolveAbortedError,
-    make_screenmessage_progress_reporter,
+    make_progress_reporter,
 )
 
 if TYPE_CHECKING:
@@ -91,10 +93,14 @@ class ConstructAppMode(AppMode):
         # and lets the real app-mode drive the fade-in.
         self._faded_in = False
 
-        # Whether we showed the 'Updating assets…' message (a real
-        # download happened); if so we follow up with 'Assets updated.'
-        # on success. A clean no-download boot shows neither.
-        self._showed_updating_message = False
+        # The progress/error dialog (gui only). Created lazily the first
+        # time we have something to show (a download/build, or an error);
+        # a clean no-download boot never creates one.
+        self._dialog: SimpleDialog | None = None
+
+        # Stashed resolve inputs so the dialog's Retry button can re-run.
+        self._assets: AssetSubsystem | None = None
+        self._required: list[str] = []
 
     @override
     @classmethod
@@ -143,11 +149,12 @@ class ConstructAppMode(AppMode):
           (the common bundled-assets boot) resolves in one off-thread pass
           with the screen left untouched — the real app-mode drives the
           fade-in.
-        * If a real download is needed, :meth:`_on_download_starting` fires
-          (fade in + ``Updating assets…``). If the server then reports
-          authentication is needed, show ``Authenticating…``, wait for
-          auto-sign-in, then retry. Failures surface a screenmessage and we
-          stay put.
+        * If a real download/build is needed, a progress :class:`SimpleDialog`
+          appears (gui). If the server then reports authentication is needed,
+          we wait for auto-sign-in then retry. A failure leaves an error
+          dialog with a **Retry** button (gui) — pressing it re-runs the
+          resolve via :meth:`_run`; on headless we exit with a failure code
+          for the wrapper to restart. We stay in construct-mode until success.
         """
         scanresults = _babase.app.meta.scanresults
         required = (
@@ -166,41 +173,65 @@ class ConstructAppMode(AppMode):
             ', '.join(required),
         )
 
-        # Attempt the resolve immediately, with whatever account state
-        # exists this early (typically none — we don't pre-wait for sign-in,
-        # so the public-package path isn't gated on it). A fully-local set
-        # passes straight through; a real download triggers
-        # _on_download_starting (fade + 'Updating assets…').
-        outcome = await self._attempt(assets, required, auth_recoverable=True)
+        # Stash inputs so the Retry button can re-run, then go.
+        self._assets = assets
+        self._required = required
+        await self._run()
 
-        if outcome is _ResolveOutcome.AUTH_REQUIRED:
-            # Wait for auto-sign-in to settle, then retry.
-            logger.info(
-                'Construct-mode: resolve needs authentication;'
-                ' waiting for sign-in.'
+    async def _run(self) -> None:
+        """Run one resolve cycle; on failure leave an error dialog + Retry.
+
+        Re-entered by the dialog's Retry button (which clears its own button
+        first, so it can't double-fire). Wrapped so an unexpected error can't
+        leave a stuck modal progress dialog with no way out.
+        """
+        assert self._assets is not None
+        try:
+            # Attempt immediately, with whatever account state exists this
+            # early (typically none — we don't pre-wait for sign-in, so the
+            # public-package path isn't gated on it). A fully-local set passes
+            # straight through; a real download/build shows the dialog.
+            outcome = await self._attempt(
+                self._assets, self._required, auth_recoverable=True
             )
-            self._screenmessage('Authenticating…')
-            if not await self._wait_for_sign_in():
-                self._fail(
-                    'You must sign in to load these assets. Remove these'
-                    ' mods/changes so you can sign in and then try again.'
-                )
-                return
-            outcome = await self._resolve_signed_in(assets, required)
 
-        if outcome is _ResolveOutcome.SUCCESS:
-            # The resolve may have fetched ideal flavors of assets that came
-            # up earlier on fallbacks (e.g. builtin textures loaded at boot,
-            # before their ideal versions were cached). Reload those so the
-            # real app-mode renders at the ideal flavor, behind a progress
-            # bar. Cheap no-op when nothing changed (the warm path).
-            _babase.reload_changed_media()
-            # Close the loop on 'Updating assets…' if we showed it (a
-            # clean no-download boot shows neither message).
-            if self._showed_updating_message:
-                self._screenmessage('Assets updated.')
-            self._hand_off()
-        # Else: _attempt already surfaced the failure message; stay put.
+            if outcome is _ResolveOutcome.AUTH_REQUIRED:
+                # Wait for auto-sign-in to settle, then retry.
+                logger.info(
+                    'Construct-mode: resolve needs authentication;'
+                    ' waiting for sign-in.'
+                )
+                self._set_status('Authenticating…')
+                if not await self._wait_for_sign_in():
+                    self._fail(
+                        'You must sign in to load these assets. Remove these'
+                        ' mods/changes so you can sign in and then try again.'
+                    )
+                    return
+                outcome = await self._resolve_signed_in(
+                    self._assets, self._required
+                )
+
+            if outcome is _ResolveOutcome.SUCCESS:
+                # The resolve may have fetched ideal flavors of assets that
+                # came up earlier on fallbacks (e.g. builtin textures loaded
+                # at boot, before their ideal versions were cached). Reload
+                # those so the real app-mode renders at the ideal flavor. Cheap
+                # no-op when nothing changed (the warm path).
+                _babase.reload_changed_media()
+                self._finish_success()
+            elif outcome is _ResolveOutcome.ABORTED:
+                # App is shutting down mid-resolve; bow out quietly.
+                self._dismiss_dialog()
+            # Else FAILED: _attempt / _resolve_signed_in already called _fail,
+            # which left an error dialog + Retry (gui) or exited (headless).
+        except Exception as exc:
+            # Safety net: an unexpected orchestration error must not leave a
+            # stuck modal progress dialog. Surface it as a failure (Retry on
+            # gui / exit on headless).
+            logger.exception('Construct-mode bring-up crashed.')
+            self._fail('An error occurred loading assets; see log for details.')
+            strip_exception_tracebacks(exc)
 
     async def _resolve_signed_in(
         self, assets: AssetSubsystem, required: list[str]
@@ -260,9 +291,7 @@ class ConstructAppMode(AppMode):
                 required,
                 allow_downloads=True,
                 on_download_starting=self._on_download_starting,
-                on_progress=make_screenmessage_progress_reporter(
-                    self._screenmessage
-                ),
+                on_progress=make_progress_reporter(self._on_resolve_progress),
             )
             return _ResolveOutcome.SUCCESS
         except AssetAuthRequiredError as exc:
@@ -292,8 +321,8 @@ class ConstructAppMode(AppMode):
         except AssetResolveAbortedError as exc:
             # The app started shutting down mid-resolve (e.g. the user
             # quit while a download/cloud-build was still in flight).
-            # That's not a real failure -- bow out quietly without a
-            # screenmessage or failure exit-code.
+            # That's not a real failure -- bow out quietly without an error
+            # dialog or failure exit-code.
             logger.debug(
                 'Construct-mode asset bring-up aborted; app is shutting'
                 ' down.'
@@ -342,14 +371,12 @@ class ConstructAppMode(AppMode):
     def _on_download_starting(self) -> None:
         """Resolve callback: a real asset download is about to begin.
 
-        Surface progress — fade in and show ``Updating assets…``. A
-        fully-local (warm/bundled) resolve never calls this, so that boot
-        passes straight through with the screen untouched (the real
-        app-mode drives the fade-in). May fire on each retry; idempotent.
+        Ensures the progress dialog is up (gui). A fully-local (warm/bundled)
+        resolve never calls this, so that boot passes straight through with
+        the screen untouched (the real app-mode drives the fade-in). May fire
+        on each retry; idempotent.
         """
-        self._begin_visible()
-        self._screenmessage('Updating assets…')
-        self._showed_updating_message = True
+        self._ensure_dialog()
 
     def _begin_visible(self) -> None:
         """Fade the screen up from the boot black-out (idempotent, gui).
@@ -364,60 +391,108 @@ class ConstructAppMode(AppMode):
         self._faded_in = True
         _babase.fade_screen(True, time=0.5)
 
-    @staticmethod
-    def _screenmessage(message: str, *, error: bool = False) -> None:
-        """Post a screenmessage (red for errors), mirrored to the log.
+    def _ensure_dialog(self) -> SimpleDialog | None:
+        """Return the progress dialog, creating + fading in on first need.
 
-        Logging every message here keeps the log in lock-step with what's
-        shown on screen — and surfaces the bring-up flow on headless (which
-        has no screen) and behind the "see log for details" message. Errors
-        log at WARNING, progress at INFO.
-
-        IMPORTANT: the screenmessage presentation is provisional — it'll be
-        replaced by progress dialogs / a dead-in-the-water UI later. The
-        *logging* half must survive that migration (it's the headless +
-        diagnostic record), so keep it whatever the presentation becomes.
+        Returns ``None`` on headless (no dialogs there). The dialog starts
+        with the generic 'updating' title and a zeroed bar; callers set the
+        message / progress / button.
         """
-        if error:
-            logger.warning('Construct-mode: %s', message)
-        else:
-            logger.info('Construct-mode: %s', message)
-        try:
-            # pylint: disable=cyclic-import
-            import babase
-
-            babase.screenmessage(
-                message, color=(1.0, 0.0, 0.0) if error else (1.0, 1.0, 1.0)
+        if not _babase.app.env.gui:
+            return None
+        self._begin_visible()
+        if self._dialog is None:
+            self._dialog = SimpleDialog(
+                title=Lstr(resource='updatingText'), progress=0.0
             )
-        except Exception as exc:
-            logger.exception('Error showing construct-mode message.')
-            strip_exception_tracebacks(exc)
+        return self._dialog
+
+    def _dismiss_dialog(self) -> None:
+        """Tear down the dialog if present (idempotent)."""
+        if self._dialog is not None:
+            self._dialog.dismiss()
+            self._dialog = None
+
+    def _on_resolve_progress(
+        self, message: str, progress: float | None
+    ) -> None:
+        """Progress-reporter sink: log + drive the dialog.
+
+        The INFO log is the headless + diagnostic record — it must survive
+        (it's the only bring-up trace on headless, which has no dialog).
+        """
+        logger.info('Construct-mode: %s', message)
+        dialog = self._ensure_dialog()
+        if dialog is not None:
+            dialog.update(message=message, progress=progress)
+
+    def _set_status(self, message: str) -> None:
+        """Log an interim lifecycle status; reflect it in the dialog if up.
+
+        Unlike :meth:`_on_resolve_progress` this does NOT create a dialog --
+        it's for states (e.g. 'Authenticating…') that may occur before any
+        download dialog exists; on headless / pre-dialog it just logs.
+        """
+        logger.info('Construct-mode: %s', message)
+        if self._dialog is not None:
+            self._dialog.update(message=message)
+
+    def _finish_success(self) -> None:
+        """Tear down the dialog and hand off after a successful resolve."""
+        if self._dialog is not None:
+            logger.info('Construct-mode: assets updated.')
+        self._dismiss_dialog()
+        self._hand_off()
 
     def _fail(self, message: str) -> None:
         """Surface a terminal bring-up failure.
 
-        Ensures the screen is up (so the message is visible) and posts it
-        in red (also logged at WARNING via :meth:`_screenmessage`).
+        On gui, leave an error dialog up with a **Retry** button (pressing it
+        re-runs :meth:`_run`); the message is logged at WARNING (the surviving
+        record). The builtin package's fonts/assets are already up, so this
+        renders even when the resolve failed.
 
-        On gui we stay put with the message on screen and wait for the
-        user to quit (a proper babase-level dead-in-the-water dialog
-        replaces this later; the builtin package's fonts are already up,
-        so this renders even when resolve fails). On headless there's no
-        one to read a dialog, and sitting here forever just looks like a
-        hang (and wedges supervisors/tests), so we exit cleanly with a
-        specific failure code (:class:`~bacommon.app.ExitCode`). Under the
-        server wrapper's default auto-restart this is simply retried (so
-        a transient fleet-side condition, e.g. a mid-rollout node, can
-        self-heal); ``--no-auto-restart``, direct-binary runs, and BASN
-        task orchestration can read the code to treat it as a definitive
-        failure.
+        On headless there's no one to read a dialog, and sitting here forever
+        just looks like a hang (and wedges supervisors/tests), so we exit
+        cleanly with a specific failure code (:class:`~bacommon.app.ExitCode`).
+        Under the server wrapper's default auto-restart this is simply retried
+        (so a transient fleet-side condition, e.g. a mid-rollout node, can
+        self-heal); ``--no-auto-restart``, direct-binary runs, and BASN task
+        orchestration can read the code to treat it as a definitive failure.
         """
-        self._begin_visible()
-        self._screenmessage(message, error=True)
+        logger.warning('Construct-mode: %s', message)
 
         if not _babase.app.env.gui:
             _babase.set_app_exit_code(ExitCode.ASSET_BRINGUP_FAILED.value)
             _babase.quit()
+            return
+
+        dialog = self._ensure_dialog()
+        assert dialog is not None
+        dialog.update(
+            title=Lstr(resource='errorText'),
+            message=message,
+            progress=None,
+            button_label=Lstr(resource='retryText'),
+            on_button=self._on_retry,
+        )
+
+    def _on_retry(self) -> None:
+        """Dialog Retry-button handler: re-run the resolve.
+
+        Resets the dialog to a progress state first -- restores the 'updating'
+        title, removes the Retry button (so a second press can't fire while we
+        re-resolve), and shows that work has resumed.
+        """
+        if self._dialog is not None:
+            self._dialog.update(
+                title=Lstr(resource='updatingText'),
+                message='',
+                progress=0.0,
+                button_label=None,
+                on_button=None,
+            )
+        _babase.app.create_async_task(self._run(), name='construct-mode retry')
 
     def _hand_off(self) -> None:
         """Release the deferred launch intent to the normal app-mode."""

@@ -436,10 +436,14 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
             continue;
           }
           c.SetTexture(t);
+          // Premultiply rgb by alpha for premultiplied textures so fading
+          // top-messages composite 'over' under premult blend (matches the
+          // bottom-message pass); straight-alpha textures keep raw rgb.
+          float cmul = t->premultiplied() ? a : 1.0f;
           if (i->GetText().GetElementCanColor(e)) {
-            c.SetColor(r, g, b, a);
+            c.SetColor(r * cmul, g * cmul, b * cmul, a);
           } else {
-            c.SetColor(1, 1, 1, a);
+            c.SetColor(cmul, cmul, cmul, a);
           }
           c.SetShadow(-0.003f * i->GetText().GetElementUScale(e),
                       -0.003f * i->GetText().GetElementVScale(e), 0.0f,

@@ -6,7 +6,16 @@
 from bacommon.app import AppArchitecture, AppPlatform, AppVariant
 from babase._generated import enums
 
-from babase import _language, _apputils, _hooks, _env, _error, _general, _ui
+from babase import (
+    _language,
+    _apputils,
+    _hooks,
+    _env,
+    _error,
+    _general,
+    _ui,
+    _simpledialog,
+)
 
 # The C++ layer looks for this variable:
 values = [
@@ -84,4 +93,5 @@ values = [
     _hooks.v2_auth_request,  # kV2AuthRequestCall
     _hooks.v2_auth_data,  # kV2AuthDataCall
     _hooks.start_native_repl,  # kStartNativeReplCall
+    _simpledialog.dispatch_button,  # kSimpleDialogButtonPressCall
 ]

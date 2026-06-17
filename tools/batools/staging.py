@@ -37,12 +37,8 @@ class BuildStager:
         self.win_type: str | None = None
         self.include_python_dylib = False
         self.include_shell_executable = False
-        self.include_audio = True
-        self.include_meshes = True
-        self.include_collision_meshes = True
         self.include_scripts = True
         self.include_python = True
-        self.include_textures = True
         self.include_fonts = True
         self.include_json = True
         self.include_pylib = False
@@ -56,7 +52,6 @@ class BuildStager:
         self.executable_name: str | None = None
         self.pylib_src_path: str | None = None
         self.include_payload_file = False
-        self.tex_suffix: str | None = None
         self.is_payload_full = False
         self.debug: bool | None = None
         self.builddir: str | None = None
@@ -175,14 +170,12 @@ class BuildStager:
         elif platform_arg == '-cmake':
             self.desc = 'cmake'
             self.dst = args[-1]
-            self.tex_suffix = '.dds'
             # Link/copy in a binary *if* builddir is provided.
             self.include_binary_executable = self.builddir is not None
             self.executable_name = 'ballisticakit'
         elif platform_arg == '-cmakemodular':
             self.desc = 'cmake modular'
             self.dst = args[-1]
-            self.tex_suffix = '.dds'
             self.include_python_dylib = True
             self.include_shell_executable = True
             self.executable_name = 'ballisticakit'
@@ -190,9 +183,6 @@ class BuildStager:
             self.desc = 'cmake server'
             self.dst = os.path.join(args[-1], 'dist')
             self.serverdst = args[-1]
-            self.include_textures = False
-            self.include_audio = False
-            self.include_meshes = False
             # Link/copy in a binary *if* builddir is provided.
             self.include_binary_executable = self.builddir is not None
             self.executable_name = 'ballisticakit_headless'
@@ -200,9 +190,6 @@ class BuildStager:
             self.desc = 'cmake modular server'
             self.dst = os.path.join(args[-1], 'dist')
             self.serverdst = args[-1]
-            self.include_textures = False
-            self.include_audio = False
-            self.include_meshes = False
             self.include_python_dylib = True
             self.include_shell_executable = True
             self.executable_name = 'ballisticakit_headless'
@@ -216,18 +203,18 @@ class BuildStager:
             )
             self.include_pylib = True
             self.pylib_src_path = 'pylib-apple'
-            self.tex_suffix = '.dds'
-        elif platform_arg == '-xcode-ios':
-            self.desc = 'xcode ios'
-            self.src = os.environ['SOURCE_ROOT'] + '/build/assets'
+        elif platform_arg in ('-xcode-ios', '-xcode-tvos'):
+            # iOS and tvOS stage identically (same Apple pylib + asset
+            # layout into the .app bundle's flat Resources dir).
+            self.desc = 'xcode ' + platform_arg.removeprefix('-xcode-')
+            self.src = os.environ['SOURCE_ROOT'] + '/../build/assets'
             self.dst = (
                 os.environ['TARGET_BUILD_DIR']
                 + '/'
                 + os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH']
             )
-            self.include_pylib = False
-            # self.pylib_src_path = 'pylib-apple'
-            self.tex_suffix = '.pvr'
+            self.include_pylib = True
+            self.pylib_src_path = 'pylib-apple'
         else:
             raise RuntimeError('No valid platform arg provided.')
 
@@ -262,7 +249,6 @@ class BuildStager:
         self.pylib_src_path = 'pylib-android'
         self.include_payload_file = True
         self.is_payload_full = True
-        self.tex_suffix = '.ktx'
         self.include_pylib = True
 
     def _parse_win_args(self, platform: str, args: list[str]) -> None:
@@ -271,16 +257,12 @@ class BuildStager:
         self.win_platform = winplt
         self.win_type = wintype
         assert winempty == ''
-        self.tex_suffix = '.dds'
 
         if wintype == 'win':
             self.dst = args[-1]
         elif wintype == 'winserver':
             self.dst = os.path.join(args[-1], 'dist')
             self.serverdst = args[-1]
-            self.include_textures = False
-            self.include_audio = False
-            self.include_meshes = False
         else:
             raise RuntimeError(f"Invalid wintype: '{wintype}'.")
 
@@ -487,16 +469,9 @@ class BuildStager:
         else:
             # Shouldn't be trying to do sparse stuff in server builds.
             if self.serverdst is not None:
-                assert self.include_json and self.include_collision_meshes
+                assert self.include_json
             else:
-                assert (
-                    self.include_textures
-                    and self.include_audio
-                    and self.include_fonts
-                    and self.include_json
-                    and self.include_meshes
-                    and self.include_collision_meshes
-                )
+                assert self.include_fonts and self.include_json
             # Keep rsync from deleting the other stuff we're overlaying.
             cmd += ['--exclude', '/python-dylib']
 
@@ -508,24 +483,11 @@ class BuildStager:
                 '*.pem',
             ]
 
-        if self.include_textures:
-            assert self.tex_suffix is not None
-            cmd += ['--include', f'*{self.tex_suffix}']
-
-        if self.include_audio:
-            cmd += ['--include', '*.ogg']
-
         if self.include_fonts:
             cmd += ['--include', '*.fdata']
 
         if self.include_json:
             cmd += ['--include', '*.json']
-
-        if self.include_meshes:
-            cmd += ['--include', '*.bob']
-
-        if self.include_collision_meshes:
-            cmd += ['--include', '*.cob']
 
         # By default we want to include all dirs and exclude all files.
         cmd += [

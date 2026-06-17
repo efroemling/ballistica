@@ -105,6 +105,13 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
               + (1.0f - draw_controller_mult_) * 1.0f;
       }
 
+      // Premultiply rgb by opacity for premultiplied textures so faded icons
+      // composite 'over' under premult blend instead of staying full-brightness
+      // (premult blend adds rgb directly rather than weighting it by alpha).
+      // Straight-alpha textures keep raw rgb and fade via alpha as before.
+      float omul =
+          (texture_.exists() && texture_->premultiplied()) ? opacity_ : 1.0f;
+
       // Opaque portion may get drawn transparent or opaque depending on our
       // global opacity.
       if (mesh_opaque_used.exists() || draw_radial_opaque) {
@@ -124,8 +131,8 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         if (should_draw) {
           base::SimpleComponent c(pass);
           c.SetTransparent(should_draw_transparent);
-          c.SetColor(color_red_ * db, color_green_ * db, color_blue_ * db,
-                     opacity_);
+          c.SetColor(color_red_ * db * omul, color_green_ * db * omul,
+                     color_blue_ * db * omul, opacity_);
           c.SetTexture(texture_);
           if (flatness_ != 0.0f) {
             c.SetFlatness(flatness_);
@@ -165,8 +172,8 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           && draw_transparent) {
         base::SimpleComponent c(pass);
         c.SetTransparent(true);
-        c.SetColor(color_red_ * db, color_green_ * db, color_blue_ * db,
-                   opacity_);
+        c.SetColor(color_red_ * db * omul, color_green_ * db * omul,
+                   color_blue_ * db * omul, opacity_);
         c.SetTexture(texture_);
         if (flatness_ != 0.0f) {
           c.SetFlatness(flatness_);

@@ -141,6 +141,7 @@ class BasePython {
     kV2AuthRequestCall,
     kV2AuthDataCall,
     kStartNativeReplCall,
+    kSimpleDialogButtonPressCall,
     kLast  // Sentinel; must be at end.
   };
 

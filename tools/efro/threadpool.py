@@ -4,8 +4,10 @@
 
 import time
 import logging
+import functools
 import threading
-from typing import TYPE_CHECKING, ParamSpec
+from collections import Counter
+from typing import TYPE_CHECKING, ParamSpec, TypeVar, override
 from concurrent.futures import ThreadPoolExecutor
 
 from efro.util import strip_exception_tracebacks
@@ -15,12 +17,25 @@ if TYPE_CHECKING:
     from concurrent.futures import Future
 
 P = ParamSpec('P')
+T = TypeVar('T')
 
 logger = logging.getLogger(__name__)
 
 
 class ThreadPoolExecutorEx(ThreadPoolExecutor):
-    """A ThreadPoolExecutor with additional functionality added."""
+    """A ThreadPoolExecutor with extra diagnostics.
+
+    Intended for **efficiency**: parallelizing pieces of a single task so
+    it finishes faster. It is **not** a queue for long-running or blocking
+    work -- a worker tied up on a slow task can't run anything else, so
+    long/blocking work starves the pool and delays everything queued
+    behind it (and ``submit_no_wait`` callers can pile up a backlog).
+
+    To make misuse easy to spot, submitted work is timed: a task that
+    waits too long in the queue before starting, or runs too long, logs a
+    (rate-limited) warning naming the callable. ``submit_no_wait`` also
+    logs when its backlog exceeds a soft limit. None of these block.
+    """
 
     def __init__(
         self,
@@ -30,6 +45,9 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
         max_no_wait_count: int | None = None,
         *,
         allow_submit_no_wait: bool = True,
+        queue_wait_warn_seconds: float = 10.0,
+        run_duration_warn_seconds: float = 5.0,
+        log_throttle_seconds: float = 10.0,
     ) -> None:
         super().__init__(
             max_workers=max_workers,
@@ -52,19 +70,43 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
             if max_no_wait_count is not None
             else 50 if max_workers is None else max_workers * 2
         )
-        self._last_no_wait_warn_time: float | None = None
+
+        #: Warn if a submitted task waits longer than this in the queue
+        #: before a worker picks it up (pool saturation), or runs longer
+        #: than the run threshold (likely misuse -- long work on an
+        #: efficiency pool).
+        self._queue_wait_warn_seconds = queue_wait_warn_seconds
+        self._run_duration_warn_seconds = run_duration_warn_seconds
+
+        #: Min seconds between repeats of any one throttled log line, so a
+        #: bad spell can't saturate the logs. Keyed by a short kind string.
+        self._log_throttle_seconds = log_throttle_seconds
+        self._last_log_times: dict[str, float] = {}
+
         self._no_wait_count_lock = threading.Lock()
+
+        #: Count of in-flight no-wait calls keyed by callable name, so an
+        #: over-soft-limit log can name the spike's likely source.
+        #: Guarded by ``_no_wait_count_lock``.
+        self._no_wait_calls: Counter[str] = Counter()
 
     def submit_no_wait(
         self, call: Callable[P, Any], *args: P.args, **keywds: P.kwargs
     ) -> None:
-        """Submit work to the threadpool with no expectation of waiting.
+        """Submit fire-and-forget work to the threadpool.
 
         Any exceptions raised by the callable are automatically caught
         and logged via ``logger.exception()``, so callers do not need
-        their own error handling for fire-and-forget work. This call will
-        block and log a warning if the threadpool reaches its max queued
-        no-wait call count.
+        their own error handling for fire-and-forget work.
+
+        This call **never blocks**. If the pool's queued no-wait backlog
+        exceeds its soft limit we log an error (naming the most common
+        in-flight callables, to help pinpoint the source of a spike) but
+        still submit. A blocking backpressure was used here previously,
+        but it could self-deadlock when ``submit_no_wait`` was called from
+        one of this pool's own workers — the backlog only drains via those
+        same workers, so blocking them stalled it forever. A loud,
+        non-blocking warning gives the same visibility without that risk.
 
         Raises RuntimeError if the pool was created with
         ``allow_submit_no_wait=False`` (hosts with no background CPU).
@@ -76,30 +118,99 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
                 ' Do the work synchronously instead; see the'
                 ' allow_submit_no_wait attr.'
             )
-        # If we're too backlogged, issue a warning and block until we
-        # aren't. We don't bother with the lock here since this can be
-        # slightly inexact. In general we should aim to not hit this
-        # limit but it is good to have backpressure to avoid runaway
-        # queues in cases of network outages/etc.
-        if self.no_wait_count > self._max_no_wait_count:
-            now = time.monotonic()
-            if (
-                self._last_no_wait_warn_time is None
-                or now - self._last_no_wait_warn_time > 10.0
-            ):
-                logger.warning(
-                    'ThreadPoolExecutorEx hit max no-wait limit of %s;'
-                    ' blocking.',
-                    self._max_no_wait_count,
-                )
-                self._last_no_wait_warn_time = now
-            while self.no_wait_count > self._max_no_wait_count:
-                time.sleep(0.01)
 
-        fut = self.submit(call, *args, **keywds)
+        key = _callable_name(call)
         with self._no_wait_count_lock:
             self.no_wait_count += 1
-        fut.add_done_callback(self._no_wait_done)
+            self._no_wait_calls[key] += 1
+            count = self.no_wait_count
+
+        # Over the soft limit: log (rate-limited) but never block.
+        if count > self._max_no_wait_count and self._should_log('backlog'):
+            logger.error(
+                'ThreadPoolExecutorEx no-wait backlog (%d) exceeds soft'
+                ' limit (%d); not blocking. Top in-flight no-wait'
+                ' callables: %s.',
+                count,
+                self._max_no_wait_count,
+                self._top_no_wait_calls(),
+            )
+
+        fut = self.submit(call, *args, **keywds)
+        fut.add_done_callback(functools.partial(self._no_wait_done, key=key))
+
+    def _top_no_wait_calls(self, count: int = 5) -> str:
+        """Compact ``name=N, ...`` of the top in-flight no-wait calls."""
+        with self._no_wait_count_lock:
+            top = self._no_wait_calls.most_common(count)
+        return ', '.join(f'{name}={num}' for name, num in top) or '(none)'
+
+    @override
+    def submit(
+        self, fn: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
+    ) -> Future[T]:
+        """Submit work, timing its queue-wait and run duration.
+
+        See the class docstring: this pool is for short parallel work,
+        not long-running or blocking tasks. Submitted callables are timed
+        and a slow wait-to-start or a slow run logs a rate-limited warning
+        naming the callable, so misuse is easy to spot.
+        """
+        return super().submit(self._wrap_timed(fn), *args, **kwargs)
+
+    def _wrap_timed(self, fn: Callable[P, T]) -> Callable[P, T]:
+        """Wrap ``fn`` to warn on excessive queue-wait / run duration."""
+        enqueue_time = time.monotonic()
+        name = _callable_name(fn)
+
+        def _timed(*args: P.args, **kwargs: P.kwargs) -> T:
+            start = time.monotonic()
+            wait = start - enqueue_time
+            if wait > self._queue_wait_warn_seconds and self._should_log(
+                'queue_wait'
+            ):
+                logger.warning(
+                    'ThreadPoolExecutorEx: %s waited %.1fs in the queue'
+                    ' before starting (over %.0fs). This pool is for short'
+                    ' parallel work; long/blocking tasks or floods saturate'
+                    ' it and delay everything queued behind them.',
+                    name,
+                    wait,
+                    self._queue_wait_warn_seconds,
+                )
+            try:
+                return fn(*args, **kwargs)
+            finally:
+                duration = time.monotonic() - start
+                if (
+                    duration > self._run_duration_warn_seconds
+                    and self._should_log('run_duration')
+                ):
+                    logger.warning(
+                        'ThreadPoolExecutorEx: %s ran %.1fs (over %.0fs).'
+                        ' This pool is for short parallel work to speed a'
+                        ' task up, not long-running or blocking work -- that'
+                        ' ties up a worker and starves the pool. Move long'
+                        ' work elsewhere.',
+                        name,
+                        duration,
+                        self._run_duration_warn_seconds,
+                    )
+
+        return _timed
+
+    def _should_log(self, kind: str) -> bool:
+        """Return True at most once per throttle window for ``kind``.
+
+        Lock-free and thus slightly inexact under races (an occasional
+        extra line), which is fine for diagnostics.
+        """
+        now = time.monotonic()
+        last = self._last_log_times.get(kind)
+        if last is None or now - last > self._log_throttle_seconds:
+            self._last_log_times[kind] = now
+            return True
+        return False
 
     def submit_no_wait_or_run(
         self, call: Callable[P, Any], *args: P.args, **keywds: P.kwargs
@@ -132,9 +243,13 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
             # Terminal consumer of this exception; strip to avoid cycles.
             strip_exception_tracebacks(exc)
 
-    def _no_wait_done(self, fut: Future) -> None:
+    def _no_wait_done(self, fut: Future, *, key: str) -> None:
         with self._no_wait_count_lock:
             self.no_wait_count -= 1
+            self._no_wait_calls[key] -= 1
+            # Keep the Counter from accumulating stale zero entries.
+            if self._no_wait_calls[key] <= 0:
+                del self._no_wait_calls[key]
         try:
             fut.result()
         except Exception as exc:
@@ -142,6 +257,22 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
             # We're done with this exception, so strip its traceback to
             # avoid reference cycles.
             strip_exception_tracebacks(exc)
+
+
+def _callable_name(call: Callable[..., Any]) -> str:
+    """Best-effort human-readable name for a submitted callable.
+
+    Unwraps :class:`functools.partial` chains to the underlying function
+    so diagnostics name the real target, not ``functools.partial``.
+    """
+    target: Any = call
+    while isinstance(target, functools.partial):
+        target = target.func
+    return (
+        getattr(target, '__qualname__', None)
+        or getattr(target, '__name__', None)
+        or type(target).__name__
+    )
 
 
 # ---- Threadpool introspection ----

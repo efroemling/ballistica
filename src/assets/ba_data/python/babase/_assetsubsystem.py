@@ -318,8 +318,8 @@ class ResolveProgress:
     bytes_total: int = 0
 
 
-#: Min seconds between placeholder progress screen-messages.
-_PROGRESS_SCREENMESSAGE_INTERVAL = 1.5
+#: Min seconds between throttled progress updates.
+_PROGRESS_UPDATE_INTERVAL = 1.5
 
 #: Seconds between Tier-1 resolve polls while the server reports it's
 #: still building the requested flavors.
@@ -339,23 +339,21 @@ def _package_display_name(apverid: str | None) -> str:
     return parts[1] if len(parts) == 3 and parts[1] else apverid
 
 
-def make_screenmessage_progress_reporter(
-    screenmessage: Callable[[str], None] | None = None,
+def make_progress_reporter(
+    on_update: Callable[[str, float | None], None],
 ) -> Callable[[ResolveProgress], None]:
-    """Build a throttled progress reporter that posts screen-messages.
+    """Build a throttled progress reporter.
 
-    Placeholder progress UI: pass the returned callable as ``on_progress``
-    to :meth:`AssetSubsystem.resolve`. It posts a message immediately on a
-    phase change and then at most one per
-    :data:`_PROGRESS_SCREENMESSAGE_INTERVAL` seconds, so a slow download
-    keeps the user informed without spamming. A server-provided
-    :attr:`ResolveProgress.detail` is shown verbatim when present.
-
-    ``screenmessage`` defaults to :func:`_babase.screenmessage`; pass a
-    custom poster (e.g. one that also logs) to override. This is a stopgap
-    until a real progress bar exists.
+    Pass the returned callable as ``on_progress`` to
+    :meth:`AssetSubsystem.resolve`. It calls ``on_update(message, progress)``
+    immediately on a phase or package change and then at most once per
+    :data:`_PROGRESS_UPDATE_INTERVAL` seconds (so a slow download keeps
+    the user informed without spamming). ``progress`` is a ``0.0``–``1.0``
+    fraction for a progress bar — ``0.0`` during phases with no known count
+    (the bar is held at zero rather than hidden, so the display doesn't resize
+    between phases). A server-provided :attr:`ResolveProgress.detail` is shown
+    verbatim when present.
     """
-    post = screenmessage if screenmessage is not None else _babase.screenmessage
     last_time = -1.0e9
     last_phase: ResolvePhase | None = None
     last_apverid: str | None = None
@@ -372,19 +370,17 @@ def make_screenmessage_progress_reporter(
             and progress.blobs_done >= progress.blobs_total
         )
         now = _babase.apptime()
-        # Post immediately on a phase change OR a package change (so a
+        # Update immediately on a phase change OR a package change (so a
         # per-package build line's package name updates promptly); else
         # throttle to avoid spamming a slow download.
         if (
             progress.phase is last_phase
             and progress.apverid == last_apverid
-            and now - last_time < _PROGRESS_SCREENMESSAGE_INTERVAL
+            and now - last_time < _PROGRESS_UPDATE_INTERVAL
             and not caught_up
         ):
-            # TEMP trace: note throttled updates so the log reflects
-            # exactly what was (and wasn't) shown, and when.
             logger.debug(
-                'temp-progress: throttled update (phase=%s build=%s/%s'
+                'progress: throttled update (phase=%s build=%s/%s'
                 ' blobs=%d/%d apverid=%s)',
                 progress.phase.value,
                 progress.build_units_done,
@@ -398,9 +394,11 @@ def make_screenmessage_progress_reporter(
         last_phase = progress.phase
         last_apverid = progress.apverid
 
-        # Build the message for this phase. A server-provided detail is an
-        # escape hatch (unused by the standard flow) and wins if present.
+        # Build the message + bar fraction for this phase. A server-provided
+        # detail is an escape hatch (unused by the standard flow) and wins if
+        # present. The bar sits at 0.0 unless we have a real count.
         message: str | None
+        fraction = 0.0
         if progress.detail:
             message = progress.detail
         elif progress.phase is ResolvePhase.BUILDING:
@@ -413,6 +411,7 @@ def make_screenmessage_progress_reporter(
             if done is not None and total is not None and total > 0:
                 remaining = max(total - done, 0)
                 message = f'Building {pkg} assets ({remaining} remaining)…'
+                fraction = done / total
             else:
                 # Counts not reported yet (the initial 'preparing' step:
                 # workspace compile + leaf-build queue, before any leaf
@@ -425,22 +424,22 @@ def make_screenmessage_progress_reporter(
             # Single running total across the whole resolve (all packages).
             remaining = max(progress.blobs_total - progress.blobs_done, 0)
             message = f'Downloading assets ({remaining} remaining)…'
+            fraction = progress.blobs_done / progress.blobs_total
         else:
-            # RESOLVING with no detail: nothing to add (construct-mode's
-            # own 'Updating assets…' covers the initial state).
+            # RESOLVING with no detail: nothing to add (the display's own
+            # title/initial state covers it).
             logger.debug(
-                'temp-progress: no message for update (phase=%s apverid=%s)',
+                'progress: no message for update (phase=%s apverid=%s)',
                 progress.phase.value,
                 progress.apverid,
             )
             return
-        # TEMP trace (DEBUG so it stays out of default logs but is there
-        # under ``ba.assetmanager=DEBUG``): log every screen-message we post
-        # with the structured fields behind it, so the exact on-screen
-        # sequence and timing are fully reconstructable. (The posted text
-        # itself is also logged at INFO by construct-mode's _screenmessage.)
+        # Diagnostic trace (DEBUG; available under ``ba.assetmanager=DEBUG``):
+        # log every update with the structured fields behind it, so the exact
+        # sequence and timing are reconstructable. (The message text itself is
+        # logged at INFO by the on_update consumer -- the headless record.)
         logger.debug(
-            'temp-progress: screenmessage %r (phase=%s build=%s/%s'
+            'progress: update %r (phase=%s build=%s/%s'
             ' blobs=%d/%d bytes=%d/%d apverid=%s)',
             message,
             progress.phase.value,
@@ -452,7 +451,7 @@ def make_screenmessage_progress_reporter(
             progress.bytes_total,
             progress.apverid,
         )
-        post(message)
+        on_update(message, fraction)
 
     return report
 
@@ -1190,12 +1189,30 @@ class AssetSubsystem(AppSubsystem):
         return _OneResult(coords=coords, entries=entries, fell_back=fell_back)
 
     def _local_coords(self, apverid: str) -> dict[str, str]:
-        """Locally-known ``coord -> flavor-manifest hash`` (bundle ∪ cache)."""
+        """Locally-known ``coord -> flavor-manifest hash`` (bundle ∪ cache).
+
+        The cache's (downloaded/ideal) hash supersedes the bundle's for a
+        coord -- but ONLY when that cached flavor is actually complete on
+        disk. The writable cache can have blobs pruned out from under a
+        committed entry (e.g. the cache-ninja prunes random cache files
+        before spinup), so a cached flavor-manifest pointing at now-missing
+        files must NOT shadow the bundle's complete copy of the same coord;
+        it has to fall through to it. The bundle is read-only and never
+        pruned, so it is a reliable floor for builtin packages -- surviving
+        a flavor-manifest that references nonexistent files is a core
+        design constraint of the asset system.
+
+        Coords the bundle doesn't carry are taken from the cache as-is
+        (there's no floor to fall through to); their completeness is
+        checked downstream by :meth:`_scan_local` / :meth:`_finalize_one`.
+        """
         coords: dict[str, str] = {}
         coords.update(self._read_bundle_manifest().get(apverid, {}))
         pkg = self._load_manifest().packages.get(apverid)
         if pkg is not None:
-            coords.update(pkg.flavor_manifests)
+            for coord, fm_hash in pkg.flavor_manifests.items():
+                if coord not in coords or self._coord_complete(fm_hash):
+                    coords[coord] = fm_hash
         return coords
 
     def _read_bundle_manifest(self) -> dict[str, dict[str, str]]:
