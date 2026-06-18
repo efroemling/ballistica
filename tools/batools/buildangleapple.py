@@ -188,6 +188,14 @@ def _apply_local_patches(checkout: Path) -> None:
     tvOS: Chromium asserts ``tvos`` builds require ``use_blink`` (its only tvOS
     consumer is Blink/content_shell); we build standalone libs, so comment out
     that one sanity assert. It gates nothing else.
+
+    Metal ASTC upload: ANGLE's Metal staging-upload path
+    (``CopyTextureData``) is not block-format aware -- it iterates pixel rows
+    rather than block rows and over-reads compressed source data, an
+    intermittent crash on ASTC texture uploads (iOS simulator + device). We
+    force compressed uploads down the direct ``replaceRegion`` path instead.
+    See ``docs/followups.md`` ("ANGLE Metal ASTC compressed-texture upload
+    over-read"). Remove once upstream fixes it.
     """
     mobile_config = (
         checkout / 'build' / 'config' / 'apple' / 'mobile_config.gni'
@@ -203,6 +211,51 @@ def _apply_local_patches(checkout: Path) -> None:
             text.replace(assert_line, patched_line), encoding='utf-8'
         )
         print('Applied tvOS use_blink patch to mobile_config.gni.', flush=True)
+
+    _patch_metal_astc_upload(checkout)
+
+
+def _patch_metal_astc_upload(checkout: Path) -> None:
+    """Route block-compressed Metal uploads off the non-block-aware staging
+    path (forces the direct replaceRegion path). See ``_apply_local_patches``
+    for the why. Idempotent; fails loudly if the anchor moves.
+    """
+    from efro.error import CleanError
+
+    src = checkout / 'src' / 'libANGLE' / 'renderer' / 'metal' / 'TextureMtl.mm'
+    marker = 'ballistica: ANGLE Metal staging upload is not'
+    text = src.read_text(encoding='utf-8')
+    if marker in text:
+        return  # Already patched (survives re-syncs).
+
+    anchor = (
+        '        PreferStagedTextureUploads(context, texture, mtlFormat,'
+        ' mtl::StagingPurpose::Upload);\n'
+    )
+    if anchor not in text:
+        # An ANGLE bump moved/renamed this code, so our crash-fix would
+        # silently stop applying. Fail loudly: re-verify the upload path in
+        # TextureMtl.mm and update the anchor below (or drop this patch if
+        # upstream has fixed the block-format over-read).
+        raise CleanError(
+            'ANGLE ASTC-upload patch anchor not found in TextureMtl.mm --'
+            ' upstream code moved. Re-verify and update'
+            ' _patch_metal_astc_upload() in buildangleapple.py.'
+        )
+
+    addition = (
+        '    // ballistica: ANGLE Metal staging upload is not\n'
+        '    // block-format aware (CopyTextureData iterates pixel rows,\n'
+        '    // not block rows, and over-reads compressed source data --\n'
+        '    // intermittent ASTC upload crash on iOS simulator + device).\n'
+        '    // Force compressed uploads down the direct replaceRegion path.\n'
+        '    if (textureAngleFormat.isBlock)\n'
+        '    {\n'
+        '        preferGPUInitialization = false;\n'
+        '    }\n'
+    )
+    src.write_text(text.replace(anchor, anchor + addition), encoding='utf-8')
+    print('Applied Metal ASTC-upload patch to TextureMtl.mm.', flush=True)
 
 
 def _sync_angle(checkout: Path, env: dict[str, str]) -> None:
@@ -607,6 +660,14 @@ def _do_build(
     if artifacts.exists():
         shutil.rmtree(artifacts)
     artifacts.mkdir(parents=True)
+    # Record which normal variant produced these artifacts. ``gather`` reads
+    # this and refuses to install unoptimized 'test' binaries into the source
+    # tree -- only 'release' is shippable/committable. (Both entry points
+    # assemble into this same dir, so the marker is the only signal of which
+    # one ran.) See gather().
+    (artifacts / 'build_variant.txt').write_text(
+        variant + '\n', encoding='utf-8'
+    )
     work = root / 'assembly'
     if work.exists():
         shutil.rmtree(work)
@@ -686,6 +747,29 @@ def gather(projroot: str) -> None:
         raise CleanError(
             f"Artifacts dir not found: '{artifacts}'."
             ' Run make angle-apple-build or angle-apple-test-build first.'
+        )
+
+    # Only the shipping 'release' build is committable; refuse to install
+    # unoptimized 'test' (or unknown) artifacts into the source tree. The
+    # override env var exists for local-only verification (e.g. confirming a
+    # patch fixes a crash) -- do NOT commit what it installs; a real release
+    # build + gather must overwrite it before commit.
+    variant_file = artifacts / 'build_variant.txt'
+    variant = (
+        variant_file.read_text(encoding='utf-8').strip()
+        if variant_file.is_file()
+        else '<unknown>'
+    )
+    if variant != 'release' and (
+        os.environ.get('BA_ANGLE_APPLE_ALLOW_TEST_GATHER') != '1'
+    ):
+        raise CleanError(
+            f"Refusing to gather '{variant}' ANGLE artifacts into the source"
+            ' tree -- only the shipping release build is committable. Run'
+            ' `make angle-apple-build` (release, from scratch), then'
+            ' `make angle-apple-gather`. To install these non-release artifacts'
+            ' for local verification only (do NOT commit them), set'
+            ' BA_ANGLE_APPLE_ALLOW_TEST_GATHER=1.'
         )
 
     normal_dst = root / 'src' / 'external' / 'angle-apple'
