@@ -27,13 +27,24 @@
 // For XCode builds, grab Apple's framework-y headers.
 #if BA_XCODE_BUILD
 #if BA_OPENGL_IS_ES
+#if BA_USE_ANGLE
+// Apple (Xcode) ANGLE build (macOS/iOS/tvOS): GLES3 headers come from the
+// vendored ANGLE xcframework's include dir (on the header search path), not
+// Apple's system OpenGLES.framework -- mirroring the cmake/Windows ANGLE paths.
+// clang-format off
+#include <GLES3/gl3.h>
+// NOLINTNEXTLINE(build/include) -- mutually-exclusive #if vs the android block
+#include <GLES2/gl2ext.h>  // GL_KHR_debug constants/typedefs (needs gl3.h)
+// clang-format on
+#else
 #include <OpenGLES/ES3/gl.h>
 #include <OpenGLES/ES3/glext.h>
+#endif  // BA_USE_ANGLE
 #else
 #include <OpenGL/gl3.h>
 #include <OpenGL/gl3ext.h>
-#endif
-#endif
+#endif  // BA_OPENGL_IS_ES
+#endif  // BA_XCODE_BUILD
 
 // On Android, we're currently supporting Android API 21 and newer, which
 // means we can count on GL ES 3.1 libs/headers always being available. Note

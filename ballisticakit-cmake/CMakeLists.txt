@@ -82,24 +82,46 @@ else()
     set(BALLISTICA_USE_ANGLE "AUTO" CACHE STRING
       "macOS GL backend: AUTO (ANGLE if present) / ON (require) / OFF (desktop GL)")
     set(_BA_ANGLE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../src/external/angle-apple")
-    set(_BA_ANGLE_GLES
-      "${_BA_ANGLE_ROOT}/libGLESv2.xcframework/macos-arm64_x86_64/libGLESv2.dylib")
-    set(_BA_ANGLE_EGL
-      "${_BA_ANGLE_ROOT}/libEGL.xcframework/macos-arm64_x86_64/libEGL.dylib")
+    set(_BA_ANGLE_DEBUG_ROOT
+      "${CMAKE_CURRENT_SOURCE_DIR}/../src/external/angle-apple-debug")
+    # macOS ANGLE ships as bare dylibs (id @rpath/libX.dylib, already signed) in
+    # the macos/ subdir. The .xcframeworks alongside are framework-form for the
+    # iOS/tvOS Xcode consumers; this desktop/SDL build uses the bare dylibs (SDL
+    # wants libEGL + libGLESv2 as sibling bare dylibs named libX.dylib anyway).
+    set(_BA_ANGLE_GLES "${_BA_ANGLE_ROOT}/macos/libGLESv2.dylib")
     if(BALLISTICA_USE_ANGLE STREQUAL "OFF")
       # Forced desktop GL.
     elseif(EXISTS "${_BA_ANGLE_GLES}")
       set(_BA_USE_ANGLE ON)
     elseif(BALLISTICA_USE_ANGLE STREQUAL "ON")
       message(FATAL_ERROR
-        "BALLISTICA_USE_ANGLE=ON but no ANGLE xcframework found at "
-        "${_BA_ANGLE_ROOT}. Run 'make angle-apple-build' + "
+        "BALLISTICA_USE_ANGLE=ON but no ANGLE dylibs found at "
+        "${_BA_ANGLE_ROOT}/macos. Run 'make angle-apple-build' + "
         "'make angle-apple-gather' first, or use AUTO/OFF.")
     endif()
   endif()
 
   if(_BA_USE_ANGLE)
-    message(STATUS "Ballistica GL backend: ANGLE (GL ES -> Metal)")
+    # A Debug build uses the debug/validation ANGLE variant when it's vendored
+    # (ANGLE asserts + Metal validation + GL trace, to surface GL-usage bugs);
+    # any other config -- or a Debug build without the debug variant present --
+    # uses the normal (optimized) one. Headers always come from the normal
+    # root (the debug root ships no include/ tree).
+    set(_BA_ANGLE_LIB_ROOT "${_BA_ANGLE_ROOT}")
+    set(_BA_ANGLE_VARIANT "release")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND EXISTS
+       "${_BA_ANGLE_DEBUG_ROOT}/macos/libGLESv2.dylib")
+      set(_BA_ANGLE_LIB_ROOT "${_BA_ANGLE_DEBUG_ROOT}")
+      set(_BA_ANGLE_VARIANT "debug/validation")
+    endif()
+    # Use the bare macos/ dylibs directly: they already have id @rpath/libX.dylib
+    # and are signed, so there's no framework extraction / install_name_tool /
+    # re-sign to do. The ANGLE-DYLIB STAGING step below copies them next to the
+    # binary; SDL is pointed at libEGL.dylib and finds libGLESv2.dylib beside it.
+    set(_BA_ANGLE_GLES "${_BA_ANGLE_LIB_ROOT}/macos/libGLESv2.dylib")
+    set(_BA_ANGLE_EGL "${_BA_ANGLE_LIB_ROOT}/macos/libEGL.dylib")
+    message(STATUS
+      "Ballistica GL backend: ANGLE (GL ES -> Metal) [${_BA_ANGLE_VARIANT}]")
     target_compile_definitions(common_deps INTERFACE BA_OPENGL_IS_ES=1)
     target_include_directories(ba_deps INTERFACE "${_BA_ANGLE_ROOT}/include")
     set(_BA_GL_LIBS "${_BA_ANGLE_GLES}" "${_BA_ANGLE_EGL}")
@@ -960,10 +982,11 @@ endif()
 
 
 # ============= ANGLE DYLIB STAGING (macOS) =============
-# When building against ANGLE, copy its dylibs next to the binary (where
-# @executable_path resolves -- dev builds symlink the staged binary back to
-# this build dir) and ensure the rpath, mirroring the Discord staging above.
-# SDL is pointed at these explicitly at GL-context-creation time.
+# When building against ANGLE, copy the bare dylibs (see the backend
+# selection above) next to the binary (where @executable_path resolves -- dev
+# builds symlink the staged binary back to this build dir) and ensure the
+# rpath, mirroring the Discord staging above. SDL is pointed at libEGL.dylib
+# explicitly at GL-context-creation time and finds libGLESv2.dylib beside it.
 if(_BA_USE_ANGLE)
   add_custom_command(TARGET ballisticakitbin POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different

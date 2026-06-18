@@ -58,18 +58,48 @@ def openal_android_build() -> None:
     build_openal(args[0], args[1])
 
 
-def openal_mac_build() -> None:
-    """Build openalsoft for mac."""
-    from efrotools.openalbuildapple import build_openal_mac
+def openal_apple_build() -> None:
+    """Build OpenAL Soft xcframework + mac dylib for Apple platforms.
 
-    build_openal_mac()
+    Re-clones OpenAL Soft at the pinned tag and builds every slice (macOS /
+    iOS / tvOS / visionOS, device + simulator) into build/openal-apple/
+    artifacts. Follow with 'make openal-apple-gather' to install into the
+    source tree.
+    """
+    import os
+
+    from efrotools import openalbuildapple
+
+    os.chdir(pcommand.PROJROOT)
+    openalbuildapple.build(str(pcommand.PROJROOT))
 
 
-def openal_mac_gather() -> None:
-    """Gather openalsoft for mac."""
-    from efrotools.openalbuildapple import gather_openal_mac
+def openal_apple_test_build() -> None:
+    """Build the Apple OpenAL Soft artifacts, reusing an existing checkout.
 
-    gather_openal_mac()
+    For CI / exercising the pipeline -- lazily reuses build/openal-apple/
+    checkout (incremental). Follow with 'make openal-apple-gather'.
+    """
+    import os
+
+    from efrotools import openalbuildapple
+
+    os.chdir(pcommand.PROJROOT)
+    openalbuildapple.test_build(str(pcommand.PROJROOT))
+
+
+def openal_apple_gather() -> None:
+    """Install assembled Apple OpenAL Soft artifacts into the source tree.
+
+    Copies build/openal-apple/artifacts into src/external/openal-apple (the
+    OpenALSoft.xcframework, the bare macOS dylib, and shared headers).
+    """
+    import os
+
+    from efrotools import openalbuildapple
+
+    os.chdir(pcommand.PROJROOT)
+    openalbuildapple.gather(str(pcommand.PROJROOT))
 
 
 def openal_android_gather() -> None:

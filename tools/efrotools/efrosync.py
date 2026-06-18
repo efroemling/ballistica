@@ -624,9 +624,16 @@ def run_efrosync(
             print(f'  {Clr.RED}{err}{Clr.RST}')
         raise CleanError(f'efrosync: {len(ctx.errors)} error(s) found.')
 
-    # Apply pass: all validation passed, now write files and
-    # update state.
-    _apply_pending(ctx)
+    # Apply pass: all validation passed, now write files and update
+    # state. Skipped entirely in --check mode: a check only reports
+    # drift (out-of-sync files already became errors above, so
+    # pending_syncs is empty) and must stay read-only — its only
+    # effect here would be state.json bookkeeping (cached hash updates
+    # + stale-key pruning), a perf optimization the next run redoes
+    # anyway. Writing nothing is also what lets --check run without the
+    # lock (see efrosync_main), so concurrent checks don't collide.
+    if not ctx.check:
+        _apply_pending(ctx)
 
     _print_summary(ctx)
 
@@ -756,5 +763,14 @@ def efrosync_main() -> None:
     if dry_run and check:
         raise CleanError('Cannot use --dry-run and --check together.')
 
-    with SyncLock():
+    # --check is read-only (writes no files and no sync state), so it
+    # skips the lock entirely. This lets many checks run at once on one
+    # machine -- e.g. parallel `make check` / `spinoff-update` across
+    # repos during a push -- without colliding on the single global
+    # lock. Mutating runs (real sync, and --dry-run which still writes
+    # sync state) take the exclusive lock as before.
+    if check:
         run_efrosync(dry_run=dry_run, check=check)
+    else:
+        with SyncLock():
+            run_efrosync(dry_run=dry_run, check=check)

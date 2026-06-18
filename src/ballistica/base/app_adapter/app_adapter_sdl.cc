@@ -42,7 +42,9 @@ namespace ballistica::base {
 // EGL/GLES libraries via a plain-name dlopen which wouldn't find them via
 // @executable_path, so we resolve the real executable dir (dev builds stage
 // the binary as a symlink back to the build dir, where the dylibs live) and
-// hand SDL absolute paths.
+// hand SDL absolute paths. (We stage bare libX.dylib siblings rather than the
+// vendored .framework bundles because SDL derives the libGLESv2 path from the
+// libEGL dir and expects a plain sibling dylib.)
 static void SetAngleLibPaths_() {
   char buf[PATH_MAX];
   uint32_t size = sizeof(buf);

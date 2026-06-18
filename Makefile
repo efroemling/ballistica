@@ -208,6 +208,10 @@ assetpins:
 assetpins-latest:
 	@$(PCOMMAND) assetpins update all latest
 
+# Show how to wrangle asset pins.
+assetpins-help:
+	@$(PCOMMAND) assetpins help
+
 # (No dedicated assetpins-check make target — non-prod pins are
 # flagged prominently in ``make assetpins`` output, and the
 # check fires automatically as part of ``blessing check``,
@@ -1282,19 +1286,30 @@ windows-clean-list: env
 	git clean -dnx ballisticakit-windows
 	echo would also remove build/windows $(LAZYBUILDDIR)
 
-# Build apple ANGLE GL-ES xcframeworks locally and stage them to
-# build/angle-artifacts/. Self-contained (clones a throwaway vcpkg); needs
-# Xcode command-line tools. Follow with 'make angle-apple-gather' to install.
-angle-apple-build-local: env
-	@$(PCOMMAND) build_angle_apple
+# Build all Apple ANGLE GL-ES -> Metal xcframeworks (macOS/iOS/tvOS + a macOS
+# debug-validation variant) via ANGLE's native gn build, into
+# build/angle-apple/artifacts/. Cheap 'test' variant for CI / exercising the
+# pipeline; reuses an existing checkout. Self-contained (depot_tools fetches a
+# hermetic clang/gn/ninja); needs Xcode + git. Follow with 'make
+# angle-apple-gather' to install into the source tree.
+angle-apple-test-build: env
+	@$(PCOMMAND) angle_apple_test_build
 
-# Install staged apple ANGLE artifacts from build/angle-artifacts/ into the
-# source tree (src/external/angle-apple/).
+# Build the shipping-tier Apple ANGLE xcframeworks from scratch (optimized +
+# stripped + bundled dSYMs) plus the macOS debug-validation dylibs. Always a
+# full clean build (wipes build/angle-apple/ + re-syncs ANGLE); set
+# BA_ANGLE_APPLE_KEEP_CHECKOUT=1 to reuse the existing checkout for fast local
+# iteration. Follow with 'make angle-apple-gather'.
+angle-apple-build: env
+	@$(PCOMMAND) angle_apple_build
+
+# Install assembled Apple ANGLE xcframeworks from build/angle-apple/artifacts/
+# into src/external/angle-apple (+ -debug).
 angle-apple-gather: env
-	@$(PCOMMAND) install_angle_apple_artifacts
-	@$(PCOMMAND) echo GRN BLD ANGLE Apple artifacts installed successfully.
+	@$(PCOMMAND) angle_apple_gather
+	@$(PCOMMAND) echo GRN BLD ANGLE Apple xcframeworks installed successfully.
 
-.PHONY: angle-apple-build-local angle-apple-gather
+.PHONY: angle-apple-test-build angle-apple-build angle-apple-gather
 
 
 ################################################################################

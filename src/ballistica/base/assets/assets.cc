@@ -512,9 +512,9 @@ void Assets::StartLoading() {
   LoadBuiltinMesh(
       BuiltinMeshID::kMeshesScrollBarThumbShortSimple,
       "a-0.babuiltinassets.260617:meshes/scroll_bar_thumb_short_simple");
-  LoadBuiltinMesh(
-      BuiltinMeshID::kMeshesScrollBarThumbShortTransparent,
-      "a-0.babuiltinassets.260617:meshes/scroll_bar_thumb_short_transparent");
+  LoadBuiltinMesh(BuiltinMeshID::kMeshesScrollBarThumbShortTransparent,
+                  "a-0.babuiltinassets.260617:meshes/"
+                  "scroll_bar_thumb_short_transparent");
   LoadBuiltinMesh(BuiltinMeshID::kMeshesScrollBarThumbSimple,
                   "a-0.babuiltinassets.260617:meshes/scroll_bar_thumb_simple");
   LoadBuiltinMesh(

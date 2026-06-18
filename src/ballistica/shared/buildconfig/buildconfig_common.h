@@ -234,6 +234,14 @@ namespace ballistica {
 #define BA_ENABLE_OS_FONT_RENDERING 0
 #endif
 
+// Are we rendering GL through ANGLE (GL ES -> Metal/D3D/Vulkan) rather than a
+// platform-native GL? Already implied by the SDL/Windows ANGLE paths; this
+// explicit flag is what the Xcode iOS build flips to swap its system-GLES
+// (OpenGLES.framework/EAGL) usage for the vendored ANGLE xcframework + EGL.
+#ifndef BA_USE_ANGLE
+#define BA_USE_ANGLE 0
+#endif
+
 // Does this build support vr mode? (does not mean vr mode is always on)
 #ifndef BA_VR_BUILD
 #define BA_VR_BUILD 0

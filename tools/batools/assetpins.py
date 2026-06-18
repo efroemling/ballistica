@@ -450,23 +450,21 @@ def do_help() -> None:
         f' current track (dev/test/prod).\n'
         f'      Same as `tools/pcommand assetpins update all latest`.\n'
         f'\n'
+        f'  {Clr.MAG}tools/pcommand assetpins update myassetpack dev{Clr.RST}\n'
+        f'      Pin every myassetpack to the latest dev version of itself.\n'
+        f'\n'
         f'  {Clr.MAG}tools/pcommand assetpins update'
         f' all prod{Clr.RST}\n'
         f'      Pin everything to the latest prod'
         f' version of itself.\n'
         f'\n'
         f'  {Clr.MAG}tools/pcommand assetpins update'
-        f' pconfig/projectconfig.json dev{Clr.RST}\n'
-        f'      Pin a specific file to the'
-        f' latest dev version of itself.\n'
-        f'\n'
-        f'  {Clr.MAG}tools/pcommand assetpins update myassetpack'
-        f' test260513a{Clr.RST}\n'
-        f'      Pin every myassetpack instance to a specific version.\n'
+        f' pconfig/projectconfig.json test260513{Clr.RST}\n'
+        f'      Pin one specific file to a specific version.\n'
         f'\n'
         f'  {Clr.MAG}tools/pcommand assetpins update myoldassets'
         f' efro.mynewassets.test260518{Clr.RST}\n'
-        f'      Pin every myoldassets instance to a specific version.\n'
+        f'      Pin every myoldassets to a specific version.\n'
         f'      With this long form you can switch assetpacks completely.\n'
         f'\n'
     )
@@ -475,7 +473,7 @@ def do_help() -> None:
 def _print_help_pointer() -> None:
     print(
         f'{Clr.SBLK}For pin-wrangling examples, run:'
-        f' tools/pcommand assetpins help.{Clr.RST}'
+        f' `make assetpins-help`.{Clr.RST}'
     )
 
 
@@ -517,17 +515,28 @@ def do_update(projroot: Path, target_str: str, version_str: str) -> None:
             resolve_cache[key] = cached
         return cached
 
+    # ---- Phase 1: resolve + compute all writes (NO disk mutation). ----
+    #
+    # Everything we intend to write is computed into ``staged`` first and
+    # applied only once every resolve / cloud fetch / splice computation
+    # has succeeded. A failure partway through (server unreachable, a bad
+    # wrapper, etc.) raises before any file is touched, so the tree never
+    # ends up half-updated.
+    staged: dict[Path, str] = {}
+    pin_msgs: list[str] = []
     projectconfig_changed = False
+
     for pin in matched:
         new_apverid = _resolve_for(pin)
         if new_apverid == pin.apverid:
-            print(
+            pin_msgs.append(
                 f'  {Clr.BLD}{pin.file_path}{Clr.RST}'
-                f' already at {Clr.CYN}{pin.apverid}{Clr.RST}.'
+                f' is already at {Clr.CYN}{pin.apverid}{Clr.RST}.'
             )
             continue
-        _apply_update(projroot, pin, new_apverid)
-        print(
+        path, content = _compute_pin_write(projroot, pin, new_apverid)
+        staged[path] = content
+        pin_msgs.append(
             f'  {Clr.BLD}{pin.file_path}{Clr.RST}'
             f' updated: {Clr.CYN}{pin.apverid}{Clr.RST}'
             f' -> {Clr.GRN}{new_apverid}{Clr.RST}'
@@ -536,46 +545,120 @@ def do_update(projroot: Path, target_str: str, version_str: str) -> None:
             projectconfig_changed = True
         pin.apverid = new_apverid
 
-    # Refresh the local bundle manifests + regenerate the C++ wrapper
-    # splice whenever the projectconfig pin moved OR the existing splice
-    # is out of sync with it. (Wrapper pins don't drive this — they're
-    # per-package runtime references; the construct-mode pin in
-    # projectconfig is what drives the build's bundled assets.)
-    #
-    # The second condition makes this self-healing. The splice regen
-    # depends on the master (the bundle resolve), so an update that
-    # advanced the pin but died before regenerating — e.g. the server was
-    # briefly unreachable — leaves the pin "already at" the target. A bare
-    # ``projectconfig_changed`` check would then never retry, and the
-    # half-applied state (pin new, splice stale) sticks until a manual
-    # fix. Comparing the splice's embedded apverid to the pin lets any
-    # re-run of ``assetpins update`` converge to a consistent state.
-    projectconfig_pins = [p for p in matched if p.kind == 'projectconfig']
-    splice_stale = False
-    pc_apverid = ''
-    if projectconfig_pins:
-        pc_apverid = projectconfig_pins[0].apverid
-        # The splice embeds the pin as ``kBuiltinAssetsApverid = "<id>";``;
-        # a quoted-substring check is insensitive to clang-format wrapping
-        # (mirrors check_builtin_asset_ids in batools/project/_checks.py).
-        base_h = (projroot / 'src/ballistica/base/base.h').read_text()
-        splice_stale = f'"{pc_apverid}"' not in base_h
+    # Stage the builtin-asset id enum regen (base.h / assets.cc splices)
+    # if the projectconfig pin moved or the on-disk splice drifted.
+    pc_apverid, enum_selfheal = _stage_enum_splices(
+        projroot, matched, projectconfig_changed, staged
+    )
 
-    if projectconfig_changed or splice_stale:
-        if splice_stale and not projectconfig_changed:
+    # ---- Phase 2: apply all staged writes at once (skipping no-op
+    # writes so timestamp-based builds don't needlessly rebuild). ----
+    written = _apply_staged_writes(staged)
+
+    pc_path = projroot / 'pconfig' / 'projectconfig.json'
+    if pc_path in written:
+        # projectconfig was written behind ``getprojectconfig``'s
+        # process-wide cache; clear it so later reads see the new pin.
+        from efrotools import project as _project
+
+        _project._g_project_configs.pop(  # pylint: disable=protected-access
+            str(projroot), None
+        )
+
+    # ---- Report (terse, ordered: pins, then enums). ----
+    for msg in pin_msgs:
+        print(msg)
+    enum_changed = bool(
+        written
+        & {
+            projroot / 'src/ballistica/base/base.h',
+            projroot / 'src/ballistica/base/assets/assets.cc',
+        }
+    )
+    if pc_apverid and (projectconfig_changed or enum_changed or enum_selfheal):
+        if enum_selfheal:
             print(
-                f'{Clr.YLW}Builtin-asset splice is stale vs the pin'
-                f' ({pc_apverid}); regenerating.{Clr.RST}'
+                f'{Clr.YLW}Builtin-asset enums were stale vs the pin'
+                f' ({pc_apverid}); regenerated.{Clr.RST}'
             )
-        for profile in ('gui-minimal', 'headless-minimal'):
-            _run_pcommand(projroot, 'asset_bundle_build', profile)
-        from batools.builtinassetids import generate
+        verb = 'updated to' if enum_changed else 'already at'
+        clr = Clr.GRN if enum_changed else Clr.CYN
+        print(
+            f'  {Clr.BLD}builtin-asset enums{Clr.RST} (base.h/assets.cc)'
+            f' {verb} {clr}{pc_apverid}{Clr.RST}.'
+        )
 
-        changed = generate(projroot, check=False)
-        if changed:
-            print(f'{Clr.GRN}C++ wrapper updated.{Clr.RST}')
-        else:
-            print(f'{Clr.BLU}C++ wrapper already up to date.{Clr.RST}')
+
+def _stage_enum_splices(
+    projroot: Path,
+    matched: list[Pin],
+    projectconfig_changed: bool,
+    staged: dict[Path, str],
+) -> tuple[str, bool]:
+    """Stage builtin-asset id enum regen into ``staged`` when needed.
+
+    Regenerates the ``base.h`` / ``assets.cc`` autogen splices whenever
+    the projectconfig pin moved OR the on-disk splice is out of sync with
+    it. (Wrapper pins don't drive this — they're per-package runtime
+    references; the construct-mode pin in projectconfig is what the
+    builtin enums track.) This is the *real* header update;
+    ``update_project --check`` only verifies the splice matches the pin,
+    it never regenerates.
+
+    No asset *assembly* happens here — the enums come from the
+    assembly-free ``assetpackage _listing`` query (see
+    ``batools.builtinassetids``). Bundle manifests + CAS blobs are built
+    by the normal asset build (``make cmake-build``), not by pin updates.
+
+    The splice-staleness condition makes this self-healing: the regen
+    depends on the master (the listing fetch), so an update that advanced
+    the pin but died before regenerating — e.g. the server was briefly
+    unreachable — leaves the pin "already at" the target. A bare
+    ``projectconfig_changed`` check would then never retry, and the
+    half-applied state (pin new, splice stale) sticks until a manual fix.
+    Comparing the splice's embedded apverid to the pin lets any re-run of
+    ``assetpins update`` converge to a consistent state.
+
+    We compute against ``pc_apverid`` explicitly rather than letting the
+    generator read projectconfig: the projectconfig write is still only
+    staged at this point, so disk would show the *old* pin.
+
+    Returns ``(pc_apverid, selfheal)`` -- the apverid the enums track
+    (``''`` if no projectconfig pin matched) and whether this was a pure
+    self-heal (splice stale but pin unchanged).
+    """
+    projectconfig_pins = [p for p in matched if p.kind == 'projectconfig']
+    if not projectconfig_pins:
+        return '', False
+    pc_apverid = projectconfig_pins[0].apverid
+    # The splice embeds the pin as ``kBuiltinAssetsApverid = "<id>";``; a
+    # quoted-substring check is insensitive to clang-format wrapping
+    # (mirrors check_builtin_asset_ids in batools/project/_checks.py).
+    base_h = (projroot / 'src/ballistica/base/base.h').read_text()
+    splice_stale = f'"{pc_apverid}"' not in base_h
+    if not projectconfig_changed and not splice_stale:
+        return pc_apverid, False
+    from batools.builtinassetids import compute_splices
+
+    for rel_path, content in compute_splices(projroot, pc_apverid).items():
+        staged[projroot / rel_path] = content
+    return pc_apverid, splice_stale and not projectconfig_changed
+
+
+def _apply_staged_writes(staged: dict[Path, str]) -> set[Path]:
+    """Write staged ``path -> content`` entries, skipping unchanged ones.
+
+    Returns the set of paths actually written. Skipping no-op writes
+    keeps file mtimes stable so timestamp-based builds don't rebuild
+    needlessly.
+    """
+    written: set[Path] = set()
+    for path, content in staged.items():
+        if path.exists() and path.read_text() == content:
+            continue
+        path.write_text(content)
+        written.add(path)
+    return written
 
 
 def do_check(projroot: Path) -> list[Pin]:
@@ -894,6 +977,28 @@ def _query_latest_for_track(projroot: Path, pin: Pin, track: PinType) -> str:
 # --------------------------------------------------------------------
 
 
+def _bacloud_failure_detail(
+    result: subprocess.CompletedProcess[str],
+) -> str:
+    """Build a diagnostic suffix from a failed bacloud subprocess.
+
+    bacloud prints its ``CleanError`` message to stdout (not stderr),
+    so a transient transport/HTTP failure typically leaves stderr
+    empty — which historically produced bare, misleading errors that
+    read like a missing/format-broken pin. Folding both streams plus
+    the exit code in keeps transient transport blips distinguishable
+    from a genuine "no such version" / format error.
+    """
+    bits = [f'exit code {result.returncode}']
+    out = result.stdout.strip()
+    err = result.stderr.strip()
+    if out:
+        bits.append(f'stdout: {out}')
+    if err:
+        bits.append(f'stderr: {err}')
+    return '; '.join(bits)
+
+
 def _resolve_bare_dev(projroot: Path, account: str, package: str) -> str:
     """Ask master to resolve to the current dev snapshot.
 
@@ -920,8 +1025,8 @@ def _resolve_bare_dev(projroot: Path, account: str, package: str) -> str:
     if result.returncode != 0:
         raise CleanError(
             f'Failed to resolve {account}.{package}.dev via'
-            f' bacloud assetpackage version --dev:'
-            f' {result.stderr.strip()}'
+            f' bacloud assetpackage version --dev'
+            f' ({_bacloud_failure_detail(result)}).'
         )
     out = result.stdout.strip()
     if not out:
@@ -960,8 +1065,8 @@ def _bacloud_version(
     if result.returncode != 0:
         raise CleanError(
             f'bacloud assetpackage version failed for'
-            f' {account}.{package} (prod={prod}):'
-            f' {result.stderr.strip()}'
+            f' {account}.{package} (prod={prod})'
+            f' ({_bacloud_failure_detail(result)}).'
         )
     out = result.stdout.strip()
     return out or None
@@ -1000,8 +1105,8 @@ def _fetch_account_info(
         return None
     if result.returncode != 0:
         raise CleanError(
-            f'bacloud account info failed for {account_or_tag}:'
-            f' {result.stderr.strip()}'
+            f'bacloud account info failed for {account_or_tag}'
+            f' ({_bacloud_failure_detail(result)}).'
         )
     return dataclass_from_json(AccountResponse, result.stdout.strip())
 
@@ -1063,8 +1168,8 @@ def _fetch_wrapper(projroot: Path, apverid: str, wrapper_type: str) -> str:
     if result.returncode != 0:
         raise CleanError(
             f'Failed to fetch wrapper for {apverid}'
-            f' (wrapper_type={wrapper_type}):'
-            f' {result.stderr.strip()}'
+            f' (wrapper_type={wrapper_type};'
+            f' {_bacloud_failure_detail(result)}).'
         )
     try:
         content = out_path.read_text()
@@ -1083,24 +1188,33 @@ def _fetch_wrapper(projroot: Path, apverid: str, wrapper_type: str) -> str:
 # --------------------------------------------------------------------
 
 
-def _apply_update(projroot: Path, pin: Pin, new_apverid: str) -> None:
-    """Mutate the pin's source file to point at ``new_apverid``."""
+def _compute_pin_write(
+    projroot: Path, pin: Pin, new_apverid: str
+) -> tuple[Path, str]:
+    """Compute ``(abs_path, new_content)`` for a pin update.
+
+    Pure: performs the resolve/fetch/format work and returns what
+    *should* be on disk, but writes nothing. ``do_update`` stages all
+    such results and applies them together so a mid-update failure
+    leaves the tree untouched.
+    """
     if pin.kind == 'projectconfig':
-        _writeback_projectconfig(projroot, new_apverid)
-        return
+        return _compute_projectconfig_write(projroot, new_apverid)
     if pin.kind == 'wrapper':
-        _writeback_wrapper(projroot, pin, new_apverid)
-        return
+        return _compute_wrapper_write(projroot, pin, new_apverid)
     raise CleanError(f'Internal error: unknown pin kind {pin.kind!r}.')
 
 
-def _writeback_projectconfig(projroot: Path, new_apverid: str) -> None:
-    """Replace ``"assets"`` in projectconfig.
+def _compute_projectconfig_write(
+    projroot: Path, new_apverid: str
+) -> tuple[Path, str]:
+    """Compute projectconfig with ``"assets"`` set to ``new_apverid``.
 
-    Uses a string-level read/edit/write to preserve formatting
-    (comments, key ordering, trailing newline) since the rest of
-    the file may carry editorial intent we don't want
-    ``json.dump`` to wash away.
+    Uses a string-level edit to preserve formatting (comments, key
+    ordering, trailing newline) since the rest of the file may carry
+    editorial intent we don't want ``json.dump`` to wash away. Returns
+    ``(path, new_text)``; the caller writes (and clears the
+    ``getprojectconfig`` cache) when it applies staged writes.
     """
     pc = projroot / 'pconfig' / 'projectconfig.json'
     text = pc.read_text()
@@ -1114,26 +1228,17 @@ def _writeback_projectconfig(projroot: Path, new_apverid: str) -> None:
         raise CleanError(
             f'Could not locate "assets" entry in {pc} for writeback.'
         )
-    if new_text != text:
-        pc.write_text(new_text)
-        # ``efrotools.project.getprojectconfig`` caches its
-        # parsed result in a process-wide dict. Since we wrote
-        # the file directly (preserving formatting) instead of
-        # going through ``setprojectconfig``, the cache is now
-        # stale; clear it so subsequent reads see our update.
-        from efrotools import project as _project
-
-        _project._g_project_configs.pop(  # pylint: disable=protected-access
-            str(projroot), None
-        )
+    return pc, new_text
 
 
-def _writeback_wrapper(projroot: Path, pin: Pin, new_apverid: str) -> None:
-    """Re-fetch the wrapper at the new apverid and overwrite file.
+def _compute_wrapper_write(
+    projroot: Path, pin: Pin, new_apverid: str
+) -> tuple[Path, str]:
+    """Compute the refreshed wrapper file content for ``new_apverid``.
 
-    Wrappers are server-generated; updating means asking the
-    server for a fresh version pointing at ``new_apverid`` and
-    replacing the file in-place. We never hand-edit a wrapper.
+    Wrappers are server-generated; updating means asking the server for
+    a fresh version pointing at ``new_apverid``. We never hand-edit a
+    wrapper. Returns ``(path, content)``; nothing is written here.
     """
     assert pin.wrapper_type is not None
     content = _fetch_wrapper(projroot, new_apverid, pin.wrapper_type)
@@ -1156,19 +1261,6 @@ def _writeback_wrapper(projroot: Path, pin: Pin, new_apverid: str) -> None:
     # Land it format-clean: the server generator doesn't guarantee our
     # line-length rules (a long asset path can overflow), and the
     # on-disk copy is always formatted, so formatting first also keeps
-    # the no-change comparison below meaningful.
+    # the no-change comparison (at apply time) meaningful.
     content = format_python_str(projroot, content)
-    full = projroot / pin.file_path
-    if full.read_text() != content:
-        full.write_text(content)
-
-
-# --------------------------------------------------------------------
-# Internal: pcommand invocation
-# --------------------------------------------------------------------
-
-
-def _run_pcommand(projroot: Path, name: str, *args: str) -> None:
-    """Subprocess-invoke a sibling pcommand."""
-    cmd = [str(projroot / 'tools' / 'pcommand'), name, *args]
-    subprocess.run(cmd, cwd=projroot, check=True)
+    return projroot / pin.file_path, content

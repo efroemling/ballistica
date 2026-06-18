@@ -321,41 +321,50 @@ def python_apple_gather() -> None:
     _python_build_apple_mod.gather(str(pcommand.PROJROOT))
 
 
-def build_angle_apple() -> None:
-    """Build Apple ANGLE (GL-ES -> Metal) xcframeworks via vcpkg.
+def angle_apple_test_build() -> None:
+    """Build all Apple ANGLE xcframeworks at the cheap 'test' variant.
 
-    Stages libEGL.xcframework / libGLESv2.xcframework + headers to
-    build/angle-artifacts/ for pickup by 'make angle-apple-gather'. This is a
-    self-contained local build (clones a throwaway vcpkg; requires Xcode
-    command-line tools). Pass --include-ios to also attempt the (not yet
-    usable) iOS triplets, or --triplets=a,b to limit the build for testing.
+    For CI / exercising the gn build pipeline -- optimization doesn't matter.
+    Lazily reuses an existing checkout under build/angle-apple/ (incremental
+    sync), builds mac/iOS/tvOS plus the macOS debug-validation variant, and
+    assembles .xcframeworks into build/angle-apple/artifacts/. Self-contained
+    (depot_tools fetches a hermetic clang/gn/ninja); needs Xcode + system git.
+    Follow with 'make angle-apple-gather' to install into the source tree.
     """
     import os
-    import argparse
     from batools import buildangleapple
 
-    parser = argparse.ArgumentParser(prog='pcommand build_angle_apple')
-    parser.add_argument(
-        '--include-ios',
-        action='store_true',
-        help='Also attempt the iOS triplets (not yet usable; see module doc).',
-    )
-    parser.add_argument(
-        '--triplets',
-        help='Comma-separated overlay-triplet names to limit the build to.',
-    )
-    args = parser.parse_args(sys.argv[2:])
-
     os.chdir(pcommand.PROJROOT)
-    buildangleapple.build(
-        str(pcommand.PROJROOT),
-        include_ios=args.include_ios,
-        triplets=args.triplets,
-    )
+    buildangleapple.test_build(str(pcommand.PROJROOT))
 
 
-def install_angle_apple_artifacts() -> None:
-    """Install staged Apple ANGLE artifacts into the source tree."""
+def angle_apple_build() -> None:
+    """Build shipping-tier Apple ANGLE xcframeworks from scratch.
+
+    Always starts clean and builds the optimized 'release' variant
+    (is_official_build -> ThinLTO + stripped binaries + bundled dSYMs) plus the
+    macOS debug-validation xcframeworks, assembling into
+    build/angle-apple/artifacts/. Self-contained under build/angle-apple/; needs
+    Xcode + system git. Follow with 'make angle-apple-gather' to install.
+
+    Pass '--assemble-only' to skip the rebuild and just (re)assemble the
+    xcframeworks from the existing build/angle-apple/checkout/out slices --
+    for re-emitting after an assembly-logic change without a full build.
+    """
+    import os
+    from batools import buildangleapple
+
+    assemble_only = '--assemble-only' in sys.argv
+    os.chdir(pcommand.PROJROOT)
+    buildangleapple.build(str(pcommand.PROJROOT), assemble_only=assemble_only)
+
+
+def angle_apple_gather() -> None:
+    """Install assembled Apple ANGLE xcframeworks into the source tree.
+
+    Copies build/angle-apple/artifacts/ into src/external/angle-apple (normal
+    set + headers) and src/external/angle-apple-debug (macOS debug set).
+    """
     import os
     from batools import buildangleapple
 

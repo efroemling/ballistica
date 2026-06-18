@@ -167,6 +167,17 @@ class RequestData:
     #: stream-mode intent is always visible at construction.
     stream: Annotated[bool, IOAttrs('s', soft_default=False)]
 
+    #: Whether the originating CLI command is safe to retry even when a
+    #: failure is *post-send* (the request may have reached the server).
+    #: The client sets this for read-only / content-idempotent commands
+    #: (assemble, version listings, etc.). basn's bacloud proxy reads it
+    #: to decide whether a post-send upstream timeout should surface as
+    #: a retryable 503 (idempotent) or a terminal error (mutating).
+    #: Soft-defaults to ``False`` so older clients/payloads without the
+    #: field deserialize as non-idempotent (fail-closed); has a Python
+    #: default so non-CLI constructors needn't pass it.
+    idempotent: Annotated[bool, IOAttrs('i', soft_default=False)] = False
+
 
 # Types used by the UploadPlan protocol. See ResponseData.UploadPlan.
 

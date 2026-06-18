@@ -9,6 +9,7 @@ import os
 import sys
 import zlib
 import time
+import random
 import datetime
 from pathlib import Path
 from dataclasses import dataclass
@@ -35,6 +36,17 @@ from bacommon.bacloud import (
 TOOL_NAME = 'bacloud'
 
 TIMEOUT_SECONDS = 60 * 5
+
+# Connection-establishment failures (provably pre-send) are retried a
+# few times with exponential backoff + full jitter to ride out
+# transient blips — Cloud Run cold starts and deploy/traffic-ramp
+# windows where the request dies before reaching an app instance and
+# thus leaves no server-side log. Full jitter (sleep in [0, backoff])
+# deliberately de-syncs herds of concurrent CI jobs that would
+# otherwise fail and retry in lockstep.
+CONNECT_RETRIES = 5
+CONNECT_RETRY_BASE_SECONDS = 0.5
+CONNECT_RETRY_MAX_SECONDS = 8.0
 
 VERBOSE = os.environ.get('BACLOUD_VERBOSE') == '1'
 
@@ -157,6 +169,63 @@ def get_tz_offset_seconds() -> float:
     return utc_offset
 
 
+def _is_retryable_connection_error(exc: BaseException) -> bool:
+    """Return whether ``exc`` is a pre-send connection failure.
+
+    Only failures where the request provably never reached the
+    application are retryable: connection-refused, DNS-resolution
+    failures, connect-timeouts, and load-balancer 5xx codes
+    (502/503/504) returned by Cloud Run's front end before a request is
+    handed to an app instance (cold-start / no-instance / bad-gateway
+    during a deploy window). These are idempotency-neutral, so retrying
+    is safe even for mutating commands (publish, etc.).
+
+    Post-send failures are deliberately NOT retried, since the request
+    may already have taken effect: a ``ReadTimeout`` (bytes were sent,
+    the app just didn't answer in time) and an app-level HTTP 500.
+    """
+    # requests.ConnectionError covers connection-refused + DNS
+    # failures; ConnectTimeout subclasses it, so connect-timeouts are
+    # included. ReadTimeout is NOT a ConnectionError subclass, so
+    # post-send read timeouts are correctly excluded here.
+    if isinstance(exc, requests.exceptions.ConnectionError):
+        return True
+    if isinstance(exc, requests.exceptions.HTTPError):
+        resp = exc.response
+        if resp is not None and resp.status_code in (502, 503, 504):
+            return True
+    return False
+
+
+# argv prefixes for CLI commands that are safe to retry even when a
+# failure is *post-send* (the request may have reached the server).
+# These are read-only or content-idempotent — re-running can't
+# double-apply a mutation. The client stamps RequestData.idempotent
+# from this list; basn reads it to decide whether a post-send upstream
+# timeout becomes a retryable 503 or a terminal error. Everything not
+# listed defaults to non-idempotent (fail-closed) — notably publish,
+# workspace put/get, login/logout, and admin/archive mutations.
+_IDEMPOTENT_COMMAND_PREFIXES: tuple[tuple[str, ...], ...] = (
+    ('assetpackage', '_assemble'),
+    ('assetpackage', 'version'),
+    ('assetpackage', '_listing'),
+    ('assetpackage', 'wrapper'),
+    ('account', 'info'),
+)
+
+
+def _command_is_idempotent(args: list[str]) -> bool:
+    """Whether a bacloud CLI invocation is safe to retry post-send.
+
+    Conservative: matches a known read-only / content-idempotent argv
+    prefix (see :data:`_IDEMPOTENT_COMMAND_PREFIXES`); otherwise False.
+    """
+    return any(
+        tuple(args[: len(prefix)]) == prefix
+        for prefix in _IDEMPOTENT_COMMAND_PREFIXES
+    )
+
+
 def run_bacloud_main() -> None:
     """Do the thing."""
     # pylint: disable=try-except-raise, raise-missing-from
@@ -188,6 +257,7 @@ class App:
         self._return_code = 0
         self._api_key: str | None = None
         self._server: str | None = None
+        self._idempotent = False
 
     def run(self) -> int:
         """Run the tool."""
@@ -224,6 +294,13 @@ class App:
             )
 
         self._server = self._resolve_server()
+
+        # Classify the whole invocation's retry-safety once (it's a
+        # property of the user's CLI command, shared by the kickoff and
+        # every chained call). basn uses this to decide whether a
+        # post-send upstream timeout is safe to surface as a retryable
+        # 503.
+        self._idempotent = _command_is_idempotent(sys.argv[1:])
 
         # Simply pass all args to the server and let it do the thing.
         self.run_interactive_command(cwd=os.getcwd(), args=sys.argv[1:])
@@ -339,47 +416,82 @@ class App:
                     tzoffset=get_tz_offset_seconds(),
                     isatty=sys.stdout.isatty(),
                     stream=stream,
+                    idempotent=self._idempotent,
                 )
             ),
         }
 
-        try:
-            # Trying urllib for comparison (note that this doesn't
-            # support files arg so not actually production ready)
-            if bool(False):
-                import urllib.request
-                import urllib.parse
+        attempt = 0
+        while True:
+            try:
+                # Trying urllib for comparison (note that this doesn't
+                # support files arg so not actually production ready)
+                if bool(False):
+                    import urllib.request
+                    import urllib.parse
 
-                with urllib.request.urlopen(
-                    urllib.request.Request(
-                        url, urllib.parse.urlencode(rdata).encode(), headers
+                    with urllib.request.urlopen(
+                        urllib.request.Request(
+                            url,
+                            urllib.parse.urlencode(rdata).encode(),
+                            headers,
+                        )
+                    ) as raw_response:
+                        if raw_response.getcode() != 200:
+                            raise RuntimeError('Error talking to server')
+                        response_content = raw_response.read().decode()
+
+                # Using requests module.
+                else:
+                    with requests.post(
+                        url,
+                        headers=headers,
+                        data=rdata,
+                        timeout=TIMEOUT_SECONDS,
+                    ) as response_raw:
+                        response_raw.raise_for_status()
+                        assert isinstance(response_raw.content, bytes)
+                        response_content = response_raw.content.decode()
+                break
+
+            except Exception as exc:
+                # Ride out transient connection-establishment blips
+                # (cold starts, deploy/traffic-ramp windows). These are
+                # provably pre-send, so retrying is safe even for
+                # mutating commands; post-send failures fall straight
+                # through and surface immediately.
+                if attempt < CONNECT_RETRIES and (
+                    _is_retryable_connection_error(exc)
+                ):
+                    delay = random.uniform(
+                        0.0,
+                        min(
+                            CONNECT_RETRY_MAX_SECONDS,
+                            CONNECT_RETRY_BASE_SECONDS * 2**attempt,
+                        ),
                     )
-                ) as raw_response:
-                    if raw_response.getcode() != 200:
-                        raise RuntimeError('Error talking to server')
-                    response_content = raw_response.read().decode()
+                    attempt += 1
+                    print(
+                        f'{Clr.YLW}Unable to reach bacloud server'
+                        f' ({type(exc).__name__}); retrying in'
+                        f' {delay:.1f}s ({attempt}/{CONNECT_RETRIES})...'
+                        f'{Clr.RST}',
+                        file=sys.stderr,
+                        flush=True,
+                    )
+                    time.sleep(delay)
+                    continue
 
-            # Using requests module.
-            else:
-                with requests.post(
-                    url,
-                    headers=headers,
-                    data=rdata,
-                    timeout=TIMEOUT_SECONDS,
-                ) as response_raw:
-                    response_raw.raise_for_status()
-                    assert isinstance(response_raw.content, bytes)
-                    response_content = response_raw.content.decode()
+                if VERBOSE:
+                    import traceback
 
-        except Exception as exc:
-            if VERBOSE:
-                import traceback
-
-                traceback.print_exc()
-            raise CleanError(
-                'Unable to talk to bacloud server.'
-                ' Set env-var BACLOUD_VERBOSE=1 for details.'
-            ) from exc
+                    traceback.print_exc()
+                raise CleanError(
+                    f'Unable to talk to bacloud server:'
+                    f' {type(exc).__name__}: {exc}.'
+                    f' Set env-var BACLOUD_VERBOSE=1 for the full'
+                    f' traceback.'
+                ) from exc
 
         assert response_content is not None
         response = dataclass_from_json(ResponseData, response_content)
@@ -524,7 +636,7 @@ class App:
 
     def _handle_downloads(self, downloads: ResponseData.Downloads) -> None:
         from efro.util import data_size_str
-        from concurrent.futures import ThreadPoolExecutor
+        from concurrent.futures import ThreadPoolExecutor, as_completed
 
         starttime = time.monotonic()
 
@@ -557,15 +669,59 @@ class App:
         for entry in downloads.entries:
             _prep_entry(entry)
 
-        # Run several downloads simultaneously to hopefully maximize
-        # throughput.
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            # Convert the generator to a list to trigger any exceptions
-            # that occurred.
-            results = list(executor.map(_download_entry, downloads.entries))
+        total = len(downloads.entries)
+        num_dls = 0
+        total_bytes = 0
+        completed = 0
 
-        num_dls = sum(1 for x in results if x is not None)
-        total_bytes = sum(x for x in results if x is not None)
+        # Live progress only helps an interactive terminal; in CI / piped
+        # contexts it would just add log noise, so there we keep the
+        # single end-of-run summary. Progress rides stderr so it never
+        # pollutes stdout (which some callers parse as the result).
+        show_progress = sys.stderr.isatty()
+        last_draw = 0.0
+
+        def _draw_progress() -> None:
+            nonlocal last_draw
+            now = time.monotonic()
+            # Throttle redraws. No forced final frame is needed — the
+            # line is cleared below and replaced by the summary.
+            if now - last_draw < 0.25:
+                return
+            last_draw = now
+            # \r returns to col 0; \x1b[K clears to end-of-line so a
+            # shorter line never leaves stale characters behind.
+            print(
+                f'\r{Clr.BLU}Downloading {completed}/{total} files'
+                f' ({data_size_str(total_bytes)})\u2026{Clr.RST}\x1b[K',
+                end='',
+                file=sys.stderr,
+                flush=True,
+            )
+
+        # Run several downloads simultaneously to hopefully maximize
+        # throughput. Drain via as_completed (rather than map) so we can
+        # surface incremental progress instead of one blocking barrier.
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = [
+                executor.submit(_download_entry, entry)
+                for entry in downloads.entries
+            ]
+            for future in as_completed(futures):
+                # .result() re-raises any download error (matching the
+                # old list(map(...)) fail-fast behavior).
+                result = future.result()
+                completed += 1
+                if result is not None:
+                    num_dls += 1
+                    total_bytes += result
+                if show_progress:
+                    _draw_progress()
+
+        if show_progress:
+            # Clear the in-progress line so the summary lands cleanly.
+            print('\r\x1b[K', end='', file=sys.stderr, flush=True)
+
         duration = time.monotonic() - starttime
         if num_dls:
             print(
