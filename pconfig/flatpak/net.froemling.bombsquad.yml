@@ -1,6 +1,12 @@
 app-id: net.froemling.bombsquad
 runtime: org.freedesktop.Platform
-runtime-version: "25.08"
+# TEMPORARY: pinned to the unstable 'master' runtime because no stable
+# freedesktop release ships Python 3.14 yet (25.08 = 3.13; 3.14 lands in
+# the future 26.08 release). master currently provides Python 3.14 + LLVM
+# 22. This is a moving target -- revert to a stable runtime-version (and
+# matching llvm extension / python refs below) once one ships 3.14, before
+# this flatpak ships. See docs/followups.md.
+runtime-version: "master"
 sdk: org.freedesktop.Sdk
 command: bombsquad.sh
 finish-args:
@@ -13,19 +19,18 @@ finish-args:
   - --persist=.ballisticakit
 
 sdk-extensions:
-  - org.freedesktop.Sdk.Extension.llvm20
+  - org.freedesktop.Sdk.Extension.llvm22
 
 modules:
-  # We are currently using org.freedesktop.Sdk version 25.08
-  # which provides python3.13 required by bombsquad
-  # if this ever changes then enable this python module to build
-  # the required python locally
+  # The 'master' runtime currently provides python3.14 (required by
+  # bombsquad). If a future runtime's python ever diverges from what
+  # bombsquad needs, enable this python module to build it locally.
 
   # - name: Python
   #   sources:
   #     - type: archive
-  #       url: https://www.python.org/ftp/python/3.13.3/Python-3.13.3.tar.xz
-  #       sha256: 40f868bcbdeb8149a3149580bb9bfd407b3321cd48f0be631af955ac92c0e041
+  #       url: https://www.python.org/ftp/python/3.14.5/Python-3.14.5.tar.xz
+  #       sha256: { SHA256_CHECKSUM }
   #   config-opts:
   #     - --prefix=${FLATPAK_DEST}
   #     - --enable-shared
@@ -80,8 +85,8 @@ modules:
   - name: bombsquad
     buildsystem: simple
     build-options:
-      append-path: /usr/lib/sdk/llvm20/bin
-      prepend-ld-library-path: /usr/lib/sdk/llvm20/lib
+      append-path: /usr/lib/sdk/llvm22/bin
+      prepend-ld-library-path: /usr/lib/sdk/llvm22/lib
       build-args:
         - --share=network
       env:
@@ -92,12 +97,12 @@ modules:
       # Install uv into /app/bin (already on build PATH) so subsequent
       # ``make env`` / ``make cmake-build`` can build the project venv.
       - curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/app/bin INSTALLER_NO_MODIFY_PATH=1 sh
-      # we need to fix .venv/bin/python3.13 which is a symlink to system python
+      # we need to fix .venv/bin/python3.14 which is a symlink to system python
       # of the machine the venv was created on, and then update the venv to fix
       # all the shebangs according to the current build env
-      - rm -f .venv/bin/python3.13
-      - ln -s /usr/bin/python3.13 .venv/bin/python3.13
-      - python3.13 -m venv --upgrade .venv
+      - rm -f .venv/bin/python3.14
+      - ln -s /usr/bin/python3.14 .venv/bin/python3.14
+      - python3.14 -m venv --upgrade .venv
       # Get rid of tools/pcommand and similar with wrong shebangs
       - make env-clean
       - make cmake-build

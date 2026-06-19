@@ -1,15 +1,57 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Functionality to build the openal library."""
+"""Build OpenAL Soft (+ Oboe) static libs for Android.
+
+Cross-compiles OpenAL Soft as a static ``libopenal.a`` (plus its Oboe backend
+dependency ``liboboe.a``) for each Android ABI (armeabi-v7a / arm64-v8a / x86 /
+x86_64), in debug and release, using the Android NDK's cmake toolchain.
+``gather`` then installs the results into
+``src/external/openal-android/{lib,include}``.
+
+**Build host:** runs *locally* wherever the Android NDK is installed (resolved
+via ``android_sdk_utils get-ndk-path``). There is no cloud build+gather target;
+CI builds individual ABIs on linbeast purely as a canary (no gather).
+
+**Driving it:** ``make openal-android-all`` builds all eight ABI/mode combos
+(one ``openal_android_build <arch> <mode>`` pcommand each), then ``make
+openal-android-gather`` installs them into the source tree. Per-ABI targets
+(``openal-android-arm`` etc.) exist too.
+
+**Why tarballs:** sources are fetched as github release *tarballs*, not git
+clones, so the build creates no nested ``.git`` -- which keeps it runnable
+under restricted filesystem sandboxes (the build sandbox forbids creating or
+even deleting ``.git`` dirs). Everything lives under ``build/openal-android/``;
+remove that dir to clean up. OpenAL Soft is pinned by ``OPENAL_SOFT_TAG``, Oboe
+by ``OBOE_TAG``.
+
+**Local source tweaks** applied after extraction: reroute OpenAL's Android
+logging through our ``alcSetCustomAndroidLogger`` hook; add a
+``BA_OBOE_USE_OPENSLES`` env-var escape hatch to force Oboe's OpenSL backend;
+disable Oboe's open-a-test-stream probe; and demote OpenAL Soft 1.25.2's
+``-Werror=function-effects`` to a warning (it trips its own code under newer
+clang -- same patch the Apple build applies).
+"""
 
 import os
+import shutil
+import tarfile
 import subprocess
-from typing import TYPE_CHECKING
+import urllib.request
 
 from efro.error import CleanError
 
-if TYPE_CHECKING:
-    pass
+# Source versions. Fetched as github release tarballs (see module docstring re:
+# why, not clones). Prior OpenAL pins: 1.23.1 / 1.24.2 / 1.24.3 / 1.25.1 (+
+# assorted commit SHAs); prior Oboe: 1.9.3 / 1.9.4-ish.
+OPENAL_SOFT_TAG = '1.25.2'
+OBOE_TAG = '1.10.0'
+OPENAL_SOFT_TARBALL = (
+    'https://github.com/kcat/openal-soft/archive/refs/tags/'
+    f'{OPENAL_SOFT_TAG}.tar.gz'
+)
+OBOE_TARBALL = (
+    f'https://github.com/google/oboe/archive/refs/tags/{OBOE_TAG}.tar.gz'
+)
 
 # Arch names we take and their official android versions.
 ARCHS = {
@@ -24,7 +66,38 @@ MODES = {'debug', 'release'}
 
 def _build_dir(arch: str, mode: str) -> str:
     """Build dir given an arch and mode."""
-    return f'build/openal_build_android_{arch}_{mode}'
+    return f'build/openal-android/{arch}_{mode}'
+
+
+def _fetch_tarball(url: str, dest: str) -> None:
+    """Download + extract a github release tarball so ``dest`` is its root.
+
+    The tarball's single top-level dir is stripped, leaving ``dest`` as the
+    source root (the same layout a clone-into-``dest`` produced). ``dest`` is
+    wiped first; no ``.git`` is ever created.
+    """
+    subprocess.run(['rm', '-rf', dest], check=True)
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    tmp = f'{dest}.extract'
+    subprocess.run(['rm', '-rf', tmp], check=True)
+    os.makedirs(tmp)
+    tarball = f'{tmp}/src.tar.gz'
+    print(f'Downloading {url} ...', flush=True)
+    with urllib.request.urlopen(url) as resp:
+        with open(tarball, 'wb') as outfile:
+            outfile.write(resp.read())
+    print(f'Extracting {os.path.basename(url)} ...', flush=True)
+    with tarfile.open(tarball, 'r:gz') as tar:
+        tar.extractall(tmp, filter='data')
+    inner = [
+        os.path.join(tmp, n)
+        for n in os.listdir(tmp)
+        if os.path.isdir(os.path.join(tmp, n))
+    ]
+    if len(inner) != 1:
+        raise CleanError(f'Expected one top-level dir in tarball; got {inner}.')
+    os.rename(inner[0], dest)
+    shutil.rmtree(tmp)
 
 
 def build_openal(arch: str, mode: str) -> None:
@@ -59,54 +132,27 @@ def build_openal(arch: str, mode: str) -> None:
         .strip()
     )
 
-    # Grab OpenALSoft
+    # Grab OpenAL Soft.
     builddir = _build_dir(arch, mode)
-    subprocess.run(['rm', '-rf', builddir], check=True)
-    subprocess.run(['mkdir', '-p', os.path.dirname(builddir)], check=True)
-    subprocess.run(
-        ['git', 'clone', 'https://github.com/kcat/openal-soft.git', builddir],
-        check=True,
-    )
-    subprocess.run(
-        [
-            'git',
-            'checkout',
-            # '1.23.1',
-            # '1381a951bea78c67281a2e844e6db1dedbd5ed7c',
-            # 'bc83c874ff15b29fdab9b6c0bf40b268345b3026',
-            # '59c466077fd6f16af64afcc6260bb61aa4e632dc',
-            # '1.24.2',
-            # '1.24.3',
-            '1.25.1',
-        ],
-        check=True,
-        cwd=builddir,
-    )
+    _fetch_tarball(OPENAL_SOFT_TARBALL, builddir)
 
-    # Grab Oboe
+    # Demote OpenAL Soft 1.25.2's -Werror=function-effects to a warning -- it
+    # unconditionally promotes that diagnostic and trips its own code under
+    # newer clang (same fix the Apple build applies). Safe no-op if absent.
+    cmakelists = f'{builddir}/CMakeLists.txt'
+    with open(cmakelists, encoding='utf-8') as infile:
+        cml_txt = infile.read()
+    if '-Werror=function-effects' in cml_txt:
+        with open(cmakelists, 'w', encoding='utf-8') as outfile:
+            outfile.write(
+                cml_txt.replace(
+                    '-Werror=function-effects', '-Wfunction-effects'
+                )
+            )
+
+    # Grab Oboe (OpenAL Soft's low-latency Android backend dependency).
     builddir_oboe = f'{builddir}_oboe'
-    subprocess.run(['rm', '-rf', builddir_oboe], check=True)
-    subprocess.run(['mkdir', '-p', os.path.dirname(builddir_oboe)], check=True)
-    subprocess.run(
-        [
-            'git',
-            'clone',
-            'https://github.com/google/oboe',
-            builddir_oboe,
-        ],
-        check=True,
-    )
-    subprocess.run(
-        [
-            'git',
-            'checkout',
-            # '1.9.3',
-            # '2968fff97730ede42d522ad5afe8b82468a7d1d8',  # Early 1.9.4
-            '1.10.0',
-        ],
-        check=True,
-        cwd=builddir_oboe,
-    )
+    _fetch_tarball(OBOE_TARBALL, builddir_oboe)
 
     if bool(True):
         oboepath = f'{builddir}/alc/backends/oboe.cpp'
@@ -345,6 +391,12 @@ def build_openal(arch: str, mode: str) -> None:
             '-DALSOFT_REQUIRE_OBOE=1',
             '-DALSOFT_BACKEND_OPENSL=0',
             '-DALSOFT_BACKEND_WAVE=0',
+            # We only gather libopenal.a; skip the rest. (As of 1.25.2 the
+            # examples fail to link with duplicate-symbol errors against the
+            # static lib anyway.)
+            '-DALSOFT_EXAMPLES=OFF',
+            '-DALSOFT_UTILS=OFF',
+            '-DALSOFT_TESTS=OFF',
             f'-DCMAKE_BUILD_TYPE={mode}',
             '-DLIBTYPE=STATIC',
             '-DCMAKE_TOOLCHAIN_FILE='

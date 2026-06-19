@@ -488,11 +488,6 @@ class Platform {
   /// Are we being run from a terminal? (should we show prompts, etc?).
   auto is_stdin_a_terminal() const { return is_stdin_a_terminal_; }
 
-  void set_music_app_playlists(const std::list<std::string>& playlists) {
-    mac_music_app_playlists_ = playlists;
-  }
-  auto mac_music_app_playlists() const { return mac_music_app_playlists_; }
-
  protected:
   /// Are we being run from a terminal? (should we show prompts, etc?).
   virtual auto GetIsStdinATerminal() -> bool;
@@ -584,9 +579,6 @@ class Platform {
   std::string legacy_device_uuid_;
   std::string cache_dir_;
   std::string replays_dir_;
-
-  // Temp; should be able to remove this once Swift 5.10 is out.
-  std::list<std::string> mac_music_app_playlists_;
 
   std::mutex network_availability_mutex_;
   std::vector<NetworkAvailabilityCallback> network_availability_callbacks_;

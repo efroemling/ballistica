@@ -637,6 +637,8 @@ def assetpins() -> None:
                                              #   latest-available
         assetpins help                       # show usage examples
         assetpins update <TARGET> <VERSION>  # mutate matched pins
+        assetpins update ... --force         # also re-fetch wrappers
+                                             #   at an unchanged version
         assetpins check                      # exit non-zero on any
                                              #   dev/test pin
 
@@ -687,6 +689,8 @@ def assetpins() -> None:
         return
     if args[0] == 'update':
         rest = args[1:]
+        force = '--force' in rest
+        rest = [a for a in rest if a != '--force']
         if len(rest) != 2:
             raise CleanError(
                 f'assetpins update: expected exactly two args'
@@ -695,7 +699,7 @@ def assetpins() -> None:
             )
         target_str, version_str = rest
         assetpins_module.do_update(
-            Path(pcommand.PROJROOT), target_str, version_str
+            Path(pcommand.PROJROOT), target_str, version_str, force=force
         )
         return
     if args[0] == 'check':

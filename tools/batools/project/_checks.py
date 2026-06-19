@@ -774,6 +774,10 @@ def check_asset_name_compat(self: ProjectUpdater) -> None:
     without the table being updated — so cross-reference every row's
     path against the package's wrapper module and fail loudly on a
     stale one.
+
+    Logical paths are reconstructed from the wrapper's ``_TREE`` runtime
+    nested-dict (decision #28: subdir -> nested dict, leaf -> kind code),
+    which is the authoritative set of the package's asset paths.
     """
     import re
 
@@ -800,17 +804,18 @@ def check_asset_name_compat(self: ProjectUpdater) -> None:
         'builtinassets': wrapper_dir / 'builtinassets.py',
         'stdassets': wrapper_dir / 'stdassets.py',
     }
-    wrapper_texts = {
-        key: path.read_text() for key, path in wrapper_for_key.items()
+    paths_for_key = {
+        key: _wrapper_logical_paths(path)
+        for key, path in wrapper_for_key.items()
     }
     for legacy, package_key, logical_path in rows:
-        wrapper_text = wrapper_texts.get(package_key)
-        if wrapper_text is None:
+        paths = paths_for_key.get(package_key)
+        if paths is None:
             raise CleanError(
                 f"asset_name_compat row '{legacy}' references unknown"
                 f" package key '{package_key}'."
             )
-        if f":{logical_path}'" not in wrapper_text:
+        if logical_path not in paths:
             raise CleanError(
                 f"asset_name_compat row '{legacy}' maps to"
                 f" '{package_key}:{logical_path}' but that logical path"
@@ -818,3 +823,44 @@ def check_asset_name_compat(self: ProjectUpdater) -> None:
                 f' {wrapper_for_key[package_key].relative_to(projroot)};'
                 f' the package side of the table is stale.'
             )
+
+
+def _wrapper_logical_paths(wrapper_path: Path) -> set[str]:
+    """Reconstruct a wrapper's logical asset paths from its ``_TREE``.
+
+    Parses the generated wrapper module, evaluates its ``_TREE``
+    nested-dict literal (subdir -> nested dict, leaf -> kind code), and
+    flattens it into the set of ``a/b/c`` logical paths the package
+    exposes (decision #28).
+    """
+    import ast
+
+    tree = ast.parse(wrapper_path.read_text())
+    data: object = None
+    for node in tree.body:
+        if (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+            and node.targets[0].id == '_TREE'
+        ):
+            data = ast.literal_eval(node.value)
+            break
+    if not isinstance(data, dict):
+        raise CleanError(
+            f'Could not find a _TREE dict literal in {wrapper_path};'
+            ' the asset_name_compat check needs updating.'
+        )
+
+    paths: set[str] = set()
+
+    def _walk(node: dict[str, object], prefix: str) -> None:
+        for name, child in node.items():
+            path = f'{prefix}/{name}' if prefix else name
+            if isinstance(child, dict):
+                _walk(child, path)
+            else:
+                paths.add(path)
+
+    _walk(data, '')
+    return paths

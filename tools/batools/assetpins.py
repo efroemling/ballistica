@@ -477,7 +477,12 @@ def _print_help_pointer() -> None:
     )
 
 
-def do_update(projroot: Path, target_str: str, version_str: str) -> None:
+def do_update(
+    projroot: Path,
+    target_str: str,
+    version_str: str,
+    force: bool = False,
+) -> None:
     """Update one or more pins to a chosen version.
 
     ``target_str``: ``all``, an asset-package name (e.g.
@@ -489,6 +494,12 @@ def do_update(projroot: Path, target_str: str, version_str: str) -> None:
     ``<account-or-tag>.<package>.<version>`` spec to *retarget* the
     pin to a different asset-package (e.g.
     ``efro.mynewassets.test260518``).
+
+    ``force``: re-fetch and rewrite wrapper pins even when the resolved
+    version is unchanged. Use after a server-side wrapper *format*
+    change (which moves no pin) to regenerate every wrapper at its
+    current pinned version. Has no effect on the projectconfig pin
+    (there's nothing to regenerate — only the apverid string).
     """
     pins = _discover_pins(projroot)
     if not pins:
@@ -528,7 +539,10 @@ def do_update(projroot: Path, target_str: str, version_str: str) -> None:
 
     for pin in matched:
         new_apverid = _resolve_for(pin)
-        if new_apverid == pin.apverid:
+        # --force re-fetches wrappers even when the version is unchanged
+        # (for server-side format changes that move no pin).
+        regen = force and pin.kind == 'wrapper'
+        if new_apverid == pin.apverid and not regen:
             pin_msgs.append(
                 f'  {Clr.BLD}{pin.file_path}{Clr.RST}'
                 f' is already at {Clr.CYN}{pin.apverid}{Clr.RST}.'
@@ -536,11 +550,17 @@ def do_update(projroot: Path, target_str: str, version_str: str) -> None:
             continue
         path, content = _compute_pin_write(projroot, pin, new_apverid)
         staged[path] = content
-        pin_msgs.append(
-            f'  {Clr.BLD}{pin.file_path}{Clr.RST}'
-            f' updated: {Clr.CYN}{pin.apverid}{Clr.RST}'
-            f' -> {Clr.GRN}{new_apverid}{Clr.RST}'
-        )
+        if new_apverid == pin.apverid:
+            pin_msgs.append(
+                f'  {Clr.BLD}{pin.file_path}{Clr.RST}'
+                f' regenerated at {Clr.CYN}{pin.apverid}{Clr.RST}.'
+            )
+        else:
+            pin_msgs.append(
+                f'  {Clr.BLD}{pin.file_path}{Clr.RST}'
+                f' updated: {Clr.CYN}{pin.apverid}{Clr.RST}'
+                f' -> {Clr.GRN}{new_apverid}{Clr.RST}'
+            )
         if pin.kind == 'projectconfig':
             projectconfig_changed = True
         pin.apverid = new_apverid

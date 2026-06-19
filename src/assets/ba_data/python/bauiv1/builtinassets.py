@@ -7,10 +7,12 @@ Auto-generated; do not edit by hand.
 
 # ba_meta require api 9
 # ba_meta require asset-package a-0.babuiltinassets.260617
-# pylint: disable=missing-function-docstring
-# pylint: disable=too-many-public-methods, useless-suppression
-# pylint: disable=too-many-lines, disallowed-name
+# pylint: disable=useless-suppression
+# pylint: disable=too-many-lines
+# pylint: disable=too-few-public-methods, disallowed-name
 from typing import TYPE_CHECKING
+
+from bauiv1._assetwrap import AssetDir
 
 if TYPE_CHECKING:
     import bauiv1
@@ -18,1075 +20,376 @@ if TYPE_CHECKING:
 __asset_package__ = 'a-0.babuiltinassets.260617'
 _APVERID = __asset_package__
 
-
-class _Audio:
-    @property
-    def blank(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/blank')
-
-    @property
-    def blip(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/blip')
-
-    @property
-    def cash_register(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/cash_register')
-
-    @property
-    def click01(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/click01')
-
-    @property
-    def cork_pop(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/cork_pop')
-
-    @property
-    def deek(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/deek')
-
-    @property
-    def ding(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/ding')
-
-    @property
-    def error(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/error')
-
-    @property
-    def gun_cocking(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/gun_cocking')
-
-    @property
-    def powerdown01(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/powerdown01')
-
-    @property
-    def punch01(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/punch01')
-
-    @property
-    def score_increase(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/score_increase')
-
-    @property
-    def sparkle01(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/sparkle01')
-
-    @property
-    def sparkle02(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/sparkle02')
-
-    @property
-    def sparkle03(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/sparkle03')
-
-    @property
-    def swish(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/swish')
-
-    @property
-    def swish2(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/swish2')
-
-    @property
-    def swish3(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/swish3')
-
-    @property
-    def tap(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/tap')
-
-    @property
-    def ticking_crazy(self) -> bauiv1.Sound:
-        import bauiv1
-
-        return bauiv1.getsound(f'{_APVERID}:audio/ticking_crazy')
-
-
-audio = _Audio()
-
-
-class _Meshes:
-    @property
-    def action_button_bottom(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/action_button_bottom')
-
-    @property
-    def action_button_left(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/action_button_left')
-
-    @property
-    def action_button_right(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/action_button_right')
-
-    @property
-    def action_button_top(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/action_button_top')
-
-    @property
-    def arrow_back(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/arrow_back')
-
-    @property
-    def arrow_front(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/arrow_front')
-
-    @property
-    def box(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/box')
-
-    @property
-    def boxing_glove(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/boxing_glove')
-
-    @property
-    def button_back_opaque(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/button_back_opaque')
-
-    @property
-    def button_back_small_opaque(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/button_back_small_opaque')
-
-    @property
-    def button_back_small_transparent(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(
-            f'{_APVERID}:meshes/button_back_small_transparent'
-        )
-
-    @property
-    def button_back_transparent(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/button_back_transparent')
-
-    @property
-    def button_large_opaque(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/button_large_opaque')
-
-    @property
-    def button_large_transparent(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/button_large_transparent')
-
-    @property
-    def button_larger_opaque(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/button_larger_opaque')
-
-    @property
-    def button_larger_transparent(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/button_larger_transparent')
-
-    @property
-    def button_medium_opaque(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/button_medium_opaque')
-
-    @property
-    def button_medium_transparent(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/button_medium_transparent')
-
-    @property
-    def button_small_opaque(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/button_small_opaque')
-
-    @property
-    def button_small_transparent(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/button_small_transparent')
-
-    @property
-    def button_square_opaque(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/button_square_opaque')
-
-    @property
-    def button_square_transparent(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/button_square_transparent')
-
-    @property
-    def button_tab_opaque(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/button_tab_opaque')
-
-    @property
-    def button_tab_transparent(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/button_tab_transparent')
-
-    @property
-    def check_transparent(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/check_transparent')
-
-    @property
-    def cross_out(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/cross_out')
-
-    @property
-    def cylinder(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/cylinder')
-
-    @property
-    def eye_ball(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/eye_ball')
-
-    @property
-    def eye_ball_iris(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/eye_ball_iris')
-
-    @property
-    def eye_lid(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/eye_lid')
-
-    @property
-    def flag_pole(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/flag_pole')
-
-    @property
-    def flag_stand(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/flag_stand')
-
-    @property
-    def flash(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/flash')
-
-    @property
-    def hair_tuft1(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/hair_tuft1')
-
-    @property
-    def hair_tuft1b(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/hair_tuft1b')
-
-    @property
-    def hair_tuft2(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/hair_tuft2')
-
-    @property
-    def hair_tuft3(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/hair_tuft3')
-
-    @property
-    def hair_tuft4(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/hair_tuft4')
-
-    @property
-    def image16x1(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/image16x1')
-
-    @property
-    def image1x1(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/image1x1')
-
-    @property
-    def image1x1_full_screen(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/image1x1_full_screen')
-
-    @property
-    def image1x1_vrfull_screen(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/image1x1_vrfull_screen')
-
-    @property
-    def image2x1(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/image2x1')
-
-    @property
-    def image4x1(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/image4x1')
-
-    @property
-    def locator(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/locator')
-
-    @property
-    def locator_box(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/locator_box')
-
-    @property
-    def locator_circle(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/locator_circle')
-
-    @property
-    def locator_circle_outline(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/locator_circle_outline')
-
-    @property
-    def overlay_guide(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/overlay_guide')
-
-    @property
-    def scorch(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/scorch')
-
-    @property
-    def scroll_bar_thumb_opaque(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/scroll_bar_thumb_opaque')
-
-    @property
-    def scroll_bar_thumb_short_opaque(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(
-            f'{_APVERID}:meshes/scroll_bar_thumb_short_opaque'
-        )
-
-    @property
-    def scroll_bar_thumb_short_simple(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(
-            f'{_APVERID}:meshes/scroll_bar_thumb_short_simple'
-        )
-
-    @property
-    def scroll_bar_thumb_short_transparent(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(
-            f'{_APVERID}:meshes/scroll_bar_thumb_short_transparent'
-        )
-
-    @property
-    def scroll_bar_thumb_simple(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/scroll_bar_thumb_simple')
-
-    @property
-    def scroll_bar_thumb_transparent(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/scroll_bar_thumb_transparent')
-
-    @property
-    def scroll_bar_trough_transparent(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(
-            f'{_APVERID}:meshes/scroll_bar_trough_transparent'
-        )
-
-    @property
-    def shield(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/shield')
-
-    @property
-    def shock_wave(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/shock_wave')
-
-    @property
-    def shrapnel1(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/shrapnel1')
-
-    @property
-    def shrapnel_board(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/shrapnel_board')
-
-    @property
-    def shrapnel_slime(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/shrapnel_slime')
-
-    @property
-    def soft_edge_inside(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/soft_edge_inside')
-
-    @property
-    def soft_edge_outside(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/soft_edge_outside')
-
-    @property
-    def text_box_transparent(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/text_box_transparent')
-
-    @property
-    def vr_fade(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/vr_fade')
-
-    @property
-    def vr_overlay(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/vr_overlay')
-
-    @property
-    def window_hsmall_vmed_opaque(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/window_hsmall_vmed_opaque')
-
-    @property
-    def window_hsmall_vmed_transparent(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(
-            f'{_APVERID}:meshes/window_hsmall_vmed_transparent'
-        )
-
-    @property
-    def window_hsmall_vsmall_opaque(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/window_hsmall_vsmall_opaque')
-
-    @property
-    def window_hsmall_vsmall_transparent(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(
-            f'{_APVERID}:meshes/window_hsmall_vsmall_transparent'
-        )
-
-    @property
-    def wing(self) -> bauiv1.Mesh:
-        import bauiv1
-
-        return bauiv1.getmesh(f'{_APVERID}:meshes/wing')
-
-
-meshes = _Meshes()
-
-
-class _Textures:
-    @property
-    def action_buttons(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/action_buttons')
-
-    @property
-    def arrow(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/arrow')
-
-    @property
-    def back_icon(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/back_icon')
-
-    @property
-    def black(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/black')
-
-    @property
-    def bomb_button(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/bomb_button')
-
-    @property
-    def boxing_gloves_color(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/boxing_gloves_color')
-
-    @property
-    def button_square(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/button_square')
-
-    @property
-    def button_square_wide(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/button_square_wide')
-
-    @property
-    def character_icon_mask(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/character_icon_mask')
-
-    @property
-    def circle(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/circle')
-
-    @property
-    def circle_no_alpha(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/circle_no_alpha')
-
-    @property
-    def circle_outline(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/circle_outline')
-
-    @property
-    def circle_outline_no_alpha(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/circle_outline_no_alpha')
-
-    @property
-    def circle_shadow(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/circle_shadow')
-
-    @property
-    def circle_soft(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/circle_soft')
-
-    @property
-    def cursor(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/cursor')
-
-    @property
-    def explosion(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/explosion')
-
-    @property
-    def eye_color(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/eye_color')
-
-    @property
-    def eye_color_tint_mask(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/eye_color_tint_mask')
-
-    @property
-    def flag_pole_color(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/flag_pole_color')
-
-    @property
-    def font_big(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/font_big')
-
-    @property
-    def font_extras(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/font_extras')
-
-    @property
-    def font_extras2(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/font_extras2')
-
-    @property
-    def font_extras3(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/font_extras3')
-
-    @property
-    def font_extras4(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/font_extras4')
-
-    @property
-    def font_extras5(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/font_extras5')
-
-    @property
-    def font_small0(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/font_small0')
-
-    @property
-    def font_small1(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/font_small1')
-
-    @property
-    def font_small2(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/font_small2')
-
-    @property
-    def font_small3(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/font_small3')
-
-    @property
-    def font_small4(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/font_small4')
-
-    @property
-    def font_small5(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/font_small5')
-
-    @property
-    def font_small6(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/font_small6')
-
-    @property
-    def font_small7(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/font_small7')
-
-    @property
-    def fuse(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/fuse')
-
-    @property
-    def glow(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/glow')
-
-    @property
-    def light(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/light')
-
-    @property
-    def light_sharp(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/light_sharp')
-
-    @property
-    def light_soft(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/light_soft')
-
-    @property
-    def menu_button(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/menu_button')
-
-    @property
-    def nub(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/nub')
-
-    @property
-    def ouya_abutton(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/ouya_abutton')
-
-    @property
-    def page_left_right(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/page_left_right')
-
-    @property
-    def rgb_stripes(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/rgb_stripes')
-
-    @property
-    def scorch(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/scorch')
-
-    @property
-    def scorch_big(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/scorch_big')
-
-    @property
-    def scroll_widget(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/scroll_widget')
-
-    @property
-    def scroll_widget_glow(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/scroll_widget_glow')
-
-    @property
-    def shadow(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/shadow')
-
-    @property
-    def shadow_sharp(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/shadow_sharp')
-
-    @property
-    def shadow_soft(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/shadow_soft')
-
-    @property
-    def shield(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/shield')
-
-    @property
-    def shrapnel1_color(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/shrapnel1_color')
-
-    @property
-    def smoke(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/smoke')
-
-    @property
-    def soft_rect(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/soft_rect')
-
-    @property
-    def soft_rect2(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/soft_rect2')
-
-    @property
-    def soft_rect_vertical(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/soft_rect_vertical')
-
-    @property
-    def sparks(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/sparks')
-
-    @property
-    def spinner(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/spinner')
-
-    @property
-    def spinner0(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/spinner0')
-
-    @property
-    def spinner1(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/spinner1')
-
-    @property
-    def spinner10(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/spinner10')
-
-    @property
-    def spinner11(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/spinner11')
-
-    @property
-    def spinner2(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/spinner2')
-
-    @property
-    def spinner3(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/spinner3')
-
-    @property
-    def spinner4(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/spinner4')
-
-    @property
-    def spinner5(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/spinner5')
-
-    @property
-    def spinner6(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/spinner6')
-
-    @property
-    def spinner7(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/spinner7')
-
-    @property
-    def spinner8(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/spinner8')
-
-    @property
-    def spinner9(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/spinner9')
-
-    @property
-    def start_button(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/start_button')
-
-    @property
-    def text_clear_button(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/text_clear_button')
-
-    @property
-    def touch_arrows(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/touch_arrows')
-
-    @property
-    def touch_arrows_actions(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/touch_arrows_actions')
-
-    @property
-    def ui_atlas(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/ui_atlas')
-
-    @property
-    def ui_atlas2(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/ui_atlas2')
-
-    @property
-    def users_button(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/users_button')
-
-    @property
-    def white(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/white')
-
-    @property
-    def window_hsmall_vmed(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/window_hsmall_vmed')
-
-    @property
-    def window_hsmall_vsmall(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/window_hsmall_vsmall')
-
-    @property
-    def wings(self) -> bauiv1.Texture:
-        import bauiv1
-
-        return bauiv1.gettexture(f'{_APVERID}:textures/wings')
-
-
-textures = _Textures()
+_TREE = {
+    'audio': {
+        'blank': 's',
+        'blip': 's',
+        'cash_register': 's',
+        'click01': 's',
+        'cork_pop': 's',
+        'deek': 's',
+        'ding': 's',
+        'error': 's',
+        'gun_cocking': 's',
+        'powerdown01': 's',
+        'punch01': 's',
+        'score_increase': 's',
+        'sparkle01': 's',
+        'sparkle02': 's',
+        'sparkle03': 's',
+        'swish': 's',
+        'swish2': 's',
+        'swish3': 's',
+        'tap': 's',
+        'ticking_crazy': 's',
+    },
+    'meshes': {
+        'action_button_bottom': 'm',
+        'action_button_left': 'm',
+        'action_button_right': 'm',
+        'action_button_top': 'm',
+        'arrow_back': 'm',
+        'arrow_front': 'm',
+        'box': 'm',
+        'boxing_glove': 'm',
+        'button_back_opaque': 'm',
+        'button_back_small_opaque': 'm',
+        'button_back_small_transparent': 'm',
+        'button_back_transparent': 'm',
+        'button_large_opaque': 'm',
+        'button_large_transparent': 'm',
+        'button_larger_opaque': 'm',
+        'button_larger_transparent': 'm',
+        'button_medium_opaque': 'm',
+        'button_medium_transparent': 'm',
+        'button_small_opaque': 'm',
+        'button_small_transparent': 'm',
+        'button_square_opaque': 'm',
+        'button_square_transparent': 'm',
+        'button_tab_opaque': 'm',
+        'button_tab_transparent': 'm',
+        'check_transparent': 'm',
+        'cross_out': 'm',
+        'cylinder': 'm',
+        'eye_ball': 'm',
+        'eye_ball_iris': 'm',
+        'eye_lid': 'm',
+        'flag_pole': 'm',
+        'flag_stand': 'm',
+        'flash': 'm',
+        'hair_tuft1': 'm',
+        'hair_tuft1b': 'm',
+        'hair_tuft2': 'm',
+        'hair_tuft3': 'm',
+        'hair_tuft4': 'm',
+        'image16x1': 'm',
+        'image1x1': 'm',
+        'image1x1_full_screen': 'm',
+        'image1x1_vrfull_screen': 'm',
+        'image2x1': 'm',
+        'image4x1': 'm',
+        'locator': 'm',
+        'locator_box': 'm',
+        'locator_circle': 'm',
+        'locator_circle_outline': 'm',
+        'overlay_guide': 'm',
+        'scorch': 'm',
+        'scroll_bar_thumb_opaque': 'm',
+        'scroll_bar_thumb_short_opaque': 'm',
+        'scroll_bar_thumb_short_simple': 'm',
+        'scroll_bar_thumb_short_transparent': 'm',
+        'scroll_bar_thumb_simple': 'm',
+        'scroll_bar_thumb_transparent': 'm',
+        'scroll_bar_trough_transparent': 'm',
+        'shield': 'm',
+        'shock_wave': 'm',
+        'shrapnel1': 'm',
+        'shrapnel_board': 'm',
+        'shrapnel_slime': 'm',
+        'soft_edge_inside': 'm',
+        'soft_edge_outside': 'm',
+        'text_box_transparent': 'm',
+        'vr_fade': 'm',
+        'vr_overlay': 'm',
+        'window_hsmall_vmed_opaque': 'm',
+        'window_hsmall_vmed_transparent': 'm',
+        'window_hsmall_vsmall_opaque': 'm',
+        'window_hsmall_vsmall_transparent': 'm',
+        'wing': 'm',
+    },
+    'textures': {
+        'action_buttons': 't',
+        'arrow': 't',
+        'back_icon': 't',
+        'black': 't',
+        'bomb_button': 't',
+        'boxing_gloves_color': 't',
+        'button_square': 't',
+        'button_square_wide': 't',
+        'character_icon_mask': 't',
+        'circle': 't',
+        'circle_no_alpha': 't',
+        'circle_outline': 't',
+        'circle_outline_no_alpha': 't',
+        'circle_shadow': 't',
+        'circle_soft': 't',
+        'cursor': 't',
+        'explosion': 't',
+        'eye_color': 't',
+        'eye_color_tint_mask': 't',
+        'flag_pole_color': 't',
+        'font_big': 't',
+        'font_extras': 't',
+        'font_extras2': 't',
+        'font_extras3': 't',
+        'font_extras4': 't',
+        'font_extras5': 't',
+        'font_small0': 't',
+        'font_small1': 't',
+        'font_small2': 't',
+        'font_small3': 't',
+        'font_small4': 't',
+        'font_small5': 't',
+        'font_small6': 't',
+        'font_small7': 't',
+        'fuse': 't',
+        'glow': 't',
+        'light': 't',
+        'light_sharp': 't',
+        'light_soft': 't',
+        'menu_button': 't',
+        'nub': 't',
+        'ouya_abutton': 't',
+        'page_left_right': 't',
+        'rgb_stripes': 't',
+        'scorch': 't',
+        'scorch_big': 't',
+        'scroll_widget': 't',
+        'scroll_widget_glow': 't',
+        'shadow': 't',
+        'shadow_sharp': 't',
+        'shadow_soft': 't',
+        'shield': 't',
+        'shrapnel1_color': 't',
+        'smoke': 't',
+        'soft_rect': 't',
+        'soft_rect2': 't',
+        'soft_rect_vertical': 't',
+        'sparks': 't',
+        'spinner': 't',
+        'spinner0': 't',
+        'spinner1': 't',
+        'spinner10': 't',
+        'spinner11': 't',
+        'spinner2': 't',
+        'spinner3': 't',
+        'spinner4': 't',
+        'spinner5': 't',
+        'spinner6': 't',
+        'spinner7': 't',
+        'spinner8': 't',
+        'spinner9': 't',
+        'start_button': 't',
+        'text_clear_button': 't',
+        'touch_arrows': 't',
+        'touch_arrows_actions': 't',
+        'ui_atlas': 't',
+        'ui_atlas2': 't',
+        'users_button': 't',
+        'white': 't',
+        'window_hsmall_vmed': 't',
+        'window_hsmall_vsmall': 't',
+        'wings': 't',
+    },
+}
+
+
+if TYPE_CHECKING:
+
+    class _Audio:
+        blank: bauiv1.Sound
+        blip: bauiv1.Sound
+        cash_register: bauiv1.Sound
+        click01: bauiv1.Sound
+        cork_pop: bauiv1.Sound
+        deek: bauiv1.Sound
+        ding: bauiv1.Sound
+        error: bauiv1.Sound
+        gun_cocking: bauiv1.Sound
+        powerdown01: bauiv1.Sound
+        punch01: bauiv1.Sound
+        score_increase: bauiv1.Sound
+        sparkle01: bauiv1.Sound
+        sparkle02: bauiv1.Sound
+        sparkle03: bauiv1.Sound
+        swish: bauiv1.Sound
+        swish2: bauiv1.Sound
+        swish3: bauiv1.Sound
+        tap: bauiv1.Sound
+        ticking_crazy: bauiv1.Sound
+
+    class _Meshes:
+        action_button_bottom: bauiv1.Mesh
+        action_button_left: bauiv1.Mesh
+        action_button_right: bauiv1.Mesh
+        action_button_top: bauiv1.Mesh
+        arrow_back: bauiv1.Mesh
+        arrow_front: bauiv1.Mesh
+        box: bauiv1.Mesh
+        boxing_glove: bauiv1.Mesh
+        button_back_opaque: bauiv1.Mesh
+        button_back_small_opaque: bauiv1.Mesh
+        button_back_small_transparent: bauiv1.Mesh
+        button_back_transparent: bauiv1.Mesh
+        button_large_opaque: bauiv1.Mesh
+        button_large_transparent: bauiv1.Mesh
+        button_larger_opaque: bauiv1.Mesh
+        button_larger_transparent: bauiv1.Mesh
+        button_medium_opaque: bauiv1.Mesh
+        button_medium_transparent: bauiv1.Mesh
+        button_small_opaque: bauiv1.Mesh
+        button_small_transparent: bauiv1.Mesh
+        button_square_opaque: bauiv1.Mesh
+        button_square_transparent: bauiv1.Mesh
+        button_tab_opaque: bauiv1.Mesh
+        button_tab_transparent: bauiv1.Mesh
+        check_transparent: bauiv1.Mesh
+        cross_out: bauiv1.Mesh
+        cylinder: bauiv1.Mesh
+        eye_ball: bauiv1.Mesh
+        eye_ball_iris: bauiv1.Mesh
+        eye_lid: bauiv1.Mesh
+        flag_pole: bauiv1.Mesh
+        flag_stand: bauiv1.Mesh
+        flash: bauiv1.Mesh
+        hair_tuft1: bauiv1.Mesh
+        hair_tuft1b: bauiv1.Mesh
+        hair_tuft2: bauiv1.Mesh
+        hair_tuft3: bauiv1.Mesh
+        hair_tuft4: bauiv1.Mesh
+        image16x1: bauiv1.Mesh
+        image1x1: bauiv1.Mesh
+        image1x1_full_screen: bauiv1.Mesh
+        image1x1_vrfull_screen: bauiv1.Mesh
+        image2x1: bauiv1.Mesh
+        image4x1: bauiv1.Mesh
+        locator: bauiv1.Mesh
+        locator_box: bauiv1.Mesh
+        locator_circle: bauiv1.Mesh
+        locator_circle_outline: bauiv1.Mesh
+        overlay_guide: bauiv1.Mesh
+        scorch: bauiv1.Mesh
+        scroll_bar_thumb_opaque: bauiv1.Mesh
+        scroll_bar_thumb_short_opaque: bauiv1.Mesh
+        scroll_bar_thumb_short_simple: bauiv1.Mesh
+        scroll_bar_thumb_short_transparent: bauiv1.Mesh
+        scroll_bar_thumb_simple: bauiv1.Mesh
+        scroll_bar_thumb_transparent: bauiv1.Mesh
+        scroll_bar_trough_transparent: bauiv1.Mesh
+        shield: bauiv1.Mesh
+        shock_wave: bauiv1.Mesh
+        shrapnel1: bauiv1.Mesh
+        shrapnel_board: bauiv1.Mesh
+        shrapnel_slime: bauiv1.Mesh
+        soft_edge_inside: bauiv1.Mesh
+        soft_edge_outside: bauiv1.Mesh
+        text_box_transparent: bauiv1.Mesh
+        vr_fade: bauiv1.Mesh
+        vr_overlay: bauiv1.Mesh
+        window_hsmall_vmed_opaque: bauiv1.Mesh
+        window_hsmall_vmed_transparent: bauiv1.Mesh
+        window_hsmall_vsmall_opaque: bauiv1.Mesh
+        window_hsmall_vsmall_transparent: bauiv1.Mesh
+        wing: bauiv1.Mesh
+
+    class _Textures:
+        action_buttons: bauiv1.Texture
+        arrow: bauiv1.Texture
+        back_icon: bauiv1.Texture
+        black: bauiv1.Texture
+        bomb_button: bauiv1.Texture
+        boxing_gloves_color: bauiv1.Texture
+        button_square: bauiv1.Texture
+        button_square_wide: bauiv1.Texture
+        character_icon_mask: bauiv1.Texture
+        circle: bauiv1.Texture
+        circle_no_alpha: bauiv1.Texture
+        circle_outline: bauiv1.Texture
+        circle_outline_no_alpha: bauiv1.Texture
+        circle_shadow: bauiv1.Texture
+        circle_soft: bauiv1.Texture
+        cursor: bauiv1.Texture
+        explosion: bauiv1.Texture
+        eye_color: bauiv1.Texture
+        eye_color_tint_mask: bauiv1.Texture
+        flag_pole_color: bauiv1.Texture
+        font_big: bauiv1.Texture
+        font_extras: bauiv1.Texture
+        font_extras2: bauiv1.Texture
+        font_extras3: bauiv1.Texture
+        font_extras4: bauiv1.Texture
+        font_extras5: bauiv1.Texture
+        font_small0: bauiv1.Texture
+        font_small1: bauiv1.Texture
+        font_small2: bauiv1.Texture
+        font_small3: bauiv1.Texture
+        font_small4: bauiv1.Texture
+        font_small5: bauiv1.Texture
+        font_small6: bauiv1.Texture
+        font_small7: bauiv1.Texture
+        fuse: bauiv1.Texture
+        glow: bauiv1.Texture
+        light: bauiv1.Texture
+        light_sharp: bauiv1.Texture
+        light_soft: bauiv1.Texture
+        menu_button: bauiv1.Texture
+        nub: bauiv1.Texture
+        ouya_abutton: bauiv1.Texture
+        page_left_right: bauiv1.Texture
+        rgb_stripes: bauiv1.Texture
+        scorch: bauiv1.Texture
+        scorch_big: bauiv1.Texture
+        scroll_widget: bauiv1.Texture
+        scroll_widget_glow: bauiv1.Texture
+        shadow: bauiv1.Texture
+        shadow_sharp: bauiv1.Texture
+        shadow_soft: bauiv1.Texture
+        shield: bauiv1.Texture
+        shrapnel1_color: bauiv1.Texture
+        smoke: bauiv1.Texture
+        soft_rect: bauiv1.Texture
+        soft_rect2: bauiv1.Texture
+        soft_rect_vertical: bauiv1.Texture
+        sparks: bauiv1.Texture
+        spinner: bauiv1.Texture
+        spinner0: bauiv1.Texture
+        spinner1: bauiv1.Texture
+        spinner10: bauiv1.Texture
+        spinner11: bauiv1.Texture
+        spinner2: bauiv1.Texture
+        spinner3: bauiv1.Texture
+        spinner4: bauiv1.Texture
+        spinner5: bauiv1.Texture
+        spinner6: bauiv1.Texture
+        spinner7: bauiv1.Texture
+        spinner8: bauiv1.Texture
+        spinner9: bauiv1.Texture
+        start_button: bauiv1.Texture
+        text_clear_button: bauiv1.Texture
+        touch_arrows: bauiv1.Texture
+        touch_arrows_actions: bauiv1.Texture
+        ui_atlas: bauiv1.Texture
+        ui_atlas2: bauiv1.Texture
+        users_button: bauiv1.Texture
+        white: bauiv1.Texture
+        window_hsmall_vmed: bauiv1.Texture
+        window_hsmall_vsmall: bauiv1.Texture
+        wings: bauiv1.Texture
+
+    audio: _Audio
+    meshes: _Meshes
+    textures: _Textures
+else:
+    audio = AssetDir(_APVERID, _TREE['audio'], 'audio')
+    meshes = AssetDir(_APVERID, _TREE['meshes'], 'meshes')
+    textures = AssetDir(_APVERID, _TREE['textures'], 'textures')

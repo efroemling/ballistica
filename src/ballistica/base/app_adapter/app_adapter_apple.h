@@ -5,6 +5,7 @@
 
 #if BA_XCODE_BUILD
 
+#include <atomic>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -41,6 +42,12 @@ class AppAdapterApple : public AppAdapter {
   auto FullscreenControlKeyShortcut() const
       -> std::optional<std::string> override;
 
+  /// Called by FromSwift (on the main thread) when the OS reports the main
+  /// window entering/exiting fullscreen. We cache the value so the logic
+  /// thread can read it via FullscreenControlGet without a cross-thread Swift
+  /// call. Safe to call from any thread.
+  void OnFullscreenChanged(bool fullscreen);
+
   auto HasDirectKeyboardInput() -> bool override;
   void EnableResizeFriendlyMode(int width, int height);
 
@@ -70,6 +77,7 @@ class AppAdapterApple : public AppAdapter {
   void ReloadRenderer_(const GraphicsSettings* settings);
 
   std::thread::id graphics_thread_{};
+  std::atomic<bool> fullscreen_control_value_{false};
   bool graphics_allowed_{};
   uint8_t resize_friendly_frames_{};
   Vector2f resize_target_resolution_{-1.0f, -1.0f};

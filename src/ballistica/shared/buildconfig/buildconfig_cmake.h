@@ -31,8 +31,6 @@
 #error Unknown processor architecture.
 #endif
 
-// #define BA_USE_FRAMEWORK_OPENAL 1
-
 #elif __linux__
 
 #define BA_PLATFORM "linux"

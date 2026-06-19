@@ -162,6 +162,10 @@ from batools.pcommands3 import (
     generate_flathub_manifest,
     gen_pyembed,
 )
+from batools.pcommands4 import (
+    ios_sim_run,
+    ios_sim_log,
+)
 from batools._automation import test_game_cmd
 
 # pylint: enable=unused-import

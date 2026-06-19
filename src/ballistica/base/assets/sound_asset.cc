@@ -23,11 +23,6 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/platform.h"
 
-// Need to move away from OpenAL on Apple stuff.
-#if __clang__
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
-
 namespace ballistica::base {
 
 #if BA_ENABLE_AUDIO

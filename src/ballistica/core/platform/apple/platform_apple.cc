@@ -5,7 +5,6 @@
 #include "ballistica/core/platform/apple/platform_apple.h"
 
 #if BA_XCODE_BUILD
-#include <CoreServices/CoreServices.h>
 #include <os/log.h>
 #include <unistd.h>
 #endif
@@ -52,30 +51,11 @@ auto PlatformApple::GetDeviceV1AccountUUIDPrefix() -> std::string {
 
 auto PlatformApple::DoGetDeviceName() -> std::string {
 #if BA_PLATFORM_MACOS && BA_XCODE_BUILD
-
-#pragma clang diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-  CFStringRef machineName = CSCopyMachineName();
-  if (machineName != nullptr) {
-    char buffer[256];
-    std::string out;
-    if (CFStringGetCString(machineName, buffer, sizeof(buffer),
-                           kCFStringEncodingUTF8)) {
-      out = buffer;
-    }
-    CFRelease(machineName);
-    return out;
-  }
-
-#pragma clang diagnostic pop
-
-  // FIXME - This code currently hangs if there is an apostrophe in the
-  // device name. Should hopefully be fixed in Swift 5.10.
-  // https://github.com/apple/swift/issues/69870
-
-  // Ask swift for a pretty name if possible.
-  // return BallisticaKit::CocoaFromCpp::getDeviceName();
+  // Ask Swift for the (pretty) machine name. This used to hang for names
+  // containing an apostrophe due to a Swift/C++ string-interop bug
+  // (apple/swift#69870), which forced a fallback to the deprecated Carbon
+  // CSCopyMachineName(); that interop bug is fixed in current toolchains.
+  return BallisticaKit::CocoaFromCpp::getDeviceName();
 #elif BA_PLATFORM_IOS_TVOS && BA_XCODE_BUILD
   return BallisticaKit::UIKitFromCpp::getDeviceName();
 #endif
@@ -477,16 +457,16 @@ auto PlatformApple::MacMusicAppPlayPlaylist(const std::string& playlist)
 
 auto PlatformApple::MacMusicAppGetPlaylists() -> std::list<std::string> {
 #if BA_PLATFORM_MACOS && BA_XCODE_BUILD
-  BallisticaKit::CocoaFromCpp::macMusicAppGetPlaylists();
-  // mac_music_app_playlists_.clear();
-  // mac_music_app_playlists_.push_back("foof");
-  // mac_music_app_playlists_.push_back("barf");
-  //  std::list<std::string> out;
-  //  for (auto&& val : vals) {
-  //    out.push_back(std::string(val));
-  //  }
-  //  return out;
-  return mac_music_app_playlists();
+  // Swift returns the playlist names directly now; the old Swift-5.9 interop
+  // bug that forced a C++-side-channel workaround is fixed in current
+  // toolchains.
+  auto vals = BallisticaKit::CocoaFromCpp::macMusicAppGetPlaylists();
+  std::list<std::string> out;
+  auto count = vals.getCount();
+  for (decltype(count) i = 0; i < count; ++i) {
+    out.push_back(std::string(vals[i]));
+  }
+  return out;
 #else
   return Platform::MacMusicAppGetPlaylists();
 #endif

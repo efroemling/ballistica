@@ -224,10 +224,20 @@ auto AppAdapterApple::FullscreenControlAvailable() const -> bool {
 
 auto AppAdapterApple::FullscreenControlGet() const -> bool {
 #if BA_PLATFORM_MACOS
-  return BallisticaKit::CocoaFromCpp::getMainWindowIsFullscreen();
+  // Read the value Swift pushes to us via OnFullscreenChanged (mirrors the
+  // net-availability push model). This avoids a cross-thread Swift call from
+  // the logic thread, where this getter runs.
+  return fullscreen_control_value_.load();
 #else
   return false;
 #endif
+}
+
+void AppAdapterApple::OnFullscreenChanged(bool fullscreen) {
+  // Pushed from Swift's NSWindow fullscreen delegate callbacks (main thread);
+  // read on the logic thread via FullscreenControlGet. An atomic bool is all
+  // the synchronization a single published flag needs.
+  fullscreen_control_value_.store(fullscreen);
 }
 
 void AppAdapterApple::FullscreenControlSet(bool fullscreen) {

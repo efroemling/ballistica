@@ -5,17 +5,10 @@
 
 #if BA_ENABLE_AUDIO
 
-#include <string>
-
-// TODO(ericf): Migrate to OpenALSoft on remaining platforms (iOS, etc.) and
-// then we can get rid of framework option.
-#if BA_USE_FRAMEWORK_OPENAL
-#include <OpenAL/al.h>   // IWYU pragma: export
-#include <OpenAL/alc.h>  // IWYU pragma: export
-#else
 #include <al.h>   // IWYU pragma: export
 #include <alc.h>  // IWYU pragma: export
-#endif
+
+#include <string>
 
 #define CHECK_AL_ERROR _check_al_error(__FILE__, __LINE__)
 

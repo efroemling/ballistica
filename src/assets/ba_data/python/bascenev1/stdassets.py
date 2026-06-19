@@ -5,12 +5,14 @@
 Auto-generated; do not edit by hand.
 """
 
+# ba_meta require api 9
 # ba_meta require asset-package a-0.bastdassets.260612
-# pylint: disable=missing-function-docstring
-# pylint: disable=too-many-public-methods, useless-suppression
-# pylint: disable=too-many-lines, disallowed-name
-
+# pylint: disable=useless-suppression
+# pylint: disable=too-many-lines
+# pylint: disable=too-few-public-methods, disallowed-name
 from typing import TYPE_CHECKING
+
+from bascenev1._assetwrap import AssetDir
 
 if TYPE_CHECKING:
     import bascenev1
@@ -18,6909 +20,2258 @@ if TYPE_CHECKING:
 __asset_package__ = 'a-0.bastdassets.260612'
 _APVERID = __asset_package__
 
-
-class _Audio:
-    @property
-    def achievement(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/achievement')
-
-    @property
-    def action_hero1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/action_hero1')
-
-    @property
-    def action_hero2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/action_hero2')
-
-    @property
-    def action_hero3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/action_hero3')
-
-    @property
-    def action_hero4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/action_hero4')
-
-    @property
-    def action_hero_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/action_hero_death')
-
-    @property
-    def action_hero_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/action_hero_fall')
-
-    @property
-    def action_hero_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/action_hero_hit1')
-
-    @property
-    def action_hero_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/action_hero_hit2')
-
-    @property
-    def activate_beep(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/activate_beep')
-
-    @property
-    def agent1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/agent1')
-
-    @property
-    def agent2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/agent2')
-
-    @property
-    def agent3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/agent3')
-
-    @property
-    def agent4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/agent4')
-
-    @property
-    def agent_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/agent_death')
-
-    @property
-    def agent_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/agent_fall')
-
-    @property
-    def agent_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/agent_hit1')
-
-    @property
-    def agent_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/agent_hit2')
-
-    @property
-    def alarm(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/alarm')
-
-    @property
-    def ali1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ali1')
-
-    @property
-    def ali2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ali2')
-
-    @property
-    def ali3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ali3')
-
-    @property
-    def ali4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ali4')
-
-    @property
-    def ali_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ali_death')
-
-    @property
-    def ali_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ali_fall')
-
-    @property
-    def ali_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ali_hit1')
-
-    @property
-    def ali_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ali_hit2')
-
-    @property
-    def alien1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/alien1')
-
-    @property
-    def alien2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/alien2')
-
-    @property
-    def alien3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/alien3')
-
-    @property
-    def alien4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/alien4')
-
-    @property
-    def alien_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/alien_death')
-
-    @property
-    def alien_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/alien_fall')
-
-    @property
-    def alien_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/alien_hit1')
-
-    @property
-    def alien_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/alien_hit2')
-
-    @property
-    def announce_eight(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/announce_eight')
-
-    @property
-    def announce_five(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/announce_five')
-
-    @property
-    def announce_four(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/announce_four')
-
-    @property
-    def announce_nine(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/announce_nine')
-
-    @property
-    def announce_one(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/announce_one')
-
-    @property
-    def announce_seven(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/announce_seven')
-
-    @property
-    def announce_six(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/announce_six')
-
-    @property
-    def announce_ten(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/announce_ten')
-
-    @property
-    def announce_three(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/announce_three')
-
-    @property
-    def announce_two(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/announce_two')
-
-    @property
-    def assassin1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/assassin1')
-
-    @property
-    def assassin2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/assassin2')
-
-    @property
-    def assassin3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/assassin3')
-
-    @property
-    def assassin4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/assassin4')
-
-    @property
-    def assassin_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/assassin_death')
-
-    @property
-    def assassin_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/assassin_fall')
-
-    @property
-    def assassin_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/assassin_hit1')
-
-    @property
-    def assassin_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/assassin_hit2')
-
-    @property
-    def aww(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/aww')
-
-    @property
-    def bear1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bear1')
-
-    @property
-    def bear2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bear2')
-
-    @property
-    def bear3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bear3')
-
-    @property
-    def bear4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bear4')
-
-    @property
-    def bear_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bear_death')
-
-    @property
-    def bear_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bear_fall')
-
-    @property
-    def bear_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bear_hit1')
-
-    @property
-    def bear_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bear_hit2')
-
-    @property
-    def bell_high(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bell_high')
-
-    @property
-    def bell_low(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bell_low')
-
-    @property
-    def bell_med(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bell_med')
-
-    @property
-    def big_impact(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/big_impact')
-
-    @property
-    def big_impact2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/big_impact2')
-
-    @property
-    def block(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/block')
-
-    @property
-    def bomb_drop01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bomb_drop01')
-
-    @property
-    def bomb_drop02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bomb_drop02')
-
-    @property
-    def bomb_roll01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bomb_roll01')
-
-    @property
-    def bones1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bones1')
-
-    @property
-    def bones2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bones2')
-
-    @property
-    def bones3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bones3')
-
-    @property
-    def bones_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bones_death')
-
-    @property
-    def bones_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bones_fall')
-
-    @property
-    def boo(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/boo')
-
-    @property
-    def box_drop(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/box_drop')
-
-    @property
-    def boxing_bell(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/boxing_bell')
-
-    @property
-    def bunny1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bunny1')
-
-    @property
-    def bunny2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bunny2')
-
-    @property
-    def bunny3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bunny3')
-
-    @property
-    def bunny4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bunny4')
-
-    @property
-    def bunny_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bunny_death')
-
-    @property
-    def bunny_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bunny_fall')
-
-    @property
-    def bunny_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bunny_hit1')
-
-    @property
-    def bunny_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bunny_hit2')
-
-    @property
-    def bunny_jump(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/bunny_jump')
-
-    @property
-    def cash_register2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cash_register2')
-
-    @property
-    def char_select_music(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/char_select_music')
-
-    @property
-    def cheer(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cheer')
-
-    @property
-    def cork_pop2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cork_pop2')
-
-    @property
-    def cowboy1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cowboy1')
-
-    @property
-    def cowboy2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cowboy2')
-
-    @property
-    def cowboy3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cowboy3')
-
-    @property
-    def cowboy4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cowboy4')
-
-    @property
-    def cowboy_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cowboy_death')
-
-    @property
-    def cowboy_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cowboy_fall')
-
-    @property
-    def cowboy_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cowboy_hit1')
-
-    @property
-    def cowboy_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cowboy_hit2')
-
-    @property
-    def crowd_chant(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/crowd_chant')
-
-    @property
-    def cyborg1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cyborg1')
-
-    @property
-    def cyborg2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cyborg2')
-
-    @property
-    def cyborg3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cyborg3')
-
-    @property
-    def cyborg4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cyborg4')
-
-    @property
-    def cyborg_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cyborg_death')
-
-    @property
-    def cyborg_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cyborg_fall')
-
-    @property
-    def cyborg_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cyborg_hit1')
-
-    @property
-    def cyborg_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cyborg_hit2')
-
-    @property
-    def cymbal(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cymbal')
-
-    @property
-    def debris_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/debris_fall')
-
-    @property
-    def deek2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/deek2')
-
-    @property
-    def ding_small(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ding_small')
-
-    @property
-    def ding_small_high(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ding_small_high')
-
-    @property
-    def dripity(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/dripity')
-
-    @property
-    def drum_roll(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/drum_roll')
-
-    @property
-    def drum_roll_short(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/drum_roll_short')
-
-    @property
-    def explosion01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/explosion01')
-
-    @property
-    def explosion02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/explosion02')
-
-    @property
-    def explosion03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/explosion03')
-
-    @property
-    def explosion04(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/explosion04')
-
-    @property
-    def explosion05(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/explosion05')
-
-    @property
-    def fanfare(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/fanfare')
-
-    @property
-    def flag_catcher_music(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/flag_catcher_music')
-
-    @property
-    def flying_music(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/flying_music')
-
-    @property
-    def foghorn(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/foghorn')
-
-    @property
-    def foot_impact01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/foot_impact01')
-
-    @property
-    def foot_impact02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/foot_impact02')
-
-    @property
-    def foot_impact03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/foot_impact03')
-
-    @property
-    def forward_march_music(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/forward_march_music')
-
-    @property
-    def freeze(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/freeze')
-
-    @property
-    def frosty01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/frosty01')
-
-    @property
-    def frosty02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/frosty02')
-
-    @property
-    def frosty03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/frosty03')
-
-    @property
-    def frosty04(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/frosty04')
-
-    @property
-    def frosty05(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/frosty05')
-
-    @property
-    def frosty_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/frosty_death')
-
-    @property
-    def frosty_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/frosty_fall')
-
-    @property
-    def frosty_hit01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/frosty_hit01')
-
-    @property
-    def frosty_hit02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/frosty_hit02')
-
-    @property
-    def frosty_hit03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/frosty_hit03')
-
-    @property
-    def fuse01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/fuse01')
-
-    @property
-    def gasp(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/gasp')
-
-    @property
-    def gladiator1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/gladiator1')
-
-    @property
-    def gladiator2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/gladiator2')
-
-    @property
-    def gladiator3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/gladiator3')
-
-    @property
-    def gladiator4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/gladiator4')
-
-    @property
-    def gladiator_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/gladiator_death')
-
-    @property
-    def gladiator_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/gladiator_fall')
-
-    @property
-    def gladiator_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/gladiator_hit1')
-
-    @property
-    def gladiator_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/gladiator_hit2')
-
-    @property
-    def gong(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/gong')
-
-    @property
-    def grand_romp_music(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/grand_romp_music')
-
-    @property
-    def gravel_skid(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/gravel_skid')
-
-    @property
-    def health_powerup(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/health_powerup')
-
-    @property
-    def hiss(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/hiss')
-
-    @property
-    def impact_hard(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/impact_hard')
-
-    @property
-    def impact_hard2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/impact_hard2')
-
-    @property
-    def impact_hard3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/impact_hard3')
-
-    @property
-    def impact_medium(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/impact_medium')
-
-    @property
-    def impact_medium2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/impact_medium2')
-
-    @property
-    def jack01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jack01')
-
-    @property
-    def jack02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jack02')
-
-    @property
-    def jack03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jack03')
-
-    @property
-    def jack04(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jack04')
-
-    @property
-    def jack05(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jack05')
-
-    @property
-    def jack06(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jack06')
-
-    @property
-    def jack_death01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jack_death01')
-
-    @property
-    def jack_fall01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jack_fall01')
-
-    @property
-    def jack_hit01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jack_hit01')
-
-    @property
-    def jack_hit02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jack_hit02')
-
-    @property
-    def jack_hit03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jack_hit03')
-
-    @property
-    def jack_hit04(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jack_hit04')
-
-    @property
-    def jack_hit05(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jack_hit05')
-
-    @property
-    def jack_hit06(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jack_hit06')
-
-    @property
-    def jack_hit07(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jack_hit07')
-
-    @property
-    def jumpsuit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit1')
-
-    @property
-    def jumpsuit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit2')
-
-    @property
-    def jumpsuit3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit3')
-
-    @property
-    def jumpsuit4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit4')
-
-    @property
-    def jumpsuit_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit_death')
-
-    @property
-    def jumpsuit_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit_fall')
-
-    @property
-    def jumpsuit_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit_hit1')
-
-    @property
-    def jumpsuit_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/jumpsuit_hit2')
-
-    @property
-    def kronk1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/kronk1')
-
-    @property
-    def kronk10(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/kronk10')
-
-    @property
-    def kronk2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/kronk2')
-
-    @property
-    def kronk3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/kronk3')
-
-    @property
-    def kronk4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/kronk4')
-
-    @property
-    def kronk5(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/kronk5')
-
-    @property
-    def kronk6(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/kronk6')
-
-    @property
-    def kronk7(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/kronk7')
-
-    @property
-    def kronk8(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/kronk8')
-
-    @property
-    def kronk9(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/kronk9')
-
-    @property
-    def kronk_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/kronk_death')
-
-    @property
-    def kronk_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/kronk_fall')
-
-    @property
-    def laser(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/laser')
-
-    @property
-    def laser_reverse(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/laser_reverse')
-
-    @property
-    def mel01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/mel01')
-
-    @property
-    def mel02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/mel02')
-
-    @property
-    def mel03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/mel03')
-
-    @property
-    def mel04(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/mel04')
-
-    @property
-    def mel05(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/mel05')
-
-    @property
-    def mel06(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/mel06')
-
-    @property
-    def mel07(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/mel07')
-
-    @property
-    def mel08(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/mel08')
-
-    @property
-    def mel09(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/mel09')
-
-    @property
-    def mel10(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/mel10')
-
-    @property
-    def mel_death01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/mel_death01')
-
-    @property
-    def mel_fall01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/mel_fall01')
-
-    @property
-    def menu_music(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/menu_music')
-
-    @property
-    def metal_hit(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/metal_hit')
-
-    @property
-    def metal_skid(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/metal_skid')
-
-    @property
-    def nice(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/nice')
-
-    @property
-    def ninja_attack1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_attack1')
-
-    @property
-    def ninja_attack2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_attack2')
-
-    @property
-    def ninja_attack3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_attack3')
-
-    @property
-    def ninja_attack4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_attack4')
-
-    @property
-    def ninja_attack5(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_attack5')
-
-    @property
-    def ninja_attack6(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_attack6')
-
-    @property
-    def ninja_attack7(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_attack7')
-
-    @property
-    def ninja_death1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_death1')
-
-    @property
-    def ninja_fall1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_fall1')
-
-    @property
-    def ninja_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit1')
-
-    @property
-    def ninja_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit2')
-
-    @property
-    def ninja_hit3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit3')
-
-    @property
-    def ninja_hit4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit4')
-
-    @property
-    def ninja_hit5(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit5')
-
-    @property
-    def ninja_hit6(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit6')
-
-    @property
-    def ninja_hit7(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit7')
-
-    @property
-    def ninja_hit8(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ninja_hit8')
-
-    @property
-    def old_lady1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/old_lady1')
-
-    @property
-    def old_lady2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/old_lady2')
-
-    @property
-    def old_lady3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/old_lady3')
-
-    @property
-    def old_lady4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/old_lady4')
-
-    @property
-    def old_lady_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/old_lady_death')
-
-    @property
-    def old_lady_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/old_lady_fall')
-
-    @property
-    def old_lady_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/old_lady_hit1')
-
-    @property
-    def old_lady_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/old_lady_hit2')
-
-    @property
-    def ooh(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ooh')
-
-    @property
-    def opera_singer1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer1')
-
-    @property
-    def opera_singer2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer2')
-
-    @property
-    def opera_singer3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer3')
-
-    @property
-    def opera_singer4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer4')
-
-    @property
-    def opera_singer_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer_death')
-
-    @property
-    def opera_singer_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer_fall')
-
-    @property
-    def opera_singer_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer_hit1')
-
-    @property
-    def opera_singer_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/opera_singer_hit2')
-
-    @property
-    def orchestra_hit(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/orchestra_hit')
-
-    @property
-    def orchestra_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/orchestra_hit2')
-
-    @property
-    def orchestra_hit3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/orchestra_hit3')
-
-    @property
-    def orchestra_hit4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/orchestra_hit4')
-
-    @property
-    def orchestra_hit_big1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/orchestra_hit_big1')
-
-    @property
-    def orchestra_hit_big2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/orchestra_hit_big2')
-
-    @property
-    def penguin1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/penguin1')
-
-    @property
-    def penguin2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/penguin2')
-
-    @property
-    def penguin3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/penguin3')
-
-    @property
-    def penguin4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/penguin4')
-
-    @property
-    def penguin_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/penguin_death')
-
-    @property
-    def penguin_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/penguin_fall')
-
-    @property
-    def penguin_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/penguin_hit1')
-
-    @property
-    def penguin_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/penguin_hit2')
-
-    @property
-    def pixie1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/pixie1')
-
-    @property
-    def pixie2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/pixie2')
-
-    @property
-    def pixie3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/pixie3')
-
-    @property
-    def pixie4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/pixie4')
-
-    @property
-    def pixie_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/pixie_death')
-
-    @property
-    def pixie_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/pixie_fall')
-
-    @property
-    def pixie_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/pixie_hit1')
-
-    @property
-    def pixie_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/pixie_hit2')
-
-    @property
-    def player_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/player_death')
-
-    @property
-    def player_left(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/player_left')
-
-    @property
-    def pop01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/pop01')
-
-    @property
-    def powerup01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/powerup01')
-
-    @property
-    def punch_strong01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/punch_strong01')
-
-    @property
-    def punch_strong02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/punch_strong02')
-
-    @property
-    def punch_swish(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/punch_swish')
-
-    @property
-    def punch_weak01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/punch_weak01')
-
-    @property
-    def race_beep1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/race_beep1')
-
-    @property
-    def race_beep2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/race_beep2')
-
-    @property
-    def ref_whistle(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ref_whistle')
-
-    @property
-    def rev_up(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/rev_up')
-
-    @property
-    def robot1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/robot1')
-
-    @property
-    def robot2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/robot2')
-
-    @property
-    def robot3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/robot3')
-
-    @property
-    def robot4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/robot4')
-
-    @property
-    def robot_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/robot_death')
-
-    @property
-    def robot_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/robot_fall')
-
-    @property
-    def robot_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/robot_hit1')
-
-    @property
-    def robot_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/robot_hit2')
-
-    @property
-    def run_away_music(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/run_away_music')
-
-    @property
-    def santa01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/santa01')
-
-    @property
-    def santa02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/santa02')
-
-    @property
-    def santa03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/santa03')
-
-    @property
-    def santa04(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/santa04')
-
-    @property
-    def santa05(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/santa05')
-
-    @property
-    def santa_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/santa_death')
-
-    @property
-    def santa_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/santa_fall')
-
-    @property
-    def santa_hit01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/santa_hit01')
-
-    @property
-    def santa_hit02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/santa_hit02')
-
-    @property
-    def santa_hit03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/santa_hit03')
-
-    @property
-    def santa_hit04(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/santa_hit04')
-
-    @property
-    def scamper01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/scamper01')
-
-    @property
-    def scary_music(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/scary_music')
-
-    @property
-    def score(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/score')
-
-    @property
-    def score_hit01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/score_hit01')
-
-    @property
-    def score_hit02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/score_hit02')
-
-    @property
-    def scores_epic_music(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/scores_epic_music')
-
-    @property
-    def shatter(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/shatter')
-
-    @property
-    def shield_down(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/shield_down')
-
-    @property
-    def shield_hit(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/shield_hit')
-
-    @property
-    def shield_up(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/shield_up')
-
-    @property
-    def skid01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/skid01')
-
-    @property
-    def slow_epic_music(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/slow_epic_music')
-
-    @property
-    def spawn(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spawn')
-
-    @property
-    def spaz_attack01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_attack01')
-
-    @property
-    def spaz_attack02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_attack02')
-
-    @property
-    def spaz_attack03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_attack03')
-
-    @property
-    def spaz_attack04(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_attack04')
-
-    @property
-    def spaz_death01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_death01')
-
-    @property
-    def spaz_eff(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_eff')
-
-    @property
-    def spaz_fall01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_fall01')
-
-    @property
-    def spaz_impact01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_impact01')
-
-    @property
-    def spaz_impact02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_impact02')
-
-    @property
-    def spaz_impact03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_impact03')
-
-    @property
-    def spaz_impact04(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_impact04')
-
-    @property
-    def spaz_jump01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_jump01')
-
-    @property
-    def spaz_jump02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_jump02')
-
-    @property
-    def spaz_jump03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_jump03')
-
-    @property
-    def spaz_jump04(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_jump04')
-
-    @property
-    def spaz_ow(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_ow')
-
-    @property
-    def spaz_pickup01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_pickup01')
-
-    @property
-    def spaz_scream01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/spaz_scream01')
-
-    @property
-    def splatter(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/splatter')
-
-    @property
-    def sports_music(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/sports_music')
-
-    @property
-    def sticky_impact(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/sticky_impact')
-
-    @property
-    def super_punch(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/super_punch')
-
-    @property
-    def superhero1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/superhero1')
-
-    @property
-    def superhero2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/superhero2')
-
-    @property
-    def superhero3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/superhero3')
-
-    @property
-    def superhero4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/superhero4')
-
-    @property
-    def superhero_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/superhero_death')
-
-    @property
-    def superhero_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/superhero_fall')
-
-    @property
-    def superhero_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/superhero_hit1')
-
-    @property
-    def superhero_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/superhero_hit2')
-
-    @property
-    def survival_music(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/survival_music')
-
-    @property
-    def swip(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/swip')
-
-    @property
-    def swip2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/swip2')
-
-    @property
-    def techno_hit01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/techno_hit01')
-
-    @property
-    def tick(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/tick')
-
-    @property
-    def ticking(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ticking')
-
-    @property
-    def to_the_death_music(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/to_the_death_music')
-
-    @property
-    def trash_rummage(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/trash_rummage')
-
-    @property
-    def victory_music(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/victory_music')
-
-    @property
-    def warn_beep(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/warn_beep')
-
-    @property
-    def warn_beeps(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/warn_beeps')
-
-    @property
-    def warrior1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/warrior1')
-
-    @property
-    def warrior2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/warrior2')
-
-    @property
-    def warrior3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/warrior3')
-
-    @property
-    def warrior4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/warrior4')
-
-    @property
-    def warrior_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/warrior_death')
-
-    @property
-    def warrior_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/warrior_fall')
-
-    @property
-    def warrior_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/warrior_hit1')
-
-    @property
-    def warrior_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/warrior_hit2')
-
-    @property
-    def when_johnny_comes_marching_home_music(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(
-            f'{_APVERID}:audio/when_johnny_comes_marching_home_music'
-        )
-
-    @property
-    def witch1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/witch1')
-
-    @property
-    def witch2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/witch2')
-
-    @property
-    def witch3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/witch3')
-
-    @property
-    def witch4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/witch4')
-
-    @property
-    def witch_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/witch_death')
-
-    @property
-    def witch_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/witch_fall')
-
-    @property
-    def witch_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/witch_hit1')
-
-    @property
-    def witch_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/witch_hit2')
-
-    @property
-    def wizard1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wizard1')
-
-    @property
-    def wizard2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wizard2')
-
-    @property
-    def wizard3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wizard3')
-
-    @property
-    def wizard4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wizard4')
-
-    @property
-    def wizard_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wizard_death')
-
-    @property
-    def wizard_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wizard_fall')
-
-    @property
-    def wizard_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wizard_hit1')
-
-    @property
-    def wizard_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wizard_hit2')
-
-    @property
-    def woo(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/woo')
-
-    @property
-    def woo2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/woo2')
-
-    @property
-    def woo3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/woo3')
-
-    @property
-    def wood_debris_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wood_debris_fall')
-
-    @property
-    def wow(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wow')
-
-    @property
-    def wrestler1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wrestler1')
-
-    @property
-    def wrestler2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wrestler2')
-
-    @property
-    def wrestler3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wrestler3')
-
-    @property
-    def wrestler4(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wrestler4')
-
-    @property
-    def wrestler_death(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wrestler_death')
-
-    @property
-    def wrestler_fall(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wrestler_fall')
-
-    @property
-    def wrestler_hit1(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wrestler_hit1')
-
-    @property
-    def wrestler_hit2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/wrestler_hit2')
-
-    @property
-    def yeah(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/yeah')
-
-    @property
-    def zoe_attack01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_attack01')
-
-    @property
-    def zoe_attack02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_attack02')
-
-    @property
-    def zoe_attack03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_attack03')
-
-    @property
-    def zoe_attack04(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_attack04')
-
-    @property
-    def zoe_death01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_death01')
-
-    @property
-    def zoe_eff(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_eff')
-
-    @property
-    def zoe_fall01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_fall01')
-
-    @property
-    def zoe_impact01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_impact01')
-
-    @property
-    def zoe_impact02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_impact02')
-
-    @property
-    def zoe_impact03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_impact03')
-
-    @property
-    def zoe_impact04(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_impact04')
-
-    @property
-    def zoe_jump01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_jump01')
-
-    @property
-    def zoe_jump02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_jump02')
-
-    @property
-    def zoe_jump03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_jump03')
-
-    @property
-    def zoe_ow(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_ow')
-
-    @property
-    def zoe_pickup01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_pickup01')
-
-    @property
-    def zoe_scream01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/zoe_scream01')
-
-
-audio = _Audio()
-
-
-class _Meshes:
-    @property
-    def achievement_outline(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/achievement_outline')
-
-    @property
-    def action_hero_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/action_hero_fore_arm')
-
-    @property
-    def action_hero_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/action_hero_hand')
-
-    @property
-    def action_hero_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/action_hero_head')
-
-    @property
-    def action_hero_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/action_hero_lower_leg')
-
-    @property
-    def action_hero_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/action_hero_pelvis')
-
-    @property
-    def action_hero_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/action_hero_toes')
-
-    @property
-    def action_hero_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/action_hero_torso')
-
-    @property
-    def action_hero_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/action_hero_upper_arm')
-
-    @property
-    def action_hero_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/action_hero_upper_leg')
-
-    @property
-    def agent_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/agent_fore_arm')
-
-    @property
-    def agent_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/agent_hand')
-
-    @property
-    def agent_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/agent_head')
-
-    @property
-    def agent_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/agent_lower_leg')
-
-    @property
-    def agent_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/agent_pelvis')
-
-    @property
-    def agent_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/agent_toes')
-
-    @property
-    def agent_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/agent_torso')
-
-    @property
-    def agent_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/agent_upper_arm')
-
-    @property
-    def agent_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/agent_upper_leg')
-
-    @property
-    def ali_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ali_fore_arm')
-
-    @property
-    def ali_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ali_hand')
-
-    @property
-    def ali_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ali_head')
-
-    @property
-    def ali_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ali_lower_leg')
-
-    @property
-    def ali_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ali_pelvis')
-
-    @property
-    def ali_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ali_toes')
-
-    @property
-    def ali_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ali_torso')
-
-    @property
-    def ali_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ali_upper_arm')
-
-    @property
-    def ali_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ali_upper_leg')
-
-    @property
-    def alien_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/alien_fore_arm')
-
-    @property
-    def alien_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/alien_hand')
-
-    @property
-    def alien_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/alien_head')
-
-    @property
-    def alien_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/alien_lower_leg')
-
-    @property
-    def alien_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/alien_pelvis')
-
-    @property
-    def alien_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/alien_toes')
-
-    @property
-    def alien_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/alien_torso')
-
-    @property
-    def alien_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/alien_upper_arm')
-
-    @property
-    def alien_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/alien_upper_leg')
-
-    @property
-    def always_land_bg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/always_land_bg')
-
-    @property
-    def always_land_level(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/always_land_level')
-
-    @property
-    def always_land_level_bottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/always_land_level_bottom')
-
-    @property
-    def always_land_level_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/always_land_level_collide'
-        )
-
-    @property
-    def always_land_vrfill_mound(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/always_land_vrfill_mound')
-
-    @property
-    def angry_computer_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/angry_computer_transparent'
-        )
-
-    @property
-    def assassin_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/assassin_fore_arm')
-
-    @property
-    def assassin_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/assassin_hand')
-
-    @property
-    def assassin_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/assassin_head')
-
-    @property
-    def assassin_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/assassin_lower_leg')
-
-    @property
-    def assassin_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/assassin_pelvis')
-
-    @property
-    def assassin_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/assassin_toes')
-
-    @property
-    def assassin_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/assassin_torso')
-
-    @property
-    def assassin_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/assassin_upper_arm')
-
-    @property
-    def assassin_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/assassin_upper_leg')
-
-    @property
-    def bear_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bear_fore_arm')
-
-    @property
-    def bear_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bear_hand')
-
-    @property
-    def bear_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bear_head')
-
-    @property
-    def bear_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bear_lower_leg')
-
-    @property
-    def bear_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bear_pelvis')
-
-    @property
-    def bear_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bear_toes')
-
-    @property
-    def bear_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bear_torso')
-
-    @property
-    def bear_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bear_upper_arm')
-
-    @property
-    def bear_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bear_upper_leg')
-
-    @property
-    def big_g(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/big_g')
-
-    @property
-    def big_gbottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/big_gbottom')
-
-    @property
-    def big_gbumper(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(f'{_APVERID}:meshes/big_gbumper')
-
-    @property
-    def big_gcollide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(f'{_APVERID}:meshes/big_gcollide')
-
-    @property
-    def bomb(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bomb')
-
-    @property
-    def bomb_sticky(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bomb_sticky')
-
-    @property
-    def bones_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bones_fore_arm')
-
-    @property
-    def bones_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bones_hand')
-
-    @property
-    def bones_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bones_head')
-
-    @property
-    def bones_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bones_lower_leg')
-
-    @property
-    def bones_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bones_pelvis')
-
-    @property
-    def bones_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bones_toes')
-
-    @property
-    def bones_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bones_torso')
-
-    @property
-    def bones_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bones_upper_arm')
-
-    @property
-    def bones_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bones_upper_leg')
-
-    @property
-    def bridgit_level_bottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bridgit_level_bottom')
-
-    @property
-    def bridgit_level_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/bridgit_level_collide'
-        )
-
-    @property
-    def bridgit_level_railing_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/bridgit_level_railing_collide'
-        )
-
-    @property
-    def bridgit_level_top(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bridgit_level_top')
-
-    @property
-    def bunny_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bunny_fore_arm')
-
-    @property
-    def bunny_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bunny_hand')
-
-    @property
-    def bunny_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bunny_head')
-
-    @property
-    def bunny_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bunny_lower_leg')
-
-    @property
-    def bunny_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bunny_pelvis')
-
-    @property
-    def bunny_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bunny_toes')
-
-    @property
-    def bunny_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bunny_torso')
-
-    @property
-    def bunny_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bunny_upper_arm')
-
-    @property
-    def bunny_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/bunny_upper_leg')
-
-    @property
-    def button_null(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_null')
-
-    @property
-    def courtyard_level(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/courtyard_level')
-
-    @property
-    def courtyard_level_bottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/courtyard_level_bottom')
-
-    @property
-    def courtyard_level_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/courtyard_level_collide'
-        )
-
-    @property
-    def courtyard_player_wall(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/courtyard_player_wall'
-        )
-
-    @property
-    def cowboy_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cowboy_fore_arm')
-
-    @property
-    def cowboy_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cowboy_hand')
-
-    @property
-    def cowboy_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cowboy_head')
-
-    @property
-    def cowboy_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cowboy_lower_leg')
-
-    @property
-    def cowboy_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cowboy_pelvis')
-
-    @property
-    def cowboy_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cowboy_toes')
-
-    @property
-    def cowboy_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cowboy_torso')
-
-    @property
-    def cowboy_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cowboy_upper_arm')
-
-    @property
-    def cowboy_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cowboy_upper_leg')
-
-    @property
-    def crag_castle_level(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/crag_castle_level')
-
-    @property
-    def crag_castle_level_bottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/crag_castle_level_bottom')
-
-    @property
-    def crag_castle_level_bumper(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/crag_castle_level_bumper'
-        )
-
-    @property
-    def crag_castle_level_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/crag_castle_level_collide'
-        )
-
-    @property
-    def crag_castle_vrfill_mound(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/crag_castle_vrfill_mound')
-
-    @property
-    def currency_meter(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/currency_meter')
-
-    @property
-    def currency_plus_button(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/currency_plus_button')
-
-    @property
-    def cyborg_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cyborg_fore_arm')
-
-    @property
-    def cyborg_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cyborg_hand')
-
-    @property
-    def cyborg_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cyborg_head')
-
-    @property
-    def cyborg_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cyborg_lower_leg')
-
-    @property
-    def cyborg_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cyborg_pelvis')
-
-    @property
-    def cyborg_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cyborg_toes')
-
-    @property
-    def cyborg_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cyborg_torso')
-
-    @property
-    def cyborg_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cyborg_upper_arm')
-
-    @property
-    def cyborg_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cyborg_upper_leg')
-
-    @property
-    def doom_shroom_bg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/doom_shroom_bg')
-
-    @property
-    def doom_shroom_level(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/doom_shroom_level')
-
-    @property
-    def doom_shroom_level_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/doom_shroom_level_collide'
-        )
-
-    @property
-    def doom_shroom_stem(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/doom_shroom_stem')
-
-    @property
-    def doom_shroom_stem_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/doom_shroom_stem_collide'
-        )
-
-    @property
-    def doom_shroom_vrfill(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/doom_shroom_vrfill')
-
-    @property
-    def egg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/egg')
-
-    @property
-    def football_stadium(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/football_stadium')
-
-    @property
-    def football_stadium_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/football_stadium_collide'
-        )
-
-    @property
-    def football_stadium_vrfill(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/football_stadium_vrfill')
-
-    @property
-    def frame_inset(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/frame_inset')
-
-    @property
-    def frosty_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/frosty_fore_arm')
-
-    @property
-    def frosty_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/frosty_hand')
-
-    @property
-    def frosty_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/frosty_head')
-
-    @property
-    def frosty_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/frosty_lower_leg')
-
-    @property
-    def frosty_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/frosty_pelvis')
-
-    @property
-    def frosty_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/frosty_toes')
-
-    @property
-    def frosty_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/frosty_torso')
-
-    @property
-    def frosty_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/frosty_upper_arm')
-
-    @property
-    def frosty_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/frosty_upper_leg')
-
-    @property
-    def gladiator_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/gladiator_fore_arm')
-
-    @property
-    def gladiator_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/gladiator_hand')
-
-    @property
-    def gladiator_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/gladiator_head')
-
-    @property
-    def gladiator_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/gladiator_lower_leg')
-
-    @property
-    def gladiator_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/gladiator_pelvis')
-
-    @property
-    def gladiator_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/gladiator_toes')
-
-    @property
-    def gladiator_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/gladiator_torso')
-
-    @property
-    def gladiator_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/gladiator_upper_arm')
-
-    @property
-    def gladiator_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/gladiator_upper_leg')
-
-    @property
-    def heart_opaque(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/heart_opaque')
-
-    @property
-    def heart_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/heart_transparent')
-
-    @property
-    def hockey_stadium_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/hockey_stadium_collide'
-        )
-
-    @property
-    def hockey_stadium_inner(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/hockey_stadium_inner')
-
-    @property
-    def hockey_stadium_outer(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/hockey_stadium_outer')
-
-    @property
-    def hockey_stadium_stands(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/hockey_stadium_stands')
-
-    @property
-    def image2x1_vertical(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/image2x1_vertical')
-
-    @property
-    def impact_bomb(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/impact_bomb')
-
-    @property
-    def jack_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jack_fore_arm')
-
-    @property
-    def jack_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jack_hand')
-
-    @property
-    def jack_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jack_head')
-
-    @property
-    def jack_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jack_lower_leg')
-
-    @property
-    def jack_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jack_toes')
-
-    @property
-    def jack_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jack_torso')
-
-    @property
-    def jack_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jack_upper_arm')
-
-    @property
-    def jack_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jack_upper_leg')
-
-    @property
-    def jumpsuit_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jumpsuit_fore_arm')
-
-    @property
-    def jumpsuit_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jumpsuit_hand')
-
-    @property
-    def jumpsuit_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jumpsuit_head')
-
-    @property
-    def jumpsuit_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jumpsuit_lower_leg')
-
-    @property
-    def jumpsuit_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jumpsuit_pelvis')
-
-    @property
-    def jumpsuit_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jumpsuit_toes')
-
-    @property
-    def jumpsuit_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jumpsuit_torso')
-
-    @property
-    def jumpsuit_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jumpsuit_upper_arm')
-
-    @property
-    def jumpsuit_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/jumpsuit_upper_leg')
-
-    @property
-    def kronk_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/kronk_fore_arm')
-
-    @property
-    def kronk_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/kronk_hand')
-
-    @property
-    def kronk_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/kronk_head')
-
-    @property
-    def kronk_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/kronk_lower_leg')
-
-    @property
-    def kronk_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/kronk_pelvis')
-
-    @property
-    def kronk_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/kronk_toes')
-
-    @property
-    def kronk_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/kronk_torso')
-
-    @property
-    def kronk_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/kronk_upper_arm')
-
-    @property
-    def kronk_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/kronk_upper_leg')
-
-    @property
-    def lake_frigid(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/lake_frigid')
-
-    @property
-    def lake_frigid_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/lake_frigid_collide'
-        )
-
-    @property
-    def lake_frigid_reflections(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/lake_frigid_reflections')
-
-    @property
-    def lake_frigid_top(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/lake_frigid_top')
-
-    @property
-    def lake_frigid_vrfill(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/lake_frigid_vrfill')
-
-    @property
-    def land_mine(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/land_mine')
-
-    @property
-    def level_select_button_opaque(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/level_select_button_opaque'
-        )
-
-    @property
-    def level_select_button_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/level_select_button_transparent'
-        )
-
-    @property
-    def logo(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/logo')
-
-    @property
-    def logo_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/logo_transparent')
-
-    @property
-    def mel_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/mel_fore_arm')
-
-    @property
-    def mel_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/mel_hand')
-
-    @property
-    def mel_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/mel_head')
-
-    @property
-    def mel_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/mel_lower_leg')
-
-    @property
-    def mel_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/mel_toes')
-
-    @property
-    def mel_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/mel_torso')
-
-    @property
-    def mel_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/mel_upper_arm')
-
-    @property
-    def mel_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/mel_upper_leg')
-
-    @property
-    def meter_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/meter_transparent')
-
-    @property
-    def monkey_face_level(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/monkey_face_level')
-
-    @property
-    def monkey_face_level_bottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/monkey_face_level_bottom')
-
-    @property
-    def monkey_face_level_bumper(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/monkey_face_level_bumper'
-        )
-
-    @property
-    def monkey_face_level_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/monkey_face_level_collide'
-        )
-
-    @property
-    def nature_background(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/nature_background')
-
-    @property
-    def nature_background_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/nature_background_collide'
-        )
-
-    @property
-    def nature_background_vrfill(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/nature_background_vrfill')
-
-    @property
-    def neo_spaz_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/neo_spaz_fore_arm')
-
-    @property
-    def neo_spaz_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/neo_spaz_hand')
-
-    @property
-    def neo_spaz_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/neo_spaz_head')
-
-    @property
-    def neo_spaz_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/neo_spaz_lower_leg')
-
-    @property
-    def neo_spaz_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/neo_spaz_pelvis')
-
-    @property
-    def neo_spaz_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/neo_spaz_toes')
-
-    @property
-    def neo_spaz_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/neo_spaz_torso')
-
-    @property
-    def neo_spaz_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/neo_spaz_upper_arm')
-
-    @property
-    def neo_spaz_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/neo_spaz_upper_leg')
-
-    @property
-    def ninja_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ninja_fore_arm')
-
-    @property
-    def ninja_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ninja_hand')
-
-    @property
-    def ninja_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ninja_head')
-
-    @property
-    def ninja_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ninja_lower_leg')
-
-    @property
-    def ninja_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ninja_pelvis')
-
-    @property
-    def ninja_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ninja_toes')
-
-    @property
-    def ninja_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ninja_torso')
-
-    @property
-    def ninja_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ninja_upper_arm')
-
-    @property
-    def ninja_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/ninja_upper_leg')
-
-    @property
-    def old_lady_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/old_lady_fore_arm')
-
-    @property
-    def old_lady_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/old_lady_hand')
-
-    @property
-    def old_lady_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/old_lady_head')
-
-    @property
-    def old_lady_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/old_lady_lower_leg')
-
-    @property
-    def old_lady_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/old_lady_pelvis')
-
-    @property
-    def old_lady_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/old_lady_toes')
-
-    @property
-    def old_lady_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/old_lady_torso')
-
-    @property
-    def old_lady_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/old_lady_upper_arm')
-
-    @property
-    def old_lady_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/old_lady_upper_leg')
-
-    @property
-    def opera_singer_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/opera_singer_fore_arm')
-
-    @property
-    def opera_singer_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/opera_singer_hand')
-
-    @property
-    def opera_singer_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/opera_singer_head')
-
-    @property
-    def opera_singer_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/opera_singer_lower_leg')
-
-    @property
-    def opera_singer_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/opera_singer_pelvis')
-
-    @property
-    def opera_singer_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/opera_singer_toes')
-
-    @property
-    def opera_singer_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/opera_singer_torso')
-
-    @property
-    def opera_singer_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/opera_singer_upper_arm')
-
-    @property
-    def opera_singer_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/opera_singer_upper_leg')
-
-    @property
-    def penguin_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/penguin_fore_arm')
-
-    @property
-    def penguin_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/penguin_hand')
-
-    @property
-    def penguin_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/penguin_head')
-
-    @property
-    def penguin_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/penguin_lower_leg')
-
-    @property
-    def penguin_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/penguin_pelvis')
-
-    @property
-    def penguin_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/penguin_toes')
-
-    @property
-    def penguin_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/penguin_torso')
-
-    @property
-    def penguin_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/penguin_upper_arm')
-
-    @property
-    def penguin_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/penguin_upper_leg')
-
-    @property
-    def pixie_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/pixie_fore_arm')
-
-    @property
-    def pixie_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/pixie_hand')
-
-    @property
-    def pixie_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/pixie_head')
-
-    @property
-    def pixie_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/pixie_lower_leg')
-
-    @property
-    def pixie_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/pixie_pelvis')
-
-    @property
-    def pixie_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/pixie_toes')
-
-    @property
-    def pixie_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/pixie_torso')
-
-    @property
-    def pixie_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/pixie_upper_arm')
-
-    @property
-    def pixie_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/pixie_upper_leg')
-
-    @property
-    def plastic_eyes_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/plastic_eyes_transparent')
-
-    @property
-    def player_lineup1_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/player_lineup1_transparent'
-        )
-
-    @property
-    def player_lineup2_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/player_lineup2_transparent'
-        )
-
-    @property
-    def player_lineup3_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/player_lineup3_transparent'
-        )
-
-    @property
-    def player_lineup4_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/player_lineup4_transparent'
-        )
-
-    @property
-    def powerup(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/powerup')
-
-    @property
-    def powerup_simple(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/powerup_simple')
-
-    @property
-    def puck(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/puck')
-
-    @property
-    def rampage_bg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/rampage_bg')
-
-    @property
-    def rampage_bg2(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/rampage_bg2')
-
-    @property
-    def rampage_bumper(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(f'{_APVERID}:meshes/rampage_bumper')
-
-    @property
-    def rampage_level(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/rampage_level')
-
-    @property
-    def rampage_level_bottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/rampage_level_bottom')
-
-    @property
-    def rampage_level_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/rampage_level_collide'
-        )
-
-    @property
-    def rampage_vrfill(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/rampage_vrfill')
-
-    @property
-    def robot_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/robot_fore_arm')
-
-    @property
-    def robot_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/robot_hand')
-
-    @property
-    def robot_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/robot_head')
-
-    @property
-    def robot_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/robot_lower_leg')
-
-    @property
-    def robot_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/robot_pelvis')
-
-    @property
-    def robot_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/robot_toes')
-
-    @property
-    def robot_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/robot_torso')
-
-    @property
-    def robot_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/robot_upper_arm')
-
-    @property
-    def robot_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/robot_upper_leg')
-
-    @property
-    def roundabout_level(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/roundabout_level')
-
-    @property
-    def roundabout_level_bottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/roundabout_level_bottom')
-
-    @property
-    def roundabout_level_bumper(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/roundabout_level_bumper'
-        )
-
-    @property
-    def roundabout_level_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/roundabout_level_collide'
-        )
-
-    @property
-    def running_shoes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/running_shoes')
-
-    @property
-    def santa_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/santa_fore_arm')
-
-    @property
-    def santa_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/santa_hand')
-
-    @property
-    def santa_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/santa_head')
-
-    @property
-    def santa_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/santa_lower_leg')
-
-    @property
-    def santa_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/santa_toes')
-
-    @property
-    def santa_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/santa_torso')
-
-    @property
-    def santa_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/santa_upper_arm')
-
-    @property
-    def santa_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/santa_upper_leg')
-
-    @property
-    def scroll_widget_short(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/scroll_widget_short')
-
-    @property
-    def step_right_up_level(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/step_right_up_level')
-
-    @property
-    def step_right_up_level_bottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/step_right_up_level_bottom'
-        )
-
-    @property
-    def step_right_up_level_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/step_right_up_level_collide'
-        )
-
-    @property
-    def step_right_up_vrfill_mound(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/step_right_up_vrfill_mound'
-        )
-
-    @property
-    def superhero_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/superhero_fore_arm')
-
-    @property
-    def superhero_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/superhero_hand')
-
-    @property
-    def superhero_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/superhero_head')
-
-    @property
-    def superhero_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/superhero_lower_leg')
-
-    @property
-    def superhero_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/superhero_pelvis')
-
-    @property
-    def superhero_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/superhero_toes')
-
-    @property
-    def superhero_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/superhero_torso')
-
-    @property
-    def superhero_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/superhero_upper_arm')
-
-    @property
-    def superhero_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/superhero_upper_leg')
-
-    @property
-    def the_pad_bg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/the_pad_bg')
-
-    @property
-    def the_pad_bgsmall(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/the_pad_bgsmall')
-
-    @property
-    def the_pad_level(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/the_pad_level')
-
-    @property
-    def the_pad_level_bottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/the_pad_level_bottom')
-
-    @property
-    def the_pad_level_bumper(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/the_pad_level_bumper'
-        )
-
-    @property
-    def the_pad_level_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/the_pad_level_collide'
-        )
-
-    @property
-    def the_pad_vrfill_bottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/the_pad_vrfill_bottom')
-
-    @property
-    def the_pad_vrfill_mound(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/the_pad_vrfill_mound')
-
-    @property
-    def the_pad_vrfill_top(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/the_pad_vrfill_top')
-
-    @property
-    def tip_top_bg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/tip_top_bg')
-
-    @property
-    def tip_top_level(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/tip_top_level')
-
-    @property
-    def tip_top_level_bottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/tip_top_level_bottom')
-
-    @property
-    def tip_top_level_bumper(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/tip_top_level_bumper'
-        )
-
-    @property
-    def tip_top_level_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/tip_top_level_collide'
-        )
-
-    @property
-    def tnt(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/tnt')
-
-    @property
-    def toolbar_backing(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/toolbar_backing')
-
-    @property
-    def toolbar_backing_bottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/toolbar_backing_bottom')
-
-    @property
-    def toolbar_backing_bottom2(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/toolbar_backing_bottom2')
-
-    @property
-    def toolbar_backing_opaque(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/toolbar_backing_opaque')
-
-    @property
-    def toolbar_backing_top(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/toolbar_backing_top')
-
-    @property
-    def toolbar_backing_top2(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/toolbar_backing_top2')
-
-    @property
-    def toolbar_backing_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/toolbar_backing_transparent'
-        )
-
-    @property
-    def tower_dlevel(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/tower_dlevel')
-
-    @property
-    def tower_dlevel_bottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/tower_dlevel_bottom')
-
-    @property
-    def tower_dlevel_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/tower_dlevel_collide'
-        )
-
-    @property
-    def tower_dplayer_wall(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/tower_dplayer_wall'
-        )
-
-    @property
-    def trees(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/trees')
-
-    @property
-    def warrior_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/warrior_fore_arm')
-
-    @property
-    def warrior_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/warrior_hand')
-
-    @property
-    def warrior_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/warrior_head')
-
-    @property
-    def warrior_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/warrior_lower_leg')
-
-    @property
-    def warrior_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/warrior_pelvis')
-
-    @property
-    def warrior_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/warrior_toes')
-
-    @property
-    def warrior_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/warrior_torso')
-
-    @property
-    def warrior_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/warrior_upper_arm')
-
-    @property
-    def warrior_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/warrior_upper_leg')
-
-    @property
-    def window_bgblotch(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/window_bgblotch')
-
-    @property
-    def witch_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/witch_fore_arm')
-
-    @property
-    def witch_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/witch_hand')
-
-    @property
-    def witch_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/witch_head')
-
-    @property
-    def witch_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/witch_lower_leg')
-
-    @property
-    def witch_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/witch_pelvis')
-
-    @property
-    def witch_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/witch_toes')
-
-    @property
-    def witch_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/witch_torso')
-
-    @property
-    def witch_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/witch_upper_arm')
-
-    @property
-    def witch_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/witch_upper_leg')
-
-    @property
-    def wizard_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wizard_fore_arm')
-
-    @property
-    def wizard_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wizard_hand')
-
-    @property
-    def wizard_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wizard_head')
-
-    @property
-    def wizard_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wizard_lower_leg')
-
-    @property
-    def wizard_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wizard_pelvis')
-
-    @property
-    def wizard_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wizard_toes')
-
-    @property
-    def wizard_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wizard_torso')
-
-    @property
-    def wizard_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wizard_upper_arm')
-
-    @property
-    def wizard_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wizard_upper_leg')
-
-    @property
-    def wrestler_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wrestler_fore_arm')
-
-    @property
-    def wrestler_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wrestler_hand')
-
-    @property
-    def wrestler_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wrestler_head')
-
-    @property
-    def wrestler_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wrestler_lower_leg')
-
-    @property
-    def wrestler_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wrestler_pelvis')
-
-    @property
-    def wrestler_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wrestler_toes')
-
-    @property
-    def wrestler_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wrestler_torso')
-
-    @property
-    def wrestler_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wrestler_upper_arm')
-
-    @property
-    def wrestler_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wrestler_upper_leg')
-
-    @property
-    def zig_zag_level(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/zig_zag_level')
-
-    @property
-    def zig_zag_level_bottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/zig_zag_level_bottom')
-
-    @property
-    def zig_zag_level_bumper(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/zig_zag_level_bumper'
-        )
-
-    @property
-    def zig_zag_level_collide(self) -> bascenev1.CollisionMesh:
-        import bascenev1
-
-        return bascenev1.getcollisionmesh(
-            f'{_APVERID}:meshes/zig_zag_level_collide'
-        )
-
-    @property
-    def zoe_fore_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/zoe_fore_arm')
-
-    @property
-    def zoe_hand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/zoe_hand')
-
-    @property
-    def zoe_head(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/zoe_head')
-
-    @property
-    def zoe_lower_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/zoe_lower_leg')
-
-    @property
-    def zoe_pelvis(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/zoe_pelvis')
-
-    @property
-    def zoe_toes(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/zoe_toes')
-
-    @property
-    def zoe_torso(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/zoe_torso')
-
-    @property
-    def zoe_upper_arm(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/zoe_upper_arm')
-
-    @property
-    def zoe_upper_leg(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/zoe_upper_leg')
-
-
-meshes = _Meshes()
-
-
-class _Textures:
-    @property
-    def achievement_boxer(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/achievement_boxer')
-
-    @property
-    def achievement_cross_hair(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_cross_hair'
-        )
-
-    @property
-    def achievement_dual_wielding(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_dual_wielding'
-        )
-
-    @property
-    def achievement_empty(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/achievement_empty')
-
-    @property
-    def achievement_flawless_victory(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_flawless_victory'
-        )
-
-    @property
-    def achievement_football_shutout(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_football_shutout'
-        )
-
-    @property
-    def achievement_football_victory(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_football_victory'
-        )
-
-    @property
-    def achievement_free_loader(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_free_loader'
-        )
-
-    @property
-    def achievement_got_the_moves(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_got_the_moves'
-        )
-
-    @property
-    def achievement_in_control(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_in_control'
-        )
-
-    @property
-    def achievement_medal_large(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_medal_large'
-        )
-
-    @property
-    def achievement_medal_medium(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_medal_medium'
-        )
-
-    @property
-    def achievement_medal_small(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_medal_small'
-        )
-
-    @property
-    def achievement_mine(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/achievement_mine')
-
-    @property
-    def achievement_off_you_go(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_off_you_go'
-        )
-
-    @property
-    def achievement_onslaught(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_onslaught'
-        )
-
-    @property
-    def achievement_outline(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/achievement_outline')
-
-    @property
-    def achievement_runaround(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_runaround'
-        )
-
-    @property
-    def achievement_sharing_is_caring(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_sharing_is_caring'
-        )
-
-    @property
-    def achievement_stayin_alive(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_stayin_alive'
-        )
-
-    @property
-    def achievement_super_punch(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_super_punch'
-        )
-
-    @property
-    def achievement_team_player(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/achievement_team_player'
-        )
-
-    @property
-    def achievement_tnt(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/achievement_tnt')
-
-    @property
-    def achievement_wall(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/achievement_wall')
-
-    @property
-    def achievements_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/achievements_icon')
-
-    @property
-    def action_hero_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/action_hero_color')
-
-    @property
-    def action_hero_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/action_hero_color_mask'
-        )
-
-    @property
-    def action_hero_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/action_hero_icon')
-
-    @property
-    def action_hero_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/action_hero_icon_color_mask'
-        )
-
-    @property
-    def advanced_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/advanced_icon')
-
-    @property
-    def agent_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/agent_color')
-
-    @property
-    def agent_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/agent_color_mask')
-
-    @property
-    def agent_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/agent_icon')
-
-    @property
-    def agent_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/agent_icon_color_mask'
-        )
-
-    @property
-    def ali_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ali_color')
-
-    @property
-    def ali_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ali_color_mask')
-
-    @property
-    def ali_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ali_icon')
-
-    @property
-    def ali_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ali_icon_color_mask')
-
-    @property
-    def ali_splash(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ali_splash')
-
-    @property
-    def alien_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/alien_color')
-
-    @property
-    def alien_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/alien_color_mask')
-
-    @property
-    def alien_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/alien_icon')
-
-    @property
-    def alien_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/alien_icon_color_mask'
-        )
-
-    @property
-    def always_land_bgcolor(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/always_land_bgcolor')
-
-    @property
-    def always_land_level_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/always_land_level_color'
-        )
-
-    @property
-    def always_land_preview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/always_land_preview')
-
-    @property
-    def analog_stick(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/analog_stick')
-
-    @property
-    def assassin_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/assassin_color')
-
-    @property
-    def assassin_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/assassin_color_mask')
-
-    @property
-    def assassin_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/assassin_icon')
-
-    @property
-    def assassin_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/assassin_icon_color_mask'
-        )
-
-    @property
-    def audio_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/audio_icon')
-
-    @property
-    def bar(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bar')
-
-    @property
-    def bear_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bear_color')
-
-    @property
-    def bear_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bear_color_mask')
-
-    @property
-    def bear_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bear_icon')
-
-    @property
-    def bear_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bear_icon_color_mask')
-
-    @property
-    def bg(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bg')
-
-    @property
-    def big_g(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/big_g')
-
-    @property
-    def big_gpreview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/big_gpreview')
-
-    @property
-    def bomb_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bomb_color')
-
-    @property
-    def bomb_color_ice(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bomb_color_ice')
-
-    @property
-    def bomb_sticky_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bomb_sticky_color')
-
-    @property
-    def bones_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bones_color')
-
-    @property
-    def bones_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bones_color_mask')
-
-    @property
-    def bones_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bones_icon')
-
-    @property
-    def bones_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/bones_icon_color_mask'
-        )
-
-    @property
-    def bridgit_level_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bridgit_level_color')
-
-    @property
-    def bridgit_preview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bridgit_preview')
-
-    @property
-    def bunny_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bunny_color')
-
-    @property
-    def bunny_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bunny_color_mask')
-
-    @property
-    def bunny_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bunny_icon')
-
-    @property
-    def bunny_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/bunny_icon_color_mask'
-        )
-
-    @property
-    def button_bomb(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/button_bomb')
-
-    @property
-    def button_jump(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/button_jump')
-
-    @property
-    def button_pick_up(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/button_pick_up')
-
-    @property
-    def button_punch(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/button_punch')
-
-    @property
-    def ch_title_char1(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ch_title_char1')
-
-    @property
-    def ch_title_char2(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ch_title_char2')
-
-    @property
-    def ch_title_char3(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ch_title_char3')
-
-    @property
-    def ch_title_char4(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ch_title_char4')
-
-    @property
-    def ch_title_char5(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ch_title_char5')
-
-    @property
-    def chest_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/chest_icon')
-
-    @property
-    def chest_icon_empty(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/chest_icon_empty')
-
-    @property
-    def chest_icon_multi(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/chest_icon_multi')
-
-    @property
-    def chest_icon_tint(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/chest_icon_tint')
-
-    @property
-    def chest_open_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/chest_open_icon')
-
-    @property
-    def chest_open_icon_tint(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/chest_open_icon_tint')
-
-    @property
-    def circle_zig_zag(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/circle_zig_zag')
-
-    @property
-    def clay_stroke(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/clay_stroke')
-
-    @property
-    def coin(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/coin')
-
-    @property
-    def controller_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/controller_icon')
-
-    @property
-    def courtyard_level_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/courtyard_level_color'
-        )
-
-    @property
-    def courtyard_preview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/courtyard_preview')
-
-    @property
-    def cowboy_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/cowboy_color')
-
-    @property
-    def cowboy_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/cowboy_color_mask')
-
-    @property
-    def cowboy_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/cowboy_icon')
-
-    @property
-    def cowboy_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/cowboy_icon_color_mask'
-        )
-
-    @property
-    def crag_castle_level_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/crag_castle_level_color'
-        )
-
-    @property
-    def crag_castle_preview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/crag_castle_preview')
-
-    @property
-    def cross_out(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/cross_out')
-
-    @property
-    def cross_out_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/cross_out_mask')
-
-    @property
-    def cute_spaz(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/cute_spaz')
-
-    @property
-    def cyborg_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/cyborg_color')
-
-    @property
-    def cyborg_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/cyborg_color_mask')
-
-    @property
-    def cyborg_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/cyborg_icon')
-
-    @property
-    def cyborg_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/cyborg_icon_color_mask'
-        )
-
-    @property
-    def discord_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/discord_icon')
-
-    @property
-    def discord_logo(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/discord_logo')
-
-    @property
-    def discord_server(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/discord_server')
-
-    @property
-    def doom_shroom_bgcolor(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/doom_shroom_bgcolor')
-
-    @property
-    def doom_shroom_level_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/doom_shroom_level_color'
-        )
-
-    @property
-    def doom_shroom_preview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/doom_shroom_preview')
-
-    @property
-    def down_button(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/down_button')
-
-    @property
-    def egg1(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/egg1')
-
-    @property
-    def egg2(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/egg2')
-
-    @property
-    def egg3(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/egg3')
-
-    @property
-    def egg4(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/egg4')
-
-    @property
-    def egg_tex1(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/egg_tex1')
-
-    @property
-    def egg_tex2(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/egg_tex2')
-
-    @property
-    def egg_tex3(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/egg_tex3')
-
-    @property
-    def empty(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/empty')
-
-    @property
-    def file(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/file')
-
-    @property
-    def flag_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/flag_color')
-
-    @property
-    def folder(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/folder')
-
-    @property
-    def football_stadium(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/football_stadium')
-
-    @property
-    def football_stadium_preview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/football_stadium_preview'
-        )
-
-    @property
-    def frame_inset(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/frame_inset')
-
-    @property
-    def frosty_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/frosty_color')
-
-    @property
-    def frosty_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/frosty_color_mask')
-
-    @property
-    def frosty_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/frosty_icon')
-
-    @property
-    def frosty_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/frosty_icon_color_mask'
-        )
-
-    @property
-    def game_center_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/game_center_icon')
-
-    @property
-    def github_logo(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/github_logo')
-
-    @property
-    def gladiator_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/gladiator_color')
-
-    @property
-    def gladiator_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/gladiator_color_mask')
-
-    @property
-    def gladiator_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/gladiator_icon')
-
-    @property
-    def gladiator_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/gladiator_icon_color_mask'
-        )
-
-    @property
-    def gold_pass(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/gold_pass')
-
-    @property
-    def google_play_achievements_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/google_play_achievements_icon'
-        )
-
-    @property
-    def google_play_games_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/google_play_games_icon'
-        )
-
-    @property
-    def google_play_leaderboards_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/google_play_leaderboards_icon'
-        )
-
-    @property
-    def google_plus_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/google_plus_icon')
-
-    @property
-    def google_plus_sign_in_button(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/google_plus_sign_in_button'
-        )
-
-    @property
-    def graphics_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/graphics_icon')
-
-    @property
-    def heart(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/heart')
-
-    @property
-    def hockey_stadium(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/hockey_stadium')
-
-    @property
-    def hockey_stadium_preview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/hockey_stadium_preview'
-        )
-
-    @property
-    def icon_onslaught(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/icon_onslaught')
-
-    @property
-    def icon_runaround(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/icon_runaround')
-
-    @property
-    def impact_bomb_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/impact_bomb_color')
-
-    @property
-    def impact_bomb_color_lit(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/impact_bomb_color_lit'
-        )
-
-    @property
-    def inventory_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/inventory_icon')
-
-    @property
-    def jack_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/jack_color')
-
-    @property
-    def jack_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/jack_color_mask')
-
-    @property
-    def jack_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/jack_icon')
-
-    @property
-    def jack_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/jack_icon_color_mask')
-
-    @property
-    def jumpsuit_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/jumpsuit_color')
-
-    @property
-    def jumpsuit_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/jumpsuit_color_mask')
-
-    @property
-    def jumpsuit_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/jumpsuit_icon')
-
-    @property
-    def jumpsuit_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/jumpsuit_icon_color_mask'
-        )
-
-    @property
-    def kronk(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/kronk')
-
-    @property
-    def kronk_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/kronk_color_mask')
-
-    @property
-    def kronk_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/kronk_icon')
-
-    @property
-    def kronk_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/kronk_icon_color_mask'
-        )
-
-    @property
-    def lake_frigid(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/lake_frigid')
-
-    @property
-    def lake_frigid_preview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/lake_frigid_preview')
-
-    @property
-    def lake_frigid_reflections(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/lake_frigid_reflections'
-        )
-
-    @property
-    def land_mine(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/land_mine')
-
-    @property
-    def land_mine_lit(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/land_mine_lit')
-
-    @property
-    def leaderboards_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/leaderboards_icon')
-
-    @property
-    def left_button(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/left_button')
-
-    @property
-    def level_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/level_icon')
-
-    @property
-    def lock(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/lock')
-
-    @property
-    def log_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/log_icon')
-
-    @property
-    def logo(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/logo')
-
-    @property
-    def logo_easter(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/logo_easter')
-
-    @property
-    def map_preview_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/map_preview_mask')
-
-    @property
-    def medal_bronze(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/medal_bronze')
-
-    @property
-    def medal_complete(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/medal_complete')
-
-    @property
-    def medal_gold(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/medal_gold')
-
-    @property
-    def medal_silver(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/medal_silver')
-
-    @property
-    def mel_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/mel_color')
-
-    @property
-    def mel_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/mel_color_mask')
-
-    @property
-    def mel_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/mel_icon')
-
-    @property
-    def mel_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/mel_icon_color_mask')
-
-    @property
-    def menu_bg(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/menu_bg')
-
-    @property
-    def menu_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/menu_icon')
-
-    @property
-    def merch(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/merch')
-
-    @property
-    def meter(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/meter')
-
-    @property
-    def monkey_face_level_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/monkey_face_level_color'
-        )
-
-    @property
-    def monkey_face_preview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/monkey_face_preview')
-
-    @property
-    def multiplayer_examples(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/multiplayer_examples')
-
-    @property
-    def nature_background_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/nature_background_color'
-        )
-
-    @property
-    def neo_spaz_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/neo_spaz_color')
-
-    @property
-    def neo_spaz_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/neo_spaz_color_mask')
-
-    @property
-    def neo_spaz_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/neo_spaz_icon')
-
-    @property
-    def neo_spaz_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/neo_spaz_icon_color_mask'
-        )
-
-    @property
-    def next_level_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/next_level_icon')
-
-    @property
-    def ninja_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ninja_color')
-
-    @property
-    def ninja_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ninja_color_mask')
-
-    @property
-    def ninja_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ninja_icon')
-
-    @property
-    def ninja_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/ninja_icon_color_mask'
-        )
-
-    @property
-    def null(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/null')
-
-    @property
-    def old_lady_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/old_lady_color')
-
-    @property
-    def old_lady_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/old_lady_color_mask')
-
-    @property
-    def old_lady_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/old_lady_icon')
-
-    @property
-    def old_lady_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/old_lady_icon_color_mask'
-        )
-
-    @property
-    def opera_singer_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/opera_singer_color')
-
-    @property
-    def opera_singer_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/opera_singer_color_mask'
-        )
-
-    @property
-    def opera_singer_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/opera_singer_icon')
-
-    @property
-    def opera_singer_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/opera_singer_icon_color_mask'
-        )
-
-    @property
-    def ouya_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ouya_icon')
-
-    @property
-    def ouya_obutton(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ouya_obutton')
-
-    @property
-    def ouya_ubutton(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ouya_ubutton')
-
-    @property
-    def ouya_ybutton(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ouya_ybutton')
-
-    @property
-    def penguin_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/penguin_color')
-
-    @property
-    def penguin_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/penguin_color_mask')
-
-    @property
-    def penguin_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/penguin_icon')
-
-    @property
-    def penguin_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/penguin_icon_color_mask'
-        )
-
-    @property
-    def pixie_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/pixie_color')
-
-    @property
-    def pixie_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/pixie_color_mask')
-
-    @property
-    def pixie_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/pixie_icon')
-
-    @property
-    def pixie_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/pixie_icon_color_mask'
-        )
-
-    @property
-    def player_lineup(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/player_lineup')
-
-    @property
-    def plus_button(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/plus_button')
-
-    @property
-    def powerup_bomb(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/powerup_bomb')
-
-    @property
-    def powerup_curse(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/powerup_curse')
-
-    @property
-    def powerup_health(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/powerup_health')
-
-    @property
-    def powerup_ice_bombs(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/powerup_ice_bombs')
-
-    @property
-    def powerup_impact_bombs(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/powerup_impact_bombs')
-
-    @property
-    def powerup_land_mines(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/powerup_land_mines')
-
-    @property
-    def powerup_punch(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/powerup_punch')
-
-    @property
-    def powerup_shield(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/powerup_shield')
-
-    @property
-    def powerup_speed(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/powerup_speed')
-
-    @property
-    def powerup_sticky_bombs(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/powerup_sticky_bombs')
-
-    @property
-    def puck_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/puck_color')
-
-    @property
-    def quote_bubble(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/quote_bubble')
-
-    @property
-    def rampage_bgcolor(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/rampage_bgcolor')
-
-    @property
-    def rampage_bgcolor2(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/rampage_bgcolor2')
-
-    @property
-    def rampage_level_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/rampage_level_color')
-
-    @property
-    def rampage_preview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/rampage_preview')
-
-    @property
-    def replay_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/replay_icon')
-
-    @property
-    def right_button(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/right_button')
-
-    @property
-    def robot_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/robot_color')
-
-    @property
-    def robot_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/robot_color_mask')
-
-    @property
-    def robot_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/robot_icon')
-
-    @property
-    def robot_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/robot_icon_color_mask'
-        )
-
-    @property
-    def roundabout_level_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/roundabout_level_color'
-        )
-
-    @property
-    def roundabout_preview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/roundabout_preview')
-
-    @property
-    def santa_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/santa_color')
-
-    @property
-    def santa_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/santa_color_mask')
-
-    @property
-    def santa_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/santa_icon')
-
-    @property
-    def santa_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/santa_icon_color_mask'
-        )
-
-    @property
-    def settings_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/settings_icon')
-
-    @property
-    def slash(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/slash')
-
-    @property
-    def star(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/star')
-
-    @property
-    def step_right_up_level_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/step_right_up_level_color'
-        )
-
-    @property
-    def step_right_up_preview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/step_right_up_preview'
-        )
-
-    @property
-    def store_character(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/store_character')
-
-    @property
-    def store_character_easter(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/store_character_easter'
-        )
-
-    @property
-    def store_character_xmas(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/store_character_xmas')
-
-    @property
-    def store_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/store_icon')
-
-    @property
-    def superhero_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/superhero_color')
-
-    @property
-    def superhero_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/superhero_color_mask')
-
-    @property
-    def superhero_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/superhero_icon')
-
-    @property
-    def superhero_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/superhero_icon_color_mask'
-        )
-
-    @property
-    def the_pad_level_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/the_pad_level_color')
-
-    @property
-    def the_pad_preview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/the_pad_preview')
-
-    @property
-    def ticket_roll(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ticket_roll')
-
-    @property
-    def ticket_roll_big(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ticket_roll_big')
-
-    @property
-    def ticket_rolls(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ticket_rolls')
-
-    @property
-    def tickets(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/tickets')
-
-    @property
-    def tickets_more(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/tickets_more')
-
-    @property
-    def tickets_purple(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/tickets_purple')
-
-    @property
-    def tip_top_bgcolor(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/tip_top_bgcolor')
-
-    @property
-    def tip_top_level_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/tip_top_level_color')
-
-    @property
-    def tip_top_preview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/tip_top_preview')
-
-    @property
-    def tnt(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/tnt')
-
-    @property
-    def tokens1(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/tokens1')
-
-    @property
-    def tokens2(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/tokens2')
-
-    @property
-    def tokens3(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/tokens3')
-
-    @property
-    def tokens4(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/tokens4')
-
-    @property
-    def tower_dlevel_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/tower_dlevel_color')
-
-    @property
-    def tower_dpreview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/tower_dpreview')
-
-    @property
-    def trees_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/trees_color')
-
-    @property
-    def trophy(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/trophy')
-
-    @property
-    def tv(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/tv')
-
-    @property
-    def up_button(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/up_button')
-
-    @property
-    def vr_fill_mound(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/vr_fill_mound')
-
-    @property
-    def warrior_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/warrior_color')
-
-    @property
-    def warrior_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/warrior_color_mask')
-
-    @property
-    def warrior_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/warrior_icon')
-
-    @property
-    def warrior_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/warrior_icon_color_mask'
-        )
-
-    @property
-    def window_bottom_cap(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/window_bottom_cap')
-
-    @property
-    def witch_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/witch_color')
-
-    @property
-    def witch_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/witch_color_mask')
-
-    @property
-    def witch_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/witch_icon')
-
-    @property
-    def witch_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/witch_icon_color_mask'
-        )
-
-    @property
-    def wizard_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/wizard_color')
-
-    @property
-    def wizard_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/wizard_color_mask')
-
-    @property
-    def wizard_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/wizard_icon')
-
-    @property
-    def wizard_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/wizard_icon_color_mask'
-        )
-
-    @property
-    def wrestler_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/wrestler_color')
-
-    @property
-    def wrestler_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/wrestler_color_mask')
-
-    @property
-    def wrestler_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/wrestler_icon')
-
-    @property
-    def wrestler_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/wrestler_icon_color_mask'
-        )
-
-    @property
-    def zig_zag_level_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/zig_zag_level_color')
-
-    @property
-    def zigzag_preview(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/zigzag_preview')
-
-    @property
-    def zoe_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/zoe_color')
-
-    @property
-    def zoe_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/zoe_color_mask')
-
-    @property
-    def zoe_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/zoe_icon')
-
-    @property
-    def zoe_icon_color_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/zoe_icon_color_mask')
-
-
-textures = _Textures()
+_TREE = {
+    'audio': {
+        'achievement': 's',
+        'action_hero1': 's',
+        'action_hero2': 's',
+        'action_hero3': 's',
+        'action_hero4': 's',
+        'action_hero_death': 's',
+        'action_hero_fall': 's',
+        'action_hero_hit1': 's',
+        'action_hero_hit2': 's',
+        'activate_beep': 's',
+        'agent1': 's',
+        'agent2': 's',
+        'agent3': 's',
+        'agent4': 's',
+        'agent_death': 's',
+        'agent_fall': 's',
+        'agent_hit1': 's',
+        'agent_hit2': 's',
+        'alarm': 's',
+        'ali1': 's',
+        'ali2': 's',
+        'ali3': 's',
+        'ali4': 's',
+        'ali_death': 's',
+        'ali_fall': 's',
+        'ali_hit1': 's',
+        'ali_hit2': 's',
+        'alien1': 's',
+        'alien2': 's',
+        'alien3': 's',
+        'alien4': 's',
+        'alien_death': 's',
+        'alien_fall': 's',
+        'alien_hit1': 's',
+        'alien_hit2': 's',
+        'announce_eight': 's',
+        'announce_five': 's',
+        'announce_four': 's',
+        'announce_nine': 's',
+        'announce_one': 's',
+        'announce_seven': 's',
+        'announce_six': 's',
+        'announce_ten': 's',
+        'announce_three': 's',
+        'announce_two': 's',
+        'assassin1': 's',
+        'assassin2': 's',
+        'assassin3': 's',
+        'assassin4': 's',
+        'assassin_death': 's',
+        'assassin_fall': 's',
+        'assassin_hit1': 's',
+        'assassin_hit2': 's',
+        'aww': 's',
+        'bear1': 's',
+        'bear2': 's',
+        'bear3': 's',
+        'bear4': 's',
+        'bear_death': 's',
+        'bear_fall': 's',
+        'bear_hit1': 's',
+        'bear_hit2': 's',
+        'bell_high': 's',
+        'bell_low': 's',
+        'bell_med': 's',
+        'big_impact': 's',
+        'big_impact2': 's',
+        'block': 's',
+        'bomb_drop01': 's',
+        'bomb_drop02': 's',
+        'bomb_roll01': 's',
+        'bones1': 's',
+        'bones2': 's',
+        'bones3': 's',
+        'bones_death': 's',
+        'bones_fall': 's',
+        'boo': 's',
+        'box_drop': 's',
+        'boxing_bell': 's',
+        'bunny1': 's',
+        'bunny2': 's',
+        'bunny3': 's',
+        'bunny4': 's',
+        'bunny_death': 's',
+        'bunny_fall': 's',
+        'bunny_hit1': 's',
+        'bunny_hit2': 's',
+        'bunny_jump': 's',
+        'cash_register2': 's',
+        'char_select_music': 's',
+        'cheer': 's',
+        'cork_pop2': 's',
+        'cowboy1': 's',
+        'cowboy2': 's',
+        'cowboy3': 's',
+        'cowboy4': 's',
+        'cowboy_death': 's',
+        'cowboy_fall': 's',
+        'cowboy_hit1': 's',
+        'cowboy_hit2': 's',
+        'crowd_chant': 's',
+        'cyborg1': 's',
+        'cyborg2': 's',
+        'cyborg3': 's',
+        'cyborg4': 's',
+        'cyborg_death': 's',
+        'cyborg_fall': 's',
+        'cyborg_hit1': 's',
+        'cyborg_hit2': 's',
+        'cymbal': 's',
+        'debris_fall': 's',
+        'deek2': 's',
+        'ding_small': 's',
+        'ding_small_high': 's',
+        'dripity': 's',
+        'drum_roll': 's',
+        'drum_roll_short': 's',
+        'explosion01': 's',
+        'explosion02': 's',
+        'explosion03': 's',
+        'explosion04': 's',
+        'explosion05': 's',
+        'fanfare': 's',
+        'flag_catcher_music': 's',
+        'flying_music': 's',
+        'foghorn': 's',
+        'foot_impact01': 's',
+        'foot_impact02': 's',
+        'foot_impact03': 's',
+        'forward_march_music': 's',
+        'freeze': 's',
+        'frosty01': 's',
+        'frosty02': 's',
+        'frosty03': 's',
+        'frosty04': 's',
+        'frosty05': 's',
+        'frosty_death': 's',
+        'frosty_fall': 's',
+        'frosty_hit01': 's',
+        'frosty_hit02': 's',
+        'frosty_hit03': 's',
+        'fuse01': 's',
+        'gasp': 's',
+        'gladiator1': 's',
+        'gladiator2': 's',
+        'gladiator3': 's',
+        'gladiator4': 's',
+        'gladiator_death': 's',
+        'gladiator_fall': 's',
+        'gladiator_hit1': 's',
+        'gladiator_hit2': 's',
+        'gong': 's',
+        'grand_romp_music': 's',
+        'gravel_skid': 's',
+        'health_powerup': 's',
+        'hiss': 's',
+        'impact_hard': 's',
+        'impact_hard2': 's',
+        'impact_hard3': 's',
+        'impact_medium': 's',
+        'impact_medium2': 's',
+        'jack01': 's',
+        'jack02': 's',
+        'jack03': 's',
+        'jack04': 's',
+        'jack05': 's',
+        'jack06': 's',
+        'jack_death01': 's',
+        'jack_fall01': 's',
+        'jack_hit01': 's',
+        'jack_hit02': 's',
+        'jack_hit03': 's',
+        'jack_hit04': 's',
+        'jack_hit05': 's',
+        'jack_hit06': 's',
+        'jack_hit07': 's',
+        'jumpsuit1': 's',
+        'jumpsuit2': 's',
+        'jumpsuit3': 's',
+        'jumpsuit4': 's',
+        'jumpsuit_death': 's',
+        'jumpsuit_fall': 's',
+        'jumpsuit_hit1': 's',
+        'jumpsuit_hit2': 's',
+        'kronk1': 's',
+        'kronk10': 's',
+        'kronk2': 's',
+        'kronk3': 's',
+        'kronk4': 's',
+        'kronk5': 's',
+        'kronk6': 's',
+        'kronk7': 's',
+        'kronk8': 's',
+        'kronk9': 's',
+        'kronk_death': 's',
+        'kronk_fall': 's',
+        'laser': 's',
+        'laser_reverse': 's',
+        'mel01': 's',
+        'mel02': 's',
+        'mel03': 's',
+        'mel04': 's',
+        'mel05': 's',
+        'mel06': 's',
+        'mel07': 's',
+        'mel08': 's',
+        'mel09': 's',
+        'mel10': 's',
+        'mel_death01': 's',
+        'mel_fall01': 's',
+        'menu_music': 's',
+        'metal_hit': 's',
+        'metal_skid': 's',
+        'nice': 's',
+        'ninja_attack1': 's',
+        'ninja_attack2': 's',
+        'ninja_attack3': 's',
+        'ninja_attack4': 's',
+        'ninja_attack5': 's',
+        'ninja_attack6': 's',
+        'ninja_attack7': 's',
+        'ninja_death1': 's',
+        'ninja_fall1': 's',
+        'ninja_hit1': 's',
+        'ninja_hit2': 's',
+        'ninja_hit3': 's',
+        'ninja_hit4': 's',
+        'ninja_hit5': 's',
+        'ninja_hit6': 's',
+        'ninja_hit7': 's',
+        'ninja_hit8': 's',
+        'old_lady1': 's',
+        'old_lady2': 's',
+        'old_lady3': 's',
+        'old_lady4': 's',
+        'old_lady_death': 's',
+        'old_lady_fall': 's',
+        'old_lady_hit1': 's',
+        'old_lady_hit2': 's',
+        'ooh': 's',
+        'opera_singer1': 's',
+        'opera_singer2': 's',
+        'opera_singer3': 's',
+        'opera_singer4': 's',
+        'opera_singer_death': 's',
+        'opera_singer_fall': 's',
+        'opera_singer_hit1': 's',
+        'opera_singer_hit2': 's',
+        'orchestra_hit': 's',
+        'orchestra_hit2': 's',
+        'orchestra_hit3': 's',
+        'orchestra_hit4': 's',
+        'orchestra_hit_big1': 's',
+        'orchestra_hit_big2': 's',
+        'penguin1': 's',
+        'penguin2': 's',
+        'penguin3': 's',
+        'penguin4': 's',
+        'penguin_death': 's',
+        'penguin_fall': 's',
+        'penguin_hit1': 's',
+        'penguin_hit2': 's',
+        'pixie1': 's',
+        'pixie2': 's',
+        'pixie3': 's',
+        'pixie4': 's',
+        'pixie_death': 's',
+        'pixie_fall': 's',
+        'pixie_hit1': 's',
+        'pixie_hit2': 's',
+        'player_death': 's',
+        'player_left': 's',
+        'pop01': 's',
+        'powerup01': 's',
+        'punch_strong01': 's',
+        'punch_strong02': 's',
+        'punch_swish': 's',
+        'punch_weak01': 's',
+        'race_beep1': 's',
+        'race_beep2': 's',
+        'ref_whistle': 's',
+        'rev_up': 's',
+        'robot1': 's',
+        'robot2': 's',
+        'robot3': 's',
+        'robot4': 's',
+        'robot_death': 's',
+        'robot_fall': 's',
+        'robot_hit1': 's',
+        'robot_hit2': 's',
+        'run_away_music': 's',
+        'santa01': 's',
+        'santa02': 's',
+        'santa03': 's',
+        'santa04': 's',
+        'santa05': 's',
+        'santa_death': 's',
+        'santa_fall': 's',
+        'santa_hit01': 's',
+        'santa_hit02': 's',
+        'santa_hit03': 's',
+        'santa_hit04': 's',
+        'scamper01': 's',
+        'scary_music': 's',
+        'score': 's',
+        'score_hit01': 's',
+        'score_hit02': 's',
+        'scores_epic_music': 's',
+        'shatter': 's',
+        'shield_down': 's',
+        'shield_hit': 's',
+        'shield_up': 's',
+        'skid01': 's',
+        'slow_epic_music': 's',
+        'spawn': 's',
+        'spaz_attack01': 's',
+        'spaz_attack02': 's',
+        'spaz_attack03': 's',
+        'spaz_attack04': 's',
+        'spaz_death01': 's',
+        'spaz_eff': 's',
+        'spaz_fall01': 's',
+        'spaz_impact01': 's',
+        'spaz_impact02': 's',
+        'spaz_impact03': 's',
+        'spaz_impact04': 's',
+        'spaz_jump01': 's',
+        'spaz_jump02': 's',
+        'spaz_jump03': 's',
+        'spaz_jump04': 's',
+        'spaz_ow': 's',
+        'spaz_pickup01': 's',
+        'spaz_scream01': 's',
+        'splatter': 's',
+        'sports_music': 's',
+        'sticky_impact': 's',
+        'super_punch': 's',
+        'superhero1': 's',
+        'superhero2': 's',
+        'superhero3': 's',
+        'superhero4': 's',
+        'superhero_death': 's',
+        'superhero_fall': 's',
+        'superhero_hit1': 's',
+        'superhero_hit2': 's',
+        'survival_music': 's',
+        'swip': 's',
+        'swip2': 's',
+        'techno_hit01': 's',
+        'tick': 's',
+        'ticking': 's',
+        'to_the_death_music': 's',
+        'trash_rummage': 's',
+        'victory_music': 's',
+        'warn_beep': 's',
+        'warn_beeps': 's',
+        'warrior1': 's',
+        'warrior2': 's',
+        'warrior3': 's',
+        'warrior4': 's',
+        'warrior_death': 's',
+        'warrior_fall': 's',
+        'warrior_hit1': 's',
+        'warrior_hit2': 's',
+        'when_johnny_comes_marching_home_music': 's',
+        'witch1': 's',
+        'witch2': 's',
+        'witch3': 's',
+        'witch4': 's',
+        'witch_death': 's',
+        'witch_fall': 's',
+        'witch_hit1': 's',
+        'witch_hit2': 's',
+        'wizard1': 's',
+        'wizard2': 's',
+        'wizard3': 's',
+        'wizard4': 's',
+        'wizard_death': 's',
+        'wizard_fall': 's',
+        'wizard_hit1': 's',
+        'wizard_hit2': 's',
+        'woo': 's',
+        'woo2': 's',
+        'woo3': 's',
+        'wood_debris_fall': 's',
+        'wow': 's',
+        'wrestler1': 's',
+        'wrestler2': 's',
+        'wrestler3': 's',
+        'wrestler4': 's',
+        'wrestler_death': 's',
+        'wrestler_fall': 's',
+        'wrestler_hit1': 's',
+        'wrestler_hit2': 's',
+        'yeah': 's',
+        'zoe_attack01': 's',
+        'zoe_attack02': 's',
+        'zoe_attack03': 's',
+        'zoe_attack04': 's',
+        'zoe_death01': 's',
+        'zoe_eff': 's',
+        'zoe_fall01': 's',
+        'zoe_impact01': 's',
+        'zoe_impact02': 's',
+        'zoe_impact03': 's',
+        'zoe_impact04': 's',
+        'zoe_jump01': 's',
+        'zoe_jump02': 's',
+        'zoe_jump03': 's',
+        'zoe_ow': 's',
+        'zoe_pickup01': 's',
+        'zoe_scream01': 's',
+    },
+    'meshes': {
+        'achievement_outline': 'm',
+        'action_hero_fore_arm': 'm',
+        'action_hero_hand': 'm',
+        'action_hero_head': 'm',
+        'action_hero_lower_leg': 'm',
+        'action_hero_pelvis': 'm',
+        'action_hero_toes': 'm',
+        'action_hero_torso': 'm',
+        'action_hero_upper_arm': 'm',
+        'action_hero_upper_leg': 'm',
+        'agent_fore_arm': 'm',
+        'agent_hand': 'm',
+        'agent_head': 'm',
+        'agent_lower_leg': 'm',
+        'agent_pelvis': 'm',
+        'agent_toes': 'm',
+        'agent_torso': 'm',
+        'agent_upper_arm': 'm',
+        'agent_upper_leg': 'm',
+        'ali_fore_arm': 'm',
+        'ali_hand': 'm',
+        'ali_head': 'm',
+        'ali_lower_leg': 'm',
+        'ali_pelvis': 'm',
+        'ali_toes': 'm',
+        'ali_torso': 'm',
+        'ali_upper_arm': 'm',
+        'ali_upper_leg': 'm',
+        'alien_fore_arm': 'm',
+        'alien_hand': 'm',
+        'alien_head': 'm',
+        'alien_lower_leg': 'm',
+        'alien_pelvis': 'm',
+        'alien_toes': 'm',
+        'alien_torso': 'm',
+        'alien_upper_arm': 'm',
+        'alien_upper_leg': 'm',
+        'always_land_bg': 'm',
+        'always_land_level': 'm',
+        'always_land_level_bottom': 'm',
+        'always_land_level_collide': 'c',
+        'always_land_vrfill_mound': 'm',
+        'angry_computer_transparent': 'm',
+        'assassin_fore_arm': 'm',
+        'assassin_hand': 'm',
+        'assassin_head': 'm',
+        'assassin_lower_leg': 'm',
+        'assassin_pelvis': 'm',
+        'assassin_toes': 'm',
+        'assassin_torso': 'm',
+        'assassin_upper_arm': 'm',
+        'assassin_upper_leg': 'm',
+        'bear_fore_arm': 'm',
+        'bear_hand': 'm',
+        'bear_head': 'm',
+        'bear_lower_leg': 'm',
+        'bear_pelvis': 'm',
+        'bear_toes': 'm',
+        'bear_torso': 'm',
+        'bear_upper_arm': 'm',
+        'bear_upper_leg': 'm',
+        'big_g': 'm',
+        'big_gbottom': 'm',
+        'big_gbumper': 'c',
+        'big_gcollide': 'c',
+        'bomb': 'm',
+        'bomb_sticky': 'm',
+        'bones_fore_arm': 'm',
+        'bones_hand': 'm',
+        'bones_head': 'm',
+        'bones_lower_leg': 'm',
+        'bones_pelvis': 'm',
+        'bones_toes': 'm',
+        'bones_torso': 'm',
+        'bones_upper_arm': 'm',
+        'bones_upper_leg': 'm',
+        'bridgit_level_bottom': 'm',
+        'bridgit_level_collide': 'c',
+        'bridgit_level_railing_collide': 'c',
+        'bridgit_level_top': 'm',
+        'bunny_fore_arm': 'm',
+        'bunny_hand': 'm',
+        'bunny_head': 'm',
+        'bunny_lower_leg': 'm',
+        'bunny_pelvis': 'm',
+        'bunny_toes': 'm',
+        'bunny_torso': 'm',
+        'bunny_upper_arm': 'm',
+        'bunny_upper_leg': 'm',
+        'button_null': 'm',
+        'courtyard_level': 'm',
+        'courtyard_level_bottom': 'm',
+        'courtyard_level_collide': 'c',
+        'courtyard_player_wall': 'c',
+        'cowboy_fore_arm': 'm',
+        'cowboy_hand': 'm',
+        'cowboy_head': 'm',
+        'cowboy_lower_leg': 'm',
+        'cowboy_pelvis': 'm',
+        'cowboy_toes': 'm',
+        'cowboy_torso': 'm',
+        'cowboy_upper_arm': 'm',
+        'cowboy_upper_leg': 'm',
+        'crag_castle_level': 'm',
+        'crag_castle_level_bottom': 'm',
+        'crag_castle_level_bumper': 'c',
+        'crag_castle_level_collide': 'c',
+        'crag_castle_vrfill_mound': 'm',
+        'currency_meter': 'm',
+        'currency_plus_button': 'm',
+        'cyborg_fore_arm': 'm',
+        'cyborg_hand': 'm',
+        'cyborg_head': 'm',
+        'cyborg_lower_leg': 'm',
+        'cyborg_pelvis': 'm',
+        'cyborg_toes': 'm',
+        'cyborg_torso': 'm',
+        'cyborg_upper_arm': 'm',
+        'cyborg_upper_leg': 'm',
+        'doom_shroom_bg': 'm',
+        'doom_shroom_level': 'm',
+        'doom_shroom_level_collide': 'c',
+        'doom_shroom_stem': 'm',
+        'doom_shroom_stem_collide': 'c',
+        'doom_shroom_vrfill': 'm',
+        'egg': 'm',
+        'football_stadium': 'm',
+        'football_stadium_collide': 'c',
+        'football_stadium_vrfill': 'm',
+        'frame_inset': 'm',
+        'frosty_fore_arm': 'm',
+        'frosty_hand': 'm',
+        'frosty_head': 'm',
+        'frosty_lower_leg': 'm',
+        'frosty_pelvis': 'm',
+        'frosty_toes': 'm',
+        'frosty_torso': 'm',
+        'frosty_upper_arm': 'm',
+        'frosty_upper_leg': 'm',
+        'gladiator_fore_arm': 'm',
+        'gladiator_hand': 'm',
+        'gladiator_head': 'm',
+        'gladiator_lower_leg': 'm',
+        'gladiator_pelvis': 'm',
+        'gladiator_toes': 'm',
+        'gladiator_torso': 'm',
+        'gladiator_upper_arm': 'm',
+        'gladiator_upper_leg': 'm',
+        'heart_opaque': 'm',
+        'heart_transparent': 'm',
+        'hockey_stadium_collide': 'c',
+        'hockey_stadium_inner': 'm',
+        'hockey_stadium_outer': 'm',
+        'hockey_stadium_stands': 'm',
+        'image2x1_vertical': 'm',
+        'impact_bomb': 'm',
+        'jack_fore_arm': 'm',
+        'jack_hand': 'm',
+        'jack_head': 'm',
+        'jack_lower_leg': 'm',
+        'jack_toes': 'm',
+        'jack_torso': 'm',
+        'jack_upper_arm': 'm',
+        'jack_upper_leg': 'm',
+        'jumpsuit_fore_arm': 'm',
+        'jumpsuit_hand': 'm',
+        'jumpsuit_head': 'm',
+        'jumpsuit_lower_leg': 'm',
+        'jumpsuit_pelvis': 'm',
+        'jumpsuit_toes': 'm',
+        'jumpsuit_torso': 'm',
+        'jumpsuit_upper_arm': 'm',
+        'jumpsuit_upper_leg': 'm',
+        'kronk_fore_arm': 'm',
+        'kronk_hand': 'm',
+        'kronk_head': 'm',
+        'kronk_lower_leg': 'm',
+        'kronk_pelvis': 'm',
+        'kronk_toes': 'm',
+        'kronk_torso': 'm',
+        'kronk_upper_arm': 'm',
+        'kronk_upper_leg': 'm',
+        'lake_frigid': 'm',
+        'lake_frigid_collide': 'c',
+        'lake_frigid_reflections': 'm',
+        'lake_frigid_top': 'm',
+        'lake_frigid_vrfill': 'm',
+        'land_mine': 'm',
+        'level_select_button_opaque': 'm',
+        'level_select_button_transparent': 'm',
+        'logo': 'm',
+        'logo_transparent': 'm',
+        'mel_fore_arm': 'm',
+        'mel_hand': 'm',
+        'mel_head': 'm',
+        'mel_lower_leg': 'm',
+        'mel_toes': 'm',
+        'mel_torso': 'm',
+        'mel_upper_arm': 'm',
+        'mel_upper_leg': 'm',
+        'meter_transparent': 'm',
+        'monkey_face_level': 'm',
+        'monkey_face_level_bottom': 'm',
+        'monkey_face_level_bumper': 'c',
+        'monkey_face_level_collide': 'c',
+        'nature_background': 'm',
+        'nature_background_collide': 'c',
+        'nature_background_vrfill': 'm',
+        'neo_spaz_fore_arm': 'm',
+        'neo_spaz_hand': 'm',
+        'neo_spaz_head': 'm',
+        'neo_spaz_lower_leg': 'm',
+        'neo_spaz_pelvis': 'm',
+        'neo_spaz_toes': 'm',
+        'neo_spaz_torso': 'm',
+        'neo_spaz_upper_arm': 'm',
+        'neo_spaz_upper_leg': 'm',
+        'ninja_fore_arm': 'm',
+        'ninja_hand': 'm',
+        'ninja_head': 'm',
+        'ninja_lower_leg': 'm',
+        'ninja_pelvis': 'm',
+        'ninja_toes': 'm',
+        'ninja_torso': 'm',
+        'ninja_upper_arm': 'm',
+        'ninja_upper_leg': 'm',
+        'old_lady_fore_arm': 'm',
+        'old_lady_hand': 'm',
+        'old_lady_head': 'm',
+        'old_lady_lower_leg': 'm',
+        'old_lady_pelvis': 'm',
+        'old_lady_toes': 'm',
+        'old_lady_torso': 'm',
+        'old_lady_upper_arm': 'm',
+        'old_lady_upper_leg': 'm',
+        'opera_singer_fore_arm': 'm',
+        'opera_singer_hand': 'm',
+        'opera_singer_head': 'm',
+        'opera_singer_lower_leg': 'm',
+        'opera_singer_pelvis': 'm',
+        'opera_singer_toes': 'm',
+        'opera_singer_torso': 'm',
+        'opera_singer_upper_arm': 'm',
+        'opera_singer_upper_leg': 'm',
+        'penguin_fore_arm': 'm',
+        'penguin_hand': 'm',
+        'penguin_head': 'm',
+        'penguin_lower_leg': 'm',
+        'penguin_pelvis': 'm',
+        'penguin_toes': 'm',
+        'penguin_torso': 'm',
+        'penguin_upper_arm': 'm',
+        'penguin_upper_leg': 'm',
+        'pixie_fore_arm': 'm',
+        'pixie_hand': 'm',
+        'pixie_head': 'm',
+        'pixie_lower_leg': 'm',
+        'pixie_pelvis': 'm',
+        'pixie_toes': 'm',
+        'pixie_torso': 'm',
+        'pixie_upper_arm': 'm',
+        'pixie_upper_leg': 'm',
+        'plastic_eyes_transparent': 'm',
+        'player_lineup1_transparent': 'm',
+        'player_lineup2_transparent': 'm',
+        'player_lineup3_transparent': 'm',
+        'player_lineup4_transparent': 'm',
+        'powerup': 'm',
+        'powerup_simple': 'm',
+        'puck': 'm',
+        'rampage_bg': 'm',
+        'rampage_bg2': 'm',
+        'rampage_bumper': 'c',
+        'rampage_level': 'm',
+        'rampage_level_bottom': 'm',
+        'rampage_level_collide': 'c',
+        'rampage_vrfill': 'm',
+        'robot_fore_arm': 'm',
+        'robot_hand': 'm',
+        'robot_head': 'm',
+        'robot_lower_leg': 'm',
+        'robot_pelvis': 'm',
+        'robot_toes': 'm',
+        'robot_torso': 'm',
+        'robot_upper_arm': 'm',
+        'robot_upper_leg': 'm',
+        'roundabout_level': 'm',
+        'roundabout_level_bottom': 'm',
+        'roundabout_level_bumper': 'c',
+        'roundabout_level_collide': 'c',
+        'running_shoes': 'm',
+        'santa_fore_arm': 'm',
+        'santa_hand': 'm',
+        'santa_head': 'm',
+        'santa_lower_leg': 'm',
+        'santa_toes': 'm',
+        'santa_torso': 'm',
+        'santa_upper_arm': 'm',
+        'santa_upper_leg': 'm',
+        'scroll_widget_short': 'm',
+        'step_right_up_level': 'm',
+        'step_right_up_level_bottom': 'm',
+        'step_right_up_level_collide': 'c',
+        'step_right_up_vrfill_mound': 'm',
+        'superhero_fore_arm': 'm',
+        'superhero_hand': 'm',
+        'superhero_head': 'm',
+        'superhero_lower_leg': 'm',
+        'superhero_pelvis': 'm',
+        'superhero_toes': 'm',
+        'superhero_torso': 'm',
+        'superhero_upper_arm': 'm',
+        'superhero_upper_leg': 'm',
+        'the_pad_bg': 'm',
+        'the_pad_bgsmall': 'm',
+        'the_pad_level': 'm',
+        'the_pad_level_bottom': 'm',
+        'the_pad_level_bumper': 'c',
+        'the_pad_level_collide': 'c',
+        'the_pad_vrfill_bottom': 'm',
+        'the_pad_vrfill_mound': 'm',
+        'the_pad_vrfill_top': 'm',
+        'tip_top_bg': 'm',
+        'tip_top_level': 'm',
+        'tip_top_level_bottom': 'm',
+        'tip_top_level_bumper': 'c',
+        'tip_top_level_collide': 'c',
+        'tnt': 'm',
+        'toolbar_backing': 'm',
+        'toolbar_backing_bottom': 'm',
+        'toolbar_backing_bottom2': 'm',
+        'toolbar_backing_opaque': 'm',
+        'toolbar_backing_top': 'm',
+        'toolbar_backing_top2': 'm',
+        'toolbar_backing_transparent': 'm',
+        'tower_dlevel': 'm',
+        'tower_dlevel_bottom': 'm',
+        'tower_dlevel_collide': 'c',
+        'tower_dplayer_wall': 'c',
+        'trees': 'm',
+        'warrior_fore_arm': 'm',
+        'warrior_hand': 'm',
+        'warrior_head': 'm',
+        'warrior_lower_leg': 'm',
+        'warrior_pelvis': 'm',
+        'warrior_toes': 'm',
+        'warrior_torso': 'm',
+        'warrior_upper_arm': 'm',
+        'warrior_upper_leg': 'm',
+        'window_bgblotch': 'm',
+        'witch_fore_arm': 'm',
+        'witch_hand': 'm',
+        'witch_head': 'm',
+        'witch_lower_leg': 'm',
+        'witch_pelvis': 'm',
+        'witch_toes': 'm',
+        'witch_torso': 'm',
+        'witch_upper_arm': 'm',
+        'witch_upper_leg': 'm',
+        'wizard_fore_arm': 'm',
+        'wizard_hand': 'm',
+        'wizard_head': 'm',
+        'wizard_lower_leg': 'm',
+        'wizard_pelvis': 'm',
+        'wizard_toes': 'm',
+        'wizard_torso': 'm',
+        'wizard_upper_arm': 'm',
+        'wizard_upper_leg': 'm',
+        'wrestler_fore_arm': 'm',
+        'wrestler_hand': 'm',
+        'wrestler_head': 'm',
+        'wrestler_lower_leg': 'm',
+        'wrestler_pelvis': 'm',
+        'wrestler_toes': 'm',
+        'wrestler_torso': 'm',
+        'wrestler_upper_arm': 'm',
+        'wrestler_upper_leg': 'm',
+        'zig_zag_level': 'm',
+        'zig_zag_level_bottom': 'm',
+        'zig_zag_level_bumper': 'c',
+        'zig_zag_level_collide': 'c',
+        'zoe_fore_arm': 'm',
+        'zoe_hand': 'm',
+        'zoe_head': 'm',
+        'zoe_lower_leg': 'm',
+        'zoe_pelvis': 'm',
+        'zoe_toes': 'm',
+        'zoe_torso': 'm',
+        'zoe_upper_arm': 'm',
+        'zoe_upper_leg': 'm',
+    },
+    'textures': {
+        'achievement_boxer': 't',
+        'achievement_cross_hair': 't',
+        'achievement_dual_wielding': 't',
+        'achievement_empty': 't',
+        'achievement_flawless_victory': 't',
+        'achievement_football_shutout': 't',
+        'achievement_football_victory': 't',
+        'achievement_free_loader': 't',
+        'achievement_got_the_moves': 't',
+        'achievement_in_control': 't',
+        'achievement_medal_large': 't',
+        'achievement_medal_medium': 't',
+        'achievement_medal_small': 't',
+        'achievement_mine': 't',
+        'achievement_off_you_go': 't',
+        'achievement_onslaught': 't',
+        'achievement_outline': 't',
+        'achievement_runaround': 't',
+        'achievement_sharing_is_caring': 't',
+        'achievement_stayin_alive': 't',
+        'achievement_super_punch': 't',
+        'achievement_team_player': 't',
+        'achievement_tnt': 't',
+        'achievement_wall': 't',
+        'achievements_icon': 't',
+        'action_hero_color': 't',
+        'action_hero_color_mask': 't',
+        'action_hero_icon': 't',
+        'action_hero_icon_color_mask': 't',
+        'advanced_icon': 't',
+        'agent_color': 't',
+        'agent_color_mask': 't',
+        'agent_icon': 't',
+        'agent_icon_color_mask': 't',
+        'ali_color': 't',
+        'ali_color_mask': 't',
+        'ali_icon': 't',
+        'ali_icon_color_mask': 't',
+        'ali_splash': 't',
+        'alien_color': 't',
+        'alien_color_mask': 't',
+        'alien_icon': 't',
+        'alien_icon_color_mask': 't',
+        'always_land_bgcolor': 't',
+        'always_land_level_color': 't',
+        'always_land_preview': 't',
+        'analog_stick': 't',
+        'assassin_color': 't',
+        'assassin_color_mask': 't',
+        'assassin_icon': 't',
+        'assassin_icon_color_mask': 't',
+        'audio_icon': 't',
+        'bar': 't',
+        'bear_color': 't',
+        'bear_color_mask': 't',
+        'bear_icon': 't',
+        'bear_icon_color_mask': 't',
+        'bg': 't',
+        'big_g': 't',
+        'big_gpreview': 't',
+        'bomb_color': 't',
+        'bomb_color_ice': 't',
+        'bomb_sticky_color': 't',
+        'bones_color': 't',
+        'bones_color_mask': 't',
+        'bones_icon': 't',
+        'bones_icon_color_mask': 't',
+        'bridgit_level_color': 't',
+        'bridgit_preview': 't',
+        'bunny_color': 't',
+        'bunny_color_mask': 't',
+        'bunny_icon': 't',
+        'bunny_icon_color_mask': 't',
+        'button_bomb': 't',
+        'button_jump': 't',
+        'button_pick_up': 't',
+        'button_punch': 't',
+        'ch_title_char1': 't',
+        'ch_title_char2': 't',
+        'ch_title_char3': 't',
+        'ch_title_char4': 't',
+        'ch_title_char5': 't',
+        'chest_icon': 't',
+        'chest_icon_empty': 't',
+        'chest_icon_multi': 't',
+        'chest_icon_tint': 't',
+        'chest_open_icon': 't',
+        'chest_open_icon_tint': 't',
+        'circle_zig_zag': 't',
+        'clay_stroke': 't',
+        'coin': 't',
+        'controller_icon': 't',
+        'courtyard_level_color': 't',
+        'courtyard_preview': 't',
+        'cowboy_color': 't',
+        'cowboy_color_mask': 't',
+        'cowboy_icon': 't',
+        'cowboy_icon_color_mask': 't',
+        'crag_castle_level_color': 't',
+        'crag_castle_preview': 't',
+        'cross_out': 't',
+        'cross_out_mask': 't',
+        'cute_spaz': 't',
+        'cyborg_color': 't',
+        'cyborg_color_mask': 't',
+        'cyborg_icon': 't',
+        'cyborg_icon_color_mask': 't',
+        'discord_icon': 't',
+        'discord_logo': 't',
+        'discord_server': 't',
+        'doom_shroom_bgcolor': 't',
+        'doom_shroom_level_color': 't',
+        'doom_shroom_preview': 't',
+        'down_button': 't',
+        'egg1': 't',
+        'egg2': 't',
+        'egg3': 't',
+        'egg4': 't',
+        'egg_tex1': 't',
+        'egg_tex2': 't',
+        'egg_tex3': 't',
+        'empty': 't',
+        'file': 't',
+        'flag_color': 't',
+        'folder': 't',
+        'football_stadium': 't',
+        'football_stadium_preview': 't',
+        'frame_inset': 't',
+        'frosty_color': 't',
+        'frosty_color_mask': 't',
+        'frosty_icon': 't',
+        'frosty_icon_color_mask': 't',
+        'game_center_icon': 't',
+        'github_logo': 't',
+        'gladiator_color': 't',
+        'gladiator_color_mask': 't',
+        'gladiator_icon': 't',
+        'gladiator_icon_color_mask': 't',
+        'gold_pass': 't',
+        'google_play_achievements_icon': 't',
+        'google_play_games_icon': 't',
+        'google_play_leaderboards_icon': 't',
+        'google_plus_icon': 't',
+        'google_plus_sign_in_button': 't',
+        'graphics_icon': 't',
+        'heart': 't',
+        'hockey_stadium': 't',
+        'hockey_stadium_preview': 't',
+        'icon_onslaught': 't',
+        'icon_runaround': 't',
+        'impact_bomb_color': 't',
+        'impact_bomb_color_lit': 't',
+        'inventory_icon': 't',
+        'jack_color': 't',
+        'jack_color_mask': 't',
+        'jack_icon': 't',
+        'jack_icon_color_mask': 't',
+        'jumpsuit_color': 't',
+        'jumpsuit_color_mask': 't',
+        'jumpsuit_icon': 't',
+        'jumpsuit_icon_color_mask': 't',
+        'kronk': 't',
+        'kronk_color_mask': 't',
+        'kronk_icon': 't',
+        'kronk_icon_color_mask': 't',
+        'lake_frigid': 't',
+        'lake_frigid_preview': 't',
+        'lake_frigid_reflections': 't',
+        'land_mine': 't',
+        'land_mine_lit': 't',
+        'leaderboards_icon': 't',
+        'left_button': 't',
+        'level_icon': 't',
+        'lock': 't',
+        'log_icon': 't',
+        'logo': 't',
+        'logo_easter': 't',
+        'map_preview_mask': 't',
+        'medal_bronze': 't',
+        'medal_complete': 't',
+        'medal_gold': 't',
+        'medal_silver': 't',
+        'mel_color': 't',
+        'mel_color_mask': 't',
+        'mel_icon': 't',
+        'mel_icon_color_mask': 't',
+        'menu_bg': 't',
+        'menu_icon': 't',
+        'merch': 't',
+        'meter': 't',
+        'monkey_face_level_color': 't',
+        'monkey_face_preview': 't',
+        'multiplayer_examples': 't',
+        'nature_background_color': 't',
+        'neo_spaz_color': 't',
+        'neo_spaz_color_mask': 't',
+        'neo_spaz_icon': 't',
+        'neo_spaz_icon_color_mask': 't',
+        'next_level_icon': 't',
+        'ninja_color': 't',
+        'ninja_color_mask': 't',
+        'ninja_icon': 't',
+        'ninja_icon_color_mask': 't',
+        'null': 't',
+        'old_lady_color': 't',
+        'old_lady_color_mask': 't',
+        'old_lady_icon': 't',
+        'old_lady_icon_color_mask': 't',
+        'opera_singer_color': 't',
+        'opera_singer_color_mask': 't',
+        'opera_singer_icon': 't',
+        'opera_singer_icon_color_mask': 't',
+        'ouya_icon': 't',
+        'ouya_obutton': 't',
+        'ouya_ubutton': 't',
+        'ouya_ybutton': 't',
+        'penguin_color': 't',
+        'penguin_color_mask': 't',
+        'penguin_icon': 't',
+        'penguin_icon_color_mask': 't',
+        'pixie_color': 't',
+        'pixie_color_mask': 't',
+        'pixie_icon': 't',
+        'pixie_icon_color_mask': 't',
+        'player_lineup': 't',
+        'plus_button': 't',
+        'powerup_bomb': 't',
+        'powerup_curse': 't',
+        'powerup_health': 't',
+        'powerup_ice_bombs': 't',
+        'powerup_impact_bombs': 't',
+        'powerup_land_mines': 't',
+        'powerup_punch': 't',
+        'powerup_shield': 't',
+        'powerup_speed': 't',
+        'powerup_sticky_bombs': 't',
+        'puck_color': 't',
+        'quote_bubble': 't',
+        'rampage_bgcolor': 't',
+        'rampage_bgcolor2': 't',
+        'rampage_level_color': 't',
+        'rampage_preview': 't',
+        'replay_icon': 't',
+        'right_button': 't',
+        'robot_color': 't',
+        'robot_color_mask': 't',
+        'robot_icon': 't',
+        'robot_icon_color_mask': 't',
+        'roundabout_level_color': 't',
+        'roundabout_preview': 't',
+        'santa_color': 't',
+        'santa_color_mask': 't',
+        'santa_icon': 't',
+        'santa_icon_color_mask': 't',
+        'settings_icon': 't',
+        'slash': 't',
+        'star': 't',
+        'step_right_up_level_color': 't',
+        'step_right_up_preview': 't',
+        'store_character': 't',
+        'store_character_easter': 't',
+        'store_character_xmas': 't',
+        'store_icon': 't',
+        'superhero_color': 't',
+        'superhero_color_mask': 't',
+        'superhero_icon': 't',
+        'superhero_icon_color_mask': 't',
+        'the_pad_level_color': 't',
+        'the_pad_preview': 't',
+        'ticket_roll': 't',
+        'ticket_roll_big': 't',
+        'ticket_rolls': 't',
+        'tickets': 't',
+        'tickets_more': 't',
+        'tickets_purple': 't',
+        'tip_top_bgcolor': 't',
+        'tip_top_level_color': 't',
+        'tip_top_preview': 't',
+        'tnt': 't',
+        'tokens1': 't',
+        'tokens2': 't',
+        'tokens3': 't',
+        'tokens4': 't',
+        'tower_dlevel_color': 't',
+        'tower_dpreview': 't',
+        'trees_color': 't',
+        'trophy': 't',
+        'tv': 't',
+        'up_button': 't',
+        'vr_fill_mound': 't',
+        'warrior_color': 't',
+        'warrior_color_mask': 't',
+        'warrior_icon': 't',
+        'warrior_icon_color_mask': 't',
+        'window_bottom_cap': 't',
+        'witch_color': 't',
+        'witch_color_mask': 't',
+        'witch_icon': 't',
+        'witch_icon_color_mask': 't',
+        'wizard_color': 't',
+        'wizard_color_mask': 't',
+        'wizard_icon': 't',
+        'wizard_icon_color_mask': 't',
+        'wrestler_color': 't',
+        'wrestler_color_mask': 't',
+        'wrestler_icon': 't',
+        'wrestler_icon_color_mask': 't',
+        'zig_zag_level_color': 't',
+        'zigzag_preview': 't',
+        'zoe_color': 't',
+        'zoe_color_mask': 't',
+        'zoe_icon': 't',
+        'zoe_icon_color_mask': 't',
+    },
+}
+
+
+if TYPE_CHECKING:
+
+    class _Audio:
+        achievement: bascenev1.Sound
+        action_hero1: bascenev1.Sound
+        action_hero2: bascenev1.Sound
+        action_hero3: bascenev1.Sound
+        action_hero4: bascenev1.Sound
+        action_hero_death: bascenev1.Sound
+        action_hero_fall: bascenev1.Sound
+        action_hero_hit1: bascenev1.Sound
+        action_hero_hit2: bascenev1.Sound
+        activate_beep: bascenev1.Sound
+        agent1: bascenev1.Sound
+        agent2: bascenev1.Sound
+        agent3: bascenev1.Sound
+        agent4: bascenev1.Sound
+        agent_death: bascenev1.Sound
+        agent_fall: bascenev1.Sound
+        agent_hit1: bascenev1.Sound
+        agent_hit2: bascenev1.Sound
+        alarm: bascenev1.Sound
+        ali1: bascenev1.Sound
+        ali2: bascenev1.Sound
+        ali3: bascenev1.Sound
+        ali4: bascenev1.Sound
+        ali_death: bascenev1.Sound
+        ali_fall: bascenev1.Sound
+        ali_hit1: bascenev1.Sound
+        ali_hit2: bascenev1.Sound
+        alien1: bascenev1.Sound
+        alien2: bascenev1.Sound
+        alien3: bascenev1.Sound
+        alien4: bascenev1.Sound
+        alien_death: bascenev1.Sound
+        alien_fall: bascenev1.Sound
+        alien_hit1: bascenev1.Sound
+        alien_hit2: bascenev1.Sound
+        announce_eight: bascenev1.Sound
+        announce_five: bascenev1.Sound
+        announce_four: bascenev1.Sound
+        announce_nine: bascenev1.Sound
+        announce_one: bascenev1.Sound
+        announce_seven: bascenev1.Sound
+        announce_six: bascenev1.Sound
+        announce_ten: bascenev1.Sound
+        announce_three: bascenev1.Sound
+        announce_two: bascenev1.Sound
+        assassin1: bascenev1.Sound
+        assassin2: bascenev1.Sound
+        assassin3: bascenev1.Sound
+        assassin4: bascenev1.Sound
+        assassin_death: bascenev1.Sound
+        assassin_fall: bascenev1.Sound
+        assassin_hit1: bascenev1.Sound
+        assassin_hit2: bascenev1.Sound
+        aww: bascenev1.Sound
+        bear1: bascenev1.Sound
+        bear2: bascenev1.Sound
+        bear3: bascenev1.Sound
+        bear4: bascenev1.Sound
+        bear_death: bascenev1.Sound
+        bear_fall: bascenev1.Sound
+        bear_hit1: bascenev1.Sound
+        bear_hit2: bascenev1.Sound
+        bell_high: bascenev1.Sound
+        bell_low: bascenev1.Sound
+        bell_med: bascenev1.Sound
+        big_impact: bascenev1.Sound
+        big_impact2: bascenev1.Sound
+        block: bascenev1.Sound
+        bomb_drop01: bascenev1.Sound
+        bomb_drop02: bascenev1.Sound
+        bomb_roll01: bascenev1.Sound
+        bones1: bascenev1.Sound
+        bones2: bascenev1.Sound
+        bones3: bascenev1.Sound
+        bones_death: bascenev1.Sound
+        bones_fall: bascenev1.Sound
+        boo: bascenev1.Sound
+        box_drop: bascenev1.Sound
+        boxing_bell: bascenev1.Sound
+        bunny1: bascenev1.Sound
+        bunny2: bascenev1.Sound
+        bunny3: bascenev1.Sound
+        bunny4: bascenev1.Sound
+        bunny_death: bascenev1.Sound
+        bunny_fall: bascenev1.Sound
+        bunny_hit1: bascenev1.Sound
+        bunny_hit2: bascenev1.Sound
+        bunny_jump: bascenev1.Sound
+        cash_register2: bascenev1.Sound
+        char_select_music: bascenev1.Sound
+        cheer: bascenev1.Sound
+        cork_pop2: bascenev1.Sound
+        cowboy1: bascenev1.Sound
+        cowboy2: bascenev1.Sound
+        cowboy3: bascenev1.Sound
+        cowboy4: bascenev1.Sound
+        cowboy_death: bascenev1.Sound
+        cowboy_fall: bascenev1.Sound
+        cowboy_hit1: bascenev1.Sound
+        cowboy_hit2: bascenev1.Sound
+        crowd_chant: bascenev1.Sound
+        cyborg1: bascenev1.Sound
+        cyborg2: bascenev1.Sound
+        cyborg3: bascenev1.Sound
+        cyborg4: bascenev1.Sound
+        cyborg_death: bascenev1.Sound
+        cyborg_fall: bascenev1.Sound
+        cyborg_hit1: bascenev1.Sound
+        cyborg_hit2: bascenev1.Sound
+        cymbal: bascenev1.Sound
+        debris_fall: bascenev1.Sound
+        deek2: bascenev1.Sound
+        ding_small: bascenev1.Sound
+        ding_small_high: bascenev1.Sound
+        dripity: bascenev1.Sound
+        drum_roll: bascenev1.Sound
+        drum_roll_short: bascenev1.Sound
+        explosion01: bascenev1.Sound
+        explosion02: bascenev1.Sound
+        explosion03: bascenev1.Sound
+        explosion04: bascenev1.Sound
+        explosion05: bascenev1.Sound
+        fanfare: bascenev1.Sound
+        flag_catcher_music: bascenev1.Sound
+        flying_music: bascenev1.Sound
+        foghorn: bascenev1.Sound
+        foot_impact01: bascenev1.Sound
+        foot_impact02: bascenev1.Sound
+        foot_impact03: bascenev1.Sound
+        forward_march_music: bascenev1.Sound
+        freeze: bascenev1.Sound
+        frosty01: bascenev1.Sound
+        frosty02: bascenev1.Sound
+        frosty03: bascenev1.Sound
+        frosty04: bascenev1.Sound
+        frosty05: bascenev1.Sound
+        frosty_death: bascenev1.Sound
+        frosty_fall: bascenev1.Sound
+        frosty_hit01: bascenev1.Sound
+        frosty_hit02: bascenev1.Sound
+        frosty_hit03: bascenev1.Sound
+        fuse01: bascenev1.Sound
+        gasp: bascenev1.Sound
+        gladiator1: bascenev1.Sound
+        gladiator2: bascenev1.Sound
+        gladiator3: bascenev1.Sound
+        gladiator4: bascenev1.Sound
+        gladiator_death: bascenev1.Sound
+        gladiator_fall: bascenev1.Sound
+        gladiator_hit1: bascenev1.Sound
+        gladiator_hit2: bascenev1.Sound
+        gong: bascenev1.Sound
+        grand_romp_music: bascenev1.Sound
+        gravel_skid: bascenev1.Sound
+        health_powerup: bascenev1.Sound
+        hiss: bascenev1.Sound
+        impact_hard: bascenev1.Sound
+        impact_hard2: bascenev1.Sound
+        impact_hard3: bascenev1.Sound
+        impact_medium: bascenev1.Sound
+        impact_medium2: bascenev1.Sound
+        jack01: bascenev1.Sound
+        jack02: bascenev1.Sound
+        jack03: bascenev1.Sound
+        jack04: bascenev1.Sound
+        jack05: bascenev1.Sound
+        jack06: bascenev1.Sound
+        jack_death01: bascenev1.Sound
+        jack_fall01: bascenev1.Sound
+        jack_hit01: bascenev1.Sound
+        jack_hit02: bascenev1.Sound
+        jack_hit03: bascenev1.Sound
+        jack_hit04: bascenev1.Sound
+        jack_hit05: bascenev1.Sound
+        jack_hit06: bascenev1.Sound
+        jack_hit07: bascenev1.Sound
+        jumpsuit1: bascenev1.Sound
+        jumpsuit2: bascenev1.Sound
+        jumpsuit3: bascenev1.Sound
+        jumpsuit4: bascenev1.Sound
+        jumpsuit_death: bascenev1.Sound
+        jumpsuit_fall: bascenev1.Sound
+        jumpsuit_hit1: bascenev1.Sound
+        jumpsuit_hit2: bascenev1.Sound
+        kronk1: bascenev1.Sound
+        kronk10: bascenev1.Sound
+        kronk2: bascenev1.Sound
+        kronk3: bascenev1.Sound
+        kronk4: bascenev1.Sound
+        kronk5: bascenev1.Sound
+        kronk6: bascenev1.Sound
+        kronk7: bascenev1.Sound
+        kronk8: bascenev1.Sound
+        kronk9: bascenev1.Sound
+        kronk_death: bascenev1.Sound
+        kronk_fall: bascenev1.Sound
+        laser: bascenev1.Sound
+        laser_reverse: bascenev1.Sound
+        mel01: bascenev1.Sound
+        mel02: bascenev1.Sound
+        mel03: bascenev1.Sound
+        mel04: bascenev1.Sound
+        mel05: bascenev1.Sound
+        mel06: bascenev1.Sound
+        mel07: bascenev1.Sound
+        mel08: bascenev1.Sound
+        mel09: bascenev1.Sound
+        mel10: bascenev1.Sound
+        mel_death01: bascenev1.Sound
+        mel_fall01: bascenev1.Sound
+        menu_music: bascenev1.Sound
+        metal_hit: bascenev1.Sound
+        metal_skid: bascenev1.Sound
+        nice: bascenev1.Sound
+        ninja_attack1: bascenev1.Sound
+        ninja_attack2: bascenev1.Sound
+        ninja_attack3: bascenev1.Sound
+        ninja_attack4: bascenev1.Sound
+        ninja_attack5: bascenev1.Sound
+        ninja_attack6: bascenev1.Sound
+        ninja_attack7: bascenev1.Sound
+        ninja_death1: bascenev1.Sound
+        ninja_fall1: bascenev1.Sound
+        ninja_hit1: bascenev1.Sound
+        ninja_hit2: bascenev1.Sound
+        ninja_hit3: bascenev1.Sound
+        ninja_hit4: bascenev1.Sound
+        ninja_hit5: bascenev1.Sound
+        ninja_hit6: bascenev1.Sound
+        ninja_hit7: bascenev1.Sound
+        ninja_hit8: bascenev1.Sound
+        old_lady1: bascenev1.Sound
+        old_lady2: bascenev1.Sound
+        old_lady3: bascenev1.Sound
+        old_lady4: bascenev1.Sound
+        old_lady_death: bascenev1.Sound
+        old_lady_fall: bascenev1.Sound
+        old_lady_hit1: bascenev1.Sound
+        old_lady_hit2: bascenev1.Sound
+        ooh: bascenev1.Sound
+        opera_singer1: bascenev1.Sound
+        opera_singer2: bascenev1.Sound
+        opera_singer3: bascenev1.Sound
+        opera_singer4: bascenev1.Sound
+        opera_singer_death: bascenev1.Sound
+        opera_singer_fall: bascenev1.Sound
+        opera_singer_hit1: bascenev1.Sound
+        opera_singer_hit2: bascenev1.Sound
+        orchestra_hit: bascenev1.Sound
+        orchestra_hit2: bascenev1.Sound
+        orchestra_hit3: bascenev1.Sound
+        orchestra_hit4: bascenev1.Sound
+        orchestra_hit_big1: bascenev1.Sound
+        orchestra_hit_big2: bascenev1.Sound
+        penguin1: bascenev1.Sound
+        penguin2: bascenev1.Sound
+        penguin3: bascenev1.Sound
+        penguin4: bascenev1.Sound
+        penguin_death: bascenev1.Sound
+        penguin_fall: bascenev1.Sound
+        penguin_hit1: bascenev1.Sound
+        penguin_hit2: bascenev1.Sound
+        pixie1: bascenev1.Sound
+        pixie2: bascenev1.Sound
+        pixie3: bascenev1.Sound
+        pixie4: bascenev1.Sound
+        pixie_death: bascenev1.Sound
+        pixie_fall: bascenev1.Sound
+        pixie_hit1: bascenev1.Sound
+        pixie_hit2: bascenev1.Sound
+        player_death: bascenev1.Sound
+        player_left: bascenev1.Sound
+        pop01: bascenev1.Sound
+        powerup01: bascenev1.Sound
+        punch_strong01: bascenev1.Sound
+        punch_strong02: bascenev1.Sound
+        punch_swish: bascenev1.Sound
+        punch_weak01: bascenev1.Sound
+        race_beep1: bascenev1.Sound
+        race_beep2: bascenev1.Sound
+        ref_whistle: bascenev1.Sound
+        rev_up: bascenev1.Sound
+        robot1: bascenev1.Sound
+        robot2: bascenev1.Sound
+        robot3: bascenev1.Sound
+        robot4: bascenev1.Sound
+        robot_death: bascenev1.Sound
+        robot_fall: bascenev1.Sound
+        robot_hit1: bascenev1.Sound
+        robot_hit2: bascenev1.Sound
+        run_away_music: bascenev1.Sound
+        santa01: bascenev1.Sound
+        santa02: bascenev1.Sound
+        santa03: bascenev1.Sound
+        santa04: bascenev1.Sound
+        santa05: bascenev1.Sound
+        santa_death: bascenev1.Sound
+        santa_fall: bascenev1.Sound
+        santa_hit01: bascenev1.Sound
+        santa_hit02: bascenev1.Sound
+        santa_hit03: bascenev1.Sound
+        santa_hit04: bascenev1.Sound
+        scamper01: bascenev1.Sound
+        scary_music: bascenev1.Sound
+        score: bascenev1.Sound
+        score_hit01: bascenev1.Sound
+        score_hit02: bascenev1.Sound
+        scores_epic_music: bascenev1.Sound
+        shatter: bascenev1.Sound
+        shield_down: bascenev1.Sound
+        shield_hit: bascenev1.Sound
+        shield_up: bascenev1.Sound
+        skid01: bascenev1.Sound
+        slow_epic_music: bascenev1.Sound
+        spawn: bascenev1.Sound
+        spaz_attack01: bascenev1.Sound
+        spaz_attack02: bascenev1.Sound
+        spaz_attack03: bascenev1.Sound
+        spaz_attack04: bascenev1.Sound
+        spaz_death01: bascenev1.Sound
+        spaz_eff: bascenev1.Sound
+        spaz_fall01: bascenev1.Sound
+        spaz_impact01: bascenev1.Sound
+        spaz_impact02: bascenev1.Sound
+        spaz_impact03: bascenev1.Sound
+        spaz_impact04: bascenev1.Sound
+        spaz_jump01: bascenev1.Sound
+        spaz_jump02: bascenev1.Sound
+        spaz_jump03: bascenev1.Sound
+        spaz_jump04: bascenev1.Sound
+        spaz_ow: bascenev1.Sound
+        spaz_pickup01: bascenev1.Sound
+        spaz_scream01: bascenev1.Sound
+        splatter: bascenev1.Sound
+        sports_music: bascenev1.Sound
+        sticky_impact: bascenev1.Sound
+        super_punch: bascenev1.Sound
+        superhero1: bascenev1.Sound
+        superhero2: bascenev1.Sound
+        superhero3: bascenev1.Sound
+        superhero4: bascenev1.Sound
+        superhero_death: bascenev1.Sound
+        superhero_fall: bascenev1.Sound
+        superhero_hit1: bascenev1.Sound
+        superhero_hit2: bascenev1.Sound
+        survival_music: bascenev1.Sound
+        swip: bascenev1.Sound
+        swip2: bascenev1.Sound
+        techno_hit01: bascenev1.Sound
+        tick: bascenev1.Sound
+        ticking: bascenev1.Sound
+        to_the_death_music: bascenev1.Sound
+        trash_rummage: bascenev1.Sound
+        victory_music: bascenev1.Sound
+        warn_beep: bascenev1.Sound
+        warn_beeps: bascenev1.Sound
+        warrior1: bascenev1.Sound
+        warrior2: bascenev1.Sound
+        warrior3: bascenev1.Sound
+        warrior4: bascenev1.Sound
+        warrior_death: bascenev1.Sound
+        warrior_fall: bascenev1.Sound
+        warrior_hit1: bascenev1.Sound
+        warrior_hit2: bascenev1.Sound
+        when_johnny_comes_marching_home_music: bascenev1.Sound
+        witch1: bascenev1.Sound
+        witch2: bascenev1.Sound
+        witch3: bascenev1.Sound
+        witch4: bascenev1.Sound
+        witch_death: bascenev1.Sound
+        witch_fall: bascenev1.Sound
+        witch_hit1: bascenev1.Sound
+        witch_hit2: bascenev1.Sound
+        wizard1: bascenev1.Sound
+        wizard2: bascenev1.Sound
+        wizard3: bascenev1.Sound
+        wizard4: bascenev1.Sound
+        wizard_death: bascenev1.Sound
+        wizard_fall: bascenev1.Sound
+        wizard_hit1: bascenev1.Sound
+        wizard_hit2: bascenev1.Sound
+        woo: bascenev1.Sound
+        woo2: bascenev1.Sound
+        woo3: bascenev1.Sound
+        wood_debris_fall: bascenev1.Sound
+        wow: bascenev1.Sound
+        wrestler1: bascenev1.Sound
+        wrestler2: bascenev1.Sound
+        wrestler3: bascenev1.Sound
+        wrestler4: bascenev1.Sound
+        wrestler_death: bascenev1.Sound
+        wrestler_fall: bascenev1.Sound
+        wrestler_hit1: bascenev1.Sound
+        wrestler_hit2: bascenev1.Sound
+        yeah: bascenev1.Sound
+        zoe_attack01: bascenev1.Sound
+        zoe_attack02: bascenev1.Sound
+        zoe_attack03: bascenev1.Sound
+        zoe_attack04: bascenev1.Sound
+        zoe_death01: bascenev1.Sound
+        zoe_eff: bascenev1.Sound
+        zoe_fall01: bascenev1.Sound
+        zoe_impact01: bascenev1.Sound
+        zoe_impact02: bascenev1.Sound
+        zoe_impact03: bascenev1.Sound
+        zoe_impact04: bascenev1.Sound
+        zoe_jump01: bascenev1.Sound
+        zoe_jump02: bascenev1.Sound
+        zoe_jump03: bascenev1.Sound
+        zoe_ow: bascenev1.Sound
+        zoe_pickup01: bascenev1.Sound
+        zoe_scream01: bascenev1.Sound
+
+    class _Meshes:
+        achievement_outline: bascenev1.Mesh
+        action_hero_fore_arm: bascenev1.Mesh
+        action_hero_hand: bascenev1.Mesh
+        action_hero_head: bascenev1.Mesh
+        action_hero_lower_leg: bascenev1.Mesh
+        action_hero_pelvis: bascenev1.Mesh
+        action_hero_toes: bascenev1.Mesh
+        action_hero_torso: bascenev1.Mesh
+        action_hero_upper_arm: bascenev1.Mesh
+        action_hero_upper_leg: bascenev1.Mesh
+        agent_fore_arm: bascenev1.Mesh
+        agent_hand: bascenev1.Mesh
+        agent_head: bascenev1.Mesh
+        agent_lower_leg: bascenev1.Mesh
+        agent_pelvis: bascenev1.Mesh
+        agent_toes: bascenev1.Mesh
+        agent_torso: bascenev1.Mesh
+        agent_upper_arm: bascenev1.Mesh
+        agent_upper_leg: bascenev1.Mesh
+        ali_fore_arm: bascenev1.Mesh
+        ali_hand: bascenev1.Mesh
+        ali_head: bascenev1.Mesh
+        ali_lower_leg: bascenev1.Mesh
+        ali_pelvis: bascenev1.Mesh
+        ali_toes: bascenev1.Mesh
+        ali_torso: bascenev1.Mesh
+        ali_upper_arm: bascenev1.Mesh
+        ali_upper_leg: bascenev1.Mesh
+        alien_fore_arm: bascenev1.Mesh
+        alien_hand: bascenev1.Mesh
+        alien_head: bascenev1.Mesh
+        alien_lower_leg: bascenev1.Mesh
+        alien_pelvis: bascenev1.Mesh
+        alien_toes: bascenev1.Mesh
+        alien_torso: bascenev1.Mesh
+        alien_upper_arm: bascenev1.Mesh
+        alien_upper_leg: bascenev1.Mesh
+        always_land_bg: bascenev1.Mesh
+        always_land_level: bascenev1.Mesh
+        always_land_level_bottom: bascenev1.Mesh
+        always_land_level_collide: bascenev1.CollisionMesh
+        always_land_vrfill_mound: bascenev1.Mesh
+        angry_computer_transparent: bascenev1.Mesh
+        assassin_fore_arm: bascenev1.Mesh
+        assassin_hand: bascenev1.Mesh
+        assassin_head: bascenev1.Mesh
+        assassin_lower_leg: bascenev1.Mesh
+        assassin_pelvis: bascenev1.Mesh
+        assassin_toes: bascenev1.Mesh
+        assassin_torso: bascenev1.Mesh
+        assassin_upper_arm: bascenev1.Mesh
+        assassin_upper_leg: bascenev1.Mesh
+        bear_fore_arm: bascenev1.Mesh
+        bear_hand: bascenev1.Mesh
+        bear_head: bascenev1.Mesh
+        bear_lower_leg: bascenev1.Mesh
+        bear_pelvis: bascenev1.Mesh
+        bear_toes: bascenev1.Mesh
+        bear_torso: bascenev1.Mesh
+        bear_upper_arm: bascenev1.Mesh
+        bear_upper_leg: bascenev1.Mesh
+        big_g: bascenev1.Mesh
+        big_gbottom: bascenev1.Mesh
+        big_gbumper: bascenev1.CollisionMesh
+        big_gcollide: bascenev1.CollisionMesh
+        bomb: bascenev1.Mesh
+        bomb_sticky: bascenev1.Mesh
+        bones_fore_arm: bascenev1.Mesh
+        bones_hand: bascenev1.Mesh
+        bones_head: bascenev1.Mesh
+        bones_lower_leg: bascenev1.Mesh
+        bones_pelvis: bascenev1.Mesh
+        bones_toes: bascenev1.Mesh
+        bones_torso: bascenev1.Mesh
+        bones_upper_arm: bascenev1.Mesh
+        bones_upper_leg: bascenev1.Mesh
+        bridgit_level_bottom: bascenev1.Mesh
+        bridgit_level_collide: bascenev1.CollisionMesh
+        bridgit_level_railing_collide: bascenev1.CollisionMesh
+        bridgit_level_top: bascenev1.Mesh
+        bunny_fore_arm: bascenev1.Mesh
+        bunny_hand: bascenev1.Mesh
+        bunny_head: bascenev1.Mesh
+        bunny_lower_leg: bascenev1.Mesh
+        bunny_pelvis: bascenev1.Mesh
+        bunny_toes: bascenev1.Mesh
+        bunny_torso: bascenev1.Mesh
+        bunny_upper_arm: bascenev1.Mesh
+        bunny_upper_leg: bascenev1.Mesh
+        button_null: bascenev1.Mesh
+        courtyard_level: bascenev1.Mesh
+        courtyard_level_bottom: bascenev1.Mesh
+        courtyard_level_collide: bascenev1.CollisionMesh
+        courtyard_player_wall: bascenev1.CollisionMesh
+        cowboy_fore_arm: bascenev1.Mesh
+        cowboy_hand: bascenev1.Mesh
+        cowboy_head: bascenev1.Mesh
+        cowboy_lower_leg: bascenev1.Mesh
+        cowboy_pelvis: bascenev1.Mesh
+        cowboy_toes: bascenev1.Mesh
+        cowboy_torso: bascenev1.Mesh
+        cowboy_upper_arm: bascenev1.Mesh
+        cowboy_upper_leg: bascenev1.Mesh
+        crag_castle_level: bascenev1.Mesh
+        crag_castle_level_bottom: bascenev1.Mesh
+        crag_castle_level_bumper: bascenev1.CollisionMesh
+        crag_castle_level_collide: bascenev1.CollisionMesh
+        crag_castle_vrfill_mound: bascenev1.Mesh
+        currency_meter: bascenev1.Mesh
+        currency_plus_button: bascenev1.Mesh
+        cyborg_fore_arm: bascenev1.Mesh
+        cyborg_hand: bascenev1.Mesh
+        cyborg_head: bascenev1.Mesh
+        cyborg_lower_leg: bascenev1.Mesh
+        cyborg_pelvis: bascenev1.Mesh
+        cyborg_toes: bascenev1.Mesh
+        cyborg_torso: bascenev1.Mesh
+        cyborg_upper_arm: bascenev1.Mesh
+        cyborg_upper_leg: bascenev1.Mesh
+        doom_shroom_bg: bascenev1.Mesh
+        doom_shroom_level: bascenev1.Mesh
+        doom_shroom_level_collide: bascenev1.CollisionMesh
+        doom_shroom_stem: bascenev1.Mesh
+        doom_shroom_stem_collide: bascenev1.CollisionMesh
+        doom_shroom_vrfill: bascenev1.Mesh
+        egg: bascenev1.Mesh
+        football_stadium: bascenev1.Mesh
+        football_stadium_collide: bascenev1.CollisionMesh
+        football_stadium_vrfill: bascenev1.Mesh
+        frame_inset: bascenev1.Mesh
+        frosty_fore_arm: bascenev1.Mesh
+        frosty_hand: bascenev1.Mesh
+        frosty_head: bascenev1.Mesh
+        frosty_lower_leg: bascenev1.Mesh
+        frosty_pelvis: bascenev1.Mesh
+        frosty_toes: bascenev1.Mesh
+        frosty_torso: bascenev1.Mesh
+        frosty_upper_arm: bascenev1.Mesh
+        frosty_upper_leg: bascenev1.Mesh
+        gladiator_fore_arm: bascenev1.Mesh
+        gladiator_hand: bascenev1.Mesh
+        gladiator_head: bascenev1.Mesh
+        gladiator_lower_leg: bascenev1.Mesh
+        gladiator_pelvis: bascenev1.Mesh
+        gladiator_toes: bascenev1.Mesh
+        gladiator_torso: bascenev1.Mesh
+        gladiator_upper_arm: bascenev1.Mesh
+        gladiator_upper_leg: bascenev1.Mesh
+        heart_opaque: bascenev1.Mesh
+        heart_transparent: bascenev1.Mesh
+        hockey_stadium_collide: bascenev1.CollisionMesh
+        hockey_stadium_inner: bascenev1.Mesh
+        hockey_stadium_outer: bascenev1.Mesh
+        hockey_stadium_stands: bascenev1.Mesh
+        image2x1_vertical: bascenev1.Mesh
+        impact_bomb: bascenev1.Mesh
+        jack_fore_arm: bascenev1.Mesh
+        jack_hand: bascenev1.Mesh
+        jack_head: bascenev1.Mesh
+        jack_lower_leg: bascenev1.Mesh
+        jack_toes: bascenev1.Mesh
+        jack_torso: bascenev1.Mesh
+        jack_upper_arm: bascenev1.Mesh
+        jack_upper_leg: bascenev1.Mesh
+        jumpsuit_fore_arm: bascenev1.Mesh
+        jumpsuit_hand: bascenev1.Mesh
+        jumpsuit_head: bascenev1.Mesh
+        jumpsuit_lower_leg: bascenev1.Mesh
+        jumpsuit_pelvis: bascenev1.Mesh
+        jumpsuit_toes: bascenev1.Mesh
+        jumpsuit_torso: bascenev1.Mesh
+        jumpsuit_upper_arm: bascenev1.Mesh
+        jumpsuit_upper_leg: bascenev1.Mesh
+        kronk_fore_arm: bascenev1.Mesh
+        kronk_hand: bascenev1.Mesh
+        kronk_head: bascenev1.Mesh
+        kronk_lower_leg: bascenev1.Mesh
+        kronk_pelvis: bascenev1.Mesh
+        kronk_toes: bascenev1.Mesh
+        kronk_torso: bascenev1.Mesh
+        kronk_upper_arm: bascenev1.Mesh
+        kronk_upper_leg: bascenev1.Mesh
+        lake_frigid: bascenev1.Mesh
+        lake_frigid_collide: bascenev1.CollisionMesh
+        lake_frigid_reflections: bascenev1.Mesh
+        lake_frigid_top: bascenev1.Mesh
+        lake_frigid_vrfill: bascenev1.Mesh
+        land_mine: bascenev1.Mesh
+        level_select_button_opaque: bascenev1.Mesh
+        level_select_button_transparent: bascenev1.Mesh
+        logo: bascenev1.Mesh
+        logo_transparent: bascenev1.Mesh
+        mel_fore_arm: bascenev1.Mesh
+        mel_hand: bascenev1.Mesh
+        mel_head: bascenev1.Mesh
+        mel_lower_leg: bascenev1.Mesh
+        mel_toes: bascenev1.Mesh
+        mel_torso: bascenev1.Mesh
+        mel_upper_arm: bascenev1.Mesh
+        mel_upper_leg: bascenev1.Mesh
+        meter_transparent: bascenev1.Mesh
+        monkey_face_level: bascenev1.Mesh
+        monkey_face_level_bottom: bascenev1.Mesh
+        monkey_face_level_bumper: bascenev1.CollisionMesh
+        monkey_face_level_collide: bascenev1.CollisionMesh
+        nature_background: bascenev1.Mesh
+        nature_background_collide: bascenev1.CollisionMesh
+        nature_background_vrfill: bascenev1.Mesh
+        neo_spaz_fore_arm: bascenev1.Mesh
+        neo_spaz_hand: bascenev1.Mesh
+        neo_spaz_head: bascenev1.Mesh
+        neo_spaz_lower_leg: bascenev1.Mesh
+        neo_spaz_pelvis: bascenev1.Mesh
+        neo_spaz_toes: bascenev1.Mesh
+        neo_spaz_torso: bascenev1.Mesh
+        neo_spaz_upper_arm: bascenev1.Mesh
+        neo_spaz_upper_leg: bascenev1.Mesh
+        ninja_fore_arm: bascenev1.Mesh
+        ninja_hand: bascenev1.Mesh
+        ninja_head: bascenev1.Mesh
+        ninja_lower_leg: bascenev1.Mesh
+        ninja_pelvis: bascenev1.Mesh
+        ninja_toes: bascenev1.Mesh
+        ninja_torso: bascenev1.Mesh
+        ninja_upper_arm: bascenev1.Mesh
+        ninja_upper_leg: bascenev1.Mesh
+        old_lady_fore_arm: bascenev1.Mesh
+        old_lady_hand: bascenev1.Mesh
+        old_lady_head: bascenev1.Mesh
+        old_lady_lower_leg: bascenev1.Mesh
+        old_lady_pelvis: bascenev1.Mesh
+        old_lady_toes: bascenev1.Mesh
+        old_lady_torso: bascenev1.Mesh
+        old_lady_upper_arm: bascenev1.Mesh
+        old_lady_upper_leg: bascenev1.Mesh
+        opera_singer_fore_arm: bascenev1.Mesh
+        opera_singer_hand: bascenev1.Mesh
+        opera_singer_head: bascenev1.Mesh
+        opera_singer_lower_leg: bascenev1.Mesh
+        opera_singer_pelvis: bascenev1.Mesh
+        opera_singer_toes: bascenev1.Mesh
+        opera_singer_torso: bascenev1.Mesh
+        opera_singer_upper_arm: bascenev1.Mesh
+        opera_singer_upper_leg: bascenev1.Mesh
+        penguin_fore_arm: bascenev1.Mesh
+        penguin_hand: bascenev1.Mesh
+        penguin_head: bascenev1.Mesh
+        penguin_lower_leg: bascenev1.Mesh
+        penguin_pelvis: bascenev1.Mesh
+        penguin_toes: bascenev1.Mesh
+        penguin_torso: bascenev1.Mesh
+        penguin_upper_arm: bascenev1.Mesh
+        penguin_upper_leg: bascenev1.Mesh
+        pixie_fore_arm: bascenev1.Mesh
+        pixie_hand: bascenev1.Mesh
+        pixie_head: bascenev1.Mesh
+        pixie_lower_leg: bascenev1.Mesh
+        pixie_pelvis: bascenev1.Mesh
+        pixie_toes: bascenev1.Mesh
+        pixie_torso: bascenev1.Mesh
+        pixie_upper_arm: bascenev1.Mesh
+        pixie_upper_leg: bascenev1.Mesh
+        plastic_eyes_transparent: bascenev1.Mesh
+        player_lineup1_transparent: bascenev1.Mesh
+        player_lineup2_transparent: bascenev1.Mesh
+        player_lineup3_transparent: bascenev1.Mesh
+        player_lineup4_transparent: bascenev1.Mesh
+        powerup: bascenev1.Mesh
+        powerup_simple: bascenev1.Mesh
+        puck: bascenev1.Mesh
+        rampage_bg: bascenev1.Mesh
+        rampage_bg2: bascenev1.Mesh
+        rampage_bumper: bascenev1.CollisionMesh
+        rampage_level: bascenev1.Mesh
+        rampage_level_bottom: bascenev1.Mesh
+        rampage_level_collide: bascenev1.CollisionMesh
+        rampage_vrfill: bascenev1.Mesh
+        robot_fore_arm: bascenev1.Mesh
+        robot_hand: bascenev1.Mesh
+        robot_head: bascenev1.Mesh
+        robot_lower_leg: bascenev1.Mesh
+        robot_pelvis: bascenev1.Mesh
+        robot_toes: bascenev1.Mesh
+        robot_torso: bascenev1.Mesh
+        robot_upper_arm: bascenev1.Mesh
+        robot_upper_leg: bascenev1.Mesh
+        roundabout_level: bascenev1.Mesh
+        roundabout_level_bottom: bascenev1.Mesh
+        roundabout_level_bumper: bascenev1.CollisionMesh
+        roundabout_level_collide: bascenev1.CollisionMesh
+        running_shoes: bascenev1.Mesh
+        santa_fore_arm: bascenev1.Mesh
+        santa_hand: bascenev1.Mesh
+        santa_head: bascenev1.Mesh
+        santa_lower_leg: bascenev1.Mesh
+        santa_toes: bascenev1.Mesh
+        santa_torso: bascenev1.Mesh
+        santa_upper_arm: bascenev1.Mesh
+        santa_upper_leg: bascenev1.Mesh
+        scroll_widget_short: bascenev1.Mesh
+        step_right_up_level: bascenev1.Mesh
+        step_right_up_level_bottom: bascenev1.Mesh
+        step_right_up_level_collide: bascenev1.CollisionMesh
+        step_right_up_vrfill_mound: bascenev1.Mesh
+        superhero_fore_arm: bascenev1.Mesh
+        superhero_hand: bascenev1.Mesh
+        superhero_head: bascenev1.Mesh
+        superhero_lower_leg: bascenev1.Mesh
+        superhero_pelvis: bascenev1.Mesh
+        superhero_toes: bascenev1.Mesh
+        superhero_torso: bascenev1.Mesh
+        superhero_upper_arm: bascenev1.Mesh
+        superhero_upper_leg: bascenev1.Mesh
+        the_pad_bg: bascenev1.Mesh
+        the_pad_bgsmall: bascenev1.Mesh
+        the_pad_level: bascenev1.Mesh
+        the_pad_level_bottom: bascenev1.Mesh
+        the_pad_level_bumper: bascenev1.CollisionMesh
+        the_pad_level_collide: bascenev1.CollisionMesh
+        the_pad_vrfill_bottom: bascenev1.Mesh
+        the_pad_vrfill_mound: bascenev1.Mesh
+        the_pad_vrfill_top: bascenev1.Mesh
+        tip_top_bg: bascenev1.Mesh
+        tip_top_level: bascenev1.Mesh
+        tip_top_level_bottom: bascenev1.Mesh
+        tip_top_level_bumper: bascenev1.CollisionMesh
+        tip_top_level_collide: bascenev1.CollisionMesh
+        tnt: bascenev1.Mesh
+        toolbar_backing: bascenev1.Mesh
+        toolbar_backing_bottom: bascenev1.Mesh
+        toolbar_backing_bottom2: bascenev1.Mesh
+        toolbar_backing_opaque: bascenev1.Mesh
+        toolbar_backing_top: bascenev1.Mesh
+        toolbar_backing_top2: bascenev1.Mesh
+        toolbar_backing_transparent: bascenev1.Mesh
+        tower_dlevel: bascenev1.Mesh
+        tower_dlevel_bottom: bascenev1.Mesh
+        tower_dlevel_collide: bascenev1.CollisionMesh
+        tower_dplayer_wall: bascenev1.CollisionMesh
+        trees: bascenev1.Mesh
+        warrior_fore_arm: bascenev1.Mesh
+        warrior_hand: bascenev1.Mesh
+        warrior_head: bascenev1.Mesh
+        warrior_lower_leg: bascenev1.Mesh
+        warrior_pelvis: bascenev1.Mesh
+        warrior_toes: bascenev1.Mesh
+        warrior_torso: bascenev1.Mesh
+        warrior_upper_arm: bascenev1.Mesh
+        warrior_upper_leg: bascenev1.Mesh
+        window_bgblotch: bascenev1.Mesh
+        witch_fore_arm: bascenev1.Mesh
+        witch_hand: bascenev1.Mesh
+        witch_head: bascenev1.Mesh
+        witch_lower_leg: bascenev1.Mesh
+        witch_pelvis: bascenev1.Mesh
+        witch_toes: bascenev1.Mesh
+        witch_torso: bascenev1.Mesh
+        witch_upper_arm: bascenev1.Mesh
+        witch_upper_leg: bascenev1.Mesh
+        wizard_fore_arm: bascenev1.Mesh
+        wizard_hand: bascenev1.Mesh
+        wizard_head: bascenev1.Mesh
+        wizard_lower_leg: bascenev1.Mesh
+        wizard_pelvis: bascenev1.Mesh
+        wizard_toes: bascenev1.Mesh
+        wizard_torso: bascenev1.Mesh
+        wizard_upper_arm: bascenev1.Mesh
+        wizard_upper_leg: bascenev1.Mesh
+        wrestler_fore_arm: bascenev1.Mesh
+        wrestler_hand: bascenev1.Mesh
+        wrestler_head: bascenev1.Mesh
+        wrestler_lower_leg: bascenev1.Mesh
+        wrestler_pelvis: bascenev1.Mesh
+        wrestler_toes: bascenev1.Mesh
+        wrestler_torso: bascenev1.Mesh
+        wrestler_upper_arm: bascenev1.Mesh
+        wrestler_upper_leg: bascenev1.Mesh
+        zig_zag_level: bascenev1.Mesh
+        zig_zag_level_bottom: bascenev1.Mesh
+        zig_zag_level_bumper: bascenev1.CollisionMesh
+        zig_zag_level_collide: bascenev1.CollisionMesh
+        zoe_fore_arm: bascenev1.Mesh
+        zoe_hand: bascenev1.Mesh
+        zoe_head: bascenev1.Mesh
+        zoe_lower_leg: bascenev1.Mesh
+        zoe_pelvis: bascenev1.Mesh
+        zoe_toes: bascenev1.Mesh
+        zoe_torso: bascenev1.Mesh
+        zoe_upper_arm: bascenev1.Mesh
+        zoe_upper_leg: bascenev1.Mesh
+
+    class _Textures:
+        achievement_boxer: bascenev1.Texture
+        achievement_cross_hair: bascenev1.Texture
+        achievement_dual_wielding: bascenev1.Texture
+        achievement_empty: bascenev1.Texture
+        achievement_flawless_victory: bascenev1.Texture
+        achievement_football_shutout: bascenev1.Texture
+        achievement_football_victory: bascenev1.Texture
+        achievement_free_loader: bascenev1.Texture
+        achievement_got_the_moves: bascenev1.Texture
+        achievement_in_control: bascenev1.Texture
+        achievement_medal_large: bascenev1.Texture
+        achievement_medal_medium: bascenev1.Texture
+        achievement_medal_small: bascenev1.Texture
+        achievement_mine: bascenev1.Texture
+        achievement_off_you_go: bascenev1.Texture
+        achievement_onslaught: bascenev1.Texture
+        achievement_outline: bascenev1.Texture
+        achievement_runaround: bascenev1.Texture
+        achievement_sharing_is_caring: bascenev1.Texture
+        achievement_stayin_alive: bascenev1.Texture
+        achievement_super_punch: bascenev1.Texture
+        achievement_team_player: bascenev1.Texture
+        achievement_tnt: bascenev1.Texture
+        achievement_wall: bascenev1.Texture
+        achievements_icon: bascenev1.Texture
+        action_hero_color: bascenev1.Texture
+        action_hero_color_mask: bascenev1.Texture
+        action_hero_icon: bascenev1.Texture
+        action_hero_icon_color_mask: bascenev1.Texture
+        advanced_icon: bascenev1.Texture
+        agent_color: bascenev1.Texture
+        agent_color_mask: bascenev1.Texture
+        agent_icon: bascenev1.Texture
+        agent_icon_color_mask: bascenev1.Texture
+        ali_color: bascenev1.Texture
+        ali_color_mask: bascenev1.Texture
+        ali_icon: bascenev1.Texture
+        ali_icon_color_mask: bascenev1.Texture
+        ali_splash: bascenev1.Texture
+        alien_color: bascenev1.Texture
+        alien_color_mask: bascenev1.Texture
+        alien_icon: bascenev1.Texture
+        alien_icon_color_mask: bascenev1.Texture
+        always_land_bgcolor: bascenev1.Texture
+        always_land_level_color: bascenev1.Texture
+        always_land_preview: bascenev1.Texture
+        analog_stick: bascenev1.Texture
+        assassin_color: bascenev1.Texture
+        assassin_color_mask: bascenev1.Texture
+        assassin_icon: bascenev1.Texture
+        assassin_icon_color_mask: bascenev1.Texture
+        audio_icon: bascenev1.Texture
+        bar: bascenev1.Texture
+        bear_color: bascenev1.Texture
+        bear_color_mask: bascenev1.Texture
+        bear_icon: bascenev1.Texture
+        bear_icon_color_mask: bascenev1.Texture
+        bg: bascenev1.Texture
+        big_g: bascenev1.Texture
+        big_gpreview: bascenev1.Texture
+        bomb_color: bascenev1.Texture
+        bomb_color_ice: bascenev1.Texture
+        bomb_sticky_color: bascenev1.Texture
+        bones_color: bascenev1.Texture
+        bones_color_mask: bascenev1.Texture
+        bones_icon: bascenev1.Texture
+        bones_icon_color_mask: bascenev1.Texture
+        bridgit_level_color: bascenev1.Texture
+        bridgit_preview: bascenev1.Texture
+        bunny_color: bascenev1.Texture
+        bunny_color_mask: bascenev1.Texture
+        bunny_icon: bascenev1.Texture
+        bunny_icon_color_mask: bascenev1.Texture
+        button_bomb: bascenev1.Texture
+        button_jump: bascenev1.Texture
+        button_pick_up: bascenev1.Texture
+        button_punch: bascenev1.Texture
+        ch_title_char1: bascenev1.Texture
+        ch_title_char2: bascenev1.Texture
+        ch_title_char3: bascenev1.Texture
+        ch_title_char4: bascenev1.Texture
+        ch_title_char5: bascenev1.Texture
+        chest_icon: bascenev1.Texture
+        chest_icon_empty: bascenev1.Texture
+        chest_icon_multi: bascenev1.Texture
+        chest_icon_tint: bascenev1.Texture
+        chest_open_icon: bascenev1.Texture
+        chest_open_icon_tint: bascenev1.Texture
+        circle_zig_zag: bascenev1.Texture
+        clay_stroke: bascenev1.Texture
+        coin: bascenev1.Texture
+        controller_icon: bascenev1.Texture
+        courtyard_level_color: bascenev1.Texture
+        courtyard_preview: bascenev1.Texture
+        cowboy_color: bascenev1.Texture
+        cowboy_color_mask: bascenev1.Texture
+        cowboy_icon: bascenev1.Texture
+        cowboy_icon_color_mask: bascenev1.Texture
+        crag_castle_level_color: bascenev1.Texture
+        crag_castle_preview: bascenev1.Texture
+        cross_out: bascenev1.Texture
+        cross_out_mask: bascenev1.Texture
+        cute_spaz: bascenev1.Texture
+        cyborg_color: bascenev1.Texture
+        cyborg_color_mask: bascenev1.Texture
+        cyborg_icon: bascenev1.Texture
+        cyborg_icon_color_mask: bascenev1.Texture
+        discord_icon: bascenev1.Texture
+        discord_logo: bascenev1.Texture
+        discord_server: bascenev1.Texture
+        doom_shroom_bgcolor: bascenev1.Texture
+        doom_shroom_level_color: bascenev1.Texture
+        doom_shroom_preview: bascenev1.Texture
+        down_button: bascenev1.Texture
+        egg1: bascenev1.Texture
+        egg2: bascenev1.Texture
+        egg3: bascenev1.Texture
+        egg4: bascenev1.Texture
+        egg_tex1: bascenev1.Texture
+        egg_tex2: bascenev1.Texture
+        egg_tex3: bascenev1.Texture
+        empty: bascenev1.Texture
+        file: bascenev1.Texture
+        flag_color: bascenev1.Texture
+        folder: bascenev1.Texture
+        football_stadium: bascenev1.Texture
+        football_stadium_preview: bascenev1.Texture
+        frame_inset: bascenev1.Texture
+        frosty_color: bascenev1.Texture
+        frosty_color_mask: bascenev1.Texture
+        frosty_icon: bascenev1.Texture
+        frosty_icon_color_mask: bascenev1.Texture
+        game_center_icon: bascenev1.Texture
+        github_logo: bascenev1.Texture
+        gladiator_color: bascenev1.Texture
+        gladiator_color_mask: bascenev1.Texture
+        gladiator_icon: bascenev1.Texture
+        gladiator_icon_color_mask: bascenev1.Texture
+        gold_pass: bascenev1.Texture
+        google_play_achievements_icon: bascenev1.Texture
+        google_play_games_icon: bascenev1.Texture
+        google_play_leaderboards_icon: bascenev1.Texture
+        google_plus_icon: bascenev1.Texture
+        google_plus_sign_in_button: bascenev1.Texture
+        graphics_icon: bascenev1.Texture
+        heart: bascenev1.Texture
+        hockey_stadium: bascenev1.Texture
+        hockey_stadium_preview: bascenev1.Texture
+        icon_onslaught: bascenev1.Texture
+        icon_runaround: bascenev1.Texture
+        impact_bomb_color: bascenev1.Texture
+        impact_bomb_color_lit: bascenev1.Texture
+        inventory_icon: bascenev1.Texture
+        jack_color: bascenev1.Texture
+        jack_color_mask: bascenev1.Texture
+        jack_icon: bascenev1.Texture
+        jack_icon_color_mask: bascenev1.Texture
+        jumpsuit_color: bascenev1.Texture
+        jumpsuit_color_mask: bascenev1.Texture
+        jumpsuit_icon: bascenev1.Texture
+        jumpsuit_icon_color_mask: bascenev1.Texture
+        kronk: bascenev1.Texture
+        kronk_color_mask: bascenev1.Texture
+        kronk_icon: bascenev1.Texture
+        kronk_icon_color_mask: bascenev1.Texture
+        lake_frigid: bascenev1.Texture
+        lake_frigid_preview: bascenev1.Texture
+        lake_frigid_reflections: bascenev1.Texture
+        land_mine: bascenev1.Texture
+        land_mine_lit: bascenev1.Texture
+        leaderboards_icon: bascenev1.Texture
+        left_button: bascenev1.Texture
+        level_icon: bascenev1.Texture
+        lock: bascenev1.Texture
+        log_icon: bascenev1.Texture
+        logo: bascenev1.Texture
+        logo_easter: bascenev1.Texture
+        map_preview_mask: bascenev1.Texture
+        medal_bronze: bascenev1.Texture
+        medal_complete: bascenev1.Texture
+        medal_gold: bascenev1.Texture
+        medal_silver: bascenev1.Texture
+        mel_color: bascenev1.Texture
+        mel_color_mask: bascenev1.Texture
+        mel_icon: bascenev1.Texture
+        mel_icon_color_mask: bascenev1.Texture
+        menu_bg: bascenev1.Texture
+        menu_icon: bascenev1.Texture
+        merch: bascenev1.Texture
+        meter: bascenev1.Texture
+        monkey_face_level_color: bascenev1.Texture
+        monkey_face_preview: bascenev1.Texture
+        multiplayer_examples: bascenev1.Texture
+        nature_background_color: bascenev1.Texture
+        neo_spaz_color: bascenev1.Texture
+        neo_spaz_color_mask: bascenev1.Texture
+        neo_spaz_icon: bascenev1.Texture
+        neo_spaz_icon_color_mask: bascenev1.Texture
+        next_level_icon: bascenev1.Texture
+        ninja_color: bascenev1.Texture
+        ninja_color_mask: bascenev1.Texture
+        ninja_icon: bascenev1.Texture
+        ninja_icon_color_mask: bascenev1.Texture
+        null: bascenev1.Texture
+        old_lady_color: bascenev1.Texture
+        old_lady_color_mask: bascenev1.Texture
+        old_lady_icon: bascenev1.Texture
+        old_lady_icon_color_mask: bascenev1.Texture
+        opera_singer_color: bascenev1.Texture
+        opera_singer_color_mask: bascenev1.Texture
+        opera_singer_icon: bascenev1.Texture
+        opera_singer_icon_color_mask: bascenev1.Texture
+        ouya_icon: bascenev1.Texture
+        ouya_obutton: bascenev1.Texture
+        ouya_ubutton: bascenev1.Texture
+        ouya_ybutton: bascenev1.Texture
+        penguin_color: bascenev1.Texture
+        penguin_color_mask: bascenev1.Texture
+        penguin_icon: bascenev1.Texture
+        penguin_icon_color_mask: bascenev1.Texture
+        pixie_color: bascenev1.Texture
+        pixie_color_mask: bascenev1.Texture
+        pixie_icon: bascenev1.Texture
+        pixie_icon_color_mask: bascenev1.Texture
+        player_lineup: bascenev1.Texture
+        plus_button: bascenev1.Texture
+        powerup_bomb: bascenev1.Texture
+        powerup_curse: bascenev1.Texture
+        powerup_health: bascenev1.Texture
+        powerup_ice_bombs: bascenev1.Texture
+        powerup_impact_bombs: bascenev1.Texture
+        powerup_land_mines: bascenev1.Texture
+        powerup_punch: bascenev1.Texture
+        powerup_shield: bascenev1.Texture
+        powerup_speed: bascenev1.Texture
+        powerup_sticky_bombs: bascenev1.Texture
+        puck_color: bascenev1.Texture
+        quote_bubble: bascenev1.Texture
+        rampage_bgcolor: bascenev1.Texture
+        rampage_bgcolor2: bascenev1.Texture
+        rampage_level_color: bascenev1.Texture
+        rampage_preview: bascenev1.Texture
+        replay_icon: bascenev1.Texture
+        right_button: bascenev1.Texture
+        robot_color: bascenev1.Texture
+        robot_color_mask: bascenev1.Texture
+        robot_icon: bascenev1.Texture
+        robot_icon_color_mask: bascenev1.Texture
+        roundabout_level_color: bascenev1.Texture
+        roundabout_preview: bascenev1.Texture
+        santa_color: bascenev1.Texture
+        santa_color_mask: bascenev1.Texture
+        santa_icon: bascenev1.Texture
+        santa_icon_color_mask: bascenev1.Texture
+        settings_icon: bascenev1.Texture
+        slash: bascenev1.Texture
+        star: bascenev1.Texture
+        step_right_up_level_color: bascenev1.Texture
+        step_right_up_preview: bascenev1.Texture
+        store_character: bascenev1.Texture
+        store_character_easter: bascenev1.Texture
+        store_character_xmas: bascenev1.Texture
+        store_icon: bascenev1.Texture
+        superhero_color: bascenev1.Texture
+        superhero_color_mask: bascenev1.Texture
+        superhero_icon: bascenev1.Texture
+        superhero_icon_color_mask: bascenev1.Texture
+        the_pad_level_color: bascenev1.Texture
+        the_pad_preview: bascenev1.Texture
+        ticket_roll: bascenev1.Texture
+        ticket_roll_big: bascenev1.Texture
+        ticket_rolls: bascenev1.Texture
+        tickets: bascenev1.Texture
+        tickets_more: bascenev1.Texture
+        tickets_purple: bascenev1.Texture
+        tip_top_bgcolor: bascenev1.Texture
+        tip_top_level_color: bascenev1.Texture
+        tip_top_preview: bascenev1.Texture
+        tnt: bascenev1.Texture
+        tokens1: bascenev1.Texture
+        tokens2: bascenev1.Texture
+        tokens3: bascenev1.Texture
+        tokens4: bascenev1.Texture
+        tower_dlevel_color: bascenev1.Texture
+        tower_dpreview: bascenev1.Texture
+        trees_color: bascenev1.Texture
+        trophy: bascenev1.Texture
+        tv: bascenev1.Texture
+        up_button: bascenev1.Texture
+        vr_fill_mound: bascenev1.Texture
+        warrior_color: bascenev1.Texture
+        warrior_color_mask: bascenev1.Texture
+        warrior_icon: bascenev1.Texture
+        warrior_icon_color_mask: bascenev1.Texture
+        window_bottom_cap: bascenev1.Texture
+        witch_color: bascenev1.Texture
+        witch_color_mask: bascenev1.Texture
+        witch_icon: bascenev1.Texture
+        witch_icon_color_mask: bascenev1.Texture
+        wizard_color: bascenev1.Texture
+        wizard_color_mask: bascenev1.Texture
+        wizard_icon: bascenev1.Texture
+        wizard_icon_color_mask: bascenev1.Texture
+        wrestler_color: bascenev1.Texture
+        wrestler_color_mask: bascenev1.Texture
+        wrestler_icon: bascenev1.Texture
+        wrestler_icon_color_mask: bascenev1.Texture
+        zig_zag_level_color: bascenev1.Texture
+        zigzag_preview: bascenev1.Texture
+        zoe_color: bascenev1.Texture
+        zoe_color_mask: bascenev1.Texture
+        zoe_icon: bascenev1.Texture
+        zoe_icon_color_mask: bascenev1.Texture
+
+    audio: _Audio
+    meshes: _Meshes
+    textures: _Textures
+else:
+    audio = AssetDir(_APVERID, _TREE['audio'], 'audio')
+    meshes = AssetDir(_APVERID, _TREE['meshes'], 'meshes')
+    textures = AssetDir(_APVERID, _TREE['textures'], 'textures')

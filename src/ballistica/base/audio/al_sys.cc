@@ -10,11 +10,6 @@
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/shared/generic/utils.h"
 
-// Need to finish moving away from built-in OpenAL on Apple stuff.
-#if __clang__
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
-
 #if BA_ENABLE_AUDIO
 
 namespace ballistica::base {

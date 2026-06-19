@@ -124,6 +124,7 @@ class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
                     v_align='center',
                     maxwidth=self._width - 110,
                     selectable=True,
+                    always_highlight=True,
                     on_activate_call=bui.CallStrict(self._sel, playlist),
                     click_activate=True,
                 )

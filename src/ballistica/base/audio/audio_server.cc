@@ -32,11 +32,6 @@
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/math/vector3f.h"
 
-// Need to move away from OpenAL on Apple stuff.
-#if __clang__
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
-
 namespace ballistica::base {
 
 #if BA_RIFT_BUILD

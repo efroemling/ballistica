@@ -7,10 +7,12 @@ Auto-generated; do not edit by hand.
 
 # ba_meta require api 9
 # ba_meta require asset-package a-0.babuiltinassets.260617
-# pylint: disable=missing-function-docstring
-# pylint: disable=too-many-public-methods, useless-suppression
-# pylint: disable=too-many-lines, disallowed-name
+# pylint: disable=useless-suppression
+# pylint: disable=too-many-lines
+# pylint: disable=too-few-public-methods, disallowed-name
 from typing import TYPE_CHECKING
+
+from bascenev1._assetwrap import AssetDir
 
 if TYPE_CHECKING:
     import bascenev1
@@ -18,1081 +20,376 @@ if TYPE_CHECKING:
 __asset_package__ = 'a-0.babuiltinassets.260617'
 _APVERID = __asset_package__
 
-
-class _Audio:
-    @property
-    def blank(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/blank')
-
-    @property
-    def blip(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/blip')
-
-    @property
-    def cash_register(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cash_register')
-
-    @property
-    def click01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/click01')
-
-    @property
-    def cork_pop(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/cork_pop')
-
-    @property
-    def deek(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/deek')
-
-    @property
-    def ding(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ding')
-
-    @property
-    def error(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/error')
-
-    @property
-    def gun_cocking(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/gun_cocking')
-
-    @property
-    def powerdown01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/powerdown01')
-
-    @property
-    def punch01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/punch01')
-
-    @property
-    def score_increase(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/score_increase')
-
-    @property
-    def sparkle01(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/sparkle01')
-
-    @property
-    def sparkle02(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/sparkle02')
-
-    @property
-    def sparkle03(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/sparkle03')
-
-    @property
-    def swish(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/swish')
-
-    @property
-    def swish2(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/swish2')
-
-    @property
-    def swish3(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/swish3')
-
-    @property
-    def tap(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/tap')
-
-    @property
-    def ticking_crazy(self) -> bascenev1.Sound:
-        import bascenev1
-
-        return bascenev1.getsound(f'{_APVERID}:audio/ticking_crazy')
-
-
-audio = _Audio()
-
-
-class _Meshes:
-    @property
-    def action_button_bottom(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/action_button_bottom')
-
-    @property
-    def action_button_left(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/action_button_left')
-
-    @property
-    def action_button_right(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/action_button_right')
-
-    @property
-    def action_button_top(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/action_button_top')
-
-    @property
-    def arrow_back(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/arrow_back')
-
-    @property
-    def arrow_front(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/arrow_front')
-
-    @property
-    def box(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/box')
-
-    @property
-    def boxing_glove(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/boxing_glove')
-
-    @property
-    def button_back_opaque(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_back_opaque')
-
-    @property
-    def button_back_small_opaque(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_back_small_opaque')
-
-    @property
-    def button_back_small_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/button_back_small_transparent'
-        )
-
-    @property
-    def button_back_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_back_transparent')
-
-    @property
-    def button_large_opaque(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_large_opaque')
-
-    @property
-    def button_large_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_large_transparent')
-
-    @property
-    def button_larger_opaque(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_larger_opaque')
-
-    @property
-    def button_larger_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_larger_transparent')
-
-    @property
-    def button_medium_opaque(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_medium_opaque')
-
-    @property
-    def button_medium_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_medium_transparent')
-
-    @property
-    def button_small_opaque(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_small_opaque')
-
-    @property
-    def button_small_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_small_transparent')
-
-    @property
-    def button_square_opaque(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_square_opaque')
-
-    @property
-    def button_square_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_square_transparent')
-
-    @property
-    def button_tab_opaque(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_tab_opaque')
-
-    @property
-    def button_tab_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/button_tab_transparent')
-
-    @property
-    def check_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/check_transparent')
-
-    @property
-    def cross_out(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cross_out')
-
-    @property
-    def cylinder(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/cylinder')
-
-    @property
-    def eye_ball(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/eye_ball')
-
-    @property
-    def eye_ball_iris(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/eye_ball_iris')
-
-    @property
-    def eye_lid(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/eye_lid')
-
-    @property
-    def flag_pole(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/flag_pole')
-
-    @property
-    def flag_stand(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/flag_stand')
-
-    @property
-    def flash(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/flash')
-
-    @property
-    def hair_tuft1(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/hair_tuft1')
-
-    @property
-    def hair_tuft1b(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/hair_tuft1b')
-
-    @property
-    def hair_tuft2(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/hair_tuft2')
-
-    @property
-    def hair_tuft3(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/hair_tuft3')
-
-    @property
-    def hair_tuft4(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/hair_tuft4')
-
-    @property
-    def image16x1(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/image16x1')
-
-    @property
-    def image1x1(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/image1x1')
-
-    @property
-    def image1x1_full_screen(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/image1x1_full_screen')
-
-    @property
-    def image1x1_vrfull_screen(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/image1x1_vrfull_screen')
-
-    @property
-    def image2x1(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/image2x1')
-
-    @property
-    def image4x1(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/image4x1')
-
-    @property
-    def locator(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/locator')
-
-    @property
-    def locator_box(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/locator_box')
-
-    @property
-    def locator_circle(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/locator_circle')
-
-    @property
-    def locator_circle_outline(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/locator_circle_outline')
-
-    @property
-    def overlay_guide(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/overlay_guide')
-
-    @property
-    def scorch(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/scorch')
-
-    @property
-    def scroll_bar_thumb_opaque(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/scroll_bar_thumb_opaque')
-
-    @property
-    def scroll_bar_thumb_short_opaque(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/scroll_bar_thumb_short_opaque'
-        )
-
-    @property
-    def scroll_bar_thumb_short_simple(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/scroll_bar_thumb_short_simple'
-        )
-
-    @property
-    def scroll_bar_thumb_short_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/scroll_bar_thumb_short_transparent'
-        )
-
-    @property
-    def scroll_bar_thumb_simple(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/scroll_bar_thumb_simple')
-
-    @property
-    def scroll_bar_thumb_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/scroll_bar_thumb_transparent'
-        )
-
-    @property
-    def scroll_bar_trough_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/scroll_bar_trough_transparent'
-        )
-
-    @property
-    def shield(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/shield')
-
-    @property
-    def shock_wave(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/shock_wave')
-
-    @property
-    def shrapnel1(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/shrapnel1')
-
-    @property
-    def shrapnel_board(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/shrapnel_board')
-
-    @property
-    def shrapnel_slime(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/shrapnel_slime')
-
-    @property
-    def soft_edge_inside(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/soft_edge_inside')
-
-    @property
-    def soft_edge_outside(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/soft_edge_outside')
-
-    @property
-    def text_box_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/text_box_transparent')
-
-    @property
-    def vr_fade(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/vr_fade')
-
-    @property
-    def vr_overlay(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/vr_overlay')
-
-    @property
-    def window_hsmall_vmed_opaque(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/window_hsmall_vmed_opaque')
-
-    @property
-    def window_hsmall_vmed_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/window_hsmall_vmed_transparent'
-        )
-
-    @property
-    def window_hsmall_vsmall_opaque(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/window_hsmall_vsmall_opaque'
-        )
-
-    @property
-    def window_hsmall_vsmall_transparent(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(
-            f'{_APVERID}:meshes/window_hsmall_vsmall_transparent'
-        )
-
-    @property
-    def wing(self) -> bascenev1.Mesh:
-        import bascenev1
-
-        return bascenev1.getmesh(f'{_APVERID}:meshes/wing')
-
-
-meshes = _Meshes()
-
-
-class _Textures:
-    @property
-    def action_buttons(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/action_buttons')
-
-    @property
-    def arrow(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/arrow')
-
-    @property
-    def back_icon(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/back_icon')
-
-    @property
-    def black(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/black')
-
-    @property
-    def bomb_button(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/bomb_button')
-
-    @property
-    def boxing_gloves_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/boxing_gloves_color')
-
-    @property
-    def button_square(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/button_square')
-
-    @property
-    def button_square_wide(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/button_square_wide')
-
-    @property
-    def character_icon_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/character_icon_mask')
-
-    @property
-    def circle(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/circle')
-
-    @property
-    def circle_no_alpha(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/circle_no_alpha')
-
-    @property
-    def circle_outline(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/circle_outline')
-
-    @property
-    def circle_outline_no_alpha(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(
-            f'{_APVERID}:textures/circle_outline_no_alpha'
-        )
-
-    @property
-    def circle_shadow(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/circle_shadow')
-
-    @property
-    def circle_soft(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/circle_soft')
-
-    @property
-    def cursor(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/cursor')
-
-    @property
-    def explosion(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/explosion')
-
-    @property
-    def eye_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/eye_color')
-
-    @property
-    def eye_color_tint_mask(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/eye_color_tint_mask')
-
-    @property
-    def flag_pole_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/flag_pole_color')
-
-    @property
-    def font_big(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/font_big')
-
-    @property
-    def font_extras(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/font_extras')
-
-    @property
-    def font_extras2(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/font_extras2')
-
-    @property
-    def font_extras3(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/font_extras3')
-
-    @property
-    def font_extras4(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/font_extras4')
-
-    @property
-    def font_extras5(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/font_extras5')
-
-    @property
-    def font_small0(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/font_small0')
-
-    @property
-    def font_small1(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/font_small1')
-
-    @property
-    def font_small2(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/font_small2')
-
-    @property
-    def font_small3(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/font_small3')
-
-    @property
-    def font_small4(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/font_small4')
-
-    @property
-    def font_small5(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/font_small5')
-
-    @property
-    def font_small6(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/font_small6')
-
-    @property
-    def font_small7(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/font_small7')
-
-    @property
-    def fuse(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/fuse')
-
-    @property
-    def glow(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/glow')
-
-    @property
-    def light(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/light')
-
-    @property
-    def light_sharp(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/light_sharp')
-
-    @property
-    def light_soft(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/light_soft')
-
-    @property
-    def menu_button(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/menu_button')
-
-    @property
-    def nub(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/nub')
-
-    @property
-    def ouya_abutton(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ouya_abutton')
-
-    @property
-    def page_left_right(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/page_left_right')
-
-    @property
-    def rgb_stripes(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/rgb_stripes')
-
-    @property
-    def scorch(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/scorch')
-
-    @property
-    def scorch_big(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/scorch_big')
-
-    @property
-    def scroll_widget(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/scroll_widget')
-
-    @property
-    def scroll_widget_glow(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/scroll_widget_glow')
-
-    @property
-    def shadow(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/shadow')
-
-    @property
-    def shadow_sharp(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/shadow_sharp')
-
-    @property
-    def shadow_soft(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/shadow_soft')
-
-    @property
-    def shield(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/shield')
-
-    @property
-    def shrapnel1_color(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/shrapnel1_color')
-
-    @property
-    def smoke(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/smoke')
-
-    @property
-    def soft_rect(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/soft_rect')
-
-    @property
-    def soft_rect2(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/soft_rect2')
-
-    @property
-    def soft_rect_vertical(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/soft_rect_vertical')
-
-    @property
-    def sparks(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/sparks')
-
-    @property
-    def spinner(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/spinner')
-
-    @property
-    def spinner0(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/spinner0')
-
-    @property
-    def spinner1(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/spinner1')
-
-    @property
-    def spinner10(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/spinner10')
-
-    @property
-    def spinner11(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/spinner11')
-
-    @property
-    def spinner2(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/spinner2')
-
-    @property
-    def spinner3(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/spinner3')
-
-    @property
-    def spinner4(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/spinner4')
-
-    @property
-    def spinner5(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/spinner5')
-
-    @property
-    def spinner6(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/spinner6')
-
-    @property
-    def spinner7(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/spinner7')
-
-    @property
-    def spinner8(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/spinner8')
-
-    @property
-    def spinner9(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/spinner9')
-
-    @property
-    def start_button(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/start_button')
-
-    @property
-    def text_clear_button(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/text_clear_button')
-
-    @property
-    def touch_arrows(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/touch_arrows')
-
-    @property
-    def touch_arrows_actions(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/touch_arrows_actions')
-
-    @property
-    def ui_atlas(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ui_atlas')
-
-    @property
-    def ui_atlas2(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/ui_atlas2')
-
-    @property
-    def users_button(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/users_button')
-
-    @property
-    def white(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/white')
-
-    @property
-    def window_hsmall_vmed(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/window_hsmall_vmed')
-
-    @property
-    def window_hsmall_vsmall(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/window_hsmall_vsmall')
-
-    @property
-    def wings(self) -> bascenev1.Texture:
-        import bascenev1
-
-        return bascenev1.gettexture(f'{_APVERID}:textures/wings')
-
-
-textures = _Textures()
+_TREE = {
+    'audio': {
+        'blank': 's',
+        'blip': 's',
+        'cash_register': 's',
+        'click01': 's',
+        'cork_pop': 's',
+        'deek': 's',
+        'ding': 's',
+        'error': 's',
+        'gun_cocking': 's',
+        'powerdown01': 's',
+        'punch01': 's',
+        'score_increase': 's',
+        'sparkle01': 's',
+        'sparkle02': 's',
+        'sparkle03': 's',
+        'swish': 's',
+        'swish2': 's',
+        'swish3': 's',
+        'tap': 's',
+        'ticking_crazy': 's',
+    },
+    'meshes': {
+        'action_button_bottom': 'm',
+        'action_button_left': 'm',
+        'action_button_right': 'm',
+        'action_button_top': 'm',
+        'arrow_back': 'm',
+        'arrow_front': 'm',
+        'box': 'm',
+        'boxing_glove': 'm',
+        'button_back_opaque': 'm',
+        'button_back_small_opaque': 'm',
+        'button_back_small_transparent': 'm',
+        'button_back_transparent': 'm',
+        'button_large_opaque': 'm',
+        'button_large_transparent': 'm',
+        'button_larger_opaque': 'm',
+        'button_larger_transparent': 'm',
+        'button_medium_opaque': 'm',
+        'button_medium_transparent': 'm',
+        'button_small_opaque': 'm',
+        'button_small_transparent': 'm',
+        'button_square_opaque': 'm',
+        'button_square_transparent': 'm',
+        'button_tab_opaque': 'm',
+        'button_tab_transparent': 'm',
+        'check_transparent': 'm',
+        'cross_out': 'm',
+        'cylinder': 'm',
+        'eye_ball': 'm',
+        'eye_ball_iris': 'm',
+        'eye_lid': 'm',
+        'flag_pole': 'm',
+        'flag_stand': 'm',
+        'flash': 'm',
+        'hair_tuft1': 'm',
+        'hair_tuft1b': 'm',
+        'hair_tuft2': 'm',
+        'hair_tuft3': 'm',
+        'hair_tuft4': 'm',
+        'image16x1': 'm',
+        'image1x1': 'm',
+        'image1x1_full_screen': 'm',
+        'image1x1_vrfull_screen': 'm',
+        'image2x1': 'm',
+        'image4x1': 'm',
+        'locator': 'm',
+        'locator_box': 'm',
+        'locator_circle': 'm',
+        'locator_circle_outline': 'm',
+        'overlay_guide': 'm',
+        'scorch': 'm',
+        'scroll_bar_thumb_opaque': 'm',
+        'scroll_bar_thumb_short_opaque': 'm',
+        'scroll_bar_thumb_short_simple': 'm',
+        'scroll_bar_thumb_short_transparent': 'm',
+        'scroll_bar_thumb_simple': 'm',
+        'scroll_bar_thumb_transparent': 'm',
+        'scroll_bar_trough_transparent': 'm',
+        'shield': 'm',
+        'shock_wave': 'm',
+        'shrapnel1': 'm',
+        'shrapnel_board': 'm',
+        'shrapnel_slime': 'm',
+        'soft_edge_inside': 'm',
+        'soft_edge_outside': 'm',
+        'text_box_transparent': 'm',
+        'vr_fade': 'm',
+        'vr_overlay': 'm',
+        'window_hsmall_vmed_opaque': 'm',
+        'window_hsmall_vmed_transparent': 'm',
+        'window_hsmall_vsmall_opaque': 'm',
+        'window_hsmall_vsmall_transparent': 'm',
+        'wing': 'm',
+    },
+    'textures': {
+        'action_buttons': 't',
+        'arrow': 't',
+        'back_icon': 't',
+        'black': 't',
+        'bomb_button': 't',
+        'boxing_gloves_color': 't',
+        'button_square': 't',
+        'button_square_wide': 't',
+        'character_icon_mask': 't',
+        'circle': 't',
+        'circle_no_alpha': 't',
+        'circle_outline': 't',
+        'circle_outline_no_alpha': 't',
+        'circle_shadow': 't',
+        'circle_soft': 't',
+        'cursor': 't',
+        'explosion': 't',
+        'eye_color': 't',
+        'eye_color_tint_mask': 't',
+        'flag_pole_color': 't',
+        'font_big': 't',
+        'font_extras': 't',
+        'font_extras2': 't',
+        'font_extras3': 't',
+        'font_extras4': 't',
+        'font_extras5': 't',
+        'font_small0': 't',
+        'font_small1': 't',
+        'font_small2': 't',
+        'font_small3': 't',
+        'font_small4': 't',
+        'font_small5': 't',
+        'font_small6': 't',
+        'font_small7': 't',
+        'fuse': 't',
+        'glow': 't',
+        'light': 't',
+        'light_sharp': 't',
+        'light_soft': 't',
+        'menu_button': 't',
+        'nub': 't',
+        'ouya_abutton': 't',
+        'page_left_right': 't',
+        'rgb_stripes': 't',
+        'scorch': 't',
+        'scorch_big': 't',
+        'scroll_widget': 't',
+        'scroll_widget_glow': 't',
+        'shadow': 't',
+        'shadow_sharp': 't',
+        'shadow_soft': 't',
+        'shield': 't',
+        'shrapnel1_color': 't',
+        'smoke': 't',
+        'soft_rect': 't',
+        'soft_rect2': 't',
+        'soft_rect_vertical': 't',
+        'sparks': 't',
+        'spinner': 't',
+        'spinner0': 't',
+        'spinner1': 't',
+        'spinner10': 't',
+        'spinner11': 't',
+        'spinner2': 't',
+        'spinner3': 't',
+        'spinner4': 't',
+        'spinner5': 't',
+        'spinner6': 't',
+        'spinner7': 't',
+        'spinner8': 't',
+        'spinner9': 't',
+        'start_button': 't',
+        'text_clear_button': 't',
+        'touch_arrows': 't',
+        'touch_arrows_actions': 't',
+        'ui_atlas': 't',
+        'ui_atlas2': 't',
+        'users_button': 't',
+        'white': 't',
+        'window_hsmall_vmed': 't',
+        'window_hsmall_vsmall': 't',
+        'wings': 't',
+    },
+}
+
+
+if TYPE_CHECKING:
+
+    class _Audio:
+        blank: bascenev1.Sound
+        blip: bascenev1.Sound
+        cash_register: bascenev1.Sound
+        click01: bascenev1.Sound
+        cork_pop: bascenev1.Sound
+        deek: bascenev1.Sound
+        ding: bascenev1.Sound
+        error: bascenev1.Sound
+        gun_cocking: bascenev1.Sound
+        powerdown01: bascenev1.Sound
+        punch01: bascenev1.Sound
+        score_increase: bascenev1.Sound
+        sparkle01: bascenev1.Sound
+        sparkle02: bascenev1.Sound
+        sparkle03: bascenev1.Sound
+        swish: bascenev1.Sound
+        swish2: bascenev1.Sound
+        swish3: bascenev1.Sound
+        tap: bascenev1.Sound
+        ticking_crazy: bascenev1.Sound
+
+    class _Meshes:
+        action_button_bottom: bascenev1.Mesh
+        action_button_left: bascenev1.Mesh
+        action_button_right: bascenev1.Mesh
+        action_button_top: bascenev1.Mesh
+        arrow_back: bascenev1.Mesh
+        arrow_front: bascenev1.Mesh
+        box: bascenev1.Mesh
+        boxing_glove: bascenev1.Mesh
+        button_back_opaque: bascenev1.Mesh
+        button_back_small_opaque: bascenev1.Mesh
+        button_back_small_transparent: bascenev1.Mesh
+        button_back_transparent: bascenev1.Mesh
+        button_large_opaque: bascenev1.Mesh
+        button_large_transparent: bascenev1.Mesh
+        button_larger_opaque: bascenev1.Mesh
+        button_larger_transparent: bascenev1.Mesh
+        button_medium_opaque: bascenev1.Mesh
+        button_medium_transparent: bascenev1.Mesh
+        button_small_opaque: bascenev1.Mesh
+        button_small_transparent: bascenev1.Mesh
+        button_square_opaque: bascenev1.Mesh
+        button_square_transparent: bascenev1.Mesh
+        button_tab_opaque: bascenev1.Mesh
+        button_tab_transparent: bascenev1.Mesh
+        check_transparent: bascenev1.Mesh
+        cross_out: bascenev1.Mesh
+        cylinder: bascenev1.Mesh
+        eye_ball: bascenev1.Mesh
+        eye_ball_iris: bascenev1.Mesh
+        eye_lid: bascenev1.Mesh
+        flag_pole: bascenev1.Mesh
+        flag_stand: bascenev1.Mesh
+        flash: bascenev1.Mesh
+        hair_tuft1: bascenev1.Mesh
+        hair_tuft1b: bascenev1.Mesh
+        hair_tuft2: bascenev1.Mesh
+        hair_tuft3: bascenev1.Mesh
+        hair_tuft4: bascenev1.Mesh
+        image16x1: bascenev1.Mesh
+        image1x1: bascenev1.Mesh
+        image1x1_full_screen: bascenev1.Mesh
+        image1x1_vrfull_screen: bascenev1.Mesh
+        image2x1: bascenev1.Mesh
+        image4x1: bascenev1.Mesh
+        locator: bascenev1.Mesh
+        locator_box: bascenev1.Mesh
+        locator_circle: bascenev1.Mesh
+        locator_circle_outline: bascenev1.Mesh
+        overlay_guide: bascenev1.Mesh
+        scorch: bascenev1.Mesh
+        scroll_bar_thumb_opaque: bascenev1.Mesh
+        scroll_bar_thumb_short_opaque: bascenev1.Mesh
+        scroll_bar_thumb_short_simple: bascenev1.Mesh
+        scroll_bar_thumb_short_transparent: bascenev1.Mesh
+        scroll_bar_thumb_simple: bascenev1.Mesh
+        scroll_bar_thumb_transparent: bascenev1.Mesh
+        scroll_bar_trough_transparent: bascenev1.Mesh
+        shield: bascenev1.Mesh
+        shock_wave: bascenev1.Mesh
+        shrapnel1: bascenev1.Mesh
+        shrapnel_board: bascenev1.Mesh
+        shrapnel_slime: bascenev1.Mesh
+        soft_edge_inside: bascenev1.Mesh
+        soft_edge_outside: bascenev1.Mesh
+        text_box_transparent: bascenev1.Mesh
+        vr_fade: bascenev1.Mesh
+        vr_overlay: bascenev1.Mesh
+        window_hsmall_vmed_opaque: bascenev1.Mesh
+        window_hsmall_vmed_transparent: bascenev1.Mesh
+        window_hsmall_vsmall_opaque: bascenev1.Mesh
+        window_hsmall_vsmall_transparent: bascenev1.Mesh
+        wing: bascenev1.Mesh
+
+    class _Textures:
+        action_buttons: bascenev1.Texture
+        arrow: bascenev1.Texture
+        back_icon: bascenev1.Texture
+        black: bascenev1.Texture
+        bomb_button: bascenev1.Texture
+        boxing_gloves_color: bascenev1.Texture
+        button_square: bascenev1.Texture
+        button_square_wide: bascenev1.Texture
+        character_icon_mask: bascenev1.Texture
+        circle: bascenev1.Texture
+        circle_no_alpha: bascenev1.Texture
+        circle_outline: bascenev1.Texture
+        circle_outline_no_alpha: bascenev1.Texture
+        circle_shadow: bascenev1.Texture
+        circle_soft: bascenev1.Texture
+        cursor: bascenev1.Texture
+        explosion: bascenev1.Texture
+        eye_color: bascenev1.Texture
+        eye_color_tint_mask: bascenev1.Texture
+        flag_pole_color: bascenev1.Texture
+        font_big: bascenev1.Texture
+        font_extras: bascenev1.Texture
+        font_extras2: bascenev1.Texture
+        font_extras3: bascenev1.Texture
+        font_extras4: bascenev1.Texture
+        font_extras5: bascenev1.Texture
+        font_small0: bascenev1.Texture
+        font_small1: bascenev1.Texture
+        font_small2: bascenev1.Texture
+        font_small3: bascenev1.Texture
+        font_small4: bascenev1.Texture
+        font_small5: bascenev1.Texture
+        font_small6: bascenev1.Texture
+        font_small7: bascenev1.Texture
+        fuse: bascenev1.Texture
+        glow: bascenev1.Texture
+        light: bascenev1.Texture
+        light_sharp: bascenev1.Texture
+        light_soft: bascenev1.Texture
+        menu_button: bascenev1.Texture
+        nub: bascenev1.Texture
+        ouya_abutton: bascenev1.Texture
+        page_left_right: bascenev1.Texture
+        rgb_stripes: bascenev1.Texture
+        scorch: bascenev1.Texture
+        scorch_big: bascenev1.Texture
+        scroll_widget: bascenev1.Texture
+        scroll_widget_glow: bascenev1.Texture
+        shadow: bascenev1.Texture
+        shadow_sharp: bascenev1.Texture
+        shadow_soft: bascenev1.Texture
+        shield: bascenev1.Texture
+        shrapnel1_color: bascenev1.Texture
+        smoke: bascenev1.Texture
+        soft_rect: bascenev1.Texture
+        soft_rect2: bascenev1.Texture
+        soft_rect_vertical: bascenev1.Texture
+        sparks: bascenev1.Texture
+        spinner: bascenev1.Texture
+        spinner0: bascenev1.Texture
+        spinner1: bascenev1.Texture
+        spinner10: bascenev1.Texture
+        spinner11: bascenev1.Texture
+        spinner2: bascenev1.Texture
+        spinner3: bascenev1.Texture
+        spinner4: bascenev1.Texture
+        spinner5: bascenev1.Texture
+        spinner6: bascenev1.Texture
+        spinner7: bascenev1.Texture
+        spinner8: bascenev1.Texture
+        spinner9: bascenev1.Texture
+        start_button: bascenev1.Texture
+        text_clear_button: bascenev1.Texture
+        touch_arrows: bascenev1.Texture
+        touch_arrows_actions: bascenev1.Texture
+        ui_atlas: bascenev1.Texture
+        ui_atlas2: bascenev1.Texture
+        users_button: bascenev1.Texture
+        white: bascenev1.Texture
+        window_hsmall_vmed: bascenev1.Texture
+        window_hsmall_vsmall: bascenev1.Texture
+        wings: bascenev1.Texture
+
+    audio: _Audio
+    meshes: _Meshes
+    textures: _Textures
+else:
+    audio = AssetDir(_APVERID, _TREE['audio'], 'audio')
+    meshes = AssetDir(_APVERID, _TREE['meshes'], 'meshes')
+    textures = AssetDir(_APVERID, _TREE['textures'], 'textures')
