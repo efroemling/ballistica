@@ -27,7 +27,7 @@
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/generic/json.h"
+#include "ballistica/shared/generic/json_facade.h"
 #include "ballistica/shared/python/python.h"
 
 namespace ballistica::base {
@@ -2032,99 +2032,99 @@ void Assets::SetLanguageKeys(
   g_base->graphics->LanguageChanged();
 }
 
-auto DoCompileResourceString(cJSON* obj) -> std::string {
+auto DoCompileResourceString(JsonRef obj, int depth) -> std::string {
   // NOTE: We currently talk to Python here so need to be sure
   // we're holding the GIL. Perhaps in the future we could handle this
   // stuff completely in C++ and be free of this limitation.
   assert(Python::HaveGIL());
-  assert(obj != nullptr);
+  assert(obj.exists());
+
+  // Guard against deeply-nested (potentially malicious) input. yyjson's
+  // parser is iterative so it won't reject deep nesting for us, and we
+  // recurse here on sub-dicts.
+  if (depth > kJsonMaxConsumerDepth) {
+    throw Exception("Resource-string nesting too deep.");
+  }
 
   std::string result;
 
   // If its got a "r" key, look it up as a resource.. (with optional fallback).
-  cJSON* resource = cJSON_GetObjectItem(obj, "r");
-  if (resource != nullptr) {
-    if (!cJSON_IsString(resource)) {
+  if (JsonRef resource = obj["r"]) {
+    if (!resource.is_string()) {
       throw Exception("expected a string for resource");
     }
     // Look for fallback-resource.
-    cJSON* fallback_resource = cJSON_GetObjectItem(obj, "f");
-    cJSON* fallback_value = cJSON_GetObjectItem(obj, "fv");
-    if (fallback_resource && !cJSON_IsString(fallback_resource)) {
+    JsonRef fallback_resource = obj["f"];
+    JsonRef fallback_value = obj["fv"];
+    if (fallback_resource && !fallback_resource.is_string()) {
       throw Exception("expected a string for fallback_resource");
     }
-    if (fallback_value && !cJSON_IsString(fallback_value)) {
+    if (fallback_value && !fallback_value.is_string()) {
       throw Exception("expected a string for fallback_value");
     }
+    std::string r{resource.string_or("")};
+    std::string fr{fallback_resource.string_or("")};
+    std::string fv{fallback_value.string_or("")};
     result = g_base->python->GetResource(
-        resource->valuestring,
-        fallback_resource ? fallback_resource->valuestring : nullptr,
-        fallback_value ? fallback_value->valuestring : nullptr);
-  } else {
+        r.c_str(), fallback_resource ? fr.c_str() : nullptr,
+        fallback_value ? fv.c_str() : nullptr);
+  } else if (JsonRef translate = obj["t"]) {
     // Apparently not a resource; lets try as a translation ("t" keys).
-    cJSON* translate = cJSON_GetObjectItem(obj, "t");
-    if (translate != nullptr) {
-      if (!cJSON_IsArray(translate) || cJSON_GetArraySize(translate) != 2) {
-        throw Exception("Expected a 2 member array for translate");
-      }
-      cJSON* category = cJSON_GetArrayItem(translate, 0);
-      if (!cJSON_IsString(category)) {
-        throw Exception(
-            "First member of translate array (category) must be a string");
-      }
-      cJSON* value = cJSON_GetArrayItem(translate, 1);
-      if (!cJSON_IsString(value)) {
-        throw Exception(
-            "Second member of translate array (value) must be a string");
-      }
-      result = g_base->python->GetTranslation(category->valuestring,
-                                              value->valuestring);
-    } else {
-      // Lastly try it as a value ("value" or "v").
-      // (can be useful for feeding explicit strings while still allowing
-      // translated subs
-      cJSON* value = cJSON_GetObjectItem(obj, "v");
-      if (value != nullptr) {
-        if (!cJSON_IsString(value)) {
-          throw Exception("Expected a string for value");
-        }
-        result = value->valuestring;
-      } else {
-        throw Exception("no 'resource', 'translate', or 'value' keys found");
-      }
+    if (!translate.is_array() || translate.size() != 2) {
+      throw Exception("Expected a 2 member array for translate");
     }
+    JsonRef category = translate[0];
+    if (!category.is_string()) {
+      throw Exception(
+          "First member of translate array (category) must be a string");
+    }
+    JsonRef value = translate[1];
+    if (!value.is_string()) {
+      throw Exception(
+          "Second member of translate array (value) must be a string");
+    }
+    std::string cat{category.string_or("")};
+    std::string val{value.string_or("")};
+    result = g_base->python->GetTranslation(cat.c_str(), val.c_str());
+  } else if (JsonRef value = obj["v"]) {
+    // Lastly try it as a value ("value" or "v").
+    // (can be useful for feeding explicit strings while still allowing
+    // translated subs
+    if (!value.is_string()) {
+      throw Exception("Expected a string for value");
+    }
+    result = std::string{value.string_or("")};
+  } else {
+    throw Exception("no 'resource', 'translate', or 'value' keys found");
   }
 
   // Ok; now no matter what it was, see if it contains any subs and replace
   // them ("s").
-  cJSON* subs = cJSON_GetObjectItem(obj, "s");
-  if (subs != nullptr) {
-    if (!cJSON_IsArray(subs)) {
+  if (JsonRef subs = obj["s"]) {
+    if (!subs.is_array()) {
       throw Exception("expected an array for 'subs'");
     }
-    int subs_count = cJSON_GetArraySize(subs);
-    for (int i = 0; i < subs_count; i++) {
-      cJSON* sub = cJSON_GetArrayItem(subs, i);
-      if (!cJSON_IsArray(sub) || cJSON_GetArraySize(sub) != 2) {
+    for (JsonRef sub : subs.elements()) {
+      if (!sub.is_array() || sub.size() != 2) {
         throw Exception(
             "Invalid subs entry; expected length 2 list of sub/replacement.");
       }
 
       // First item should be a string.
-      cJSON* key = cJSON_GetArrayItem(sub, 0);
-      if (!cJSON_IsString(key)) {
+      JsonRef key = sub[0];
+      if (!key.is_string()) {
         throw Exception("Sub keys must be strings.");
       }
-      std::string s_key = key->valuestring;
+      std::string s_key{key.string_or("")};
 
       // Second item can be a string or a dict; if its a dict, we go
       // recursive.
-      cJSON* value = cJSON_GetArrayItem(sub, 1);
+      JsonRef value = sub[1];
       std::string s_val;
-      if (cJSON_IsString(value)) {
-        s_val = value->valuestring;
-      } else if (cJSON_IsObject(value)) {
-        s_val = DoCompileResourceString(value);
+      if (value.is_string()) {
+        s_val = std::string{value.string_or("")};
+      } else if (value.is_object()) {
+        s_val = DoCompileResourceString(value, depth + 1);
       } else {
         throw Exception("Sub values must be strings or dicts.");
       }
@@ -2163,13 +2163,8 @@ auto Assets::CompileResourceString(const std::string& s, bool* valid)
     return s;
   }
 
-  cJSON* root = cJSON_Parse(s.c_str());
-  if (root && !cJSON_IsObject(root)) {
-    cJSON_Delete(root);
-    root = nullptr;
-  }
-
-  if (root == nullptr) {
+  auto doc = JsonDoc::Parse(s);
+  if (!doc.has_value() || !doc->root().is_object()) {
     g_core->logging->Log(
         LogName::kBaAssets, LogLevel::kError,
         "CompileResourceString failed; invalid json: '" + s + "'");
@@ -2178,7 +2173,7 @@ auto Assets::CompileResourceString(const std::string& s, bool* valid)
   }
   std::string result;
   try {
-    result = DoCompileResourceString(root);
+    result = DoCompileResourceString(doc->root(), 0);
     *valid = true;
   } catch (const std::exception& e) {
     g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
@@ -2187,7 +2182,6 @@ auto Assets::CompileResourceString(const std::string& s, bool* valid)
     result = "<error>";
     *valid = false;
   }
-  cJSON_Delete(root);
   return result;
 }
 

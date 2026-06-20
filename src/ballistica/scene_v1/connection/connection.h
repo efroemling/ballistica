@@ -32,8 +32,9 @@ class Connection : public Object {
   /// between other unreliable/reliable messages.
   void SendUnreliableMessage(const std::vector<uint8_t>& data);
 
-  /// Send a json-based reliable message.
-  void SendJMessage(cJSON* val);
+  /// Send a json-based reliable message. `val` is the already-serialized
+  /// json string (build it with JsonBuilder).
+  void SendJMessage(const std::string& val);
   virtual void Update();
 
   /// Called with raw packets as they come in from the network.

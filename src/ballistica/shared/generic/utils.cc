@@ -13,7 +13,7 @@
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/exception.h"
-#include "ballistica/shared/generic/json.h"
+#include "ballistica/shared/generic/json_facade.h"
 #include "ballistica/shared/generic/utf8.h"
 #include "ballistica/shared/math/random.h"
 #include "ballistica/shared/math/vector3f.h"
@@ -363,13 +363,7 @@ void Utils::AdvanceUTF8(const char** c) {
 }
 
 auto Utils::GetJSONString(const char* s) -> std::string {
-  std::string str;
-  cJSON* str_obj = cJSON_CreateString(s);
-  char* str_buffer = cJSON_PrintUnformatted(str_obj);
-  str = str_buffer;
-  free(str_buffer);
-  cJSON_Delete(str_obj);
-  return str;
+  return JsonEncodeString(s);
 }
 
 auto Utils::PtrToString(const void* val) -> std::string {

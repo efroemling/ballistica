@@ -1567,10 +1567,10 @@
     <ClInclude Include="..\..\src\ballistica\shared\generic\buffer.h">
       <Filter>ballistica\shared\generic</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\shared\generic\json.cc">
+    <ClCompile Include="..\..\src\ballistica\shared\generic\json_facade.cc">
       <Filter>ballistica\shared\generic</Filter>
     </ClCompile>
-    <ClInclude Include="..\..\src\ballistica\shared\generic\json.h">
+    <ClInclude Include="..\..\src\ballistica\shared\generic\json_facade.h">
       <Filter>ballistica\shared\generic</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ballistica\shared\generic\lambda_runnable.h">
@@ -2068,6 +2068,12 @@
     <ClCompile Include="..\..\src\external\monocypher\monocypher-ed25519.c">
       <Filter>external\monocypher</Filter>
     </ClCompile>
+    <ClInclude Include="..\..\src\external\yyjson\yyjson.h">
+      <Filter>external\yyjson</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\external\yyjson\yyjson.c">
+      <Filter>external\yyjson</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\external\qr_code_generator\QrCode.cpp">
       <Filter>external\qr_code_generator</Filter>
     </ClCompile>
@@ -2155,5 +2161,6 @@
     <Filter Include="external\open_dynamics_engine-ef" />
     <Filter Include="external\open_dynamics_engine-ef\ode" />
     <Filter Include="external\qr_code_generator" />
+    <Filter Include="external\yyjson" />
   </ItemGroup>
 </Project>

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "ballistica/base/app_mode/app_mode.h"
@@ -14,7 +15,7 @@
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
-#include "ballistica/shared/generic/json.h"
+#include "ballistica/shared/generic/json_facade.h"
 #include "ballistica/shared/math/vector3f.h"
 #include "ballistica/shared/networking/sockaddr.h"
 
@@ -315,13 +316,11 @@ auto NetworkReader::RunThread_() -> int {
             }
             case BA_PACKET_JSON_PONG: {
               if (rresult2 > 1) {
-                std::vector<char> s_buffer(rresult2);
-                memcpy(s_buffer.data(), buffer + 1, rresult2 - 1);
-                s_buffer[rresult2 - 1] = 0;  // terminate string
-                cJSON* data = cJSON_Parse(s_buffer.data());
-                if (data != nullptr) {
-                  cJSON_Delete(data);
-                }
+                // Parse to validate the payload; the result is currently
+                // unused.
+                JsonDoc::Parse(
+                    std::string_view(reinterpret_cast<const char*>(buffer + 1),
+                                     static_cast<size_t>(rresult2 - 1)));
               }
               break;
             }

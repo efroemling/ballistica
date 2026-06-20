@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "ballistica/base/assets/assets.h"
@@ -24,7 +25,7 @@
 #include "ballistica/scene_v1/support/client_input_device.h"
 #include "ballistica/scene_v1/support/client_input_device_delegate.h"
 #include "ballistica/scene_v1/support/host_session.h"
-#include "ballistica/shared/generic/json.h"
+#include "ballistica/shared/generic/json_facade.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
 
@@ -133,20 +134,21 @@ void ConnectionToClient::Update() {
     // the future.
     if (explicit_bool(protocol_version() >= 33)) {
       // Construct a json dict with our player-spec-string as one element.
-      JsonDict dict;
-      dict.AddString("s", our_handshake_player_spec_str_);
+      JsonBuilder builder;
+      JsonObjBuilder dict = builder.root_object();
+      dict.Add("s", our_handshake_player_spec_str_);
 
       // We also add our random salt for hashing.
-      dict.AddString("l", our_handshake_salt_);
+      dict.Add("l", our_handshake_salt_);
 
       // If we're doing V2 auth, bundle our global-app-instance-uuid so they
       // can ask the cloud to send us their credentials.
       auto app_uuid{g_base->GlobalAppInstanceUUID()};
       if (doing_v2_auth && app_uuid.has_value()) {
-        dict.AddString("v2a", *app_uuid);
+        dict.Add("v2a", *app_uuid);
       }
 
-      std::string out = dict.PrintUnformatted();
+      std::string out = builder.Write();
       std::vector<uint8_t> data(3 + out.size());
       data[0] = BA_SCENEPACKET_HANDSHAKE;
       uint16_t val = protocol_version();
@@ -210,23 +212,23 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
       // In newer builds we expect to be sent a json dict here; pull
       // client's spec from that.
       if (protocol_version() >= 33) {
-        std::vector<char> string_buffer(data.size() - 3 + 1);
-        memcpy(&(string_buffer[0]), &(data[3]), data.size() - 3);
-        string_buffer[string_buffer.size() - 1] = 0;
-        if (cJSON* handshake = cJSON_Parse(string_buffer.data())) {
-          if (cJSON_IsObject(handshake)) {
+        // Handshake payload is the bytes after the 3-byte header (no trailing
+        // null).
+        if (auto doc = JsonDoc::Parse(
+                std::string_view(reinterpret_cast<const char*>(data.data() + 3),
+                                 data.size() - 3))) {
+          JsonRef root = doc->root();
+          if (root.is_object()) {
             // Grab V2 auth token if present.
-            if (cJSON* v2at = cJSON_GetObjectItem(handshake, "v2at")) {
-              if (cJSON_IsString(v2at)) {
-                v2_auth_token = v2at->valuestring;
-              }
+            if (auto v2at = root["v2at"].as_string()) {
+              v2_auth_token = std::string(*v2at);
             }
-            if (cJSON* pspec = cJSON_GetObjectItem(handshake, "s")) {
-              if (cJSON_IsString(pspec)) {
+            if (JsonRef pspec = root["s"]) {
+              if (auto s = pspec.as_string()) {
                 // Set peer-spec to what they pass us (note this is
                 // untrusted). With v2 auth we'll override this further down
                 // when we look at their token.
-                set_peer_spec(PlayerSpec(pspec->valuestring));
+                set_peer_spec(PlayerSpec(std::string(*s)));
               } else {
                 BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                             "Ignoring non-string peer-spec data.");
@@ -235,9 +237,9 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
 
             // Newer builds also send their public-device-id; servers
             // can use this to combat simple spam attacks.
-            if (cJSON* pubdeviceid = cJSON_GetObjectItem(handshake, "d")) {
-              if (cJSON_IsString(pubdeviceid)) {
-                public_device_id_ = pubdeviceid->valuestring;
+            if (JsonRef pubdeviceid = root["d"]) {
+              if (auto d = pubdeviceid.as_string()) {
+                public_device_id_ = std::string(*d);
               } else {
                 BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                             "Ignoring non-string public-device-id data.");
@@ -247,7 +249,6 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
             BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                         "Ignoring non-object player-data container.");
           }
-          cJSON_Delete(handshake);
         }
       } else {
         // (KILL THIS WHEN kProtocolVersionClientMin >= 33)
@@ -433,18 +434,15 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
         // reliable message they get; if something else shows up first
         // they'll assume we're an old build and not sending this.
         {
-          cJSON* info_dict = cJSON_CreateObject();
-          cJSON_AddItemToObject(info_dict, "b",
-                                cJSON_CreateNumber(kEngineBuildNumber));
+          JsonBuilder builder;
+          JsonObjBuilder info_dict = builder.root_object();
+          info_dict.Add("b", kEngineBuildNumber);
 
           // Add a name entry if we've got a public party name set.
           if (!appmode->public_party_name().empty()) {
-            cJSON_AddItemToObject(
-                info_dict, "n",
-                cJSON_CreateString(appmode->public_party_name().c_str()));
+            info_dict.Add("n", appmode->public_party_name());
           }
-          std::string info = cJSON_PrintUnformatted(info_dict);
-          cJSON_Delete(info_dict);
+          std::string info = builder.Write();
 
           std::vector<uint8_t> info_msg(info.size() + 1);
           info_msg[0] = BA_MESSAGE_HOST_INFO;
@@ -513,14 +511,14 @@ void ConnectionToClient::SendScreenMessage(const std::string& s, float r,
     memcpy(&(msg_out[2 + spec_size]), value.c_str(), value.size());
     SendReliableMessage(msg_out);
   } else {
-    cJSON* msg = cJSON_CreateObject();
-    cJSON_AddNumberToObject(msg, "t", BA_JMESSAGE_SCREEN_MESSAGE);
-    cJSON_AddStringToObject(msg, "m", s.c_str());
-    cJSON_AddNumberToObject(msg, "r", r);
-    cJSON_AddNumberToObject(msg, "g", g);
-    cJSON_AddNumberToObject(msg, "b", b);
-    SendJMessage(msg);
-    cJSON_Delete(msg);
+    JsonBuilder builder;
+    builder.root_object()
+        .Add("t", BA_JMESSAGE_SCREEN_MESSAGE)
+        .Add("m", s)
+        .Add("r", r)
+        .Add("g", g)
+        .Add("b", b);
+    SendJMessage(builder.Write());
   }
 }
 
@@ -547,11 +545,11 @@ void ConnectionToClient::HandleMessagePacket(
   switch (buffer[0]) {
     case BA_MESSAGE_JMESSAGE: {
       if (buffer.size() >= 3 && buffer[buffer.size() - 1] == 0) {
-        cJSON* msg =
-            cJSON_Parse(reinterpret_cast<const char*>(buffer.data() + 1));
-        if (msg) {
-          cJSON_Delete(msg);
-        }
+        // Parse to validate; the result is currently unused. Payload is the
+        // bytes between the type byte and the trailing null.
+        JsonDoc::Parse(
+            std::string_view(reinterpret_cast<const char*>(buffer.data() + 1),
+                             buffer.size() - 2));
       }
       break;
     }
@@ -571,16 +569,15 @@ void ConnectionToClient::HandleMessagePacket(
 
     case BA_MESSAGE_CLIENT_INFO: {
       if (buffer.size() > 1) {
-        // Create a string from bytes 1+ of msg.
-        std::vector<char> str_buffer(buffer.size());  // Preallocate needed.
-        std::copy(buffer.begin() + 1, buffer.end(), str_buffer.begin());
-        str_buffer.back() = 0;  // Null terminate.
-
-        if (cJSON* info = cJSON_Parse(str_buffer.data())) {
-          if (cJSON_IsObject(info)) {
-            cJSON* b = cJSON_GetObjectItem(info, "b");
-            if (cJSON_IsNumber(b)) {
-              build_number_ = b->valueint;
+        // Payload is the bytes after the type byte (no trailing null).
+        std::string_view info_str(
+            reinterpret_cast<const char*>(buffer.data() + 1),
+            buffer.size() - 1);
+        if (auto doc = JsonDoc::Parse(info_str)) {
+          JsonRef root = doc->root();
+          if (root.is_object()) {
+            if (auto b = root["b"].as_double()) {
+              build_number_ = static_cast<int>(*b);
             } else {
               BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                           "No buildnumber in clientinfo msg.");
@@ -589,9 +586,8 @@ void ConnectionToClient::HandleMessagePacket(
 
             // Grab their token (we use this to ask the server for their
             // v1 account info).
-            cJSON* t = cJSON_GetObjectItem(info, "tk");
-            if (cJSON_IsString(t)) {
-              token_ = t->valuestring;
+            if (auto t = root["tk"].as_string()) {
+              token_ = std::string(*t);
             } else {
               BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                           "No token in clientinfo msg.");
@@ -601,9 +597,8 @@ void ConnectionToClient::HandleMessagePacket(
             // Newer clients also pass a peer-hash, which we can include
             // with the token to allow the v1 server to better verify the
             // client's identity.
-            cJSON* ph = cJSON_GetObjectItem(info, "ph");
-            if (cJSON_IsString(ph)) {
-              peer_hash_ = ph->valuestring;
+            if (auto ph = root["ph"].as_string()) {
+              peer_hash_ = std::string(*ph);
             }
             auto doing_v2_auth{appmode->require_client_authentication()
                                && appmode->client_authentication_version()
@@ -627,11 +622,10 @@ void ConnectionToClient::HandleMessagePacket(
                          + (doing_v2_auth ? "true" : "false") + ").";
                 });
           }
-          cJSON_Delete(info);
         } else {
           BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                       "Got invalid json in clientinfo message: '"
-                          + std::string(str_buffer.data()) + "'.");
+                          + std::string(info_str) + "'.");
           Error("");
         }
       }

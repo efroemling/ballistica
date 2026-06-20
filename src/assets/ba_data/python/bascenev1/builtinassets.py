@@ -7,9 +7,13 @@ Auto-generated; do not edit by hand.
 
 # ba_meta require api 9
 # ba_meta require asset-package a-0.babuiltinassets.260617
+
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
+
+__asset_package__ = 'a-0.babuiltinassets.260617'
+
 from typing import TYPE_CHECKING
 
 from bascenev1._assetwrap import AssetDir
@@ -17,8 +21,205 @@ from bascenev1._assetwrap import AssetDir
 if TYPE_CHECKING:
     import bascenev1
 
-__asset_package__ = 'a-0.babuiltinassets.260617'
-_APVERID = __asset_package__
+    class Audio:
+        """Asset-group type; see source for the full list."""
+
+        blank: bascenev1.Sound
+        blip: bascenev1.Sound
+        cash_register: bascenev1.Sound
+        click01: bascenev1.Sound
+        cork_pop: bascenev1.Sound
+        deek: bascenev1.Sound
+        ding: bascenev1.Sound
+        error: bascenev1.Sound
+        gun_cocking: bascenev1.Sound
+        powerdown01: bascenev1.Sound
+        punch01: bascenev1.Sound
+        score_increase: bascenev1.Sound
+        sparkle01: bascenev1.Sound
+        sparkle02: bascenev1.Sound
+        sparkle03: bascenev1.Sound
+        swish: bascenev1.Sound
+        swish2: bascenev1.Sound
+        swish3: bascenev1.Sound
+        tap: bascenev1.Sound
+        ticking_crazy: bascenev1.Sound
+
+    class Meshes:
+        """Asset-group type; see source for the full list."""
+
+        action_button_bottom: bascenev1.Mesh
+        action_button_left: bascenev1.Mesh
+        action_button_right: bascenev1.Mesh
+        action_button_top: bascenev1.Mesh
+        arrow_back: bascenev1.Mesh
+        arrow_front: bascenev1.Mesh
+        box: bascenev1.Mesh
+        boxing_glove: bascenev1.Mesh
+        button_back_opaque: bascenev1.Mesh
+        button_back_small_opaque: bascenev1.Mesh
+        button_back_small_transparent: bascenev1.Mesh
+        button_back_transparent: bascenev1.Mesh
+        button_large_opaque: bascenev1.Mesh
+        button_large_transparent: bascenev1.Mesh
+        button_larger_opaque: bascenev1.Mesh
+        button_larger_transparent: bascenev1.Mesh
+        button_medium_opaque: bascenev1.Mesh
+        button_medium_transparent: bascenev1.Mesh
+        button_small_opaque: bascenev1.Mesh
+        button_small_transparent: bascenev1.Mesh
+        button_square_opaque: bascenev1.Mesh
+        button_square_transparent: bascenev1.Mesh
+        button_tab_opaque: bascenev1.Mesh
+        button_tab_transparent: bascenev1.Mesh
+        check_transparent: bascenev1.Mesh
+        cross_out: bascenev1.Mesh
+        cylinder: bascenev1.Mesh
+        eye_ball: bascenev1.Mesh
+        eye_ball_iris: bascenev1.Mesh
+        eye_lid: bascenev1.Mesh
+        flag_pole: bascenev1.Mesh
+        flag_stand: bascenev1.Mesh
+        flash: bascenev1.Mesh
+        hair_tuft1: bascenev1.Mesh
+        hair_tuft1b: bascenev1.Mesh
+        hair_tuft2: bascenev1.Mesh
+        hair_tuft3: bascenev1.Mesh
+        hair_tuft4: bascenev1.Mesh
+        image16x1: bascenev1.Mesh
+        image1x1: bascenev1.Mesh
+        image1x1_full_screen: bascenev1.Mesh
+        image1x1_vrfull_screen: bascenev1.Mesh
+        image2x1: bascenev1.Mesh
+        image4x1: bascenev1.Mesh
+        locator: bascenev1.Mesh
+        locator_box: bascenev1.Mesh
+        locator_circle: bascenev1.Mesh
+        locator_circle_outline: bascenev1.Mesh
+        overlay_guide: bascenev1.Mesh
+        scorch: bascenev1.Mesh
+        scroll_bar_thumb_opaque: bascenev1.Mesh
+        scroll_bar_thumb_short_opaque: bascenev1.Mesh
+        scroll_bar_thumb_short_simple: bascenev1.Mesh
+        scroll_bar_thumb_short_transparent: bascenev1.Mesh
+        scroll_bar_thumb_simple: bascenev1.Mesh
+        scroll_bar_thumb_transparent: bascenev1.Mesh
+        scroll_bar_trough_transparent: bascenev1.Mesh
+        shield: bascenev1.Mesh
+        shock_wave: bascenev1.Mesh
+        shrapnel1: bascenev1.Mesh
+        shrapnel_board: bascenev1.Mesh
+        shrapnel_slime: bascenev1.Mesh
+        soft_edge_inside: bascenev1.Mesh
+        soft_edge_outside: bascenev1.Mesh
+        text_box_transparent: bascenev1.Mesh
+        vr_fade: bascenev1.Mesh
+        vr_overlay: bascenev1.Mesh
+        window_hsmall_vmed_opaque: bascenev1.Mesh
+        window_hsmall_vmed_transparent: bascenev1.Mesh
+        window_hsmall_vsmall_opaque: bascenev1.Mesh
+        window_hsmall_vsmall_transparent: bascenev1.Mesh
+        wing: bascenev1.Mesh
+
+    class Textures:
+        """Asset-group type; see source for the full list."""
+
+        action_buttons: bascenev1.Texture
+        arrow: bascenev1.Texture
+        back_icon: bascenev1.Texture
+        black: bascenev1.Texture
+        bomb_button: bascenev1.Texture
+        boxing_gloves_color: bascenev1.Texture
+        button_square: bascenev1.Texture
+        button_square_wide: bascenev1.Texture
+        character_icon_mask: bascenev1.Texture
+        circle: bascenev1.Texture
+        circle_no_alpha: bascenev1.Texture
+        circle_outline: bascenev1.Texture
+        circle_outline_no_alpha: bascenev1.Texture
+        circle_shadow: bascenev1.Texture
+        circle_soft: bascenev1.Texture
+        cursor: bascenev1.Texture
+        explosion: bascenev1.Texture
+        eye_color: bascenev1.Texture
+        eye_color_tint_mask: bascenev1.Texture
+        flag_pole_color: bascenev1.Texture
+        font_big: bascenev1.Texture
+        font_extras: bascenev1.Texture
+        font_extras2: bascenev1.Texture
+        font_extras3: bascenev1.Texture
+        font_extras4: bascenev1.Texture
+        font_extras5: bascenev1.Texture
+        font_small0: bascenev1.Texture
+        font_small1: bascenev1.Texture
+        font_small2: bascenev1.Texture
+        font_small3: bascenev1.Texture
+        font_small4: bascenev1.Texture
+        font_small5: bascenev1.Texture
+        font_small6: bascenev1.Texture
+        font_small7: bascenev1.Texture
+        fuse: bascenev1.Texture
+        glow: bascenev1.Texture
+        light: bascenev1.Texture
+        light_sharp: bascenev1.Texture
+        light_soft: bascenev1.Texture
+        menu_button: bascenev1.Texture
+        nub: bascenev1.Texture
+        ouya_abutton: bascenev1.Texture
+        page_left_right: bascenev1.Texture
+        rgb_stripes: bascenev1.Texture
+        scorch: bascenev1.Texture
+        scorch_big: bascenev1.Texture
+        scroll_widget: bascenev1.Texture
+        scroll_widget_glow: bascenev1.Texture
+        shadow: bascenev1.Texture
+        shadow_sharp: bascenev1.Texture
+        shadow_soft: bascenev1.Texture
+        shield: bascenev1.Texture
+        shrapnel1_color: bascenev1.Texture
+        smoke: bascenev1.Texture
+        soft_rect: bascenev1.Texture
+        soft_rect2: bascenev1.Texture
+        soft_rect_vertical: bascenev1.Texture
+        sparks: bascenev1.Texture
+        spinner: bascenev1.Texture
+        spinner0: bascenev1.Texture
+        spinner1: bascenev1.Texture
+        spinner10: bascenev1.Texture
+        spinner11: bascenev1.Texture
+        spinner2: bascenev1.Texture
+        spinner3: bascenev1.Texture
+        spinner4: bascenev1.Texture
+        spinner5: bascenev1.Texture
+        spinner6: bascenev1.Texture
+        spinner7: bascenev1.Texture
+        spinner8: bascenev1.Texture
+        spinner9: bascenev1.Texture
+        start_button: bascenev1.Texture
+        text_clear_button: bascenev1.Texture
+        touch_arrows: bascenev1.Texture
+        touch_arrows_actions: bascenev1.Texture
+        ui_atlas: bascenev1.Texture
+        ui_atlas2: bascenev1.Texture
+        users_button: bascenev1.Texture
+        white: bascenev1.Texture
+        window_hsmall_vmed: bascenev1.Texture
+        window_hsmall_vsmall: bascenev1.Texture
+        wings: bascenev1.Texture
+
+    #: The ``audio`` group - 20 assets (``blank``, ``blip``, ``cash_register``,
+    #: ``click01``, ``cork_pop``, and 15 more). Full list in source.
+    audio: Audio
+
+    #: The ``meshes`` group - 72 assets (``action_button_bottom``,
+    #: ``action_button_left``, ``action_button_right``, ``action_button_top``,
+    #: ``arrow_back``, and 67 more). Full list in source.
+    meshes: Meshes
+
+    #: The ``textures`` group - 82 assets (``action_buttons``, ``arrow``,
+    #: ``back_icon``, ``black``, ``bomb_button``, and 77 more). Full list in
+    #: source.
+    textures: Textures
 
 _TREE = {
     'audio': {
@@ -204,192 +405,7 @@ _TREE = {
 }
 
 
-if TYPE_CHECKING:
-
-    class _Audio:
-        blank: bascenev1.Sound
-        blip: bascenev1.Sound
-        cash_register: bascenev1.Sound
-        click01: bascenev1.Sound
-        cork_pop: bascenev1.Sound
-        deek: bascenev1.Sound
-        ding: bascenev1.Sound
-        error: bascenev1.Sound
-        gun_cocking: bascenev1.Sound
-        powerdown01: bascenev1.Sound
-        punch01: bascenev1.Sound
-        score_increase: bascenev1.Sound
-        sparkle01: bascenev1.Sound
-        sparkle02: bascenev1.Sound
-        sparkle03: bascenev1.Sound
-        swish: bascenev1.Sound
-        swish2: bascenev1.Sound
-        swish3: bascenev1.Sound
-        tap: bascenev1.Sound
-        ticking_crazy: bascenev1.Sound
-
-    class _Meshes:
-        action_button_bottom: bascenev1.Mesh
-        action_button_left: bascenev1.Mesh
-        action_button_right: bascenev1.Mesh
-        action_button_top: bascenev1.Mesh
-        arrow_back: bascenev1.Mesh
-        arrow_front: bascenev1.Mesh
-        box: bascenev1.Mesh
-        boxing_glove: bascenev1.Mesh
-        button_back_opaque: bascenev1.Mesh
-        button_back_small_opaque: bascenev1.Mesh
-        button_back_small_transparent: bascenev1.Mesh
-        button_back_transparent: bascenev1.Mesh
-        button_large_opaque: bascenev1.Mesh
-        button_large_transparent: bascenev1.Mesh
-        button_larger_opaque: bascenev1.Mesh
-        button_larger_transparent: bascenev1.Mesh
-        button_medium_opaque: bascenev1.Mesh
-        button_medium_transparent: bascenev1.Mesh
-        button_small_opaque: bascenev1.Mesh
-        button_small_transparent: bascenev1.Mesh
-        button_square_opaque: bascenev1.Mesh
-        button_square_transparent: bascenev1.Mesh
-        button_tab_opaque: bascenev1.Mesh
-        button_tab_transparent: bascenev1.Mesh
-        check_transparent: bascenev1.Mesh
-        cross_out: bascenev1.Mesh
-        cylinder: bascenev1.Mesh
-        eye_ball: bascenev1.Mesh
-        eye_ball_iris: bascenev1.Mesh
-        eye_lid: bascenev1.Mesh
-        flag_pole: bascenev1.Mesh
-        flag_stand: bascenev1.Mesh
-        flash: bascenev1.Mesh
-        hair_tuft1: bascenev1.Mesh
-        hair_tuft1b: bascenev1.Mesh
-        hair_tuft2: bascenev1.Mesh
-        hair_tuft3: bascenev1.Mesh
-        hair_tuft4: bascenev1.Mesh
-        image16x1: bascenev1.Mesh
-        image1x1: bascenev1.Mesh
-        image1x1_full_screen: bascenev1.Mesh
-        image1x1_vrfull_screen: bascenev1.Mesh
-        image2x1: bascenev1.Mesh
-        image4x1: bascenev1.Mesh
-        locator: bascenev1.Mesh
-        locator_box: bascenev1.Mesh
-        locator_circle: bascenev1.Mesh
-        locator_circle_outline: bascenev1.Mesh
-        overlay_guide: bascenev1.Mesh
-        scorch: bascenev1.Mesh
-        scroll_bar_thumb_opaque: bascenev1.Mesh
-        scroll_bar_thumb_short_opaque: bascenev1.Mesh
-        scroll_bar_thumb_short_simple: bascenev1.Mesh
-        scroll_bar_thumb_short_transparent: bascenev1.Mesh
-        scroll_bar_thumb_simple: bascenev1.Mesh
-        scroll_bar_thumb_transparent: bascenev1.Mesh
-        scroll_bar_trough_transparent: bascenev1.Mesh
-        shield: bascenev1.Mesh
-        shock_wave: bascenev1.Mesh
-        shrapnel1: bascenev1.Mesh
-        shrapnel_board: bascenev1.Mesh
-        shrapnel_slime: bascenev1.Mesh
-        soft_edge_inside: bascenev1.Mesh
-        soft_edge_outside: bascenev1.Mesh
-        text_box_transparent: bascenev1.Mesh
-        vr_fade: bascenev1.Mesh
-        vr_overlay: bascenev1.Mesh
-        window_hsmall_vmed_opaque: bascenev1.Mesh
-        window_hsmall_vmed_transparent: bascenev1.Mesh
-        window_hsmall_vsmall_opaque: bascenev1.Mesh
-        window_hsmall_vsmall_transparent: bascenev1.Mesh
-        wing: bascenev1.Mesh
-
-    class _Textures:
-        action_buttons: bascenev1.Texture
-        arrow: bascenev1.Texture
-        back_icon: bascenev1.Texture
-        black: bascenev1.Texture
-        bomb_button: bascenev1.Texture
-        boxing_gloves_color: bascenev1.Texture
-        button_square: bascenev1.Texture
-        button_square_wide: bascenev1.Texture
-        character_icon_mask: bascenev1.Texture
-        circle: bascenev1.Texture
-        circle_no_alpha: bascenev1.Texture
-        circle_outline: bascenev1.Texture
-        circle_outline_no_alpha: bascenev1.Texture
-        circle_shadow: bascenev1.Texture
-        circle_soft: bascenev1.Texture
-        cursor: bascenev1.Texture
-        explosion: bascenev1.Texture
-        eye_color: bascenev1.Texture
-        eye_color_tint_mask: bascenev1.Texture
-        flag_pole_color: bascenev1.Texture
-        font_big: bascenev1.Texture
-        font_extras: bascenev1.Texture
-        font_extras2: bascenev1.Texture
-        font_extras3: bascenev1.Texture
-        font_extras4: bascenev1.Texture
-        font_extras5: bascenev1.Texture
-        font_small0: bascenev1.Texture
-        font_small1: bascenev1.Texture
-        font_small2: bascenev1.Texture
-        font_small3: bascenev1.Texture
-        font_small4: bascenev1.Texture
-        font_small5: bascenev1.Texture
-        font_small6: bascenev1.Texture
-        font_small7: bascenev1.Texture
-        fuse: bascenev1.Texture
-        glow: bascenev1.Texture
-        light: bascenev1.Texture
-        light_sharp: bascenev1.Texture
-        light_soft: bascenev1.Texture
-        menu_button: bascenev1.Texture
-        nub: bascenev1.Texture
-        ouya_abutton: bascenev1.Texture
-        page_left_right: bascenev1.Texture
-        rgb_stripes: bascenev1.Texture
-        scorch: bascenev1.Texture
-        scorch_big: bascenev1.Texture
-        scroll_widget: bascenev1.Texture
-        scroll_widget_glow: bascenev1.Texture
-        shadow: bascenev1.Texture
-        shadow_sharp: bascenev1.Texture
-        shadow_soft: bascenev1.Texture
-        shield: bascenev1.Texture
-        shrapnel1_color: bascenev1.Texture
-        smoke: bascenev1.Texture
-        soft_rect: bascenev1.Texture
-        soft_rect2: bascenev1.Texture
-        soft_rect_vertical: bascenev1.Texture
-        sparks: bascenev1.Texture
-        spinner: bascenev1.Texture
-        spinner0: bascenev1.Texture
-        spinner1: bascenev1.Texture
-        spinner10: bascenev1.Texture
-        spinner11: bascenev1.Texture
-        spinner2: bascenev1.Texture
-        spinner3: bascenev1.Texture
-        spinner4: bascenev1.Texture
-        spinner5: bascenev1.Texture
-        spinner6: bascenev1.Texture
-        spinner7: bascenev1.Texture
-        spinner8: bascenev1.Texture
-        spinner9: bascenev1.Texture
-        start_button: bascenev1.Texture
-        text_clear_button: bascenev1.Texture
-        touch_arrows: bascenev1.Texture
-        touch_arrows_actions: bascenev1.Texture
-        ui_atlas: bascenev1.Texture
-        ui_atlas2: bascenev1.Texture
-        users_button: bascenev1.Texture
-        white: bascenev1.Texture
-        window_hsmall_vmed: bascenev1.Texture
-        window_hsmall_vsmall: bascenev1.Texture
-        wings: bascenev1.Texture
-
-    audio: _Audio
-    meshes: _Meshes
-    textures: _Textures
-else:
-    audio = AssetDir(_APVERID, _TREE['audio'], 'audio')
-    meshes = AssetDir(_APVERID, _TREE['meshes'], 'meshes')
-    textures = AssetDir(_APVERID, _TREE['textures'], 'textures')
+if not TYPE_CHECKING:
+    audio = AssetDir(__asset_package__, _TREE['audio'], 'audio')
+    meshes = AssetDir(__asset_package__, _TREE['meshes'], 'meshes')
+    textures = AssetDir(__asset_package__, _TREE['textures'], 'textures')

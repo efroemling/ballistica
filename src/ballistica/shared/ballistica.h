@@ -45,11 +45,9 @@ namespace ballistica {
 
 // Predeclare types we use throughout our FeatureSet so most headers can get
 // away with just including this header.
-struct cJSON;
 class EventLoop;
 class Exception;
 class FeatureSetNativeComponent;
-class JsonDict;
 class Matrix44f;
 class NativeStackTrace;
 class Object;

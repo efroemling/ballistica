@@ -10,6 +10,10 @@
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
 
+namespace ballistica {
+class JsonObjBuilder;
+}
+
 namespace ballistica::base {
 
 /// 'Soft' interface to the plus feature-set, managed by base.
@@ -61,7 +65,7 @@ class PlusSoftInterface {
                                const std::string& val3, int build_number) = 0;
   virtual auto CalcV1PeerHash(const std::string& peer_hash_input)
       -> std::string = 0;
-  virtual void V1SetClientInfo(JsonDict* dict) = 0;
+  virtual void V1SetClientInfo(JsonObjBuilder* dict) = 0;
   virtual void DoPushSubmitAnalyticsCountsCall(const std::string& sval) = 0;
   virtual void SetHaveIncentivizedAd(bool val) = 0;
   virtual auto HaveIncentivizedAd() -> bool = 0;

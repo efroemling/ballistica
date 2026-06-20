@@ -33,7 +33,6 @@
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
-#include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::scene_v1 {
@@ -1299,85 +1298,54 @@ static auto PyGetGameRoster(PyObject* self, PyObject* args, PyObject* keywds)
   }
   PythonRef py_client_list(PyList_New(0), PythonRef::kSteal);
 
-  cJSON* party = classic::ClassicAppMode::GetSingleton()->game_roster();
-  assert(cJSON_IsArray(party));
-  int len = cJSON_GetArraySize(party);
-  for (int i = 0; i < len; i++) {
-    cJSON* client = cJSON_GetArrayItem(party, i);
-    if (cJSON_IsObject(client)) {
-      cJSON* spec = cJSON_GetObjectItem(client, "spec");
-      cJSON* players = cJSON_GetObjectItem(client, "p");
-      PythonRef py_player_list(PyList_New(0), PythonRef::kSteal);
-      if (cJSON_IsArray(players)) {
-        int plen = cJSON_GetArraySize(players);
-        for (int j = 0; j < plen; ++j) {
-          cJSON* player = cJSON_GetArrayItem(players, j);
-          if (cJSON_IsObject(player)) {
-            cJSON* name = cJSON_GetObjectItem(player, "n");
-            cJSON* py_name_full = cJSON_GetObjectItem(player, "nf");
-            cJSON* id_obj = cJSON_GetObjectItem(player, "i");
-            int id_val = cJSON_IsNumber(id_obj) ? id_obj->valueint : -1;
-            if (cJSON_IsString(name) && cJSON_IsString(py_name_full)
-                && cJSON_IsNumber(id_obj)) {
-              PythonRef py_player(
-                  Py_BuildValue(
-                      "{sssssi}", "name",
-                      Utils::GetValidUTF8(name->valuestring, "ggr1").c_str(),
-                      "name_full",
-                      Utils::GetValidUTF8(py_name_full->valuestring, "ggr2")
-                          .c_str(),
-                      "id", id_val),
-                  PythonRef::kSteal);
-              // This increments ref.
-              PyList_Append(py_player_list.get(), py_player.get());
-            }
-          }
-        }
-      }
-
-      // If there's a client_id with this data, include it; otherwise pass None.
-      cJSON* client_id = cJSON_GetObjectItem(client, "i");
-      int clientid{};
-      PythonRef client_id_ref;
-      if (client_id != nullptr) {
-        clientid = client_id->valueint;
-        client_id_ref.Steal(PyLong_FromLong(clientid));
-      } else {
-        client_id_ref.Acquire(Py_None);
-      }
-
-      // Let's also include a public account-id if we have one.
-      std::string account_id;
-      if (clientid == -1) {
-        account_id = g_base->Plus()->GetAccountID();
-      } else {
-        if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
-          auto client2 =
-              appmode->connections()->connections_to_clients().find(clientid);
-          if (client2
-              != appmode->connections()->connections_to_clients().end()) {
-            account_id = client2->second->peer_public_account_id();
-          }
-        }
-      }
-      PythonRef account_id_ref;
-      if (account_id.empty()) {
-        account_id_ref.Acquire(Py_None);
-      } else {
-        account_id_ref.Steal(PyUnicode_FromString(account_id.c_str()));
-      }
-
-      auto py_client{PythonRef::Stolen(Py_BuildValue(
-          "{sssssOsOsO}", "display_string",
-          cJSON_IsString(spec)
-              ? PlayerSpec(spec->valuestring).GetDisplayString().c_str()
-              : "",
-          "spec_string", cJSON_IsString(spec) ? spec->valuestring : "",
-          "players", py_player_list.get(), "client_id", client_id_ref.get(),
-          "account_id", account_id_ref.get()))};
-
-      PyList_Append(py_client_list.get(), py_client.get());
+  const auto& party = classic::ClassicAppMode::GetSingleton()->game_roster();
+  for (auto&& client : party) {
+    PythonRef py_player_list(PyList_New(0), PythonRef::kSteal);
+    for (auto&& player : client.players) {
+      PythonRef py_player(
+          Py_BuildValue(
+              "{sssssi}", "name",
+              Utils::GetValidUTF8(player.name.c_str(), "ggr1").c_str(),
+              "name_full",
+              Utils::GetValidUTF8(player.name_full.c_str(), "ggr2").c_str(),
+              "id", player.id),
+          PythonRef::kSteal);
+      // This increments ref.
+      PyList_Append(py_player_list.get(), py_player.get());
     }
+
+    int clientid = client.client_id;
+    PythonRef client_id_ref(PyLong_FromLong(clientid), PythonRef::kSteal);
+
+    // Let's also include a public account-id if we have one.
+    std::string account_id;
+    if (clientid == -1) {
+      account_id = g_base->Plus()->GetAccountID();
+    } else {
+      if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
+        auto client2 =
+            appmode->connections()->connections_to_clients().find(clientid);
+        if (client2 != appmode->connections()->connections_to_clients().end()) {
+          account_id = client2->second->peer_public_account_id();
+        }
+      }
+    }
+    PythonRef account_id_ref;
+    if (account_id.empty()) {
+      account_id_ref.Acquire(Py_None);
+    } else {
+      account_id_ref.Steal(PyUnicode_FromString(account_id.c_str()));
+    }
+
+    auto py_client{PythonRef::Stolen(Py_BuildValue(
+        "{sssssOsOsO}", "display_string",
+        client.spec.empty()
+            ? ""
+            : PlayerSpec(client.spec).GetDisplayString().c_str(),
+        "spec_string", client.spec.c_str(), "players", py_player_list.get(),
+        "client_id", client_id_ref.get(), "account_id", account_id_ref.get()))};
+
+    PyList_Append(py_client_list.get(), py_client.get());
   }
   return py_client_list.NewRef();
   BA_PYTHON_CATCH;

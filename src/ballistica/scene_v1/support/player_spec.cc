@@ -2,14 +2,16 @@
 
 #include "ballistica/scene_v1/support/player_spec.h"
 
+#include <optional>
 #include <string>
+#include <string_view>
 
 #include "ballistica/base/support/classic_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/platform.h"
-#include "ballistica/shared/generic/json.h"
+#include "ballistica/shared/generic/json_facade.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::scene_v1 {
@@ -17,30 +19,29 @@ namespace ballistica::scene_v1 {
 PlayerSpec::PlayerSpec() = default;
 
 PlayerSpec::PlayerSpec(const std::string& s) {
-  cJSON* root_obj = cJSON_Parse(s.c_str());
   bool success = false;
-  if (root_obj) {
-    if (cJSON_IsObject(root_obj)) {
-      cJSON* name_obj = cJSON_GetObjectItem(root_obj, "n");
-      cJSON* short_name_obj = cJSON_GetObjectItem(root_obj, "sn");
-      cJSON* account_obj = cJSON_GetObjectItem(root_obj, "a");
-      if (cJSON_IsString(name_obj) && cJSON_IsString(short_name_obj)
-          && cJSON_IsString(account_obj)) {
-        name_ = Utils::GetValidUTF8(name_obj->valuestring, "psps");
-        short_name_ = Utils::GetValidUTF8(short_name_obj->valuestring, "psps2");
+  if (auto doc = JsonDoc::Parse(s)) {
+    JsonRef root = doc->root();
+    if (root.is_object()) {
+      std::optional<std::string_view> name = root["n"].as_string();
+      std::optional<std::string_view> short_name = root["sn"].as_string();
+      std::optional<std::string_view> account = root["a"].as_string();
+      if (name.has_value() && short_name.has_value() && account.has_value()) {
+        name_ = Utils::GetValidUTF8(std::string(*name).c_str(), "psps");
+        short_name_ =
+            Utils::GetValidUTF8(std::string(*short_name).c_str(), "psps2");
 
         // Account type may technically be something we don't recognize,
         // but that's ok.. it'll just be 'invalid' to us in that case
         if (g_base->HaveClassic()) {
           v1_account_type_ = g_base->classic()->GetV1AccountTypeFromString(
-              account_obj->valuestring);
+              std::string(*account).c_str());
         } else {
           v1_account_type_ = 0;  // kInvalid.
         }
         success = true;
       }
     }
-    cJSON_Delete(root_obj);
   }
   if (!success) {
     valid_ = false;
@@ -76,19 +77,16 @@ auto PlayerSpec::operator==(const PlayerSpec& spec) const -> bool {
 }
 
 auto PlayerSpec::GetSpecString() const -> std::string {
-  cJSON* root;
-  root = cJSON_CreateObject();
-  cJSON_AddStringToObject(root, "n", name_.c_str());
-  cJSON_AddStringToObject(
-      root, "a",
+  std::string account_type =
       g_base->HaveClassic()
-          ? g_base->classic()->V1AccountTypeToString(v1_account_type_).c_str()
-          : "");
-  cJSON_AddStringToObject(root, "sn", short_name_.c_str());
-  char* out = cJSON_PrintUnformatted(root);
-  std::string out_s = out;
-  free(out);
-  cJSON_Delete(root);
+          ? g_base->classic()->V1AccountTypeToString(v1_account_type_)
+          : "";
+  JsonBuilder builder;
+  builder.root_object()
+      .Add("n", name_)
+      .Add("a", account_type)
+      .Add("sn", short_name_);
+  std::string out_s = builder.Write();
 
   // We should never allow ourself to have all this add up to more than 256.
   assert(out_s.size() < 256);

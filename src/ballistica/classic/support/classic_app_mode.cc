@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/audio/audio.h"
@@ -36,7 +37,7 @@
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
-#include "ballistica/shared/generic/json.h"
+#include "ballistica/shared/generic/json_facade.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/networking/sockaddr.h"
 #include "ballistica/ui_v1/ui_v1.h"
@@ -498,8 +499,7 @@ auto ClassicAppMode::GetSingleton() -> ClassicAppMode* {
 }
 
 ClassicAppMode::ClassicAppMode()
-    : game_roster_(cJSON_CreateArray()),
-      connections_(std::make_unique<scene_v1::ConnectionSet>()) {}
+    : connections_(std::make_unique<scene_v1::ConnectionSet>()) {}
 
 void ClassicAppMode::HandleIncomingUDPPacket(const std::vector<uint8_t>& data,
                                              const SockAddr& addr) {
@@ -510,26 +510,53 @@ void ClassicAppMode::HandleIncomingUDPPacket(const std::vector<uint8_t>& data,
 auto ClassicAppMode::HandleJSONPing(const std::string& data_str)
     -> std::string {
   // Note to self - this is called in a non-logic thread.
-  cJSON* data = cJSON_Parse(data_str.c_str());
-  if (data == nullptr) {
+
+  // Require valid json (we don't currently use the contents).
+  if (!JsonDoc::Parse(data_str)) {
     return "";
   }
-  cJSON_Delete(data);
 
   // Ok lets include some basic info that might be pertinent to someone
   // pinging us. Currently that includes our current/max connection count.
-  char buffer[256];
-  snprintf(buffer, sizeof(buffer), R"({"b":%d,"ps":%d,"psmx":%d})",
-           kEngineBuildNumber, public_party_size(), public_party_max_size());
-  return buffer;
+  JsonBuilder builder;
+  builder.root_object()
+      .Add("b", kEngineBuildNumber)
+      .Add("ps", public_party_size())
+      .Add("psmx", public_party_max_size());
+  return builder.Write();
 }
 
-void ClassicAppMode::SetGameRoster(cJSON* r) {
+void ClassicAppMode::SetGameRoster(const JsonRef& roster) {
   assert(g_base->InLogicThread());
-  if (game_roster_ != nullptr) {
-    cJSON_Delete(game_roster_);
+
+  // Decode the (untrusted) array of client entries into our native roster,
+  // copying out what we need. Anything missing or wrong-typed is skipped, so
+  // a malformed/malicious roster yields a sane (possibly partial) result
+  // rather than garbage. Mirrors the wire keys built in UpdateGameRoster().
+  std::vector<GameRosterEntry> new_roster;
+  for (JsonRef client : roster.elements()) {
+    if (!client.is_object()) {
+      continue;
+    }
+    GameRosterEntry entry;
+    entry.spec = client["spec"].string_or("");
+    entry.client_id = static_cast<int>(client["i"].int_or(0));
+    if (auto account_id = client["a"].as_string()) {
+      entry.account_id = std::string(*account_id);
+    }
+    for (JsonRef player : client["p"].elements()) {
+      if (!player.is_object()) {
+        continue;
+      }
+      GameRosterEntry::Player p;
+      p.name = player["n"].string_or("");
+      p.name_full = player["nf"].string_or("");
+      p.id = static_cast<int>(player["i"].int_or(-1));
+      entry.players.push_back(std::move(p));
+    }
+    new_roster.push_back(std::move(entry));
   }
-  game_roster_ = r;
+  game_roster_ = std::move(new_roster);
   OnGameRosterChanged_();
 }
 
@@ -540,8 +567,7 @@ void ClassicAppMode::OnGameRosterChanged_() {
 
 auto ClassicAppMode::GetPartySize() const -> int {
   assert(g_base->InLogicThread());
-  assert(game_roster_ != nullptr);
-  return cJSON_GetArraySize(game_roster_);
+  return static_cast<int>(game_roster_.size());
 }
 
 auto ClassicAppMode::GetHeadlessNextDisplayTimeStep() -> microsecs_t {
@@ -657,14 +683,32 @@ void ClassicAppMode::StepDisplayTime() {
 }
 
 auto ClassicAppMode::GetGameRosterMessage_() -> std::vector<uint8_t> {
-  // This message is simply a flattened json string of our roster (including
-  // terminating char).
-  char* s = cJSON_PrintUnformatted(game_roster_);
-  auto s_len = strlen(s);
-  std::vector<uint8_t> msg(1 + s_len + 1);
+  // The message is a flattened json string of our roster (including the
+  // terminating null char, which the receiver relies on). Serialize our
+  // native roster back to the historical wire shape: an array of client
+  // dicts {spec, p:[{n,nf,i}], i, (a)}.
+  JsonBuilder builder;
+  JsonArrBuilder arr = builder.root_array();
+  for (auto&& entry : game_roster_) {
+    JsonObjBuilder client = arr.AddObject();
+    client.Add("spec", entry.spec);
+    JsonArrBuilder players = client.AddArray("p");
+    for (auto&& player : entry.players) {
+      JsonObjBuilder pj = players.AddObject();
+      pj.Add("n", player.name);
+      pj.Add("nf", player.name_full);
+      pj.Add("i", player.id);
+    }
+    client.Add("i", entry.client_id);
+    if (entry.account_id.has_value()) {
+      client.Add("a", *entry.account_id);
+    }
+  }
+  std::string s = builder.Write();
+
+  std::vector<uint8_t> msg(1 + s.size() + 1);
   msg[0] = BA_MESSAGE_PARTY_ROSTER;
-  memcpy(&(msg[1]), s, s_len + 1);
-  free(s);
+  memcpy(&(msg[1]), s.c_str(), s.size() + 1);  // +1 to include null terminator.
 
   return msg;
 }
@@ -681,13 +725,8 @@ base::ContextRef ClassicAppMode::GetForegroundContext() {
 void ClassicAppMode::UpdateGameRoster() {
   assert(g_base->InLogicThread());
 
-  assert(game_roster_ != nullptr);
-  if (game_roster_ != nullptr) {
-    cJSON_Delete(game_roster_);
-  }
-
-  // Our party-roster is just a json array of dicts containing player-specs.
-  game_roster_ = cJSON_CreateArray();
+  // Our party-roster is an array of client entries, each with player-specs.
+  game_roster_.clear();
 
   int total_party_size = 1;  // include ourself here..
 
@@ -700,15 +739,10 @@ void ClassicAppMode::UpdateGameRoster() {
   if (auto* hs = dynamic_cast<scene_v1::HostSession*>(GetForegroundSession())) {
     // Add our host-y self.
     if (include_self) {
-      cJSON* client_dict = cJSON_CreateObject();
-      cJSON_AddItemToObject(
-          client_dict, "spec",
-          cJSON_CreateString(scene_v1::PlayerSpec::GetAccountPlayerSpec()
-                                 .GetSpecString()
-                                 .c_str()));
+      GameRosterEntry entry;
+      entry.spec = scene_v1::PlayerSpec::GetAccountPlayerSpec().GetSpecString();
 
       // Add our list of local players.
-      cJSON* player_array = cJSON_CreateArray();
       for (auto&& p : hs->players()) {
         auto* delegate = p->input_device_delegate();
         if (delegate == nullptr || !delegate->InputDeviceExists()) {
@@ -721,20 +755,11 @@ void ClassicAppMode::UpdateGameRoster() {
         // Add some basic info for each local player (only ones with real
         // names though; don't wanna send <selecting character>, etc).
         if (p->accepted() && p->name_is_real() && !delegate->IsRemoteClient()) {
-          cJSON* player_dict = cJSON_CreateObject();
-          cJSON_AddItemToObject(player_dict, "n",
-                                cJSON_CreateString(p->GetName().c_str()));
-          cJSON_AddItemToObject(player_dict, "nf",
-                                cJSON_CreateString(p->GetName(true).c_str()));
-          cJSON_AddItemToObject(player_dict, "i", cJSON_CreateNumber(p->id()));
-          cJSON_AddItemToArray(player_array, player_dict);
+          entry.players.push_back({p->GetName(), p->GetName(true), p->id()});
         }
       }
-      cJSON_AddItemToObject(client_dict, "p", player_array);
-      cJSON_AddItemToObject(
-          client_dict, "i",
-          cJSON_CreateNumber(-1));  // -1 client_id means we're the host.
-      cJSON_AddItemToArray(game_roster_, client_dict);
+      entry.client_id = -1;  // -1 client_id means we're the host.
+      game_roster_.push_back(std::move(entry));
     }
 
     // Add all connected clients.
@@ -742,16 +767,11 @@ void ClassicAppMode::UpdateGameRoster() {
         require_client_authentication() && client_authentication_version() == 2;
     for (auto&& i : connections()->connections_to_clients()) {
       if (i.second->can_communicate()) {
-        cJSON* client_dict = cJSON_CreateObject();
-        cJSON_AddItemToObject(
-            client_dict, "spec",
-            cJSON_CreateString(i.second->peer_spec().GetSpecString().c_str()));
+        GameRosterEntry entry;
+        entry.spec = i.second->peer_spec().GetSpecString();
 
-        // Add their list of players.
-        cJSON* player_array = cJSON_CreateArray();
-
-        // Include all players that are remote and coming from this same
-        // client connection.
+        // Add their list of players: all players that are remote and coming
+        // from this same client connection.
         for (auto&& p : hs->players()) {
           auto* delegate = p->input_device_delegate();
           if (delegate == nullptr || !delegate->InputDeviceExists()) {
@@ -770,27 +790,16 @@ void ClassicAppMode::UpdateGameRoster() {
 
             // Add some basic info for each remote player.
             if (ctc != nullptr && ctc == i.second.get()) {
-              cJSON* player_dict = cJSON_CreateObject();
-              cJSON_AddItemToObject(player_dict, "n",
-                                    cJSON_CreateString(p->GetName().c_str()));
-              cJSON_AddItemToObject(
-                  player_dict, "nf",
-                  cJSON_CreateString(p->GetName(true).c_str()));
-              cJSON_AddItemToObject(player_dict, "i",
-                                    cJSON_CreateNumber(p->id()));
-              cJSON_AddItemToArray(player_array, player_dict);
+              entry.players.push_back(
+                  {p->GetName(), p->GetName(true), p->id()});
             }
           }
         }
-        cJSON_AddItemToObject(client_dict, "p", player_array);
-        cJSON_AddItemToObject(client_dict, "i",
-                              cJSON_CreateNumber(i.second->id()));
+        entry.client_id = i.second->id();
         if (doing_v2_auth && !i.second->peer_public_account_id().empty()) {
-          cJSON_AddItemToObject(
-              client_dict, "a",
-              cJSON_CreateString(i.second->peer_public_account_id().c_str()));
+          entry.account_id = i.second->peer_public_account_id();
         }
-        cJSON_AddItemToArray(game_roster_, client_dict);
+        game_roster_.push_back(std::move(entry));
         total_party_size += 1;
       }
     }

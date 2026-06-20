@@ -19,9 +19,32 @@
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/ui_v1/ui_v1.h"
 
+namespace ballistica {
+class JsonRef;
+}
+
 namespace ballistica::classic {
 
 const int kMaxPartyNameCombinedSize{25};
+
+/// One client in the party roster: a connected peer (or the host itself, with
+/// client_id == -1) plus the local players it has joined. This is the native
+/// form of what was historically a cJSON array-of-dicts; the original wire
+/// keys are noted in comments. ClassicAppMode owns the roster as a value,
+/// rebuilds it on the host side, and replaces it wholesale from the network
+/// on the client side.
+struct GameRosterEntry {
+  /// A joined player belonging to a client.
+  struct Player {
+    std::string name;       // wire: "n"
+    std::string name_full;  // wire: "nf"
+    int id{};               // wire: "i"
+  };
+  std::string spec;                       // wire: "spec" (PlayerSpec string)
+  int client_id{};                        // wire: "i" (-1 == the host)
+  std::optional<std::string> account_id;  // wire: "a" (public id; v2-auth only)
+  std::vector<Player> players;            // wire: "p"
+};
 
 /// Defines high level app behavior when we're active.
 class ClassicAppMode : public base::AppMode {
@@ -55,10 +78,18 @@ class ClassicAppMode : public base::AppMode {
                                const SockAddr& addr) override;
   void StepDisplayTime() override;
   void OnAppShutdown() override;
-  auto game_roster() const -> cJSON* { return game_roster_; }
+  // The roster we own (a value; valid for the lifetime of this app-mode).
+  auto game_roster() const -> const std::vector<GameRosterEntry>& {
+    return game_roster_;
+  }
   void UpdateGameRoster();
   void MarkGameRosterDirty() { game_roster_dirty_ = true; }
-  void SetGameRoster(cJSON* r);
+  // Replaces the current roster by decoding `roster` (a JSON array of client
+  // entries, typically just-parsed from untrusted network data). We copy what
+  // we need out of the borrowed view, so the caller keeps ownership of the
+  // underlying JsonDoc and may discard it after this returns. Malformed
+  // elements are skipped.
+  void SetGameRoster(const JsonRef& roster);
   auto GetPartySize() const -> int override;
   auto kick_vote_in_progress() const -> bool { return kick_vote_in_progress_; }
   void StartKickVote(scene_v1::ConnectionToClient* starter,
@@ -322,7 +353,7 @@ class ClassicAppMode : public base::AppMode {
   bool root_ui_highlight_potential_token_purchases_{};
 
   ui_v1::UIV1FeatureSet* uiv1_{};
-  cJSON* game_roster_{};
+  std::vector<GameRosterEntry> game_roster_;
   millisecs_t last_game_roster_send_time_{};
   std::unique_ptr<scene_v1::ConnectionSet> connections_;
   Object::WeakRef<scene_v1::ConnectionToClient> kick_vote_starter_;

@@ -101,7 +101,7 @@
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -123,7 +123,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -145,7 +145,7 @@
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -169,7 +169,7 @@
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -706,8 +706,8 @@
     <ClCompile Include="..\..\src\ballistica\shared\generic\base64.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\base64.h" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\buffer.h" />
-    <ClCompile Include="..\..\src\ballistica\shared\generic\json.cc" />
-    <ClInclude Include="..\..\src\ballistica\shared\generic\json.h" />
+    <ClCompile Include="..\..\src\ballistica\shared\generic\json_facade.cc" />
+    <ClInclude Include="..\..\src\ballistica\shared\generic\json_facade.h" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\lambda_runnable.h" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\native_stack_trace.h" />
     <ClCompile Include="..\..\src\ballistica\shared\generic\runnable.cc" />
@@ -876,6 +876,11 @@
     </ClCompile>
     <ClInclude Include="..\..\src\external\monocypher\monocypher-ed25519.h" />
     <ClCompile Include="..\..\src\external\monocypher\monocypher-ed25519.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <ForcedIncludeFiles />
+    </ClCompile>
+    <ClInclude Include="..\..\src\external\yyjson\yyjson.h" />
+    <ClCompile Include="..\..\src\external\yyjson\yyjson.c">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <ForcedIncludeFiles />
     </ClCompile>

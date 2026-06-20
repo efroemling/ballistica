@@ -7,9 +7,13 @@ Auto-generated; do not edit by hand.
 
 # ba_meta require api 9
 # ba_meta require asset-package a-0.babuiltinassets.260617
+
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
+
+__asset_package__ = 'a-0.babuiltinassets.260617'
+
 from typing import TYPE_CHECKING
 
 from bauiv1._assetwrap import AssetDir
@@ -17,8 +21,205 @@ from bauiv1._assetwrap import AssetDir
 if TYPE_CHECKING:
     import bauiv1
 
-__asset_package__ = 'a-0.babuiltinassets.260617'
-_APVERID = __asset_package__
+    class Audio:
+        """Asset-group type; see source for the full list."""
+
+        blank: bauiv1.Sound
+        blip: bauiv1.Sound
+        cash_register: bauiv1.Sound
+        click01: bauiv1.Sound
+        cork_pop: bauiv1.Sound
+        deek: bauiv1.Sound
+        ding: bauiv1.Sound
+        error: bauiv1.Sound
+        gun_cocking: bauiv1.Sound
+        powerdown01: bauiv1.Sound
+        punch01: bauiv1.Sound
+        score_increase: bauiv1.Sound
+        sparkle01: bauiv1.Sound
+        sparkle02: bauiv1.Sound
+        sparkle03: bauiv1.Sound
+        swish: bauiv1.Sound
+        swish2: bauiv1.Sound
+        swish3: bauiv1.Sound
+        tap: bauiv1.Sound
+        ticking_crazy: bauiv1.Sound
+
+    class Meshes:
+        """Asset-group type; see source for the full list."""
+
+        action_button_bottom: bauiv1.Mesh
+        action_button_left: bauiv1.Mesh
+        action_button_right: bauiv1.Mesh
+        action_button_top: bauiv1.Mesh
+        arrow_back: bauiv1.Mesh
+        arrow_front: bauiv1.Mesh
+        box: bauiv1.Mesh
+        boxing_glove: bauiv1.Mesh
+        button_back_opaque: bauiv1.Mesh
+        button_back_small_opaque: bauiv1.Mesh
+        button_back_small_transparent: bauiv1.Mesh
+        button_back_transparent: bauiv1.Mesh
+        button_large_opaque: bauiv1.Mesh
+        button_large_transparent: bauiv1.Mesh
+        button_larger_opaque: bauiv1.Mesh
+        button_larger_transparent: bauiv1.Mesh
+        button_medium_opaque: bauiv1.Mesh
+        button_medium_transparent: bauiv1.Mesh
+        button_small_opaque: bauiv1.Mesh
+        button_small_transparent: bauiv1.Mesh
+        button_square_opaque: bauiv1.Mesh
+        button_square_transparent: bauiv1.Mesh
+        button_tab_opaque: bauiv1.Mesh
+        button_tab_transparent: bauiv1.Mesh
+        check_transparent: bauiv1.Mesh
+        cross_out: bauiv1.Mesh
+        cylinder: bauiv1.Mesh
+        eye_ball: bauiv1.Mesh
+        eye_ball_iris: bauiv1.Mesh
+        eye_lid: bauiv1.Mesh
+        flag_pole: bauiv1.Mesh
+        flag_stand: bauiv1.Mesh
+        flash: bauiv1.Mesh
+        hair_tuft1: bauiv1.Mesh
+        hair_tuft1b: bauiv1.Mesh
+        hair_tuft2: bauiv1.Mesh
+        hair_tuft3: bauiv1.Mesh
+        hair_tuft4: bauiv1.Mesh
+        image16x1: bauiv1.Mesh
+        image1x1: bauiv1.Mesh
+        image1x1_full_screen: bauiv1.Mesh
+        image1x1_vrfull_screen: bauiv1.Mesh
+        image2x1: bauiv1.Mesh
+        image4x1: bauiv1.Mesh
+        locator: bauiv1.Mesh
+        locator_box: bauiv1.Mesh
+        locator_circle: bauiv1.Mesh
+        locator_circle_outline: bauiv1.Mesh
+        overlay_guide: bauiv1.Mesh
+        scorch: bauiv1.Mesh
+        scroll_bar_thumb_opaque: bauiv1.Mesh
+        scroll_bar_thumb_short_opaque: bauiv1.Mesh
+        scroll_bar_thumb_short_simple: bauiv1.Mesh
+        scroll_bar_thumb_short_transparent: bauiv1.Mesh
+        scroll_bar_thumb_simple: bauiv1.Mesh
+        scroll_bar_thumb_transparent: bauiv1.Mesh
+        scroll_bar_trough_transparent: bauiv1.Mesh
+        shield: bauiv1.Mesh
+        shock_wave: bauiv1.Mesh
+        shrapnel1: bauiv1.Mesh
+        shrapnel_board: bauiv1.Mesh
+        shrapnel_slime: bauiv1.Mesh
+        soft_edge_inside: bauiv1.Mesh
+        soft_edge_outside: bauiv1.Mesh
+        text_box_transparent: bauiv1.Mesh
+        vr_fade: bauiv1.Mesh
+        vr_overlay: bauiv1.Mesh
+        window_hsmall_vmed_opaque: bauiv1.Mesh
+        window_hsmall_vmed_transparent: bauiv1.Mesh
+        window_hsmall_vsmall_opaque: bauiv1.Mesh
+        window_hsmall_vsmall_transparent: bauiv1.Mesh
+        wing: bauiv1.Mesh
+
+    class Textures:
+        """Asset-group type; see source for the full list."""
+
+        action_buttons: bauiv1.Texture
+        arrow: bauiv1.Texture
+        back_icon: bauiv1.Texture
+        black: bauiv1.Texture
+        bomb_button: bauiv1.Texture
+        boxing_gloves_color: bauiv1.Texture
+        button_square: bauiv1.Texture
+        button_square_wide: bauiv1.Texture
+        character_icon_mask: bauiv1.Texture
+        circle: bauiv1.Texture
+        circle_no_alpha: bauiv1.Texture
+        circle_outline: bauiv1.Texture
+        circle_outline_no_alpha: bauiv1.Texture
+        circle_shadow: bauiv1.Texture
+        circle_soft: bauiv1.Texture
+        cursor: bauiv1.Texture
+        explosion: bauiv1.Texture
+        eye_color: bauiv1.Texture
+        eye_color_tint_mask: bauiv1.Texture
+        flag_pole_color: bauiv1.Texture
+        font_big: bauiv1.Texture
+        font_extras: bauiv1.Texture
+        font_extras2: bauiv1.Texture
+        font_extras3: bauiv1.Texture
+        font_extras4: bauiv1.Texture
+        font_extras5: bauiv1.Texture
+        font_small0: bauiv1.Texture
+        font_small1: bauiv1.Texture
+        font_small2: bauiv1.Texture
+        font_small3: bauiv1.Texture
+        font_small4: bauiv1.Texture
+        font_small5: bauiv1.Texture
+        font_small6: bauiv1.Texture
+        font_small7: bauiv1.Texture
+        fuse: bauiv1.Texture
+        glow: bauiv1.Texture
+        light: bauiv1.Texture
+        light_sharp: bauiv1.Texture
+        light_soft: bauiv1.Texture
+        menu_button: bauiv1.Texture
+        nub: bauiv1.Texture
+        ouya_abutton: bauiv1.Texture
+        page_left_right: bauiv1.Texture
+        rgb_stripes: bauiv1.Texture
+        scorch: bauiv1.Texture
+        scorch_big: bauiv1.Texture
+        scroll_widget: bauiv1.Texture
+        scroll_widget_glow: bauiv1.Texture
+        shadow: bauiv1.Texture
+        shadow_sharp: bauiv1.Texture
+        shadow_soft: bauiv1.Texture
+        shield: bauiv1.Texture
+        shrapnel1_color: bauiv1.Texture
+        smoke: bauiv1.Texture
+        soft_rect: bauiv1.Texture
+        soft_rect2: bauiv1.Texture
+        soft_rect_vertical: bauiv1.Texture
+        sparks: bauiv1.Texture
+        spinner: bauiv1.Texture
+        spinner0: bauiv1.Texture
+        spinner1: bauiv1.Texture
+        spinner10: bauiv1.Texture
+        spinner11: bauiv1.Texture
+        spinner2: bauiv1.Texture
+        spinner3: bauiv1.Texture
+        spinner4: bauiv1.Texture
+        spinner5: bauiv1.Texture
+        spinner6: bauiv1.Texture
+        spinner7: bauiv1.Texture
+        spinner8: bauiv1.Texture
+        spinner9: bauiv1.Texture
+        start_button: bauiv1.Texture
+        text_clear_button: bauiv1.Texture
+        touch_arrows: bauiv1.Texture
+        touch_arrows_actions: bauiv1.Texture
+        ui_atlas: bauiv1.Texture
+        ui_atlas2: bauiv1.Texture
+        users_button: bauiv1.Texture
+        white: bauiv1.Texture
+        window_hsmall_vmed: bauiv1.Texture
+        window_hsmall_vsmall: bauiv1.Texture
+        wings: bauiv1.Texture
+
+    #: The ``audio`` group - 20 assets (``blank``, ``blip``, ``cash_register``,
+    #: ``click01``, ``cork_pop``, and 15 more). Full list in source.
+    audio: Audio
+
+    #: The ``meshes`` group - 72 assets (``action_button_bottom``,
+    #: ``action_button_left``, ``action_button_right``, ``action_button_top``,
+    #: ``arrow_back``, and 67 more). Full list in source.
+    meshes: Meshes
+
+    #: The ``textures`` group - 82 assets (``action_buttons``, ``arrow``,
+    #: ``back_icon``, ``black``, ``bomb_button``, and 77 more). Full list in
+    #: source.
+    textures: Textures
 
 _TREE = {
     'audio': {
@@ -204,192 +405,7 @@ _TREE = {
 }
 
 
-if TYPE_CHECKING:
-
-    class _Audio:
-        blank: bauiv1.Sound
-        blip: bauiv1.Sound
-        cash_register: bauiv1.Sound
-        click01: bauiv1.Sound
-        cork_pop: bauiv1.Sound
-        deek: bauiv1.Sound
-        ding: bauiv1.Sound
-        error: bauiv1.Sound
-        gun_cocking: bauiv1.Sound
-        powerdown01: bauiv1.Sound
-        punch01: bauiv1.Sound
-        score_increase: bauiv1.Sound
-        sparkle01: bauiv1.Sound
-        sparkle02: bauiv1.Sound
-        sparkle03: bauiv1.Sound
-        swish: bauiv1.Sound
-        swish2: bauiv1.Sound
-        swish3: bauiv1.Sound
-        tap: bauiv1.Sound
-        ticking_crazy: bauiv1.Sound
-
-    class _Meshes:
-        action_button_bottom: bauiv1.Mesh
-        action_button_left: bauiv1.Mesh
-        action_button_right: bauiv1.Mesh
-        action_button_top: bauiv1.Mesh
-        arrow_back: bauiv1.Mesh
-        arrow_front: bauiv1.Mesh
-        box: bauiv1.Mesh
-        boxing_glove: bauiv1.Mesh
-        button_back_opaque: bauiv1.Mesh
-        button_back_small_opaque: bauiv1.Mesh
-        button_back_small_transparent: bauiv1.Mesh
-        button_back_transparent: bauiv1.Mesh
-        button_large_opaque: bauiv1.Mesh
-        button_large_transparent: bauiv1.Mesh
-        button_larger_opaque: bauiv1.Mesh
-        button_larger_transparent: bauiv1.Mesh
-        button_medium_opaque: bauiv1.Mesh
-        button_medium_transparent: bauiv1.Mesh
-        button_small_opaque: bauiv1.Mesh
-        button_small_transparent: bauiv1.Mesh
-        button_square_opaque: bauiv1.Mesh
-        button_square_transparent: bauiv1.Mesh
-        button_tab_opaque: bauiv1.Mesh
-        button_tab_transparent: bauiv1.Mesh
-        check_transparent: bauiv1.Mesh
-        cross_out: bauiv1.Mesh
-        cylinder: bauiv1.Mesh
-        eye_ball: bauiv1.Mesh
-        eye_ball_iris: bauiv1.Mesh
-        eye_lid: bauiv1.Mesh
-        flag_pole: bauiv1.Mesh
-        flag_stand: bauiv1.Mesh
-        flash: bauiv1.Mesh
-        hair_tuft1: bauiv1.Mesh
-        hair_tuft1b: bauiv1.Mesh
-        hair_tuft2: bauiv1.Mesh
-        hair_tuft3: bauiv1.Mesh
-        hair_tuft4: bauiv1.Mesh
-        image16x1: bauiv1.Mesh
-        image1x1: bauiv1.Mesh
-        image1x1_full_screen: bauiv1.Mesh
-        image1x1_vrfull_screen: bauiv1.Mesh
-        image2x1: bauiv1.Mesh
-        image4x1: bauiv1.Mesh
-        locator: bauiv1.Mesh
-        locator_box: bauiv1.Mesh
-        locator_circle: bauiv1.Mesh
-        locator_circle_outline: bauiv1.Mesh
-        overlay_guide: bauiv1.Mesh
-        scorch: bauiv1.Mesh
-        scroll_bar_thumb_opaque: bauiv1.Mesh
-        scroll_bar_thumb_short_opaque: bauiv1.Mesh
-        scroll_bar_thumb_short_simple: bauiv1.Mesh
-        scroll_bar_thumb_short_transparent: bauiv1.Mesh
-        scroll_bar_thumb_simple: bauiv1.Mesh
-        scroll_bar_thumb_transparent: bauiv1.Mesh
-        scroll_bar_trough_transparent: bauiv1.Mesh
-        shield: bauiv1.Mesh
-        shock_wave: bauiv1.Mesh
-        shrapnel1: bauiv1.Mesh
-        shrapnel_board: bauiv1.Mesh
-        shrapnel_slime: bauiv1.Mesh
-        soft_edge_inside: bauiv1.Mesh
-        soft_edge_outside: bauiv1.Mesh
-        text_box_transparent: bauiv1.Mesh
-        vr_fade: bauiv1.Mesh
-        vr_overlay: bauiv1.Mesh
-        window_hsmall_vmed_opaque: bauiv1.Mesh
-        window_hsmall_vmed_transparent: bauiv1.Mesh
-        window_hsmall_vsmall_opaque: bauiv1.Mesh
-        window_hsmall_vsmall_transparent: bauiv1.Mesh
-        wing: bauiv1.Mesh
-
-    class _Textures:
-        action_buttons: bauiv1.Texture
-        arrow: bauiv1.Texture
-        back_icon: bauiv1.Texture
-        black: bauiv1.Texture
-        bomb_button: bauiv1.Texture
-        boxing_gloves_color: bauiv1.Texture
-        button_square: bauiv1.Texture
-        button_square_wide: bauiv1.Texture
-        character_icon_mask: bauiv1.Texture
-        circle: bauiv1.Texture
-        circle_no_alpha: bauiv1.Texture
-        circle_outline: bauiv1.Texture
-        circle_outline_no_alpha: bauiv1.Texture
-        circle_shadow: bauiv1.Texture
-        circle_soft: bauiv1.Texture
-        cursor: bauiv1.Texture
-        explosion: bauiv1.Texture
-        eye_color: bauiv1.Texture
-        eye_color_tint_mask: bauiv1.Texture
-        flag_pole_color: bauiv1.Texture
-        font_big: bauiv1.Texture
-        font_extras: bauiv1.Texture
-        font_extras2: bauiv1.Texture
-        font_extras3: bauiv1.Texture
-        font_extras4: bauiv1.Texture
-        font_extras5: bauiv1.Texture
-        font_small0: bauiv1.Texture
-        font_small1: bauiv1.Texture
-        font_small2: bauiv1.Texture
-        font_small3: bauiv1.Texture
-        font_small4: bauiv1.Texture
-        font_small5: bauiv1.Texture
-        font_small6: bauiv1.Texture
-        font_small7: bauiv1.Texture
-        fuse: bauiv1.Texture
-        glow: bauiv1.Texture
-        light: bauiv1.Texture
-        light_sharp: bauiv1.Texture
-        light_soft: bauiv1.Texture
-        menu_button: bauiv1.Texture
-        nub: bauiv1.Texture
-        ouya_abutton: bauiv1.Texture
-        page_left_right: bauiv1.Texture
-        rgb_stripes: bauiv1.Texture
-        scorch: bauiv1.Texture
-        scorch_big: bauiv1.Texture
-        scroll_widget: bauiv1.Texture
-        scroll_widget_glow: bauiv1.Texture
-        shadow: bauiv1.Texture
-        shadow_sharp: bauiv1.Texture
-        shadow_soft: bauiv1.Texture
-        shield: bauiv1.Texture
-        shrapnel1_color: bauiv1.Texture
-        smoke: bauiv1.Texture
-        soft_rect: bauiv1.Texture
-        soft_rect2: bauiv1.Texture
-        soft_rect_vertical: bauiv1.Texture
-        sparks: bauiv1.Texture
-        spinner: bauiv1.Texture
-        spinner0: bauiv1.Texture
-        spinner1: bauiv1.Texture
-        spinner10: bauiv1.Texture
-        spinner11: bauiv1.Texture
-        spinner2: bauiv1.Texture
-        spinner3: bauiv1.Texture
-        spinner4: bauiv1.Texture
-        spinner5: bauiv1.Texture
-        spinner6: bauiv1.Texture
-        spinner7: bauiv1.Texture
-        spinner8: bauiv1.Texture
-        spinner9: bauiv1.Texture
-        start_button: bauiv1.Texture
-        text_clear_button: bauiv1.Texture
-        touch_arrows: bauiv1.Texture
-        touch_arrows_actions: bauiv1.Texture
-        ui_atlas: bauiv1.Texture
-        ui_atlas2: bauiv1.Texture
-        users_button: bauiv1.Texture
-        white: bauiv1.Texture
-        window_hsmall_vmed: bauiv1.Texture
-        window_hsmall_vsmall: bauiv1.Texture
-        wings: bauiv1.Texture
-
-    audio: _Audio
-    meshes: _Meshes
-    textures: _Textures
-else:
-    audio = AssetDir(_APVERID, _TREE['audio'], 'audio')
-    meshes = AssetDir(_APVERID, _TREE['meshes'], 'meshes')
-    textures = AssetDir(_APVERID, _TREE['textures'], 'textures')
+if not TYPE_CHECKING:
+    audio = AssetDir(__asset_package__, _TREE['audio'], 'audio')
+    meshes = AssetDir(__asset_package__, _TREE['meshes'], 'meshes')
+    textures = AssetDir(__asset_package__, _TREE['textures'], 'textures')

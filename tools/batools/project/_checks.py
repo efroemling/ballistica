@@ -36,6 +36,38 @@ CROSS_FEATURESET_PRIVATE_IMPORT_ALLOWLIST: set[str] = {
 }
 
 
+# The JSON facade (``src/ballistica/shared/generic/json_facade.h``) is the
+# engine's one sanctioned JSON interface (initiative:
+# strings-asset-migration, decision D7). Engine code must go through it
+# (``JsonDoc``/``JsonRef``/``JsonBuilder``) rather than touch the underlying
+# yyjson C API or the legacy cJSON C API directly; that is what makes the
+# crash-the-server-on-bad-JSON exploit class structurally unreachable rather
+# than merely mitigated.
+#
+# yyjson is born facade-only: it is banned everywhere outside the facade's
+# own translation unit from day one (no allowlist needed -- the vendored
+# library lives under src/external and is never scanned here). cJSON is
+# retired incrementally; the set below names the not-yet-migrated files still
+# permitted to use the raw cJSON C API. It only ever SHRINKS -- migrate a
+# file onto the facade and delete its entry (the check then guards the file
+# against cJSON creeping back in).
+#
+# The set is now EMPTY: every engine consumer is on the facade and no new raw
+# cJSON use is permitted anywhere. The remaining cleanup is to delete the
+# vendored cJSON library itself (shared/generic/json.{h,cc}) and the
+# now-unused JsonDict/JsonObject veneer, after which _JSON_FACADE_EXEMPT_FILES
+# can drop its json.{h,cc} entries too.
+JSON_FACADE_CJSON_ALLOWLIST: set[str] = set()
+
+# The facade's own translation unit: this is the one place the raw yyjson API
+# legitimately lives, so it is exempt from the ban below. (The vendored cJSON
+# library that used to share this directory has been retired.)
+_JSON_FACADE_EXEMPT_FILES: set[str] = {
+    'src/ballistica/shared/generic/json_facade.h',
+    'src/ballistica/shared/generic/json_facade.cc',
+}
+
+
 def check_source_files(self: ProjectUpdater) -> None:
     """Check project source files."""
     for fsrc in self.source_files:
@@ -60,6 +92,7 @@ def _check_source_file(self: ProjectUpdater, fname: str) -> None:
         _check_c_license(self, fname, lines)
 
     _source_file_feature_set_namespace_check(self, fname, lines)
+    _source_file_json_facade_check(fname, lines)
 
 
 def _source_file_feature_set_namespace_check(
@@ -134,6 +167,75 @@ def _source_file_feature_set_namespace_check(
                     )
 
 
+def _source_file_json_facade_check(fname: str, lines: list[str]) -> None:
+    """Enforce JSON-facade-only access to JSON (initiative D7).
+
+    Engine code must use the facade in ``shared/generic/json_facade.h``
+    (``JsonDoc``/``JsonRef``/``JsonBuilder``); raw ``yyjson_*`` is banned
+    outside the facade TU, and raw ``cJSON_*`` is permitted only in the
+    shrinking ``JSON_FACADE_CJSON_ALLOWLIST`` of not-yet-migrated files. A
+    single line may opt out with a ``// __JSON_FACADE_ALLOW_RAW__`` marker for
+    genuinely exceptional cases (rare, and to be justified in a comment).
+    """
+    # Skip extensions we don't scan (matches the namespace check). The
+    # vendored yyjson.c is a .c file under src/external and never reaches
+    # here anyway.
+    if any(fname.endswith(x) for x in ('.c', '.swift')):
+        return
+    if not any(fname.endswith(x) for x in ('.cc', '.h', '.mm')):
+        return
+
+    # The facade TU (and the vendored cJSON lib beside it) legitimately use
+    # the raw APIs.
+    if fname in _JSON_FACADE_EXEMPT_FILES:
+        return
+
+    cjson_allowed = fname in JSON_FACADE_CJSON_ALLOWLIST
+    found_cjson = False
+
+    for i, line in enumerate(lines):
+        stripped = line.lstrip()
+
+        # Skip comment lines (naive, in the spirit of the namespace check).
+        if stripped.startswith(('//', '*', '/*')):
+            continue
+
+        # Per-line escape hatch for genuinely exceptional cases.
+        if '__JSON_FACADE_ALLOW_RAW__' in line:
+            continue
+
+        if 'yyjson_' in line:
+            raise CleanError(
+                f'Raw yyjson use at {fname} line {i + 1}:\n'
+                f'  {line.strip()}\n'
+                'yyjson is reachable only through the JSON facade'
+                ' (shared/generic/json_facade.h); use JsonDoc/JsonRef/'
+                'JsonBuilder, or extend the facade if it lacks something'
+                ' you need (initiative: strings-asset-migration, D7).'
+            )
+
+        if 'cJSON_' in line:
+            found_cjson = True
+            if not cjson_allowed:
+                raise CleanError(
+                    f'Raw cJSON use at {fname} line {i + 1}:\n'
+                    f'  {line.strip()}\n'
+                    'The legacy cJSON C API is being retired in favor of the'
+                    ' JSON facade (shared/generic/json_facade.h); use'
+                    ' JsonDoc/JsonRef/JsonBuilder for new code (initiative:'
+                    ' strings-asset-migration, D7).'
+                )
+
+    # Keep the allowlist honest: an allowlisted file that no longer uses
+    # cJSON should be removed so the list keeps shrinking toward empty.
+    if cjson_allowed and not found_cjson:
+        raise CleanError(
+            f"'{fname}' is in JSON_FACADE_CJSON_ALLOWLIST but no longer uses"
+            ' the cJSON C API; remove it from the allowlist (initiative:'
+            ' strings-asset-migration, D7).'
+        )
+
+
 def _get_namespace_info(lines: list[str], index: int) -> tuple[str, bool]:
     """Given a line no, return name of namespace declared and whether it
     is only predeclares."""
@@ -184,6 +286,7 @@ def _check_header(self: ProjectUpdater, fname: str) -> None:
         _check_c_license(self, fname, lines)
 
     _source_file_feature_set_namespace_check(self, fname, lines)
+    _source_file_json_facade_check(fname, lines)
 
     # Check for header guard lines at top
     line = f'#ifndef {guard}'
