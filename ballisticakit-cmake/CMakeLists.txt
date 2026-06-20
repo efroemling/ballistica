@@ -827,8 +827,6 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/generic/snapshot.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/timer_list.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/timer_list.h
-  ${BA_SRC_ROOT}/ballistica/shared/generic/utf8.cc
-  ${BA_SRC_ROOT}/ballistica/shared/generic/utf8.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/utils.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/utils.h
   ${BA_SRC_ROOT}/ballistica/shared/math/lerp.h

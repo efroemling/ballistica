@@ -4,6 +4,7 @@
 
 #include <cstdio>
 #include <fstream>
+#include <iterator>
 #include <list>
 #include <sstream>
 #include <string>
@@ -14,9 +15,15 @@
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/exception.h"
 #include "ballistica/shared/generic/json_facade.h"
-#include "ballistica/shared/generic/utf8.h"
 #include "ballistica/shared/math/random.h"
 #include "ballistica/shared/math/vector3f.h"
+
+// Pin utfcpp 8-bit code units to unsigned char rather than C++20 char8_t:
+// we use char-based std::string throughout, and the char8_t typedef trips
+// -Wcharacter-conversion in utfcpp steppers. We only use its iterator API
+// (identical across C++17/20). UTF_CPP_CPLUSPLUS is utfcpp own override knob.
+#define UTF_CPP_CPLUSPLUS 201703L
+#include "external/utfcpp/utf8.h"
 
 namespace ballistica {
 
@@ -155,211 +162,67 @@ void Utils::StringReplaceAll(std::string* target, const std::string& key,
 }
 
 auto Utils::IsValidUTF8(const std::string& val) -> bool {
-  std::string out = Utils::GetValidUTF8(val.c_str(), "bsivu8");
-  return (out == val);
+  return utf8::is_valid(val);
 }
 
-static auto utf8_check_is_valid(const std::string& string) -> bool {
-  int c, i, ix, n, j;
-  for (i = 0, ix = static_cast<int>(string.length()); i < ix; i++) {
-    c = (unsigned char)string[i];
-    // if (c==0x09 || c==0x0a || c==0x0d
-    // || (0x20 <= c && c <= 0x7e) ) n = 0;  // is_printable_ascii
-    if (0x00 <= c && c <= 0x7f) {
-      n = 0;                          // 0bbbbbbb
-    } else if ((c & 0xE0) == 0xC0) {  // NOLINT
-      n = 1;                          // 110bbbbb
-    } else if (c == 0xed && i < (ix - 1)
-               && ((unsigned char)string[i + 1] & 0xa0) == 0xa0) {  // NOLINT
-      return false;                   // U+d800 to U+dfff
-    } else if ((c & 0xF0) == 0xE0) {  // NOLINT
-      n = 2;                          // 1110bbbb
-    } else if ((c & 0xF8) == 0xF0) {  // NOLINT
-      n = 3;                          // 11110bbb
-    } else {
-      // else if (($c & 0xFC) == 0xF8)
-      // n=4;  // 111110bb //byte 5, unnecessary in 4 byte UTF-8
-      // else if (($c & 0xFE) == 0xFC)
-      // n=5;  // 1111110b //byte 6, unnecessary in 4 byte UTF-8
-
-      return false;
-    }
-    for (j = 0; j < n && i < ix; j++) {  // n bytes matching 10bbbbbb follow ?
-      // NOLINTNEXTLINE
-      if ((++i == ix) || (((unsigned char)string[i] & 0xC0) != 0x80)) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
-// Added by ericf from: http://stackoverflow.com/questions/17316506/
-// strip-invalid-utf8-from-string-in-c-c
 auto Utils::GetValidUTF8(const char* str, const char* loc) -> std::string {
-  int i, f_size = static_cast<int>(strlen(str));
-  unsigned char c, c2 = 0, c3, c4;
-  std::string to;
-  to.reserve(static_cast<size_t>(f_size));
+  std::string s{str};
 
-  // Ok, it seems we're somehow letting some funky utf8 through that's
-  // causing crashes. For now lets try this all-or-nothing func and return
-  // ascii only if it fails.
-  if (!utf8_check_is_valid(str)) {
-    // Now strip out anything but normal ascii.
-    for (i = 0; i < f_size; i++) {
-      c = (unsigned char)(str)[i];
-      if (c < 127) {  // Normal ASCII.
-        to.append(1, static_cast<char>(c));
-      }
-    }
-
-    // Phone home a few times for bad strings.
-    static int logged_count = 0;
-    if (logged_count < 10) {
-      std::string log_str;
-      for (i = 0; i < f_size; i++) {
-        c = (unsigned char)(str)[i];
-        log_str += std::to_string(static_cast<int>(c));
-        if (i + 1 < f_size) {
-          log_str += ',';
-        }
-      }
-      logged_count++;
-      g_core->logging->Log(LogName::kBa, LogLevel::kError,
-                           "GOT INVALID UTF8 SEQUENCE: (" + log_str
-                               + "); RETURNING '" + to + "'; LOC '" + loc
-                               + "'");
-    }
-
-  } else {
-    for (i = 0; i < f_size; i++) {
-      c = (unsigned char)(str)[i];
-      if (c < 32) {                          // control char
-        if (c == 9 || c == 10 || c == 13) {  // allow only \t \n \r
-          to.append(1, static_cast<char>(c));
-        }
-        continue;
-      } else if (c < 127) {  // normal ASCII
-        to.append(1, static_cast<char>(c));
-        continue;
-      } else if (c < 160) {
-        // control char (nothing should be defined here either
-        // ASCI, ISO_8859-1 or UTF8, so skipping)
-        if (c2 == 128) {  // fix microsoft mess, add euro
-          to.append(1, static_cast<char>((unsigned char)(226)));
-          to.append(1, static_cast<char>((unsigned char)(130)));
-          to.append(1, static_cast<char>((unsigned char)(172)));
-        }
-        if (c2 == 133) {  // fix IBM mess, add NEL = \n\r
-          to.append(1, 10);
-          to.append(1, 13);
-        }
-        continue;
-      } else if (c < 192) {  // invalid for UTF8, converting ASCII
-        to.append(1, static_cast<char>((unsigned char)194));
-        to.append(1, static_cast<char>(c));
-        continue;
-      } else if (c < 194) {  // invalid for UTF8, converting ASCII
-        to.append(1, static_cast<char>((unsigned char)195));
-        to.append(1, c - 64);
-        continue;
-      } else if (c < 224 && i + 1 < f_size) {  // possibly 2byte UTF8
-        c2 = (unsigned char)(str)[i + 1];
-        if (c2 > 127 && c2 < 192) {    // valid 2byte UTF8
-          if (c == 194 && c2 < 160) {  // control char, skipping
-          } else {
-            to.append(1, static_cast<char>(c));
-            to.append(1, static_cast<char>(c2));
-          }
-          i++;
-          continue;
-        }
-      } else if (c < 240 && i + 2 < f_size) {  // possibly 3byte UTF8
-        c2 = (unsigned char)(str)[i + 1];
-        c3 = (unsigned char)(str)[i + 2];
-        if (c2 > 127 && c2 < 192 && c3 > 127 && c3 < 192) {  // valid 3byte UTF8
-          to.append(1, static_cast<char>(c));
-          to.append(1, static_cast<char>(c2));
-          to.append(1, static_cast<char>(c3));
-          i += 2;
-          continue;
-        }
-      } else if (c < 245 && i + 3 < f_size) {  // possibly 4byte UTF8
-        c2 = (unsigned char)(str)[i + 1];
-        c3 = (unsigned char)(str)[i + 2];
-        c4 = (unsigned char)(str)[i + 3];
-        if (c2 > 127 && c2 < 192 && c3 > 127 && c3 < 192 && c4 > 127
-            && c4 < 192) {
-          // valid 4byte UTF8
-          to.append(1, static_cast<char>(c));
-          to.append(1, static_cast<char>(c2));
-          to.append(1, static_cast<char>(c3));
-          to.append(1, static_cast<char>(c4));
-          i += 3;
-          continue;
-        }
-      }
-      // invalid UTF8, converting ASCII
-      // (c>245 || string too short for multi-byte))
-      to.append(1, static_cast<char>((unsigned char)195));
-      to.append(1, c - 64);
-    }
+  // Fast path: already valid (the common case).
+  if (utf8::is_valid(s)) {
+    return s;
   }
-  return to;
+
+  // Invalid UTF-8 (often from untrusted input such as player names). Rather
+  // than failing or stripping the whole string down to ASCII (the old
+  // behavior), substitute only the bad byte-sequences with U+FFFD, preserving
+  // all valid content. Logged at debug since this is now routine and handled.
+  if (g_core != nullptr) {
+    g_core->logging->Log(
+        LogName::kBa, LogLevel::kDebug,
+        std::string("Replaced invalid UTF-8 with U+FFFD; loc '") + loc + "'.");
+  }
+  return utf8::replace_invalid(s);
 }
 
 auto Utils::UTF8StringLength(const char* val) -> int {
-  std::string valid_str = GetValidUTF8(val, "gusl1");
-  return u8_strlen(valid_str.c_str());
+  std::string valid = GetValidUTF8(val, "gusl1");
+  return static_cast<int>(utf8::distance(valid.begin(), valid.end()));
 }
 
 auto Utils::GetUTF8Value(const char* c) -> uint32_t {
-  int offset = 0;
-  uint32_t val = u8_nextchar(c, &offset);
-
-  // Hack: allow showing euro even if we don't support unicode font rendering.
-  // if (!g_buildconfig.enable_os_font_rendering()) {
-  //   if (val == 8364) {
-  //     val = 0xE000;
-  //   }
-  // }
-  return val;
+  // IMPORTANT: assumes valid UTF-8 (see header note); returns first code-point.
+  const char* it = c;
+  return utf8::unchecked::next(it);
 }
 
 auto Utils::UTF8FromUnicode(std::vector<uint32_t> unichars) -> std::string {
-  int buffer_size = static_cast<int>(unichars.size() * 4 + 1);
-  // at most 4 chars per unichar plus ending zero
-  std::vector<char> buffer(static_cast<size_t>(buffer_size));
-  [[maybe_unused]] int len =
-      u8_toutf8(buffer.data(), buffer_size, unichars.data(),
-                static_cast<int>(unichars.size()));
-  assert(len == unichars.size());
-  buffer.resize(strlen(buffer.data()) + 1);
-  return buffer.data();
+  std::string result;
+  // Lenient encode (no validation/throw) to match prior behavior.
+  for (uint32_t cp : unichars) {
+    utf8::unchecked::append(cp, std::back_inserter(result));
+  }
+  return result;
 }
 
 auto Utils::UnicodeFromUTF8(const std::string& s_in, const char* loc)
     -> std::vector<uint32_t> {
   std::string s = GetValidUTF8(s_in.c_str(), loc);
-  // worst case every char is a character (plus trailing 0)
-  std::vector<uint32_t> vals(s.size() + 1);
-  int converted = u8_toucs(&vals[0], static_cast<int>(vals.size()), s.c_str(),
-                           static_cast<int>(s.size()));
-  vals.resize(static_cast<size_t>(converted));
+  std::vector<uint32_t> vals;
+  // s is valid now, so the checked decode will not throw.
+  utf8::utf8to32(s.begin(), s.end(), std::back_inserter(vals));
   return vals;
 }
 
 auto Utils::UTF8FromUnicodeChar(uint32_t c) -> std::string {
-  char buffer[10];
-  u8_toutf8(buffer, sizeof(buffer), &c, 1);
-  return buffer;
+  std::string result;
+  utf8::unchecked::append(c, std::back_inserter(result));
+  return result;
 }
 
 void Utils::AdvanceUTF8(const char** c) {
-  int offset = 0;
-  u8_nextchar(*c, &offset);
-  *c += offset;
+  // IMPORTANT: assumes valid UTF-8 (see header note).
+  utf8::unchecked::next(*c);
 }
 
 auto Utils::GetJSONString(const char* s) -> std::string {

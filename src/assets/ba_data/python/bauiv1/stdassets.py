@@ -1,18 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Asset-package wrapper for ``a-0.bastdassets.260612`` (bauiv1).
+# Auto-generated; do not edit by hand.
+"""Asset-package wrapper for ``a-0.bastdassets.260620`` (bauiv1).
 
-Auto-generated; do not edit by hand.
+All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bastdassets.260612
+# ba_meta require asset-package a-0.bastdassets.260620
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.bastdassets.260612'
+__asset_package__ = 'a-0.bastdassets.260620'
 
 from typing import TYPE_CHECKING
 
@@ -21,7 +22,7 @@ from bauiv1._assetwrap import AssetDir
 if TYPE_CHECKING:
     import bauiv1
 
-    class Audio:
+    class AudioGroup:
         """Asset-group type; see source for the full list."""
 
         achievement: bauiv1.Sound
@@ -437,7 +438,7 @@ if TYPE_CHECKING:
         zoe_pickup01: bauiv1.Sound
         zoe_scream01: bauiv1.Sound
 
-    class Meshes:
+    class MeshesGroup:
         """Asset-group type; see source for the full list."""
 
         achievement_outline: bauiv1.Mesh
@@ -801,7 +802,7 @@ if TYPE_CHECKING:
         zoe_upper_arm: bauiv1.Mesh
         zoe_upper_leg: bauiv1.Mesh
 
-    class Textures:
+    class TexturesGroup:
         """Asset-group type; see source for the full list."""
 
         achievement_boxer: bauiv1.Texture
@@ -1121,18 +1122,18 @@ if TYPE_CHECKING:
     #: The ``audio`` group - 412 assets (``achievement``, ``action_hero1``,
     #: ``action_hero2``, ``action_hero3``, ``action_hero4``, and 407 more). Full
     #: list in source.
-    audio: Audio
+    audio: AudioGroup
 
     #: The ``meshes`` group - 360 assets (``achievement_outline``,
     #: ``action_hero_fore_arm``, ``action_hero_hand``, ``action_hero_head``,
     #: ``action_hero_lower_leg``, and 355 more). Full list in source.
-    meshes: Meshes
+    meshes: MeshesGroup
 
     #: The ``textures`` group - 313 assets (``achievement_boxer``,
     #: ``achievement_cross_hair``, ``achievement_dual_wielding``,
     #: ``achievement_empty``, ``achievement_flawless_victory``, and 308 more).
     #: Full list in source.
-    textures: Textures
+    textures: TexturesGroup
 
 _TREE = {
     'audio': {

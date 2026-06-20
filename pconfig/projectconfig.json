@@ -1,20 +1,14 @@
 {
-  "assets": "a-0.babuiltinassets.260617",
+  "assets": "a-0.babuiltinassets.260620",
   "code_source_dirs": [
     "src/ballistica"
   ],
   "cpplint_blacklist": [
-    "src/ballistica/shared/generic/json.cc",
-    "src/ballistica/shared/generic/json.h",
-    "src/ballistica/shared/generic/utf8.cc",
     "src/ballistica/base/graphics/texture/dds.h",
     "src/ballistica/base/graphics/texture/ktx.cc",
     "src/ballistica/core/platform/android/android_gl3.h",
     "src/ballistica/base/app_platform/apple/MacMusicApp.h",
     "src/ballistica/base/app_platform/apple/MacMusicAppScriptingBridge.h",
-    "src/ballistica/core/platform/android/utf8/checked.h",
-    "src/ballistica/core/platform/android/utf8/unchecked.h",
-    "src/ballistica/core/platform/android/utf8/core.h",
     "src/ballistica/base/app_platform/oculus/main_rift.cc",
     "src/ballistica/core/platform/android/android_gl3.c"
   ],

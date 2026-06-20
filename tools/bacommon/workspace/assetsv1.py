@@ -48,6 +48,11 @@ class AssetsV1GlobalVals:
         str, IOAttrs('base_assets_filter', store_default=False)
     ] = ''
 
+    #: Optional free-form workspace documentation, appended to the
+    #: generated wrapper module's docstring (after the auto-generated
+    #: summary line). Empty string means none.
+    docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
+
 
 class AssetsV1StringFileTypeID(Enum):
     """Type ID for each of our subclasses."""
@@ -136,6 +141,8 @@ class AssetsV1PathValsTypeID(Enum):
     STR_V1 = 'str_v1'
     AUDIO_V1 = 'audio_v1'
     MESH_V1 = 'mesh_v1'
+    GROUP_V1 = 'group_v1'
+    CUBE_MAP_V1 = 'cube_map_v1'
 
 
 class AssetsV1PathVals(IOMultiType[AssetsV1PathValsTypeID]):
@@ -173,6 +180,12 @@ class AssetsV1PathVals(IOMultiType[AssetsV1PathValsTypeID]):
 
         if type_id is t.MESH_V1:
             return AssetsV1PathValsMeshV1
+
+        if type_id is t.GROUP_V1:
+            return AssetsV1PathValsGroupV1
+
+        if type_id is t.CUBE_MAP_V1:
+            return AssetsV1PathValsCubeMapV1
 
         # Important to make sure we provide all types.
         assert_never(type_id)
@@ -352,6 +365,11 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
         Bc7Settings, IOAttrs('bc7', store_default=False)
     ] = field(default_factory=Bc7Settings)
 
+    #: Optional free-form documentation for this asset, surfaced as a
+    #: comment above the asset in generated wrapper modules (and in the
+    #: Sphinx docs). Empty string means no docs.
+    docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
+
     @override
     @classmethod
     def get_type_id(cls) -> AssetsV1PathValsTypeID:
@@ -466,6 +484,11 @@ class AssetsV1PathValsAudioV1(AssetsV1PathVals):
         AudioQuality, IOAttrs('audio_quality', store_default=False)
     ] = AudioQuality.DEFAULT
 
+    #: Optional free-form documentation for this asset, surfaced as a
+    #: comment above the asset in generated wrapper modules (and in the
+    #: Sphinx docs). Empty string means no docs.
+    docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
+
     @override
     @classmethod
     def get_type_id(cls) -> AssetsV1PathValsTypeID:
@@ -504,7 +527,59 @@ class AssetsV1PathValsMeshV1(AssetsV1PathVals):
         MeshRole, IOAttrs('mesh_role', store_default=False)
     ] = MeshRole.DEFAULT
 
+    #: Optional free-form documentation for this asset, surfaced as a
+    #: comment above the asset in generated wrapper modules (and in the
+    #: Sphinx docs). Empty string means no docs.
+    docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
+
     @override
     @classmethod
     def get_type_id(cls) -> AssetsV1PathValsTypeID:
         return AssetsV1PathValsTypeID.MESH_V1
+
+
+@ioprepped
+@dataclass
+class AssetsV1PathValsGroupV1(AssetsV1PathVals):
+    """Path-specific values for a group (directory) in a workspace.
+
+    A group builds no asset of its own; this exists purely to carry
+    optional ``docs`` (decision #28) that become the generated wrapper
+    group class's docstring. Keyed in ``workspace.json``'s ``path`` dict
+    by the directory path (e.g. ``textures`` or ``mydir/subdir``).
+    """
+
+    #: Optional free-form documentation for this group, used as the
+    #: generated wrapper group class's docstring (a trailing "See source
+    #: for the full asset list." is always appended). Empty string means
+    #: fall back to the auto-generated docstring.
+    docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AssetsV1PathValsTypeID:
+        return AssetsV1PathValsTypeID.GROUP_V1
+
+
+@ioprepped
+@dataclass
+class AssetsV1PathValsCubeMapV1(AssetsV1PathVals):
+    """Path-specific values for a cube map (``.cubemap`` dir) in a workspace.
+
+    Cube maps are reflection textures with no Python API (decision #24),
+    so they aren't wrapper-visible. This currently carries only optional
+    ``docs`` -- stored for completeness/consistency with other asset
+    kinds, but not yet consumed by anything (it'll have a home if/when
+    cube maps gain a Python surface). Keyed in ``workspace.json``'s
+    ``path`` dict by the ``.cubemap`` directory path.
+    """
+
+    #: Optional free-form documentation for this cube map. Stored but not
+    #: yet surfaced anywhere (cube maps have no wrapper entry). Empty
+    #: string means no docs.
+    docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AssetsV1PathValsTypeID:
+        return AssetsV1PathValsTypeID.CUBE_MAP_V1

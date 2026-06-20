@@ -1,18 +1,21 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Asset-package wrapper for ``a-0.babuiltinassets.260617`` (bauiv1).
+# Auto-generated; do not edit by hand.
+"""Asset-package wrapper for ``a-0.babuiltinassets.260620`` (bauiv1).
 
-Auto-generated; do not edit by hand.
+Bare minimum assets always bundled with the engine.
+
+These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260617
+# ba_meta require asset-package a-0.babuiltinassets.260620
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260617'
+__asset_package__ = 'a-0.babuiltinassets.260620'
 
 from typing import TYPE_CHECKING
 
@@ -21,7 +24,7 @@ from bauiv1._assetwrap import AssetDir
 if TYPE_CHECKING:
     import bauiv1
 
-    class Audio:
+    class AudioGroup:
         """Asset-group type; see source for the full list."""
 
         blank: bauiv1.Sound
@@ -45,7 +48,7 @@ if TYPE_CHECKING:
         tap: bauiv1.Sound
         ticking_crazy: bauiv1.Sound
 
-    class Meshes:
+    class MeshesGroup:
         """Asset-group type; see source for the full list."""
 
         action_button_bottom: bauiv1.Mesh
@@ -121,7 +124,7 @@ if TYPE_CHECKING:
         window_hsmall_vsmall_transparent: bauiv1.Mesh
         wing: bauiv1.Mesh
 
-    class Textures:
+    class TexturesGroup:
         """Asset-group type; see source for the full list."""
 
         action_buttons: bauiv1.Texture
@@ -209,17 +212,17 @@ if TYPE_CHECKING:
 
     #: The ``audio`` group - 20 assets (``blank``, ``blip``, ``cash_register``,
     #: ``click01``, ``cork_pop``, and 15 more). Full list in source.
-    audio: Audio
+    audio: AudioGroup
 
     #: The ``meshes`` group - 72 assets (``action_button_bottom``,
     #: ``action_button_left``, ``action_button_right``, ``action_button_top``,
     #: ``arrow_back``, and 67 more). Full list in source.
-    meshes: Meshes
+    meshes: MeshesGroup
 
     #: The ``textures`` group - 82 assets (``action_buttons``, ``arrow``,
     #: ``back_icon``, ``black``, ``bomb_button``, and 77 more). Full list in
     #: source.
-    textures: Textures
+    textures: TexturesGroup
 
 _TREE = {
     'audio': {
