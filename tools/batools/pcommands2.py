@@ -864,11 +864,19 @@ def _assemble_one_package(apverid: str, pkg: BundlePackage) -> dict[str, Any]:
     import subprocess
 
     from efro.error import CleanError
+    from batools.version import get_current_version
 
     tmpdir = os.path.join(pcommand.PROJROOT, 'build/tmp')
     os.makedirs(tmpdir, exist_ok=True)
     fd, tmppath = tempfile.mkstemp(suffix='.json', dir=tmpdir)
     os.close(fd)
+
+    # Report the target build to bacloud so master picks the matching
+    # asset-manifest path-format epoch (bacloud itself can't see baenv
+    # in this subprocess context; see _caller_build_number there).
+    _version, build_number = get_current_version(str(pcommand.PROJROOT))
+    env = dict(os.environ)
+    env['BA_BUILD_NUMBER'] = str(build_number)
     try:
         subprocess.run(
             [
@@ -886,6 +894,7 @@ def _assemble_one_package(apverid: str, pkg: BundlePackage) -> dict[str, Any]:
                 tmppath,
             ],
             check=True,
+            env=env,
         )
         with open(tmppath, encoding='utf-8') as infile:
             manifest: dict[str, Any] = json.load(infile)

@@ -1171,7 +1171,7 @@ static PyMethodDef PyRegisterAssetPackageBucketDef = {
     "the C++ runtime registry. Called from the babase startup path after\n"
     "parsing the bundled top-level ``manifest.json`` and each referenced\n"
     "bucket-manifest blob from the CAS store. ``entries`` maps logical\n"
-    "asset paths (e.g. ``ba_data/textures/helloworld.ktx2``) to a\n"
+    "asset paths (e.g. ``textures/helloworld.ktx2``) to a\n"
     "part-keyed component map ``{part: CAS_hash}`` (e.g. ``t`` = texture\n"
     "data, ``j`` = descriptor); a null asset maps to an empty dict."};
 

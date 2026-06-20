@@ -1623,7 +1623,7 @@ auto Assets::FindCasTexturePartPath(const std::string& name,
   if (bucket_id.empty()) {
     return "";
   }
-  std::string logical_path = "ba_data/textures/" + asset_name + ".ktx2";
+  std::string logical_path = asset_name + ".ktx2";
 
   auto hash =
       package_registry_.LookupAssetHash(apverid, bucket_id, logical_path, part);
@@ -1659,8 +1659,7 @@ auto Assets::FindCasCubeMapTexturePath(const std::string& name) -> std::string {
   if (bucket_id.empty()) {
     return "";
   }
-  std::string logical_path =
-      "ba_data/cube_map_textures/" + asset_name + ".ktx2";
+  std::string logical_path = asset_name + ".ktx2";
 
   auto hash =
       package_registry_.LookupAssetHash(apverid, bucket_id, logical_path, "t");
@@ -1695,7 +1694,7 @@ auto Assets::FindCasSoundPath(const std::string& name) -> std::string {
   if (bucket_id.empty()) {
     return "";
   }
-  std::string logical_path = "ba_data/audio/" + asset_name + ".ogg";
+  std::string logical_path = asset_name + ".ogg";
 
   auto hash =
       package_registry_.LookupAssetHash(apverid, bucket_id, logical_path, "a");
@@ -1729,7 +1728,7 @@ auto Assets::FindCasMeshPath(const std::string& name) -> std::string {
   if (bucket_id.empty()) {
     return "";
   }
-  std::string logical_path = "ba_data/meshes/" + asset_name + ".bob";
+  std::string logical_path = asset_name + ".bob";
 
   auto hash =
       package_registry_.LookupAssetHash(apverid, bucket_id, logical_path, "m");
@@ -1759,7 +1758,7 @@ auto Assets::FindCasCollisionMeshPath(const std::string& name) -> std::string {
   if (bucket_id.empty()) {
     return "";
   }
-  std::string logical_path = "ba_data/meshes/" + asset_name + ".cob";
+  std::string logical_path = asset_name + ".cob";
 
   auto hash =
       package_registry_.LookupAssetHash(apverid, bucket_id, logical_path, "c");

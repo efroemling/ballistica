@@ -68,6 +68,26 @@ _FLEET_MASTER_HOSTS = {
 }
 
 
+def _caller_build_number() -> int:
+    """The engine build number to report to bacloud (0 if unset).
+
+    Master gates asset-package resolves/assembles on this (see
+    ``MIN_SUPPORTED_ASSET_BUILD``). Only asset build/assemble commands
+    care, and the tooling that drives them (e.g. ``asset_bundle_build``)
+    sets ``BA_BUILD_NUMBER`` to the target build; every other bacloud
+    caller reports 0, which is irrelevant for non-asset commands. (The
+    game's runtime asset resolves don't go through bacloud at all -- they
+    ride the basn message protocol -- so there's no engine path here.)
+    """
+    env = os.environ.get('BA_BUILD_NUMBER')
+    if env is not None:
+        try:
+            return int(env)
+        except ValueError:
+            pass
+    return 0
+
+
 def _hash_file(path: str) -> tuple[int, str]:
     """Return (size, sha256_hex) for a local file."""
     import hashlib
@@ -417,6 +437,7 @@ class App:
                     isatty=sys.stdout.isatty(),
                     stream=stream,
                     idempotent=self._idempotent,
+                    build_number=_caller_build_number(),
                 )
             ),
         }

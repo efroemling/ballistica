@@ -205,6 +205,15 @@ class AssetAccessDeniedError(AssetResolveError):
     """
 
 
+class AssetClientTooOldError(AssetResolveError):
+    """Tier-1 resolve refused: this app build is too old for current assets.
+
+    The server's asset manifests use logical paths this build can't
+    address; the user must update. Raised when the server returns
+    :attr:`~bacommon.cloud.AssetPackageResolveError.CLIENT_TOO_OLD`.
+    """
+
+
 class AssetResolveAbortedError(AssetResolveError):
     """An asset-subsystem operation was abandoned because we're shutting down.
 
@@ -1309,6 +1318,8 @@ class AssetSubsystem(AppSubsystem):
                 raise AssetAuthRequiredError(msg, code, response.error)
             if code is AssetPackageResolveError.ACCESS_DENIED:
                 raise AssetAccessDeniedError(msg, code, response.error)
+            if code is AssetPackageResolveError.CLIENT_TOO_OLD:
+                raise AssetClientTooOldError(msg, code, response.error)
             raise AssetResolveError(msg, code, response.error)
         if not response.buckets:
             raise AssetResolveError(f'{apverid}: resolve returned no buckets.')
@@ -1420,6 +1431,7 @@ class AssetSubsystem(AppSubsystem):
             language=language,
             texture_profile=self._texture_profile,
             texture_tier=self._texture_tier,
+            build_number=_babase.app.env.engine_build_number,
         )
         # A transport-level hiccup (node mid-rollout, flaky link, etc.)
         # surfaces as CommunicationError. Convert it to an AssetResolveError

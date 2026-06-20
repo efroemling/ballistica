@@ -17,6 +17,7 @@ from babase._simpledialog import SimpleDialog
 from babase._assetsubsystem import (
     AssetAuthRequiredError,
     AssetAccessDeniedError,
+    AssetClientTooOldError,
     AssetResolveAbortedError,
     make_progress_reporter,
 )
@@ -304,7 +305,6 @@ class ConstructAppMode(AppMode):
             )
             self._fail('An error occurred loading assets; see log for details.')
             strip_exception_tracebacks(exc)
-            return _ResolveOutcome.FAILED
         except AssetAccessDeniedError as exc:
             # Surface the server's own message — it names the account
             # (by tag, resolved server-side) and the version, so it both
@@ -317,7 +317,17 @@ class ConstructAppMode(AppMode):
             )
             self._fail(f'{detail} Remove these mods/changes and try again.')
             strip_exception_tracebacks(exc)
-            return _ResolveOutcome.FAILED
+        except AssetClientTooOldError as exc:
+            # This build can't address the server's current asset
+            # manifests; updating is the only fix (Retry won't help, but
+            # it's harmless). Prefer the server's own wording.
+            logger.warning('Construct-mode: client too old for assets: %s', exc)
+            self._fail(
+                exc.server_message
+                or 'This app version is too old to load current assets.'
+                ' Please update to continue.'
+            )
+            strip_exception_tracebacks(exc)
         except AssetResolveAbortedError as exc:
             # The app started shutting down mid-resolve (e.g. the user
             # quit while a download/cloud-build was still in flight).
@@ -335,7 +345,7 @@ class ConstructAppMode(AppMode):
             )
             self._fail('An error occurred loading assets; see log for details.')
             strip_exception_tracebacks(exc)
-            return _ResolveOutcome.FAILED
+        return _ResolveOutcome.FAILED
 
     @staticmethod
     async def _wait_for_sign_in() -> bool:

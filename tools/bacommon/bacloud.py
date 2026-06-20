@@ -178,6 +178,14 @@ class RequestData:
     #: default so non-CLI constructors needn't pass it.
     idempotent: Annotated[bool, IOAttrs('i', soft_default=False)] = False
 
+    #: Engine build number of the caller. Master gates asset-package
+    #: resolves on it (see ``MIN_SUPPORTED_ASSET_BUILD``): a build too old
+    #: to address current source-named manifests gets a clean
+    #: update-required error. Soft-defaults to ``0`` (not None) so
+    #: requests/payloads lacking it read as build 0 -- always below the
+    #: floor -- and gating stays a simple ``build_number < X``.
+    build_number: Annotated[int, IOAttrs('b', soft_default=0)] = 0
+
 
 # Types used by the UploadPlan protocol. See ResponseData.UploadPlan.
 

@@ -421,6 +421,11 @@ class AssetPackageResolveError(Enum):
     INVALID = 'invalid'
     #: An internal/assemble error occurred server-side.
     INTERNAL = 'internal'
+    #: The client build is too old to address current asset-package
+    #: manifests (which use clean source-named logical paths); the user
+    #: must update. Clients predating the build-number field also land
+    #: here.
+    CLIENT_TOO_OLD = 'tooold'
 
 
 class AssetPackageBuildPhase(Enum):
@@ -515,6 +520,13 @@ class ResolveAssetPackageMessage(Message):
     #: boot, so the key must not break across versions.
     texture_tier: Annotated[str, IOAttrs('tq')]
 
+    #: The client's engine build number. basn relays it to master, which
+    #: gates the resolve on it (clients too old to address current
+    #: source-named manifests get a ``CLIENT_TOO_OLD`` error). Soft-
+    #: defaults to 0 so older clients (and un-migrated basn) read as
+    #: build 0 -- always below the floor.
+    build_number: Annotated[int, IOAttrs('bn', soft_default=0)] = 0
+
     @override
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
@@ -540,8 +552,17 @@ class ResolveAssetPackageResponse(Response):
     #: Structured failure reason accompanying ``error`` (lets the client
     #: branch — e.g. prompt for sign-in — without parsing the message).
     #: ``None`` on success, or when an older server didn't supply one.
+    #: ``enum_fallback`` makes a *future* unrecognized code degrade to
+    #: ``INTERNAL`` (message decode is lossy) instead of failing the whole
+    #: response — so a new error reason never bricks an older client's
+    #: resolve; it just surfaces the human ``error`` under a generic code.
     error_code: Annotated[
-        AssetPackageResolveError | None, IOAttrs('ec', soft_default=None)
+        AssetPackageResolveError | None,
+        IOAttrs(
+            'ec',
+            soft_default=None,
+            enum_fallback=AssetPackageResolveError.INTERNAL,
+        ),
     ]
 
     #: ``bucket/flavor`` coordinate -> the resolved flavor-manifest blob
