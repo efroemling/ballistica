@@ -3,6 +3,7 @@
 #include "ballistica/base/python/methods/python_methods_base_3.h"
 
 #include <list>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -1314,58 +1315,114 @@ static PyMethodDef PyLoginAdapterBackEndActiveChangeDef = {
     ":meta private:",
 };
 
-// ---------------------- set_internal_language_keys ---------------------------
+// ---------------------- reload_language --------------------------------------
 
-static auto PySetInternalLanguageKeys(PyObject* self, PyObject* args)
-    -> PyObject* {
+static auto PyReloadLanguage(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  PyObject* list_obj;
-  PyObject* random_names_list_obj;
-  if (!PyArg_ParseTuple(args, "OO", &list_obj, &random_names_list_obj)) {
+  PyObject* apverids_obj;
+  if (!PyArg_ParseTuple(args, "O", &apverids_obj)) {
     return nullptr;
   }
-  BA_PRECONDITION(PyList_Check(list_obj));
-  BA_PRECONDITION(PyList_Check(random_names_list_obj));
-  std::unordered_map<std::string, std::string> language;
-  int size = static_cast<int>(PyList_GET_SIZE(list_obj));
-
+  BA_PRECONDITION(PyList_Check(apverids_obj));
+  std::vector<std::string> apverids;
+  int size = static_cast<int>(PyList_GET_SIZE(apverids_obj));
   for (int i = 0; i < size; i++) {
-    PyObject* entry = PyList_GET_ITEM(list_obj, i);
-    if (!PyTuple_Check(entry) || PyTuple_GET_SIZE(entry) != 2
-        || !PyUnicode_Check(PyTuple_GET_ITEM(entry, 0))
-        || !PyUnicode_Check(PyTuple_GET_ITEM(entry, 1))) {
-      throw Exception("Invalid root language data.");
-    }
-    language[PyUnicode_AsUTF8(PyTuple_GET_ITEM(entry, 0))] =
-        PyUnicode_AsUTF8(PyTuple_GET_ITEM(entry, 1));
-  }
-
-  size = static_cast<int>(PyList_GET_SIZE(random_names_list_obj));
-  std::list<std::string> random_names;
-  for (int i = 0; i < size; i++) {
-    PyObject* entry = PyList_GET_ITEM(random_names_list_obj, i);
+    PyObject* entry = PyList_GET_ITEM(apverids_obj, i);
     if (!PyUnicode_Check(entry)) {
-      throw Exception("Got non-string in random name list.", PyExcType::kType);
+      throw Exception("Got non-string in apverids list.", PyExcType::kType);
     }
-    random_names.emplace_back(PyUnicode_AsUTF8(entry));
+    apverids.emplace_back(PyUnicode_AsUTF8(entry));
   }
-
-  Utils::SetRandomNameList(random_names);
   assert(g_base->logic);
-  g_base->assets->SetLanguageKeys(language);
+  g_base->assets->ReloadLanguage(apverids);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PySetInternalLanguageKeysDef = {
-    "set_internal_language_keys",  // name
-    PySetInternalLanguageKeys,     // method
-    METH_VARARGS,                  // flags
+static PyMethodDef PyReloadLanguageDef = {
+    "reload_language",  // name
+    PyReloadLanguage,   // method
+    METH_VARARGS,       // flags
 
-    "set_internal_language_keys(listobj: list[tuple[str, str]],\n"
-    "  random_names_list: list[tuple[str, str]]) -> None\n"
+    "reload_language(apverids: list[str]) -> None\n"
     "\n"
-    ":meta private:",
+    ":meta private:\n"
+    "\n"
+    "(Re)build the native language string table from the registered\n"
+    "``language`` buckets of the given asset-packages and notify\n"
+    "subsystems of the language change.",
+};
+
+// ---------------------- get_resource -----------------------------------------
+
+static auto PyGetResource(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* resource;
+  PyObject* fallback_resource_obj = Py_None;
+  static const char* kwlist[] = {"resource", "fallback_resource", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|O",
+                                   const_cast<char**>(kwlist), &resource,
+                                   &fallback_resource_obj)) {
+    return nullptr;
+  }
+  std::optional<std::string> result;
+  if (fallback_resource_obj != Py_None) {
+    if (!PyUnicode_Check(fallback_resource_obj)) {
+      throw Exception("fallback_resource must be a string or None.",
+                      PyExcType::kType);
+    }
+    std::string fr{PyUnicode_AsUTF8(fallback_resource_obj)};
+    result = g_base->assets->GetResourceOrFallback(resource, &fr);
+  } else {
+    result = g_base->assets->GetResourceOrFallback(resource, nullptr);
+  }
+  if (result.has_value()) {
+    return PyUnicode_FromString(result->c_str());
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetResourceDef = {
+    "get_resource",                // name
+    (PyCFunction)PyGetResource,    // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "get_resource(resource: str,\n"
+    "             fallback_resource: str | None = None) -> str | None\n"
+    "\n"
+    ":meta private:\n"
+    "\n"
+    "Native resource lookup by full dot-path key, trying\n"
+    "``fallback_resource`` on a miss. ``None`` if neither resolves.",
+};
+
+// ---------------------- translate --------------------------------------------
+
+static auto PyTranslate(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* category;
+  const char* value;
+  if (!PyArg_ParseTuple(args, "ss", &category, &value)) {
+    return nullptr;
+  }
+  return PyUnicode_FromString(
+      g_base->assets->GetTranslation(category, value).c_str());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyTranslateDef = {
+    "translate",   // name
+    PyTranslate,   // method
+    METH_VARARGS,  // flags
+
+    "translate(category: str, value: str) -> str\n"
+    "\n"
+    ":meta private:\n"
+    "\n"
+    "Native translate lookup; returns ``value`` itself when there is no\n"
+    "translation (the legacy null-means-use-value convention).",
 };
 
 // -------------------- android_get_external_files_dir -------------------------
@@ -2379,7 +2436,9 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyVerifyEd25519Def,
       PyGetAppDef,
       PyAndroidGetExternalFilesDirDef,
-      PySetInternalLanguageKeysDef,
+      PyReloadLanguageDef,
+      PyGetResourceDef,
+      PyTranslateDef,
       PySetAnalyticsScreenDef,
       PyLoginAdapterGetSignInTokenDef,
       PyLoginAdapterBackEndActiveChangeDef,

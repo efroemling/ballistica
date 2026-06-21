@@ -3,11 +3,9 @@
 
 """UI functionality for advanced settings."""
 
-import os
-import logging
 from typing import TYPE_CHECKING, override
 
-from bacommon.locale import LocaleResolved
+from bacommon.locale import Locale, LocaleResolved
 import bauiv1 as bui
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 from bauiv1lib.popup import PopupMenu
@@ -375,24 +373,9 @@ class AdvancedSettingsWindow(bui.MainWindow):
 
         # We have a special dict of language names in that language so
         # we don't have to go digging through each full language.
-        try:
-            import json
-
-            with open(
-                os.path.join(
-                    bui.app.env.data_directory,
-                    'ba_data',
-                    'data',
-                    'langdata.json',
-                ),
-                encoding='utf-8',
-            ) as infile:
-                lang_names_translated = json.loads(infile.read())[
-                    'lang_names_translated'
-                ]
-        except Exception:
-            logging.exception('Error reading lang data.')
-            lang_names_translated = {}
+        lang_names_translated = bui.get_legacy_langdata().get(
+            'lang_names_translated', {}
+        )
 
         langs_translated = {}
         for lang in available_languages:
@@ -939,21 +922,22 @@ class AdvancedSettingsWindow(bui.MainWindow):
         self._menu_open = False
 
     def _on_menu_choice(self, choice: str) -> None:
-
-        cfg = bui.app.config
-        cfgkey = 'Lang'
-
+        # Switching is now an elective asset-resolve (the target locale's
+        # language flavor is downloaded if not already local) that commits
+        # only on success -- driven by LocaleSubsystem.set_locale, which
+        # writes/clears the 'Lang' config itself. 'Auto' = no override
+        # (follow the OS-default locale).
+        locale_ss = bui.app.locale
         if choice == 'Auto':
-            if cfgkey in cfg:
-                del cfg[cfgkey]
+            locale_ss.set_locale(
+                locale_ss.default_locale, store_to_config=False
+            )
         else:
-            cfg[cfgkey] = choice
-
-        cfg.apply_and_commit()
+            locale_ss.set_locale(
+                Locale.from_long_value(choice), store_to_config=True
+            )
 
         self.main_window_save_shared_state()
-
-        bui.apptimer(0.1, bui.WeakCallStrict(self._rebuild))
 
     def _completed_langs_cb(self, results: dict[str, Any] | None) -> None:
         if results is not None and results['langs'] is not None:

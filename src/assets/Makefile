@@ -3275,48 +3275,6 @@ PEM_TARGETS = \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/cacert.pem
 
 DATA_TARGETS = \
-  $(BUILD_DIR)/ba_data/data/langdata.json \
-  $(BUILD_DIR)/ba_data/data/languages/arabic.json \
-  $(BUILD_DIR)/ba_data/data/languages/belarussian.json \
-  $(BUILD_DIR)/ba_data/data/languages/chinesesimplified.json \
-  $(BUILD_DIR)/ba_data/data/languages/chinesetraditional.json \
-  $(BUILD_DIR)/ba_data/data/languages/croatian.json \
-  $(BUILD_DIR)/ba_data/data/languages/czech.json \
-  $(BUILD_DIR)/ba_data/data/languages/danish.json \
-  $(BUILD_DIR)/ba_data/data/languages/dutch.json \
-  $(BUILD_DIR)/ba_data/data/languages/english.json \
-  $(BUILD_DIR)/ba_data/data/languages/esperanto.json \
-  $(BUILD_DIR)/ba_data/data/languages/filipino.json \
-  $(BUILD_DIR)/ba_data/data/languages/french.json \
-  $(BUILD_DIR)/ba_data/data/languages/german.json \
-  $(BUILD_DIR)/ba_data/data/languages/gibberish.json \
-  $(BUILD_DIR)/ba_data/data/languages/greek.json \
-  $(BUILD_DIR)/ba_data/data/languages/hindi.json \
-  $(BUILD_DIR)/ba_data/data/languages/hungarian.json \
-  $(BUILD_DIR)/ba_data/data/languages/indonesian.json \
-  $(BUILD_DIR)/ba_data/data/languages/italian.json \
-  $(BUILD_DIR)/ba_data/data/languages/japanese.json \
-  $(BUILD_DIR)/ba_data/data/languages/kazakh.json \
-  $(BUILD_DIR)/ba_data/data/languages/korean.json \
-  $(BUILD_DIR)/ba_data/data/languages/malay.json \
-  $(BUILD_DIR)/ba_data/data/languages/persian.json \
-  $(BUILD_DIR)/ba_data/data/languages/piratespeak.json \
-  $(BUILD_DIR)/ba_data/data/languages/polish.json \
-  $(BUILD_DIR)/ba_data/data/languages/portuguesebrazil.json \
-  $(BUILD_DIR)/ba_data/data/languages/portugueseportugal.json \
-  $(BUILD_DIR)/ba_data/data/languages/romanian.json \
-  $(BUILD_DIR)/ba_data/data/languages/russian.json \
-  $(BUILD_DIR)/ba_data/data/languages/serbian.json \
-  $(BUILD_DIR)/ba_data/data/languages/slovak.json \
-  $(BUILD_DIR)/ba_data/data/languages/spanishlatinamerica.json \
-  $(BUILD_DIR)/ba_data/data/languages/spanishspain.json \
-  $(BUILD_DIR)/ba_data/data/languages/swedish.json \
-  $(BUILD_DIR)/ba_data/data/languages/tamil.json \
-  $(BUILD_DIR)/ba_data/data/languages/thai.json \
-  $(BUILD_DIR)/ba_data/data/languages/turkish.json \
-  $(BUILD_DIR)/ba_data/data/languages/ukrainian.json \
-  $(BUILD_DIR)/ba_data/data/languages/venetian.json \
-  $(BUILD_DIR)/ba_data/data/languages/vietnamese.json \
   $(BUILD_DIR)/ba_data/data/maps/big_g.json \
   $(BUILD_DIR)/ba_data/data/maps/bridgit.json \
   $(BUILD_DIR)/ba_data/data/maps/courtyard.json \

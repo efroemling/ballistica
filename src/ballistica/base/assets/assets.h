@@ -3,7 +3,9 @@
 #ifndef BALLISTICA_BASE_ASSETS_ASSETS_H_
 #define BALLISTICA_BASE_ASSETS_ASSETS_H_
 
+#include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -128,9 +130,52 @@ class Assets {
     return static_cast<uint32_t>(collision_meshes_.size());
   }
 
-  // Text & Language (need to mold this into more asset-like concepts).
-  void SetLanguageKeys(
-      const std::unordered_map<std::string, std::string>& language);
+  // Text & Language.
+
+  /// The native string table parsed once from a ``language/<locale>``
+  /// blob (strings asset-migration). Replaces the old Python-dict
+  /// overlay + per-lookup C++<->Python round-trip; ``Lstr`` compiles and
+  /// resource/translate lookups now resolve entirely in C++.
+  struct LanguageData {
+    /// Full dot-path resource key -> string value (string leaves only;
+    /// numeric/other leaves are dropped -- see strings-migration
+    /// followup).
+    std::unordered_map<std::string, std::string> resources;
+    /// translate category -> value -> translation string (the
+    /// ``translations`` section; null entries are omitted so a miss
+    /// falls back to the looked-up value).
+    std::unordered_map<std::string,
+                       std::unordered_map<std::string, std::string> >
+        translations;
+    /// Curated 'internal' slice keyed by bare name, for the C++
+    /// ``GetResourceString`` consumers (everything under ``internal`` by
+    /// bare name, plus a few cherry-picked top-level keys).
+    std::unordered_map<std::string, std::string> internal;
+  };
+
+  /// (Re)build the native language table from the registered
+  /// ``language`` buckets of ``apverids`` (merged in order), swap it in
+  /// atomically, and notify subsystems of the language change. English
+  /// is the bundled fallback flavor, so this currently always loads
+  /// English (Step A of the strings migration).
+  void ReloadLanguage(const std::vector<std::string>& apverids);
+
+  /// Resolve a resource by full dot-path key, trying ``fallback_resource``
+  /// (if non-null) on a miss. Nullopt if neither resolves. Backs both the
+  /// ``Lstr`` ``r`` compile path and the Python ``get_resource`` API.
+  auto GetResourceOrFallback(const std::string& key,
+                             const std::string* fallback_resource)
+      -> std::optional<std::string>;
+
+  /// Resolve a translation (``translations[category][value]``), falling
+  /// back to ``value`` itself on a miss (the legacy null-means-use-value
+  /// convention). Backs the ``Lstr`` ``t`` compile path and Python
+  /// ``translate``.
+  auto GetTranslation(const std::string& category, const std::string& value)
+      -> std::string;
+
+  /// Look up a curated 'internal' string by bare key (C++ consumers).
+  /// Empty string if absent.
   auto GetResourceString(const std::string& key) -> std::string;
   auto CharStr(SpecialChar id) -> std::string;
   auto CompileResourceString(const std::string& s, bool* valid = nullptr)
@@ -281,9 +326,12 @@ class Assets {
   std::vector<Object::Ref<Asset>*> pending_loads_other_;
   std::vector<Object::Ref<Asset>*> pending_loads_done_;
 
-  // Text & Language (need to mold this into more asset-like concepts).
+  // Text & Language. The active table is published behind a shared_ptr
+  // snapshot (lock-free reads on the text hot path; swapped under the
+  // mutex on a language change), mirroring AssetPackageRegistry.
+  auto LanguageDataSnapshot_() -> std::shared_ptr<const LanguageData>;
   std::mutex language_mutex_;
-  std::unordered_map<std::string, std::string> language_;
+  std::shared_ptr<const LanguageData> language_data_;
   std::mutex special_char_mutex_;
   std::unordered_map<SpecialChar, std::string> special_char_strings_;
 };

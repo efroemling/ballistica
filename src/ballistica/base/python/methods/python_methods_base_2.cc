@@ -1234,6 +1234,48 @@ static PyMethodDef PyRegisterAssetPackageBucketsDef = {
     "sees a half-registered package. Safe to call while other threads are\n"
     "doing asset lookups."};
 
+// ---------------- get_asset_package_constant_blob_path -----------------------
+
+static auto PyGetAssetPackageConstantBlobPath(PyObject* self, PyObject* args,
+                                              PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* apverid;
+  const char* logical_path;
+  static const char* kwlist[] = {"apverid", "logical_path", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss",
+                                   const_cast<char**>(kwlist), &apverid,
+                                   &logical_path)) {
+    return nullptr;
+  }
+  auto* registry = g_base->assets->package_registry();
+  auto bucket_id = registry->LookupConstantBucketId(apverid);
+  if (bucket_id.empty()) {
+    Py_RETURN_NONE;
+  }
+  auto hash = registry->LookupAssetHash(apverid, bucket_id, logical_path, "j");
+  if (hash.empty()) {
+    Py_RETURN_NONE;
+  }
+  return PyUnicode_FromString(registry->CasBlobPath(hash).c_str());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetAssetPackageConstantBlobPathDef = {
+    "get_asset_package_constant_blob_path",          // name
+    (PyCFunction)PyGetAssetPackageConstantBlobPath,  // method
+    METH_VARARGS | METH_KEYWORDS,                    // flags
+
+    "get_asset_package_constant_blob_path(apverid: str,\n"
+    "                                     logical_path: str) -> str | None\n"
+    "\n"
+    "(internal) Resolve a flavor-invariant ``constant``-bucket logical\n"
+    "path in a registered asset-package to its on-disk CAS blob path.\n"
+    "Returns the path, or ``None`` if the package isn't registered, has\n"
+    "no constant bucket, or doesn't carry that logical path. The blob is\n"
+    "the JSON (``j``) component. The returned path is where the blob\n"
+    "should live (writable CAS root, else bundle root); a caller must\n"
+    "still handle a genuine ``open()`` failure."};
+
 // ---------------- set_asset_name_compat_versions -----------------------------
 
 static auto PySetAssetNameCompatVersions(PyObject* self, PyObject* args,
@@ -1312,6 +1354,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
   return {
       PyRegisterAssetPackageBucketDef,
       PyRegisterAssetPackageBucketsDef,
+      PyGetAssetPackageConstantBlobPathDef,
       PySetAssetNameCompatVersionsDef,
       PyPreferredTextureProfileDef,
       PyOpenURLDef,

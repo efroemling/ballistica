@@ -123,7 +123,17 @@ if TYPE_CHECKING:
 #               dead code for a wire-version cycle. Drops a
 #               soft-default field that no client populates and
 #               no server reads. ``MIN_VERSION`` matched.
-BACLOUD_VERSION = 23
+# 24 (2026-06): Workspace get/put optimistic-concurrency (mid-air-
+#               collision guard). ``ResponseData.workspace_snapshotid``
+#               carries the workspace's current snapshot id back on a
+#               get/put; the client stashes it in a ``.bacloudstate.json``
+#               (a dotfile, so the sync auto-ignores it) and sends it as
+#               ``WorkspacePutProcessCommand.expected_snapshotid`` on the
+#               next put, which the server rejects if the workspace has
+#               moved since. Both fields are optional/soft-default, so old
+#               clients/servers just skip the check -- ``MIN_VERSION``
+#               unchanged.
+BACLOUD_VERSION = 24
 
 
 def asset_file_cache_path(filehash: str) -> str:
@@ -677,6 +687,15 @@ class ResponseData:
     #: If present, all empty dirs under this one should be removed.
     dir_prune_empty: Annotated[
         str | None, IOAttrs('dpe', store_default=False)
+    ] = None
+
+    #: If present, the workspace's current snapshot id after a completed
+    #: workspace ``get``/``put`` (bacloud v24+ optimistic-concurrency).
+    #: The client stashes it in ``<dir>/.bacloudstate.json`` and sends it
+    #: back as the put's ``expected_snapshotid`` to detect mid-air
+    #: collisions (the workspace changing between get and put).
+    workspace_snapshotid: Annotated[
+        str | None, IOAttrs('wss', store_default=False)
     ] = None
 
     #: If present, url to display to the user.

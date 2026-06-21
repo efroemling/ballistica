@@ -6,6 +6,7 @@
 #include <mutex>
 #include <string>
 #include <tuple>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -36,6 +37,25 @@ void AssetPackageRegistry::RegisterBucketsAtomic(
   // until it releases its shared_ptr. Writes are rare (startup + a
   // resolve commit) so doing the copy under the lock is fine.
   auto next = std::make_shared<PackagesMap>(*packages_);
+
+  // A batch is the COMPLETE set of buckets for each package it covers (a
+  // resolve always finalizes every bucket), so REPLACE each touched
+  // package's bucket map rather than merging into it. Merging would leave
+  // a previously-registered flavor of a runtime-switchable dimension
+  // lingering -- e.g. an old ``language/<locale>`` bucket after a language
+  // switch, or an old ``textures/<profile>...`` bucket after a future
+  // texture-tier switch -- which the prefix lookups (LookupLanguageBucketId
+  // et al., "first matching head wins") could then return instead of the
+  // freshly-registered one. The clear+set both happen on the not-yet-
+  // published copy, so readers only ever see the old or the fully-rebuilt
+  // snapshot, never a partial one.
+  std::unordered_set<std::string> touched;
+  for (auto& spec : buckets) {
+    touched.insert(std::get<0>(spec));
+  }
+  for (auto&& apverid : touched) {
+    (*next)[apverid].clear();
+  }
   for (auto& spec : buckets) {
     auto& apverid = std::get<0>(spec);
     auto& bucket_id = std::get<1>(spec);
@@ -117,6 +137,11 @@ auto AssetPackageRegistry::LookupAudioBucketId(const std::string& apverid) const
 auto AssetPackageRegistry::LookupMeshBucketId(const std::string& apverid) const
     -> std::string {
   return LookupBucketIdWithPrefix_(apverid, "meshes/");
+}
+
+auto AssetPackageRegistry::LookupLanguageBucketId(
+    const std::string& apverid) const -> std::string {
+  return LookupBucketIdWithPrefix_(apverid, "language/");
 }
 
 auto AssetPackageRegistry::LookupConstantBucketId(

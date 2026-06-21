@@ -94,9 +94,10 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         tval = 6.4
         t_incr = 0.12
 
-        always_use_first_to = bs.app.lang.get_resource(
-            'bestOfUseFirstToInstead'
-        )
+        # 'bestOfUseFirstToInstead' was a per-language 0/1 grammar flag;
+        # hard-coded to the English value (0) for the strings migration
+        # (revisit in Step B; see followups.md).
+        always_use_first_to = 0
 
         session = self.session
         if self._is_ffa:

@@ -44,3 +44,73 @@ def ios_sim_log() -> None:
         udid,
         os.environ.get('IOS_LOG_SUBSYSTEM', iossim.DEFAULT_LOG_SUBSYSTEM),
     )
+
+
+def assetworkspace() -> None:
+    """Get/put an asset-package source workspace via a fast local cache.
+
+    Maintains a persistent local checkout of a cloud asset-package source
+    workspace under ``.cache/asset_package_sources/<NAME>/`` (gitignored;
+    bacloud syncs only diffs, so repeat gets are fast) and wraps
+    ``bacloud workspace get``/``put`` against it.
+
+    bacloud itself guards against mid-air collisions: a ``get`` stashes
+    the workspace's snapshot id in a ``.bacloudstate.json`` and a ``put``
+    is rejected if the workspace has changed since (``put --force``
+    overrides). So the only discipline is the standard cycle: ``get`` ->
+    edit the files under the printed path -> ``put``.
+
+    Subcommands::
+
+      assetworkspace get <NAME>
+      assetworkspace put <NAME> [--force]
+      assetworkspace path <NAME>
+
+    ``<NAME>`` is the case-sensitive cloud workspace name (e.g.
+    ``BaBuiltinAssets``); ``path`` just prints the cache dir (no network).
+    """
+    import os
+    import subprocess
+
+    from efro.error import CleanError
+
+    args = pcommand.get_args()
+    if len(args) < 2:
+        raise CleanError(
+            'Expected: <subcommand> <workspace-name> [flags].'
+            ' Subcommands: get, put, path.'
+        )
+    subcmd, name = args[0], args[1]
+    flags = args[2:]
+
+    ws_dir = os.path.join(
+        pcommand.PROJROOT, '.cache', 'asset_package_sources', name
+    )
+    bacloud = os.path.join(pcommand.PROJROOT, 'tools', 'bacloud')
+
+    if subcmd == 'path':
+        print(ws_dir)
+        return
+
+    if subcmd not in ('get', 'put'):
+        raise CleanError(f'Unknown subcommand {subcmd!r}; use get, put, path.')
+
+    if subcmd == 'get':
+        os.makedirs(ws_dir, exist_ok=True)
+    elif not os.path.isdir(ws_dir):
+        raise CleanError(
+            f'No local cache for {name!r} at {ws_dir};'
+            f' run `assetworkspace get {name}` first.'
+        )
+
+    cmd = [bacloud, 'workspace', subcmd, ws_dir, '--workspace', name]
+    if subcmd == 'put' and '--force' in flags:
+        cmd.append('--force')
+    try:
+        subprocess.run(cmd, check=True)
+    except subprocess.CalledProcessError as exc:
+        raise CleanError(
+            f'bacloud workspace {subcmd} failed for {name!r}.'
+        ) from exc
+    verb = 'synced to' if subcmd == 'get' else 'pushed from'
+    print(f'Workspace {name!r} {verb} {ws_dir}')

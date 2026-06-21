@@ -118,6 +118,121 @@ class LocaleSubsystem(AppSubsystem):
             raise RuntimeError('Locale is not set.')
         return self._current_locale
 
+    def set_locale(
+        self, locale: Locale, *, store_to_config: bool = True
+    ) -> None:
+        """Switch the active language to ``locale``.
+
+        Resolves the target locale's asset flavors first (downloading the
+        ``language/<locale>`` blob if it isn't already local, with a
+        cancelable progress dialog) and commits the switch only on
+        success. Runs asynchronously; on-screen text re-translates when
+        the resolve completes.
+
+        ``store_to_config`` writes the choice as an explicit ``'Lang'``
+        override; pass ``False`` for the 'auto' selection (clears the
+        override so the OS-default locale is followed).
+        """
+        assert _babase.in_logic_thread()
+
+        # Normalize to a currently-supported resolved locale.
+        locale = locale.resolved.locale
+        if not self.can_display_locale(locale):
+            applog.error(
+                'Cannot display locale %s on this build; ignoring switch.',
+                locale.name,
+            )
+            return
+        _babase.app.create_async_task(
+            self._do_set_locale(locale, store_to_config)
+        )
+
+    async def _do_set_locale(
+        self, locale: Locale, store_to_config: bool
+    ) -> None:
+        """Resolve + commit a language switch (see :meth:`set_locale`)."""
+        import asyncio
+
+        from babase._simpledialog import SimpleDialog
+        from babase._language import Lstr
+        from babase._asset_packages import loaded_asset_package_apverids
+        from babase._assetsubsystem import make_progress_reporter
+
+        task = asyncio.current_task()
+        dialog: SimpleDialog | None = None
+
+        def on_cancel() -> None:
+            if task is not None:
+                task.cancel()
+
+        def ensure_dialog() -> None:
+            # Lazily shown only if a real download begins (an
+            # already-local/warm switch stays instant, no dialog flash).
+            nonlocal dialog
+            if dialog is None and _babase.app.env.gui:
+                dialog = SimpleDialog(
+                    title=Lstr(resource='updatingText'),
+                    progress=0.0,
+                    button_label=Lstr(resource='cancelText'),
+                    on_button=on_cancel,
+                )
+
+        def on_update(message: str, progress: float | None) -> None:
+            if dialog is not None:
+                dialog.update(
+                    message=message,
+                    progress=0.0 if progress is None else progress,
+                )
+
+        try:
+            await _babase.app.assets.resolve(
+                loaded_asset_package_apverids(),
+                allow_downloads=True,
+                language=locale,
+                on_download_starting=ensure_dialog,
+                on_progress=make_progress_reporter(on_update),
+            )
+        except asyncio.CancelledError:
+            # User hit Cancel -- bow out, leave the current locale in place.
+            if dialog is not None:
+                dialog.dismiss()
+            applog.info('Language switch to %s cancelled.', locale.long_value)
+            return
+        except Exception:
+            # Resolve failed -- the registry + native table are unchanged
+            # on failure, so just surface the error and stay put.
+            applog.exception('Error switching to locale %s.', locale.name)
+            if dialog is not None:
+                dialog.update(
+                    title=Lstr(resource='errorText'),
+                    message=Lstr(
+                        resource='internal.unavailableNoConnectionText'
+                    ),
+                    progress=None,
+                    button_label=Lstr(resource='okText'),
+                    on_button=dialog.dismiss,
+                )
+            else:
+                _babase.screenmessage(
+                    'Error switching language; see log.', color=(1, 0, 0)
+                )
+            return
+
+        # Success: the registry + native string table are now the target
+        # locale (the resolve rebuilt the table and fired the
+        # language-change cascade, so on-screen text has already
+        # re-translated). Commit the locale + config.
+        if dialog is not None:
+            dialog.dismiss()
+        self._current_locale = locale
+        cfg = _babase.app.config
+        if store_to_config:
+            cfg['Lang'] = locale.long_value
+        else:
+            cfg.pop('Lang', None)
+        cfg.commit()
+        applog.info('Switched language to %s.', locale.long_value)
+
     @staticmethod
     @cache
     def can_display_locale(locale: Locale) -> bool:

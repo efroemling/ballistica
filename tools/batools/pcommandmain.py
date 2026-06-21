@@ -165,6 +165,7 @@ from batools.pcommands3 import (
 from batools.pcommands4 import (
     ios_sim_run,
     ios_sim_log,
+    assetworkspace,
 )
 from batools._automation import test_game_cmd
 

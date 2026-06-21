@@ -670,9 +670,8 @@ class Achievement:
     @property
     def description(self) -> babase.Lstr:
         """Get a babase.Lstr for the Achievement's brief description."""
-        if (
-            'description'
-            in babase.app.lang.get_resource('achievements')[self._name]
+        if babase.app.lang.has_resource(
+            f'achievements.{self._name}.description'
         ):
             return babase.Lstr(
                 resource='achievements.' + self._name + '.description'
@@ -684,9 +683,8 @@ class Achievement:
     @property
     def description_complete(self) -> babase.Lstr:
         """Get a babase.Lstr for the Achievement's description when complete."""
-        if (
-            'descriptionComplete'
-            in babase.app.lang.get_resource('achievements')[self._name]
+        if babase.app.lang.has_resource(
+            f'achievements.{self._name}.descriptionComplete'
         ):
             return babase.Lstr(
                 resource='achievements.' + self._name + '.descriptionComplete'

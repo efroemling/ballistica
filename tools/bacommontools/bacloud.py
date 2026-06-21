@@ -217,6 +217,12 @@ def _is_retryable_connection_error(exc: BaseException) -> bool:
     return False
 
 
+# Per-workspace-checkout control file (a dotfile, so the workspace sync
+# auto-ignores it) recording the snapshot id we last synced to, for the
+# put optimistic-concurrency / mid-air-collision check (bacloud v24+).
+_BACLOUD_STATE_FILENAME = '.bacloudstate.json'
+
+
 # argv prefixes for CLI commands that are safe to retry even when a
 # failure is *post-send* (the request may have reached the server).
 # These are read-only or content-idempotent — re-running can't
@@ -278,6 +284,12 @@ class App:
         self._api_key: str | None = None
         self._server: str | None = None
         self._idempotent = False
+        # Workspace get/put optimistic-concurrency (v24+): the local dir
+        # whose .bacloudstate.json to (re)write, and the snapshot id the
+        # server handed back this run.
+        self._ws_state_dir: str | None = None
+        self._ws_name: str | None = None
+        self._ws_snapshotid_received: str | None = None
 
     def run(self) -> int:
         """Run the tool."""
@@ -322,13 +334,106 @@ class App:
         # 503.
         self._idempotent = _command_is_idempotent(sys.argv[1:])
 
+        # For a `workspace get`/`put`, set up optimistic-concurrency
+        # handling: a put injects its last-synced snapshot id (from the
+        # dir's .bacloudstate.json) so the server can reject a mid-air
+        # collision. May mutate args (strip the client-only --force, add
+        # --expected-snapshotid).
+        cwd = os.getcwd()
+        args = self._prep_workspace_command(list(sys.argv[1:]), cwd)
+
         # Simply pass all args to the server and let it do the thing.
-        self.run_interactive_command(cwd=os.getcwd(), args=sys.argv[1:])
+        self.run_interactive_command(cwd=cwd, args=args)
+
+        # On a completed get/put the server hands back the workspace's
+        # current snapshot id; stash it for the next put's check.
+        self._finish_workspace_command()
 
         if self._api_key is None:
             self._save_state()
 
         return self._return_code
+
+    def _prep_workspace_command(self, args: list[str], cwd: str) -> list[str]:
+        """Set up optimistic-concurrency for a ``workspace get``/``put``.
+
+        Returns the (possibly modified) args to actually send. For a put,
+        strips the client-only ``--force`` flag and -- unless forced --
+        adds ``--expected-snapshotid`` from the dir's
+        ``.bacloudstate.json`` so the server can reject a mid-air
+        collision (the workspace having changed since our last get).
+        """
+        if (
+            len(args) < 2
+            or args[0] != 'workspace'
+            or args[1] not in ('get', 'put')
+        ):
+            return args
+
+        # The target dir is the lone positional after the subcommand
+        # (default '.'); --workspace takes a value, other --flags don't.
+        positionals: list[str] = []
+        rest = args[2:]
+        i = 0
+        while i < len(rest):
+            tok = rest[i]
+            if tok == '--workspace':
+                self._ws_name = rest[i + 1] if i + 1 < len(rest) else None
+                i += 2
+                continue
+            if tok.startswith('--'):
+                i += 1
+                continue
+            positionals.append(tok)
+            i += 1
+        self._ws_state_dir = os.path.abspath(
+            os.path.join(cwd, positionals[0] if positionals else '.')
+        )
+
+        if args[1] == 'put':
+            force = '--force' in args
+            args = [a for a in args if a != '--force']
+            if not force:
+                snapshotid = self._read_ws_state_snapshotid(self._ws_state_dir)
+                if snapshotid is not None:
+                    args = args + ['--expected-snapshotid', snapshotid]
+        return args
+
+    def _finish_workspace_command(self) -> None:
+        """Persist the snapshot id the server returned (get/put), if any."""
+        import json
+
+        if self._ws_state_dir is None or self._ws_snapshotid_received is None:
+            return
+        path = os.path.join(self._ws_state_dir, _BACLOUD_STATE_FILENAME)
+        try:
+            data: dict[str, str] = {'snapshotid': self._ws_snapshotid_received}
+            if self._ws_name is not None:
+                data['name'] = self._ws_name
+            with open(path, 'w', encoding='utf-8') as outfile:
+                json.dump(data, outfile)
+        except Exception:
+            # Non-fatal: the sync itself succeeded; we just couldn't stash
+            # the token (a later put simply skips the check).
+            if VERBOSE:
+                import traceback
+
+                traceback.print_exc()
+
+    @staticmethod
+    def _read_ws_state_snapshotid(ws_dir: str) -> str | None:
+        """Read the last-synced snapshot id from a dir's state file."""
+        import json
+
+        path = os.path.join(ws_dir, _BACLOUD_STATE_FILENAME)
+        if not os.path.exists(path):
+            return None
+        try:
+            with open(path, encoding='utf-8') as infile:
+                val = json.load(infile).get('snapshotid')
+                return val if isinstance(val, str) else None
+        except Exception:
+            return None
 
     @property
     def _state_dir(self) -> Path:
@@ -1191,6 +1296,10 @@ class App:
                 self._handle_downloads_signed(response.downloads_signed)
             if response.dir_prune_empty:
                 self._handle_dir_prune_empty(response.dir_prune_empty)
+            if response.workspace_snapshotid is not None:
+                # A get/put completed; remember the workspace's current
+                # snapshot id so _finish_workspace_command can stash it.
+                self._ws_snapshotid_received = response.workspace_snapshotid
 
             if response.open_url is not None:
                 self._handle_open_url(response.open_url)

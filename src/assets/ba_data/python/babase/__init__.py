@@ -188,7 +188,11 @@ from babase._general import (
     storagename,
     verify_object_death,
 )
-from babase._language import LanguageSubsystem, Lstr
+from babase._language import (
+    LanguageSubsystem,
+    Lstr,
+    get_legacy_langdata,
+)
 from babase._locale import LocaleSubsystem
 from babase._logging import (
     accountlog,
@@ -309,6 +313,7 @@ __all__ = [
     'get_immediate_return_code',
     'get_input_idle_time',
     'get_ip_address_type',
+    'get_legacy_langdata',
     'get_low_level_config_value',
     'get_max_graphics_quality',
     'get_remote_app_name',

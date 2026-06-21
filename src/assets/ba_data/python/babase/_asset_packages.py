@@ -75,6 +75,11 @@ def load_bundled_asset_packages() -> None:
         if apverid not in _loaded_apverids:
             _loaded_apverids.append(apverid)
     if apverids:
+        # resolve_local registers the packages' buckets (including
+        # ``language/<locale>``) and rebuilds the native language string
+        # table from them — so this is what actually populates the table
+        # at startup (the boot-time ``setlanguage`` may have run earlier,
+        # before any packages were loaded).
         _babase.app.assets.resolve_local(apverids)
 
 

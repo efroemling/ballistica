@@ -67,6 +67,30 @@ def get_current_version(projroot: str = '') -> tuple[str, int]:
     return version, build_number
 
 
+def get_current_build_resilient(projroot: str = '') -> int:
+    """Pull the build number from whichever version file is present.
+
+    The asset bundle is assembled in several cloudshell envs that each
+    sync a *different* curated file subset: the asset-source env
+    (``ba-assets-src-alldeps``) has ``baenv.py`` but not the C++ tree,
+    while the platform build envs (apple/android/cmake) have
+    ``ballistica.cc`` but not the source ``baenv.py``. So try ``baenv.py``
+    first and fall back to ``ballistica.cc`` -- both carry the same build
+    number (``make inc`` bumps both), and every asset-build context has at
+    least one. Avoids a FileNotFoundError that only shows up in CI.
+    """
+    baenv_path = os.path.join(projroot, 'src/assets/ba_data/python/baenv.py')
+    if os.path.exists(baenv_path):
+        prefix = 'TARGET_BALLISTICA_BUILD = '
+        with open(baenv_path, encoding='utf-8') as infile:
+            for line in infile:
+                if line.startswith(prefix):
+                    return int(line.removeprefix(prefix).strip())
+        raise RuntimeError('Build number not found in baenv.py.')
+    # Fall back to the C++ source (present in the platform build envs).
+    return get_current_version(projroot)[1]
+
+
 def get_current_api_version(projroot: str = '') -> int:
     """Pull current api version from the project."""
     with open(

@@ -273,7 +273,6 @@ class SoundtrackEditWindow(bui.MainWindow):
         ]
 
         # FIXME: We should probably convert this to use translations.
-        type_names_translated = bui.app.lang.get_resource('soundtrackTypeNames')
         prev_type_button: bui.Widget | None = None
         prev_test_button: bui.Widget | None = None
 
@@ -284,7 +283,9 @@ class SoundtrackEditWindow(bui.MainWindow):
                 claims_left_right=True,
                 selection_loops_to_parent=True,
             )
-            type_name = type_names_translated.get(song_type, song_type)
+            type_name = bui.app.lang.get_resource(
+                f'soundtrackTypeNames.{song_type}', fallback_value=song_type
+            )
             bui.textwidget(
                 parent=row,
                 size=(self._scroll_width - 350, 25),

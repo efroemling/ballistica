@@ -26,8 +26,6 @@ class HelpWindow(bui.MainWindow):
 
         self._r = 'helpWindow'
 
-        getres = bui.app.lang.get_resource
-
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         width = 1050 if uiscale is bui.UIScale.SMALL else 750
@@ -129,13 +127,10 @@ class HelpWindow(bui.MainWindow):
         inline_title_height = 50
 
         self._sub_width = 660
-        self._sub_height = (
-            1590
-            + bui.app.lang.get_resource(f'{self._r}.someDaysExtraSpace')
-            + bui.app.lang.get_resource(
-                f'{self._r}.orPunchingSomethingExtraSpace'
-            )
-        )
+        # NOTE: someDaysExtraSpace + orPunchingSomethingExtraSpace were
+        # per-language layout tweaks (English value 0); hard-coded for the
+        # strings migration (revisit in Step B; see followups.md).
+        self._sub_height = 1590.0
 
         # Make space for our title when we're stuffing it inline.
         if uiscale is bui.UIScale.SMALL:
@@ -238,7 +233,8 @@ class HelpWindow(bui.MainWindow):
             v_align='center',
             flatness=1.0,
         )
-        v -= spacing * 25.0 + getres(f'{self._r}.someDaysExtraSpace')
+        # (+ someDaysExtraSpace, English value 0; see followups.md)
+        v -= spacing * 25.0
         txt_scale = 0.66
         txt = bui.Lstr(resource=f'{self._r}.orPunchingSomethingText').evaluate()
         bui.textwidget(
@@ -253,7 +249,8 @@ class HelpWindow(bui.MainWindow):
             v_align='center',
             flatness=1.0,
         )
-        v -= spacing * 27.0 + getres(f'{self._r}.orPunchingSomethingExtraSpace')
+        # (+ orPunchingSomethingExtraSpace, English value 0; see followups.md)
+        v -= spacing * 27.0
         txt_scale = 1.0
         txt = bui.Lstr(
             resource=f'{self._r}.canHelpText',
@@ -452,7 +449,7 @@ class HelpWindow(bui.MainWindow):
             ),
         )
 
-        txt_scale = getres(f'{self._r}.punchInfoTextScale')
+        txt_scale = 0.6  # punchInfoTextScale (English value; see followups.md)
         txt = bui.Lstr(resource=f'{self._r}.punchInfoText').evaluate()
         bui.textwidget(
             parent=self._subcontainer,
@@ -483,7 +480,7 @@ class HelpWindow(bui.MainWindow):
         )
 
         txt = bui.Lstr(resource=f'{self._r}.bombInfoText').evaluate()
-        txt_scale = getres(f'{self._r}.bombInfoTextScale')
+        txt_scale = 0.6  # bombInfoTextScale (English value; see followups.md)
         bui.textwidget(
             parent=self._subcontainer,
             position=(h + sep + 50 + 60, v - 35),
@@ -514,7 +511,7 @@ class HelpWindow(bui.MainWindow):
         )
 
         txtl = bui.Lstr(resource=f'{self._r}.pickUpInfoText')
-        txt_scale = getres(f'{self._r}.pickUpInfoTextScale')
+        txt_scale = 0.6  # pickUpInfoTextScale (English value; see followups.md)
         bui.textwidget(
             parent=self._subcontainer,
             position=(h + 60 + 120, v + sep + 50),
@@ -544,7 +541,7 @@ class HelpWindow(bui.MainWindow):
         )
 
         txt = bui.Lstr(resource=f'{self._r}.jumpInfoText').evaluate()
-        txt_scale = getres(f'{self._r}.jumpInfoTextScale')
+        txt_scale = 0.6  # jumpInfoTextScale (English value; see followups.md)
         bui.textwidget(
             parent=self._subcontainer,
             position=(h - 250 + 75, v - sep - 15 + 30),
@@ -558,7 +555,7 @@ class HelpWindow(bui.MainWindow):
         )
 
         txt = bui.Lstr(resource=f'{self._r}.runInfoText').evaluate()
-        txt_scale = getres(f'{self._r}.runInfoTextScale')
+        txt_scale = 0.6  # runInfoTextScale (English value; see followups.md)
         bui.textwidget(
             parent=self._subcontainer,
             position=(h, v - sep - 100),
@@ -607,7 +604,8 @@ class HelpWindow(bui.MainWindow):
         h = baseh + 20
 
         v -= spacing * 50.0
-        txt_scale = getres(f'{self._r}.powerupsSubtitleTextScale')
+        # powerupsSubtitleTextScale (English value; see followups.md)
+        txt_scale = 0.8
         txt = bui.Lstr(resource=f'{self._r}.powerupsSubtitleText').evaluate()
         bui.textwidget(
             parent=self._subcontainer,

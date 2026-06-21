@@ -112,6 +112,12 @@ class AssetPackageRegistry {
   /// registered or has no constant bucket.
   auto LookupConstantBucketId(const std::string& apverid) const -> std::string;
 
+  /// Per-locale-flavored ``language/<locale>`` bucket id registered for
+  /// ``apverid`` (the resolved language flavor, e.g. ``language/eng``).
+  /// Empty if the package isn't registered or has no language bucket
+  /// (strings asset-migration). Analog of :meth:`LookupTextureBucketId`.
+  auto LookupLanguageBucketId(const std::string& apverid) const -> std::string;
+
   /// Single chokepoint for "where is this CAS blob on disk?". Probes
   /// the writable CAS root (``<cache_dir>/assets/<aa>/<rest>``, where
   /// downloaded-on-the-fly blobs land) and falls through to the bundle

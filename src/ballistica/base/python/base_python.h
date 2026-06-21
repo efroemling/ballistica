@@ -163,9 +163,6 @@ class BasePython {
   void StorePreEnv(PyObject* obj);
 
   void RunDeepLink(const std::string& url);
-  auto GetResource(const char* key, const char* fallback_resource = nullptr,
-                   const char* fallback_value = nullptr) -> std::string;
-  auto GetTranslation(const char* category, const char* s) -> std::string;
 
   // Fetch raw values from the config dict. The default value is returned if
   // the requested value is not present or not of a compatible type.

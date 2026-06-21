@@ -864,7 +864,7 @@ def _assemble_one_package(apverid: str, pkg: BundlePackage) -> dict[str, Any]:
     import subprocess
 
     from efro.error import CleanError
-    from batools.version import get_current_version
+    from batools.version import get_current_build_resilient
 
     tmpdir = os.path.join(pcommand.PROJROOT, 'build/tmp')
     os.makedirs(tmpdir, exist_ok=True)
@@ -872,9 +872,12 @@ def _assemble_one_package(apverid: str, pkg: BundlePackage) -> dict[str, Any]:
     os.close(fd)
 
     # Report the target build to bacloud so master picks the matching
-    # asset-manifest path-format epoch (bacloud itself can't see baenv
-    # in this subprocess context; see _caller_build_number there).
-    _version, build_number = get_current_version(str(pcommand.PROJROOT))
+    # asset-manifest path-format epoch (bacloud itself can't see baenv in
+    # this subprocess context; see _caller_build_number there). Use the
+    # resilient reader -- the various asset-build cloudshell envs sync
+    # different subsets (some have baenv.py, some ballistica.cc), so
+    # reading just one would FileNotFoundError in CI.
+    build_number = get_current_build_resilient(str(pcommand.PROJROOT))
     env = dict(os.environ)
     env['BA_BUILD_NUMBER'] = str(build_number)
     try:

@@ -750,6 +750,7 @@ class AssetSubsystem(AppSubsystem):
         allow_downloads: bool = True,
         on_download_starting: Callable[[], None] | None = None,
         on_progress: Callable[[ResolveProgress], None] | None = None,
+        language: Locale | None = None,
     ) -> ResolveResult:
         """Make every requested asset-package-version available natively.
 
@@ -797,7 +798,7 @@ class AssetSubsystem(AppSubsystem):
         self._progress_cb = on_progress
         try:
             return await self._resolve(
-                apverids, allow_downloads, on_download_starting
+                apverids, allow_downloads, on_download_starting, language
             )
         except Exception as exc:
             # TLS cert-verify failures against our own nodes are
@@ -930,12 +931,29 @@ class AssetSubsystem(AppSubsystem):
         )
         _babase.register_asset_package_buckets(register_specs)
         self._pin(manifest_pkgs)
+        self._reload_language()
         logger.info(
             'Registered %d builtin package(s) at best-local flavor%s.',
             len(apverids),
             f' ({len(fell_back)} on fallback)' if fell_back else '',
         )
         return ResolveResult(apverids=list(apverids), fell_back=fell_back)
+
+    @staticmethod
+    def _reload_language() -> None:
+        """(Re)build the native language string table from the registered
+        ``language`` buckets.
+
+        Called right after any bucket commit (boot ``resolve_local``,
+        construct-mode resolve, an elective language switch), so the
+        native table always tracks the currently-registered locale flavor
+        — a resolve that swaps ``language/<locale>`` is immediately
+        reflected in on-screen text via the resulting language-change
+        cascade.
+        """
+        from babase._asset_packages import loaded_asset_package_apverids
+
+        _babase.reload_language(loaded_asset_package_apverids())
 
     # ---------------------------------------------------------------------
     # Resolve internals.
@@ -945,8 +963,13 @@ class AssetSubsystem(AppSubsystem):
         apverids: list[str],
         allow_downloads: bool,
         on_download_starting: Callable[[], None] | None = None,
+        language: Locale | None = None,
     ) -> ResolveResult:
-        language = _babase.app.locale.current_locale
+        # An explicit target locale (used by an elective language switch
+        # to resolve a flavor *before* committing it) overrides the active
+        # one; otherwise resolve for the current locale.
+        if language is None:
+            language = _babase.app.locale.current_locale
         now = time.time()
         logger.info(
             'Resolving %d asset-package(s) (downloads=%s): %s',
@@ -983,6 +1006,7 @@ class AssetSubsystem(AppSubsystem):
         # Pin everything we just told the engine about — never retracted
         # this process lifetime (GC-/cap-immune).
         self._pin(manifest_pkgs)
+        self._reload_language()
         await self._run_in_pool(self._commit_manifest, manifest_pkgs, now)
 
         logger.info(

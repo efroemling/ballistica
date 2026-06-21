@@ -61,7 +61,6 @@ class LeagueRankWindow(bui.MainWindow):
             else 710 if uiscale is bui.UIScale.MEDIUM else 800
         )
         self._r = 'coopSelectWindow'
-        self._rdict = bui.app.lang.get_resource(self._r)
         self._xoffs = 40
 
         self._league_url_arg = ''
@@ -847,7 +846,7 @@ class LeagueRankWindow(bui.MainWindow):
         self._see_more_button = bui.buttonwidget(
             parent=w_parent,
             id=f'{self.main_window_id_prefix}|seemore',
-            label=self._rdict.seeMoreText,
+            label=bui.app.lang.get_resource(f'{self._r}.seeMoreText'),
             position=(self._xoffs + h, v),
             color=(0.5, 0.5, 0.6),
             textcolor=(0.7, 0.7, 0.8),
@@ -935,8 +934,10 @@ class LeagueRankWindow(bui.MainWindow):
         assert bui.app.classic is not None
         accounts = bui.app.classic.accounts
         in_top = data is not None and data['rank'] is not None
-        eq_text = self._rdict.powerRankingPointsEqualsText
-        pts_txt = self._rdict.powerRankingPointsText
+        eq_text = bui.app.lang.get_resource(
+            f'{self._r}.powerRankingPointsEqualsText'
+        )
+        pts_txt = bui.app.lang.get_resource(f'{self._r}.powerRankingPointsText')
         num_text = bui.Lstr(resource='numberText').evaluate()
         do_percent = False
         finished_season_unranked = False
@@ -954,8 +955,8 @@ class LeagueRankWindow(bui.MainWindow):
                 # Handle old seasons where we didn't wind up ranked at
                 # the end.
                 if not data['scores']:
-                    status_text = (
-                        self._rdict.powerRankingFinishedSeasonUnrankedText
+                    status_text = bui.app.lang.get_resource(
+                        f'{self._r}.powerRankingFinishedSeasonUnrankedText'
                     )
                     extra_text = ''
                     finished_season_unranked = True
@@ -964,18 +965,17 @@ class LeagueRankWindow(bui.MainWindow):
                     our_points = accounts.get_league_rank_points(data)
                     progress = float(our_points) / max(1, data['scores'][-1][1])
                     status_text = str(int(progress * 100.0)) + '%'
-                    extra_text = (
-                        '\n'
-                        + self._rdict.powerRankingPointsToRankedText.replace(
-                            '${CURRENT}', str(our_points)
-                        ).replace('${REMAINING}', str(data['scores'][-1][1]))
+                    extra_text = '\n' + bui.app.lang.get_resource(
+                        f'{self._r}.powerRankingPointsToRankedText'
+                    ).replace('${CURRENT}', str(our_points)).replace(
+                        '${REMAINING}', str(data['scores'][-1][1])
                     )
                     do_percent = True
             except Exception:
                 logging.exception('Error updating power ranking.')
-                status_text = self._rdict.powerRankingNotInTopText.replace(
-                    '${NUMBER}', str(data['listSize'])
-                )
+                status_text = bui.app.lang.get_resource(
+                    f'{self._r}.powerRankingNotInTopText'
+                ).replace('${NUMBER}', str(data['listSize']))
                 extra_text = ''
         else:
             status_text = '-'
