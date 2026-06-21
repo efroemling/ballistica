@@ -39,56 +39,30 @@ def _handle_args(args: list[str]) -> Mode:
 
 
 def get_current_version(projroot: str = '') -> tuple[str, int]:
-    """Pull current version and build_number from the project."""
-    version = None
-    build_number = None
-    with open(
-        os.path.join(projroot, 'src/ballistica/shared/ballistica.cc'),
-        encoding='utf-8',
-    ) as infile:
-        lines = infile.readlines()
-    for line in lines:
-        prefix = 'const char* kEngineVersion = "'
-        suffix = '";\n'
-        if line.startswith(prefix) and line.endswith(suffix):
-            if version is not None:
-                raise RuntimeError('Found multiple version lines.')
-            version = line.removeprefix(prefix).removesuffix(suffix)
-        prefix = 'const int kEngineBuildNumber = '
-        suffix = ';\n'
-        if line.startswith(prefix) and line.endswith(suffix):
-            if build_number is not None:
-                raise RuntimeError('Found multiple build number lines.')
-            build_number = int(line.removeprefix(prefix).removesuffix(suffix))
-    if version is None:
-        raise RuntimeError('Version not found.')
-    if build_number is None:
-        raise RuntimeError('Build number not found.')
-    return version, build_number
+    """Pull current version and build_number from the project.
 
-
-def get_current_build_resilient(projroot: str = '') -> int:
-    """Pull the build number from whichever version file is present.
-
-    The asset bundle is assembled in several cloudshell envs that each
-    sync a *different* curated file subset: the asset-source env
-    (``ba-assets-src-alldeps``) has ``baenv.py`` but not the C++ tree,
-    while the platform build envs (apple/android/cmake) have
-    ``ballistica.cc`` but not the source ``baenv.py``. So try ``baenv.py``
-    first and fall back to ``ballistica.cc`` -- both carry the same build
-    number (``make inc`` bumps both), and every asset-build context has at
-    least one. Avoids a FileNotFoundError that only shows up in CI.
+    These live canonically in ``pconfig/projectconfig.json`` (``version``
+    + ``engine_build_number``) -- the one file guaranteed present in every
+    build and tooling context (pcommand itself locates PROJROOT by it), so
+    reading them here works even in the curated cloudshell envs that sync
+    only a subset of the tree. ``make inc`` keeps the embedded copies in
+    ``ballistica.cc`` / ``baenv.py`` / gradle / xcode in sync with these.
     """
-    baenv_path = os.path.join(projroot, 'src/assets/ba_data/python/baenv.py')
-    if os.path.exists(baenv_path):
-        prefix = 'TARGET_BALLISTICA_BUILD = '
-        with open(baenv_path, encoding='utf-8') as infile:
-            for line in infile:
-                if line.startswith(prefix):
-                    return int(line.removeprefix(prefix).strip())
-        raise RuntimeError('Build number not found in baenv.py.')
-    # Fall back to the C++ source (present in the platform build envs).
-    return get_current_version(projroot)[1]
+    import json
+
+    path = os.path.join(projroot, 'pconfig/projectconfig.json')
+    with open(path, encoding='utf-8') as infile:
+        cfg = json.load(infile)
+    try:
+        version = cfg['version']
+        build_number = cfg['engine_build_number']
+    except KeyError as exc:
+        raise RuntimeError(
+            f'{exc} not found in pconfig/projectconfig.json.'
+        ) from exc
+    assert isinstance(version, str)
+    assert isinstance(build_number, int)
+    return version, build_number
 
 
 def get_current_api_version(projroot: str = '') -> int:
