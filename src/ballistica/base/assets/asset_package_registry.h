@@ -85,15 +85,10 @@ class AssetPackageRegistry {
   /// lookup track the resolved flavor *per-package* rather than assuming
   /// a single global one (different packages can resolve to different
   /// flavors — e.g. one downloads desktop_v1 while a builtin falls back
-  /// to its bundled fallback_v1).
+  /// to its bundled fallback_v1). Serves cube maps too: they share the
+  /// textures bucket (decision #24), distinguished by call-site
+  /// (FileType::kCubeMapTexture), not by a separate bucket head.
   auto LookupTextureBucketId(const std::string& apverid) const -> std::string;
-
-  /// Cube-map analog of :meth:`LookupTextureBucketId`: the
-  /// ``cube_map_textures/...`` bucket id registered for ``apverid``
-  /// (decision #24). Empty if the package isn't registered or has no
-  /// cube-map bucket.
-  auto LookupCubeMapTextureBucketId(const std::string& apverid) const
-      -> std::string;
 
   /// Audio analog of :meth:`LookupTextureBucketId`: the ``audio/...``
   /// bucket id registered for ``apverid`` (decision #25). Empty if the

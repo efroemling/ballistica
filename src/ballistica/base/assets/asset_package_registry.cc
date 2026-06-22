@@ -108,9 +108,9 @@ auto AssetPackageRegistry::LookupBucketIdWithPrefix_(const std::string& apverid,
   }
   // Each package registers exactly one bucket per asset-type head — its
   // resolved flavor, e.g. "textures/desktop_v1.gamma.regular" or
-  // "textures/fallback_v1.gamma.regular". Find it by prefix. (Note the
-  // heads can't shadow each other: "cube_map_textures/" does not start
-  // with "textures/".)
+  // "textures/fallback_v1.gamma.regular". Find it by prefix. (The heads
+  // in use — "textures/", "audio/", "meshes/", "language/" — are
+  // mutually non-prefixing, so the first match is unambiguous.)
   for (auto&& bucket : pkg_it->second) {
     if (bucket.first.rfind(prefix, 0) == 0) {
       return bucket.first;
@@ -121,12 +121,9 @@ auto AssetPackageRegistry::LookupBucketIdWithPrefix_(const std::string& apverid,
 
 auto AssetPackageRegistry::LookupTextureBucketId(
     const std::string& apverid) const -> std::string {
+  // Serves both 2D textures and cube maps — they share this bucket (see
+  // Assets::FindCasCubeMapTexturePath).
   return LookupBucketIdWithPrefix_(apverid, "textures/");
-}
-
-auto AssetPackageRegistry::LookupCubeMapTextureBucketId(
-    const std::string& apverid) const -> std::string {
-  return LookupBucketIdWithPrefix_(apverid, "cube_map_textures/");
 }
 
 auto AssetPackageRegistry::LookupAudioBucketId(const std::string& apverid) const

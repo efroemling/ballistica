@@ -74,16 +74,18 @@ _ResolveAccum = tuple[
 ]
 
 #: Max concurrent CAS-blob downloads, run on a dedicated thread pool (NOT the
-#: shared app threadpool). Kept deliberately low: each in-flight download
-#: buffers its whole blob in RAM, so peak download memory is roughly this times
-#: blob-size -- and the target is low-end Android (scarce RAM + an aggressive
-#: low-memory killer, weak CPUs, and often slow/flaky links where a handful of
-#: connections already saturate bandwidth). 4 hides per-request latency well
-#: while staying under the urllib3 pool's per-host maxsize, so connections get
-#: reused rather than churned. Raise later if real-world numbers show downloads
-#: are bandwidth-starved on good connections (and bump that maxsize to match if
-#: you go above it).
-_BLOB_DOWNLOAD_CONCURRENCY = 4
+#: shared app threadpool). Each in-flight download buffers its whole blob in
+#: RAM, so peak download memory is roughly this times blob-size -- a real
+#: constraint on low-end Android (scarce RAM + an aggressive low-memory killer).
+#: Set to 8 from measured numbers: a warm-node sweep showed near-linear speedup
+#: through 4 and a further ~20% at 8 (download throughput still climbing, not
+#: yet bandwidth-saturated), so 8 meaningfully cuts time-to-first-menu while
+#: staying under the urllib3 pool's per-host maxsize (10) so connections get
+#: reused rather than churned. Overridable via BA_BLOB_DOWNLOAD_CONCURRENCY for
+#: testing; if you raise it past 10, bump that maxsize in _env.py to match.
+_BLOB_DOWNLOAD_CONCURRENCY = int(
+    os.environ.get('BA_BLOB_DOWNLOAD_CONCURRENCY', '8')
+)
 
 #: Per-request timeout for individual CAS-blob downloads. The shared
 #: urllib3 pool's default total timeout (10s) is sized for small API
@@ -129,12 +131,16 @@ _GC_BUSY_TIMEOUT_SECONDS = 2.0
 #: Number of single-level CAS shard dirs (first 2 hex chars of a hash).
 _CAS_SHARD_COUNT = 256
 
-#: The canonical asset-package buckets, in registration order.
+#: The canonical asset-package buckets, in registration order. A bucket is
+#: a delivery-variation coordinate (everything that varies together in how
+#: it's delivered), not an asset-kind namespace -- so e.g. cube maps ride
+#: 'textures' (same profile/render_space/tier dimensions as 2D textures)
+#: and collision meshes ride 'constant'. See the bucketing-model rules in
+#: the asset-packages design doc.
 _BUCKETS = (
     'constant',
     'language',
     'textures',
-    'cube_map_textures',
     'audio',
     'meshes',
 )
@@ -147,8 +153,8 @@ _BUCKETS = (
 _BUCKET_FALLBACKS: dict[str, str | None] = {
     'constant': None,  # No flavor dimension; 'constant' is always present.
     'language': 'language/eng',
+    # Serves cube maps too -- they share the textures bucket (decision #24).
     'textures': 'textures/fallback_v1.gamma.regular',
-    'cube_map_textures': 'cube_map_textures/fallback_v1.gamma.regular',
     # vorbis_v1 is audio's only real profile (decision #25), so desired
     # == fallback for GUI builds today; this entry matters only if a
     # non-bundled audio dimension (e.g. an ultra tier) appears later.
@@ -600,6 +606,10 @@ class AssetSubsystem(AppSubsystem):
         are single-in-flight, so there's no concurrency on this attribute.
         """
         if self._download_pool is None:
+            logger.info(
+                'Creating blob-download pool (%d workers).',
+                _BLOB_DOWNLOAD_CONCURRENCY,
+            )
             self._download_pool = ThreadPoolExecutor(
                 max_workers=_BLOB_DOWNLOAD_CONCURRENCY,
                 thread_name_prefix='baassetdl',
@@ -703,15 +713,10 @@ class AssetSubsystem(AppSubsystem):
         return {
             'constant': 'constant',
             'language': f'language/{language.value}',
+            # Cube maps share this bucket -- same profile/render_space/tier
+            # dimensions as 2D textures (decision #24).
             'textures': (
                 f'textures/{self._texture_profile}'
-                f'.{self._render_space}'
-                f'.{self._texture_tier}'
-            ),
-            # Cube maps ride the same dimensions as 2D textures in
-            # their own bucket (decision #24).
-            'cube_map_textures': (
-                f'cube_map_textures/{self._texture_profile}'
                 f'.{self._render_space}'
                 f'.{self._texture_tier}'
             ),

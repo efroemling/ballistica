@@ -7,6 +7,7 @@
 #include <exception>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
@@ -839,27 +840,33 @@ void UI::SetUIDelegate(base::UIDelegateInterface* delegate) {
   }
 }
 
-void UI::PushDevConsolePrintCall(std::string_view msg, float scale,
-                                 Vector4f color) {
+void UI::PushDevConsolePrintCall(
+    std::vector<core::DevConsolePrintEntry> entries) {
   // Completely ignore this stuff in headless mode.
   if (g_core->HeadlessMode()) {
     return;
   }
-  // If our event loop AND console are up and running, ship it off to be
-  // printed. Otherwise store it for the console to grab when it's ready.
-  //
-  // IMPORTANT: We're holding a string_view here so we need to copy it into
-  // a string to keep it valid when its called later.
+  // If our event loop AND console are up and running, ship the whole batch
+  // off to be printed in a SINGLE logic-thread call. Doing one PushCall per
+  // log line instead let a logging burst (e.g. a verbose-logging boot)
+  // flood the logic thread's message queue -- see the >1000/>10000
+  // ThreadMessage guards in EventLoop. Otherwise store the lines for the
+  // console to grab once it's ready.
   if (auto* event_loop = g_base->logic->event_loop()) {
     if (dev_console_ != nullptr) {
-      event_loop->PushCall([this, msg_s = std::string(msg), scale, color] {
-        dev_console_->Print(msg_s.c_str(), scale, color);
+      event_loop->PushCall([this, entries = std::move(entries)] {
+        for (auto& entry : entries) {
+          dev_console_->Print(entry.msg.c_str(), entry.scale, entry.color);
+        }
       });
       return;
     }
   }
-  // Didn't send a print; store for later.
-  dev_console_startup_messages_.emplace_back(msg, scale, color);
+  // Console not ready yet; buffer the lines for later.
+  for (auto& entry : entries) {
+    dev_console_startup_messages_.emplace_back(entry.msg, entry.scale,
+                                               entry.color);
+  }
 }
 
 void UI::OnAssetsAvailable() {

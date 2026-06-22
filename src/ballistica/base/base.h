@@ -8,6 +8,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
@@ -447,7 +448,7 @@ enum class SystemDataID : uint8_t {};
 // their callsites migrate.
 
 inline constexpr const char* kBuiltinAssetsApverid =
-    "a-0.babuiltinassets.260621";
+    "a-0.babuiltinassets.260622";
 
 enum class BuiltinTextureID : uint16_t {
   kTexturesActionButtons,         // textures/action_buttons
@@ -818,8 +819,8 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
       -> PyObject* override;
   auto FeatureSetFromData(PyObject* obj) -> FeatureSetNativeComponent* override;
   void DoV1CloudLog(const std::string& msg) override;
-  void PushDevConsolePrintCall(std::string_view msg, float scale,
-                               Vector4f color) override;
+  void PushDevConsolePrintCall(
+      std::vector<core::DevConsolePrintEntry> entries) override;
   auto GetPyExceptionType(PyExcType exctype) -> PyObject* override;
   auto PrintPythonStackTrace() -> bool override;
   auto GetPyLString(PyObject* obj) -> std::string override;

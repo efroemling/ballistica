@@ -1,19 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bastdassets.260620`` (bauiv1).
+"""Asset-package wrapper for ``a-0.bastdassets.260622`` (bauiv1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bastdassets.260620
+# ba_meta require asset-package a-0.bastdassets.260622
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.bastdassets.260620'
+__asset_package__ = 'a-0.bastdassets.260622'
 
 from typing import TYPE_CHECKING
 

@@ -787,9 +787,9 @@ void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {
   Plus()->DirectSendV1CloudLogs(logprefix, logsuffix, false, nullptr);
 }
 
-void BaseFeatureSet::PushDevConsolePrintCall(std::string_view msg, float scale,
-                                             Vector4f color) {
-  ui->PushDevConsolePrintCall(msg, scale, color);
+void BaseFeatureSet::PushDevConsolePrintCall(
+    std::vector<core::DevConsolePrintEntry> entries) {
+  ui->PushDevConsolePrintCall(std::move(entries));
 }
 
 PyObject* BaseFeatureSet::GetPyExceptionType(PyExcType exctype) {
