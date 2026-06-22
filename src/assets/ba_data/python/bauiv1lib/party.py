@@ -5,12 +5,17 @@
 import json
 import math
 import logging
-from typing import Any, Sequence, cast
+from typing import TYPE_CHECKING, cast
 
 import bauiv1 as bui
 from bauiv1 import builtinassets
 import bascenev1 as bs
-from bauiv1lib.popup import PopupMenuWindow, PopupWindow
+from bauiv1lib.popup import PopupMenuWindow
+
+if TYPE_CHECKING:
+    from typing import Any, Sequence
+
+    from bauiv1lib.popup import PopupWindow
 
 _CHAT_MUTE_CHOICE = 'chat_mute'
 _MAX_CHAT_NAME_COMBINED_SIZE = 25
@@ -692,12 +697,12 @@ class PartyWindow(bui.Window):
                 self._display_old_msgs = True
                 self._update()
             if choice == 'add_to_favorites':
-                info = bs.get_connection_to_host_info_2()
-                if info is not None:
+                host_info = bs.get_connection_to_host_info_2()
+                if host_info is not None:
                     self._add_to_favorites(
-                        name=info.name,
-                        address=info.address,
-                        port_num=info.port,
+                        name=host_info.name,
+                        address=host_info.address,
+                        port_num=host_info.port,
                     )
                 else:
                     # We should not allow the user to see this option
@@ -769,6 +774,7 @@ class PartyWindow(bui.Window):
         choices_display: list[bui.Lstr] = []
 
         # if we're the host, pop up 'kick' options for all non-host members
+        kick_str: bui.Lstr | None
         if bs.get_foreground_host_session() is not None:
             can_mute_chat = client_id != -1
             kick_str = bui.Lstr(resource='kickText')
@@ -776,10 +782,10 @@ class PartyWindow(bui.Window):
             can_mute_chat = True
 
             # kick-votes appeared in build 14248
-            info = bs.get_connection_to_host_info_2()
+            host_info = bs.get_connection_to_host_info_2()
             kick_str = (
                 None
-                if info is None or info.build_number < 14248
+                if host_info is None or host_info.build_number < 14248
                 else bui.Lstr(resource='kickVoteText')
             )
 
