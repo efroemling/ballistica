@@ -353,6 +353,40 @@ static PyMethodDef PySetAdminsDef = {
     "(internal)",
 };
 
+// ----------------------- set_chat_muted_player_names -------------------------
+
+static auto PySetChatMutedPlayerNames(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* names_obj;
+  static const char* kwlist[] = {"names", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &names_obj)) {
+    return nullptr;
+  }
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+
+  auto names = Python::GetStrings(names_obj);
+  std::set<std::string> name_set;
+  for (auto&& name : names) {
+    name_set.insert(name);
+  }
+  appmode->SetChatMutedPlayerNames(name_set);
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetChatMutedPlayerNamesDef = {
+    "set_chat_muted_player_names",             // name
+    (PyCFunction)PySetChatMutedPlayerNames,    // method
+    METH_VARARGS | METH_KEYWORDS,              // flags
+
+    "set_chat_muted_player_names(names: list[str]) -> None\n"
+    "\n"
+    "(internal)",
+};
+
 // --------------------- set_enable_default_kick_voting ------------------------
 
 static auto PySetEnableDefaultKickVoting(PyObject* self, PyObject* args,
@@ -961,6 +995,7 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       PySetPublicPartyPublicAddressIPV6Def,
       PySetAuthenticateClientsDef,
       PySetAdminsDef,
+      PySetChatMutedPlayerNamesDef,
       PySetEnableDefaultKickVotingDef,
       PySetPublicPartyMaxSizeDef,
       PySetPublicPartyQueueEnabledDef,
