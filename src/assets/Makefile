@@ -3275,23 +3275,7 @@ PEM_TARGETS = \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/cacert.pem
 
 DATA_TARGETS = \
-  $(BUILD_DIR)/ba_data/data/maps/big_g.json \
-  $(BUILD_DIR)/ba_data/data/maps/bridgit.json \
-  $(BUILD_DIR)/ba_data/data/maps/courtyard.json \
-  $(BUILD_DIR)/ba_data/data/maps/crag_castle.json \
-  $(BUILD_DIR)/ba_data/data/maps/doom_shroom.json \
-  $(BUILD_DIR)/ba_data/data/maps/football_stadium.json \
-  $(BUILD_DIR)/ba_data/data/maps/happy_thoughts.json \
-  $(BUILD_DIR)/ba_data/data/maps/hockey_stadium.json \
-  $(BUILD_DIR)/ba_data/data/maps/lake_frigid.json \
-  $(BUILD_DIR)/ba_data/data/maps/monkey_face.json \
-  $(BUILD_DIR)/ba_data/data/maps/rampage.json \
-  $(BUILD_DIR)/ba_data/data/maps/roundabout.json \
-  $(BUILD_DIR)/ba_data/data/maps/step_right_up.json \
-  $(BUILD_DIR)/ba_data/data/maps/the_pad.json \
-  $(BUILD_DIR)/ba_data/data/maps/tip_top.json \
-  $(BUILD_DIR)/ba_data/data/maps/tower_d.json \
-  $(BUILD_DIR)/ba_data/data/maps/zig_zag.json
+  
 
 EXTRAS_TARGETS_WIN_WIN32 = \
   $(BUILD_DIR)/windows/Win32/DLLs/_asyncio.pyd \
@@ -3521,18 +3505,6 @@ $(BUILD_DIR)/%.fdata : ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
 $(BUILD_DIR)/%.pem : ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-# Langdata one-off json file.
-$(BUILD_DIR)/ba_data/data/langdata.json : ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-# Languages json files.
-$(BUILD_DIR)/ba_data/data/languages/%.json : ../../.efrocachemap
-	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
-
-# Map json files.
-$(BUILD_DIR)/ba_data/data/maps/%.json : ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
 data: $(DATA_TARGETS)
