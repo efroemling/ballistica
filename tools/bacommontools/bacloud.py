@@ -217,6 +217,41 @@ def _is_retryable_connection_error(exc: BaseException) -> bool:
     return False
 
 
+class _TransientDownloadError(Exception):
+    """A CAS blob download failed in a retryable way.
+
+    Raised for a truncated stream (byte-count or sha256 mismatch) or a
+    transient 5xx from the blob store -- conditions a re-download can
+    plausibly fix. See :func:`_is_retryable_download_error`.
+    """
+
+
+def _is_retryable_download_error(exc: BaseException) -> bool:
+    """Whether a CAS blob-download failure is worth retrying.
+
+    Unlike the mutating-server path
+    (:func:`_is_retryable_connection_error`), a blob download is
+    content-idempotent: the signed URL targets one specific content hash
+    and the streamed result is size- AND sha256-verified before use. So
+    *any* transient fetch failure is safe to retry here -- crucially
+    including a ``ReadTimeout`` (bytes were mid-stream), which the server
+    path must NOT retry for mutating commands. Covers connection drops,
+    connect/read timeouts, chunked-encoding interruptions, and
+    truncated/transient-5xx streams (surfaced as
+    :class:`_TransientDownloadError`).
+    """
+    if isinstance(exc, _TransientDownloadError):
+        return True
+    return isinstance(
+        exc,
+        (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+            requests.exceptions.ChunkedEncodingError,
+        ),
+    )
+
+
 # Per-workspace-checkout control file (a dotfile, so the workspace sync
 # auto-ignores it) recording the snapshot id we last synced to, for the
 # put optimistic-concurrency / mid-air-collision check (bacloud v24+).
@@ -659,62 +694,102 @@ class App:
         dirname = os.path.dirname(filename)
         assert os.path.isdir(dirname)
 
-        response = self._servercmd(call, args, stream=False)
-
-        # We expect a single sentinel entry in downloads_signed keyed
-        # at 'default'. The server-side per-file handler doesn't know
-        # the client's destination path, so it hands back one signed
-        # URL + hash under that sentinel and we stream it into
-        # ``filename`` here.
-        assert response.downloads_signed is not None
-        assert len(response.downloads_signed) == 1
-        entry = response.downloads_signed[0]
-        assert entry.path == 'default'
-
         tmp = f'{filename}.tmp'
         chunk_size = 1024 * 1024
-        hasher = hashlib.sha256()
-        total = 0
-        with requests.get(
-            entry.download_url,
-            stream=True,
-            timeout=TIMEOUT_SECONDS,
-        ) as resp:
-            if not 200 <= resp.status_code < 300:
-                raise CleanError(
-                    f'GCS download of {filename} failed:'
-                    f' status={resp.status_code}'
-                    f' body={resp.text!r}'
-                )
-            with open(tmp, 'wb') as outfile:
-                for chunk in resp.iter_content(chunk_size=chunk_size):
-                    if not chunk:
-                        continue
-                    outfile.write(chunk)
-                    hasher.update(chunk)
-                    total += len(chunk)
 
-        if total != entry.size:
+        # CAS blob downloads are content-idempotent -- the signed URL
+        # targets one specific content hash and the streamed bytes are
+        # size- and sha256-verified below -- so any transient fetch
+        # failure is safe to retry. Retry the whole attempt (re-fetching a
+        # fresh signed URL each time, in case the prior one expired) with
+        # the same backoff + full-jitter the server path uses.
+        attempt = 0
+        while True:
             try:
-                os.unlink(tmp)
-            except OSError:
-                pass
-            raise CleanError(
-                f'GCS download of {filename} returned'
-                f' {total} bytes; expected {entry.size}.'
-            )
-        digest = hasher.hexdigest()
-        if digest != entry.sha256:
-            try:
-                os.unlink(tmp)
-            except OSError:
-                pass
-            raise CleanError(
-                f'GCS download of {filename} sha256 mismatch:'
-                f' got {digest}, expected {entry.sha256}.'
-            )
-        os.rename(tmp, filename)
-        return total
+                response = self._servercmd(call, args, stream=False)
+
+                # We expect a single sentinel entry in downloads_signed
+                # keyed at 'default'. The server-side per-file handler
+                # doesn't know the client's destination path, so it hands
+                # back one signed URL + hash under that sentinel and we
+                # stream it into ``filename`` here.
+                assert response.downloads_signed is not None
+                assert len(response.downloads_signed) == 1
+                entry = response.downloads_signed[0]
+                assert entry.path == 'default'
+
+                hasher = hashlib.sha256()
+                total = 0
+                with requests.get(
+                    entry.download_url,
+                    stream=True,
+                    timeout=TIMEOUT_SECONDS,
+                ) as resp:
+                    # Transient (5xx) blob-store errors are retryable; any
+                    # other non-2xx (e.g. 403/404) is a real problem.
+                    if resp.status_code >= 500:
+                        raise _TransientDownloadError(
+                            f'GCS download of {filename} got transient'
+                            f' status={resp.status_code}.'
+                        )
+                    if not 200 <= resp.status_code < 300:
+                        raise CleanError(
+                            f'GCS download of {filename} failed:'
+                            f' status={resp.status_code}'
+                            f' body={resp.text!r}'
+                        )
+                    with open(tmp, 'wb') as outfile:
+                        for chunk in resp.iter_content(chunk_size=chunk_size):
+                            if not chunk:
+                                continue
+                            outfile.write(chunk)
+                            hasher.update(chunk)
+                            total += len(chunk)
+
+                # A short read or hash mismatch means a truncated/corrupt
+                # stream -- retryable (re-download).
+                if total != entry.size:
+                    raise _TransientDownloadError(
+                        f'GCS download of {filename} returned {total} bytes;'
+                        f' expected {entry.size} (truncated stream).'
+                    )
+                digest = hasher.hexdigest()
+                if digest != entry.sha256:
+                    raise _TransientDownloadError(
+                        f'GCS download of {filename} sha256 mismatch: got'
+                        f' {digest}, expected {entry.sha256}.'
+                    )
+                os.rename(tmp, filename)
+                return total
+
+            except Exception as exc:
+                # Drop any partial tmp before retrying or giving up.
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+                if attempt < CONNECT_RETRIES and _is_retryable_download_error(
+                    exc
+                ):
+                    delay = random.uniform(
+                        0.0,
+                        min(
+                            CONNECT_RETRY_MAX_SECONDS,
+                            CONNECT_RETRY_BASE_SECONDS * 2**attempt,
+                        ),
+                    )
+                    attempt += 1
+                    print(
+                        f'{Clr.YLW}Download of'
+                        f' {os.path.basename(filename)} failed'
+                        f' ({type(exc).__name__}); retrying in {delay:.1f}s'
+                        f' ({attempt}/{CONNECT_RETRIES})...{Clr.RST}',
+                        file=sys.stderr,
+                        flush=True,
+                    )
+                    time.sleep(delay)
+                    continue
+                raise
 
     def _handle_dir_manifest_response(self, dirmanifest: str) -> None:
         from bacommon.transfer import DirectoryManifest
