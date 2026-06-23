@@ -67,7 +67,18 @@ def make_pool() -> urllib3.PoolManager:
     """PoolManager that honors HTTPS_PROXY (urllib3 doesn't by default)."""
     proxy = os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
     if proxy:
-        return urllib3.ProxyManager(proxy)
+        # urllib3 does not pull credentials out of a proxy URL's
+        # userinfo, so an authenticating proxy (CI runners, the Claude
+        # Code sandbox, etc.) needs them passed explicitly as a
+        # Proxy-Authorization header; otherwise the CONNECT tunnel for
+        # an https target comes back '407 Proxy Authentication Required'.
+        parsed = urllib3.util.parse_url(proxy)
+        proxy_headers = (
+            urllib3.make_headers(proxy_basic_auth=parsed.auth)
+            if parsed.auth
+            else None
+        )
+        return urllib3.ProxyManager(proxy, proxy_headers=proxy_headers)
     return urllib3.PoolManager()
 
 

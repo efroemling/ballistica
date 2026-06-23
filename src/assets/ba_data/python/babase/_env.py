@@ -204,6 +204,17 @@ def _bootstrap_networking() -> None:
     headers = {'User-Agent': _babase.user_agent_string()}
     proxy_url = os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
     if proxy_url:
+        # urllib3 doesn't pull credentials out of the proxy URL's
+        # userinfo, so an authenticating proxy needs them passed
+        # explicitly as a Proxy-Authorization header; otherwise the
+        # CONNECT tunnel for an https target comes back '407 Proxy
+        # Authentication Required'.
+        proxy_auth = urllib3.util.parse_url(proxy_url).auth
+        proxy_headers = (
+            urllib3.make_headers(proxy_basic_auth=proxy_auth)
+            if proxy_auth
+            else None
+        )
         _g_net_warm_start_pool_manager = urllib3.ProxyManager(
             proxy_url,
             retries=False,
@@ -211,6 +222,7 @@ def _bootstrap_networking() -> None:
             timeout=timeout,
             maxsize=10,
             headers=headers,
+            proxy_headers=proxy_headers,
         )
     else:
         _g_net_warm_start_pool_manager = urllib3.PoolManager(

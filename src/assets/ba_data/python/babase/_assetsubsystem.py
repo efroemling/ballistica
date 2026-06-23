@@ -26,16 +26,12 @@ selection (step 5) layer on top of this in later steps.
 import os
 import json
 import time
-import base64
-import hashlib
 import asyncio
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Annotated, override
-
-import urllib3
 
 import _babase
 from babase._appsubsystem import AppSubsystem
@@ -54,6 +50,7 @@ from bacommon.cloud import (
     ResolveAssetPackageResponse,
     AssetPackageResolveError,
 )
+from bacommon import assetcas
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -642,9 +639,7 @@ class AssetSubsystem(AppSubsystem):
 
     def _writable_blob_path(self, filehash: str) -> str:
         """Path a CAS blob would occupy in the writable root."""
-        return os.path.join(
-            self._writable_assets_root, filehash[:2], filehash[2:]
-        )
+        return assetcas.cas_blob_path(self._writable_assets_root, filehash)
 
     def _locate_blob(self, filehash: str) -> str | None:
         """Path of a CAS blob if present (writable then bundle), else None.
@@ -1640,16 +1635,8 @@ class AssetSubsystem(AppSubsystem):
 
     @staticmethod
     def _encode_token(token: securedata.Archive) -> str:
-        """Encode a capability token for the ``X-Asset-Token`` header.
-
-        base64-urlsafe of the Archive's canonical JSON (HTTP headers don't
-        carry raw JSON cleanly); mirrors the streamcall token encoding.
-        """
-        return (
-            base64.urlsafe_b64encode(dataclass_to_json(token).encode())
-            .rstrip(b'=')
-            .decode('ascii')
-        )
+        """Encode a capability token for the ``X-Asset-Token`` header."""
+        return assetcas.encode_asset_token(token)
 
     # ---------------------------------------------------------------------
     # CAS blob IO (off-thread; blocking).
@@ -1665,73 +1652,45 @@ class AssetSubsystem(AppSubsystem):
         roots = [self._writable_assets_root]
         if self._reuse_bundle:
             roots.append(self._bundle_assets_root)
-        for root in roots:
-            path = os.path.join(root, filehash[:2], filehash[2:])
-            try:
-                st = os.stat(path)
-            except OSError:
-                continue
-            if st.st_size == size:
-                return True
-            # Present but wrong size in this root; treat as absent.
-        return False
+        return assetcas.blob_present(roots, filehash, size)
 
     def _acquire_data_blob(
         self, base_url: str, token_header: str, filehash: str, size: int
     ) -> None:
         """Fetch one data blob from the node and atomically write it.
 
-        ``GET {base_url}/casblob/{hash}?size={size}`` with the
-        capability token; the bytes are verified + written by the shared
-        atomic writer. ``base_url``'s scheme mirrors the transport
-        session's security (see :meth:`_node_base_url`) — integrity is
-        guaranteed by the CAS sha256 check in :meth:`_cas_write` either
-        way. Off-thread; blocking.
+        Delegates to the shared
+        :func:`bacommon.assetcas.download_cas_blob`
+        (``GET {base_url}/casblob/{hash}?size={size}`` with the capability
+        token, then sha256-verify + atomic write). ``base_url``'s scheme
+        mirrors the transport session's security (see
+        :meth:`_node_base_url`); integrity is guaranteed by the CAS hash
+        check either way. Off-thread; blocking.
         """
-        pool = _babase.app.net.urllib3pool
-        url = f'{base_url}/casblob/{filehash}?size={size}'
-        response = pool.request(
-            'GET',
-            url,
-            headers={'X-Asset-Token': token_header},
-            timeout=urllib3.util.Timeout(total=_BLOB_DOWNLOAD_TIMEOUT_SECONDS),
-        )
-        if response.status != 200:
-            raise AssetResolveError(
-                f'casblob GET for {filehash} failed: HTTP {response.status}.'
+        try:
+            assetcas.download_cas_blob(
+                _babase.app.net.urllib3pool,
+                base_url,
+                filehash,
+                size,
+                token_header=token_header,
+                dest_root=self._writable_assets_root,
+                timeout_seconds=_BLOB_DOWNLOAD_TIMEOUT_SECONDS,
             )
-        self._cas_write(filehash, response.data)
+        except assetcas.CasDownloadError as exc:
+            raise AssetResolveError(str(exc)) from exc
 
     def _cas_write(self, filehash: str, data: bytes) -> None:
         """Atomically write a CAS blob into the writable root.
 
-        sha256-verify → temp in the destination dir → ``fsync`` →
-        ``os.replace`` (atomic on the same filesystem). A file at its CAS
-        path is therefore always whole-and-correct (the "exists ⇒ intact"
-        contract): a crash mid-write leaves only a temp file, never a
-        partial blob at the final path. Off-thread; blocking.
+        Delegates to the shared :func:`bacommon.assetcas.cas_write`
+        (sha256-verify, temp + ``fsync`` + ``os.replace``). Off-thread;
+        blocking.
         """
-        actual = hashlib.sha256(data).hexdigest()
-        if actual != filehash:
-            raise AssetResolveError(
-                f'CAS write hash mismatch for {filehash}: got {actual}.'
-            )
-        dest = self._writable_blob_path(filehash)
-        destdir = os.path.dirname(dest)
-        os.makedirs(destdir, exist_ok=True)
-        fd, tmp = tempfile.mkstemp(dir=destdir, prefix='.tmp_')
         try:
-            with os.fdopen(fd, 'wb') as outfile:
-                outfile.write(data)
-                outfile.flush()
-                os.fsync(outfile.fileno())
-            os.replace(tmp, dest)
-        except BaseException:
-            try:
-                os.unlink(tmp)
-            except OSError:
-                pass
-            raise
+            assetcas.cas_write(self._writable_assets_root, filehash, data)
+        except assetcas.CasDownloadError as exc:
+            raise AssetResolveError(str(exc)) from exc
 
     # ---------------------------------------------------------------------
     # Cache manifest IO (off-thread; blocking).

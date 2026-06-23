@@ -203,6 +203,7 @@ nitpick_ignore = [
     ('py:class', 'asyncio.streams.StreamWriter'),
     ('py:class', 'concurrent.futures.thread.ThreadPoolExecutor'),
     ('py:class', 'urllib3.response.BaseHTTPResponse'),
+    ('py:class', 'urllib3.poolmanager.PoolManager'),
     ('py:class', 'socket.AddressFamily'),
     ('py:attr', 'socket.AF_INET'),
     ('py:attr', 'socket.AF_INET6'),

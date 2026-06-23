@@ -563,6 +563,40 @@ class ResponseData:
         #: Everything that should be downloaded.
         entries: Annotated[list[Entry], IOAttrs('e')]
 
+    @ioprepped
+    @dataclass
+    class CasDelivery:
+        """CAS-delivery info for an asset-package assemble.
+
+        Returned by an assemble run in CAS-delivery mode instead of
+        per-blob signed-URL downloads. Carries everything a basn
+        assemble-intercept needs to mint a ``/casblob`` capability token
+        and warm the node CAS, and everything a CAS-aware bacloud needs to
+        fetch the blobs from ``/casblob`` -- so neither side has to
+        re-parse the inline flavor-manifests. ``token`` is minted and
+        injected by the intercepting basn node (``None`` from the master).
+        """
+
+        #: Fully-qualified asset-package version id this bundle is for.
+        apverid: Annotated[str, IOAttrs('a')]
+
+        #: Bucket dimensions, carried for the capability token.
+        texture_profile: Annotated[str, IOAttrs('tp')]
+        texture_tier: Annotated[str, IOAttrs('tq')]
+        language: Annotated[str, IOAttrs('l')]
+
+        #: Every data blob the bundle needs as content-sha256 -> byte
+        #: size, in manifest order (= the order to warm/fetch). Fetched
+        #: from a basn node's ``/casblob`` warm cache.
+        blobs: Annotated[dict[str, int], IOAttrs('b')]
+
+        #: Capability token for ``GET /casblob/{hash}``; minted and
+        #: injected by the basn node that warms and serves the blobs
+        #: (``None`` as sent from the master).
+        token: Annotated[
+            securedata.Archive | None, IOAttrs('tk', store_default=False)
+        ] = None
+
     #: If present, client should print this message before any other
     #: response processing (including error handling) occurs.
     message: Annotated[str | None, IOAttrs('m', store_default=False)] = None
@@ -682,6 +716,13 @@ class ResponseData:
     downloads_signed: Annotated[
         list[SignedDownloadEntry] | None,
         IOAttrs('dsgn', store_default=False),
+    ] = None
+
+    #: If present, the assemble ran in CAS-delivery mode: data blobs are
+    #: delivered from a basn node's ``/casblob`` warm cache (see
+    #: :class:`CasDelivery`) instead of per-blob GCS signed URLs.
+    cas_delivery: Annotated[
+        CasDelivery | None, IOAttrs('cas', store_default=False)
     ] = None
 
     #: If present, all empty dirs under this one should be removed.

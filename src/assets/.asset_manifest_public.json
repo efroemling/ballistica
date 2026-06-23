@@ -64,6 +64,7 @@
  "ba_data/python/bacommon/__init__.py",
  "ba_data/python/bacommon/analytics.py",
  "ba_data/python/bacommon/app.py",
+ "ba_data/python/bacommon/assetcas.py",
  "ba_data/python/bacommon/bacloud.py",
  "ba_data/python/bacommon/build.py",
  "ba_data/python/bacommon/classic/__init__.py",
