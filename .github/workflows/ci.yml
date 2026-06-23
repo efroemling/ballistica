@@ -90,12 +90,7 @@ jobs:
   # significantly between windows and linux/apple. We also are able to
   # build our windows binary.
   build_and_test_windows:
-    # We need an image with Visual Studio 2026. The plain 'windows-2025'
-    # label is migrating to VS2026 during June 8-15 2026; this explicit
-    # label is guaranteed VS2026 and becomes an alias of 'windows-2025'
-    # once that migration completes (at which point we can switch to the
-    # plain label).
-    runs-on: windows-2025-vs2026
+    runs-on: windows-2025
     steps:
       - uses: actions/checkout@v6
       - name: Set up Python
