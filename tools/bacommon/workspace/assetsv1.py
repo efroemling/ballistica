@@ -33,6 +33,11 @@ class WrapperType(Enum):
 
     BASCENEV1 = 'bascenev1'
     BAUIV1 = 'bauiv1'
+    #: Strings-only wrapper (asset-packages strings phase). Strings
+    #: resolve via ``_babase.get_resource`` (a base-level concept, not a
+    #: scene/UI loader), so they live in their own babase-rooted wrapper
+    #: whose leaves are call-time-resolved ``str`` accessors.
+    BABASE = 'babase'
 
 
 @ioprepped

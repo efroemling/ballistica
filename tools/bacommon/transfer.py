@@ -46,7 +46,15 @@ class DirectoryManifest:
         from concurrent.futures import ThreadPoolExecutor
 
         pathstr = str(path)
-        paths: list[str] = []
+
+        # Each entry pairs the manifest key (forward-slashed; for a
+        # single file the bare path.as_posix() the put-file handler
+        # keys on) with the actual on-disk path to hash. Keeping the two
+        # separate is what fixes single-file inputs: the dir case joins
+        # a relative key back onto pathstr, but doing that to a
+        # single-file key (which is the whole path) doubles a relative
+        # path up (a/b.png -> a/b.png/a/b.png -> File not found).
+        entries: list[tuple[str, str]] = []
 
         exists = path.exists()
 
@@ -58,14 +66,18 @@ class DirectoryManifest:
                     assert fullname.startswith(pathstr)
                     # Make sure we end up with forward slashes no matter
                     # what the os.* stuff above here was using.
-                    paths.append(Path(fullname[len(pathstr) + 1 :]).as_posix())
+                    key = Path(fullname[len(pathstr) + 1 :]).as_posix()
+                    entries.append((key, fullname))
         elif exists:
-            # Just return a single file entry if path is not a dir.
-            paths.append(path.as_posix())
+            # Single file: key stays path.as_posix(), but the on-disk
+            # path is just the path itself (no join — see above).
+            entries.append((path.as_posix(), pathstr))
 
-        def _get_file_info(filepath: str) -> tuple[str, DirectoryManifestFile]:
+        def _get_file_info(
+            entry: tuple[str, str],
+        ) -> tuple[str, DirectoryManifestFile]:
+            key, fullfilepath = entry
             sha = hashlib.sha256()
-            fullfilepath = os.path.join(pathstr, filepath)
             if not os.path.isfile(fullfilepath):
                 raise RuntimeError(f'File not found: "{fullfilepath}".')
             # Stream the file through sha256 to keep peak memory
@@ -78,7 +90,7 @@ class DirectoryManifest:
                     sha.update(chunk)
                     filesize += len(chunk)
             return (
-                filepath,
+                key,
                 DirectoryManifestFile(
                     hash_sha256=sha.hexdigest(),
                     size=filesize,
@@ -91,7 +103,8 @@ class DirectoryManifest:
             cpus = 4
         with ThreadPoolExecutor(max_workers=cpus) as executor:
             return cls(
-                files=dict(executor.map(_get_file_info, paths)), exists=exists
+                files=dict(executor.map(_get_file_info, entries)),
+                exists=exists,
             )
 
     def validate(self) -> None:

@@ -386,10 +386,12 @@ class _Inputter:
             # doesn't itself use this same name, as this could lead to
             # tricky breakage. We can't verify this for types at prep
             # time because IOMultiTypes are lazy-loaded, so this is the
-            # best we can do.
-            if type_id_store_name in fields_by_name:
+            # best we can do. Compare against storage-names (not
+            # attr-names) so we also catch fields that *rename* to the
+            # clashing name via IOAttrs.
+            if type_id_store_name in prep.storage_names:
                 raise RuntimeError(
-                    f"{cls} contains a '{type_id_store_name}' field"
+                    f"{cls} contains a '{type_id_store_name}' storage-name"
                     ' which clashes with the type-id-storage-name of'
                     ' the IOMultiType it inherits from.'
                 )
@@ -402,7 +404,7 @@ class _Inputter:
         args: dict[str, Any] = {}
         for rawkey, value in values.items():
 
-            # Ignore _dciotype or whatnot.
+            # Ignore the type-id storage key (_t or whatnot).
             if type_id_store_name is not None and rawkey == type_id_store_name:
                 continue
 

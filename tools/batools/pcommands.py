@@ -717,11 +717,34 @@ def _camel_case_split(string: str) -> list[str]:
 
 def efro_gradle() -> None:
     """Calls ./gradlew with some extra magic."""
+    import os
     import subprocess
     from efro.terminal import Clr
     from efrotools.android import filter_gradle_file
 
     args = ['./gradlew'] + sys.argv[2:]
+
+    # Under Claude Code's sandbox, all network egress is forced through
+    # an authenticating proxy that the JVM/Gradle won't use, so any
+    # dependency or Gradle-distribution *download* fails. Force
+    # --offline so the build relies solely on the already-warmed Gradle
+    # caches (populated by normal, unsandboxed builds). No-op outside
+    # the sandbox, where nothing sets these env vars.
+    forced_offline = False
+    in_sandbox = bool(os.environ.get('SANDBOX_RUNTIME')) or os.environ.get(
+        'ALL_PROXY', ''
+    ).startswith(('socks5://', 'socks5h://'))
+    if in_sandbox and '--offline' not in args:
+        args.append('--offline')
+        forced_offline = True
+        print(
+            f'{Clr.YLW}efro_gradle: sandbox detected -- adding --offline'
+            ' (Gradle cannot reach the network through the sandbox'
+            ' proxy); dependencies must already be cached by a prior'
+            f' unsandboxed build.{Clr.RST}',
+            flush=True,
+        )
+
     print(f'{Clr.BLU}Running gradle with args:{Clr.RST} {args}.', flush=True)
     enabled_tags: set[str] = {'true'}
     target_words = [w.lower() for w in _camel_case_split(args[-1])]
@@ -757,6 +780,17 @@ def efro_gradle() -> None:
     )
 
     if errored:
+        if forced_offline:
+            print(
+                f'{Clr.RED}efro_gradle: build failed in sandbox-forced'
+                ' offline mode. If the error above says "No cached'
+                ' version ... available for offline mode" (or shows a'
+                ' failed distribution download), a dependency or the'
+                ' Gradle distribution is not cached -- run this build'
+                " once OUTSIDE Claude's sandbox to warm the cache, then"
+                f' retry.{Clr.RST}',
+                flush=True,
+            )
         sys.exit(1)
 
 

@@ -2,6 +2,8 @@
 
 #include "ballistica/base/input/input.h"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -16,6 +18,7 @@
 #include "ballistica/base/input/device/touch_input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/platform.h"
@@ -534,9 +537,15 @@ void Input::OnAppStart() {
   }
 }
 
-void Input::OnAppSuspend() { assert(g_base->InLogicThread()); }
+void Input::OnAppSuspend() {
+  assert(g_base->InLogicThread());
+  SetGyroEnabled(false);
+}
 
-void Input::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
+void Input::OnAppUnsuspend() {
+  assert(g_base->InLogicThread());
+  SetGyroEnabled(true);
+}
 
 void Input::OnAppShutdown() { assert(g_base->InLogicThread()); }
 
@@ -558,6 +567,10 @@ void Input::ApplyAppConfig() {
 
   // Some config settings can affect this.
   UpdateInputDeviceCounts_();
+
+  // Device-motion tilt toggle ('Disable Camera Gyro' in advanced settings).
+  camera_gyro_explicitly_disabled_ =
+      g_base->app_config->Resolve(AppConfig::BoolID::kDisableCameraGyro);
 }
 
 void Input::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
@@ -1494,10 +1507,6 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
     return;
   }
 
-  if (g_buildconfig.platform_ios_tvos()) {
-    printf("FIXME: update touch handling\n");
-  }
-
   float x = g_base->graphics->PixelToVirtualX(
       e.x * g_base->graphics->screen_pixel_width());
   float y = g_base->graphics->PixelToVirtualY(
@@ -1548,6 +1557,87 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
   // If we've got a touch input device, forward events along to it.
   if (touch_input_) {
     touch_input_->HandleTouchEvent(e.type, e.touch, x, y);
+  }
+}
+
+void Input::PushGyroEvent(const Vector3f& vals) {
+  assert(g_base->logic->event_loop());
+  auto* loop{g_base->logic->event_loop()};
+  if (loop->CheckPushSafety()) {
+    loop->PushCall([vals, this] { HandleGyroEvent_(vals); });
+  }
+}
+
+void Input::HandleGyroEvent_(const Vector3f& vals) {
+  assert(g_base->InLogicThread());
+  // Just stash the latest sample; UpdateGyro() integrates it each frame.
+  gyro_vals_ = vals;
+}
+
+void Input::SetGyroEnabled(bool enable) {
+  assert(g_base->InLogicThread());
+  // If we're turning back on, suppress gyro updates for a bit to avoid a
+  // hitch from a stale accumulated sample.
+  if (enable && !gyro_enabled_) {
+    last_suppress_gyro_time_ = g_core->AppTimeMicrosecs();
+  }
+  gyro_enabled_ = enable;
+}
+
+void Input::UpdateGyro(microsecs_t time_microsecs,
+                       microsecs_t elapsed_microsecs) {
+  assert(g_base->InLogicThread());
+  Vector3f tilt = gyro_vals_;
+
+  millisecs_t elapsed_millisecs = elapsed_microsecs / 1000;
+
+  // Guard against bad sensor data (and historically against torn reads from
+  // a cross-thread write; samples now arrive on the logic thread via
+  // PushGyroEvent, but the sanitize is cheap insurance against wonky gyros).
+  for (float& i : tilt.v) {
+    // Check for NaN and Inf:
+    if (!std::isfinite(i)) {
+      i = 0.0f;
+    }
+
+    // Clamp crazy big values:
+    i = std::min(100.0f, std::max(-100.0f, i));
+  }
+
+  // Our math was calibrated for 60hz (16ms per frame);
+  // adjust for other framerates...
+  float timescale = static_cast<float>(elapsed_millisecs) / 16.0f;
+
+  // If we've recently been told to suppress the gyro, zero these.
+  // (prevents hitches when being restored, etc)
+  if (!gyro_enabled_ || camera_gyro_explicitly_disabled_
+      || (time_microsecs - last_suppress_gyro_time_ < 1000000)) {
+    tilt = Vector3f{0.0, 0.0, 0.0};
+  }
+
+  float tilt_smoothing = 0.0f;
+  tilt_smoothed_ =
+      tilt_smoothing * tilt_smoothed_ + (1.0f - tilt_smoothing) * tilt;
+
+  tilt_vel_ = tilt_smoothed_ * 3.0f;
+  tilt_pos_ += tilt_vel_ * timescale;
+
+  // Technically this will behave slightly differently at different time
+  // scales, but it should be close to correct.. tilt_pos_ *= 0.991f;
+  tilt_pos_ *= std::max(0.0f, 1.0f - 0.01f * timescale);
+
+  // Some gyros seem wonky and either give us crazy big values or consistently
+  // offset ones. Let's keep a running tally of magnitude that slowly drops
+  // over time, and if it reaches a certain value lets just kill gyro input.
+  if (gyro_broken_) {
+    tilt_pos_ *= 0.0f;
+  } else {
+    gyro_mag_test_ += tilt_vel_.Length() * 0.01f * timescale;
+    gyro_mag_test_ = std::max(0.0f, gyro_mag_test_ - 0.02f * timescale);
+    if (gyro_mag_test_ > 100.0f) {
+      g_base->ScreenMessage("Wonky gyro; disabling tilt.", {1, 0, 0});
+      gyro_broken_ = true;
+    }
   }
 }
 

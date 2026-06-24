@@ -168,7 +168,6 @@ class Graphics {
     return network_debug_display_enabled_;
   }
   void ToggleNetworkDebugDisplay();
-  void SetGyroEnabled(bool enable);
   auto floor_reflection() const {
     assert(g_base->InLogicThread());
     return floor_reflection_;
@@ -252,9 +251,6 @@ class Graphics {
     }
   }
 
-  auto accel() const { return accel_pos_; }
-  auto tilt() const { return tilt_pos_; }
-
   auto PixelToVirtualX(float x) const -> float {
     if (tv_border_) {
       // In this case, 0 to 1 in physical coords maps to -0.05f to 1.05f in
@@ -278,7 +274,6 @@ class Graphics {
   void set_internal_components_inited(bool val) {
     internal_components_inited_ = val;
   }
-  void set_gyro_vals(const Vector3f& vals) { gyro_vals_ = vals; }
   auto show_net_info() const { return show_net_info_; }
   void set_show_net_info(bool val) { show_net_info_ = val; }
   auto GetDebugGraph(const std::string& name, bool smoothed) -> NetGraph*;
@@ -312,9 +307,6 @@ class Graphics {
     camera_shake_disabled_ = disabled;
   }
   auto camera_shake_disabled() const { return camera_shake_disabled_; }
-  void set_camera_gyro_explicitly_disabled(bool disabled) {
-    camera_gyro_explicitly_disabled_ = disabled;
-  }
 
   auto* settings() const {
     assert(g_base->InLogicThread());
@@ -395,7 +387,6 @@ class Graphics {
   void ClearFrameDefDeleteList();
   void DrawProgressBar(RenderPass* pass, float opacity);
   void UpdateProgressBarProgress(float target);
-  void UpdateGyro(microsecs_t time, microsecs_t elapsed);
   void UpdateInitialGraphicsSettingsSend_();
 
   int last_total_frames_rendered_{};
@@ -415,8 +406,6 @@ class Graphics {
   bool network_debug_display_enabled_{};
   bool hardware_cursor_visible_{};
   bool camera_shake_disabled_{};
-  bool camera_gyro_explicitly_disabled_{};
-  bool gyro_enabled_{true};
   bool show_fps_{};
   bool show_ping_{};
   bool show_net_info_{};
@@ -425,7 +414,6 @@ class Graphics {
   bool building_frame_def_{};
   bool shadow_ortho_{};
   bool fetched_overlay_node_z_depth_{};
-  bool gyro_broken_{};
   bool set_fade_start_on_next_draw_{};
   bool graphics_settings_dirty_{true};
   bool applied_app_config_{};
@@ -439,15 +427,6 @@ class Graphics {
   Vector3f vignette_outer_{0.0f, 0.0f, 0.0f};
   Vector3f vignette_inner_{1.0f, 1.0f, 1.0f};
   Vector3f jitter_{0.0f, 0.0f, 0.0f};
-  Vector3f accel_smoothed_{0.0f, 0.0f, 0.0f};
-  Vector3f accel_smoothed2_{0.0f, 0.0f, 0.0f};
-  Vector3f accel_hi_pass_{0.0f, 0.0f, 0.0f};
-  Vector3f accel_vel_{0.0f, 0.0f, 0.0f};
-  Vector3f accel_pos_{0.0f, 0.0f, 0.0f};
-  Vector3f tilt_smoothed_{0.0f, 0.0f, 0.0f};
-  Vector3f tilt_vel_{0.0f, 0.0f, 0.0f};
-  Vector3f tilt_pos_{0.0f, 0.0f, 0.0f};
-  Vector3f gyro_vals_{0.0f, 0.0, 0.0f};
   std::string fps_string_;
   std::string ping_string_;
   std::string net_info_string_;
@@ -469,7 +448,6 @@ class Graphics {
   float res_y_{256.0f};
   float res_x_virtual_{256.0f};
   float res_y_virtual_{256.0f};
-  float gyro_mag_test_{};
   float overlay_node_z_depth_{};
   float progress_bar_progress_{};
   float shadow_lower_bottom_{-4.0f};
@@ -487,7 +465,6 @@ class Graphics {
   millisecs_t last_progress_bar_start_time_{};
   millisecs_t last_create_frame_def_time_millisecs_{};
   millisecs_t last_jitter_update_time_{};
-  microsecs_t last_suppress_gyro_time_{};
   microsecs_t next_frame_number_filtered_increment_time_{};
   microsecs_t last_create_frame_def_time_microsecs_{};
   Object::Ref<ImageMesh> screen_mesh_;

@@ -7,6 +7,7 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 
 namespace ballistica::ui_v1 {
@@ -27,8 +28,8 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   millisecs_t current_time = pass->frame_def()->display_time_millisecs();
 
-  Vector3f tilt = tilt_scale_ * 0.01f * g_base->graphics->tilt();
-  if (draw_control_parent()) tilt += 0.02f * g_base->graphics->tilt();
+  Vector3f tilt = tilt_scale_ * 0.01f * g_base->input->tilt();
+  if (draw_control_parent()) tilt += 0.02f * g_base->input->tilt();
   float extra_offs_x = -tilt.y;
   float extra_offs_y = tilt.x;
 

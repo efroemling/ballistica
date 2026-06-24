@@ -117,6 +117,11 @@ class PrepData:
     # Map of storage names to attr names.
     storage_names_to_attr_names: dict[str, str]
 
+    # The full set of storage names used by this class (including ones
+    # that match their attr name). Used to detect clashes with things
+    # like IOMultiType type-id-storage-names.
+    storage_names: set[str]
+
 
 class PrepSession:
     """Context for a prep."""
@@ -241,6 +246,7 @@ class PrepSession:
         prepdata = PrepData(
             annotations=resolved_annotations,
             storage_names_to_attr_names=storage_names_to_attr_names,
+            storage_names=all_storage_names,
         )
         setattr(cls, PREP_ATTR, prepdata)
 

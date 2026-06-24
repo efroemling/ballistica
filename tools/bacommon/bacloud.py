@@ -133,7 +133,16 @@ if TYPE_CHECKING:
 #               moved since. Both fields are optional/soft-default, so old
 #               clients/servers just skip the check -- ``MIN_VERSION``
 #               unchanged.
-BACLOUD_VERSION = 24
+# 25 (2026-06): One-shot small-file uploads via the basn relay.
+#               ``ResponseData.uploads_oneshot`` tells the client to POST
+#               small file bodies to the basn node (which relays them to
+#               the master one-shot cloud-file endpoint) instead of the
+#               signed-URL-to-GCS path; the client sends the resulting
+#               cloud_file_ids back under ``uploads_oneshot``. The server
+#               only emits this to v25+ clients and falls back to
+#               ``uploads_signed`` otherwise, so the field is optional --
+#               ``MIN_VERSION`` unchanged.
+BACLOUD_VERSION = 25
 
 
 def asset_file_cache_path(filehash: str) -> str:
@@ -330,6 +339,12 @@ class StreamFrame(IOMultiType[StreamFrameTypeID]):
 
     @override
     @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        # Pin to the original default for back-compat with stored data.
+        return '_dciotype'
+
+    @override
+    @classmethod
     def get_type(cls, type_id: StreamFrameTypeID) -> type[StreamFrame]:
         # pylint: disable=cyclic-import
         t = StreamFrameTypeID
@@ -459,6 +474,32 @@ class ResponseData:
         #: in the next ``end_command`` args under ``uploads_signed`` to
         #: tell the server which upload to finalize.
         session_id: Annotated[str, IOAttrs('s')]
+
+    @ioprepped
+    @dataclass
+    class OneshotUploadEntry:
+        """Describes one small file to upload via the basn one-shot relay.
+
+        The client POSTs the file body to the basn node it's already
+        talking to (which relays it to the master server's one-shot
+        cloud-file endpoint and has the master verify the
+        content-addressed id), then sends the resulting
+        ``cloud_file_id`` back in the next ``end_command`` args under
+        ``uploads_oneshot`` (a ``dict[path, cloud_file_id]`` keyed by
+        the same local path). Used for small files: the bytes ride one
+        request to the node and the master holds them in memory and
+        verifies them inline, avoiding both the signed-URL round-trip
+        and the server-side blob read-back of the two-step path.
+        """
+
+        #: Local file the client should read and upload.
+        path: Annotated[str, IOAttrs('p')]
+
+        #: The content-addressed cloud_file_id the client declares for
+        #: this file (from the manifest's sha256+size). The basn relay
+        #: passes it through; the master recomputes from the bytes and
+        #: rejects a mismatch.
+        cloud_file_id: Annotated[str, IOAttrs('f')]
 
     @ioprepped
     @dataclass
@@ -668,6 +709,19 @@ class ResponseData:
     uploads_signed: Annotated[
         list[SignedUploadEntry] | None,
         IOAttrs('usgn', store_default=False),
+    ] = None
+
+    #: If present, small files the client should upload via the basn
+    #: one-shot relay (POST the body to the node it's talking to, which
+    #: relays to the master one-shot cloud-file endpoint), then send the
+    #: resulting cloud_file_ids back in the next end_command's args under
+    #: 'uploads_oneshot' (a ``dict[path, cloud_file_id]`` keyed by the
+    #: same local path). The size cutoff vs. ``uploads_signed`` is
+    #: decided server-side. Only emitted to v25+ clients (older clients
+    #: get ``uploads_signed`` instead).
+    uploads_oneshot: Annotated[
+        list[OneshotUploadEntry] | None,
+        IOAttrs('uos', store_default=False),
     ] = None
 
     #: If present, an upload plan the client should execute. See

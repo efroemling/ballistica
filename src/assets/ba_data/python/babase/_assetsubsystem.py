@@ -736,9 +736,12 @@ class AssetSubsystem(AppSubsystem):
         is exact-or-fail.
         """
         # pylint: disable=cyclic-import
-        from babase._asset_packages import loaded_asset_package_apverids
+        # Builtin-only set on purpose: a runtime-resolved non-builtin
+        # package is also "loaded" (its strings merge) but is NOT
+        # fallback-eligible -- it has no bundled flavor on disk.
+        from babase._asset_packages import builtin_asset_package_apverids
 
-        return apverid in loaded_asset_package_apverids()
+        return apverid in builtin_asset_package_apverids()
 
     # ---------------------------------------------------------------------
     # Public API.
@@ -1006,6 +1009,13 @@ class AssetSubsystem(AppSubsystem):
         # Pin everything we just told the engine about — never retracted
         # this process lifetime (GC-/cap-immune).
         self._pin(manifest_pkgs)
+        # Record these as loaded so _reload_language (next line) merges any
+        # newly-resolved package's strings into the native table -- and a
+        # later locale switch re-resolves them. Builtins are skipped.
+        # pylint: disable-next=cyclic-import
+        from babase._asset_packages import register_resolved_apverids
+
+        register_resolved_apverids(apverids)
         self._reload_language()
         await self._run_in_pool(self._commit_manifest, manifest_pkgs, now)
 

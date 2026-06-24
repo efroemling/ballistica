@@ -10,6 +10,7 @@
 #include "ballistica/base/graphics/renderer/render_pass.h"
 #include "ballistica/base/graphics/support/area_of_interest.h"
 #include "ballistica/base/graphics/support/frame_def.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/core/core.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
@@ -576,7 +577,7 @@ void Camera::UpdatePosition() {
     to_cam.Normalize();
     Vector3f cam_space_lr = Vector3f::Cross(to_cam, Vector3f(0, 1, 0));
     Vector3f cam_space_ud = Vector3f::Cross(cam_space_lr, to_cam);
-    Vector3f tilt = 0.1f * g_base->graphics->tilt();
+    Vector3f tilt = 0.1f * g_base->input->tilt();
     if (manual_) {
       tilt.x = 0.0f;
       tilt.y = 0.0f;

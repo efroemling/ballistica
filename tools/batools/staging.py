@@ -612,6 +612,41 @@ class BuildStager:
             f'{self.asset_bundle_profile}/manifest.json'
         )
         if not os.path.exists(bundle_manifest_path):
+            bundle_root = f'{self.projroot}/.cache/asset_bundle'
+            siblings = (
+                sorted(
+                    e
+                    for e in os.listdir(bundle_root)
+                    if os.path.isdir(os.path.join(bundle_root, e))
+                )
+                if os.path.isdir(bundle_root)
+                else []
+            )
+            if siblings:
+                # Our profile is missing but *other* profiles are present:
+                # this is a corrupt/partial asset cache, not an asset-target
+                # wiring bug. lazybuild guards the assets sub-build on the
+                # existence of the shared .cache/asset_bundle dir (so a full
+                # `rm -rf .cache/asset_bundle` re-triggers it), but a sibling
+                # profile's presence satisfies that dir-level check -- so with
+                # a stale lazybuild marker a single missing profile gets
+                # skipped rather than rebuilt. Clearing the whole dir restores
+                # the guard's ability to fire.
+                raise RuntimeError(
+                    f"Asset bundle manifest for profile"
+                    f" '{self.asset_bundle_profile}' was not found at"
+                    f' {bundle_manifest_path}, but other profiles are present'
+                    f' ({', '.join(siblings)}). This is a corrupt/partial'
+                    f' asset cache (a single bundle profile is missing while'
+                    f' siblings remain), so lazybuild -- which guards the'
+                    f' assets sub-build on the existence of the shared'
+                    f' .cache/asset_bundle dir -- saw the dir present (via a'
+                    f' sibling) and skipped the rebuild. Clear the asset'
+                    f' bundle cache and rebuild:\n'
+                    f'    rm -rf .cache/asset_bundle\n'
+                    f' (with the dir fully gone, lazybuild re-triggers the'
+                    f' assets build and regenerates every profile).'
+                )
             raise RuntimeError(
                 f"Asset bundle manifest for profile"
                 f" '{self.asset_bundle_profile}' was not found at"

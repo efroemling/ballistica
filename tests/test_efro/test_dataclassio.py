@@ -1681,6 +1681,76 @@ def test_multi_type_2() -> None:
         val3 = dataclass_from_dict(MTTest2Base, indict3)
 
 
+# A sneakier version of the MTTest2 clash: here the offending child has a
+# field whose *attr name* differs from the parent's custom
+# type-id-storage-name, but which *renames* (via IOAttrs) to that same
+# storage name. A naive check comparing only attr names misses this.
+class MTTest2bTypeID(Enum):
+    """IDs for our multi-type class."""
+
+    CLASS_1 = 'm1'
+
+
+class MTTest2bBase(IOMultiType[MTTest2bTypeID]):
+    """A multi-type using a custom 'type' type-id-storage-name."""
+
+    @override
+    @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        return 'type'
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: MTTest2bTypeID) -> type[MTTest2bBase]:
+        val: type[MTTest2bBase]
+        if type_id is MTTest2bTypeID.CLASS_1:
+            val = MTTest2bClass1
+        else:
+            assert_never(type_id)
+        return val
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTest2bTypeID:
+        raise NotImplementedError()
+
+
+@ioprepped
+@dataclass
+class MTTest2bClass1(MTTest2bBase):
+    """A child whose 'category' attr serializes to the clashing 'type'."""
+
+    # Attr name is 'category' but it serializes to 'type', which clashes
+    # with our parent's type-id-storage-name.
+    category: Annotated[str, IOAttrs('type')] = ''
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTest2bTypeID:
+        return MTTest2bTypeID.CLASS_1
+
+
+def test_multi_type_renamed_storage_clash() -> None:
+    """Test a child field that *renames* to the type-id-storage-name.
+
+    This is a subtler form of the clash covered by test_multi_type_2:
+    there the clashing field's attr name literally was the storage name,
+    but here only its serialized storage-name clashes while its attr
+    name differs. Either way, serializing such an object would silently
+    drop the field's value under the type-id, so dataclassio should
+    error on both output and input rather than letting things break.
+    """
+    # Make sure we error on output instead of silently clobbering
+    # 'category' with the type-id...
+    val: MTTest2bBase = MTTest2bClass1(category='hello')
+    with pytest.raises(RuntimeError):
+        _outdict = dataclass_to_dict(val)
+
+    # ...and on input.
+    with pytest.raises(RuntimeError):
+        _val = dataclass_from_dict(MTTest2bBase, {'type': 'm1'})
+
+
 # Define 2 variations of Test3 - an 'old' and 'new' one - to simulate
 # older/newer versions of the same schema.
 class MTTest3OldTypeID(Enum):
@@ -2334,12 +2404,12 @@ def test_multi_type_missing() -> None:
 
     val1: MTTestMissingBase = MTTestMissingClass1(ival=123)
     outdict = dataclass_to_dict(val1)
-    assert outdict == {'ival': 123, '_dciotype': 'm1'}
+    assert outdict == {'ival': 123, '_t': 'm1'}
 
     val1b = dataclass_from_dict(MTTestMissingBase, outdict)
     assert val1 == val1b
 
-    outdict2 = {'sval': 'whee', '_dciotype': 'm2'}
+    outdict2 = {'sval': 'whee', '_t': 'm2'}
 
     # We're simulating not having class-3, so this will fail.
     with pytest.raises(TypeNotPresentError):

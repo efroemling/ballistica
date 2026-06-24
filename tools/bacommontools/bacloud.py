@@ -106,11 +106,23 @@ def _make_pool() -> urllib3.PoolManager:
     proxies = urllib.request.getproxies()
     proxy_url = proxies.get('https') or proxies.get('http')
     if proxy_url:
+        # urllib3 doesn't pull credentials out of the proxy URL's
+        # userinfo, so an authenticating proxy (corporate proxies,
+        # Claude Code's sandbox) needs them passed explicitly as a
+        # Proxy-Authorization header; otherwise the CONNECT tunnel for
+        # an https target comes back '407 Proxy Authentication Required'.
+        proxy_auth = urllib3.util.parse_url(proxy_url).auth
+        proxy_headers = (
+            urllib3.make_headers(proxy_basic_auth=proxy_auth)
+            if proxy_auth
+            else None
+        )
         return urllib3.ProxyManager(
             proxy_url,
             ssl_context=ssl_context,
             maxsize=maxsize,
             timeout=timeout,
+            proxy_headers=proxy_headers,
         )
     return urllib3.PoolManager(
         ssl_context=ssl_context,
@@ -1140,6 +1152,67 @@ class App:
             sessions[entry.path] = entry.session_id
         self._end_command_args['uploads_signed'] = sessions
 
+    def _handle_uploads_oneshot(
+        self, uploads_oneshot: list[ResponseData.OneshotUploadEntry]
+    ) -> None:
+        """Handle small-file uploads via the basn one-shot relay.
+
+        For each entry, POST the local file body to the basn node's
+        one-shot relay endpoint (``/bacloud_oneshot_upload``), which
+        forwards it to the master server's one-shot cloud-file endpoint
+        and has the master verify the content-addressed id. The bytes
+        go to the node we're already talking to (never to the master
+        directly), and there's no signed-URL round-trip or server-side
+        read-back.
+
+        Stashes ``{path: cloud_file_id}`` into ``end_command`` args
+        under ``uploads_oneshot`` so the server can wire each resulting
+        cloud-file into place in the next call.
+        """
+        import json
+
+        assert self._server is not None
+        bearer = self._api_key or self._state.login_token
+        results: dict[str, str] = {}
+        for entry in uploads_oneshot:
+            if not os.path.exists(entry.path):
+                raise CleanError(f'File not found: {entry.path}')
+            file_size = os.path.getsize(entry.path)
+            headers = {
+                'User-Agent': f'bacloud/{BACLOUD_VERSION}',
+                'Content-Type': 'application/octet-stream',
+                'Content-Length': str(file_size),
+            }
+            if bearer is not None:
+                headers['Authorization'] = f'Bearer {bearer}'
+            url = (
+                f'https://{self._server}/bacloud_oneshot_upload'
+                f'?f={entry.cloud_file_id}'
+            )
+            with open(entry.path, 'rb') as infile:
+                response = _g_pool.request(
+                    'POST',
+                    url,
+                    body=infile,
+                    headers=headers,
+                    retries=False,
+                )
+            if not 200 <= response.status < 300:
+                raise CleanError(
+                    f'One-shot upload of {entry.path} failed:'
+                    f' status={response.status}'
+                    f' body={_err_body(response)!r}'
+                )
+            # The relay echoes back the verified cloud_file_id; fall back
+            # to the declared one if parsing fails for any reason.
+            cfid: str | None = None
+            try:
+                cfid = json.loads(response.data).get('cloud_file_id')
+            except Exception:
+                cfid = None
+            results[entry.path] = cfid or entry.cloud_file_id
+        self._end_command_args['uploads_oneshot'] = results
+
     def _handle_upload_plan(  # pylint: disable=too-many-locals
         self, plan: ResponseData.UploadPlan
     ) -> tuple[str, dict, bool]:
@@ -1524,6 +1597,8 @@ class App:
                 self._handle_dir_manifest_response(response.dir_manifest)
             if response.uploads_signed is not None:
                 self._handle_uploads_signed(response.uploads_signed)
+            if response.uploads_oneshot is not None:
+                self._handle_uploads_oneshot(response.uploads_oneshot)
             if response.upload_plan is not None:
                 nextcall = self._handle_upload_plan(response.upload_plan)
                 # Upload plan overrides end_command; skip the rest of

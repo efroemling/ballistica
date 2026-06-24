@@ -12,6 +12,7 @@
 #include "ballistica/base/base.h"
 #include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/foundation/object.h"
+#include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
 
@@ -168,6 +169,30 @@ class Input {
   void PushRemoveInputDeviceCall(InputDevice* input_device,
                                  bool standard_message);
   void PushTouchEvent(const TouchEvent& touch_event);
+
+  /// Feed a raw device-motion (gyroscope) sample into the engine. Values are
+  /// orientation-corrected angular velocity from a platform sensor layer
+  /// (Android SensorManager, iOS CoreMotion, ...). Safe to call from any
+  /// thread. This drives only a cosmetic 'toy' effect (subtle camera/UI
+  /// parallax via tilt()), not gameplay, so high sample rates aren't needed.
+  void PushGyroEvent(const Vector3f& vals);
+
+  /// Enable/disable device-motion tilt. Re-enabling briefly suppresses
+  /// updates to avoid a hitch from a stale accumulated sample. Driven by app
+  /// suspend/unsuspend.
+  void SetGyroEnabled(bool enable);
+
+  /// Current smoothed device-tilt offset: integrated from gyro samples and
+  /// decayed over time. Consumed by the camera and assorted UI/scene elements
+  /// for subtle parallax. Zero when gyro is unavailable or disabled. Logic
+  /// thread only.
+  auto tilt() const -> Vector3f { return tilt_pos_; }
+
+  /// Integrate the latest gyro sample into the tilt value. Called once per
+  /// rendered frame from the logic thread (just before frame-def build, so
+  /// the freshest sample is used).
+  void UpdateGyro(microsecs_t time_microsecs, microsecs_t elapsed_microsecs);
+
   void PushDestroyKeyboardInputDevices();
   void PushCreateKeyboardInputDevices();
   void LsInputDevices();
@@ -209,6 +234,7 @@ class Input {
   void HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum);
   void HandleJoystickEvent_(const BAEvent& event, InputDevice* input_device);
   void HandleTouchEvent_(const TouchEvent& e);
+  void HandleGyroEvent_(const Vector3f& vals);
   void ShowStandardInputDeviceConnectedMessage_(InputDevice* j);
   void ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j);
   void PrintLockLabels_();
@@ -245,6 +271,13 @@ class Input {
   seconds_t last_mouse_move_time_{};
   float cursor_pos_x_{};
   float cursor_pos_y_{};
+  // Device-motion (gyro) -> tilt signal. See PushGyroEvent() / tilt().
+  Vector3f gyro_vals_{0.0f, 0.0f, 0.0f};
+  Vector3f tilt_smoothed_{0.0f, 0.0f, 0.0f};
+  Vector3f tilt_vel_{0.0f, 0.0f, 0.0f};
+  Vector3f tilt_pos_{0.0f, 0.0f, 0.0f};
+  float gyro_mag_test_{};
+  microsecs_t last_suppress_gyro_time_{};
   int connect_print_timer_id_{};
   int disconnect_print_timer_id_{};
   int max_controller_count_so_far_{};
@@ -254,6 +287,9 @@ class Input {
   int8_t input_lock_count_permanent_{};
   bool attract_mode_{};
   bool input_active_{};
+  bool gyro_enabled_{true};
+  bool camera_gyro_explicitly_disabled_{};
+  bool gyro_broken_{};
   bool have_button_using_inputs_{};
   bool have_start_activated_default_button_inputs_{};
   bool have_non_touch_inputs_{};

@@ -181,10 +181,13 @@ class _Outputter:
             if self._create:
                 assert out is not None
                 storagename = obj.get_type_id_storage_name()
-                if any(f.name == storagename for f in fields):
+                # Compare against storage-names (not attr-names) so we
+                # also catch fields that *rename* to the clashing name
+                # via IOAttrs.
+                if storagename in prep.storage_names:
                     raise RuntimeError(
                         f'dataclassio: {type(obj)} contains a'
-                        f" '{storagename}' field which clashes with"
+                        f" '{storagename}' storage-name which clashes with"
                         f' the type-id-storage-name of the IOMulticlass'
                         f' it inherits from.'
                     )

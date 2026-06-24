@@ -44,6 +44,12 @@ class CloudDialog(IOMultiType[CloudDialogTypeID]):
 
     @override
     @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        # Pin to the original default for back-compat with stored data.
+        return '_dciotype'
+
+    @override
+    @classmethod
     def get_type(cls, type_id: CloudDialogTypeID) -> type[CloudDialog]:
         """Return the subclass for each of our type-ids."""
         # pylint: disable=cyclic-import
