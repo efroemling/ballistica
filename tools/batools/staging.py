@@ -481,6 +481,10 @@ class BuildStager:
                 '*.py',
                 '--include',
                 '*.pem',
+                # Bundled zstd dictionaries (e.g. bacommon mesh dicts) ride
+                # along with the scripts they accompany.
+                '--include',
+                '*.zstddict',
             ]
 
         if self.include_fonts:
