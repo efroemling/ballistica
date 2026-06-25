@@ -19,6 +19,7 @@ import urllib3
 import urllib3.util
 
 from efro.dataclassio import dataclass_to_json
+from bacommon.cloudfilecodec import CompressionType, decompress_for_type
 
 if TYPE_CHECKING:
     from bacommon import securedata
@@ -109,15 +110,21 @@ def download_cas_blob(
     token_header: str,
     dest_root: str,
     timeout_seconds: float,
+    compression: CompressionType = CompressionType.UNCOMPRESSED,
 ) -> None:
     """Fetch one CAS blob from a node and atomically write it.
 
     Issues ``GET {base_url}/casblob/{filehash}?size={size}`` with the
-    capability token in the ``X-Asset-Token`` header, then hands the bytes
-    to :func:`cas_write` for sha256-verify and atomic write. Integrity is
-    guaranteed by that hash check regardless of the URL scheme. One
-    attempt only; the caller owns concurrency and retry. Raises
-    :class:`CasDownloadError` on a non-200 response or a verify failure.
+    capability token in the ``X-Asset-Token`` header. ``filehash`` and
+    ``size`` are the blob's *canonical* (uncompressed) identity (from the
+    manifest); ``compression`` is the encoding the node serves it in (also
+    from the manifest). When compressed, the received bytes are
+    decompressed back to canonical before :func:`cas_write` sha256-verifies
+    them against ``filehash`` and writes them — so the local cache always
+    holds uncompressed blobs and the hash check still validates content.
+    One attempt only; the caller owns concurrency and retry. Raises
+    :class:`CasDownloadError` on a non-200 response, a decompress failure,
+    or a verify failure.
     """
     url = f'{base_url}/casblob/{filehash}?size={size}'
     response = pool.request(
@@ -130,4 +137,12 @@ def download_cas_blob(
         raise CasDownloadError(
             f'casblob GET for {filehash} failed: HTTP {response.status}.'
         )
-    cas_write(dest_root, filehash, response.data)
+    data = response.data
+    if compression is not CompressionType.UNCOMPRESSED:
+        try:
+            data = decompress_for_type(data, compression)
+        except Exception as exc:
+            raise CasDownloadError(
+                f'casblob decompress for {filehash} failed: {exc}'
+            ) from exc
+    cas_write(dest_root, filehash, data)

@@ -80,6 +80,7 @@
  "ba_data/python/bacommon/clouddialog/__init__.py",
  "ba_data/python/bacommon/clouddialog/_clouddialog.py",
  "ba_data/python/bacommon/clouddialog/basic.py",
+ "ba_data/python/bacommon/cloudfilecodec.py",
  "ba_data/python/bacommon/displayitem.py",
  "ba_data/python/bacommon/docui/__init__.py",
  "ba_data/python/bacommon/docui/_docui.py",

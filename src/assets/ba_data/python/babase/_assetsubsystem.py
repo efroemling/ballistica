@@ -50,6 +50,7 @@ from bacommon.cloud import (
     ResolveAssetPackageResponse,
     AssetPackageResolveError,
 )
+from bacommon.cloudfilecodec import CompressionType
 from bacommon import assetcas
 
 if TYPE_CHECKING:
@@ -1361,6 +1362,9 @@ class AssetSubsystem(AppSubsystem):
         coords: dict[str, str] = {}
         fm_writes: dict[str, bytes] = {}
         data_needed: dict[str, int] = {}
+        # Per-blob stored compression (canonical-hash -> CompressionType
+        # value). Absent 'c' => uncompressed (older manifests / blobs).
+        data_compression: dict[str, str] = {}
         for coord, flavor_manifest in response.buckets.items():
             coords[coord] = flavor_manifest.hash
             # Dedupe by hash: a flavor-manifest blob is often shared across
@@ -1373,6 +1377,9 @@ class AssetSubsystem(AppSubsystem):
             for info in parsed['e'].values():
                 for comp in info.values():
                     data_needed[comp['h']] = comp['s']
+                    data_compression[comp['h']] = comp.get(
+                        'c', CompressionType.UNCOMPRESSED.value
+                    )
 
         if fm_writes:
             await asyncio.gather(
@@ -1421,8 +1428,7 @@ class AssetSubsystem(AppSubsystem):
                         self._acquire_data_blob,
                         base_url,
                         token_header,
-                        h,
-                        s,
+                        (h, s, CompressionType(data_compression.get(h, 'u'))),
                         executor=self._download_executor(),
                     )
                 except Exception as exc:
@@ -1665,18 +1671,25 @@ class AssetSubsystem(AppSubsystem):
         return assetcas.blob_present(roots, filehash, size)
 
     def _acquire_data_blob(
-        self, base_url: str, token_header: str, filehash: str, size: int
+        self,
+        base_url: str,
+        token_header: str,
+        blob: tuple[str, int, CompressionType],
     ) -> None:
         """Fetch one data blob from the node and atomically write it.
 
+        ``blob`` is ``(canonical-hash, canonical-size, compression)``.
         Delegates to the shared
         :func:`bacommon.assetcas.download_cas_blob`
         (``GET {base_url}/casblob/{hash}?size={size}`` with the capability
-        token, then sha256-verify + atomic write). ``base_url``'s scheme
-        mirrors the transport session's security (see
+        token, then -- if ``compression`` is non-canonical -- decompress
+        to canonical, then sha256-verify + atomic write). ``base_url``'s
+        scheme mirrors the transport session's security (see
         :meth:`_node_base_url`); integrity is guaranteed by the CAS hash
-        check either way. Off-thread; blocking.
+        check either way. The local cache always stores uncompressed
+        blobs. Off-thread; blocking.
         """
+        filehash, size, compression = blob
         try:
             assetcas.download_cas_blob(
                 _babase.app.net.urllib3pool,
@@ -1686,6 +1699,7 @@ class AssetSubsystem(AppSubsystem):
                 token_header=token_header,
                 dest_root=self._writable_assets_root,
                 timeout_seconds=_BLOB_DOWNLOAD_TIMEOUT_SECONDS,
+                compression=compression,
             )
         except assetcas.CasDownloadError as exc:
             raise AssetResolveError(str(exc)) from exc

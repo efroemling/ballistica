@@ -638,6 +638,17 @@ class ResponseData:
             securedata.Archive | None, IOAttrs('tk', store_default=False)
         ] = None
 
+        #: Per-blob stored compression (content-sha256 ->
+        #: :class:`~bacommon.cloudfilecodec.CompressionType` value) for
+        #: blobs not stored uncompressed; a hash absent here is
+        #: uncompressed. Empty until the pipeline produces compressed
+        #: blobs. bacloud decompresses to canonical on arrival, so the
+        #: ``.cache/assetdata`` store always holds uncompressed blobs.
+        blob_compression: Annotated[
+            dict[str, str],
+            IOAttrs('bc', store_default=False, soft_default_factory=dict),
+        ] = field(default_factory=dict)
+
     #: If present, client should print this message before any other
     #: response processing (including error handling) occurs.
     message: Annotated[str | None, IOAttrs('m', store_default=False)] = None
