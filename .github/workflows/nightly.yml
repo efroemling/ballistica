@@ -13,7 +13,7 @@ jobs:
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -23,7 +23,7 @@ jobs:
           make docker-gui-debug
           make docker-save
       - name: Upload the build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: docker_gui(debug)
           path: build/docker/bombsquad_gui_debug_docker.tar
@@ -39,7 +39,7 @@ jobs:
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -49,7 +49,7 @@ jobs:
           make docker-server-debug
           make docker-save
       - name: Upload the build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: docker_server(debug)
           path: build/docker/bombsquad_server_debug_docker.tar
@@ -67,7 +67,7 @@ jobs:
       - name: Make the build
         run: make docs
       - name: Upload the build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: html_docs
           path: build/docs
@@ -121,7 +121,7 @@ jobs:
           sudo flatpak install -y flathub org.freedesktop.Sdk.Extension.llvm20//25.08
           make flatpak-linux
       - name: Upload the build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bombsquad_${{ matrix.arch }}(debug).flatpak
           path: build/flatpak/bombsquad.flatpak
