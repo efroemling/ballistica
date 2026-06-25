@@ -60,6 +60,7 @@ def _get_py_targets(
     py_targets: list[str],
     # pyc_targets: list[str],
     so_targets: list[str],
+    zstddict_targets: list[str],
     all_targets: set[str],
     subset: str,
 ) -> None:
@@ -93,9 +94,17 @@ def _get_py_targets(
         dstfin = dst + proot[len(src) :]
 
         for fname in fnames:
-            # Ignore non-python files and flycheck/emacs temp files.
+            # Ignore non-python files and flycheck/emacs temp files. The
+            # one allowed non-code exception is our own ``.zstddict`` data
+            # (bundled zstd dictionaries, e.g. in bacommon) -- a distinct
+            # extension we deliberately whitelist so we stay strict about
+            # what gets copied rather than allowing arbitrary data files.
             if (
-                (not fname.endswith('.py') and not fname.endswith('.so'))
+                (
+                    not fname.endswith('.py')
+                    and not fname.endswith('.so')
+                    and not fname.endswith('.zstddict')
+                )
                 or fname.startswith('flycheck_')
                 or fname.startswith('.#')
             ):
@@ -148,6 +157,12 @@ def _get_py_targets(
                 assert targetpath not in all_targets
                 all_targets.add(targetpath)
                 so_targets.append(os.path.join(dstrootvar, fname))
+            elif fname.endswith('.zstddict'):
+                # .zstddict (bundled data such as zstd dictionaries):
+                targetpath = os.path.join(dstfin, fname)
+                assert targetpath not in all_targets
+                all_targets.add(targetpath)
+                zstddict_targets.append(os.path.join(dstrootvar, fname))
             else:
                 # .py:
                 targetpath = os.path.join(dstfin, fname)
@@ -256,6 +271,7 @@ def _get_py_targets_subset(
     py_targets: list[str] = []
     # pyc_targets: list[str] = []
     so_targets: list[str] = []
+    zstddict_targets: list[str] = []
 
     _get_py_targets(
         projroot,
@@ -266,6 +282,7 @@ def _get_py_targets_subset(
         py_targets,
         # pyc_targets,
         so_targets,
+        zstddict_targets,
         all_targets,
         subset=subset,
     )
@@ -277,6 +294,7 @@ def _get_py_targets_subset(
     # combined_targets.sort()
     py_targets.sort()
     so_targets.sort()
+    zstddict_targets.sort()
 
     # py_targets = [t[0] for t in combined_targets]
     # pyc_targets = [t[1] for t in combined_targets]
@@ -299,6 +317,12 @@ def _get_py_targets_subset(
         + '\n'
     )
 
+    out += (
+        f'\nSCRIPT_TARGETS_ZSTDDICT{suffix} = \\\n  '
+        + ' \\\n  '.join(zstddict_targets)
+        + '\n'
+    )
+
     # We transform all non-public targets into efrocache-fetches in public.
     efc = '' if subset.startswith('public') else '# __EFROCACHE_TARGET__\n'
 
@@ -317,6 +341,18 @@ def _get_py_targets_subset(
             '# (and make non-writable so I\'m less likely to '
             'accidentally edit them there)\n'
             f'{efc}$(SCRIPT_TARGETS_SO{suffix}) : {copyrule_so}\n'
+            '\t@$(PCOMMANDBATCH) copy_python_file $^ $@\n'
+        )
+
+    if zstddict_targets:
+        # Bundled data files (e.g. zstd dictionaries); plain copy. The
+        # copyrule pattern mirrors the .py one but for the .zstddict ext.
+        copyrule_zstddict = copyrule.replace('.py', '.zstddict')
+        out += (
+            '\n# Rule to copy bundled .zstddict data files to dst.\n'
+            '# (and make non-writable so I\'m less likely to '
+            'accidentally edit them there)\n'
+            f'{efc}$(SCRIPT_TARGETS_ZSTDDICT{suffix}) : {copyrule_zstddict}\n'
             '\t@$(PCOMMANDBATCH) copy_python_file $^ $@\n'
         )
 
