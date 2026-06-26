@@ -1,41 +1,46 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Localized-text evaluation (ICU-MessageFormat subset).
+"""Localized-text evaluation (structured plural/select + substitutions).
 
-A pure-Python evaluator for localized message strings carrying plural
-selection and named substitutions. The string *value* delivered for a
-locale is an ICU-MessageFormat-subset message; :func:`evaluate` resolves
-it against a locale and caller-supplied arguments to a final ``str``.
+The value delivered for a locale is either a plain ``str`` or a
+:class:`StringSelector`. :func:`evaluate` resolves either against a locale
+and caller-supplied arguments to a final ``str``:
 
-This is the prototype of the logic the native ``Lstr2`` runtime object
-will eventually implement in C++ -- keeping it here in ``bacommon`` means
-the same evaluator is available to pure-Python consumers (the game
-client's embedded Python, and server-side resolution in bamaster/basn)
-and serves as the executable spec for the C++ port.
+* A plain ``str`` has its ``{name}`` placeholders replaced by
+  ``str(args['name'])``.
+* A :class:`StringSelector` picks one *leaf* string at render time -- by
+  CLDR plural category of an integer arg (``kind=PLURAL``) or by the string
+  value of an arg (``kind=SELECT``) -- then substitutes ``{name}`` and (for
+  plurals) ``#`` (the count) in the chosen leaf.
 
-Supported syntax (a subset of ICU MessageFormat):
+We use our own small structured form rather than parsing a message-format
+string: the runtime decisions are few and closed, the data is
+self-describing (it can only express what we support), and a struct is far
+safer to port than a hand-rolled string parser. This is the prototype of
+the native ``Lstr2`` runtime -- keeping it in ``bacommon`` gives pure-Python
+consumers (the client's embedded Python, server-side resolution in
+bamaster/basn) the same evaluator, and the :class:`StringSelector`
+``IOAttrs`` keys are the on-the-wire schema the C++ port implements.
 
-* Literal text, with ``{name}`` replaced by ``str(args['name'])``.
-* ``{name, plural, [offset:N] [=N {msg}]... cat {msg}... other {msg}}`` --
-  selects a plural form for the numeric argument ``name``. ``cat`` is a
-  CLDR plural category (``zero``/``one``/``two``/``few``/``many``/
-  ``other``); ``=N`` matches an exact value first. Within a form, ``#``
-  is replaced by the number (minus any ``offset``).
-* ``{name, select, key {msg}... other {msg}}`` -- selects by the string
-  value of ``name`` (e.g. gender).
-
-Forms may nest (a form's message can contain further ``{...}``
-constructs). Not yet supported (prototype): ICU ``'`` quoting/escaping,
-``selectordinal``, and number/date skeletons -- noted for the C++ port.
+Scope: cardinal plural selection for non-negative integers, string
+``select``, ``{name}`` substitution, and ``#`` for the plural count.
+``=N`` keys match an exact count before the category rule. Not (yet):
+ordinals/selectordinal, decimal operands, plural offsets, nested selectors.
 """
 
+import re
 from enum import Enum
-from typing import TYPE_CHECKING
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Annotated
 
+from efro.dataclassio import ioprepped, IOAttrs
 from bacommon.locale import Locale
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
+
+#: A ``{name}`` substitution placeholder (lowercase snake_case arg name).
+_SUB_RE = re.compile(r'\{([a-z][a-z0-9_]*)\}')
 
 
 class PluralCategory(Enum):
@@ -49,33 +54,58 @@ class PluralCategory(Enum):
     OTHER = 'other'
 
 
-# --- CLDR plural rules (bounded-but-real prototype set) --------------------
+# --- CLDR cardinal plural rules (integer-only) -----------------------------
 #
-# Each rule maps an integer count to its CLDR plural category. This covers
-# the major rule families and the locales exercised so far; locales not
-# explicitly mapped fall back to the Germanic/Romance one-other rule (see
-# _RULE_FOR_LOCALE). Expanding to the full CLDR set later is mechanical --
-# add a rule function and map the locales to it.
-
-
-def _rule_one_other(n: int) -> PluralCategory:
-    """``one`` for 1, else ``other`` (English, German, Spanish, ...)."""
-    return PluralCategory.ONE if n == 1 else PluralCategory.OTHER
+# Scope: cardinal selection for NON-NEGATIVE INTEGER counts ("3 boxes",
+# "1 kill") -- the only case the string system needs. For an integer every
+# CLDR fraction operand (v/w/f/t) is zero, so each rule collapses to a
+# function of n alone (with n % 10 / n % 100). Decimals, ordinals
+# (``selectordinal``), and compact/scientific are intentionally
+# unsupported.
+#
+# These compact functions are cross-checked against ICU's authoritative
+# ``PluralRules`` for every shipped locale by the producer-side
+# ``test_loctext_cldr`` test (where ``pyicu`` lives) -- so this table is
+# provably CLDR-correct for integers without carrying any CLDR data or a
+# rule-expression parser at runtime, and it ports trivially to the native
+# ``Lstr2``.
+#
+# One deliberate gap, bounded above 1,000,000: a handful of West-European
+# locales (es/it/pt/fr/vec) put EXACT millions in a distinct ``many`` form
+# (e.g. Spanish "un millón DE puntos"). We don't model that -- counts at or
+# above 1,000,000 in those locales get ``other`` where CLDR says ``many``.
+# Adding it later is a one-line ``n % 1_000_000 == 0`` clause plus widening
+# the cross-check range; it's omitted now since game counts stay well below
+# a million and it would force an extra translated form for those locales.
 
 
 def _rule_other_only(n: int) -> PluralCategory:
-    """Always ``other`` (Chinese, Japanese, Korean, Thai, ...)."""
+    """Always ``other`` -- no count distinction (zh, ja, ko, th, vi, id, ms)."""
     del n  # Unused.
     return PluralCategory.OTHER
 
 
-def _rule_french(n: int) -> PluralCategory:
-    """``one`` for 0 and 1, else ``other`` (French, Brazilian Portuguese)."""
+def _rule_one_other(n: int) -> PluralCategory:
+    """``one`` for 1, else ``other``.
+
+    The common Germanic/Romance rule (en, de, nl, da, sv, el, hu, tr, ta,
+    kk, eo, ...). Also covers es/it/vec below the deferred millions-``many``
+    threshold (see the module-level note).
+    """
+    return PluralCategory.ONE if n == 1 else PluralCategory.OTHER
+
+
+def _rule_zero_one_other(n: int) -> PluralCategory:
+    """``one`` for 0 and 1, else ``other`` (fr, pt, fa, hi).
+
+    (fr/pt also have the deferred millions-``many``; below that threshold
+    they match this rule.)
+    """
     return PluralCategory.ONE if n in (0, 1) else PluralCategory.OTHER
 
 
 def _rule_russian(n: int) -> PluralCategory:
-    """East-Slavic rule (Russian, Ukrainian, Belarussian)."""
+    """East-Slavic rule (ru, uk, be): one/few/many."""
     mod10 = n % 10
     mod100 = n % 100
     if mod10 == 1 and mod100 != 11:
@@ -86,7 +116,7 @@ def _rule_russian(n: int) -> PluralCategory:
 
 
 def _rule_polish(n: int) -> PluralCategory:
-    """Polish rule (one/few/many)."""
+    """Polish rule (pl): one/few/many."""
     if n == 1:
         return PluralCategory.ONE
     mod10 = n % 10
@@ -97,7 +127,11 @@ def _rule_polish(n: int) -> PluralCategory:
 
 
 def _rule_czech(n: int) -> PluralCategory:
-    """West-Slavic rule (Czech, Slovak): one/few/other."""
+    """West-Slavic rule (cs, sk): one/few/other for integers.
+
+    (CLDR's ``many`` for cs/sk only occurs for decimals, so integers never
+    select it.)
+    """
     if n == 1:
         return PluralCategory.ONE
     if 2 <= n <= 4:
@@ -105,8 +139,31 @@ def _rule_czech(n: int) -> PluralCategory:
     return PluralCategory.OTHER
 
 
+def _rule_croatian(n: int) -> PluralCategory:
+    """South-Slavic rule (hr, sr): one/few/other for integers.
+
+    Like East-Slavic but ``many`` (decimal-only here) folds into ``other``.
+    """
+    mod10 = n % 10
+    mod100 = n % 100
+    if mod10 == 1 and mod100 != 11:
+        return PluralCategory.ONE
+    if 2 <= mod10 <= 4 and not 12 <= mod100 <= 14:
+        return PluralCategory.FEW
+    return PluralCategory.OTHER
+
+
+def _rule_romanian(n: int) -> PluralCategory:
+    """Romanian rule (ro): one/few/other."""
+    if n == 1:
+        return PluralCategory.ONE
+    if n == 0 or 1 <= n % 100 <= 19:
+        return PluralCategory.FEW
+    return PluralCategory.OTHER
+
+
 def _rule_arabic(n: int) -> PluralCategory:
-    """Arabic rule (zero/one/two/few/many/other)."""
+    """Arabic rule (ar): zero/one/two/few/many/other."""
     mod100 = n % 100
     if n == 0:
         return PluralCategory.ZERO
@@ -121,11 +178,18 @@ def _rule_arabic(n: int) -> PluralCategory:
     return PluralCategory.OTHER
 
 
-# Locale -> rule. Anything absent defaults to one-other (see
-# plural_category). Grouped by rule family for readability.
+def _rule_filipino(n: int) -> PluralCategory:
+    """Filipino/Tagalog rule (fil): ``other`` only for integers ending 4/6/9."""
+    return PluralCategory.OTHER if n % 10 in (4, 6, 9) else PluralCategory.ONE
+
+
+# Total ``Locale -> rule`` map over every resolved (canonical) locale we
+# ship; the completeness + correctness of this table is enforced by the
+# producer-side ``test_loctext_cldr`` test. Obsolete aliases resolve to
+# their canonical form before lookup (see ``plural_category``). Grouped by
+# rule family for readability.
 _RULE_FOR_LOCALE: dict[Locale, Callable[[int], PluralCategory]] = {
     # other-only (no count distinction).
-    Locale.CHINESE: _rule_other_only,
     Locale.CHINESE_TRADITIONAL: _rule_other_only,
     Locale.CHINESE_SIMPLIFIED: _rule_other_only,
     Locale.JAPANESE: _rule_other_only,
@@ -134,31 +198,61 @@ _RULE_FOR_LOCALE: dict[Locale, Callable[[int], PluralCategory]] = {
     Locale.VIETNAMESE: _rule_other_only,
     Locale.INDONESIAN: _rule_other_only,
     Locale.MALAY: _rule_other_only,
-    Locale.PERSIAN: _rule_other_only,
+    # one/other (n == 1).
+    Locale.ENGLISH: _rule_one_other,
+    Locale.GERMAN: _rule_one_other,
+    Locale.DUTCH: _rule_one_other,
+    Locale.DANISH: _rule_one_other,
+    Locale.SWEDISH: _rule_one_other,
+    Locale.GREEK: _rule_one_other,
+    Locale.HUNGARIAN: _rule_one_other,
+    Locale.TURKISH: _rule_one_other,
+    Locale.ESPERANTO: _rule_one_other,
+    Locale.TAMIL: _rule_one_other,
+    Locale.KAZAKH: _rule_one_other,
+    Locale.SPANISH_SPAIN: _rule_one_other,
+    Locale.SPANISH_LATIN_AMERICA: _rule_one_other,
+    Locale.ITALIAN: _rule_one_other,
+    Locale.VENETIAN: _rule_one_other,
+    # European Portuguese is one-for-1 (unlike Brazilian, which is 0,1).
+    Locale.PORTUGUESE_PORTUGAL: _rule_one_other,
+    # Novelty/English-derived locales with no CLDR entry -> English's rule.
+    Locale.PIRATE_SPEAK: _rule_one_other,
+    Locale.GIBBERISH: _rule_one_other,
     # 0,1 -> one.
-    Locale.FRENCH: _rule_french,
-    Locale.PORTUGUESE_BRAZIL: _rule_french,
-    # East-Slavic.
+    Locale.FRENCH: _rule_zero_one_other,
+    Locale.PORTUGUESE_BRAZIL: _rule_zero_one_other,
+    Locale.PERSIAN: _rule_zero_one_other,
+    Locale.HINDI: _rule_zero_one_other,
+    # East-Slavic one/few/many.
     Locale.RUSSIAN: _rule_russian,
     Locale.UKRAINIAN: _rule_russian,
     Locale.BELARUSSIAN: _rule_russian,
-    # Polish.
+    # Polish one/few/many.
     Locale.POLISH: _rule_polish,
-    # West-Slavic.
+    # West-Slavic one/few/other.
     Locale.CZECH: _rule_czech,
     Locale.SLOVAK: _rule_czech,
-    # Arabic.
+    # South-Slavic one/few/other.
+    Locale.CROATIAN: _rule_croatian,
+    Locale.SERBIAN: _rule_croatian,
+    # Romanian one/few/other.
+    Locale.ROMANIAN: _rule_romanian,
+    # Arabic zero/one/two/few/many/other.
     Locale.ARABIC: _rule_arabic,
+    # Filipino.
+    Locale.FILIPINO: _rule_filipino,
 }
 
 
 def plural_category(locale: Locale, n: int) -> PluralCategory:
-    """Return the CLDR plural category for a count in a locale.
+    """Return the CLDR cardinal plural category for an integer in a locale.
 
-    Uses the locale's resolved form so obsolete aliases (e.g. the bare
-    ``SPANISH``) follow the same rule as their modern locale. Locales not
-    explicitly mapped fall back to the Germanic/Romance ``one``-for-1 rule
-    -- a safe, common default for the prototype's bounded ruleset.
+    ``n`` is treated as a non-negative integer count (its absolute value is
+    used). Uses the locale's resolved form so obsolete aliases (e.g. the
+    bare ``SPANISH``) follow their modern locale's rule. Every shipped
+    locale is mapped explicitly; a genuinely-unknown locale falls back to
+    the ``one``-for-1 rule. See the module note for the integer-only scope.
     """
     resolved = locale.resolved.locale
     rule = _RULE_FOR_LOCALE.get(resolved, _rule_one_other)
@@ -185,210 +279,124 @@ def required_plural_categories(locale: Locale) -> list[PluralCategory]:
     for the target locale -- derived from the same rules
     :func:`plural_category` evaluates with, so producer and client agree.
 
-    Note this is the prototype's bounded ruleset; the integer sample
-    (0..200) spans every modulo cycle the current rules use.
+    The integer sample (0..200) spans every modulo cycle the rules use;
+    under the integer-only scope (see the module note) this is the exact
+    set of categories the locale can select.
     """
     present = {plural_category(locale, n) for n in range(201)}
     present.add(PluralCategory.OTHER)
     return [c for c in _CATEGORY_ORDER if c in present]
 
 
-# --- Message-format parsing/evaluation -------------------------------------
+# --- Structured selectors + evaluation -------------------------------------
 
 
 class LocTextError(Exception):
-    """A malformed localized-message string."""
+    """A malformed localized value or a missing/bad argument."""
 
 
-def evaluate(message: str, locale: Locale, **args: object) -> str:
-    """Resolve an ICU-MessageFormat-subset ``message`` to a final string.
+class SelectorKind(Enum):
+    """How a :class:`StringSelector` chooses among its forms."""
 
-    ``args`` supplies the named arguments referenced by ``{name}``
-    substitutions and ``plural``/``select`` selectors. Plural selection
-    uses ``locale``'s CLDR rule (see :func:`plural_category`).
+    #: Choose by the CLDR plural category of an integer argument.
+    PLURAL = 'p'
+    #: Choose by the string value of an argument (e.g. gender).
+    SELECT = 's'
+
+
+@ioprepped
+@dataclass
+class StringSelector:
+    """A localized string whose final form is chosen at render time.
+
+    The structured alternative to a plain ``str`` value: ``forms`` maps a
+    form key to its leaf text (which may carry ``{name}`` substitutions and,
+    for plurals, ``#`` for the count). For ``PLURAL`` the keys are CLDR
+    category names (``one``/``few``/…/``other``) or ``=N`` exact-count
+    matches; for ``SELECT`` they are the possible string values of ``arg``.
+    ``other`` is the fallback. The ``IOAttrs`` keys are the on-the-wire
+    schema shared with the native ``Lstr2`` port.
     """
-    return _eval_text(message, locale, args, pound=None)
+
+    kind: Annotated[SelectorKind, IOAttrs('t')]
+    arg: Annotated[str, IOAttrs('a')]
+    forms: Annotated[dict[str, str], IOAttrs('f')]
 
 
-def _find_matching_brace(s: str, open_idx: int) -> int:
-    """Index of the ``}`` matching the ``{`` at ``open_idx`` (balanced)."""
-    depth = 0
-    for i in range(open_idx, len(s)):
-        if s[i] == '{':
-            depth += 1
-        elif s[i] == '}':
-            depth -= 1
-            if depth == 0:
-                return i
-    raise LocTextError(f'Unbalanced braces in message: {s!r}.')
-
-
-def _eval_text(
-    text: str,
-    locale: Locale,
-    args: Mapping[str, object],
-    pound: int | None,
+def evaluate(
+    value: 'str | StringSelector', locale: Locale, **args: object
 ) -> str:
-    """Evaluate one message-text run, expanding ``{...}`` and ``#``.
+    """Resolve a localized ``value`` to a final string.
 
-    ``pound`` is the active plural number (with offset applied) so a ``#``
-    inside a plural form renders the count; outside a plural it's literal.
+    ``value`` is a plain ``str`` (``{name}`` substitutions only) or a
+    :class:`StringSelector` (plural/select choice, then substitution).
+    ``args`` supplies the named arguments; plural selection uses
+    ``locale``'s CLDR rule (see :func:`plural_category`). Raises
+    :class:`LocTextError` on a missing/ill-typed argument or a selector
+    with no matching form and no ``other``.
     """
-    out: list[str] = []
-    i = 0
-    n = len(text)
-    while i < n:
-        c = text[i]
-        if c == '{':
-            close = _find_matching_brace(text, i)
-            out.append(_eval_arg(text[i + 1 : close], locale, args, pound))
-            i = close + 1
-        elif c == '#' and pound is not None:
-            out.append(str(pound))
-            i += 1
-        else:
-            out.append(c)
-            i += 1
-    return ''.join(out)
+    if isinstance(value, StringSelector):
+        return _eval_selector(value, locale, args)
+    return _substitute(value, args, pound=None)
 
 
-def _split_top_comma(s: str, maxsplit: int) -> list[str]:
-    """Split ``s`` on commas not nested inside braces (up to ``maxsplit``)."""
-    parts: list[str] = []
-    depth = 0
-    start = 0
-    for i, c in enumerate(s):
-        if c == '{':
-            depth += 1
-        elif c == '}':
-            depth -= 1
-        elif c == ',' and depth == 0 and len(parts) < maxsplit:
-            parts.append(s[start:i])
-            start = i + 1
-    parts.append(s[start:])
-    return parts
-
-
-def _eval_arg(
-    inner: str,
-    locale: Locale,
-    args: Mapping[str, object],
-    pound: int | None,
+def _substitute(
+    text: str, args: 'Mapping[str, object]', pound: int | None
 ) -> str:
-    """Evaluate the contents of one ``{...}`` construct."""
-    fields = _split_top_comma(inner, maxsplit=2)
-    name = fields[0].strip()
-    if len(fields) == 1:
-        # Simple substitution.
+    """Expand ``{name}`` placeholders (and ``#`` when ``pound`` is set)."""
+    # ``#`` first, on the template, so a substituted value that happens to
+    # contain ``#`` is left untouched.
+    if pound is not None:
+        text = text.replace('#', str(pound))
+
+    def _repl(match: 're.Match[str]') -> str:
+        name = match.group(1)
         if name not in args:
             raise LocTextError(f'Missing argument {name!r}.')
         return str(args[name])
 
-    kind = fields[1].strip()
-    body = fields[2] if len(fields) > 2 else ''
-    if kind == 'plural':
-        return _eval_plural(name, body, locale, args, pound)
-    if kind == 'select':
-        return _eval_select(name, body, locale, args, pound)
-    raise LocTextError(f'Unknown argument type {kind!r} for {name!r}.')
+    return _SUB_RE.sub(_repl, text)
 
 
-def _parse_forms(body: str) -> tuple[int, dict[str, str]]:
-    """Parse ``[offset:N] selector {msg}...`` into (offset, {selector: msg}).
-
-    Selectors are kept verbatim (``=N`` exact matches and CLDR category
-    names); messages are the raw inner text (evaluated lazily once a form
-    is selected).
-    """
-    offset = 0
-    forms: dict[str, str] = {}
-    i = 0
-    n = len(body)
-    while i < n:
-        # Skip whitespace.
-        if body[i].isspace():
-            i += 1
-            continue
-        # Read a token up to the next '{' or whitespace.
-        j = i
-        while j < n and not body[j].isspace() and body[j] != '{':
-            j += 1
-        token = body[i:j]
-        if token.startswith('offset:'):
-            offset = int(token[len('offset:') :])
-            i = j
-            continue
-        # Skip whitespace before the brace.
-        while j < n and body[j].isspace():
-            j += 1
-        if j >= n or body[j] != '{':
-            raise LocTextError(f'Expected {{...}} after {token!r} in form.')
-        close = _find_matching_brace(body, j)
-        forms[token] = body[j + 1 : close]
-        i = close + 1
-    return offset, forms
-
-
-def _eval_plural(
-    name: str,
-    body: str,
-    locale: Locale,
-    args: Mapping[str, object],
-    pound: int | None,
+def _eval_selector(
+    sel: StringSelector, locale: Locale, args: 'Mapping[str, object]'
 ) -> str:
-    """Evaluate a ``plural`` construct for numeric argument ``name``."""
-    del pound  # A plural establishes its own pound value.
-    if name not in args:
-        raise LocTextError(f'Missing plural argument {name!r}.')
-    raw = args[name]
-    # ``bool`` is an ``int`` subclass but never a meaningful count.
-    if isinstance(raw, bool) or not isinstance(raw, (int, float, str)):
-        raise LocTextError(
-            f'Plural argument {name!r} must be a number; got {raw!r}.'
-        )
-    try:
-        value = int(raw)
-    except ValueError as exc:
-        raise LocTextError(
-            f'Plural argument {name!r} must be an integer; got {raw!r}.'
-        ) from exc
+    """Pick ``sel``'s form for the args, then substitute its leaf text."""
+    if sel.arg not in args:
+        raise LocTextError(f'Missing argument {sel.arg!r}.')
+    raw = args[sel.arg]
 
-    offset, forms = _parse_forms(body)
-    # Exact ``=N`` matches win over category rules.
-    exact = f'={value}'
-    if exact in forms:
-        return _eval_text(forms[exact], locale, args, pound=value - offset)
+    if sel.kind is SelectorKind.PLURAL:
+        # ``bool`` is an ``int`` subclass but never a meaningful count.
+        if isinstance(raw, bool) or not isinstance(raw, (int, float, str)):
+            raise LocTextError(
+                f'Plural argument {sel.arg!r} must be a number; got {raw!r}.'
+            )
+        try:
+            value = int(raw)
+        except ValueError as exc:
+            raise LocTextError(
+                f'Plural argument {sel.arg!r} must be an integer;'
+                f' got {raw!r}.'
+            ) from exc
+        # Exact ``=N`` matches win over the category rule.
+        form = sel.forms.get(f'={value}')
+        if form is None:
+            category = plural_category(locale, value)
+            form = sel.forms.get(category.value) or sel.forms.get('other')
+        if form is None:
+            raise LocTextError(
+                f'Plural for {sel.arg!r} has no matching form and no'
+                " 'other'."
+            )
+        return _substitute(form, args, pound=value)
 
-    category = plural_category(locale, value - offset)
-    msg = forms.get(category.value)
-    if msg is None:
-        msg = forms.get(PluralCategory.OTHER.value)
-    if msg is None:
+    # SELECT: key by the argument's string value.
+    key = str(raw)
+    form = sel.forms.get(key) or sel.forms.get('other')
+    if form is None:
         raise LocTextError(
-            f'Plural for {name!r} has no matching form'
-            f" (category {category.value!r}) and no 'other'."
-        )
-    return _eval_text(msg, locale, args, pound=value - offset)
-
-
-def _eval_select(
-    name: str,
-    body: str,
-    locale: Locale,
-    args: Mapping[str, object],
-    pound: int | None,
-) -> str:
-    """Evaluate a ``select`` construct keyed by the string value of ``name``."""
-    if name not in args:
-        raise LocTextError(f'Missing select argument {name!r}.')
-    key = str(args[name])
-    _offset, forms = _parse_forms(body)
-    msg = forms.get(key)
-    if msg is None:
-        msg = forms.get('other')
-    if msg is None:
-        raise LocTextError(
-            f'Select for {name!r} has no matching key {key!r} and no'
+            f'Select for {sel.arg!r} has no matching key {key!r} and no'
             " 'other'."
         )
-    return _eval_text(msg, locale, args, pound=pound)
+    return _substitute(form, args, pound=None)

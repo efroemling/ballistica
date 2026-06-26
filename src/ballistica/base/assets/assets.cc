@@ -2066,32 +2066,53 @@ void Assets::ReloadLanguage(const std::vector<std::string>& apverids) {
                            "ReloadLanguage: invalid language blob at " + path);
       continue;
     }
+    // A language.json blob can carry two key namespaces: `legacy` (the
+    // old per-locale language data -- flat resources plus a `translations`
+    // sub-object) and `strings` (the new asset-package string format -- a
+    // flat dotpath->value map, with any ICU richness carried inside each
+    // value). A package ships one or the other; read whichever is present
+    // so the two formats never share a namespace.
+    bool found_any = false;
+
     JsonRef legacy = doc->root()["legacy"];
-    if (!legacy.is_object()) {
-      g_core->logging->Log(
-          LogName::kBaAssets, LogLevel::kError,
-          "ReloadLanguage: language blob missing 'legacy' object at " + path);
-      continue;
-    }
+    if (legacy.is_object()) {
+      found_any = true;
 
-    // Every string leaf becomes a full-dot-path resource.
-    FlattenResources_(legacy, "", &data->resources);
+      // Every string leaf becomes a full-dot-path resource.
+      FlattenResources_(legacy, "", &data->resources);
 
-    // The `translations` section becomes the translate table.
-    JsonRef translations = legacy["translations"];
-    if (translations.is_object()) {
-      for (auto&& [category, valmap] : translations.items()) {
-        if (!valmap.is_object()) {
-          continue;
-        }
-        auto& cat_out = data->translations[std::string{category}];
-        for (auto&& [value, translation] : valmap.items()) {
-          if (translation.is_string()) {
-            cat_out[std::string{value}] =
-                std::string{translation.string_or("")};
+      // The `translations` section becomes the translate table.
+      JsonRef translations = legacy["translations"];
+      if (translations.is_object()) {
+        for (auto&& [category, valmap] : translations.items()) {
+          if (!valmap.is_object()) {
+            continue;
+          }
+          auto& cat_out = data->translations[std::string{category}];
+          for (auto&& [value, translation] : valmap.items()) {
+            if (translation.is_string()) {
+              cat_out[std::string{value}] =
+                  std::string{translation.string_or("")};
+            }
           }
         }
       }
+    }
+
+    JsonRef strings = doc->root()["strings"];
+    if (strings.is_object()) {
+      found_any = true;
+      // New-format strings are pure resources (dotpath -> value); no
+      // translations section.
+      FlattenResources_(strings, "", &data->resources);
+    }
+
+    if (!found_any) {
+      g_core->logging->Log(
+          LogName::kBaAssets, LogLevel::kError,
+          "ReloadLanguage: language blob has no 'legacy'/'strings' object at "
+              + path);
+      continue;
     }
   }
 

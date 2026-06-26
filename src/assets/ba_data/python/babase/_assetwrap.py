@@ -64,14 +64,22 @@ def _load(path: str, kind: str) -> 'Callable[..., str]':
 class _StringAsset:
     """Callable accessor for one localized string leaf.
 
-    Calling it resolves the string from the live language table by its
-    logical path (which is its resource key) and evaluates it as an
-    ICU-MessageFormat-subset message against the current locale via
-    :func:`bacommon.loctext.evaluate`. So the value always tracks the
-    current locale, and keyword arguments drive named substitutions and
-    plural/select selection (e.g. ``apples(n=5)`` /
-    ``greeting(player='Bo')``). This is the wrapper-side entry into the
-    ``Lstr2`` evaluation logic prototyped in pure Python today.
+    Resolves the string from the live language table by its logical path
+    (its resource key) and evaluates it against the current locale via
+    :func:`bacommon.loctext.evaluate`, so the value tracks the locale.
+
+    Plain strings resolve fully: keyword arguments drive named ``{name}``
+    substitutions (e.g. ``greeting(player='Bo')``).
+
+    Structured entries (a plural/select
+    :class:`~bacommon.loctext.StringSelector`) do NOT resolve yet:
+    ``_babase.get_resource`` returns only flat strings from the native
+    ``map<string, string>`` resource table, so a selector never reaches
+    :func:`~bacommon.loctext.evaluate` (and the native flatten shreds it
+    besides). So a call like ``apples(n=5)`` type-checks and is wired to
+    evaluate, but falls back to the key until the native ``Lstr2`` work
+    delivers selectors to the evaluator. This is the wrapper-side entry
+    into that evaluation logic, prototyped in pure Python today.
     """
 
     __slots__ = ('_key',)

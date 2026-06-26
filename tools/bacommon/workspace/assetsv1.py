@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 from bacommon.locale import Locale
+from bacommon.loctext import StringSelector
 
 if TYPE_CHECKING:
     pass
@@ -124,8 +125,16 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
             datetime.datetime, IOAttrs('modtime', time_format='float')
         ]
 
-        #: Default value (no counts involved).
-        value: Annotated[str, IOAttrs('value')]
+        #: The plain-string output. Set for plain entries; empty (and
+        #: omitted from the wire) when ``selector`` is set -- the selector
+        #: is then the authoritative value, with no separate fallback.
+        value: Annotated[str, IOAttrs('value', store_default=False)] = ''
+
+        #: Optional render-time selector (plural/select); set instead of
+        #: ``value`` for an entry whose value is chosen at render time.
+        selector: Annotated[
+            StringSelector | None, IOAttrs('sel', store_default=False)
+        ] = None
 
     input: Annotated[str, IOAttrs('input')]
     input_modtime: Annotated[
