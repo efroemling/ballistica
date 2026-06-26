@@ -989,6 +989,10 @@ class ClassicAppMode(AppMode):
             bui.DevConsoleButtonDef(
                 'DocUI Test', bui.WeakCallStrict(self._doc_ui_test_press)
             ),
+            bui.DevConsoleButtonDef(
+                'DocUI Test v2',
+                bui.WeakCallStrict(self._doc_ui_test_v2_press),
+            ),
         ]
 
     def _main_win_template_press(self) -> None:
@@ -1030,3 +1034,20 @@ class ClassicAppMode(AppMode):
         builtinassets.audio.swish.play()
 
         show_test_doc_ui_window()
+
+    def _doc_ui_test_v2_press(self) -> None:
+        from bauiv1lib.docuitest import show_test_doc_ui_v2_window
+
+        # This only works if a main ui is up.
+        if bui.app.ui_v1.get_main_window() is None:
+            bui.screenmessage(
+                'This requires a main-window to be present.'
+                ' Open a menu or whatnot first.',
+                color=(1, 0, 0),
+            )
+            builtinassets.audio.error.play()
+            return
+
+        builtinassets.audio.swish.play()
+
+        show_test_doc_ui_v2_window()

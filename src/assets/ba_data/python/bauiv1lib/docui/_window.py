@@ -313,6 +313,11 @@ class DocUIWindow(bui.MainWindow):
             # One state per path seems like a reasonable default.
             assert isinstance(request, dui1.Request)
             return request.path
+        if requesttypeid is DocUIRequestTypeID.V2:
+            import bacommon.docui.v2 as dui2
+
+            assert isinstance(request, dui2.Request)
+            return request.path
         if requesttypeid is DocUIRequestTypeID.UNKNOWN:
             return 'unknown'
         assert_never(requesttypeid)
@@ -392,6 +397,11 @@ class DocUIWindow(bui.MainWindow):
             import bacommon.docui.v1 as dui1
 
             assert isinstance(response, dui1.Response)
+            self._last_response_shared_state_id = response.shared_state_id
+        elif responsetypeid is DocUIResponseTypeID.V2:
+            import bacommon.docui.v2 as dui2
+
+            assert isinstance(response, dui2.Response)
             self._last_response_shared_state_id = response.shared_state_id
         elif responsetypeid is DocUIResponseTypeID.UNKNOWN:
             self._last_response_shared_state_id = None

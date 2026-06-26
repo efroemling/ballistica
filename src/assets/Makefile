@@ -411,6 +411,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/discord.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_controller.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_v2transcode.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_window.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/_calls.py \
@@ -516,6 +517,10 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/analytics.py \
   $(BUILD_DIR)/ba_data/python/bacommon/app.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetcas.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/assetref/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/assetref/_codegen.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/assetref/_core.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/assetref/_wrapper.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bacloud.py \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
   $(BUILD_DIR)/ba_data/python/bacommon/classic/__init__.py \
@@ -534,6 +539,12 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/_docui.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/v1.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/v2.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/langstr/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/langstr/_blob.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/langstr/_codegen.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/langstr/_core.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/langstr/_wrapper.py \
   $(BUILD_DIR)/ba_data/python/bacommon/locale.py \
   $(BUILD_DIR)/ba_data/python/bacommon/loctext.py \
   $(BUILD_DIR)/ba_data/python/bacommon/loggercontrol.py \

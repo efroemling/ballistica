@@ -481,6 +481,7 @@ class DocUIController:
     ) -> None:
         """Kick off a request to replace existing window contents."""
         import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         assert bui.in_logic_thread()
 
@@ -488,58 +489,62 @@ class DocUIController:
 
         requesttype = request.get_type_id()
 
+        # V1 and V2 dispatch identically here; the v2 bg pass additionally
+        # resolves packages, decodes l-strings, and transcodes to v1.
         if requesttype is DocUIRequestTypeID.V1:
             assert isinstance(win.request, dui1.Request)
-
-            self._set_win_data(
-                win,
-                (
-                    _WinData(
-                        _WinState.REFRESHING
-                        if is_refresh
-                        else _WinState.FETCHING_FRESH_REQUEST
-                    )
-                ),
-            )
-
-            # Lock the ui and kick off this update.
-            win.lock_ui(origin_widget)
-            bui.app.threadpool.submit_no_wait(
-                bui.CallStrict(
-                    self._process_request_in_bg,
-                    win.request,
-                    weakwin=weakref.ref(win),
-                    uiscale=bui.app.ui_v1.uiscale,
-                    scroll_width=win.scroll_width,
-                    scroll_height=win.scroll_height,
-                    idprefix=win.main_window_id_prefix,
-                    immediate=True,
-                )
-            )
+            self._submit_fresh_request(win, origin_widget, is_refresh)
+        elif requesttype is DocUIRequestTypeID.V2:
+            assert isinstance(win.request, dui2.Request)
+            self._submit_fresh_request(win, origin_widget, is_refresh)
         elif requesttype is DocUIRequestTypeID.UNKNOWN:
-            assert isinstance(win.request, UnknownDocUIRequest)
             # Got a request type we don't know. Show a 'need a newer
             # build' error.
-
-            self._set_win_data(win, _WinData(_WinState.ERRORED))
-
-            # Lock the ui and kick off this update.
-            win.lock_ui(origin_widget)
-            bui.app.threadpool.submit_no_wait(
-                bui.CallStrict(
-                    self._process_request_in_bg,
-                    win.request,
-                    weakwin=weakref.ref(win),
-                    uiscale=bui.app.ui_v1.uiscale,
-                    scroll_width=win.scroll_width,
-                    scroll_height=win.scroll_height,
-                    idprefix=win.main_window_id_prefix,
-                    immediate=True,
-                    explicit_error=self.ErrorType.NEED_UPDATE,
-                )
+            assert isinstance(win.request, UnknownDocUIRequest)
+            self._submit_fresh_request(
+                win,
+                origin_widget,
+                is_refresh,
+                explicit_error=self.ErrorType.NEED_UPDATE,
             )
         else:
             assert_never(requesttype)
+
+    def _submit_fresh_request(
+        self,
+        win: DocUIWindow,
+        origin_widget: bui.Widget | None,
+        is_refresh: bool,
+        *,
+        explicit_error: DocUIController.ErrorType | None = None,
+    ) -> None:
+        """Lock the ui and kick off a fresh request's bg processing."""
+        self._set_win_data(
+            win,
+            _WinData(
+                _WinState.ERRORED
+                if explicit_error is not None
+                else (
+                    _WinState.REFRESHING
+                    if is_refresh
+                    else _WinState.FETCHING_FRESH_REQUEST
+                )
+            ),
+        )
+        win.lock_ui(origin_widget)
+        bui.app.threadpool.submit_no_wait(
+            bui.CallStrict(
+                self._process_request_in_bg,
+                win.request,
+                weakwin=weakref.ref(win),
+                uiscale=bui.app.ui_v1.uiscale,
+                scroll_width=win.scroll_width,
+                scroll_height=win.scroll_height,
+                idprefix=win.main_window_id_prefix,
+                immediate=True,
+                explicit_error=explicit_error,
+            )
+        )
 
     def run_action(
         self,
@@ -790,6 +795,31 @@ class DocUIController:
                 ):
                     error = self.ErrorType.NEED_UPDATE
 
+            elif responsetype is DocUIResponseTypeID.V2:
+                import bacommon.docui.v2 as dui2
+
+                assert isinstance(response, dui2.Response)
+                minbuild = response.minimum_engine_build
+                if (
+                    minbuild is not None
+                    and minbuild > bui.app.env.engine_build_number
+                ):
+                    error = self.ErrorType.NEED_UPDATE
+                    response = None
+                else:
+                    try:
+                        # Resolve referenced packages, decode l-strings in
+                        # our locale, and transcode to a v1 page so the
+                        # existing v1 render pipeline draws it.
+                        from bauiv1lib.docui import _v2transcode
+
+                        response = _v2transcode.resolve_and_transcode(response)
+                    except Exception:
+                        bui.uilog.exception(
+                            'Error rendering v2 doc-ui response.'
+                        )
+                        error = self.ErrorType.GENERIC
+                        response = None
             elif responsetype is DocUIResponseTypeID.UNKNOWN:
                 assert isinstance(response, UnknownDocUIResponse)
                 bui.uilog.debug(
@@ -889,20 +919,16 @@ class DocUIController:
 
         # Possibly take further action depending on state.
         if state is _WinState.REDISPLAYING_OLD_STATE:
-            # Ok; we're done showing old state. For POST this is as far
-            # as we go (don't want to repeat POST effects), but for GET
-            # we can now kick off a refresh to swap in the latest
-            # version of the page.
-            assert isinstance(win.request, dui1.Request)
-            if win.request.method is dui1.RequestMethod.GET:
+            # Ok; we're done showing old state. For GET we can now kick off
+            # a refresh to swap in the latest version of the page; for POST
+            # this is as far as we go (don't want to repeat POST effects).
+            # (win.request stays the original v1-or-v2 request here.)
+            from bauiv1lib.docui import _v2transcode
+
+            if _v2transcode.request_is_get(win.request):
                 self.replace(win, win.request, is_refresh=True)
-            elif (
-                win.request.method is dui1.RequestMethod.POST
-                or win.request.method is dui1.RequestMethod.UNKNOWN
-            ):
-                self._set_idle_and_schedule_timed_action(response, weakwin)
             else:
-                assert_never(win.request.method)
+                self._set_idle_and_schedule_timed_action(response, weakwin)
 
         elif state is _WinState.ERRORED or state is _WinState.IDLE:
             pass

@@ -259,6 +259,23 @@ nitpick_ignore = [
     # public signatures (``str | Lstr | _Unset``) to distinguish an
     # unset arg from None; the private class has no doc target.
     ('py:class', 'babase._simpledialog._Unset'),
+    #
+    # docui-v2 / langstr (bacommon) cross-module refs. The bare class
+    # refs (Lstr, StringSelector) are docstring cross-refs that should be
+    # fully qualified at the source eventually; EncodedLstr / WrapperTree
+    # are PEP 695 ``type`` aliases autodoc renders in signatures but can't
+    # cross-ref as classes. See docs/followups.md.
+    ('py:class', 'Lstr'),
+    ('py:class', 'StringSelector'),
+    ('py:class', 'bacommon.langstr._core.EncodedLstr'),
+    ('py:class', 'bacommon.langstr._wrapper.WrapperTree'),
+    # bacommon.assetref texture/mesh refs — same story: bare cross-module
+    # class refs to fully-qualify eventually; AssetRefTree is a PEP 695
+    # ``type`` alias autodoc renders in signatures but can't cross-ref.
+    ('py:class', 'TextureRef'),
+    ('py:class', 'MeshRef'),
+    ('py:class', 'AssetRefDir'),
+    ('py:class', 'bacommon.assetref._wrapper.AssetRefTree'),
 ]
 
 # Regex-based nitpick ignores for whole categories of references.

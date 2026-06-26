@@ -46,6 +46,33 @@ def show_test_doc_ui_window() -> None:
     )
 
 
+def show_test_doc_ui_v2_window() -> None:
+    """Bust out a v2 (l-string) doc-ui window fetched from the master server.
+
+    Unlike the v1 demo (which builds its pages locally), this fetches a
+    language-agnostic v2 page from bamaster's ``docuitestv2`` domain so the
+    full resolve -> decode -> render path is exercised end-to-end.
+    """
+    import bacommon.docui.v2 as dui2
+
+    bui.app.ui_v1.auxiliary_window_activate(
+        win_type=DocUIWindow,
+        win_create_call=bui.CallStrict(
+            TestDocUIV2Controller().create_window, dui2.Request('/')
+        ),
+        win_extra_type_id=TestDocUIV2Controller.get_window_extra_type_id(),
+    )
+
+
+class TestDocUIV2Controller(DocUIController):
+    """Fetches a v2 (l-string) doc-ui page from the master server."""
+
+    @override
+    def fulfill_request(self, request: DocUIRequest) -> DocUIResponse:
+        """Fetch from bamaster's ``docuitestv2`` domain (background thread)."""
+        return self.fulfill_request_cloud(request, 'docuitestv2')
+
+
 class TestDocUIController(DocUIController):
     """Provides various tests/demonstrations of docui functionality."""
 

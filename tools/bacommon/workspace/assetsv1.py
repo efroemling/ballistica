@@ -148,6 +148,36 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
     )
 
 
+def complete_locale_values(
+    string_files: dict[str, AssetsV1StringFileV1], locale: Locale
+) -> dict[str, str | StringSelector]:
+    """English-completed per-locale values for a set of string files.
+
+    Maps each string's logical name to its value for ``locale``: the
+    locale's own output, else the English output, else the raw English brief
+    ``input``. So every locale's map carries the **complete key set** with
+    graceful English fallback -- untranslated strings still render (in
+    English) rather than failing, and every locale's key set is identical.
+
+    The shared value-selection both the asset-build string recipe and the
+    `langstr vendor` command route through (paired with
+    :func:`~bacommon.langstr.serialize_language_blob`) so the built and
+    vendored blobs can't drift.
+    """
+    out: dict[str, str | StringSelector] = {}
+    for name, sfile in string_files.items():
+        output = sfile.outputs.get(locale)
+        if output is None:
+            output = sfile.outputs.get(Locale.ENGLISH)
+        if output is None:
+            out[name] = sfile.input
+        elif output.selector is not None:
+            out[name] = output.selector
+        else:
+            out[name] = output.value
+    return out
+
+
 class AssetsV1PathValsTypeID(Enum):
     """Types of vals we can store for paths."""
 

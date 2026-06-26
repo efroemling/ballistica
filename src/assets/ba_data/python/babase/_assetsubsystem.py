@@ -58,6 +58,7 @@ if TYPE_CHECKING:
     from bacommon import securedata
     from bacommon.cloud import AssetPackageBuildProgress
     from bacommon.locale import Locale
+    from bacommon.loctext import StringSelector
     from babase._accountv2 import AccountV2Handle
 
 #: Accumulated resolve output: ``(register_specs, manifest_pkgs, fell_back)``
@@ -948,6 +949,51 @@ class AssetSubsystem(AppSubsystem):
             f' ({len(fell_back)} on fallback)' if fell_back else '',
         )
         return ResolveResult(apverids=list(apverids), fell_back=fell_back)
+
+    def get_package_strings(
+        self, apverid: str, locale: Locale
+    ) -> dict[str, 'str | StringSelector']:
+        """Per-locale language-string values for an already-resolved package.
+
+        Returns ``{logical-name: value}`` (a plain ``str`` or a
+        :class:`~bacommon.loctext.StringSelector`) read from the package's
+        resolved ``language/<locale>`` blob -- the Python side of what the
+        native ``ReloadLanguage`` consumes, for the language-agnostic
+        (``Lstr``) doc-ui decode path. ``locale`` must be the one the package
+        was :meth:`resolve`\\ d for (the coord is ``language/<locale.value>``,
+        matching the ``_desired_coords`` bucket map).
+
+        Reads local blobs only (no network); does blocking file IO, so call
+        it off the logic thread. Missing/absent data fails soft -- an empty
+        map -- leaving the caller's decode to surface per-string sentinels.
+        """
+        # Deferred: keep bacommon.langstr out of babase's module-load graph.
+        from bacommon.langstr import parse_language_blob
+
+        coord = f'language/{locale.value}'
+
+        # The language flavor-manifest hash: downloaded packages live in the
+        # cache manifest, builtin ones in the bundle manifest.
+        cached = self._load_manifest().packages.get(apverid)
+        fm_hash = (
+            cached.flavor_manifests.get(coord) if cached is not None else None
+        )
+        if fm_hash is None:
+            fm_hash = self._read_bundle_manifest().get(apverid, {}).get(coord)
+        if fm_hash is None or self._locate_blob(fm_hash) is None:
+            return {}
+
+        # The blob lives at logical path 'language.json' part 'j' (the same
+        # one native ReloadLanguage looks up).
+        parts = self._read_entries(fm_hash).get('language.json')
+        blob_hash = parts.get('j') if parts else None
+        if blob_hash is None:
+            return {}
+        path = self._locate_blob(blob_hash)
+        if path is None:
+            return {}
+        with open(path, 'rb') as infile:
+            return parse_language_blob(infile.read().decode())
 
     @staticmethod
     def _reload_language() -> None:
