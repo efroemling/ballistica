@@ -296,10 +296,17 @@ void GraphicsServer::ReloadChangedMedia_() {
   SetRenderHold();
 
   // Re-mark the now-unloaded assets for load, flip on progress-bar drawing,
-  // then tell the graphics thread to stop ignoring frame-defs.
+  // then tell the graphics thread to stop ignoring frame-defs. Use the
+  // fade-in variant (unlike the full ReloadMedia_ paths): a changed-media
+  // reload is usually tiny -- often a handful of textures after a warm
+  // resolve -- and finishes well within the bar's 2s fade-in ramp, so the
+  // full-screen bar stays invisible rather than flashing. This matters
+  // especially because this can run behind a construct-mode fade-out, where
+  // the "draw only the progress bar" hold-path would otherwise punch an
+  // instant bar through the black.
   g_base->logic->event_loop()->PushCall([this] {
     g_base->assets->MarkAllAssetsForLoad();
-    g_base->graphics->EnableProgressBar(false);
+    g_base->graphics->EnableProgressBar(true);
     PushRemoveRenderHoldCall();
   });
 }

@@ -330,8 +330,15 @@ class ResolveProgress:
     bytes_total: int = 0
 
 
-#: Min seconds between throttled progress updates.
-_PROGRESS_UPDATE_INTERVAL = 1.5
+#: Min seconds between throttled progress updates. The resolve emits one
+#: event per blob / build-unit completed (see :meth:`_emit_progress`); this
+#: caps how often those reach the dialog. Kept low (20/sec) so the meter
+#: advances smoothly through a many-item resolve -- a ~500-blob download
+#: otherwise batches into only a few visible jumps -- while still coalescing
+#: a burst of fast-completing tiny blobs into at most one text-mesh rebuild
+#: per tick. (Phase/package changes and the final caught-up frame bypass
+#: the throttle entirely, so the bar still reaches 100%.)
+_PROGRESS_UPDATE_INTERVAL = 0.05
 
 #: Seconds between Tier-1 resolve polls while the server reports it's
 #: still building the requested flavors.
