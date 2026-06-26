@@ -638,12 +638,13 @@ class ResponseData:
             securedata.Archive | None, IOAttrs('tk', store_default=False)
         ] = None
 
-        #: Per-blob stored compression (content-sha256 ->
-        #: :class:`~bacommon.cloudfilecodec.CompressionType` value) for
-        #: blobs not stored uncompressed; a hash absent here is
-        #: uncompressed. Empty until the pipeline produces compressed
-        #: blobs. bacloud decompresses to canonical on arrival, so the
-        #: ``.cache/assetdata`` store always holds uncompressed blobs.
+        #: DEPRECATED / UNUSED -- always empty. Compression is no longer
+        #: carried here: a blob's transfer encoding is negotiated per
+        #: ``/casblob`` request (the node reports it via its
+        #: ``X-Cas-Compression`` response header and the client decodes per
+        #: that). The field is retained (unpopulated, unread) only so the
+        #: producer can stop sending it before any reader drops it -- safe
+        #: to delete in a later cleanup once every component is updated.
         blob_compression: Annotated[
             dict[str, str],
             IOAttrs('bc', store_default=False, soft_default_factory=dict),

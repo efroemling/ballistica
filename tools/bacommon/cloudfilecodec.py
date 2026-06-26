@@ -16,7 +16,10 @@ stored bytes *are* the canonical content.
 """
 
 from enum import Enum
-from typing import assert_never
+from typing import TYPE_CHECKING, assert_never
+
+if TYPE_CHECKING:
+    from typing import Iterable
 
 
 class CompressionType(Enum):
@@ -41,6 +44,56 @@ class CompressionType(Enum):
     #: (:func:`bacommon.meshzstddict.display_mesh_dict_v1`). The dict and
     #: its version are fixed by this member.
     ZSTD_DICT_BOB_V1 = 'zb1'
+
+
+#: Request header on a CAS ``/casblob`` GET: a comma-separated list of
+#: :class:`CompressionType` values the client can decode (e.g.
+#: ``'zb1,z,u'``). Lets the server fulfill the request in any encoding the
+#: client supports -- picking the smallest available -- rather than
+#: assuming a fixed one. A client always includes ``u`` (it can always
+#: handle uncompressed). Absent ⇒ a legacy client that decodes per its
+#: manifest (back-compat).
+CAS_ACCEPT_COMPRESSION_HEADER = 'X-Accept-Compression'
+
+#: Response header on a CAS ``/casblob`` GET: the single
+#: :class:`CompressionType` value the served bytes are encoded in. The
+#: client decodes per THIS header (not its manifest), so whatever the node
+#: actually serves -- even a re-negotiated or differently-cached encoding
+#: -- is always decoded correctly. Absent ⇒ a legacy node; the client
+#: falls back to its manifest's compression.
+CAS_COMPRESSION_HEADER = 'X-Cas-Compression'
+
+
+def format_compression_accept(types: 'Iterable[CompressionType]') -> str:
+    """Encode a set of supported types for the accept header."""
+    return ','.join(t.value for t in types)
+
+
+def parse_compression_accept(value: str | None) -> set[CompressionType]:
+    """Decode the accept header into a set of known types.
+
+    Tolerant of unknown/empty entries (an unrecognized future value is
+    skipped, not an error) so an old server reading a newer client's
+    header simply ignores types it doesn't know.
+    """
+    result: set[CompressionType] = set()
+    if value:
+        by_value = {t.value: t for t in CompressionType}
+        for part in value.split(','):
+            ctype = by_value.get(part.strip())
+            if ctype is not None:
+                result.add(ctype)
+    return result
+
+
+def all_compression_types() -> set[CompressionType]:
+    """All :class:`CompressionType` members this build can decode.
+
+    What a client advertises in :data:`CAS_ACCEPT_COMPRESSION_HEADER` --
+    every member is decodable here because the codecs (and any bundled
+    dictionaries) ship with the build.
+    """
+    return set(CompressionType)
 
 
 def zstd_compress(data: bytes, level: int) -> bytes:

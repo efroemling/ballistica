@@ -892,7 +892,6 @@ class App:
 
         from efro.util import data_size_str
         from bacommon import assetcas
-        from bacommon.cloudfilecodec import CompressionType
 
         if cas.token is None:
             raise CleanError(
@@ -925,9 +924,6 @@ class App:
                 token_header=token_header,
                 dest_root=dest_root,
                 timeout_seconds=TIMEOUT_SECONDS,
-                compression=CompressionType(
-                    cas.blob_compression.get(fhash, 'u')
-                ),
             )
             return size
 

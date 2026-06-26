@@ -19,7 +19,14 @@ import urllib3
 import urllib3.util
 
 from efro.dataclassio import dataclass_to_json
-from bacommon.cloudfilecodec import CompressionType, decompress_for_type
+from bacommon.cloudfilecodec import (
+    CompressionType,
+    decompress_for_type,
+    all_compression_types,
+    format_compression_accept,
+    CAS_ACCEPT_COMPRESSION_HEADER,
+    CAS_COMPRESSION_HEADER,
+)
 
 if TYPE_CHECKING:
     from bacommon import securedata
@@ -110,27 +117,37 @@ def download_cas_blob(
     token_header: str,
     dest_root: str,
     timeout_seconds: float,
-    compression: CompressionType = CompressionType.UNCOMPRESSED,
 ) -> None:
     """Fetch one CAS blob from a node and atomically write it.
 
     Issues ``GET {base_url}/casblob/{filehash}?size={size}`` with the
-    capability token in the ``X-Asset-Token`` header. ``filehash`` and
-    ``size`` are the blob's *canonical* (uncompressed) identity (from the
-    manifest); ``compression`` is the encoding the node serves it in (also
-    from the manifest). When compressed, the received bytes are
-    decompressed back to canonical before :func:`cas_write` sha256-verifies
-    them against ``filehash`` and writes them — so the local cache always
+    capability token in the ``X-Asset-Token`` header and an
+    ``X-Accept-Compression`` header advertising every encoding this build
+    can decode, so the node fulfills the request in whichever supported
+    encoding is smallest/available. ``filehash`` and ``size`` are the
+    blob's *canonical* (uncompressed) identity. The encoding of the
+    received bytes is taken solely from the node's ``X-Cas-Compression``
+    response header -- it is authoritative, so whatever the node actually
+    served is decoded correctly regardless of how it was cached. (The
+    flavor-manifest no longer carries compression; encoding is purely a
+    transfer-layer concern negotiated here.) The bytes are decompressed
+    back to canonical before :func:`cas_write` sha256-verifies them
+    against ``filehash`` and writes them -- so the local cache always
     holds uncompressed blobs and the hash check still validates content.
     One attempt only; the caller owns concurrency and retry. Raises
-    :class:`CasDownloadError` on a non-200 response, a decompress failure,
-    or a verify failure.
+    :class:`CasDownloadError` on a non-200 response, a missing/unknown
+    served-encoding header, a decompress failure, or a verify failure.
     """
     url = f'{base_url}/casblob/{filehash}?size={size}'
     response = pool.request(
         'GET',
         url,
-        headers={'X-Asset-Token': token_header},
+        headers={
+            'X-Asset-Token': token_header,
+            CAS_ACCEPT_COMPRESSION_HEADER: format_compression_accept(
+                all_compression_types()
+            ),
+        },
         timeout=urllib3.util.Timeout(total=timeout_seconds),
     )
     if response.status != 200:
@@ -138,11 +155,30 @@ def download_cas_blob(
             f'casblob GET for {filehash} failed: HTTP {response.status}.'
         )
     data = response.data
-    if compression is not CompressionType.UNCOMPRESSED:
+
+    # The node's response header is authoritative for how the bytes are
+    # encoded. A node always sends it; its absence means a node too old to
+    # negotiate, which this build doesn't support (clean break).
+    served_header = response.headers.get(CAS_COMPRESSION_HEADER)
+    if served_header is None:
+        raise CasDownloadError(
+            f'casblob for {filehash} missing {CAS_COMPRESSION_HEADER}'
+            f' header (node too old).'
+        )
+    try:
+        served = CompressionType(served_header)
+    except ValueError as exc:
+        raise CasDownloadError(
+            f'casblob for {filehash} served unknown encoding'
+            f' {served_header!r}.'
+        ) from exc
+
+    if served is not CompressionType.UNCOMPRESSED:
         try:
-            data = decompress_for_type(data, compression)
+            data = decompress_for_type(data, served)
         except Exception as exc:
             raise CasDownloadError(
-                f'casblob decompress for {filehash} failed: {exc}'
+                f'casblob decompress for {filehash} ({served.value})'
+                f' failed: {exc}'
             ) from exc
     cas_write(dest_root, filehash, data)
