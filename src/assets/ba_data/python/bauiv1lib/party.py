@@ -487,7 +487,7 @@ class PartyWindow(bui.Window):
         del popup_window  # unused
         if self._popup_type == 'partyMemberPress':
             if self._popup_party_member_is_host:
-                builtinassets.audio.error.play()
+                builtinassets.audio.error.get().play()
                 bui.screenmessage(
                     bui.Lstr(resource='internal.cantKickHostError'),
                     color=(1, 0, 0),
@@ -500,7 +500,7 @@ class PartyWindow(bui.Window):
                     self._popup_party_member_client_id, ban_time=5 * 60
                 )
                 if not result:
-                    builtinassets.audio.error.play()
+                    builtinassets.audio.error.get().play()
                     bui.screenmessage(
                         bui.Lstr(resource='getTicketsWindow.unavailableText'),
                         color=(1, 0, 0),
@@ -526,7 +526,7 @@ class PartyWindow(bui.Window):
                     bui.screenmessage(
                         bui.Lstr(resource='errorText'), color=(1, 0, 0)
                     )
-                    builtinassets.audio.error.play()
+                    builtinassets.audio.error.get().play()
         else:
             print(f'unhandled popup type: {self._popup_type}')
 
@@ -539,7 +539,7 @@ class PartyWindow(bui.Window):
                 bui.Lstr(resource='internal.invalidAddressErrorText'),
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
         port = port_num if port_num is not None else -1
         if port > 65535 or port < 0:
@@ -547,7 +547,7 @@ class PartyWindow(bui.Window):
                 bui.Lstr(resource='internal.invalidPortErrorText'),
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         # Avoid empty names.
@@ -565,7 +565,7 @@ class PartyWindow(bui.Window):
                 'name': name,
             }
             config.commit()
-            builtinassets.audio.gun_cocking.play()
+            builtinassets.audio.gun_cocking.get().play()
             bui.screenmessage(
                 bui.Lstr(
                     resource='addedToFavoritesText', subs=[('${NAME}', name)]
@@ -577,7 +577,7 @@ class PartyWindow(bui.Window):
                 bui.Lstr(resource='internal.invalidAddressErrorText'),
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
 
     def popup_menu_closing(self, _popup_window: PopupWindow) -> None:
         """Called when the popup is closing."""
@@ -637,5 +637,5 @@ class PartyWindow(bui.Window):
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         self.close()

@@ -556,7 +556,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
                                 control
                             ),
                         )
-                    builtinassets.audio.gun_cocking.play()
+                    builtinassets.audio.gun_cocking.get().play()
                     dialog.die()
         else:
             if event['type'] == 'BUTTONDOWN':
@@ -570,7 +570,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
                             control
                         ),
                     )
-                builtinassets.audio.gun_cocking.play()
+                builtinassets.audio.gun_cocking.get().play()
                 dialog.die()
 
     def _done(self) -> None:

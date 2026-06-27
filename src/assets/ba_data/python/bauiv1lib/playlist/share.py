@@ -28,7 +28,7 @@ class SharePlaylistImportWindow(SendInfoWindowLegacyModal):
     def _on_import_response(self, response: dict[str, Any] | None) -> None:
         if response is None:
             bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         if response['playlistType'] == 'Team Tournament':
@@ -48,7 +48,7 @@ class SharePlaylistImportWindow(SendInfoWindowLegacyModal):
             ),
             color=(0, 1, 0),
         )
-        builtinassets.audio.gun_cocking.play()
+        builtinassets.audio.gun_cocking.get().play()
         if self._on_success_callback is not None:
             self._on_success_callback()
         bui.containerwidget(
@@ -96,8 +96,8 @@ class SharePlaylistResultsWindow(bui.Window):
                 darken_behind=True,
             )
         )
-        builtinassets.audio.cash_register.play()
-        builtinassets.audio.swish.play()
+        builtinassets.audio.cash_register.get().play()
+        builtinassets.audio.swish.get().play()
 
         self._cancel_button = bui.buttonwidget(
             parent=self._root_widget,

@@ -56,9 +56,11 @@ class KioskWindow(bui.MainWindow):
             t_delay_base = 1.0
             t_delay_scale = 1.0
 
-        mesh_opaque = stdassets.meshes.level_select_button_opaque
-        mesh_transparent = stdassets.meshes.level_select_button_transparent
-        mask_tex = stdassets.textures.map_preview_mask
+        mesh_opaque = stdassets.meshes.level_select_button_opaque.get()
+        mesh_transparent = (
+            stdassets.meshes.level_select_button_transparent.get()
+        )
+        mask_tex = stdassets.textures.map_preview_mask.get()
 
         y_extra = 130.0 + (0.0 if self._show_multiplayer else -130.0)
         b_width = 250.0
@@ -137,7 +139,7 @@ class KioskWindow(bui.MainWindow):
             size=(img_width, 0.5 * img_width),
             transition_delay=tdelay,
             position=(h - img_width * 0.5, img_v),
-            texture=stdassets.textures.doom_shroom_preview,
+            texture=stdassets.textures.doom_shroom_preview.get(),
             mesh_opaque=mesh_opaque,
             mesh_transparent=mesh_transparent,
             mask_texture=mask_tex,
@@ -172,7 +174,7 @@ class KioskWindow(bui.MainWindow):
             size=(img_width, 0.5 * img_width),
             transition_delay=tdelay,
             position=(h - img_width * 0.5, img_v),
-            texture=stdassets.textures.football_stadium_preview,
+            texture=stdassets.textures.football_stadium_preview.get(),
             mesh_opaque=mesh_opaque,
             mesh_transparent=mesh_transparent,
             mask_texture=mask_tex,
@@ -207,7 +209,7 @@ class KioskWindow(bui.MainWindow):
             transition_delay=tdelay,
             size=(img_width, 0.5 * img_width),
             position=(h - img_width * 0.5, img_v),
-            texture=stdassets.textures.courtyard_preview,
+            texture=stdassets.textures.courtyard_preview.get(),
             mesh_opaque=mesh_opaque,
             mesh_transparent=mesh_transparent,
             mask_texture=mask_tex,
@@ -262,7 +264,7 @@ class KioskWindow(bui.MainWindow):
                 size=(img_width, 0.5 * img_width),
                 transition_delay=tdelay,
                 position=(h - img_width * 0.5, img_v),
-                texture=stdassets.textures.bridgit_preview,
+                texture=stdassets.textures.bridgit_preview.get(),
                 mesh_opaque=mesh_opaque,
                 mesh_transparent=mesh_transparent,
                 mask_texture=mask_tex,
@@ -298,7 +300,7 @@ class KioskWindow(bui.MainWindow):
                 size=(img_width, 0.5 * img_width),
                 transition_delay=tdelay,
                 position=(h - img_width * 0.5, img_v),
-                texture=stdassets.textures.hockey_stadium_preview,
+                texture=stdassets.textures.hockey_stadium_preview.get(),
                 mesh_opaque=mesh_opaque,
                 mesh_transparent=mesh_transparent,
                 mask_texture=mask_tex,
@@ -333,7 +335,7 @@ class KioskWindow(bui.MainWindow):
                 transition_delay=tdelay,
                 size=(img_width, 0.5 * img_width),
                 position=(h - img_width * 0.5, img_v),
-                texture=stdassets.textures.tip_top_preview,
+                texture=stdassets.textures.tip_top_preview.get(),
                 mesh_opaque=mesh_opaque,
                 mesh_transparent=mesh_transparent,
                 mask_texture=mask_tex,

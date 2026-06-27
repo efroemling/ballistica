@@ -236,14 +236,15 @@ class PlaylistEditGameWindow(bui.MainWindow):
             v_align='center',
         )
 
+        mesh_trans = stdassets.meshes.level_select_button_transparent.get()
         bui.imagewidget(
             parent=self._subcontainer,
             size=(256 * 0.7, 125 * 0.7),
             position=(h + 261 - 128 + 128.0 * 0.56, v - 90),
             texture=map_tex,
-            mesh_opaque=stdassets.meshes.level_select_button_opaque,
-            mesh_transparent=stdassets.meshes.level_select_button_transparent,
-            mask_texture=stdassets.textures.map_preview_mask,
+            mesh_opaque=stdassets.meshes.level_select_button_opaque.get(),
+            mesh_transparent=mesh_trans,
+            mask_texture=stdassets.textures.map_preview_mask.get(),
         )
         map_button = btn = bui.buttonwidget(
             parent=self._subcontainer,

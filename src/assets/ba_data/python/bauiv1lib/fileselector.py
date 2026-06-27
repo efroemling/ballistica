@@ -110,9 +110,9 @@ class FileSelectorWindow(bui.MainWindow):
             on_activate_call=self._on_back_press,
         )
 
-        self._folder_tex = stdassets.textures.folder
+        self._folder_tex = stdassets.textures.folder.get()
         self._folder_color = (1.1, 0.8, 0.2)
-        self._file_tex = stdassets.textures.file
+        self._file_tex = stdassets.textures.file.get()
         self._file_color = (1, 1, 1)
         self._use_folder_button: bui.Widget | None = None
         self._folder_center = self._width * 0.5 + 15
@@ -174,11 +174,11 @@ class FileSelectorWindow(bui.MainWindow):
 
     def _on_back_press(self) -> None:
         if len(self._recent_paths) > 1:
-            builtinassets.audio.swish.play()
+            builtinassets.audio.swish.get().play()
             self._recent_paths.pop()
             self._set_path(self._recent_paths.pop())
         else:
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
 
     def _on_folder_entry_activated(self) -> None:
         if self._callback is not None:
@@ -196,22 +196,22 @@ class FileSelectorWindow(bui.MainWindow):
                     if new_path == '':
                         new_path = '/'
                 else:
-                    builtinassets.audio.error.play()
+                    builtinassets.audio.error.get().play()
             else:
                 if self._path == '/':
                     test_path = self._path + entry
                 else:
                     test_path = self._path + '/' + entry
                 if os.path.isdir(test_path):
-                    builtinassets.audio.swish.play()
+                    builtinassets.audio.swish.get().play()
                     new_path = test_path
                 elif os.path.isfile(test_path):
                     if self._is_valid_file_path(test_path):
-                        builtinassets.audio.swish.play()
+                        builtinassets.audio.swish.get().play()
                         if self._callback is not None:
                             self._callback(test_path)
                     else:
-                        builtinassets.audio.error.play()
+                        builtinassets.audio.error.get().play()
                 else:
                     print(
                         (

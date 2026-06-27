@@ -920,8 +920,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     def preload_map_preview_media(self) -> None:
         """Preload media needed for map preview UIs."""
         try:
-            _ = uistdassets.meshes.level_select_button_opaque
-            _ = uistdassets.meshes.level_select_button_transparent
+            _ = uistdassets.meshes.level_select_button_opaque.get()
+            _ = uistdassets.meshes.level_select_button_transparent.get()
             for maptype in list(self.maps.values()):
                 map_tex_name = maptype.get_preview_texture_name()
                 if map_tex_name is not None:
@@ -939,7 +939,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # Play explicit swish sound so it occurs due to keypresses/etc.
         # This means we have to disable it for any button or else we get
         # double.
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
 
         # If it exists, dismiss it; otherwise make a new one.
         party_window = (
@@ -961,7 +961,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             # need to make sure to disable swish sounds for any buttons
             # that lead us here.
             if babase.app.env.gui:
-                builtinassets.audio.swish.play()
+                builtinassets.audio.swish.get().play()
 
             # Pause gameplay.
             self.pause()

@@ -78,6 +78,7 @@ from batools.pcommands import (
     lazy_increment_build,
     androidaddr,
     push_ipa,
+    push_ipa_to_archive,
     printcolors,
     prune_includes,
     python_version_android,

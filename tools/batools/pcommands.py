@@ -186,6 +186,31 @@ def push_ipa() -> None:
     )
 
 
+def push_ipa_to_archive() -> None:
+    """Construct an ios IPA and publish it to a bamaster archive.
+
+    Like push_ipa but uploads into the archive system (signed-URL GCS
+    storage) instead of rsyncing to the staging server. Pass
+    --archive-id to override the default ('ios-test-builds').
+    """
+    from efro.util import extract_arg
+    import efrotools.ios
+
+    args = sys.argv[2:]
+    signing_config = extract_arg(args, '--signing-config')
+    archive_id = extract_arg(args, '--archive-id')
+
+    if len(args) != 1:
+        raise RuntimeError('Expected 1 mode arg (debug or release).')
+    modename = args[0].lower()
+    efrotools.ios.push_ipa_to_archive(
+        pcommand.PROJROOT,
+        modename,
+        signing_config=signing_config,
+        archive_id=('ios-test-builds' if archive_id is None else archive_id),
+    )
+
+
 def printcolors() -> None:
     """Print all colors available in efro.terminals.TerminalColor."""
     from efro.error import CleanError

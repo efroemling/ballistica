@@ -86,7 +86,7 @@ class DiscordWindow(bui.Window):
             parent=self._root_widget,
             position=(40, -15),
             size=(min_size, min_size),
-            texture=stdassets.textures.discord_server,
+            texture=stdassets.textures.discord_server.get(),
         )
 
         # Hmm should we translate this? The discord server is mostly

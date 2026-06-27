@@ -218,7 +218,7 @@ class ManualGatherTab(GatherTab):
     ) -> None:
         assert self._container
         if playsound:
-            builtinassets.audio.click01.play()
+            builtinassets.audio.click01.get().play()
 
         self._sub_tab = value
         active_color = (0.6, 1.0, 0.6)
@@ -508,7 +508,7 @@ class ManualGatherTab(GatherTab):
         bui.screenmessage(
             bui.Lstr(resource='nothingIsSelectedErrorText'), color=(1, 0, 0)
         )
-        builtinassets.audio.error.play()
+        builtinassets.audio.error.get().play()
 
     def _on_favorites_connect_press(self) -> None:
         if self._favorite_selected is None:
@@ -684,7 +684,7 @@ class ManualGatherTab(GatherTab):
             # Notify about incorrect port? I'm lazy; simply leave old value.
             pass
         bui.app.config.commit()
-        builtinassets.audio.gun_cocking.play()
+        builtinassets.audio.gun_cocking.get().play()
         self._refresh_favorites()
 
         bui.containerwidget(
@@ -722,7 +722,7 @@ class ManualGatherTab(GatherTab):
         del config[self._favorite_selected]
         self._favorite_selected = None
         bui.app.config.commit()
-        stdassets.audio.shield_down.play()
+        stdassets.audio.shield_down.get().play()
         self._refresh_favorites()
 
     def _on_favorite_select(self, server: str) -> None:
@@ -819,7 +819,7 @@ class ManualGatherTab(GatherTab):
                 bui.Lstr(resource='internal.invalidAddressErrorText'),
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
         try:
             port = int(cast(str, bui.textwidget(query=port_textwidget)))
@@ -830,7 +830,7 @@ class ManualGatherTab(GatherTab):
                 bui.Lstr(resource='internal.invalidPortErrorText'),
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         _HostLookupThread(
@@ -848,7 +848,7 @@ class ManualGatherTab(GatherTab):
                 bui.Lstr(resource='internal.invalidAddressErrorText'),
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
         try:
             port = int(cast(str, bui.textwidget(query=port_textwidget)))
@@ -859,7 +859,7 @@ class ManualGatherTab(GatherTab):
                 bui.Lstr(resource='internal.invalidPortErrorText'),
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
         config = bui.app.config
 
@@ -872,7 +872,7 @@ class ManualGatherTab(GatherTab):
                 'name': addr,
             }
             config.commit()
-            builtinassets.audio.gun_cocking.play()
+            builtinassets.audio.gun_cocking.get().play()
             bui.screenmessage(
                 bui.Lstr(
                     resource='addedToFavoritesText', subs=[('${NAME}', addr)]
@@ -884,7 +884,7 @@ class ManualGatherTab(GatherTab):
                 bui.Lstr(resource='internal.invalidAddressErrorText'),
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
 
     def _host_lookup_result(
         self, resolved_address: str | None, port: int
@@ -894,7 +894,7 @@ class ManualGatherTab(GatherTab):
                 bui.Lstr(resource='internal.unableToResolveHostText'),
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
         else:
             # Store for later.
             config = bui.app.config
@@ -961,7 +961,7 @@ class ManualGatherTab(GatherTab):
         tscl = 0.85
         tspc = 25
 
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         bui.textwidget(
             parent=container,
             position=(c_width * 0.5 - 10, v2),

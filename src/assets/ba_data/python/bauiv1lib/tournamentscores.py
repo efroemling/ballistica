@@ -212,9 +212,9 @@ class TournamentScoresWindow(PopupWindow):
         # For the moment we only work if a single player-info is
         # present.
         if len(entry[2]) != 1:
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         AccountViewerWindow(
             account_id=entry[2][0].get('a', None),
             profile_id=entry[2][0].get('p', None),
@@ -232,5 +232,5 @@ class TournamentScoresWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         self._transition_out()

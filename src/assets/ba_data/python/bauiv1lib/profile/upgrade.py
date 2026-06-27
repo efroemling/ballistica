@@ -212,7 +212,7 @@ class ProfileUpgradeWindow(bui.Window):
             # tickets = plus.get_v1_account_ticket_count()
             tickets = classic.tickets
             if tickets < self._cost:
-                builtinassets.audio.error.play()
+                builtinassets.audio.error.get().play()
                 bui.screenmessage(
                     bui.Lstr(resource='notEnoughTicketsText'),
                     color=(1, 0, 0),
@@ -237,7 +237,7 @@ class ProfileUpgradeWindow(bui.Window):
                 bui.screenmessage(
                     bui.Lstr(resource='errorText'), color=(1, 0, 0)
                 )
-                builtinassets.audio.error.play()
+                builtinassets.audio.error.get().play()
                 return
             plus.add_v1_account_transaction(
                 {'type': 'UPGRADE_PROFILE', 'name': self._name}
@@ -246,7 +246,7 @@ class ProfileUpgradeWindow(bui.Window):
             self._status = 'upgrading'
             self._upgrade_start_time = time.time()
         else:
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
 
     def _update(self) -> None:
         plus = bui.app.plus
@@ -273,7 +273,7 @@ class ProfileUpgradeWindow(bui.Window):
                     ' original edit window gone'
                 )
                 return
-            builtinassets.audio.gun_cocking.play()
+            builtinassets.audio.gun_cocking.get().play()
             edit_profile_window.reload_window()
 
     def _cancel(self) -> None:
@@ -283,6 +283,6 @@ class ProfileUpgradeWindow(bui.Window):
             self._upgrade_start_time is not None
             and time.time() - self._upgrade_start_time < 10.0
         ):
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
         bui.containerwidget(edit=self._root_widget, transition='out_right')

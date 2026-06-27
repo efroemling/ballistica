@@ -171,7 +171,7 @@ class InventoryUIController(DocUIController):
             bui.screenmessage(
                 f'Invalid local-action "{action.name}".', color=(1, 0, 0)
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
 
     @override
     def restore_window_shared_state(
@@ -314,7 +314,7 @@ class InventoryUIController(DocUIController):
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.edit import EditProfileWindow
 
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
 
         plus = bui.app.plus
         assert plus is not None
@@ -332,7 +332,7 @@ class InventoryUIController(DocUIController):
                 ),
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         action.window.main_window_replace(
@@ -347,7 +347,7 @@ class InventoryUIController(DocUIController):
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.edit import EditProfileWindow
 
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
 
         profile = action.args.get('profile')
         assert isinstance(profile, str)

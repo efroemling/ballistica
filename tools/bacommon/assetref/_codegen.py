@@ -19,7 +19,7 @@ must be an identifier.
 """
 
 #: Reference type name emitted for each single-char asset kind code.
-_KIND_TYPES = {'t': 'TextureRef', 'm': 'MeshRef'}
+_KIND_TYPES = {'t': 'TextureRef', 'm': 'MeshRef', 's': 'SoundRef'}
 
 #: A nested name tree: a leaf maps a name to its kind code, a subdir maps a
 #: name to a nested tree (paths split on ``/``).

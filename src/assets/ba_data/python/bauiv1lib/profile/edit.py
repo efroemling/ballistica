@@ -448,7 +448,7 @@ class EditProfileWindow(
             size=(b_size_2, b_size_2),
             label='',
             color=(1, 1, 1),
-            mask_texture=builtinassets.textures.character_icon_mask,
+            mask_texture=builtinassets.textures.character_icon_mask.get(),
         )
         if not self._is_account_profile and not self._global:
             bui.containerwidget(
@@ -550,7 +550,7 @@ class EditProfileWindow(
         from bauiv1lib.confirm import ConfirmWindow
 
         if self._is_account_profile:
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             bui.screenmessage(
                 bui.Lstr(
                     resource='playerProfilesWindow.cantDeleteAccountProfileText'
@@ -560,7 +560,7 @@ class EditProfileWindow(
             return
 
         if self._existing_profile is None:
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             bui.screenmessage(
                 bui.Lstr(resource='nothingIsSelectedErrorText'), color=(1, 0, 0)
             )
@@ -596,7 +596,7 @@ class EditProfileWindow(
         )
 
         plus.run_v1_account_transactions()
-        stdassets.audio.shield_down.play()
+        stdassets.audio.shield_down.get().play()
 
         if self._on_profile_delete is not None:
             try:
@@ -652,7 +652,7 @@ class EditProfileWindow(
             bui.screenmessage(
                 'Unsaved changes found; you must save first.', color=(1, 0, 0)
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         plus = bui.app.plus
@@ -797,7 +797,7 @@ class EditProfileWindow(
         plus = bui.app.plus
         if plus is None:
             bui.screenmessage('This requires plus.', color=(1, 0, 0))
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return False
         if plus.accounts.primary is None:
             show_sign_in_prompt(origin_widget=origin_widget)
@@ -985,7 +985,7 @@ class EditProfileWindow(
 
         if not new_name:
             bui.screenmessage(bui.Lstr(resource='nameNotEmptyText'))
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return False
 
         # Make sure we're not renaming to another existing profile.
@@ -994,7 +994,7 @@ class EditProfileWindow(
             bui.screenmessage(
                 bui.Lstr(resource='editProfileWindow.profileAlreadyExistsText')
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return False
 
         if self._on_profile_save is not None:
@@ -1004,7 +1004,7 @@ class EditProfileWindow(
                 bui.balog.exception('Error in _on_profile_save cb.')
 
         if transition_out:
-            builtinassets.audio.gun_cocking.play()
+            builtinassets.audio.gun_cocking.get().play()
 
         # Delete old in case we're renaming.
         if self._existing_profile and self._existing_profile != new_name:

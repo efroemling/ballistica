@@ -46,23 +46,24 @@ class LocalConfig:
     sftp_dir: str
 
 
-def push_ipa(
+def _construct_ipa(
     root: pathlib.Path, modename: str, signing_config: str | None
-) -> None:
-    """Construct ios IPA and push it to staging server for device testing.
+) -> tuple[pathlib.Path, pathlib.Path]:
+    """Construct an iOS IPA, recycling the xcarchive across runs.
 
-    This takes some shortcuts to minimize turnaround time;
-    It doesn't recreate the ipa completely each run, uses rsync
-    for speedy pushes to the staging server, etc.
-    The use case for this is quick build iteration on a device
-    that is not physically near the build machine.
+    Returns an ``(ipa_path, built_app_path)`` pair. Shared by both the
+    staging-server push and the archive push.
+
+    This takes some shortcuts to minimize turnaround time; it doesn't
+    recreate the xcarchive completely each run, etc. The use case is
+    quick build iteration on a device that is not physically near the
+    build machine.
     """
     from efrotools.xcodebuild import project_build_path
 
-    # Load both the local and project config data.
+    # Load project config data.
     # FIXME: switch this to use dataclassio.
     cfg = Config(**getprojectconfig(root)['push_ipa_config'])
-    lcfg = LocalConfig(**getlocalconfig(root)['push_ipa_local_config'])
 
     if modename not in MODES:
         raise RuntimeError(f'invalid mode: "{modename}"')
@@ -96,7 +97,24 @@ def push_ipa(
         archivepath, exportoptionspath, ipa_dir_path, cfg, signing_config
     )
 
-    # And lastly sync said IPA up to our staging server.
+    return ipa_path, built_app_path
+
+
+def push_ipa(
+    root: pathlib.Path, modename: str, signing_config: str | None
+) -> None:
+    """Construct ios IPA and push it to staging server for device testing.
+
+    Uses rsync for speedy pushes to the staging server. See
+    :func:`push_ipa_to_archive` for the newer archive-based path.
+    """
+    # Load machine-specific config (staging-server destination).
+    # FIXME: switch this to use dataclassio.
+    lcfg = LocalConfig(**getlocalconfig(root)['push_ipa_local_config'])
+
+    ipa_path, _built_app_path = _construct_ipa(root, modename, signing_config)
+
+    # Sync the IPA up to our staging server.
     print('Pushing to staging server...')
     sys.stdout.flush()
     subprocess.run(
@@ -112,6 +130,70 @@ def push_ipa(
     )
 
     print('iOS Package Updated Successfully!')
+
+
+def push_ipa_to_archive(
+    root: pathlib.Path,
+    modename: str,
+    signing_config: str | None,
+    archive_id: str,
+) -> None:
+    """Construct an IPA and publish it as a new bamaster archive version.
+
+    Replaces the staging-server rsync with an upload into the archive
+    system (content-addressed GCS storage, via ``bacloud admin archive
+    publish``). The master server's Installs page serves the latest
+    version to iOS via a short-lived signed URL wrapped in an OTA
+    manifest. A small ``install_meta.json`` sidecar carrying bundle
+    metadata is published alongside the IPA so the manifest can be built
+    without re-parsing the binary.
+    """
+    import json
+    import shutil
+    import plistlib
+    import tempfile
+
+    ipa_path, built_app_path = _construct_ipa(root, modename, signing_config)
+
+    # Pull bundle metadata out of the freshly built app for the manifest.
+    with pathlib.Path(built_app_path, 'Info.plist').open('rb') as infile:
+        info = plistlib.load(infile)
+    meta = {
+        'bundle_id': info.get('CFBundleIdentifier', ''),
+        'bundle_version': info.get('CFBundleVersion', ''),
+        'bundle_short_version': info.get('CFBundleShortVersionString', ''),
+        'title': (
+            info.get('CFBundleDisplayName')
+            or info.get('CFBundleName')
+            or 'BallisticaKit'
+        ),
+    }
+
+    # Stage the IPA + sidecar in a clean dir and publish them together as
+    # one version. We omit the version arg so the archive system
+    # auto-assigns the next integer after the latest published version.
+    with tempfile.TemporaryDirectory() as tmpdir:
+        shutil.copy2(ipa_path, pathlib.Path(tmpdir, ipa_path.name))
+        with pathlib.Path(tmpdir, 'install_meta.json').open(
+            'w', encoding='utf-8'
+        ) as outfile:
+            json.dump(meta, outfile)
+
+        print(f'Publishing {archive_id} to archive...')
+        sys.stdout.flush()
+        subprocess.run(
+            [
+                str(pathlib.Path(root, 'tools', 'bacloud')),
+                'admin',
+                'archive',
+                'publish',
+                archive_id,
+                tmpdir,
+            ],
+            check=True,
+        )
+
+    print('iOS build published to archive successfully!')
 
 
 def _add_build_to_xcarchive(

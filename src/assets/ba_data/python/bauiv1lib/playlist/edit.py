@@ -302,7 +302,7 @@ class PlaylistEditWindow(bui.MainWindow):
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        builtinassets.audio.powerdown01.play()
+        builtinassets.audio.powerdown01.get().play()
         self.main_window_back()
 
     def _add(self) -> None:
@@ -343,16 +343,16 @@ class PlaylistEditWindow(bui.MainWindow):
             bui.screenmessage(
                 bui.Lstr(resource=f'{self._r}.cantSaveAlreadyExistsText')
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
         if not new_name:
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
         if not self._editcontroller.get_playlist():
             bui.screenmessage(
                 bui.Lstr(resource=f'{self._r}.cantSaveEmptyListText')
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         # We couldn't actually replace the default list anyway, but disallow
@@ -361,7 +361,7 @@ class PlaylistEditWindow(bui.MainWindow):
             bui.screenmessage(
                 bui.Lstr(resource=f'{self._r}.cantOverwriteDefaultText')
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         # If we had an old one, delete it.
@@ -386,12 +386,12 @@ class PlaylistEditWindow(bui.MainWindow):
         )
         plus.run_v1_account_transactions()
 
-        builtinassets.audio.gun_cocking.play()
+        builtinassets.audio.gun_cocking.get().play()
 
         self.main_window_back()
 
     def _save_press_with_sound(self) -> None:
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         self._save_press()
 
     def _select(self, index: int) -> None:
@@ -474,5 +474,5 @@ class PlaylistEditWindow(bui.MainWindow):
             index = len(playlist) - 1
         self._editcontroller.set_playlist(playlist)
         self._editcontroller.set_selected_index(index)
-        stdassets.audio.shield_down.play()
+        stdassets.audio.shield_down.get().play()
         self._refresh()

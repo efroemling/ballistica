@@ -187,7 +187,7 @@ class TeamNamesColorsWindow(PopupWindow):
                 bui.screenmessage(
                     bui.Lstr(resource='nameNotEmptyText'), color=(1, 0, 0)
                 )
-                builtinassets.audio.error.play()
+                builtinassets.audio.error.get().play()
                 return
             new_names.append(name)
 
@@ -222,7 +222,7 @@ class TeamNamesColorsWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         self._transition_out()
 
     def _on_cancel_press(self) -> None:

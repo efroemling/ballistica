@@ -95,7 +95,7 @@ class GameButton:
             texture=bui.gettexture(
                 campaign.getlevel(levelname).preview_texture_name
             ),
-            mask_texture=stdassets.textures.map_preview_mask,
+            mask_texture=stdassets.textures.map_preview_mask.get(),
         )
 
         translated = campaign.getlevel(levelname).displayname
@@ -180,7 +180,7 @@ class GameButton:
             position=(x - 8 + sclx * 0.5, y + scly * 0.5 - 20),
             size=(60, 60),
             opacity=0.0,
-            texture=stdassets.textures.lock,
+            texture=stdassets.textures.lock.get(),
         )
 
         # give a quasi-random update increment to spread the load..

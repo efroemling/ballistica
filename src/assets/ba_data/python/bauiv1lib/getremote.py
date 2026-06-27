@@ -47,7 +47,7 @@ class GetBSRemoteWindow(PopupWindow):
             parent=self.root_widget,
             position=(self._width * 0.5 - 110, self._height * 0.67 - 110),
             size=(220, 220),
-            texture=stdassets.textures.multiplayer_examples,
+            texture=stdassets.textures.multiplayer_examples.get(),
         )
         bui.textwidget(
             parent=self.root_widget,
@@ -78,5 +78,5 @@ class GetBSRemoteWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         self._transition_out()

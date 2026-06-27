@@ -152,7 +152,7 @@ class ColorPicker(PopupWindow):
     @override
     def on_popup_cancel(self) -> None:
         if not self._transitioning_out:
-            builtinassets.audio.swish.play()
+            builtinassets.audio.swish.get().play()
         self._transition_out()
 
 
@@ -212,7 +212,7 @@ class ColorPickerExact(PopupWindow):
             parent=self.root_widget,
             position=(width * 0.5 - 65 + 5, height - 95),
             size=(130, 115),
-            texture=stdassets.textures.clay_stroke,
+            texture=stdassets.textures.clay_stroke.get(),
             color=(1, 0, 0),
         )
         self._hex_textbox = bui.textwidget(
@@ -377,7 +377,7 @@ class ColorPickerExact(PopupWindow):
     @override
     def on_popup_cancel(self) -> None:
         if not self._transitioning_out:
-            builtinassets.audio.swish.play()
+            builtinassets.audio.swish.get().play()
         self._transition_out()
 
 

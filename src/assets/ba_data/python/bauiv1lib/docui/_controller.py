@@ -563,7 +563,7 @@ class DocUIController:
 
         # If locked, been and tell them to try again.
         if window.locked:
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             bui.screenmessage(
                 bui.Lstr(resource='pageRefreshingTryAgainText'), color=(1, 0, 0)
             )
@@ -586,7 +586,7 @@ class DocUIController:
         # Play error beeps on buttons with no actions assigned to let
         # the user know nothing is supposed to happen.
         if action is None:
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         action_type = action.get_type_id()
@@ -601,7 +601,7 @@ class DocUIController:
                 )
             else:
                 if action.default_sound:
-                    builtinassets.audio.swish.play()
+                    builtinassets.audio.swish.get().play()
                 window.main_window_replace(
                     lambda: self.create_window(
                         action.request,
@@ -626,7 +626,7 @@ class DocUIController:
             # Play default click sound only if this is coming from a
             # button.
             if widget is not None and action.default_sound:
-                builtinassets.audio.click01.play()
+                builtinassets.audio.click01.get().play()
 
             # Force a state save so if our UI gets rebuilt with the same
             # IDs we'll wind up with the same selection and whatnot.
@@ -648,11 +648,11 @@ class DocUIController:
                 if action.close_window:
                     # Always play close-window swish, even if we don't have
                     # a source button.
-                    builtinassets.audio.swish.play()
+                    builtinassets.audio.swish.get().play()
                 else:
                     # Only play click sound if this is coming from a button.
                     if widget is not None:
-                        builtinassets.audio.click01.play()
+                        builtinassets.audio.click01.get().play()
             if action.close_window:
                 window.main_window_back()
 
@@ -667,7 +667,7 @@ class DocUIController:
         elif action_type is dui.ActionTypeID.UNKNOWN:
             assert isinstance(action, dui.UnknownAction)
             bui.screenmessage('Unknown action.', color=(1, 0, 0))
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
         else:
             # Make sure we handle all options.
             assert_never(action_type)

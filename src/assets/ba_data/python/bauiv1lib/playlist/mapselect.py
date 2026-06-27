@@ -165,8 +165,10 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         if self._subcontainer is not None:
             self._subcontainer.delete()
 
-        mesh_opaque = stdassets.meshes.level_select_button_opaque
-        mesh_transparent = stdassets.meshes.level_select_button_transparent
+        mesh_opaque = stdassets.meshes.level_select_button_opaque.get()
+        mesh_transparent = (
+            stdassets.meshes.level_select_button_transparent.get()
+        )
 
         self._maps = []
         map_list = self._gametype.get_supported_maps(self._sessiontype)
@@ -205,7 +207,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             background=False,
         )
         index = 0
-        mask_texture = stdassets.textures.map_preview_mask
+        mask_texture = stdassets.textures.map_preview_mask.get()
         h_offs = 130 if len(self._maps) == 1 else 0
         for y in range(rows):
             for x in range(columns):

@@ -16,7 +16,7 @@ same ergonomics (``pkg.textures.zoe_icon``) work server-side where no real
 assets exist.
 """
 
-from bacommon.assetref._core import TextureRef, MeshRef
+from bacommon.assetref._core import TextureRef, MeshRef, SoundRef
 
 #: A node in a wrapper's kind-code tree: each key is one path segment; a
 #: ``dict`` value is a subdirectory and a ``str`` value is a leaf asset
@@ -41,7 +41,9 @@ class AssetRefDir:
         self._node = node
         self._prefix = prefix
 
-    def __getattr__(self, name: str) -> 'AssetRefDir | TextureRef | MeshRef':
+    def __getattr__(
+        self, name: str
+    ) -> 'AssetRefDir | TextureRef | MeshRef | SoundRef':
         try:
             child = self._node[name]
         except KeyError:
@@ -52,10 +54,14 @@ class AssetRefDir:
         return _make(self._apverid, path, child)
 
 
-def _make(apverid: str, path: str, kind: str) -> TextureRef | MeshRef:
+def _make(
+    apverid: str, path: str, kind: str
+) -> TextureRef | MeshRef | SoundRef:
     """Build a single leaf reference by its single-char kind code."""
     if kind == 't':
         return TextureRef(apverid, path)
     if kind == 'm':
         return MeshRef(apverid, path)
+    if kind == 's':
+        return SoundRef(apverid, path)
     raise ValueError(f'Invalid asset-ref kind {kind!r} for {apverid}:{path}.')

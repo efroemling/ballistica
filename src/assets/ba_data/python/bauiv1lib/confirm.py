@@ -178,7 +178,7 @@ class QuitWindow:
             ui.quit_window.delete()
             ui.quit_window = None
         if swish:
-            builtinassets.audio.swish.play()
+            builtinassets.audio.swish.get().play()
 
         # Generally Macs say Quit and other stuff says Exit
         quit_resource = (

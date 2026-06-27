@@ -305,7 +305,7 @@ class ClassicAppMode(AppMode):
                 color=(0, 1, 0),
             )
             if bui.asset_loads_allowed():
-                builtinassets.audio.cash_register.play()
+                builtinassets.audio.cash_register.get().play()
 
         else:
 
@@ -321,7 +321,7 @@ class ClassicAppMode(AppMode):
                 color=(0, 1, 0),
             )
             if bui.asset_loads_allowed():
-                builtinassets.audio.cash_register.play()
+                builtinassets.audio.cash_register.get().play()
 
     def on_engine_will_reset(self) -> None:
         """Called just before classic resets the engine.
@@ -699,7 +699,7 @@ class ClassicAppMode(AppMode):
         old_window = ui.get_main_window()
         if old_window is not None:
 
-            builtinassets.audio.swish.play()
+            builtinassets.audio.swish.get().play()
 
             classic = bui.app.classic
             assert classic is not None
@@ -857,7 +857,7 @@ class ClassicAppMode(AppMode):
         plus = bui.app.plus
         if plus is None:
             bui.screenmessage('This requires plus.', color=(1, 0, 0))
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return False
         if plus.accounts.primary is None:
             show_sign_in_prompt(origin_widget=origin_widget)
@@ -1005,13 +1005,13 @@ class ClassicAppMode(AppMode):
                 ' Open a menu or whatnot first.',
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         # Unintuitively, swish sounds come from buttons, not windows.
         # And dev-console buttons don't make sounds. So we need to
         # explicitly do so here.
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
 
         show_template_main_window()
 
@@ -1025,13 +1025,13 @@ class ClassicAppMode(AppMode):
                 ' Open a menu or whatnot first.',
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         # Unintuitively, swish sounds come from buttons, not windows.
         # And dev-console buttons don't make sounds. So we need to
         # explicitly do so here.
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
 
         show_test_doc_ui_window()
 
@@ -1045,9 +1045,9 @@ class ClassicAppMode(AppMode):
                 ' Open a menu or whatnot first.',
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
 
         show_test_doc_ui_v2_window()

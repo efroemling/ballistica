@@ -176,7 +176,7 @@ class HelpWindow(bui.MainWindow):
         if uiscale is bui.UIScale.SMALL:
             v -= inline_title_height
 
-        logo_tex = stdassets.textures.logo
+        logo_tex = stdassets.textures.logo.get()
         icon_buffer = 1.1
         header = (0.7, 1.0, 0.7, 1.0)
         header2 = (0.8, 0.8, 1.0, 1.0)
@@ -440,7 +440,7 @@ class HelpWindow(bui.MainWindow):
             label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
-            texture=stdassets.textures.button_punch,
+            texture=stdassets.textures.button_punch.get(),
             color=(1, 0.7, 0.3),
             selectable=False,
             enable_sound=False,
@@ -470,7 +470,7 @@ class HelpWindow(bui.MainWindow):
             label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
-            texture=stdassets.textures.button_bomb,
+            texture=stdassets.textures.button_bomb.get(),
             color=(1, 0.3, 0.3),
             selectable=False,
             enable_sound=False,
@@ -501,7 +501,7 @@ class HelpWindow(bui.MainWindow):
             label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
-            texture=stdassets.textures.button_pick_up,
+            texture=stdassets.textures.button_pick_up.get(),
             color=(0.5, 0.5, 1),
             selectable=False,
             enable_sound=False,
@@ -531,7 +531,7 @@ class HelpWindow(bui.MainWindow):
             label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
-            texture=stdassets.textures.button_jump,
+            texture=stdassets.textures.button_jump.get(),
             color=(0.4, 1, 0.4),
             selectable=False,
             enable_sound=False,
@@ -634,18 +634,24 @@ class HelpWindow(bui.MainWindow):
         t_big = 1.1
         t_small = 0.65
 
-        shadow_tex = builtinassets.textures.shadow_sharp
+        shadow_tex = builtinassets.textures.shadow_sharp.get()
 
         for reskey, tex in [
-            ('powerupPunch', stdassets.textures.powerup_punch),
-            ('powerupShield', stdassets.textures.powerup_shield),
-            ('powerupBomb', stdassets.textures.powerup_bomb),
-            ('powerupHealth', stdassets.textures.powerup_health),
-            ('powerupIceBombs', stdassets.textures.powerup_ice_bombs),
-            ('powerupImpactBombs', stdassets.textures.powerup_impact_bombs),
-            ('powerupStickyBombs', stdassets.textures.powerup_sticky_bombs),
-            ('powerupLandMines', stdassets.textures.powerup_land_mines),
-            ('powerupCurse', stdassets.textures.powerup_curse),
+            ('powerupPunch', stdassets.textures.powerup_punch.get()),
+            ('powerupShield', stdassets.textures.powerup_shield.get()),
+            ('powerupBomb', stdassets.textures.powerup_bomb.get()),
+            ('powerupHealth', stdassets.textures.powerup_health.get()),
+            ('powerupIceBombs', stdassets.textures.powerup_ice_bombs.get()),
+            (
+                'powerupImpactBombs',
+                stdassets.textures.powerup_impact_bombs.get(),
+            ),
+            (
+                'powerupStickyBombs',
+                stdassets.textures.powerup_sticky_bombs.get(),
+            ),
+            ('powerupLandMines', stdassets.textures.powerup_land_mines.get()),
+            ('powerupCurse', stdassets.textures.powerup_curse.get()),
         ]:
             name = bui.Lstr(resource=f'{self._r}.' + reskey + 'NameText')
             desc = bui.Lstr(resource=f'{self._r}.' + reskey + 'DescriptionText')

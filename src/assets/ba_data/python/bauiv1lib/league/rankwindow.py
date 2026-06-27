@@ -281,7 +281,7 @@ class LeagueRankWindow(bui.MainWindow):
                 ),
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
 
     def _on_activity_mult_press(self) -> None:
         from bauiv1lib import confirm
@@ -351,7 +351,7 @@ class LeagueRankWindow(bui.MainWindow):
                 data=info,
             )
         else:
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
 
     def _on_power_ranking_query_response(
         self, data: dict[str, Any] | None
@@ -480,7 +480,7 @@ class LeagueRankWindow(bui.MainWindow):
             id=f'{self.main_window_id_prefix}|ach',
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 80),
-            icon=stdassets.textures.achievements_icon,
+            icon=stdassets.textures.achievements_icon.get(),
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(self._on_achievements_press),
             up_widget=self._back_button,
@@ -511,7 +511,7 @@ class LeagueRankWindow(bui.MainWindow):
             id=f'{self.main_window_id_prefix}|trophies',
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 80),
-            icon=stdassets.textures.medal_silver,
+            icon=stdassets.textures.medal_silver.get(),
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(self._on_trophies_press),
             left_widget=self._back_button,
@@ -556,7 +556,7 @@ class LeagueRankWindow(bui.MainWindow):
                 id=f'{self.main_window_id_prefix}|amult',
                 position=(self._xoffs + h2 - 60, v2 + 10),
                 size=(200, 60),
-                icon=stdassets.textures.heart,
+                icon=stdassets.textures.heart.get(),
                 icon_color=(0.5, 0, 0.5),
                 label=bui.Lstr(resource='coopSelectWindow.activityText'),
                 autoselect=True,
@@ -590,7 +590,7 @@ class LeagueRankWindow(bui.MainWindow):
             id=f'{self.main_window_id_prefix}|uptodatebonus',
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 60),
-            icon=stdassets.textures.logo,
+            icon=stdassets.textures.logo.get(),
             icon_color=(0.3, 0, 0.3),
             label=bui.Lstr(resource='league.upToDateBonusText'),
             autoselect=True,
@@ -651,7 +651,7 @@ class LeagueRankWindow(bui.MainWindow):
             label='',
             position=(self._xoffs + h2 - 60, v2 - 100),
             color=(0.7, 0.55, 0.9),
-            texture=builtinassets.textures.button_square_wide,
+            texture=builtinassets.textures.button_square_wide.get(),
             opacity=0.3,
             size=(200, 80),
             autoselect=True,
@@ -687,7 +687,7 @@ class LeagueRankWindow(bui.MainWindow):
         self._president_star1 = bui.imagewidget(
             parent=w_parent,
             draw_controller=self._president_button,
-            texture=stdassets.textures.star,
+            texture=stdassets.textures.star.get(),
             color=(0.7, 0.55, 0.9),
             opacity=0.2,
             position=(self._xoffs + h2 - 60 + 5, v2 - 100 + 17),
@@ -696,7 +696,7 @@ class LeagueRankWindow(bui.MainWindow):
         self._president_star1 = bui.imagewidget(
             parent=w_parent,
             draw_controller=self._president_button,
-            texture=stdassets.textures.star,
+            texture=stdassets.textures.star.get(),
             color=(0.7, 0.55, 0.9),
             opacity=0.2,
             position=(self._xoffs + h2 - 60 + 200 - 5 - 32, v2 - 100 + 17),
@@ -873,7 +873,7 @@ class LeagueRankWindow(bui.MainWindow):
             bui.screenmessage(
                 bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         # Wait for connectivity if need be, then bring up a cloud based
@@ -898,7 +898,7 @@ class LeagueRankWindow(bui.MainWindow):
 
         our_login_id = plus.get_v1_account_public_login_id()
         if not self._can_do_more_button or our_login_id is None:
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             bui.screenmessage(
                 bui.Lstr(resource='unavailableText'), color=(1, 0, 0)
             )
@@ -1361,7 +1361,7 @@ class LeagueRankWindow(bui.MainWindow):
     ) -> None:
         from bauiv1lib.account.viewer import AccountViewerWindow
 
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         AccountViewerWindow(
             account_id=account_id, position=textwidget.get_screen_space_center()
         )

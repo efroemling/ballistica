@@ -14,13 +14,14 @@ per-kind roots (``textures``, ``meshes``) are driven at runtime by
 :class:`AssetRefDir` -- mirroring the client-side asset-package wrappers.
 """
 
-from bacommon.assetref._core import TextureRef, MeshRef
+from bacommon.assetref._core import TextureRef, MeshRef, SoundRef
 from bacommon.assetref._wrapper import AssetRefDir, AssetRefTree
 from bacommon.assetref._codegen import generate_asset_ref_wrapper_module
 
 __all__ = [
     'TextureRef',
     'MeshRef',
+    'SoundRef',
     'AssetRefDir',
     'AssetRefTree',
     'generate_asset_ref_wrapper_module',

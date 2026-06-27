@@ -51,3 +51,17 @@ class MeshRef:
 
     apverid: Annotated[str, IOAttrs('a')]
     name: Annotated[str, IOAttrs('n')]
+
+
+@ioprepped
+@dataclass
+class SoundRef:
+    """A language-independent reference to a sound in an asset-package.
+
+    ``name`` is the sound's logical path within the package (e.g.
+    ``audio/swish``). The engine resolves the qualified form
+    ``<apverid>:<name>``.
+    """
+
+    apverid: Annotated[str, IOAttrs('a')]
+    name: Annotated[str, IOAttrs('n')]

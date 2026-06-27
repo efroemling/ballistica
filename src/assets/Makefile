@@ -378,12 +378,15 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/batemplatefs/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_appsubsystem.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_assetref.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_assetwrap.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_automation.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_window.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/bamvpstrings.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/bamvpstrings2.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/builtinassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/stdassets.py \

@@ -564,7 +564,7 @@ class PublicGatherTab(GatherTab):
     ) -> None:
         assert self._container
         if playsound:
-            builtinassets.audio.click01.play()
+            builtinassets.audio.click01.get().play()
 
         # Reset our selection (prevents selecting something way down the
         # list if we switched away and came back).
@@ -1444,13 +1444,13 @@ class PublicGatherTab(GatherTab):
                 bui.Lstr(resource='internal.invalidNameErrorText'),
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
         bs.set_public_party_name(name)
         cfg = bui.app.config
         cfg['Public Party Name'] = name
         cfg.commit()
-        stdassets.audio.shield_up.play()
+        stdassets.audio.shield_up.get().play()
         bs.set_public_party_enabled(True)
 
         # In GUI builds we want to authenticate clients only when
@@ -1473,7 +1473,7 @@ class PublicGatherTab(GatherTab):
         # In GUI builds we want to authenticate clients only when
         # hosting public parties.
         bs.set_authenticate_clients(False)
-        stdassets.audio.shield_down.play()
+        stdassets.audio.shield_down.get().play()
         text = self._host_status_text
         if text:
             bui.textwidget(
@@ -1505,7 +1505,7 @@ class PublicGatherTab(GatherTab):
         if party.queue is not None:
             from bauiv1lib.partyqueue import PartyQueueWindow
 
-            builtinassets.audio.swish.play()
+            builtinassets.audio.swish.get().play()
             PartyQueueWindow(party.queue, party.address, party.port)
         else:
             address = party.address
