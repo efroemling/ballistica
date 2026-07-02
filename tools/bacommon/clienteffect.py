@@ -45,6 +45,12 @@ class Effect(IOMultiType[EffectTypeID]):
 
     @override
     @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        # Pin to the original default for back-compat with stored data.
+        return '_dciotype'
+
+    @override
+    @classmethod
     def get_type(cls, type_id: EffectTypeID) -> type[Effect]:
         """Return the subclass for each of our type-ids."""
         # pylint: disable=cyclic-import

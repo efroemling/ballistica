@@ -8,6 +8,7 @@
 
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/scene.h"
@@ -435,7 +436,7 @@ void TextNode::Draw(base::FrameDef* frame_def) {
 
     // left/rigth shift from tilting the device
     if (tilt_translate_ != 0.0f) {
-      Vector3f tilt = g_base->graphics->tilt();
+      Vector3f tilt = g_base->input->tilt();
       tx_tilt = -tilt.y * tilt_translate_;
       ty_tilt = tilt.x * tilt_translate_;
     }

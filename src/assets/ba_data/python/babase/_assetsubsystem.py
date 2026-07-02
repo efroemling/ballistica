@@ -26,16 +26,12 @@ selection (step 5) layer on top of this in later steps.
 import os
 import json
 import time
-import base64
-import hashlib
 import asyncio
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Annotated, override
-
-import urllib3
 
 import _babase
 from babase._appsubsystem import AppSubsystem
@@ -54,6 +50,7 @@ from bacommon.cloud import (
     ResolveAssetPackageResponse,
     AssetPackageResolveError,
 )
+from bacommon import assetcas
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -61,6 +58,7 @@ if TYPE_CHECKING:
     from bacommon import securedata
     from bacommon.cloud import AssetPackageBuildProgress
     from bacommon.locale import Locale
+    from bacommon.loctext import StringSelector
     from babase._accountv2 import AccountV2Handle
 
 #: Accumulated resolve output: ``(register_specs, manifest_pkgs, fell_back)``
@@ -74,16 +72,18 @@ _ResolveAccum = tuple[
 ]
 
 #: Max concurrent CAS-blob downloads, run on a dedicated thread pool (NOT the
-#: shared app threadpool). Kept deliberately low: each in-flight download
-#: buffers its whole blob in RAM, so peak download memory is roughly this times
-#: blob-size -- and the target is low-end Android (scarce RAM + an aggressive
-#: low-memory killer, weak CPUs, and often slow/flaky links where a handful of
-#: connections already saturate bandwidth). 4 hides per-request latency well
-#: while staying under the urllib3 pool's per-host maxsize, so connections get
-#: reused rather than churned. Raise later if real-world numbers show downloads
-#: are bandwidth-starved on good connections (and bump that maxsize to match if
-#: you go above it).
-_BLOB_DOWNLOAD_CONCURRENCY = 4
+#: shared app threadpool). Each in-flight download buffers its whole blob in
+#: RAM, so peak download memory is roughly this times blob-size -- a real
+#: constraint on low-end Android (scarce RAM + an aggressive low-memory killer).
+#: Set to 8 from measured numbers: a warm-node sweep showed near-linear speedup
+#: through 4 and a further ~20% at 8 (download throughput still climbing, not
+#: yet bandwidth-saturated), so 8 meaningfully cuts time-to-first-menu while
+#: staying under the urllib3 pool's per-host maxsize (10) so connections get
+#: reused rather than churned. Overridable via BA_BLOB_DOWNLOAD_CONCURRENCY for
+#: testing; if you raise it past 10, bump that maxsize in _env.py to match.
+_BLOB_DOWNLOAD_CONCURRENCY = int(
+    os.environ.get('BA_BLOB_DOWNLOAD_CONCURRENCY', '8')
+)
 
 #: Per-request timeout for individual CAS-blob downloads. The shared
 #: urllib3 pool's default total timeout (10s) is sized for small API
@@ -129,12 +129,16 @@ _GC_BUSY_TIMEOUT_SECONDS = 2.0
 #: Number of single-level CAS shard dirs (first 2 hex chars of a hash).
 _CAS_SHARD_COUNT = 256
 
-#: The canonical asset-package buckets, in registration order.
+#: The canonical asset-package buckets, in registration order. A bucket is
+#: a delivery-variation coordinate (everything that varies together in how
+#: it's delivered), not an asset-kind namespace -- so e.g. cube maps ride
+#: 'textures' (same profile/render_space/tier dimensions as 2D textures)
+#: and collision meshes ride 'constant'. See the bucketing-model rules in
+#: the asset-packages design doc.
 _BUCKETS = (
     'constant',
     'language',
     'textures',
-    'cube_map_textures',
     'audio',
     'meshes',
 )
@@ -147,8 +151,8 @@ _BUCKETS = (
 _BUCKET_FALLBACKS: dict[str, str | None] = {
     'constant': None,  # No flavor dimension; 'constant' is always present.
     'language': 'language/eng',
+    # Serves cube maps too -- they share the textures bucket (decision #24).
     'textures': 'textures/fallback_v1.gamma.regular',
-    'cube_map_textures': 'cube_map_textures/fallback_v1.gamma.regular',
     # vorbis_v1 is audio's only real profile (decision #25), so desired
     # == fallback for GUI builds today; this entry matters only if a
     # non-bundled audio dimension (e.g. an ultra tier) appears later.
@@ -327,8 +331,15 @@ class ResolveProgress:
     bytes_total: int = 0
 
 
-#: Min seconds between throttled progress updates.
-_PROGRESS_UPDATE_INTERVAL = 1.5
+#: Min seconds between throttled progress updates. The resolve emits one
+#: event per blob / build-unit completed (see :meth:`_emit_progress`); this
+#: caps how often those reach the dialog. Kept low (20/sec) so the meter
+#: advances smoothly through a many-item resolve -- a ~500-blob download
+#: otherwise batches into only a few visible jumps -- while still coalescing
+#: a burst of fast-completing tiny blobs into at most one text-mesh rebuild
+#: per tick. (Phase/package changes and the final caught-up frame bypass
+#: the throttle entirely, so the bar still reaches 100%.)
+_PROGRESS_UPDATE_INTERVAL = 0.05
 
 #: Seconds between Tier-1 resolve polls while the server reports it's
 #: still building the requested flavors.
@@ -600,6 +611,10 @@ class AssetSubsystem(AppSubsystem):
         are single-in-flight, so there's no concurrency on this attribute.
         """
         if self._download_pool is None:
+            logger.info(
+                'Creating blob-download pool (%d workers).',
+                _BLOB_DOWNLOAD_CONCURRENCY,
+            )
             self._download_pool = ThreadPoolExecutor(
                 max_workers=_BLOB_DOWNLOAD_CONCURRENCY,
                 thread_name_prefix='baassetdl',
@@ -632,9 +647,7 @@ class AssetSubsystem(AppSubsystem):
 
     def _writable_blob_path(self, filehash: str) -> str:
         """Path a CAS blob would occupy in the writable root."""
-        return os.path.join(
-            self._writable_assets_root, filehash[:2], filehash[2:]
-        )
+        return assetcas.cas_blob_path(self._writable_assets_root, filehash)
 
     def _locate_blob(self, filehash: str) -> str | None:
         """Path of a CAS blob if present (writable then bundle), else None.
@@ -703,15 +716,10 @@ class AssetSubsystem(AppSubsystem):
         return {
             'constant': 'constant',
             'language': f'language/{language.value}',
+            # Cube maps share this bucket -- same profile/render_space/tier
+            # dimensions as 2D textures (decision #24).
             'textures': (
                 f'textures/{self._texture_profile}'
-                f'.{self._render_space}'
-                f'.{self._texture_tier}'
-            ),
-            # Cube maps ride the same dimensions as 2D textures in
-            # their own bucket (decision #24).
-            'cube_map_textures': (
-                f'cube_map_textures/{self._texture_profile}'
                 f'.{self._render_space}'
                 f'.{self._texture_tier}'
             ),
@@ -736,9 +744,12 @@ class AssetSubsystem(AppSubsystem):
         is exact-or-fail.
         """
         # pylint: disable=cyclic-import
-        from babase._asset_packages import loaded_asset_package_apverids
+        # Builtin-only set on purpose: a runtime-resolved non-builtin
+        # package is also "loaded" (its strings merge) but is NOT
+        # fallback-eligible -- it has no bundled flavor on disk.
+        from babase._asset_packages import builtin_asset_package_apverids
 
-        return apverid in loaded_asset_package_apverids()
+        return apverid in builtin_asset_package_apverids()
 
     # ---------------------------------------------------------------------
     # Public API.
@@ -939,6 +950,51 @@ class AssetSubsystem(AppSubsystem):
         )
         return ResolveResult(apverids=list(apverids), fell_back=fell_back)
 
+    def get_package_strings(
+        self, apverid: str, locale: Locale
+    ) -> dict[str, 'str | StringSelector']:
+        """Per-locale language-string values for an already-resolved package.
+
+        Returns ``{logical-name: value}`` (a plain ``str`` or a
+        :class:`~bacommon.loctext.StringSelector`) read from the package's
+        resolved ``language/<locale>`` blob -- the Python side of what the
+        native ``ReloadLanguage`` consumes, for the language-agnostic
+        (``Lstr``) doc-ui decode path. ``locale`` must be the one the package
+        was :meth:`resolve`\\ d for (the coord is ``language/<locale.value>``,
+        matching the ``_desired_coords`` bucket map).
+
+        Reads local blobs only (no network); does blocking file IO, so call
+        it off the logic thread. Missing/absent data fails soft -- an empty
+        map -- leaving the caller's decode to surface per-string sentinels.
+        """
+        # Deferred: keep bacommon.langstr out of babase's module-load graph.
+        from bacommon.langstr import parse_language_blob
+
+        coord = f'language/{locale.value}'
+
+        # The language flavor-manifest hash: downloaded packages live in the
+        # cache manifest, builtin ones in the bundle manifest.
+        cached = self._load_manifest().packages.get(apverid)
+        fm_hash = (
+            cached.flavor_manifests.get(coord) if cached is not None else None
+        )
+        if fm_hash is None:
+            fm_hash = self._read_bundle_manifest().get(apverid, {}).get(coord)
+        if fm_hash is None or self._locate_blob(fm_hash) is None:
+            return {}
+
+        # The blob lives at logical path 'language.json' part 'j' (the same
+        # one native ReloadLanguage looks up).
+        parts = self._read_entries(fm_hash).get('language.json')
+        blob_hash = parts.get('j') if parts else None
+        if blob_hash is None:
+            return {}
+        path = self._locate_blob(blob_hash)
+        if path is None:
+            return {}
+        with open(path, 'rb') as infile:
+            return parse_language_blob(infile.read().decode())
+
     @staticmethod
     def _reload_language() -> None:
         """(Re)build the native language string table from the registered
@@ -1006,6 +1062,13 @@ class AssetSubsystem(AppSubsystem):
         # Pin everything we just told the engine about — never retracted
         # this process lifetime (GC-/cap-immune).
         self._pin(manifest_pkgs)
+        # Record these as loaded so _reload_language (next line) merges any
+        # newly-resolved package's strings into the native table -- and a
+        # later locale switch re-resolves them. Builtins are skipped.
+        # pylint: disable-next=cyclic-import
+        from babase._asset_packages import register_resolved_apverids
+
+        register_resolved_apverids(apverids)
         self._reload_language()
         await self._run_in_pool(self._commit_manifest, manifest_pkgs, now)
 
@@ -1360,6 +1423,9 @@ class AssetSubsystem(AppSubsystem):
             ):
                 fm_writes[flavor_manifest.hash] = flavor_manifest.data
             parsed = json.loads(flavor_manifest.data)
+            # The manifest carries only canonical content identity (hash +
+            # size); a blob's transfer encoding is negotiated per /casblob
+            # download (see _acquire_data_blob), not recorded here.
             for info in parsed['e'].values():
                 for comp in info.values():
                     data_needed[comp['h']] = comp['s']
@@ -1411,8 +1477,7 @@ class AssetSubsystem(AppSubsystem):
                         self._acquire_data_blob,
                         base_url,
                         token_header,
-                        h,
-                        s,
+                        (h, s),
                         executor=self._download_executor(),
                     )
                 except Exception as exc:
@@ -1635,16 +1700,8 @@ class AssetSubsystem(AppSubsystem):
 
     @staticmethod
     def _encode_token(token: securedata.Archive) -> str:
-        """Encode a capability token for the ``X-Asset-Token`` header.
-
-        base64-urlsafe of the Archive's canonical JSON (HTTP headers don't
-        carry raw JSON cleanly); mirrors the streamcall token encoding.
-        """
-        return (
-            base64.urlsafe_b64encode(dataclass_to_json(token).encode())
-            .rstrip(b'=')
-            .decode('ascii')
-        )
+        """Encode a capability token for the ``X-Asset-Token`` header."""
+        return assetcas.encode_asset_token(token)
 
     # ---------------------------------------------------------------------
     # CAS blob IO (off-thread; blocking).
@@ -1660,73 +1717,51 @@ class AssetSubsystem(AppSubsystem):
         roots = [self._writable_assets_root]
         if self._reuse_bundle:
             roots.append(self._bundle_assets_root)
-        for root in roots:
-            path = os.path.join(root, filehash[:2], filehash[2:])
-            try:
-                st = os.stat(path)
-            except OSError:
-                continue
-            if st.st_size == size:
-                return True
-            # Present but wrong size in this root; treat as absent.
-        return False
+        return assetcas.blob_present(roots, filehash, size)
 
     def _acquire_data_blob(
-        self, base_url: str, token_header: str, filehash: str, size: int
+        self,
+        base_url: str,
+        token_header: str,
+        blob: tuple[str, int],
     ) -> None:
         """Fetch one data blob from the node and atomically write it.
 
-        ``GET {base_url}/casblob/{hash}?size={size}`` with the
-        capability token; the bytes are verified + written by the shared
-        atomic writer. ``base_url``'s scheme mirrors the transport
-        session's security (see :meth:`_node_base_url`) — integrity is
-        guaranteed by the CAS sha256 check in :meth:`_cas_write` either
-        way. Off-thread; blocking.
+        ``blob`` is ``(canonical-hash, canonical-size)``. Delegates to the
+        shared :func:`bacommon.assetcas.download_cas_blob`, which
+        advertises the encodings we can decode, decodes per the encoding
+        the node reports it served (``X-Cas-Compression``), then
+        sha256-verifies + atomically writes the canonical bytes.
+        ``base_url``'s scheme mirrors the transport session's security
+        (see :meth:`_node_base_url`); integrity is guaranteed by the CAS
+        hash check either way. The local cache always stores uncompressed
+        blobs. Off-thread; blocking.
         """
-        pool = _babase.app.net.urllib3pool
-        url = f'{base_url}/casblob/{filehash}?size={size}'
-        response = pool.request(
-            'GET',
-            url,
-            headers={'X-Asset-Token': token_header},
-            timeout=urllib3.util.Timeout(total=_BLOB_DOWNLOAD_TIMEOUT_SECONDS),
-        )
-        if response.status != 200:
-            raise AssetResolveError(
-                f'casblob GET for {filehash} failed: HTTP {response.status}.'
+        filehash, size = blob
+        try:
+            assetcas.download_cas_blob(
+                _babase.app.net.urllib3pool,
+                base_url,
+                filehash,
+                size,
+                token_header=token_header,
+                dest_root=self._writable_assets_root,
+                timeout_seconds=_BLOB_DOWNLOAD_TIMEOUT_SECONDS,
             )
-        self._cas_write(filehash, response.data)
+        except assetcas.CasDownloadError as exc:
+            raise AssetResolveError(str(exc)) from exc
 
     def _cas_write(self, filehash: str, data: bytes) -> None:
         """Atomically write a CAS blob into the writable root.
 
-        sha256-verify → temp in the destination dir → ``fsync`` →
-        ``os.replace`` (atomic on the same filesystem). A file at its CAS
-        path is therefore always whole-and-correct (the "exists ⇒ intact"
-        contract): a crash mid-write leaves only a temp file, never a
-        partial blob at the final path. Off-thread; blocking.
+        Delegates to the shared :func:`bacommon.assetcas.cas_write`
+        (sha256-verify, temp + ``fsync`` + ``os.replace``). Off-thread;
+        blocking.
         """
-        actual = hashlib.sha256(data).hexdigest()
-        if actual != filehash:
-            raise AssetResolveError(
-                f'CAS write hash mismatch for {filehash}: got {actual}.'
-            )
-        dest = self._writable_blob_path(filehash)
-        destdir = os.path.dirname(dest)
-        os.makedirs(destdir, exist_ok=True)
-        fd, tmp = tempfile.mkstemp(dir=destdir, prefix='.tmp_')
         try:
-            with os.fdopen(fd, 'wb') as outfile:
-                outfile.write(data)
-                outfile.flush()
-                os.fsync(outfile.fileno())
-            os.replace(tmp, dest)
-        except BaseException:
-            try:
-                os.unlink(tmp)
-            except OSError:
-                pass
-            raise
+            assetcas.cas_write(self._writable_assets_root, filehash, data)
+        except assetcas.CasDownloadError as exc:
+            raise AssetResolveError(str(exc)) from exc
 
     # ---------------------------------------------------------------------
     # Cache manifest IO (off-thread; blocking).

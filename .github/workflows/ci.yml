@@ -14,7 +14,7 @@ jobs:
   # we can always add an explicit mac job later if it seems worthwhile.
 
   check_linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v6
       - name: Setup build env
@@ -32,7 +32,7 @@ jobs:
 
   # Compile a server binary and run some tests.
   build_and_test_linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v6
       - name: Setup build env
@@ -68,7 +68,7 @@ jobs:
   # Make a copy of the template feature-set and build with it included.
   # Also take the opportunity to test a modular build (we did monolithic above).
   feature_set_copy_test_linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@v6
       - name: Setup build env
@@ -90,12 +90,7 @@ jobs:
   # significantly between windows and linux/apple. We also are able to
   # build our windows binary.
   build_and_test_windows:
-    # We need an image with Visual Studio 2026. The plain 'windows-2025'
-    # label is migrating to VS2026 during June 8-15 2026; this explicit
-    # label is guaranteed VS2026 and becomes an alias of 'windows-2025'
-    # once that migration completes (at which point we can switch to the
-    # plain label).
-    runs-on: windows-2025-vs2026
+    runs-on: windows-2025
     steps:
       - uses: actions/checkout@v6
       - name: Set up Python

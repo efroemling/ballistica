@@ -22,19 +22,21 @@ const float kDialogWidthFraction = 2.0f / 3.0f;
 /// (panel, text, bar, button, margins).
 const float kDialogScale = 0.8f;
 
-/// Fixed message-area height as a fraction of the dialog width. Sized to
-/// comfortably hold ~4 lines; stays constant regardless of whether a progress
-/// bar or button is present (the dialog's overall height grows instead).
-const float kMessageAreaHeightFraction = 0.185f;
+/// Target height of one line of TITLE text, as a fraction of the dialog width.
+/// The title is rendered at exactly this scale (shrinking only to fit the
+/// bounds), and its area is sized to a single line of it. Tuned to reproduce
+/// the previous look (the title filled a ~6%-of-width band).
+const float kTitleLineHeightFraction = 0.06f;
 
-/// Shrink message text a few percent below a perfect fit so it never crowds
-/// the message-area edges (leaves a tiny buffer; with top-alignment that
-/// buffer lands at the bottom).
-const float kMessageScaleBuffer = 0.95f;
+/// Body (message) text is rendered at this fraction of the title's scale, so
+/// it reads a touch smaller than the title rather than ballooning to fill its
+/// area as it used to.
+const float kMessageScaleFactor = 0.8f;
 
-/// Render the title a bit smaller than its area would allow, for a less
-/// crowded look. (1.0 == fill the reserved title height.)
-const float kTitleScaleFactor = 1.0f;
+/// The message area is sized to hold this many lines of body text at the
+/// target scale. A shorter message simply leaves empty space below it (the
+/// text is top-aligned); a longer one is scaled down to fit.
+const float kMessageAreaLines = 3.0f;
 
 /// How long the button shows its pressed glow after a key/controller
 /// activation (which is instantaneous, unlike a held mouse press).
@@ -170,13 +172,25 @@ void SimpleDialog::Draw(FrameDef* frame_def) {
   bool draw_bounds_now = kSimpleDialogShowBounds
                          && std::fmod(frame_def->display_time(), 2.0) >= 1.0;
 
-  // Vertical metrics, all absolute (derived from the fixed width). The message
-  // area is a FIXED height; everything else just shifts the total.
+  // Fixed target text scales. Rather than scaling each text block to fill a
+  // fixed area (which made a short message balloon), we fix the scales up front
+  // and derive the text areas from them. The single-line height comes from a
+  // one-char measurement -- GetStringHeight is line-count * row-height, so any
+  // single-line string yields exactly one line's height. The per-string scales
+  // computed at draw time below only ever shrink from these to fit.
+  float line_height =
+      std::max(0.0001f, g_base->text_graphics->GetStringHeight("X"));
+  float title_scale = width * kTitleLineHeightFraction / line_height;
+  float message_scale = title_scale * kMessageScaleFactor;
+
+  // Vertical metrics, all absolute. Most derive from the fixed width; the two
+  // text areas instead take their height from the scales above -- one line for
+  // the title, kMessageAreaLines for the message.
   float margin = width * 0.025f;
   float gap = width * 0.02f;
-  float title_h = width * 0.06f;
+  float title_h = line_height * title_scale;
   float bar_h = width * 0.04f;
-  float message_h = width * kMessageAreaHeightFraction;
+  float message_h = line_height * message_scale * kMessageAreaLines;
   float button_h = width * 0.07f;
   float button_w = button_h * 3.0f;
 
@@ -222,19 +236,16 @@ void SimpleDialog::Draw(FrameDef* frame_def) {
     DrawBoundsRect_(frame_def, cx, title_cy, title_area_width, title_h,
                     kSimpleDialogZDepth + 0.002f);
   }
-  // Title text: fill the area height, then clamp the scale down so a long
-  // string fits within the area width (à la ButtonWidget).
+  // Title text: render at the fixed title scale, shrinking only to fit the
+  // area's width (or its one-line height, for a multi-line title).
   if (!title_.empty()) {
     const std::string& title = title_text_group_.text();
     float string_width =
         std::max(0.0001f, g_base->text_graphics->GetStringWidth(title));
     float string_height =
         std::max(0.0001f, g_base->text_graphics->GetStringHeight(title));
-    float text_scale = title_h / string_height;
-    if (string_width * text_scale > title_area_width) {
-      text_scale = title_area_width / string_width;
-    }
-    text_scale *= kTitleScaleFactor;
+    float text_scale = std::min({title_scale, title_area_width / string_width,
+                                 title_h / string_height});
     SimpleComponent c(frame_def->overlay_front_pass());
     c.SetTransparent(true);
     c.SetFlatness(1.0f);
@@ -296,8 +307,8 @@ void SimpleDialog::Draw(FrameDef* frame_def) {
     }
   }
 
-  // Message text-area: a fixed-height region (top-aligned multi-line text that
-  // scales to fit both dimensions, shrunk a hair for a bottom buffer).
+  // Message text-area: top-aligned multi-line text rendered at the fixed
+  // message scale, shrinking only to fit the area's width or height.
   y -= gap;
   float message_top = y;
   float message_cy = y - message_h * 0.5f;
@@ -314,8 +325,8 @@ void SimpleDialog::Draw(FrameDef* frame_def) {
     float string_height =
         std::max(0.0001f, g_base->text_graphics->GetStringHeight(message));
     float text_scale =
-        std::min(message_area_width / string_width, message_h / string_height)
-        * kMessageScaleBuffer;
+        std::min({message_scale, message_area_width / string_width,
+                  message_h / string_height});
     // Top-align: the text-group is centered on its draw point
     // (VAlign::kCenter), so drop the draw point by half the scaled block
     // height to pin the block's top to the area top.

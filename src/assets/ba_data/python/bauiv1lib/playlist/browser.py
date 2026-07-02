@@ -476,9 +476,11 @@ class PlaylistBrowserWindow(bui.MainWindow):
         index = 0
         appconfig = bui.app.config
 
-        mesh_opaque = stdassets.meshes.level_select_button_opaque
-        mesh_transparent = stdassets.meshes.level_select_button_transparent
-        mask_tex = stdassets.textures.map_preview_mask
+        mesh_opaque = stdassets.meshes.level_select_button_opaque.get()
+        mesh_transparent = (
+            stdassets.meshes.level_select_button_transparent.get()
+        )
+        mask_tex = stdassets.textures.map_preview_mask.get()
 
         # h_offs = 225 if count == 1 else 115 if count == 2 else 0
         h_offs = 2
@@ -686,7 +688,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                                         parent=self._subcontainer,
                                         size=(scl * 100.0, scl * 100.0),
                                         position=(h + scl * 75, v + scl * 10),
-                                        texture=stdassets.textures.lock,
+                                        texture=stdassets.textures.lock.get(),
                                         draw_controller=btn,
                                     )
                         if v is not None:

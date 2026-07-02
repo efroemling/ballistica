@@ -254,7 +254,7 @@ class AchievementsWindow(bui.MainWindow):
                     ),
                     size=(28, 28),
                     color=(2, 1.4, 0),
-                    texture=stdassets.textures.achievement_outline,
+                    texture=stdassets.textures.achievement_outline.get(),
                 )
             bui.textwidget(
                 parent=self._subcontainer,

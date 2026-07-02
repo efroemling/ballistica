@@ -178,28 +178,28 @@ class ConfigKeyboardWindow(bui.MainWindow):
             pos=(h_offs, v + 0.95 * dist),
             color=d_color,
             button='buttonUp',
-            texture=stdassets.textures.up_button,
+            texture=stdassets.textures.up_button.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs - 1.2 * dist, v),
             color=d_color,
             button='buttonLeft',
-            texture=stdassets.textures.left_button,
+            texture=stdassets.textures.left_button.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs + 1.2 * dist, v),
             color=d_color,
             button='buttonRight',
-            texture=stdassets.textures.right_button,
+            texture=stdassets.textures.right_button.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs, v - 0.95 * dist),
             color=d_color,
             button='buttonDown',
-            texture=stdassets.textures.down_button,
+            texture=stdassets.textures.down_button.get(),
             scale=1.0,
         )
 
@@ -208,7 +208,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
                 pos=(self._width * 0.5, v + 0.1 * dist),
                 color=(0.4, 0.4, 0.6),
                 button='buttonStart',
-                texture=builtinassets.textures.start_button,
+                texture=builtinassets.textures.start_button.get(),
                 scale=0.8,
             )
 
@@ -218,28 +218,28 @@ class ConfigKeyboardWindow(bui.MainWindow):
             pos=(h_offs, v + 0.95 * dist),
             color=(0.6, 0.4, 0.8),
             button='buttonPickUp',
-            texture=stdassets.textures.button_pick_up,
+            texture=stdassets.textures.button_pick_up.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs - 1.2 * dist, v),
             color=(0.7, 0.5, 0.1),
             button='buttonPunch',
-            texture=stdassets.textures.button_punch,
+            texture=stdassets.textures.button_punch.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs + 1.2 * dist, v),
             color=(0.5, 0.2, 0.1),
             button='buttonBomb',
-            texture=stdassets.textures.button_bomb,
+            texture=stdassets.textures.button_bomb.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs, v - 0.95 * dist),
             color=(0.2, 0.5, 0.2),
             button='buttonJump',
-            texture=stdassets.textures.button_jump,
+            texture=stdassets.textures.button_jump.get(),
             scale=1.0,
         )
 
@@ -341,7 +341,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
         self._settings = {}
         self._get_config_mapping(default=True)
         self._rebuild_ui(is_reset=True)
-        builtinassets.audio.gun_cocking.play()
+        builtinassets.audio.gun_cocking.get().play()
 
     def _do_more(self) -> None:
         """Show a burger menu with extra settings."""
@@ -388,7 +388,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
             return
 
         assert bui.app.classic is not None
-        builtinassets.audio.gun_cocking.play()
+        builtinassets.audio.gun_cocking.get().play()
 
         # There's a chance the device disappeared; handle that
         # gracefully.
@@ -484,7 +484,7 @@ class AwaitKeyboardInputWindow(bui.Window):
         if event['type'] == 'BUTTONDOWN':
             bname = event['input_device'].get_button_name(event['button'])
             bui.textwidget(edit=self._capture_key_ui, text=bname)
-            builtinassets.audio.gun_cocking.play()
+            builtinassets.audio.gun_cocking.get().play()
             self._die()
 
     def _decrement(self) -> None:

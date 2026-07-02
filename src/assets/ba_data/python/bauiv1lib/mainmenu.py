@@ -116,7 +116,7 @@ class MainMenuWindow(bui.MainWindow):
                         try:
                             from bauiv1lib.getremote import GetBSRemoteWindow
 
-                            builtinassets.audio.swish.play()
+                            builtinassets.audio.swish.get().play()
                             GetBSRemoteWindow()
                         except Exception:
                             logging.exception(
@@ -340,7 +340,7 @@ class MainMenuWindow(bui.MainWindow):
                 + 0.65 * side_button_height * side_button_scale
                 - 0.5 * icon_size,
             ),
-            texture=builtinassets.textures.users_button,
+            texture=builtinassets.textures.users_button.get(),
         )
         thistdelay = self._tdelay + td1 * self._t_delay_inc
 
@@ -437,7 +437,7 @@ class MainMenuWindow(bui.MainWindow):
                 + 0.65 * side_button_height * side_button_scale
                 - 0.5 * icon_size,
             ),
-            texture=stdassets.textures.tv,
+            texture=stdassets.textures.tv.get(),
         )
 
         # Credits button.

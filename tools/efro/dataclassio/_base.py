@@ -168,13 +168,14 @@ class IOMultiType[EnumT: Enum]:
     def get_type_id_storage_name(cls) -> str:
         """Return the key used to store type id in serialized data.
 
-        The default is an obscure value so that it does not conflict
-        with members of individual type attrs, but in some cases one
-        might prefer to serialize it to something simpler like 'type' by
-        overriding this call. One just needs to make sure that no
-        encompassed types serialize anything to 'type' themself.
+        The default is a short obscure value so that it is unlikely to
+        conflict with members of individual type attrs, but in some
+        cases one might prefer to serialize it to something simpler like
+        'type' by overriding this call. One just needs to make sure that
+        no encompassed types serialize anything to that same name
+        themself (dataclassio will error if they do).
         """
-        return '_dciotype'
+        return '_t'
 
     # NOTE: Currently (Jan 2025) mypy complains if overrides annotate
     # return type of 'Self | None'. Substituting their own explicit type

@@ -30,18 +30,16 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
         high_quality_(high_quality_in),
         msaa_(msaa_in),
         alpha_(alpha_in) {
-    // Desktop stuff is always high-quality.
-#if BA_PLATFORM_MACOS || BA_PLATFORM_LINUX || BA_PLATFORM_WINDOWS
-    high_quality_ = true;
-#endif
-
-    // Things are finally getting to the point where we can default to
-    // desktop quality on some mobile stuff.
-#if BA_PLATFORM_ANDROID
-    if (renderer_->is_tegra_k1_) {
+    // Anything not flagged as a low-end device gets full-quality (8-bit)
+    // buffers. low_end_device_ is only ever true on Android (set Java-side
+    // from GLES version + RAM); desktop/iOS are always false and so get
+    // promoted unconditionally here. On a low-end device we instead honor
+    // the per-buffer high_quality arg, letting big buffers (camera/backing)
+    // drop to 16-bit while banding-sensitive ones (light/shadow) stay
+    // 8-bit. See docs/initiatives/low-end-device-tiering.md.
+    if (!renderer_->low_end_device_) {
       high_quality_ = true;
     }
-#endif
 
     Load();
   }
@@ -109,10 +107,7 @@ class RendererGL::FramebufferObjectGL : public Framebuffer {
     } else {
       // Regular renderbuffer.
       assert(!alpha_);  // fixme
-#if BA_PLATFORM_IOS_TVOS
-      GLenum format =
-          GL_RGB565;  // FIXME; need to pull ES3 headers in for GL_RGB8
-#elif BA_PLATFORM_ANDROID
+#if BA_PLATFORM_IOS_TVOS || BA_PLATFORM_ANDROID
       GLenum format = do_high_quality ? GL_RGB8 : GL_RGB565;
 #else
       GLenum format = GL_RGB8;

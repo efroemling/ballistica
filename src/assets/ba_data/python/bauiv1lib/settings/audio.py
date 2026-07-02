@@ -206,7 +206,7 @@ class AudioSettingsWindow(bui.MainWindow):
         # We require disk access for soundtracks; request it if we don't
         # have it.
         if not bui.have_permission(bui.Permission.STORAGE):
-            builtinassets.audio.ding.play()
+            builtinassets.audio.ding.get().play()
             bui.screenmessage(
                 bui.Lstr(resource='storagePermissionAccessText'),
                 color=(0.5, 1, 0.5),

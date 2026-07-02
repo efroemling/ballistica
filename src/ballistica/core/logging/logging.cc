@@ -23,7 +23,8 @@ void Logging::EmitLog(std::string_view name, LogLevel level, double timestamp,
   if (g_base_soft) {
     if (name == "stdout" || name == "stderr") {
       // Print stdout/stderr entries with no extra info.
-      g_base_soft->PushDevConsolePrintCall(msg, 1.0f, kVector4f1);
+      g_base_soft->PushDevConsolePrintCall(
+          {{std::string(msg), 1.0f, kVector4f1}});
     } else {
       auto elt{g_core->ba_env_launch_timestamp()};
 
@@ -52,12 +53,16 @@ void Logging::EmitLog(std::string_view name, LogLevel level, double timestamp,
 
       snprintf(prestr, sizeof(prestr), "%.3f  %.*s", rel_time,
                static_cast<int>(name.size()), name.data());
-      g_base_soft->PushDevConsolePrintCall("", 0.3f, kVector4f1);
+      // Ship the whole entry (spacer + prefix + message) as ONE batched
+      // call: a single logic-thread message instead of three. Per-line
+      // calls let a verbose-logging burst flood that queue (the >1000
+      // ThreadMessage ERROR / >10000 FatalError guards).
       g_base_soft->PushDevConsolePrintCall(
-          prestr, 0.75f,
-          Vector4f(logcolor.x * 0.4f + 0.6f, logcolor.y * 0.4f + 0.6f,
-                   logcolor.z * 0.4f + 0.6f, 0.75));
-      g_base_soft->PushDevConsolePrintCall(msg, 1.0f, logcolor);
+          {{"", 0.3f, kVector4f1},
+           {prestr, 0.75f,
+            Vector4f(logcolor.x * 0.4f + 0.6f, logcolor.y * 0.4f + 0.6f,
+                     logcolor.z * 0.4f + 0.6f, 0.75)},
+           {std::string(msg), 1.0f, logcolor}});
     }
   }
 

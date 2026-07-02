@@ -65,9 +65,11 @@ class PlayOptionsWindow(PopupWindow):
         self._row_height = 45.0
 
         # Grab our maps to display.
-        mesh_opaque = stdassets.meshes.level_select_button_opaque
-        mesh_transparent = stdassets.meshes.level_select_button_transparent
-        mask_tex = stdassets.textures.map_preview_mask
+        mesh_opaque = stdassets.meshes.level_select_button_opaque.get()
+        mesh_transparent = (
+            stdassets.meshes.level_select_button_transparent.get()
+        )
+        mask_tex = stdassets.textures.map_preview_mask.get()
 
         # Poke into this playlist and see if we can display some of its
         # maps.
@@ -240,7 +242,7 @@ class PlayOptionsWindow(PopupWindow):
                         texture=(
                             bui.gettexture(tex_name)
                             if owned
-                            else stdassets.textures.empty
+                            else stdassets.textures.empty.get()
                         ),
                         mesh_opaque=mesh_opaque if owned else None,
                         on_activate_call=bui.CallStrict(
@@ -281,7 +283,7 @@ class PlayOptionsWindow(PopupWindow):
                             size=(scl * 100, scl * 100),
                             draw_controller=btn,
                             position=(h + scl * 70, v + scl * 10),
-                            texture=stdassets.textures.lock,
+                            texture=stdassets.textures.lock.get(),
                         )
 
         y_offs = 50 if show_shuffle_check_box else 0
@@ -472,7 +474,7 @@ class PlayOptionsWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         self._transition_out()
 
     def _on_cancel_press(self) -> None:
@@ -489,7 +491,7 @@ class PlayOptionsWindow(PopupWindow):
 
         # Disallow if we have no unlocked games.
         if not self._have_at_least_one_owned:
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             bui.screenmessage(
                 bui.Lstr(resource='playlistNoValidGamesErrorText'),
                 color=(1, 0, 0),
@@ -509,7 +511,7 @@ class PlayOptionsWindow(PopupWindow):
             else:
                 raise RuntimeError('Only teams and ffa currently supported')
             cfg['Private Party Host Session Type'] = typename
-            builtinassets.audio.gun_cocking.play()
+            builtinassets.audio.gun_cocking.get().play()
 
             self._transition_out(transition='out_left')
             if self._delegate is not None:

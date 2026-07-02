@@ -7,6 +7,7 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
@@ -891,7 +892,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   CheckLayout();
 
-  Vector3f tilt = 0.02f * g_base->graphics->tilt();
+  Vector3f tilt = 0.02f * g_base->input->tilt();
   float extra_offs_x = tilt.y;
   float extra_offs_y = -tilt.x;
 

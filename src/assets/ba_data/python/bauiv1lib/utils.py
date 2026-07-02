@@ -86,8 +86,8 @@ def _scroll_fade(
     blotchheight = scrollwidth * 0.23
     bimg = bui.imagewidget(
         parent=container,
-        texture=builtinassets.textures.ui_atlas,
-        mesh_transparent=stdassets.meshes.window_bgblotch,
+        texture=builtinassets.textures.ui_atlas.get(),
+        mesh_transparent=stdassets.meshes.window_bgblotch.get(),
         position=(
             scrollleft + 60.0 - blotchwidth * 0.5,
             scrollbottom + yoffs - yscale * blotchheight * 0.5,
@@ -98,8 +98,8 @@ def _scroll_fade(
     bui.widget(edit=bimg, depth_range=(0.9, 1.0))
     bimg = bui.imagewidget(
         parent=container,
-        texture=builtinassets.textures.ui_atlas,
-        mesh_transparent=stdassets.meshes.window_bgblotch,
+        texture=builtinassets.textures.ui_atlas.get(),
+        mesh_transparent=stdassets.meshes.window_bgblotch.get(),
         position=(
             scrollleft + scrollwidth - 60.0 - blotchwidth * 0.5,
             scrollbottom + yoffs - yscale * blotchheight * 0.5,
@@ -112,8 +112,8 @@ def _scroll_fade(
     if center:
         bimg = bui.imagewidget(
             parent=container,
-            texture=builtinassets.textures.ui_atlas,
-            mesh_transparent=stdassets.meshes.window_bgblotch,
+            texture=builtinassets.textures.ui_atlas.get(),
+            mesh_transparent=stdassets.meshes.window_bgblotch.get(),
             position=(
                 scrollleft + scrollwidth * 0.5 - blotchwidth * 0.5,
                 scrollbottom + yoffs - yscale * blotchheight * 0.5,

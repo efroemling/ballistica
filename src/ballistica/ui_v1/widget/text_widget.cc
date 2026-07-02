@@ -120,7 +120,7 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // If we're on a button or something, add tilt.
   {
     float tilt_scale = draw_control_parent() ? 0.04f : 0.01f;
-    Vector3f tilt = tilt_scale * g_base->graphics->tilt();
+    Vector3f tilt = tilt_scale * g_base->input->tilt();
     l -= tilt.y;
     r -= tilt.y;
     b += tilt.x;

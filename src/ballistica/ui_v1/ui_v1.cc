@@ -118,7 +118,7 @@ void UIV1FeatureSet::Draw(base::FrameDef* frame_def) {
     g_base->graphics->set_drawing_opaque_only(true);
 
     // Do a wee bit of shifting based on tilt just for fun.
-    Vector3f tilt = 0.1f * g_base->graphics->tilt();
+    Vector3f tilt = 0.1f * g_base->input->tilt();
     {
       base::EmptyComponent c(overlay_flat_pass);
       c.SetTransparent(false);

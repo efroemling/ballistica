@@ -192,9 +192,13 @@ class Platform {
   /// Are we running on fireTV hardware?
   virtual auto IsRunningOnFireTV() -> bool;
 
-  // For enabling some special hardware optimizations for nvidia.
-  auto is_tegra_k1() const -> bool { return is_tegra_k1_; }
-  void set_is_tegra_k1(bool val) { is_tegra_k1_ = val; }
+  /// Whether this is a flagged low-end device. Only ever true on Android
+  /// (computed Java-side from GLES version + RAM before the renderer comes
+  /// up); always false on desktop/iOS. Drives reduced framebuffer color
+  /// depth, render resolution, and graphics quality. See
+  /// docs/initiatives/low-end-device-tiering.md.
+  auto low_end_device() const -> bool { return low_end_device_; }
+  void set_low_end_device(bool val) { low_end_device_ = val; }
 
   /// Run system() command on OSs which support it. Throws exception
   /// elsewhere.
@@ -569,7 +573,7 @@ class Platform {
   bool is_stdin_a_terminal_{};
   bool have_has_touchscreen_value_{};
   bool have_touchscreen_{};
-  bool is_tegra_k1_{};
+  bool low_end_device_{};
   bool made_cache_dir_{};
   bool have_device_uuid_{};
   bool ran_base_post_init_{};

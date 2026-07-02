@@ -95,15 +95,9 @@ Graphics::~Graphics() = default;
 
 void Graphics::OnAppStart() { assert(g_base->InLogicThread()); }
 
-void Graphics::OnAppSuspend() {
-  assert(g_base->InLogicThread());
-  SetGyroEnabled(false);
-}
+void Graphics::OnAppSuspend() { assert(g_base->InLogicThread()); }
 
-void Graphics::OnAppUnsuspend() {
-  assert(g_base->InLogicThread());
-  g_base->graphics->SetGyroEnabled(true);
-}
+void Graphics::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
 
 void Graphics::OnAppShutdown() { assert(g_base->InLogicThread()); }
 
@@ -123,9 +117,8 @@ void Graphics::ApplyAppConfig() {
       g_base->app_config->Resolve(AppConfig::BoolID::kDisableCameraShake);
   set_camera_shake_disabled(disable_camera_shake);
 
-  bool disable_camera_gyro =
-      g_base->app_config->Resolve(AppConfig::BoolID::kDisableCameraGyro);
-  set_camera_gyro_explicitly_disabled(disable_camera_gyro);
+  // Note: the 'Disable Camera Gyro' setting is handled by the input
+  // subsystem, which owns the device-motion -> tilt signal.
 
   applied_app_config_ = true;
 
@@ -250,14 +243,6 @@ auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
     graphics_quality_requested = GraphicsQualityRequest::kAuto;
   }
   return graphics_quality_requested;
-}
-
-void Graphics::SetGyroEnabled(bool enable) {
-  // If we're turning back on, suppress gyro updates for a bit.
-  if (enable && !gyro_enabled_) {
-    last_suppress_gyro_time_ = g_core->AppTimeMicrosecs();
-  }
-  gyro_enabled_ = enable;
 }
 
 void Graphics::UpdateProgressBarProgress(float target) {
@@ -669,62 +654,6 @@ void Graphics::DrawLoadDot(RenderPass* pass) {
   c.Submit();
 }
 
-void Graphics::UpdateGyro(microsecs_t time_microsecs,
-                          microsecs_t elapsed_microsecs) {
-  Vector3f tilt = gyro_vals_;
-
-  millisecs_t elapsed_millisecs = elapsed_microsecs / 1000;
-
-  // Our gyro vals get set from another thread and we don't use a lock,
-  // so perhaps there's a chance we get corrupted float values here?..
-  // Let's watch out for crazy vals just in case.
-  for (float& i : tilt.v) {
-    // Check for NaN and Inf:
-    if (!std::isfinite(i)) {
-      i = 0.0f;
-    }
-
-    // Clamp crazy big values:
-    i = std::min(100.0f, std::max(-100.0f, i));
-  }
-
-  // Our math was calibrated for 60hz (16ms per frame);
-  // adjust for other framerates...
-  float timescale = static_cast<float>(elapsed_millisecs) / 16.0f;
-
-  // If we've recently been told to suppress the gyro, zero these.
-  // (prevents hitches when being restored, etc)
-  if (!gyro_enabled_ || camera_gyro_explicitly_disabled_
-      || (time_microsecs - last_suppress_gyro_time_ < 1000000)) {
-    tilt = Vector3f{0.0, 0.0, 0.0};
-  }
-
-  float tilt_smoothing = 0.0f;
-  tilt_smoothed_ =
-      tilt_smoothing * tilt_smoothed_ + (1.0f - tilt_smoothing) * tilt;
-
-  tilt_vel_ = tilt_smoothed_ * 3.0f;
-  tilt_pos_ += tilt_vel_ * timescale;
-
-  // Technically this will behave slightly differently at different time
-  // scales, but it should be close to correct.. tilt_pos_ *= 0.991f;
-  tilt_pos_ *= std::max(0.0f, 1.0f - 0.01f * timescale);
-
-  // Some gyros seem wonky and either give us crazy big values or consistently
-  // offset ones. Let's keep a running tally of magnitude that slowly drops
-  // over time, and if it reaches a certain value lets just kill gyro input.
-  if (gyro_broken_) {
-    tilt_pos_ *= 0.0f;
-  } else {
-    gyro_mag_test_ += tilt_vel_.Length() * 0.01f * timescale;
-    gyro_mag_test_ = std::max(0.0f, gyro_mag_test_ - 0.02f * timescale);
-    if (gyro_mag_test_ > 100.0f) {
-      g_base->ScreenMessage("Wonky gyro; disabling tilt.", {1, 0, 0});
-      gyro_broken_ = true;
-    }
-  }
-}
-
 void Graphics::ApplyCamera(FrameDef* frame_def) {
   camera_->Update(frame_def->display_time_elapsed_millisecs());
   camera_->UpdatePosition();
@@ -809,10 +738,11 @@ void Graphics::BuildAndPushFrameDef() {
                  next_frame_number_filtered_increment_time_ + 1000000 / 60);
   }
 
-  // This probably should not be here. Though I guess we get the most
-  // up-to-date values possible this way. But it should probably live in
-  // g_input.
-  UpdateGyro(app_time_microsecs, elapsed_microsecs);
+  // The device-motion -> tilt signal lives in the input subsystem, but we
+  // drive its per-frame integration from here so it uses the freshest gyro
+  // sample possible right before we build this frame's draw commands (which
+  // sample input->tilt() for camera/UI parallax).
+  g_base->input->UpdateGyro(app_time_microsecs, elapsed_microsecs);
 
   FrameDef* frame_def = GetEmptyFrameDef();
   frame_def->set_app_time_microsecs(app_time_microsecs);

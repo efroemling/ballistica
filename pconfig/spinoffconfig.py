@@ -329,4 +329,5 @@ ctx.no_filter_file_extensions = {
     '.keystore',
     '.bmp',
     '.pem',
+    '.zstddict',
 }

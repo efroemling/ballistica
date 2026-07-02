@@ -923,7 +923,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 size=(button_width, 60),
                 label=bui.Lstr(resource=f'{self._r}.manageAccountText'),
                 color=(0.55, 0.5, 0.6),
-                icon=stdassets.textures.settings_icon,
+                icon=stdassets.textures.settings_icon.get(),
                 textcolor=(0.75, 0.7, 0.8),
                 on_activate_call=bui.WeakCallStrict(
                     self._on_manage_account_press
@@ -1027,7 +1027,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
-                icon=stdassets.textures.google_play_leaderboards_icon,
+                icon=stdassets.textures.google_play_leaderboards_icon.get(),
                 icon_color=(0.8, 0.95, 0.7),
                 on_activate_call=self._on_leaderboards_press,
                 size=(button_width, 50),
@@ -1219,7 +1219,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 'Got error in manage-account-response: %s.', response
             )
             bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         bui.open_url(response.url)
@@ -1418,7 +1418,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 bui.Lstr(resource='internal.signInNoConnectionText'),
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
         else:
             # Success! Plug in these credentials which will begin
             # verifying them and set our primary account-handle when
@@ -1482,7 +1482,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 bui.Lstr(resource='internal.signInNoConnectionText'),
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
         else:
             plus = bui.app.plus
             assert plus is not None

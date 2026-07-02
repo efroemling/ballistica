@@ -256,10 +256,10 @@ class RendererGL : public Renderer {
   bool blend_{};
   bool blend_premult_{};
   bool first_extension_check_{true};
-  bool is_tegra_4_{};
-  bool is_tegra_k1_{};
-  bool is_recent_adreno_{};
   bool is_adreno_{};
+  // Mirror of Platform::low_end_device() (only ever true on Android); read
+  // once at GL init. See docs/initiatives/low-end-device-tiering.md.
+  bool low_end_device_{};
   bool enable_msaa_{};
   bool draw_at_equal_depth_{};
   bool depth_writing_enabled_{};

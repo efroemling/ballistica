@@ -248,8 +248,8 @@ class GatherWindow(bui.MainWindow):
                 self._width * 0.5 - self._scroll_width * 0.5,
                 self._scroll_bottom,
             ),
-            texture=builtinassets.textures.scroll_widget,
-            mesh_transparent=builtinassets.meshes.soft_edge_outside,
+            texture=builtinassets.textures.scroll_widget.get(),
+            mesh_transparent=builtinassets.meshes.soft_edge_outside.get(),
             opacity=0.4,
         )
         self._tab_container: bui.Widget | None = None

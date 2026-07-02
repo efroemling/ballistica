@@ -12,6 +12,7 @@
 
 #include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/ui/widget_message.h"
+#include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/math/vector4f.h"
 
 namespace ballistica::base {
@@ -159,8 +160,7 @@ class UI {
 
   auto* dev_console() const { return dev_console_; }
 
-  void PushDevConsolePrintCall(std::string_view msg, float scale,
-                               Vector4f color);
+  void PushDevConsolePrintCall(std::vector<core::DevConsolePrintEntry> entries);
 
   auto* delegate() const { return delegate_; }
 

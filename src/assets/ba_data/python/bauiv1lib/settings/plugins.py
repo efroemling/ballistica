@@ -173,7 +173,7 @@ class PluginWindow(bui.MainWindow):
             position=(settings_button_x + 3, button_row_yoffs - 57),
             draw_controller=self._settings_button,
             size=(35, 35),
-            texture=stdassets.textures.settings_icon,
+            texture=stdassets.textures.settings_icon.get(),
         )
 
         bui.widget(
@@ -212,7 +212,7 @@ class PluginWindow(bui.MainWindow):
             bui.screenmessage(
                 'Still scanning plugins; please try again.', color=(1, 0, 0)
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
         plugspecs = bui.app.plugins.plugin_specs
         plugstates: dict[str, dict] = bui.app.config.get('Plugins', {})
         assert isinstance(plugstates, dict)

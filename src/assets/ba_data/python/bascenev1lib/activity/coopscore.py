@@ -48,9 +48,11 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         self.drum_roll_sound = stdassets.audio.drum_roll
         self.cymbal_sound = stdassets.audio.cymbal
 
-        self._replay_icon_texture = uistdassets.textures.replay_icon
-        self._menu_icon_texture = uistdassets.textures.menu_icon
-        self._next_level_icon_texture = uistdassets.textures.next_level_icon
+        self._replay_icon_texture = uistdassets.textures.replay_icon.get()
+        self._menu_icon_texture = uistdassets.textures.menu_icon.get()
+        self._next_level_icon_texture = (
+            uistdassets.textures.next_level_icon.get()
+        )
 
         self._campaign: bs.Campaign = settings['campaign']
 
@@ -75,17 +77,17 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
         if game_center_active:
             self._game_service_icon_color = (1.0, 1.0, 1.0)
-            icon = uistdassets.textures.game_center_icon
+            icon = uistdassets.textures.game_center_icon.get()
             self._game_service_achievements_texture = icon
             self._game_service_leaderboards_texture = icon
             self._account_has_achievements = True
         elif gpgs_active:
             self._game_service_icon_color = (0.8, 1.0, 0.6)
             self._game_service_achievements_texture = (
-                uistdassets.textures.google_play_achievements_icon
+                uistdassets.textures.google_play_achievements_icon.get()
             )
             self._game_service_leaderboards_texture = (
-                uistdassets.textures.google_play_leaderboards_icon
+                uistdassets.textures.google_play_leaderboards_icon.get()
             )
             self._account_has_achievements = True
         else:

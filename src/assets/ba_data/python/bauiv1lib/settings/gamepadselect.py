@@ -139,8 +139,8 @@ class GamepadSelectWindow(bui.MainWindow):
 
         assert bui.app.classic is not None
 
-        stdassets.audio.activate_beep.play()
-        builtinassets.audio.swish.play()
+        stdassets.audio.activate_beep.get().play()
+        builtinassets.audio.swish.get().play()
         device = event['input_device']
         assert isinstance(device, bs.InputDevice)
 

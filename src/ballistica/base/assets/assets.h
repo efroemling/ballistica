@@ -229,8 +229,10 @@ class Assets {
   /// Cube-map analog of :meth:`FindCasTexturePartPath` (decision #24):
   /// resolve a cube-map qualified-ref to its single ``faceCount=6``
   /// KTX2 CAS blob (part ``"t"`` in the package's resolved
-  /// ``cube_map_textures/...`` bucket). Returns ``""`` if the name
-  /// isn't a CAS ref, the asset/part is absent, or in headless mode.
+  /// ``textures/...`` bucket — cube maps share the 2D textures bucket,
+  /// distinguished by call-site, not a separate bucket head). Returns
+  /// ``""`` if the name isn't a CAS ref, the asset/part is absent, or in
+  /// headless mode.
   auto FindCasCubeMapTexturePath(const std::string& name) -> std::string;
 
   /// Audio analog of :meth:`FindCasTexturePartPath` (decision #25):

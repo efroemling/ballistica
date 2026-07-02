@@ -774,7 +774,7 @@ def _discover_wrapper_pins(projroot: Path) -> list[Pin]:
 # (bascenev1)."""`` as the first line of the docstring; the
 # parenthesised value is the wrapper type.
 _RE_WRAPPER_DOCSTRING_TYPE = re.compile(
-    r'Asset-package wrapper for ``[^`]+`` \((bascenev1|bauiv1)\)'
+    r'Asset-package wrapper for ``[^`]+`` \((bascenev1|bauiv1|babase)\)'
 )
 
 

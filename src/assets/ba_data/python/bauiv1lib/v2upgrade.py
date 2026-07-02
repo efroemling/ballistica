@@ -30,7 +30,7 @@ class V2UpgradeWindow(bui.Window):
                 ),
             )
         )
-        builtinassets.audio.error.play()
+        builtinassets.audio.error.get().play()
 
         bui.textwidget(
             parent=self._root_widget,

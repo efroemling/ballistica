@@ -362,7 +362,7 @@ class SendInfoWindowLegacyModal(bui.Window):
             bui.screenmessage(
                 bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
         else:
             plus.add_v1_account_transaction(
                 {
@@ -392,7 +392,7 @@ async def _send_info(description: str) -> None:
                 bui.Lstr(resource='internal.unavailableNoConnectionText'),
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         # Pause root ui updates so stuff like token counts don't change
@@ -430,7 +430,7 @@ async def _send_info(description: str) -> None:
             bui.screenmessage(
                 bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         # Push it along to v1 as an old style code. Allow v2 response to
@@ -450,7 +450,7 @@ async def _send_info(description: str) -> None:
     except Exception:
         logging.exception('Error sending promo code.')
         bui.screenmessage('Error sending code (see log).', color=(1, 0, 0))
-        builtinassets.audio.error.play()
+        builtinassets.audio.error.get().play()
     finally:
         # Make sure ui-pause is dead even if something is holding
         # on to this stack frame.

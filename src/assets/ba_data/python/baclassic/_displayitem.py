@@ -96,7 +96,7 @@ def show_display_item(
                 pos[1] - height * 0.5,
             ),
             size=(width, height),
-            texture=builtinassets.textures.white,
+            texture=builtinassets.textures.white.get(),
             color=(0, 1, 0),
             opacity=0.1,
         )

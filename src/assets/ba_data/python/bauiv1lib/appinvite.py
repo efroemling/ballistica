@@ -36,8 +36,8 @@ class ShowFriendCodeWindow(bui.Window):
             )
         )
         self._data = copy.deepcopy(data)
-        builtinassets.audio.cash_register.play()
-        builtinassets.audio.swish.play()
+        builtinassets.audio.cash_register.get().play()
+        builtinassets.audio.swish.get().play()
 
         self._cancel_button = bui.buttonwidget(
             parent=self._root_widget,
@@ -163,7 +163,7 @@ class ShowFriendCodeWindow(bui.Window):
             bui.screenmessage(
                 bui.Lstr(resource='notSignedInText'), color=(1, 0, 0)
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         bui.set_analytics_screen('Email Friend Code')
@@ -225,7 +225,7 @@ def handle_app_invites_press() -> None:
     def handle_result(result: dict[str, Any] | None) -> None:
         if result is None:
             bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
         else:
             ShowFriendCodeWindow(result)
 

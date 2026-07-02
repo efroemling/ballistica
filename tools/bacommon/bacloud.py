@@ -133,7 +133,16 @@ if TYPE_CHECKING:
 #               moved since. Both fields are optional/soft-default, so old
 #               clients/servers just skip the check -- ``MIN_VERSION``
 #               unchanged.
-BACLOUD_VERSION = 24
+# 25 (2026-06): One-shot small-file uploads via the basn relay.
+#               ``ResponseData.uploads_oneshot`` tells the client to POST
+#               small file bodies to the basn node (which relays them to
+#               the master one-shot cloud-file endpoint) instead of the
+#               signed-URL-to-GCS path; the client sends the resulting
+#               cloud_file_ids back under ``uploads_oneshot``. The server
+#               only emits this to v25+ clients and falls back to
+#               ``uploads_signed`` otherwise, so the field is optional --
+#               ``MIN_VERSION`` unchanged.
+BACLOUD_VERSION = 25
 
 
 def asset_file_cache_path(filehash: str) -> str:
@@ -330,6 +339,12 @@ class StreamFrame(IOMultiType[StreamFrameTypeID]):
 
     @override
     @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        # Pin to the original default for back-compat with stored data.
+        return '_dciotype'
+
+    @override
+    @classmethod
     def get_type(cls, type_id: StreamFrameTypeID) -> type[StreamFrame]:
         # pylint: disable=cyclic-import
         t = StreamFrameTypeID
@@ -462,6 +477,32 @@ class ResponseData:
 
     @ioprepped
     @dataclass
+    class OneshotUploadEntry:
+        """Describes one small file to upload via the basn one-shot relay.
+
+        The client POSTs the file body to the basn node it's already
+        talking to (which relays it to the master server's one-shot
+        cloud-file endpoint and has the master verify the
+        content-addressed id), then sends the resulting
+        ``cloud_file_id`` back in the next ``end_command`` args under
+        ``uploads_oneshot`` (a ``dict[path, cloud_file_id]`` keyed by
+        the same local path). Used for small files: the bytes ride one
+        request to the node and the master holds them in memory and
+        verifies them inline, avoiding both the signed-URL round-trip
+        and the server-side blob read-back of the two-step path.
+        """
+
+        #: Local file the client should read and upload.
+        path: Annotated[str, IOAttrs('p')]
+
+        #: The content-addressed cloud_file_id the client declares for
+        #: this file (from the manifest's sha256+size). The basn relay
+        #: passes it through; the master recomputes from the bytes and
+        #: rejects a mismatch.
+        cloud_file_id: Annotated[str, IOAttrs('f')]
+
+    @ioprepped
+    @dataclass
     class SignedDownloadEntry:
         """Describes one direct-from-GCS streaming download to perform.
 
@@ -563,6 +604,52 @@ class ResponseData:
         #: Everything that should be downloaded.
         entries: Annotated[list[Entry], IOAttrs('e')]
 
+    @ioprepped
+    @dataclass
+    class CasDelivery:
+        """CAS-delivery info for an asset-package assemble.
+
+        Returned by an assemble run in CAS-delivery mode instead of
+        per-blob signed-URL downloads. Carries everything a basn
+        assemble-intercept needs to mint a ``/casblob`` capability token
+        and warm the node CAS, and everything a CAS-aware bacloud needs to
+        fetch the blobs from ``/casblob`` -- so neither side has to
+        re-parse the inline flavor-manifests. ``token`` is minted and
+        injected by the intercepting basn node (``None`` from the master).
+        """
+
+        #: Fully-qualified asset-package version id this bundle is for.
+        apverid: Annotated[str, IOAttrs('a')]
+
+        #: Bucket dimensions, carried for the capability token.
+        texture_profile: Annotated[str, IOAttrs('tp')]
+        texture_tier: Annotated[str, IOAttrs('tq')]
+        language: Annotated[str, IOAttrs('l')]
+
+        #: Every data blob the bundle needs as content-sha256 -> byte
+        #: size, in manifest order (= the order to warm/fetch). Fetched
+        #: from a basn node's ``/casblob`` warm cache.
+        blobs: Annotated[dict[str, int], IOAttrs('b')]
+
+        #: Capability token for ``GET /casblob/{hash}``; minted and
+        #: injected by the basn node that warms and serves the blobs
+        #: (``None`` as sent from the master).
+        token: Annotated[
+            securedata.Archive | None, IOAttrs('tk', store_default=False)
+        ] = None
+
+        #: DEPRECATED / UNUSED -- always empty. Compression is no longer
+        #: carried here: a blob's transfer encoding is negotiated per
+        #: ``/casblob`` request (the node reports it via its
+        #: ``X-Cas-Compression`` response header and the client decodes per
+        #: that). The field is retained (unpopulated, unread) only so the
+        #: producer can stop sending it before any reader drops it -- safe
+        #: to delete in a later cleanup once every component is updated.
+        blob_compression: Annotated[
+            dict[str, str],
+            IOAttrs('bc', store_default=False, soft_default_factory=dict),
+        ] = field(default_factory=dict)
+
     #: If present, client should print this message before any other
     #: response processing (including error handling) occurs.
     message: Annotated[str | None, IOAttrs('m', store_default=False)] = None
@@ -636,6 +723,19 @@ class ResponseData:
         IOAttrs('usgn', store_default=False),
     ] = None
 
+    #: If present, small files the client should upload via the basn
+    #: one-shot relay (POST the body to the node it's talking to, which
+    #: relays to the master one-shot cloud-file endpoint), then send the
+    #: resulting cloud_file_ids back in the next end_command's args under
+    #: 'uploads_oneshot' (a ``dict[path, cloud_file_id]`` keyed by the
+    #: same local path). The size cutoff vs. ``uploads_signed`` is
+    #: decided server-side. Only emitted to v25+ clients (older clients
+    #: get ``uploads_signed`` instead).
+    uploads_oneshot: Annotated[
+        list[OneshotUploadEntry] | None,
+        IOAttrs('uos', store_default=False),
+    ] = None
+
     #: If present, an upload plan the client should execute. See
     #: :class:`UploadPlan` for details. The client handles the full
     #: upload protocol (manifest, dedup, signed uploads, finalize)
@@ -682,6 +782,13 @@ class ResponseData:
     downloads_signed: Annotated[
         list[SignedDownloadEntry] | None,
         IOAttrs('dsgn', store_default=False),
+    ] = None
+
+    #: If present, the assemble ran in CAS-delivery mode: data blobs are
+    #: delivered from a basn node's ``/casblob`` warm cache (see
+    #: :class:`CasDelivery`) instead of per-blob GCS signed URLs.
+    cas_delivery: Annotated[
+        CasDelivery | None, IOAttrs('cas', store_default=False)
     ] = None
 
     #: If present, all empty dirs under this one should be removed.

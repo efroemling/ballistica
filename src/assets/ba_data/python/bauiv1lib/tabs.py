@@ -87,6 +87,6 @@ class TabRow[T: Enum]:
     def _tick_and_call(
         self, call: Callable[[Any], None] | None, arg: Any
     ) -> None:
-        builtinassets.audio.click01.play()
+        builtinassets.audio.click01.get().play()
         if call is not None:
             call(arg)

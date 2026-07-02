@@ -67,10 +67,10 @@ class ResourceTypeInfoWindow(PopupWindow):
         if resource_type == 'tickets':
             yoffs -= 20
             rdesc = bui.Lstr(resource='ticketsDescriptionText')
-            tex = stdassets.textures.tickets
+            tex = stdassets.textures.tickets.get()
         elif resource_type == 'tokens':
             rdesc = bui.Lstr(resource='tokens.tokensDescriptionText')
-            tex = stdassets.textures.coin
+            tex = stdassets.textures.coin.get()
             bwidth = 200
             bheight = 50
 
@@ -97,10 +97,10 @@ class ResourceTypeInfoWindow(PopupWindow):
 
         elif resource_type == 'trophies':
             rdesc = 'TODO: Will show trophies & league rankings.'
-            tex = stdassets.textures.cross_out
+            tex = stdassets.textures.cross_out.get()
         elif resource_type == 'xp':
             rdesc = 'TODO: Will describe xp/levels.'
-            tex = stdassets.textures.cross_out
+            tex = stdassets.textures.cross_out.get()
         else:
             assert_never(resource_type)
 
@@ -142,5 +142,5 @@ class ResourceTypeInfoWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         self._transition_out()

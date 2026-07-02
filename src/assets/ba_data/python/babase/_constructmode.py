@@ -214,12 +214,10 @@ class ConstructAppMode(AppMode):
                 )
 
             if outcome is _ResolveOutcome.SUCCESS:
-                # The resolve may have fetched ideal flavors of assets that
-                # came up earlier on fallbacks (e.g. builtin textures loaded
-                # at boot, before their ideal versions were cached). Reload
-                # those so the real app-mode renders at the ideal flavor. Cheap
-                # no-op when nothing changed (the warm path).
-                _babase.reload_changed_media()
+                # Hand off to app-mode (fading out first if we showed
+                # progress). The post-resolve ideal-flavor media reload happens
+                # inside the hand-off -- after the fade-out -- so its visual
+                # churn stays hidden behind the black screen.
                 self._finish_success()
             elif outcome is _ResolveOutcome.ABORTED:
                 # App is shutting down mid-resolve; bow out quietly.
@@ -448,9 +446,38 @@ class ConstructAppMode(AppMode):
             self._dialog.update(message=message)
 
     def _finish_success(self) -> None:
-        """Tear down the dialog and hand off after a successful resolve."""
+        """Hand off to app-mode after a successful resolve.
+
+        If we faded in to show progress, fade back out to black first so the
+        post-resolve media reload (a visible hitch) and the dialog teardown
+        happen behind black rather than flashing, and don't hard-cut into
+        app-mode's UI -- the fade's end-command does that work, and app-mode
+        fades back in from black on its own (it expects to start from black).
+        A purely-local (warm/bundled) boot never faded in -- nor does headless
+        -- so there (and when there's no intent to release) we do it
+        immediately (the reload is a no-op on those paths).
+        """
         if self._dialog is not None:
             logger.info('Construct-mode: assets updated.')
+        if self._faded_in and self._deferred_intent is not None:
+            _babase.fade_screen(
+                False, time=0.25, endcall=self._reload_and_hand_off
+            )
+        else:
+            self._reload_and_hand_off()
+
+    def _reload_and_hand_off(self) -> None:
+        """Reload ideal-flavor media, tear down the dialog, then hand off.
+
+        Runs behind the faded-out black screen (or immediately on the
+        warm/headless path). The resolve may have fetched ideal flavors of
+        assets that came up earlier on fallbacks (e.g. builtin textures loaded
+        at boot, before their ideal versions were cached); reloading them here
+        -- after the fade-out -- keeps the reload's hitch hidden so app-mode
+        renders at the ideal flavor on fade-in. Cheap no-op when nothing
+        changed (the warm path).
+        """
+        _babase.reload_changed_media()
         self._dismiss_dialog()
         self._hand_off()
 

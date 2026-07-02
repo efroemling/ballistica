@@ -18,6 +18,7 @@ from bauiv1lib.docui import DocUIWindow, DocUIController
 if TYPE_CHECKING:
     from bacommon.docui import DocUIRequest, DocUIResponse
     import bacommon.docui.v1
+    import bacommon.docui.v2
 
     from bauiv1lib.docui import DocUILocalAction
 
@@ -43,6 +44,123 @@ def show_test_doc_ui_window() -> None:
             TestDocUIController().create_window, dui1.Request('/')
         ),
         win_extra_type_id=TestDocUIController.get_window_extra_type_id(),
+    )
+
+
+def show_test_doc_ui_v2_window() -> None:
+    """Bust out a v2 (l-string) doc-ui window built locally on the client.
+
+    Unlike the cloud-fetched milestone-1 demo, this authors a
+    language-agnostic v2 page *on the client* using the bauiv1 asset-package
+    wrappers (``bamvpstrings`` / ``bamvpstrings2``), proving that doc-ui-v2
+    documents can be created locally. A 'Server Version' button fetches the
+    equivalent page from bamaster's ``docuitestv2`` domain so the full
+    cloud resolve -> decode -> render path stays exercised too.
+    """
+    import bacommon.docui.v2 as dui2
+
+    bui.app.ui_v1.auxiliary_window_activate(
+        win_type=DocUIWindow,
+        win_create_call=bui.CallStrict(
+            TestDocUIV2Controller().create_window, dui2.Request('/')
+        ),
+        win_extra_type_id=TestDocUIV2Controller.get_window_extra_type_id(),
+    )
+
+
+class TestDocUIV2Controller(DocUIController):
+    """Builds a v2 (l-string) doc-ui page locally on the client.
+
+    The root page is authored client-side; the ``/server`` path fetches the
+    equivalent page from bamaster so both paths get exercised.
+    """
+
+    @override
+    def fulfill_request(self, request: DocUIRequest) -> DocUIResponse:
+        """Fulfill a v2 request (called in a background thread)."""
+        import bacommon.docui.v2 as dui2
+
+        if not isinstance(request, dui2.Request):
+            raise CleanError('Invalid request version.')
+
+        # The root page is built right here on the client.
+        if request.path == '/':
+            return _test_v2_page_root()
+
+        # The '/server' path fetches the equivalent page from bamaster's
+        # 'docuitestv2' domain (the cloud-authored counterpart).
+        if request.path == '/server':
+            return self.fulfill_request_cloud(request, 'docuitestv2')
+
+        raise CleanError('Invalid request path.')
+
+
+def _test_v2_page_root() -> bacommon.docui.v2.Response:
+    """Author the v2 (l-string) test page purely on the client.
+
+    All text is authored as ``Lstr`` from the bamvpstrings test package and
+    all textures/meshes as apverid-pinned references from bamvpstrings2 -- the
+    same content bamaster's ``docuitestv2`` domain produces, but built locally
+    here. The client resolves those packages in its own locale and decodes, so
+    this single response renders in any language.
+    """
+    import bacommon.docui.v2 as dui2
+
+    from bauiv1.bamvpstrings import strings as mvp
+    from bauiv1.bamvpstrings2 import textures as mvptex, meshes as mvpmesh
+
+    return dui2.Response(
+        page=dui2.Page(
+            title=mvp.strings.mvpgreeting,
+            center_vertically=True,
+            rows=[
+                dui2.ButtonRow(
+                    title=mvp.strings.mvphello(player='Bo'),
+                    subtitle=mvp.strings.mvpcolor,
+                    center_content=True,
+                    buttons=[
+                        dui2.Button(
+                            label=mvp.strings.mvpfarewell,
+                            action=dui2.Local(close_window=True),
+                            size=(180, 200),
+                            style=dui2.ButtonStyle.MEDIUM,
+                            default=True,
+                            selected=True,
+                            decorations=[
+                                # NOTE: decorations must sit within the button
+                                # bounds (here +-90 x, +-100 y) or they get
+                                # culled.
+                                #
+                                # An apverid-pinned texture + mesh, authored
+                                # type-safely from the client wrappers
+                                # (resolved + drawn after the resolve phase).
+                                # mesh_transparent (not _opaque): UI images
+                                # draw in the transparent pass.
+                                dui2.Image(
+                                    texture=mvptex.v2tex,
+                                    mesh_transparent=mvpmesh.v2diamond,
+                                    position=(0, 45),
+                                    size=(90, 90),
+                                ),
+                                dui2.Text(
+                                    text=mvp.strings.mvpbananacount(bananas=5),
+                                    position=(0, -70),
+                                    size=(160, 30),
+                                    scale=0.7,
+                                ),
+                            ],
+                        ),
+                        dui2.Button(
+                            label=mvp.strings.mvpgreeting,
+                            action=dui2.Browse(dui2.Request('/server')),
+                            size=(160, 80),
+                            style=dui2.ButtonStyle.MEDIUM,
+                            texture=mvptex.v2tex,
+                        ),
+                    ],
+                ),
+            ],
+        )
     )
 
 

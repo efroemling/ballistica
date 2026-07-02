@@ -12,6 +12,7 @@ of the pubsync process.
 import os
 import json
 import zlib
+import shlex
 import subprocess
 from typing import TYPE_CHECKING, Annotated
 from dataclasses import dataclass
@@ -500,19 +501,25 @@ def _update_cloud_cache(
         f' excludes {len(fnames_all) - len(fnames_starter_server)}{Clr.RST}'
     )
 
+    # Under a network sandbox that only permits egress via a SOCKS5 proxy
+    # (e.g. when running these uploads from a sandboxed shell), route
+    # ssh/rsync through it; a no-op in normal environments.
+    from efro.cloudshell import socks_proxy_ssh_args
+
+    proxy_args = socks_proxy_ssh_args()
+
     # Sync all individual cache files to the staging server.
     print(f'{Clr.SBLU}Pushing cache to staging...{Clr.RST}', flush=True)
-    subprocess.run(
-        [
-            'rsync',
-            '--progress',
-            '--recursive',
-            '--human-readable',
-            'build/efrocache/',
-            'ubuntu@staging.ballistica.net:files.ballistica.net/cache/ba1/',
-        ],
-        check=True,
-    )
+    rsync_cmd = ['rsync', '--progress', '--recursive', '--human-readable']
+    if proxy_args:
+        # rsync runs --rsh through the shell, so shlex.join keeps the
+        # multi-word proxy command intact.
+        rsync_cmd.append('--rsh=' + shlex.join(['ssh', *proxy_args]))
+    rsync_cmd += [
+        'build/efrocache/',
+        'ubuntu@staging.ballistica.net:files.ballistica.net/cache/ba1/',
+    ]
+    subprocess.run(rsync_cmd, check=True)
 
     # Now generate the starter cache on the server.
     subprocess.run(
@@ -520,6 +527,7 @@ def _update_cloud_cache(
             'ssh',
             '-oBatchMode=yes',
             '-oStrictHostKeyChecking=yes',
+            *proxy_args,
             'ubuntu@staging.ballistica.net',
             'cd files.ballistica.net/cache/ba1 && python3 genstartercache.py',
         ],

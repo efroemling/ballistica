@@ -27,8 +27,8 @@ class SoundtrackEditWindow(bui.MainWindow):
 
         appconfig = bui.app.config
         self._r = 'editSoundtrackWindow'
-        self._folder_tex = stdassets.textures.folder
-        self._file_tex = stdassets.textures.file
+        self._folder_tex = stdassets.textures.folder.get()
+        self._file_tex = stdassets.textures.file.get()
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         self._width = 1200 if uiscale is bui.UIScale.SMALL else 648
@@ -390,7 +390,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             None if musictype not in soundtrack else soundtrack[musictype]
         )
         if existing_entry != entry:
-            builtinassets.audio.gun_cocking.play()
+            builtinassets.audio.gun_cocking.get().play()
 
         # Make sure this doesn't get mucked with after we get it.
         if entry is not None:
@@ -448,7 +448,7 @@ class SoundtrackEditWindow(bui.MainWindow):
 
         # Warn if volume is zero.
         if bui.app.config.resolve('Music Volume') < 0.01:
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             bui.screenmessage(
                 bui.Lstr(resource=f'{self._r}.musicVolumeZeroWarning'),
                 color=(1, 0.5, 0),
@@ -512,10 +512,10 @@ class SoundtrackEditWindow(bui.MainWindow):
             bui.screenmessage(
                 bui.Lstr(resource=f'{self._r}.cantSaveAlreadyExistsText')
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
         if not new_name:
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
         if (
             new_name
@@ -526,7 +526,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             bui.screenmessage(
                 bui.Lstr(resource=f'{self._r}.cantOverwriteDefaultText')
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         # Make sure config exists.
@@ -543,7 +543,7 @@ class SoundtrackEditWindow(bui.MainWindow):
         cfg['Soundtrack'] = new_name
 
         cfg.commit()
-        builtinassets.audio.gun_cocking.play()
+        builtinassets.audio.gun_cocking.get().play()
 
         # Resets music back to normal.
         music.set_music_play_mode(
@@ -553,5 +553,5 @@ class SoundtrackEditWindow(bui.MainWindow):
         self.main_window_back()
 
     def _do_it_with_sound(self) -> None:
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         self._do_it()

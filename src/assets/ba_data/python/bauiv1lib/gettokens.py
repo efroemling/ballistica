@@ -806,7 +806,7 @@ class GetTokensWindow(bui.MainWindow):
                 errmsg = bui.Lstr(resource='purchaseNeverAvailableText')
 
             bui.screenmessage(errmsg, color=(1, 0.5, 0))
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         assert plus is not None

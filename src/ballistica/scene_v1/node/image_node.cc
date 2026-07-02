@@ -7,6 +7,7 @@
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/core/core.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
@@ -312,7 +313,7 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
 
   // Tilt-translate doesn't happen in vr mode.
   if (tilt_translate_ != 0.0f && !vr) {
-    Vector3f tilt = g_base->graphics->tilt();
+    Vector3f tilt = g_base->input->tilt();
     fin_center_x -= tilt.y * tilt_translate_;
     fin_center_y += tilt.x * tilt_translate_;
 

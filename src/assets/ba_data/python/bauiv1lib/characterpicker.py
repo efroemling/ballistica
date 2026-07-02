@@ -124,7 +124,7 @@ class CharacterPicker(PopupWindow):
             background=False,
         )
         index = 0
-        mask_texture = builtinassets.textures.character_icon_mask
+        mask_texture = builtinassets.textures.character_icon_mask.get()
         for y in range(rows):
             for x in range(columns):
                 pos = (
@@ -218,5 +218,5 @@ class CharacterPicker(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         self._transition_out()

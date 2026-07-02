@@ -34,8 +34,8 @@ class TournamentButton:
         sclx = 300
         scly = 195.0
         self.on_pressed = on_pressed
-        self.lsbt = stdassets.meshes.level_select_button_transparent
-        self.lsbo = stdassets.meshes.level_select_button_opaque
+        self.lsbt = stdassets.meshes.level_select_button_transparent.get()
+        self.lsbo = stdassets.meshes.level_select_button_opaque.get()
         self.allow_ads = False
         self.tournament_id: str | None = None
         self.game: str | None = None
@@ -75,9 +75,9 @@ class TournamentButton:
             size=(image_width, image_width * 0.5),
             mesh_transparent=self.lsbt,
             mesh_opaque=self.lsbo,
-            texture=builtinassets.textures.black,
+            texture=builtinassets.textures.black.get(),
             opacity=0.2,
-            mask_texture=stdassets.textures.map_preview_mask,
+            mask_texture=stdassets.textures.map_preview_mask.get(),
         )
 
         self.lock_image = bui.imagewidget(
@@ -85,7 +85,7 @@ class TournamentButton:
             draw_controller=btn,
             position=(x + 21 + sclx * 0.5 - image_width * 0.15, y + scly - 130),
             size=(image_width * 0.3, image_width * 0.3),
-            texture=stdassets.textures.lock,
+            texture=stdassets.textures.lock.get(),
             opacity=0.0,
         )
 
@@ -169,7 +169,7 @@ class TournamentButton:
                 draw_controller=btn,
                 position=(x + 360 - 20, y + scly - 140),
                 opacity=0.0,
-                texture=stdassets.textures.tv,
+                texture=stdassets.textures.tv.get(),
             )
 
         x_offs += 50
@@ -224,7 +224,7 @@ class TournamentButton:
         self.prize_chest_1_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            texture=builtinassets.textures.white,
+            texture=builtinassets.textures.white.get(),
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(self._chestsz, self._chestsz),
             opacity=0.0,
@@ -258,7 +258,7 @@ class TournamentButton:
         self.prize_chest_2_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            texture=builtinassets.textures.white,
+            texture=builtinassets.textures.white.get(),
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(self._chestsz, self._chestsz),
             opacity=0.0,
@@ -292,7 +292,7 @@ class TournamentButton:
         self.prize_chest_3_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            texture=builtinassets.textures.white,
+            texture=builtinassets.textures.white.get(),
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(self._chestsz, self._chestsz),
             opacity=0.0,
@@ -429,9 +429,9 @@ class TournamentButton:
             or self.leader is None
             or len(self.leader[2]) != 1
         ):
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         AccountViewerWindow(
             account_id=self.leader[2][0].get('a', None),
             profile_id=self.leader[2][0].get('p', None),
@@ -444,7 +444,7 @@ class TournamentButton:
 
         tournament_id = self.tournament_id
         if tournament_id is None:
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         TournamentScoresWindow(

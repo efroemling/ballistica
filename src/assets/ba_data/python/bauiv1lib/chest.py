@@ -46,7 +46,7 @@ class ChestWindow(bui.MainWindow):
         self._uiopenstate = bui.UIOpenState(f'classicchest{index}')
 
         # Get this loading before we need it.
-        self._quote_bubble_tex = stdassets.textures.quote_bubble
+        self._quote_bubble_tex = stdassets.textures.quote_bubble.get()
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -361,7 +361,7 @@ class ChestWindow(bui.MainWindow):
                     self._chest_yoffs + 27.0,
                 ),
                 size=(lsize, lsize),
-                texture=stdassets.textures.lock,
+                texture=stdassets.textures.lock.get(),
             )
 
         # Time string.
@@ -482,7 +482,7 @@ class ChestWindow(bui.MainWindow):
                             self._yoffs + bposy + bheight * 0.35,
                         ),
                         draw_controller=self._open_now_button,
-                        texture=stdassets.textures.coin,
+                        texture=stdassets.textures.coin.get(),
                     )
                 )
                 self._open_now_texts.append(
@@ -554,7 +554,7 @@ class ChestWindow(bui.MainWindow):
                 ),
                 draw_controller=self._watch_ad_button,
                 color=(1.5, 1.0, 2.0),
-                texture=stdassets.textures.tv,
+                texture=stdassets.textures.tv.get(),
             )
             # Note to self: AdMob requires rewarded ad usage
             # specifically says 'Ad' in it.
@@ -834,14 +834,14 @@ class ChestWindow(bui.MainWindow):
     def _open_press(self, user_tokens: int, token_payment: int) -> None:
         from bauiv1lib.gettokens import show_get_tokens_prompt
 
-        builtinassets.audio.click01.play()
+        builtinassets.audio.click01.get().play()
 
         # Allow only one in-flight action at once.
         if self._action_in_flight:
             bui.screenmessage(
                 bui.Lstr(resource='pleaseWaitText'), color=(1, 0, 0)
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         plus = bui.app.plus
@@ -855,7 +855,7 @@ class ChestWindow(bui.MainWindow):
         if user_tokens < token_payment:
             # Hack: We disable normal swish for the open button and it
             # seems weird without a swish here, so explicitly do one.
-            builtinassets.audio.swish.play()
+            builtinassets.audio.swish.get().play()
             show_get_tokens_prompt(origin_widget=self._open_now_button)
             return
 
@@ -886,14 +886,14 @@ class ChestWindow(bui.MainWindow):
 
     def _watch_ad_press(self) -> None:
 
-        builtinassets.audio.click01.play()
+        builtinassets.audio.click01.get().play()
 
         # Allow only one in-flight action at once.
         if self._action_in_flight:
             bui.screenmessage(
                 bui.Lstr(resource='pleaseWaitText'), color=(1, 0, 0)
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         assert bui.app.plus is not None
@@ -929,7 +929,7 @@ class ChestWindow(bui.MainWindow):
             bui.screenmessage(
                 bui.Lstr(resource='pleaseWaitText'), color=(1, 0, 0)
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         plus = bui.app.plus
@@ -1009,7 +1009,7 @@ class ChestWindow(bui.MainWindow):
         tendoffs = tincr * 4.0
         toffs = 0.0
 
-        stdassets.audio.rev_up.play(volume=2.0)
+        stdassets.audio.rev_up.get().play(volume=2.0)
 
         # Show nothing but the chest icon and animate it shaking.
         self._reset()
@@ -1060,7 +1060,8 @@ class ChestWindow(bui.MainWindow):
         xspacing = 100
         xoffs = -0.5 * (len(response.contents) - 1) * xspacing
         bui.apptimer(
-            toffs - 0.2, lambda: stdassets.audio.cork_pop2.play(volume=4.0)
+            toffs - 0.2,
+            lambda: stdassets.audio.cork_pop2.get().play(volume=4.0),
         )
         # Play a variety of voice sounds.
 
@@ -1098,7 +1099,9 @@ class ChestWindow(bui.MainWindow):
 
         for item in response.contents:
             toffs += tincr
-            bui.apptimer(toffs - 0.1, builtinassets.audio.cash_register.play)
+            bui.apptimer(
+                toffs - 0.1, builtinassets.audio.cash_register.get().play
+            )
             bui.apptimer(
                 toffs,
                 strict_partial(
@@ -1156,7 +1159,7 @@ class ChestWindow(bui.MainWindow):
 
         self._reset()
         imgsize = 145
-        stdassets.audio.hiss.play()
+        stdassets.audio.hiss.get().play()
         assert self._chestdisplayinfo is not None
         img = bui.imagewidget(
             parent=self._root_widget,

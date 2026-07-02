@@ -316,7 +316,7 @@ class ControlsSettingsWindow(bui.MainWindow):
                     bui.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
                     color=(1, 1, 0),
                 )
-                builtinassets.audio.gun_cocking.play()
+                builtinassets.audio.gun_cocking.get().play()
                 bui.set_low_level_config_value('enablexinput', not value)
 
             xinput_checkbox = bui.checkboxwidget(

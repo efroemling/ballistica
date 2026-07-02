@@ -14,10 +14,18 @@ import datetime
 from pathlib import Path
 from dataclasses import dataclass
 
-import requests
+import urllib3
+import urllib3.util
+import urllib3.response
+import urllib3.exceptions
 
 from efro.terminal import Clr
-from efro.error import CleanError
+from efro.error import (
+    CleanError,
+    Urllib3HttpError,
+    raise_for_urllib3_status,
+    is_urllib3_communication_error,
+)
 from efro.dataclassio import (
     dataclass_from_dict,
     dataclass_from_json,
@@ -49,6 +57,88 @@ CONNECT_RETRY_BASE_SECONDS = 0.5
 CONNECT_RETRY_MAX_SECONDS = 8.0
 
 VERBOSE = os.environ.get('BACLOUD_VERBOSE') == '1'
+
+
+def _download_workers() -> int:
+    """Concurrency for the parallel download thread pool.
+
+    Also sizes the connection pool's per-host cap (see _make_pool) so a
+    full set of workers can each hold a reused connection without the
+    pool discarding+reopening (and re-handshaking TLS) past its cap.
+    Env-overridable for tuning; the default is kept modest so a herd of
+    build hosts each downloading at once doesn't hammer the master.
+    """
+    return max(1, int(os.environ.get('BA_BACLOUD_DOWNLOAD_WORKERS', '16')))
+
+
+def _make_pool() -> urllib3.PoolManager:
+    """Build the shared urllib3 connection pool.
+
+    A single PoolManager covers every host bacloud talks to (the master
+    server + ``storage.googleapis.com``); urllib3 keeps a separate
+    connection pool per host internally, so one manager transparently
+    reuses connections to each — eliminating the repeat TLS handshakes a
+    many-blob download would otherwise pay. ``maxsize`` is sized to the
+    worker count so a saturated pool doesn't churn connections, and the
+    default ``Timeout`` mirrors the old per-request value (a per-read
+    timeout, so large streamed bodies aren't cut off mid-flight).
+
+    Created eagerly at import (below) rather than lazily: bacloud always
+    talks to the cloud, and an eager singleton sidesteps a first-call
+    race where the download thread pool could otherwise build several
+    pools at once and lose all connection sharing between them.
+    """
+    import ssl
+    import urllib.request
+
+    ssl_context = ssl.create_default_context()
+    maxsize = _download_workers()
+    timeout = urllib3.util.Timeout(
+        connect=TIMEOUT_SECONDS, read=TIMEOUT_SECONDS
+    )
+
+    # Honor the standard proxy env vars (HTTPS_PROXY / HTTP_PROXY) the way
+    # the old ``requests`` calls did for free. urllib3's bare PoolManager
+    # ignores them, which would break users behind a corporate proxy (and
+    # Claude Code's sandbox, which routes all traffic through one).
+    # bacloud only ever talks to public hosts (ballistica.net /
+    # googleapis.com), so NO_PROXY bypass doesn't apply.
+    proxies = urllib.request.getproxies()
+    proxy_url = proxies.get('https') or proxies.get('http')
+    if proxy_url:
+        # urllib3 doesn't pull credentials out of the proxy URL's
+        # userinfo, so an authenticating proxy (corporate proxies,
+        # Claude Code's sandbox) needs them passed explicitly as a
+        # Proxy-Authorization header; otherwise the CONNECT tunnel for
+        # an https target comes back '407 Proxy Authentication Required'.
+        proxy_auth = urllib3.util.parse_url(proxy_url).auth
+        proxy_headers = (
+            urllib3.make_headers(proxy_basic_auth=proxy_auth)
+            if proxy_auth
+            else None
+        )
+        return urllib3.ProxyManager(
+            proxy_url,
+            ssl_context=ssl_context,
+            maxsize=maxsize,
+            timeout=timeout,
+            proxy_headers=proxy_headers,
+        )
+    return urllib3.PoolManager(
+        ssl_context=ssl_context,
+        maxsize=maxsize,
+        timeout=timeout,
+    )
+
+
+# Process-wide shared connection pool (thread-safe; see _make_pool).
+_g_pool = _make_pool()
+
+
+def _err_body(response: urllib3.response.BaseHTTPResponse) -> str:
+    """Best-effort decode of a (small) error-response body for messages."""
+    return response.data.decode('utf-8', 'replace')
+
 
 # Server selection precedence:
 #   1. BACLOUD_SERVER — explicit host override (e.g. a specific basn
@@ -204,17 +294,58 @@ def _is_retryable_connection_error(exc: BaseException) -> bool:
     may already have taken effect: a ``ReadTimeout`` (bytes were sent,
     the app just didn't answer in time) and an app-level HTTP 500.
     """
-    # requests.ConnectionError covers connection-refused + DNS
-    # failures; ConnectTimeout subclasses it, so connect-timeouts are
-    # included. ReadTimeout is NOT a ConnectionError subclass, so
-    # post-send read timeouts are correctly excluded here.
-    if isinstance(exc, requests.exceptions.ConnectionError):
+    # urllib3's ConnectTimeoutError covers connect-timeouts AND the
+    # connection-establishment failures that subclass it
+    # (NewConnectionError = connection-refused, NameResolutionError =
+    # DNS). ReadTimeoutError is a *sibling*, not a subclass, so
+    # post-send read timeouts are correctly excluded here. (We pass
+    # retries=False everywhere so the raw error surfaces directly;
+    # unwrap a MaxRetryError to its reason defensively in case one ever
+    # arrives wrapped.)
+    if isinstance(exc, urllib3.exceptions.MaxRetryError):
+        if exc.reason is None:
+            return False
+        exc = exc.reason
+    if isinstance(exc, urllib3.exceptions.ConnectTimeoutError):
         return True
-    if isinstance(exc, requests.exceptions.HTTPError):
-        resp = exc.response
-        if resp is not None and resp.status_code in (502, 503, 504):
-            return True
+    # 502/503/504 from the LB front-end surface via
+    # raise_for_urllib3_status as a Urllib3HttpError; they're returned
+    # before a request reaches an app instance, so retrying is safe.
+    if isinstance(exc, Urllib3HttpError) and exc.code in (502, 503, 504):
+        return True
     return False
+
+
+class _TransientDownloadError(Exception):
+    """A CAS blob download failed in a retryable way.
+
+    Raised for a truncated stream (byte-count or sha256 mismatch) or a
+    transient 5xx from the blob store -- conditions a re-download can
+    plausibly fix. See :func:`_is_retryable_download_error`.
+    """
+
+
+def _is_retryable_download_error(exc: BaseException) -> bool:
+    """Whether a CAS blob-download failure is worth retrying.
+
+    Unlike the mutating-server path
+    (:func:`_is_retryable_connection_error`), a blob download is
+    content-idempotent: the signed URL targets one specific content hash
+    and the streamed result is size- AND sha256-verified before use. So
+    *any* transient fetch failure is safe to retry here -- crucially
+    including a ``ReadTimeout`` (bytes were mid-stream), which the server
+    path must NOT retry for mutating commands. Covers connection drops,
+    connect/read timeouts, chunked-encoding interruptions, and
+    truncated/transient-5xx streams (surfaced as
+    :class:`_TransientDownloadError`).
+    """
+    if isinstance(exc, _TransientDownloadError):
+        return True
+    # Any urllib3 communication-level error (connect/read timeouts,
+    # connection drops, DNS, SSL, aborted streams) is safe to retry for
+    # a content-idempotent download -- including read timeouts, unlike
+    # the mutating-server path above.
+    return is_urllib3_communication_error(exc, None)
 
 
 # Per-workspace-checkout control file (a dotfile, so the workspace sync
@@ -486,12 +617,15 @@ class App:
 
         master = _FLEET_MASTER_HOSTS[BA_FLEET]
         try:
-            with requests.get(
+            import json
+
+            resp = _g_pool.request(
+                'GET',
                 f'https://{master}/bacloud_node',
-                timeout=TIMEOUT_SECONDS,
-            ) as resp:
-                resp.raise_for_status()
-                data = resp.json()
+                retries=False,
+            )
+            raise_for_urllib3_status(resp)
+            data = json.loads(resp.data.decode())
         except Exception as exc:
             if VERBOSE:
                 import traceback
@@ -533,7 +667,7 @@ class App:
             headers['Authorization'] = f'Bearer {bearer}'
 
         rdata = {
-            'v': BACLOUD_VERSION,
+            'v': str(BACLOUD_VERSION),
             'r': dataclass_to_json(
                 RequestData(
                     command=cmd,
@@ -550,34 +684,20 @@ class App:
         attempt = 0
         while True:
             try:
-                # Trying urllib for comparison (note that this doesn't
-                # support files arg so not actually production ready)
-                if bool(False):
-                    import urllib.request
-                    import urllib.parse
-
-                    with urllib.request.urlopen(
-                        urllib.request.Request(
-                            url,
-                            urllib.parse.urlencode(rdata).encode(),
-                            headers,
-                        )
-                    ) as raw_response:
-                        if raw_response.getcode() != 200:
-                            raise RuntimeError('Error talking to server')
-                        response_content = raw_response.read().decode()
-
-                # Using requests module.
-                else:
-                    with requests.post(
-                        url,
-                        headers=headers,
-                        data=rdata,
-                        timeout=TIMEOUT_SECONDS,
-                    ) as response_raw:
-                        response_raw.raise_for_status()
-                        assert isinstance(response_raw.content, bytes)
-                        response_content = response_raw.content.decode()
+                # Form-encoded POST (encode_multipart=False) matching the
+                # old requests ``data=dict`` behavior. retries=False so
+                # our own connection-retry loop below owns retry policy
+                # and sees the raw urllib3 error for classification.
+                response_raw = _g_pool.request(
+                    'POST',
+                    url,
+                    fields=rdata,
+                    encode_multipart=False,
+                    headers=headers,
+                    retries=False,
+                )
+                raise_for_urllib3_status(response_raw)
+                response_content = response_raw.data.decode()
                 break
 
             except Exception as exc:
@@ -659,62 +779,171 @@ class App:
         dirname = os.path.dirname(filename)
         assert os.path.isdir(dirname)
 
-        response = self._servercmd(call, args, stream=False)
-
-        # We expect a single sentinel entry in downloads_signed keyed
-        # at 'default'. The server-side per-file handler doesn't know
-        # the client's destination path, so it hands back one signed
-        # URL + hash under that sentinel and we stream it into
-        # ``filename`` here.
-        assert response.downloads_signed is not None
-        assert len(response.downloads_signed) == 1
-        entry = response.downloads_signed[0]
-        assert entry.path == 'default'
-
         tmp = f'{filename}.tmp'
         chunk_size = 1024 * 1024
-        hasher = hashlib.sha256()
-        total = 0
-        with requests.get(
-            entry.download_url,
-            stream=True,
-            timeout=TIMEOUT_SECONDS,
-        ) as resp:
-            if not 200 <= resp.status_code < 300:
-                raise CleanError(
-                    f'GCS download of {filename} failed:'
-                    f' status={resp.status_code}'
-                    f' body={resp.text!r}'
-                )
-            with open(tmp, 'wb') as outfile:
-                for chunk in resp.iter_content(chunk_size=chunk_size):
-                    if not chunk:
-                        continue
-                    outfile.write(chunk)
-                    hasher.update(chunk)
-                    total += len(chunk)
 
-        if total != entry.size:
+        # CAS blob downloads are content-idempotent -- the signed URL
+        # targets one specific content hash and the streamed bytes are
+        # size- and sha256-verified below -- so any transient fetch
+        # failure is safe to retry. Retry the whole attempt (re-fetching a
+        # fresh signed URL each time, in case the prior one expired) with
+        # the same backoff + full-jitter the server path uses.
+        attempt = 0
+        while True:
             try:
-                os.unlink(tmp)
-            except OSError:
-                pass
+                response = self._servercmd(call, args, stream=False)
+
+                # We expect a single sentinel entry in downloads_signed
+                # keyed at 'default'. The server-side per-file handler
+                # doesn't know the client's destination path, so it hands
+                # back one signed URL + hash under that sentinel and we
+                # stream it into ``filename`` here.
+                assert response.downloads_signed is not None
+                assert len(response.downloads_signed) == 1
+                entry = response.downloads_signed[0]
+                assert entry.path == 'default'
+
+                hasher = hashlib.sha256()
+                total = 0
+                with _g_pool.request(
+                    'GET',
+                    entry.download_url,
+                    preload_content=False,
+                    retries=False,
+                ) as resp:
+                    # Transient (5xx) blob-store errors are retryable; any
+                    # other non-2xx (e.g. 403/404) is a real problem.
+                    if resp.status >= 500:
+                        raise _TransientDownloadError(
+                            f'GCS download of {filename} got transient'
+                            f' status={resp.status}.'
+                        )
+                    if not 200 <= resp.status < 300:
+                        raise CleanError(
+                            f'GCS download of {filename} failed:'
+                            f' status={resp.status}'
+                            f' body={_err_body(resp)!r}'
+                        )
+                    with open(tmp, 'wb') as outfile:
+                        for chunk in resp.stream(chunk_size):
+                            if not chunk:
+                                continue
+                            outfile.write(chunk)
+                            hasher.update(chunk)
+                            total += len(chunk)
+
+                # A short read or hash mismatch means a truncated/corrupt
+                # stream -- retryable (re-download).
+                if total != entry.size:
+                    raise _TransientDownloadError(
+                        f'GCS download of {filename} returned {total} bytes;'
+                        f' expected {entry.size} (truncated stream).'
+                    )
+                digest = hasher.hexdigest()
+                if digest != entry.sha256:
+                    raise _TransientDownloadError(
+                        f'GCS download of {filename} sha256 mismatch: got'
+                        f' {digest}, expected {entry.sha256}.'
+                    )
+                os.rename(tmp, filename)
+                return total
+
+            except Exception as exc:
+                # Drop any partial tmp before retrying or giving up.
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+                if attempt < CONNECT_RETRIES and _is_retryable_download_error(
+                    exc
+                ):
+                    delay = random.uniform(
+                        0.0,
+                        min(
+                            CONNECT_RETRY_MAX_SECONDS,
+                            CONNECT_RETRY_BASE_SECONDS * 2**attempt,
+                        ),
+                    )
+                    attempt += 1
+                    print(
+                        f'{Clr.YLW}Download of'
+                        f' {os.path.basename(filename)} failed'
+                        f' ({type(exc).__name__}); retrying in {delay:.1f}s'
+                        f' ({attempt}/{CONNECT_RETRIES})...{Clr.RST}',
+                        file=sys.stderr,
+                        flush=True,
+                    )
+                    time.sleep(delay)
+                    continue
+                raise
+
+    def _handle_cas_delivery(self, cas: ResponseData.CasDelivery) -> None:
+        """Download a CAS-delivery assemble's data blobs from a basn node.
+
+        The build/mod-time analogue of the game client's Tier-2 download:
+        each data blob is fetched from the serving node's ``/casblob`` warm
+        cache (using the capability token the node minted and injected) via
+        the shared :mod:`bacommon.assetcas` primitive -- the exact same
+        fetch path the client uses -- and written into ``.cache/assetdata``
+        at the same CAS shard paths the assemble's inline bundle manifest
+        references. Fetches run in parallel; already-present blobs skip.
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        from efro.util import data_size_str
+        from bacommon import assetcas
+
+        if cas.token is None:
             raise CleanError(
-                f'GCS download of {filename} returned'
-                f' {total} bytes; expected {entry.size}.'
+                'CAS-delivery assemble received no /casblob token; the'
+                ' serving node may be too old to warm and serve it. Retry,'
+                ' or update the server fleet.'
             )
-        digest = hasher.hexdigest()
-        if digest != entry.sha256:
-            try:
-                os.unlink(tmp)
-            except OSError:
-                pass
-            raise CleanError(
-                f'GCS download of {filename} sha256 mismatch:'
-                f' got {digest}, expected {entry.sha256}.'
+
+        base_url = f'https://{self._server}'
+        token_header = assetcas.encode_asset_token(cas.token)
+        dest_root = os.path.join(str(self._project_root), '.cache/assetdata')
+
+        to_fetch = [
+            (h, s)
+            for h, s in cas.blobs.items()
+            if not assetcas.blob_present([dest_root], h, s)
+        ]
+        if not to_fetch:
+            return
+
+        starttime = time.monotonic()
+
+        def _fetch(item: tuple[str, int]) -> int:
+            fhash, size = item
+            assetcas.download_cas_blob(
+                _g_pool,
+                base_url,
+                fhash,
+                size,
+                token_header=token_header,
+                dest_root=dest_root,
+                timeout_seconds=TIMEOUT_SECONDS,
             )
-        os.rename(tmp, filename)
-        return total
+            return size
+
+        total_bytes = 0
+        try:
+            with ThreadPoolExecutor(
+                max_workers=_download_workers()
+            ) as executor:
+                futures = [executor.submit(_fetch, item) for item in to_fetch]
+                for future in as_completed(futures):
+                    total_bytes += future.result()
+        except assetcas.CasDownloadError as exc:
+            raise CleanError(f'CAS blob download failed: {exc}') from exc
+
+        duration = time.monotonic() - starttime
+        print(
+            f'{Clr.BLU}Downloaded {len(to_fetch)} blob(s)'
+            f' ({data_size_str(total_bytes)} total) from node CAS in'
+            f' {duration:.2f}s.{Clr.RST}'
+        )
 
     def _handle_dir_manifest_response(self, dirmanifest: str) -> None:
         from bacommon.transfer import DirectoryManifest
@@ -825,10 +1054,18 @@ class App:
                 flush=True,
             )
 
-        # Run several downloads simultaneously to hopefully maximize
-        # throughput. Drain via as_completed (rather than map) so we can
-        # surface incremental progress instead of one blocking barrier.
-        with ThreadPoolExecutor(max_workers=4) as executor:
+        # Run several downloads simultaneously to maximize throughput.
+        # Each entry costs a master round-trip (to mint its signed URL)
+        # plus a usually-small GCS transfer, so the work is latency-bound
+        # per blob -- more concurrency mostly just hides that latency.
+        # Env-overridable for tuning; the default is kept modest so a herd
+        # of build hosts (CI, cloudshell, devs) each downloading at once
+        # doesn't hammer the master's request pool. Drain via as_completed
+        # (not map) so progress surfaces incrementally, not as one barrier.
+        workers = max(
+            1, int(os.environ.get('BA_BACLOUD_DOWNLOAD_WORKERS', '16'))
+        )
+        with ThreadPoolExecutor(max_workers=workers) as executor:
             futures = [
                 executor.submit(_download_entry, entry)
                 for entry in downloads.entries
@@ -876,12 +1113,11 @@ class App:
         """Handle direct-to-GCS streaming uploads via signed URLs.
 
         For each entry, stream the local file body straight to the
-        signed PUT URL using ``requests`` (which sends a chunked-free
-        PUT when ``Content-Length`` is set, so GCS sees the bytes as a
-        single body that satisfies the URL's ``Content-MD5``
-        signature). Memory use is bounded regardless of file size —
-        ``requests`` reads the file object in fixed-size chunks rather
-        than slurping it.
+        signed PUT URL via urllib3 (which sends a chunked-free PUT when
+        ``Content-Length`` is set, so GCS sees the bytes as a single
+        body that satisfies the URL's ``Content-MD5`` signature). Memory
+        use is bounded regardless of file size — urllib3 reads the file
+        object in fixed-size chunks rather than slurping it.
 
         Stashes ``{path: session_id}`` into ``end_command`` args under
         ``uploads_signed`` so the server can finalize each session in
@@ -892,27 +1128,90 @@ class App:
             if not os.path.exists(entry.path):
                 raise CleanError(f'File not found: {entry.path}')
             file_size = os.path.getsize(entry.path)
-            # Setting Content-Length explicitly forces ``requests`` to
-            # send a non-chunked PUT, which is required for the signed
-            # URL's Content-MD5 binding to validate against a single
-            # body on the GCS side.
+            # Setting Content-Length explicitly forces a non-chunked PUT,
+            # which is required for the signed URL's Content-MD5 binding
+            # to validate against a single body on the GCS side. urllib3
+            # streams the file object in fixed-size chunks (no slurp), so
+            # memory stays bounded regardless of file size.
             put_headers = dict(entry.upload_headers)
             put_headers['Content-Length'] = str(file_size)
             with open(entry.path, 'rb') as infile:
-                response = requests.put(
+                response = _g_pool.request(
+                    'PUT',
                     entry.upload_url,
-                    data=infile,
+                    body=infile,
                     headers=put_headers,
-                    timeout=TIMEOUT_SECONDS,
+                    retries=False,
                 )
-            if not 200 <= response.status_code < 300:
+            if not 200 <= response.status < 300:
                 raise CleanError(
                     f'GCS upload of {entry.path} failed:'
-                    f' status={response.status_code}'
-                    f' body={response.text!r}'
+                    f' status={response.status}'
+                    f' body={_err_body(response)!r}'
                 )
             sessions[entry.path] = entry.session_id
         self._end_command_args['uploads_signed'] = sessions
+
+    def _handle_uploads_oneshot(
+        self, uploads_oneshot: list[ResponseData.OneshotUploadEntry]
+    ) -> None:
+        """Handle small-file uploads via the basn one-shot relay.
+
+        For each entry, POST the local file body to the basn node's
+        one-shot relay endpoint (``/bacloud_oneshot_upload``), which
+        forwards it to the master server's one-shot cloud-file endpoint
+        and has the master verify the content-addressed id. The bytes
+        go to the node we're already talking to (never to the master
+        directly), and there's no signed-URL round-trip or server-side
+        read-back.
+
+        Stashes ``{path: cloud_file_id}`` into ``end_command`` args
+        under ``uploads_oneshot`` so the server can wire each resulting
+        cloud-file into place in the next call.
+        """
+        import json
+
+        assert self._server is not None
+        bearer = self._api_key or self._state.login_token
+        results: dict[str, str] = {}
+        for entry in uploads_oneshot:
+            if not os.path.exists(entry.path):
+                raise CleanError(f'File not found: {entry.path}')
+            file_size = os.path.getsize(entry.path)
+            headers = {
+                'User-Agent': f'bacloud/{BACLOUD_VERSION}',
+                'Content-Type': 'application/octet-stream',
+                'Content-Length': str(file_size),
+            }
+            if bearer is not None:
+                headers['Authorization'] = f'Bearer {bearer}'
+            url = (
+                f'https://{self._server}/bacloud_oneshot_upload'
+                f'?f={entry.cloud_file_id}'
+            )
+            with open(entry.path, 'rb') as infile:
+                response = _g_pool.request(
+                    'POST',
+                    url,
+                    body=infile,
+                    headers=headers,
+                    retries=False,
+                )
+            if not 200 <= response.status < 300:
+                raise CleanError(
+                    f'One-shot upload of {entry.path} failed:'
+                    f' status={response.status}'
+                    f' body={_err_body(response)!r}'
+                )
+            # The relay echoes back the verified cloud_file_id; fall back
+            # to the declared one if parsing fails for any reason.
+            cfid: str | None = None
+            try:
+                cfid = json.loads(response.data).get('cloud_file_id')
+            except Exception:
+                cfid = None
+            results[entry.path] = cfid or entry.cloud_file_id
+        self._end_command_args['uploads_oneshot'] = results
 
     def _handle_upload_plan(  # pylint: disable=too-many-locals
         self, plan: ResponseData.UploadPlan
@@ -985,17 +1284,18 @@ class App:
             put_headers = dict(item.upload_headers)
             put_headers['Content-Length'] = str(file_size)
             with open(local, 'rb') as infile:
-                resp = requests.put(
+                resp = _g_pool.request(
+                    'PUT',
                     item.upload_url,
-                    data=infile,
+                    body=infile,
                     headers=put_headers,
-                    timeout=TIMEOUT_SECONDS,
+                    retries=False,
                 )
-            if not 200 <= resp.status_code < 300:
+            if not 200 <= resp.status < 300:
                 raise CleanError(
                     f'GCS upload of {item.name} failed:'
-                    f' status={resp.status_code}'
-                    f' body={resp.text!r}'
+                    f' status={resp.status}'
+                    f' body={_err_body(resp)!r}'
                 )
             sessions[item.name] = item.session_id
 
@@ -1067,19 +1367,20 @@ class App:
             tmp = f'{entry.path}.tmp'
             hasher = hashlib.sha256()
             total = 0
-            with requests.get(
+            with _g_pool.request(
+                'GET',
                 entry.download_url,
-                stream=True,
-                timeout=TIMEOUT_SECONDS,
+                preload_content=False,
+                retries=False,
             ) as resp:
-                if not 200 <= resp.status_code < 300:
+                if not 200 <= resp.status < 300:
                     raise CleanError(
                         f'GCS download of {entry.path} failed:'
-                        f' status={resp.status_code}'
-                        f' body={resp.text!r}'
+                        f' status={resp.status}'
+                        f' body={_err_body(resp)!r}'
                     )
                 with open(tmp, 'wb') as outfile:
-                    for chunk in resp.iter_content(chunk_size=chunk_size):
+                    for chunk in resp.stream(chunk_size):
                         if not chunk:
                             continue
                         outfile.write(chunk)
@@ -1173,6 +1474,41 @@ class App:
                 )
                 time.sleep(min(3.0, remaining))
 
+    def _apply_response_file_ops(self, response: ResponseData) -> None:
+        """Apply a response's file deletes + downloads.
+
+        The non-chaining side-effect ops, factored out of the response
+        loop to keep it under control.
+        """
+        # Note: we handle file deletes *before* downloads. This way our
+        # file-download code only has to worry about creating or removing
+        # directories and not files, and corner cases such as a file
+        # getting replaced with a directory should just work.
+        #
+        # UPDATE: that actually only applies to commands where the client
+        # uploads a manifest first and then the server responds with
+        # specific deletes and inline downloads. The newer 'downloads'
+        # command is used differently; in that case the server is just
+        # pushing a big list of hashes to the client and the client is
+        # asking for the stuff it doesn't have. So in that case the client
+        # needs to fully handle things like replacing dirs with files.
+        if response.deletes:
+            self._handle_deletes(response.deletes)
+        if response.downloads:
+            self._handle_downloads(response.downloads)
+        if response.cas_delivery is not None:
+            self._handle_cas_delivery(response.cas_delivery)
+        if response.downloads_inline:
+            self._handle_downloads_inline(response.downloads_inline)
+        if response.downloads_signed:
+            self._handle_downloads_signed(response.downloads_signed)
+        if response.dir_prune_empty:
+            self._handle_dir_prune_empty(response.dir_prune_empty)
+        if response.workspace_snapshotid is not None:
+            # A get/put completed; remember the workspace's current
+            # snapshot id so _finish_workspace_command can stash it.
+            self._ws_snapshotid_received = response.workspace_snapshotid
+
     def run_interactive_command(self, cwd: str, args: list[str]) -> None:
         """Run a single user command to completion."""
         # pylint: disable=too-many-branches
@@ -1261,6 +1597,8 @@ class App:
                 self._handle_dir_manifest_response(response.dir_manifest)
             if response.uploads_signed is not None:
                 self._handle_uploads_signed(response.uploads_signed)
+            if response.uploads_oneshot is not None:
+                self._handle_uploads_oneshot(response.uploads_oneshot)
             if response.upload_plan is not None:
                 nextcall = self._handle_upload_plan(response.upload_plan)
                 # Upload plan overrides end_command; skip the rest of
@@ -1272,34 +1610,7 @@ class App:
                     )
                 continue
 
-            # Note: we handle file deletes *before* downloads. This way
-            # our file-download code only has to worry about creating or
-            # removing directories and not files, and corner cases such
-            # as a file getting replaced with a directory should just
-            # work.
-            #
-            # UPDATE: that actually only applies to commands where the
-            # client uploads a manifest first and then the server
-            # responds with specific deletes and inline downloads. The
-            # newer 'downloads' command is used differently; in that
-            # case the server is just pushing a big list of hashes to
-            # the client and the client is asking for the stuff it
-            # doesn't have. So in that case the client needs to fully
-            # handle things like replacing dirs with files.
-            if response.deletes:
-                self._handle_deletes(response.deletes)
-            if response.downloads:
-                self._handle_downloads(response.downloads)
-            if response.downloads_inline:
-                self._handle_downloads_inline(response.downloads_inline)
-            if response.downloads_signed:
-                self._handle_downloads_signed(response.downloads_signed)
-            if response.dir_prune_empty:
-                self._handle_dir_prune_empty(response.dir_prune_empty)
-            if response.workspace_snapshotid is not None:
-                # A get/put completed; remember the workspace's current
-                # snapshot id so _finish_workspace_command can stash it.
-                self._ws_snapshotid_received = response.workspace_snapshotid
+            self._apply_response_file_ops(response)
 
             if response.open_url is not None:
                 self._handle_open_url(response.open_url)

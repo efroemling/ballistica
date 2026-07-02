@@ -186,6 +186,31 @@ def push_ipa() -> None:
     )
 
 
+def push_ipa_to_archive() -> None:
+    """Construct an ios IPA and publish it to a bamaster archive.
+
+    Like push_ipa but uploads into the archive system (signed-URL GCS
+    storage) instead of rsyncing to the staging server. Pass
+    --archive-id to override the default ('ios-test-builds').
+    """
+    from efro.util import extract_arg
+    import efrotools.ios
+
+    args = sys.argv[2:]
+    signing_config = extract_arg(args, '--signing-config')
+    archive_id = extract_arg(args, '--archive-id')
+
+    if len(args) != 1:
+        raise RuntimeError('Expected 1 mode arg (debug or release).')
+    modename = args[0].lower()
+    efrotools.ios.push_ipa_to_archive(
+        pcommand.PROJROOT,
+        modename,
+        signing_config=signing_config,
+        archive_id=('ios-test-builds' if archive_id is None else archive_id),
+    )
+
+
 def printcolors() -> None:
     """Print all colors available in efro.terminals.TerminalColor."""
     from efro.error import CleanError
@@ -717,11 +742,34 @@ def _camel_case_split(string: str) -> list[str]:
 
 def efro_gradle() -> None:
     """Calls ./gradlew with some extra magic."""
+    import os
     import subprocess
     from efro.terminal import Clr
     from efrotools.android import filter_gradle_file
 
     args = ['./gradlew'] + sys.argv[2:]
+
+    # Under Claude Code's sandbox, all network egress is forced through
+    # an authenticating proxy that the JVM/Gradle won't use, so any
+    # dependency or Gradle-distribution *download* fails. Force
+    # --offline so the build relies solely on the already-warmed Gradle
+    # caches (populated by normal, unsandboxed builds). No-op outside
+    # the sandbox, where nothing sets these env vars.
+    forced_offline = False
+    in_sandbox = bool(os.environ.get('SANDBOX_RUNTIME')) or os.environ.get(
+        'ALL_PROXY', ''
+    ).startswith(('socks5://', 'socks5h://'))
+    if in_sandbox and '--offline' not in args:
+        args.append('--offline')
+        forced_offline = True
+        print(
+            f'{Clr.YLW}efro_gradle: sandbox detected -- adding --offline'
+            ' (Gradle cannot reach the network through the sandbox'
+            ' proxy); dependencies must already be cached by a prior'
+            f' unsandboxed build.{Clr.RST}',
+            flush=True,
+        )
+
     print(f'{Clr.BLU}Running gradle with args:{Clr.RST} {args}.', flush=True)
     enabled_tags: set[str] = {'true'}
     target_words = [w.lower() for w in _camel_case_split(args[-1])]
@@ -757,6 +805,17 @@ def efro_gradle() -> None:
     )
 
     if errored:
+        if forced_offline:
+            print(
+                f'{Clr.RED}efro_gradle: build failed in sandbox-forced'
+                ' offline mode. If the error above says "No cached'
+                ' version ... available for offline mode" (or shows a'
+                ' failed distribution download), a dependency or the'
+                ' Gradle distribution is not cached -- run this build'
+                " once OUTSIDE Claude's sandbox to warm the cache, then"
+                f' retry.{Clr.RST}',
+                flush=True,
+            )
         sys.exit(1)
 
 

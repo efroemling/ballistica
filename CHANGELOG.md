@@ -1,4 +1,4 @@
-### 1.8.0 (build 22904, api 9, 2026-06-21)
+### 1.8.0 (build 22919, api 9, 2026-06-27)
 - Fully implemented asset packages (more on this soon)
 - Added a per-player chat mute option to the party window.
 - Upgraded to Python 3.14. This gives us a few nice useful bits such as zstd

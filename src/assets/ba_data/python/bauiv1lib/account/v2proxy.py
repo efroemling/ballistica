@@ -319,7 +319,7 @@ class V2ProxySignInWindow(bui.Window):
             and response.state is response.State.FAIL
         ):
             logging.info('LoginProxy failed.')
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
             self._done()
             return

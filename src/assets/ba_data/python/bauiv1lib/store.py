@@ -33,7 +33,7 @@ class StoreUIController(DocUIController):
             bui.screenmessage(
                 f'Invalid local-action "{action.name}".', color=(1, 0, 0)
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
 
     def _restore_purchases(self) -> None:
 
@@ -45,7 +45,7 @@ class StoreUIController(DocUIController):
             bui.screenmessage(
                 bui.Lstr(resource='notSignedInText'), color=(1, 0, 0)
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         plus.restore_purchases()
@@ -53,6 +53,6 @@ class StoreUIController(DocUIController):
     def _get_tokens(self, action: DocUILocalAction) -> None:
         from bauiv1lib.gettokens import show_get_tokens_window
 
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
 
         show_get_tokens_window(origin_widget=bui.existing(action.widget))

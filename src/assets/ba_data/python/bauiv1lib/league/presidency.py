@@ -30,10 +30,10 @@ class LeaguePresidencyUIController(DocUIController):
             bui.screenmessage(
                 f'Invalid local-action "{action.name}".', color=(1, 0, 0)
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
 
     def _get_tokens(self, action: DocUILocalAction) -> None:
         from bauiv1lib.gettokens import show_get_tokens_window
 
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         show_get_tokens_window(origin_widget=bui.existing(action.widget))

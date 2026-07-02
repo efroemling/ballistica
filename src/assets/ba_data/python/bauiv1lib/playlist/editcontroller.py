@@ -231,7 +231,7 @@ class PlaylistEditController:
 
         assert bui.app.classic is not None
         if config is None:
-            builtinassets.audio.powerdown01.play()
+            builtinassets.audio.powerdown01.get().play()
         else:
             # Make sure type is in there.
             assert self._editing_game_type is not None
@@ -247,7 +247,7 @@ class PlaylistEditController:
                 self._playlist.insert(insert_index, copy.deepcopy(config))
                 self._selected_index = insert_index
 
-            builtinassets.audio.gun_cocking.play()
+            builtinassets.audio.gun_cocking.get().play()
 
         # If we're adding, jump to before the add started.
         # Otherwise jump to before the edit started.

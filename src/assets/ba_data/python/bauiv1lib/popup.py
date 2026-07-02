@@ -268,7 +268,7 @@ class PopupMenuWindow(PopupWindow):
             self._current_choice = self._choices[index]
 
     def _activate(self) -> None:
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         bui.apptimer(0.05, self._transition_out)
         delegate = self._getdelegate()
         if delegate is not None:
@@ -295,7 +295,7 @@ class PopupMenuWindow(PopupWindow):
     @override
     def on_popup_cancel(self) -> None:
         if not self._transitioning_out:
-            builtinassets.audio.swish.play()
+            builtinassets.audio.swish.get().play()
         self._transition_out()
 
 

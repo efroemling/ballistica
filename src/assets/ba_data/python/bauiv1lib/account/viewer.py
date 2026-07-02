@@ -292,9 +292,8 @@ class AccountViewerWindow(PopupWindow):
                                 )
                                 icon_tex = character.icon_texture
                                 tint_tex = character.icon_mask_texture
-                                mask_texture = (
-                                    builtinassets.textures.character_icon_mask
-                                )
+                                btex = builtinassets.textures
+                                mask_texture = btex.character_icon_mask.get()
                                 bui.imagewidget(
                                     parent=self._subcontainer,
                                     position=(sub_width * center - 40, v - 80),
@@ -599,5 +598,5 @@ class AccountViewerWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        builtinassets.audio.swish.play()
+        builtinassets.audio.swish.get().play()
         self._transition_out()

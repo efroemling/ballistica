@@ -9,6 +9,7 @@
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/ui/ui.h"
@@ -128,7 +129,7 @@ auto ButtonWidget::GetDrawBrightness(millisecs_t time) const -> float {
 void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   millisecs_t current_time = pass->frame_def()->display_time_millisecs();
 
-  Vector3f tilt = 0.02f * g_base->graphics->tilt();
+  Vector3f tilt = 0.02f * g_base->input->tilt();
   float extra_offs_x = -tilt.y;
   float extra_offs_y = tilt.x;
 
@@ -269,8 +270,16 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                     "no opaque meshes.");
         opacity = 1.0f;
       }
-      c.SetColor(mult * color_red_, mult * color_green_, mult * color_blue_,
-                 opacity);
+      // Premultiply rgb by opacity for premultiplied textures so faded/
+      // transparent buttons composite 'over' under premult blend instead of
+      // staying full-brightness (premult blend adds rgb directly rather than
+      // weighting it by alpha). Straight-alpha textures (and untextured
+      // buttons, which force opacity to 1.0 above) keep raw rgb and fade via
+      // alpha as before.
+      float omul =
+          (texture_.exists() && texture_->premultiplied()) ? opacity : 1.0f;
+      c.SetColor(mult * color_red_ * omul, mult * color_green_ * omul,
+                 mult * color_blue_ * omul, opacity);
       if (flatness_ != 0.0f) {
         c.SetFlatness(flatness_);
       }

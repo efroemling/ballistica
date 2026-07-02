@@ -629,6 +629,18 @@ typedef enum {
   BA_LASTEVENT = 0xFFFF
 } BAEventType;
 
+/// High-level touch event phases forwarded from the platform layer (currently
+/// Apple/UIKit) across the Swift bridge into base::Input::PushTouchEvent. A
+/// flat global enum (like BAKeycodeEnum) so Swift imports it cleanly; mirrors
+/// ballistica::base::TouchEvent::Type. Distinct from the SDL-style
+/// BA_FINGER*/BA_TOUCHBUTTON* event ids above.
+enum BATouchEventType {
+  BA_TOUCH_EVENT_DOWN = 0,
+  BA_TOUCH_EVENT_UP = 1,
+  BA_TOUCH_EVENT_MOVED = 2,
+  BA_TOUCH_EVENT_CANCELED = 3,
+};
+
 typedef struct BAJoyAxisEvent {
   uint32_t type;
   uint32_t timestamp;
