@@ -1,12 +1,12 @@
 app-id: net.froemling.bombsquad
 runtime: org.freedesktop.Platform
-# TEMPORARY: pinned to the unstable 'master' runtime because no stable
-# freedesktop release ships Python 3.14 yet (25.08 = 3.13; 3.14 lands in
-# the future 26.08 release). master currently provides Python 3.14 + LLVM
-# 22. This is a moving target -- revert to a stable runtime-version (and
-# matching llvm extension / python refs below) once one ships 3.14, before
-# this flatpak ships. See docs/followups.md.
-runtime-version: "master"
+# Stable runtime. It ships Python 3.13, and bombsquad requires exactly
+# 3.14, so we build our own Python via the module below. Once a stable
+# runtime ships Python 3.14 (26.08+, ~Aug 2026), the Python module can
+# be dropped. (A prior attempt pinned the unstable 'master' runtime for
+# its Python 3.14, but master runtimes aren't installable from flathub
+# and their dev remote is unreliable -- see docs/followups.md.)
+runtime-version: "25.08"
 sdk: org.freedesktop.Sdk
 command: bombsquad.sh
 finish-args:
@@ -19,35 +19,34 @@ finish-args:
   - --persist=.ballisticakit
 
 sdk-extensions:
-  - org.freedesktop.Sdk.Extension.llvm22
+  - org.freedesktop.Sdk.Extension.llvm20
 
 modules:
-  # The 'master' runtime currently provides python3.14 (required by
-  # bombsquad). If a future runtime's python ever diverges from what
-  # bombsquad needs, enable this python module to build it locally.
+  # The stable runtime's python (3.13) is older than what bombsquad
+  # requires (exactly 3.14; see ballisticakit-cmake/CMakeLists.txt), so
+  # build our own into /app. Headers/bin are cleaned from the final app
+  # but libpython + the stdlib under /app/lib stay (the game embeds
+  # python). No PGO/LTO (--enable-optimizations/--with-lto) -- this is
+  # a nightly debug canary and those add ~20min per build.
 
-  # - name: Python
-  #   sources:
-  #     - type: archive
-  #       url: https://www.python.org/ftp/python/3.14.5/Python-3.14.5.tar.xz
-  #       sha256: { SHA256_CHECKSUM }
-  #   config-opts:
-  #     - --prefix=${FLATPAK_DEST}
-  #     - --enable-shared
-  #     - --enable-optimizations
-  #     - --with-computed-gotos
-  #     - --with-lto
-  #     - --enable-ipv6
-  #     - --with-system-expat
-  #     - --with-system-ffi
-  #     - --with-system-libmpdec
-  #     - --enable-loadable-sqlite-extensions
-  #     - --without-ensurepip
-  #   cleanup:
-  #     - /bin
-  #     - /include
-  #     - /lib/pkgconfig
-  #     - /share
+  - name: Python
+    sources:
+      - type: archive
+        url: https://www.python.org/ftp/python/3.14.6/Python-3.14.6.tar.xz
+        sha256: 143b1dddefaec3bd2e21e3b839b34a2b7fb9842272883c576420d605e9f30c63
+    config-opts:
+      - --prefix=${FLATPAK_DEST}
+      - --enable-shared
+      - --with-computed-gotos
+      - --enable-ipv6
+      - --with-system-expat
+      - --enable-loadable-sqlite-extensions
+      - --without-ensurepip
+    cleanup:
+      - /bin
+      - /include
+      - /lib/pkgconfig
+      - /share
 
   # SDL2 is already provided by the runtime
 
@@ -85,8 +84,8 @@ modules:
   - name: bombsquad
     buildsystem: simple
     build-options:
-      append-path: /usr/lib/sdk/llvm22/bin
-      prepend-ld-library-path: /usr/lib/sdk/llvm22/lib
+      append-path: /usr/lib/sdk/llvm20/bin
+      prepend-ld-library-path: /usr/lib/sdk/llvm20/lib
       build-args:
         - --share=network
       env:
@@ -99,9 +98,10 @@ modules:
       - curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/app/bin INSTALLER_NO_MODIFY_PATH=1 sh
       # we need to fix .venv/bin/python3.14 which is a symlink to system python
       # of the machine the venv was created on, and then update the venv to fix
-      # all the shebangs according to the current build env
+      # all the shebangs according to the current build env (python3.14 here is
+      # the one our Python module built into /app/bin, which is on PATH)
       - rm -f .venv/bin/python3.14
-      - ln -s /usr/bin/python3.14 .venv/bin/python3.14
+      - ln -s /app/bin/python3.14 .venv/bin/python3.14
       - python3.14 -m venv --upgrade .venv
       # Get rid of tools/pcommand and similar with wrong shebangs
       - make env-clean

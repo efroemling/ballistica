@@ -6,7 +6,9 @@ ARG cmake_build_type=Release
 ARG headless_build=1
 # system to start with the build with
 # currently will break for other images
-ARG base_image=ubuntu:latest
+# (pinned to 26.04, the first LTS shipping python3.14, which the build
+# requires exactly; see ballisticakit-cmake/CMakeLists.txt)
+ARG base_image=ubuntu:26.04
 
 #-------------------------------BUILDER--------------------------------
 # Start with the base image
@@ -30,9 +32,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/root/.cache/pip \
     --mount=type=cache,target=/root/.cache/venv \
     apt-get update && \
-    apt-get install -y software-properties-common &&\
-    add-apt-repository ppa:deadsnakes/ppa &&\
-    apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
         clang \
@@ -41,12 +40,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         curl \
         libglut-dev \
         libopenal-dev \
-        libsdl2-dev \
+        libsdl3-dev \
         libvorbis-dev \
         make \
         python3-pip \
-        python3.13-dev \
-        python3.13-venv \
+        python3.14-dev \
+        python3.14-venv \
         rsync \
         zstd
 
@@ -90,21 +89,18 @@ LABEL BOMBSQUAD_BUILD_TYPE=${cmake_build_type}
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
-    apt-get install -y software-properties-common &&\
-    add-apt-repository ppa:deadsnakes/ppa &&\
-    apt-get update && \
     apt-get install -y \
-        python3.13-dev && \
+        python3.14-dev && \
     if [ "$HEADLESS_BUILD" = "0" ]; then \
         apt-get install -y \
-            libsdl2-dev \
+            libsdl3-dev \
             libvorbis-dev \
             libglut-dev \
             pulseaudio-utils \
             libopenal-dev; \
     fi && \
     apt-get clean && \
-    python3.13 -c "import uuid; print(uuid.uuid4())" > /etc/machine-id
+    python3.14 -c "import uuid; print(uuid.uuid4())" > /etc/machine-id
 
 # Copy the compiled application from the builder stage
 COPY --from=builder /ballistica_cmake \
