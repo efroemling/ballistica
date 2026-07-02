@@ -207,7 +207,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_apputils.py \
   $(BUILD_DIR)/ba_data/python/babase/_asset_packages.py \
   $(BUILD_DIR)/ba_data/python/babase/_assetsubsystem.py \
-  $(BUILD_DIR)/ba_data/python/babase/_assetwrap.py \
   $(BUILD_DIR)/ba_data/python/babase/_asyncio.py \
   $(BUILD_DIR)/ba_data/python/babase/_automation.py \
   $(BUILD_DIR)/ba_data/python/babase/_baeventloop.py \
@@ -521,7 +520,6 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/app.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetcas.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetref/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/assetref/_codegen.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetref/_core.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetref/_wrapper.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bacloud.py \
@@ -545,7 +543,6 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/v2.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_blob.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/langstr/_codegen.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_core.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_wrapper.py \
   $(BUILD_DIR)/ba_data/python/bacommon/locale.py \

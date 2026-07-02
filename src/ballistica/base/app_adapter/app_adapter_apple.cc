@@ -13,6 +13,7 @@
 #include "ballistica/base/graphics/graphics_server.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/support/app_config.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/input_types.h"
@@ -238,6 +239,19 @@ void AppAdapterApple::OnFullscreenChanged(bool fullscreen) {
   // read on the logic thread via FullscreenControlGet. An atomic bool is all
   // the synchronization a single published flag needs.
   fullscreen_control_value_.store(fullscreen);
+}
+
+void AppAdapterApple::SetUsingPointingDevice(bool pointing) {
+  // Pushed from Swift's touch/pointer handling (main thread). We track the
+  // last value here (main-thread-only, so no locking needed) and, on change,
+  // hand the flip off to the logic thread where UI::SetTouchMode lives. This
+  // mirrors Android's PlatformAndroid::PushUsingPointingDevice_.
+  assert(g_core->InMainThread());
+  if (pointing != using_pointing_device_) {
+    using_pointing_device_ = pointing;
+    g_base->logic->event_loop()->PushCall(
+        [pointing] { g_base->ui->SetTouchMode(!pointing); });
+  }
 }
 
 void AppAdapterApple::FullscreenControlSet(bool fullscreen) {

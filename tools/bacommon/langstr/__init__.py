@@ -28,7 +28,6 @@ from bacommon.langstr._wrapper import (
     WrapperTree,
     package_structure,
 )
-from bacommon.langstr._codegen import generate_wrapper_module
 from bacommon.langstr._blob import (
     serialize_language_blob,
     parse_language_blob,
@@ -48,7 +47,6 @@ __all__ = [
     'LangStrDir',
     'WrapperTree',
     'package_structure',
-    'generate_wrapper_module',
     'serialize_language_blob',
     'parse_language_blob',
     'LANGUAGE_BLOB_STRINGS_KEY',

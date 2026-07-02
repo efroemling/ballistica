@@ -34,11 +34,6 @@ class WrapperType(Enum):
 
     BASCENEV1 = 'bascenev1'
     BAUIV1 = 'bauiv1'
-    #: Strings-only wrapper (asset-packages strings phase). Strings
-    #: resolve via ``_babase.get_resource`` (a base-level concept, not a
-    #: scene/UI loader), so they live in their own babase-rooted wrapper
-    #: whose leaves are call-time-resolved ``str`` accessors.
-    BABASE = 'babase'
 
 
 @ioprepped
@@ -148,16 +143,27 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
     )
 
 
+#: Placeholder value for a string with no generated output in its own locale
+#: *or* in English. We deliberately do NOT fall back to the brief ``input``
+#: here: that's the author's description of what the string should say (a
+#: translator prompt), often a long-winded sentence -- not display text -- so
+#: rendering it is worse than an obvious "untranslated" marker.
+STRING_NOT_TRANSLATED = '<NOT-TRANSLATED>'
+
+
 def complete_locale_values(
     string_files: dict[str, AssetsV1StringFileV1], locale: Locale
 ) -> dict[str, str | StringSelector]:
     """English-completed per-locale values for a set of string files.
 
     Maps each string's logical name to its value for ``locale``: the
-    locale's own output, else the English output, else the raw English brief
-    ``input``. So every locale's map carries the **complete key set** with
-    graceful English fallback -- untranslated strings still render (in
-    English) rather than failing, and every locale's key set is identical.
+    locale's own output, else the English output, else the
+    ``STRING_NOT_TRANSLATED`` placeholder. So every locale's map carries the
+    **complete key set** with graceful English fallback -- an untranslated
+    string still renders (in English where available, else an obvious
+    ``<NOT-TRANSLATED>`` marker) rather than failing, and every locale's key
+    set is identical. The brief ``input`` is intentionally never used as a
+    value: it's the author's prompt/description, not display text.
 
     The shared value-selection both the asset-build string recipe and the
     `langstr vendor` command route through (paired with
@@ -170,7 +176,7 @@ def complete_locale_values(
         if output is None:
             output = sfile.outputs.get(Locale.ENGLISH)
         if output is None:
-            out[name] = sfile.input
+            out[name] = STRING_NOT_TRANSLATED
         elif output.selector is not None:
             out[name] = output.selector
         else:
