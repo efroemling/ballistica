@@ -1,5 +1,6 @@
 ### 1.8.0 (build 22919, api 9, 2026-06-27)
 - Fully implemented asset packages (more on this soon)
+- Added a per-player chat mute option to the party window.
 - Upgraded to Python 3.14. This gives us a few nice useful bits such as zstd
   compression to help speed up online stuff and also means we can get rid of all
   the annoying `from __future__ import annotations` lines. Woohoo!

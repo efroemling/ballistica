@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -153,6 +154,7 @@ void ClassicAppMode::Reset_() {
   // Tear down any existing session.
   foreground_session_.Clear();
   PruneSessions_();
+  chat_muted_player_names_.clear();
 
   // If all is well our sessions should all be dead at this point.
   if (g_scene_v1->session_count != 0) {
@@ -1269,8 +1271,10 @@ void ClassicAppMode::LocalDisplayChatMessage(
       }
       b2[msg_len] = 0;
 
-      std::string final_message =
-          scene_v1::PlayerSpec(b1.data()).GetDisplayString() + ": " + b2.data();
+      scene_v1::PlayerSpec player_spec(b1.data());
+      std::string final_message = player_spec.GetDisplayString() + ": "
+                                  + b2.data();
+      bool muted_player = IsChatMutedPlayer_(player_spec);
 
       // Store it locally.
       chat_messages_.push_back(final_message);
@@ -1281,18 +1285,36 @@ void ClassicAppMode::LocalDisplayChatMessage(
       // Show it on the screen if they don't have their chat window open
       // (and don't have chat muted).
       if (!g_base->ui->IsPartyWindowOpen()) {
-        if (!chat_muted_) {
+        if (!chat_muted_ && !muted_player) {
           g_base->ScreenMessage(final_message, {0.7f, 1.0f, 0.7f});
         }
       } else {
         // Party window is open - notify it that there's a new message.
-        g_scene_v1->python->HandleLocalChatMessage(final_message);
+        if (!muted_player) {
+          g_scene_v1->python->HandleLocalChatMessage(final_message);
+        }
       }
-      if (!chat_muted_) {
+      if (!chat_muted_ && !muted_player) {
         g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
       }
     }
   }
+}
+
+void ClassicAppMode::SetChatMutedPlayerNames(
+    const std::set<std::string>& names) {
+  assert(g_base->InLogicThread());
+  chat_muted_player_names_ = names;
+}
+
+auto ClassicAppMode::IsChatMutedPlayer_(
+    const scene_v1::PlayerSpec& spec) const -> bool {
+  assert(g_base->InLogicThread());
+  if (chat_muted_player_names_.empty()) {
+    return false;
+  }
+  return chat_muted_player_names_.contains(spec.GetDisplayString())
+         || chat_muted_player_names_.contains(spec.GetShortName());
 }
 
 void ClassicAppMode::ApplyAppConfig() {

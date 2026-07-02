@@ -2,6 +2,7 @@
 #
 """Provides party related UI."""
 
+import json
 import math
 import logging
 from typing import TYPE_CHECKING, cast
@@ -12,13 +13,33 @@ import bascenev1 as bs
 from bauiv1lib.popup import PopupMenuWindow
 
 if TYPE_CHECKING:
-    from typing import Sequence, Any
+    from typing import Any, Sequence
 
     from bauiv1lib.popup import PopupWindow
+
+_CHAT_MUTE_CHOICE = 'chat_mute'
+_MAX_CHAT_NAME_COMBINED_SIZE = 25
+
+
+def _chat_destination_key() -> tuple[object, ...]:
+    """Return a key describing the current chat source/destination."""
+    info = bs.get_connection_to_host_info_2()
+    if info is not None:
+        return ('remote', info.address, info.port, info.name, info.build_number)
+
+    session = bs.get_foreground_host_session()
+    if session is not None:
+        return ('local', id(session))
+
+    return ('menu',)
 
 
 class PartyWindow(bui.Window):
     """Party list/chat window."""
+
+    _chat_mute_destination_key: tuple[object, ...] | None = None
+    _chat_muted_player_keys: set[str] = set()
+    _chat_muted_player_names: set[str] = set()
 
     def __init__(self, origin: Sequence[float] = (0, 0)):
 
@@ -27,9 +48,17 @@ class PartyWindow(bui.Window):
         self._popup_type: str | None = None
         self._popup_party_member_client_id: int | None = None
         self._popup_party_member_is_host: bool | None = None
+        self._popup_party_member_chat_mute_info: dict[str, Any] | None = None
         self._width = 500
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
+
+        chat_dest = _chat_destination_key()
+        if type(self)._chat_mute_destination_key != chat_dest:
+            type(self)._chat_mute_destination_key = chat_dest
+            type(self)._chat_muted_player_keys.clear()
+            self._sync_chat_muted_player_names([])
+
         self._height = (
             365
             if uiscale is bui.UIScale.SMALL
@@ -217,7 +246,8 @@ class PartyWindow(bui.Window):
 
     def on_chat_message(self, msg: str) -> None:
         """Called when a new chat message comes through."""
-        if not bui.app.config.resolve('Chat Muted'):
+        chat_muted = bui.app.config.resolve('Chat Muted')
+        if not chat_muted and not self._should_filter_chat_message(msg):
             self._add_msg(msg)
 
     def _add_msg(self, msg: str) -> None:
@@ -254,6 +284,131 @@ class PartyWindow(bui.Window):
             bui.screenmessage(
                 bui.Lstr(resource='copyConfirmText'), color=(0, 1, 0)
             )
+
+    @classmethod
+    def _should_filter_chat_message(cls, msg: str) -> bool:
+        if not cls._chat_muted_player_names or ': ' not in msg:
+            return False
+        return msg.split(': ', 1)[0] in cls._chat_muted_player_names
+
+    def _rebuild_chat_messages(self) -> None:
+        while self._chat_texts:
+            self._chat_texts.pop().delete()
+        self._display_old_msgs = False
+
+        if bui.app.config.resolve('Chat Muted'):
+            return
+
+        for msg in bs.get_chat_messages():
+            if not self._should_filter_chat_message(msg):
+                self._add_msg(msg)
+
+    @staticmethod
+    def _add_chat_mute_name(names: set[str], value: Any) -> None:
+        if isinstance(value, str):
+            name = value.strip()
+            if name:
+                names.add(name)
+
+    @staticmethod
+    def _combined_chat_mute_name(names: list[str]) -> str:
+        name = '/'.join(names)
+        if len(name) > _MAX_CHAT_NAME_COMBINED_SIZE:
+            name = name[:_MAX_CHAT_NAME_COMBINED_SIZE] + '...'
+        return name
+
+    @classmethod
+    def _chat_mute_info_from_entry(
+        cls, entry: dict[str, Any]
+    ) -> dict[str, Any]:
+        names: set[str] = set()
+        spec_string = entry.get('spec_string')
+        client_id = entry.get('client_id')
+        key = (
+            f'spec:{spec_string}'
+            if isinstance(spec_string, str) and spec_string
+            else f'client:{client_id}'
+        )
+
+        cls._add_chat_mute_name(names, entry.get('display_string'))
+        if isinstance(spec_string, str) and spec_string:
+            try:
+                spec = json.loads(spec_string)
+            except Exception:
+                pass
+            else:
+                if isinstance(spec, dict):
+                    cls._add_chat_mute_name(names, spec.get('n'))
+                    cls._add_chat_mute_name(names, spec.get('sn'))
+
+        players = entry.get('players')
+        if not isinstance(players, list):
+            players = []
+
+        short_names: list[str] = []
+        full_names: list[str] = []
+        for player in players:
+            if not isinstance(player, dict):
+                continue
+            name = player.get('name')
+            if isinstance(name, str) and name.strip():
+                short_names.append(name.strip())
+            name_full = player.get('name_full')
+            if isinstance(name_full, str) and name_full.strip():
+                full_names.append(name_full.strip())
+
+        for name in short_names + full_names:
+            cls._add_chat_mute_name(names, name)
+        if short_names:
+            cls._add_chat_mute_name(
+                names, cls._combined_chat_mute_name(short_names)
+            )
+        if full_names:
+            cls._add_chat_mute_name(
+                names, cls._combined_chat_mute_name(full_names)
+            )
+
+        if len(full_names) == 1:
+            display_name = full_names[0]
+        elif short_names:
+            display_name = cls._combined_chat_mute_name(short_names)
+        else:
+            display_name = entry.get('display_string') or str(client_id)
+
+        return {'key': key, 'names': names, 'display_name': display_name}
+
+    def _chat_mute_info_for_client_id(
+        self, client_id: int | None
+    ) -> dict[str, Any] | None:
+        for entry in self._roster or []:
+            if entry.get('client_id') == client_id:
+                return self._chat_mute_info_from_entry(entry)
+        return None
+
+    @classmethod
+    def _sync_chat_muted_player_names(
+        cls, roster: list[dict[str, Any]] | None
+    ) -> bool:
+        muted_names: set[str] = set()
+        roster_keys: set[str] = set()
+
+        for entry in roster or []:
+            info = cls._chat_mute_info_from_entry(entry)
+            key = info['key']
+            roster_keys.add(key)
+            if key in cls._chat_muted_player_keys:
+                muted_names.update(info['names'])
+
+        if roster is not None:
+            cls._chat_muted_player_keys.intersection_update(roster_keys)
+
+        changed = muted_names != cls._chat_muted_player_names
+        cls._chat_muted_player_names = muted_names
+        try:
+            bs.set_chat_muted_player_names(sorted(muted_names))
+        except Exception:
+            logging.exception('Error applying muted chat player names.')
+        return changed
 
     def _on_menu_button_press(self) -> None:
         is_muted = bui.app.config.resolve('Chat Muted')
@@ -306,15 +461,17 @@ class PartyWindow(bui.Window):
             bui.textwidget(edit=self._muted_text, color=(1, 1, 1, 0.0))
             # add all existing messages if chat is not muted
             if self._display_old_msgs:
-                msgs = bs.get_chat_messages()
-                for msg in msgs:
-                    self._add_msg(msg)
-                self._display_old_msgs = False
+                self._rebuild_chat_messages()
 
         # update roster section
         roster = bs.get_game_roster()
         if roster != self._roster:
             self._roster = roster
+            muted_names_changed = self._sync_chat_muted_player_names(
+                self._roster
+            )
+            if muted_names_changed:
+                self._rebuild_chat_messages()
 
             # clear out old
             for widget in self._name_widgets:
@@ -486,13 +643,13 @@ class PartyWindow(bui.Window):
         """Called when a choice is selected in the popup."""
         del popup_window  # unused
         if self._popup_type == 'partyMemberPress':
-            if self._popup_party_member_is_host:
+            if choice == 'kick' and self._popup_party_member_is_host:
                 builtinassets.audio.error.get().play()
                 bui.screenmessage(
                     bui.Lstr(resource='internal.cantKickHostError'),
                     color=(1, 0, 0),
                 )
-            else:
+            elif choice == 'kick':
                 assert self._popup_party_member_client_id is not None
 
                 # Ban for 5 minutes.
@@ -505,6 +662,33 @@ class PartyWindow(bui.Window):
                         bui.Lstr(resource='getTicketsWindow.unavailableText'),
                         color=(1, 0, 0),
                     )
+            elif choice == _CHAT_MUTE_CHOICE:
+                info = self._popup_party_member_chat_mute_info
+                if info is None:
+                    builtinassets.audio.error.get().play()
+                    bui.screenmessage(
+                        bui.Lstr(resource='errorText'), color=(1, 0, 0)
+                    )
+                    return
+
+                key = info['key']
+                if key in type(self)._chat_muted_player_keys:
+                    type(self)._chat_muted_player_keys.remove(key)
+                    muted = False
+                else:
+                    type(self)._chat_muted_player_keys.add(key)
+                    muted = True
+
+                self._sync_chat_muted_player_names(self._roster)
+                self._rebuild_chat_messages()
+                display_name = info['display_name']
+                bui.screenmessage(
+                    f'{display_name}: chat '
+                    + ('muted' if muted else 'unmuted'),
+                    color=(1, 0.75, 0.2) if muted else (0.3, 1, 0.3),
+                )
+            else:
+                print(f'unhandled party member popup choice: {choice}')
         elif self._popup_type == 'menu':
             if choice in ('mute', 'unmute'):
                 cfg = bui.app.config
@@ -513,12 +697,12 @@ class PartyWindow(bui.Window):
                 self._display_old_msgs = True
                 self._update()
             if choice == 'add_to_favorites':
-                info = bs.get_connection_to_host_info_2()
-                if info is not None:
+                host_info = bs.get_connection_to_host_info_2()
+                if host_info is not None:
                     self._add_to_favorites(
-                        name=info.name,
-                        address=info.address,
-                        port_num=info.port,
+                        name=host_info.name,
+                        address=host_info.address,
+                        port_num=host_info.port,
                     )
                 else:
                     # We should not allow the user to see this option
@@ -586,15 +770,52 @@ class PartyWindow(bui.Window):
     def _on_party_member_press(
         self, client_id: int, is_host: bool, widget: bui.Widget
     ) -> None:
+        choices: list[str] = []
+        choices_display: list[bui.Lstr] = []
+
         # if we're the host, pop up 'kick' options for all non-host members
+        kick_str: bui.Lstr | None
         if bs.get_foreground_host_session() is not None:
+            can_mute_chat = client_id != -1
             kick_str = bui.Lstr(resource='kickText')
         else:
+            can_mute_chat = True
+
             # kick-votes appeared in build 14248
-            info = bs.get_connection_to_host_info_2()
-            if info is None or info.build_number < 14248:
-                return
-            kick_str = bui.Lstr(resource='kickVoteText')
+            host_info = bs.get_connection_to_host_info_2()
+            kick_str = (
+                None
+                if host_info is None or host_info.build_number < 14248
+                else bui.Lstr(resource='kickVoteText')
+            )
+
+        if kick_str is not None:
+            choices.append('kick')
+            choices_display.append(kick_str)
+
+        self._popup_party_member_chat_mute_info = None
+        chat_mute_info = self._chat_mute_info_for_client_id(client_id)
+        if (
+            can_mute_chat
+            and chat_mute_info is not None
+            and chat_mute_info['names']
+        ):
+            self._popup_party_member_chat_mute_info = chat_mute_info
+            is_chat_muted = (
+                chat_mute_info['key'] in type(self)._chat_muted_player_keys
+            )
+            choices.append(_CHAT_MUTE_CHOICE)
+            choices_display.append(
+                bui.Lstr(
+                    resource='chatUnMuteText'
+                    if is_chat_muted
+                    else 'chatMuteText'
+                )
+            )
+
+        if not choices:
+            return
+
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         self._menu_popup = PopupMenuWindow(
@@ -604,9 +825,9 @@ class PartyWindow(bui.Window):
                 if uiscale is bui.UIScale.SMALL
                 else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             ),
-            choices=['kick'],
-            choices_display=[kick_str],
-            current_choice='kick',
+            choices=choices,
+            choices_display=choices_display,
+            current_choice=choices[0],
             delegate=self,
         )
         self._popup_type = 'partyMemberPress'

@@ -115,6 +115,7 @@ class ClassicAppMode : public base::AppMode {
   void ChangeGameSpeed(int offs) override;
   void SetForegroundSession(scene_v1::Session* s);
   void LocalDisplayChatMessage(const std::vector<uint8_t>& buffer);
+  void SetChatMutedPlayerNames(const std::set<std::string>& names);
   auto chat_messages() const -> const std::list<std::string>& {
     return chat_messages_;
   }
@@ -302,6 +303,7 @@ class ClassicAppMode : public base::AppMode {
   void Reset_();
   void PruneSessions_();
   void HandleQuitOnIdle_();
+  auto IsChatMutedPlayer_(const scene_v1::PlayerSpec& spec) const -> bool;
 
   struct ScanResultsEntryPriv_;
 
@@ -332,6 +334,7 @@ class ClassicAppMode : public base::AppMode {
   int host_protocol_version_{-1};
 
   std::list<std::string> chat_messages_;
+  std::set<std::string> chat_muted_player_names_;
   // *All* existing sessions (including old ones waiting to shut down).
   std::vector<Object::Ref<scene_v1::Session> > sessions_;
   Object::WeakRef<scene_v1::Scene> foreground_scene_;
