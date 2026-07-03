@@ -1,5 +1,7 @@
 # Code Generation & the `generated/` Convention
 
+**Description:** Why generated code lives in generated/ and _generated/ dirs — one path pattern drives gitignore, spinoff strip, and file-list exclusion — and how new generators fit in.
+
 This codebase has several code generators that emit C++, Python,
 and Java alongside the hand-written source. By convention,
 generated files live in `generated/` (C++/Java) or `_generated/`

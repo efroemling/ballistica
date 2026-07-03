@@ -1,5 +1,7 @@
 # Spinoff & Feature-Sets
 
+**Description:** Deep mechanics of spinoff strip rules and feature-sets — path omission, public/private split, inline markers — and how to structure code that crosses them.
+
 How `ballistica-internal` produces downstream projects (e.g.
 `bombsquad`, `spinoff-template`) by stripping and substituting
 source. Feature-sets are the modular units the spinoff system

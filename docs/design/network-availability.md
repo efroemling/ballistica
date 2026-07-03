@@ -1,5 +1,7 @@
 # Network Availability Signal
 
+**Description:** The OS-backed "definitely offline" signal that gates connectivity/transport network retries — platform plumbing, per-OS implementations, and key design decisions.
+
 An OS-backed "is the network path available right now?" signal that
 the engine and Python latch onto, so persistent network activity
 (connectivity pings, transport agent retries, etc.) short-circuits

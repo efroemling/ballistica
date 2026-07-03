@@ -1,5 +1,7 @@
 # Premultiplied-alpha rendering
 
+**Description:** The premultiplied-alpha convention: callers premultiply straight modulate colors by alpha when drawing premult textures, else faded content stays full-bright.
+
 Migrated asset-package textures (KTX2) store their RGB **premultiplied by
 alpha** and carry the `KHR_DF_FLAG_ALPHA_PREMULTIPLIED` flag in their DFD
 (asset-packages "decision #23"). OS-rendered text is premultiplied too. This
