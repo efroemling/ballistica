@@ -290,7 +290,8 @@ def patch_modules_setup(
     python_dir: str, baseplatform: str, python_version: str = '3.13'
 ) -> None:
     """Muck with the Setup.* files Python uses to build modules."""
-    del baseplatform  # Unused.
+    if baseplatform not in ('android', 'apple'):
+        raise ValueError(f'Unsupported baseplatform: {baseplatform!r}')
 
     if python_version not in ('3.13', '3.14'):
         raise ValueError(f'Unsupported python_version: {python_version!r}')
@@ -496,14 +497,27 @@ def patch_modules_setup(
         # MODULE__BLAKE2_CFLAGS intact so blake2module.c can find the
         # HACL headers — see _patch_embedded_makefile.)
         #
-        # The other 3.14-new modules (_remote_debugging, _zstd,
-        # xxsubtype) are tracked in cmodules so they get explicitly
-        # disabled — _zstd would need a libzstd.a we don't build, and
-        # the others we don't ship.
+        # The other 3.14-new modules (_remote_debugging, xxsubtype)
+        # are tracked in cmodules so they get explicitly disabled —
+        # we don't ship them.
         enables |= {
             '_hmac',
             '_blake2',
         }
+        # _zstd backs the stdlib compression.zstd package (PEP 784),
+        # which the client asset pipeline needs at runtime to decode
+        # zstd-compressed CAS blobs (serving types zb1 etc.). The
+        # android build's dep chain provides a libzstd.a for it (see
+        # python_build_android._build_zstd).
+        # TODO(ericf): Wire a libzstd.a into the apple build's dep set
+        # and enable this there too — shipped apple builds currently
+        # have the same runtime hole (any runtime CAS download of a
+        # zstd-served blob fails with ModuleNotFoundError: _zstd) that
+        # this fixed on android.
+        if baseplatform == 'android':
+            enables |= {
+                '_zstd',
+            }
 
     # Muck with things in line form for a bit.
     lines = ftxt.splitlines()
