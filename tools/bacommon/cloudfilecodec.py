@@ -16,10 +16,13 @@ stored bytes *are* the canonical content.
 """
 
 from enum import Enum
+from functools import cache
 from typing import TYPE_CHECKING, assert_never
 
 if TYPE_CHECKING:
     from typing import Iterable
+
+    from compression.zstd import ZstdDict
 
 
 class CompressionType(Enum):
@@ -96,6 +99,26 @@ def all_compression_types() -> set[CompressionType]:
     return set(CompressionType)
 
 
+@cache
+def _shared_zstd_dict(dict_bytes: bytes) -> ZstdDict:
+    """Return a process-wide shared ``ZstdDict`` for a dictionary's bytes.
+
+    Constructing a ``ZstdDict`` copies and digests the full dictionary,
+    so build each distinct dictionary exactly once per process instead
+    of once per (de)compress call — clients decompressing blobs and
+    servers compressing them both funnel through here many times with
+    the same dictionary. IMPORTANT: any *future* pre-shared dictionary
+    added to this codec should likewise go through this helper rather
+    than calling ``ZstdDict()`` directly. Cache keys are the dictionary
+    bytes themselves; sources should hand us a stable cached bytes
+    object (see :func:`bacommon.meshzstddict.display_mesh_dict_v1`) so
+    the hash is computed once and entries never duplicate.
+    """
+    from compression import zstd
+
+    return zstd.ZstdDict(dict_bytes)
+
+
 def zstd_compress(data: bytes, level: int) -> bytes:
     """Compress ``data`` with plain zstd at the given level."""
     from compression import zstd
@@ -116,7 +139,9 @@ def zstd_compress_with_dict(
     """Compress ``data`` with zstd using a pre-shared dictionary."""
     from compression import zstd
 
-    return zstd.compress(data, level=level, zstd_dict=zstd.ZstdDict(dict_bytes))
+    return zstd.compress(
+        data, level=level, zstd_dict=_shared_zstd_dict(dict_bytes)
+    )
 
 
 def zstd_decompress_with_dict(data: bytes, dict_bytes: bytes) -> bytes:
@@ -127,7 +152,7 @@ def zstd_decompress_with_dict(data: bytes, dict_bytes: bytes) -> bytes:
     """
     from compression import zstd
 
-    return zstd.decompress(data, zstd_dict=zstd.ZstdDict(dict_bytes))
+    return zstd.decompress(data, zstd_dict=_shared_zstd_dict(dict_bytes))
 
 
 def compress_for_type(
