@@ -420,6 +420,18 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
     #: Sphinx docs). Empty string means no docs.
     docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
 
+    #: Halve the fallback flavor's level0 downsize divisor (2 instead
+    #: of 4) so this asset's fallback carries a higher-res top mip. For
+    #: the rare asset whose fallback bytes get consumed directly rather
+    #: than just serving as a universal render fallback -- e.g. the
+    #: engine cursor texture feeding OS hardware cursors, which wants a
+    #: retina-res mip. Deliberately not exposed in the workspace web UI
+    #: (it would be noise there); edit workspace.json directly for the
+    #: odd asset that needs it.
+    fallback_high_res: Annotated[
+        bool, IOAttrs('fallback_high_res', store_default=False)
+    ] = False
+
     @override
     @classmethod
     def get_type_id(cls) -> AssetsV1PathValsTypeID:

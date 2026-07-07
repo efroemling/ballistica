@@ -52,8 +52,8 @@ fast-path (`kSimpleComponentInlineColor`), which a centralized premultiply in
 `WriteConfig` would not — so the premultiply belongs at the caller, not buried
 in the renderer.
 
-Callers that follow this: `text_node`, `text_widget`, `screen_messages`,
-`image_widget`, the dev-console caret glow.
+Callers that follow this: `text_node`, `image_node`, `text_widget`,
+`screen_messages`, `image_widget`, the dev-console caret glow.
 
 ## `SetPremultiplied(true)` means "I manage premult myself"
 

@@ -71,6 +71,27 @@ The two axes are orthogonal: a `core`-only spinoff that is also
 private will include `tools/batoolsinternal/` but exclude
 `src/ballistica/base/`, `src/codegen/babasecodegen/`, etc.
 
+#### Pubsync's dir-level behavior differs from spinoff's
+
+The public `ballistica` repo is produced by **pubsync**, not
+spinoff, and behaves differently at the directory level: it
+**commits** `src/external/*` binary deps into git (e.g. the Windows
+ANGLE `.lib`s, `python-apple`, `openal-apple`) so public users can
+build from source — unlike spinoff dsts, which gitignore
+`/src/external` wholesale and pull binaries at build time. So a new
+`src/external/<dir>` added here flows into (and gets committed to)
+the public repo by default. To keep a path out, add it to
+`NO_SYNC_DIRS` in `tools/batoolsinternal/pubsync.py` (the same list
+that excludes `tools/efrotoolsinternal`, `python-apple`, etc.).
+Exclusions are verifiable in the pubsync staging clone *before*
+`pubsync end` — nothing is public until `end`.
+
+Related gotcha: public-bound `tools/` Python needs the MIT license
+header (`# Released under the MIT License. See LICENSE for
+details.`), never the internal copyright header — pubsync passes
+files through unchanged and the public `make update` license check
+enforces it.
+
 ### 3. Inline strip markers
 
 Pairs of magic comments that delete content between them during
@@ -156,6 +177,25 @@ ever called. The codegenmakefile gate above handles that.
 If the function body has *static* imports from a feature-set's
 modules, those static imports are the problem — refactor them away
 (invert the type dependency, or use `importlib.import_module`).
+
+## Core-only gating
+
+Some CI builds and behaviors should only run in ballistica-internal,
+not in spinoffs (e.g., periodic ANGLE/Python build checks — these are
+canary runs to keep build pipelines exercised; their results are never
+gathered, so running them in every spinoff project is redundant). The
+standard pattern for this is:
+
+```python
+IS_CORE_REPO = 'ballistica' + 'kit' == 'ballisticakit'
+```
+
+This evaluates to `True` in ballistica-internal and `False` in
+spinoffs: spinoff substitutes `ballisticakit` on the right-hand side
+with the dst name, but the split string on the left is left alone, so
+the equality fails. Writing it as a single string would cause both
+sides to be substituted (both become the dst name → still `True`),
+which defeats the purpose.
 
 ## Verifying with spinofftest
 

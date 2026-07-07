@@ -5,7 +5,9 @@
 #include "ballistica/base/app_adapter/app_adapter_sdl.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -13,10 +15,10 @@
 #include <mach-o/dyld.h>
 
 #include <climits>
-#include <cstdint>
 #include <cstdlib>
 #endif
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/base.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
@@ -36,6 +38,22 @@
 #include "ballistica/shared/foundation/input_types.h"
 
 namespace ballistica::base {
+
+// Hand the OS a hardware cursor built from the engine's bundled cursor
+// texture instead of drawing the engine's software cursor each frame
+// (saves the software cursor's frame or so of latency). Deliberately
+// kept as a toggle even with the hardware path established: flipping
+// this off is the easy way to exercise the engine's software-cursor
+// path (Graphics::DrawCursor) on a desktop build - that path stays
+// load-bearing for platforms with no hardware cursor (e.g. Android
+// with a pointer).
+static const bool kUseHardwareCursor{true};
+
+// The hardware cursor's logical size in points -- matches the Mac
+// build's cursor so all paths present identically. The cursor-texture
+// mip of this size becomes the base cursor surface; larger mips become
+// high-DPI alternates.
+static const int kHardwareCursorLogicalSize{64};
 
 #if BA_PLATFORM_MACOS && BA_OPENGL_IS_ES
 // Point SDL at the ANGLE dylibs we bundle next to the binary. SDL loads its
@@ -112,6 +130,12 @@ void AppAdapterSDL::OnMainThreadStartApp() {
   // We wrangle our own signal handling; don't bring SDL into it.
   SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
 
+  // Let SDL serve scale-matched versions of our hardware cursor on
+  // HiDPI displays (Windows gates this behind a hint; macOS/Wayland
+  // do it unconditionally). Our cursor surface carries higher-res
+  // alternate images for this - see CreateHardwareCursor_.
+  SDL_SetHint(SDL_HINT_MOUSE_DPI_SCALE_CURSORS, "1");
+
   // We provide our own main() (SDL_MAIN_HANDLED; see min_sdl.h), so tell SDL
   // that startup happened properly before we init.
   SDL_SetMainReady();
@@ -150,8 +174,99 @@ void AppAdapterSDL::OnMainThreadStartApp() {
     }
   }
 
-  // This adapter draws a software cursor; hide the actual OS one.
+  // Start with the OS cursor hidden: in software-cursor mode we draw our
+  // own, and in hardware-cursor mode the engine pushes visibility updates
+  // (SetHardwareCursorVisible) once drawing is up.
   SDL_HideCursor();
+}
+
+auto AppAdapterSDL::HasHardwareCursor() -> bool { return kUseHardwareCursor; }
+
+void AppAdapterSDL::SetHardwareCursorVisible(bool visible) {
+  assert(g_core->InMainThread());
+  if (visible) {
+    // Build our custom color cursor on first use. If that fails (the
+    // pixel loader logs the reason) we live with the OS default cursor.
+    if (!hw_cursor_create_attempted_) {
+      hw_cursor_create_attempted_ = true;
+      hw_cursor_ = CreateHardwareCursor_();
+    }
+    if (hw_cursor_ != nullptr) {
+      SDL_SetCursor(hw_cursor_);
+    }
+    SDL_ShowCursor();
+  } else {
+    SDL_HideCursor();
+  }
+}
+
+// Build an SDL surface (owning its pixels) from one RGBA8 mip level.
+// SDL surfaces want straight (non-premultiplied) alpha; the cursor
+// texture ships premultiplied (asset-packages decision #23), so
+// un-premultiply if needed.
+static auto CreateCursorSurface_(const Assets::BundledTextureMip& mip,
+                                 bool premultiplied) -> SDL_Surface* {
+  SDL_Surface* surface =
+      SDL_CreateSurface(mip.width, mip.height, SDL_PIXELFORMAT_RGBA32);
+  if (surface == nullptr) {
+    return nullptr;
+  }
+  auto* dst = static_cast<uint8_t*>(surface->pixels);
+  for (int y = 0; y < mip.height; ++y) {
+    uint8_t* row = dst + y * surface->pitch;
+    memcpy(row, mip.rgba.data() + static_cast<size_t>(y) * mip.width * 4,
+           static_cast<size_t>(mip.width) * 4);
+    if (premultiplied) {
+      for (int x = 0; x < mip.width; ++x) {
+        uint8_t* px = row + x * 4;
+        int a = px[3];
+        if (a != 0 && a != 255) {
+          for (int c = 0; c < 3; ++c) {
+            px[c] =
+                static_cast<uint8_t>(std::min(255, (px[c] * 255 + a / 2) / a));
+          }
+        }
+      }
+    }
+  }
+  return surface;
+}
+
+auto AppAdapterSDL::CreateHardwareCursor_() -> SDL_Cursor* {
+  auto img = Assets::LoadBundledFallbackTextureRGBA(
+      std::string(kBuiltinAssetsApverid) + ":textures/cursor");
+  if (!img.has_value() || img->mips.empty()) {
+    return nullptr;
+  }
+
+  // The mip matching our logical cursor size becomes the base surface
+  // (which defines the cursor's on-screen size in points); any larger
+  // mips get attached as high-DPI alternates for SDL to serve per
+  // display scale.
+  size_t base{};
+  while (base + 1 < img->mips.size()
+         && img->mips[base].width > kHardwareCursorLogicalSize) {
+    ++base;
+  }
+  SDL_Surface* surface =
+      CreateCursorSurface_(img->mips[base], img->premultiplied);
+  if (surface == nullptr) {
+    return nullptr;
+  }
+  for (size_t i = 0; i < base; ++i) {
+    if (SDL_Surface* alt =
+            CreateCursorSurface_(img->mips[i], img->premultiplied)) {
+      SDL_AddSurfaceAlternateImage(surface, alt);
+      // AddSurfaceAlternateImage holds its own reference.
+      SDL_DestroySurface(alt);
+    }
+  }
+  // Match the Mac build's cursor: hotspot at (6, 6) in its 64px space.
+  SDL_Cursor* cursor = SDL_CreateColorCursor(
+      surface, 6 * img->mips[base].width / 64, 6 * img->mips[base].height / 64);
+  // The cursor keeps its own copy of the pixels.
+  SDL_DestroySurface(surface);
+  return cursor;
 }
 
 /// Our particular flavor of graphics settings.

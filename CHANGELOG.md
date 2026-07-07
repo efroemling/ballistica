@@ -1,4 +1,4 @@
-### 1.8.0 (build 22924, api 9, 2026-07-04)
+### 1.8.0 (build 22925, api 9, 2026-07-06)
 - Fully implemented asset packages (more on this soon)
 - Upgraded to Python 3.14. This gives us a few nice useful bits such as zstd
   compression to help speed up online stuff and also means we can get rid of all
@@ -13,6 +13,8 @@
 - Finally got rid of the weird square textures containing non-square contents
   split into two pieces. This was a long-obsolete artifact of targeting pvrtc
   texture compression which was limited to square dimensions.
+- Added hardware cursor support on all platforms; should eliminate any sense of
+  cursor lag.
 - Upgraded Windows builds from VS2022 to VS2026.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)

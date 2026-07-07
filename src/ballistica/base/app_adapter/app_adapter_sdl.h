@@ -16,6 +16,7 @@
 // real SDL types directly (converting to engine-native BA types at its
 // boundary — see HandleSDLEvent_).
 struct SDL_Window;
+struct SDL_Cursor;
 union SDL_Event;
 
 namespace ballistica::base {
@@ -44,6 +45,8 @@ class AppAdapterSDL : public AppAdapter {
   auto SupportsMaxFPS() -> bool const override;
 
   auto HasDirectKeyboardInput() -> bool override;
+  auto HasHardwareCursor() -> bool override;
+  void SetHardwareCursorVisible(bool visible) override;
   void ApplyGraphicsSettings(const GraphicsSettings* settings) override;
 
   auto GetGraphicsSettings() -> GraphicsSettings* override;
@@ -80,6 +83,10 @@ class AppAdapterSDL : public AppAdapter {
   void RemoveSDLInputDevice_(int index);
   void SleepUntilNextEventCycle_(microsecs_t cycle_start_time);
   void LogEventProcessingTime_(microsecs_t duration, int count);
+  // Build our custom color cursor from the engine's bundled cursor
+  // texture (hardware-cursor mode). Returns nullptr on failure (the
+  // pixel loader logs the reason).
+  auto CreateHardwareCursor_() -> SDL_Cursor*;
 
   int max_fps_{60};
   bool done_{};
@@ -109,6 +116,8 @@ class AppAdapterSDL : public AppAdapter {
   Vector2f window_size_{1.0f, 1.0f};
   SDL_Window* sdl_window_{};
   void* sdl_gl_context_{};
+  SDL_Cursor* hw_cursor_{};
+  bool hw_cursor_create_attempted_{};
   seconds_t last_windowevent_close_time_{};
 };
 

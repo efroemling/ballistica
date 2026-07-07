@@ -333,6 +333,16 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
   if (alpha < 0) {
     alpha = 0;
   }
+
+  // Premultiply rgb by alpha for premultiplied textures so faded images
+  // composite 'over' under premult blend instead of staying full-brightness
+  // (premult blend adds rgb directly rather than weighting it by alpha).
+  // Skip this when our premultiplied attr is explicitly set; that means the
+  // caller manages premult colors themselves (additive glows, etc.).
+  float cmul = (!premultiplied_ && texture_.exists()
+                && texture_->texture_data()->premultiplied())
+                   ? alpha
+                   : 1.0f;
   base::MeshAsset* mesh_opaque_used = nullptr;
   if (mesh_opaque_.exists()) mesh_opaque_used = mesh_opaque_->mesh_data();
   base::MeshAsset* mesh_transparent_used = nullptr;
@@ -374,7 +384,7 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
     c.SetTransparent(draw_transparent);
     c.SetPremultiplied(premultiplied_);
     c.SetTexture(texture_.exists() ? texture_->texture_data() : nullptr);
-    c.SetColor(red_, green_, blue_, alpha);
+    c.SetColor(red_ * cmul, green_ * cmul, blue_ * cmul, alpha);
     if (tint_texture_.exists()) {
       c.SetColorizeTexture(tint_texture_->texture_data());
       c.SetColorizeColor(tint_red_, tint_green_, tint_blue_);
@@ -400,7 +410,7 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
     c.SetTransparent(true);
     c.SetPremultiplied(premultiplied_);
     c.SetTexture(texture_.exists() ? texture_->texture_data() : nullptr);
-    c.SetColor(red_, green_, blue_, alpha);
+    c.SetColor(red_ * cmul, green_ * cmul, blue_ * cmul, alpha);
     if (tint_texture_.exists()) {
       c.SetColorizeTexture(tint_texture_->texture_data());
       c.SetColorizeColor(tint_red_, tint_green_, tint_blue_);

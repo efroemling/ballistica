@@ -255,6 +255,36 @@ class Assets {
   /// headless builds genuinely load.
   auto FindCasCollisionMeshPath(const std::string& name) -> std::string;
 
+  /// One mip level of raw RGBA8 pixel data (see
+  /// :meth:`LoadBundledFallbackTextureRGBA`).
+  struct BundledTextureMip {
+    int width{};
+    int height{};
+    std::vector<uint8_t> rgba;
+  };
+
+  /// Decoded pixel data from a bundled texture (see
+  /// :meth:`LoadBundledFallbackTextureRGBA`). Mips are ordered largest
+  /// first — the full chain present in the flavor blob.
+  struct BundledTextureRGBAData {
+    bool premultiplied{};
+    std::vector<BundledTextureMip> mips;
+  };
+
+  /// Decode a texture qualified-ref (``<apverid>:<asset_name>``) from
+  /// its *bundled fallback flavor* into raw RGBA8 pixels — for handing
+  /// image data to OS facilities (hardware cursors, etc.) rather than
+  /// the renderer. Reads the bundled ``manifest.json`` chain directly
+  /// instead of consulting the runtime package registry: the registry
+  /// holds only the single flavor a package *resolved* to (which on
+  /// warm desktop starts is desktop_v1 BC7 — not CPU-decodable), while
+  /// the bundled fallback flavor is uncompressed RGBA8 KTX2 and
+  /// guaranteed present on disk from process start. Static and callable
+  /// from any thread once core is bootstrapped (touches only immutable
+  /// bundled files). Returns nullopt (logging a warning) on any miss.
+  static auto LoadBundledFallbackTextureRGBA(const std::string& name)
+      -> std::optional<BundledTextureRGBAData>;
+
  private:
   /// Resolve a qualified-ref name (``<apverid>:<asset_name>``) into a
   /// CAS blob path via :class:`AssetPackageRegistry`. Called from the
