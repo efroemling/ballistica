@@ -134,7 +134,11 @@ void AppAdapterSDL::OnMainThreadStartApp() {
   // HiDPI displays (Windows gates this behind a hint; macOS/Wayland
   // do it unconditionally). Our cursor surface carries higher-res
   // alternate images for this - see CreateHardwareCursor_.
+  // The hint only exists in SDL 3.4.0+; on older SDLs (e.g. the
+  // flatpak runtime's) the cursor simply shows at standard res.
+#ifdef SDL_HINT_MOUSE_DPI_SCALE_CURSORS
   SDL_SetHint(SDL_HINT_MOUSE_DPI_SCALE_CURSORS, "1");
+#endif
 
   // We provide our own main() (SDL_MAIN_HANDLED; see min_sdl.h), so tell SDL
   // that startup happened properly before we init.
