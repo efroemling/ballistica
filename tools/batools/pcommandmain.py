@@ -145,8 +145,6 @@ from batools.pcommands2 import (
     get_modern_make,
     assetpins,
     asset_bundle_build,
-    cst_test,
-    prefab_symbols_fetch,
 )
 from batools.pcommands3 import (
     test_game_run,
@@ -167,6 +165,8 @@ from batools.pcommands4 import (
     ios_sim_run,
     ios_sim_log,
     assetworkspace,
+    cst_test,
+    prefab_symbols_fetch,
 )
 from batools._automation import test_game_cmd
 

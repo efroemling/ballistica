@@ -471,7 +471,6 @@ class LogHandler(logging.Handler):
         message: str | logging.LogRecord,
         labels: dict[str, str],
     ) -> None:
-        # pylint: disable=too-many-positional-arguments
         try:
             # If they passed a raw record here, bake it down to a string.
             if isinstance(message, logging.LogRecord):
@@ -1025,7 +1024,7 @@ class LogBatchForwarder:
             self._flush_task.cancel()
             try:
                 await self._flush_task
-            except (asyncio.CancelledError, Exception):
+            except asyncio.CancelledError, Exception:
                 pass
             self._flush_task = None
         await self.flush_now()

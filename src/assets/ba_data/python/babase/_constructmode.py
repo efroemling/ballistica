@@ -18,6 +18,7 @@ from babase._assetsubsystem import (
     AssetAuthRequiredError,
     AssetAccessDeniedError,
     AssetClientTooOldError,
+    AssetContentError,
     AssetResolveAbortedError,
     make_progress_reporter,
 )
@@ -324,6 +325,19 @@ class ConstructAppMode(AppMode):
                 exc.server_message
                 or 'This app version is too old to load current assets.'
                 ' Please update to continue.'
+            )
+            strip_exception_tracebacks(exc)
+        except AssetContentError as exc:
+            # A source asset in the package failed to build — something
+            # its author can fix. Surface the server's message verbatim;
+            # it names the offending source file(s). This audience is
+            # nearly always the author (dev/test versions only resolve
+            # for the owner/dev-team), so speak to them directly.
+            logger.warning('Construct-mode: asset content error: %s', exc)
+            detail = exc.server_message or 'An asset failed to build.'
+            self._fail(
+                f'{detail} Fix the file in the source workspace and'
+                f' try again.'
             )
             strip_exception_tracebacks(exc)
         except AssetResolveAbortedError as exc:

@@ -364,24 +364,15 @@ def _print_pin_table(pins: list[Pin]) -> None:
 def _format_pin_label(pin: Pin) -> str:
     """Return the human-readable label form.
 
-    Prod pins display as the bare version segment (the track is
-    conveyed by color in the rendered table). Test pins show
-    ``test <suffix>``. Dev pins show just ``dev`` since the
-    resolved snapshot suffix is volatile.
+    The version segment as-is (``260709`` / ``test260709`` /
+    ``dev260709``); the track is additionally conveyed by color in
+    the rendered table. (Dev pins used to display as bare ``dev``,
+    but dev version ids are first-class in source pins now, so
+    hiding the concrete segment just made the table show less than
+    the pin files do.)
     """
-    from typing import assert_never
-
     parts = pin.apverid.split('.')
-    seg = parts[2] if len(parts) == 3 else ''
-    match pin.pin_type:
-        case PinType.PROD:
-            return seg
-        case PinType.TEST:
-            return seg
-        case PinType.DEV:
-            return 'dev'
-        case _:
-            assert_never(pin.pin_type)
+    return parts[2] if len(parts) == 3 else ''
 
 
 def _pin_color(pin: Pin) -> str:
@@ -422,52 +413,6 @@ def _clip_left(text: str, width: int) -> str:
     if width <= 3:
         return text[-width:]
     return '...' + text[-(width - 3) :]
-
-
-def do_help() -> None:
-    """Print usage examples for ``assetpins update``."""
-    print(
-        f'\n'
-        f'{Clr.BLD}USAGE{Clr.RST}\n'
-        f'\n'
-        f'  {Clr.BLD}VIEWING PINS{Clr.RST}\n'
-        f'    tools/pcommand assetpins\n'
-        f'\n'
-        f'  {Clr.BLD}UPDATING PINS{Clr.RST}\n'
-        f'    tools/pcommand assetpins update <TARGET> <VERSION>\n'
-        f'    TARGET:  all | <package-name> | <file-path>\n'
-        f'    VERSION: latest | prod | test | dev | <version>\n'
-        f'             | <account>.<package>.<version>\n'
-        '\n'
-        f'{Clr.BLD}EXAMPLES{Clr.RST}\n'
-        f'\n'
-        f'  {Clr.MAG}make assetpins{Clr.RST}\n'
-        f'      Show current pins.\n'
-        f'      Same as `tools/pcommand assetpins`.\n'
-        f'\n'
-        f'  {Clr.MAG}make assetpins-latest{Clr.RST}\n'
-        f'      Pin everything to the latest version in its'
-        f' current track (dev/test/prod).\n'
-        f'      Same as `tools/pcommand assetpins update all latest`.\n'
-        f'\n'
-        f'  {Clr.MAG}tools/pcommand assetpins update myassetpack dev{Clr.RST}\n'
-        f'      Pin every myassetpack to the latest dev version of itself.\n'
-        f'\n'
-        f'  {Clr.MAG}tools/pcommand assetpins update'
-        f' all prod{Clr.RST}\n'
-        f'      Pin everything to the latest prod'
-        f' version of itself.\n'
-        f'\n'
-        f'  {Clr.MAG}tools/pcommand assetpins update'
-        f' pconfig/projectconfig.json test260513{Clr.RST}\n'
-        f'      Pin one specific file to a specific version.\n'
-        f'\n'
-        f'  {Clr.MAG}tools/pcommand assetpins update myoldassets'
-        f' efro.mynewassets.test260518{Clr.RST}\n'
-        f'      Pin every myoldassets to a specific version.\n'
-        f'      With this long form you can switch assetpacks completely.\n'
-        f'\n'
-    )
 
 
 def _print_help_pointer() -> None:

@@ -218,6 +218,17 @@ class AssetClientTooOldError(AssetResolveError):
     """
 
 
+class AssetContentError(AssetResolveError):
+    """Tier-1 resolve failed: the package's own source content is bad.
+
+    The package failed to build due to a problem in its source assets
+    (e.g. a malformed sound or texture file) — something the package
+    author can fix. ``server_message`` names the offending source
+    file(s), so surface it verbatim. Raised when the server returns
+    :attr:`~bacommon.cloud.AssetPackageResolveError.CONTENT`.
+    """
+
+
 class AssetResolveAbortedError(AssetResolveError):
     """An asset-subsystem operation was abandoned because we're shutting down.
 
@@ -227,6 +238,19 @@ class AssetResolveAbortedError(AssetResolveError):
     outcome -- not a real failure -- so callers should bow out quietly
     rather than logging it as an error.
     """
+
+
+#: Which :class:`AssetResolveError` subclass a Tier-1 resolve raises for
+#: each structured server code (codes without an entry get the base
+#: class).
+_RESOLVE_ERROR_TYPES: dict[
+    AssetPackageResolveError, type[AssetResolveError]
+] = {
+    AssetPackageResolveError.AUTH_REQUIRED: AssetAuthRequiredError,
+    AssetPackageResolveError.ACCESS_DENIED: AssetAccessDeniedError,
+    AssetPackageResolveError.CLIENT_TOO_OLD: AssetClientTooOldError,
+    AssetPackageResolveError.CONTENT: AssetContentError,
+}
 
 
 @dataclass
@@ -1401,13 +1425,10 @@ class AssetSubsystem(AppSubsystem):
             # Raise a specific subclass for the cases callers branch on
             # (e.g. construct-mode prompting for sign-in). Carry the
             # server's raw message too so callers can show its wording.
-            if code is AssetPackageResolveError.AUTH_REQUIRED:
-                raise AssetAuthRequiredError(msg, code, response.error)
-            if code is AssetPackageResolveError.ACCESS_DENIED:
-                raise AssetAccessDeniedError(msg, code, response.error)
-            if code is AssetPackageResolveError.CLIENT_TOO_OLD:
-                raise AssetClientTooOldError(msg, code, response.error)
-            raise AssetResolveError(msg, code, response.error)
+            errcls = AssetResolveError
+            if code is not None:
+                errcls = _RESOLVE_ERROR_TYPES.get(code, AssetResolveError)
+            raise errcls(msg, code, response.error)
         if not response.buckets:
             raise AssetResolveError(f'{apverid}: resolve returned no buckets.')
 
@@ -2043,7 +2064,7 @@ class AssetSubsystem(AppSubsystem):
                 value = int(infile.read().strip(), 16)
             if 0 <= value < _CAS_SHARD_COUNT:
                 return value
-        except (OSError, ValueError):
+        except OSError, ValueError:
             pass
         return 0
 

@@ -498,7 +498,7 @@ def _emit_class_instance_attrs(
     try:
         with open(srcfile, encoding='utf-8') as infile:
             tree = ast.parse(infile.read())
-    except (OSError, SyntaxError):
+    except OSError, SyntaxError:
         return
 
     # Resolve the class node by walking the qualname path. Handles
@@ -676,7 +676,7 @@ def _format_detail_callable(qualname: str, value: object) -> str:
             value,  # type: ignore[arg-type]
             annotation_format=annotationlib.Format.STRING,
         )
-    except (TypeError, ValueError):
+    except TypeError, ValueError:
         return qualname
     sigstr = sig.format(quote_annotation_strings=False)
     return f"{qualname.rsplit('.', 1)[-1]}{sigstr}"

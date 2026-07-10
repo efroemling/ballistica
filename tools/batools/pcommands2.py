@@ -12,7 +12,6 @@ from efrotools import pcommand
 if TYPE_CHECKING:
     from typing import Any
 
-    from libcst import BaseExpression
     from libcst.metadata import CodeRange
 
     from batools.assetbundleprofiles import BundlePackage
@@ -630,48 +629,41 @@ def get_modern_make() -> None:
 def assetpins() -> None:
     """Inspect and update asset-package pins.
 
-    Subcommands::
+    **Usage**::
 
-        assetpins                            # default: same as 'list'
-        assetpins list                       # list pins + master's
-                                             #   latest-available
-        assetpins help                       # show usage examples
-        assetpins update <TARGET> <VERSION>  # mutate matched pins
-        assetpins update ... --force         # also re-fetch wrappers
-                                             #   at an unchanged version
-        assetpins check                      # exit non-zero on any
-                                             #   dev/test pin
+        tools/pcommand assetpins
+        tools/pcommand assetpins update <TARGET> <VERSION> [--force]
 
-    VERSION can be:
+        TARGET:  all | <package-name> | <file-path>
+        VERSION: latest | prod | test | dev | <version>
+                 | <account-or-tag>.<package>.<version>
 
-    - ``latest`` — current track, newest version.
-    - ``prod`` / ``test`` / ``dev`` — switch (or stay on) the
-      named track, newest version of it.
-    - A full version string as seen in the third segment of an
-      apverid: ``<digits>`` for prod (e.g. ``260513a``),
-      ``test<digits>`` for test (e.g. ``test260512a``), or
-      ``dev<digits>`` for dev (e.g. ``dev260513a``). The track
-      is inferred from the prefix; account and package come
-      from each pin's own apverid.
+    **Examples:**
 
-    TARGET can be:
+      ``make assetpins``
+          Show current pins.
+          Same as ``tools/pcommand assetpins``.
 
-    - ``all`` — every discovered pin.
-    - ``<package-name>`` (e.g. ``bastdassets``) — every pin of
-      that asset-package across accounts.
-    - A file path (e.g. ``pconfig/projectconfig.json``) —
-      exactly one pin.
+      ``make assetpins-latest``
+          Pin everything to the latest version in its current track
+          (dev/test/prod).
+          Same as ``tools/pcommand assetpins update all latest``.
 
-    Pins live in ``pconfig/projectconfig.json`` (the
-    construct-mode/bootloader pin) and per-wrapper
-    ``# ba_meta require asset-package <id>`` lines in Python
-    wrapper modules under ``src/assets/ba_data/python/``. Each
-    pin is independent — moving one pin does not move any
-    other; track-switching is an explicit deliberate operation.
+      ``tools/pcommand assetpins update myassetpack dev``
+          Pin every myassetpack to the latest dev version of itself.
 
-    ``assetpins`` is the only command that mutates pin state,
-    and the only build-flow phase that talks to the cloud — see
-    ``efrohome/docs/global_design/build_system.md``.
+      ``tools/pcommand assetpins update all prod``
+          Pin everything to the latest prod version of itself.
+
+      ``tools/pcommand assetpins update pconfig/projectconfig.json test260513``
+          Pin one specific file to a specific version.
+
+      ``tools/pcommand assetpins update myoldassets efro.newassets.test260518``
+          Pin every myoldassets to a specific version. With this long
+          form you can switch assetpacks completely.
+
+    Full semantics (pin discovery, apverid schema/tracks, ``--force``)
+    live in the ``batools.assetpins`` module docstring.
     """
     from pathlib import Path
 
@@ -685,7 +677,13 @@ def assetpins() -> None:
         assetpins_module.do_list(Path(pcommand.PROJROOT))
         return
     if args == ['help']:
-        assetpins_module.do_help()
+        # Full usage lives in this docstring; the pcommand framework's
+        # built-in help renders it.
+        print(
+            f'For usage, run {Clr.BLD}tools/pcommand help'
+            f' assetpins{Clr.RST} (or {Clr.BLD}make'
+            f' assetpins-help{Clr.RST}).'
+        )
         return
     if args[0] == 'update':
         rest = args[1:]
@@ -702,14 +700,19 @@ def assetpins() -> None:
             Path(pcommand.PROJROOT), target_str, version_str, force=force
         )
         return
-    if args[0] == 'check':
+    # Tooling-only (blessing/pubsync gates); deliberately undocumented
+    # in the help docstring.
+    if args[0] == 'assert-prod-only':
         if len(args) > 1:
-            raise CleanError('assetpins check: takes no args.')
+            raise CleanError('assetpins assert-prod-only: takes no args.')
         offenders = assetpins_module.do_check(Path(pcommand.PROJROOT))
         if not offenders:
-            print(f'{Clr.GRN}assetpins check: clean.{Clr.RST}')
+            print(f'{Clr.GRN}assetpins assert-prod-only: clean.{Clr.RST}')
             return
-        lines = [f'{Clr.RED}assetpins check: found non-prod pin(s):{Clr.RST}']
+        lines = [
+            f'{Clr.RED}assetpins assert-prod-only: found'
+            f' non-prod pin(s):{Clr.RST}'
+        ]
         for pin in offenders:
             lines.append(
                 f'  {Clr.BLD}{pin.file_path}{Clr.RST}:'
@@ -719,15 +722,14 @@ def assetpins() -> None:
         lines.append(
             f'{Clr.YLW}Fix: run `make assetpins-latest` to move to the'
             f' current-track latest, or `tools/pcommand assetpins update'
-            f' prod <target>` to switch to prod.{Clr.RST}'
+            f' <target> prod` to switch to prod.{Clr.RST}'
         )
         raise CleanError('\n'.join(lines))
     raise CleanError(
         f'Unknown assetpins subcommand: {args[0]!r}.'
         f' Try {Clr.BLD}assetpins{Clr.RST} (list),'
-        f' {Clr.BLD}assetpins help{Clr.RST} (examples),'
         f' {Clr.BLD}assetpins update <TARGET> <VERSION>{Clr.RST}, or'
-        f' {Clr.BLD}assetpins check{Clr.RST}.'
+        f' {Clr.BLD}make assetpins-help{Clr.RST} (full usage).'
     )
 
 
@@ -911,62 +913,3 @@ def _assemble_one_package(apverid: str, pkg: BundlePackage) -> dict[str, Any]:
     finally:
         if os.path.exists(tmppath):
             os.unlink(tmppath)
-
-
-def cst_test() -> None:
-    """Test filtering a Python file using LibCST."""
-
-    from typing import override
-
-    from efro.error import CleanError
-    import libcst as cst
-    from libcst import CSTTransformer, Name, Index, Subscript
-
-    args = pcommand.get_args()
-
-    if len(args) != 2:
-        raise CleanError('Expected an in-path and out-path.')
-
-    filename = args[0]
-    filenameout = args[1]
-
-    class RemoveAnnotatedTransformer(CSTTransformer):
-        """Replaces `Annotated[FOO, ...]` with just `FOO`"""
-
-        @override
-        def leave_Subscript(
-            self, original_node: BaseExpression, updated_node: BaseExpression
-        ) -> BaseExpression:
-            if (
-                isinstance(updated_node, Subscript)
-                and isinstance(updated_node.value, Name)
-                and updated_node.value.value == 'Annotated'
-                and isinstance(updated_node.slice[0].slice, Index)
-            ):
-                return updated_node.slice[0].slice.value
-            return updated_node
-
-    with open(filename, 'r', encoding='utf-8') as f:
-        source_code: str = f.read()
-
-    tree: cst.Module = cst.parse_module(source_code)
-    modified_tree: cst.Module = tree.visit(RemoveAnnotatedTransformer())
-
-    with open(filenameout, 'w', encoding='utf-8') as f:
-        f.write(modified_tree.code)
-
-    print('Success!')
-
-
-def prefab_symbols_fetch() -> None:
-    """Fetch debug symbols for the Windows prefab binaries present.
-
-    Looks up symbols by each binary's content hash from the master
-    server's recent-build archives and drops the .pdb next to its exe,
-    after which native stack traces in fatal-error output come out
-    fully symbolicated. Symbols are retained for recent builds only.
-    Honors ``BA_FLEET`` for developer setups (default prod).
-    """
-    from batools.prefabsymbols import fetch_prefab_symbols
-
-    fetch_prefab_symbols()

@@ -263,7 +263,7 @@ class LanguageStringDecodeContext:
         try:
             name = struct.name_of(str_int)
             params = struct.params_of(name)
-        except (IndexError, KeyError):
+        except IndexError, KeyError:
             raise _DecodeFail(
                 f'unknown string index {str_int} in {apverid}'
             ) from None

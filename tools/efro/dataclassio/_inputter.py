@@ -170,7 +170,6 @@ class _Inputter:
         ioattrs: IOAttrs | None,
     ) -> Any:
         """Convert an assigned value to what a dataclass field expects."""
-        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
 
@@ -510,7 +509,6 @@ class _Inputter:
         value: Any,
         ioattrs: IOAttrs | None,
     ) -> Any:
-        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-branches
 
         if not isinstance(value, dict):
@@ -676,7 +674,7 @@ class _Inputter:
             mttype = _get_multitype_type(anntype, fieldpath, value)
         # NOTE: We may want to tighten this up; ValueError might be
         # covering more than the missing enum case we intend here.
-        except (ValueError, TypeNotPresentError):
+        except ValueError, TypeNotPresentError:
             if self._lossy:
                 out = anntype.get_unknown_type_fallback()
                 if out is not None:
@@ -696,7 +694,6 @@ class _Inputter:
         value: Any,
         ioattrs: IOAttrs | None,
     ) -> Any:
-        # pylint: disable=too-many-positional-arguments
         out: list = []
 
         # Because we are json-centric, we expect a list for all sequences.

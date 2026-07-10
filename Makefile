@@ -191,7 +191,7 @@ codegen-clean:
 # Inspect / update asset-package pins. Convenience aliases for the
 # pcommand subcommands; richer invocations (specific
 # VERSION/TARGET combos, track switching, etc.) should go through
-# ``tools/pcommand assetpins update <VERSION> <TARGET>`` directly
+# ``tools/pcommand assetpins update <TARGET> <VERSION>`` directly
 # (since make targets can't take CLI-style args). `assetpins` is
 # the only build-flow entry that talks to the cloud and the only
 # one that mutates checked-in source as part of normal use — see
@@ -202,22 +202,23 @@ assetpins:
 # Move every pin to the newest version on its current track.
 # Dev pins re-resolve; prod/test pins move to the newest of
 # their type if upstream has published one. Convenience for
-# `tools/pcommand assetpins update latest all`. For finer
+# `tools/pcommand assetpins update all latest`. For finer
 # control (single package, single file, track switching, exact
 # version), invoke the underlying pcommand directly.
 assetpins-latest:
 	@$(PCOMMAND) assetpins update all latest
 
-# Show how to wrangle asset pins.
+# Show full assetpins usage (the pcommand's docstring).
 assetpins-help:
-	@$(PCOMMAND) assetpins help
+	@$(PCOMMAND) help assetpins
 
 # (No dedicated assetpins-check make target — non-prod pins are
 # flagged prominently in ``make assetpins`` output, and the
 # check fires automatically as part of ``blessing check``,
 # pubsync push, and other gates that already enforce
 # "shippable build" invariants. Callers that want the bare
-# check can run ``tools/pcommand assetpins check`` directly.)
+# check can run ``tools/pcommand assetpins assert-prod-only``
+# directly.)
 
 # Clean asset-bundle outputs (manifests + CAS blobs).
 assets-resolve-clean:
@@ -881,6 +882,7 @@ update-check: env-pre-update
 upgrade: env
 	@$(MAKE) venv-upgrade
 	@$(MAKE) python-site-packages
+	@$(MAKE) assetpins-latest
 	@$(PCOMMANDBATCH) echo GRN Upgrade-Project: SUCCESS!
 
 # Tell make which of these targets don't represent files.

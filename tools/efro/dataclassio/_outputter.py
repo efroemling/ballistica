@@ -210,7 +210,6 @@ class _Outputter:
         ioattrs: IOAttrs | None,
     ) -> Any:
         # pylint: disable=too-many-statements
-        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
 
@@ -588,7 +587,6 @@ class _Outputter:
         value: dict,
         ioattrs: IOAttrs | None,
     ) -> Any:
-        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-branches
         if not isinstance(value, dict):
             raise TypeError(

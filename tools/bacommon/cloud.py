@@ -426,6 +426,12 @@ class AssetPackageResolveError(Enum):
     #: must update. Clients predating the build-number field also land
     #: here.
     CLIENT_TOO_OLD = 'tooold'
+    #: The package's own source content failed to build — a problem the
+    #: package author can fix (e.g. a malformed sound or texture file).
+    #: The human-readable ``error`` names the offending source file(s);
+    #: clients should surface it verbatim. Old clients see this as
+    #: ``INTERNAL`` via ``enum_fallback``.
+    CONTENT = 'content'
 
 
 class AssetPackageBuildPhase(Enum):

@@ -982,7 +982,6 @@ class AwaitGamepadInputWindow(bui.Window):
         message: bui.Lstr | None = None,
         message2: bui.Lstr | None = None,
     ):
-        # pylint: disable=too-many-positional-arguments
         if message is None:
             print('AwaitGamepadInputWindow message is None!')
             # Shouldn't get here.

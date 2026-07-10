@@ -398,8 +398,7 @@ class CoopSession(Session):
                         else:
                             raise RuntimeError('FIXME')
                 else:
-                    if results.scoretype is not ScoreType.POINTS:
-                        print(f'Unknown ScoreType:' f' "{results.scoretype}"')
+                    assert results.scoretype is ScoreType.POINTS
                     scoretype = 'points'
 
             # Old coop-game-specific results; should migrate away from these.

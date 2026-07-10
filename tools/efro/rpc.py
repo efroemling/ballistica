@@ -391,8 +391,6 @@ class RPCEndpoint:
         bytes_awaitable: asyncio.Task[bytes],
         message_id: int,
     ) -> bytes:
-        # pylint: disable=too-many-positional-arguments
-
         # We need to know their protocol, so if we haven't gotten a
         # handshake from them yet, just wait.
         while self._peer_info is None:

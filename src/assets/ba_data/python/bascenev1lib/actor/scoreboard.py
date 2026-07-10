@@ -384,7 +384,6 @@ class Scoreboard:
         Label can be something like 'points' and will
         show up on boards if provided.
         """
-        # pylint: disable=too-many-positional-arguments
         self._flat_tex = stdassets.textures.null
         self._entries: dict[int, _Entry] = {}
         self._label = label

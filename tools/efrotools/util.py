@@ -50,7 +50,7 @@ def container_aware_cpu_count() -> int:
             quota, period = int(quota_str), int(period_str)
             if period > 0:
                 return max(1, quota // period)
-    except (OSError, ValueError):
+    except OSError, ValueError:
         pass
 
     # cgroup v1
@@ -65,7 +65,7 @@ def container_aware_cpu_count() -> int:
             period = int(f.read().strip())
         if quota > 0 and period > 0:
             return max(1, quota // period)
-    except (OSError, ValueError):
+    except OSError, ValueError:
         pass
 
     return os.cpu_count() or 1

@@ -40,7 +40,6 @@ class MasterServerV1CallThread(threading.Thread):
         callback: MasterServerCallback | None,
         response_type: MasterServerResponseType,
     ):
-        # pylint: disable=too-many-positional-arguments
 
         super().__init__()
         self._request = request

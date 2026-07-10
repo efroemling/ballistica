@@ -54,6 +54,37 @@ class AssetsV1GlobalVals:
     #: summary line). Empty string means none.
     docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
 
+    #: Dev-team id granting resolve access to this workspace's
+    #: dev/test asset-package versions. None (unset) means owner-only
+    #: access — matching the semantics of the asset-package doc's
+    #: ``dev_team_id`` (see ``AssetPackage.account_has_access``).
+    dev_team: Annotated[
+        str | None, IOAttrs('dev_team', store_default=False)
+    ] = None
+
+    #: The asset-package name this workspace publishes under. None
+    #: means it is derived from the workspace's display name (see
+    #: :func:`derive_asset_package_name`); set explicitly to decouple
+    #: the published name from the display name (e.g. to keep a
+    #: package lineage across a workspace rename, or to have a new
+    #: workspace take over publishing an existing package name).
+    asset_package_name: Annotated[
+        str | None, IOAttrs('asset_package_name', store_default=False)
+    ] = None
+
+
+def derive_asset_package_name(workspace_name: str) -> str:
+    """Derive a default asset-package name from a workspace name.
+
+    Lowercases and strips spaces ('My Awesome Assets' ->
+    'myawesomeassets'). The single source for this rule — publish
+    paths, collision checks, and UI previews must all route through
+    it. Note the result is not guaranteed to be a *valid*
+    asset-package name (the workspace name may contain characters
+    with no valid mapping); consumers validate at point of use.
+    """
+    return workspace_name.lower().replace(' ', '')
+
 
 class AssetsV1StringFileTypeID(Enum):
     """Type ID for each of our subclasses."""
