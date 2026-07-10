@@ -506,18 +506,15 @@ def patch_modules_setup(
         }
         # _zstd backs the stdlib compression.zstd package (PEP 784),
         # which the client asset pipeline needs at runtime to decode
-        # zstd-compressed CAS blobs (serving types zb1 etc.). The
-        # android build's dep chain provides a libzstd.a for it (see
-        # python_build_android._build_zstd).
-        # TODO(ericf): Wire a libzstd.a into the apple build's dep set
-        # and enable this there too — shipped apple builds currently
-        # have the same runtime hole (any runtime CAS download of a
-        # zstd-served blob fails with ModuleNotFoundError: _zstd) that
-        # this fixed on android.
-        if baseplatform == 'android':
-            enables |= {
-                '_zstd',
-            }
+        # zstd-compressed CAS blobs (serving types zb1 etc.). Each
+        # platform's dep chain provides a libzstd.a for it: android
+        # builds it from source (python_build_android._build_zstd);
+        # apple uses BeeWare's prebuilt zstd tarballs for embedded
+        # slices and builds from source for macOS
+        # (python_build_apple._build_macos_zstd_source).
+        enables |= {
+            '_zstd',
+        }
 
     # Muck with things in line form for a bit.
     lines = ftxt.splitlines()
