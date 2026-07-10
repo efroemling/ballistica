@@ -28,7 +28,7 @@ jobs:
         # in ballistica-internal also refuses non-prod pins, but
         # re-check here so a stray dev/test pin in the public
         # tree fails CI loudly rather than shipping.
-        run: tools/pcommand assetpins check
+        run: tools/pcommand assetpins assert-prod-only
 
   # Compile a server binary and run some tests.
   build_and_test_linux:
