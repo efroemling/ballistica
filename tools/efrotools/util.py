@@ -17,8 +17,8 @@ def explicit_bool(value: bool) -> bool:
     return value
 
 
-def container_aware_cpu_count() -> int:
-    """CPU count available to this process, respecting cgroup CPU quota.
+def container_aware_cpu_fraction() -> float:
+    """Fractional CPU quota available to this process.
 
     Cloud Run (and modern Docker/k8s) impose CPU limits via cgroup
     CFS bandwidth quotas, NOT via scheduling affinity. ``os.cpu_count()``
@@ -27,18 +27,23 @@ def container_aware_cpu_count() -> int:
     bandwidth quota — so on a 16-CPU host running a 1-CPU Cloud Run
     container they still return 16.
 
-    This reads the cpu cgroup quota directly:
+    This reads the cpu cgroup quota directly and returns it unrounded
+    (quotas are commonly fractional — e.g. a measured ``7.44`` on a
+    Cloud Run instance provisioned at ``--cpu 8``, the platform
+    holding back the rest for system overhead):
 
     - cgroup v2 (modern Linux, including Cloud Run): ``/sys/fs/cgroup/cpu.max``
       contains ``"<quota> <period>"`` (or ``"max <period>"`` when
-      unconstrained). CPUs = ``quota // period``.
+      unconstrained). CPUs = ``quota / period``.
     - cgroup v1 (older systems): ``cpu.cfs_quota_us`` /
       ``cpu.cfs_period_us`` under ``/sys/fs/cgroup/cpu/``.
 
     Falls back to :func:`os.cpu_count` outside Linux or when no
-    cgroup quota is set / accessible. Floors at 1 — sub-CPU quotas
-    (e.g. Cloud Run ``--cpu=0.5`` → 50000/100000) round down to 0
-    which would be meaningless as a worker count.
+    cgroup quota is set / accessible.
+
+    Mirrored (for the same reasons as its callers) by
+    ``bamastertask.beefconfig.container_cpu_fraction`` in
+    ballistica-master-server; keep the two in sync.
     """
     import os
 
@@ -48,8 +53,8 @@ def container_aware_cpu_count() -> int:
             quota_str, period_str = f.read().strip().split()
         if quota_str != 'max':
             quota, period = int(quota_str), int(period_str)
-            if period > 0:
-                return max(1, quota // period)
+            if quota > 0 and period > 0:
+                return quota / period
     except OSError, ValueError:
         pass
 
@@ -64,11 +69,24 @@ def container_aware_cpu_count() -> int:
         ) as f:
             period = int(f.read().strip())
         if quota > 0 and period > 0:
-            return max(1, quota // period)
+            return quota / period
     except OSError, ValueError:
         pass
 
-    return os.cpu_count() or 1
+    return float(os.cpu_count() or 1)
+
+
+def container_aware_cpu_count() -> int:
+    """CPU count available to this process, respecting cgroup CPU quota.
+
+    Integer floor of :func:`container_aware_cpu_fraction`, floored at
+    1 — sub-CPU quotas (e.g. Cloud Run ``--cpu=0.5`` → 50000/100000)
+    round down to 0 which would be meaningless as a worker count.
+    Callers sizing CPU-bound worker pools that want to soak a
+    fractional quota's remainder should ceil the fraction themselves
+    (see ``efrotools.code.pylint_job_count``).
+    """
+    return max(1, int(container_aware_cpu_fraction()))
 
 
 def replace_section(

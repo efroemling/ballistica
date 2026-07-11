@@ -491,6 +491,39 @@ def pylint(
     )
 
 
+def pylint_job_count() -> int:
+    """Worker-process count our parallel pylint invocations use.
+
+    Up to 8 cpus if available — capping at 8 since pylint workers
+    are predominantly CPU-bound (astroid parsing + analysis) and
+    additional workers beyond cpu count mostly thrash. Uses the
+    *container-aware* cpu quota (which respects cgroup CPU limits
+    on Cloud Run / Docker / k8s) rather than the host-CPU-count
+    that ``os.cpu_count()`` returns — otherwise a 1-CPU Cloud Run
+    container running on a 16-CPU host would still try to fork 8
+    pylint workers.
+
+    The quota is CEILed, not floored: container quotas are commonly
+    fractional (measured 7.44 on beef's ``--cpu 8`` — Cloud Run holds
+    back a slice for system overhead), and N-workers can never consume
+    more than N whole CPUs of bandwidth, so flooring strands the
+    fractional remainder. One extra CPU-bound worker soaks it; CFS
+    just timeslices each slightly below 100%.
+
+    This is the single definition of the parallelism policy. Note
+    that bamaster's workspace-check runner logs a *mirror* of it
+    (built on ``bamastertask.beefconfig.container_cpu_fraction``,
+    ceiled + capped the same way) because efrotools is dev-tooling
+    and isn't staged into the server image; keep the policies in
+    sync if this changes.
+    """
+    import math
+
+    from efrotools.util import container_aware_cpu_fraction
+
+    return max(1, min(math.ceil(container_aware_cpu_fraction()), 8))
+
+
 def pylint_files(
     pylintrc: Path | str,
     filenames: list[str],
@@ -742,19 +775,10 @@ def _run_pylint(
     from pylint import lint
     from efro.terminal import Clr
 
-    # By default we use up to 8 cpus if available — capping at 8
-    # since pylint workers are predominantly CPU-bound (astroid
-    # parsing + analysis) and additional workers beyond cpu count
-    # mostly thrash. ``extra=True`` forces single-process mode for
-    # CI determinism. We use the *container-aware* cpu count
-    # (which respects cgroup CPU quotas on Cloud Run / Docker /
-    # k8s) rather than the host-CPU-count that ``os.cpu_count()``
-    # returns — otherwise a 1-CPU Cloud Run container running on a
-    # 16-CPU host would still try to fork 8 pylint workers.
-    from efrotools.util import container_aware_cpu_count
-
-    cpucount = container_aware_cpu_count()
-    jobcount = 1 if extra else min(cpucount, 8)
+    # ``extra=True`` forces single-process mode for CI determinism;
+    # otherwise see :func:`pylint_job_count` for the parallelism
+    # policy.
+    jobcount = 1 if extra else pylint_job_count()
 
     pylint_output_format = 'json2' if output_format == 'json' else 'colorized'
     start_time = time.monotonic()
