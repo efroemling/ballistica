@@ -7,6 +7,9 @@
 #include <string>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
+#if BA_SDL_BUILD
+#include "ballistica/base/app_adapter/app_adapter_sdl.h"
+#endif
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
@@ -429,6 +432,22 @@ void JoystickInput::ResetHeldStates() {
   HandleSDLEvent(&e);
 
   resetting_ = false;
+}
+
+void JoystickInput::Rumble(float low_freq, float high_freq, int duration_ms) {
+#if BA_SDL_BUILD
+  if (is_sdl_joystick_) {
+    // We're running in the logic thread here, but AppAdapterSDL (and the
+    // SDL_Joystick handles it owns) is only safe to touch from the main
+    // thread, so hop over there instead of calling straight through.
+    int sdl_joystick_id{sdl_joystick_id_};
+    g_base->app_adapter->PushMainThreadCall(
+        [sdl_joystick_id, low_freq, high_freq, duration_ms] {
+          AppAdapterSDL::Get()->RumbleJoystick(sdl_joystick_id, low_freq,
+                                               high_freq, duration_ms);
+        });
+  }
+#endif
 }
 
 void JoystickInput::HandleSDLEvent(const BAEvent* e) {

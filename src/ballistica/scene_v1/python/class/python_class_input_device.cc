@@ -473,6 +473,30 @@ auto PythonClassInputDevice::GetButtonName(PythonClassInputDevice* self,
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassInputDevice::Rumble(PythonClassInputDevice* self,
+                                    PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base->InLogicThread());
+  float low_freq{1.0f};
+  float high_freq{1.0f};
+  int duration_ms{150};
+  static const char* kwlist[] = {"low_freq", "high_freq", "duration_ms",
+                                 nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ffi",
+                                   const_cast<char**>(kwlist), &low_freq,
+                                   &high_freq, &duration_ms)) {
+    return nullptr;
+  }
+  SceneV1InputDeviceDelegate* d = self->input_device_delegate_->get();
+  if (!d) {
+    throw Exception(PyExcType::kInputDeviceNotFound);
+  }
+  d->input_device().Rumble(low_freq, high_freq, duration_ms);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
 PyTypeObject PythonClassInputDevice::type_obj;
 PyMethodDef PythonClassInputDevice::tp_methods[] = {
     {"detach_from_player", (PyCFunction)DetachFromPlayer, METH_NOARGS,
@@ -539,6 +563,20 @@ PyMethodDef PythonClassInputDevice::tp_methods[] = {
      "represent 'owns nothing'.\n"
      "\n"
      "(internal)"},
+    {"rumble", (PyCFunction)Rumble,
+     METH_VARARGS | METH_KEYWORDS,  // NOLINT (signed bitwise ops)
+     "rumble(low_freq: float = 1.0, high_freq: float = 1.0,\n"
+     "duration_ms: int = 150) -> None\n"
+     "\n"
+     "Trigger haptic feedback (controller rumble) on this device, if it\n"
+     "supports it.\n"
+     "\n"
+     "low_freq and high_freq are normalized motor intensities in the\n"
+     "0.0 to 1.0 range (mirrors dual-motor gamepad rumble: a\n"
+     "low-frequency 'strong' motor and a high-frequency 'weak' motor).\n"
+     "duration_ms is how long to sustain it. Devices that don't support\n"
+     "rumble (keyboards, touchscreens, remote clients without haptics,\n"
+     "etc.) simply ignore this call."},
     {nullptr}};  // namespace ballistica
 
 #pragma clang diagnostic pop

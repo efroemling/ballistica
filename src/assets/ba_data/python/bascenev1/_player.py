@@ -266,6 +266,40 @@ class Player[TeamT]:
         assert not self._expired
         self._sessionplayer.resetinput()
 
+    def rumble(
+        self,
+        low_freq: float = 1.0,
+        high_freq: float = 1.0,
+        duration_ms: int = 150,
+    ) -> None:
+        """Trigger haptic feedback (controller rumble) for this player.
+
+        low_freq and high_freq are normalized motor intensities in the
+        0.0 to 1.0 range; duration_ms is how long to sustain it. Does
+        nothing if the player no longer exists or their input device
+        doesn't support haptics (keyboards, touchscreens, remote clients
+        without haptics, etc). Also honors the user's global
+        'Controller Rumble' on/off and 'Controller Rumble Intensity'
+        settings, scaling or fully suppressing the request accordingly.
+        """
+        assert self._postinited
+        if self._expired or not self.exists():
+            return
+        cfg = babase.app.config
+        if not cfg.get('Controller Rumble', True):
+            return
+        multiplier = cfg.get('Controller Rumble Intensity', 1.0)
+        if multiplier <= 0.0:
+            return
+        try:
+            self._sessionplayer.inputdevice.rumble(
+                low_freq=min(1.0, low_freq * multiplier),
+                high_freq=min(1.0, high_freq * multiplier),
+                duration_ms=duration_ms,
+            )
+        except babase.NotFoundError:
+            pass
+
     def __bool__(self) -> bool:
         return self.exists()
 

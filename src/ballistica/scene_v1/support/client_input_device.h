@@ -20,6 +20,11 @@ class ClientInputDevice : public base::InputDevice {
   auto DoGetDeviceName() -> std::string override;
   auto IsLocal() -> bool override { return false; }
 
+  /// Relay a rumble request across the network to this device's actual
+  /// owner (the remote client), targeted at the specific local device
+  /// they attached with. No-ops if the connection is gone.
+  void Rumble(float low_freq, float high_freq, int duration_ms) override;
+
   void PassInputCommand(InputType type, float value) {
     InputCommand(type, value);
   }

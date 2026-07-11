@@ -554,6 +554,31 @@ class Spaz(bs.Actor):
     def on_punched(self, damage: int) -> None:
         """Called when this spaz gets punched."""
 
+    def _rumble_from_hit(self, damage: int) -> None:
+        """Rumble the controller of the player that owns this spaz.
+
+        Scaled by how much damage they just took. Only ever touches the
+        controller of the player actually getting hit; never a broadcast
+        to other players' controllers.
+        """
+        player = self.source_player
+        if player is None or not player.exists():
+            return
+        if damage <= 0:
+            return
+        # Controller motors typically need a minimum duty-cycle to
+        # physically spin at all, so a linear damage->intensity mapping
+        # left ordinary hits too weak to feel. Floor it, and cap at the
+        # same 500-damage threshold this file already treats as a
+        # 'strong' hit (see punch sound above).
+        scale = min(1.0, damage / 500.0)
+        intensity = 0.3 + 0.7 * scale
+        player.rumble(
+            low_freq=intensity,
+            high_freq=0.6 * intensity,
+            duration_ms=int(80 + 120 * scale),
+        )
+
     def get_death_points(self, how: bs.DeathType) -> tuple[int, int]:
         """Get the points awarded for killing this spaz."""
         del how  # Unused.
@@ -1014,6 +1039,7 @@ class Spaz(bs.Actor):
 
                 damage = int(damage_scale * self.node.damage)
             self.node.handlemessage('hurt_sound')
+            self._rumble_from_hit(damage)
 
             # Play punch impact sound based on damage if it was a punch.
             if msg.hit_type == 'punch':

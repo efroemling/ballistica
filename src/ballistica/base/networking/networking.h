@@ -102,6 +102,7 @@ namespace ballistica::base {
 #define BA_MESSAGE_CLIENT_PLAYER_PROFILES_JSON 21
 
 #define BA_JMESSAGE_SCREEN_MESSAGE 0
+#define BA_JMESSAGE_RUMBLE 1
 
 // Enable huffman compression for all net packets?
 #define BA_HUFFMAN_NET_COMPRESSION 1

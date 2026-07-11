@@ -508,6 +508,25 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
                 }
                 break;
               }
+              case BA_JMESSAGE_RUMBLE: {
+                // The host addresses us by the local device-index we
+                // originally claimed a remote player with (see
+                // SceneV1InputDeviceDelegate::RequestPlayer()), so we can
+                // look it up directly and rumble it ourselves.
+                auto device_index = root["d"].as_int();
+                if (device_index) {
+                  if (base::InputDevice* input_device =
+                          g_base->input->GetInputDevice(
+                              static_cast<int>(*device_index))) {
+                    auto low = static_cast<float>(root["lo"].double_or(1.0));
+                    auto high = static_cast<float>(root["hi"].double_or(1.0));
+                    auto duration =
+                        static_cast<int>(root["ms"].int_or(150));
+                    input_device->Rumble(low, high, duration);
+                  }
+                }
+                break;
+              }
               default:
                 break;
             }

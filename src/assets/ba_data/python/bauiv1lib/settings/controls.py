@@ -92,6 +92,16 @@ class ControlsSettingsWindow(bui.MainWindow):
         if show_xinput_toggle:
             buttons_height += spacing
 
+        # Rumble is only wired up for local SDL-backed gamepads so far;
+        # tie its visibility to the same check used for the gamepads
+        # button above.
+        show_rumble_settings = show_gamepads
+        if show_rumble_settings:
+            buttons_height += spacing * 2
+            # The two new rows push past the window's fixed base height,
+            # so grow it to match (only when they're actually present).
+            height += spacing * 2
+
         assert bui.app.classic is not None
 
         # Do some fancy math to fill all available screen area up to the
@@ -347,6 +357,49 @@ class ControlsSettingsWindow(bui.MainWindow):
                 edit=xinput_checkbox,
                 left_widget=xinput_checkbox,
                 right_widget=xinput_checkbox,
+            )
+            v -= spacing
+
+        if show_rumble_settings:
+            # pylint: disable=cyclic-import
+            from bauiv1lib.config import ConfigCheckBox, ConfigNumberEdit
+
+            self._rumble_checkbox = rumble_checkbox = ConfigCheckBox(
+                parent=self._root_widget,
+                configkey='Controller Rumble',
+                position=(
+                    width * (0.35 if uiscale is bui.UIScale.SMALL else 0.25),
+                    v + 3,
+                ),
+                size=(120, 30),
+                displayname=bui.Lstr(
+                    resource=f'{self._r}.rumbleText',
+                    fallback_value='Controller Vibration',
+                ),
+                maxwidth=200,
+                fallback_value=True,
+            )
+            bui.widget(
+                edit=rumble_checkbox.widget,
+                left_widget=rumble_checkbox.widget,
+                right_widget=rumble_checkbox.widget,
+            )
+            v -= spacing
+
+            self._rumble_intensity_numedit = ConfigNumberEdit(
+                parent=self._root_widget,
+                idprefix=f'{self.main_window_id_prefix}|rumbleintensity',
+                position=(width * 0.5 - 160, v),
+                configkey='Controller Rumble Intensity',
+                displayname=bui.Lstr(
+                    resource=f'{self._r}.rumbleIntensityText',
+                    fallback_value='Vibration Strength',
+                ),
+                minval=0.0,
+                maxval=1.0,
+                increment=0.1,
+                fallback_value=1.0,
+                as_percent=True,
             )
             v -= spacing
 

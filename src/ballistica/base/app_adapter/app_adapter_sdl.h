@@ -53,6 +53,12 @@ class AppAdapterSDL : public AppAdapter {
 
   auto GetKeyName(int keycode) -> std::string override;
 
+  /// Trigger hardware rumble on the SDL joystick with the given
+  /// instance-id. No-ops if that id doesn't correspond to a currently
+  /// open SDL_Joystick handle.
+  void RumbleJoystick(int sdl_joystick_id, float low_freq, float high_freq,
+                      int duration_ms);
+
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;
   void RunMainThreadEventLoopToCompletion() override;

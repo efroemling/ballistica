@@ -43,6 +43,8 @@ class PythonClassInputDevice : public PythonClass {
                           PyObject* keywds) -> PyObject*;
   static auto GetButtonName(PythonClassInputDevice* self, PyObject* args,
                             PyObject* keywds) -> PyObject*;
+  static auto Rumble(PythonClassInputDevice* self, PyObject* args,
+                     PyObject* keywds) -> PyObject*;
   static PyNumberMethods as_number_;
   Object::WeakRef<SceneV1InputDeviceDelegate>* input_device_delegate_;
 };
