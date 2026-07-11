@@ -753,6 +753,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* tint_color_obj{Py_None};
   PyObject* tint2_color_obj{Py_None};
   PyObject* opacity_obj{Py_None};
+  PyObject* rotate_obj{Py_None};
   PyObject* mesh_transparent_obj{Py_None};
   PyObject* mesh_opaque_obj{Py_None};
   PyObject* has_alpha_channel_obj{Py_None};
@@ -772,6 +773,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "color",
                                  "texture",
                                  "opacity",
+                                 "rotate",
                                  "mesh_transparent",
                                  "mesh_opaque",
                                  "has_alpha_channel",
@@ -790,7 +792,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (!PyArg_ParseTupleAndKeywords(
           args, keywds, "|OOOOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &color_obj, &texture_obj,
-          &opacity_obj, &mesh_transparent_obj, &mesh_opaque_obj,
+          &opacity_obj, &rotate_obj, &mesh_transparent_obj, &mesh_opaque_obj,
           &has_alpha_channel_obj, &tint_texture_obj, &tint_color_obj,
           &transition_delay_obj, &draw_controller_obj, &tint2_color_obj,
           &tilt_scale_obj, &mask_texture_obj, &radial_amount_obj,
@@ -859,6 +861,9 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
   if (opacity_obj != Py_None) {
     b->set_opacity(Python::GetFloat(opacity_obj));
+  }
+  if (rotate_obj != Py_None) {
+    b->set_rotate(Python::GetFloat(rotate_obj));
   }
   if (radial_amount_obj != Py_None) {
     b->set_radial_amount(Python::GetFloat(radial_amount_obj));
@@ -949,6 +954,7 @@ static PyMethodDef PyImageWidgetDef = {
     "  color: Sequence[float] | None = None,\n"
     "  texture: bauiv1.Texture | None = None,\n"
     "  opacity: float | None = None,\n"
+    "  rotate: float | None = None,\n"
     "  mesh_transparent: bauiv1.Mesh | None = None,\n"
     "  mesh_opaque: bauiv1.Mesh | None = None,\n"
     "  has_alpha_channel: bool = True,\n"
@@ -972,7 +978,7 @@ static PyMethodDef PyImageWidgetDef = {
     "are applied to the Widget.",
 };
 
-// ----------------------------- imagewidget -----------------------------------
+// ---------------------------- spinnerwidget ----------------------------------
 
 static auto PySpinnerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
