@@ -520,8 +520,7 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
                               static_cast<int>(*device_index))) {
                     auto low = static_cast<float>(root["lo"].double_or(1.0));
                     auto high = static_cast<float>(root["hi"].double_or(1.0));
-                    auto duration =
-                        static_cast<int>(root["ms"].int_or(150));
+                    auto duration = static_cast<int>(root["ms"].int_or(150));
                     input_device->Rumble(low, high, duration);
                   }
                 }
