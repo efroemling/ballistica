@@ -85,3 +85,6 @@
 ### TheMikirog
 - Punch grab exploit fix
 - Volume slider value to perceived volume fix
+
+### sedbytes
+- Implement Controller Haptics / Rumble
