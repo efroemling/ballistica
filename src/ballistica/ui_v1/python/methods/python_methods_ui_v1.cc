@@ -196,6 +196,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* text_res_scale_obj{Py_None};
   PyObject* text_literal_obj{Py_None};
   PyObject* opacity_obj{Py_None};
+  PyObject* rotate_obj{Py_None};
   PyObject* enabled_obj{Py_None};
   PyObject* better_bg_fit_obj{Py_None};
   PyObject* transition_type_obj{Py_None};
@@ -239,6 +240,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "enabled",
                                  "text_literal",
                                  "opacity",
+                                 "rotate",
                                  "better_bg_fit",
                                  "transition_type",
                                  nullptr};
@@ -255,7 +257,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &autoselect_obj, &mask_texture_obj, &tint_texture_obj,
           &tint_color_obj, &tint2_color_obj, &text_flatness_obj,
           &text_res_scale_obj, &enabled_obj, &text_literal_obj, &opacity_obj,
-          &better_bg_fit_obj, &transition_type_obj))
+          &rotate_obj, &better_bg_fit_obj, &transition_type_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -487,6 +489,9 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (opacity_obj != Py_None) {
     b->set_opacity(Python::GetFloat(opacity_obj));
   }
+  if (rotate_obj != Py_None) {
+    b->set_rotate(Python::GetFloat(rotate_obj));
+  }
   // If making a new widget add it at the end.
   if (edit_obj == Py_None) {
     g_ui_v1->AddWidget(b.get(), parent_widget);
@@ -546,6 +551,7 @@ static PyMethodDef PyButtonWidgetDef = {
     "  enabled: bool | None = None,\n"
     "  text_literal: bool | None = None,\n"
     "  opacity: float | None = None,\n"
+    "  rotate: float | None = None,\n"
     "  better_bg_fit: bool | None = None,\n"
     "  transition_type: Literal['in_left', 'scale'] | None = None,\n"
     ") -> bauiv1.Widget\n"

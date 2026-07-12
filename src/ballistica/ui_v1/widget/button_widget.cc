@@ -182,6 +182,19 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.Submit();
   }
 
+  bool apply_rotate_transform = (rotate_ != 0.0f);
+  if (apply_rotate_transform) {
+    base::EmptyComponent c(pass);
+    c.SetTransparent(draw_transparent);
+    c.PushTransform();
+    float cx = width_ * 0.5f;
+    float cy = height_ * 0.5f;
+    c.Translate(cx, cy, 0.0f);
+    c.Rotate(rotate_, 0, 0, 1);
+    c.Translate(-cx, -cy, 0.0f);
+    c.Submit();
+  }
+
   if (text_width_dirty_) {
     text_width_ = text_->GetTextWidth();
     text_width_dirty_ = false;
@@ -636,6 +649,13 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.Submit();
   }
 
+  if (apply_rotate_transform) {
+    base::EmptyComponent c(pass);
+    c.SetTransparent(draw_transparent);
+    c.PopTransform();
+    c.Submit();
+  }
+
   // Pop scale-in transform we pushed at the top.
   if (apply_scale_transform) {
     base::EmptyComponent c(pass);
@@ -643,6 +663,24 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.PopTransform();
     c.Submit();
   }
+}
+
+auto ButtonWidget::RotatePointToLocal(float x, float y) const
+    -> std::pair<float, float> {
+  if (rotate_ == 0.0f) {
+    return {x, y};
+  }
+  constexpr float kDegToRad = 3.14159265358979323846f / 180.0f;
+  float theta = rotate_ * kDegToRad;
+  float cx = width_ * 0.5f;
+  float cy = height_ * 0.5f;
+  float dx = x - cx;
+  float dy = y - cy;
+  float ct = cosf(theta);
+  float st = sinf(theta);
+  float nx = cx + dx * ct + dy * st;
+  float ny = cy - dx * st + dy * ct;
+  return {nx, ny};
 }
 
 auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
@@ -671,8 +709,7 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
   switch (m.type) {
     case base::WidgetMessage::Type::kMouseMove: {
-      float x = m.fval1;
-      float y = m.fval2;
+      auto [x, y] = RotatePointToLocal(m.fval1, m.fval2);
       bool claimed = (m.fval3 > 0.0f);
       [[maybe_unused]] auto old_hover{hover_};
 
@@ -692,8 +729,7 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       return claimed;
     }
     case base::WidgetMessage::Type::kMouseDown: {
-      float x = m.fval1;
-      float y = m.fval2;
+      auto [x, y] = RotatePointToLocal(m.fval1, m.fval2);
       if (enabled_ && (x >= (-left_overlap)) && (x < (width_ + right_overlap))
           && (y >= (-bottom_overlap)) && (y < (height_ + top_overlap))) {
         hover_ = true;
@@ -717,8 +753,7 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     }
     case base::WidgetMessage::Type::kMouseUp:
     case base::WidgetMessage::Type::kMouseCancel: {
-      float x = m.fval1;
-      float y = m.fval2;
+      auto [x, y] = RotatePointToLocal(m.fval1, m.fval2);
       bool claimed = (m.fval3 > 0.0f);
 
       if (pressed_) {

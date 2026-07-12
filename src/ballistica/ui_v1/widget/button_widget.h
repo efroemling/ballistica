@@ -4,6 +4,7 @@
 #define BALLISTICA_UI_V1_WIDGET_BUTTON_WIDGET_H_
 
 #include <string>
+#include <utility>
 
 #include "ballistica/ui_v1/widget/text_widget.h"
 
@@ -98,6 +99,7 @@ class ButtonWidget : public Widget {
   // Disabled buttons can't be clicked or otherwise activated.
   auto set_enabled(bool val) { enabled_ = val; }
   auto enabled() const -> bool { return enabled_; }
+  void set_rotate(float val) { rotate_ = val; }
   auto set_opacity(float val) { opacity_ = val; }
   auto GetDrawBrightness(millisecs_t time) const -> float override;
   auto is_color_set() const -> bool { return color_set_; }
@@ -111,6 +113,7 @@ class ButtonWidget : public Widget {
   bool color_set_ = false;
   void DoActivate(bool is_repeat = false);
   auto GetMult(millisecs_t current_time) const -> float;
+  auto RotatePointToLocal(float x, float y) const -> std::pair<float, float>;
 
   IconType icon_type_{};
   Style style_{};
@@ -139,6 +142,7 @@ class ButtonWidget : public Widget {
   float icon_color_blue_{1.0f};
   float icon_color_alpha_{1.0f};
   float icon_scale_{1.0f};
+  float rotate_{0.0f};
   float opacity_{1.0f};
   float flatness_{0.0f};
   float text_flatness_{0.5f};
