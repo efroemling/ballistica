@@ -74,6 +74,7 @@ runs:
           libglut-dev \
           libopenal-dev \
           libvorbis-dev \
+          libpango1.0-dev \
           ninja-build \
           libsdl3-dev
     - name: Setup env variables

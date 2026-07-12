@@ -147,7 +147,6 @@ from batools.pcommands2 import (
     asset_bundle_build,
 )
 from batools.pcommands3 import (
-    test_game_run,
     compose_docker_gui_release,
     compose_docker_gui_debug,
     compose_docker_server_release,
@@ -168,7 +167,6 @@ from batools.pcommands4 import (
     cst_test,
     prefab_symbols_fetch,
 )
-from batools._automation import test_game_cmd
 
 # pylint: enable=unused-import
 

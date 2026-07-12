@@ -250,6 +250,19 @@ class Platform {
   // BA_ENABLE_OS_FONT_RENDERING is set)
   virtual void GetTextBoundsAndWidth(const std::string& text, Rect* r,
                                      float* width);
+
+  /// Return utf-8 byte offsets within a (valid utf-8) string where a new
+  /// line may begin, as determined by the OS text stack (Unicode UAX #14
+  /// line-breaking incl. dictionary-based word segmentation for scripts
+  /// such as Thai where the OS supports it). Offsets are strictly between
+  /// 0 and text.size(), in increasing order, and always fall on utf-8
+  /// sequence boundaries. Mandatory breaks (after newlines) are included
+  /// as regular opportunities; callers wanting to honor them specially
+  /// should pre-split on newlines. The base implementation is a naive
+  /// space/newline breaker for platforms without OS support (headless
+  /// etc.). Logic thread only.
+  virtual auto GetTextLineBreakOffsets(const std::string& text)
+      -> std::vector<int>;
   virtual void FreeTextTexture(void* tex);
   virtual auto CreateTextTexture(int width, int height,
                                  const std::vector<std::string>& strings,

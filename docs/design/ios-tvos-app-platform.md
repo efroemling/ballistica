@@ -181,3 +181,42 @@ platform-specific pieces worth knowing:
   --predicate 'subsystem == "net.froemling.ballistica"'` (or `log stream`).
   Note `simctl launch --console[-pty]` does *not* capture the sim app's
   stderr — os_log is the reliable channel.
+
+### Simulator build/launch recipe (verified 2026-06-18)
+
+For a no-signing sim smoke-test, build for a simulator destination
+(the device-targeting `make ios-build` uses `-allowProvisioningUpdates`):
+
+```bash
+make ios-staging                              # deps: assets-ios, resources, codegen, discord
+tools/pcommand xcodebuild -project ballisticakit-xcode/BallisticaKit.xcodeproj \
+    -scheme "BallisticaKit iOS" -configuration Debug \
+    -destination 'platform=iOS Simulator,name=iPhone 17' \
+    -derivedDataPath build/ios_sim_dd build
+xcrun simctl boot "iPhone 17"
+open -a Simulator                             # unsandboxed (GUI)
+APP=build/ios_sim_dd/Build/Products/Debug-iphonesimulator/BallisticaKit.app
+xcrun simctl install booted "$APP"
+xcrun simctl launch booted com.ericfroemling.ballisticakit
+xcrun simctl io booted screenshot build/tmp/ios_sim_shot.png
+```
+
+Bundle id: `com.ericfroemling.ballisticakit`. tvOS mirrors this with
+`make tvos-staging`, scheme `"BallisticaKit tvOS"`, destination
+`platform=tvOS Simulator,name=Apple TV 4K (3rd generation)`.
+`simctl boot/install/list` work *sandboxed*; only the GUI
+`open -a Simulator` and console/pty attaches need unsandboxed.
+
+For intermittent launch crashes, a Release cold-launch loop (alive after
+~7s == booted past GL init):
+
+```bash
+tools/pcommand xcodebuild -project ballisticakit-xcode/BallisticaKit.xcodeproj \
+    -scheme "BallisticaKit iOS" -configuration Release \
+    -destination 'platform=iOS Simulator,id=<udid>' \
+    -derivedDataPath build/ios_sim_rel_dd build
+D=<udid>; B=com.ericfroemling.ballisticakit
+xcrun simctl install $D build/ios_sim_rel_dd/Build/Products/Release-iphonesimulator/BallisticaKit.app
+for i in $(seq 1 15); do xcrun simctl terminate $D $B; xcrun simctl launch $D $B; sleep 7; \
+  xcrun simctl spawn $D launchctl list | grep -qi ballisticakit && echo "$i alive" || echo "$i CRASH"; done
+```

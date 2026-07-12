@@ -81,21 +81,11 @@ def _gen_lprop_file(local_properties_path: str) -> str:
     return sdk_dir
 
 
-def run(projroot: str, args: list[str]) -> None:
-    """Main script entry point."""
+def get_sdk_dir(projroot: str) -> str:
+    """Return the Android SDK dir, creating local.properties if needed.
 
-    if len(args) != 1:
-        raise CleanError('Expected 1 arg')
-
-    command = args[0]
-
-    valid_args = ['check', 'get-sdk-path', 'get-ndk-path', 'get-adb-path']
-    if command not in valid_args:
-        print('INVALID ARG; expected one of', valid_args, file=sys.stderr)
-        sys.exit(255)
-
-    # In all cases we make sure there's a local.properties in our android
-    # dir that contains valid sdk path.  If not, we attempt to create it.
+    Sanity-checks that the dir looks like a real SDK (adb present).
+    """
     local_properties_path = os.path.join(
         projroot, 'ballisticakit-android', 'local.properties'
     )
@@ -110,6 +100,25 @@ def run(projroot: str, args: list[str]) -> None:
         raise RuntimeError(
             'ERROR: android sdk at "' + sdk_dir + '" does not seem valid'
         )
+    return sdk_dir
+
+
+def run(projroot: str, args: list[str]) -> None:
+    """Main script entry point."""
+
+    if len(args) != 1:
+        raise CleanError('Expected 1 arg')
+
+    command = args[0]
+
+    valid_args = ['check', 'get-sdk-path', 'get-ndk-path', 'get-adb-path']
+    if command not in valid_args:
+        print('INVALID ARG; expected one of', valid_args, file=sys.stderr)
+        sys.exit(255)
+
+    # In all cases we make sure there's a local.properties in our android
+    # dir that contains a valid sdk path. If not, we attempt to create it.
+    sdk_dir = get_sdk_dir(projroot)
 
     # Sanity check: if they've got ANDROID_HOME set, make sure it lines up with
     # what we're pointing at.

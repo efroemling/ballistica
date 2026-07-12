@@ -358,6 +358,11 @@ class RendererGL : public Renderer {
   int msaa_max_samples_rgb565_{-1};
   int msaa_max_samples_rgb8_{-1};
   bool gl_debug_output_available_{};
+  // Whether the GL_KHR_debug extension is actually advertised. Proc
+  // addresses alone can't be trusted for this (eglGetProcAddress may
+  // return non-null for unsupported functions), and using the KHR
+  // debug enums without the extension yields GL_INVALID_ENUM.
+  bool gl_supports_khr_debug_{};
 #if BA_OPENGL_IS_ES && (BA_SDL_BUILD || BA_PLATFORM_ANDROID)
   // Not available on Apple ES builds (iOS/tvOS) — gl2ext.h KHR typedefs absent.
   PFNGLDEBUGMESSAGECONTROLKHRPROC gl_debug_message_control_khr_{};

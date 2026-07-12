@@ -5,6 +5,7 @@
 #include "ballistica/core/platform/apple/platform_apple.h"
 
 #if BA_XCODE_BUILD
+#include <CoreFoundation/CoreFoundation.h>
 #include <os/log.h>
 #include <unistd.h>
 #endif
@@ -27,6 +28,7 @@
 
 #include "ballistica/core/platform/support/sdl_message_box.h"
 #include "ballistica/shared/ballistica.h"
+#include "ballistica/shared/generic/utils.h"
 
 #if BA_XCODE_BUILD
 // This needs to be below ballistica headers since it relies on
@@ -311,6 +313,49 @@ void PlatformApple::GetTextBoundsAndWidth(const std::string& text, Rect* r,
   PangoGetTextBoundsAndWidth_(text, r, width);
 #else
   Platform::GetTextBoundsAndWidth(text, r, width);
+#endif
+}
+
+auto PlatformApple::GetTextLineBreakOffsets(const std::string& text)
+    -> std::vector<int> {
+#if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
+  // CFStringTokenizer's line-break unit gives us CoreFoundation's full
+  // UAX #14 analysis (dictionary-based segmentation included) with no
+  // Swift bridging needed.
+  std::vector<int> offsets;
+  CFStringRef cf_text = CFStringCreateWithBytes(
+      kCFAllocatorDefault, reinterpret_cast<const UInt8*>(text.data()),
+      static_cast<CFIndex>(text.size()), kCFStringEncodingUTF8, false);
+  if (cf_text == nullptr) {
+    // Should only happen on invalid utf-8; fall back gracefully.
+    return Platform::GetTextLineBreakOffsets(text);
+  }
+  CFIndex length16 = CFStringGetLength(cf_text);
+  CFLocaleRef locale = CFLocaleCopyCurrent();
+  CFStringTokenizerRef tokenizer = CFStringTokenizerCreate(
+      kCFAllocatorDefault, cf_text, CFRangeMake(0, length16),
+      kCFStringTokenizerUnitLineBreak, locale);
+  auto offset_map = Utils::UTF16ToUTF8OffsetMap(text);
+  while (CFStringTokenizerAdvanceToNextToken(tokenizer)
+         != kCFStringTokenizerTokenNone) {
+    CFRange range = CFStringTokenizerGetCurrentTokenRange(tokenizer);
+    // Each token is a line-break unit; a new line may begin at each
+    // token start. Skip the string start.
+    if (range.location > 0 && range.location < length16) {
+      int offset = offset_map[range.location];
+      if (offset > 0 && offset < static_cast<int>(text.size())) {
+        offsets.push_back(offset);
+      }
+    }
+  }
+  CFRelease(tokenizer);
+  CFRelease(locale);
+  CFRelease(cf_text);
+  return offsets;
+#elif BA_ENABLE_OS_FONT_RENDERING
+  return PangoGetTextLineBreakOffsets_(text);
+#else
+  return Platform::GetTextLineBreakOffsets(text);
 #endif
 }
 

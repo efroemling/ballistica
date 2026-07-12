@@ -307,6 +307,8 @@ def _writefuncs(
                 returnstr = "return [{'foo': 'bar'}]"
             elif returns == 'list[dict[str, str]]':
                 returnstr = "return [{'foo': 'bar'}]"
+            elif returns == 'list[int]':
+                returnstr = 'return [0]'
             elif returns in {
                 'session.Session',
                 'team.Team',

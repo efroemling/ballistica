@@ -6,9 +6,15 @@
 // CMake may override our variant.
 #if BA_VARIANT_TEST_BUILD
 #define BA_VARIANT "test_build"
+#elif BA_VARIANT_SERVER
+#define BA_VARIANT "server"
+#elif BA_VARIANT_SERVER_BASN
+#define BA_VARIANT "server_basn"
 #else
 #define BA_VARIANT "generic"
+#ifndef BA_VARIANT_GENERIC
 #define BA_VARIANT_GENERIC 1
+#endif
 #endif
 
 // For cmake builds, attempt to figure out what architecture we're running on

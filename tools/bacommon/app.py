@@ -152,6 +152,13 @@ class AppVariant(Enum):
     #: checks or logging enabled).
     TEST_BUILD = 'test_build'
 
+    #: Server bundles we distribute for third-party operators (such as
+    #: those on the ballistica.net downloads page).
+    SERVER = 'server'
+
+    #: Our own cloud-hosted game servers.
+    SERVER_BASN = 'server_basn'
+
     # Various stores.
     AMAZON_APPSTORE = 'amazon_appstore'
     GOOGLE_PLAY = 'google_play'

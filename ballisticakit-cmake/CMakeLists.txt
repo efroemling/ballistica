@@ -2,10 +2,21 @@ cmake_minimum_required(VERSION 3.18)
 project(BallisticaKit)
 
 option(HEADLESS "build headless server" OFF)
-option(TEST_BUILD "include testing features" OFF)
 option(DISCORD "enable Discord Social SDK integration" OFF)
-option(REQUIRE_OS_FONT_RENDERING "fail if pangocairo is not found" OFF)
+option(REQUIRE_OS_FONT_RENDERING "fail if pangocairo is not found" ON)
 option(STATIC_BUILD "build with static libs" OFF)
+
+# Which app variant to build. Variant describes the distribution
+# audience for a build (who it is distributed to and how the master
+# server should classify it); it is orthogonal to build type and
+# headless-ness. See the AppVariant enum in tools/bacommon/app.py for
+# the full story.
+set(VARIANT generic CACHE STRING "app variant to build")
+set(BA_VALID_VARIANTS generic test_build server server_basn)
+if(NOT VARIANT IN_LIST BA_VALID_VARIANTS)
+  message(FATAL_ERROR
+    "Invalid VARIANT '${VARIANT}'; expected one of: ${BA_VALID_VARIANTS}.")
+endif()
 # Requiring minimum of C++23 currently.
 set(CMAKE_CXX_STANDARD 23)
 set(PROJECT_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
@@ -151,8 +162,11 @@ else()
     )
   endif()
 
-  # Optional: Pango+Cairo for OS font rendering on Linux/macOS cmake builds.
-  # Pass -DREQUIRE_OS_FONT_RENDERING=ON to make this a hard requirement.
+  # Pango+Cairo for OS font rendering (unicode text rendering + line
+  # breaks) on Linux/macOS cmake builds. Required by default so a
+  # missing pangocairo fails the configure loudly instead of silently
+  # producing a build with the internal fallback text handling; pass
+  # -DREQUIRE_OS_FONT_RENDERING=OFF to allow building without it.
   if(REQUIRE_OS_FONT_RENDERING)
     pkg_check_modules(PANGOCAIRO REQUIRED IMPORTED_TARGET pangocairo)
   else()
@@ -165,9 +179,12 @@ else()
 
 endif()
 
-if(TEST_BUILD)
-  target_compile_definitions(common_deps INTERFACE BA_VARIANT_TEST_BUILD=1)
-endif()
+# Define the selected variant for the engine
+# (BA_VARIANT_TEST_BUILD=1 etc.); buildconfig_cmake.h maps it to its
+# runtime string.
+string(TOUPPER ${VARIANT} BA_VARIANT_UPPER)
+target_compile_definitions(common_deps
+  INTERFACE BA_VARIANT_${BA_VARIANT_UPPER}=1)
 
 # Opt-in automation control channel (FIFO + in-process Python dispatch).
 # Unstable, unsupported public API — gated off by default; users opt in

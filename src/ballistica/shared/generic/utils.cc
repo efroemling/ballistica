@@ -225,6 +225,27 @@ void Utils::AdvanceUTF8(const char** c) {
   utf8::unchecked::next(*c);
 }
 
+auto Utils::UTF16ToUTF8OffsetMap(const std::string& s) -> std::vector<int> {
+  // IMPORTANT: assumes valid UTF-8 (see header note).
+  std::vector<int> map;
+  map.reserve(s.size() + 1);
+  const char* start = s.c_str();
+  const char* it = start;
+  const char* end = start + s.size();
+  while (it < end) {
+    auto offset = static_cast<int>(it - start);
+    uint32_t cp = utf8::unchecked::next(it);
+    map.push_back(offset);
+    if (cp >= 0x10000) {
+      // Code points outside the BMP occupy two utf-16 code units
+      // (a surrogate pair); both map to the code point's start.
+      map.push_back(offset);
+    }
+  }
+  map.push_back(static_cast<int>(s.size()));
+  return map;
+}
+
 auto Utils::GetJSONString(const char* s) -> std::string {
   return JsonEncodeString(s);
 }
