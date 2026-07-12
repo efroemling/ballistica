@@ -30,6 +30,30 @@ struct PangoTextData_ {
   int height{};
 };
 
+inline auto PangoGetTextLineBreakOffsets_(const std::string& text)
+    -> std::vector<int> {
+  // pango_get_log_attrs runs Pango's UAX #14 analysis (libthai-backed for
+  // Thai where available); attrs[i].is_line_break means a line may begin
+  // before character i.
+  std::vector<int> offsets;
+  auto n_chars = static_cast<int64_t>(g_utf8_strlen(text.c_str(), -1));
+  if (n_chars <= 1) {
+    return offsets;
+  }
+  std::vector<PangoLogAttr> attrs(static_cast<size_t>(n_chars) + 1);
+  pango_get_log_attrs(text.c_str(), static_cast<int>(text.size()), -1,
+                      pango_language_get_default(), attrs.data(),
+                      static_cast<int>(attrs.size()));
+  const char* p = text.c_str();
+  for (int64_t i = 1; i < n_chars; ++i) {
+    p = g_utf8_next_char(p);
+    if (attrs[static_cast<size_t>(i)].is_line_break) {
+      offsets.push_back(static_cast<int>(p - text.c_str()));
+    }
+  }
+  return offsets;
+}
+
 inline void PangoGetTextBoundsAndWidth_(const std::string& text, Rect* r,
                                         float* width) {
   cairo_surface_t* surface =

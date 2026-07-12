@@ -23,7 +23,7 @@
     "bauiv1lib": "buil"
   },
   "efrocache_repository_url": "https://files.ballistica.net/cache/ba1",
-  "engine_build_number": 22929,
+  "engine_build_number": 22930,
   "name": "BallisticaKit",
   "public": true,
   "python_paths": [
@@ -43,5 +43,5 @@
     "tests",
     "config"
   ],
-  "version": "1.8.0a42"
+  "version": "1.8.0a43"
 }

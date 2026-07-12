@@ -42,6 +42,40 @@ def run(
     *, project: str, scheme: str, configuration: str, platform: str
 ) -> None:
     """Build the scheme for the simulator, then install + launch + log it."""
+    app_path, bundle_id = build_for_sim(
+        project=project,
+        scheme=scheme,
+        configuration=configuration,
+        platform=platform,
+    )
+
+    udid = ensure_booted_device(platform)
+    print(
+        f'{Clr.BLU}Installing {os.path.basename(app_path)}...{Clr.RST}',
+        flush=True,
+    )
+    _simctl(['install', udid, app_path])
+    print(f'{Clr.BLU}Launching {bundle_id}...{Clr.RST}', flush=True)
+    _simctl(['launch', udid, bundle_id])
+
+    subsystem = os.environ.get('IOS_LOG_SUBSYSTEM', DEFAULT_LOG_SUBSYSTEM)
+    print(
+        f'{Clr.GRN}Running. Streaming os_log (subsystem={subsystem}); '
+        f'Ctrl-C to detach (app keeps running).{Clr.RST}',
+        flush=True,
+    )
+    stream_log(udid, subsystem)
+
+
+def build_for_sim(
+    *, project: str, scheme: str, configuration: str, platform: str
+) -> tuple[str, str]:
+    """Build the scheme for the simulator.
+
+    Returns ``(app_path, bundle_id)`` for the built product. Also used
+    by external drivers (e.g. test_game_run's ios leg) that manage
+    their own install/launch lifecycle.
+    """
     if platform not in _PLATFORM_INFO:
         raise CleanError(f"Unknown platform '{platform}'.")
     info = _PLATFORM_INFO[platform]
@@ -59,23 +93,22 @@ def run(
         flush=True,
     )
     _build(project, scheme, configuration, info)
+    return app_path, bundle_id
 
-    udid = _ensure_booted_device(platform, info)
-    print(
-        f'{Clr.BLU}Installing {os.path.basename(app_path)}...{Clr.RST}',
-        flush=True,
-    )
+
+def ensure_booted_device(platform: str) -> str:
+    """Return a booted sim udid for a platform, picking/booting if needed.
+
+    See ``_ensure_booted_device`` for the selection rules.
+    """
+    if platform not in _PLATFORM_INFO:
+        raise CleanError(f"Unknown platform '{platform}'.")
+    return _ensure_booted_device(platform, _PLATFORM_INFO[platform])
+
+
+def install_app(udid: str, app_path: str) -> None:
+    """Install a built .app onto a booted sim."""
     _simctl(['install', udid, app_path])
-    print(f'{Clr.BLU}Launching {bundle_id}...{Clr.RST}', flush=True)
-    _simctl(['launch', udid, bundle_id])
-
-    subsystem = os.environ.get('IOS_LOG_SUBSYSTEM', DEFAULT_LOG_SUBSYSTEM)
-    print(
-        f'{Clr.GRN}Running. Streaming os_log (subsystem={subsystem}); '
-        f'Ctrl-C to detach (app keeps running).{Clr.RST}',
-        flush=True,
-    )
-    stream_log(udid, subsystem)
 
 
 def stream_log(udid: str, subsystem: str) -> None:

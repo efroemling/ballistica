@@ -382,6 +382,7 @@ def _do_pycache_upkeep() -> None:
         if complained:
             cachelog.debug('(repeat) Error updating pycache dir: %s', msg)
             return
+        complained = True
         cachelog.warning('Error updating pycache dir: %s', msg)
 
     # Build a dict of dst pyc paths mapped to src py paths and
@@ -514,7 +515,7 @@ def _do_pycache_upkeep() -> None:
                         dstpath
                     ) or srcmtime > os.path.getmtime(dstpath)
                     if still_out_of_date:
-                        complain(f'Error precompiling {fullpath}: {exc}')
+                        complain(f'Error precompiling {srcpath}: {exc}')
                         assert complained
 
             if should_abort():

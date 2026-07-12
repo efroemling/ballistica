@@ -81,6 +81,13 @@ class Utils {
   static auto GetUTF8Value(const char* s) -> uint32_t;
   static void AdvanceUTF8(const char** s);
 
+  /// Build a table mapping utf-16 code-unit indices to utf-8 byte offsets
+  /// for a (trusted) utf-8 string. The returned vector has one entry per
+  /// utf-16 code unit plus a final entry equal to the utf-8 byte length,
+  /// so utf-16 offset i (0 <= i <= utf-16-length) maps to result[i].
+  /// Surrogate-pair code units both map to the start of their code point.
+  static auto UTF16ToUTF8OffsetMap(const std::string& s) -> std::vector<int>;
+
   /* The following code uses bitwise operators to determine
    if an unsigned integer, x, is a power of two.  If x is a power of two,
    x is represented in binary with only a single bit; therefore, subtraction

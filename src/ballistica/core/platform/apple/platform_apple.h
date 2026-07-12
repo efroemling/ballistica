@@ -30,6 +30,8 @@ class PlatformApple : public Platform {
                        std::string_view msg) override;
   void GetTextBoundsAndWidth(const std::string& text, Rect* r,
                              float* width) override;
+  auto GetTextLineBreakOffsets(const std::string& text)
+      -> std::vector<int> override;
   void FreeTextTexture(void* tex) override;
   auto CreateTextTexture(int width, int height,
                          const std::vector<std::string>& strings,

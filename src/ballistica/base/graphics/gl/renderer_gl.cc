@@ -349,6 +349,12 @@ void RendererGL::CheckGLCapabilities_() {
 
 #endif  // BA_PLATFORM_ANDROID
 
+  // Record actual GL_KHR_debug support; TrySetupGLDebugOutput_ must not
+  // trust proc addresses alone (eglGetProcAddress can return non-null
+  // for unsupported functions), and touching the KHR debug enums
+  // without the extension yields GL_INVALID_ENUM.
+  gl_supports_khr_debug_ = CheckGLExtension(extensions, "debug");
+
   std::list<TextureCompressionType> c_types;
   assert(g_base->graphics);
   // Also check for texture_compression_dxt5: ANGLE reports
@@ -3327,6 +3333,11 @@ void RendererGL::TrySetupGLDebugOutput_() {
   // Apple ES (iOS/tvOS) and Apple desktop (macOS Xcode) lack proc-address APIs
   // and GL_KHR_debug header support, so they are skipped entirely.
 #if BA_OPENGL_IS_ES && BA_SDL_BUILD
+  if (!gl_supports_khr_debug_) {
+    g_core->logging->Log(kGLDebugLogName, LogLevel::kInfo,
+                         "GL debug output not available (no GL_KHR_debug).");
+    return;
+  }
   auto set_callback = reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKKHRPROC>(
       SDL_GL_GetProcAddress("glDebugMessageCallbackKHR"));
   gl_debug_message_control_khr_ =
@@ -3339,6 +3350,11 @@ void RendererGL::TrySetupGLDebugOutput_() {
   }
   set_callback(GLDebugCallbackKHR_, nullptr);
 #elif BA_OPENGL_IS_ES && BA_PLATFORM_ANDROID
+  if (!gl_supports_khr_debug_) {
+    g_core->logging->Log(kGLDebugLogName, LogLevel::kInfo,
+                         "GL debug output not available (no GL_KHR_debug).");
+    return;
+  }
   auto set_callback = reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKKHRPROC>(
       eglGetProcAddress("glDebugMessageCallbackKHR"));
   gl_debug_message_control_khr_ =

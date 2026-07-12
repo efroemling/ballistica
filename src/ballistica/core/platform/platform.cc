@@ -690,6 +690,22 @@ void Platform::GetTextBoundsAndWidth(const std::string& text, Rect* r,
   throw Exception();
 }
 
+auto Platform::GetTextLineBreakOffsets(const std::string& text)
+    -> std::vector<int> {
+  // Naive fallback: allow a line to begin wherever a non-space follows a
+  // space or newline. (Real OS implementations give full UAX #14.)
+  std::vector<int> offsets;
+  size_t len = text.size();
+  for (size_t i = 1; i < len; ++i) {
+    char prev = text[i - 1];
+    char cur = text[i];
+    if ((prev == ' ' || prev == '\n') && cur != ' ' && cur != '\n') {
+      offsets.push_back(static_cast<int>(i));
+    }
+  }
+  return offsets;
+}
+
 void Platform::FreeTextTexture(void* tex) { throw Exception(); }
 
 auto Platform::CreateTextTexture(int width, int height,

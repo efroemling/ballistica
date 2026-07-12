@@ -61,7 +61,6 @@ from typing import TYPE_CHECKING
 
 from efro.error import CleanError
 from efro.terminal import Clr
-from efrotools.code import format_python_str
 from batools.version import get_current_api_version
 
 if TYPE_CHECKING:
@@ -1158,10 +1157,10 @@ def _compute_pin_write(
 ) -> tuple[Path, str]:
     """Compute ``(abs_path, new_content)`` for a pin update.
 
-    Pure: performs the resolve/fetch/format work and returns what
-    *should* be on disk, but writes nothing. ``do_update`` stages all
-    such results and applies them together so a mid-update failure
-    leaves the tree untouched.
+    Pure: performs the resolve/fetch work and returns what *should*
+    be on disk, but writes nothing. ``do_update`` stages all such
+    results and applies them together so a mid-update failure leaves
+    the tree untouched.
     """
     if pin.kind == 'projectconfig':
         return _compute_projectconfig_write(projroot, new_apverid)
@@ -1223,53 +1222,11 @@ def _compute_wrapper_write(
             f' CLIENT_API_VERSION in bamaster src/bamaster/clientapi.py'
             f' (and deploy) before refreshing wrappers.'
         )
-    # Land it format-clean: the server generator doesn't guarantee our
-    # line-length rules (a long asset path can overflow), and the
-    # on-disk copy is always formatted, so formatting first also keeps
-    # the no-change comparison (at apply time) meaningful.
-    content = format_python_str(projroot, content)
-    content = _guard_wrapper_line_length(pin, content)
+    # No local format/line-length pass: the server guarantees
+    # format-clean, lint-clean output (formatted via the checkenv
+    # black + a line-too-long guard; see bamaster
+    # ``assetpackage/_wrappergen._format_and_guard``), and the same
+    # 80-col config applies on both sides — so fetched content lands
+    # as-is and the no-change comparison (at apply time) stays
+    # meaningful.
     return projroot / pin.file_path, content
-
-
-#: pylint's max-line-length for this project (see ``.pylintrc``).
-_MAX_LINE_LEN = 80
-
-
-def _guard_wrapper_line_length(pin: Pin, content: str) -> str:
-    """Fallback: keep a wrapper lint-clean if a line still exceeds 80.
-
-    The generator wraps everything to the budget, and the formatter
-    re-wraps the data tree — but neither can break an over-long *bare
-    annotation* (a freakishly long asset name) or dict key. Rather than
-    land a wrapper that fails ``line-too-long`` in CI, inject a
-    file-level disable as a safety net and warn loudly so the offending
-    asset name gets shortened (and/or the generator fixed). This runs
-    post-format because the formatter is what produces the final line
-    lengths.
-    """
-    overlong = [ln for ln in content.splitlines() if len(ln) > _MAX_LINE_LEN]
-    if not overlong:
-        return content
-    if 'disable=line-too-long' not in content:
-        lines = content.splitlines(keepends=True)
-        # Anchor after the last file-level pylint-disable comment.
-        last = max(
-            (
-                i
-                for i, ln in enumerate(lines[:40])
-                if ln.startswith('# pylint: disable=')
-            ),
-            default=None,
-        )
-        if last is not None:
-            lines.insert(last + 1, '# pylint: disable=line-too-long\n')
-            content = ''.join(lines)
-    print(
-        f'{Clr.RED}{Clr.BLD}WARNING:{Clr.RST}{Clr.RED} wrapper'
-        f' {pin.file_path} has {len(overlong)} line(s) over'
-        f' {_MAX_LINE_LEN} cols; added a `line-too-long` disable as a'
-        f' fallback. Shorten the offending asset name(s) and regenerate.'
-        f'\n  first offender: {overlong[0].strip()[:90]}{Clr.RST}'
-    )
-    return content
