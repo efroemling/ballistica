@@ -790,7 +790,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "transition_type",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &color_obj, &texture_obj,
           &opacity_obj, &rotate_obj, &mesh_transparent_obj, &mesh_opaque_obj,
           &has_alpha_channel_obj, &tint_texture_obj, &tint_color_obj,
