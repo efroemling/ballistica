@@ -403,8 +403,15 @@ def archive_old_builds(
     # this works.
     for fname in sorted(files_to_archive):
         print('Archiving ' + fname, file=sys.stderr)
+        # Concurrent publish jobs (push-all-servers /
+        # push-all-test-packages) can race to archive the same file
+        # between our ls above and this mv; a vanished source means
+        # the other job got it first, which is fine — only fail if
+        # the mv failed with the source still present.
+        src = builds_dir + '/' + fname
         ssh_run(
-            'mv "' + builds_dir + '/' + fname + '" "' + builds_dir + '/old/"'
+            'mv "' + src + '" "' + builds_dir + '/old/"'
+            ' || [ ! -e "' + src + '" ]'
         )
 
 

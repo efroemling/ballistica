@@ -214,16 +214,13 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
             datetime.datetime, IOAttrs('modtime', time_format='float')
         ]
 
-        #: The plain-string output. Set for plain entries; empty (and
-        #: omitted from the wire) when ``selector`` is set -- the selector
-        #: is then the authoritative value, with no separate fallback.
-        value: Annotated[str, IOAttrs('value', store_default=False)] = ''
-
-        #: Optional render-time selector (plural/select); set instead of
-        #: ``value`` for an entry whose value is chosen at render time.
-        selector: Annotated[
-            StringSelector | None, IOAttrs('sel', store_default=False)
-        ] = None
+        #: The localized output -- a plain string, or a render-time
+        #: :class:`~bacommon.loctext.StringSelector` (plural/select)
+        #: whose final form is chosen at display time. (A type-disjoint
+        #: dataclassio union; selectors ride the wire as dicts.)
+        value: Annotated[
+            str | StringSelector, IOAttrs('value', store_default=False)
+        ] = ''
 
     input: Annotated[str, IOAttrs('input')]
     input_modtime: Annotated[
@@ -349,12 +346,7 @@ def complete_locale_values(
         output = sfile.outputs.get(locale)
         if output is None:
             output = sfile.outputs.get(Locale.ENGLISH)
-        if output is None:
-            out[name] = STRING_NOT_TRANSLATED
-        elif output.selector is not None:
-            out[name] = output.selector
-        else:
-            out[name] = output.value
+        out[name] = STRING_NOT_TRANSLATED if output is None else output.value
     return out
 
 

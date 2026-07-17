@@ -137,8 +137,18 @@ def collect_apverids(page: dui2.Page, acc: set[str]) -> None:
     import bacommon.clienteffect as clfx
 
     def _walk(lstr: LangStr) -> None:
-        acc.add(lstr.apverid)
-        for sub in lstr.subs.values():
+        from bacommon.langstr import LangStrResource, LangStrValue
+
+        if isinstance(lstr, LangStrResource):
+            acc.add(lstr.apverid)
+            subvals = lstr.subs.values()
+        elif isinstance(lstr, LangStrValue):
+            subvals = lstr.subs.values()
+        else:
+            # Indexed values resolve against an out-of-band context;
+            # they carry no apverids of their own.
+            return
+        for sub in subvals:
             if isinstance(sub, LangStr):
                 _walk(sub)
 

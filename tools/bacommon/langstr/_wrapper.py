@@ -11,7 +11,12 @@ builds an :class:`LangStr` from keyword substitutions, and a subdir is a
 nested :class:`LangStrDir`.
 """
 
-from bacommon.langstr._core import LangStr, PackageStructure
+from typing import TYPE_CHECKING
+
+from bacommon.langstr._core import LangStrResource, PackageStructure
+
+if TYPE_CHECKING:
+    from bacommon.langstr._core import LangStr
 
 #: A wrapper's compact runtime tree: a leaf is its ordered param-keyword
 #: tuple (``()`` for a no-arg string); a subdir is a nested tree.
@@ -48,8 +53,8 @@ class _LstrMaker:
         self._apverid = apverid
         self._name = name
 
-    def __call__(self, **subs: 'str | int | LangStr') -> LangStr:
-        return LangStr(self._apverid, self._name, dict(subs))
+    def __call__(self, **subs: 'str | int | LangStr') -> 'LangStr':
+        return LangStrResource(self._apverid, self._name, dict(subs))
 
 
 class LangStrDir:
@@ -75,5 +80,5 @@ class LangStrDir:
         # A leaf: its param-keyword tuple. Empty -> a no-arg string, read
         # as a property yielding the LangStr directly; otherwise a maker.
         if not child:
-            return LangStr(self._apverid, full)
+            return LangStrResource(self._apverid, full)
         return _LstrMaker(self._apverid, full)

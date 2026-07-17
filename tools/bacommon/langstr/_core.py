@@ -5,9 +5,12 @@
 See ``docs/initiatives/language-string-context.md`` (ballistica-internal)
 for the full design. Three pieces:
 
-* :class:`LangStr` -- a deferred, language-agnostic complex string (an apverid
-  + a string name + keyword substitution values, each a flat ``str``/``int``
-  or a nested :class:`LangStr`).
+* :class:`LangStr` -- a deferred, language-agnostic complex string; a
+  small multitype whose forms are :class:`LangStrResource` (apverid +
+  logical name + keyword substitutions), :class:`LangStrValue` (a raw
+  literal), and :class:`LangStrResourceIndexed` (the compact
+  integer-addressed projection). Substitution values are flat
+  ``str``/``int`` or nested language-strings.
 * :class:`LanguageStringEncodeContext` -- turns a batch of :class:`LangStr` into
   minimal, language-free encoded chunks plus the ``{pkg_int: apverid}`` map.
 * :class:`LanguageStringDecodeContext` -- single-locale; turns an encoded
@@ -20,10 +23,11 @@ an ``LANGSTR_ERROR:…`` sentinel and logs, never crashing the caller.
 """
 
 import logging
+from enum import Enum
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, assert_never, override
 
-from efro.dataclassio import ioprepped, IOAttrs
+from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 from bacommon.loctext import evaluate, LocTextError
 
 if TYPE_CHECKING:
@@ -31,6 +35,11 @@ if TYPE_CHECKING:
     from bacommon.loctext import StringSelector
 
 logger = logging.getLogger(__name__)
+
+#: Cap on nested-:class:`LangStr` substitution depth at decode. Wire
+#: data is untrusted, so the recursive decode paths refuse trees deeper
+#: than this (fail-visible) instead of recursing unboundedly.
+MAX_NESTING_DEPTH = 16
 
 
 class LangStrError(Exception):
@@ -45,30 +54,155 @@ class _DecodeFail(Exception):
     """
 
 
-@ioprepped
-@dataclass
-class LangStr:
+class LangStrTypeID(Enum):
+    """Type IDs for the :class:`LangStr` multitype's forms."""
+
+    RESOURCE = 'r'
+    VALUE = 'v'
+    RESOURCE_INDEXED = 'i'
+
+
+class LangStr(IOMultiType[LangStrTypeID]):
     """A deferred, language-agnostic complex string.
 
-    ``subs`` maps each substitution keyword to its value -- a flat ``str`` /
-    ``int`` or a nested :class:`LangStr`. A no-arg string has empty ``subs``.
-    The value carries its own exact ``apverid`` (so an encode context can
-    discover the package union from the values themselves) and the string's
-    logical ``name`` (mapped to its integer index at encode time).
+    The base of a small multitype: a language-string is a
+    :class:`LangStrResource` (an asset-package string addressed by
+    apverid + logical name -- the common authored form), a
+    :class:`LangStrValue` (a raw literal that needs no package), or a
+    :class:`LangStrResourceIndexed` (the compact integer-addressed
+    projection of a resource, for contexts that carry a package-index
+    map). All forms take keyword substitutions whose values may
+    themselves be language-strings, so a ``LangStr`` is a recursive
+    tree; it holds tokens, not text, and only decodes to a flat string
+    in some particular locale at display time.
 
-    This is ``@ioprepped`` so it can be sent directly on the wire (the
-    name-based docui-v2 form). Flat ``str``/``int`` subs serialize directly;
-    nested-:class:`LangStr` subs are exercised by the in-memory encode /
-    name-decode paths but are not yet directly JSON-serializable here (they
-    graduate with the integer-indexed :data:`EncodedLangStr` form).
+    Wire notes: the indexed form is the multitype *default*, so it
+    alone serializes without a type tag (it is the space-sensitive
+    form). Clients older than ``LANGSTR_EXT_MIN_BUILD`` understand only
+    tag-free resource values with flat subs; producers that know the
+    client build must gate everything beyond that (nested subs and the
+    value/indexed forms) on it.
+    """
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: LangStrTypeID) -> type[LangStr]:
+        """Return the subclass for each of our type-ids."""
+        t = LangStrTypeID
+        if type_id is t.RESOURCE:
+            return LangStrResource
+        if type_id is t.VALUE:
+            return LangStrValue
+        if type_id is t.RESOURCE_INDEXED:
+            return LangStrResourceIndexed
+
+        # Make sure we cover all cases.
+        assert_never(type_id)
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> LangStrTypeID:
+        # Child classes supply this themselves.
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        return 't'
+
+    @override
+    @classmethod
+    def get_default_type_id(cls) -> LangStrTypeID | None:
+        # The indexed form owns the tag-free slot: the tag would be
+        # large relative to its couple of ints, and it is chosen
+        # exactly when space matters. (Per dataclassio rules this
+        # default is permanent once keyless data ships.)
+        return LangStrTypeID.RESOURCE_INDEXED
+
+
+@ioprepped
+@dataclass
+class LangStrResource(LangStr):
+    """An asset-package string: the common authored :class:`LangStr` form.
+
+    ``subs`` maps each substitution keyword to its value -- a flat
+    ``str`` / ``int`` or a nested :class:`LangStr`. A no-arg string has
+    empty ``subs``. The value carries its own exact ``apverid`` (so an
+    encode context can discover the package union from the values
+    themselves) and the string's logical ``name`` (mapped to its
+    integer index at encode time).
     """
 
     apverid: Annotated[str, IOAttrs('a')]
     name: Annotated[str, IOAttrs('n')]
-    subs: Annotated[dict, IOAttrs('s', store_default=False)] = field(
-        default_factory=dict
-    )
+    subs: Annotated[
+        dict[str, str | int | LangStr],
+        IOAttrs('s', store_default=False),
+    ] = field(default_factory=dict)
 
+    @override
+    @classmethod
+    def get_type_id(cls) -> LangStrTypeID:
+        return LangStrTypeID.RESOURCE
+
+
+@ioprepped
+@dataclass
+class LangStrValue(LangStr):
+    """A raw literal string value needing no asset package.
+
+    For server-generated dynamic text (player names, pre-formatted
+    numbers, etc.) that rides a :class:`LangStr`-shaped slot without a
+    package entry. The value is locale-independent; ``subs`` are
+    substituted into ``{name}`` tokens exactly like a plain resource
+    value (nested language-strings allowed).
+    """
+
+    value: Annotated[str, IOAttrs('v')]
+    subs: Annotated[
+        dict[str, str | int | LangStr],
+        IOAttrs('s', store_default=False),
+    ] = field(default_factory=dict)
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> LangStrTypeID:
+        return LangStrTypeID.VALUE
+
+
+@ioprepped
+@dataclass
+class LangStrResourceIndexed(LangStr):
+    """The compact integer-addressed projection of a resource string.
+
+    Usable only against a context carrying the ``{pkg_int: apverid}``
+    package-index map (and package structures for positional-sub
+    ordering); see ``LanguageStringDecodeContext``. Substitutions are
+    positional here (canonical param order), matching the
+    :data:`EncodedLangStr` chunk model. This form is the multitype
+    default, so it serializes without a type tag.
+    """
+
+    pkg: Annotated[int, IOAttrs('p')]
+    index: Annotated[int, IOAttrs('n')]
+    subs: Annotated[
+        list[str | int | LangStr],
+        IOAttrs('s', store_default=False),
+    ] = field(default_factory=list)
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> LangStrTypeID:
+        return LangStrTypeID.RESOURCE_INDEXED
+
+
+#: First engine build with full current language-string support:
+#: nested-:class:`LangStr` substitutions, the type-tagged wire form,
+#: and the value/indexed forms. Older builds understand only tag-free
+#: resource values with flat subs (they tolerate an unrecognized type
+#: tag on those); servers that know the client build must gate
+#: everything beyond that on this floor.
+LANGSTR_EXT_MIN_BUILD = 22933
 
 #: A substitution value: a flat string/number, or a nested language-string.
 type LangStrSub = str | int | LangStr
@@ -181,6 +315,11 @@ class LanguageStringEncodeContext:
         self._pkg_index = {av: i for i, av in enumerate(sorted(apverids))}
 
     def _collect(self, lstr: LangStr, acc: set[str]) -> None:
+        if not isinstance(lstr, LangStrResource):
+            raise LangStrError(
+                f'only resource-form language-strings can be encoded;'
+                f' got {type(lstr).__name__}.'
+            )
         acc.add(lstr.apverid)
         for val in lstr.subs.values():
             if isinstance(val, LangStr):
@@ -193,6 +332,11 @@ class LanguageStringEncodeContext:
 
     def encode(self, lstr: LangStr) -> EncodedLangStr:
         """Encode one value (recursively) into a minimal chunk."""
+        if not isinstance(lstr, LangStrResource):
+            raise LangStrError(
+                f'only resource-form language-strings can be encoded;'
+                f' got {type(lstr).__name__}.'
+            )
         pkg_int = self._pkg_index.get(lstr.apverid)
         struct = self._structures.get(lstr.apverid)
         if pkg_int is None or struct is None:
@@ -251,7 +395,9 @@ class LanguageStringDecodeContext:
             logger.warning('langstr decode: %s', exc)
             return f'LANGSTR_ERROR:{exc}'
 
-    def _decode(self, encoded: EncodedLangStr) -> str:
+    def _decode(self, encoded: EncodedLangStr, depth: int = 0) -> str:
+        if depth > MAX_NESTING_DEPTH:
+            raise _DecodeFail('max nesting depth exceeded')
         if len(encoded) < 2:
             raise _DecodeFail(f'malformed chunk {encoded!r}')
         pkg_int = encoded[0]
@@ -284,7 +430,9 @@ class LanguageStringDecodeContext:
         kwargs: dict[str, str | int] = {}
         for param, sub in zip(params, subs):
             # A nested chunk (list) renders recursively to a flat string.
-            kwargs[param] = self.decode(sub) if isinstance(sub, list) else sub
+            kwargs[param] = (
+                self._decode(sub, depth + 1) if isinstance(sub, list) else sub
+            )
         try:
             return evaluate(values[name], self._locale, **kwargs)
         except LocTextError as exc:
@@ -329,18 +477,39 @@ class LanguageStringNameDecodeContext:
             logger.warning('langstr name-decode: %s', exc)
             return f'LANGSTR_ERROR:{exc}'
 
-    def _decode(self, lstr: LangStr) -> str:
-        values = self._language.get(lstr.apverid)
-        if values is None:
-            raise _DecodeFail(f'no values for package {lstr.apverid!r}')
-        value = values.get(lstr.name)
-        if value is None:
-            raise _DecodeFail(f'no value for {lstr.name!r} in {lstr.apverid}')
+    def _decode(self, lstr: LangStr, depth: int = 0) -> str:
+        if depth > MAX_NESTING_DEPTH:
+            raise _DecodeFail('max nesting depth exceeded')
+        value: str | StringSelector
+        if isinstance(lstr, LangStrValue):
+            # A raw literal; the value itself is the (locale-free) text.
+            value = lstr.value
+            subs = lstr.subs
+            desc = 'literal'
+        elif isinstance(lstr, LangStrResource):
+            values = self._language.get(lstr.apverid)
+            if values is None:
+                raise _DecodeFail(f'no values for package {lstr.apverid!r}')
+            resval = values.get(lstr.name)
+            if resval is None:
+                raise _DecodeFail(
+                    f'no value for {lstr.name!r} in {lstr.apverid}'
+                )
+            value = resval
+            subs = lstr.subs
+            desc = lstr.name
+        else:
+            # The indexed form needs an index context, not this one.
+            raise _DecodeFail(f'cannot name-decode a {type(lstr).__name__}.')
         kwargs: dict[str, str | int] = {}
-        for key, sub in lstr.subs.items():
+        for key, sub in subs.items():
             # A nested LangStr renders recursively to a flat string.
-            kwargs[key] = self._decode(sub) if isinstance(sub, LangStr) else sub
+            kwargs[key] = (
+                self._decode(sub, depth + 1)
+                if isinstance(sub, LangStr)
+                else sub
+            )
         try:
             return evaluate(value, self._locale, **kwargs)
         except LocTextError as exc:
-            raise _DecodeFail(f'eval failed for {lstr.name!r}: {exc}') from exc
+            raise _DecodeFail(f'eval failed for {desc!r}: {exc}') from exc

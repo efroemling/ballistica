@@ -379,27 +379,29 @@ def test_prep() -> None:
         class _TestClass:
             ival: Sequence[int]
 
-    # We currently only support Unions with exactly 2 members; one of
-    # which is None. (Optional types get transformed into this by
-    # get_type_hints() so we need to support at least that).
+    # Beyond the simple Optional form, unions must be 'type-disjoint'
+    # (see test_type_disjoint_unions). int and float cannot coexist
+    # since both are numbers on the wire.
     with pytest.raises(TypeError):
 
         @ioprepped
         @dataclass
         class _TestClass2:
-            ival: int | str
+            ival: int | float
 
     @ioprepped
     @dataclass
     class _TestClass3:
         uval: int | None
 
+    # Member types without a distinct wire type (bytes, enums, lists,
+    # etc.) are not allowed in multi-member unions.
     with pytest.raises(TypeError):
 
         @ioprepped
         @dataclass
         class _TestClass4:
-            ival: int | str
+            ival: int | str | bytes
 
     # This will get simplified down to simply int by get_type_hints so is ok.
     @ioprepped
@@ -2885,3 +2887,158 @@ def test_human_codec() -> None:
     # Decoding with HUMAN codec should raise ValueError.
     with pytest.raises(ValueError):
         dataclass_from_dict(_HumanTestClass, out, codec=Codec.HUMAN)
+
+
+@ioprepped
+@dataclass
+class _DJUnionSub:
+    ival: Annotated[int, IOAttrs('i')]
+
+
+@ioprepped
+@dataclass
+class _DJUnionHost:
+    val: Annotated[str | int | _DJUnionSub | None, IOAttrs('v')]
+
+
+@ioprepped
+@dataclass
+class _DJUnionBoolHost:
+    val: Annotated[bool | str, IOAttrs('v')]
+
+
+@ioprepped
+@dataclass
+class _DJUnionFloatHost:
+    val: Annotated[str | float, IOAttrs('v')]
+
+
+@ioprepped
+@dataclass
+class _DJUnionMTHost:
+    val: Annotated[str | MTTestBase, IOAttrs('v')]
+
+
+@dataclass
+class _DJUnionRecursive:
+    """Mimics the langstr nested-substitution shape."""
+
+    name: Annotated[str, IOAttrs('n')]
+    subs: Annotated[dict[str, str | int | _DJUnionRecursive], IOAttrs('s')] = (
+        field(default_factory=dict)
+    )
+
+
+def test_type_disjoint_unions() -> None:
+    """Test multi-member 'type-disjoint' unions."""
+
+    # Each member kind round-trips, with primitives staying bare on the
+    # wire and the object-shaped member appearing as a dict.
+    for obj, wire in [
+        (_DJUnionHost(val='hello'), {'v': 'hello'}),
+        (_DJUnionHost(val=5), {'v': 5}),
+        (_DJUnionHost(val=_DJUnionSub(ival=3)), {'v': {'i': 3}}),
+        (_DJUnionHost(val=None), {'v': None}),
+    ]:
+        dataclass_validate(obj)
+        assert dataclass_to_dict(obj) == wire
+        assert dataclass_from_dict(_DJUnionHost, wire) == obj
+
+    # Value types not present in the union get rejected in both
+    # directions. Note that bool is NOT considered an int here (it has
+    # its own wire type), though static type-checking can't catch that
+    # direction since bool is a subtype of int in the type system.
+    with pytest.raises(TypeError):
+        dataclass_to_dict(_DJUnionHost(val=True))
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_DJUnionHost, {'v': True})
+    with pytest.raises(TypeError):
+        dataclass_to_dict(_DJUnionHost(val=1.5))  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_DJUnionHost, {'v': 1.5})
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_DJUnionHost, {'v': ['nope']})
+
+    # Bool members match bool values exactly, and a union without a
+    # None member rejects None values.
+    assert dataclass_to_dict(_DJUnionBoolHost(val=True)) == {'v': True}
+    assert dataclass_from_dict(_DJUnionBoolHost, {'v': True}).val is True
+    assert dataclass_from_dict(_DJUnionBoolHost, {'v': 'x'}).val == 'x'
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_DJUnionBoolHost, {'v': 5})
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_DJUnionBoolHost, {'v': None})
+    with pytest.raises(TypeError):
+        dataclass_to_dict(_DJUnionBoolHost(val=None))  # type: ignore[arg-type]
+
+    # Int values land on a float member via the usual coercion rules.
+    fobj = dataclass_from_dict(_DJUnionFloatHost, {'v': 5})
+    assert isinstance(fobj.val, float)
+    assert fobj.val == 5.0
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_DJUnionFloatHost, {'v': 5}, coerce_to_float=False)
+
+    # IOMultiType members work; concrete subclasses ride the tagged
+    # dict form.
+    tpname = MTTestBase.get_type_id_storage_name()
+    mtwire = dataclass_to_dict(_DJUnionMTHost(val=MTTestClass1(ival=7)))
+    assert mtwire == {'v': {'ival': 7, tpname: 'm1'}}
+    mtback = dataclass_from_dict(_DJUnionMTHost, mtwire)
+    assert isinstance(mtback.val, MTTestClass1)
+    assert mtback.val.ival == 7
+    assert dataclass_from_dict(_DJUnionMTHost, {'v': 'str'}).val == 'str'
+
+    # Prep-time rejection: only one object-shaped member is allowed
+    # (multiple would be indistinguishable on the wire).
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClassBad1:
+            val: str | _DJUnionSub | MTTestBase
+
+    # Enums lack a distinct wire type (they serialize to str/int).
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClassBad2:
+            val: str | _EnumTest
+
+    # Datetimes too (str in JSON, native in Firestore).
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClassBad3:
+            val: str | datetime.datetime
+
+    # Containers too.
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClassBad4:
+            val: str | int | list[int]
+
+
+def test_type_disjoint_union_recursive() -> None:
+    """The nested-langstr shape: a self-referential union dict value."""
+
+    # Can't use @ioprepped due to the self-reference; prep explicitly.
+    ioprep(_DJUnionRecursive)
+
+    obj = _DJUnionRecursive(
+        name='hello',
+        subs={
+            'player': 'Bo',
+            'count': 5,
+            'how': _DJUnionRecursive(name='salute'),
+        },
+    )
+    wire = dataclass_to_dict(obj)
+    assert wire == {
+        'n': 'hello',
+        's': {'player': 'Bo', 'count': 5, 'how': {'n': 'salute', 's': {}}},
+    }
+    assert dataclass_from_dict(_DJUnionRecursive, wire) == obj

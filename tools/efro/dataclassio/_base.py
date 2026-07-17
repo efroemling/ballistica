@@ -529,6 +529,50 @@ def _raise_type_error(
     )
 
 
+def _select_union_member_type(
+    childanntypes: list[Any], value: Any
+) -> Any | None:
+    """Select the member of a type-disjoint union matching a value.
+
+    Multi-member unions (beyond the simple Optional form) are required
+    at prep time to be 'type-disjoint': each member must map to a
+    distinct wire type, so a value can be matched to its member with no
+    tagging. This does that matching. It works both for wire data
+    (where object-shaped members appear as dicts) and for in-memory
+    values (where they appear as dataclass instances). None members
+    are expected to be filtered out by the caller (along with None
+    values). Returns the matching member annotation type, or None if
+    nothing matches.
+    """
+    valtype = type(value)
+    float_member: Any = None
+    object_member: Any = None
+    for childtype in childanntypes:
+        childorigin = _get_origin(childtype)
+        if childorigin is valtype:
+            return childtype
+        if childorigin is float:
+            float_member = childtype
+        elif isinstance(childorigin, type) and (
+            dataclasses.is_dataclass(childorigin)
+            or issubclass(childorigin, IOMultiType)
+        ):
+            object_member = childtype
+
+    # No exact match. Int values can land on a float member (the float
+    # handling there applies the usual coercion rules), and dict values
+    # (wire form) or dataclass instances (in-memory form, including
+    # subclasses such as IOMultiType members) land on the object-shaped
+    # member.
+    if valtype is int and float_member is not None:
+        return float_member
+    if object_member is not None and (
+        isinstance(value, dict) or dataclasses.is_dataclass(valtype)
+    ):
+        return object_member
+    return None
+
+
 def _is_valid_for_codec(obj: Any, codec: Codec) -> bool:
     """Return whether a value consists solely of json-supported types.
 

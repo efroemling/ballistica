@@ -24,6 +24,7 @@ from efro.dataclassio._base import (
     _get_origin,
     SIMPLE_TYPES,
     _raise_type_error,
+    _select_union_member_type,
     IOExtendedData,
     IOMultiType,
 )
@@ -229,14 +230,33 @@ class _Outputter:
             return value if self._create else None
 
         if origin is typing.Union or origin is types.UnionType:
-            # Currently, the only unions we support are None/Value
-            # (translated from Optional), which we verified on prep.
-            # So let's treat this as a simple optional case.
+            childanntypes = typing.get_args(anntype)
             if value is None:
+                if type(None) not in childanntypes:
+                    _raise_type_error(
+                        fieldpath,
+                        type(value),
+                        tuple(_get_origin(c) for c in childanntypes),
+                    )
                 return None
             childanntypes_l = [
-                c for c in typing.get_args(anntype) if c is not type(None)
+                c for c in childanntypes if c is not type(None)
             ]  # noqa (pycodestyle complains about *is* with type)
+            if len(childanntypes_l) > 1:
+                # A multi-member 'type-disjoint' union; find the member
+                # matching the value's type (prep verified that this is
+                # decidable).
+                member = _select_union_member_type(childanntypes_l, value)
+                if member is None:
+                    _raise_type_error(
+                        fieldpath,
+                        type(value),
+                        tuple(_get_origin(c) for c in childanntypes_l),
+                    )
+                return self._process_value(
+                    cls, fieldpath, member, value, ioattrs
+                )
+            # Simple Optional case.
             assert len(childanntypes_l) == 1
             return self._process_value(
                 cls, fieldpath, childanntypes_l[0], value, ioattrs

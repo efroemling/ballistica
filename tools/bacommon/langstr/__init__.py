@@ -18,6 +18,12 @@ serves clients of any language.
 
 from bacommon.langstr._core import (
     LangStr,
+    LangStrResource,
+    LangStrValue,
+    LangStrResourceIndexed,
+    LangStrTypeID,
+    LANGSTR_EXT_MIN_BUILD,
+    MAX_NESTING_DEPTH,
     StringDef,
     PackageDef,
     PackageStructure,
@@ -40,6 +46,12 @@ from bacommon.langstr._blob import (
 
 __all__ = [
     'LangStr',
+    'LangStrResource',
+    'LangStrValue',
+    'LangStrResourceIndexed',
+    'LangStrTypeID',
+    'LANGSTR_EXT_MIN_BUILD',
+    'MAX_NESTING_DEPTH',
     'StringDef',
     'PackageDef',
     'PackageStructure',
