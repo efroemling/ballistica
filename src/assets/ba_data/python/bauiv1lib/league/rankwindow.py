@@ -856,7 +856,7 @@ class LeagueRankWindow(bui.MainWindow):
         )
 
     def _on_president_press(self) -> None:
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.league.presidency import LeaguePresidencyUIController
         from bauiv1lib.connectivity import wait_for_connectivity
@@ -882,7 +882,7 @@ class LeagueRankWindow(bui.MainWindow):
             on_connected=lambda: self.main_window_replace(
                 bui.CallStrict(
                     LeaguePresidencyUIController().create_window,
-                    dui1.Request('/', args={'season': self._season}),
+                    dui2.Request('/', args={'season': self._season}),
                     origin_widget=self._president_button,
                     auxiliary_style=False,
                 ),

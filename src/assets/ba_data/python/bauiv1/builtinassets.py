@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260707`` (bauiv1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260715`` (bauiv1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,13 +9,13 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260707
+# ba_meta require asset-package a-0.babuiltinassets.260715
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260707'
+__asset_package__ = 'a-0.babuiltinassets.260715'
 
 from typing import TYPE_CHECKING
 
@@ -25,7 +25,12 @@ if TYPE_CHECKING:
     from bauiv1._assetref import MeshRef, SoundRef, TextureRef
 
     class AudioGroup:
-        """Asset-group type; see source for the full list."""
+        """
+        Sounds needed during engine bootstrap and early UI (clicks, errors, and
+        other always-available effects).
+
+        See source for the full asset list.
+        """
 
         blank: SoundRef
         blip: SoundRef
@@ -49,7 +54,11 @@ if TYPE_CHECKING:
         ticking_crazy: SoundRef
 
     class MeshesGroup:
-        """Asset-group type; see source for the full list."""
+        """
+        Meshes needed during engine bootstrap and early UI.
+
+        See source for the full asset list.
+        """
 
         action_button_bottom: MeshRef
         action_button_left: MeshRef
@@ -125,7 +134,12 @@ if TYPE_CHECKING:
         wing: MeshRef
 
     class TexturesGroup:
-        """Asset-group type; see source for the full list."""
+        """
+        Textures needed during engine bootstrap and early UI, including the
+        reflection cube-maps.
+
+        See source for the full asset list.
+        """
 
         action_buttons: TextureRef
         arrow: TextureRef

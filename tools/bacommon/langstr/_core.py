@@ -5,10 +5,10 @@
 See ``docs/initiatives/language-string-context.md`` (ballistica-internal)
 for the full design. Three pieces:
 
-* :class:`Lstr` -- a deferred, language-agnostic complex string (an apverid
+* :class:`LangStr` -- a deferred, language-agnostic complex string (an apverid
   + a string name + keyword substitution values, each a flat ``str``/``int``
-  or a nested :class:`Lstr`).
-* :class:`LanguageStringEncodeContext` -- turns a batch of :class:`Lstr` into
+  or a nested :class:`LangStr`).
+* :class:`LanguageStringEncodeContext` -- turns a batch of :class:`LangStr` into
   minimal, language-free encoded chunks plus the ``{pkg_int: apverid}`` map.
 * :class:`LanguageStringDecodeContext` -- single-locale; turns an encoded
   chunk back into a flat string via :func:`bacommon.loctext.evaluate`.
@@ -16,7 +16,7 @@ for the full design. Three pieces:
 Error posture is deliberately asymmetric: encoding is the authoring side
 (you control the data) so it raises :class:`LangStrError` loudly; decoding
 is the consumer side (you receive data) so it is fail-visible -- it returns
-an ``LSTR_ERROR:…`` sentinel and logs, never crashing the caller.
+an ``LANGSTR_ERROR:…`` sentinel and logs, never crashing the caller.
 """
 
 import logging
@@ -41,26 +41,26 @@ class _DecodeFail(Exception):
     """Internal: a structural problem while decoding a chunk.
 
     Caught once in :meth:`LanguageStringDecodeContext.decode` and turned
-    into the fail-visible ``LSTR_ERROR:…`` sentinel.
+    into the fail-visible ``LANGSTR_ERROR:…`` sentinel.
     """
 
 
 @ioprepped
 @dataclass
-class Lstr:
+class LangStr:
     """A deferred, language-agnostic complex string.
 
     ``subs`` maps each substitution keyword to its value -- a flat ``str`` /
-    ``int`` or a nested :class:`Lstr`. A no-arg string has empty ``subs``.
+    ``int`` or a nested :class:`LangStr`. A no-arg string has empty ``subs``.
     The value carries its own exact ``apverid`` (so an encode context can
     discover the package union from the values themselves) and the string's
     logical ``name`` (mapped to its integer index at encode time).
 
     This is ``@ioprepped`` so it can be sent directly on the wire (the
     name-based docui-v2 form). Flat ``str``/``int`` subs serialize directly;
-    nested-:class:`Lstr` subs are exercised by the in-memory encode /
+    nested-:class:`LangStr` subs are exercised by the in-memory encode /
     name-decode paths but are not yet directly JSON-serializable here (they
-    graduate with the integer-indexed :data:`EncodedLstr` form).
+    graduate with the integer-indexed :data:`EncodedLangStr` form).
     """
 
     apverid: Annotated[str, IOAttrs('a')]
@@ -71,12 +71,12 @@ class Lstr:
 
 
 #: A substitution value: a flat string/number, or a nested language-string.
-type LstrSub = str | int | Lstr
+type LangStrSub = str | int | LangStr
 
 #: An encoded chunk: ``[pkg_int, str_int, sub0, sub1, …]`` where each sub is
 #: a flat ``str``/``int`` or a nested chunk (a list). Plain JSON -- the
 #: flat-vs-nested distinction is "str/int vs list".
-type EncodedLstr = list[str | int | 'EncodedLstr']
+type EncodedLangStr = list[str | int | 'EncodedLangStr']
 
 
 @dataclass(frozen=True)
@@ -84,13 +84,19 @@ class StringDef:
     """One string's language-free definition.
 
     ``params`` is the ordered list of ``(keyword, kind)`` where kind is
-    ``'text'`` (a text sub -> ``str | Lstr``) or ``'count'`` (the plural
+    ``'text'`` (a text sub -> ``str | LangStr``) or ``'count'`` (the plural
     pivot -> ``int``); ``()`` for a no-arg string. The canonical ordering
     (sorted keyword) is what fixes the positional substitution order.
+
+    ``docs`` (author usage docs) and ``english`` (an English preview of
+    the rendered text) are optional docstring material for wrapper
+    codegen only -- neither participates in the encode/decode structure.
     """
 
     path: str
     params: tuple[tuple[str, str], ...] = ()
+    docs: str = ''
+    english: str = ''
 
 
 @dataclass(frozen=True)
@@ -152,7 +158,7 @@ class PackageStructure:
 
 
 class LanguageStringEncodeContext:
-    """Encodes :class:`Lstr` values into minimal language-free chunks.
+    """Encodes :class:`LangStr` values into minimal language-free chunks.
 
     Built from the batch of values to send: it computes the union of
     apverids they reference (recursively -- nested values know their own
@@ -164,7 +170,7 @@ class LanguageStringEncodeContext:
 
     def __init__(
         self,
-        lstrs: list[Lstr],
+        lstrs: list[LangStr],
         structures: dict[str, PackageStructure],
     ) -> None:
         self._structures = structures
@@ -174,10 +180,10 @@ class LanguageStringEncodeContext:
         # Sorted -> deterministic indices for a given apverid set.
         self._pkg_index = {av: i for i, av in enumerate(sorted(apverids))}
 
-    def _collect(self, lstr: Lstr, acc: set[str]) -> None:
+    def _collect(self, lstr: LangStr, acc: set[str]) -> None:
         acc.add(lstr.apverid)
         for val in lstr.subs.values():
-            if isinstance(val, Lstr):
+            if isinstance(val, LangStr):
                 self._collect(val, acc)
 
     @property
@@ -185,7 +191,7 @@ class LanguageStringEncodeContext:
         """The ``{pkg_int: apverid}`` map a decoder needs."""
         return {i: av for av, i in self._pkg_index.items()}
 
-    def encode(self, lstr: Lstr) -> EncodedLstr:
+    def encode(self, lstr: LangStr) -> EncodedLangStr:
         """Encode one value (recursively) into a minimal chunk."""
         pkg_int = self._pkg_index.get(lstr.apverid)
         struct = self._structures.get(lstr.apverid)
@@ -200,14 +206,14 @@ class LanguageStringEncodeContext:
             raise LangStrError(
                 f'unknown string {lstr.name!r} in {lstr.apverid}'
             ) from exc
-        out: list[str | int | EncodedLstr] = [pkg_int, str_int]
+        out: list[str | int | EncodedLangStr] = [pkg_int, str_int]
         for param in params:
             if param not in lstr.subs:
                 raise LangStrError(
                     f'missing substitution {param!r} for {lstr.name!r}'
                 )
             val = lstr.subs[param]
-            out.append(self.encode(val) if isinstance(val, Lstr) else val)
+            out.append(self.encode(val) if isinstance(val, LangStr) else val)
         return out
 
 
@@ -233,19 +239,19 @@ class LanguageStringDecodeContext:
         self._language = language
         self._locale = locale
 
-    def decode(self, encoded: EncodedLstr) -> str:
+    def decode(self, encoded: EncodedLangStr) -> str:
         """Resolve a chunk to a flat string in this context's locale.
 
-        Fail-visible: any structural problem yields an ``LSTR_ERROR:…``
+        Fail-visible: any structural problem yields an ``LANGSTR_ERROR:…``
         sentinel (and a logged warning) rather than crashing the caller.
         """
         try:
             return self._decode(encoded)
         except _DecodeFail as exc:
             logger.warning('langstr decode: %s', exc)
-            return f'LSTR_ERROR:{exc}'
+            return f'LANGSTR_ERROR:{exc}'
 
-    def _decode(self, encoded: EncodedLstr) -> str:
+    def _decode(self, encoded: EncodedLangStr) -> str:
         if len(encoded) < 2:
             raise _DecodeFail(f'malformed chunk {encoded!r}')
         pkg_int = encoded[0]
@@ -286,19 +292,19 @@ class LanguageStringDecodeContext:
 
 
 class LanguageStringNameDecodeContext:
-    """Decodes :class:`Lstr` values directly, by name, for one locale.
+    """Decodes :class:`LangStr` values directly, by name, for one locale.
 
     The name-based counterpart to :class:`LanguageStringDecodeContext`: it
-    resolves an in-memory :class:`Lstr` (carrying its ``apverid``, string
+    resolves an in-memory :class:`LangStr` (carrying its ``apverid``, string
     ``name``, and keyword ``subs``) straight against per-apverid per-locale
     values -- no integer indices, package-index-map, or
     :class:`PackageStructure` needed, since the subs are self-describing
     keyword->value pairs. This is the client's primary path: resolve the
     referenced packages, gather their per-locale values, then decode each
-    :class:`Lstr` in the client's locale.
+    :class:`LangStr` in the client's locale.
 
     Fail-visible like :class:`LanguageStringDecodeContext` -- any structural
-    problem yields an ``LSTR_ERROR:…`` sentinel (and a logged warning) rather
+    problem yields an ``LANGSTR_ERROR:…`` sentinel (and a logged warning) rather
     than crashing the caller.
     """
 
@@ -311,19 +317,19 @@ class LanguageStringNameDecodeContext:
         self._language = language
         self._locale = locale
 
-    def decode(self, lstr: Lstr) -> str:
-        """Resolve an :class:`Lstr` to a flat string in this context's locale.
+    def decode(self, lstr: LangStr) -> str:
+        """Resolve a :class:`LangStr` to a flat string in this locale.
 
-        Fail-visible: any structural problem yields an ``LSTR_ERROR:…``
+        Fail-visible: any structural problem yields an ``LANGSTR_ERROR:…``
         sentinel (and a logged warning) rather than crashing the caller.
         """
         try:
             return self._decode(lstr)
         except _DecodeFail as exc:
             logger.warning('langstr name-decode: %s', exc)
-            return f'LSTR_ERROR:{exc}'
+            return f'LANGSTR_ERROR:{exc}'
 
-    def _decode(self, lstr: Lstr) -> str:
+    def _decode(self, lstr: LangStr) -> str:
         values = self._language.get(lstr.apverid)
         if values is None:
             raise _DecodeFail(f'no values for package {lstr.apverid!r}')
@@ -332,8 +338,8 @@ class LanguageStringNameDecodeContext:
             raise _DecodeFail(f'no value for {lstr.name!r} in {lstr.apverid}')
         kwargs: dict[str, str | int] = {}
         for key, sub in lstr.subs.items():
-            # A nested Lstr renders recursively to a flat string.
-            kwargs[key] = self._decode(sub) if isinstance(sub, Lstr) else sub
+            # A nested LangStr renders recursively to a flat string.
+            kwargs[key] = self._decode(sub) if isinstance(sub, LangStr) else sub
         try:
             return evaluate(value, self._locale, **kwargs)
         except LocTextError as exc:

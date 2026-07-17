@@ -16,10 +16,12 @@ import bauiv1 as bui
 from bauiv1 import builtinassets
 
 from bauiv1lib.docui.v1prep._types import PagePrep, RowPrep, ButtonPrep
+from bauiv1lib.docui.v1prep._wrap import wrapped_widget_call
 
 if TYPE_CHECKING:
     from typing import Callable
 
+    from bacommon.docui import WrapParams
     from bauiv1lib.docui import DocUIWindow
 
 
@@ -119,6 +121,9 @@ def prep_page(
     center_vertically: bool = page.center_vertically
     title: str = page.title
     title_is_lstr: bool = page.title_is_lstr
+    title_wrap: WrapParams | None = (
+        None if page.title_is_lstr else page.title_wrap
+    )
 
     # Called with root container after construction completes.
     root_post_calls: list[Callable[[bui.Widget], None]] = []
@@ -263,7 +268,10 @@ def prep_page(
         if row.title is not None:
             rowprep.titlecalls.append(
                 partial(
+                    wrapped_widget_call,
                     bui.textwidget,
+                    'text',
+                    None if row.title_is_lstr else row.title_wrap,
                     position=(
                         (
                             ((width - left_buffer - right_buffer) * 0.5)
@@ -311,7 +319,10 @@ def prep_page(
         if row.subtitle is not None:
             rowprep.titlecalls.append(
                 partial(
+                    wrapped_widget_call,
                     bui.textwidget,
+                    'text',
+                    None if row.subtitle_is_lstr else row.subtitle_wrap,
                     position=(
                         (
                             ((width - left_buffer - right_buffer) * 0.5)
@@ -518,7 +529,10 @@ def prep_page(
 
             buttonprep = ButtonPrep(
                 buttoncall=partial(
+                    wrapped_widget_call,
                     bui.buttonwidget,
+                    'label',
+                    None if button.label_is_lstr else button.label_wrap,
                     id=widgetid,
                     position=(x, row.padding_bottom + to_button_bottom),
                     size=(bwidth, bheight),
@@ -660,6 +674,7 @@ def prep_page(
         center_vertically=center_vertically,
         title=title,
         title_is_lstr=title_is_lstr,
+        title_wrap=title_wrap,
         root_post_calls=root_post_calls,
     )
 

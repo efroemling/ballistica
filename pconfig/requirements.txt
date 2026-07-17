@@ -18,10 +18,10 @@ requests==2.34.2
 Sphinx==9.1.0
 tomlkit==0.15.0
 types-certifi==2021.10.8.3
-types-docutils==0.22.3.20260518
+types-docutils==0.22.3.20260712
 types-filelock==3.2.7
 types-psutil==7.2.2.20260518
-types-requests==2.33.0.20260518
+types-requests==2.33.0.20260712
 typing_extensions==4.16.0
 urllib3==2.7.0
 websockets==16.1

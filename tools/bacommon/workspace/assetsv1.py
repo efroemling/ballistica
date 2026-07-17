@@ -36,6 +36,18 @@ class WrapperType(Enum):
     BAUIV1 = 'bauiv1'
 
 
+class ConventionsMode(Enum):
+    """Conventions-check enforcement level for an assets_v1 workspace.
+
+    ``STRICT`` blocks test/prod publishes while conventions findings
+    exist (dev-track resolves are never gated); ``RELAXED`` (the
+    default) surfaces findings as informational hints only.
+    """
+
+    RELAXED = 'relaxed'
+    STRICT = 'strict'
+
+
 @ioprepped
 @dataclass
 class AssetsV1GlobalVals:
@@ -71,6 +83,21 @@ class AssetsV1GlobalVals:
     asset_package_name: Annotated[
         str | None, IOAttrs('asset_package_name', store_default=False)
     ] = None
+
+    #: Conventions-check enforcement level (see
+    #: :class:`ConventionsMode`). First-party workspaces set strict
+    #: (see the asset-packages design doc). Set by hand in
+    #: ``workspace.json`` -- deliberately not exposed in the UI.
+    #: Unknown stored values fall back to relaxed so older servers
+    #: never over-enforce.
+    conventions: Annotated[
+        ConventionsMode,
+        IOAttrs(
+            'conventions',
+            store_default=False,
+            enum_fallback=ConventionsMode.RELAXED,
+        ),
+    ] = ConventionsMode.RELAXED
 
 
 def derive_asset_package_name(workspace_name: str) -> str:
@@ -137,6 +164,42 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
         LOUD = 'loud'
         SOFT = 'soft'
 
+    class FitPreset(Enum):
+        """Preset bounding translated-output size for UI space.
+
+        Mirrors ``StylePreset``: a rough size budget passed to
+        the translator (with UI context) so localized output respects
+        the space available. Budgets are display-width in *Latin*
+        characters -- wide-glyph scripts (CJK) target roughly half the
+        character count -- and are aims, not hard caps (soft
+        enforcement with generous slack; see ``char_budget``).
+        """
+
+        #: No size constraint (the default).
+        NONE = 'none'
+
+        #: Aim for ~20 characters - narrow buttons, tabs, column
+        #: headings.
+        CHARS_20 = 'chars_20'
+
+        #: Aim for ~40 characters - standard buttons and labels.
+        CHARS_40 = 'chars_40'
+
+        #: Aim for ~80 characters / one concise line - transient
+        #: messages, status lines, and the like.
+        CHARS_80 = 'chars_80'
+
+        @property
+        def char_budget(self) -> int | None:
+            """The preset's rough character budget (None for NONE)."""
+            cls = type(self)
+            return {
+                cls.NONE: None,
+                cls.CHARS_20: 20,
+                cls.CHARS_40: 40,
+                cls.CHARS_80: 80,
+            }[self]
+
     @override
     @classmethod
     def get_type_id(cls) -> AssetsV1StringFileTypeID:
@@ -169,9 +232,89 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
     style_preset: Annotated[
         StylePreset, IOAttrs('style_preset', store_default=False)
     ] = StylePreset.NONE
+
+    #: Optional free-form usage docs describing where this string
+    #: appears and how it is used. Feeds both the generated wrapper
+    #: accessor's docstring
+    #: and the translation prompt (as usage context). Lives in the
+    #: ``.bstr`` itself so edits restale translations via the file's
+    #: content-id; when an edit doesn't warrant regeneration, use the
+    #: UI's mark-translations-clean action.
+    docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
+
+    #: Optional size/fit constraint (see ``FitPreset``). Passed to
+    #: the translator so localized output respects the UI space
+    #: available.
+    fit_preset: Annotated[
+        FitPreset, IOAttrs('fit_preset', store_default=False)
+    ] = FitPreset.NONE
+
     outputs: Annotated[dict[Locale, Output], IOAttrs('outputs')] = field(
         default_factory=dict
     )
+
+
+class AssetsV1AprefFileTypeID(Enum):
+    """Type ID for each of our subclasses."""
+
+    V1 = 'v1'
+
+
+class AssetsV1AprefFile(IOMultiType[AssetsV1AprefFileTypeID]):
+    """Top level class for our multitype.
+
+    An ``<name>.apref`` source in an assets_v1 workspace is an
+    asset-package reference: a pin to a published asset-package
+    version. String briefs can then reference the pinned package's
+    translations via cross-package term refs
+    (``{@<apref-logical-path>:<entry-path>}``).
+    """
+
+    @override
+    @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        return 'apref_file_version'
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AssetsV1AprefFileTypeID:
+        # Require child classes to supply this themselves. If we did a
+        # full type registry/lookup here it would require us to import
+        # everything and would prevent lazy loading.
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_type(
+        cls, type_id: AssetsV1AprefFileTypeID
+    ) -> type[AssetsV1AprefFile]:
+        """Return the subclass for each of our type-ids."""
+        # pylint: disable=cyclic-import
+
+        t = AssetsV1AprefFileTypeID
+        if type_id is t.V1:
+            return AssetsV1AprefFileV1
+
+        # Important to make sure we provide all types.
+        assert_never(type_id)
+
+
+@ioprepped
+@dataclass
+class AssetsV1AprefFileV1(AssetsV1AprefFile):
+    """Our initial version of asset-package-ref file data."""
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AssetsV1AprefFileTypeID:
+        return AssetsV1AprefFileTypeID.V1
+
+    #: The pinned asset-package-version id
+    #: (``<account>.<package>.<version-segment>``). Always a concrete
+    #: version — including on the dev track (a specific ``devN``
+    #: segment, never the bare ``dev`` pseudo-id); pins only move via
+    #: the explicit update/switch-track actions in the workspace UI.
+    apverid: Annotated[str, IOAttrs('apverid')]
 
 
 #: Placeholder value for a string with no generated output in its own locale
@@ -512,6 +655,12 @@ class AssetsV1PathValsStrV1(AssetsV1PathVals):
 
     #: Hash generated when all translations for this entry are complete.
     #: Used as a fast-out for checking whether updates are needed.
+    #:
+    #: (Historical note: string author docs briefly lived here as a
+    #: ``docs`` path-val to avoid restaling translations; they moved
+    #: into the ``.bstr`` itself once docs began feeding the translation
+    #: prompt, with the UI's mark-translations-clean action as the
+    #: no-regeneration-needed escape hatch.)
     up_to_date_state: Annotated[
         str | None, IOAttrs('up_to_date_state', store_default=False)
     ] = None

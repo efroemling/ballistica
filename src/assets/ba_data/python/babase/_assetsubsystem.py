@@ -983,7 +983,7 @@ class AssetSubsystem(AppSubsystem):
         :class:`~bacommon.loctext.StringSelector`) read from the package's
         resolved ``language/<locale>`` blob -- the Python side of what the
         native ``ReloadLanguage`` consumes, for the language-agnostic
-        (``Lstr``) doc-ui decode path. ``locale`` must be the one the package
+        (``LangStr``) doc-ui decode path. ``locale`` must be the one the package
         was :meth:`resolve`\\ d for (the coord is ``language/<locale.value>``,
         matching the ``_desired_coords`` bucket map).
 

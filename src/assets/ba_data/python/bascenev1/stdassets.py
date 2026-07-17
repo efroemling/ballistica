@@ -1,19 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bastdassets.260622`` (bascenev1).
+"""Asset-package wrapper for ``a-0.bastdassets.260716`` (bascenev1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bastdassets.260622
+# ba_meta require asset-package a-0.bastdassets.260716
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.bastdassets.260622'
+__asset_package__ = 'a-0.bastdassets.260716'
 
 from typing import TYPE_CHECKING
 
@@ -23,7 +23,11 @@ if TYPE_CHECKING:
     import bascenev1
 
     class AudioGroup:
-        """Asset-group type; see source for the full list."""
+        """
+        All standard game sounds (everything non-bootstrap).
+
+        See source for the full asset list.
+        """
 
         achievement: bascenev1.Sound
         action_hero1: bascenev1.Sound
@@ -439,7 +443,11 @@ if TYPE_CHECKING:
         zoe_scream01: bascenev1.Sound
 
     class MeshesGroup:
-        """Asset-group type; see source for the full list."""
+        """
+        All standard game meshes (everything non-bootstrap).
+
+        See source for the full asset list.
+        """
 
         achievement_outline: bascenev1.Mesh
         action_hero_fore_arm: bascenev1.Mesh
@@ -833,7 +841,11 @@ if TYPE_CHECKING:
         zoe_upper_leg: bascenev1.Mesh
 
     class TexturesGroup:
-        """Asset-group type; see source for the full list."""
+        """
+        All standard game textures (everything non-bootstrap).
+
+        See source for the full asset list.
+        """
 
         achievement_boxer: bascenev1.Texture
         achievement_cross_hair: bascenev1.Texture

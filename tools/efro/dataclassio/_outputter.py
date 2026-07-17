@@ -191,13 +191,16 @@ class _Outputter:
                         f' the type-id-storage-name of the IOMulticlass'
                         f' it inherits from.'
                     )
-                if self._codec is Codec.HUMAN:
-                    storagename = storagename.replace('_', ' ')
-                out[storagename] = (
-                    type_id.name.lower().replace('_', ' ')
-                    if self._codec is Codec.HUMAN
-                    else type_id.value
-                )
+                # If this is the multitype's default type, we skip
+                # writing the type id; its absence implies the default.
+                if type_id is not obj.get_default_type_id():
+                    if self._codec is Codec.HUMAN:
+                        storagename = storagename.replace('_', ' ')
+                    out[storagename] = (
+                        type_id.name.lower().replace('_', ' ')
+                        if self._codec is Codec.HUMAN
+                        else type_id.value
+                    )
 
         return out
 

@@ -71,6 +71,14 @@ sync JNI (Android), `IDWriteTextAnalyzer::AnalyzeLineBreakpoints` (Windows),
 in Thai word choices (ICU vs libthai dictionaries) — cosmetic; don't
 golden-test exact offsets cross-platform.
 
+First real consumer: `Platform::SplitTextIntoLines()` (exposed as
+`babase.split_text_into_lines()`), a constraint-based splitter
+(min/max lines, max chars per line) that treats characters as equal
+width and picks the most balanced break set via a small DP. It exists
+to feed flat new-style translations into places expecting preformatted
+line counts (the legacy translations baked in hard line breaks); a
+proper font-aware wrapping text widget supersedes it eventually.
+
 ## Per-platform implementations
 
 - **Apple (Xcode builds)** — CoreText drawing into a `CGContext`, wrapped by

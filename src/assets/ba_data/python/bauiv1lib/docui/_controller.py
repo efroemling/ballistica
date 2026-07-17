@@ -107,11 +107,16 @@ class DocUIController:
     ) -> DocUIResponse:
         """Fulfill a request by sending it to a webserver."""
         import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         import urllib3.util
 
-        if not isinstance(request, dui1.Request):
+        if not isinstance(request, (dui1.Request, dui2.Request)):
             raise RuntimeError(f'Unsupported docui request: {type(request)}')
+
+        # The v1 and v2 method enums share wire values; normalize to v1
+        # for our http dispatch below.
+        method = dui1.RequestMethod(request.method.value)
 
         upool = bui.app.net.urllib3pool
 
@@ -128,7 +133,7 @@ class DocUIController:
 
         try:
             # Map docui GET requests to http GET and POST to POST.
-            if request.method is dui1.RequestMethod.GET:
+            if method is dui1.RequestMethod.GET:
                 # For GET we embed the request into a url param.
                 raw_response = upool.request(
                     'GET',
@@ -139,7 +144,7 @@ class DocUIController:
                     headers=headers,
                 )
 
-            elif request.method is dui1.RequestMethod.POST:
+            elif method is dui1.RequestMethod.POST:
                 # for POST we send the webrequest as json in body.
                 headers['Content-Type'] = 'application/json'
                 raw_response = upool.request(
@@ -148,10 +153,10 @@ class DocUIController:
                     headers=headers,
                     body=dataclass_to_json(webrequest),
                 )
-            elif request.method is dui1.RequestMethod.UNKNOWN:
+            elif method is dui1.RequestMethod.UNKNOWN:
                 raise RuntimeError('Unknown request method.')
             else:
-                assert_never(request.method)
+                assert_never(method)
 
             try:
                 # We use 'lossy' here so response versions or elements

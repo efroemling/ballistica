@@ -177,6 +177,34 @@ class IOMultiType[EnumT: Enum]:
         """
         return '_t'
 
+    @classmethod
+    def get_default_type_id(cls) -> EnumT | None:
+        """Return a type-id to be assumed when none is present.
+
+        By default, dataclassio errors when deserializing multitype
+        data that contains no type-id value. Overriding this to return
+        a type-id changes that behavior: data with no type-id present
+        will be deserialized as the returned type, and instances of
+        that type will be serialized *without* a type-id value. This
+        both saves a bit of space and allows 'upgrading' an existing
+        regular dataclass to a multitype - simply designate the
+        original dataclass type as the default and old serialized data
+        will remain loadable (and data for the default type will remain
+        loadable by old code).
+
+        Be aware of the following, however:
+
+        - Once serialized data exists anywhere without type-id values,
+          the default type-id must never be changed or removed; doing
+          so would cause that existing data to be silently
+          reinterpreted as some other type (or to error).
+        - A missing type-id normally acts as a sanity check when
+          deserializing; defining a default effectively disables that
+          check, meaning malformed data may deserialize successfully
+          as the default type instead of erroring.
+        """
+        return None
+
     # NOTE: Currently (Jan 2025) mypy complains if overrides annotate
     # return type of 'Self | None'. Substituting their own explicit type
     # works though (see test_dataclassio).
@@ -583,6 +611,11 @@ def _get_multitype_type(
     storename = cls.get_type_id_storage_name()
     id_val = val.get(storename)
     if id_val is None:
+        # A missing type-id is allowed if the multitype designates a
+        # default type; otherwise it's an error.
+        default_type_id = cls.get_default_type_id()
+        if default_type_id is not None:
+            return cls.get_type_cached(default_type_id)
         raise ValueError(
             f"Expected a '{storename}'" f" value for object at '{fieldpath}'."
         )

@@ -67,12 +67,15 @@ def assetworkspace() -> None:
 
     Subcommands::
 
-      assetworkspace get <NAME>
-      assetworkspace put <NAME> [--force]
+      assetworkspace get <NAME> [--fleet <FLEET>]
+      assetworkspace put <NAME> [--force] [--fleet <FLEET>]
       assetworkspace path <NAME>
 
     ``<NAME>`` is the case-sensitive cloud workspace name (e.g.
     ``BaBuiltinAssets``); ``path`` just prints the cache dir (no network).
+    ``--fleet`` targets a non-default master fleet (sets ``BA_FLEET``
+    for the underlying bacloud call; flag form keeps the command
+    signature stable for sandbox permission grants).
     """
     import os
     import subprocess
@@ -87,6 +90,14 @@ def assetworkspace() -> None:
         )
     subcmd, name = args[0], args[1]
     flags = args[2:]
+
+    fleet: str | None = None
+    if '--fleet' in flags:
+        findex = flags.index('--fleet')
+        if findex + 1 >= len(flags):
+            raise CleanError('--fleet requires a value (e.g. dev).')
+        fleet = flags[findex + 1]
+        flags = flags[:findex] + flags[findex + 2 :]
 
     ws_dir = os.path.join(
         pcommand.PROJROOT, '.cache', 'asset_package_sources', name
@@ -111,8 +122,11 @@ def assetworkspace() -> None:
     cmd = [bacloud, 'workspace', subcmd, ws_dir, '--workspace', name]
     if subcmd == 'put' and '--force' in flags:
         cmd.append('--force')
+    env = dict(os.environ)
+    if fleet is not None:
+        env['BA_FLEET'] = fleet
     try:
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True, env=env)
     except subprocess.CalledProcessError as exc:
         raise CleanError(
             f'bacloud workspace {subcmd} failed for {name!r}.'

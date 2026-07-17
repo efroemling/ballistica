@@ -119,7 +119,7 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
                 ' allow_submit_no_wait attr.'
             )
 
-        key = _callable_name(call)
+        key = _stable_callable_name(call)
         with self._no_wait_count_lock:
             self.no_wait_count += 1
             self._no_wait_calls[key] += 1
@@ -161,7 +161,7 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
     def _wrap_timed(self, fn: Callable[P, T]) -> Callable[P, T]:
         """Wrap ``fn`` to warn on excessive queue-wait / run duration."""
         enqueue_time = time.monotonic()
-        name = _callable_name(fn)
+        name = _stable_callable_name(fn)
 
         def _timed(*args: P.args, **kwargs: P.kwargs) -> T:
             start = time.monotonic()
@@ -259,15 +259,46 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
             strip_exception_tracebacks(exc)
 
 
-def _callable_name(call: Callable[..., Any]) -> str:
-    """Best-effort human-readable name for a submitted callable.
+def _stable_callable_name(call: Callable[..., Any]) -> str:
+    """Short, stable, address-free name for a submitted callable.
 
-    Unwraps :class:`functools.partial` chains to the underlying function
-    so diagnostics name the real target, not ``functools.partial``.
+    Serves two roles: display label in diagnostic warnings, and
+    aggregation key for the in-flight no-wait call Counter. The second
+    role is why this extracts a name instead of using ``str()`` or
+    ``repr()``:
+
+    - For anything but a plain function, ``str()`` embeds a memory
+      address and/or instance state (``<bound method Foo.bar of <Foo
+      object at 0x...>>``), so the same logical callable invoked on N
+      different objects would fragment into N distinct Counter keys of
+      count 1, rendering the top-callables report useless. Extracted
+      names collapse them all to ``Foo.bar`` — the granularity the
+      diagnostics want. (Addresses are also display noise that varies
+      per process, hurting log grouping and grepping.)
+    - ``str()`` of a :class:`functools.partial` (or any wrapper whose
+      ``__repr__`` shows its stored args) drags arg reprs into the log
+      line: unbounded length, and in server pools possibly sensitive
+      data.
+
+    Wrappers are unwrapped to the real target through the two stdlib
+    conventions: :class:`functools.partial`'s ``func`` attr and the
+    ``__wrapped__`` attr set by :func:`functools.wraps` (and by
+    callable wrapper classes such as babase's ``CallStrict``). Without
+    unwrapping, such wrappers expose no ``__name__`` and would all
+    collapse into a useless bare wrapper-class name (``partial``,
+    ``CallStrict``). The ``type(target).__name__`` fallback remains
+    for wrapper classes that don't participate in either convention.
     """
     target: Any = call
-    while isinstance(target, functools.partial):
-        target = target.func
+    # Depth-capped so a pathological __wrapped__ cycle can't spin.
+    for _ in range(10):
+        if isinstance(target, functools.partial):
+            target = target.func
+        else:
+            wrapped = getattr(target, '__wrapped__', None)
+            if wrapped is None:
+                break
+            target = wrapped
     return (
         getattr(target, '__qualname__', None)
         or getattr(target, '__name__', None)

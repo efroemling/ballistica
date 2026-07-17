@@ -15,6 +15,7 @@ from bacommon.docui._docui import (
     DocUIRequestTypeID,
     DocUIResponse,
     DocUIResponseTypeID,
+    WrapParams,
 )
 
 
@@ -336,6 +337,12 @@ class Text(Decoration):
 
     is_lstr: Annotated[bool, IOAttrs('l', store_default=False)] = False
 
+    #: Line-wrap constraints applied to the text at widget-creation
+    #: time. Set only by the client-local v2→v1 transcode; v1 producers
+    #: must never send it (older clients can't parse unknown fields —
+    #: bake newlines into the string instead).
+    wrap: Annotated[WrapParams | None, IOAttrs('w', store_default=False)] = None
+
     highlight: Annotated[bool, IOAttrs('h', store_default=False)] = True
     depth_range: Annotated[tuple[float, float] | None, IOAttrs('z')] = None
 
@@ -485,6 +492,15 @@ class Button:
         None
     )
     label_is_lstr: Annotated[bool, IOAttrs('ll', store_default=False)] = False
+
+    #: Line-wrap constraints applied to the label at widget-creation
+    #: time. Set only by the client-local v2→v1 transcode; v1 producers
+    #: must never send it (older clients can't parse unknown fields —
+    #: bake newlines into the label instead).
+    label_wrap: Annotated[
+        WrapParams | None, IOAttrs('lw', store_default=False)
+    ] = None
+
     texture: Annotated[str | None, IOAttrs('tex', store_default=False)] = None
     scale: Annotated[float, IOAttrs('sc', store_default=False)] = 1.0
     padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 0.0
@@ -611,6 +627,15 @@ class ButtonRow(Row):
         float | None, IOAttrs('ts', store_default=False)
     ] = None
     title_is_lstr: Annotated[bool, IOAttrs('tl', store_default=False)] = False
+
+    #: Line-wrap constraints applied to the title at widget-creation
+    #: time. Set only by the client-local v2→v1 transcode; v1 producers
+    #: must never send it (older clients can't parse unknown fields —
+    #: bake newlines into the title instead).
+    title_wrap: Annotated[
+        WrapParams | None, IOAttrs('tw', store_default=False)
+    ] = None
+
     subtitle: Annotated[str | None, IOAttrs('s', store_default=False)] = None
     subtitle_color: Annotated[
         tuple[float, float, float, float] | None,
@@ -625,6 +650,14 @@ class ButtonRow(Row):
     subtitle_is_lstr: Annotated[bool, IOAttrs('sl', store_default=False)] = (
         False
     )
+
+    #: Line-wrap constraints applied to the subtitle at widget-creation
+    #: time. Set only by the client-local v2→v1 transcode; v1 producers
+    #: must never send it (older clients can't parse unknown fields —
+    #: bake newlines into the subtitle instead).
+    subtitle_wrap: Annotated[
+        WrapParams | None, IOAttrs('sw', store_default=False)
+    ] = None
 
     #: Spacing between all buttons in the row.
     button_spacing: Annotated[float, IOAttrs('bs', store_default=False)] = 15.0
@@ -694,6 +727,14 @@ class Page:
     #: doc-ui translation should be handled server-side, but this can
     #: allow client-side translation.
     title_is_lstr: Annotated[bool, IOAttrs('tl', store_default=False)] = False
+
+    #: Line-wrap constraints applied to the title at widget-creation
+    #: time. Set only by the client-local v2→v1 transcode; v1 producers
+    #: must never send it (older clients can't parse unknown fields —
+    #: bake newlines into the title instead).
+    title_wrap: Annotated[
+        WrapParams | None, IOAttrs('tw', store_default=False)
+    ] = None
 
     padding_bottom: Annotated[float, IOAttrs('pb', store_default=False)] = 0.0
     padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 0.0

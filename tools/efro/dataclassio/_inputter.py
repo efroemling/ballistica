@@ -86,21 +86,29 @@ class _Inputter:
             storename = self._cls.get_type_id_storage_name()
             type_id_val = values.get(storename)
             if type_id_val is None:
-                raise ValueError(
-                    f'\'{storename}\' type id value'
-                    f' not found in \'{self._cls.__name__}\' input data.'
-                )
-            type_id_enum = self._cls.get_type_id_type()
-            try:
-                enum_val = type_id_enum(type_id_val)
-            except ValueError as exc:
+                # A missing type-id is allowed if the multitype
+                # designates a default type; otherwise it's an error.
+                default_type_id = self._cls.get_default_type_id()
+                if default_type_id is None:
+                    raise ValueError(
+                        f'\'{storename}\' type id value'
+                        f' not found in \'{self._cls.__name__}\' input data.'
+                    )
+                enum_val = default_type_id
+            else:
+                type_id_enum = self._cls.get_type_id_type()
+                try:
+                    enum_val = type_id_enum(type_id_val)
+                except ValueError as exc:
 
-                fallback_obj = self._get_fallback_object(exc, 'unrecognized')
-                if fallback_obj is not None:
-                    return fallback_obj
+                    fallback_obj = self._get_fallback_object(
+                        exc, 'unrecognized'
+                    )
+                    if fallback_obj is not None:
+                        return fallback_obj
 
-                # Otherwise the error stands as-is.
-                raise
+                    # Otherwise the error stands as-is.
+                    raise
 
             try:
                 outcls = self._cls.get_type_cached(enum_val)

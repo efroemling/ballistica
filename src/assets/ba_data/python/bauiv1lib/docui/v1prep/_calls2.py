@@ -17,6 +17,7 @@ from bauiv1 import builtinassets
 from bauiv1 import stdassets
 
 from bauiv1lib.docui.v1prep._types import DecorationPrep
+from bauiv1lib.docui.v1prep._wrap import wrapped_widget_call
 
 if TYPE_CHECKING:
     from typing import Callable
@@ -123,7 +124,10 @@ def prep_text(
     out_decoration_preps.append(
         DecorationPrep(
             call=partial(
+                wrapped_widget_call,
                 bui.textwidget,
+                'text',
+                None if text.is_lstr else text.wrap,
                 position=(xoffs, yoffs),
                 scale=text.scale * bscale,
                 maxwidth=text.size[0] * bscale,

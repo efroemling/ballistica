@@ -416,6 +416,7 @@ class DocUIWindow(bui.MainWindow):
         from bauiv1lib.docui.v1prep._calls import (
             doc_ui_v1_instantiate_page_prep,
         )
+        from bauiv1lib.docui.v1prep._wrap import split_wrapped_text
 
         assert bui.in_logic_thread()
 
@@ -423,7 +424,7 @@ class DocUIWindow(bui.MainWindow):
         bui.textwidget(
             edit=self._title,
             literal=not pageprep.title_is_lstr,
-            text=pageprep.title,
+            text=split_wrapped_text(pageprep.title, pageprep.title_wrap),
         )
 
         # Clear any existing children.

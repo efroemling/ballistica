@@ -16,6 +16,7 @@ from bacommon.docui._docui import (
     UnknownDocUIResponse,
     DocUIWebRequest,
     DocUIWebResponse,
+    WrapParams,
 )
 
 __all__ = [
@@ -27,4 +28,5 @@ __all__ = [
     'UnknownDocUIResponse',
     'DocUIWebRequest',
     'DocUIWebResponse',
+    'WrapParams',
 ]

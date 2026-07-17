@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Callable
 
+    import bacommon.docui
     import bacommon.docui.v1
     import bauiv1
 
@@ -68,4 +69,5 @@ class PagePrep:
     center_vertically: bool
     title: str
     title_is_lstr: bool
+    title_wrap: bacommon.docui.WrapParams | None
     root_post_calls: list[Callable[[bauiv1.Widget], None]]

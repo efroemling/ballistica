@@ -1,29 +1,36 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bastdassets.260622`` (bauiv1).
+"""Asset-package wrapper for ``a-0.bastdassets.260716`` (bauiv1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bastdassets.260622
+# ba_meta require asset-package a-0.bastdassets.260716
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.bastdassets.260622'
+__asset_package__ = 'a-0.bastdassets.260716'
 
 from typing import TYPE_CHECKING
 
 from bauiv1._assetref import AssetRefDir
 
+from bacommon.langstr import LangStrDir
+
 if TYPE_CHECKING:
     from bauiv1._assetref import MeshRef, SoundRef, TextureRef
+    from bacommon.langstr import LangStr
 
     class AudioGroup:
-        """Asset-group type; see source for the full list."""
+        """
+        All standard game sounds (everything non-bootstrap).
+
+        See source for the full asset list.
+        """
 
         achievement: SoundRef
         action_hero1: SoundRef
@@ -439,7 +446,11 @@ if TYPE_CHECKING:
         zoe_scream01: SoundRef
 
     class MeshesGroup:
-        """Asset-group type; see source for the full list."""
+        """
+        All standard game meshes (everything non-bootstrap).
+
+        See source for the full asset list.
+        """
 
         achievement_outline: MeshRef
         action_hero_fore_arm: MeshRef
@@ -802,8 +813,36 @@ if TYPE_CHECKING:
         zoe_upper_arm: MeshRef
         zoe_upper_leg: MeshRef
 
+    class StringsEconomyGroup:
+        """
+        Screen-messages about currency: grants and related notices.
+
+        See source for the full asset list.
+        """
+
+        def you_got_tokens(self, *, tokens: int) -> LangStr:
+            """
+            Confirmation effect sent to game clients when tokens are credited
+            (store purchases, promo codes, and other grant flows).
+
+            English: (one) "You got # token!" / (other) "You got # tokens!"
+            """
+
+    class StringsGroup:
+        """
+        All standard game strings (everything non-bootstrap).
+
+        See source for the full asset list.
+        """
+
+        economy: StringsEconomyGroup
+
     class TexturesGroup:
-        """Asset-group type; see source for the full list."""
+        """
+        All standard game textures (everything non-bootstrap).
+
+        See source for the full asset list.
+        """
 
         achievement_boxer: TextureRef
         achievement_cross_hair: TextureRef
@@ -1128,6 +1167,9 @@ if TYPE_CHECKING:
     #: ``action_hero_fore_arm``, ``action_hero_hand``, ``action_hero_head``,
     #: ``action_hero_lower_leg``, and 355 more). Full list in source.
     meshes: MeshesGroup
+
+    #: The ``strings`` group - 1 string (``economy``). Full list in source.
+    strings: StringsGroup
 
     #: The ``textures`` group - 313 assets (``achievement_boxer``,
     #: ``achievement_cross_hair``, ``achievement_dual_wielding``,
@@ -1912,6 +1954,7 @@ _TREE = {
         'zoe_upper_arm': 'm',
         'zoe_upper_leg': 'm',
     },
+    'strings': {'economy': {'you_got_tokens': ('tokens',)}},
     'textures': {
         'achievement_boxer': 't',
         'achievement_cross_hair': 't',
@@ -2233,4 +2276,5 @@ _TREE = {
 if not TYPE_CHECKING:
     audio = AssetRefDir(__asset_package__, _TREE['audio'], 'audio')
     meshes = AssetRefDir(__asset_package__, _TREE['meshes'], 'meshes')
+    strings = LangStrDir(__asset_package__, _TREE['strings'], 'strings')
     textures = AssetRefDir(__asset_package__, _TREE['textures'], 'textures')
