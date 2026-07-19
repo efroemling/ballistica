@@ -747,7 +747,7 @@ class EditProfileWindow(
     @override
     def on_icon_picker_get_more_press(self) -> None:
         """User wants to get more icons."""
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.store import StoreUIController
 
@@ -766,7 +766,7 @@ class EditProfileWindow(
             on_connected=lambda: self.main_window_replace(
                 bui.CallStrict(
                     StoreUIController().create_window,
-                    dui1.Request('/'),
+                    dui2.Request('/'),
                     origin_widget=bui.get_special_widget('store_button'),
                     auxiliary_style=False,
                 ),
@@ -806,7 +806,7 @@ class EditProfileWindow(
 
     @override
     def on_character_picker_get_more_press(self) -> None:
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.store import StoreUIController
 
@@ -823,7 +823,7 @@ class EditProfileWindow(
             on_connected=lambda: self.main_window_replace(
                 bui.CallStrict(
                     StoreUIController().create_window,
-                    dui1.Request('/'),
+                    dui2.Request('/'),
                     origin_widget=bui.get_special_widget('store_button'),
                     auxiliary_style=False,
                 ),

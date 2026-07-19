@@ -3,48 +3,21 @@
 #ifndef BALLISTICA_UI_V1_PYTHON_CLASS_PYTHON_CLASS_UI_MESH_H_
 #define BALLISTICA_UI_V1_PYTHON_CLASS_PYTHON_CLASS_UI_MESH_H_
 
-#include <string>
-
-#include "ballistica/base/base.h"
-#include "ballistica/shared/foundation/object.h"
-#include "ballistica/shared/python/python.h"
-#include "ballistica/shared/python/python_class.h"
+#include "ballistica/base/assets/mesh_asset.h"
+#include "ballistica/base/python/class/python_class_asset_ref.h"
 
 namespace ballistica::ui_v1 {
 
-class PythonClassUIMesh : public PythonClass {
+class PythonClassUIMesh
+    : public base::PythonClassAssetRef<PythonClassUIMesh, base::MeshAsset> {
  public:
-  static void SetupType(PyTypeObject* cls);
-  static auto type_name() -> const char*;
-  static auto Create(const Object::Ref<base::MeshAsset>& mesh) -> PyObject*;
-  static auto Check(PyObject* o) -> bool {
-    return PyObject_TypeCheck(o, &type_obj);
-  }
+  static auto type_name() -> const char* { return "Mesh"; }
+  static constexpr const char* kTpName = "bauiv1.Mesh";
+  static constexpr const char* kTpDoc =
+      "Mesh asset for local user interface purposes.";
+  static constexpr const char* kFactoryCall = "bauiv1.getmesh()";
 
-  /// Cast raw Python pointer to our type; throws an exception on wrong types.
-  static auto FromPyObj(PyObject* o) -> PythonClassUIMesh& {
-    if (Check(o)) {
-      return *reinterpret_cast<PythonClassUIMesh*>(o);
-    }
-    throw Exception(std::string("Expected a ") + type_name() + "; got a "
-                        + Python::ObjTypeToString(o),
-                    PyExcType::kType);
-  }
-
-  auto mesh() const -> base::MeshAsset& {
-    assert(mesh_);
-    return **mesh_;
-  }
-
-  static PyTypeObject type_obj;
-
- private:
-  static PyMethodDef tp_methods[];
-  static auto tp_repr(PythonClassUIMesh* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
-      -> PyObject*;
-  static void tp_dealloc(PythonClassUIMesh* self);
-  Object::Ref<base::MeshAsset>* mesh_;
+  auto mesh() const -> base::MeshAsset& { return asset(); }
 };
 
 }  // namespace ballistica::ui_v1

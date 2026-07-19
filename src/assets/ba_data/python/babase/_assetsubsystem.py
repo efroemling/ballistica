@@ -983,7 +983,7 @@ class AssetSubsystem(AppSubsystem):
         :class:`~bacommon.loctext.StringSelector`) read from the package's
         resolved ``language/<locale>`` blob -- the Python side of what the
         native ``ReloadLanguage`` consumes, for the language-agnostic
-        (``Lstr``) doc-ui decode path. ``locale`` must be the one the package
+        (``LangStr``) doc-ui decode path. ``locale`` must be the one the package
         was :meth:`resolve`\\ d for (the coord is ``language/<locale.value>``,
         matching the ``_desired_coords`` bucket map).
 
@@ -1033,7 +1033,10 @@ class AssetSubsystem(AppSubsystem):
         """
         from babase._asset_packages import loaded_asset_package_apverids
 
-        _babase.reload_language(loaded_asset_package_apverids())
+        # The resolved locale's wire value drives native CLDR plural
+        # selection for language-string evaluation.
+        plural_locale = _babase.app.locale.current_locale.resolved.locale.value
+        _babase.reload_language(loaded_asset_package_apverids(), plural_locale)
 
     # ---------------------------------------------------------------------
     # Resolve internals.

@@ -1062,7 +1062,7 @@ class CoopBrowserWindow(bui.MainWindow):
     ) -> None:
         """Run the provided game."""
         # pylint: disable=cyclic-import
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.confirm import ConfirmWindow
         from bauiv1lib.account.signin import show_sign_in_prompt
@@ -1108,7 +1108,7 @@ class CoopBrowserWindow(bui.MainWindow):
                     on_connected=lambda: self.main_window_replace(
                         bui.CallStrict(
                             StoreUIController().create_window,
-                            dui1.Request(
+                            dui2.Request(
                                 '/',
                                 args={'unlockreqs': required_purchases},
                             ),
@@ -1132,7 +1132,7 @@ class CoopBrowserWindow(bui.MainWindow):
         """Run the provided tournament game."""
         # pylint: disable=too-many-return-statements
 
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.tournamententry import TournamentEntryWindow
@@ -1220,7 +1220,7 @@ class CoopBrowserWindow(bui.MainWindow):
                         on_connected=lambda: self.main_window_replace(
                             bui.CallStrict(
                                 StoreUIController().create_window,
-                                dui1.Request(
+                                dui2.Request(
                                     '/',
                                     args={'unlockreqs': required_purchases},
                                 ),

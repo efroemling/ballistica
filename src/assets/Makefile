@@ -380,12 +380,11 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/_assetref.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_assetwrap.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_automation.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_docuiv2testassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_window.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/bamvpstrings.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/bamvpstrings2.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/builtinassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/stdassets.py \
@@ -413,12 +412,12 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/discord.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_controller.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_v2transcode.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_resolve.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_window.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/_calls.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/_calls2.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/_types.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_calls.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_calls2.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_types.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitest.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__init__.py \

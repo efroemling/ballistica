@@ -2,6 +2,7 @@
 
 #include "ballistica/base/python/base_python.h"
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -12,12 +13,14 @@
 #include "ballistica/base/python/class/python_class_display_timer.h"
 #include "ballistica/base/python/class/python_class_env.h"
 #include "ballistica/base/python/class/python_class_feature_set_data.h"
+#include "ballistica/base/python/class/python_class_lang_str.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 #include "ballistica/base/python/class/python_class_vec3.h"
 #include "ballistica/base/python/methods/python_methods_base_1.h"
 #include "ballistica/base/python/methods/python_methods_base_2.h"
 #include "ballistica/base/python/methods/python_methods_base_3.h"
 #include "ballistica/base/python/methods/python_methods_test.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/core/core.h"
 #include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
 #include "ballistica/shared/python/python_module_builder.h"
@@ -54,6 +57,7 @@ void BasePython::AddPythonClasses(PyObject* module) {
   PythonModuleBuilder::AddClass<PythonClassDisplayTimer>(module);
   PythonModuleBuilder::AddClass<PythonClassEnv>(module);
   PythonModuleBuilder::AddClass<PythonClassSimpleSound>(module);
+  PythonModuleBuilder::AddClass<PythonClassLangStr>(module);
   PythonModuleBuilder::AddClass<PythonClassContextCall>(module);
   PyObject* vec3 = PythonModuleBuilder::AddClass<PythonClassVec3>(module);
   // Register our Vec3 as an abc.Sequence
@@ -261,8 +265,59 @@ auto BasePython::IsPyLString(PyObject* o) -> bool {
   assert(Python::HaveGIL());
   assert(o != nullptr);
 
-  return (PyUnicode_Check(o)
-          || PyObject_IsInstance(o, objs().Get(ObjID::kLStrClass).get()));
+  return (PyUnicode_Check(o) || PythonClassLangStr::Check(o)
+          || PyObject_IsInstance(o, objs().Get(ObjID::kLStrClass).get())
+          || IsBacommonLangStr_(o));
+}
+
+auto BasePython::IsBacommonLangStr_(PyObject* o) -> bool {
+  assert(Python::HaveGIL());
+  if (!bacommon_lang_str_class_.exists()) {
+    if (bacommon_lang_str_lookup_failed_) {
+      return false;
+    }
+    auto mod = PythonRef::StolenSoft(PyImport_ImportModule("bacommon.langstr"));
+    auto dio = PythonRef::StolenSoft(PyImport_ImportModule("efro.dataclassio"));
+    if (!mod.exists() || !dio.exists()) {
+      PyErr_Clear();
+      bacommon_lang_str_lookup_failed_ = true;
+      return false;
+    }
+    bacommon_lang_str_class_ = mod.GetAttr("LangStr");
+    dataclass_to_json_call_ = dio.GetAttr("dataclass_to_json");
+  }
+  int result = PyObject_IsInstance(o, bacommon_lang_str_class_.get());
+  if (result == -1) {
+    PyErr_Clear();
+    result = 0;
+  }
+  return result == 1;
+}
+
+auto BasePython::EvalBacommonLangStr_(PyObject* o)
+    -> std::optional<std::string> {
+  assert(Python::HaveGIL());
+  if (!IsBacommonLangStr_(o)) {
+    return {};
+  }
+  // Serialize the dataclass to its canonical wire JSON and evaluate
+  // natively. Fail-visible from here on (it *is* a language-string;
+  // problems should render as sentinels, not type errors).
+  auto args = PythonRef::Stolen(Py_BuildValue("(O)", o));
+  PythonRef json = dataclass_to_json_call_.Call(args);
+  if (!json.exists() || !PyUnicode_Check(json.get())) {
+    PyErr_Clear();
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                         "langstr evaluate: dataclass serialization failed.");
+    return "LANGSTR_ERROR:dataclass serialization failed";
+  }
+  auto parsed = LangStr::FromJson(PyUnicode_AsUTF8(json.get()));
+  if (!parsed.has_value()) {
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                         "langstr evaluate: " + parsed.error());
+    return "LANGSTR_ERROR:" + parsed.error();
+  }
+  return (*parsed)->Evaluate();
 }
 
 auto BasePython::GetPyLString(PyObject* o) -> std::string {
@@ -272,6 +327,17 @@ auto BasePython::GetPyLString(PyObject* o) -> std::string {
   PyExcType exctype{PyExcType::kType};
   if (PyUnicode_Check(o)) {
     return PyUnicode_AsUTF8(o);
+  } else if (PythonClassLangStr::Check(o)) {
+    // Native language-strings evaluate to flat display text here
+    // (fail-visible; see LangStr::Evaluate). Checked explicitly by
+    // class -- never by sniffing content (see the language-string
+    // initiative's D-s).
+    return PythonClassLangStr::FromPyObj(o).value()->Evaluate();
+  } else if (auto flat = EvalBacommonLangStr_(o)) {
+    // Likewise for the shared bacommon.langstr dataclass form (what
+    // the generated wrapper accessors emit) -- so authored strings
+    // drop straight into any display slot.
+    return *flat;
   } else {
     // Check if its a Lstr.  If so; we pull its json string representation.
     int result = PyObject_IsInstance(o, objs().Get(ObjID::kLStrClass).get());

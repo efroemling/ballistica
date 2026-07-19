@@ -9,6 +9,7 @@
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/python/class/python_class_lang_str.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -294,7 +295,12 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     b->SetTextLiteral(Python::GetBool(text_literal_obj));
   }
   if (label_obj != Py_None) {
-    b->SetText(g_base->python->GetPyLString(label_obj));
+    // See the textwidget text param note re native language-strings.
+    if (base::PythonClassLangStr::Check(label_obj)) {
+      b->SetLangStr(base::PythonClassLangStr::FromPyObj(label_obj).value());
+    } else {
+      b->SetText(g_base->python->GetPyLString(label_obj));
+    }
   }
   if (on_activate_call_obj != Py_None) {
     b->SetOnActivateCall(on_activate_call_obj);
@@ -512,7 +518,7 @@ static PyMethodDef PyButtonWidgetDef = {
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
     "  on_activate_call: Callable | None = None,\n"
-    "  label: str | bauiv1.Lstr | None = None,\n"
+    "  label: str | bauiv1.Lstr | bauiv1.LangStr | None = None,\n"
     "  color: Sequence[float] | None = None,\n"
     "  down_widget: bauiv1.Widget | None = None,\n"
     "  up_widget: bauiv1.Widget | None = None,\n"
@@ -2277,7 +2283,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
       throw Exception("Invalid or nonexistent widget.",
                       PyExcType::kWidgetNotFound);
     }
-    return PyUnicode_FromString(widget->text_raw().c_str());
+    return PyUnicode_FromString(widget->GetQueryText().c_str());
   }
   if (query_max_chars_obj != Py_None) {
     widget =
@@ -2402,7 +2408,15 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
     widget->SetLiteral(Python::GetBool(literal_obj));
   }
   if (text_obj != Py_None) {
-    widget->SetText(g_base->python->GetPyLString(text_obj));
+    // Native language-strings are retained by the widget and
+    // re-evaluated on language changes (mirroring legacy Lstr
+    // behavior); everything else flattens through the standard
+    // string slot.
+    if (base::PythonClassLangStr::Check(text_obj)) {
+      widget->SetLangStr(base::PythonClassLangStr::FromPyObj(text_obj).value());
+    } else {
+      widget->SetText(g_base->python->GetPyLString(text_obj));
+    }
   }
   if (h_align_obj != Py_None) {
     std::string halign = Python::GetString(h_align_obj);
@@ -2546,7 +2560,7 @@ static PyMethodDef PyTextWidgetDef = {
     "  id: str | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
-    "  text: str | bauiv1.Lstr | None = None,\n"
+    "  text: str | bauiv1.Lstr | bauiv1.LangStr | None = None,\n"
     "  v_align: str | None = None,\n"
     "  h_align: str | None = None,\n"
     "  editable: bool | None = None,\n"

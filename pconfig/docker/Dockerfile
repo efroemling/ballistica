@@ -40,6 +40,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         curl \
         libglut-dev \
         libopenal-dev \
+        libpango1.0-dev \
         libsdl3-dev \
         libvorbis-dev \
         make \
@@ -96,6 +97,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
             libsdl3-dev \
             libvorbis-dev \
             libglut-dev \
+            libpango1.0-dev \
             pulseaudio-utils \
             libopenal-dev; \
     fi && \

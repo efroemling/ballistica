@@ -200,7 +200,8 @@ class LanguageSubsystem(AppSubsystem):
         # migration Step A); switching to other locales lands in Step B.
         from babase._asset_packages import loaded_asset_package_apverids
 
-        _babase.reload_language(loaded_asset_package_apverids())
+        plural_locale = _babase.app.locale.current_locale.resolved.locale.value
+        _babase.reload_language(loaded_asset_package_apverids(), plural_locale)
 
         if switched and print_change:
             _babase.screenmessage(

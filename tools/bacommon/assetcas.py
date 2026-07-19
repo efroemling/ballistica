@@ -10,6 +10,7 @@ root, and owns concurrency, retry, and progress reporting itself.
 """
 
 import os
+import json
 import base64
 import hashlib
 import tempfile
@@ -47,6 +48,27 @@ def encode_asset_token(token: securedata.Archive) -> str:
         .rstrip(b'=')
         .decode('ascii')
     )
+
+
+def parse_flavor_manifest_blobs(data: bytes | str) -> dict[str, int]:
+    """Extract a flavor-manifest's data-blob map from its canonical JSON.
+
+    Parses the ``{"e": {logical_path: {part: {"h", "s"}}}}`` shape and
+    returns every referenced data blob as a content-sha256-hex ->
+    canonical-byte-size map, in manifest order (the order clients
+    download). The single shared reader for this shape -- resolve
+    grant-building, ``/casblob`` scope verification, and tests all go
+    through it. Raises :class:`ValueError` on a malformed manifest.
+    """
+    try:
+        parsed = json.loads(data)
+        blobs: dict[str, int] = {}
+        for entry in parsed['e'].values():
+            for comp in entry.values():
+                blobs[comp['h']] = comp['s']
+    except (KeyError, TypeError, AttributeError) as exc:
+        raise ValueError(f'malformed flavor-manifest: {exc}') from exc
+    return blobs
 
 
 def cas_blob_path(root: str, filehash: str) -> str:

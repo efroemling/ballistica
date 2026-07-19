@@ -1320,7 +1320,8 @@ static PyMethodDef PyLoginAdapterBackEndActiveChangeDef = {
 static auto PyReloadLanguage(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
   PyObject* apverids_obj;
-  if (!PyArg_ParseTuple(args, "O", &apverids_obj)) {
+  const char* plural_locale;
+  if (!PyArg_ParseTuple(args, "Os", &apverids_obj, &plural_locale)) {
     return nullptr;
   }
   BA_PRECONDITION(PyList_Check(apverids_obj));
@@ -1334,7 +1335,7 @@ static auto PyReloadLanguage(PyObject* self, PyObject* args) -> PyObject* {
     apverids.emplace_back(PyUnicode_AsUTF8(entry));
   }
   assert(g_base->logic);
-  g_base->assets->ReloadLanguage(apverids);
+  g_base->assets->ReloadLanguage(apverids, plural_locale);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1344,13 +1345,15 @@ static PyMethodDef PyReloadLanguageDef = {
     PyReloadLanguage,   // method
     METH_VARARGS,       // flags
 
-    "reload_language(apverids: list[str]) -> None\n"
+    "reload_language(apverids: list[str], plural_locale: str) -> None\n"
     "\n"
     ":meta private:\n"
     "\n"
-    "(Re)build the native language string table from the registered\n"
-    "``language`` buckets of the given asset-packages and notify\n"
-    "subsystems of the language change.",
+    "(Re)build the native language string table (and per-package\n"
+    "language-string tables) from the registered ``language`` buckets\n"
+    "of the given asset-packages and notify subsystems of the language\n"
+    "change. ``plural_locale`` is the resolved locale wire value\n"
+    "driving CLDR plural selection.",
 };
 
 // ---------------------- get_resource -----------------------------------------

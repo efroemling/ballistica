@@ -545,11 +545,19 @@ void ConnectionToClient::HandleMessagePacket(
   switch (buffer[0]) {
     case BA_MESSAGE_JMESSAGE: {
       if (buffer.size() >= 3 && buffer[buffer.size() - 1] == 0) {
-        // Parse to validate; the result is currently unused. Payload is the
-        // bytes between the type byte and the trailing null.
-        JsonDoc::Parse(
+        // Validate the payload (nothing currently uses the parsed
+        // contents); it is the bytes between the type byte and the
+        // trailing null. Log-once only; this arrives from remote
+        // clients, so per-packet logging would be a spam vector.
+        auto doc = JsonDoc::Parse(
             std::string_view(reinterpret_cast<const char*>(buffer.data() + 1),
                              buffer.size() - 2));
+        if (!doc.has_value()) {
+          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                      "Got malformed jmessage packet (" + doc.error().message
+                          + " at byte offset "
+                          + std::to_string(doc.error().byte_offset) + ").");
+        }
       }
       break;
     }

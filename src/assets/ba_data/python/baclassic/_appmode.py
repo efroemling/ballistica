@@ -16,6 +16,7 @@ import babase
 from babase import AppMode
 import bauiv1 as bui
 from bauiv1 import builtinassets
+from bauiv1 import stdassets
 from bauiv1lib.connectivity import wait_for_connectivity
 
 import _baclassic
@@ -83,10 +84,8 @@ class ClassicAppMode(AppMode):
         # AssetNameCompat in the native layer). Sourcing these from
         # the wrappers means a modder-swapped package keeps working.
         # (The bauiv1 and bascenev1 wrapper flavors carry identical
-        # __asset_package__ ids; builtinassets here is our module-level
-        # bauiv1 import.)
-        from bauiv1 import stdassets
-
+        # __asset_package__ ids; builtinassets and stdassets here are
+        # our module-level bauiv1 imports.)
         babase.set_asset_name_compat_versions(
             {
                 'builtinassets': builtinassets.__asset_package__,
@@ -252,23 +251,18 @@ class ClassicAppMode(AppMode):
         if item_id.startswith('tokens'):
             if item_id == 'tokens1':
                 tokens = bacommon.classic.TOKENS1_COUNT
-                tokens_str = str(tokens)
                 anim_time = 2.0
             elif item_id == 'tokens2':
                 tokens = bacommon.classic.TOKENS2_COUNT
-                tokens_str = str(tokens)
                 anim_time = 2.5
             elif item_id == 'tokens3':
                 tokens = bacommon.classic.TOKENS3_COUNT
-                tokens_str = str(tokens)
                 anim_time = 3.0
             elif item_id == 'tokens4':
                 tokens = bacommon.classic.TOKENS4_COUNT
-                tokens_str = str(tokens)
                 anim_time = 3.5
             else:
                 tokens = 0
-                tokens_str = '???'
                 anim_time = 2.5
                 logging.warning(
                     'Unhandled item_id in on_purchase_process_end: %s', item_id
@@ -282,12 +276,13 @@ class ClassicAppMode(AppMode):
                     endvalue=self._last_tokens_value + tokens,
                 ),
                 clfx.Delay(anim_time),
-                clfx.LegacyScreenMessage(
-                    message='You got ${COUNT} tokens!',
-                    subs=['${COUNT}', tokens_str],
+                clfx.ScreenMessageV2(
+                    message=stdassets.strings.economy.you_got_tokens(
+                        tokens=tokens
+                    ),
                     color=(0, 1, 0),
                 ),
-                clfx.PlaySound(clfx.Sound.CASH_REGISTER),
+                clfx.PlaySoundV2(sound=builtinassets.audio.cash_register),
             ]
             bui.app.classic.run_bs_client_effects(effects)
 
@@ -769,7 +764,7 @@ class ClassicAppMode(AppMode):
         )
 
     def _root_ui_store_press(self) -> None:
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.store import StoreUIController
@@ -785,7 +780,7 @@ class ClassicAppMode(AppMode):
                 win_type=DocUIWindow,
                 win_create_call=bui.CallStrict(
                     StoreUIController().create_window,
-                    dui1.Request('/'),
+                    dui2.Request('/'),
                     origin_widget=btn,
                     uiopenstateid='classicstore',
                 ),
@@ -833,7 +828,7 @@ class ClassicAppMode(AppMode):
         ResourceTypeInfoWindow('xp', origin_widget=btn)
 
     def _root_ui_inventory_press(self) -> None:
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.inventory import InventoryUIController
@@ -843,7 +838,7 @@ class ClassicAppMode(AppMode):
             win_type=DocUIWindow,
             win_create_call=bui.CallStrict(
                 InventoryUIController().create_window,
-                dui1.Request('/'),
+                dui2.Request('/'),
                 origin_widget=bui.get_special_widget('inventory_button'),
                 uiopenstateid='classicinventory',
             ),
@@ -987,10 +982,7 @@ class ClassicAppMode(AppMode):
                 bui.WeakCallStrict(self._main_win_template_press),
             ),
             bui.DevConsoleButtonDef(
-                'DocUI Test', bui.WeakCallStrict(self._doc_ui_test_press)
-            ),
-            bui.DevConsoleButtonDef(
-                'DocUI Test v2',
+                'DocUI Test',
                 bui.WeakCallStrict(self._doc_ui_test_v2_press),
             ),
         ]
@@ -1014,26 +1006,6 @@ class ClassicAppMode(AppMode):
         builtinassets.audio.swish.get().play()
 
         show_template_main_window()
-
-    def _doc_ui_test_press(self) -> None:
-        from bauiv1lib.docuitest import show_test_doc_ui_window
-
-        # This only works if a main ui is up.
-        if bui.app.ui_v1.get_main_window() is None:
-            bui.screenmessage(
-                'This requires a main-window to be present.'
-                ' Open a menu or whatnot first.',
-                color=(1, 0, 0),
-            )
-            builtinassets.audio.error.get().play()
-            return
-
-        # Unintuitively, swish sounds come from buttons, not windows.
-        # And dev-console buttons don't make sounds. So we need to
-        # explicitly do so here.
-        builtinassets.audio.swish.get().play()
-
-        show_test_doc_ui_window()
 
     def _doc_ui_test_v2_press(self) -> None:
         from bauiv1lib.docuitest import show_test_doc_ui_v2_window
