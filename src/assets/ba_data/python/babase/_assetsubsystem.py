@@ -1033,7 +1033,10 @@ class AssetSubsystem(AppSubsystem):
         """
         from babase._asset_packages import loaded_asset_package_apverids
 
-        _babase.reload_language(loaded_asset_package_apverids())
+        # The resolved locale's wire value drives native CLDR plural
+        # selection for language-string evaluation.
+        plural_locale = _babase.app.locale.current_locale.resolved.locale.value
+        _babase.reload_language(loaded_asset_package_apverids(), plural_locale)
 
     # ---------------------------------------------------------------------
     # Resolve internals.

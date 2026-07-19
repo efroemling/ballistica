@@ -12,6 +12,7 @@
 
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/base.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::base {
@@ -157,8 +158,16 @@ class Assets {
   /// ``language`` buckets of ``apverids`` (merged in order), swap it in
   /// atomically, and notify subsystems of the language change. English
   /// is the bundled fallback flavor, so this currently always loads
-  /// English (Step A of the strings migration).
-  void ReloadLanguage(const std::vector<std::string>& apverids);
+  /// English (Step A of the strings migration). ``plural_locale`` is
+  /// the client's *resolved* locale wire value (e.g. ``eng``), stamped
+  /// onto the language-string tables to drive CLDR plural selection.
+  void ReloadLanguage(const std::vector<std::string>& apverids,
+                      const std::string& plural_locale);
+
+  /// The current native language-string tables (per-apverid values for
+  /// the client's locale; see LangStrTables). Immutable snapshot; any
+  /// thread may call and read. Null until the first ReloadLanguage.
+  auto LangStrTablesSnapshot() -> std::shared_ptr<const LangStrTables>;
 
   /// Resolve a resource by full dot-path key, trying ``fallback_resource``
   /// (if non-null) on a miss. Nullopt if neither resolves. Backs both the
@@ -362,6 +371,7 @@ class Assets {
   // snapshot (lock-free reads on the text hot path; swapped under the
   // mutex on a language change), mirroring AssetPackageRegistry.
   auto LanguageDataSnapshot_() -> std::shared_ptr<const LanguageData>;
+  std::shared_ptr<const LangStrTables> lang_str_tables_;
   std::mutex language_mutex_;
   std::shared_ptr<const LanguageData> language_data_;
   std::mutex special_char_mutex_;

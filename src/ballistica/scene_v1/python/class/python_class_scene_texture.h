@@ -3,30 +3,25 @@
 #ifndef BALLISTICA_SCENE_V1_PYTHON_CLASS_PYTHON_CLASS_SCENE_TEXTURE_H_
 #define BALLISTICA_SCENE_V1_PYTHON_CLASS_PYTHON_CLASS_SCENE_TEXTURE_H_
 
-#include "ballistica/scene_v1/scene_v1.h"
-#include "ballistica/shared/foundation/object.h"
-#include "ballistica/shared/python/python_class.h"
+#include "ballistica/base/python/class/python_class_asset_ref.h"
+#include "ballistica/scene_v1/assets/scene_texture.h"
 
 namespace ballistica::scene_v1 {
 
-class PythonClassSceneTexture : public PythonClass {
+class PythonClassSceneTexture
+    : public base::PythonClassAssetRef<PythonClassSceneTexture, SceneTexture> {
  public:
-  static auto type_name() -> const char*;
-  static auto tp_repr(PythonClassSceneTexture* self) -> PyObject*;
-  static void SetupType(PyTypeObject* cls);
-  static PyTypeObject type_obj;
-  static auto Create(SceneTexture* texture) -> PyObject*;
-  static auto Check(PyObject* o) -> bool {
-    return PyObject_TypeCheck(o, &type_obj);
-  }
-  auto GetTexture(bool doraise = true) const -> SceneTexture*;
+  static auto type_name() -> const char* { return "Texture"; }
+  static constexpr const char* kTpName = "bascenev1.Texture";
+  static constexpr const char* kTpDoc =
+      "A reference to a texture.\n"
+      "\n"
+      "Use :meth:`bascenev1.gettexture()` to instantiate one.";
+  static constexpr const char* kFactoryCall = "bascenev1.gettexture()";
 
- private:
-  static bool s_create_empty_;
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* keywds)
-      -> PyObject*;
-  static void tp_dealloc(PythonClassSceneTexture* self);
-  Object::Ref<SceneTexture>* texture_;
+  auto GetTexture(bool doraise = true) const -> SceneTexture* {
+    return GetAsset(doraise);
+  }
 };
 
 }  // namespace ballistica::scene_v1

@@ -12,6 +12,7 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -23,6 +24,17 @@ namespace ballistica::core {
 static constexpr float kPangoBaseFontSize = 26.0f;
 static constexpr bool kPangoDebugFontBounds = false;
 static constexpr const char* kPangoFontFamily = "Sans";
+
+// Serializes all Pango entry points below. Per-call surfaces/contexts/
+// layouts are private, but everything resolves through Pango's shared
+// default fontmap (and default-language state), and these functions run
+// concurrently: logic-thread measuring/line-breaking vs rasterization,
+// which itself may run on any thread since asset preloads are not
+// thread-pinned (see Asset::DoPreload()). Modern pango (>=1.32.6) +
+// fontconfig (>=2.13) document the fontmap as thread-safe, but we don't
+// pin those minimums, so one coarse lock buys certainty; text work is
+// rare and cheap enough that contention is negligible.
+inline std::mutex g_pango_mutex_;
 
 struct PangoTextData_ {
   std::vector<uint8_t> pixels;
@@ -40,6 +52,7 @@ inline auto PangoGetTextLineBreakOffsets_(const std::string& text)
   if (n_chars <= 1) {
     return offsets;
   }
+  std::scoped_lock lock(g_pango_mutex_);
   std::vector<PangoLogAttr> attrs(static_cast<size_t>(n_chars) + 1);
   pango_get_log_attrs(text.c_str(), static_cast<int>(text.size()), -1,
                       pango_language_get_default(), attrs.data(),
@@ -56,6 +69,7 @@ inline auto PangoGetTextLineBreakOffsets_(const std::string& text)
 
 inline void PangoGetTextBoundsAndWidth_(const std::string& text, Rect* r,
                                         float* width) {
+  std::scoped_lock lock(g_pango_mutex_);
   cairo_surface_t* surface =
       cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1, 1);
   cairo_t* cr = cairo_create(surface);
@@ -107,6 +121,7 @@ inline auto PangoCreateTextTexture_(int width, int height,
     }
     fflush(stdout);
   }
+  std::scoped_lock lock(g_pango_mutex_);
   cairo_surface_t* surface =
       cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
   cairo_t* cr = cairo_create(surface);

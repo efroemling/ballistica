@@ -5,7 +5,9 @@
 #include <Python.h>
 
 #include <algorithm>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_platform/app_platform.h"
@@ -21,6 +23,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/input_types.h"
@@ -541,13 +544,29 @@ void TextWidget::SetLiteral(bool val) {
   text_translation_dirty_ = true;
 }
 
+auto TextWidget::GetQueryText() -> std::string {
+  if (lang_str_ != nullptr) {
+    UpdateTranslation_();
+    return text_translated_;
+  }
+  return text_raw_;
+}
+
+void TextWidget::SetLangStr(std::shared_ptr<const base::LangStr> val) {
+  lang_str_ = std::move(val);
+  text_raw_.clear();
+  text_translation_dirty_ = true;
+}
+
 void TextWidget::SetText(const std::string& text_in_raw) {
   std::string text_in = Utils::GetValidUTF8(text_in_raw.c_str(), "twst1");
 
-  // Ignore redundant sets.
-  if (text_in == text_raw_) {
+  // Ignore redundant sets (only when not switching away from a native
+  // language-string).
+  if (lang_str_ == nullptr && text_in == text_raw_) {
     return;
   }
+  lang_str_ = nullptr;
 
   // In some cases we want to make sure this is a valid resource-string
   // since catching the error here is much more useful than if we catch it
@@ -990,8 +1009,13 @@ void TextWidget::AddCharsToText_(const std::string& addchars) {
 void TextWidget::UpdateTranslation_() {
   // Apply subs/resources to get our actual text if need be.
   if (text_translation_dirty_) {
-    // We don't run translations on user-editable text or text marked literal.
-    if (editable() || literal_) {
+    if (lang_str_ != nullptr) {
+      // Native language-strings re-evaluate against the current
+      // tables (fail-visible; definition-time wrap applies inside).
+      text_translated_ = lang_str_->Evaluate();
+    } else if (editable() || literal_) {
+      // We don't run translations on user-editable text or text
+      // marked literal.
       text_translated_ = text_raw_;
     } else {
       text_translated_ = g_base->assets->CompileResourceString(text_raw_);

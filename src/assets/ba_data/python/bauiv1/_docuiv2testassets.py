@@ -1,16 +1,16 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.badocuiv2testassets.260716`` (bauiv1)."""
+"""Asset-package wrapper for ``a-0.badocuiv2testassets.260718a`` (bauiv1)."""
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.badocuiv2testassets.260716
+# ba_meta require asset-package a-0.badocuiv2testassets.260718a
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.badocuiv2testassets.260716'
+__asset_package__ = 'a-0.badocuiv2testassets.260718a'
 
 from typing import TYPE_CHECKING
 

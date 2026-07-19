@@ -1,19 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bastdassets.260717`` (bauiv1).
+"""Asset-package wrapper for ``a-0.bastdassets.260719c`` (bauiv1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bastdassets.260717
+# ba_meta require asset-package a-0.bastdassets.260719c
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.bastdassets.260717'
+__asset_package__ = 'a-0.bastdassets.260719c'
 
 from typing import TYPE_CHECKING
 
@@ -828,6 +828,143 @@ if TYPE_CHECKING:
             English: (one) "You got # token!" / (other) "You got # tokens!"
             """
 
+    class StringsInventoryGroup:
+        """
+        Client-side inventory window bits: offline/signed-out placeholder
+        variants (the online inventory content itself is server-composed).
+
+        See source for the full asset list.
+        """
+
+        #: Inventory placeholder message.
+        #:
+        #: English: "Full inventory is only available when online."
+        only_available_online: LangStr
+
+        #: Inventory placeholder message.
+        #:
+        #: English: "Full inventory is only available when signed in."
+        only_available_signed_in: LangStr
+
+        #: Window title (client-side offline/profiles-only variants; the online
+        #: inventory title comes from the server).
+        #:
+        #: English: "Inventory"
+        title: LangStr
+
+    class StringsProfilesGroup:
+        """
+        Player-profile management UI: profile lists, creation, and related
+        hints.
+
+        See source for the full asset list.
+        """
+
+        #: Single-line parenthetical hint; keep the parentheses.
+        #:
+        #: English: "(custom player names and appearances for this account)"
+        explanation: LangStr
+
+        #: Button label.
+        #:
+        #: English: "New Profile"
+        new_profile: LangStr
+
+        #: Section heading / window title for player-profile management.
+        #:
+        #: English: "Player Profiles"
+        title: LangStr
+
+    class StringsUiGroup:
+        """
+        Generic UI vocabulary: short labels (buttons, dialog titles, joiners)
+        shared across many UIs. Purpose-specific wording belongs elsewhere - see
+        each entry's docs for what it is and is not.
+
+        See source for the full asset list.
+        """
+
+        #: Abort button label; backs out of a dialog or in-progress action
+        #: without applying anything. NOT a "no" answer to a question and not
+        #: "back" navigation.
+        #:
+        #: English: "Cancel"
+        cancel: LangStr
+
+        #: Confirmation label; commits a pending action (purchases and other
+        #: are-you-sure moments). Appears on commit buttons and as
+        #: confirm-dialog titles. Stronger than "ok" — implies something happens
+        #: as a result.
+        #:
+        #: English: "Confirm"
+        confirm: LangStr
+
+        #: Completion button label; closes a screen or flow the user has
+        #: finished working in. Implies completed work — not a generic "close"
+        #: or "back".
+        #:
+        #: English: "Done"
+        done: LangStr
+
+        #: Error-dialog title label; the dialog body carries the failure
+        #: details. Title only — never used as a full error message.
+        #:
+        #: English: "Error"
+        error: LangStr
+
+        #: Generic error-page message.
+        #:
+        #: English: "An error has occurred."
+        error_occurred: LangStr
+
+        #: Error-page message.
+        #:
+        #: English: "You must update the app to view this."
+        need_update: LangStr
+
+        #: Placeholder label shown on an empty doc-ui section with no items to
+        #: display.
+        #:
+        #: English: "There is nothing here."
+        nothing_here: LangStr
+
+        #: Generic affirmative/acknowledge button label; dismisses a dialog or
+        #: message with agreement. NOT a "yes" answer to a question (use a
+        #: dedicated yes/no pair for those).
+        #:
+        #: English: "Ok"
+        ok: LangStr
+
+        def or_join(self, *, a: str | LangStr, b: str | LangStr) -> LangStr:
+            """
+            Joiner between exactly two complete pre-rendered alternatives (e.g.
+            a price payable in either of two currencies: "500 tickets or 10
+            tokens"). Not for lists of three or more and not a standalone "or"
+            word.
+
+            English: "{a} or {b}"
+            """
+
+        #: Transient screen-message.
+        #:
+        #: English: "Page is refreshing - try again in a moment."
+        page_refreshing_try_again: LangStr
+
+        #: Button label.
+        #:
+        #: English: "Retry"
+        retry: LangStr
+
+        #: Error-page message; usually paired with a Retry button.
+        #:
+        #: English: "Error talking to server."
+        server_error: LangStr
+
+        #: Error/placeholder-page message.
+        #:
+        #: English: "Under construction - check back soon."
+        under_construction: LangStr
+
     class StringsGroup:
         """
         All standard game strings (everything non-bootstrap).
@@ -836,6 +973,9 @@ if TYPE_CHECKING:
         """
 
         economy: StringsEconomyGroup
+        inventory: StringsInventoryGroup
+        profiles: StringsProfilesGroup
+        ui: StringsUiGroup
 
     class TexturesGroup:
         """
@@ -1168,7 +1308,8 @@ if TYPE_CHECKING:
     #: ``action_hero_lower_leg``, and 355 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1 string (``economy``). Full list in source.
+    #: The ``strings`` group - 20 strings (``economy``, ``inventory``,
+    #: ``profiles``, ``ui``, and 16 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 313 assets (``achievement_boxer``,
@@ -1954,7 +2095,30 @@ _TREE = {
         'zoe_upper_arm': 'm',
         'zoe_upper_leg': 'm',
     },
-    'strings': {'economy': {'you_got_tokens': ('tokens',)}},
+    'strings': {
+        'economy': {'you_got_tokens': ('tokens',)},
+        'inventory': {
+            'only_available_online': (),
+            'only_available_signed_in': (),
+            'title': (),
+        },
+        'profiles': {'explanation': (), 'new_profile': (), 'title': ()},
+        'ui': {
+            'cancel': (),
+            'confirm': (),
+            'done': (),
+            'error': (),
+            'error_occurred': (),
+            'need_update': (),
+            'nothing_here': (),
+            'ok': (),
+            'or_join': ('a', 'b'),
+            'page_refreshing_try_again': (),
+            'retry': (),
+            'server_error': (),
+            'under_construction': (),
+        },
+    },
     'textures': {
         'achievement_boxer': 't',
         'achievement_cross_hair': 't',

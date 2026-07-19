@@ -2,6 +2,7 @@
 
 #include "ballistica/base/assets/assets.h"
 
+#include <algorithm>
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
@@ -2167,16 +2168,89 @@ auto Assets::LanguageDataSnapshot_() -> std::shared_ptr<const LanguageData> {
   return language_data_;
 }
 
-void Assets::ReloadLanguage(const std::vector<std::string>& apverids) {
+auto Assets::LangStrTablesSnapshot() -> std::shared_ptr<const LangStrTables> {
+  std::scoped_lock lock(language_mutex_);
+  return lang_str_tables_;
+}
+
+// Parse one new-format string entry: a plain string, a StringSelector
+// dict {'t','a','f'}, or a {'v': value, 'w': wrap} carrier adding
+// definition-time wrap hints (decision D-t). Fail-soft: malformed
+// values yield nullopt and get skipped, matching the Python
+// parse_language_blob posture.
+static auto ParseLangStrTableValue_(const JsonRef& val)
+    -> std::optional<LangStrTableValue> {
+  if (auto str = val.as_string()) {
+    return LangStrTableValue{std::string(*str)};
+  }
+  if (!val.is_object()) {
+    return {};
+  }
+  auto kind = val["t"].as_string();
+  auto arg = val["a"].as_string();
+  JsonRef forms = val["f"];
+  if (!kind.has_value() || !arg.has_value() || !forms.is_object()
+      || (*kind != "p" && *kind != "s")) {
+    return {};
+  }
+  LangStrSelector sel;
+  sel.is_plural = (*kind == "p");
+  sel.arg = *arg;
+  for (auto&& [key, form] : forms.items()) {
+    if (auto formstr = form.as_string()) {
+      sel.forms.emplace_back(std::string(key), std::string(*formstr));
+    }
+  }
+  return LangStrTableValue{std::move(sel)};
+}
+
+static auto ParseLangStrTableEntry_(const JsonRef& val)
+    -> std::optional<LangStrTableEntry> {
+  // A {'v': ..., 'w': ...} carrier wraps the value with its
+  // definition-time wrap hints.
+  if (val.is_object() && val["v"].exists()) {
+    auto inner = ParseLangStrTableValue_(val["v"]);
+    if (!inner.has_value()) {
+      return {};
+    }
+    LangStrTableEntry entry{std::move(*inner), {}};
+    if (JsonRef wrap = val["w"]; wrap.is_object()) {
+      LangStrWrap wrapval;
+      wrapval.min_lines = static_cast<int>(wrap["mn"].int_or(1));
+      wrapval.max_lines = static_cast<int>(wrap["mx"].int_or(0));
+      wrapval.max_chars_per_line = static_cast<int>(wrap["mc"].int_or(0));
+      entry.wrap = wrapval;
+    }
+    return entry;
+  }
+  auto inner = ParseLangStrTableValue_(val);
+  if (!inner.has_value()) {
+    return {};
+  }
+  return LangStrTableEntry{std::move(*inner), {}};
+}
+
+void Assets::ReloadLanguage(const std::vector<std::string>& apverids,
+                            const std::string& plural_locale) {
   assert(g_base->InLogicThread());
 
+  g_core->logging->Log(
+      LogName::kBaAssets, LogLevel::kDebug,
+      "ReloadLanguage: rebuilding (plural_locale=" + plural_locale
+          + ", packages=" + std::to_string(apverids.size()) + ").");
+
   auto data = std::make_shared<LanguageData>();
+  auto tables = std::make_shared<LangStrTables>();
+  tables->plural_locale = plural_locale;
 
   // Merge each package's registered `language/<locale>` blob (later
   // packages overlay earlier ones). English is the bundled fallback
   // flavor, so absent other locales this loads English (Step A).
   for (auto&& apverid : apverids) {
     auto bucket_id = package_registry_.LookupLanguageBucketId(apverid);
+    g_core->logging->Log(
+        LogName::kBaAssets, LogLevel::kDebug,
+        "ReloadLanguage: " + apverid + " -> bucket '" + bucket_id + "'.");
     if (bucket_id.empty()) {
       continue;
     }
@@ -2228,9 +2302,29 @@ void Assets::ReloadLanguage(const std::vector<std::string>& apverids) {
     JsonRef strings = doc->root()["strings"];
     if (strings.is_object()) {
       found_any = true;
-      // New-format strings are pure resources (dotpath -> value); no
-      // translations section.
-      FlattenResources_(strings, "", &data->resources);
+      // New-format strings: build this package's native
+      // language-string table (values + definition-time wrap hints;
+      // selectors parse structurally), and mirror plain-string leaves
+      // into the flat legacy resource map for Lstr compatibility
+      // (seeing through {'v','w'} carriers, unlike the old blind
+      // flatten, which also leaked selector internals as junk keys).
+      auto& pkg_table = tables->packages[apverid];
+      for (auto&& [name, val] : strings.items()) {
+        if (auto parsed = ParseLangStrTableEntry_(val)) {
+          if (auto* strval = std::get_if<std::string>(&parsed->value)) {
+            data->resources[std::string(name)] = *strval;
+          }
+          pkg_table.values[std::string(name)] = std::move(*parsed);
+        }
+      }
+      // Canonical sorted-name order fixes integer string indices
+      // (identical across locales by construction; both ends derive
+      // it, so indexed values resolve without shipping the mapping).
+      pkg_table.sorted_names.reserve(pkg_table.values.size());
+      for (auto&& [name, val] : pkg_table.values) {
+        pkg_table.sorted_names.push_back(name);
+      }
+      std::sort(pkg_table.sorted_names.begin(), pkg_table.sorted_names.end());
     }
 
     if (!found_any) {
@@ -2292,10 +2386,11 @@ void Assets::ReloadLanguage(const std::vector<std::string>& apverids) {
     }
   }
 
-  // Publish the new table atomically, then fan out the change.
+  // Publish the new tables atomically, then fan out the change.
   {
     std::scoped_lock lock(language_mutex_);
     language_data_ = data;
+    lang_str_tables_ = tables;
   }
   Utils::SetRandomNameList(random_names);
 

@@ -31,7 +31,6 @@ from bacommon.docui._docui import (
     DocUIRequestTypeID,
     DocUIResponse,
     DocUIResponseTypeID,
-    WrapParams,
 )
 
 
@@ -274,13 +273,6 @@ class Text(Decoration):
     #: Effectively max-width and max-height.
     size: Annotated[tuple[float, float], IOAttrs('i')]
 
-    #: Line-wrap constraints applied to the decoded text (see
-    #: :class:`~bacommon.docui.WrapParams`). This replaces the
-    #: hand-placed newlines v1 documents bake into pre-localized
-    #: strings — v2 text decodes per-locale, so wrapping must happen
-    #: client-side after decode.
-    wrap: Annotated[WrapParams | None, IOAttrs('w', store_default=False)] = None
-
     scale: Annotated[float, IOAttrs('s', store_default=False)] = 1.0
     h_align: Annotated[HAlign, IOAttrs('ha', store_default=False)] = (
         HAlign.CENTER
@@ -425,15 +417,6 @@ class Button:
 
     label: Annotated[LangStr | None, IOAttrs('l', store_default=False)] = None
 
-    #: Line-wrap constraints applied to the decoded label (see
-    #: :class:`~bacommon.docui.WrapParams`). This replaces the
-    #: hand-placed newlines v1 documents bake into pre-localized
-    #: labels — v2 text decodes per-locale, so wrapping must happen
-    #: client-side after decode.
-    label_wrap: Annotated[
-        WrapParams | None, IOAttrs('lw', store_default=False)
-    ] = None
-
     action: Annotated[Action | None, IOAttrs('a', store_default=False)] = None
     size: Annotated[
         tuple[float, float] | None, IOAttrs('sz', store_default=False)
@@ -573,12 +556,6 @@ class ButtonRow(Row):
         float | None, IOAttrs('ts', store_default=False)
     ] = None
 
-    #: Line-wrap constraints applied to the decoded title (see
-    #: :class:`~bacommon.docui.WrapParams`).
-    title_wrap: Annotated[
-        WrapParams | None, IOAttrs('tw', store_default=False)
-    ] = None
-
     subtitle: Annotated[LangStr | None, IOAttrs('s', store_default=False)] = (
         None
     )
@@ -591,12 +568,6 @@ class ButtonRow(Row):
     ] = None
     subtitle_shadow: Annotated[
         float | None, IOAttrs('ss', store_default=False)
-    ] = None
-
-    #: Line-wrap constraints applied to the decoded subtitle (see
-    #: :class:`~bacommon.docui.WrapParams`).
-    subtitle_wrap: Annotated[
-        WrapParams | None, IOAttrs('sw', store_default=False)
     ] = None
 
     #: Spacing between all buttons in the row.
@@ -640,12 +611,6 @@ class Page:
 
     title: Annotated[LangStr, IOAttrs('t')]
     rows: Annotated[list[Row], IOAttrs('r')]
-
-    #: Line-wrap constraints applied to the decoded title (see
-    #: :class:`~bacommon.docui.WrapParams`).
-    title_wrap: Annotated[
-        WrapParams | None, IOAttrs('tw', store_default=False)
-    ] = None
 
     #: Center content vertically when it's smaller than the available height.
     center_vertically: Annotated[bool, IOAttrs('cv', store_default=False)] = (
@@ -694,6 +659,18 @@ class Response(DocUIResponse):
     #: so a consumer seeing a mismatch with its own build should treat
     #: the response as stale (e.g. toss cached data) rather than use it.
     for_build: Annotated[int | None, IOAttrs('fb', store_default=False)] = None
+
+    #: Asset-package-versions the response's integer-indexed
+    #: language-strings resolve against (position = package index).
+    #: Present only on wire responses finalized to the indexed form by
+    #: the server; its presence declares the page + contained client
+    #: effects fully indexed (consumers may flag resource-form leaks),
+    #: and it doubles as the client's resolve/pre-warm manifest.
+    #: Locally-authored responses never carry it (indexing is a wire
+    #: compression; local pages stay in the authored resource form).
+    packages: Annotated[list[str], IOAttrs('pk', store_default=False)] = field(
+        default_factory=list
+    )
 
     #: Effects to run on the client when this response is initially
     #: received (not re-run on automatic page refreshes). Note that

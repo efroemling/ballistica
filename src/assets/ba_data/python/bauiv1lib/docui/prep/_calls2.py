@@ -10,19 +10,25 @@ from functools import partial
 from typing import TYPE_CHECKING, assert_never
 
 from efro.util import pairs_from_flat
+from efro.dataclassio import dataclass_to_json
 import bacommon.displayitem as ditm
-import bacommon.docui.v1 as dui1
+import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 from bauiv1 import builtinassets
 from bauiv1 import stdassets
 
-from bauiv1lib.docui.v1prep._types import DecorationPrep
-from bauiv1lib.docui.v1prep._wrap import wrapped_widget_call
+from bauiv1lib.docui.prep._types import DecorationPrep
 
 if TYPE_CHECKING:
-    from typing import Callable
+    from typing import Any, Callable
 
+    from bacommon.langstr import LangStr
     from bauiv1lib.docui import DocUIWindow
+
+
+def _native(lstr: 'LangStr', packages: list[str]) -> bui.LangStr:
+    """Native handle bound against a payload's package list."""
+    return bui.LangStr(dataclass_to_json(lstr), packages=packages)
 
 
 def _btex(name: str) -> str:
@@ -35,38 +41,45 @@ def _stex(name: str) -> str:
     return f'{stdassets.__asset_package__}:textures/{name}'
 
 
+def _refstr(ref: 'Any') -> str:
+    """Qualified engine name for a typed asset ref."""
+    return f'{ref.apverid}:{ref.name}'
+
+
 def prep_decorations(
-    decorations: list[dui1.Decoration],
+    decorations: list[dui2.Decoration],
     center_x: float,
     center_y: float,
     scale: float,
     tdelay: float | None,
     *,
+    packages: list[str],
     highlight: bool,
     out_decoration_preps: list[DecorationPrep],
 ) -> None:
     """Prep appropriate decoration types for a list of decorations."""
     for decoration in decorations:
         dectypeid = decoration.get_type_id()
-        if dectypeid is dui1.DecorationTypeID.UNKNOWN:
+        if dectypeid is dui2.DecorationTypeID.UNKNOWN:
             if bui.do_once():
                 bui.uilog.exception(
                     'DocUI receieved unknown decoration;'
                     ' this is likely a server error.'
                 )
-        elif dectypeid is dui1.DecorationTypeID.TEXT:
-            assert isinstance(decoration, dui1.Text)
+        elif dectypeid is dui2.DecorationTypeID.TEXT:
+            assert isinstance(decoration, dui2.Text)
             prep_text(
                 decoration,
                 (center_x, center_y),
                 scale,
                 tdelay,
                 out_decoration_preps,
+                packages=packages,
                 highlight=highlight,
             )
 
-        elif dectypeid is dui1.DecorationTypeID.IMAGE:
-            assert isinstance(decoration, dui1.Image)
+        elif dectypeid is dui2.DecorationTypeID.IMAGE:
+            assert isinstance(decoration, dui2.Image)
             prep_image(
                 decoration,
                 (center_x, center_y),
@@ -75,8 +88,8 @@ def prep_decorations(
                 out_decoration_preps,
                 highlight=highlight,
             )
-        elif dectypeid is dui1.DecorationTypeID.DISPLAY_ITEM:
-            assert isinstance(decoration, dui1.DisplayItem)
+        elif dectypeid is dui2.DecorationTypeID.DISPLAY_ITEM:
+            assert isinstance(decoration, dui2.DisplayItem)
             prep_display_item(
                 decoration,
                 (center_x, center_y),
@@ -90,12 +103,13 @@ def prep_decorations(
 
 
 def prep_text(
-    text: dui1.Text,
+    text: dui2.Text,
     bcenter: tuple[float, float],
     bscale: float,
     tdelay: float | None,
     out_decoration_preps: list[DecorationPrep],
     *,
+    packages: list[str],
     highlight: bool,
 ) -> None:
     """Prep decorations for text."""
@@ -103,20 +117,20 @@ def prep_text(
     xoffs = bcenter[0] + text.position[0] * bscale
     yoffs = bcenter[1] + text.position[1] * bscale
 
-    if text.h_align is dui1.HAlign.LEFT:
+    if text.h_align is dui2.HAlign.LEFT:
         h_align = 'left'
-    elif text.h_align is dui1.HAlign.CENTER:
+    elif text.h_align is dui2.HAlign.CENTER:
         h_align = 'center'
-    elif text.h_align is dui1.HAlign.RIGHT:
+    elif text.h_align is dui2.HAlign.RIGHT:
         h_align = 'right'
     else:
         assert_never(text.h_align)
 
-    if text.v_align is dui1.VAlign.TOP:
+    if text.v_align is dui2.VAlign.TOP:
         v_align = 'top'
-    elif text.v_align is dui1.VAlign.CENTER:
+    elif text.v_align is dui2.VAlign.CENTER:
         v_align = 'center'
-    elif text.v_align is dui1.VAlign.BOTTOM:
+    elif text.v_align is dui2.VAlign.BOTTOM:
         v_align = 'bottom'
     else:
         assert_never(text.v_align)
@@ -124,10 +138,7 @@ def prep_text(
     out_decoration_preps.append(
         DecorationPrep(
             call=partial(
-                wrapped_widget_call,
                 bui.textwidget,
-                'text',
-                None if text.is_lstr else text.wrap,
                 position=(xoffs, yoffs),
                 scale=text.scale * bscale,
                 maxwidth=text.size[0] * bscale,
@@ -138,8 +149,8 @@ def prep_text(
                 v_align=v_align,
                 size=(0, 0),
                 color=text.color,
-                text=text.text,
-                literal=not text.is_lstr,
+                text=_native(text.text, packages),
+                literal=True,
                 transition_delay=tdelay,
                 transition_type='scale',
                 depth_range=text.depth_range,
@@ -154,20 +165,20 @@ def prep_text(
         mwfull = bscale * text.size[0]
         mhfull = bscale * text.size[1]
 
-        if text.h_align is dui1.HAlign.LEFT:
+        if text.h_align is dui2.HAlign.LEFT:
             mwxoffs = xoffs
-        elif text.h_align is dui1.HAlign.CENTER:
+        elif text.h_align is dui2.HAlign.CENTER:
             mwxoffs = xoffs - mwfull * 0.5
-        elif text.h_align is dui1.HAlign.RIGHT:
+        elif text.h_align is dui2.HAlign.RIGHT:
             mwxoffs = xoffs - mwfull
         else:
             assert_never(text.h_align)
 
-        if text.v_align is dui1.VAlign.TOP:
+        if text.v_align is dui2.VAlign.TOP:
             mwyoffs = yoffs - mhfull
-        elif text.v_align is dui1.VAlign.CENTER:
+        elif text.v_align is dui2.VAlign.CENTER:
             mwyoffs = yoffs - mhfull * 0.5
-        elif text.v_align is dui1.VAlign.BOTTOM:
+        elif text.v_align is dui2.VAlign.BOTTOM:
             mwyoffs = yoffs
         else:
             assert_never(text.v_align)
@@ -191,7 +202,7 @@ def prep_text(
 
 
 def prep_image(
-    image: dui1.Image,
+    image: dui2.Image,
     bcenter: tuple[float, float],
     bscale: float,
     tdelay: float | None,
@@ -206,35 +217,35 @@ def prep_image(
     widthfull = bscale * image.size[0]
     heightfull = bscale * image.size[1]
 
-    if image.h_align is dui1.HAlign.LEFT:
+    if image.h_align is dui2.HAlign.LEFT:
         xoffsfin = xoffs
-    elif image.h_align is dui1.HAlign.CENTER:
+    elif image.h_align is dui2.HAlign.CENTER:
         xoffsfin = xoffs - widthfull * 0.5
-    elif image.h_align is dui1.HAlign.RIGHT:
+    elif image.h_align is dui2.HAlign.RIGHT:
         xoffsfin = xoffs - widthfull
     else:
         assert_never(image.h_align)
 
-    if image.v_align is dui1.VAlign.TOP:
+    if image.v_align is dui2.VAlign.TOP:
         yoffsfin = yoffs - heightfull
-    elif image.v_align is dui1.VAlign.CENTER:
+    elif image.v_align is dui2.VAlign.CENTER:
         yoffsfin = yoffs - heightfull * 0.5
-    elif image.v_align is dui1.VAlign.BOTTOM:
+    elif image.v_align is dui2.VAlign.BOTTOM:
         yoffsfin = yoffs
     else:
         assert_never(image.v_align)
 
-    textures: dict[str, str] = {'texture': image.texture}
+    textures: dict[str, str] = {'texture': _refstr(image.texture)}
     if image.tint_texture is not None:
-        textures['tint_texture'] = image.tint_texture
+        textures['tint_texture'] = _refstr(image.tint_texture)
     if image.mask_texture is not None:
-        textures['mask_texture'] = image.mask_texture
+        textures['mask_texture'] = _refstr(image.mask_texture)
 
     meshes: dict[str, str] = {}
     if image.mesh_opaque is not None:
-        meshes['mesh_opaque'] = image.mesh_opaque
+        meshes['mesh_opaque'] = _refstr(image.mesh_opaque)
     if image.mesh_transparent is not None:
-        meshes['mesh_transparent'] = image.mesh_transparent
+        meshes['mesh_transparent'] = _refstr(image.mesh_transparent)
 
     out_decoration_preps.append(
         DecorationPrep(
@@ -350,7 +361,7 @@ def prep_button_debug(
 
 
 def prep_display_item(
-    display_item: dui1.DisplayItem,
+    display_item: dui2.DisplayItem,
     parent_center: tuple[float, float],
     parent_scale: float,
     tdelay: float | None,
@@ -401,15 +412,15 @@ def prep_display_item(
 
     # Calc our width and height based on our aspect ratio so we fit in
     # the provided bounds.
-    if display_item.style is dui1.DisplayItemStyle.FULL:
+    if display_item.style is dui2.DisplayItemStyle.FULL:
         aspect_ratio = 0.75  # Bit less tall than wide (graphic centric).
         compact = False
         icon = False
-    elif display_item.style is dui1.DisplayItemStyle.COMPACT:
+    elif display_item.style is dui2.DisplayItemStyle.COMPACT:
         aspect_ratio = 0.5  # Significantly wider (text centric)
         compact = True
         icon = False
-    elif display_item.style is dui1.DisplayItemStyle.ICON:
+    elif display_item.style is dui2.DisplayItemStyle.ICON:
         aspect_ratio = 1.0  # Square
         compact = False
         icon = True

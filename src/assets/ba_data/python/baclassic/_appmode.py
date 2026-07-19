@@ -764,7 +764,7 @@ class ClassicAppMode(AppMode):
         )
 
     def _root_ui_store_press(self) -> None:
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.store import StoreUIController
@@ -780,7 +780,7 @@ class ClassicAppMode(AppMode):
                 win_type=DocUIWindow,
                 win_create_call=bui.CallStrict(
                     StoreUIController().create_window,
-                    dui1.Request('/'),
+                    dui2.Request('/'),
                     origin_widget=btn,
                     uiopenstateid='classicstore',
                 ),
@@ -828,7 +828,7 @@ class ClassicAppMode(AppMode):
         ResourceTypeInfoWindow('xp', origin_widget=btn)
 
     def _root_ui_inventory_press(self) -> None:
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.inventory import InventoryUIController
@@ -838,7 +838,7 @@ class ClassicAppMode(AppMode):
             win_type=DocUIWindow,
             win_create_call=bui.CallStrict(
                 InventoryUIController().create_window,
-                dui1.Request('/'),
+                dui2.Request('/'),
                 origin_widget=bui.get_special_widget('inventory_button'),
                 uiopenstateid='classicinventory',
             ),
@@ -982,10 +982,7 @@ class ClassicAppMode(AppMode):
                 bui.WeakCallStrict(self._main_win_template_press),
             ),
             bui.DevConsoleButtonDef(
-                'DocUI Test', bui.WeakCallStrict(self._doc_ui_test_press)
-            ),
-            bui.DevConsoleButtonDef(
-                'DocUI Test v2',
+                'DocUI Test',
                 bui.WeakCallStrict(self._doc_ui_test_v2_press),
             ),
         ]
@@ -1009,26 +1006,6 @@ class ClassicAppMode(AppMode):
         builtinassets.audio.swish.get().play()
 
         show_template_main_window()
-
-    def _doc_ui_test_press(self) -> None:
-        from bauiv1lib.docuitest import show_test_doc_ui_window
-
-        # This only works if a main ui is up.
-        if bui.app.ui_v1.get_main_window() is None:
-            bui.screenmessage(
-                'This requires a main-window to be present.'
-                ' Open a menu or whatnot first.',
-                color=(1, 0, 0),
-            )
-            builtinassets.audio.error.get().play()
-            return
-
-        # Unintuitively, swish sounds come from buttons, not windows.
-        # And dev-console buttons don't make sounds. So we need to
-        # explicitly do so here.
-        builtinassets.audio.swish.get().play()
-
-        show_test_doc_ui_window()
 
     def _doc_ui_test_v2_press(self) -> None:
         from bauiv1lib.docuitest import show_test_doc_ui_v2_window

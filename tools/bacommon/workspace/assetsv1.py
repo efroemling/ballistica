@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 from bacommon.locale import Locale
+from bacommon.langstr import WrapParams
 from bacommon.loctext import StringSelector
 
 if TYPE_CHECKING:
@@ -642,6 +643,36 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
 
 @ioprepped
 @dataclass
+class AssetsV1StrTermDeps:
+    """Cached term-ref info for a ``.bstr``, keyed to its content.
+
+    Term refs (``{@term}`` / ``{@pkg:term}`` in the brief) are a pure
+    function of the ``.bstr`` file's content, which is pinned by its
+    content-addressed ``file_id`` -- so this record stays valid exactly
+    as long as ``file_id`` matches the entry's current file. Consumers
+    (dep-aware staleness calcs) use it to skip reading the file; on
+    mismatch they fall back to reading that one file. Maintained
+    automatically by the string save/translate paths; do not hand-edit
+    (a wrong ``local``/``cross`` list with a matching ``file_id`` would
+    be trusted).
+    """
+
+    #: Content-id of the ``.bstr`` file these refs were extracted from.
+    file_id: Annotated[str, IOAttrs('file_id')]
+
+    #: Local term-ref targets (logical ``.bstr`` paths, no extension).
+    local: Annotated[list[str], IOAttrs('local', store_default=False)] = field(
+        default_factory=list
+    )
+
+    #: Cross-package ref targets (``.apref`` paths, no extension).
+    cross: Annotated[list[str], IOAttrs('cross', store_default=False)] = field(
+        default_factory=list
+    )
+
+
+@ioprepped
+@dataclass
 class AssetsV1PathValsStrV1(AssetsV1PathVals):
     """Path-specific values for an assets_v1 workspace path."""
 
@@ -655,6 +686,28 @@ class AssetsV1PathValsStrV1(AssetsV1PathVals):
     #: no-regeneration-needed escape hatch.)
     up_to_date_state: Annotated[
         str | None, IOAttrs('up_to_date_state', store_default=False)
+    ] = None
+
+    #: Optional definition-time line-wrapping hints (decision D-t in
+    #: the language-string-context initiative): applied automatically
+    #: at evaluation everywhere this string displays. Locale-invariant.
+    #: Lives HERE (not in the ``.bstr``) deliberately: the ``.bstr`` is
+    #: by definition the translation input, so its content hash is the
+    #: translation-staleness key, and display-side metadata like this
+    #: must not restale translations (the same reasoning as the docs
+    #: history above, in reverse -- wrap does not feed the translation
+    #: prompt).
+    wrap: Annotated[WrapParams | None, IOAttrs('wrap', store_default=False)] = (
+        None
+    )
+
+    #: Cached term-ref info (see :class:`AssetsV1StrTermDeps`). Absent
+    #: until first extracted; ignored (and lazily recomputed from the
+    #: file) whenever its ``file_id`` no longer matches the entry's
+    #: current content -- so write paths that don't maintain it merely
+    #: cost a read, never a wrong answer.
+    deps: Annotated[
+        AssetsV1StrTermDeps | None, IOAttrs('deps', store_default=False)
     ] = None
 
     @override

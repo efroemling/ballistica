@@ -3,11 +3,16 @@
 #ifndef BALLISTICA_UI_V1_WIDGET_TEXT_WIDGET_H_
 #define BALLISTICA_UI_V1_WIDGET_TEXT_WIDGET_H_
 
+#include <memory>
 #include <string>
 
 #include "ballistica/base/graphics/mesh/text_mesh.h"
 #include "ballistica/shared/python/python_ref.h"
 #include "ballistica/ui_v1/widget/widget.h"
+
+namespace ballistica::base {
+class LangStr;
+}
 
 namespace ballistica::ui_v1 {
 
@@ -36,6 +41,12 @@ class TextWidget : public Widget {
   void set_rotate(float val) { rotate_ = val; }
   void SetLiteral(bool val);
   void SetText(const std::string& text_in);
+
+  /// Set a native language-string as our text. The widget retains the
+  /// value and re-evaluates it on language changes (the native mirror
+  /// of the legacy Lstr resource-string behavior). Cleared by any
+  /// subsequent SetText().
+  void SetLangStr(std::shared_ptr<const base::LangStr> val);
   void set_color(float r, float g, float b, float a) {
     color_r_ = r;
     color_g_ = g;
@@ -43,6 +54,11 @@ class TextWidget : public Widget {
     color_a_ = a;
   }
   auto text_raw() const -> const std::string& { return text_raw_; }
+
+  /// The text as consumers should *read* it: for native
+  /// language-string content this is the evaluated display text
+  /// (raw is empty in that case); otherwise the raw text.
+  auto GetQueryText() -> std::string;
   void SetEditable(bool e);
   void set_selectable(bool s) { selectable_ = s; }
   void SetEnabled(bool val);
@@ -152,6 +168,7 @@ class TextWidget : public Widget {
   float center_scale_{1.0f};
   std::string text_raw_;
   std::string text_translated_;
+  std::shared_ptr<const base::LangStr> lang_str_;
   millisecs_t birth_time_millisecs_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t last_carat_change_time_millisecs_{};

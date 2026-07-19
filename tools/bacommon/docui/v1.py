@@ -10,12 +10,12 @@ from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
 import bacommon.displayitem as ditm
 import bacommon.clienteffect as clfx
+from bacommon.langstr import WrapParams
 from bacommon.docui._docui import (
     DocUIRequest,
     DocUIRequestTypeID,
     DocUIResponse,
     DocUIResponseTypeID,
-    WrapParams,
 )
 
 
@@ -337,6 +337,12 @@ class Text(Decoration):
 
     is_lstr: Annotated[bool, IOAttrs('l', store_default=False)] = False
 
+    #: The text field holds a language-string (canonical resource-form
+    #: wire JSON) to be evaluated natively at display and
+    #: re-evaluated on language changes. Set by the client-side v2
+    #: transcode; mutually exclusive with is_lstr.
+    is_langstr: Annotated[bool, IOAttrs('ls', store_default=False)] = False
+
     #: Line-wrap constraints applied to the text at widget-creation
     #: time. Set only by the client-local v2→v1 transcode; v1 producers
     #: must never send it (older clients can't parse unknown fields —
@@ -493,6 +499,14 @@ class Button:
     )
     label_is_lstr: Annotated[bool, IOAttrs('ll', store_default=False)] = False
 
+    #: The label field holds a language-string (canonical resource-form
+    #: wire JSON) to be evaluated natively at display and
+    #: re-evaluated on language changes. Set by the client-side v2
+    #: transcode; mutually exclusive with label_is_lstr.
+    label_is_langstr: Annotated[bool, IOAttrs('lls', store_default=False)] = (
+        False
+    )
+
     #: Line-wrap constraints applied to the label at widget-creation
     #: time. Set only by the client-local v2→v1 transcode; v1 producers
     #: must never send it (older clients can't parse unknown fields —
@@ -628,6 +642,14 @@ class ButtonRow(Row):
     ] = None
     title_is_lstr: Annotated[bool, IOAttrs('tl', store_default=False)] = False
 
+    #: The title field holds a language-string (canonical resource-form
+    #: wire JSON) to be evaluated natively at display and
+    #: re-evaluated on language changes. Set by the client-side v2
+    #: transcode; mutually exclusive with title_is_lstr.
+    title_is_langstr: Annotated[bool, IOAttrs('tls', store_default=False)] = (
+        False
+    )
+
     #: Line-wrap constraints applied to the title at widget-creation
     #: time. Set only by the client-local v2→v1 transcode; v1 producers
     #: must never send it (older clients can't parse unknown fields —
@@ -650,6 +672,14 @@ class ButtonRow(Row):
     subtitle_is_lstr: Annotated[bool, IOAttrs('sl', store_default=False)] = (
         False
     )
+
+    #: The subtitle field holds a language-string (canonical resource-form
+    #: wire JSON) to be evaluated natively at display and
+    #: re-evaluated on language changes. Set by the client-side v2
+    #: transcode; mutually exclusive with subtitle_is_lstr.
+    subtitle_is_langstr: Annotated[
+        bool, IOAttrs('sls', store_default=False)
+    ] = False
 
     #: Line-wrap constraints applied to the subtitle at widget-creation
     #: time. Set only by the client-local v2→v1 transcode; v1 producers
@@ -727,6 +757,14 @@ class Page:
     #: doc-ui translation should be handled server-side, but this can
     #: allow client-side translation.
     title_is_lstr: Annotated[bool, IOAttrs('tl', store_default=False)] = False
+
+    #: The title field holds a language-string (canonical resource-form
+    #: wire JSON) to be evaluated natively at display and
+    #: re-evaluated on language changes. Set by the client-side v2
+    #: transcode; mutually exclusive with title_is_lstr.
+    title_is_langstr: Annotated[bool, IOAttrs('tls', store_default=False)] = (
+        False
+    )
 
     #: Line-wrap constraints applied to the title at widget-creation
     #: time. Set only by the client-local v2→v1 transcode; v1 producers

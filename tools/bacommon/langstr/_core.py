@@ -42,6 +42,45 @@ logger = logging.getLogger(__name__)
 MAX_NESTING_DEPTH = 16
 
 
+@ioprepped
+@dataclass
+class WrapParams:
+    """Constraints for splitting a text value into lines client-side.
+
+    Mirrors the engine's simple equal-width line splitter
+    (``babase.split_text_into_lines()``): text is broken only at valid
+    line-break opportunities, using the fewest lines that keep every
+    line within :attr:`max_chars_per_line` (when provided) while
+    staying between :attr:`min_lines` and :attr:`max_lines` (``None``
+    means unlimited), with line lengths balanced within that count. So
+    ``max_chars_per_line`` alone gives basic wrapping and ``min_lines``
+    alone gives an exact line count. Constraints are best-effort.
+
+    **Default to pinning an exact line count**: set ``min_lines`` to
+    the layout's designed count and leave ``max_chars_per_line``
+    unset. A ``max_chars_per_line``-driven wrap yields a per-locale
+    *varying* line count (translation lengths differ), which reads as
+    broken in layouts designed around a specific count — and every
+    legacy-converted string is such a layout, since the legacy
+    pipeline hand-baked newlines at fixed counts (see D21 in the
+    strings-asset-migration initiative). Reserve
+    ``max_chars_per_line`` for surfaces explicitly designed to
+    tolerate a variable number of lines.
+
+    Per decision D-t these are *definition-time* presentation hints: a
+    string definition carries them optionally, they ride each locale
+    blob, and evaluation applies them automatically. They are
+    locale-invariant, and width-driven layout consumers may ignore
+    them (they are a fallback presentation default).
+    """
+
+    min_lines: Annotated[int, IOAttrs('mn', store_default=False)] = 1
+    max_lines: Annotated[int | None, IOAttrs('mx', store_default=False)] = None
+    max_chars_per_line: Annotated[
+        int | None, IOAttrs('mc', store_default=False)
+    ] = None
+
+
 class LangStrError(Exception):
     """A malformed language-string or encode-context operation."""
 
@@ -266,17 +305,48 @@ class PackageStructure:
             },
         )
 
+    @classmethod
+    def from_language_values(
+        cls, apverid: str, values: dict[str, str | StringSelector]
+    ) -> 'PackageStructure':
+        """Derive the structure from one locale's complete value set.
+
+        The consumer-side counterpart of :meth:`from_def`: string
+        indices come from the canonical sorted-name order (the key set
+        is identical across locales by construction -- see
+        ``complete_locale_values``) and each string's substitution
+        keywords from its own value via
+        :func:`bacommon.loctext.substitution_names`. Both ends
+        canonicalize param order alphabetically, so a structure derived
+        here agrees with the producer's brief-derived one; producer
+        tests lock that agreement.
+        """
+        from bacommon.loctext import substitution_names
+
+        return cls(
+            apverid,
+            {
+                name: tuple(substitution_names(value))
+                for name, value in values.items()
+            },
+        )
+
     def __init__(
         self, apverid: str, strings: dict[str, tuple[str, ...]]
     ) -> None:
-        #: ``strings`` maps each logical name to its ordered substitution
-        #: keywords (``()`` for a no-arg string).
+        #: ``strings`` maps each logical name to its substitution
+        #: keywords (``()`` for a no-arg string). Order of the passed
+        #: keywords is ignored: positional-substitution order is
+        #: canonically alphabetical, enforced here so producer- and
+        #: consumer-derived structures can't disagree on it.
         self.apverid = apverid
         self._names: tuple[str, ...] = tuple(sorted(strings))
         self._index: dict[str, int] = {
             name: i for i, name in enumerate(self._names)
         }
-        self._params: dict[str, tuple[str, ...]] = dict(strings)
+        self._params: dict[str, tuple[str, ...]] = {
+            name: tuple(sorted(params)) for name, params in strings.items()
+        }
 
     def index_of(self, name: str) -> int:
         """Return the integer index for a string name."""
@@ -315,13 +385,17 @@ class LanguageStringEncodeContext:
         self._pkg_index = {av: i for i, av in enumerate(sorted(apverids))}
 
     def _collect(self, lstr: LangStr, acc: set[str]) -> None:
-        if not isinstance(lstr, LangStrResource):
+        if isinstance(lstr, LangStrResource):
+            acc.add(lstr.apverid)
+            subvals = list(lstr.subs.values())
+        elif isinstance(lstr, LangStrValue):
+            # Literals reference no package but may nest values that do.
+            subvals = list(lstr.subs.values())
+        else:
             raise LangStrError(
-                f'only resource-form language-strings can be encoded;'
-                f' got {type(lstr).__name__}.'
+                f'cannot encode an already-indexed' f' {type(lstr).__name__}.'
             )
-        acc.add(lstr.apverid)
-        for val in lstr.subs.values():
+        for val in subvals:
             if isinstance(val, LangStr):
                 self._collect(val, acc)
 
@@ -359,6 +433,56 @@ class LanguageStringEncodeContext:
             val = lstr.subs[param]
             out.append(self.encode(val) if isinstance(val, LangStr) else val)
         return out
+
+    def to_indexed(self, lstr: LangStr) -> LangStr:
+        """Convert a resource/value tree to its integer-indexed form.
+
+        Resource nodes become :class:`LangStrResourceIndexed` (with
+        positional subs in canonical param order); literal
+        :class:`LangStrValue` nodes pass through (with their nested
+        subs converted). New objects are returned; the input tree is
+        never mutated. Raises :class:`LangStrError` loudly for
+        packages/strings unknown to this context (authoring-side
+        errors) or already-indexed input.
+        """
+        if isinstance(lstr, LangStrValue):
+            return LangStrValue(
+                lstr.value,
+                {
+                    key: (
+                        self.to_indexed(val)
+                        if isinstance(val, LangStr)
+                        else val
+                    )
+                    for key, val in lstr.subs.items()
+                },
+            )
+        if not isinstance(lstr, LangStrResource):
+            raise LangStrError(f'cannot index a {type(lstr).__name__}.')
+        pkg_int = self._pkg_index.get(lstr.apverid)
+        struct = self._structures.get(lstr.apverid)
+        if pkg_int is None or struct is None:
+            raise LangStrError(
+                f'apverid {lstr.apverid!r} is not in this encode context'
+            )
+        try:
+            str_int = struct.index_of(lstr.name)
+            params = struct.params_of(lstr.name)
+        except KeyError as exc:
+            raise LangStrError(
+                f'unknown string {lstr.name!r} in {lstr.apverid}'
+            ) from exc
+        subs: list[str | int | LangStr] = []
+        for param in params:
+            if param not in lstr.subs:
+                raise LangStrError(
+                    f'missing substitution {param!r} for {lstr.name!r}'
+                )
+            val = lstr.subs[param]
+            subs.append(
+                self.to_indexed(val) if isinstance(val, LangStr) else val
+            )
+        return LangStrResourceIndexed(pkg=pkg_int, index=str_int, subs=subs)
 
 
 class LanguageStringDecodeContext:
@@ -437,6 +561,182 @@ class LanguageStringDecodeContext:
             return evaluate(values[name], self._locale, **kwargs)
         except LocTextError as exc:
             raise _DecodeFail(f'eval failed for {name!r}: {exc}') from exc
+
+    def to_resource(self, lstr: LangStr, _depth: int = 0) -> LangStr:
+        """Convert integer-indexed nodes back to the resource form.
+
+        The inverse of ``LanguageStringEncodeContext.to_indexed``, for
+        consumers that ingest indexed wire values but hold some of them
+        in the self-describing name form (e.g. deferred client effects
+        that outlive their containing payload's package-index map).
+        Returns new objects (resource/value nodes are rebuilt with
+        converted subs); raises :class:`LangStrError` for indices
+        unknown to this context.
+        """
+        if _depth > MAX_NESTING_DEPTH:
+            raise LangStrError('max nesting depth exceeded')
+        if isinstance(lstr, LangStrValue):
+            return LangStrValue(
+                lstr.value,
+                {
+                    key: (
+                        self.to_resource(val, _depth + 1)
+                        if isinstance(val, LangStr)
+                        else val
+                    )
+                    for key, val in lstr.subs.items()
+                },
+            )
+        if isinstance(lstr, LangStrResource):
+            return LangStrResource(
+                lstr.apverid,
+                lstr.name,
+                {
+                    key: (
+                        self.to_resource(val, _depth + 1)
+                        if isinstance(val, LangStr)
+                        else val
+                    )
+                    for key, val in lstr.subs.items()
+                },
+            )
+        if not isinstance(lstr, LangStrResourceIndexed):
+            raise LangStrError(f'cannot convert a {type(lstr).__name__}.')
+        apverid = self._pkg_map.get(lstr.pkg)
+        if apverid is None or apverid not in self._structures:
+            raise LangStrError(f'unknown package index {lstr.pkg}')
+        struct = self._structures[apverid]
+        try:
+            name = struct.name_of(lstr.index)
+            params = struct.params_of(name)
+        except (IndexError, KeyError) as exc:
+            raise LangStrError(
+                f'unknown string index {lstr.index} in {apverid}'
+            ) from exc
+        if len(lstr.subs) != len(params):
+            raise LangStrError(f'arity mismatch for {name!r}')
+        return LangStrResource(
+            apverid,
+            name,
+            {
+                param: (
+                    self.to_resource(sub, _depth + 1)
+                    if isinstance(sub, LangStr)
+                    else sub
+                )
+                for param, sub in zip(params, lstr.subs)
+            },
+        )
+
+    def decode_value(self, lstr: LangStr) -> str:
+        """Resolve any language-string form to flat text in this locale.
+
+        The tolerant all-forms counterpart of :meth:`decode`: handles
+        :class:`LangStrResourceIndexed` (via this context's
+        package-index map + structures), :class:`LangStrValue`
+        (self-contained), and plain :class:`LangStrResource` (by name,
+        for legacy/mixed payloads). Fail-visible like everything else
+        on the decode side.
+        """
+        try:
+            return self._decode_value(lstr, 0)
+        except _DecodeFail as exc:
+            logger.warning('langstr decode: %s', exc)
+            return f'LANGSTR_ERROR:{exc}'
+
+    def _decode_value(self, lstr: LangStr, depth: int) -> str:
+        if depth > MAX_NESTING_DEPTH:
+            raise _DecodeFail('max nesting depth exceeded')
+        value: str | StringSelector
+        desc: str
+        kwargs: dict[str, str | int] = {}
+        if isinstance(lstr, LangStrResourceIndexed):
+            apverid = self._pkg_map.get(lstr.pkg)
+            if (
+                apverid is None
+                or apverid not in self._structures
+                or apverid not in self._language
+            ):
+                raise _DecodeFail(f'unknown package index {lstr.pkg}')
+            struct = self._structures[apverid]
+            try:
+                name = struct.name_of(lstr.index)
+                params = struct.params_of(name)
+            except IndexError, KeyError:
+                raise _DecodeFail(
+                    f'unknown string index {lstr.index} in {apverid}'
+                ) from None
+            values = self._language[apverid]
+            if name not in values:
+                raise _DecodeFail(f'no value for {name!r} in {apverid}')
+            if len(lstr.subs) != len(params):
+                raise _DecodeFail(
+                    f'arity mismatch for {name!r}:'
+                    f' {len(lstr.subs)} != {len(params)}'
+                )
+            for param, sub in zip(params, lstr.subs):
+                kwargs[param] = (
+                    self._decode_value(sub, depth + 1)
+                    if isinstance(sub, LangStr)
+                    else sub
+                )
+            value = values[name]
+            desc = name
+        elif isinstance(lstr, LangStrValue):
+            value = lstr.value
+            desc = 'literal'
+            for key, sub in lstr.subs.items():
+                kwargs[key] = (
+                    self._decode_value(sub, depth + 1)
+                    if isinstance(sub, LangStr)
+                    else sub
+                )
+        elif isinstance(lstr, LangStrResource):
+            resvalues = self._language.get(lstr.apverid)
+            if resvalues is None:
+                raise _DecodeFail(f'no values for package {lstr.apverid!r}')
+            resval = resvalues.get(lstr.name)
+            if resval is None:
+                raise _DecodeFail(
+                    f'no value for {lstr.name!r} in {lstr.apverid}'
+                )
+            for key, sub in lstr.subs.items():
+                kwargs[key] = (
+                    self._decode_value(sub, depth + 1)
+                    if isinstance(sub, LangStr)
+                    else sub
+                )
+            value = resval
+            desc = lstr.name
+        else:
+            raise _DecodeFail(f'cannot decode a {type(lstr).__name__}.')
+        try:
+            return evaluate(value, self._locale, **kwargs)
+        except LocTextError as exc:
+            raise _DecodeFail(f'eval failed for {desc!r}: {exc}') from exc
+
+
+def contains_resource_form(lstr: LangStr) -> bool:
+    """Return whether a language-string tree contains any full
+    resource-form (non-indexed) node.
+
+    Used by consumers verifying that a wire payload claiming the
+    integer-indexed form really is fully indexed (a resource-form leak
+    means some producer path skipped indexing).
+    """
+    subvals: list[str | int | LangStr]
+    if isinstance(lstr, LangStrResource):
+        return True
+    if isinstance(lstr, LangStrValue):
+        subvals = list(lstr.subs.values())
+    elif isinstance(lstr, LangStrResourceIndexed):
+        subvals = list(lstr.subs)
+    else:
+        return False
+    return any(
+        isinstance(sub, LangStr) and contains_resource_form(sub)
+        for sub in subvals
+    )
 
 
 class LanguageStringNameDecodeContext:

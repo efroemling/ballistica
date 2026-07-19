@@ -3,30 +3,26 @@
 #ifndef BALLISTICA_SCENE_V1_PYTHON_CLASS_PYTHON_CLASS_SCENE_COLLISION_MESH_H_
 #define BALLISTICA_SCENE_V1_PYTHON_CLASS_PYTHON_CLASS_SCENE_COLLISION_MESH_H_
 
-#include "ballistica/scene_v1/scene_v1.h"
-#include "ballistica/shared/foundation/object.h"
-#include "ballistica/shared/python/python_class.h"
+#include "ballistica/base/python/class/python_class_asset_ref.h"
+#include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 
 namespace ballistica::scene_v1 {
 
-class PythonClassSceneCollisionMesh : public PythonClass {
+class PythonClassSceneCollisionMesh
+    : public base::PythonClassAssetRef<PythonClassSceneCollisionMesh,
+                                       SceneCollisionMesh> {
  public:
-  static auto type_name() -> const char*;
-  static auto tp_repr(PythonClassSceneCollisionMesh* self) -> PyObject*;
-  static void SetupType(PyTypeObject* cls);
-  static PyTypeObject type_obj;
-  static auto Create(SceneCollisionMesh* collision_mesh) -> PyObject*;
-  static auto Check(PyObject* o) -> bool {
-    return PyObject_TypeCheck(o, &type_obj);
-  }
-  auto GetCollisionMesh(bool doraise = true) const -> SceneCollisionMesh*;
+  static auto type_name() -> const char* { return "CollisionMesh"; }
+  static constexpr const char* kTpName = "bascenev1.CollisionMesh";
+  static constexpr const char* kTpDoc =
+      "A reference to a collision-mesh.\n"
+      "\n"
+      "Use :meth:`bascenev1.getcollisionmesh()` to instantiate one.";
+  static constexpr const char* kFactoryCall = "bascenev1.getcollisionmesh()";
 
- private:
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
-      -> PyObject*;
-  static void tp_dealloc(PythonClassSceneCollisionMesh* self);
-  static bool s_create_empty_;
-  Object::Ref<SceneCollisionMesh>* collision_mesh_;
+  auto GetCollisionMesh(bool doraise = true) const -> SceneCollisionMesh* {
+    return GetAsset(doraise);
+  }
 };
 
 }  // namespace ballistica::scene_v1

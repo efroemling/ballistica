@@ -18,6 +18,7 @@ serves clients of any language.
 
 from bacommon.langstr._core import (
     LangStr,
+    WrapParams,
     LangStrResource,
     LangStrValue,
     LangStrResourceIndexed,
@@ -32,6 +33,7 @@ from bacommon.langstr._core import (
     LanguageStringNameDecodeContext,
     LangStrError,
     EncodedLangStr,
+    contains_resource_form,
 )
 from bacommon.langstr._wrapper import (
     LangStrDir,
@@ -46,6 +48,7 @@ from bacommon.langstr._blob import (
 
 __all__ = [
     'LangStr',
+    'WrapParams',
     'LangStrResource',
     'LangStrValue',
     'LangStrResourceIndexed',
@@ -60,6 +63,7 @@ __all__ = [
     'LanguageStringNameDecodeContext',
     'LangStrError',
     'EncodedLangStr',
+    'contains_resource_form',
     'LangStrDir',
     'WrapperTree',
     'package_structure',

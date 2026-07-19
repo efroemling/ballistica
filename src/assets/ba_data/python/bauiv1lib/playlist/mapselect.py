@@ -288,7 +288,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             )
 
     def _on_store_press(self) -> None:
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.connectivity import wait_for_connectivity
@@ -317,7 +317,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
                 win_type=DocUIWindow,
                 win_create_call=bui.CallStrict(
                     StoreUIController().create_window,
-                    dui1.Request('/'),
+                    dui2.Request('/'),
                     origin_widget=self._get_more_maps_button,
                     uiopenstateid='classicstore',
                 ),

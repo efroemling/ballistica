@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_PYTHON_BASE_PYTHON_H_
 #define BALLISTICA_BASE_PYTHON_BASE_PYTHON_H_
 
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -204,6 +205,14 @@ class BasePython {
   void SoftImportClassic();
 
  private:
+  /// If o is a bacommon.langstr.LangStr dataclass (the shared authored
+  /// form the generated wrapper accessors emit), evaluate it natively
+  /// to flat display text (fail-visible) and return it; nullopt if o
+  /// is some other type. Lazily grabs the class + serializer on first
+  /// use, keeping bacommon out of the babase bootstrap graph.
+  auto EvalBacommonLangStr_(PyObject* o) -> std::optional<std::string>;
+  auto IsBacommonLangStr_(PyObject* o) -> bool;
+
   template <typename T>
   auto IsPyEnum_(BasePython::ObjID enum_class_id, PyObject* obj) -> bool;
   template <typename T>
@@ -211,6 +220,10 @@ class BasePython {
 
   std::set<std::string> do_once_locations_;
   PythonObjectSet<ObjID> objs_;
+  // Lazily-populated (see EvalBacommonLangStr_).
+  PythonRef bacommon_lang_str_class_;
+  PythonRef dataclass_to_json_call_;
+  bool bacommon_lang_str_lookup_failed_{};
   float last_screen_res_x_{-1.0f};
   float last_screen_res_y_{-1.0f};
 };

@@ -216,7 +216,8 @@ static PyMethodDef PyScreenMessageDef = {
     (PyCFunction)PyScreenMessage,  // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "screenmessage(message: str | babase.Lstr,\n"
+    "screenmessage(message: str | babase.Lstr | babase.LangStr\n"
+    "    | bacommon.langstr.LangStr,\n"
     "  color: Sequence[float] | None = None,\n"
     "  log: bool = False,\n"
     "  literal: bool = False,\n"
