@@ -527,8 +527,12 @@ class _CachedPackage:
 #: orphaned old ones get swept by GC). History: 1 = original shape
 #: (container-extension keys + single-char parts); 2 = pure
 #: logical-path keys + ``<role>.<format>`` parts (asset-packages
-#: decision #35, 2026-07-19).
-_CACHE_MANIFEST_LAYOUT_VERSION = 2
+#: decision #35, 2026-07-19); 3 = same shape as 2 — bumped purely to
+#: flush caches poisoned during the #35 rollout window, when servers
+#: could still hand a new client old-shape manifests that were then
+#: committed under epoch 2 (see the ingestion-time shape validation
+#: in ``_tier1_download``, which prevents that class going forward).
+_CACHE_MANIFEST_LAYOUT_VERSION = 3
 
 
 @ioprepped
@@ -1412,6 +1416,33 @@ class AssetSubsystem(AppSubsystem):
             for p, info in parsed['e'].items()
         }
 
+    @staticmethod
+    def _validate_manifest_shape(
+        apverid: str, coord: str, parsed: dict
+    ) -> None:
+        """Refuse a downloaded flavor-manifest from an older layout epoch.
+
+        Ingestion-time shape validation: nothing else guards
+        server-too-old — a mid-rollout server (or its serve-stale cache)
+        handing us an older-epoch manifest would otherwise silently miss
+        every lookup AND poison our writable cache until manually
+        cleared (exactly what happened in the decision-#35 reshape
+        rollout, 2026-07-19). Raising here (before any write) means a
+        mismatched manifest is never committed. Discriminator: every
+        part key is ``<role>.<format>`` in the current epoch, so any
+        dotless part key marks a pre-#35 manifest; this check must move
+        in lockstep with any future shape change.
+        """
+        for info in parsed['e'].values():
+            for part in info:
+                if '.' not in part:
+                    raise AssetResolveError(
+                        f'{apverid}: server manifest for {coord!r} is from'
+                        f' an older layout epoch (part {part!r}); refusing'
+                        f' to ingest. The server may be mid-update; retry'
+                        f' later.'
+                    )
+
     async def _tier1_download(
         self, apverid: str, language: Locale
     ) -> dict[str, str]:
@@ -1468,6 +1499,7 @@ class AssetSubsystem(AppSubsystem):
             ):
                 fm_writes[flavor_manifest.hash] = flavor_manifest.data
             parsed = json.loads(flavor_manifest.data)
+            self._validate_manifest_shape(apverid, coord, parsed)
             # The manifest carries only canonical content identity (hash +
             # size); a blob's transfer encoding is negotiated per /casblob
             # download (see _acquire_data_blob), not recorded here.

@@ -78,6 +78,14 @@ class AssetPackageRegistry {
                        const std::string& logical_path,
                        const std::string& part) const -> std::string;
 
+  /// One-line human-readable summary of a package's registered buckets
+  /// (``bucket-id(entry-count)`` pairs, or a not-registered note) for
+  /// asset-miss diagnostics. A one-shot "asset not found" fatal in the
+  /// field is only diagnosable post-hoc if the error itself says what
+  /// WAS registered (e.g. an old-layout bucket whose keys can't match —
+  /// the decision-#35 poisoned-cache incident).
+  auto DebugDescribePackage(const std::string& apverid) const -> std::string;
+
   /// Role + format-preference form of :meth:`LookupAssetHash`
   /// (asset-packages decision #35): parts are named ``<role>.<format>``,
   /// so this tries ``<role>.<fmt>`` for each format in ``format_prefs``

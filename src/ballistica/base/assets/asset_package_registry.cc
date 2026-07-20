@@ -127,6 +127,21 @@ auto AssetPackageRegistry::LookupAssetHashByRole(
   return "";
 }
 
+auto AssetPackageRegistry::DebugDescribePackage(
+    const std::string& apverid) const -> std::string {
+  auto snapshot = Snapshot_();
+  auto pkg_it = snapshot->find(apverid);
+  if (pkg_it == snapshot->end()) {
+    return "package not registered";
+  }
+  std::string out = "registered buckets:";
+  for (auto&& bucket : pkg_it->second) {
+    out +=
+        " " + bucket.first + "(" + std::to_string(bucket.second.size()) + ")";
+  }
+  return out;
+}
+
 auto AssetPackageRegistry::LookupBucketIdWithPrefix_(const std::string& apverid,
                                                      const char* prefix) const
     -> std::string {

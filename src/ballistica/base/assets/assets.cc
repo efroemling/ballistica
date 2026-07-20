@@ -1541,6 +1541,16 @@ auto Assets::FindAssetFileCas_(FileType type, const std::string& name,
                     + name + "'");
   }
 
+  // Appended to every miss below: a one-shot "not found" fatal in the
+  // field is only diagnosable post-hoc if the error says what WAS
+  // registered for the package (e.g. an old-layout bucket whose keys
+  // can't match — the decision-#35 poisoned-cache incident).
+  auto describe = [this, &name, colon_pos]() {
+    return " ["
+           + package_registry_.DebugDescribePackage(name.substr(0, colon_pos))
+           + "]";
+  };
+
   // Collision meshes are the one kind headless builds genuinely load
   // (physics), so they skip the headless short-circuit below — their
   // bytes live in the flavor-invariant constant bucket, which every
@@ -1549,7 +1559,7 @@ auto Assets::FindAssetFileCas_(FileType type, const std::string& name,
     auto cob_path = FindCasCollisionMeshPath(name);
     if (cob_path.empty()) {
       throw Exception("Collision-mesh asset not found in package: '" + name
-                      + "' (role=c).");
+                      + "' (role=c)." + describe());
     }
     return cob_path;
   }
@@ -1574,7 +1584,7 @@ auto Assets::FindAssetFileCas_(FileType type, const std::string& name,
     auto sound_path = FindCasSoundPath(name);
     if (sound_path.empty()) {
       throw Exception("Sound asset not found in package: '" + name
-                      + "' (role=a).");
+                      + "' (role=a)." + describe());
     }
     return sound_path;
   }
@@ -1585,7 +1595,7 @@ auto Assets::FindAssetFileCas_(FileType type, const std::string& name,
     auto mesh_path = FindCasMeshPath(name);
     if (mesh_path.empty()) {
       throw Exception("Mesh asset not found in package: '" + name
-                      + "' (role=m).");
+                      + "' (role=m)." + describe());
     }
     return mesh_path;
   }
@@ -1597,7 +1607,7 @@ auto Assets::FindAssetFileCas_(FileType type, const std::string& name,
     auto cube_path = FindCasCubeMapTexturePath(name);
     if (cube_path.empty()) {
       throw Exception("Cube-map asset not found in package: '" + name
-                      + "' (role=t).");
+                      + "' (role=t)." + describe());
     }
     return cube_path;
   }
@@ -1608,7 +1618,8 @@ auto Assets::FindAssetFileCas_(FileType type, const std::string& name,
   // follow-up.)
   auto path = FindCasTexturePartPath(name, "t");
   if (path.empty()) {
-    throw Exception("Asset not found in package: '" + name + "' (role=t).");
+    throw Exception("Asset not found in package: '" + name + "' (role=t)."
+                    + describe());
   }
   return path;
 }
