@@ -561,7 +561,8 @@ def _stage_enum_splices(
 ) -> tuple[str, bool]:
     """Stage builtin-asset id enum regen into ``staged`` when needed.
 
-    Regenerates the ``base.h`` / ``assets.cc`` autogen splices whenever
+    Regenerates the ``base.h`` / ``assets.cc`` autogen splices (plus the
+    fully-generated ``builtin_strings.{h,cc}`` accessor files) whenever
     the projectconfig pin moved OR the on-disk splice is out of sync with
     it. (Wrapper pins don't drive this — they're per-package runtime
     references; the construct-mode pin in projectconfig is what the

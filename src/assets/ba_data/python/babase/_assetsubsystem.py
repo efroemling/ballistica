@@ -517,6 +517,20 @@ class _CachedPackage:
     last_used: Annotated[float, IOAttrs('lu')]
 
 
+#: Layout epoch of the flavor-manifest blobs the cache manifest
+#: references. Bumped when the server-side manifest shape changes
+#: incompatibly, so a client upgrading across the change discards its
+#: cached (old-shape) flavor manifests wholesale instead of serving
+#: them to lookups that expect the new shape. Discard is cheap: leaf
+#: data blobs are shape-invariant and stay reusable by hash, so a
+#: re-resolve only re-downloads the small flavor-manifest blobs (the
+#: orphaned old ones get swept by GC). History: 1 = original shape
+#: (container-extension keys + single-char parts); 2 = pure
+#: logical-path keys + ``<role>.<format>`` parts (asset-packages
+#: decision #35, 2026-07-19).
+_CACHE_MANIFEST_LAYOUT_VERSION = 2
+
+
 @ioprepped
 @dataclass
 class _CacheManifest:
@@ -538,6 +552,13 @@ class _CacheManifest:
     flavor_manifest_last_used: Annotated[dict[str, float], IOAttrs('f')] = (
         field(default_factory=dict)
     )
+
+    #: The ``_CACHE_MANIFEST_LAYOUT_VERSION`` this manifest was written
+    #: at. Defaults to 1 (not the current version!) so manifests
+    #: predating the field read as the original epoch; construction
+    #: sites must pass the current version explicitly. A mismatch on
+    #: load discards the manifest (see ``_load_manifest``).
+    layout_version: Annotated[int, IOAttrs('v')] = 1
 
 
 class AssetSubsystem(AppSubsystem):
@@ -1007,10 +1028,10 @@ class AssetSubsystem(AppSubsystem):
         if fm_hash is None or self._locate_blob(fm_hash) is None:
             return {}
 
-        # The blob lives at logical path 'language.json' part 'j' (the same
-        # one native ReloadLanguage looks up).
-        parts = self._read_entries(fm_hash).get('language.json')
-        blob_hash = parts.get('j') if parts else None
+        # The blob lives at logical path 'language' part 'j.json' (the
+        # same one native ReloadLanguage looks up).
+        parts = self._read_entries(fm_hash).get('language')
+        blob_hash = parts.get('j.json') if parts else None
         if blob_hash is None:
             return {}
         path = self._locate_blob(blob_hash)
@@ -1794,15 +1815,33 @@ class AssetSubsystem(AppSubsystem):
         path = self._manifest_path
         try:
             with open(path, encoding='utf-8') as infile:
-                return dataclass_from_json(_CacheManifest, infile.read())
+                manifest = dataclass_from_json(_CacheManifest, infile.read())
         except FileNotFoundError:
-            return _CacheManifest()
+            return self._fresh_manifest()
         except Exception as exc:
             logger.exception(
                 'Error loading asset cache manifest %s; starting fresh.', path
             )
             strip_exception_tracebacks(exc)
-            return _CacheManifest()
+            return self._fresh_manifest()
+        if manifest.layout_version != _CACHE_MANIFEST_LAYOUT_VERSION:
+            # The cached flavor manifests were written at a different
+            # shape epoch than this build expects; drop them wholesale
+            # (packages simply re-resolve; shape-invariant data blobs
+            # stay reusable by hash and orphans get swept by GC).
+            logger.info(
+                'Discarding asset cache manifest at layout version %d'
+                ' (current is %d).',
+                manifest.layout_version,
+                _CACHE_MANIFEST_LAYOUT_VERSION,
+            )
+            return self._fresh_manifest()
+        return manifest
+
+    @staticmethod
+    def _fresh_manifest() -> _CacheManifest:
+        """An empty cache manifest at the current layout version."""
+        return _CacheManifest(layout_version=_CACHE_MANIFEST_LAYOUT_VERSION)
 
     def _commit_manifest(
         self, manifest_pkgs: dict[str, dict[str, str]], now: float
@@ -1943,7 +1982,9 @@ class AssetSubsystem(AppSubsystem):
         }
         self._persist_manifest(
             _CacheManifest(
-                packages=new_packages, flavor_manifest_last_used=new_fmlu
+                packages=new_packages,
+                flavor_manifest_last_used=new_fmlu,
+                layout_version=_CACHE_MANIFEST_LAYOUT_VERSION,
             )
         )
         return live, time.monotonic() - start

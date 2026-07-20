@@ -94,23 +94,6 @@ def open_url_with_webbrowser_module(url: str) -> None:
         _babase.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
 
 
-def rejecting_invite_already_in_party_message() -> None:
-    from babase._language import Lstr
-
-    _babase.screenmessage(
-        Lstr(resource='internal.rejectingInviteAlreadyInPartyText'),
-        color=(1, 0.5, 0),
-    )
-
-
-def connection_failed_message() -> None:
-    from babase._language import Lstr
-
-    _babase.screenmessage(
-        Lstr(resource='internal.connectionFailedText'), color=(1, 0.5, 0)
-    )
-
-
 def temporarily_unavailable_message() -> None:
     from babase._language import Lstr
 

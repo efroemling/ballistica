@@ -1,10 +1,6 @@
 # Engine Asset Loading
 
-**Description:** The C++ client asset lifecycle — the claimed state
-machine, the preload/load pipeline and its threads, the on-demand
-inline-load escape hatch, and the platform-call thread-safety
-contract that escape hatch imposes (notably for OS text
-rasterization).
+**Description:** The C++ client asset lifecycle — the claimed load-state machine, preload/load threading, the inline-load escape hatch, and the platform-call thread-safety contract it imposes.
 
 This covers the *engine-level* machinery in
 `src/ballistica/base/assets/` — how an individual `Asset` gets its

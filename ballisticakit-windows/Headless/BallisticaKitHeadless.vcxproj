@@ -217,6 +217,8 @@
     <ClInclude Include="..\..\src\ballistica\base\assets\assets.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\assets_server.cc" />
     <ClInclude Include="..\..\src\ballistica\base\assets\assets_server.h" />
+    <ClCompile Include="..\..\src\ballistica\base\assets\builtin_strings.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\assets\builtin_strings.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\collision_mesh_asset.cc" />
     <ClInclude Include="..\..\src\ballistica\base\assets\collision_mesh_asset.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\data_asset.cc" />

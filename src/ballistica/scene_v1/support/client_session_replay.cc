@@ -8,7 +8,7 @@
 #include <utility>
 #include <vector>
 
-#include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
@@ -243,8 +243,8 @@ void ClientSessionReplay::FetchMessages() {
 void ClientSessionReplay::Error(const std::string& description) {
   // Close the replay, announce something went wrong with it, and then do
   // standard error response..
-  g_base->ScreenMessage(
-      g_base->assets->GetResourceString("replayReadErrorText"), {1, 0, 0});
+  g_base->ScreenMessage(base::BuiltinStrings::Replay::ReadError()->Evaluate(),
+                        {1, 0, 0});
   if (file_) {
     fclose(file_);
     file_ = nullptr;
@@ -297,8 +297,7 @@ void ClientSessionReplay::OnReset(bool rewind) {
     }
     if (version > kProtocolVersionMax || version < kProtocolVersionClientMin) {
       g_base->ScreenMessage(
-          g_base->assets->GetResourceString("replayVersionErrorText"),
-          {1, 0, 0});
+          base::BuiltinStrings::Replay::VersionError()->Evaluate(), {1, 0, 0});
       End();
       return;
     }

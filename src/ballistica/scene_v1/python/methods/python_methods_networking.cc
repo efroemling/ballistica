@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/networking/network_reader.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/classic/support/classic_app_mode.h"
@@ -427,8 +427,7 @@ static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
     }
   } catch (const std::exception&) {
     g_base->ScreenMessage(
-        g_base->assets->GetResourceString("invalidAddressErrorText"),
-        {1, 0, 0});
+        base::BuiltinStrings::Net::InvalidAddress()->Evaluate(), {1, 0, 0});
     Py_RETURN_NONE;
   }
   g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [&s] {

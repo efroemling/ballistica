@@ -10,6 +10,7 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
@@ -147,31 +148,27 @@ void Input::AnnounceConnects_() {
 
     // If there's been several connected, just give a number.
     if (newly_connected_controllers_.size() > 1) {
-      std::string s =
-          g_base->assets->GetResourceString("controllersDetectedText");
-      Utils::StringReplaceOne(
-          &s, "${COUNT}", std::to_string(newly_connected_controllers_.size()));
-      g_base->ScreenMessage(s);
+      g_base->ScreenMessage(
+          BuiltinStrings::Input::ControllersDetected(
+              static_cast<int64_t>(newly_connected_controllers_.size()))
+              ->Evaluate());
     } else {
       g_base->ScreenMessage(
-          g_base->assets->GetResourceString("controllerDetectedText"));
+          BuiltinStrings::Input::ControllerDetected()->Evaluate());
     }
 
   } else {
     // If there's been several connected, just give a number.
     if (newly_connected_controllers_.size() > 1) {
-      std::string s =
-          g_base->assets->GetResourceString("controllersConnectedText");
-      Utils::StringReplaceOne(
-          &s, "${COUNT}", std::to_string(newly_connected_controllers_.size()));
-      g_base->ScreenMessage(s);
+      g_base->ScreenMessage(
+          BuiltinStrings::Input::ControllersConnected(
+              static_cast<int64_t>(newly_connected_controllers_.size()))
+              ->Evaluate());
     } else {
       // If its just one, give its name.
-      std::string s =
-          g_base->assets->GetResourceString("controllerConnectedText");
-      Utils::StringReplaceOne(&s, "${CONTROLLER}",
-                              newly_connected_controllers_.front());
-      g_base->ScreenMessage(s);
+      g_base->ScreenMessage(BuiltinStrings::Input::ControllerConnected(
+                                newly_connected_controllers_.front())
+                                ->Evaluate());
     }
     if (g_base->assets->sys_assets_loaded()) {
       g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioGunCocking);
@@ -183,18 +180,15 @@ void Input::AnnounceConnects_() {
 void Input::AnnounceDisconnects_() {
   // If there's been several connected, just give a number.
   if (newly_disconnected_controllers_.size() > 1) {
-    std::string s =
-        g_base->assets->GetResourceString("controllersDisconnectedText");
-    Utils::StringReplaceOne(
-        &s, "${COUNT}", std::to_string(newly_disconnected_controllers_.size()));
-    g_base->ScreenMessage(s);
+    g_base->ScreenMessage(
+        BuiltinStrings::Input::ControllersDisconnected(
+            static_cast<int64_t>(newly_disconnected_controllers_.size()))
+            ->Evaluate());
   } else {
     // If its just one, name it.
-    std::string s =
-        g_base->assets->GetResourceString("controllerDisconnectedText");
-    Utils::StringReplaceOne(&s, "${CONTROLLER}",
-                            newly_disconnected_controllers_.front());
-    g_base->ScreenMessage(s);
+    g_base->ScreenMessage(BuiltinStrings::Input::ControllerDisconnected(
+                              newly_disconnected_controllers_.front())
+                              ->Evaluate());
   }
   if (g_base->assets->sys_assets_loaded()) {
     g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioCorkPop);

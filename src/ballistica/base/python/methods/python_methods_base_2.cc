@@ -1234,9 +1234,10 @@ static PyMethodDef PyRegisterAssetPackageBucketDef = {
     "the C++ runtime registry. Called from the babase startup path after\n"
     "parsing the bundled top-level ``manifest.json`` and each referenced\n"
     "bucket-manifest blob from the CAS store. ``entries`` maps logical\n"
-    "asset paths (e.g. ``textures/helloworld.ktx2``) to a\n"
-    "part-keyed component map ``{part: CAS_hash}`` (e.g. ``t`` = texture\n"
-    "data, ``j`` = descriptor); a null asset maps to an empty dict."};
+    "asset paths (e.g. ``textures/helloworld``) to a part-keyed\n"
+    "component map ``{part: CAS_hash}`` with ``<role>.<format>`` part\n"
+    "names (e.g. ``t.ktx2`` = texture data); a null asset maps to an\n"
+    "empty dict."};
 
 // ---------------- register_asset_package_buckets -----------------------------
 
@@ -1315,7 +1316,8 @@ static auto PyGetAssetPackageConstantBlobPath(PyObject* self, PyObject* args,
   if (bucket_id.empty()) {
     Py_RETURN_NONE;
   }
-  auto hash = registry->LookupAssetHash(apverid, bucket_id, logical_path, "j");
+  auto hash = registry->LookupAssetHashByRole(apverid, bucket_id, logical_path,
+                                              "j", {"json"});
   if (hash.empty()) {
     Py_RETURN_NONE;
   }
@@ -1335,9 +1337,9 @@ static PyMethodDef PyGetAssetPackageConstantBlobPathDef = {
     "path in a registered asset-package to its on-disk CAS blob path.\n"
     "Returns the path, or ``None`` if the package isn't registered, has\n"
     "no constant bucket, or doesn't carry that logical path. The blob is\n"
-    "the JSON (``j``) component. The returned path is where the blob\n"
-    "should live (writable CAS root, else bundle root); a caller must\n"
-    "still handle a genuine ``open()`` failure."};
+    "the JSON (``j.json``) component. The returned path is where the\n"
+    "blob should live (writable CAS root, else bundle root); a caller\n"
+    "must still handle a genuine ``open()`` failure."};
 
 // ---------------- set_asset_name_compat_versions -----------------------------
 

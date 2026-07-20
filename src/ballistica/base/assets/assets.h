@@ -224,20 +224,22 @@ class Assets {
   /// path. See the implementation.
   auto PreferredTextureProfile() const -> std::string;
 
-  /// Resolve one *part* of a texture qualified-ref (``<apverid>:<name>``)
-  /// to its CAS blob path. Textures are single-part today — part ``"t"``
-  /// is the texture-data component (the placeholder ``"j"`` sidecar was
-  /// dropped; see decision #16 follow-up). The part argument is kept
-  /// general so multi-file logical assets (e.g. fonts: atlas + metrics)
-  /// can pull individual component files. Returns ``""`` if the name isn't
-  /// a CAS ref, the part is absent, or in headless mode. A transitional
-  /// seam until the full AssetLayout resolve (decision #16, shape b) lands.
-  auto FindCasTexturePartPath(const std::string& name, const std::string& part)
+  /// Resolve one part role of a texture qualified-ref
+  /// (``<apverid>:<logical-path>``) to its CAS blob path. Textures are
+  /// single-part today — role ``"t"`` is the texture-data component (the
+  /// placeholder ``"j"`` sidecar was dropped; see decision #16
+  /// follow-up); the current format preference is ``{ktx2}`` (decision
+  /// #35). The role argument is kept general so multi-file logical
+  /// assets (e.g. fonts: atlas + metrics) can pull individual component
+  /// files. Returns ``""`` if the name isn't a CAS ref, the role is
+  /// absent, or in headless mode. A transitional seam until the full
+  /// AssetLayout resolve (decision #16, shape b) lands.
+  auto FindCasTexturePartPath(const std::string& name, const std::string& role)
       -> std::string;
 
   /// Cube-map analog of :meth:`FindCasTexturePartPath` (decision #24):
   /// resolve a cube-map qualified-ref to its single ``faceCount=6``
-  /// KTX2 CAS blob (part ``"t"`` in the package's resolved
+  /// KTX2 CAS blob (part ``t.ktx2`` in the package's resolved
   /// ``textures/...`` bucket — cube maps share the 2D textures bucket,
   /// distinguished by call-site, not a separate bucket head). Returns
   /// ``""`` if the name isn't a CAS ref, the asset/part is absent, or in
@@ -246,19 +248,19 @@ class Assets {
 
   /// Audio analog of :meth:`FindCasTexturePartPath` (decision #25):
   /// resolve a sound qualified-ref to its single ogg-vorbis CAS blob
-  /// (part ``"a"`` in the package's resolved ``audio/...`` bucket).
+  /// (part ``a.ogg`` in the package's resolved ``audio/...`` bucket).
   /// Returns ``""`` if the name isn't a CAS ref, the asset/part is
   /// absent, or in headless mode.
   auto FindCasSoundPath(const std::string& name) -> std::string;
 
   /// Display-mesh analog of :meth:`FindCasSoundPath` (decision #26):
   /// resolve a mesh qualified-ref to its single bob CAS blob (part
-  /// ``"m"`` in the package's resolved ``meshes/...`` bucket).
+  /// ``m.bob`` in the package's resolved ``meshes/...`` bucket).
   /// Returns ``""`` if the name isn't a CAS ref, the asset/part is
   /// absent, or in headless mode.
   auto FindCasMeshPath(const std::string& name) -> std::string;
 
-  /// Collision-mesh CAS resolve (decision #26): part ``"c"`` in the
+  /// Collision-mesh CAS resolve (decision #26): part ``c.cob`` in the
   /// package's ``constant`` bucket. Unlike the other kinds this works
   /// in headless mode too — collision geometry is the one asset kind
   /// headless builds genuinely load.

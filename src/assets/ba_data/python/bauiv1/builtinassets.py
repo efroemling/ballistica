@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260715`` (bauiv1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260719g`` (bauiv1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,20 +9,23 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260715
+# ba_meta require asset-package a-0.babuiltinassets.260719g
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260715'
+__asset_package__ = 'a-0.babuiltinassets.260719g'
 
 from typing import TYPE_CHECKING
 
 from bauiv1._assetref import AssetRefDir
 
+from bacommon.langstr import LangStrDir
+
 if TYPE_CHECKING:
     from bauiv1._assetref import MeshRef, SoundRef, TextureRef
+    from bacommon.langstr import LangStr
 
     class AudioGroup:
         """
@@ -133,6 +136,274 @@ if TYPE_CHECKING:
         window_hsmall_vsmall_transparent: MeshRef
         wing: MeshRef
 
+    class StringsAudioGroup:
+        """
+        Audio-related messages: music/custom-soundtrack playback errors.
+
+        See source for the full asset list.
+        """
+
+        def music_play_error(self, *, music: str | LangStr) -> LangStr:
+            """
+            Error screen-message shown when a custom-soundtrack music file fails
+            to play; the placeholder is the quoted filename.
+
+            English: "Error playing music: {music}"
+            """
+
+    class StringsInputGroup:
+        """
+        Input-device strings: device display names and connect/disconnect
+        notices.
+
+        See source for the full asset list.
+        """
+
+        def axis(self, *, number: str | LangStr) -> LangStr:
+            """
+            Short lowercase label identifying a numbered joystick axis by index;
+            used inline in axis-name displays such as the controls-configuration
+            UI. The {number} placeholder is the axis index.
+
+            English: "axis {number}"
+            """
+
+        def button(self, *, number: str | LangStr) -> LangStr:
+            """
+            Short lowercase label identifying a numbered controller button by
+            index; used inline in button-name displays such as the
+            controls-configuration UI. The {number} placeholder is the button
+            index.
+
+            English: "button {number}"
+            """
+
+        def controller_connected(self, *, controller: str | LangStr) -> LangStr:
+            """
+            Transient screen-message shown when a single game controller
+            connects, naming the device (several connecting at once use a
+            separate counted message).
+
+            English: "{controller} connected."
+            """
+
+        #: Transient screen-message shown at app startup when exactly one game
+        #: controller is detected (multiple controllers at startup use a
+        #: separate counted message).
+        #:
+        #: English: "1 controller detected."
+        controller_detected: LangStr
+
+        def controller_disconnected(
+            self, *, controller: str | LangStr
+        ) -> LangStr:
+            """
+            Transient screen-message shown when a single game controller
+            disconnects, naming the device (several disconnecting at once use a
+            separate counted message).
+
+            English: "{controller} disconnected."
+            """
+
+        def controller_reconnected(
+            self, *, controller: str | LangStr
+        ) -> LangStr:
+            """
+            Transient screen-message shown when a previously-connected game
+            controller (e.g. a BombSquad Remote phone client) reconnects, naming
+            the device.
+
+            English: "{controller} reconnected."
+            """
+
+        def controllers_connected(self, *, count: int) -> LangStr:
+            """
+            Transient screen-message shown when multiple game controllers
+            connect at the same time (a single controller connecting shows a
+            different message naming that controller).
+
+            English: (one) "# controller connected." / (other) "# controllers
+            connected."
+            """
+
+        def controllers_detected(self, *, count: int) -> LangStr:
+            """
+            Transient screen-message shown at app startup when more than one
+            game controller is detected at once (a single controller at startup
+            uses a separate message).
+
+            English: (one) "# controller detected." / (other) "# controllers
+            detected."
+            """
+
+        def controllers_disconnected(self, *, count: int) -> LangStr:
+            """
+            Transient screen-message shown when multiple game controllers
+            disconnect at the same time (a single controller disconnecting shows
+            a different message naming that controller).
+
+            English: (one) "# controller disconnected." / (other) "# controllers
+            disconnected."
+            """
+
+        #: Display name for the keyboard input device; shown in input-device
+        #: lists, controls-configuration UI, and messages naming the device.
+        #:
+        #: English: "Keyboard"
+        keyboard: LangStr
+
+        #: Display name for the touch-screen input device; shown in input-device
+        #: lists, controls-configuration UI, and messages naming the device.
+        #:
+        #: English: "TouchScreen"
+        touch_screen: LangStr
+
+        #: Warning screen-message shown when the touchscreen joins the game
+        #: while physical controllers are already active (touch joins are often
+        #: accidental then); tells the player how to back out. 'Menu' and 'Leave
+        #: Game' refer to in-game menu items.
+        #:
+        #: English: "You have joined with the touchscreen. If this was a
+        #: mistake, tap Menu -> Leave Game with it to back out."
+        touch_screen_join_warning: LangStr
+
+        #: Confirmation screen-message shown in VR mode when the player resets
+        #: the headset's forward orientation via their controller.
+        #:
+        #: English: "VR orientation reset."
+        vr_orientation_reset: LangStr
+
+    class StringsNetGroup:
+        """
+        Networking error messages shown to the player.
+
+        See source for the full asset list.
+        """
+
+        #: Error screen-message shown when the player enters a malformed network
+        #: address trying to connect to a game party.
+        #:
+        #: English: "Error: invalid address."
+        invalid_address: LangStr
+
+    class StringsReplayGroup:
+        """
+        Game-replay playback error messages.
+
+        See source for the full asset list.
+        """
+
+        #: Error screen-message shown when a game replay file can't be read
+        #: (corrupt or truncated).
+        #:
+        #: English: "Error reading replay file."
+        read_error: LangStr
+
+        #: Error screen-message shown when a saved game replay was recorded by
+        #: an incompatible game version and can't be played back.
+        #:
+        #: English: "Sorry, this replay was made in a different version of the
+        #: game and can't be used."
+        version_error: LangStr
+
+    class StringsSessionGroup:
+        """
+        Gameplay-session messages shown by the host: idle-player kick notices
+        and similar.
+
+        See source for the full asset list.
+        """
+
+        def kick_idle_kicked(self, *, name: str | LangStr) -> LangStr:
+            """
+            Screen-message shown on the host when a player is removed from the
+            game for being idle too long (the kick-idle-players option).
+
+            English: "Kicking {name} for being idle."
+            """
+
+        def kick_idle_warning(
+            self, *, seconds: int, name: str | LangStr
+        ) -> LangStr:
+            """
+            Screen-message warning shown on the host shortly before an idle
+            player gets kicked (the kick-idle-players option); followed by the
+            kick_idle_warning_settings note.
+
+            English: (one) "{name} will be kicked in # second if still idle." /
+            (other) "{name} will be kicked in # seconds if still idle."
+            """
+
+        #: Parenthesized note shown right after the kick_idle_warning message,
+        #: pointing at where the kick-idle-players behavior can be disabled.
+        #: 'Settings' and 'Advanced' refer to the in-game settings menu
+        #: sections.
+        #:
+        #: English: "(you can turn this off in Settings -> Advanced)"
+        kick_idle_warning_settings: LangStr
+
+    class StringsUiGroup:
+        """
+        General UI strings: menu-control ownership messages and list-navigation
+        hints.
+
+        See source for the full asset list.
+        """
+
+        def arrows_to_exit_list(
+            self, *, left: str | LangStr, right: str | LangStr
+        ) -> LangStr:
+            """
+            Lowercase hint shown (with an error sound) when the player hits the
+            edge of a UI list; tells them how to move focus out of it. The two
+            placeholders are substituted with left/right arrow glyph characters.
+
+            English: "press {left} or {right} to exit list"
+            """
+
+        def has_menu_control(self, *, name: str | LangStr) -> LangStr:
+            """
+            Screen-message shown when an input device tries to use a menu
+            another device currently controls; names the controlling device. A
+            timeout suffix (menu_control_time_out or menu_control_will_time_out)
+            is appended after it.
+
+            English: "{name} has menu control."
+            """
+
+        def menu_control_time_out(self, *, seconds: int) -> LangStr:
+            """
+            Parenthesized suffix appended after the has_menu_control message
+            once the controlling device's ownership is close to expiring; gives
+            the remaining seconds.
+
+            English: (one) "(times out in # second)" / (other) "(times out in #
+            seconds)"
+            """
+
+        #: Parenthesized suffix appended after the has_menu_control message
+        #: while the controlling device's ownership is not yet close to
+        #: expiring.
+        #:
+        #: English: "(will time out if idle)"
+        menu_control_will_time_out: LangStr
+
+    class StringsGroup:
+        """
+        New-format engine strings needed early or accessed from the C++ layer
+        via the builtin-strings API (see ballistica-internal
+        strings-asset-migration decision D22).
+
+        See source for the full asset list.
+        """
+
+        audio: StringsAudioGroup
+        input: StringsInputGroup
+        net: StringsNetGroup
+        replay: StringsReplayGroup
+        session: StringsSessionGroup
+        ui: StringsUiGroup
+
     class TexturesGroup:
         """
         Textures needed during engine bootstrap and early UI, including the
@@ -232,6 +503,10 @@ if TYPE_CHECKING:
     #: ``action_button_left``, ``action_button_right``, ``action_button_top``,
     #: ``arrow_back``, and 67 more). Full list in source.
     meshes: MeshesGroup
+
+    #: The ``strings`` group - 24 strings (``audio``, ``input``, ``net``,
+    #: ``replay``, ``session``, and 19 more). Full list in source.
+    strings: StringsGroup
 
     #: The ``textures`` group - 82 assets (``action_buttons``, ``arrow``,
     #: ``back_icon``, ``black``, ``bomb_button``, and 77 more). Full list in
@@ -335,6 +610,37 @@ _TREE = {
         'window_hsmall_vsmall_transparent': 'm',
         'wing': 'm',
     },
+    'strings': {
+        'audio': {'music_play_error': ('music',)},
+        'input': {
+            'axis': ('number',),
+            'button': ('number',),
+            'controller_connected': ('controller',),
+            'controller_detected': (),
+            'controller_disconnected': ('controller',),
+            'controller_reconnected': ('controller',),
+            'controllers_connected': ('count',),
+            'controllers_detected': ('count',),
+            'controllers_disconnected': ('count',),
+            'keyboard': (),
+            'touch_screen': (),
+            'touch_screen_join_warning': (),
+            'vr_orientation_reset': (),
+        },
+        'net': {'invalid_address': ()},
+        'replay': {'read_error': (), 'version_error': ()},
+        'session': {
+            'kick_idle_kicked': ('name',),
+            'kick_idle_warning': ('seconds', 'name'),
+            'kick_idle_warning_settings': (),
+        },
+        'ui': {
+            'arrows_to_exit_list': ('left', 'right'),
+            'has_menu_control': ('name',),
+            'menu_control_time_out': ('seconds',),
+            'menu_control_will_time_out': (),
+        },
+    },
     'textures': {
         'action_buttons': 't',
         'arrow': 't',
@@ -425,4 +731,5 @@ _TREE = {
 if not TYPE_CHECKING:
     audio = AssetRefDir(__asset_package__, _TREE['audio'], 'audio')
     meshes = AssetRefDir(__asset_package__, _TREE['meshes'], 'meshes')
+    strings = LangStrDir(__asset_package__, _TREE['strings'], 'strings')
     textures = AssetRefDir(__asset_package__, _TREE['textures'], 'textures')

@@ -59,8 +59,6 @@ class BasePython {
     kSetConfigFullscreenOnCall,
     kSetConfigFullscreenOffCall,
     kNotSignedInScreenMessageCall,
-    kRejectingInviteAlreadyInPartyMessageCall,
-    kConnectionFailedMessageCall,
     kTemporarilyUnavailableMessageCall,
     kInProgressMessageCall,
     kErrorMessageCall,

@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
@@ -437,22 +438,19 @@ void HostSession::DecrementPlayerTimeOuts(millisecs_t millisecs) {
     Player* player = i.get();
     assert(player);
     if (player->time_out() < millisecs) {
-      std::string kick_str =
-          g_base->assets->GetResourceString("kickIdlePlayersKickedText");
-      Utils::StringReplaceOne(&kick_str, "${NAME}", player->GetName());
-      g_base->ScreenMessage(kick_str);
+      g_base->ScreenMessage(
+          base::BuiltinStrings::Session::KickIdleKicked(player->GetName())
+              ->Evaluate());
       RemovePlayer(player);
       return;  // Bail for this round since we prolly mucked with the list.
     } else if (player->time_out() > BA_PLAYER_TIME_OUT_WARN
                && (player->time_out() - millisecs <= BA_PLAYER_TIME_OUT_WARN)) {
-      std::string kick_str_1 =
-          g_base->assets->GetResourceString("kickIdlePlayersWarning1Text");
-      Utils::StringReplaceOne(&kick_str_1, "${NAME}", player->GetName());
-      Utils::StringReplaceOne(&kick_str_1, "${COUNT}",
-                              std::to_string(BA_PLAYER_TIME_OUT_WARN / 1000));
-      g_base->ScreenMessage(kick_str_1);
       g_base->ScreenMessage(
-          g_base->assets->GetResourceString("kickIdlePlayersWarning2Text"));
+          base::BuiltinStrings::Session::KickIdleWarning(
+              int64_t{BA_PLAYER_TIME_OUT_WARN / 1000}, player->GetName())
+              ->Evaluate());
+      g_base->ScreenMessage(
+          base::BuiltinStrings::Session::KickIdleWarningSettings()->Evaluate());
     }
     player->set_time_out(player->time_out() - millisecs);
   }

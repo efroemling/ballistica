@@ -100,6 +100,12 @@
     <ClInclude Include="..\..\src\ballistica\base\assets\assets_server.h">
       <Filter>ballistica\base\assets</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\assets\builtin_strings.cc">
+      <Filter>ballistica\base\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\assets\builtin_strings.h">
+      <Filter>ballistica\base\assets</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\assets\collision_mesh_asset.cc">
       <Filter>ballistica\base\assets</Filter>
     </ClCompile>

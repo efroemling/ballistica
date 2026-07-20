@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 #: Process-lifetime cache for :func:`get_legacy_langdata` (the constant
-#: ``legacylangdata.json`` blob is flavor-invariant, so it is stable for
+#: ``legacylangdata`` blob is flavor-invariant, so it is stable for
 #: the life of the process once read).
 _g_legacy_langdata: dict[str, Any] | None = None
 
@@ -27,8 +27,8 @@ def get_legacy_langdata() -> dict[str, Any]:
 
     This is the legacy ``langdata.json`` payload (translated language
     names + translation contributors), now sourced from the builtin
-    asset-package's flavor-invariant ``constant`` bucket
-    (``legacylangdata.json``) rather than a bundled data file.
+    asset-package's flavor-invariant ``constant`` bucket (logical path
+    ``legacylangdata``) rather than a bundled data file.
 
     Returns ``{}`` when the blob is unavailable (headless / no bundled
     asset-package manifest / not yet resolved) or on any read error, so
@@ -48,7 +48,7 @@ def get_legacy_langdata() -> dict[str, Any]:
     result: dict[str, Any] = {}
     for apverid in loaded_asset_package_apverids():
         path = _babase.get_asset_package_constant_blob_path(
-            apverid, 'legacylangdata.json'
+            apverid, 'legacylangdata'
         )
         if path is None:
             continue

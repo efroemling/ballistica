@@ -790,6 +790,19 @@ def check_builtin_asset_ids(self: ProjectUpdater) -> None:
             f' `tools/pcommand gen_builtin_asset_ids` to regenerate it.'
         )
 
+    # The fully-generated builtin-strings accessor header embeds the
+    # same pin in its ``Generated from: "<apverid>"`` banner line; the
+    # same quoted-substring compare catches a stale regen there.
+    strings_h = (
+        Path(self.projroot) / 'src/ballistica/base/assets/builtin_strings.h'
+    ).read_text()
+    if f'"{apverid}"' not in strings_h:
+        raise CleanError(
+            f'Generated builtin_strings.h does not reference the'
+            f' projectconfig "assets" pin ({apverid}); it is stale. Run'
+            f' `tools/pcommand gen_builtin_asset_ids` to regenerate it.'
+        )
+
 
 def check_misc(self: ProjectUpdater) -> None:
     """Check misc project stuff."""

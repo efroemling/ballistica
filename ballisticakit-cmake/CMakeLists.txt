@@ -346,6 +346,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/assets/assets.h
   ${BA_SRC_ROOT}/ballistica/base/assets/assets_server.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/assets_server.h
+  ${BA_SRC_ROOT}/ballistica/base/assets/builtin_strings.cc
+  ${BA_SRC_ROOT}/ballistica/base/assets/builtin_strings.h
   ${BA_SRC_ROOT}/ballistica/base/assets/collision_mesh_asset.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/collision_mesh_asset.h
   ${BA_SRC_ROOT}/ballistica/base/assets/data_asset.cc
