@@ -384,6 +384,7 @@ class PublicGatherTab(GatherTab):
         self._update_timer: bui.AppTimer | None = None
         self._host_scrollwidget: bui.Widget | None = None
         self._host_name_text: bui.Widget | None = None
+        self._host_password_text: bui.Widget | None = None
         self._host_toggle_button: bui.Widget | None = None
         self._last_server_list_query_time: float | None = None
         self._join_list_column: bui.Widget | None = None
@@ -738,9 +739,9 @@ class PublicGatherTab(GatherTab):
         c_width = region_width
         c_height = region_height - 20
         v = c_height - 35
-        v -= 25
+        v -= 20
         is_public_enabled = bs.get_public_party_enabled()
-        v -= 30
+        v -= 25
 
         bui.textwidget(
             parent=self._container,
@@ -754,7 +755,7 @@ class PublicGatherTab(GatherTab):
             position=(region_width * 0.5, v + 10),
             text=bui.Lstr(resource='gatherWindow.publicHostRouterConfigText'),
         )
-        v -= 30
+        v -= 20
 
         # Nudge party name and size values to be mostly centered.
         xoffs = region_width * 0.5 - 500
@@ -786,6 +787,37 @@ class PublicGatherTab(GatherTab):
             shadow=0.3,
             flatness=1.0,
             description=party_name_text,
+            autoselect=True,
+            v_align='center',
+            corner_scale=1.0,
+        )
+
+        v -= 60
+        party_password_text = stdassets.strings.gather.password_optional
+        bui.textwidget(
+            parent=self._container,
+            size=(0, 0),
+            h_align='right',
+            v_align='center',
+            maxwidth=200,
+            scale=0.8,
+            color=bui.app.ui_v1.infotextcolor,
+            position=(210 + xoffs, v - 9),
+            text=party_password_text,
+        )
+        self._host_password_text = bui.textwidget(
+            parent=self._container,
+            id=f'{self._idprefix}|hostingpassword',
+            editable=True,
+            size=(535, 40),
+            position=(230 + xoffs, v - 30),
+            text=bui.app.config.get('Public Party Password', ''),
+            maxwidth=494,
+            max_chars=100,
+            password=True,
+            shadow=0.3,
+            flatness=1.0,
+            description=party_password_text.evaluate(),
             autoselect=True,
             v_align='center',
             corner_scale=1.0,
@@ -838,8 +870,8 @@ class PublicGatherTab(GatherTab):
             label='+',
             autoselect=True,
         )
-        v -= 50
-        v -= 70
+        v -= 45
+        v -= 90
         if is_public_enabled:
             label = bui.Lstr(
                 resource='gatherWindow.makePartyPrivateText',
@@ -864,9 +896,12 @@ class PublicGatherTab(GatherTab):
             autoselect=True,
             up_widget=btn2,
         )
-        bui.widget(edit=self._host_name_text, down_widget=btn2)
-        bui.widget(edit=btn2, up_widget=self._host_name_text)
-        bui.widget(edit=btn1, up_widget=self._host_name_text)
+        bui.widget(
+            edit=self._host_name_text, down_widget=self._host_password_text
+        )
+        bui.widget(edit=self._host_password_text, down_widget=btn2)
+        bui.widget(edit=btn2, up_widget=self._host_password_text)
+        bui.widget(edit=btn1, up_widget=self._host_password_text)
         assert self._join_text is not None
         bui.widget(edit=self._join_text, down_widget=self._host_name_text)
         v -= 10
@@ -985,11 +1020,19 @@ class PublicGatherTab(GatherTab):
         self._update_party_lists()
 
         # If we've got a party-name text widget, keep its value plugged
-        # into our public host name.
+        # into our public host name — but only while we're actually
+        # advertising; otherwise the name would linger in things like
+        # LAN-scan responses after we stop. (The make-party-public press
+        # reads the widget directly, so nothing is lost by not syncing
+        # beforehand.)
         text = self._host_name_text
-        if text:
+        if text and bs.get_public_party_enabled():
             name = cast(str, bui.textwidget(query=self._host_name_text))
             bs.set_public_party_name(name)
+            # Same story for the password field.
+            pwtext = self._host_password_text
+            if pwtext:
+                bs.set_host_password(cast(str, bui.textwidget(query=pwtext)))
 
         # Update status text and loading spinner.
         if self._join_status_text:
@@ -1447,8 +1490,11 @@ class PublicGatherTab(GatherTab):
             builtinassets.audio.error.get().play()
             return
         bs.set_public_party_name(name)
+        password = cast(str, bui.textwidget(query=self._host_password_text))
+        bs.set_host_password(password)
         cfg = bui.app.config
         cfg['Public Party Name'] = name
+        cfg['Public Party Password'] = password
         cfg.commit()
         stdassets.audio.shield_up.get().play()
         bs.set_public_party_enabled(True)
@@ -1469,6 +1515,14 @@ class PublicGatherTab(GatherTab):
 
     def _on_stop_advertising_press(self) -> None:
         bs.set_public_party_enabled(False)
+
+        # Clear the party name so things like LAN-scan responses don't
+        # keep advertising it once we're no longer public. (Our stored
+        # config value survives for pre-filling the UI next time.)
+        bs.set_public_party_name('')
+
+        # Ditto for the password requirement.
+        bs.set_host_password('')
 
         # In GUI builds we want to authenticate clients only when
         # hosting public parties.

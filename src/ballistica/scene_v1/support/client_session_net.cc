@@ -18,18 +18,9 @@
 namespace ballistica::scene_v1 {
 
 ClientSessionNet::ClientSessionNet() {
-  // Sanity check: we should only ever be writing one replay at once.
-  if (g_scene_v1->replay_open) {
-    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                         "g_scene_v1->replay_open true at netclient start;"
-                         " shouldn't happen.");
-  }
-  assert(g_base->assets_server);
-
-  // We always write replays as the highest protocol version we support.
-  replay_writer_ = new ReplayWriter;
-  writing_replay_ = true;
-  g_scene_v1->replay_open = true;
+  // Note: replay-writing setup happens in SetConnectionToHost() — we
+  // need the connection's negotiated protocol version to stamp the
+  // replay, and no stream messages arrive before that wiring happens.
 }
 
 ClientSessionNet::~ClientSessionNet() {
@@ -50,6 +41,22 @@ ClientSessionNet::~ClientSessionNet() {
 
 void ClientSessionNet::SetConnectionToHost(ConnectionToHost* c) {
   connection_to_host_ = c;
+
+  if (c != nullptr && !writing_replay_) {
+    // Sanity check: we should only ever be writing one replay at once.
+    if (g_scene_v1->replay_open) {
+      g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
+                           "g_scene_v1->replay_open true at netclient start;"
+                           " shouldn't happen.");
+    }
+    assert(g_base->assets_server);
+
+    // Messages get written to the replay verbatim, so its protocol is
+    // whatever we negotiated with the host (possibly older than ours).
+    replay_writer_ = new ReplayWriter(c->protocol_version());
+    writing_replay_ = true;
+    g_scene_v1->replay_open = true;
+  }
 }
 
 void ClientSessionNet::OnCommandBufferUnderrun() {

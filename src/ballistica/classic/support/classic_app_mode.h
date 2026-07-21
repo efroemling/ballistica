@@ -189,6 +189,22 @@ class ClassicAppMode : public base::AppMode {
   void set_require_client_authentication(bool enable) {
     require_client_authentication_ = enable;
   }
+
+  /// Set the asset-package-versions this app run hosts with (the launch
+  /// metascan snapshot; see asset-packages.md decision #36). Call once
+  /// from the logic thread at app-mode activation; advertised in V2
+  /// host-query responses (and eventually fed to session package
+  /// universes / the public-party heartbeat).
+  void SetHostingAssetPackages(std::vector<std::string> packages);
+
+  // Set/get the password clients must provide to join us (empty =
+  // none). Set from the logic thread; readable from any thread (the
+  // requirements-query responder runs in the network-reader thread).
+  void SetHostPassword(const std::string& password);
+  auto GetHostPassword() -> std::string;
+
+  /// Thread-safe copy of the hosting asset-package set.
+  auto GetHostingAssetPackages() -> std::vector<std::string>;
   // void set_client_authentication_version(int version) {
   //   assert(version == 1 || version == 2);
   //   client_authentication_version_ = version;
@@ -217,6 +233,14 @@ class ClassicAppMode : public base::AppMode {
   struct ScanResultsEntry {
     std::string display_string;
     std::string address;
+    // V2-scan extras; defaults apply for hosts seen only via V1 scans.
+    bool has_v2{};
+    std::string party_name;
+    int party_size{};
+    int party_max_size{};
+    bool auth_required{};
+    int build_number{};
+    int protocol_version{};
   };
 
   auto GetScanResults() -> std::vector<ScanResultsEntry>;
@@ -309,6 +333,16 @@ class ClassicAppMode : public base::AppMode {
   // forward declarations of their template params.
   std::map<std::string, ScanResultsEntryPriv_> scan_results_;
   std::mutex scan_results_mutex_;
+
+  // The launch-metascan hosting set. Written once from the logic thread;
+  // read by the network-reader thread when answering V2 host-queries.
+  std::vector<std::string> hosting_asset_packages_;
+  std::mutex hosting_asset_packages_mutex_;
+
+  // Join password (empty = none). Written from the logic thread; read
+  // by the network-reader thread when answering requirements queries.
+  std::string host_password_;
+  std::mutex host_password_mutex_;
 
   std::string root_ui_chest_0_appearance_;
   std::string root_ui_chest_1_appearance_;

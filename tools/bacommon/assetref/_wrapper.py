@@ -10,13 +10,13 @@ side: a leaf reads as a property yielding the kind's reference type, a
 subdir is a nested :class:`AssetRefDir`.
 
 This mirrors the client-side asset wrappers (``bauiv1._assetwrap.AssetDir``)
-except it yields a language-independent *reference* (:class:`TextureRef` /
-:class:`MeshRef`) rather than loading the actual engine asset -- so the
+except it yields a language-independent *reference* (:class:`TextureSpec` /
+:class:`MeshSpec`) rather than loading the actual engine asset -- so the
 same ergonomics (``pkg.textures.zoe_icon``) work server-side where no real
 assets exist.
 """
 
-from bacommon.assetref._core import TextureRef, MeshRef, SoundRef
+from bacommon.assetref._core import TextureSpec, MeshSpec, SoundSpec
 
 #: A node in a wrapper's kind-code tree: each key is one path segment; a
 #: ``dict`` value is a subdirectory and a ``str`` value is a leaf asset
@@ -43,7 +43,7 @@ class AssetRefDir:
 
     def __getattr__(
         self, name: str
-    ) -> 'AssetRefDir | TextureRef | MeshRef | SoundRef':
+    ) -> 'AssetRefDir | TextureSpec | MeshSpec | SoundSpec':
         try:
             child = self._node[name]
         except KeyError:
@@ -56,12 +56,12 @@ class AssetRefDir:
 
 def _make(
     apverid: str, path: str, kind: str
-) -> TextureRef | MeshRef | SoundRef:
+) -> TextureSpec | MeshSpec | SoundSpec:
     """Build a single leaf reference by its single-char kind code."""
     if kind == 't':
-        return TextureRef(apverid, path)
+        return TextureSpec(apverid, path)
     if kind == 'm':
-        return MeshRef(apverid, path)
+        return MeshSpec(apverid, path)
     if kind == 's':
-        return SoundRef(apverid, path)
+        return SoundSpec(apverid, path)
     raise ValueError(f'Invalid asset-ref kind {kind!r} for {apverid}:{path}.')

@@ -2,7 +2,7 @@
 """Functionality related to prepping a doc-ui page for display.
 
 Consumes native (v2 / language-agnostic) doc-ui documents: text rides
-as :class:`bacommon.langstr.LangStr` (handed to widgets as native
+as :class:`bacommon.langstr.LangStrSpec` (handed to widgets as native
 handles that re-evaluate on language changes) and assets as typed refs.
 
 .. warning::

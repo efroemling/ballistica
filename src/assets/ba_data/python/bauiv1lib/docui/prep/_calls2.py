@@ -22,11 +22,11 @@ from bauiv1lib.docui.prep._types import DecorationPrep
 if TYPE_CHECKING:
     from typing import Any, Callable
 
-    from bacommon.langstr import LangStr
+    from bacommon.langstr import LangStrSpec
     from bauiv1lib.docui import DocUIWindow
 
 
-def _native(lstr: 'LangStr', packages: list[str]) -> bui.LangStr:
+def _native(lstr: 'LangStrSpec', packages: list[str]) -> bui.LangStr:
     """Native handle bound against a payload's package list."""
     return bui.LangStr(dataclass_to_json(lstr), packages=packages)
 

@@ -22,10 +22,10 @@ _PARITY_SCRIPT = """
 import babase
 from efro.dataclassio import dataclass_to_json, dataclass_from_json
 from bacommon.langstr import (
-    LangStr,
-    LangStrResource,
-    LangStrValue,
-    LangStrResourceIndexed,
+    LangStrSpec,
+    LangStrSpecResource,
+    LangStrSpecValue,
+    LangStrSpecResourceIndexed,
     LanguageStringNameDecodeContext,
 )
 from bacommon.locale import Locale
@@ -33,16 +33,16 @@ from bacommon.locale import Locale
 # Value-form cases evaluate fully native (no tables needed); expected
 # values come from the Python evaluator, so this asserts parity, not
 # hand-maintained outputs.
-value_cases: list[LangStr] = [
-    LangStrValue('Hello There.'),
-    LangStrValue('Hello {name}.', {'name': 'Flopsy'}),
-    LangStrValue('{a} and {b} make {total}.', {'a': 1, 'b': 2, 'total': 3}),
-    LangStrValue(
+value_cases: list[LangStrSpec] = [
+    LangStrSpecValue('Hello There.'),
+    LangStrSpecValue('Hello {name}.', {'name': 'Flopsy'}),
+    LangStrSpecValue('{a} and {b} make {total}.', {'a': 1, 'b': 2, 'total': 3}),
+    LangStrSpecValue(
         'Nested: {inner}!',
-        {'inner': LangStrValue('{x} rules', {'x': 'recursion'})},
+        {'inner': LangStrSpecValue('{x} rules', {'x': 'recursion'})},
     ),
-    LangStrValue('Non-token braces stay literal: {Weird} {9foo} { } {x'),
-    LangStrValue('Unicode: \\u3053\\u3093\\u306b\\u3061\\u306f {who}',
+    LangStrSpecValue('Non-token braces stay literal: {Weird} {9foo} { } {x'),
+    LangStrSpecValue('Unicode: \\u3053\\u3093\\u306b\\u3061\\u306f {who}',
                  {'who': '\\u4e16\\u754c'}),
 ]
 pyctx = LanguageStringNameDecodeContext({}, Locale.ENGLISH)
@@ -56,7 +56,7 @@ for case in value_cases:
     assert got == expected, f'{got!r} != {expected!r} for {case}'
 
 # Missing-substitution is fail-visible on both sides.
-missing = LangStrValue('Hi {name}.')
+missing = LangStrSpecValue('Hi {name}.')
 assert pyctx.decode(missing).startswith('LANGSTR_ERROR:')
 assert babase.LangStr(dataclass_to_json(missing)).evaluate().startswith(
     'LANGSTR_ERROR:'
@@ -64,23 +64,23 @@ assert babase.LangStr(dataclass_to_json(missing)).evaluate().startswith(
 
 # Resource/indexed forms round-trip losslessly through the native
 # parse (evaluation of these awaits the native table store).
-rt_cases: list[LangStr] = [
-    LangStrResource('a-0.testpkg.1a2b', 'common.hello_there'),
-    LangStrResource(
+rt_cases: list[LangStrSpec] = [
+    LangStrSpecResource('a-0.testpkg.1a2b', 'common.hello_there'),
+    LangStrSpecResource(
         'a-0.testpkg.1a2b',
         'common.hello_num',
-        {'num': 5, 'name': LangStrValue('Zoe')},
+        {'num': 5, 'name': LangStrSpecValue('Zoe')},
     ),
-    LangStrResourceIndexed(pkg=0, index=12),
-    LangStrResourceIndexed(
-        pkg=1, index=0, subs=['x', 3, LangStrResourceIndexed(pkg=0, index=2)]
+    LangStrSpecResourceIndexed(pkg=0, index=12),
+    LangStrSpecResourceIndexed(
+        pkg=1, index=0, subs=['x', 3, LangStrSpecResourceIndexed(pkg=0, index=2)]
     ),
-    LangStrValue('plain'),
+    LangStrSpecValue('plain'),
 ]
 for case in rt_cases:
     json_in = dataclass_to_json(case)
     native = babase.LangStr(json_in)
-    back = dataclass_from_json(LangStr, native.to_json())
+    back = dataclass_from_json(LangStrSpec, native.to_json())
     assert back == case, f'round-trip mismatch: {back} != {case}'
 
 # Content equality + hashing.
@@ -104,9 +104,9 @@ for bad in ('nope', '[]', '{"t": "x"}', '{"t": "r", "a": "y"}'):
 # Depth cap: the native parse rejects over-deep trees outright
 # (stricter than the Python side, whose cap fires at eval time --
 # wire data is untrusted, so refusing at parse is the safer posture).
-deep: LangStr = LangStrValue('bottom')
+deep: LangStrSpec = LangStrSpecValue('bottom')
 for _i in range(17):
-    deep = LangStrValue('{sub}', {'sub': deep})
+    deep = LangStrSpecValue('{sub}', {'sub': deep})
 assert pyctx.decode(deep).startswith('LANGSTR_ERROR:')
 try:
     babase.LangStr(dataclass_to_json(deep))
@@ -124,5 +124,5 @@ print('LANGSTR-PARITY-OK')
 )
 @pytest.mark.skipif(FAST_MODE, reason='fast mode')
 def test_native_lang_str_parity() -> None:
-    """Native LangStr parses/evaluates identically to the Python impl."""
+    """Native LangStrSpec parses/evaluates identically to the Python impl."""
     apprun.python_command(_PARITY_SCRIPT, purpose='langstr parity test')

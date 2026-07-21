@@ -373,7 +373,9 @@ auto NetworkReader::RunThread_() -> int {
               break;
             }
 
-            case BA_PACKET_HOST_QUERY: {
+            case BA_PACKET_HOST_QUERY:
+            case BA_PACKET_HOST_QUERY_V2:
+            case BA_PACKET_HOST_REQUIREMENTS_QUERY: {
               g_base->app_mode()->HandleGameQuery(buffer, rresult2, &from);
               break;
             }

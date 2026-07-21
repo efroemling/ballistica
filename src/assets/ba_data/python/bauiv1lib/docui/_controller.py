@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
     import bacommon.docui.v2
     from bacommon.docui import DocUIRequest, DocUIResponse
-    from bacommon.langstr import LangStr
+    from bacommon.langstr import LangStrSpec
     import bacommon.clienteffect as clfx
 
     from bauiv1lib.docui import prep
@@ -207,6 +207,7 @@ class DocUIController:
             )
 
         assert webresponse.doc_ui_response is not None
+        self._check_server_response(webresponse.doc_ui_response)
         return webresponse.doc_ui_response
 
     def fulfill_request_cloud(
@@ -239,6 +240,7 @@ class DocUIController:
                 )
             assert isinstance(mresponse, bacommon.cloud.FulfillDocUIResponse)
 
+            self._check_server_response(mresponse.response)
             return mresponse.response
 
         except CommunicationError:
@@ -248,6 +250,21 @@ class DocUIController:
             )
         except Exception:
             return self.error_response(request)
+
+    @staticmethod
+    def _check_server_response(response: DocUIResponse) -> None:
+        """Run diagnostics on a pristine server-supplied response.
+
+        Called at the receipt points (cloud/web fulfillment) — before
+        controllers splice in any local content — so finalization
+        checks only see what the server actually sent.
+        """
+        import bacommon.docui.v2 as dui2
+
+        from bauiv1lib.docui import _resolve
+
+        if isinstance(response, dui2.Response):
+            _resolve.check_finalization_leaks(response)
 
     def error_response(
         self,
@@ -265,27 +282,27 @@ class DocUIController:
         ``custom_message`` shows verbatim (untranslated).
         """
         import bacommon.docui.v2 as dui2
-        from bacommon.langstr import LangStrValue
+        from bacommon.langstr import LangStrSpecValue
 
         from bauiv1 import stdassets
 
         uistrs = stdassets.strings.ui
 
-        error_msg: LangStr
+        error_msg: LangStrSpec
 
         status_code = dui2.ResponseStatus.UNKNOWN_ERROR
 
         if custom_message is not None:
-            error_msg = LangStrValue(custom_message)
+            error_msg = LangStrSpecValue(custom_message)
         elif error_type is self.ErrorType.GENERIC:
-            error_msg = uistrs.error_occurred
+            error_msg = uistrs.error_occurred.spec
         elif error_type is self.ErrorType.NEED_UPDATE:
-            error_msg = uistrs.need_update
+            error_msg = uistrs.need_update.spec
         elif error_type is self.ErrorType.UNDER_CONSTRUCTION:
-            error_msg = uistrs.under_construction
+            error_msg = uistrs.under_construction.spec
         elif error_type is self.ErrorType.COMMUNICATION_ERROR:
             status_code = dui2.ResponseStatus.COMMUNICATION_ERROR
-            error_msg = uistrs.server_error
+            error_msg = uistrs.server_error.spec
         else:
             assert_never(error_type)
 
@@ -303,13 +320,13 @@ class DocUIController:
         return dui2.Response(
             status=status_code,
             page=dui2.Page(
-                title=uistrs.error,
+                title=uistrs.error.spec,
                 center_vertically=True,
                 rows=[
                     dui2.ButtonRow(
                         buttons=[
                             dui2.Button(
-                                uistrs.retry if do_retry else uistrs.ok,
+                                (uistrs.retry if do_retry else uistrs.ok).spec,
                                 action=(
                                     dui2.Replace(
                                         asserttype(request, dui2.Request)
@@ -803,7 +820,6 @@ class DocUIController:
                             'Error resolving v2 doc-ui response.'
                         )
                         error = self.ErrorType.GENERIC
-                        response = None
                         response = None
             elif responsetype is DocUIResponseTypeID.UNKNOWN:
                 assert isinstance(response, UnknownDocUIResponse)

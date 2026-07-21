@@ -306,6 +306,7 @@
  "ba_data/python/bauiv1lib/mainmenu.py",
  "ba_data/python/bauiv1lib/party.py",
  "ba_data/python/bauiv1lib/partyqueue.py",
+ "ba_data/python/bauiv1lib/passwordprompt.py",
  "ba_data/python/bauiv1lib/play.py",
  "ba_data/python/bauiv1lib/playlist/__init__.py",
  "ba_data/python/bauiv1lib/playlist/addgame.py",

@@ -443,6 +443,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/mainmenu.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/party.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/partyqueue.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/passwordprompt.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/play.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/addgame.py \

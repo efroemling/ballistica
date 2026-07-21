@@ -14,10 +14,10 @@ __asset_package__ = 'a-0.badocuiv2testassets.260718a'
 
 from typing import TYPE_CHECKING
 
-from bacommon.langstr import LangStrDir
+from babase import LangStrDir
 
 if TYPE_CHECKING:
-    from bacommon.langstr import LangStr
+    from babase import LangStr
 
     class StringsCloudGroup:
         """

@@ -14,12 +14,93 @@ if TYPE_CHECKING:
     from typing import Any, Sequence
 
     import babase
+    import bacommon.langstr
 
 
 #: Process-lifetime cache for :func:`get_legacy_langdata` (the constant
 #: ``legacylangdata`` blob is flavor-invariant, so it is stable for
 #: the life of the process once read).
 _g_legacy_langdata: dict[str, Any] | None = None
+
+
+def _native_from_spec(spec: bacommon.langstr.LangStrSpec) -> babase.LangStr:
+    """Parse an authoring-spec into the native verified-local form.
+
+    Private on purpose (D28): there is no *public* spec -> verified
+    conversion — verification comes from context. The callers here are
+    the wrapper runtime below, whose asset-package pins are
+    construct-mode-resolved before any wrapper is usable.
+    """
+    from efro.dataclassio import dataclass_to_json
+
+    return _babase.LangStr(dataclass_to_json(spec))
+
+
+class _NativeLstrMaker:
+    """Callable leaf: builds a native LangStr from keyword subs."""
+
+    __slots__ = ('_apverid', '_name')
+
+    def __init__(self, apverid: str, name: str) -> None:
+        self._apverid = apverid
+        self._name = name
+
+    def __call__(self, **subs: str | int | babase.LangStr) -> babase.LangStr:
+        from bacommon.langstr import LangStrSpecResource
+
+        return _native_from_spec(
+            LangStrSpecResource(
+                self._apverid,
+                self._name,
+                {
+                    key: (val.spec if isinstance(val, _babase.LangStr) else val)
+                    for key, val in subs.items()
+                },
+            )
+        )
+
+
+class LangStrDir:
+    """Runtime accessor tree for client-destined asset-package wrappers.
+
+    The verified-local counterpart of
+    :class:`bacommon.langstr.LangStrDir`: generated client wrapper
+    modules instantiate this over the same tree data, and string leaves
+    yield native :class:`babase.LangStr` values (per the D28 semantic
+    split — the construct-mode resolve that gates wrapper use
+    guarantees these strings are locally displayable).
+    """
+
+    __slots__ = ('_apverid', '_tree', '_prefix')
+
+    def __init__(
+        self,
+        apverid: str,
+        tree: bacommon.langstr.WrapperTree,
+        prefix: str = '',
+    ) -> None:
+        self._apverid = apverid
+        self._tree = tree
+        self._prefix = prefix
+
+    def __getattr__(
+        self, name: str
+    ) -> babase.LangStr | _NativeLstrMaker | LangStrDir:
+        try:
+            child = self._tree[name]
+        except KeyError:
+            raise AttributeError(name) from None
+        full = f'{self._prefix}/{name}' if self._prefix else name
+        if isinstance(child, dict):
+            return LangStrDir(self._apverid, child, full)
+        # A leaf: its param-keyword tuple. Empty -> a no-arg string,
+        # read as a property yielding the native LangStr directly;
+        # otherwise a maker.
+        if not child:
+            from bacommon.langstr import LangStrSpecResource
+
+            return _native_from_spec(LangStrSpecResource(self._apverid, full))
+        return _NativeLstrMaker(self._apverid, full)
 
 
 def get_legacy_langdata() -> dict[str, Any]:

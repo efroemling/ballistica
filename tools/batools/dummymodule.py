@@ -795,7 +795,7 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
         # Special cases such as attributes we add.
         out += _special_class_cases(classname)
 
-        # Print its methods.
+        # Print its methods (and getset-descriptor properties).
         funcnames = []
         for entry in (e for e in dir(cls) if not e.startswith('__')):
             if isinstance(getattr(cls, entry), types.MethodDescriptorType):
@@ -803,6 +803,25 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
             elif isinstance(getattr(cls, entry), types.BuiltinMethodType):
                 # We get this for classmethods
                 funcnames.append(entry)
+            elif isinstance(getattr(cls, entry), types.GetSetDescriptorType):
+                # A native property. By convention its docstring's first
+                # line is '<name>: <type>' followed by a blank line and
+                # the prose docs; emit a typed read-only property.
+                gsdoc = getattr(cls, entry).__doc__
+                assert gsdoc is not None, f'getset {entry} needs a docstring'
+                gslines = gsdoc.splitlines()
+                prefix = f'{entry}: '
+                assert gslines and gslines[0].startswith(prefix), (
+                    f"getset {entry} docstring must start with"
+                    f" '{entry}: <type>'"
+                )
+                gstype = gslines[0].removeprefix(prefix)
+                gsbody = '\n'.join(gslines[1:]).strip()
+                out += '\n    @property\n'
+                out += f'    def {entry}(self) -> {gstype}:\n'
+                out += _formatdoc(_filterdoc(gsbody), indent=8, form='str')
+                out += '        raise NotImplementedError()\n'
+                has_attrs = True
             else:
                 entrytype = type(getattr(cls, entry))
                 raise RuntimeError(
@@ -884,13 +903,18 @@ class Generator:
         if self.mname == '_babase':
             tc_import_lines_extra += (
                 '    import bacommon.app\n'
+                '    import bacommon.langstr\n'
                 '    from babase import App\n'
                 '    import babase\n'  # hold
             )
         elif self.mname == '_bascenev1':
             tc_import_lines_extra += '    import babase\n    import bascenev1\n'
         elif self.mname == '_bauiv1':
-            tc_import_lines_extra += '    import babase\n    import bauiv1\n'
+            tc_import_lines_extra += (
+                '    import babase\n'
+                '    import bacommon.langstr\n'
+                '    import bauiv1\n'
+            )
         app_declare_lines = 'app: App\n\n' if self.mname == '_babase' else ''
         enum_import_lines = (
             ''

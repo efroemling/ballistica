@@ -20,6 +20,7 @@ from bauiv1 import stdassets
 from bauiv1lib.connectivity import wait_for_connectivity
 
 import _baclassic
+import bascenev1
 
 if TYPE_CHECKING:
     from typing import Callable, Any, Literal, Iterable
@@ -95,6 +96,19 @@ class ClassicAppMode(AppMode):
 
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_activate()
+
+        # Register the app-run's hosting package universe: exactly the
+        # set the launch metascan discovered (which construct-mode fully
+        # resolved before we could activate). Sessions we host may only
+        # reference packages from this set, and it's what we advertise
+        # to LAN scanners in v2 host-query responses. (Foundational
+        # rule: asset-packages.md decision #36.)
+        scanresults = babase.app.meta.scanresults
+        bascenev1.set_hosting_asset_packages(
+            sorted(scanresults.asset_packages)
+            if scanresults is not None
+            else []
+        )
 
         app = bui.app
         plus = app.plus
@@ -279,7 +293,7 @@ class ClassicAppMode(AppMode):
                 clfx.ScreenMessageV2(
                     message=stdassets.strings.economy.you_got_tokens(
                         tokens=tokens
-                    ),
+                    ).spec,
                     color=(0, 1, 0),
                 ),
                 clfx.PlaySoundV2(sound=builtinassets.audio.cash_register),

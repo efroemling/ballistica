@@ -284,6 +284,9 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
               }
               if (auto salt = root["l"].as_string()) {
                 peer_hash_input_ += *salt;
+                // Keep the raw salt too; it doubles as the per-connection
+                // nonce for the join-password HMAC (see CLIENT_INFO below).
+                handshake_salt_ = *salt;
               }
             }
           }
@@ -341,6 +344,15 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
           // Pass the hash we generated from their handshake; they can use
           // this for v1 client auth.
           dict.Add("ph", peer_hash_);
+
+          // If we were given a join-password, prove we know it without
+          // sending it in the clear: HMAC it with the host's
+          // per-connection handshake salt. The host recomputes the same
+          // and compares (see ConnectionToClient CLIENT_INFO handling).
+          if (!join_password_.empty()) {
+            dict.Add("pw", g_base->python->HmacSha256Hex(join_password_,
+                                                         handshake_salt_));
+          }
           std::string info = builder.Write();
           std::vector<uint8_t> msg(info.size() + 1);
           msg[0] = BA_MESSAGE_CLIENT_INFO;

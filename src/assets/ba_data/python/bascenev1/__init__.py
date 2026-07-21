@@ -79,7 +79,6 @@ from _bascenev1 import (
     chatmessage,
     client_info_query_response,
     CollisionMesh,
-    connect_to_party,
     Data,
     disconnect_client,
     disconnect_from_host,
@@ -138,6 +137,8 @@ from _bascenev1 import (
     set_admins,
     set_authenticate_clients,
     set_debug_speed_exponent,
+    set_host_password,
+    set_hosting_asset_packages,
     set_enable_default_kick_voting,
     set_internal_music,
     set_map_bounds,
@@ -213,7 +214,12 @@ from bascenev1._multiteamsession import (
     DEFAULT_TEAM_NAMES,
 )
 from bascenev1._music import MusicType, setmusic
-from bascenev1._net import HostInfo
+from bascenev1._net import (
+    connect_to_party,
+    fetch_host_requirements,
+    HostInfo,
+    HostRequirements,
+)
 from bascenev1._nodeactor import NodeActor
 from bascenev1._powerup import get_default_powerup_distribution
 from bascenev1._profile import (
@@ -358,7 +364,9 @@ __all__ = [
     'have_connected_clients',
     'have_touchscreen_input',
     'HitMessage',
+    'fetch_host_requirements',
     'HostInfo',
+    'HostRequirements',
     'host_scan_cycle',
     'ImpactDamageMessage',
     'increment_analytics_count',
@@ -433,8 +441,9 @@ __all__ = [
     'set_analytics_screen',
     'set_authenticate_clients',
     'set_debug_speed_exponent',
-    'set_debug_speed_exponent',
     'set_enable_default_kick_voting',
+    'set_host_password',
+    'set_hosting_asset_packages',
     'set_internal_music',
     'set_map_bounds',
     'set_master_server_source',

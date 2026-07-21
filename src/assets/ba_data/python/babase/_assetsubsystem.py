@@ -391,7 +391,7 @@ def make_progress_reporter(
     Pass the returned callable as ``on_progress`` to
     :meth:`AssetSubsystem.resolve`. It calls ``on_update(message, progress)``
     immediately on a phase or package change and then at most once per
-    :data:`_PROGRESS_UPDATE_INTERVAL` seconds (so a slow download keeps
+    a short throttle interval (so a slow download keeps
     the user informed without spamming). ``progress`` is a ``0.0``–``1.0``
     fraction for a progress bar — ``0.0`` during phases with no known count
     (the bar is held at zero rather than hidden, so the display doesn't resize

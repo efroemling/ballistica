@@ -2,31 +2,32 @@
 #
 """Runtime support for generated bauiv1 asset-*reference* wrappers.
 
-This is the bauiv1 (client) flavor of :mod:`bacommon.assetref`. A
-generated reference wrapper exposes per-kind roots (``textures``,
-``meshes``, ...) whose leaves are language-independent references
-(:class:`~bacommon.assetref.TextureRef` / :class:`~bacommon.assetref.MeshRef`)
-suitable for authoring doc-ui-v2 documents. Where the server-side wrapper
-(:mod:`bacommon.assetref`) yields the bare ``bacommon`` reference types, the
-client wants those references to *also* be loadable into real engine assets
-for low-level UI calls. So this module's leaves are thin subclasses that add
-a single :meth:`TextureRef.get` method returning the live ``bauiv1.Texture``
-(etc.) while remaining ordinary references on the wire.
+This is the bauiv1 (client) flavor of :mod:`bacommon.assetref` and the
+middle tier of the D28 asset ladder: ``TextureSpec`` (authoring claim)
+-> ``TextureRef`` (this module; a *verified-local* reference — its
+wrapper's pin was construct-mode-resolved before use) ->
+``bauiv1.Texture`` (the loaded engine asset). A generated reference
+wrapper exposes per-kind roots (``textures``, ``meshes``, ...) whose
+leaves here are thin subclasses of the spec types adding a single
+:meth:`TextureRef.get` method returning the live ``bauiv1.Texture``
+(etc.) while remaining ordinary specs on the wire.
 
-The subclasses add no data fields -- only the ``get()`` accessor -- so an
-instance serializes identically to its ``bacommon`` base and decodes back as
+The subclasses add no data fields -- only the ``get()`` accessor -- so
+an instance serializes identically to its spec base and decodes back as
 the plain base type on the far end (the subclass is an authoring-side
-convenience only). This is the inverse of inheriting a field-less abstract
-base; it stays within dataclassio's rules (a nested-dataclass field accepts
-any ``isinstance`` of its annotated type).
+convenience only; verified -> spec is the always-valid direction, here
+via plain inheritance rather than langstr's ``.spec`` projection). This
+is the inverse of inheriting a field-less abstract base; it stays
+within dataclassio's rules (a nested-dataclass field accepts any
+``isinstance`` of its annotated type).
 """
 
 from typing import TYPE_CHECKING
 
 from bacommon.assetref import (
-    TextureRef as _TextureRef,
-    MeshRef as _MeshRef,
-    SoundRef as _SoundRef,
+    TextureSpec as _TextureSpec,
+    MeshSpec as _MeshSpec,
+    SoundSpec as _SoundSpec,
 )
 
 if TYPE_CHECKING:
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
 # These leaves add only a ``get()`` method (no new fields), so they need no
 # ``@dataclass`` -- they inherit the base's fields, ``__init__``, ``__eq__``,
 # etc., serialize byte-for-byte as the base, and decode back as the base.
-class TextureRef(_TextureRef):
+class TextureRef(_TextureSpec):
     """A texture reference that can also load the live engine texture."""
 
     def get(self) -> 'bauiv1.Texture':
@@ -46,7 +47,7 @@ class TextureRef(_TextureRef):
         return bauiv1.gettexture(f'{self.apverid}:{self.name}')
 
 
-class MeshRef(_MeshRef):
+class MeshRef(_MeshSpec):
     """A mesh reference that can also load the live engine mesh."""
 
     def get(self) -> 'bauiv1.Mesh':
@@ -56,7 +57,7 @@ class MeshRef(_MeshRef):
         return bauiv1.getmesh(f'{self.apverid}:{self.name}')
 
 
-class SoundRef(_SoundRef):
+class SoundRef(_SoundSpec):
     """A sound reference that can also load the live engine sound."""
 
     def get(self) -> 'bauiv1.Sound':

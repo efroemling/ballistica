@@ -5,13 +5,13 @@
 Where v1 carries pre-localized raw ``str`` text (optionally a JSON-encoded
 legacy ``babase.Lstr`` via ``*_is_lstr`` flags) and expects the *server* to
 localize, v2 text is always a language-agnostic
-:class:`~bacommon.langstr.LangStr`. The server ships one response to every
+:class:`~bacommon.langstr.LangStrSpec`. The server ships one response to every
 client regardless of language; the client resolves the referenced
 asset-packages in its own locale and decodes the strings at render time.
 
 See ``docs/initiatives/docui-v2-lstrings.md`` (ballistica-internal). This is
 the milestone-1 slice: a minimal but real subset of the v1 element set, with
-text typed as ``LangStr`` (the name-based form -- subs are flat for now).
+text typed as ``LangStrSpec`` (the name-based form -- subs are flat for now).
 Non-text fields mirror v1's names/keys so client render code can stay close
 to ``v1prep``.
 """
@@ -24,8 +24,8 @@ from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
 import bacommon.clienteffect as clfx
 import bacommon.displayitem as ditm
-from bacommon.langstr import LangStr
-from bacommon.assetref import TextureRef, MeshRef
+from bacommon.langstr import LangStrSpec
+from bacommon.assetref import TextureSpec, MeshSpec
 from bacommon.docui._docui import (
     DocUIRequest,
     DocUIRequestTypeID,
@@ -166,7 +166,7 @@ class Local(Action):
     #: Client-effects to run immediately when the button is pressed.
     #: Note that effect payloads are not yet v2-native — text in them is
     #: raw/legacy-lstr, pending clienteffect gaining a resolve-context
-    #: concept (see the SoundRef followup in docs/followups.md).
+    #: concept (see the SoundSpec followup in docs/followups.md).
     #:
     #: :meta private:
     immediate_client_effects: Annotated[
@@ -264,10 +264,10 @@ class UnknownDecoration(Decoration):
 class Text(Decoration):
     """Text decoration.
 
-    ``text`` is a language-agnostic :class:`~bacommon.langstr.LangStr`.
+    ``text`` is a language-agnostic :class:`~bacommon.langstr.LangStrSpec`.
     """
 
-    text: Annotated[LangStr, IOAttrs('t')]
+    text: Annotated[LangStrSpec, IOAttrs('t')]
     position: Annotated[tuple[float, float], IOAttrs('p')]
 
     #: Effectively max-width and max-height.
@@ -304,11 +304,12 @@ class Image(Decoration):
     """Image decoration. Textures/meshes are language-independent refs.
 
     Unlike text, image assets need no per-locale decode; each ref
-    (:class:`TextureRef` / :class:`MeshRef`) is resolved by the client and
+    (:class:`~bacommon.assetref.TextureSpec` /
+    :class:`~bacommon.assetref.MeshSpec`) is resolved by the client and
     rendered directly.
     """
 
-    texture: Annotated[TextureRef, IOAttrs('t')]
+    texture: Annotated[TextureSpec, IOAttrs('t')]
     position: Annotated[tuple[float, float], IOAttrs('p')]
     size: Annotated[tuple[float, float], IOAttrs('s')]
     color: Annotated[
@@ -322,7 +323,7 @@ class Image(Decoration):
         VAlign.CENTER
     )
     tint_texture: Annotated[
-        TextureRef | None, IOAttrs('tt', store_default=False)
+        TextureSpec | None, IOAttrs('tt', store_default=False)
     ] = None
     tint_color: Annotated[
         tuple[float, float, float] | None, IOAttrs('tc1', store_default=False)
@@ -331,13 +332,13 @@ class Image(Decoration):
         tuple[float, float, float] | None, IOAttrs('tc2', store_default=False)
     ] = None
     mask_texture: Annotated[
-        TextureRef | None, IOAttrs('mt', store_default=False)
+        TextureSpec | None, IOAttrs('mt', store_default=False)
     ] = None
     mesh_opaque: Annotated[
-        MeshRef | None, IOAttrs('mo', store_default=False)
+        MeshSpec | None, IOAttrs('mo', store_default=False)
     ] = None
     mesh_transparent: Annotated[
-        MeshRef | None, IOAttrs('mn', store_default=False)
+        MeshSpec | None, IOAttrs('mn', store_default=False)
     ] = None
     highlight: Annotated[bool, IOAttrs('h', store_default=False)] = True
     depth_range: Annotated[tuple[float, float] | None, IOAttrs('z')] = None
@@ -411,11 +412,13 @@ class ButtonStyle(Enum):
 class Button:
     """A button in our doc-ui.
 
-    ``label`` is a language-agnostic :class:`~bacommon.langstr.LangStr`.
+    ``label`` is a language-agnostic :class:`~bacommon.langstr.LangStrSpec`.
     Size, padding, and all decorations scale consistently with ``scale``.
     """
 
-    label: Annotated[LangStr | None, IOAttrs('l', store_default=False)] = None
+    label: Annotated[LangStrSpec | None, IOAttrs('l', store_default=False)] = (
+        None
+    )
 
     action: Annotated[Action | None, IOAttrs('a', store_default=False)] = None
     size: Annotated[
@@ -436,7 +439,7 @@ class Button:
         float | None, IOAttrs('lf', store_default=False)
     ] = None
     texture: Annotated[
-        TextureRef | None, IOAttrs('tex', store_default=False)
+        TextureSpec | None, IOAttrs('tex', store_default=False)
     ] = None
     scale: Annotated[float, IOAttrs('sc', store_default=False)] = 1.0
     padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 0.0
@@ -452,7 +455,7 @@ class Button:
     default: Annotated[bool, IOAttrs('df', store_default=False)] = False
     selected: Annotated[bool, IOAttrs('sel', store_default=False)] = False
 
-    icon: Annotated[TextureRef | None, IOAttrs('icn', store_default=False)] = (
+    icon: Annotated[TextureSpec | None, IOAttrs('icn', store_default=False)] = (
         None
     )
     icon_scale: Annotated[float | None, IOAttrs('is', store_default=False)] = (
@@ -527,7 +530,7 @@ class UnknownRow(Row):
 class ButtonRow(Row):
     """A row consisting of buttons.
 
-    ``title``/``subtitle`` are :class:`~bacommon.langstr.LangStr`.
+    ``title``/``subtitle`` are :class:`~bacommon.langstr.LangStrSpec`.
     """
 
     buttons: Annotated[list[Button], IOAttrs('b')]
@@ -544,7 +547,9 @@ class ButtonRow(Row):
         list[Decoration] | None, IOAttrs('hdr', store_default=False)
     ] = None
 
-    title: Annotated[LangStr | None, IOAttrs('t', store_default=False)] = None
+    title: Annotated[LangStrSpec | None, IOAttrs('t', store_default=False)] = (
+        None
+    )
     title_color: Annotated[
         tuple[float, float, float, float] | None,
         IOAttrs('tc', store_default=False),
@@ -556,9 +561,9 @@ class ButtonRow(Row):
         float | None, IOAttrs('ts', store_default=False)
     ] = None
 
-    subtitle: Annotated[LangStr | None, IOAttrs('s', store_default=False)] = (
-        None
-    )
+    subtitle: Annotated[
+        LangStrSpec | None, IOAttrs('s', store_default=False)
+    ] = None
     subtitle_color: Annotated[
         tuple[float, float, float, float] | None,
         IOAttrs('sc', store_default=False),
@@ -606,10 +611,10 @@ class ButtonRow(Row):
 class Page:
     """Doc-UI page version 2.
 
-    ``title`` is a language-agnostic :class:`~bacommon.langstr.LangStr`.
+    ``title`` is a language-agnostic :class:`~bacommon.langstr.LangStrSpec`.
     """
 
-    title: Annotated[LangStr, IOAttrs('t')]
+    title: Annotated[LangStrSpec, IOAttrs('t')]
     rows: Annotated[list[Row], IOAttrs('r')]
 
     #: Center content vertically when it's smaller than the available height.
@@ -676,7 +681,7 @@ class Response(DocUIResponse):
     #: received (not re-run on automatic page refreshes). Note that
     #: effect payloads are not yet v2-native — text in them is
     #: raw/legacy-lstr, pending clienteffect gaining a resolve-context
-    #: concept (see the SoundRef followup in docs/followups.md).
+    #: concept (see the SoundSpec followup in docs/followups.md).
     #:
     #: :meta private:
     client_effects: Annotated[

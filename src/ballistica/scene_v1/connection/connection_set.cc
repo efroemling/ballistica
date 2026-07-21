@@ -387,18 +387,22 @@ void ConnectionSet::PushDisconnectedFromHostCall() {
 }
 
 void ConnectionSet::PushHostConnectedUDPCall(const SockAddr& addr,
-                                             bool print_connect_progress) {
-  g_base->logic->event_loop()->PushCall([this, addr, print_connect_progress] {
-    // Attempt to disconnect any clients we have, turn off public-party
-    // advertising, etc.
-    if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
-      appmode->CleanUpBeforeConnectingToHost();
-    }
-    print_udp_connect_progress_ = print_connect_progress;
-    connection_to_host_ = Object::New<ConnectionToHostUDP>(addr);
-    has_connection_to_host_ = true;
-    printed_host_disconnect_ = false;
-  });
+                                             bool print_connect_progress,
+                                             const std::string& password) {
+  g_base->logic->event_loop()->PushCall(
+      [this, addr, print_connect_progress, password] {
+        // Attempt to disconnect any clients we have, turn off public-party
+        // advertising, etc.
+        if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
+          appmode->CleanUpBeforeConnectingToHost();
+        }
+        print_udp_connect_progress_ = print_connect_progress;
+        auto connection = Object::New<ConnectionToHostUDP>(addr);
+        connection->set_join_password(password);
+        connection_to_host_ = connection;
+        has_connection_to_host_ = true;
+        printed_host_disconnect_ = false;
+      });
 }
 
 void ConnectionSet::PushDisconnectFromHostCall() {

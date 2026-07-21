@@ -21,11 +21,11 @@ from typing import TYPE_CHECKING
 
 from bauiv1._assetref import AssetRefDir
 
-from bacommon.langstr import LangStrDir
+from babase import LangStrDir
 
 if TYPE_CHECKING:
     from bauiv1._assetref import MeshRef, SoundRef, TextureRef
-    from bacommon.langstr import LangStr
+    from babase import LangStr
 
     class AudioGroup:
         """

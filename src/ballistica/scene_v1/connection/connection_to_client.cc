@@ -608,6 +608,32 @@ void ConnectionToClient::HandleMessagePacket(
             if (auto ph = root["ph"].as_string()) {
               peer_hash_ = std::string(*ph);
             }
+
+            // Join-password gate: if we host with a password, the client
+            // must prove it knows it via HMAC(password, our handshake
+            // salt). Fail closed — missing or wrong hash is rejected. The
+            // raw password never crosses the (plaintext) wire.
+            auto host_password{appmode->GetHostPassword()};
+            if (!host_password.empty()) {
+              std::string expected{g_base->python->HmacSha256Hex(
+                  host_password, our_handshake_salt_)};
+              auto got{root["pw"].string_or("")};
+              if (expected.empty() || got != expected) {
+                g_core->logging->Log(
+                    LogName::kBaNetworking, LogLevel::kDebug,
+                    "ConnectionToClient rejecting join; bad/missing "
+                    "password.");
+                // FIXME: route through the string system once the scene_v1
+                //  message layer speaks LangStr (transitional English).
+                SendScreenMessage("Incorrect password.", 1, 0, 0);
+                // Proactively kick (not just Error(), which only replies
+                // to further incoming packets) so the joiner is cleanly
+                // disconnected rather than left hanging.
+                RequestDisconnect();
+                return;
+              }
+            }
+
             auto doing_v2_auth{appmode->require_client_authentication()
                                && appmode->client_authentication_version()
                                       == 2};
@@ -649,45 +675,36 @@ void ConnectionToClient::HandleMessagePacket(
         BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                     "Ignoring invalid client-player-profiles-json msg.");
       } else {
-        switch (appmode->client_authentication_version()) {
-          case 1: {
-            // Ok; doing old-school V1 auth.
-            //
-            // Only accept peer profiles if we're allowing that and have not
-            // gotten official ones through v1 client auth.
-            if (!appmode->require_client_authentication()
-                && !got_v1_auth_from_master_server_) {
-              // Create a string from bytes 1+ of msg.
-              std::vector<char> b2(buffer.size());  // Preallocate full space.
-              std::copy(buffer.begin() + 1, buffer.end(), b2.begin());
-              b2.back() = 0;  // Null terminate.
+        // Note: what matters here is whether client-auth is actually in
+        // effect for this party — not merely whether our protocol is
+        // v2-auth *capable* (client_authentication_version()). The
+        // client makes the matching send/don't-send call based on
+        // whether our handshake advertised v2-auth.
+        if (appmode->require_client_authentication()) {
+          // With client-auth in effect we get verified profiles through
+          // the auth path (in v2, from the cloud *before* the connection
+          // is allowed), so fully ignore anything coming through here.
+          // But also clients should know from our handshake not to
+          // bother sending profiles, so this should never happen.
+          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                      "Got client-profiles message while client-auth is "
+                      "enabled; this should not happen.");
+        } else if (!got_v1_auth_from_master_server_) {
+          // Auth not required (private/LAN party); accept the profiles
+          // the peer sent us (unless official v1-auth ones arrived).
+          //
+          // Create a string from bytes 1+ of msg.
+          std::vector<char> b2(buffer.size());  // Preallocate full space.
+          std::copy(buffer.begin() + 1, buffer.end(), b2.begin());
+          b2.back() = 0;  // Null terminate.
 
-              PythonRef args(Py_BuildValue("(s)", b2.data()),
-                             PythonRef::kSteal);
-              PythonRef results =
-                  g_core->python->objs()
-                      .Get(core::CorePython::ObjID::kJsonLoadsCall)
-                      .Call(args);
-              if (results.exists()) {
-                player_profiles_ = results;
-              }
-            }
-            break;
+          PythonRef args(Py_BuildValue("(s)", b2.data()), PythonRef::kSteal);
+          PythonRef results = g_core->python->objs()
+                                  .Get(core::CorePython::ObjID::kJsonLoadsCall)
+                                  .Call(args);
+          if (results.exists()) {
+            player_profiles_ = results;
           }
-          case 2: {
-            // In client-auth version 2, profiles are sent to us by the
-            // cloud *before* the connection is allowed, so fully ignore
-            // anything that comes through here. But also clients should
-            // know not to bother sending us profiles so this should never
-            // happen.
-            BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
-                        "Got client-profiles message while v2-auth is enabled; "
-                        "this should not happen.");
-            break;
-          }
-          default:
-            FatalError("Unexpected client-auth version.");
-            break;
         }
       }
       break;

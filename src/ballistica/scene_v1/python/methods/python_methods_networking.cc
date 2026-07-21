@@ -353,6 +353,79 @@ static PyMethodDef PySetAdminsDef = {
     "(internal)",
 };
 
+// ----------------------- set_hosting_asset_packages --------------------------
+
+static auto PySetHostingAssetPackages(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* packages_obj;
+  static const char* kwlist[] = {"packages", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &packages_obj)) {
+    return nullptr;
+  }
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+  appmode->SetHostingAssetPackages(Python::GetStrings(packages_obj));
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetHostingAssetPackagesDef = {
+    "set_hosting_asset_packages",            // name
+    (PyCFunction)PySetHostingAssetPackages,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
+
+    "set_hosting_asset_packages(packages: list[str]) -> None\n"
+    "\n"
+    "Set the asset-package-versions this app run hosts with.\n"
+    "\n"
+    "This should be the launch metascan snapshot (the app's hosting\n"
+    "package universe; see asset-packages.md decision #36). Advertised\n"
+    "to LAN scanners in v2 host-query responses.\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- set_host_password -------------------------------
+
+static auto PySetHostPassword(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* password_obj;
+  static const char* kwlist[] = {"password", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &password_obj)) {
+    return nullptr;
+  }
+  auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
+  std::string password;
+  if (password_obj != Py_None) {
+    password = Python::GetString(password_obj);
+  }
+  appmode->SetHostPassword(password);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetHostPasswordDef = {
+    "set_host_password",             // name
+    (PyCFunction)PySetHostPassword,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+
+    "set_host_password(password: str | None) -> None\n"
+    "\n"
+    "Set the password clients must provide to join us.\n"
+    "\n"
+    "Pass None or an empty string for no password. Advertised (as a\n"
+    "required-flag only) in pre-join requirements-query responses.\n"
+    "\n"
+    "(internal)\n"
+    "\n"
+    ":meta private:",
+};
+
 // --------------------- set_enable_default_kick_voting ------------------------
 
 static auto PySetEnableDefaultKickVoting(PyObject* self, PyObject* args,
@@ -398,11 +471,17 @@ static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
   // be printed and most connection attempts will be silent todo: could
   // generalize this to pass all results to a callback instead
   int print_progress = 1;
-  static const char* kwlist[] = {"address", "port", "print_progress", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|ip",
+  PyObject* password_obj{Py_None};
+  static const char* kwlist[] = {"address", "port", "print_progress",
+                                 "password", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|ipO",
                                    const_cast<char**>(kwlist), &address_obj,
-                                   &port, &print_progress)) {
+                                   &port, &print_progress, &password_obj)) {
     return nullptr;
+  }
+  std::string password;
+  if (password_obj != Py_None) {
+    password = Python::GetString(password_obj);
   }
 
   // Error if we're not in our app-mode.
@@ -435,7 +514,7 @@ static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
            + ":" + std::to_string(s.Port()) + ".";
   });
   appmode->connections()->PushHostConnectedUDPCall(
-      s, static_cast<bool>(print_progress));
+      s, static_cast<bool>(print_progress), password);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -446,7 +525,7 @@ static PyMethodDef PyConnectToPartyDef = {
     METH_VARARGS | METH_KEYWORDS,   // flags
 
     "connect_to_party(address: str, port: int | None = None,\n"
-    "  print_progress: bool = True) -> None\n"
+    "  print_progress: bool = True, password: str | None = None) -> None\n"
     "\n"
     "(internal)",
 };
@@ -790,9 +869,19 @@ static auto PyHostScanCycle(PyObject* self, PyObject* args, PyObject* keywds)
       appmode->GetScanResults();
   PyObject* py_list = PyList_New(0);
   for (auto&& i : results) {
-    PyList_Append(py_list, Py_BuildValue("{ssss}", "display_string",
-                                         i.display_string.c_str(), "address",
-                                         i.address.c_str()));
+    PyObject* py_dict =
+        Py_BuildValue("{ss ss sO ss si si sO si si}",              // format
+                      "display_string", i.display_string.c_str(),  //
+                      "address", i.address.c_str(),                //
+                      "has_v2", i.has_v2 ? Py_True : Py_False,     //
+                      "party_name", i.party_name.c_str(),          //
+                      "party_size", i.party_size,                  //
+                      "party_max_size", i.party_max_size,          //
+                      "auth_required", i.auth_required ? Py_True : Py_False,  //
+                      "build_number", i.build_number,                         //
+                      "protocol_version", i.protocol_version);
+    PyList_Append(py_list, py_dict);
+    Py_DECREF(py_dict);
   }
   return py_list;
   BA_PYTHON_CATCH;
@@ -803,7 +892,14 @@ static PyMethodDef PyHostScanCycleDef = {
     (PyCFunction)PyHostScanCycle,  // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "host_scan_cycle() -> list[dict[str, str]]\n"
+    "host_scan_cycle() -> list[dict[str, Any]]\n"
+    "\n"
+    "Run a lan-scan cycle and return results gathered so far.\n"
+    "\n"
+    "Hosts answering only the old v1 query form have ``has_v2`` False\n"
+    "and carry defaults for the v2-only fields (``party_name``,\n"
+    "``party_size``, ``party_max_size``, ``auth_required``,\n"
+    "``build_number``, ``protocol_version``).\n"
     "\n"
     "(internal)\n"
     "\n"
@@ -960,6 +1056,8 @@ auto PythonMethodsNetworking::GetMethods() -> std::vector<PyMethodDef> {
       PySetPublicPartyPublicAddressIPV6Def,
       PySetAuthenticateClientsDef,
       PySetAdminsDef,
+      PySetHostingAssetPackagesDef,
+      PySetHostPasswordDef,
       PySetEnableDefaultKickVotingDef,
       PySetPublicPartyMaxSizeDef,
       PySetPublicPartyQueueEnabledDef,

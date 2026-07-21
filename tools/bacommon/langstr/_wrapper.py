@@ -6,17 +6,18 @@ A generated wrapper module exposes a ``strings`` object built from a
 compact nested param-tree; its precise types live in the module's
 ``if TYPE_CHECKING`` shadow (decision #28 -- bare annotations, no per-entry
 runtime class). This drives the *runtime* side: a no-arg string reads as a
-property yielding an :class:`LangStr`, a parameterized one is a callable that
-builds an :class:`LangStr` from keyword substitutions, and a subdir is a
+property yielding a :class:`LangStrSpec`; a parameterized one is a
+callable that
+builds an :class:`LangStrSpec` from keyword substitutions, and a subdir is a
 nested :class:`LangStrDir`.
 """
 
 from typing import TYPE_CHECKING
 
-from bacommon.langstr._core import LangStrResource, PackageStructure
+from bacommon.langstr._core import LangStrSpecResource, PackageStructure
 
 if TYPE_CHECKING:
-    from bacommon.langstr._core import LangStr
+    from bacommon.langstr._core import LangStrSpec
 
 #: A wrapper's compact runtime tree: a leaf is its ordered param-keyword
 #: tuple (``()`` for a no-arg string); a subdir is a nested tree.
@@ -31,21 +32,25 @@ def package_structure(apverid: str, tree: WrapperTree) -> PackageStructure:
     just passes ``module.APVERID, module._TREE`` (both module-level).
     """
     flat: dict[str, tuple[str, ...]] = {}
-
-    def _walk(node: WrapperTree, prefix: str) -> None:
-        for name, value in node.items():
-            full = f'{prefix}/{name}' if prefix else name
-            if isinstance(value, dict):
-                _walk(value, full)
-            else:
-                flat[full] = value
-
-    _walk(tree, '')
+    _flatten_tree(tree, '', flat)
     return PackageStructure(apverid, flat)
 
 
+# (Module-level rather than a closure inside package_structure; a
+# self-recursive closure creates a reference cycle per call.)
+def _flatten_tree(
+    node: WrapperTree, prefix: str, flat: dict[str, tuple[str, ...]]
+) -> None:
+    for name, value in node.items():
+        full = f'{prefix}/{name}' if prefix else name
+        if isinstance(value, dict):
+            _flatten_tree(value, full, flat)
+        else:
+            flat[full] = value
+
+
 class _LstrMaker:
-    """Callable leaf: builds an :class:`LangStr` from keyword substitutions."""
+    """Callable leaf: builds a :class:`LangStrSpec` from keyword subs."""
 
     __slots__ = ('_apverid', '_name')
 
@@ -53,8 +58,8 @@ class _LstrMaker:
         self._apverid = apverid
         self._name = name
 
-    def __call__(self, **subs: 'str | int | LangStr') -> 'LangStr':
-        return LangStrResource(self._apverid, self._name, dict(subs))
+    def __call__(self, **subs: 'str | int | LangStrSpec') -> 'LangStrSpec':
+        return LangStrSpecResource(self._apverid, self._name, dict(subs))
 
 
 class LangStrDir:
@@ -69,7 +74,7 @@ class LangStrDir:
         self._tree = tree
         self._prefix = prefix
 
-    def __getattr__(self, name: str) -> 'LangStr | _LstrMaker | LangStrDir':
+    def __getattr__(self, name: str) -> 'LangStrSpec | _LstrMaker | LangStrDir':
         try:
             child = self._tree[name]
         except KeyError:
@@ -78,7 +83,7 @@ class LangStrDir:
         if isinstance(child, dict):
             return LangStrDir(self._apverid, child, full)
         # A leaf: its param-keyword tuple. Empty -> a no-arg string, read
-        # as a property yielding the LangStr directly; otherwise a maker.
+        # as a property yielding the LangStrSpec directly; otherwise a maker.
         if not child:
-            return LangStrResource(self._apverid, full)
+            return LangStrSpecResource(self._apverid, full)
         return _LstrMaker(self._apverid, full)

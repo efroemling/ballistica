@@ -7,6 +7,9 @@
 #include <utility>
 #include <vector>
 
+#include "ballistica/base/base.h"
+#include "ballistica/base/python/base_python.h"
+
 namespace ballistica::base {
 
 void PythonClassLangStr::SetupType(PyTypeObject* cls) {
@@ -19,7 +22,9 @@ void PythonClassLangStr::SetupType(PyTypeObject* cls) {
       "\n"
       "A deferred, language-agnostic complex string (native).\n"
       "\n"
-      "The native counterpart of :class:`bacommon.langstr.LangStr`:\n"
+      "The verified-local counterpart of\n"
+      ":class:`bacommon.langstr.LangStrSpec` (see the D28 semantic\n"
+      "split -- holding one of these implies displayability here):\n"
       "holds tokens, not text, and evaluates to a flat string in the\n"
       "client's locale at display time. Construct from the canonical\n"
       "wire JSON of any language-string form; pass the payload's\n"
@@ -35,6 +40,7 @@ void PythonClassLangStr::SetupType(PyTypeObject* cls) {
   cls->tp_richcompare = (richcmpfunc)tp_richcompare;
   cls->tp_hash = (hashfunc)tp_hash;
   cls->tp_methods = tp_methods;
+  cls->tp_getset = tp_getsets;
 }
 
 auto PythonClassLangStr::Create(std::shared_ptr<const LangStr> value)
@@ -181,6 +187,22 @@ auto PythonClassLangStr::ToResourceJson(PythonClassLangStr* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassLangStr::GetSpec(PythonClassLangStr* self, void* closure)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  auto json = self->value()->ToResourceJson();
+  if (!json.has_value()) {
+    throw Exception("Cannot project to spec form: " + json.error(),
+                    PyExcType::kValue);
+  }
+  auto spec = g_base->python->MakeLangStrSpecFromJson(*json);
+  if (!spec.exists()) {
+    throw Exception("LangStrSpec construction failed.", PyExcType::kRuntime);
+  }
+  return spec.NewRef();
+  BA_PYTHON_CATCH;
+}
+
 std::shared_ptr<const LangStr>* PythonClassLangStr::s_pending_value_ = nullptr;
 PyTypeObject PythonClassLangStr::type_obj;
 PyMethodDef PythonClassLangStr::tp_methods[] = {
@@ -203,6 +225,20 @@ PyMethodDef PythonClassLangStr::tp_methods[] = {
      "via the native language tables). For persisting values beyond\n"
      "their payload's package-index context. Raises ValueError for\n"
      "unbound/unknown indexed nodes.\n"},
+    {nullptr}};
+PyGetSetDef PythonClassLangStr::tp_getsets[] = {
+    {const_cast<char*>("spec"), (getter)GetSpec, nullptr,
+     const_cast<char*>(
+         "spec: bacommon.langstr.LangStrSpec\n"
+         "\n"
+         "The authoring-spec projection of this verified-local string.\n"
+         "\n"
+         "Projecting verified -> spec is always valid (the reverse is\n"
+         "deliberately not offered; see the D28 semantic split). Use this\n"
+         "when feeding a wrapper string into spec-typed surfaces such as\n"
+         "doc-ui models or client-effects. Content-only: any usage-site\n"
+         "line-wrap override does not carry into the spec.\n"),
+     nullptr},
     {nullptr}};
 
 }  // namespace ballistica::base

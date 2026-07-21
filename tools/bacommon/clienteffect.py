@@ -15,8 +15,9 @@ from typing import Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
-from bacommon.langstr import LangStr
-from bacommon.assetref import SoundRef
+from bacommon import langstr
+from bacommon.langstr import LangStrSpec
+from bacommon.assetref import SoundSpec
 
 #: First engine build carrying the v2 client-effect machinery
 #: (``ScreenMessageV2``/``PlaySoundV2`` + resolve-before-run).
@@ -143,7 +144,7 @@ class ScreenMessage(Effect):
     Supported on engine build 22606 or newer.
 
     This version does no translation by default (expecting translation
-    to happen server-side). Pass a LangStr json string and set is_lstr=True
+    to happen server-side). Pass a LangStrSpec json string and set is_lstr=True
     for client-side translation.
     """
 
@@ -165,7 +166,7 @@ class ScreenMessageV2(Effect):
     """Display a screen-message (asset-package l-string version).
 
     The message is a language-agnostic
-    :class:`~bacommon.langstr.LangStr`; the client resolves the referenced
+    :class:`~bacommon.langstr.LangStrSpec`; the client resolves the referenced
     asset-package(s) in its own locale and decodes before display (see
     :func:`collect_apverids`). Only understood by clients new enough to
     carry the v2 effect machinery — older ones drop it as
@@ -173,7 +174,7 @@ class ScreenMessageV2(Effect):
     legacy form where the message matters.
     """
 
-    message: Annotated[LangStr, IOAttrs('m')]
+    message: Annotated[LangStrSpec, IOAttrs('m')]
     color: Annotated[
         tuple[float, float, float], IOAttrs('c', store_default=False)
     ] = (1.0, 1.0, 1.0)
@@ -215,14 +216,14 @@ class PlaySoundV2(Effect):
 
     Unlike :class:`PlaySound`'s fixed :class:`Sound` set, this can play
     any packaged sound via a typed
-    :class:`~bacommon.assetref.SoundRef`; the client resolves the
+    :class:`~bacommon.assetref.SoundSpec`; the client resolves the
     referenced asset-package before playing (see
     :func:`collect_apverids`). Only understood by clients new enough to
     carry the v2 effect machinery — older ones drop it as
     :class:`Unknown`.
     """
 
-    sound: Annotated[SoundRef, IOAttrs('s')]
+    sound: Annotated[SoundSpec, IOAttrs('s')]
     volume: Annotated[float, IOAttrs('v', store_default=False)] = 1.0
 
     @override
@@ -234,31 +235,14 @@ class PlaySoundV2(Effect):
 def collect_apverids(effects: list[Effect], acc: set[str]) -> None:
     """Gather every asset-package-version a list of effects references.
 
-    The v2 effect forms are self-describing (name-based ``LangStr`` values
+    The v2 effect forms are self-describing (name-based ``LangStrSpec`` values
     and typed asset refs), so the packages a client must resolve before
     running the effects are derived by walking them — nothing extra
     rides the wire. Mirrors the doc-ui-v2 pattern.
     """
-
-    def _walk_lstr(lstr: LangStr) -> None:
-        from bacommon.langstr import LangStrResource, LangStrValue
-
-        if isinstance(lstr, LangStrResource):
-            acc.add(lstr.apverid)
-            subvals = lstr.subs.values()
-        elif isinstance(lstr, LangStrValue):
-            subvals = lstr.subs.values()
-        else:
-            # Indexed values resolve against an out-of-band context;
-            # they carry no apverids of their own.
-            return
-        for sub in subvals:
-            if isinstance(sub, LangStr):
-                _walk_lstr(sub)
-
     for effect in effects:
         if isinstance(effect, ScreenMessageV2):
-            _walk_lstr(effect.message)
+            langstr.collect_apverids(effect.message, acc)
         elif isinstance(effect, PlaySoundV2):
             acc.add(effect.sound.apverid)
 

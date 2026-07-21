@@ -111,7 +111,9 @@ class NetScanner:
                 on_select_call=bui.CallStrict(self._on_select, host),
                 on_activate_call=bui.CallStrict(self._on_activate, host),
                 click_activate=True,
-                text=host['display_string'],
+                # Show the host's party name when they're advertising
+                # one (v2 scan responses); otherwise their player name.
+                text=host['party_name'] or host['display_string'],
                 h_align='left',
                 v_align='center',
                 corner_scale=t_scale,

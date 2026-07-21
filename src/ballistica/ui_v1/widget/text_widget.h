@@ -72,6 +72,16 @@ class TextWidget : public Widget {
   void SetOnActivateCall(PyObject* call_tuple);
   void set_center_scale(float val) { center_scale_ = val; }
   auto editable() const -> bool { return editable_; }
+  auto password() const -> bool { return password_; }
+
+  /// Set password mode: display masks each character as a bullet.
+  /// Only presentation is affected; the real text stays queryable.
+  void set_password(bool val) {
+    if (val != password_) {
+      password_ = val;
+      text_translation_dirty_ = true;
+    }
+  }
   void Activate() override;
   auto GetWidgetTypeName() -> std::string override { return "text"; }
   void set_always_highlight(bool val) { always_highlight_ = val; }
@@ -132,6 +142,7 @@ class TextWidget : public Widget {
   bool pressed_activate_{};
   bool always_highlight_{};
   bool editable_{};
+  bool password_{};
   bool selectable_{};
   bool clear_pressed_{};
   bool clear_mouse_over_{};

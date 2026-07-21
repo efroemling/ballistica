@@ -39,10 +39,11 @@ SessionStream::SessionStream(HostSession* host_session, bool save_replay)
                            "g_scene_v1->replay_open true at replay start;"
                            " shouldn't happen.");
     }
-    // We always write replays as the max protocol version we support.
+    // We're recording our own host-session's stream, so the replay's
+    // protocol is our hosted protocol.
     assert(g_base->assets_server);
 
-    replay_writer_ = new ReplayWriter;
+    replay_writer_ = new ReplayWriter(app_mode_->host_protocol_version());
     writing_replay_ = true;
     g_scene_v1->replay_open = true;
   }

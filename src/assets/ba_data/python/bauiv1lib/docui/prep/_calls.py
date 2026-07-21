@@ -22,8 +22,8 @@ from bauiv1lib.docui.prep._types import PagePrep, RowPrep, ButtonPrep
 if TYPE_CHECKING:
     from typing import Callable
 
-    from bacommon.langstr import LangStr
-    from bacommon.assetref import TextureRef, MeshRef
+    from bacommon.langstr import LangStrSpec
+    from bacommon.assetref import TextureSpec, MeshSpec
     from bauiv1lib.docui import DocUIWindow
 
 
@@ -32,7 +32,7 @@ def _btex(name: str) -> str:
     return f'{builtinassets.__asset_package__}:textures/{name}'
 
 
-def refstr(ref: 'TextureRef | MeshRef') -> str:
+def refstr(ref: 'TextureSpec | MeshSpec') -> str:
     """Qualified engine name for a typed asset ref."""
     return f'{ref.apverid}:{ref.name}'
 
@@ -55,7 +55,7 @@ def prep_page(
 
     import bauiv1lib.docui.prep._calls2 as prepcalls2
 
-    def _n(lstr: 'LangStr') -> bui.LangStr:
+    def _n(lstr: 'LangStrSpec') -> bui.LangStr:
         """Native handle bound against this payload's package list."""
         return bui.LangStr(dataclass_to_json(lstr), packages=packages)
 
@@ -67,7 +67,7 @@ def prep_page(
                 pagerow = copy.deepcopy(pagerow)
                 pagerow.buttons.append(
                     dui2.Button(
-                        label=stdassets.strings.ui.nothing_here,
+                        label=stdassets.strings.ui.nothing_here.spec,
                         label_color=(1, 1, 1, 0.3),
                         size=(220, 100),
                         label_scale=0.6,

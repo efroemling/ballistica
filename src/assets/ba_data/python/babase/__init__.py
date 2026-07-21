@@ -191,6 +191,7 @@ from babase._general import (
     verify_object_death,
 )
 from babase._language import (
+    LangStrDir,
     LanguageSubsystem,
     Lstr,
     get_legacy_langdata,
@@ -217,6 +218,7 @@ from babase._math import normalized_color, is_point_in_box, vec3validate
 from babase._meta import MetadataSubsystem
 from babase._assetsubsystem import (
     AssetSubsystem,
+    make_progress_reporter,
     ResolveResult,
     ResolveProgress,
     ResolvePhase,
@@ -349,10 +351,12 @@ __all__ = [
     'LocaleSubsystem',
     'lifecyclelog',
     'LangStr',
+    'LangStrDir',
     'lock_all_input',
     'LoginAdapter',
     'LoginInfo',
     'Lstr',
+    'make_progress_reporter',
     'mac_music_app_get_playlists',
     'mac_music_app_get_volume',
     'mac_music_app_init',

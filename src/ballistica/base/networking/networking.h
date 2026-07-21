@@ -40,6 +40,33 @@ namespace ballistica::base {
 #define BA_PACKET_HOST_QUERY 22
 #define BA_PACKET_HOST_QUERY_RESPONSE 23
 
+// V2 local network scanning (added build 22937 / 1.8.0): query is
+// 1 type byte + 4 byte query-id + a json dict describing the asker
+// ('b': engine-build-number, 'v': query-format-version) so hosts can
+// tailor responses; response is 1 type byte + the echoed 4 byte
+// query-id + a json dict (see ClassicAppMode::HandleGameQuery).
+// Both sides ignore unknown fields, giving this format permanent
+// extension room. Old builds simply drop these packet types, so new
+// clients broadcast V1 + V2 queries and dedupe results (preferring
+// V2) by app-instance-uuid.
+#define BA_PACKET_HOST_QUERY_V2 38
+#define BA_PACKET_HOST_QUERY_RESPONSE_V2 39
+
+// Pre-join requirements query (added build 22937 / 1.8.0): asked of a
+// specific host (unicast, same game port) before joining, returning
+// everything a client must satisfy to join — currently the host's
+// asset-package listing; later possibly requires-password etc. Query is
+// 1 type byte + 4 byte query-id + a json dict ('v': format-version,
+// 'b': engine-build-number, 'p': requested page); response is 1 type
+// byte + the echoed query-id + a json dict ('v': format-version,
+// 'p': page, 'n': page-count, 'r': requirements-fragment). Paging keeps
+// each response inside a single safe datagram; clients merge fragments
+// (arrays concatenate across pages, scalars are first-seen). Old hosts
+// drop the unknown type; clients treat no-response as a legacy host
+// with no requirements.
+#define BA_PACKET_HOST_REQUIREMENTS_QUERY 40
+#define BA_PACKET_HOST_REQUIREMENTS_RESPONSE 41
+
 // Connection/disconnection.
 #define BA_PACKET_CLIENT_REQUEST 24
 #define BA_PACKET_CLIENT_ACCEPT 25

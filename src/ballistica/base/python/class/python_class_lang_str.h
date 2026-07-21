@@ -26,6 +26,7 @@ class PythonClassLangStr : public PythonClass {
   static void SetupType(PyTypeObject* cls);
   static PyTypeObject type_obj;
   static PyMethodDef tp_methods[];
+  static PyGetSetDef tp_getsets[];
 
   /// Mint a wrapper around an existing native value.
   static auto Create(std::shared_ptr<const LangStr> value) -> PyObject*;
@@ -58,6 +59,7 @@ class PythonClassLangStr : public PythonClass {
   static auto tp_richcompare(PythonClassLangStr* self, PyObject* other, int op)
       -> PyObject*;
   static auto tp_hash(PythonClassLangStr* self) -> Py_hash_t;
+  static auto GetSpec(PythonClassLangStr* self, void* closure) -> PyObject*;
   static auto Evaluate(PythonClassLangStr* self) -> PyObject*;
   static auto ToJson(PythonClassLangStr* self) -> PyObject*;
   static auto ToResourceJson(PythonClassLangStr* self) -> PyObject*;

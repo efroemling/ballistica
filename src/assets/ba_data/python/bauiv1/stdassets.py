@@ -1,29 +1,29 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bastdassets.260719c`` (bauiv1).
+"""Asset-package wrapper for ``a-0.bastdassets.260720`` (bauiv1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bastdassets.260719c
+# ba_meta require asset-package a-0.bastdassets.260720
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.bastdassets.260719c'
+__asset_package__ = 'a-0.bastdassets.260720'
 
 from typing import TYPE_CHECKING
 
 from bauiv1._assetref import AssetRefDir
 
-from bacommon.langstr import LangStrDir
+from babase import LangStrDir
 
 if TYPE_CHECKING:
     from bauiv1._assetref import MeshRef, SoundRef, TextureRef
-    from bacommon.langstr import LangStr
+    from babase import LangStr
 
     class AudioGroup:
         """
@@ -828,6 +828,26 @@ if TYPE_CHECKING:
             English: (one) "You got # token!" / (other) "You got # tokens!"
             """
 
+    class StringsGatherGroup:
+        """
+        Party/gather UI strings: hosting-form labels, pre-join prompts, and
+        related networking-flow messages.
+
+        See source for the full asset list.
+        """
+
+        #: Description line in the pre-join password prompt dialog, shown above
+        #: the password entry field when joining a password-protected party.
+        #:
+        #: English: "This party requires a password."
+        party_requires_password: LangStr
+
+        #: Label for the optional party-password entry field in the gather
+        #: window's public-hosting form.
+        #:
+        #: English: "Password (optional)"
+        password_optional: LangStr
+
     class StringsInventoryGroup:
         """
         Client-side inventory window bits: offline/signed-out placeholder
@@ -973,6 +993,7 @@ if TYPE_CHECKING:
         """
 
         economy: StringsEconomyGroup
+        gather: StringsGatherGroup
         inventory: StringsInventoryGroup
         profiles: StringsProfilesGroup
         ui: StringsUiGroup
@@ -1308,8 +1329,8 @@ if TYPE_CHECKING:
     #: ``action_hero_lower_leg``, and 355 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 20 strings (``economy``, ``inventory``,
-    #: ``profiles``, ``ui``, and 16 more). Full list in source.
+    #: The ``strings`` group - 22 strings (``economy``, ``gather``,
+    #: ``inventory``, ``profiles``, ``ui``, and 17 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 313 assets (``achievement_boxer``,
@@ -2097,6 +2118,7 @@ _TREE = {
     },
     'strings': {
         'economy': {'you_got_tokens': ('tokens',)},
+        'gather': {'party_requires_password': (), 'password_optional': ()},
         'inventory': {
             'only_available_online': (),
             'only_available_signed_in': (),

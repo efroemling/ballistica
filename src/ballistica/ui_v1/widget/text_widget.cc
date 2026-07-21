@@ -507,8 +507,10 @@ void TextWidget::DoDrawCarat_(base::RenderPass* pass,
         carat_position_ = str_size;
       }
       float h, v;
-      text_group_->GetCaratPts(text_raw_, align_h, align_v, carat_position_, &h,
-                               &v);
+      // In password mode, carat positions must be computed against the
+      // masked display string (same char count; different glyph widths).
+      text_group_->GetCaratPts(password_ ? text_translated_ : text_raw_,
+                               align_h, align_v, carat_position_, &h, &v);
       base::SimpleComponent c(pass);
       c.SetPremultiplied(true);
       c.SetTransparent(true);
@@ -1019,6 +1021,17 @@ void TextWidget::UpdateTranslation_() {
       text_translated_ = text_raw_;
     } else {
       text_translated_ = g_base->assets->CompileResourceString(text_raw_);
+    }
+    if (password_) {
+      // Password mode masks display only: one bullet per character.
+      // The real text lives on in text_raw_ (queries return it) and
+      // char counts match, so carat indexing stays valid.
+      int len = Utils::UTF8StringLength(text_translated_.c_str());
+      std::string masked;
+      for (int i = 0; i < len; ++i) {
+        masked += "\xE2\x80\xA2";  // U+2022 BULLET.
+      }
+      text_translated_ = masked;
     }
     text_translation_dirty_ = false;
     text_group_dirty_ = true;

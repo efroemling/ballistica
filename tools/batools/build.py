@@ -591,13 +591,14 @@ def _get_server_config_template_toml(projroot: str) -> str:
     cfg.unclean_exit_minutes = 90
     cfg.idle_exit_minutes = 20
     cfg.admins = ['a-YOUR-ID-HERE', 'a-ANOTHER-ID-HERE']
-    cfg.protocol_version = 37
+    cfg.protocol_version = 38
     cfg.session_max_players_override = 8
     cfg.playlist_inline = []
     cfg.team_names = ('Red', 'Blue')
     cfg.team_colors = ((0.1, 0.25, 1.0), (1.0, 0.25, 0.2))
     cfg.public_ipv4_address = '123.123.123.123'
     cfg.public_ipv6_address = '123A::A123:23A1:A312:12A3:A213:2A13'
+    cfg.password = 'changeme'
     cfg.log_levels = {'ba.lifecycle': 'INFO', 'ba.assets': 'INFO'}
 
     lines_in = _get_server_config_raw_contents(projroot).splitlines()

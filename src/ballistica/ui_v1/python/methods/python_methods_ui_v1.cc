@@ -2199,6 +2199,8 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* literal_obj{Py_None};
   PyObject* depth_range_obj{Py_None};
   PyObject* transition_type_obj{Py_None};
+  PyObject* password_obj{Py_None};
+  PyObject* query_password_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -2244,9 +2246,11 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "literal",
                                  "depth_range",
                                  "transition_type",
+                                 "password",
+                                 "query_password",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &text_obj, &v_align_obj, &h_align_obj,
           &editable_obj, &padding_obj, &on_return_press_call_obj,
@@ -2260,7 +2264,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &extra_touch_border_scale_obj, &res_scale_obj, &query_max_chars_obj,
           &query_description_obj, &adapter_finished_obj, &glow_type_obj,
           &allow_clear_button_obj, &literal_obj, &depth_range_obj,
-          &transition_type_obj))
+          &transition_type_obj, &password_obj, &query_password_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2296,6 +2300,18 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
                       PyExcType::kWidgetNotFound);
     }
     return PyUnicode_FromString(widget->description().c_str());
+  }
+  if (query_password_obj != Py_None) {
+    widget =
+        dynamic_cast<TextWidget*>(UIV1Python::GetPyWidget(query_password_obj));
+    if (!widget.exists()) {
+      throw Exception("Invalid or nonexistent widget.",
+                      PyExcType::kWidgetNotFound);
+    }
+    if (widget->password()) {
+      Py_RETURN_TRUE;
+    }
+    Py_RETURN_FALSE;
   }
 
   // Ok it's not a query; it's a create or edit.
@@ -2401,11 +2417,17 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (literal_obj != Py_None) {
     widget->SetLiteral(Python::GetBool(literal_obj));
   }
+  if (password_obj != Py_None) {
+    widget->set_password(Python::GetBool(password_obj));
+  }
   if (text_obj != Py_None) {
     // Native language-strings are retained by the widget and
     // re-evaluated on language changes (mirroring legacy Lstr
-    // behavior); everything else flattens through the standard
-    // string slot.
+    // behavior); everything else flattens through the standard string
+    // slot. Per the D28 semantic split, widgets accept only the
+    // verified-local babase.LangStr form — authoring-spec values must
+    // be verified (resolved) before display, so no implicit
+    // spec-conversion here.
     if (base::PythonClassLangStr::Check(text_obj)) {
       widget->SetLangStr(base::PythonClassLangStr::FromPyObj(text_obj).value());
     } else {
@@ -2593,6 +2615,8 @@ static PyMethodDef PyTextWidgetDef = {
     "  literal: bool | None = None,\n"
     "  depth_range: tuple[float, float] | None = None,\n"
     "  transition_type: Literal['in_left', 'scale'] | None = None,\n"
+    "  password: bool | None = None,\n"
+    "  query_password: bauiv1.Widget | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a text widget.\n"

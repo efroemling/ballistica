@@ -16,7 +16,7 @@ from bauiv1lib.docui import DocUIWindow, DocUIController
 if TYPE_CHECKING:
     from bacommon.docui import DocUIRequest, DocUIResponse
     import bacommon.docui.v2
-    from bacommon.langstr import LangStr
+    from bacommon.langstr import LangStrSpec
 
     from bauiv1lib.docui import DocUILocalAction
 
@@ -35,7 +35,7 @@ def show_test_doc_ui_v2_window() -> None:
     """Bust out a doc-ui test window built locally on the client.
 
     Test pages authored as language-agnostic v2 documents — text as
-    ``LangStr`` values from the ``badocuiv2testassets`` asset package (decoded
+    ``LangStrSpec`` values from the ``badocuiv2testassets`` package (decoded
     in the client's locale at render time), textures/meshes as typed
     refs, and multi-line labels via wrap-params instead of hand-baked
     newlines. The Cloud-Msg and Web buttons fetch equivalent v2 pages
@@ -110,7 +110,7 @@ def _test_v2_page_root(
     """Author the v2 (l-string) test root page purely on the client.
 
     The full v1 test root page, with all text authored as
-    language-agnostic ``LangStr`` values from the ``badocuiv2testassets``
+    language-agnostic ``LangStrSpec`` values from the ``badocuiv2testassets``
     package, textures/meshes as typed refs from
     ``builtinassets``/``stdassets``, and multi-line labels wrapped via
     definition-time :class:`~bacommon.langstr.WrapParams` on the
@@ -131,14 +131,14 @@ def _test_v2_page_root(
 
     response = dui2.Response(
         page=dui2.Page(
-            title=strs.nav.test_root_title,
+            title=strs.nav.test_root_title.spec,
             rows=[
                 dui2.ButtonRow(
                     debug=debug,
                     header_height=100,
                     header_decorations_left=[
                         dui2.Text(
-                            text=strs.common.header_left,
+                            text=strs.common.header_left.spec,
                             position=(0, 10 + 20),
                             color=(1, 1, 1, 0.3),
                             size=(150, 30),
@@ -148,13 +148,13 @@ def _test_v2_page_root(
                     ],
                     header_decorations_center=[
                         dui2.Text(
-                            text=strs.common.hello_from_docui,
+                            text=strs.common.hello_from_docui.spec,
                             position=(0, 10 + 20),
                             size=(300, 30),
                             debug=debug,
                         ),
                         dui2.Text(
-                            text=strs.common.docui_reference,
+                            text=strs.common.docui_reference.spec,
                             scale=0.5,
                             position=(0, -18 + 20),
                             size=(600, 23),
@@ -168,7 +168,7 @@ def _test_v2_page_root(
                     ],
                     header_decorations_right=[
                         dui2.Text(
-                            text=strs.common.header_right,
+                            text=strs.common.header_right.spec,
                             position=(0, 10 + 20),
                             color=(1, 1, 1, 0.3),
                             size=(150, 30),
@@ -176,30 +176,30 @@ def _test_v2_page_root(
                             debug=debug,
                         ),
                     ],
-                    title=strs.nav.some_tests,
+                    title=strs.nav.some_tests.spec,
                     buttons=[
                         dui2.Button(
-                            label=strs.nav.browse,
+                            label=strs.nav.browse.spec,
                             size=(120, 80),
                             action=dui2.Browse(dui2.Request('/test2')),
                         ),
                         dui2.Button(
-                            label=strs.nav.replace,
+                            label=strs.nav.replace.spec,
                             size=(120, 80),
                             action=dui2.Replace(dui2.Request('/test2')),
                         ),
                         dui2.Button(
-                            label=strs.nav.close,
+                            label=strs.nav.close.spec,
                             size=(120, 80),
                             action=dui2.Local(close_window=True),
                         ),
                         dui2.Button(
-                            label=strs.common.invalid_request,
+                            label=strs.common.invalid_request.spec,
                             size=(120, 80),
                             action=dui2.Browse(dui2.Request('/invalidrequest')),
                         ),
                         dui2.Button(
-                            label=strs.effects.immediate_client_effects,
+                            label=strs.effects.immediate_client_effects.spec,
                             size=(120, 80),
                             action=dui2.Local(
                                 # V2 effect forms: l-string text decoded
@@ -212,7 +212,7 @@ def _test_v2_page_root(
                                     clfx.ScreenMessageV2(
                                         message=(
                                             strs.effects.immediate_effects_hello
-                                        ),
+                                        ).spec,
                                         color=(0, 1, 0),
                                     ),
                                     clfx.PlaySoundV2(
@@ -222,7 +222,9 @@ def _test_v2_page_root(
                                     ),
                                     clfx.Delay(1.0),
                                     clfx.ScreenMessageV2(
-                                        message=strs.effects.effect_success,
+                                        message=(
+                                            strs.effects.effect_success
+                                        ).spec,
                                         color=(0, 1, 0),
                                     ),
                                     clfx.PlaySoundV2(
@@ -234,14 +236,14 @@ def _test_v2_page_root(
                             ),
                         ),
                         dui2.Button(
-                            label=strs.effects.response_client_effects,
+                            label=strs.effects.response_client_effects.spec,
                             size=(120, 80),
                             action=dui2.Browse(
                                 dui2.Request('/', args={'test_effects': True})
                             ),
                         ),
                         dui2.Button(
-                            label=strs.effects.immediate_local_action,
+                            label=strs.effects.immediate_local_action.spec,
                             size=(120, 80),
                             action=dui2.Local(
                                 immediate_local_action='testaction',
@@ -249,7 +251,7 @@ def _test_v2_page_root(
                             ),
                         ),
                         dui2.Button(
-                            label=strs.effects.response_local_action,
+                            label=strs.effects.response_local_action.spec,
                             size=(120, 80),
                             action=dui2.Browse(
                                 dui2.Request('/', args={'test_action': True})
@@ -258,13 +260,13 @@ def _test_v2_page_root(
                     ],
                 ),
                 dui2.ButtonRow(
-                    title=strs.nav.few_more_tests,
+                    title=strs.nav.few_more_tests.spec,
                     buttons=[
                         dui2.Button(
                             label=(
-                                strs.common.hide_debug
+                                strs.common.hide_debug.spec
                                 if debug
-                                else strs.common.show_debug
+                                else strs.common.show_debug.spec
                             ),
                             size=(120, 80),
                             action=dui2.Replace(
@@ -272,27 +274,27 @@ def _test_v2_page_root(
                             ),
                         ),
                         dui2.Button(
-                            label=strs.nav.slow_browse,
+                            label=strs.nav.slow_browse.spec,
                             size=(120, 80),
                             action=dui2.Browse(dui2.Request('/slow')),
                         ),
                         dui2.Button(
-                            label=strs.nav.slow_replace,
+                            label=strs.nav.slow_replace.spec,
                             size=(120, 80),
                             action=dui2.Replace(dui2.Request('/slow')),
                         ),
                         dui2.Button(
-                            label=strs.common.timed_actions,
+                            label=strs.common.timed_actions.spec,
                             size=(120, 80),
                             action=dui2.Browse(dui2.Request('/timedactions')),
                         ),
                         dui2.Button(
-                            label=strs.web.web_get,
+                            label=strs.web.web_get.spec,
                             size=(120, 80),
                             action=dui2.Browse(dui2.Request('/webtest/get')),
                         ),
                         dui2.Button(
-                            label=strs.web.web_post,
+                            label=strs.web.web_post.spec,
                             size=(120, 80),
                             action=dui2.Browse(
                                 dui2.Request(
@@ -302,29 +304,29 @@ def _test_v2_page_root(
                             ),
                         ),
                         dui2.Button(
-                            label=strs.items.display_items,
+                            label=strs.items.display_items.spec,
                             size=(120, 80),
                             action=dui2.Browse(dui2.Request('/displayitems')),
                         ),
                         dui2.Button(
-                            label=strs.layout.empty_page,
+                            label=strs.layout.empty_page.spec,
                             size=(120, 80),
                             action=dui2.Browse(dui2.Request('/emptypage')),
                         ),
                     ],
                 ),
                 dui2.ButtonRow(
-                    title=strs.nav.even_more_tests,
+                    title=strs.nav.even_more_tests.spec,
                     buttons=[
                         dui2.Button(
-                            label=strs.cloud.cloud_msg_get,
+                            label=strs.cloud.cloud_msg_get.spec,
                             size=(120, 80),
                             action=dui2.Browse(
                                 dui2.Request('/cloudmsgtest/get')
                             ),
                         ),
                         dui2.Button(
-                            label=strs.cloud.cloud_msg_post,
+                            label=strs.cloud.cloud_msg_post.spec,
                             size=(120, 80),
                             action=dui2.Browse(
                                 dui2.Request(
@@ -334,25 +336,25 @@ def _test_v2_page_root(
                             ),
                         ),
                         dui2.Button(
-                            label=strs.layout.bounds_tests,
+                            label=strs.layout.bounds_tests.spec,
                             size=(120, 80),
                             action=dui2.Browse(dui2.Request('/boundstests')),
                         ),
                     ],
                 ),
-                dui2.ButtonRow(title=strs.layout.empty_row, buttons=[]),
+                dui2.ButtonRow(title=strs.layout.empty_row.spec, buttons=[]),
                 dui2.ButtonRow(
-                    title=strs.layout.layout_tests,
+                    title=strs.layout.layout_tests.spec,
                     debug=debug,
                     padding_left=5.0,
                     buttons=[
                         dui2.Button(
-                            label=strs.nav.test,
+                            label=strs.nav.test.spec,
                             size=(180, 200),
                             decorations=_layout_test_decos(debug),
                         ),
                         dui2.Button(
-                            label=strs.nav.test_two,
+                            label=strs.nav.test_two.spec,
                             size=(100, 100),
                             color=(1, 0, 0, 1),
                             label_color=(1, 1, 1, 1),
@@ -361,7 +363,7 @@ def _test_v2_page_root(
                         # Should look like the first button but
                         # scaled down.
                         dui2.Button(
-                            label=strs.nav.test,
+                            label=strs.nav.test.spec,
                             size=(180, 200),
                             scale=0.6,
                             padding_bottom=30,  # Should nudge us up.
@@ -370,7 +372,7 @@ def _test_v2_page_root(
                         ),
                         # Testing custom button images and opacity.
                         dui2.Button(
-                            label=strs.nav.test_three,
+                            label=strs.nav.test_three.spec,
                             texture=builtinassets.textures.button_square_wide,
                             padding_left=10.0,
                             padding_right=10.0,
@@ -379,7 +381,7 @@ def _test_v2_page_root(
                         ),
                         # Testing image drawing vs bounds
                         dui2.Button(
-                            label=strs.layout.bounds_test,
+                            label=strs.layout.bounds_test.spec,
                             texture=builtinassets.textures.white,
                             color=(1, 1, 1, 0.3),
                             size=(150, 100),
@@ -388,14 +390,14 @@ def _test_v2_page_root(
                     ],
                 ),
                 dui2.ButtonRow(
-                    title=strs.layout.long_row_test,
-                    subtitle=strs.layout.look_a_subtitle,
+                    title=strs.layout.long_row_test.spec,
+                    subtitle=strs.layout.look_a_subtitle.spec,
                     buttons=[
                         dui2.Button(
                             size=(150, 100),
                             decorations=[
                                 dui2.Text(
-                                    text=strs.layout.max_width_test,
+                                    text=strs.layout.max_width_test.spec,
                                     position=(0, 25),
                                     size=(150 * 0.8, 32.0),
                                     flatness=1.0,
@@ -406,7 +408,7 @@ def _test_v2_page_root(
                                 # ('MaxHeightTest\nSecondLine'); we ask
                                 # for two balanced lines instead.
                                 dui2.Text(
-                                    text=strs.layout.max_height_test,
+                                    text=strs.layout.max_height_test.spec,
                                     position=(0, -20),
                                     size=(150 * 0.8, 40),
                                     flatness=1.0,
@@ -461,7 +463,7 @@ def _test_v2_page_root(
                         dui2.Button(size=(150, 100)),
                         dui2.Button(size=(150, 100)),
                         dui2.Button(
-                            label=strs.common.foo,
+                            label=strs.common.foo.spec,
                             size=(150, 100),
                             scale=0.4,
                             padding_left=100,
@@ -479,7 +481,7 @@ def _test_v2_page_root(
                 ),
                 dui2.ButtonRow(
                     spacing_top=-15,
-                    subtitle=strs.layout.subtitle_only,
+                    subtitle=strs.layout.subtitle_only.spec,
                     buttons=[
                         dui2.Button(size=(200, 120)),
                     ],
@@ -487,7 +489,7 @@ def _test_v2_page_root(
                 dui2.ButtonRow(
                     buttons=[
                         dui2.Button(
-                            label=strs.layout.row_with_no_title,
+                            label=strs.layout.row_with_no_title.spec,
                             size=(300, 80),
                             style=dui2.ButtonStyle.MEDIUM,
                             color=(0.8, 0.8, 0.8, 1),
@@ -498,11 +500,11 @@ def _test_v2_page_root(
                     ],
                 ),
                 dui2.ButtonRow(
-                    title=strs.layout.centered_faded_title,
+                    title=strs.layout.centered_faded_title.spec,
                     title_color=(0.6, 0.6, 1.0, 0.3),
                     title_flatness=1.0,
                     title_shadow=1.0,
-                    subtitle=strs.layout.testing_centered,
+                    subtitle=strs.layout.testing_centered.spec,
                     subtitle_color=(1.0, 0.5, 1.0, 0.5),
                     subtitle_flatness=1.0,
                     subtitle_shadow=0.0,
@@ -510,7 +512,7 @@ def _test_v2_page_root(
                     center_title=True,
                     buttons=[
                         dui2.Button(
-                            label=strs.common.hello_there,
+                            label=strs.common.hello_there.spec,
                             size=(200, 120),
                             color=(0.7, 0.7, 0.9, 1),
                         ),
@@ -526,12 +528,13 @@ def _test_v2_page_root(
     if request.args.get('test_effects', False):
         response.client_effects = [
             clfx.ScreenMessageV2(
-                message=strs.effects.response_effects_hello, color=(0, 1, 0)
+                message=strs.effects.response_effects_hello.spec,
+                color=(0, 1, 0),
             ),
             clfx.PlaySoundV2(sound=builtinassets.audio.cash_register),
             clfx.Delay(1.0),
             clfx.ScreenMessageV2(
-                message=strs.effects.effect_success, color=(0, 1, 0)
+                message=strs.effects.effect_success.spec, color=(0, 1, 0)
             ),
             clfx.PlaySoundV2(sound=builtinassets.audio.cash_register),
         ]
@@ -567,7 +570,7 @@ def _layout_test_decos(debug: bool) -> list[bacommon.docui.v2.Decoration]:
             v_align=dui2.VAlign.TOP,
         ),
         dui2.Text(
-            text=strs.layout.corner_tl,
+            text=strs.layout.corner_tl.spec,
             position=(-70, 75),
             size=(50, 50),
             h_align=dui2.HAlign.LEFT,
@@ -575,7 +578,7 @@ def _layout_test_decos(debug: bool) -> list[bacommon.docui.v2.Decoration]:
             debug=debug,
         ),
         dui2.Text(
-            text=strs.layout.corner_tr,
+            text=strs.layout.corner_tr.spec,
             position=(70, 75),
             size=(50, 50),
             h_align=dui2.HAlign.RIGHT,
@@ -583,7 +586,7 @@ def _layout_test_decos(debug: bool) -> list[bacommon.docui.v2.Decoration]:
             debug=debug,
         ),
         dui2.Text(
-            text=strs.layout.corner_bl,
+            text=strs.layout.corner_bl.spec,
             position=(-70, -75),
             size=(50, 50),
             h_align=dui2.HAlign.LEFT,
@@ -591,7 +594,7 @@ def _layout_test_decos(debug: bool) -> list[bacommon.docui.v2.Decoration]:
             debug=debug,
         ),
         dui2.Text(
-            text=strs.layout.corner_br,
+            text=strs.layout.corner_br.spec,
             position=(70, -75),
             size=(50, 50),
             h_align=dui2.HAlign.RIGHT,
@@ -615,23 +618,23 @@ def _test_v2_page_2(
 
     return dui2.Response(
         page=dui2.Page(
-            title=strs.nav.test_two_title,
+            title=strs.nav.test_two_title.spec,
             rows=[
                 dui2.ButtonRow(
-                    title=strs.nav.more_tests,
+                    title=strs.nav.more_tests.spec,
                     buttons=[
                         dui2.Button(
-                            label=strs.nav.browse,
+                            label=strs.nav.browse.spec,
                             size=(120, 80),
                             action=dui2.Browse(dui2.Request('/')),
                         ),
                         dui2.Button(
-                            label=strs.nav.replace,
+                            label=strs.nav.replace.spec,
                             size=(120, 80),
                             action=dui2.Replace(dui2.Request('/')),
                         ),
                         dui2.Button(
-                            label=strs.nav.close,
+                            label=strs.nav.close.spec,
                             size=(120, 80),
                             action=dui2.Local(close_window=True),
                             selected=True,  # Testing this
@@ -660,16 +663,16 @@ def _test_v2_page_long(
 
     return dui2.Response(
         page=dui2.Page(
-            title=strs.nav.test,
+            title=strs.nav.test.spec,
             center_vertically=True,
             rows=[
                 dui2.ButtonRow(
-                    title=strs.common.that_took_a_while,
+                    title=strs.common.that_took_a_while.spec,
                     center_title=True,
                     center_content=True,
                     buttons=[
                         dui2.Button(
-                            label=strs.common.sure_did,
+                            label=strs.common.sure_did.spec,
                             size=(120, 80),
                             action=dui2.Browse(dui2.Request('/')),
                         ),
@@ -696,17 +699,17 @@ def _test_v2_page_timed_actions(
 
     return dui2.Response(
         page=dui2.Page(
-            title=strs.nav.test,
+            title=strs.nav.test.spec,
             center_vertically=True,
             rows=[
                 dui2.ButtonRow(
-                    title=strs.common.hello_there_num(num=str(val)),
-                    subtitle=strs.common.each_change,
+                    title=strs.common.hello_there_num(num=str(val)).spec,
+                    subtitle=strs.common.each_change.spec,
                     center_title=True,
                     center_content=True,
                     buttons=[
                         dui2.Button(
-                            label=strs.nav.done,
+                            label=strs.nav.done.spec,
                             size=(120, 80),
                             action=dui2.Local(close_window=True),
                             default=True,
@@ -738,7 +741,8 @@ def _test_v2_page_empty(
 
     return dui2.Response(
         page=dui2.Page(
-            title=_docuiv2testassets.strings.layout.empty_page_title, rows=[]
+            title=_docuiv2testassets.strings.layout.empty_page_title.spec,
+            rows=[],
         )
     )
 
@@ -821,13 +825,13 @@ def _test_v2_page_display_items(
         page=dui2.Page(
             padding_left=20,
             padding_right=20,
-            title=strs.items.display_items,
+            title=strs.items.display_items.spec,
             rows=[
                 dui2.ButtonRow(
                     debug=debug,
                     padding_left=-10,
-                    title=strs.items.display_item_tests,
-                    subtitle=strs.items.display_items_sub,
+                    title=strs.items.display_item_tests.spec,
+                    subtitle=strs.items.display_items_sub.spec,
                     buttons=[
                         _make_test_button(
                             1.0,
@@ -863,9 +867,9 @@ def _test_v2_page_display_items(
                     buttons=[
                         dui2.Button(
                             label=(
-                                strs.common.hide_debug
+                                strs.common.hide_debug.spec
                                 if debug
-                                else strs.common.show_debug
+                                else strs.common.show_debug.spec
                             ),
                             style=dui2.ButtonStyle.MEDIUM,
                             size=(240, 60),
@@ -895,15 +899,15 @@ def _test_v2_bounds(
 
     strs = _docuiv2testassets.strings
 
-    def _nm(style: bacommon.docui.v2.ButtonStyle) -> LangStr:
+    def _nm(style: bacommon.docui.v2.ButtonStyle) -> LangStrSpec:
         # Code-literal pass-through: renders the raw enum name
         # verbatim in every locale.
         return strs.common.code_literal(
             text=f'{type(style).__name__}.{style.name}'
-        )
+        ).spec
 
     def _hello_row(
-        title: LangStr,
+        title: LangStrSpec,
         sizes: list[tuple[float, float]],
         style: bacommon.docui.v2.ButtonStyle,
         texture: bool = False,
@@ -912,7 +916,7 @@ def _test_v2_bounds(
             title=title,
             buttons=[
                 dui2.Button(
-                    label=strs.layout.hello,
+                    label=strs.layout.hello.spec,
                     size=size,
                     style=style,
                     texture=(builtinassets.textures.white if texture else None),
@@ -927,7 +931,7 @@ def _test_v2_bounds(
 
     return dui2.Response(
         page=dui2.Page(
-            title=strs.layout.bounds_tests_title,
+            title=strs.layout.bounds_tests_title.spec,
             rows=[
                 _hello_row(
                     _nm(styles.SQUARE),
@@ -940,7 +944,7 @@ def _test_v2_bounds(
                     styles.SQUARE_WIDE,
                 ),
                 _hello_row(
-                    strs.layout.background_texture,
+                    strs.layout.background_texture.spec,
                     [(300, 300), (200, 200), (100, 100)],
                     styles.SQUARE,
                     texture=True,

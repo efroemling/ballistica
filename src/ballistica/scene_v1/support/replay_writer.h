@@ -13,7 +13,12 @@ namespace ballistica::scene_v1 {
 
 class ReplayWriter : public base::AssetsServer::Processor {
  public:
-  ReplayWriter();
+  /// Protocol-version must be the version of the actual stream being
+  /// recorded (the hosted protocol when recording our own host-session;
+  /// the negotiated connection protocol when recording as a client) —
+  /// NOT simply kProtocolVersionMax, since as a client we may be
+  /// ingesting an older-protocol stream which gets written verbatim.
+  explicit ReplayWriter(int protocol_version);
   void Finish();
 
   void PushAddMessageToReplayCall(const std::vector<uint8_t>& message);
@@ -22,6 +27,7 @@ class ReplayWriter : public base::AssetsServer::Processor {
 
  private:
   void WriteReplayMessages_();
+  int protocol_version_;
   std::list<std::vector<uint8_t> > replay_messages_;
   FILE* replay_out_file_{};
   size_t replay_bytes_written_{};

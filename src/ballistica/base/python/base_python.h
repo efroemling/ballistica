@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_PYTHON_BASE_PYTHON_H_
 #define BALLISTICA_BASE_PYTHON_BASE_PYTHON_H_
 
+#include <memory>
 #include <optional>
 #include <set>
 #include <string>
@@ -12,6 +13,8 @@
 #include "ballistica/shared/python/python_object_set.h"
 
 namespace ballistica::base {
+
+class LangStr;
 
 /// General Python support class for the base feature-set.
 class BasePython {
@@ -202,12 +205,29 @@ class BasePython {
   void SoftImportPlus();
   void SoftImportClassic();
 
+  /// Build a bacommon.langstr.LangStrSpec dataclass instance from its
+  /// wire JSON (used by babase.LangStr's ``.spec`` projection). Returns
+  /// an empty ref on failure (logged).
+  auto MakeLangStrSpecFromJson(const std::string& json) -> PythonRef;
+
+  /// Compute HMAC-SHA256(key, msg) as a lowercase hex string (via
+  /// stdlib hmac/hashlib). Returns empty string on failure (logged).
+  /// Used for join-password proofs over the scene_v1 wire.
+  auto HmacSha256Hex(const std::string& key, const std::string& msg)
+      -> std::string;
+
  private:
-  /// If o is a bacommon.langstr.LangStr dataclass (the shared authored
-  /// form the generated wrapper accessors emit), evaluate it natively
-  /// to flat display text (fail-visible) and return it; nullopt if o
-  /// is some other type. Lazily grabs the class + serializer on first
-  /// use, keeping bacommon out of the babase bootstrap graph.
+  /// If o is a bacommon.langstr.LangStrSpec dataclass (the authoring
+  /// form), parse it into a native LangStr and return it; nullopt if o
+  /// is some other type or on parse trouble (which is logged).
+  auto ParseBacommonLangStr(PyObject* o)
+      -> std::optional<std::shared_ptr<const LangStr>>;
+
+  /// If o is a bacommon.langstr.LangStrSpec dataclass (the authoring
+  /// form), evaluate it natively to flat display text (fail-visible)
+  /// and return it; nullopt if o is some other type. Lazily grabs the
+  /// class + serializers on first use, keeping bacommon out of the
+  /// babase bootstrap graph.
   auto EvalBacommonLangStr_(PyObject* o) -> std::optional<std::string>;
   auto IsBacommonLangStr_(PyObject* o) -> bool;
 
@@ -218,9 +238,14 @@ class BasePython {
 
   std::set<std::string> do_once_locations_;
   PythonObjectSet<ObjID> objs_;
-  // Lazily-populated (see EvalBacommonLangStr_).
+  // Lazily-populated (see IsBacommonLangStr_).
   PythonRef bacommon_lang_str_class_;
   PythonRef dataclass_to_json_call_;
+  PythonRef dataclass_from_json_call_;
+  // Lazily-populated (see HmacSha256Hex).
+  PythonRef hmac_new_call_;
+  PythonRef hashlib_sha256_call_;
+  bool hmac_lookup_failed_{};
   bool bacommon_lang_str_lookup_failed_{};
   float last_screen_res_x_{-1.0f};
   float last_screen_res_y_{-1.0f};

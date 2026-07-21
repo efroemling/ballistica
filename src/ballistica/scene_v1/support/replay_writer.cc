@@ -17,7 +17,8 @@
 
 namespace ballistica::scene_v1 {
 
-ReplayWriter::ReplayWriter() {
+ReplayWriter::ReplayWriter(int protocol_version)
+    : protocol_version_{protocol_version} {
   g_base->assets_server->AddProcessor(this);
   g_base->assets_server->event_loop()->PushCall([this] {
     std::string f_name = "__lastReplay";
@@ -32,12 +33,12 @@ ReplayWriter::ReplayWriter() {
           LogName::kBa, LogLevel::kError,
           "unable to open output-stream file: '" + file_path + "'");
     } else {
-      // Write file id and protocol-version.
-      //
-      // NOTE: We always write replays in our host protocol version no
-      // matter what the client stream is.
+      // Write file id and protocol-version. The version is that of the
+      // stream we're recording (messages are written verbatim, so as a
+      // client of an older-protocol host this is their protocol, not
+      // ours).
       uint32_t file_id = kBrpFileID;
-      uint16_t version = kProtocolVersionMax;
+      auto version = static_cast_check_fit<uint16_t>(protocol_version_);
       if ((fwrite(&file_id, sizeof(file_id), 1, replay_out_file_) != 1)
           || (fwrite(&version, sizeof(version), 1, replay_out_file_) != 1)) {
         fclose(replay_out_file_);

@@ -8,8 +8,8 @@ from typing import override, TYPE_CHECKING
 
 from efro.util import asserttype
 import bacommon.docui.v2 as dui2
-from bacommon.assetref import TextureRef
-from bacommon.langstr import LangStrValue
+from bacommon.assetref import TextureSpec
+from bacommon.langstr import LangStrSpecValue
 import bauiv1 as bui
 from bauiv1 import builtinassets
 from bauiv1 import stdassets
@@ -24,14 +24,14 @@ if TYPE_CHECKING:
     from bauiv1lib.docui import DocUILocalAction, DocUIWindow
 
 
-def _tex_from_qualified(qualified: str) -> TextureRef:
+def _tex_from_qualified(qualified: str) -> TextureSpec:
     """Typed ref for a qualified ``<apverid>:<name>`` texture string.
 
     (Appearance texture fields carry qualified strings; docui v2 wants
     typed refs.)
     """
     apverid, _, name = qualified.partition(':')
-    return TextureRef(apverid, name)
+    return TextureSpec(apverid, name)
 
 
 class InventoryUIController(DocUIController):
@@ -55,7 +55,7 @@ class InventoryUIController(DocUIController):
         if self._player_profiles_only:
             response = dui2.Response(
                 page=dui2.Page(
-                    title=invstrs.title,
+                    title=invstrs.title.spec,
                     rows=[],
                 )
             )
@@ -86,7 +86,7 @@ class InventoryUIController(DocUIController):
             if response.status is not dui2.ResponseStatus.SUCCESS:
                 response = dui2.Response(
                     page=dui2.Page(
-                        title=invstrs.title,
+                        title=invstrs.title.spec,
                         rows=[
                             dui2.ButtonRow(
                                 center_content=True,
@@ -96,7 +96,7 @@ class InventoryUIController(DocUIController):
                                             invstrs.only_available_signed_in
                                             if not signed_in
                                             else invstrs.only_available_online
-                                        ),
+                                        ).spec,
                                         texture=builtinassets.textures.white,
                                         size=(600, 100),
                                         color=(1, 1, 1, 0.0),
@@ -127,8 +127,8 @@ class InventoryUIController(DocUIController):
         # available offline.
         response.page.rows = [
             dui2.ButtonRow(
-                title=profstrs.title,
-                subtitle=profstrs.explanation,
+                title=profstrs.title.spec,
+                subtitle=profstrs.explanation.spec,
                 button_spacing=15,
                 buttons=self._get_profile_buttons(),
             ),
@@ -138,7 +138,7 @@ class InventoryUIController(DocUIController):
                 padding_left=13,
                 buttons=[
                     dui2.Button(
-                        profstrs.new_profile,
+                        profstrs.new_profile.spec,
                         action=dui2.Local(
                             default_sound=False,
                             immediate_local_action='new_profile',
@@ -301,7 +301,7 @@ class InventoryUIController(DocUIController):
                         ),
                         dui2.Text(
                             # Raw profile name (+icon glyph); verbatim.
-                            LangStrValue(tval),
+                            LangStrSpecValue(tval),
                             position=(0, -75),
                             size=(130, 40),
                             flatness=1.0,

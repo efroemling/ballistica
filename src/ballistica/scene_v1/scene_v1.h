@@ -34,7 +34,7 @@ namespace ballistica::scene_v1 {
 // anything emitting or ingesting scene streams.
 
 // Oldest protocol version we can act as a host for.
-const int kProtocolVersionHostMin = 33;
+const int kProtocolVersionHostMin = 38;
 
 // Oldest protocol version we can act as a client to. This can generally be
 // left as-is as long as only new nodes/attrs/commands are added and old
@@ -42,7 +42,7 @@ const int kProtocolVersionHostMin = 33;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 37;
+const int kProtocolVersionMax = 38;
 
 // The protocol version we actually host is now read as a setting; see
 // kSceneV1HostProtocol in ballistica/base/support/app_config.h.
@@ -84,6 +84,14 @@ const int kProtocolVersionMax = 37;
 // 37: Allows behavior_version 2 on spaz nodes which has punch-grab-spam
 //     protection. Note that if you are running a server and prefer the
 //     old behavior, you can still set that attr to 1 in mod code.
+//
+// 38: Asset-package-native worlds (in progress; landing incrementally
+//     during the 1.8 alpha cycle under this single version). Stream-level
+//     exact-apverid package tables with integer-indexed LangStr string
+//     refs and asset refs; fixed per-session package universes declared
+//     fully in stream baselines (see strings-asset-migration.md D23/D25
+//     and asset-packages.md #36). Replays now stamp the TRUE stream
+//     protocol they contain rather than kProtocolVersionMax.
 
 // Sim step size in milliseconds.
 const int kGameStepMilliseconds = 8;

@@ -57,7 +57,8 @@ class ConnectionSet {
   auto DisconnectClient(int client_id, int ban_seconds) -> bool;
   void ForceDisconnectClients();
   void PushHostConnectedUDPCall(const SockAddr& addr,
-                                bool print_connect_progress);
+                                bool print_connect_progress,
+                                const std::string& password);
   void PushDisconnectFromHostCall();
   void PushDisconnectedFromHostCall();
   auto GetPrintUDPConnectProgress() const -> bool {

@@ -1,4 +1,4 @@
-### 1.8.0 (build 22937, api 9, 2026-07-20)
+### 1.8.0 (build 22938, api 9, 2026-07-20)
 - Fully implemented asset packages (more on this soon)
 - Upgraded to Python 3.14. This gives us a few nice useful bits such as zstd
   compression to help speed up online stuff and also means we can get rid of all
@@ -16,6 +16,7 @@
 - Added hardware cursor support on all platforms; should eliminate any sense of
   cursor lag.
 - Upgraded Windows builds from VS2022 to VS2026.
+- Added password option to game hosting.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.
