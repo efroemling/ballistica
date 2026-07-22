@@ -73,6 +73,13 @@ class InputDevice : public Object {
   /// Read and apply new control values from config.
   virtual void ApplyAppConfig();
 
+  /// Trigger controller rumble/haptic feedback if the device supports it.
+  /// Default implementation does nothing. low_freq/high_freq are normalized
+  /// motor intensities in [0.0, 1.0] (mirrors dual-motor gamepad rumble: a
+  /// low-frequency 'strong' motor and a high-frequency 'weak' motor);
+  /// duration_ms is how long to sustain it.
+  virtual void Rumble(float low_freq, float high_freq, int duration_ms) {}
+
 #if BA_SDL_BUILD || BA_MINSDL_BUILD
   virtual void HandleSDLEvent(const BAEvent* e);
 #endif

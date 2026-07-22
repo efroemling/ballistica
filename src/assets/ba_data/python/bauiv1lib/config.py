@@ -33,11 +33,18 @@ class ConfigCheckBox:
         autoselect: bool = True,
         value_change_call: Callable[[Any], Any] | None = None,
         check_box_id: str | None = None,
+        fallback_value: bool = False,
     ):
         if displayname is None:
             displayname = configkey
         self._value_change_call = value_change_call
         self._configkey = configkey
+        try:
+            value = bui.app.config.resolve(configkey)
+        except KeyError:
+            # Not a builtin config key; fall back to a plain dict lookup
+            # (see AppConfig.resolve()'s docs on ad-hoc config values).
+            value = bui.app.config.get(configkey, fallback_value)
         self.widget = bui.checkboxwidget(
             parent=parent,
             id=check_box_id,
@@ -46,7 +53,7 @@ class ConfigCheckBox:
             size=size,
             text=displayname,
             textcolor=(0.8, 0.8, 0.8),
-            value=bui.app.config.resolve(configkey),
+            value=value,
             on_value_change_call=self._value_changed,
             scale=scale,
             maxwidth=maxwidth,

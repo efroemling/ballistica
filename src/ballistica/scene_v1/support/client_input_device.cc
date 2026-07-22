@@ -4,7 +4,9 @@
 
 #include <string>
 
+#include "ballistica/base/networking/networking.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
+#include "ballistica/shared/generic/json_facade.h"
 
 namespace ballistica::scene_v1 {
 
@@ -21,6 +23,22 @@ ClientInputDevice::~ClientInputDevice() = default;
 
 auto ClientInputDevice::DoGetDeviceName() -> std::string {
   return "Client Input Device";
+}
+
+void ClientInputDevice::Rumble(float low_freq, float high_freq,
+                               int duration_ms) {
+  ConnectionToClient* connection = connection_to_client_.get();
+  if (!connection) {
+    return;
+  }
+  JsonBuilder builder;
+  builder.root_object()
+      .Add("t", BA_JMESSAGE_RUMBLE)
+      .Add("d", remote_device_id_)
+      .Add("lo", low_freq)
+      .Add("hi", high_freq)
+      .Add("ms", duration_ms);
+  connection->SendJMessage(builder.Write());
 }
 
 }  // namespace ballistica::scene_v1

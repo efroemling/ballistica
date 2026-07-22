@@ -36,6 +36,7 @@ class JoystickInput : public InputDevice {
   void ApplyAppConfig() override;
   void Update() override;
   void ResetHeldStates() override;
+  void Rumble(float low_freq, float high_freq, int duration_ms) override;
 
   auto sdl_joystick_id() const -> int { return sdl_joystick_id_; }
 

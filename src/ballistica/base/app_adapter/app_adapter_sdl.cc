@@ -992,6 +992,24 @@ auto AppAdapterSDL::GetSDLJoystickInput_(int sdl_joystick_id) const
   return nullptr;  // Epic fail.
 }
 
+void AppAdapterSDL::RumbleJoystick(int sdl_joystick_id, float low_freq,
+                                   float high_freq, int duration_ms) {
+  assert(g_core->InMainThread());
+  if (sdl_joystick_id < 0
+      || static_cast<size_t>(sdl_joystick_id) >= sdl_joystick_handles_.size()) {
+    return;
+  }
+  SDL_Joystick* handle = sdl_joystick_handles_[sdl_joystick_id];
+  if (handle == nullptr) {
+    return;
+  }
+  auto to_u16 = [](float v) -> uint16_t {
+    return static_cast<uint16_t>(std::clamp(v, 0.0f, 1.0f) * 65535.0f);
+  };
+  SDL_RumbleJoystick(handle, to_u16(low_freq), to_u16(high_freq),
+                     static_cast<uint32_t>(std::max(0, duration_ms)));
+}
+
 void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
   assert(g_base->app_adapter->InGraphicsContext());
 
