@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, override
 import logging
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 
 from bauiv1lib.popup import PopupWindow, PopupMenuWindow
@@ -84,7 +85,7 @@ class AccountViewerWindow(PopupWindow):
             h_align='center',
             v_align='center',
             scale=0.6,
-            text=bui.Lstr(resource='playerInfoText'),
+            text=stdassets.strings.account.player_info,
             maxwidth=200,
             color=bui.app.ui_v1.title_color,
         )
@@ -170,14 +171,14 @@ class AccountViewerWindow(PopupWindow):
     def _on_extras_menu_press(self) -> None:
         choices = ['more', 'report']
         choices_display = [
-            bui.Lstr(resource='coopSelectWindow.seeMoreText'),
-            bui.Lstr(resource='reportThisPlayerText'),
+            stdassets.strings.ui.more,
+            stdassets.strings.account.report_this_player,
         ]
         is_admin = False
         if is_admin:
             bui.screenmessage('TEMP FORCING ADMIN ON')
             choices.append('ban')
-            choices_display.append(bui.Lstr(resource='banThisPlayerText'))
+            choices_display.append(stdassets.strings.account.ban_this_player)
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -228,7 +229,7 @@ class AccountViewerWindow(PopupWindow):
         if data is None:
             bui.textwidget(
                 edit=self._loading_text,
-                text=bui.Lstr(resource='internal.unavailableNoConnectionText'),
+                text=stdassets.strings.ui.unavailable_no_connection,
             )
             bui.spinnerwidget(edit=self._loading_spinner, visible=False)
         else:
@@ -317,7 +318,7 @@ class AccountViewerWindow(PopupWindow):
                         scale=0.9,
                         color=bui.safecolor(tint_color, 0.7),
                         shadow=1.0,
-                        text=bui.Lstr(value=data['profileDisplayString']),
+                        text=data['profileDisplayString'],
                         maxwidth=sub_width * maxwidth_scale * 0.75,
                     )
                     showing_character = True
@@ -328,14 +329,9 @@ class AccountViewerWindow(PopupWindow):
 
                 v = sub_height - 20
                 if len(data['accountDisplayStrings']) <= 1:
-                    account_title = bui.Lstr(
-                        resource='settingsWindow.accountText'
-                    )
+                    account_title = stdassets.strings.account.title
                 else:
-                    account_title = bui.Lstr(
-                        resource='accountSettingsWindow.accountsText',
-                        fallback_resource='settingsWindow.accountText',
-                    )
+                    account_title = stdassets.strings.account.accounts
                 bui.textwidget(
                     parent=self._subcontainer,
                     size=(0, 0),
@@ -377,7 +373,7 @@ class AccountViewerWindow(PopupWindow):
                     v_align='center',
                     scale=title_scale,
                     color=bui.app.ui_v1.infotextcolor,
-                    text=bui.Lstr(resource='rankText'),
+                    text=stdassets.strings.ui.rank,
                     maxwidth=sub_width * maxwidth_scale,
                 )
                 v -= 14
@@ -533,7 +529,7 @@ class AccountViewerWindow(PopupWindow):
                     v_align='center',
                     scale=title_scale,
                     color=bui.app.ui_v1.infotextcolor,
-                    text=bui.Lstr(resource='achievementsText'),
+                    text=stdassets.strings.ui.achievements,
                     maxwidth=sub_width * maxwidth_scale,
                 )
                 v -= 14
@@ -568,10 +564,7 @@ class AccountViewerWindow(PopupWindow):
                     scale=title_scale,
                     color=bui.app.ui_v1.infotextcolor,
                     flatness=1.0,
-                    text=bui.Lstr(
-                        resource='trophiesThisSeasonText',
-                        fallback_resource='trophiesText',
-                    ),
+                    text=stdassets.strings.account.trophies_this_season,
                     maxwidth=sub_width * maxwidth_scale,
                 )
                 v -= 19

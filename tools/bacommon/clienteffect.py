@@ -17,7 +17,7 @@ from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
 from bacommon import langstr
 from bacommon.langstr import LangStrSpec
-from bacommon.assetref import SoundSpec
+from bacommon.assetspec import SoundSpec
 
 #: First engine build carrying the v2 client-effect machinery
 #: (``ScreenMessageV2``/``PlaySoundV2`` + resolve-before-run).
@@ -216,7 +216,7 @@ class PlaySoundV2(Effect):
 
     Unlike :class:`PlaySound`'s fixed :class:`Sound` set, this can play
     any packaged sound via a typed
-    :class:`~bacommon.assetref.SoundSpec`; the client resolves the
+    :class:`~bacommon.assetspec.SoundSpec`; the client resolves the
     referenced asset-package before playing (see
     :func:`collect_apverids`). Only understood by clients new enough to
     carry the v2 effect machinery — older ones drop it as

@@ -835,6 +835,11 @@ auto ClassicAppMode::GetGameRosterMessage_() -> std::vector<uint8_t> {
   return msg;
 }
 
+auto ClassicAppMode::InReplay() const -> bool {
+  return dynamic_cast<scene_v1::ClientSessionReplay*>(GetForegroundSession())
+         != nullptr;
+}
+
 base::ContextRef ClassicAppMode::GetForegroundContext() {
   scene_v1::Session* s = GetForegroundSession();
   if (s) {

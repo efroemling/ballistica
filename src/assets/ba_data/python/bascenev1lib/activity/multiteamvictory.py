@@ -5,6 +5,7 @@
 from typing import override, TYPE_CHECKING, Any, cast
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 
@@ -43,9 +44,9 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         )
         assert bs.app.classic is not None
         if bs.app.ui_v1.uiscale is bs.UIScale.LARGE:
-            sval = bs.Lstr(resource='pressAnyKeyButtonPlayAgainText')
+            sval = stdassets.strings.game.press_any_key_button_play_again
         else:
-            sval = bs.Lstr(resource='pressAnyButtonPlayAgainText')
+            sval = stdassets.strings.game.press_any_button_play_again
         self._show_up_next = False
         self._custom_continue_message = sval
         super().on_begin()
@@ -222,7 +223,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                     break
             if mvp is not None:
                 Text(
-                    bs.Lstr(resource='mostValuablePlayerText'),
+                    stdassets.strings.multiteam.most_valuable_player,
                     color=(0.5, 0.5, 0.5, 1.0),
                     v_align=Text.VAlign.CENTER,
                     maxwidth=300,
@@ -242,7 +243,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 ).autoretain()
                 assert mvp_name is not None
                 Text(
-                    bs.Lstr(value=mvp_name),
+                    mvp_name,
                     position=(280, ts_height / 2 - 55 + 15 - 5),
                     h_align=Text.HAlign.LEFT,
                     v_align=Text.VAlign.CENTER,
@@ -263,7 +264,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 most_kills = entry[2].kill_count
         if mvp is not None:
             Text(
-                bs.Lstr(resource='mostViolentPlayerText'),
+                stdassets.strings.multiteam.most_violent_player,
                 color=(0.5, 0.5, 0.5, 1.0),
                 v_align=Text.VAlign.CENTER,
                 maxwidth=300,
@@ -303,7 +304,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             assert mvp_name is not None
             Text(
-                bs.Lstr(value=mvp_name),
+                mvp_name,
                 position=(270, ts_height / 2 - 150 - 30 - 36 + v_extra + 15),
                 h_align=Text.HAlign.LEFT,
                 v_align=Text.VAlign.CENTER,
@@ -324,7 +325,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 most_killed = entry[2].killed_count
         if mkp is not None:
             Text(
-                bs.Lstr(resource='mostDestroyedPlayerText'),
+                stdassets.strings.multiteam.most_destroyed_player,
                 color=(0.5, 0.5, 0.5, 1.0),
                 v_align=Text.VAlign.CENTER,
                 maxwidth=300,
@@ -363,7 +364,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             assert mkp_name is not None
             Text(
-                bs.Lstr(value=mkp_name),
+                mkp_name,
                 position=(270, ts_height / 2 - 300 - 30 - 36 + v_extra + 15),
                 h_align=Text.HAlign.LEFT,
                 v_align=Text.VAlign.CENTER,
@@ -377,7 +378,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         # Now show individual scores.
         tdelay = tval
         Text(
-            bs.Lstr(resource='finalScoresText'),
+            stdassets.strings.game.final_scores,
             color=(0.5, 0.5, 0.5, 1.0),
             position=(ts_h_offs, ts_height / 2),
             transition=Text.Transition.IN_RIGHT,
@@ -412,7 +413,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 transition_delay=tdelay,
             ).autoretain()
             Text(
-                bs.Lstr(value=name),
+                name,
                 position=(ts_h_offs - 50, ts_height / 2 + v_offs + 15),
                 h_align=Text.HAlign.LEFT,
                 v_align=Text.VAlign.CENTER,
@@ -478,7 +479,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 bs.animate(i.node, 'opacity', {0.0: 0.0, 0.25: 1.0})
 
             ZoomText(
-                bs.Lstr(value=player_name),
+                player_name,
                 position=(0, 97 + offs_v + (0 if icon is not None else 60)),
                 color=team.color,
                 scale=1.15,
@@ -506,7 +507,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             maxwidth=250,
         ).autoretain()
         ZoomText(
-            bs.Lstr(resource='seriesWinLine2Text'),
+            stdassets.strings.multiteam.series,
             position=(0, -110 + offs_v),
             scale=1.0 * s_extra,
             color=team.color,

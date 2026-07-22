@@ -130,6 +130,28 @@ namespace ballistica::base {
 
 #define BA_JMESSAGE_SCREEN_MESSAGE 0
 
+// A post-handshake join rejection carrying a reason CODE (its "r" entry;
+// one of the BA_REJECT_REASON_* values). The joiner renders a recognized
+// reason as its OWN localized builtin string and any unrecognized value as
+// a generic rejection -- so no message text crosses the wire. Older clients
+// ignore the unknown type, so hosts gate on the peer build.
+#define BA_JMESSAGE_REJECT_REASON 1
+
+// Reason codes for BA_JMESSAGE_REJECT_REASON. Wire-stable integers, APPEND
+// ONLY: a joiner renders any value it does not recognize as a generic
+// rejection, so reasons added later degrade gracefully on older clients.
+// These same codes also ride the master-server v2-auth-request channel;
+// keep in sync with bacommon.cloud.JoinRejectReason.
+#define BA_REJECT_REASON_UNKNOWN 0
+#define BA_REJECT_REASON_PASSWORD_INCORRECT 1
+#define BA_REJECT_REASON_ACCOUNT_REJECTED 2
+#define BA_REJECT_REASON_AUTH_ERROR 3
+#define BA_REJECT_REASON_MUST_SIGN_IN 4
+
+// Minimum peer build_number that understands BA_JMESSAGE_REJECT_REASON;
+// older clients get a legacy (English-literal) screen-message instead.
+#define BA_REJECT_REASON_MIN_BUILD 22939
+
 // Enable huffman compression for all net packets?
 #define BA_HUFFMAN_NET_COMPRESSION 1
 

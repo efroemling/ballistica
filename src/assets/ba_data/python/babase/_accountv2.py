@@ -218,8 +218,17 @@ class AccountV2Subsystem:
 
     def auth_request(
         self, global_app_instance_id: str
-    ) -> None | tuple[bool, str]:
-        """Start/process an auth request."""
+    ) -> None | tuple[bool, str, int | None]:
+        """Start/process an auth request.
+
+        Returns ``None`` while in flight, or ``(success, value,
+        reason)`` where ``value`` is a token on success or error text
+        on failure, and ``reason`` is an optional
+        :class:`~bacommon.cloud.JoinRejectReason` int value
+        accompanying a failure (the native layer renders a recognized
+        reason as its own localized builtin string, falling back to
+        the error text otherwise).
+        """
         import bacommon.cloud
 
         assert _babase.in_logic_thread()
@@ -241,7 +250,11 @@ class AccountV2Subsystem:
         # If we find no attempt in progress, kick one off (or fail fast).
         if auth_request is None:
             if self.primary is None:
-                return (False, 'You must sign in to do this.')
+                return (
+                    False,
+                    'You must sign in to do this.',
+                    bacommon.cloud.JoinRejectReason.MUST_SIGN_IN.value,
+                )
         if (
             auth_request is None
             and plus.cloud.connected
@@ -249,7 +262,12 @@ class AccountV2Subsystem:
         ):
             netlog.debug('Sending v2 auth request...')
             auth_request = self._auth_requests[global_app_instance_id] = (
-                _AuthRequest(expire_time=now + 10.0, error=None, token=None)
+                _AuthRequest(
+                    expire_time=now + 10.0,
+                    error=None,
+                    token=None,
+                    reason=None,
+                )
             )
             with self.primary:
                 plus.cloud.send_message_cb(
@@ -264,10 +282,10 @@ class AccountV2Subsystem:
             return None
         if auth_request.error is not None:
             assert auth_request.token is None
-            return (False, auth_request.error)
+            return (False, auth_request.error, auth_request.reason)
         if auth_request.token is not None:
             assert auth_request.error is None
-            return (True, auth_request.token)
+            return (True, auth_request.token, None)
         # No error or token; its still in flight.
         return None
 
@@ -276,6 +294,8 @@ class AccountV2Subsystem:
         auth_request: _AuthRequest,
         response: bacommon.cloud.AuthRequestResponse | Exception,
     ) -> None:
+        import bacommon.cloud
+
         assert _babase.in_logic_thread()
 
         assert auth_request.error is None
@@ -283,6 +303,9 @@ class AccountV2Subsystem:
 
         if isinstance(response, Exception):
             auth_request.error = 'An error has occurred.'
+            auth_request.reason = (
+                bacommon.cloud.JoinRejectReason.AUTH_ERROR.value
+            )
         else:
             netlog.debug(
                 'Got V2 auth response with error %s and token %s.',
@@ -291,6 +314,7 @@ class AccountV2Subsystem:
             )
             auth_request.error = response.error
             auth_request.token = response.token
+            auth_request.reason = response.reason
 
             # Make sure this sticks around for long enough to complete
             # the connection.
@@ -678,3 +702,4 @@ class _AuthRequest:
     expire_time: float
     error: str | None
     token: str | None
+    reason: int | None

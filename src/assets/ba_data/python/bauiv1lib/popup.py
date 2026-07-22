@@ -126,7 +126,7 @@ class PopupMenuWindow(PopupWindow):
         maxwidth: float | None = None,
         scale: float = 1.0,
         choices_disabled: Sequence[str] | None = None,
-        choices_display: Sequence[bui.Lstr] | None = None,
+        choices_display: Sequence[bui.Lstr | bui.LangStr] | None = None,
     ):
         # FIXME: Clean up a bit.
         # pylint: disable=too-many-branches
@@ -320,7 +320,7 @@ class PopupMenu:
         maxwidth: float | None = None,
         scale: float | None = None,
         choices_disabled: Sequence[str] | None = None,
-        choices_display: Sequence[bui.Lstr] | None = None,
+        choices_display: Sequence[bui.Lstr | bui.LangStr] | None = None,
         button_size: tuple[float, float] = (160.0, 50.0),
         autoselect: bool = True,
     ):
@@ -423,7 +423,7 @@ class PopupMenu:
     def set_choice(self, choice: str) -> None:
         """Set the selected choice."""
         self._current_choice = choice
-        displayname: str | bui.Lstr
+        displayname: str | bui.Lstr | bui.LangStr
         if len(self._choices_display) == len(self._choices):
             displayname = self._choices_display[self._choices.index(choice)]
         else:

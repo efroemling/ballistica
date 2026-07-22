@@ -1452,7 +1452,7 @@ class HappyThoughts(bs.Map):
         txt = bs.newnode(
             'text',
             attrs={
-                'text': bs.Lstr(resource='pressJumpToFlyText'),
+                'text': stdassets.strings.game.press_jump_to_fly,
                 'scale': 1.2,
                 'maxwidth': 800,
                 'position': (0, 200),

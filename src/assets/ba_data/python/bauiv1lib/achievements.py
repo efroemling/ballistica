@@ -177,12 +177,9 @@ class AchievementsWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 scale=0.6,
-                text=bui.Lstr(
-                    resource='accountSettingsWindow.achievementProgressText',
-                    subs=[
-                        ('${COUNT}', str(num_complete)),
-                        ('${TOTAL}', str(len(achievements))),
-                    ],
+                text=stdassets.strings.account.achievement_progress(
+                    complete=str(num_complete),
+                    total=str(len(achievements)),
                 ),
                 maxwidth=180,
                 color=bui.app.ui_v1.title_color,

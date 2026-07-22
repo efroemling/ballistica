@@ -103,8 +103,25 @@ auto BuiltinStrings::Input::VrOrientationReset()
   return MakeResource_("strings/input/vr_orientation_reset");
 }
 
+auto BuiltinStrings::Net::AccountRejected() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/account_rejected");
+}
+
+auto BuiltinStrings::Net::AuthError() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/auth_error");
+}
+
+auto BuiltinStrings::Net::IncorrectPassword()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/incorrect_password");
+}
+
 auto BuiltinStrings::Net::InvalidAddress() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/invalid_address");
+}
+
+auto BuiltinStrings::Net::MustSignIn() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/must_sign_in");
 }
 
 auto BuiltinStrings::Replay::ReadError() -> std::shared_ptr<const LangStr> {

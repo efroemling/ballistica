@@ -8,6 +8,7 @@ import logging
 from efro.error import CommunicationError
 import bacommon.cloud
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 
 STATUS_CHECK_INTERVAL_SECONDS = 2.0
@@ -57,7 +58,7 @@ class V2ProxySignInWindow(bui.Window):
             maxwidth=0.9 * self._width,
             # text=bui.Lstr(
             #     value='${A}...',
-            #     subs=[('${A}', bui.Lstr(resource='loadingText'))],
+            #     subs=[('${A}', stdassets.strings.ui.loading)],
             # ),
             text='',
             color=(1, 1, 1),
@@ -88,7 +89,7 @@ class V2ProxySignInWindow(bui.Window):
             position=(30, self._height - 65),
             size=(130, 50),
             scale=0.8,
-            label=bui.Lstr(resource='cancelText'),
+            label=stdassets.strings.ui.cancel,
             on_activate_call=self._done,
             autoselect=True,
         )
@@ -207,7 +208,7 @@ class V2ProxySignInWindow(bui.Window):
         if bui.overlay_web_browser_is_supported():
             bui.textwidget(
                 edit=self._state_text,
-                text=bui.Lstr(resource='pleaseWaitText'),
+                text=stdassets.strings.ui.please_wait,
             )
             self._show_overlay_sign_in_ui(response)
             self._overlay_web_browser_open = True
@@ -245,9 +246,7 @@ class V2ProxySignInWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 95),
             size=(0, 0),
-            text=bui.Lstr(
-                resource='accountSettingsWindow.v2LinkInstructionsText'
-            ),
+            text=stdassets.strings.account.v2_link_instructions,
             color=bui.app.ui_v1.title_color,
             maxwidth=self._width * 0.9,
             h_align='center',
@@ -264,7 +263,7 @@ class V2ProxySignInWindow(bui.Window):
                 ),
                 autoselect=True,
                 size=(button_width, 60),
-                label=bui.Lstr(value=address_pretty),
+                label=address_pretty,
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 on_activate_call=lambda: bui.open_url(address),
@@ -275,7 +274,7 @@ class V2ProxySignInWindow(bui.Window):
                 parent=self._root_widget,
                 position=(self._width * 0.5 - 200, self._height - 180),
                 size=(button_width - 50, 50),
-                text=bui.Lstr(value=address_pretty),
+                text=address_pretty,
                 flatness=1.0,
                 maxwidth=self._width,
                 scale=0.75,
@@ -320,7 +319,7 @@ class V2ProxySignInWindow(bui.Window):
         ):
             logging.info('LoginProxy failed.')
             builtinassets.audio.error.get().play()
-            bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
+            bui.screenmessage(stdassets.strings.ui.error, color=(1, 0, 0))
             self._done()
             return
 
@@ -376,7 +375,7 @@ class V2ProxySignInWindow(bui.Window):
         if bui.clipboard_is_supported():
             bui.clipboard_set_text(link)
             bui.screenmessage(
-                bui.Lstr(resource='copyConfirmText'), color=(0, 1, 0)
+                stdassets.strings.ui.copied_to_clipboard, color=(0, 1, 0)
             )
 
     def _done(self) -> None:

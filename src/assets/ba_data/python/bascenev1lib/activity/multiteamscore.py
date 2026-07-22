@@ -132,7 +132,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
         def _txt(
             xoffs: float,
             yoffs: float,
-            text: bs.Lstr,
+            text: bs.Lstr | bs.LangStr,
             *,
             h_align: Text.HAlign = Text.HAlign.RIGHT,
             extrascale: float = 1.0,
@@ -167,9 +167,14 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
             extrascale=1.4,
             maxwidth=None,
         )
-        _txt(-15, 4, bs.Lstr(resource='playerText'), h_align=Text.HAlign.LEFT)
-        _txt(180, 4, bs.Lstr(resource='killsText'))
-        _txt(280, 4, bs.Lstr(resource='deathsText'), maxwidth=100)
+        _txt(
+            -15,
+            4,
+            stdassets.strings.multiteam.player,
+            h_align=Text.HAlign.LEFT,
+        )
+        _txt(180, 4, stdassets.strings.multiteam.kills)
+        _txt(280, 4, stdassets.strings.multiteam.deaths, maxwidth=100)
 
         score_label = 'Score' if results is None else results.score_label
         translated = bs.Lstr(translate=('scoreNames', score_label))
@@ -224,7 +229,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
                 transition_delay=tdelay,
             ).autoretain()
             Text(
-                bs.Lstr(value=playerrec.getname(full=True)),
+                playerrec.getname(full=True),
                 maxwidth=160,
                 scale=0.75 * scale,
                 position=(

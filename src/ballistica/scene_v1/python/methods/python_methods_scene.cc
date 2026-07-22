@@ -12,6 +12,7 @@
 #include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/python/class/python_class_lang_str.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/base/support/plus_soft.h"
@@ -366,6 +367,45 @@ static PyMethodDef PyNewReplaySessionDef = {
     ":meta private:",
 };
 
+// --------------------- get_replay_asset_packages -----------------------------
+
+static auto PyGetReplayAssetPackages(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* file_name_obj;
+  static const char* kwlist[] = {"file_name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "O", const_cast<char**>(kwlist), &file_name_obj)) {
+    return nullptr;
+  }
+  std::string file_name = Python::GetString(file_name_obj);
+  auto packages = ReadReplayAssetPackages(file_name);
+  if (!packages.has_value()) {
+    Py_RETURN_NONE;
+  }
+  PyObject* list = PyList_New(0);
+  for (auto&& apverid : *packages) {
+    PythonRef item(PyUnicode_FromString(apverid.c_str()), PythonRef::kSteal);
+    PyList_Append(list, item.get());
+  }
+  return list;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetReplayAssetPackagesDef = {
+    "get_replay_asset_packages",            // name
+    (PyCFunction)PyGetReplayAssetPackages,  // method
+    METH_VARARGS | METH_KEYWORDS,           // flags
+
+    "get_replay_asset_packages(file_name: str) -> list[str] | None\n"
+    "\n"
+    "Read a replay file's asset-package requirements from its header\n"
+    "without starting playback (returns None for a missing/unreadable\n"
+    "file; an empty list for a replay predating package tables).\n"
+    "\n"
+    ":meta private:",
+};
+
 // ------------------------------ is_in_replay ---------------------------------
 
 static auto PyIsInReplay(PyObject* self, PyObject* args, PyObject* keywds)
@@ -668,15 +708,23 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
           "messages.",
           PyExcType::kValue);
     }
+    // Native LangStrs additionally ride the message as a lang-str
+    // tagged wire value (self-describing resource refs; the message
+    // layer has no package table) so new enough clients render them in
+    // their own locale. The flat text remains for older clients.
+    std::string tagged;
+    if (base::PythonClassLangStr::Check(message_obj)) {
+      tagged = SceneV1Python::BuildLangStrWireValue(message_obj, nullptr).first;
+    }
     std::vector<int32_t> client_ids;
     if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
       if (clients_obj != Py_None) {
         std::vector<int> client_ids2 = Python::GetInts(clients_obj);
         appmode->connections()->SendScreenMessageToSpecificClients(
-            message, color.x, color.y, color.z, client_ids2);
+            message, color.x, color.y, color.z, client_ids2, tagged);
       } else {
-        appmode->connections()->SendScreenMessageToAll(message, color.x,
-                                                       color.y, color.z);
+        appmode->connections()->SendScreenMessageToAll(
+            message, color.x, color.y, color.z, tagged);
       }
     }
   } else {
@@ -731,9 +779,16 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
     }
 
     if (output_stream) {
+      // The stream carries the tagged lang-str wire form (native
+      // LangStrs stay structured with indexed refs; each client
+      // evaluates in its own locale). Local display below keeps using
+      // the flat GetPyLString result.
+      auto [wire, parsed] = SceneV1Python::BuildLangStrWireValue(
+          message_obj, ContextRefSceneV1::FromCurrent().GetHostSession());
+
       // FIXME: for now we just do bottom messages.
       if (texture == nullptr && !top) {
-        output_stream->ScreenMessageBottom(message, color.x, color.y, color.z);
+        output_stream->ScreenMessageBottom(wire, color.x, color.y, color.z);
       } else if (top && texture != nullptr && tint_texture != nullptr) {
         if (texture->scene() != context_scene) {
           throw Exception("Texture is not from the current context_ref.",
@@ -743,7 +798,7 @@ static auto PyBroadcastMessage(PyObject* self, PyObject* args, PyObject* keywds)
           throw Exception("Tint-texture is not from the current context_ref.",
                           PyExcType::kContext);
         output_stream->ScreenMessageTop(
-            message, color.x, color.y, color.z, texture, tint_texture,
+            wire, color.x, color.y, color.z, texture, tint_texture,
             tint_color.x, tint_color.y, tint_color.z, tint2_color.x,
             tint2_color.y, tint2_color.z);
       } else {
@@ -770,7 +825,7 @@ static PyMethodDef PyBroadcastMessageDef = {
     (PyCFunction)PyBroadcastMessage,  // method
     METH_VARARGS | METH_KEYWORDS,     // flags
 
-    "broadcastmessage(message: str | babase.Lstr,\n"
+    "broadcastmessage(message: str | babase.Lstr | babase.LangStr,\n"
     "  color: Sequence[float] | None = None,\n"
     "  top: bool = False,\n"
     "  image: dict[str, Any] | None = None,\n"
@@ -1728,6 +1783,7 @@ static PyMethodDef PyReloadHooksDef = {
 auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
   return {
       PyNewReplaySessionDef,
+      PyGetReplayAssetPackagesDef,
       PyNewHostSessionDef,
       PyGetSessionDef,
       PyGetActivityDef,

@@ -99,10 +99,6 @@ def _init_blob_download_thread() -> None:
     _babase.set_thread_name('ballistica asset-dl')
 
 
-#: Grace period a second resolve waits for an in-flight one to finish
-#: before erroring out (single-in-flight guard).
-_RESOLVE_GRACE_SECONDS = 5.0
-
 #: How long a download leg waits for the connected node to come up before
 #: giving up. Downloads route through the node, which connects a beat
 #: after boot, so a resolve kicked at boot (e.g. construct-mode) would
@@ -565,6 +561,54 @@ class _CacheManifest:
     layout_version: Annotated[int, IOAttrs('v')] = 1
 
 
+class _ResolveGate:
+    """Serial admission gate for asset resolves, with two priority classes.
+
+    Exactly one holder runs at a time (like an ``asyncio.Lock``), but
+    waiters are admitted by priority: a *foreground* (interactive,
+    dialog-backed) resolve jumps ahead of any queued *background*
+    (decorative/prefetch) resolves. This replaces the old
+    wait-a-grace-then-raise single lock -- contended resolves now QUEUE
+    rather than failing, and foreground work is never stuck behind
+    background work.
+
+    Non-preemptive: a background resolve already running is not
+    interrupted; foreground work waits for it to finish, then goes next.
+    In practice the only slow resolve (a real package download) is itself
+    foreground, so background work waits on it, not the reverse.
+    """
+
+    def __init__(self) -> None:
+        self._cond = asyncio.Condition()
+        self._busy = False
+        self._fg_waiting = 0
+
+    async def acquire(self, *, background: bool) -> None:
+        """Wait for exclusive access. Foreground waiters are served first."""
+        async with self._cond:
+            if background:
+                # Yield to any current holder AND any waiting foreground.
+                await self._cond.wait_for(
+                    lambda: not self._busy and self._fg_waiting == 0
+                )
+            else:
+                # Announce our foreground intent so background waiters hold
+                # off, then wait only for the current holder to finish.
+                self._fg_waiting += 1
+                try:
+                    await self._cond.wait_for(lambda: not self._busy)
+                finally:
+                    self._fg_waiting -= 1
+            self._busy = True
+
+    async def release(self) -> None:
+        """Release exclusive access; wake all waiters to re-contend."""
+        async with self._cond:
+            assert self._busy
+            self._busy = False
+            self._cond.notify_all()
+
+
 class AssetSubsystem(AppSubsystem):
     """Subsystem for acquiring + tracking downloadable asset packages.
 
@@ -575,9 +619,11 @@ class AssetSubsystem(AppSubsystem):
     def __init__(self) -> None:
         super().__init__()
 
-        # Single-in-flight guard covering resolve and GC. An asyncio.Lock
-        # binds to the logic-thread loop on first use.
-        self._busy_lock = asyncio.Lock()
+        # Priority-ordered serial admission gate covering resolve and GC.
+        # One resolve at a time; foreground resolves jump ahead of queued
+        # background ones. Its asyncio.Condition binds to the logic-thread
+        # loop on first use.
+        self._gate = _ResolveGate()
 
         # Pinned set: the monotonic union of every apverid + flavor-manifest
         # hash committed into the native registry this process lifetime.
@@ -590,7 +636,7 @@ class AssetSubsystem(AppSubsystem):
         self._pinned_fm_hashes: set[str] = set()
 
         # Progress for the in-flight resolve. Single-in-flight (see
-        # _busy_lock), so one running snapshot is enough; the callback is set
+        # _gate), so one running snapshot is enough; the callback is set
         # per-resolve by resolve(on_progress=...).
         self._progress = ResolveProgress()
         self._progress_cb: Callable[[ResolveProgress], None] | None = None
@@ -811,6 +857,7 @@ class AssetSubsystem(AppSubsystem):
         on_download_starting: Callable[[], None] | None = None,
         on_progress: Callable[[ResolveProgress], None] | None = None,
         language: Locale | None = None,
+        background: bool = False,
     ) -> ResolveResult:
         """Make every requested asset-package-version available natively.
 
@@ -840,19 +887,32 @@ class AssetSubsystem(AppSubsystem):
         :meth:`babase.App.create_async_task`). Blocking legs (the cloud
         resolve, ``/casblob`` fetches, file IO) are dispatched to
         :attr:`babase.App.threadpool`.
+
+        Resolves are serialized (one at a time). ``background=True`` marks
+        a decorative/prefetch resolve that queues behind -- and never
+        blocks -- foreground (interactive) resolves; foreground is the
+        default and matches all interactive/dialog-backed callers.
         """
         assert _babase.in_logic_thread()
 
-        # Single-in-flight: wait a short grace for any in-flight resolve,
-        # then give up rather than pile on.
-        try:
-            await asyncio.wait_for(
-                self._busy_lock.acquire(), timeout=_RESOLVE_GRACE_SECONDS
-            )
-        except asyncio.TimeoutError:
-            raise AssetResolveError(
-                'Another asset resolve is already in progress.'
-            ) from None
+        # Priority-ordered serial admission: exactly one resolve runs at a
+        # time, but foreground (interactive, dialog-backed) resolves jump
+        # ahead of queued background (decorative/prefetch) ones. Contended
+        # resolves QUEUE here rather than failing.
+        logger.debug(
+            'resolve: requested %d package(s) (background=%s): %s.',
+            len(apverids),
+            background,
+            apverids,
+        )
+        wait_start = time.monotonic()
+        await self._gate.acquire(background=background)
+        logger.debug(
+            'resolve: admitted (background=%s) after %.3fs wait for %s.',
+            background,
+            time.monotonic() - wait_start,
+            apverids,
+        )
 
         self._progress = ResolveProgress()
         self._progress_cb = on_progress
@@ -873,13 +933,14 @@ class AssetSubsystem(AppSubsystem):
             # created one) so its worker threads don't outlive the batch.
             # cancel_futures drops any unstarted fetches; idle workers (the
             # state once the fetch gather has drained) exit immediately.
-            # Done before releasing the busy-lock so the pool is fully gone
+            # Done before releasing the gate so the pool is fully gone
             # before any next resolve could spin up a fresh one.
             if self._download_pool is not None:
                 self._download_pool.shutdown(wait=True, cancel_futures=True)
                 self._download_pool = None
             self._progress_cb = None
-            self._busy_lock.release()
+            await self._gate.release()
+            logger.debug('resolve: released (background=%s).', background)
 
     def _emit_progress(self) -> None:
         """Hand the current progress snapshot to the on_progress callback.
@@ -1929,17 +1990,18 @@ class AssetSubsystem(AppSubsystem):
         try:
             try:
                 await asyncio.wait_for(
-                    self._busy_lock.acquire(),
+                    self._gate.acquire(background=True),
                     timeout=_GC_BUSY_TIMEOUT_SECONDS,
                 )
             except asyncio.TimeoutError as exc:
                 logger.warning('Asset GC skipped: subsystem busy.')
                 strip_exception_tracebacks(exc)
                 return
+            logger.debug('Asset GC: admitted; starting sweep.')
             try:
                 await self._run_in_pool(self._gc_blocking)
             finally:
-                self._busy_lock.release()
+                await self._gate.release()
         except AssetResolveAbortedError as exc:
             # Threadpool went away mid-GC because we're shutting down --
             # benign; the next launch's GC picks up where this left off.

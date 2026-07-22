@@ -178,10 +178,7 @@ class LeagueRankWindow(bui.MainWindow):
                 yoffs - (55 if uiscale is bui.UIScale.SMALL else 30),
             ),
             size=(0, 0),
-            text=bui.Lstr(
-                resource='league.leagueRankText',
-                fallback_resource='coopSelectWindow.powerRankingText',
-            ),
+            text=stdassets.strings.league.league_rank,
             h_align='center',
             color=bui.app.ui_v1.title_color,
             scale=1.2 if uiscale is bui.UIScale.SMALL else 1.3,
@@ -275,10 +272,7 @@ class LeagueRankWindow(bui.MainWindow):
             )
         else:
             bui.screenmessage(
-                bui.Lstr(
-                    resource='achievementsUnavailableForOldSeasonsText',
-                    fallback_resource='unavailableText',
-                ),
+                stdassets.strings.league.achievements_unavailable_old_seasons,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()
@@ -318,18 +312,10 @@ class LeagueRankWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        txt = bui.Lstr(
-            resource='league.upToDateBonusDescriptionText',
-            subs=[
-                (
-                    '${PERCENT}',
-                    str(
-                        plus.get_v1_account_misc_read_val(
-                            'proPowerRankingBoost', 10
-                        )
-                    ),
-                ),
-            ],
+        txt = stdassets.strings.league.up_to_date_bonus_description(
+            percent=str(
+                plus.get_v1_account_misc_read_val('proPowerRankingBoost', 10)
+            )
         )
         confirm.ConfirmWindow(
             txt,
@@ -467,7 +453,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
-            text=bui.Lstr(resource='coopSelectWindow.pointsText'),
+            text=stdassets.strings.ui.points,
             h_align='left',
             v_align='center',
             scale=0.8,
@@ -541,7 +527,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
-            text=bui.Lstr(resource='coopSelectWindow.multipliersText'),
+            text=stdassets.strings.league.multipliers,
             h_align='left',
             v_align='center',
             scale=0.8,
@@ -558,7 +544,7 @@ class LeagueRankWindow(bui.MainWindow):
                 size=(200, 60),
                 icon=stdassets.textures.heart.get(),
                 icon_color=(0.5, 0, 0.5),
-                label=bui.Lstr(resource='coopSelectWindow.activityText'),
+                label=stdassets.strings.ui.activity,
                 autoselect=True,
                 on_activate_call=bui.WeakCallStrict(
                     self._on_activity_mult_press
@@ -592,7 +578,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(200, 60),
             icon=stdassets.textures.logo.get(),
             icon_color=(0.3, 0, 0.3),
-            label=bui.Lstr(resource='league.upToDateBonusText'),
+            label=stdassets.strings.league.up_to_date_bonus,
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(
                 self._on_up_to_date_bonus_press
@@ -624,7 +610,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
-            text=bui.Lstr(resource='finalScoreText'),
+            text=stdassets.strings.ui.final_score,
             h_align='right',
             v_align='center',
             scale=0.9,
@@ -659,7 +645,7 @@ class LeagueRankWindow(bui.MainWindow):
         )
         self._president_label = bui.textwidget(
             parent=w_parent,
-            text=bui.Lstr(resource='league.leaguePresidentText'),
+            text=stdassets.strings.league.league_president,
             flatness=1.0,
             shadow=0.0,
             color=(0.6, 0.6, 1, 0.7),
@@ -709,7 +695,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(0, 0),
             color=(0.6, 0.6, 0.7),
             maxwidth=200,
-            text=bui.Lstr(resource='showText'),
+            text=stdassets.strings.ui.show,
             h_align='right',
             v_align='center',
             scale=0.8,
@@ -871,7 +857,7 @@ class LeagueRankWindow(bui.MainWindow):
         # We should be signed in at this point, but let's be sure.
         if plus.accounts.primary is None:
             bui.screenmessage(
-                bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
+                stdassets.strings.account.not_signed_in, color=(1, 0, 0)
             )
             builtinassets.audio.error.get().play()
             return
@@ -900,7 +886,7 @@ class LeagueRankWindow(bui.MainWindow):
         if not self._can_do_more_button or our_login_id is None:
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                bui.Lstr(resource='unavailableText'), color=(1, 0, 0)
+                stdassets.strings.ui.unavailable_status, color=(1, 0, 0)
             )
             return
         if self._season is None:
@@ -945,7 +931,7 @@ class LeagueRankWindow(bui.MainWindow):
         extra_text = ''
         if plus.get_v1_account_state() != 'signed_in':
             status_text = (
-                '(' + bui.Lstr(resource='notSignedInText').evaluate() + ')'
+                '(' + stdassets.strings.ui.not_signed_in_status.evaluate() + ')'
             )
         elif in_top:
             assert data is not None
@@ -1005,10 +991,7 @@ class LeagueRankWindow(bui.MainWindow):
                 season_choices.append(ssn)
                 if ssn != 'a' and not did_first:
                     season_choices_display.append(
-                        bui.Lstr(
-                            resource='league.currentSeasonText',
-                            subs=[('${NUMBER}', ssn)],
-                        )
+                        stdassets.strings.league.current_season(number=ssn)
                     )
                     did_first = True
 
@@ -1018,14 +1001,11 @@ class LeagueRankWindow(bui.MainWindow):
                         self._is_current_season = True
                 elif ssn == 'a':
                     season_choices_display.append(
-                        bui.Lstr(resource='league.allTimeText')
+                        stdassets.strings.league.all_time
                     )
                 else:
                     season_choices_display.append(
-                        bui.Lstr(
-                            resource='league.seasonText',
-                            subs=[('${NUMBER}', ssn)],
-                        )
+                        stdassets.strings.league.season(number=ssn)
                     )
             assert self._subcontainer
             self._season_popup_menu = PopupMenu(
@@ -1061,9 +1041,7 @@ class LeagueRankWindow(bui.MainWindow):
         bui.textwidget(
             edit=self._league_title_text,
             text=(
-                ''
-                if self._season == 'a'
-                else bui.Lstr(resource='league.leagueText')
+                '' if self._season == 'a' else stdassets.strings.league.league
             ),
         )
 
@@ -1073,7 +1051,7 @@ class LeagueRankWindow(bui.MainWindow):
             lcolor = (1, 1, 1)
             self._league_url_arg = ''
         elif self._season == 'a':
-            lname = bui.Lstr(resource='league.allTimeText').evaluate()
+            lname = stdassets.strings.league.all_time.evaluate()
             lnum = ''
             lcolor = (1, 1, 1)
             self._league_url_arg = ''
@@ -1087,7 +1065,7 @@ class LeagueRankWindow(bui.MainWindow):
                 data['l']['n'] + '_' + str(data['l']['i'])
             ).lower()
 
-        to_end_string: bui.Lstr | str
+        to_end_string: bui.Lstr | bui.LangStr | str
         if data is None or self._season == 'a' or data['se'] is None:
             to_end_string = ''
             show_season_end = False
@@ -1096,31 +1074,27 @@ class LeagueRankWindow(bui.MainWindow):
             days_to_end = data['se'][0]
             minutes_to_end = data['se'][1]
             if days_to_end > 0:
-                to_end_string = bui.Lstr(
-                    resource='league.seasonEndsDaysText',
-                    subs=[('${NUMBER}', str(days_to_end))],
+                to_end_string = stdassets.strings.league.season_ends_days(
+                    days=days_to_end
                 )
             elif days_to_end == 0 and minutes_to_end >= 60:
-                to_end_string = bui.Lstr(
-                    resource='league.seasonEndsHoursText',
-                    subs=[('${NUMBER}', str(minutes_to_end // 60))],
+                to_end_string = stdassets.strings.league.season_ends_hours(
+                    hours=minutes_to_end // 60
                 )
             elif days_to_end == 0 and minutes_to_end >= 0:
-                to_end_string = bui.Lstr(
-                    resource='league.seasonEndsMinutesText',
-                    subs=[('${NUMBER}', str(minutes_to_end))],
+                to_end_string = stdassets.strings.league.season_ends_minutes(
+                    minutes=minutes_to_end
                 )
             else:
-                to_end_string = bui.Lstr(
-                    resource='league.seasonEndedDaysAgoText',
-                    subs=[('${NUMBER}', str(-(days_to_end + 1)))],
+                to_end_string = stdassets.strings.league.season_ended_days_ago(
+                    days=-(days_to_end + 1)
                 )
 
         bui.textwidget(edit=self._season_ends_text, text=to_end_string)
         bui.textwidget(
             edit=self._trophy_counts_reset_text,
             text=(
-                bui.Lstr(resource='league.trophyCountsResetText')
+                stdassets.strings.league.trophy_counts_reset
                 if self._is_current_season and show_season_end
                 else ''
             ),
@@ -1147,9 +1121,7 @@ class LeagueRankWindow(bui.MainWindow):
         bui.textwidget(
             edit=self._to_ranked_text,
             text=(
-                bui.Lstr(resource='coopSelectWindow.toRankedText').evaluate()
-                + ''
-                + extra_text
+                stdassets.strings.league.to_ranked.evaluate() + '' + extra_text
                 if do_percent
                 else ''
             ),
@@ -1157,14 +1129,7 @@ class LeagueRankWindow(bui.MainWindow):
 
         bui.textwidget(
             edit=self._your_power_ranking_text,
-            text=(
-                bui.Lstr(
-                    resource='rankText',
-                    fallback_resource='coopSelectWindow.yourPowerRankingText',
-                )
-                if (not do_percent)
-                else ''
-            ),
+            text=(stdassets.strings.ui.rank if (not do_percent) else ''),
         )
         bui.spinnerwidget(edit=self._loading_spinner, visible=False)
 
@@ -1229,7 +1194,7 @@ class LeagueRankWindow(bui.MainWindow):
         bui.buttonwidget(
             edit=self._power_ranking_achievements_button,
             label=('' if data is None else str(data['a']) + ' ')
-            + bui.Lstr(resource='achievementsText').evaluate(),
+            + stdassets.strings.ui.achievements.evaluate(),
         )
 
         # For the achievement value, use the number they gave us for
@@ -1258,7 +1223,7 @@ class LeagueRankWindow(bui.MainWindow):
         bui.buttonwidget(
             edit=self._power_ranking_trophies_button,
             label=('' if data is None else str(total_trophies_count) + ' ')
-            + bui.Lstr(resource='trophiesText').evaluate(),
+            + stdassets.strings.ui.trophies.evaluate(),
         )
         bui.textwidget(
             edit=self._power_ranking_trophies_total_text,

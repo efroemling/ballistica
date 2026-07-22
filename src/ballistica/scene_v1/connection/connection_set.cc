@@ -236,23 +236,24 @@ void ConnectionSet::Shutdown() {
 }
 
 void ConnectionSet::SendScreenMessageToClients(const std::string& s, float r,
-                                               float g, float b) {
+                                               float g, float b,
+                                               const std::string& tagged) {
   for (auto&& i : connections_to_clients_) {
     if (i.second.exists() && i.second->can_communicate()) {
-      i.second->SendScreenMessage(s, r, g, b);
+      i.second->SendScreenMessage(s, r, g, b, tagged);
     }
   }
 }
 
 void ConnectionSet::SendScreenMessageToSpecificClients(
     const std::string& s, float r, float g, float b,
-    const std::vector<int>& clients) {
+    const std::vector<int>& clients, const std::string& tagged) {
   for (auto&& i : connections_to_clients_) {
     if (i.second.exists() && i.second->can_communicate()) {
       // Only send if this client is in our list.
       for (auto c : clients) {
         if (c == i.second->id()) {
-          i.second->SendScreenMessage(s, r, g, b);
+          i.second->SendScreenMessage(s, r, g, b, tagged);
           break;
         }
       }
@@ -269,8 +270,9 @@ void ConnectionSet::SendScreenMessageToSpecificClients(
 }
 
 void ConnectionSet::SendScreenMessageToAll(const std::string& s, float r,
-                                           float g, float b) {
-  SendScreenMessageToClients(s, r, g, b);
+                                           float g, float b,
+                                           const std::string& tagged) {
+  SendScreenMessageToClients(s, r, g, b, tagged);
   g_base->ScreenMessage(s, {r, g, b});
 }
 
@@ -388,9 +390,10 @@ void ConnectionSet::PushDisconnectedFromHostCall() {
 
 void ConnectionSet::PushHostConnectedUDPCall(const SockAddr& addr,
                                              bool print_connect_progress,
-                                             const std::string& password) {
+                                             const std::string& password,
+                                             bool prepped) {
   g_base->logic->event_loop()->PushCall(
-      [this, addr, print_connect_progress, password] {
+      [this, addr, print_connect_progress, password, prepped] {
         // Attempt to disconnect any clients we have, turn off public-party
         // advertising, etc.
         if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
@@ -399,6 +402,7 @@ void ConnectionSet::PushHostConnectedUDPCall(const SockAddr& addr,
         print_udp_connect_progress_ = print_connect_progress;
         auto connection = Object::New<ConnectionToHostUDP>(addr);
         connection->set_join_password(password);
+        connection->set_prepped(prepped);
         connection_to_host_ = connection;
         has_connection_to_host_ = true;
         printed_host_disconnect_ = false;
@@ -650,6 +654,17 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
 
         } else if (connection_to_host_.exists()) {
           // If we're connected to someone else, we can't have clients.
+          g_base->network_writer->PushSendToCall(
+              {BA_PACKET_CLIENT_DENY_ALREADY_IN_PARTY, request_id}, addr);
+        } else if (appmode->InReplay()) {
+          // We don't broadcast replay streams to clients (they never
+          // prepped the replay's package universe), so refuse joins
+          // while a replay is up. Reuses the already-in-party deny for
+          // now; a dedicated 'watching a replay' message is a
+          // follow-up.
+          g_core->logging->Log(
+              LogName::kBaNetworking, LogLevel::kDebug,
+              "Denying client-request; we're viewing a replay.");
           g_base->network_writer->PushSendToCall(
               {BA_PACKET_CLIENT_DENY_ALREADY_IN_PARTY, request_id}, addr);
         } else {

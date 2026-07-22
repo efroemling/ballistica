@@ -3,18 +3,20 @@
 """Language related functionality."""
 
 import json
+import asyncio
 from functools import partial
 from typing import TYPE_CHECKING, overload, override
 
 import _babase
 from babase._appsubsystem import AppSubsystem
-from babase._logging import applog
+from babase._logging import applog, assetmanagerlog
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any, Callable, Sequence
 
     import babase
     import bacommon.langstr
+    from bacommon.locale import Locale
 
 
 #: Process-lifetime cache for :func:`get_legacy_langdata` (the constant
@@ -34,6 +36,92 @@ def _native_from_spec(spec: bacommon.langstr.LangStrSpec) -> babase.LangStr:
     from efro.dataclassio import dataclass_to_json
 
     return _babase.LangStr(dataclass_to_json(spec))
+
+
+async def resolve_langstrs(
+    specs: Sequence[bacommon.langstr.LangStrSpec],
+    *,
+    locale: Locale | None = None,
+    background: bool = False,
+    timeout: float | None = None,
+    allow_apverid: Callable[[str], bool] | None = None,
+) -> bacommon.langstr.LanguageStringNameDecodeContext | None:
+    """Resolve the asset-packages a set of language-string specs reference.
+
+    Gathers every asset-package-version the ``specs`` reference, resolves
+    them via ``app.assets.resolve`` (downloading through the connected node
+    if needed), reads their per-locale string values, and returns a
+    ``LanguageStringNameDecodeContext`` covering them all -- the single
+    audited path from authoring specs to displayable strings (decode each
+    spec via ``ctx.decode(spec)``).
+
+    ``background=True`` marks a decorative/prefetch resolve that queues
+    behind interactive ones. ``timeout`` (seconds) bounds the whole
+    resolve-and-gather; ``None`` means no limit. ``allow_apverid``, if
+    given, is an allowlist predicate applied to every referenced apverid
+    *before* any resolve -- if any apverid fails it, this resolves and
+    downloads nothing and returns ``None`` (the load-bearing gate for
+    untrusted-peer content).
+
+    Returns ``None`` only when gated out by ``allow_apverid``. Raises on
+    resolve/decode failure (including ``TimeoutError``); callers apply
+    their own fail-soft-or-surface policy. Must be awaited on the logic
+    thread; the blocking per-locale string reads hop to the loop's
+    executor.
+    """
+    from bacommon.langstr import (
+        collect_apverids,
+        LanguageStringNameDecodeContext,
+    )
+
+    assert _babase.in_logic_thread()
+
+    if locale is None:
+        locale = _babase.app.locale.current_locale
+
+    apverids: set[str] = set()
+    for spec in specs:
+        collect_apverids(spec, apverids)
+
+    if allow_apverid is not None:
+        for apverid in apverids:
+            if not allow_apverid(apverid):
+                assetmanagerlog.warning(
+                    'resolve_langstrs: rejecting disallowed apverid %r;'
+                    ' resolving nothing.',
+                    apverid,
+                )
+                return None
+
+    ordered = sorted(apverids)
+    assetmanagerlog.debug(
+        'resolve_langstrs: resolving %d package(s) (background=%s): %s.',
+        len(ordered),
+        background,
+        ordered,
+    )
+
+    # timeout=None => no limit.
+    async with asyncio.timeout(timeout):
+        await _babase.app.assets.resolve(
+            ordered, language=locale, background=background
+        )
+        loop = asyncio.get_running_loop()
+        language = {
+            apverid: await loop.run_in_executor(
+                None,
+                partial(
+                    _babase.app.assets.get_package_strings, apverid, locale
+                ),
+            )
+            for apverid in ordered
+        }
+
+    assetmanagerlog.debug(
+        'resolve_langstrs: resolved + gathered strings for %d package(s).',
+        len(ordered),
+    )
+    return LanguageStringNameDecodeContext(language, locale)
 
 
 class _NativeLstrMaker:

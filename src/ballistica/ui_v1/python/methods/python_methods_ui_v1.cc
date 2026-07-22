@@ -657,7 +657,13 @@ static auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
     widget->set_auto_select(Python::GetBool(autoselect_obj));
   }
   if (text_obj != Py_None) {
-    widget->SetText(g_base->python->GetPyLString(text_obj));
+    // Native language-strings stay structured (retained +
+    // re-evaluated on language changes; see the textwidget analog).
+    if (base::PythonClassLangStr::Check(text_obj)) {
+      widget->SetLangStr(base::PythonClassLangStr::FromPyObj(text_obj).value());
+    } else {
+      widget->SetText(g_base->python->GetPyLString(text_obj));
+    }
   }
   if (value_obj != Py_None) {
     widget->SetValue(Python::GetBool(value_obj));
@@ -723,7 +729,7 @@ static PyMethodDef PyCheckBoxWidgetDef = {
     "  id: str | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
-    "  text: str | bauiv1.Lstr | None = None,\n"
+    "  text: str | bauiv1.Lstr | bauiv1.LangStr | None = None,\n"
     "  value: bool | None = None,\n"
     "  on_value_change_call: Callable[[bool], None] | None = None,\n"
     "  on_select_call: Callable[[], None] | None = None,\n"
@@ -2593,7 +2599,7 @@ static PyMethodDef PyTextWidgetDef = {
     "  draw_controller: bauiv1.Widget | None = None,\n"
     "  scale: float | None = None,\n"
     "  corner_scale: float | None = None,\n"
-    "  description: str | bauiv1.Lstr | None = None,\n"
+    "  description: str | bauiv1.Lstr | bauiv1.LangStr | None = None,\n"
     "  transition_delay: float | None = None,\n"
     "  maxwidth: float | None = None,\n"
     "  max_height: float | None = None,\n"

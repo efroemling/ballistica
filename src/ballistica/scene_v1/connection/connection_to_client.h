@@ -37,8 +37,19 @@ class ConnectionToClient : public Connection {
     return classic_purchases_.get();
   }
   auto build_number() const -> int { return build_number_; }
+  /// Send a screen-message. ``s`` is the legacy flat/resource-json text
+  /// every build understands; ``tagged``, when non-empty, is a lang-str
+  /// tagged wire value (see kLangStrWireTag*) shipped alongside it --
+  /// new enough clients prefer it and render in their own locale.
   void SendScreenMessage(const std::string& s, float r = 1.0f, float g = 1.0f,
-                         float b = 1.0f);
+                         float b = 1.0f,
+                         const std::string& tagged = std::string());
+
+  /// Send a post-handshake join-rejection reason CODE (a BA_REJECT_REASON_*
+  /// value) as a BA_JMESSAGE_REJECT_REASON; the joiner renders its own
+  /// localized string. Only understood by peers at or above
+  /// BA_REJECT_REASON_MIN_BUILD; gate the call on build_number().
+  void SendRejectReason(int reason);
   auto token() const -> const std::string& { return token_; }
   void HandleMasterServerClientInfo(PyObject* info_obj);
 

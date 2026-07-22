@@ -472,11 +472,12 @@ static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
   // generalize this to pass all results to a callback instead
   int print_progress = 1;
   PyObject* password_obj{Py_None};
-  static const char* kwlist[] = {"address", "port", "print_progress",
-                                 "password", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|ipO",
-                                   const_cast<char**>(kwlist), &address_obj,
-                                   &port, &print_progress, &password_obj)) {
+  int prepped = 0;
+  static const char* kwlist[] = {"address",  "port",    "print_progress",
+                                 "password", "prepped", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "O|ipOp", const_cast<char**>(kwlist), &address_obj,
+          &port, &print_progress, &password_obj, &prepped)) {
     return nullptr;
   }
   std::string password;
@@ -514,7 +515,8 @@ static auto PyConnectToParty(PyObject* self, PyObject* args, PyObject* keywds)
            + ":" + std::to_string(s.Port()) + ".";
   });
   appmode->connections()->PushHostConnectedUDPCall(
-      s, static_cast<bool>(print_progress), password);
+      s, static_cast<bool>(print_progress), password,
+      static_cast<bool>(prepped));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -525,7 +527,8 @@ static PyMethodDef PyConnectToPartyDef = {
     METH_VARARGS | METH_KEYWORDS,   // flags
 
     "connect_to_party(address: str, port: int | None = None,\n"
-    "  print_progress: bool = True, password: str | None = None) -> None\n"
+    "  print_progress: bool = True, password: str | None = None,\n"
+    "  prepped: bool = False) -> None\n"
     "\n"
     "(internal)",
 };
@@ -997,7 +1000,7 @@ static PyMethodDef PyChatMessageDef = {
     (PyCFunction)PyChatMessage,    // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "chatmessage(message: str | babase.Lstr,\n"
+    "chatmessage(message: str | babase.Lstr | babase.LangStr,\n"
     "  clients: Sequence[int] | None = None,\n"
     "  sender_override: str | None = None) -> None\n"
     "\n"

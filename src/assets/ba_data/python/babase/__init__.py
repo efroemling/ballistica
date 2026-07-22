@@ -195,6 +195,7 @@ from babase._language import (
     LanguageSubsystem,
     Lstr,
     get_legacy_langdata,
+    resolve_langstrs,
 )
 from babase._locale import LocaleSubsystem
 from babase._logging import (
@@ -396,6 +397,7 @@ __all__ = [
     'reload_hooks',
     'reload_media',
     'request_permission',
+    'resolve_langstrs',
     'ResolveResult',
     'ResolveProgress',
     'ResolvePhase',

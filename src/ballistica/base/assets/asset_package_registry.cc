@@ -2,6 +2,7 @@
 
 #include "ballistica/base/assets/asset_package_registry.h"
 
+#include <algorithm>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -69,6 +70,27 @@ auto AssetPackageRegistry::Snapshot_() const
     -> std::shared_ptr<const PackagesMap> {
   std::scoped_lock lock(mutex_);
   return packages_;
+}
+
+auto AssetPackageRegistry::BucketLogicalPathsSorted(
+    const std::string& apverid, const std::string& bucket_id) const
+    -> std::vector<std::string> {
+  auto snapshot = Snapshot_();
+  auto pkg_it = snapshot->find(apverid);
+  if (pkg_it == snapshot->end()) {
+    return {};
+  }
+  auto bucket_it = pkg_it->second.find(bucket_id);
+  if (bucket_it == pkg_it->second.end()) {
+    return {};
+  }
+  std::vector<std::string> paths;
+  paths.reserve(bucket_it->second.size());
+  for (auto&& entry : bucket_it->second) {
+    paths.push_back(entry.first);
+  }
+  std::sort(paths.begin(), paths.end());
+  return paths;
 }
 
 auto AssetPackageRegistry::LookupAssetHash(const std::string& apverid,

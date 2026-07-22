@@ -535,14 +535,16 @@ def _do_start_native_repl() -> None:
     readline.parse_and_bind('tab: complete')
 
 
-def v2_auth_request(global_app_instance_id: str) -> None | tuple[bool, str]:
+def v2_auth_request(
+    global_app_instance_id: str,
+) -> None | tuple[bool, str, int | None]:
     """Kick off or process v2 auth requests.
 
-    Return None if no results or (success, error/token)
+    Return None if no results or (success, error/token, reject-reason).
     """
     assert _babase.app.plus is not None
-    out: None | tuple[bool, str] = _babase.app.plus.accounts.auth_request(
-        global_app_instance_id
+    out: None | tuple[bool, str, int | None] = (
+        _babase.app.plus.accounts.auth_request(global_app_instance_id)
     )
     return out
 

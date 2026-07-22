@@ -62,7 +62,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
 
         valid_maps = gametype.get_supported_maps(sessiontype)
         if not valid_maps:
-            bui.screenmessage(bui.Lstr(resource='noValidMapsErrorText'))
+            bui.screenmessage(stdassets.strings.playlist.no_valid_maps)
             raise RuntimeError('No valid maps found.')
 
         self._config = config
@@ -148,7 +148,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             label=(
                 bui.charstr(bui.SpecialChar.BACK)
                 if is_add
-                else bui.Lstr(resource='cancelText')
+                else stdassets.strings.ui.cancel
             ),
             button_type='backSmall' if is_add else None,
             autoselect=True,
@@ -165,9 +165,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
             scale=0.75,
             text_scale=1.3,
             label=(
-                bui.Lstr(resource=f'{self._r}.addGameText')
+                stdassets.strings.playlist.add_game_title
                 if is_add
-                else bui.Lstr(resource='applyText')
+                else stdassets.strings.ui.apply
             ),
         )
 
@@ -230,7 +230,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             position=(h + 49, v - 63),
             size=(100, 30),
             maxwidth=110,
-            text=bui.Lstr(resource='mapText'),
+            text=stdassets.strings.ui.map,
             h_align='left',
             color=(0.8, 0.8, 0.8, 1.0),
             v_align='center',
@@ -252,7 +252,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             position=(h + 448, v - 72),
             on_activate_call=bui.CallStrict(self._select_map),
             scale=0.7,
-            label=bui.Lstr(resource='mapSelectText'),
+            label=stdassets.strings.ui.select_ellipsis,
         )
         widget_column.append([btn])
 
@@ -459,9 +459,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     position=(h + 509 - 95, v),
                     size=(0, 28),
                     text=(
-                        bui.Lstr(resource='onText')
+                        stdassets.strings.ui.on
                         if value
-                        else bui.Lstr(resource='offText')
+                        else stdassets.strings.ui.off
                     ),
                     editable=False,
                     color=(0.6, 1.0, 0.6, 1.0),
@@ -608,9 +608,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
         bui.textwidget(
             edit=widget,
             text=(
-                bui.Lstr(resource='onText')
-                if value
-                else bui.Lstr(resource='offText')
+                stdassets.strings.ui.on if value else stdassets.strings.ui.off
             ),
         )
         self._settings[setting_name] = value

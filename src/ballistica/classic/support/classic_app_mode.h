@@ -125,6 +125,12 @@ class ClassicAppMode : public base::AppMode {
     return foreground_session_.get();
   }
 
+  // Whether the foreground session is a replay-playback session. We
+  // don't broadcast replay streams to clients (they never prepped the
+  // replay's package universe), so connection attempts are refused
+  // while one is up.
+  auto InReplay() const -> bool;
+
   // Used to know which globals is in control currently/etc.
   auto GetForegroundScene() const -> scene_v1::Scene* {
     assert(g_base->InLogicThread());

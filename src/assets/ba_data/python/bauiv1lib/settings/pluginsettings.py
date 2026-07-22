@@ -5,7 +5,11 @@
 from typing import override
 
 import bauiv1 as bui
+from bauiv1 import stdassets
+
 from bauiv1lib.confirm import ConfirmWindow
+
+_plgstrs = stdassets.strings.settings.plugins
 
 
 class PluginSettingsWindow(bui.MainWindow):
@@ -84,7 +88,7 @@ class PluginSettingsWindow(bui.MainWindow):
                 self._yoffs - (55 if uiscale is bui.UIScale.SMALL else 10),
             ),
             size=(0, 0),
-            text=bui.Lstr(resource='pluginSettingsText'),
+            text=_plgstrs.settings_title,
             maxwidth=230,
             color=bui.app.ui_v1.title_color,
             h_align='center',
@@ -101,7 +105,7 @@ class PluginSettingsWindow(bui.MainWindow):
             position=(x, y),
             size=(350, 60),
             autoselect=True,
-            label=bui.Lstr(resource='pluginsEnableAllText'),
+            label=_plgstrs.enable_all,
             text_scale=1.0,
             on_activate_call=lambda: ConfirmWindow(
                 action=self._enable_all_plugins,
@@ -115,7 +119,7 @@ class PluginSettingsWindow(bui.MainWindow):
             position=(x, y),
             size=(350, 60),
             autoselect=True,
-            label=bui.Lstr(resource='pluginsDisableAllText'),
+            label=_plgstrs.disable_all,
             text_scale=1.0,
             on_activate_call=lambda: ConfirmWindow(
                 action=self._disable_all_plugins,
@@ -132,7 +136,7 @@ class PluginSettingsWindow(bui.MainWindow):
                 bui.app.plugins.AUTO_ENABLE_NEW_PLUGINS_CONFIG_KEY,
                 bui.app.plugins.AUTO_ENABLE_NEW_PLUGINS_DEFAULT,
             ),
-            text=bui.Lstr(resource='pluginsAutoEnableNewText'),
+            text=_plgstrs.auto_enable_new,
             scale=1.0,
             maxwidth=308,
             on_value_change_call=self._update_value,
@@ -177,7 +181,7 @@ class PluginSettingsWindow(bui.MainWindow):
         cfg.apply_and_commit()
 
         bui.screenmessage(
-            bui.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
+            stdassets.strings.ui.must_restart,
             color=(1.0, 0.5, 0.0),
         )
 
@@ -189,7 +193,7 @@ class PluginSettingsWindow(bui.MainWindow):
         cfg.apply_and_commit()
 
         bui.screenmessage(
-            bui.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
+            stdassets.strings.ui.must_restart,
             color=(1.0, 0.5, 0.0),
         )
 

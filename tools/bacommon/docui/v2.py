@@ -25,7 +25,7 @@ from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 import bacommon.clienteffect as clfx
 import bacommon.displayitem as ditm
 from bacommon.langstr import LangStrSpec
-from bacommon.assetref import TextureSpec, MeshSpec
+from bacommon.assetspec import TextureSpec, MeshSpec
 from bacommon.docui._docui import (
     DocUIRequest,
     DocUIRequestTypeID,
@@ -304,8 +304,8 @@ class Image(Decoration):
     """Image decoration. Textures/meshes are language-independent refs.
 
     Unlike text, image assets need no per-locale decode; each ref
-    (:class:`~bacommon.assetref.TextureSpec` /
-    :class:`~bacommon.assetref.MeshSpec`) is resolved by the client and
+    (:class:`~bacommon.assetspec.TextureSpec` /
+    :class:`~bacommon.assetspec.MeshSpec`) is resolved by the client and
     rendered directly.
     """
 

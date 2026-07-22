@@ -219,14 +219,14 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         if self.session.tournament_id is not None:
             if self._tournament_time_remaining is None:
                 bui.screenmessage(
-                    bui.Lstr(resource='tournamentCheckingStateText'),
+                    stdassets.strings.coop.tournament_checking_state,
                     color=(1, 0, 0),
                 )
                 builtinassets.audio.error.play()
                 return
             if self._tournament_time_remaining <= 0:
                 bui.screenmessage(
-                    bui.Lstr(resource='tournamentEndedText'), color=(1, 0, 0)
+                    stdassets.strings.coop.tournament_ended, color=(1, 0, 0)
                 )
                 builtinassets.audio.error.play()
                 return
@@ -235,7 +235,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         # don't allow.
         if len(self.players) < self.session.min_players:
             bui.screenmessage(
-                bui.Lstr(resource='notEnoughPlayersRemainingText'),
+                stdassets.strings.coopscore.not_enough_players_remaining,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.play()
@@ -294,7 +294,8 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         if self._score_link is None:
             builtinassets.audio.error.play()
             bui.screenmessage(
-                bui.Lstr(resource='scoreListUnavailableText'), color=(1, 0.5, 0)
+                stdassets.strings.coopscore.score_list_unavailable,
+                color=(1, 0.5, 0),
             )
         else:
             bui.open_url(self._score_link)
@@ -302,7 +303,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
     def _ui_error(self) -> None:
         with self.context:
             self._next_level_error = Text(
-                bs.Lstr(resource='completeThisLevelToProceedText'),
+                stdassets.strings.coopscore.complete_level_to_proceed,
                 flash=True,
                 maxwidth=360,
                 scale=0.54,
@@ -373,7 +374,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 color=(0.45, 0.4, 0.5),
                 position=(h_offs - 520, v_offs + 450 - 235 + 40),
                 size=(300, 60),
-                label=bui.Lstr(resource='achievementsText'),
+                label=stdassets.strings.ui.achievements,
                 on_activate_call=bui.WeakCallStrict(self._ui_show_achievements),
                 transition_delay=delay + 1.5,
                 icon=self._game_service_achievements_texture,
@@ -389,12 +390,12 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 position=(240, v_offs2 + 439),
                 size=(350, 62),
                 label=(
-                    bui.Lstr(resource='tournamentStandingsText')
+                    stdassets.strings.coopscore.tournament_standings
                     if self.session.tournament_id is not None
                     else (
-                        bui.Lstr(resource='worldsBestScoresText')
+                        stdassets.strings.coopscore.worlds_best_scores
                         if self._score_type == 'points'
-                        else bui.Lstr(resource='worldsBestTimesText')
+                        else stdassets.strings.coopscore.worlds_best_times
                     )
                 ),
                 autoselect=True,
@@ -775,7 +776,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             txt.node.client_only = True
         else:
             # In headless build, anyone can continue the game.
-            sval = bs.Lstr(resource='pressAnyButtonPlayAgainText')
+            sval = stdassets.strings.game.press_any_button_play_again
             Text(
                 sval,
                 v_attach=Text.VAttach.BOTTOM,
@@ -896,12 +897,12 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         v_offs = 40
         txt = Text(
             (
-                bs.Lstr(resource='tournamentStandingsText')
+                stdassets.strings.coopscore.tournament_standings
                 if self.session.tournament_id is not None
                 else (
-                    bs.Lstr(resource='worldsBestScoresText')
+                    stdassets.strings.coopscore.worlds_best_scores
                     if self._score_type == 'points'
-                    else bs.Lstr(resource='worldsBestTimesText')
+                    else stdassets.strings.coopscore.worlds_best_times
                 )
             ),
             maxwidth=210,
@@ -922,9 +923,9 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         v_offs = 40
         Text(
             (
-                bs.Lstr(resource='yourBestScoresText')
+                stdassets.strings.coopscore.your_best_scores
                 if self._score_type == 'points'
-                else bs.Lstr(resource='yourBestTimesText')
+                else stdassets.strings.coopscore.your_best_times
             ),
             maxwidth=210,
             position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 20),
@@ -1010,7 +1011,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             ).autoretain()
 
             Text(
-                bs.Lstr(value=name_str),
+                name_str,
                 position=(
                     ts_h_offs + 35 + h_offs_extra,
                     v_offs_extra
@@ -1039,7 +1040,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         if self._have_achievements:
             if not self._account_has_achievements:
                 Text(
-                    bs.Lstr(resource='achievementsText'),
+                    stdassets.strings.ui.achievements,
                     position=(ts_h_offs - 10, ts_height / 2 + 25 + v_offs + 3),
                     maxwidth=210,
                     host_only=True,
@@ -1090,7 +1091,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         # Report in case of error.
         if results is None:
             self._friends_loading_status = Text(
-                bs.Lstr(resource='friendScoresUnavailableText'),
+                stdassets.strings.coopscore.friend_scores_unavailable,
                 maxwidth=330,
                 position=(-475, 150 + v_offs),
                 color=(1, 1, 1, 0.4),
@@ -1190,7 +1191,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     print('Error: got empty name_str on score result:', tval)
 
             Text(
-                bs.Lstr(value=name_str),
+                name_str,
                 position=(
                     ts_h_offs + 35 + h_offs_extra,
                     v_offs_extra
@@ -1257,7 +1258,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             v_offs = 64
             if results is None:
                 self._score_loading_status = Text(
-                    bs.Lstr(resource='worldScoresUnavailableText'),
+                    stdassets.strings.coopscore.world_scores_unavailable,
                     position=(280, 130 + v_offs),
                     color=(1, 1, 1, 0.4),
                     transition=Text.Transition.FADE_IN,
@@ -1475,7 +1476,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                         ).autoretain()
                     # Player name.
                     Text(
-                        bs.Lstr(value=name_str),
+                        name_str,
                         position=(
                             ts_h_offs + 35 + h_offs_extra,
                             ts_height / 2
@@ -1544,7 +1545,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         # If we've got tournament-seconds-remaining, show it.
         if self._tournament_time_remaining is not None:
             Text(
-                bs.Lstr(resource='coopSelectWindow.timeRemainingText'),
+                stdassets.strings.coop.time_remaining,
                 position=(-360, -70 - 100),
                 color=(1, 1, 1, 0.7),
                 h_align=Text.HAlign.CENTER,
@@ -1587,7 +1588,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     # pylint: enable=useless-suppression
 
                     Text(
-                        bs.Lstr(resource='coopSelectWindow.prizesText'),
+                        stdassets.strings.coop.prizes,
                         position=(-360, -70 + 77),
                         color=(1, 1, 1, 0.7),
                         h_align=Text.HAlign.CENTER,
@@ -1635,7 +1636,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         if self._do_new_rating:
             if error:
                 ZoomText(
-                    bs.Lstr(resource='failText'),
+                    stdassets.strings.game.fail,
                     flash=True,
                     trail=True,
                     scale=1.0 if available else 0.333,
@@ -1661,7 +1662,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     (
                         ('#' + str(player_rank))
                         if player_rank is not None
-                        else bs.Lstr(resource='unavailableText')
+                        else stdassets.strings.ui.unavailable_status
                     ),
                     flash=True,
                     trail=True,
@@ -1705,7 +1706,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 (
                     f'{rating:.1f}'
                     if available
-                    else bs.Lstr(resource='unavailableText')
+                    else stdassets.strings.ui.unavailable_status
                 ),
                 flash=True,
                 trail=True,
@@ -1887,7 +1888,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
     def _show_fail(self) -> None:
         ZoomText(
-            bs.Lstr(resource='failText'),
+            stdassets.strings.game.fail,
             maxwidth=300,
             flash=False,
             trail=True,

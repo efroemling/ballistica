@@ -463,7 +463,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
         assert bui.app.classic is not None
         bui.textwidget(
             parent=self._subcontainer,
-            text=bui.Lstr(resource='playlistsText'),
+            text=stdassets.strings.playlist.playlists,
             position=(40 + xoffs, self._sub_height + yoffs - 26),
             size=(0, 0),
             scale=1.0,
@@ -725,7 +725,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
             size=(100, 30),
             position=(34 + h_offs_bottom, 50 + extra_bottom_buffer),
             text_scale=0.6,
-            label=bui.Lstr(resource='customizeText'),
+            label=stdassets.strings.ui.customize,
             on_activate_call=self._on_customize_press,
             color=(0.54, 0.52, 0.67),
             textcolor=(0.7, 0.65, 0.7),

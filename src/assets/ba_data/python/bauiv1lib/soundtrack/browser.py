@@ -85,7 +85,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             ),
             size=(0, 0),
             maxwidth=300,
-            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            text=stdassets.strings.soundtrack.title,
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -114,7 +114,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             autoselect=True,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=bui.Lstr(resource=f'{self._r}.newText'),
+            label=stdassets.strings.soundtrack.new_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -144,7 +144,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             autoselect=True,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=bui.Lstr(resource=f'{self._r}.editText'),
+            label=stdassets.strings.soundtrack.edit_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -173,7 +173,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             color=b_color,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=bui.Lstr(resource=f'{self._r}.duplicateText'),
+            label=stdassets.strings.soundtrack.duplicate_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -202,7 +202,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             autoselect=True,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=bui.Lstr(resource=f'{self._r}.deleteText'),
+            label=stdassets.strings.soundtrack.delete_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -306,14 +306,13 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         if self._selected_soundtrack == '__default__':
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                bui.Lstr(resource=f'{self._r}.cantDeleteDefaultText'),
+                stdassets.strings.soundtrack.cant_delete_default,
                 color=(1, 0, 0),
             )
         else:
             ConfirmWindow(
-                bui.Lstr(
-                    resource=f'{self._r}.deleteConfirmText',
-                    subs=[('${NAME}', self._selected_soundtrack)],
+                stdassets.strings.soundtrack.delete_confirm(
+                    name=self._selected_soundtrack
                 ),
                 self._do_delete_soundtrack,
                 width=450,
@@ -399,7 +398,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         if self._selected_soundtrack == '__default__':
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                bui.Lstr(resource=f'{self._r}.cantEditDefaultText'),
+                stdassets.strings.soundtrack.cant_edit_default,
                 color=(1, 0, 0),
             )
             return
@@ -410,9 +409,11 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             )
         )
 
-    def _get_soundtrack_display_name(self, soundtrack: str) -> bui.Lstr:
+    def _get_soundtrack_display_name(
+        self, soundtrack: str
+    ) -> bui.Lstr | bui.LangStr:
         if soundtrack == '__default__':
-            return bui.Lstr(resource=f'{self._r}.defaultSoundtrackNameText')
+            return stdassets.strings.soundtrack.default_soundtrack_name
         return bui.Lstr(value=soundtrack)
 
     def _refresh(self, select_soundtrack: str | None = None) -> None:

@@ -8,7 +8,7 @@ from typing import override, TYPE_CHECKING
 
 from efro.util import asserttype
 import bacommon.docui.v2 as dui2
-from bacommon.assetref import TextureSpec
+from bacommon.assetspec import TextureSpec
 from bacommon.langstr import LangStrSpecValue
 import bauiv1 as bui
 from bauiv1 import builtinassets

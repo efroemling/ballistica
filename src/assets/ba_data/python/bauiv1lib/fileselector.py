@@ -74,12 +74,12 @@ class FileSelectorWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
             text=(
-                bui.Lstr(resource=f'{self._r}.titleFolderText')
+                stdassets.strings.fileselector.select_folder
                 if (allow_folders and not valid_file_extensions)
                 else (
-                    bui.Lstr(resource=f'{self._r}.titleFileText')
+                    stdassets.strings.fileselector.select_file
                     if not allow_folders
-                    else bui.Lstr(resource=f'{self._r}.titleFileFolderText')
+                    else stdassets.strings.fileselector.select_file_or_folder
                 )
             ),
             maxwidth=210,
@@ -91,7 +91,7 @@ class FileSelectorWindow(bui.MainWindow):
             position=(35 + x_inset, self._height - 67),
             autoselect=True,
             size=(self._button_width, 50),
-            label=bui.Lstr(resource='cancelText'),
+            label=stdassets.strings.ui.cancel,
             on_activate_call=self._cancel,
         )
         bui.widget(edit=self._cancel_button, left_widget=self._cancel_button)
@@ -406,9 +406,7 @@ class FileSelectorWindow(bui.MainWindow):
                         self._height - 67,
                     ),
                     size=(self._button_width, 50),
-                    label=bui.Lstr(
-                        resource=f'{self._r}.useThisFolderButtonText'
-                    ),
+                    label=stdassets.strings.fileselector.use_this_folder,
                     on_activate_call=self._on_folder_entry_activated,
                 )
                 bui.widget(

@@ -7,6 +7,7 @@ from typing import override, TYPE_CHECKING
 from bauiv1lib.docui import DocUIController
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -43,7 +44,7 @@ class StoreUIController(DocUIController):
         # We should always be signed in here. Make noise if not.
         if plus.accounts.primary is None:
             bui.screenmessage(
-                bui.Lstr(resource='notSignedInText'), color=(1, 0, 0)
+                stdassets.strings.ui.not_signed_in_status, color=(1, 0, 0)
             )
             builtinassets.audio.error.get().play()
             return

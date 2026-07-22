@@ -34,7 +34,7 @@ namespace ballistica::scene_v1 {
 // anything emitting or ingesting scene streams.
 
 // Oldest protocol version we can act as a host for.
-const int kProtocolVersionHostMin = 38;
+const int kProtocolVersionHostMin = 39;
 
 // Oldest protocol version we can act as a client to. This can generally be
 // left as-is as long as only new nodes/attrs/commands are added and old
@@ -42,7 +42,7 @@ const int kProtocolVersionHostMin = 38;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 38;
+const int kProtocolVersionMax = 39;
 
 // The protocol version we actually host is now read as a setting; see
 // kSceneV1HostProtocol in ballistica/base/support/app_config.h.
@@ -85,13 +85,21 @@ const int kProtocolVersionMax = 38;
 //     protection. Note that if you are running a server and prefer the
 //     old behavior, you can still set that attr to 1 in mod code.
 //
-// 38: Asset-package-native worlds (in progress; landing incrementally
+// 38: New hosting floor for the 1.8 cycle; stream semantics identical to
+//     37 (the packet/message-layer additions that rode along -- V2 LAN
+//     host-query pair, pre-join requirements exchange, party passwords --
+//     vary by build number, not protocol). Replays now stamp the TRUE
+//     stream protocol they contain rather than kProtocolVersionMax.
+//     Frozen as-is once it reached public builds (2026-07-20); the
+//     asset-package-native-worlds stream work originally slated to land
+//     incrementally under 38 moved to 39.
+//
+// 39: Asset-package-native worlds (in progress; landing incrementally
 //     during the 1.8 alpha cycle under this single version). Stream-level
 //     exact-apverid package tables with integer-indexed LangStr string
 //     refs and asset refs; fixed per-session package universes declared
 //     fully in stream baselines (see strings-asset-migration.md D23/D25
-//     and asset-packages.md #36). Replays now stamp the TRUE stream
-//     protocol they contain rather than kProtocolVersionMax.
+//     and asset-packages.md #36).
 
 // Sim step size in milliseconds.
 const int kGameStepMilliseconds = 8;
@@ -276,7 +284,25 @@ enum class SessionCommand {
   kScreenMessageTop,
   kAddData,
   kRemoveData,
-  kCameraShake
+  kCameraShake,
+  // (protocol 39+) Declare one entry of the session's asset-package
+  // table: (index, total, apverid). The full table -- the session's
+  // fixed package universe -- is declared up front at the start of the
+  // stream / baseline dump, in index order; wire asset/string refs
+  // resolve against it by index.
+  kDeclareAssetPackage,
+  // (protocol 39+) Compact indexed forms of the kAdd<Asset> commands
+  // for package-housed assets: (scene, id, pkg_idx, asset_idx), where
+  // pkg_idx indexes the stream's declared package table and asset_idx
+  // indexes the canonical sorted logical-path list of the package's
+  // relevant bucket kind (portable across flavors by the D23/D24
+  // identical-key-set invariant; collision meshes use the constant
+  // bucket). The string kAdd<Asset> forms remain for local
+  // non-package assets (and old streams).
+  kAddTextureIndexed,
+  kAddMeshIndexed,
+  kAddSoundIndexed,
+  kAddCollisionMeshIndexed
 };
 
 enum class NodeCollideAttr {
@@ -377,7 +403,59 @@ enum class MaterialCondition {
   kEvalNotColliding
 };
 
-enum NodeAttributeFlag { kNodeAttributeFlagReadOnly = 1u };
+enum NodeAttributeFlag {
+  kNodeAttributeFlagReadOnly = 1u,
+  // Lang-str-capable string attr: at protocol 39+ its wire payload is
+  // a kLangStrWireTag*-tagged value (see those constants). The flag
+  // set is part of the protocol contract -- re-flagging an attr after
+  // a protocol ships requires a protocol bump.
+  kNodeAttributeFlagLangStr = 2u,
+};
+
+// First protocol whose lang-str-flagged string slots carry tagged
+// payloads (streams below this use the legacy raw-or-resource-json
+// forms).
+const int kProtocolVersionLangStrWire = 39;
+
+// (protocol 39+) First byte of the payload carried by
+// lang-str-flagged string slots (the text node's `text` attr and the
+// screen-message session commands). Control chars, so untagged legacy
+// text (attr connections, old-stream values passing through shared
+// code) can never collide. A payload not starting with one of these
+// is treated with legacy raw-or-resource-json semantics.
+//
+// INGEST CONTRACT: consumers of the kLangStrWireTagLangStr leg parse
+// and evaluate wire-supplied refs with NO resolve step -- which is
+// only sound at ingest points where a verified context already
+// structurally guarantees the referenced packages are locally
+// resolved (streams: the arrive-ready prep contract + handshake gate;
+// messages: an established prepped connection). Out-of-context refs
+// fail visibly (LANGSTR_ERROR); wire data must never trigger
+// client-side resolve/download machinery. Any NEW ingest point must
+// establish an equivalent guarantee first -- see the D28 trust model
+// and D33 in docs/initiatives/strings-asset-migration.md.
+inline constexpr char kLangStrWireTagLiteral = '\x01';     // verbatim text
+inline constexpr char kLangStrWireTagLegacyJson = '\x02';  // legacy Lstr json
+inline constexpr char kLangStrWireTagLangStr = '\x03';     // LangStr json
+                                                           // (indexed refs)
+
+// Which asset-package bucket kind a scene asset type's wire indices
+// derive from (see the kAdd*Indexed commands). Collision meshes live
+// in the flavor-invariant constant bucket (asset-packages decision
+// #26); the rest each have a flavored bucket kind of their own.
+enum class AssetBucketKind : uint8_t {
+  kTextures,
+  kAudio,
+  kMeshes,
+  kConstant,
+};
+
+inline auto IsLangStrWireTagged(const std::string& val) -> bool {
+  return !val.empty()
+         && (val[0] == kLangStrWireTagLiteral
+             || val[0] == kLangStrWireTagLegacyJson
+             || val[0] == kLangStrWireTagLangStr);
+}
 
 enum class NodeAttributeType {
   kFloat,

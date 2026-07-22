@@ -45,6 +45,7 @@ from babase import (
     increment_analytics_count,
     InputType,
     is_point_in_box,
+    LangStr,
     lock_all_input,
     Lstr,
     NodeNotFoundError,
@@ -89,6 +90,7 @@ from _bascenev1 import (
     get_connection_to_host_info,
     get_connection_to_host_info_2,
     get_foreground_host_activity,
+    get_replay_asset_packages,
     get_foreground_host_session,
     get_game_port,
     get_game_roster,
@@ -118,7 +120,6 @@ from _bascenev1 import (
     Material,
     Mesh,
     new_host_session,
-    new_replay_session,
     newactivity,
     newnode,
     Node,
@@ -218,10 +219,16 @@ from bascenev1._net import (
     connect_to_party,
     fetch_host_requirements,
     HostInfo,
+    HostProbeOutcome,
     HostRequirements,
 )
 from bascenev1._nodeactor import NodeActor
 from bascenev1._powerup import get_default_powerup_distribution
+from bascenev1._replay import (
+    new_replay_session,
+    prepare_replay,
+    launch_replay,
+)
 from bascenev1._profile import (
     get_player_colors,
     get_player_profile_icon,
@@ -334,6 +341,7 @@ __all__ = [
     'get_default_powerup_distribution',
     'get_filtered_map_name',
     'get_foreground_host_activity',
+    'get_replay_asset_packages',
     'get_foreground_host_session',
     'get_game_port',
     'get_game_roster',
@@ -366,6 +374,7 @@ __all__ = [
     'HitMessage',
     'fetch_host_requirements',
     'HostInfo',
+    'HostProbeOutcome',
     'HostRequirements',
     'host_scan_cycle',
     'ImpactDamageMessage',
@@ -382,6 +391,7 @@ __all__ = [
     'JoinInfo',
     'Level',
     'Lobby',
+    'LangStr',
     'lock_all_input',
     'ls_input_devices',
     'ls_objects',
@@ -393,6 +403,8 @@ __all__ = [
     'MusicType',
     'new_host_session',
     'new_replay_session',
+    'prepare_replay',
+    'launch_replay',
     'newactivity',
     'newnode',
     'Node',

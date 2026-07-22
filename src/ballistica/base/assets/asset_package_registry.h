@@ -136,6 +136,19 @@ class AssetPackageRegistry {
   /// (strings asset-migration). Analog of :meth:`LookupTextureBucketId`.
   auto LookupLanguageBucketId(const std::string& apverid) const -> std::string;
 
+  /// Return a bucket's logical-path keys in canonical (sorted) order.
+  /// This is the enumeration wire asset indices derive from (scene_v1
+  /// kAdd*Indexed commands): by the asset-packages identical-key-set
+  /// invariant, every flavor of a given bucket kind within one apverid
+  /// carries the same keys, so positions derived here match across
+  /// peers regardless of which flavor each has registered. Empty if
+  /// the package/bucket isn't registered. Callers doing repeated
+  /// lookups should cache the result (bucket contents for an exact
+  /// apverid are immutable).
+  auto BucketLogicalPathsSorted(const std::string& apverid,
+                                const std::string& bucket_id) const
+      -> std::vector<std::string>;
+
   /// Single chokepoint for "where is this CAS blob on disk?". Probes
   /// the writable CAS root (``<cache_dir>/assets/<aa>/<rest>``, where
   /// downloaded-on-the-fly blobs land) and falls through to the bundle

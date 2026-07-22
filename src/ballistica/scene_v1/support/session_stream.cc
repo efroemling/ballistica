@@ -2,16 +2,20 @@
 
 #include "ballistica/scene_v1/support/session_stream.h"
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "ballistica/base/assets/asset_name_compat.h"
+#include "ballistica/base/assets/asset_package_registry.h"
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
@@ -632,11 +636,16 @@ void SessionStream::AddTexture(SceneTexture* t) {
   }
   Scene* sg = t->scene();
   assert(IsValidScene(sg));
+  // Package-housed assets go as compact indexed refs (protocol 39+;
+  // everything we host is); local non-package assets keep the legacy
+  // string form.
+  if (TryAddAssetIndexed_(SessionCommand::kAddTextureIndexed, sg->stream_id(),
+                          t->stream_id(), t->name(), "textures",
+                          AssetBucketKind::kTextures)) {
+    return;
+  }
   WriteCommandInt64_2(SessionCommand::kAddTexture, sg->stream_id(),
                       t->stream_id());
-  // The scene_v1 wire stays permanently legacy-named; rewrite
-  // asset-package refs down to the legacy name old peers (and
-  // replays) expect.
   WriteString(base::AssetNameCompat::ToLegacy(t->name()));
   EndCommand();
 }
@@ -657,11 +666,14 @@ void SessionStream::AddMesh(SceneMesh* t) {
   }
   Scene* sg = t->scene();
   assert(IsValidScene(sg));
+  // See AddTexture: indexed for package-housed, legacy string otherwise.
+  if (TryAddAssetIndexed_(SessionCommand::kAddMeshIndexed, sg->stream_id(),
+                          t->stream_id(), t->name(), "meshes",
+                          AssetBucketKind::kMeshes)) {
+    return;
+  }
   WriteCommandInt64_2(SessionCommand::kAddMesh, sg->stream_id(),
                       t->stream_id());
-  // The scene_v1 wire stays permanently legacy-named; rewrite
-  // asset-package refs down to the legacy name old peers (and
-  // replays) expect.
   WriteString(base::AssetNameCompat::ToLegacy(t->name()));
   EndCommand();
 }
@@ -682,11 +694,14 @@ void SessionStream::AddSound(SceneSound* t) {
   }
   Scene* sg = t->scene();
   assert(IsValidScene(sg));
+  // See AddTexture: indexed for package-housed, legacy string otherwise.
+  if (TryAddAssetIndexed_(SessionCommand::kAddSoundIndexed, sg->stream_id(),
+                          t->stream_id(), t->name(), "audio",
+                          AssetBucketKind::kAudio)) {
+    return;
+  }
   WriteCommandInt64_2(SessionCommand::kAddSound, sg->stream_id(),
                       t->stream_id());
-  // The scene_v1 wire stays permanently legacy-named; rewrite
-  // asset-package refs down to the legacy name old peers (and
-  // replays) expect.
   WriteString(base::AssetNameCompat::ToLegacy(t->name()));
   EndCommand();
 }
@@ -709,9 +724,8 @@ void SessionStream::AddData(SceneDataAsset* t) {
   assert(IsValidScene(sg));
   WriteCommandInt64_2(SessionCommand::kAddData, sg->stream_id(),
                       t->stream_id());
-  // The scene_v1 wire stays permanently legacy-named; rewrite
-  // asset-package refs down to the legacy name old peers (and
-  // replays) expect.
+  // Data assets have no asset-package homes (yet), so they stay on the
+  // legacy string form; add an indexed variant if that ever changes.
   WriteString(base::AssetNameCompat::ToLegacy(t->name()));
   EndCommand();
 }
@@ -731,11 +745,17 @@ void SessionStream::AddCollisionMesh(SceneCollisionMesh* t) {
   }
   Scene* sg = t->scene();
   assert(IsValidScene(sg));
+  // See AddTexture: indexed for package-housed, legacy string
+  // otherwise. Collision meshes index against the constant bucket
+  // (their package home; asset-packages #26) though their
+  // legacy-name mapping is kind 'meshes'.
+  if (TryAddAssetIndexed_(SessionCommand::kAddCollisionMeshIndexed,
+                          sg->stream_id(), t->stream_id(), t->name(), "meshes",
+                          AssetBucketKind::kConstant)) {
+    return;
+  }
   WriteCommandInt64_2(SessionCommand::kAddCollisionMesh, sg->stream_id(),
                       t->stream_id());
-  // The scene_v1 wire stays permanently legacy-named; rewrite
-  // asset-package refs down to the legacy name old peers (and
-  // replays) expect.
   WriteString(base::AssetNameCompat::ToLegacy(t->name()));
   EndCommand();
 }
@@ -1213,6 +1233,112 @@ void SessionStream::ScreenMessageBottom(const std::string& val, float r,
   color[2] = b;
   WriteFloats(3, color);
   EndCommand();
+}
+
+void SessionStream::DeclareAssetPackages(
+    const std::vector<std::string>& table) {
+  // One tiny command per entry (the command framing has a uint16 size
+  // cap, so a single monolithic table command would bound universe
+  // size). The explicit (index, total) pair lets readers detect a fresh
+  // table start and know when the declaration is complete.
+  auto total = static_cast<int32_t>(table.size());
+  for (int32_t i = 0; i < total; ++i) {
+    WriteCommandInt32_2(SessionCommand::kDeclareAssetPackage, i, total);
+    WriteString(table[i]);
+    EndCommand();
+  }
+  // Retain: subsequent asset adds index against this.
+  declared_packages_ = table;
+
+  // Host recordings know their universe here (this is the live output
+  // stream); hand it to the replay writer for the file header. (Client
+  // recordings feed the writer from ClientSession instead, since their
+  // table is only known once the incoming baseline finishes parsing.)
+  if (writing_replay_ && replay_writer_) {
+    replay_writer_->SetAssetPackageTable(table);
+  }
+}
+
+auto SessionStream::TryAddAssetIndexed_(SessionCommand cmd, int64_t scene_id,
+                                        int64_t stream_id,
+                                        const std::string& name,
+                                        const char* legacy_kind,
+                                        AssetBucketKind bucket_kind) -> bool {
+  // Streams with no declared package table don't carry indexed refs at
+  // all (e.g. the temp stream a replay builds for its seek-state
+  // snapshot) -- fall straight back to the legacy string form. This
+  // also keeps the out-of-universe warning below meaningful (it fires
+  // only for a real table-bearing stream).
+  if (declared_packages_.empty()) {
+    return false;
+  }
+
+  // Map possibly-legacy bare names into package space the same way the
+  // load path does; genuinely local names come back unqualified and
+  // stay on the legacy string form.
+  std::string qualified = base::AssetNameCompat::FromLegacy(name, legacy_kind);
+  auto colon_pos = qualified.find(':');
+  if (colon_pos == std::string::npos) {
+    return false;
+  }
+  std::string apverid = qualified.substr(0, colon_pos);
+  std::string logical_path = qualified.substr(colon_pos + 1);
+
+  // Package must be in our declared table (the session universe).
+  auto pkg_it =
+      std::find(declared_packages_.begin(), declared_packages_.end(), apverid);
+  if (pkg_it == declared_packages_.end()) {
+    // Out-of-universe package refs are host-side bugs per the fixed-
+    // universe design (asset-packages #36); make noise but keep the
+    // stream functional via the self-describing legacy form.
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                "Asset '" + qualified
+                    + "' is outside the session's package universe;"
+                      " emitting non-indexed. This indicates a host-side"
+                      " bug (see asset-packages decision #36).");
+    return false;
+  }
+  auto pkg_idx = static_cast<int32_t>(pkg_it - declared_packages_.begin());
+
+  auto* registry = g_base->assets->package_registry();
+  std::string bucket_id;
+  switch (bucket_kind) {
+    case AssetBucketKind::kTextures:
+      bucket_id = registry->LookupTextureBucketId(apverid);
+      break;
+    case AssetBucketKind::kAudio:
+      bucket_id = registry->LookupAudioBucketId(apverid);
+      break;
+    case AssetBucketKind::kMeshes:
+      bucket_id = registry->LookupMeshBucketId(apverid);
+      break;
+    case AssetBucketKind::kConstant:
+      bucket_id = registry->LookupConstantBucketId(apverid);
+      break;
+  }
+  if (bucket_id.empty()) {
+    return false;
+  }
+
+  auto cache_key = apverid + '\n' + bucket_id;
+  auto cache_it = asset_index_keys_cache_.find(cache_key);
+  if (cache_it == asset_index_keys_cache_.end()) {
+    cache_it = asset_index_keys_cache_
+                   .emplace(cache_key, registry->BucketLogicalPathsSorted(
+                                           apverid, bucket_id))
+                   .first;
+  }
+  auto& keys = cache_it->second;
+  auto key_it = std::lower_bound(keys.begin(), keys.end(), logical_path);
+  if (key_it == keys.end() || *key_it != logical_path) {
+    return false;
+  }
+
+  WriteCommandInt32_4(cmd, static_cast_check_fit<int32_t>(scene_id),
+                      static_cast_check_fit<int32_t>(stream_id), pkg_idx,
+                      static_cast<int32_t>(key_it - keys.begin()));
+  EndCommand();
+  return true;
 }
 
 auto SessionStream::GetSoundID(SceneSound* s) -> int64_t {

@@ -2,7 +2,7 @@
 #
 """Runtime support for generated bauiv1 asset-*reference* wrappers.
 
-This is the bauiv1 (client) flavor of :mod:`bacommon.assetref` and the
+This is the bauiv1 (client) flavor of :mod:`bacommon.assetspec` and the
 middle tier of the D28 asset ladder: ``TextureSpec`` (authoring claim)
 -> ``TextureRef`` (this module; a *verified-local* reference — its
 wrapper's pin was construct-mode-resolved before use) ->
@@ -24,7 +24,7 @@ within dataclassio's rules (a nested-dataclass field accepts any
 
 from typing import TYPE_CHECKING
 
-from bacommon.assetref import (
+from bacommon.assetspec import (
     TextureSpec as _TextureSpec,
     MeshSpec as _MeshSpec,
     SoundSpec as _SoundSpec,

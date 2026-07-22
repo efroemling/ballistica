@@ -716,6 +716,23 @@ class AuthRequestMessage(Message):
         return [AuthRequestResponse]
 
 
+class JoinRejectReason(Enum):
+    """Wire-stable join-rejection reason codes; APPEND ONLY.
+
+    A client renders a recognized reason as its own localized builtin
+    string and any unrecognized value as a generic rejection, so
+    reasons added later degrade gracefully on older clients. Values
+    must stay in sync with the ``BA_REJECT_REASON_*`` defines in the
+    engine's ``networking.h``.
+    """
+
+    UNKNOWN = 0
+    PASSWORD_INCORRECT = 1
+    ACCOUNT_REJECTED = 2
+    AUTH_ERROR = 3
+    MUST_SIGN_IN = 4
+
+
 @ioprepped
 @dataclass
 class AuthRequestResponse(Response):
@@ -723,6 +740,13 @@ class AuthRequestResponse(Response):
 
     error: Annotated[str | None, IOAttrs('e')]
     token: Annotated[str | None, IOAttrs('t')]
+
+    #: Optional :class:`JoinRejectReason` value accompanying a
+    #: rejection. Kept as a plain int on the wire so clients tolerate
+    #: reasons added after they shipped (rendering them as a generic
+    #: rejection). ``None`` (e.g. free-form host-supplied rejection
+    #: text) means no code applies; show ``error`` text instead.
+    reason: Annotated[int | None, IOAttrs('r', soft_default=None)]
 
 
 @ioprepped

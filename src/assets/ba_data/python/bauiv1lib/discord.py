@@ -62,7 +62,7 @@ class DiscordWindow(bui.Window):
                 size=(140, 60),
                 scale=0.8,
                 autoselect=True,
-                label=bui.Lstr(resource='backText'),
+                label=stdassets.strings.ui.back,
                 button_type='back',
                 on_activate_call=self._do_back,
             )
@@ -111,7 +111,7 @@ class DiscordWindow(bui.Window):
             position=(self._width / 2 - 30, 20),
             size=(self._width / 2 - 60, 60),
             autoselect=True,
-            label=bui.Lstr(resource='discordJoinText'),
+            label=stdassets.strings.gather.discord_join,
             text_scale=1.0,
             on_activate_call=bui.CallStrict(
                 bui.open_url, 'https://ballistica.net/discord'

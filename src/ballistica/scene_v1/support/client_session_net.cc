@@ -42,6 +42,10 @@ ClientSessionNet::~ClientSessionNet() {
 void ClientSessionNet::SetConnectionToHost(ConnectionToHost* c) {
   connection_to_host_ = c;
 
+  if (c != nullptr) {
+    set_stream_protocol(c->protocol_version());
+  }
+
   if (c != nullptr && !writing_replay_) {
     // Sanity check: we should only ever be writing one replay at once.
     if (g_scene_v1->replay_open) {
@@ -209,6 +213,15 @@ void ClientSessionNet::OnBaseTimeStepAdded(int step) {
   if (use) {
     leading_base_time_received_ = new_base_time_received;
     leading_base_time_receive_time_ = now;
+  }
+}
+
+void ClientSessionNet::OnAssetPackageTableComplete() {
+  // Feed the just-parsed table to our replay writer's header. (Host
+  // recordings source this from SessionStream instead; a client only
+  // learns it once the baseline's declaration finishes parsing here.)
+  if (writing_replay_ && replay_writer_ != nullptr) {
+    replay_writer_->SetAssetPackageTable(asset_package_table());
   }
 }
 

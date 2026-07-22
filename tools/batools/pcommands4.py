@@ -51,6 +51,98 @@ def ios_sim_log() -> None:
     )
 
 
+def _validate_bstr_briefs(ws_dir: str) -> None:
+    """Parse every ``.bstr`` brief under a workspace checkout.
+
+    Raises :class:`~efro.error.CleanError` naming each unparseable
+    file (bad json/dataclass shape or an invalid tag vocabulary in the
+    ``input`` brief). Parsing is cheap, so the whole checkout is
+    checked every put rather than tracking dirtiness.
+    """
+    from pathlib import Path
+
+    from efro.error import CleanError
+    from efro.dataclassio import dataclass_from_json
+
+    from bacommon.strbrief import parse_brief
+    from bacommon.workspace.assetsv1 import (
+        AssetsV1StringFile,
+        AssetsV1StringFileV1,
+    )
+
+    import json
+
+    from efro.terminal import Clr
+
+    # Wrap pins live as path-vals in workspace.json (deliberately
+    # outside the .bstr so wrap edits don't restale translations) —
+    # which means file-level copy/restore workflows can silently shed
+    # them. Surface a heuristic warning for long unconstrained strings
+    # with no wrap declared so a dropped pin gets noticed at put time
+    # rather than by eyeballs in-game.
+    wrapped: set[str] = set()
+    try:
+        wsjson = json.loads((Path(ws_dir) / 'workspace.json').read_text())
+        for wpath, vals in wsjson.get('path', {}).items():
+            if isinstance(vals, dict) and 'wrap' in vals:
+                wrapped.add(wpath)
+    except OSError, ValueError:
+        pass  # No/invalid workspace.json; skip wrap warnings.
+
+    def _eng_len(strfile: AssetsV1StringFileV1) -> int | None:
+        for locale, output in strfile.outputs.items():
+            if locale.value != 'eng':
+                continue
+            if isinstance(output.value, str):
+                return len(output.value)
+            # A plural/select selector; use its longest form.
+            return max(
+                (len(form) for form in output.value.forms.values()),
+                default=0,
+            )
+        return None
+
+    errors: list[str] = []
+    warnings: list[str] = []
+    for path in sorted(Path(ws_dir).rglob('*.bstr')):
+        rel = path.relative_to(ws_dir)
+        try:
+            strfile = dataclass_from_json(AssetsV1StringFile, path.read_text())
+            # Only validate versions we know; a future format version
+            # is the server's business, not a reason to block a put.
+            if isinstance(strfile, AssetsV1StringFileV1):
+                parse_brief(strfile.input)
+                englen = _eng_len(strfile)
+                if (
+                    englen is not None
+                    and englen > 90
+                    and strfile.fit_preset
+                    is AssetsV1StringFileV1.FitPreset.NONE
+                    and str(rel) not in wrapped
+                ):
+                    warnings.append(
+                        f'  {rel}: long English ({englen} chars) with no'
+                        f' fit preset and no wrap path-val — should this'
+                        f' pin a line count? (D21)'
+                    )
+        except CleanError as exc:
+            errors.append(f'  {rel}: {exc}')
+        except Exception as exc:
+            errors.append(f'  {rel}: {exc!r}')
+    if warnings:
+        label = 'string' if len(warnings) == 1 else 'strings'
+        print(
+            f'{Clr.YLW}Warning: {len(warnings)} unconstrained-layout'
+            f' {label}:\n' + '\n'.join(warnings) + f'{Clr.RST}'
+        )
+    if errors:
+        label = 'brief' if len(errors) == 1 else 'briefs'
+        raise CleanError(
+            f'Refusing to upload; {len(errors)} invalid .bstr {label}:\n'
+            + '\n'.join(errors)
+        )
+
+
 def assetworkspace() -> None:
     """Get/put an asset-package source workspace via a fast local cache.
 
@@ -118,6 +210,14 @@ def assetworkspace() -> None:
             f'No local cache for {name!r} at {ws_dir};'
             f' run `assetworkspace get {name}` first.'
         )
+
+    # Validate .bstr authoring briefs before an upload so mistakes
+    # (duplicate tags, pasted ICU, bad names) fail here with a file
+    # pointer instead of minutes later inside a server translation run.
+    # The server parses with this same shared module, so the grammar
+    # can't drift.
+    if subcmd == 'put':
+        _validate_bstr_briefs(ws_dir)
 
     cmd = [bacloud, 'workspace', subcmd, ws_dir, '--workspace', name]
     if subcmd == 'put' and '--force' in flags:

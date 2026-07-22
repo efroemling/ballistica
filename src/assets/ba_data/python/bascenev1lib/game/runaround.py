@@ -201,7 +201,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
         super().on_transition_in()
         self._scoreboard = Scoreboard(
-            label=bs.Lstr(resource='scoreText'), score_split=0.5
+            label=stdassets.strings.game.score, score_split=0.5
         )
         self._score_region = bs.NodeActor(
             bs.newnode(
@@ -720,7 +720,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             fail_message = None
         else:
             score = None
-            fail_message = bs.Lstr(resource='reachWave2Text')
+            fail_message = stdassets.strings.game.reach_wave_2
 
         self.end(
             delay=delay,
@@ -791,7 +791,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
                 # Give remaining players some points and have them celebrate.
                 self.show_zoom_message(
-                    bs.Lstr(resource='victoryText'), scale=1.0, duration=4.0
+                    stdassets.strings.game.victory, scale=1.0, duration=4.0
                 )
 
                 self.celebrate(10.0)

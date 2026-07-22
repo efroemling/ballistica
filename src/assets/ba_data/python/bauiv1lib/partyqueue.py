@@ -303,7 +303,7 @@ class PartyQueueWindow(bui.Window):
             scale=1.3,
             h_align='center',
             v_align='center',
-            text=bui.Lstr(resource='internal.connectingToPartyText'),
+            text=stdassets.strings.ui.connecting,
             maxwidth=self._width * 0.65,
         )
 
@@ -473,7 +473,7 @@ class PartyQueueWindow(bui.Window):
             if should_show_field:
                 bui.textwidget(
                     edit=self._title_text,
-                    text=bui.Lstr(resource='waitingInLineText'),
+                    text=stdassets.strings.partyqueue.waiting_in_line,
                     position=(self._width * 0.5, self._height * 0.85),
                 )
                 self._update_field(response)
@@ -481,7 +481,7 @@ class PartyQueueWindow(bui.Window):
             if not should_show_field and self._field_shown:
                 bui.textwidget(
                     edit=self._title_text,
-                    text=bui.Lstr(resource='internal.connectingToPartyText'),
+                    text=stdassets.strings.ui.connecting,
                     position=(self._width * 0.5, self._height * 0.55),
                 )
                 self._hide_field()
@@ -513,7 +513,7 @@ class PartyQueueWindow(bui.Window):
                         scale=1.5,
                         h_align='center',
                         v_align='center',
-                        text=bui.Lstr(resource='boostText'),
+                        text=stdassets.strings.ui.boost,
                         maxwidth=150,
                     )
                     self._boost_price = bui.textwidget(
@@ -580,7 +580,7 @@ class PartyQueueWindow(bui.Window):
         if classic.tickets < self._boost_tickets:
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                bui.Lstr(resource='notEnoughTicketsText'),
+                stdassets.strings.profile.not_enough_tickets,
                 color=(1, 0, 0),
             )
             return

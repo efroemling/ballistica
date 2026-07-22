@@ -2,14 +2,21 @@
 
 #include "ballistica/scene_v1/support/client_session.h"
 
+#include <memory>
 #include <string>
+#include <string_view>
+#include <tuple>
+#include <utility>
 #include <vector>
 
+#include "ballistica/base/assets/asset_package_registry.h"
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/networking/networking.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
@@ -27,6 +34,47 @@
 #include "ballistica/scene_v1/support/session_stream.h"
 
 namespace ballistica::scene_v1 {
+
+// Resolve a lang-str-tagged wire value (see kLangStrWireTag*) to flat
+// display text for transient surfaces (screen-messages): the string to
+// show plus whether it is literal (bypasses the legacy resource-string
+// compile at draw). LangStr refs bind against the stream's declared
+// package table.
+//
+// SPECIAL CASE -- do not copy this parse-and-evaluate shape to new
+// ingest points. Binding and evaluating wire refs with no resolve step
+// is only valid because stream consumption implies a verified context:
+// net sessions sit behind the arrive-ready prep contract (unprepped
+// connects to lang-str-era hosts are refused at the handshake) and
+// replay playback is gated by its own pre-playback prep. Out-of-context
+// refs fail visibly (LANGSTR_ERROR) by design -- they indicate a
+// host-side bug -- and untrusted stream data must never be able to
+// trigger client-side resolve/download machinery. New consumers of
+// wire LangStrs must establish an equivalent verified context (see the
+// D28 trust model + D33 in docs/initiatives/strings-asset-migration.md).
+static auto EvalLangStrWireValue_(const std::string& val,
+                                  const std::vector<std::string>& package_table)
+    -> std::pair<std::string, bool> {
+  switch (val[0]) {
+    case kLangStrWireTagLiteral:
+      return {val.substr(1), true};
+    case kLangStrWireTagLegacyJson:
+      // The legacy compile happens at draw (and stays
+      // language-change-responsive there).
+      return {val.substr(1), false};
+    default: {
+      auto parsed = base::LangStr::FromJson(std::string_view(val).substr(1),
+                                            &package_table);
+      if (!parsed.has_value()) {
+        g_core->logging->Log(
+            LogName::kBaNetworking, LogLevel::kWarning,
+            "Error parsing lang-str wire value: " + parsed.error());
+        return {"LANGSTR_ERROR:" + parsed.error(), true};
+      }
+      return {(*parsed)->Evaluate(), true};
+    }
+  }
+}
 
 ClientSession::ClientSession() { ClearSessionObjs(); }
 
@@ -52,6 +100,72 @@ void ClientSession::ClearSessionObjs() {
   commands_pending_.clear();
   commands_.clear();
   base_time_buffered_ = 0;
+  asset_package_table_.clear();
+  asset_index_keys_cache_.clear();
+}
+
+auto ClientSession::ResolveIndexedAssetRef_(int32_t pkg_index,
+                                            int32_t asset_index,
+                                            AssetBucketKind bucket_kind)
+    -> std::string {
+  if (pkg_index < 0
+      || pkg_index >= static_cast<int32_t>(asset_package_table_.size())) {
+    throw Exception("indexed asset ref has invalid package index "
+                    + std::to_string(pkg_index) + " (table size "
+                    + std::to_string(asset_package_table_.size()) + ")");
+  }
+  const std::string& apverid = asset_package_table_[pkg_index];
+
+  auto* registry = g_base->assets->package_registry();
+  std::string bucket_id;
+  switch (bucket_kind) {
+    case AssetBucketKind::kTextures:
+      bucket_id = registry->LookupTextureBucketId(apverid);
+      break;
+    case AssetBucketKind::kAudio:
+      bucket_id = registry->LookupAudioBucketId(apverid);
+      break;
+    case AssetBucketKind::kMeshes:
+      bucket_id = registry->LookupMeshBucketId(apverid);
+      break;
+    case AssetBucketKind::kConstant:
+      bucket_id = registry->LookupConstantBucketId(apverid);
+      break;
+  }
+  if (bucket_id.empty()) {
+    // Hitting this means the arrive-ready prep contract was violated
+    // somewhere (the package should have been resolved pre-join);
+    // assets hard-fail by design, and the session error carries the
+    // diagnostics.
+    throw Exception("indexed asset ref package '" + apverid
+                    + "' has no registered bucket for kind "
+                    + std::to_string(static_cast<int>(bucket_kind)) + ". ["
+                    + registry->DebugDescribePackage(apverid) + "]");
+  }
+
+  auto cache_key = apverid + '\n' + bucket_id;
+  auto cache_it = asset_index_keys_cache_.find(cache_key);
+  if (cache_it == asset_index_keys_cache_.end()) {
+    cache_it = asset_index_keys_cache_
+                   .emplace(cache_key, registry->BucketLogicalPathsSorted(
+                                           apverid, bucket_id))
+                   .first;
+  }
+  auto& keys = cache_it->second;
+  if (asset_index < 0 || asset_index >= static_cast<int32_t>(keys.size())) {
+    throw Exception("indexed asset ref has invalid asset index "
+                    + std::to_string(asset_index) + " for " + apverid + " "
+                    + bucket_id + " (key count " + std::to_string(keys.size())
+                    + ")");
+  }
+  std::string name = apverid + ':' + keys[asset_index];
+  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug,
+                       [&name, pkg_index, asset_index] {
+                         return "ClientSession: indexed asset ref ("
+                                + std::to_string(pkg_index) + ","
+                                + std::to_string(asset_index) + ") -> " + name;
+                       });
+  return name;
 }
 
 auto ClientSession::DoesFillScreen() const -> bool {
@@ -619,7 +733,35 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
         case SessionCommand::kSetNodeAttrString: {
           int vals[2];
           ReadInt32_2(vals);
-          GetNode(vals[0])->GetAttribute(vals[1]).Set(ReadString());
+          NodeAttribute attr = GetNode(vals[0])->GetAttribute(vals[1]);
+          std::string val = ReadString();
+          if (stream_protocol() >= kProtocolVersionLangStrWire
+              && attr.is_lang_str() && IsLangStrWireTagged(val)) {
+            std::shared_ptr<const base::LangStr> parsed;
+            if (val[0] == kLangStrWireTagLangStr) {
+              // No-resolve bind-and-parse: legal here only per the
+              // verified-context rules on EvalLangStrWireValue_ above.
+              auto result = base::LangStr::FromJson(
+                  std::string_view(val).substr(1), &asset_package_table_);
+              if (result.has_value()) {
+                parsed = *result;
+              } else {
+                g_core->logging->Log(LogName::kBaNetworking, LogLevel::kWarning,
+                                     "Error parsing lang-str attr wire value: "
+                                         + result.error());
+              }
+            }
+            g_core->logging->Log(
+                LogName::kBaNetworking, LogLevel::kDebug, [&val, &parsed] {
+                  return "ClientSession: lang-str attr set (tag "
+                         + std::to_string(static_cast<int>(val[0])) + "): "
+                         + (parsed != nullptr ? parsed->Evaluate()
+                                              : val.substr(1));
+                });
+            attr.SetLangStrWire(val, std::move(parsed));
+          } else {
+            attr.Set(val);
+          }
           break;
         }
         case SessionCommand::kSetNodeAttrNode: {
@@ -815,7 +957,17 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           std::string val = ReadString();
           Vector3f color{};
           ReadFloats(3, color.v);
-          g_base->ScreenMessage(val, color);
+          bool literal{};
+          if (stream_protocol() >= kProtocolVersionLangStrWire
+              && IsLangStrWireTagged(val)) {
+            std::tie(val, literal) =
+                EvalLangStrWireValue_(val, asset_package_table_);
+            g_core->logging->Log(
+                LogName::kBaNetworking, LogLevel::kDebug, [&val] {
+                  return "ClientSession: lang-str screen-message: " + val;
+                });
+          }
+          g_base->ScreenMessage(val, color, literal);
           break;
         }
         case SessionCommand::kScreenMessageTop: {
@@ -826,8 +978,14 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           std::string s = ReadString();
           float f[9];
           ReadFloats(9, f);
+          bool literal{};
+          if (stream_protocol() >= kProtocolVersionLangStrWire
+              && IsLangStrWireTagged(s)) {
+            std::tie(s, literal) =
+                EvalLangStrWireValue_(s, asset_package_table_);
+          }
           g_base->graphics->screenmessages->AddScreenMessage(
-              s, false, Vector3f(f[0], f[1], f[2]), true,
+              s, literal, Vector3f(f[0], f[1], f[2]), true,
               texture->texture_data(), tint_texture->texture_data(),
               Vector3f(f[3], f[4], f[5]), Vector3f(f[6], f[7], f[8]));
           break;
@@ -867,6 +1025,113 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
             e.scale = vals[6];
             e.spread = vals[7];
             g_base->bg_dynamics->Emit(e);
+          }
+          break;
+        }
+        case SessionCommand::kAddTextureIndexed: {
+          int32_t vals[4];  // scene-id, texture-id, pkg-idx, asset-idx
+          ReadInt32_4(vals);
+          std::string name = ResolveIndexedAssetRef_(
+              vals[2], vals[3], AssetBucketKind::kTextures);
+          Scene* scene = GetScene(vals[0]);
+          int id = vals[1];
+          if (id < 0 || id >= 1000) {
+            throw Exception("invalid texture id");
+          }
+          if (static_cast<int>(textures_.size()) < (id + 1)) {
+            textures_.resize(static_cast<size_t>(id) + 1);
+          }
+          assert(!textures_[id].exists());
+          textures_[id] = Object::New<SceneTexture>(name, scene);
+          textures_[id]->set_stream_id(id);
+          break;
+        }
+        case SessionCommand::kAddMeshIndexed: {
+          int32_t vals[4];  // scene-id, mesh-id, pkg-idx, asset-idx
+          ReadInt32_4(vals);
+          std::string name = ResolveIndexedAssetRef_(vals[2], vals[3],
+                                                     AssetBucketKind::kMeshes);
+          Scene* scene = GetScene(vals[0]);
+          int id = vals[1];
+          if (id < 0 || id >= 1000) {
+            throw Exception("invalid mesh id");
+          }
+          if (static_cast<int>(meshes_.size()) < (id + 1)) {
+            meshes_.resize(static_cast<size_t>(id) + 1);
+          }
+          assert(!meshes_[id].exists());
+          meshes_[id] = Object::New<SceneMesh>(name, scene);
+          meshes_[id]->set_stream_id(id);
+          break;
+        }
+        case SessionCommand::kAddSoundIndexed: {
+          int32_t vals[4];  // scene-id, sound-id, pkg-idx, asset-idx
+          ReadInt32_4(vals);
+          std::string name = ResolveIndexedAssetRef_(vals[2], vals[3],
+                                                     AssetBucketKind::kAudio);
+          Scene* scene = GetScene(vals[0]);
+          int id = vals[1];
+          if (id < 0 || id >= 1000) {
+            throw Exception("invalid sound id");
+          }
+          if (static_cast<int>(sounds_.size()) < (id + 1)) {
+            sounds_.resize(static_cast<size_t>(id) + 1);
+          }
+          assert(!sounds_[id].exists());
+          sounds_[id] = Object::New<SceneSound>(name, scene);
+          sounds_[id]->set_stream_id(id);
+          break;
+        }
+        case SessionCommand::kAddCollisionMeshIndexed: {
+          int32_t vals[4];  // scene-id, collision-mesh-id, pkg-idx, asset-idx
+          ReadInt32_4(vals);
+          std::string name = ResolveIndexedAssetRef_(
+              vals[2], vals[3], AssetBucketKind::kConstant);
+          Scene* scene = GetScene(vals[0]);
+          int id = vals[1];
+          if (id < 0 || id >= 1000) {
+            throw Exception("invalid collision_mesh id");
+          }
+          if (static_cast<int>(collision_meshes_.size()) < (id + 1)) {
+            collision_meshes_.resize(static_cast<size_t>(id) + 1);
+          }
+          assert(!collision_meshes_[id].exists());
+          collision_meshes_[id] = Object::New<SceneCollisionMesh>(name, scene);
+          collision_meshes_[id]->set_stream_id(id);
+          break;
+        }
+        case SessionCommand::kDeclareAssetPackage: {
+          int32_t cmdvals[2];
+          ReadInt32_2(cmdvals);
+          int32_t index = cmdvals[0];
+          int32_t total = cmdvals[1];
+          std::string apverid = ReadString();
+
+          // A fresh declaration (index 0) replaces any existing table
+          // (a new baseline arrives when the host switches sessions).
+          if (index == 0) {
+            asset_package_table_.clear();
+          }
+          if (index < 0 || total < 1 || index >= total
+              || index != static_cast<int32_t>(asset_package_table_.size())) {
+            throw Exception(
+                "invalid asset-package table declaration (index "
+                + std::to_string(index) + " total " + std::to_string(total)
+                + " have " + std::to_string(asset_package_table_.size()) + ")");
+          }
+          asset_package_table_.push_back(apverid);
+          if (index + 1 == total) {
+            g_core->logging->Log(
+                LogName::kBaNetworking, LogLevel::kDebug, [this, total] {
+                  std::string out =
+                      "ClientSession: asset-package table declared ("
+                      + std::to_string(total) + " entries):";
+                  for (const auto& entry : asset_package_table_) {
+                    out += " " + entry;
+                  }
+                  return out;
+                });
+            OnAssetPackageTableComplete();
           }
           break;
         }

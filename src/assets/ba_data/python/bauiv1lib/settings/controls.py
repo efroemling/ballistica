@@ -6,7 +6,11 @@ from typing import override
 
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import stdassets
+
 from bauiv1 import builtinassets
+
+_ctlstrs = stdassets.strings.settings.controllers
 
 
 class ControlsSettingsWindow(bui.MainWindow):
@@ -167,7 +171,7 @@ class ControlsSettingsWindow(bui.MainWindow):
             ),
             maxwidth=260,
             size=(0, 0),
-            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            text=_ctlstrs.title,
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -186,7 +190,7 @@ class ControlsSettingsWindow(bui.MainWindow):
                 position=((width - button_width) / 2, v),
                 size=(button_width, 43),
                 autoselect=True,
-                label=bui.Lstr(resource=f'{self._r}.configureTouchText'),
+                label=_ctlstrs.touchscreen.title,
                 on_activate_call=self._do_touchscreen,
             )
             bui.widget(
@@ -211,7 +215,7 @@ class ControlsSettingsWindow(bui.MainWindow):
                 position=((width - button_width) / 2 - 7, v),
                 size=(button_width, 43),
                 autoselect=True,
-                label=bui.Lstr(resource=f'{self._r}.configureControllersText'),
+                label=_ctlstrs.configure_controllers,
                 on_activate_call=self._do_gamepads,
             )
             bui.widget(
@@ -242,7 +246,7 @@ class ControlsSettingsWindow(bui.MainWindow):
                 position=((width - button_width) / 2 - 5, v),
                 size=(button_width, 43),
                 autoselect=True,
-                label=bui.Lstr(resource=f'{self._r}.configureKeyboardText'),
+                label=_ctlstrs.configure_keyboard,
                 on_activate_call=self._config_keyboard,
             )
             bui.widget(
@@ -270,7 +274,7 @@ class ControlsSettingsWindow(bui.MainWindow):
                 position=((width - button_width) / 2 - 3, v),
                 size=(button_width, 43),
                 autoselect=True,
-                label=bui.Lstr(resource=f'{self._r}.configureKeyboard2Text'),
+                label=_ctlstrs.configure_keyboard_p2,
                 on_activate_call=self._config_keyboard2,
             )
             v -= spacing
@@ -287,7 +291,7 @@ class ControlsSettingsWindow(bui.MainWindow):
                 position=((width - button_width) / 2 - 5, v),
                 size=(button_width, 43),
                 autoselect=True,
-                label=bui.Lstr(resource=f'{self._r}.configureMobileText'),
+                label=_ctlstrs.configure_mobile,
                 on_activate_call=self._do_mobile_devices,
             )
             bui.widget(
@@ -313,7 +317,7 @@ class ControlsSettingsWindow(bui.MainWindow):
 
             def do_toggle(value: bool) -> None:
                 bui.screenmessage(
-                    bui.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
+                    stdassets.strings.ui.must_restart,
                     color=(1, 1, 0),
                 )
                 builtinassets.audio.gun_cocking.get().play()
@@ -329,14 +333,14 @@ class ControlsSettingsWindow(bui.MainWindow):
                 value=(not bui.get_low_level_config_value('enablexinput', 1)),
                 maxwidth=200,
                 on_value_change_call=do_toggle,
-                text=bui.Lstr(resource='disableXInputText'),
+                text=_ctlstrs.disable_xinput,
                 autoselect=True,
             )
             bui.textwidget(
                 parent=self._root_widget,
                 position=(width * 0.5, v - 5),
                 size=(0, 0),
-                text=bui.Lstr(resource='disableXInputDescriptionText'),
+                text=_ctlstrs.disable_xinput_description,
                 scale=0.5,
                 h_align='center',
                 v_align='center',

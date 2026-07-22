@@ -3,6 +3,7 @@
 """UI functionality related to accounts."""
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 
 def show_sign_in_prompt(origin_widget: bui.Widget | None = None) -> None:
@@ -10,9 +11,9 @@ def show_sign_in_prompt(origin_widget: bui.Widget | None = None) -> None:
     from bauiv1lib.confirm import ConfirmWindow
 
     ConfirmWindow(
-        bui.Lstr(resource='notSignedInErrorText'),
+        stdassets.strings.account.not_signed_in,
         _show_account_settings,
-        ok_text=bui.Lstr(resource='accountSettingsWindow.signInText'),
+        ok_text=stdassets.strings.account.sign_in,
         width=460,
         height=130,
         origin_widget=origin_widget,

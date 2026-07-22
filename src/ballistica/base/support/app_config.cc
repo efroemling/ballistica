@@ -220,7 +220,7 @@ void AppConfig::SetupEntries_() {
   // Note: this gets clamped to the valid host range at use time, so
   // stored values from old configs simply snap forward when mins rise.
   int_entries_[IntID::kSceneV1HostProtocol] =
-      IntEntry("SceneV1 Host Protocol", 38);
+      IntEntry("SceneV1 Host Protocol", 39);
 
   bool_entries_[BoolID::kTouchControlsSwipeHidden] =
       BoolEntry("Touch Controls Swipe Hidden", false);

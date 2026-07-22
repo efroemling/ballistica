@@ -15,6 +15,7 @@ import bacommon.clouddialog.basic as bcdlg
 import bacommon.classic
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -43,7 +44,7 @@ class _TextSection(_Section):
         self,
         *,
         sub_width: float,
-        text: bui.Lstr | str,
+        text: bui.Lstr | bui.LangStr | str,
         spacing_top: float = 0.0,
         spacing_bottom: float = 0.0,
         scale: float = 0.6,
@@ -56,7 +57,11 @@ class _TextSection(_Section):
 
         # We need to bake this down since we plug its final size into
         # our math.
-        self.textbaked = text.evaluate() if isinstance(text, bui.Lstr) else text
+        self.textbaked = (
+            text.evaluate()
+            if isinstance(text, (bui.Lstr, bui.LangStr))
+            else text
+        )
 
         # Calc scale to fit width and then see what height we need at
         # that scale.
@@ -103,7 +108,7 @@ class _ButtonSection(_Section):
         self,
         *,
         sub_width: float,
-        label: bui.Lstr | str,
+        label: bui.Lstr | bui.LangStr | str,
         color: tuple[float, float, float],
         label_color: tuple[float, float, float],
         call: Callable[[_ButtonSection], None],
@@ -481,7 +486,7 @@ class InboxWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
             scale=0.6 if uiscale is bui.UIScale.SMALL else 0.8,
-            text=bui.Lstr(resource='inboxText'),
+            text=stdassets.strings.ui.inbox,
             maxwidth=200,
             color=bui.app.ui_v1.title_color,
         )
@@ -489,7 +494,7 @@ class InboxWindow(bui.MainWindow):
         # Kick off request.
         plus = bui.app.plus
         if plus is None or plus.accounts.primary is None:
-            self._error(bui.Lstr(resource='notSignedInText'))
+            self._error(stdassets.strings.ui.not_signed_in_status)
             return
 
         with plus.accounts.primary:
@@ -514,7 +519,7 @@ class InboxWindow(bui.MainWindow):
     def main_window_should_preserve_selection(self) -> bool:
         return True
 
-    def _error(self, errmsg: bui.Lstr | str) -> None:
+    def _error(self, errmsg: bui.Lstr | bui.LangStr | str) -> None:
         """Put ourself in a permanent error state."""
         bui.spinnerwidget(edit=self._loading_spinner, visible=False)
         bui.textwidget(
@@ -547,7 +552,7 @@ class InboxWindow(bui.MainWindow):
         plus = bui.app.plus
         if plus is None or plus.accounts.primary is None:
             bui.screenmessage(
-                bui.Lstr(resource='notSignedInText'), color=(1, 0, 0)
+                stdassets.strings.ui.not_signed_in_status, color=(1, 0, 0)
             )
             builtinassets.audio.error.get().play()
             return
@@ -651,13 +656,12 @@ class InboxWindow(bui.MainWindow):
             bui.spinnerwidget(edit=button_spinner, visible=False)
 
         # See if we should show an error message.
+        error_message: bui.Lstr | bui.LangStr | None
         if isinstance(response, Exception):
             if isinstance(response, CommunicationError):
-                error_message = bui.Lstr(
-                    resource='internal.unavailableNoConnectionText'
-                )
+                error_message = stdassets.strings.ui.unavailable_no_connection
             else:
-                error_message = bui.Lstr(resource='errorText')
+                error_message = stdassets.strings.ui.error
         elif response.error_type is not None:
             # If error_type is set, error should be also.
             assert response.error_message is not None
@@ -672,9 +676,7 @@ class InboxWindow(bui.MainWindow):
             bui.screenmessage(error_message, color=(1, 0, 0))
             builtinassets.audio.error.get().play()
             if button is not None:
-                bui.buttonwidget(
-                    edit=button, label=bui.Lstr(resource='errorText')
-                )
+                bui.buttonwidget(edit=button, label=stdassets.strings.ui.error)
             return
 
         # Success!
@@ -687,11 +689,11 @@ class InboxWindow(bui.MainWindow):
         # Whee; no error. Mark as done.
         if button is not None:
             # If we have full unicode, just show a checkmark in all cases.
-            label: str | bui.Lstr
+            label: str | bui.Lstr | bui.LangStr
             if bui.supports_unicode_display():
                 label = '✓'
             else:
-                label = bui.Lstr(resource='doneText')
+                label = stdassets.strings.ui.done
             bui.buttonwidget(edit=button, label=label)
 
     def _on_inbox_request_response(
@@ -705,9 +707,9 @@ class InboxWindow(bui.MainWindow):
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        errmsg: str | bui.Lstr
+        errmsg: str | bui.Lstr | bui.LangStr
         if isinstance(response, Exception):
-            errmsg = bui.Lstr(resource='internal.unavailableNoConnectionText')
+            errmsg = stdassets.strings.ui.unavailable_no_connection
             is_error = True
         else:
             is_error = response.error is not None
@@ -730,7 +732,7 @@ class InboxWindow(bui.MainWindow):
             bui.textwidget(
                 edit=self._infotext,
                 color=(0.4, 0.4, 0.5),
-                text=bui.Lstr(resource='noMessagesText'),
+                text=stdassets.strings.inbox.no_messages,
             )
             return
 
@@ -933,9 +935,7 @@ class InboxWindow(bui.MainWindow):
 
                         section = _ButtonSection(
                             sub_width=sub_width,
-                            label=bui.Lstr(
-                                resource='tournamentFinalStandingsText'
-                            ),
+                            label=stdassets.strings.inbox.final_standings,
                             color=color,
                             call=partial(
                                 _do_tourney_scores, component.tournament_id
@@ -950,7 +950,7 @@ class InboxWindow(bui.MainWindow):
                         if component.prizes:
                             section = _TextSection(
                                 sub_width=sub_width,
-                                text=bui.Lstr(resource='yourPrizeText'),
+                                text=stdassets.strings.inbox.your_prize,
                                 spacing_top=6,
                                 color=(1.0, 1.0, 1.0, 0.4),
                                 scale=0.35,

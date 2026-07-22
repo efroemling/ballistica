@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
     from bacommon.locale import Locale
     from bacommon.docui import DocUIRequest
-    from bacommon.assetref import TextureSpec, MeshSpec
+    from bacommon.assetspec import TextureSpec, MeshSpec
 
 
 def request_is_get(request: DocUIRequest) -> bool:

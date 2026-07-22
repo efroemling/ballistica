@@ -140,6 +140,20 @@ class LangStr {
   /// missing from the tables.
   auto ToResourceJson() const -> std::expected<std::string, std::string>;
 
+  /// The inverse projection of ToResourceJson(): convert (recursively)
+  /// to wire JSON where resource nodes become indexed nodes -- package
+  /// apverids become their index in ``packages`` (a payload/stream
+  /// package-index manifest, e.g. a scene stream's declared table) and
+  /// string names become their index in the package's canonical
+  /// sorted-name order, with keyword subs re-ordered positionally per
+  /// the value's canonical substitution names. Bound indexed nodes
+  /// re-derive their package index against ``packages``; value nodes
+  /// pass through. Errors for unbound indexed nodes, packages missing
+  /// from ``packages``, or names missing from the tables. The result
+  /// parses back via FromJson() with the same manifest.
+  auto ToIndexedJson(const std::vector<std::string>& packages) const
+      -> std::expected<std::string, std::string>;
+
   /// Evaluate to flat display text. Fail-visible like the Python decode
   /// side: any structural problem (missing substitution, excessive
   /// depth, or -- until the native table store exists -- any

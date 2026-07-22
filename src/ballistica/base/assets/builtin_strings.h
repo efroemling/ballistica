@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.260719g"
+// Generated from: "a-0.babuiltinassets.260721a"
 
 #include <memory>
 
@@ -149,11 +149,38 @@ class BuiltinStrings {
 
   class Net {
    public:
+    /// Error screen-message shown to a player whose attempt to join a party or
+    /// server was rejected because the host could not validate their account.
+    ///
+    /// English: "Your account was rejected. Are you signed in?"
+    static auto AccountRejected() -> std::shared_ptr<const LangStr>;
+
+    /// Generic error screen-message shown to a player whose attempt to join a
+    /// party or server failed due to an authentication or server error (with no
+    /// more-specific cause available).
+    ///
+    /// English: "An error has occurred."
+    static auto AuthError() -> std::shared_ptr<const LangStr>;
+
+    /// Error screen-message shown to a player whose attempt to join a password-
+    /// protected party or server was rejected for entering the wrong party
+    /// password.
+    ///
+    /// English: "Incorrect password."
+    static auto IncorrectPassword() -> std::shared_ptr<const LangStr>;
+
     /// Error screen-message shown when the player enters a malformed network
     /// address trying to connect to a game party.
     ///
     /// English: "Error: invalid address."
     static auto InvalidAddress() -> std::shared_ptr<const LangStr>;
+
+    /// Error screen-message shown to a player who attempts to join a party or
+    /// server that requires account authentication while they are not signed in
+    /// to an account.
+    ///
+    /// English: "You must sign in to do this."
+    static auto MustSignIn() -> std::shared_ptr<const LangStr>;
   };
 
   class Replay {

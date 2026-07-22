@@ -243,9 +243,15 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         assert(glow_type_ == GlowType::kUniform);
         base::SimpleComponent c(pass);
         c.SetTransparent(true);
-        c.SetColor(0.9 * m, 1.0f * m, 0, 0.3f * m);
-        c.SetTexture(g_base->assets->BuiltinTexture(
-            base::BuiltinTextureID::kTexturesShadowSharp));
+        auto* tex = g_base->assets->BuiltinTexture(
+            base::BuiltinTextureID::kTexturesShadowSharp);
+        // Premultiply rgb by alpha for premultiplied textures so the
+        // highlight composites 'over' under premult blend instead of adding
+        // full-brightness rgb.
+        float a = 0.3f * m;
+        float cmul = tex->premultiplied() ? a : 1.0f;
+        c.SetColor(0.9f * m * cmul, 1.0f * m * cmul, 0, a);
+        c.SetTexture(tex);
         {
           auto xf = c.ScopedTransform();
           c.Translate(bound_l, bound_b, 0.1f);

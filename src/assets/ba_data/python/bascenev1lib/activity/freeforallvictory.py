@@ -181,7 +181,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 ),
             )
             txt = Text(
-                bs.Lstr(value=player.getname(full=True)),
+                player.getname(full=True),
                 maxwidth=130.0,
                 scale=0.75 * scale,
                 position=(

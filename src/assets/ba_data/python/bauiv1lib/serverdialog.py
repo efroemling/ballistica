@@ -9,6 +9,7 @@ from typing import Annotated
 from efro.dataclassio import ioprepped, IOAttrs
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 
 
@@ -90,7 +91,7 @@ class ServerDialogWindow(bui.Window):
                 position=(30, 30),
                 size=(160, 60),
                 autoselect=True,
-                label=bui.Lstr(resource='cancelText'),
+                label=stdassets.strings.ui.cancel,
                 on_activate_call=self._cancel_press,
             )
         )
@@ -103,7 +104,7 @@ class ServerDialogWindow(bui.Window):
                 position=(30, 30),
                 size=(160, 60),
                 autoselect=True,
-                label=bui.Lstr(resource='copyText'),
+                label=stdassets.strings.ui.copy,
                 on_activate_call=self._copy_press,
             )
         )
@@ -120,7 +121,7 @@ class ServerDialogWindow(bui.Window):
             ),
             size=(160, 60),
             autoselect=True,
-            label=bui.Lstr(resource='okText'),
+            label=stdassets.strings.ui.ok,
             on_activate_call=self._ok_press,
         )
 
@@ -134,7 +135,9 @@ class ServerDialogWindow(bui.Window):
     def _copy_press(self) -> None:
         assert self._data.copy_text is not None
         bui.clipboard_set_text(self._data.copy_text)
-        bui.screenmessage(bui.Lstr(resource='copyConfirmText'), color=(0, 1, 0))
+        bui.screenmessage(
+            stdassets.strings.ui.copied_to_clipboard, color=(0, 1, 0)
+        )
 
     def _ok_press(self) -> None:
         plus = bui.app.plus

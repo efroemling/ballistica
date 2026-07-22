@@ -494,7 +494,8 @@ void ConnectionToClient::Error(const std::string& msg) {
 }
 
 void ConnectionToClient::SendScreenMessage(const std::string& s, float r,
-                                           float g, float b) {
+                                           float g, float b,
+                                           const std::string& tagged) {
   // Older clients don't support the screen-message message, so in that
   // case we just send it as a chat-message from <HOST>.
   if (build_number() < 14248) {
@@ -512,14 +513,28 @@ void ConnectionToClient::SendScreenMessage(const std::string& s, float r,
     SendReliableMessage(msg_out);
   } else {
     JsonBuilder builder;
-    builder.root_object()
-        .Add("t", BA_JMESSAGE_SCREEN_MESSAGE)
+    JsonObjBuilder obj = builder.root_object();
+    obj.Add("t", BA_JMESSAGE_SCREEN_MESSAGE)
         .Add("m", s)
         .Add("r", r)
         .Add("g", g)
         .Add("b", b);
+    // Lang-str tagged form: newer receivers prefer this (rendering in
+    // their own locale); older ones simply ignore the unknown key.
+    if (!tagged.empty()) {
+      obj.Add("m2", tagged);
+    }
     SendJMessage(builder.Write());
   }
+}
+
+void ConnectionToClient::SendRejectReason(int reason) {
+  // Send just the reason code; the joiner maps it to its own localized
+  // builtin string (unrecognized codes -> a generic rejection). No message
+  // text crosses the wire.
+  JsonBuilder builder;
+  builder.root_object().Add("t", BA_JMESSAGE_REJECT_REASON).Add("r", reason);
+  SendJMessage(builder.Write());
 }
 
 void ConnectionToClient::HandleMessagePacket(
@@ -623,9 +638,14 @@ void ConnectionToClient::HandleMessagePacket(
                     LogName::kBaNetworking, LogLevel::kDebug,
                     "ConnectionToClient rejecting join; bad/missing "
                     "password.");
-                // FIXME: route through the string system once the scene_v1
-                //  message layer speaks LangStr (transitional English).
-                SendScreenMessage("Incorrect password.", 1, 0, 0);
+                // Send a reason code to clients new enough to render their
+                // own localized string; fall back to the English literal for
+                // older ones (which don't understand the reject-reason type).
+                if (build_number() >= BA_REJECT_REASON_MIN_BUILD) {
+                  SendRejectReason(BA_REJECT_REASON_PASSWORD_INCORRECT);
+                } else {
+                  SendScreenMessage("Incorrect password.", 1, 0, 0);
+                }
                 // Proactively kick (not just Error(), which only replies
                 // to further incoming packets) so the joiner is cleanly
                 // disconnected rather than left hanging.
@@ -1066,10 +1086,17 @@ void ConnectionToClient::HandleMasterServerClientInfo(PyObject* info_obj) {
     // and we're not trusting peers, kick this fella right out
     // and ban him for a short bit (to hopefully limit rejoin spam).
     if (appmode->require_client_authentication()) {
-      SendScreenMessage(
-          "{\"t\":[\"serverResponses\","
-          "\"Your account was rejected. Are you signed in?\"]}",
-          1, 0, 0);
+      // Send a reason code to clients new enough to render their own
+      // localized string; fall back to the legacy server-translated
+      // literal for older ones.
+      if (build_number() >= BA_REJECT_REASON_MIN_BUILD) {
+        SendRejectReason(BA_REJECT_REASON_ACCOUNT_REJECTED);
+      } else {
+        SendScreenMessage(
+            "{\"t\":[\"serverResponses\","
+            "\"Your account was rejected. Are you signed in?\"]}",
+            1, 0, 0);
+      }
       g_core->logging->Log(LogName::kBaNetworking, LogLevel::kWarning,
                            "Master server found no valid account for '"
                                + peer_spec().GetShortName() + "'; kicking.");

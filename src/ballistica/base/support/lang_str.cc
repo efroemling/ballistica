@@ -28,6 +28,28 @@ static auto IsSubKeyChar_(char c) -> bool {
   return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_';
 }
 
+// Append each {name} substitution token found in text to names (in
+// order of appearance; duplicates kept). Non-token brace content is
+// skipped, matching Substitute_'s scanning rules.
+static void ScanSubTokens_(const std::string& text,
+                           std::vector<std::string>* names) {
+  size_t i = 0;
+  while (i < text.size()) {
+    if (text[i] == '{' && i + 1 < text.size() && IsSubKeyStart_(text[i + 1])) {
+      size_t k = i + 2;
+      while (k < text.size() && IsSubKeyChar_(text[k])) {
+        ++k;
+      }
+      if (k < text.size() && text[k] == '}') {
+        names->push_back(text.substr(i + 1, k - i - 1));
+        i = k + 1;
+        continue;
+      }
+    }
+    ++i;
+  }
+}
+
 static auto ParseSub_(const JsonRef& ref, int depth,
                       const std::vector<std::string>* packages,
                       std::string* error) -> std::optional<LangStr::Sub>;
@@ -97,6 +119,25 @@ static auto ParseNode_(const JsonRef& ref, int depth,
     if (auto subsref = ref["s"]) {
       if (!parse_keyword_subs(subsref)) {
         return nullptr;
+      }
+    }
+    // A declared sub no {token} in the value consumes is always a bug
+    // (typo'd key or a non-lowercase token, which reads as literal
+    // text); fail here at parse rather than silently dropping it at
+    // evaluate. Value forms are self-contained so this is fully
+    // checkable at parse, unlike resource forms (locale-dependent
+    // table text; covered by authoring-side checks + evaluate-time
+    // missing-argument errors).
+    if (!out->subs.empty()) {
+      std::vector<std::string> tokens;
+      ScanSubTokens_(out->value, &tokens);
+      for (auto&& entry : out->subs) {
+        if (std::find(tokens.begin(), tokens.end(), entry.key)
+            == tokens.end()) {
+          *error = "substitution '" + entry.key + "' matches no '{" + entry.key
+                   + "}' token in value '" + out->value + "'";
+          return nullptr;
+        }
       }
     }
   } else if (tag == "i") {
@@ -187,31 +228,13 @@ auto LangStr::FromJson(std::string_view json,
 static auto SubstitutionNames_(const LangStrTableValue& value)
     -> std::vector<std::string> {
   std::vector<std::string> names;
-  auto scan = [&names](const std::string& text) {
-    size_t i = 0;
-    while (i < text.size()) {
-      if (text[i] == '{' && i + 1 < text.size()
-          && IsSubKeyStart_(text[i + 1])) {
-        size_t k = i + 2;
-        while (k < text.size() && IsSubKeyChar_(text[k])) {
-          ++k;
-        }
-        if (k < text.size() && text[k] == '}') {
-          names.push_back(text.substr(i + 1, k - i - 1));
-          i = k + 1;
-          continue;
-        }
-      }
-      ++i;
-    }
-  };
   if (auto* text = std::get_if<std::string>(&value)) {
-    scan(*text);
+    ScanSubTokens_(*text, &names);
   } else {
     auto& sel = std::get<LangStrSelector>(value);
     names.push_back(sel.arg);
     for (auto&& [key, form] : sel.forms) {
-      scan(form);
+      ScanSubTokens_(form, &names);
     }
   }
   std::sort(names.begin(), names.end());
@@ -737,6 +760,161 @@ auto LangStr::ToResourceJson() const
   std::string error;
   if (!FillResourceObj_(builder.root_object(), *this, tables.get(), 0,
                         &error)) {
+    return std::unexpected(error);
+  }
+  return builder.Write();
+}
+
+// Fill a wire object with the indexed-form projection of a node (the
+// inverse of FillResourceObj_): resource nodes convert (via the package
+// manifest + tables) to indexed nodes with positional subs; bound
+// indexed nodes re-derive their package index; value nodes emit as-is
+// with converted subs.
+static auto FillIndexedObj_(JsonObjBuilder obj, const LangStr& ls,
+                            const std::vector<std::string>& packages,
+                            const LangStrTables* tables, int depth,
+                            std::string* error) -> bool {
+  if (depth > kLangStrMaxNestingDepth) {
+    *error = "max nesting depth exceeded";
+    return false;
+  }
+  auto pkg_index_for = [&](const std::string& apverid,
+                           int64_t* out_index) -> bool {
+    auto it = std::find(packages.begin(), packages.end(), apverid);
+    if (it == packages.end()) {
+      *error = "package '" + apverid + "' is not in the package manifest";
+      return false;
+    }
+    *out_index = static_cast<int64_t>(it - packages.begin());
+    return true;
+  };
+  auto fill_keyword_sub = [&](JsonObjBuilder subs, const std::string& key,
+                              const LangStr::Sub& sub) -> bool {
+    if (auto* strval = std::get_if<std::string>(&sub)) {
+      subs.Add(key, *strval);
+      return true;
+    }
+    if (auto* intval = std::get_if<int64_t>(&sub)) {
+      subs.Add(key, *intval);
+      return true;
+    }
+    return FillIndexedObj_(subs.AddObject(key),
+                           *std::get<std::shared_ptr<const LangStr>>(sub),
+                           packages, tables, depth + 1, error);
+  };
+  auto fill_positional_sub = [&](JsonArrBuilder subs,
+                                 const LangStr::Sub& sub) -> bool {
+    if (auto* strval = std::get_if<std::string>(&sub)) {
+      subs.Add(*strval);
+      return true;
+    }
+    if (auto* intval = std::get_if<int64_t>(&sub)) {
+      subs.Add(*intval);
+      return true;
+    }
+    return FillIndexedObj_(subs.AddObject(),
+                           *std::get<std::shared_ptr<const LangStr>>(sub),
+                           packages, tables, depth + 1, error);
+  };
+  switch (ls.form) {
+    case LangStr::Form::kValue: {
+      obj.Add("t", "v");
+      obj.Add("v", ls.value);
+      if (!ls.subs.empty()) {
+        auto subs = obj.AddObject("s");
+        for (auto&& entry : ls.subs) {
+          if (!fill_keyword_sub(subs, entry.key, entry.value)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    case LangStr::Form::kResource: {
+      if (tables == nullptr) {
+        *error = "no language tables loaded";
+        return false;
+      }
+      auto pkg = tables->packages.find(ls.apverid);
+      if (pkg == tables->packages.end()) {
+        *error = "no values for package '" + ls.apverid + "'";
+        return false;
+      }
+      auto& names = pkg->second.sorted_names;
+      auto name_it = std::lower_bound(names.begin(), names.end(), ls.name);
+      if (name_it == names.end() || *name_it != ls.name) {
+        *error = "no value for '" + ls.name + "' in " + ls.apverid;
+        return false;
+      }
+      int64_t pkg_index;
+      if (!pkg_index_for(ls.apverid, &pkg_index)) {
+        return false;
+      }
+      // Keyword subs re-order onto the value's canonical (sorted)
+      // substitution names; require an exact match.
+      auto params = SubstitutionNames_(pkg->second.values.at(ls.name).value);
+      if (params.size() != ls.subs.size()) {
+        *error = "arity mismatch for '" + ls.name + "'";
+        return false;
+      }
+      obj.Add("p", pkg_index);
+      obj.Add("n", static_cast<int64_t>(name_it - names.begin()));
+      if (!ls.subs.empty()) {
+        auto subs = obj.AddArray("s");
+        for (auto&& param : params) {
+          const LangStr::Sub* sub{};
+          for (auto&& entry : ls.subs) {
+            if (entry.key == param) {
+              sub = &entry.value;
+              break;
+            }
+          }
+          if (sub == nullptr) {
+            *error =
+                "missing substitution '" + param + "' for '" + ls.name + "'";
+            return false;
+          }
+          if (!fill_positional_sub(subs, *sub)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    case LangStr::Form::kResourceIndexed: {
+      if (ls.apverid.empty()) {
+        *error = "cannot convert an unbound indexed value";
+        return false;
+      }
+      int64_t pkg_index;
+      if (!pkg_index_for(ls.apverid, &pkg_index)) {
+        return false;
+      }
+      obj.Add("p", pkg_index);
+      obj.Add("n", ls.index);
+      if (!ls.subs.empty()) {
+        auto subs = obj.AddArray("s");
+        for (auto&& entry : ls.subs) {
+          if (!fill_positional_sub(subs, entry.value)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+auto LangStr::ToIndexedJson(const std::vector<std::string>& packages) const
+    -> std::expected<std::string, std::string> {
+  auto tables = g_base && g_base->assets
+                    ? g_base->assets->LangStrTablesSnapshot()
+                    : nullptr;
+  JsonBuilder builder;
+  std::string error;
+  if (!FillIndexedObj_(builder.root_object(), *this, packages, tables.get(), 0,
+                       &error)) {
     return std::unexpected(error);
   }
   return builder.Write();

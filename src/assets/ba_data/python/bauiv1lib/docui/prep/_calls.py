@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from typing import Callable
 
     from bacommon.langstr import LangStrSpec
-    from bacommon.assetref import TextureSpec, MeshSpec
+    from bacommon.assetspec import TextureSpec, MeshSpec
     from bauiv1lib.docui import DocUIWindow
 
 

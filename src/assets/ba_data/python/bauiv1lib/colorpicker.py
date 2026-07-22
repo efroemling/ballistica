@@ -273,7 +273,7 @@ class ColorPickerExact(PopupWindow):
             text_scale=0.6,
             color=(0.6, 0.6, 0.6),
             textcolor=(0.7, 0.7, 0.7),
-            label=bui.Lstr(resource='doneText'),
+            label=stdassets.strings.ui.done,
             on_activate_call=bui.WeakCallStrict(self._transition_out),
             autoselect=True,
         )

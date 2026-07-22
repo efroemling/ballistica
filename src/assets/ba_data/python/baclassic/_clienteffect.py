@@ -60,7 +60,11 @@ async def _resolve_and_run_effects(
     locale = bauiv1.app.locale.current_locale
     try:
         async with asyncio.timeout(_RESOLVE_TIMEOUT_SECONDS):
-            await bauiv1.app.assets.resolve(apverids, language=locale)
+            # Client-effects are decorative — resolve at background priority
+            # so they queue behind (and never delay) interactive resolves.
+            await bauiv1.app.assets.resolve(
+                apverids, language=locale, background=True
+            )
             loop = asyncio.get_running_loop()
             language = {
                 apverid: await loop.run_in_executor(

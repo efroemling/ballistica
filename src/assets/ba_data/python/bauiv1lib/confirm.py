@@ -16,7 +16,7 @@ class ConfirmWindow:
 
     def __init__(
         self,
-        text: str | bui.Lstr | None = None,
+        text: str | bui.Lstr | bui.LangStr | None = None,
         action: Callable[[], Any] | None = None,
         width: float = 360.0,
         height: float = 100.0,
@@ -25,8 +25,8 @@ class ConfirmWindow:
         cancel_is_selected: bool = False,
         color: tuple[float, float, float] = (1, 1, 1),
         text_scale: float = 1.0,
-        ok_text: str | bui.Lstr | None = None,
-        cancel_text: str | bui.Lstr | None = None,
+        ok_text: str | bui.Lstr | bui.LangStr | None = None,
+        cancel_text: str | bui.Lstr | bui.LangStr | None = None,
         origin_widget: bui.Widget | None = None,
         permanent_ok_fade: bool = False,
     ):

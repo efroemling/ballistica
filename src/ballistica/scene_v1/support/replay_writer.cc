@@ -52,8 +52,61 @@ ReplayWriter::ReplayWriter(int protocol_version)
   });
 }
 
+void ReplayWriter::SetAssetPackageTable(const std::vector<std::string>& table) {
+  g_base->assets_server->event_loop()->PushCall([this, table] {
+    // First call wins (host sets it once at start; a client's baseline
+    // could in principle re-declare on a session switch, but the header
+    // reflects the file's opening universe).
+    if (have_asset_package_table_) {
+      return;
+    }
+    asset_package_table_ = table;
+    have_asset_package_table_ = true;
+  });
+}
+
+void ReplayWriter::WriteAssetPackageListing_() {
+  assert(replay_out_file_);
+  // count (uint32) followed by each apverid as uint32 length + bytes.
+  auto count = static_cast<uint32_t>(asset_package_table_.size());
+  bool ok = (fwrite(&count, sizeof(count), 1, replay_out_file_) == 1);
+  for (auto&& apverid : asset_package_table_) {
+    if (!ok) {
+      break;
+    }
+    auto len = static_cast<uint32_t>(apverid.size());
+    ok = (fwrite(&len, sizeof(len), 1, replay_out_file_) == 1);
+    if (ok && len > 0) {
+      ok = (fwrite(apverid.data(), len, 1, replay_out_file_) == 1);
+    }
+    replay_bytes_written_ += 4 + apverid.size();
+  }
+  replay_bytes_written_ += 4;
+  if (!ok) {
+    fclose(replay_out_file_);
+    replay_out_file_ = nullptr;
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "error writing replay asset-package listing: "
+                             + g_core->platform->GetErrnoString());
+    return;
+  }
+  listing_written_ = true;
+}
+
 void ReplayWriter::WriteReplayMessages_() {
   if (replay_out_file_) {
+    // For lang-str-era streams the header carries an asset-package
+    // listing that must prefix the message stream. Hold messages until
+    // the table has been provided, then write the listing once.
+    if (protocol_version_ >= kProtocolVersionLangStrWire && !listing_written_) {
+      if (!have_asset_package_table_) {
+        return;  // keep buffering until we know the table
+      }
+      WriteAssetPackageListing_();
+      if (!replay_out_file_) {
+        return;  // listing write failed and closed the file
+      }
+    }
     for (auto&& i : replay_messages_) {
       std::vector<uint8_t> data_compressed = g_scene_v1->huffman->compress(i);
 
@@ -123,6 +176,18 @@ void ReplayWriter::WriteReplayMessages_() {
 void ReplayWriter::Finish() {
   g_base->assets_server->RemoveProcessor(this);
   g_base->assets_server->event_loop()->PushCall([this] {
+    // If we're finishing a lang-str-era recording that never received a
+    // package table (e.g. a session that recorded nothing, or errored
+    // before its baseline), write an empty listing so the file is still
+    // valid rather than leaving messages forever buffered.
+    if (protocol_version_ >= kProtocolVersionLangStrWire && !listing_written_
+        && !have_asset_package_table_) {
+      g_core->logging->Log(
+          LogName::kBa, LogLevel::kWarning,
+          "replay finished with no asset-package table; writing empty"
+          " header listing.");
+      have_asset_package_table_ = true;
+    }
     WriteReplayMessages_();
 
     if (replay_out_file_) {

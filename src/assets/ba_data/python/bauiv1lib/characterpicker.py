@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -182,7 +183,7 @@ class CharacterPicker(PopupWindow):
             parent=self._subcontainer,
             size=(self._sub_width * 0.8, 60),
             position=(self._sub_width * 0.1, 30),
-            label=bui.Lstr(resource='editProfileWindow.getMoreCharactersText'),
+            label=stdassets.strings.profile.get_more_characters,
             on_activate_call=self._on_store_press,
             color=(0.6, 0.6, 0.6),
             textcolor=(0.8, 0.8, 0.8),

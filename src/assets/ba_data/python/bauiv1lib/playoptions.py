@@ -326,7 +326,7 @@ class PlayOptionsWindow(PopupWindow):
                 ),
                 autoselect=True,
                 textcolor=(0.8, 0.8, 0.8),
-                label=bui.Lstr(resource='teamNamesColorText'),
+                label=stdassets.strings.playoptions.team_names_colors,
             )
             bui.widget(
                 edit=self._custom_colors_names_button,
@@ -351,7 +351,7 @@ class PlayOptionsWindow(PopupWindow):
                 scale=1.0,
                 size=(250, 30),
                 autoselect=True,
-                text=bui.Lstr(resource=f'{self._r}.shuffleGameOrderText'),
+                text=stdassets.strings.playoptions.shuffle_game_order,
                 maxwidth=300,
                 textcolor=(0.8, 0.8, 0.8),
                 value=self._do_randomize_val,
@@ -372,7 +372,7 @@ class PlayOptionsWindow(PopupWindow):
             scale=1.0,
             size=(250, 30),
             autoselect=True,
-            text=bui.Lstr(resource=f'{self._r}.showTutorialText'),
+            text=stdassets.strings.playoptions.show_tutorial,
             maxwidth=300,
             textcolor=(0.8, 0.8, 0.8),
             value=show_tutorial,
@@ -493,7 +493,7 @@ class PlayOptionsWindow(PopupWindow):
         if not self._have_at_least_one_owned:
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                bui.Lstr(resource='playlistNoValidGamesErrorText'),
+                stdassets.strings.playoptions.no_valid_games,
                 color=(1, 0, 0),
             )
             return

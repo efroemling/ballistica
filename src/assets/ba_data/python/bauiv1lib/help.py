@@ -158,9 +158,8 @@ class HelpWindow(bui.MainWindow):
                 else (width * 0.5, yoffs - 25)
             ),
             size=(0, 0),
-            text=bui.Lstr(
-                resource=f'{self._r}.titleText',
-                subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
+            text=stdassets.strings.help.title(
+                app_name=stdassets.strings.ui.app_name
             ),
             scale=0.9,
             maxwidth=scroll_width * 0.7,
@@ -182,9 +181,8 @@ class HelpWindow(bui.MainWindow):
         header2 = (0.8, 0.8, 1.0, 1.0)
         paragraph = (0.8, 0.8, 1.0, 1.0)
 
-        txt = bui.Lstr(
-            resource=f'{self._r}.welcomeText',
-            subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
+        txt = stdassets.strings.help.welcome(
+            app_name=stdassets.strings.ui.app_name
         ).evaluate()
         txt_scale = 1.4
         txt_maxwidth = 480
@@ -220,7 +218,7 @@ class HelpWindow(bui.MainWindow):
         assert app.classic is not None
 
         v -= spacing * 50.0
-        txt = bui.Lstr(resource=f'{self._r}.someDaysText').evaluate()
+        txt = stdassets.strings.help.some_days.evaluate()
         bui.textwidget(
             parent=self._subcontainer,
             position=(h, v),
@@ -236,7 +234,7 @@ class HelpWindow(bui.MainWindow):
         # (+ someDaysExtraSpace, English value 0; see followups.md)
         v -= spacing * 25.0
         txt_scale = 0.66
-        txt = bui.Lstr(resource=f'{self._r}.orPunchingSomethingText').evaluate()
+        txt = stdassets.strings.help.or_punching_something.evaluate()
         bui.textwidget(
             parent=self._subcontainer,
             position=(h, v),
@@ -252,9 +250,8 @@ class HelpWindow(bui.MainWindow):
         # (+ orPunchingSomethingExtraSpace, English value 0; see followups.md)
         v -= spacing * 27.0
         txt_scale = 1.0
-        txt = bui.Lstr(
-            resource=f'{self._r}.canHelpText',
-            subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
+        txt = stdassets.strings.help.can_help(
+            app_name=stdassets.strings.ui.app_name
         ).evaluate()
         bui.textwidget(
             parent=self._subcontainer,
@@ -270,7 +267,7 @@ class HelpWindow(bui.MainWindow):
 
         v -= spacing * 70.0
         txt_scale = 1.0
-        txt = bui.Lstr(resource=f'{self._r}.toGetTheMostText').evaluate()
+        txt = stdassets.strings.help.to_get_the_most.evaluate()
         bui.textwidget(
             parent=self._subcontainer,
             position=(h, v),
@@ -288,7 +285,7 @@ class HelpWindow(bui.MainWindow):
 
         v -= spacing * 40.0
         txt_scale = 0.74
-        txt = bui.Lstr(resource=f'{self._r}.friendsText').evaluate()
+        txt = stdassets.strings.help.friends.evaluate()
         hval2 = h - 220
         bui.textwidget(
             parent=self._subcontainer,
@@ -303,9 +300,8 @@ class HelpWindow(bui.MainWindow):
             flatness=1.0,
         )
 
-        txt = bui.Lstr(
-            resource=f'{self._r}.friendsGoodText',
-            subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
+        txt = stdassets.strings.help.friends_good(
+            app_name=stdassets.strings.ui.app_name
         ).evaluate()
         txt_scale = 0.7
         bui.textwidget(
@@ -324,9 +320,9 @@ class HelpWindow(bui.MainWindow):
 
         v -= spacing * 45.0
         txt = (
-            bui.Lstr(resource=f'{self._r}.devicesText').evaluate()
+            stdassets.strings.help.devices.evaluate()
             if app.env.vr
-            else bui.Lstr(resource=f'{self._r}.controllersText').evaluate()
+            else stdassets.strings.help.controllers.evaluate()
         )
         txt_scale = 0.74
         hval2 = h - 220
@@ -345,19 +341,13 @@ class HelpWindow(bui.MainWindow):
 
         txt_scale = 0.7
         if not app.env.vr:
-            infotxt = '.controllersInfoText'
-            txt = bui.Lstr(
-                resource=self._r + infotxt,
-                fallback_resource=f'{self._r}.controllersInfoText',
-                subs=[
-                    ('${APP_NAME}', bui.Lstr(resource='titleText')),
-                    ('${REMOTE_APP_NAME}', bui.get_remote_app_name()),
-                ],
+            txt = stdassets.strings.help.controllers_info(
+                app_name=stdassets.strings.ui.app_name,
+                remote_app_name=stdassets.strings.ui.remote_app_name,
             ).evaluate()
         else:
-            txt = bui.Lstr(
-                resource=f'{self._r}.devicesInfoText',
-                subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
+            txt = stdassets.strings.help.devices_info(
+                app_name=stdassets.strings.ui.app_name
             ).evaluate()
 
         bui.textwidget(
@@ -377,7 +367,7 @@ class HelpWindow(bui.MainWindow):
 
         h = baseh + 30
 
-        txt = bui.Lstr(resource=f'{self._r}.controlsText').evaluate()
+        txt = stdassets.strings.help.controls.evaluate()
         txt_scale = 1.4
         txt_maxwidth = 480
         bui.textwidget(
@@ -412,9 +402,8 @@ class HelpWindow(bui.MainWindow):
         h = baseh
 
         txt_scale = 0.7
-        txt = bui.Lstr(
-            resource=f'{self._r}.controlsSubtitleText',
-            subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
+        txt = stdassets.strings.help.controls_subtitle(
+            app_name=stdassets.strings.ui.app_name
         ).evaluate()
         bui.textwidget(
             parent=self._subcontainer,
@@ -450,7 +439,7 @@ class HelpWindow(bui.MainWindow):
         )
 
         txt_scale = 0.6  # punchInfoTextScale (English value; see followups.md)
-        txt = bui.Lstr(resource=f'{self._r}.punchInfoText').evaluate()
+        txt = stdassets.strings.help.punch_info.evaluate()
         bui.textwidget(
             parent=self._subcontainer,
             position=(h - sep - 185 + 70, v + 120),
@@ -479,7 +468,7 @@ class HelpWindow(bui.MainWindow):
             ),
         )
 
-        txt = bui.Lstr(resource=f'{self._r}.bombInfoText').evaluate()
+        txt = stdassets.strings.help.bomb_info.evaluate()
         txt_scale = 0.6  # bombInfoTextScale (English value; see followups.md)
         bui.textwidget(
             parent=self._subcontainer,
@@ -510,7 +499,7 @@ class HelpWindow(bui.MainWindow):
             ),
         )
 
-        txtl = bui.Lstr(resource=f'{self._r}.pickUpInfoText')
+        txtl: bui.Lstr | bui.LangStr = stdassets.strings.help.pick_up_info
         txt_scale = 0.6  # pickUpInfoTextScale (English value; see followups.md)
         bui.textwidget(
             parent=self._subcontainer,
@@ -540,7 +529,7 @@ class HelpWindow(bui.MainWindow):
             ),
         )
 
-        txt = bui.Lstr(resource=f'{self._r}.jumpInfoText').evaluate()
+        txt = stdassets.strings.help.jump_info.evaluate()
         txt_scale = 0.6  # jumpInfoTextScale (English value; see followups.md)
         bui.textwidget(
             parent=self._subcontainer,
@@ -554,7 +543,7 @@ class HelpWindow(bui.MainWindow):
             v_align='top',
         )
 
-        txt = bui.Lstr(resource=f'{self._r}.runInfoText').evaluate()
+        txt = stdassets.strings.help.run_info.evaluate()
         txt_scale = 0.6  # runInfoTextScale (English value; see followups.md)
         bui.textwidget(
             parent=self._subcontainer,
@@ -573,7 +562,7 @@ class HelpWindow(bui.MainWindow):
 
         h = baseh + 30
 
-        txt = bui.Lstr(resource=f'{self._r}.powerupsText').evaluate()
+        txt = stdassets.strings.help.powerups.evaluate()
         txt_scale = 1.4
         txt_maxwidth = 480
         bui.textwidget(
@@ -606,7 +595,7 @@ class HelpWindow(bui.MainWindow):
         v -= spacing * 50.0
         # powerupsSubtitleTextScale (English value; see followups.md)
         txt_scale = 0.8
-        txt = bui.Lstr(resource=f'{self._r}.powerupsSubtitleText').evaluate()
+        txt = stdassets.strings.help.powerups_subtitle.evaluate()
         bui.textwidget(
             parent=self._subcontainer,
             position=(h, v),

@@ -17,17 +17,17 @@ schema can enforce where each kind may go.
 Type-safe, ergonomic access to a package's references comes from a generated
 wrapper module (emitted server-side; the codegen lives in
 ``baserver.assetwrappergen``), whose per-kind roots (``textures``, ``meshes``)
-are driven at runtime by :class:`AssetRefDir` -- mirroring the client-side
+are driven at runtime by :class:`AssetSpecDir` -- mirroring the client-side
 asset-package wrappers.
 """
 
-from bacommon.assetref._core import TextureSpec, MeshSpec, SoundSpec
-from bacommon.assetref._wrapper import AssetRefDir, AssetRefTree
+from bacommon.assetspec._core import TextureSpec, MeshSpec, SoundSpec
+from bacommon.assetspec._wrapper import AssetSpecDir, AssetSpecTree
 
 __all__ = [
     'TextureSpec',
     'MeshSpec',
     'SoundSpec',
-    'AssetRefDir',
-    'AssetRefTree',
+    'AssetSpecDir',
+    'AssetSpecTree',
 ]

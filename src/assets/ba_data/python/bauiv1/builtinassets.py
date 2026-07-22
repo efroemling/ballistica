@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260719g`` (bauiv1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260721a`` (bauiv1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,13 +9,13 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260719g
+# ba_meta require asset-package a-0.babuiltinassets.260721a
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260719g'
+__asset_package__ = 'a-0.babuiltinassets.260721a'
 
 from typing import TYPE_CHECKING
 
@@ -280,11 +280,39 @@ if TYPE_CHECKING:
         See source for the full asset list.
         """
 
+        #: Error screen-message shown to a player whose attempt to join a party
+        #: or server was rejected because the host could not validate their
+        #: account.
+        #:
+        #: English: "Your account was rejected. Are you signed in?"
+        account_rejected: LangStr
+
+        #: Generic error screen-message shown to a player whose attempt to join
+        #: a party or server failed due to an authentication or server error
+        #: (with no more-specific cause available).
+        #:
+        #: English: "An error has occurred."
+        auth_error: LangStr
+
+        #: Error screen-message shown to a player whose attempt to join a
+        #: password-protected party or server was rejected for entering the
+        #: wrong party password.
+        #:
+        #: English: "Incorrect password."
+        incorrect_password: LangStr
+
         #: Error screen-message shown when the player enters a malformed network
         #: address trying to connect to a game party.
         #:
         #: English: "Error: invalid address."
         invalid_address: LangStr
+
+        #: Error screen-message shown to a player who attempts to join a party
+        #: or server that requires account authentication while they are not
+        #: signed in to an account.
+        #:
+        #: English: "You must sign in to do this."
+        must_sign_in: LangStr
 
     class StringsReplayGroup:
         """
@@ -504,8 +532,8 @@ if TYPE_CHECKING:
     #: ``arrow_back``, and 67 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 24 strings (``audio``, ``input``, ``net``,
-    #: ``replay``, ``session``, and 19 more). Full list in source.
+    #: The ``strings`` group - 28 strings (``audio``, ``input``, ``net``,
+    #: ``replay``, ``session``, and 23 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 82 assets (``action_buttons``, ``arrow``,
@@ -627,7 +655,13 @@ _TREE = {
             'touch_screen_join_warning': (),
             'vr_orientation_reset': (),
         },
-        'net': {'invalid_address': ()},
+        'net': {
+            'account_rejected': (),
+            'auth_error': (),
+            'incorrect_password': (),
+            'invalid_address': (),
+            'must_sign_in': (),
+        },
         'replay': {'read_error': (), 'version_error': ()},
         'session': {
             'kick_idle_kicked': ('name',),

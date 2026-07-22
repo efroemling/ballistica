@@ -7,6 +7,7 @@ import logging
 from typing import TYPE_CHECKING, cast
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 import bascenev1 as bs
 from bauiv1lib.popup import PopupMenuWindow
@@ -160,7 +161,7 @@ class PartyWindow(bui.Window):
             size=(0, 0),
             h_align='center',
             v_align='center',
-            text=bui.Lstr(resource='chatMutedText'),
+            text=stdassets.strings.party.chat_muted,
         )
         self._chat_texts: list[bui.Widget] = []
 
@@ -252,7 +253,7 @@ class PartyWindow(bui.Window):
 
             bui.clipboard_set_text(content)
             bui.screenmessage(
-                bui.Lstr(resource='copyConfirmText'), color=(0, 1, 0)
+                stdassets.strings.ui.copied_to_clipboard, color=(0, 1, 0)
             )
 
     def _on_menu_button_press(self) -> None:
@@ -261,7 +262,7 @@ class PartyWindow(bui.Window):
         uiscale = bui.app.ui_v1.uiscale
 
         choices: list[str] = ['unmute' if is_muted else 'mute']
-        choices_display: list[bui.Lstr] = [
+        choices_display: list[bui.Lstr | bui.LangStr] = [
             bui.Lstr(resource='chatUnMuteText' if is_muted else 'chatMuteText')
         ]
 
@@ -274,7 +275,7 @@ class PartyWindow(bui.Window):
             'Private Party '
         ):
             choices.append('add_to_favorites')
-            choices_display.append(bui.Lstr(resource='addToFavoritesText'))
+            choices_display.append(stdassets.strings.party.add_to_favorites)
 
         self._menu_popup = PopupMenuWindow(
             position=self._menu_button.get_screen_space_center(),
@@ -328,7 +329,7 @@ class PartyWindow(bui.Window):
                 )
                 bui.textwidget(
                     edit=self._empty_str_2,
-                    text=bui.Lstr(resource='gatherWindow.descriptionShortText'),
+                    text=stdassets.strings.gather.description_short,
                 )
                 bui.scrollwidget(
                     edit=self._scrollwidget,
@@ -489,7 +490,7 @@ class PartyWindow(bui.Window):
             if self._popup_party_member_is_host:
                 builtinassets.audio.error.get().play()
                 bui.screenmessage(
-                    bui.Lstr(resource='internal.cantKickHostError'),
+                    stdassets.strings.party.cant_kick_host,
                     color=(1, 0, 0),
                 )
             else:
@@ -502,7 +503,7 @@ class PartyWindow(bui.Window):
                 if not result:
                     builtinassets.audio.error.get().play()
                     bui.screenmessage(
-                        bui.Lstr(resource='getTicketsWindow.unavailableText'),
+                        stdassets.strings.ui.not_available,
                         color=(1, 0, 0),
                     )
         elif self._popup_type == 'menu':
@@ -524,7 +525,7 @@ class PartyWindow(bui.Window):
                     # We should not allow the user to see this option
                     # if they aren't in a server; this is our bad.
                     bui.screenmessage(
-                        bui.Lstr(resource='errorText'), color=(1, 0, 0)
+                        stdassets.strings.ui.error, color=(1, 0, 0)
                     )
                     builtinassets.audio.error.get().play()
         else:
@@ -536,7 +537,7 @@ class PartyWindow(bui.Window):
         addr = address
         if addr == '':
             bui.screenmessage(
-                bui.Lstr(resource='internal.invalidAddressErrorText'),
+                stdassets.strings.gather.invalid_address_error,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()
@@ -544,7 +545,7 @@ class PartyWindow(bui.Window):
         port = port_num if port_num is not None else -1
         if port > 65535 or port < 0:
             bui.screenmessage(
-                bui.Lstr(resource='internal.invalidPortErrorText'),
+                stdassets.strings.gather.invalid_port_error,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()
@@ -567,14 +568,12 @@ class PartyWindow(bui.Window):
             config.commit()
             builtinassets.audio.gun_cocking.get().play()
             bui.screenmessage(
-                bui.Lstr(
-                    resource='addedToFavoritesText', subs=[('${NAME}', name)]
-                ),
+                stdassets.strings.gather.added_to_favorites(name=name),
                 color=(0, 1, 0),
             )
         else:
             bui.screenmessage(
-                bui.Lstr(resource='internal.invalidAddressErrorText'),
+                stdassets.strings.gather.invalid_address_error,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()
@@ -588,13 +587,13 @@ class PartyWindow(bui.Window):
     ) -> None:
         # if we're the host, pop up 'kick' options for all non-host members
         if bs.get_foreground_host_session() is not None:
-            kick_str = bui.Lstr(resource='kickText')
+            kick_str = stdassets.strings.ui.kick
         else:
             # kick-votes appeared in build 14248
             info = bs.get_connection_to_host_info_2()
             if info is None or info.build_number < 14248:
                 return
-            kick_str = bui.Lstr(resource='kickVoteText')
+            kick_str = stdassets.strings.party.kick_vote
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         self._menu_popup = PopupMenuWindow(

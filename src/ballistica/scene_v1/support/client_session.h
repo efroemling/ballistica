@@ -5,6 +5,7 @@
 
 #include <list>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "ballistica/scene_v1/support/client_controller_interface.h"
@@ -31,7 +32,7 @@ class ClientSession : public Session {
   void OnScreenSizeChange() override;
   void LanguageChanged() override;
   void GetCorrectionMessages(bool blend,
-                             std::vector<std::vector<uint8_t> >* messages);
+                             std::vector<std::vector<uint8_t>>* messages);
 
   /// Called when attempting to step without input data available.
   virtual void OnCommandBufferUnderrun() {}
@@ -54,29 +55,44 @@ class ClientSession : public Session {
   auto base_time() const { return base_time_millisecs_; }
   auto shutting_down() const { return shutting_down_; }
 
-  auto scenes() const -> const std::vector<Object::Ref<Scene> >& {
+  auto scenes() const -> const std::vector<Object::Ref<Scene>>& {
     return scenes_;
   }
-  auto nodes() const -> const std::vector<Object::WeakRef<Node> >& {
+  auto nodes() const -> const std::vector<Object::WeakRef<Node>>& {
     return nodes_;
   }
-  auto textures() const -> const std::vector<Object::Ref<SceneTexture> >& {
+  auto textures() const -> const std::vector<Object::Ref<SceneTexture>>& {
     return textures_;
   }
-  auto meshes() const -> const std::vector<Object::Ref<SceneMesh> >& {
+  auto meshes() const -> const std::vector<Object::Ref<SceneMesh>>& {
     return meshes_;
   }
-  auto sounds() const -> const std::vector<Object::Ref<SceneSound> >& {
+  auto sounds() const -> const std::vector<Object::Ref<SceneSound>>& {
     return sounds_;
   }
   auto collision_meshes() const
-      -> const std::vector<Object::Ref<SceneCollisionMesh> >& {
+      -> const std::vector<Object::Ref<SceneCollisionMesh>>& {
     return collision_meshes_;
   }
-  auto materials() const -> const std::vector<Object::Ref<Material> >& {
+  auto materials() const -> const std::vector<Object::Ref<Material>>& {
     return materials_;
   }
-  auto commands() const -> const std::list<std::vector<uint8_t> >& {
+  /// The stream's declared asset-package table (index -> apverid),
+  /// received up front with each baseline (see
+  /// SessionCommand::kDeclareAssetPackage). Wire asset/string refs
+  /// resolve against it by index.
+  auto asset_package_table() const -> const std::vector<std::string>& {
+    return asset_package_table_;
+  }
+
+  /// The protocol version of the stream we're consuming (the
+  /// negotiated connection protocol for net sessions; the file's
+  /// stamped protocol for replays). Drives per-protocol ingest
+  /// branches (e.g. lang-str-tagged vs legacy string payloads).
+  auto stream_protocol() const -> int { return stream_protocol_; }
+  void set_stream_protocol(int val) { stream_protocol_ = val; }
+
+  auto commands() const -> const std::list<std::vector<uint8_t>>& {
     return commands_;
   }
   auto add_end_of_file_command() {
@@ -102,9 +118,23 @@ class ClientSession : public Session {
     ResetTargetBaseTime();
   }
 
+  /// Called when the stream's asset-package table declaration finishes
+  /// parsing (see SessionCommand::kDeclareAssetPackage). Net sessions
+  /// override this to feed the table to their replay writer's header;
+  /// the base does nothing.
+  virtual void OnAssetPackageTableComplete() {}
+
  private:
   void ClearSessionObjs();
   void AddCommand(const std::vector<uint8_t>& command);
+
+  /// Resolve a compact indexed asset ref (see the kAdd*Indexed
+  /// commands) to its qualified ``apverid:logical/path`` name via the
+  /// stream's declared package table and the package's canonical
+  /// sorted bucket keys. Throws (stream error) on any miss -- assets
+  /// hard-fail by design.
+  auto ResolveIndexedAssetRef_(int32_t pkg_index, int32_t asset_index,
+                               AssetBucketKind bucket_kind) -> std::string;
 
   auto ReadByte() -> uint8_t;
   auto ReadInt32() -> int32_t;
@@ -118,11 +148,11 @@ class ClientSession : public Session {
   void ReadChars(int count, char* vals);
 
   // Ready-to-go commands.
-  std::list<std::vector<uint8_t> > commands_;
+  std::list<std::vector<uint8_t>> commands_;
 
   // Commands being built up for the next time step (we need to ship timesteps
   // as a whole).
-  std::list<std::vector<uint8_t> > commands_pending_;
+  std::list<std::vector<uint8_t>> commands_pending_;
   std::vector<uint8_t> current_cmd_;
   uint8_t* current_cmd_ptr_{};
   int base_time_buffered_{};
@@ -132,13 +162,19 @@ class ClientSession : public Session {
   double target_base_time_millisecs_{};
   float consume_rate_{1.0f};
 
-  std::vector<Object::Ref<Scene> > scenes_;
-  std::vector<Object::WeakRef<Node> > nodes_;
-  std::vector<Object::Ref<SceneTexture> > textures_;
-  std::vector<Object::Ref<SceneMesh> > meshes_;
-  std::vector<Object::Ref<SceneSound> > sounds_;
-  std::vector<Object::Ref<SceneCollisionMesh> > collision_meshes_;
-  std::vector<Object::Ref<Material> > materials_;
+  std::vector<std::string> asset_package_table_;
+  // Cached canonical sorted bucket keys for indexed asset refs, keyed
+  // by ``apverid + '\n' + bucket_id`` (immutable for exact apverids).
+  std::unordered_map<std::string, std::vector<std::string>>
+      asset_index_keys_cache_;
+  int stream_protocol_{kProtocolVersionMax};
+  std::vector<Object::Ref<Scene>> scenes_;
+  std::vector<Object::WeakRef<Node>> nodes_;
+  std::vector<Object::Ref<SceneTexture>> textures_;
+  std::vector<Object::Ref<SceneMesh>> meshes_;
+  std::vector<Object::Ref<SceneSound>> sounds_;
+  std::vector<Object::Ref<SceneCollisionMesh>> collision_meshes_;
+  std::vector<Object::Ref<Material>> materials_;
 };
 
 }  // namespace ballistica::scene_v1

@@ -466,7 +466,7 @@ def _special_class_cases(classname: str) -> str:
             '    name_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
             '    tint_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
             '    tint2_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
-            "    text: babase.Lstr | str = ''\n"
+            "    text: babase.Lstr | babase.LangStr | str = ''\n"
             '    texture: bascenev1.Texture | None = None\n'
             '    tint_texture: bascenev1.Texture | None = None\n'
             '    times: Sequence[int] = (1,2,3,4,5)\n'

@@ -157,7 +157,9 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         self._kicked_off_server_shutdown = False
         self._kicked_off_server_restart = False
         self._default_show_tips = True
-        self._custom_continue_message: babase.Lstr | None = None
+        self._custom_continue_message: babase.Lstr | babase.LangStr | None = (
+            None
+        )
         self._server_transitioning: bool | None = None
 
     @override

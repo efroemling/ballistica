@@ -291,6 +291,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_playlist.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_powerup.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_profile.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_replay.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_score.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_session.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_settings.py \
@@ -519,9 +520,9 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/analytics.py \
   $(BUILD_DIR)/ba_data/python/bacommon/app.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetcas.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/assetref/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/assetref/_core.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/assetref/_wrapper.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/assetspec/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/assetspec/_core.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/assetspec/_wrapper.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bacloud.py \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
   $(BUILD_DIR)/ba_data/python/bacommon/classic/__init__.py \
@@ -563,6 +564,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/restapi/v1/workspaces.py \
   $(BUILD_DIR)/ba_data/python/bacommon/securedata.py \
   $(BUILD_DIR)/ba_data/python/bacommon/servermanager.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/strbrief.py \
   $(BUILD_DIR)/ba_data/python/bacommon/text.py \
   $(BUILD_DIR)/ba_data/python/bacommon/transfer.py \
   $(BUILD_DIR)/ba_data/python/bacommon/workspace/__init__.py \

@@ -145,7 +145,7 @@ class TournamentEntryWindow(PopupWindow):
             h_align='center',
             v_align='center',
             scale=0.6,
-            text=bui.Lstr(resource='tournamentEntryText'),
+            text=stdassets.strings.tournamententry.title,
             maxwidth=180,
             color=bui.app.ui_v1.title_color,
         )
@@ -234,7 +234,7 @@ class TournamentEntryWindow(PopupWindow):
                 scale=0.6,
                 # Note to self: AdMob requires rewarded ad usage
                 # specifically says 'Ad' in it.
-                text=bui.Lstr(resource='watchAnAdText'),
+                text=stdassets.strings.tournamententry.watch_an_ad,
                 maxwidth=95,
                 color=(0, 1, 0),
             )
@@ -263,9 +263,7 @@ class TournamentEntryWindow(PopupWindow):
                 h_align='center',
                 v_align='center',
                 scale=0.6,
-                text=bui.Lstr(
-                    resource='orText', subs=[('${A}', ''), ('${B}', '')]
-                ),
+                text=stdassets.strings.ui.or_join(a='', b=''),
                 maxwidth=35,
                 color=(1, 1, 1, 0.5),
             )
@@ -282,7 +280,7 @@ class TournamentEntryWindow(PopupWindow):
                 position=btn_pos,
                 autoselect=True,
                 size=btn_size,
-                label=bui.Lstr(resource='practiceText'),
+                label=stdassets.strings.ui.practice,
                 on_activate_call=self._on_practice_press,
             )
 
@@ -317,7 +315,7 @@ class TournamentEntryWindow(PopupWindow):
             size=(0, 0),
             h_align='center',
             v_align='center',
-            text=bui.Lstr(resource='coopSelectWindow.timeRemainingText'),
+            text=stdassets.strings.coop.time_remaining,
             scale=0.45,
             flatness=1.0,
             maxwidth=100,
@@ -471,7 +469,7 @@ class TournamentEntryWindow(PopupWindow):
         bui.textwidget(
             edit=self._ticket_cost_text,
             text=(
-                bui.Lstr(resource='playText')
+                stdassets.strings.ui.play
                 # if self._purchase_price == 0
                 # else bui.Lstr(
                 #     resource='getTicketsWindow.ticketsText',
@@ -676,7 +674,7 @@ class TournamentEntryWindow(PopupWindow):
 
         if not self._have_valid_data:
             bui.screenmessage(
-                bui.Lstr(resource='tournamentCheckingStateText'),
+                stdassets.strings.coop.tournament_checking_state,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()
@@ -685,7 +683,7 @@ class TournamentEntryWindow(PopupWindow):
         # If we don't have a price.
         if self._purchase_price is None:
             bui.screenmessage(
-                bui.Lstr(resource='tournamentCheckingStateText'),
+                stdassets.strings.coop.tournament_checking_state,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()
@@ -694,7 +692,7 @@ class TournamentEntryWindow(PopupWindow):
         # Deny if it looks like the tourney has ended.
         if self._seconds_remaining == 0:
             bui.screenmessage(
-                bui.Lstr(resource='tournamentEndedText'), color=(1, 0, 0)
+                stdassets.strings.coop.tournament_ended, color=(1, 0, 0)
             )
             builtinassets.audio.error.get().play()
             return
@@ -710,7 +708,7 @@ class TournamentEntryWindow(PopupWindow):
         if ticket_count is not None and ticket_count < ticket_cost:
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                bui.Lstr(resource='notEnoughTicketsText'),
+                stdassets.strings.profile.not_enough_tickets,
                 color=(1, 0, 0),
             )
             # gettickets.show_get_tickets_prompt()
@@ -742,7 +740,7 @@ class TournamentEntryWindow(PopupWindow):
 
         if not self._have_valid_data:
             bui.screenmessage(
-                bui.Lstr(resource='tournamentCheckingStateText'),
+                stdassets.strings.coop.tournament_checking_state,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()
@@ -751,7 +749,7 @@ class TournamentEntryWindow(PopupWindow):
         # Deny if it looks like the tourney has ended.
         if self._seconds_remaining == 0:
             bui.screenmessage(
-                bui.Lstr(resource='tournamentEndedText'), color=(1, 0, 0)
+                stdassets.strings.coop.tournament_ended, color=(1, 0, 0)
             )
             builtinassets.audio.error.get().play()
             return
@@ -776,7 +774,7 @@ class TournamentEntryWindow(PopupWindow):
         # Deny if it looks like the tourney has ended.
         if self._seconds_remaining == 0:
             bui.screenmessage(
-                bui.Lstr(resource='tournamentEndedText'), color=(1, 0, 0)
+                stdassets.strings.coop.tournament_ended, color=(1, 0, 0)
             )
             builtinassets.audio.error.get().play()
             return
@@ -805,7 +803,7 @@ class TournamentEntryWindow(PopupWindow):
         # (otherwise the server will ignore our tournament entry anyway)
         if 'tournament_entry_ad' not in bui.app.classic.purchases:
             print('no tournament_entry_ad purchase present in _on_ad_complete')
-            bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
+            bui.screenmessage(stdassets.strings.ui.error, color=(1, 0, 0))
             builtinassets.audio.error.get().play()
             return
 

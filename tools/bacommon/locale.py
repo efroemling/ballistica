@@ -247,7 +247,9 @@ class Locale(Enum):
             return 'German'
         if self is cls.GIBBERISH:
             return (
-                'Gibberish (imaginary words vaguely' ' reminiscent of English)'
+                'Gibberish (imaginary words vaguely reminiscent of'
+                ' English; translated phrases should be roughly'
+                ' 150%-200% as long as the English versions)'
             )
         if self is cls.GREEK:
             return 'Greek'
