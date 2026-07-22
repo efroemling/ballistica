@@ -145,6 +145,9 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             c.SetColorizeColor2(tint2_color_red_, tint2_color_green_,
                                 tint2_color_blue_);
           }
+          if (rotate_ != 0.0f) {
+            c.Rotate(rotate_, 0, 0, 1);
+          }
           c.SetMaskTexture(mask_texture_.get());
           {
             auto xf = c.ScopedTransform();
@@ -178,6 +181,9 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.SetTexture(texture_);
         if (flatness_ != 0.0f) {
           c.SetFlatness(flatness_);
+        }
+        if (rotate_ != 0.0f) {
+          c.Rotate(rotate_, 0, 0, 1);
         }
         if (tint_texture_.exists()) {
           c.SetColorizeTexture(tint_texture_.get());
