@@ -1238,8 +1238,9 @@ static constexpr wchar_t kFontFamily[] = L"Segoe UI";
 static constexpr DWRITE_FONT_WEIGHT kFontWeight = DWRITE_FONT_WEIGHT_SEMI_BOLD;
 
 // File-scope factory singletons, initialized once via call_once.
-// D2D1_FACTORY_TYPE_MULTI_THREADED is required because CreateTextTexture runs
-// on the Assets thread while GetTextBoundsAndWidth runs on the Logic thread.
+// D2D1_FACTORY_TYPE_MULTI_THREADED is required because CreateTextTexture may
+// run on any thread (asset preloads are not thread-pinned; see
+// Asset::DoPreload()) while GetTextBoundsAndWidth runs on the Logic thread.
 static ID2D1Factory1* g_d2d_factory = nullptr;
 static IDWriteFactory* g_dwrite_factory = nullptr;
 // WARP D3D11 device — software rasterizer, no GPU required.
@@ -1248,6 +1249,16 @@ static ID3D11DeviceContext* g_d3d11_context = nullptr;
 // ID2D1Device derived from the D3D11 device; source of per-call DeviceContexts.
 static ID2D1Device* g_d2d_device = nullptr;
 static std::once_flag g_font_factories_init_flag;
+// Serializes CreateTextTexture bodies. Preloads of different assets can run
+// concurrently on different threads, and while the multithreaded D2D factory
+// internally locks its own work, our direct readback calls on the shared
+// g_d3d11_context (CopyResource/Map/Unmap) don't take that lock and the
+// immediate context is not thread-safe — including against D2D's *internal*
+// use of it at EndDraw. Text-texture creation is rare and ms-scale, so a
+// single coarse lock is the simplest correct answer. GetTextBoundsAndWidth
+// deliberately does NOT take it: it only touches the shared DWrite factory
+// (thread-safe) and per-call layouts.
+static std::mutex g_text_texture_mutex;
 
 static void InitFontFactories_() {
   // Direct2D factory (v1 for ID2D1DeviceContext / color emoji support).
@@ -1327,6 +1338,10 @@ auto PlatformWindows::CreateTextTexture(int width, int height,
   if (!g_d2d_device || !g_dwrite_factory || !g_d3d11_device) {
     return nullptr;
   }
+
+  // Serialize the whole rasterize+readback sequence (see
+  // g_text_texture_mutex comment).
+  std::scoped_lock lock(g_text_texture_mutex);
 
   // 1. Create a D3D11 BGRA texture as the render surface.
   D3D11_TEXTURE2D_DESC rt_desc{};

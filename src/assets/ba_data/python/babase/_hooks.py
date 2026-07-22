@@ -94,23 +94,6 @@ def open_url_with_webbrowser_module(url: str) -> None:
         _babase.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
 
 
-def rejecting_invite_already_in_party_message() -> None:
-    from babase._language import Lstr
-
-    _babase.screenmessage(
-        Lstr(resource='internal.rejectingInviteAlreadyInPartyText'),
-        color=(1, 0.5, 0),
-    )
-
-
-def connection_failed_message() -> None:
-    from babase._language import Lstr
-
-    _babase.screenmessage(
-        Lstr(resource='internal.connectionFailedText'), color=(1, 0.5, 0)
-    )
-
-
 def temporarily_unavailable_message() -> None:
     from babase._language import Lstr
 
@@ -197,8 +180,25 @@ def show_post_purchase_message() -> None:
 
 
 def language_test_toggle() -> None:
-    _babase.app.lang.setlanguage(
-        'Gibberish' if _babase.app.lang.language == 'English' else 'English'
+    """Debug toggle (F9): flip between English and Gibberish.
+
+    Goes through the modern elective locale switch
+    (:meth:`~babase.LocaleSubsystem.set_locale`), which resolves the
+    target locale's asset flavors first -- downloading the
+    ``language/<locale>`` blobs if needed, with a progress dialog --
+    and commits only on success.
+    """
+    # Deferred: keep bacommon out of babase's module-load graph.
+    from bacommon.locale import Locale
+
+    # Toggle off where we're *heading*, not where we are: while a
+    # switch resolves, current_locale still reads the old value, so a
+    # rapid second press would otherwise re-request the same target
+    # instead of flipping back (each press must count -- final state
+    # matches press parity).
+    locale = _babase.app.locale.target_locale
+    _babase.app.locale.set_locale(
+        Locale.GIBBERISH if locale is Locale.ENGLISH else Locale.ENGLISH
     )
 
 
@@ -535,14 +535,16 @@ def _do_start_native_repl() -> None:
     readline.parse_and_bind('tab: complete')
 
 
-def v2_auth_request(global_app_instance_id: str) -> None | tuple[bool, str]:
+def v2_auth_request(
+    global_app_instance_id: str,
+) -> None | tuple[bool, str, int | None]:
     """Kick off or process v2 auth requests.
 
-    Return None if no results or (success, error/token)
+    Return None if no results or (success, error/token, reject-reason).
     """
     assert _babase.app.plus is not None
-    out: None | tuple[bool, str] = _babase.app.plus.accounts.auth_request(
-        global_app_instance_id
+    out: None | tuple[bool, str, int | None] = (
+        _babase.app.plus.accounts.auth_request(global_app_instance_id)
     )
     return out
 

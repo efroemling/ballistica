@@ -4,6 +4,7 @@
 #define BALLISTICA_SCENE_V1_SUPPORT_CLIENT_SESSION_REPLAY_H_
 
 #include <cstdio>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -11,6 +12,15 @@
 #include "ballistica/scene_v1/support/client_session.h"
 
 namespace ballistica::scene_v1 {
+
+/// Read just a replay file's header asset-package listing without
+/// starting playback (protocol 39+ files carry it; older files return
+/// an empty list). For lightweight consumers -- pre-playback content
+/// resolve, Watch-tab requirement display. Returns nullopt on a
+/// missing/corrupt/incompatible file. Does blocking file IO; the
+/// header is tiny, but call off the logic thread for large-scale use.
+auto ReadReplayAssetPackages(const std::string& file_name)
+    -> std::optional<std::vector<std::string>>;
 
 // A client-session fed by a replay file.
 class ClientSessionReplay : public ClientSession,

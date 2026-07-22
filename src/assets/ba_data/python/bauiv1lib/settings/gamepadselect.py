@@ -7,10 +7,14 @@ from typing import TYPE_CHECKING, override
 import bascenev1 as bs
 import bauiv1 as bui
 from bauiv1 import stdassets
+
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any
+
+
+_ctlstrs = stdassets.strings.settings.controllers
 
 
 class GamepadSelectWindow(bui.MainWindow):
@@ -47,7 +51,7 @@ class GamepadSelectWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(20, height - 60),
             size=(130, 60),
-            label=bui.Lstr(resource='backText'),
+            label=stdassets.strings.ui.back,
             button_type='back',
             scale=0.8,
             on_activate_call=self.main_window_back,
@@ -64,7 +68,7 @@ class GamepadSelectWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(20, height - 50),
             size=(width, 25),
-            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            text=_ctlstrs.configure_controllers,
             maxwidth=250,
             color=bui.app.ui_v1.title_color,
             h_align='center',
@@ -85,7 +89,7 @@ class GamepadSelectWindow(bui.MainWindow):
             position=(15, v),
             size=(width - 30, 30),
             scale=0.8,
-            text=bui.Lstr(resource=f'{self._r}.pressAnyButtonText'),
+            text=_ctlstrs.press_any_button_to_configure,
             maxwidth=width * 0.95,
             color=bui.app.ui_v1.infotextcolor,
             h_align='center',
@@ -98,7 +102,7 @@ class GamepadSelectWindow(bui.MainWindow):
                 position=(15, v),
                 size=(width - 30, 30),
                 scale=0.46,
-                text=bui.Lstr(resource=f'{self._r}.androidNoteText'),
+                text=_ctlstrs.android_note,
                 maxwidth=width * 0.95,
                 color=(0.7, 0.9, 0.7, 0.5),
                 h_align='center',
@@ -186,25 +190,13 @@ class _NotConfigurableWindow(bui.MainWindow):
         self.device = device
 
         if device.allows_configuring_in_system_settings:
-            msg = bui.Lstr(
-                resource='configureDeviceInSystemSettingsText',
-                subs=[('${DEVICE}', device.name)],
-            )
+            msg = _ctlstrs.configure_in_system_settings(device=device.name)
         elif device.is_controller_app:
-            msg = bui.Lstr(
-                resource='bsRemoteConfigureInAppText',
-                subs=[
-                    (
-                        '${REMOTE_APP_NAME}',
-                        bui.get_remote_app_name(),
-                    )
-                ],
+            msg = _ctlstrs.remote_configured_in_app(
+                remote_app_name=stdassets.strings.ui.remote_app_name
             )
         else:
-            msg = bui.Lstr(
-                resource='cantConfigureDeviceText',
-                subs=[('${DEVICE}', device.name)],
-            )
+            msg = _ctlstrs.cant_configure_device(device=device.name)
         bui.textwidget(
             parent=self._root_widget,
             position=(0, height - 80),
@@ -219,7 +211,7 @@ class _NotConfigurableWindow(bui.MainWindow):
             parent=self._root_widget,
             position=((width - button_width) / 2, 20),
             size=(button_width, 60),
-            label=bui.Lstr(resource='okText'),
+            label=stdassets.strings.ui.ok,
             on_activate_call=self.main_window_back,
         )
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)

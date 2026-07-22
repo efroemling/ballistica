@@ -50,7 +50,7 @@ class TextContents(Enum):
 
 @dataclass
 class _TxtDef:
-    text: str | TextContents | bui.Lstr
+    text: str | TextContents | bui.Lstr | bui.LangStr
     pos: tuple[float, float]
     maxwidth: float | None
     scale: float = 1.0
@@ -110,14 +110,8 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        bui.Lstr(
-                            resource='tokens.numTokensText',
-                            subs=[
-                                (
-                                    '${COUNT}',
-                                    str(bacommon.classic.TOKENS1_COUNT),
-                                )
-                            ],
+                        stdassets.strings.gettokens.num_tokens(
+                            count=bacommon.classic.TOKENS1_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
@@ -155,14 +149,8 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        bui.Lstr(
-                            resource='tokens.numTokensText',
-                            subs=[
-                                (
-                                    '${COUNT}',
-                                    str(bacommon.classic.TOKENS2_COUNT),
-                                )
-                            ],
+                        stdassets.strings.gettokens.num_tokens(
+                            count=bacommon.classic.TOKENS2_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
@@ -200,14 +188,8 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        bui.Lstr(
-                            resource='tokens.numTokensText',
-                            subs=[
-                                (
-                                    '${COUNT}',
-                                    str(bacommon.classic.TOKENS3_COUNT),
-                                )
-                            ],
+                        stdassets.strings.gettokens.num_tokens(
+                            count=bacommon.classic.TOKENS3_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
@@ -245,14 +227,8 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        bui.Lstr(
-                            resource='tokens.numTokensText',
-                            subs=[
-                                (
-                                    '${COUNT}',
-                                    str(bacommon.classic.TOKENS4_COUNT),
-                                )
-                            ],
+                        stdassets.strings.gettokens.num_tokens(
+                            count=bacommon.classic.TOKENS4_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
                         color=(1.1, 1.05, 1.0),
@@ -289,28 +265,28 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        bui.Lstr(resource='goldPass.goldPassText'),
+                        stdassets.strings.gettokens.gold_pass,
                         pos=(bwidthwide * 0.5, pos1 + 27),
                         color=(1.1, 1.05, 1.0),
                         scale=titlescale,
                         maxwidth=bwidthwide * 0.8,
                     ),
                     _TxtDef(
-                        bui.Lstr(resource='goldPass.desc1InfTokensText'),
+                        stdassets.strings.gettokens.gold_pass_desc1,
                         pos=(bwidthwide * 0.5, pos1 + 6),
                         color=(1.1, 1.05, 1.0),
                         scale=0.4,
                         maxwidth=bwidthwide * 0.8,
                     ),
                     _TxtDef(
-                        bui.Lstr(resource='goldPass.desc2NoAdsText'),
+                        stdassets.strings.gettokens.gold_pass_desc2,
                         pos=(bwidthwide * 0.5, pos1 + 6 - 13 * 1),
                         color=(1.1, 1.05, 1.0),
                         scale=0.4,
                         maxwidth=bwidthwide * 0.8,
                     ),
                     _TxtDef(
-                        bui.Lstr(resource='goldPass.desc3ForeverText'),
+                        stdassets.strings.gettokens.gold_pass_desc3,
                         pos=(bwidthwide * 0.5, pos1 + 6 - 13 * 2),
                         color=(1.1, 1.05, 1.0),
                         scale=0.4,
@@ -420,7 +396,7 @@ class GetTokensWindow(bui.MainWindow):
             scale=1.2,
             h_align='center',
             v_align='center',
-            text=bui.Lstr(resource='tokens.getTokensText'),
+            text=stdassets.strings.resourcetypeinfo.get_tokens,
             maxwidth=260,
         )
 
@@ -542,7 +518,7 @@ class GetTokensWindow(bui.MainWindow):
             bui.textwidget(
                 edit=self._status_text,
                 color=(1, 0, 0),
-                text=bui.Lstr(resource='notSignedInErrorText'),
+                text=stdassets.strings.account.not_signed_in,
             )
         elif state is self.State.LOADING:
             raise RuntimeError('Should never return to loading state.')
@@ -550,7 +526,7 @@ class GetTokensWindow(bui.MainWindow):
             bui.textwidget(
                 edit=self._status_text,
                 color=(0, 1, 0),
-                text=bui.Lstr(resource='tokens.youHaveGoldPassText'),
+                text=stdassets.strings.gettokens.you_have_gold_pass,
             )
         elif state is self.State.SHOWING_STORE:
             assert self._last_query_response is not None
@@ -565,7 +541,7 @@ class GetTokensWindow(bui.MainWindow):
     def _on_load_error(self) -> None:
         bui.textwidget(
             edit=self._status_text,
-            text=bui.Lstr(resource='internal.unavailableNoConnectionText'),
+            text=stdassets.strings.ui.unavailable_no_connection,
             color=(1, 0, 0),
         )
 
@@ -639,7 +615,7 @@ class GetTokensWindow(bui.MainWindow):
             parent=self._root_widget,
             id=f'{self.main_window_id_prefix}|learnmore',
             autoselect=True,
-            label=bui.Lstr(resource='learnMoreText'),
+            label=stdassets.strings.ui.learn_more,
             text_scale=0.7,
             position=(
                 self._width * 0.5 - 75,
@@ -706,14 +682,14 @@ class GetTokensWindow(bui.MainWindow):
                     opacity=imgdef.opacity,
                 )
             for txtdef in buttondef.txtdefs:
-                txt: bui.Lstr | str
+                txt: bui.Lstr | bui.LangStr | str
                 if isinstance(txtdef.text, TextContents):
                     if txtdef.text is TextContents.PRICE:
                         tcolor = (
                             (1, 1, 1, 0.5) if price is None else txtdef.color
                         )
                         txt = (
-                            bui.Lstr(resource='unavailableText')
+                            stdassets.strings.ui.unavailable_status
                             if price is None
                             else price
                         )
@@ -755,7 +731,7 @@ class GetTokensWindow(bui.MainWindow):
                 size=(0, 0),
                 h_align='center',
                 v_align='center',
-                text=bui.Lstr(resource='tokens.shinyNewCurrencyText'),
+                text=stdassets.strings.gettokens.shiny_new_currency,
             )
 
         has_removed_ads = classic is not None and (
@@ -781,7 +757,7 @@ class GetTokensWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 maxwidth=self._scroll_width * 0.9,
-                text=bui.Lstr(resource='removeInGameAdsTokenPurchaseText'),
+                text=stdassets.strings.gettokens.remove_ads_offer,
             )
 
         # Most of our UI won't exist until this point so we need to
@@ -800,10 +776,10 @@ class GetTokensWindow(bui.MainWindow):
         if price is None:
             if plus is not None and plus.supports_purchases():
                 # Looks like internet is down or something temporary.
-                errmsg = bui.Lstr(resource='purchaseNotAvailableText')
+                errmsg = stdassets.strings.gettokens.purchase_not_available
             else:
                 # Looks like purchases will never work here.
-                errmsg = bui.Lstr(resource='purchaseNeverAvailableText')
+                errmsg = stdassets.strings.gettokens.purchase_never_available
 
             bui.screenmessage(errmsg, color=(1, 0.5, 0))
             builtinassets.audio.error.get().play()
@@ -835,18 +811,18 @@ def show_get_tokens_prompt(origin_widget: bui.Widget | None = None) -> None:
     # Currently always allowing token purchases.
     if bool(True):
         ConfirmWindow(
-            bui.Lstr(resource='tokens.notEnoughTokensText'),
+            stdassets.strings.gettokens.not_enough_tokens,
             bui.CallStrict(
                 show_get_tokens_window, origin_widget=get_tokens_button
             ),
-            ok_text=bui.Lstr(resource='tokens.getTokensText'),
+            ok_text=stdassets.strings.resourcetypeinfo.get_tokens,
             width=460,
             height=130,
             origin_widget=origin_widget,
         )
     else:
         ConfirmWindow(
-            bui.Lstr(resource='tokens.notEnoughTokensText'),
+            stdassets.strings.gettokens.not_enough_tokens,
             cancel_button=False,
             width=460,
             height=130,

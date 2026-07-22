@@ -1030,9 +1030,7 @@ class Achievement:
                     Image(
                         stdassets.textures.achievement_outline,
                         host_only=True,
-                        mesh_transparent=bascenev1.getmesh(
-                            _tex('achievement_outline')
-                        ),
+                        mesh_transparent=stdassets.meshes.achievement_outline,
                         color=(2, 1.4, 0.4, 1),
                         vr_depth=8,
                         position=(x - 25, y + 5),
@@ -1360,7 +1358,7 @@ class Achievement:
 
         obj = Image(
             stdassets.textures.achievement_outline,
-            mesh_transparent=bascenev1.getmesh(_tex('achievement_outline')),
+            mesh_transparent=stdassets.meshes.achievement_outline,
             position=(-180, 60 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,

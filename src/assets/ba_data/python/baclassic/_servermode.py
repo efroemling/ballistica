@@ -435,6 +435,7 @@ class ServerController:
         bascenev1.set_public_party_max_size(self._config.max_party_size)
         bascenev1.set_public_party_queue_enabled(self._config.enable_queue)
         bascenev1.set_public_party_name(self._config.party_name)
+        bascenev1.set_host_password(self._config.password)
         bascenev1.set_public_party_stats_url(self._config.stats_url)
         bascenev1.set_public_party_public_address_ipv4(
             self._config.public_ipv4_address

@@ -5,6 +5,7 @@
 from typing import override
 
 import bascenev1 as bs
+from bascenev1 import stdassets
 
 
 class CoopJoinActivity(bs.JoinActivity):
@@ -83,7 +84,7 @@ class CoopJoinActivity(bs.JoinActivity):
             vrmode = env.vr
             if have_achievements:
                 Text(
-                    bs.Lstr(resource='achievementsRemainingText'),
+                    stdassets.strings.coop.achievements_remaining,
                     host_only=True,
                     position=(ts_h_offs - 10, vpos),
                     transition=Text.Transition.FADE_IN,
@@ -103,7 +104,7 @@ class CoopJoinActivity(bs.JoinActivity):
                     vpos -= 55
                 if not achievements:
                     Text(
-                        bs.Lstr(resource='noAchievementsRemainingText'),
+                        stdassets.strings.coop.no_achievements_remaining,
                         host_only=True,
                         position=(ts_h_offs + 15, vpos + 10),
                         transition=Text.Transition.FADE_IN,

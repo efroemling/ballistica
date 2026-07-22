@@ -1,29 +1,39 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bastdassets.260622`` (bauiv1).
+"""Asset-package wrapper for ``a-0.bastdassets.260722z`` (bauiv1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bastdassets.260622
+# ba_meta require asset-package a-0.bastdassets.260722z
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
+# pylint: disable=line-too-long
 
-__asset_package__ = 'a-0.bastdassets.260622'
+__asset_package__ = 'a-0.bastdassets.260722z'
 
 from typing import TYPE_CHECKING
 
 from bauiv1._assetref import AssetRefDir
 
+from babase import LangStrDir
+
 if TYPE_CHECKING:
     from bauiv1._assetref import MeshRef, SoundRef, TextureRef
+    from babase import LangStr
 
     class AudioGroup:
-        """Asset-group type; see source for the full list."""
+        """
+        ::
+
+            All standard game sounds (everything non-bootstrap).
+
+            See source for the full asset list.
+        """
 
         achievement: SoundRef
         action_hero1: SoundRef
@@ -439,7 +449,13 @@ if TYPE_CHECKING:
         zoe_scream01: SoundRef
 
     class MeshesGroup:
-        """Asset-group type; see source for the full list."""
+        """
+        ::
+
+            All standard game meshes (everything non-bootstrap).
+
+            See source for the full asset list.
+        """
 
         achievement_outline: MeshRef
         action_hero_fore_arm: MeshRef
@@ -802,8 +818,5577 @@ if TYPE_CHECKING:
         zoe_upper_arm: MeshRef
         zoe_upper_leg: MeshRef
 
+    class StringsAccountGroup:
+        """
+        ::
+
+            Account-management UI: sign-in/out, account creation/linking,
+            progress display, and the player-info viewer.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Heading for a list of linked accounts.
+        #:
+        #:     English: "Accounts"
+        accounts: LangStr
+
+        def achievement_progress(
+            self, *, complete: str | LangStr, total: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Display of achievement completion (N out of M).
+
+                English: "Achievements: {complete} of {total}"
+            """
+
+        #: ::
+        #:
+        #:     Button to ban the viewed player (admin/host action).
+        #:
+        #:     English: "Ban This Player"
+        ban_this_player: LangStr
+
+        def campaign_progress(self, *, progress: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Display of hard-mode campaign completion percentage.
+
+                English: "Campaign (Hard): {progress}"
+            """
+
+        #: ::
+        #:
+        #:     Button to create a new account.
+        #:
+        #:     English: "Create an Account"
+        create_an_account: LangStr
+
+        #: ::
+        #:
+        #:     Button to delete the account.
+        #:
+        #:     English: "Delete Account"
+        delete_account: LangStr
+
+        #: ::
+        #:
+        #:     Button to manage account settings on the web.
+        #:
+        #:     English: "Manage Account"
+        manage_account: LangStr
+
+        #: ::
+        #:
+        #:     Error shown when an action requires sign-in.
+        #:
+        #:     English: "You must sign in to do this."
+        not_signed_in: LangStr
+
+        #: ::
+        #:
+        #:     Title of the player-info viewer popup.
+        #:
+        #:     English: "Player Info"
+        player_info: LangStr
+
+        #: ::
+        #:
+        #:     Button to report the viewed player.
+        #:
+        #:     English: "Report This Player"
+        report_this_player: LangStr
+
+        #: ::
+        #:
+        #:     Sign-in button label.
+        #:
+        #:     English: "Sign In"
+        sign_in: LangStr
+
+        #: ::
+        #:
+        #:     Blurb explaining the benefits of signing in.
+        #:
+        #:     English: "Sign in to collect tickets, compete online, and share
+        #:     progress across devices."
+        sign_in_info: LangStr
+
+        #: ::
+        #:
+        #:     Error when sign-in fails, likely due to no internet.
+        #:
+        #:     English: "Unable to sign in. (no internet connection?)"
+        sign_in_no_connection: LangStr
+
+        def sign_in_with(self, *, service: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Sign-in button label naming a specific service.
+
+                English: "Sign In with {service}"
+            """
+
+        #: ::
+        #:
+        #:     Button to sign in with the automatic device-local account.
+        #:
+        #:     English: "Sign In with Device Account"
+        sign_in_with_device: LangStr
+
+        #: ::
+        #:
+        #:     Explanation under the device-account sign-in button.
+        #:
+        #:     English: "(an automatic account only available from this device)"
+        sign_in_with_device_info: LangStr
+
+        #: ::
+        #:
+        #:     Button to sign in via an email address.
+        #:
+        #:     English: "Sign In with an Email Address"
+        sign_in_with_email: LangStr
+
+        #: ::
+        #:
+        #:     Sign-out button label.
+        #:
+        #:     English: "Sign Out"
+        sign_out: LangStr
+
+        #: ::
+        #:
+        #:     Status shown while signing in.
+        #:
+        #:     English: "Signing in..."
+        signing_in: LangStr
+
+        #: ::
+        #:
+        #:     Status shown while signing out.
+        #:
+        #:     English: "Signing out..."
+        signing_out: LangStr
+
+        def tickets(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Display of the ticket balance.
+
+                English: "Tickets: {count}"
+            """
+
+        #: ::
+        #:
+        #:     Title of the account section/window; also labels account buttons.
+        #:
+        #:     English: "Account"
+        title: LangStr
+
+        #: ::
+        #:
+        #:     Heading for trophies earned this season.
+        #:
+        #:     English: "Trophies This Season"
+        trophies_this_season: LangStr
+
+        #: ::
+        #:
+        #:     Instruction shown with a web link for creating or signing in to
+        #:     an account.
+        #:
+        #:     English: "Use this link to create an account or sign in."
+        v2_link_instructions: LangStr
+
+        #: ::
+        #:
+        #:     Label above the signed-in account name.
+        #:
+        #:     English: "You are signed in as:"
+        you_are_signed_in_as: LangStr
+
+    class StringsAppinviteGroup:
+        """
+        ::
+
+            Friend-invite / promo-code sharing flow.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Button to email an invite code.
+        #:
+        #:     English: "Email It"
+        email_it: LangStr
+
+        #: ::
+        #:
+        #:     Cheerful "Enjoy!" message.
+        #:
+        #:     English: "ENJOY!"
+        enjoy: LangStr
+
+        def friend_has_sent_promo(
+            self, *, count: int, app_name: str | LangStr, name: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Header naming a ticket gift from a friend.
+
+                English: (one) "# {app_name} ticket from {name}" / (other) "#
+                {app_name} tickets from {name}"
+            """
+
+        def friend_promo_award(self, *, count: int) -> LangStr:
+            """
+            ::
+
+                Explanation of the ticket reward per redemption.
+
+                English: (one) "You will receive # ticket each time it is used."
+                / (other) "You will receive # tickets each time it is used."
+            """
+
+        def friend_promo_expire(self, *, expire_hours: int) -> LangStr:
+            """
+            ::
+
+                Notice of code expiry for new players only.
+
+                English: (one) "The code will expire in # hour and only works
+                for new players." / (other) "The code will expire in # hours and
+                only works for new players."
+            """
+
+        def friend_promo_instructions(
+            self, *, app_name: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                How to redeem the promo code.
+
+                English: "To use it, open {app_name} and go to
+                "Settings->Advanced->Send Info". See bombsquadgame.com for
+                download links for all supported platforms."
+            """
+
+        def friend_promo_redeem_short(self, *, count: int) -> LangStr:
+            """
+            ::
+
+                Short note of ticket value for a code.
+
+                English: (one) "It can be redeemed for # ticket in the game." /
+                (other) "It can be redeemed for # tickets in the game."
+            """
+
+        #: ::
+        #:
+        #:     Status while requesting a promo code.
+        #:
+        #:     English: "Requesting a code..."
+        requesting_code: LangStr
+
+        #: ::
+        #:
+        #:     Instruction to share a promo code.
+        #:
+        #:     English: "Share this code with friends:"
+        share_code: LangStr
+
+        def you_have_been_sent_promo(
+            self, *, app_name: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Notice that the player got a promo code.
+
+                English: "You have been sent a {app_name} promo code:"
+            """
+
+    class StringsChestGroup:
+        """
+        ::
+
+            Chest window: open/reduce-wait controls, slot descriptions, and
+            prize odds.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Button to open a chest.
+        #:
+        #:     English: "Open"
+        open: LangStr
+
+        #: ::
+        #:
+        #:     Playful prompt on an openable chest.
+        #:
+        #:     English: "OPEN ME!"
+        open_me: LangStr
+
+        #: ::
+        #:
+        #:     Button to open a chest immediately.
+        #:
+        #:     English: "Open Now"
+        open_now: LangStr
+
+        #: ::
+        #:
+        #:     Note that the player can open a chest early.
+        #:
+        #:     English: "You have enough tokens to open this now - you don't
+        #:     need to wait."
+        open_now_description: LangStr
+
+        #: ::
+        #:
+        #:     Heading for the prize-odds view.
+        #:
+        #:     English: "Prize Odds"
+        prize_odds: LangStr
+
+        #: ::
+        #:
+        #:     Button to reduce the wait time.
+        #:
+        #:     English: "Reduce Wait"
+        reduce_wait: LangStr
+
+        #: ::
+        #:
+        #:     Explanation of what a chest slot holds.
+        #:
+        #:     English: "This slot can hold a chest. Earn chests by playing
+        #:     campaign levels, placing in tournaments, and completing
+        #:     achievements."
+        slot_description: LangStr
+
+        def slot_number(self, *, num: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Label naming a numbered chest slot.
+
+                English: "Chest Slot {num}"
+            """
+
+        #: ::
+        #:
+        #:     Button to stop open-chest reminders.
+        #:
+        #:     English: "Stop Reminding Me"
+        stop_reminding_me: LangStr
+
+        #: ::
+        #:
+        #:     Label for the time until a chest unlocks.
+        #:
+        #:     English: "Unlocks In"
+        unlocks_in: LangStr
+
+    class StringsCoopGroup:
+        """
+        ::
+
+            Co-op play UI: campaign/custom/tournament tabs, difficulty markers,
+            tournament info/status, and level-lock notices.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Heading over the list of achievements left to earn.
+        #:
+        #:     English: "Achievements Remaining:"
+        achievements_remaining: LangStr
+
+        #: ::
+        #:
+        #:     Label for the campaign tab/section.
+        #:
+        #:     English: "Campaign"
+        campaign: LangStr
+
+        #: ::
+        #:
+        #:     Warning that all chest slots are full so earned chests will be
+        #:     lost.
+        #:
+        #:     English: "WARNING: All your chest slots are full. Any chests you
+        #:     earn this game will be lost."
+        chest_slots_full_warning: LangStr
+
+        #: ::
+        #:
+        #:     Label for the player's best score.
+        #:
+        #:     English: "Current Best"
+        current_best: LangStr
+
+        #: ::
+        #:
+        #:     Label for the custom-games tab.
+        #:
+        #:     English: "Custom"
+        custom: LangStr
+
+        #: ::
+        #:
+        #:     Marker that a level is available only in hard mode.
+        #:
+        #:     English: "Hard Mode Only"
+        difficulty_hard_only: LangStr
+
+        #: ::
+        #:
+        #:     Confirmation prompt that a level unlocks only in hard mode.
+        #:
+        #:     English: "This level can only be unlocked in hard mode. Do you
+        #:     think you have what it takes!?!?!"
+        difficulty_hard_unlock_only: LangStr
+
+        #: ::
+        #:
+        #:     Label for a tournament entry fee.
+        #:
+        #:     English: "Entry"
+        entry_fee: LangStr
+
+        def level_is_locked(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Notice that a named level is locked.
+
+                English: "{level} is locked."
+            """
+
+        def level_must_be_completed_first(
+            self, *, level: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Notice that a named level must be completed first.
+
+                English: "{level} must be completed first."
+            """
+
+        #: ::
+        #:
+        #:     Placeholder when no achievements remain.
+        #:
+        #:     English: "- none"
+        no_achievements_remaining: LangStr
+
+        #: ::
+        #:
+        #:     Warning that tournament scores are ignored on test builds.
+        #:
+        #:     English: "WARNING: Tournament scores from this test build will be
+        #:     ignored."
+        no_tournaments_in_test_build: LangStr
+
+        def of_total(self, *, total: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Suffix showing a value out of a total time.
+
+                English: "of {total}"
+            """
+
+        def player_count_abbreviated(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Abbreviated player-count badge (number + "p" for players).
+
+                English: "{count}p"
+            """
+
+        #: ::
+        #:
+        #:     Label for tournament prizes.
+        #:
+        #:     English: "Prizes"
+        prizes: LangStr
+
+        #: ::
+        #:
+        #:     Label for tournament time remaining.
+        #:
+        #:     English: "Time Remaining"
+        time_remaining: LangStr
+
+        #: ::
+        #:
+        #:     Singular "Tournament" label.
+        #:
+        #:     English: "Tournament"
+        tournament: LangStr
+
+        #: ::
+        #:
+        #:     Status while loading tournament state.
+        #:
+        #:     English: "Checking tournament state; please wait..."
+        tournament_checking_state: LangStr
+
+        #: ::
+        #:
+        #:     Notice that the current tournament has ended.
+        #:
+        #:     English: "This tournament has ended. A new one will start soon."
+        tournament_ended: LangStr
+
+        #: ::
+        #:
+        #:     Explanation of how tournaments work.
+        #:
+        #:     English: "Compete for high scores with other players in your
+        #:     league. Prizes are awarded to the top scoring players when
+        #:     tournament time expires."
+        tournament_info: LangStr
+
+        #: ::
+        #:
+        #:     Plural "Tournaments" tab label.
+        #:
+        #:     English: "Tournaments"
+        tournaments: LangStr
+
+        #: ::
+        #:
+        #:     Notice that tournaments are off while a workspace is active.
+        #:
+        #:     English: "Tournaments are disabled when workspaces are active. To
+        #:     re-enable tournaments, disable your workspace and restart."
+        tournaments_disabled_workspace: LangStr
+
+    class StringsCoopscoreGroup:
+        """
+        ::
+
+            Co-op score/results screen: unavailable-scores notices, the
+            best-scores/best-times section headings, and level/tournament
+            proceed messages.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Notice that the level must be completed to proceed.
+        #:
+        #:     English: "You must complete this level to proceed!"
+        complete_level_to_proceed: LangStr
+
+        #: ::
+        #:
+        #:     Notice that friend scores could not be loaded.
+        #:
+        #:     English: "Friend scores unavailable."
+        friend_scores_unavailable: LangStr
+
+        #: ::
+        #:
+        #:     Notice that too few players remain to continue.
+        #:
+        #:     English: "Not enough players remaining; exit and start a new
+        #:     game."
+        not_enough_players_remaining: LangStr
+
+        #: ::
+        #:
+        #:     Notice that the score list could not be loaded.
+        #:
+        #:     English: "Score list unavailable."
+        score_list_unavailable: LangStr
+
+        #: ::
+        #:
+        #:     Heading/button label for the tournament standings.
+        #:
+        #:     English: "Tournament Standings"
+        tournament_standings: LangStr
+
+        #: ::
+        #:
+        #:     Notice that world scores could not be loaded.
+        #:
+        #:     English: "World scores unavailable."
+        world_scores_unavailable: LangStr
+
+        #: ::
+        #:
+        #:     Heading for the world-best scores list.
+        #:
+        #:     English: "World's Best Scores"
+        worlds_best_scores: LangStr
+
+        #: ::
+        #:
+        #:     Heading for the world-best times list.
+        #:
+        #:     English: "World's Best Times"
+        worlds_best_times: LangStr
+
+        #: ::
+        #:
+        #:     Heading for the player's own best scores.
+        #:
+        #:     English: "Your Best Scores"
+        your_best_scores: LangStr
+
+        #: ::
+        #:
+        #:     Heading for the player's own best times.
+        #:
+        #:     English: "Your Best Times"
+        your_best_times: LangStr
+
+    class StringsCreditsGroup:
+        """
+        ::
+
+            Credits-window text: section headings and contributor credit lines.
+
+            See source for the full asset list.
+        """
+
+        def additional_audio_art_ideas(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Credit line for additional contributors.
+
+                English: "Additional Audio, Early Artwork, and Ideas by {name}"
+            """
+
+        def additional_music_from(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Credit line for additional music.
+
+                English: "Additional music from {name}"
+            """
+
+        #: ::
+        #:
+        #:     Credit line thanking friends and family playtesters.
+        #:
+        #:     English: "All of my friends and family who helped play test"
+        all_my_family: LangStr
+
+        def coding_graphics_audio(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Credit line for the main developer.
+
+                English: "Coding, Graphics, and Audio by {name}"
+            """
+
+        #: ::
+        #:
+        #:     Section heading for translation credits.
+        #:
+        #:     English: "Language Translations:"
+        language_translations: LangStr
+
+        #: ::
+        #:
+        #:     Section heading for legal text.
+        #:
+        #:     English: "Legal:"
+        legal: LangStr
+
+        def public_domain_music_via(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Credit line for public-domain music.
+
+                English: "Public-domain music via {name}"
+            """
+
+        def software_based_on(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Credit line for third-party software.
+
+                English: "This software is based in part on the work of {name}."
+            """
+
+        #: ::
+        #:
+        #:     Section heading for sound/music credits.
+        #:
+        #:     English: "Sound & Music:"
+        sound_and_music: LangStr
+
+        def sounds_source(self, *, source: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Credit heading naming a sound source.
+
+                English: "Sounds ({source}):"
+            """
+
+        #: ::
+        #:
+        #:     Section heading for special thanks.
+        #:
+        #:     English: "Special Thanks:"
+        special_thanks: LangStr
+
+        def thanks_especially_to(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Special-thanks credit line.
+
+                English: "Special thanks to {name}"
+            """
+
+        def title(self, *, app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Title of the credits window.
+
+                English: "{app_name} Credits"
+            """
+
+        #: ::
+        #:
+        #:     Humorous credit line thanking coffee.
+        #:
+        #:     English: "Whoever invented coffee"
+        whoever_invented_coffee: LangStr
+
+    class StringsEconomyGroup:
+        """
+        ::
+
+            Screen-messages about currency: grants and related notices.
+
+            See source for the full asset list.
+        """
+
+        def you_got_tokens(self, *, tokens: int) -> LangStr:
+            """
+            ::
+
+                Confirmation effect sent to game clients when tokens are
+                credited (store purchases, promo codes, and other grant flows).
+
+                English: (one) "You got # token!" / (other) "You got # tokens!"
+            """
+
+    class StringsFileselectorGroup:
+        """
+        ::
+
+            File/folder selector window titles and buttons.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Title when selecting a file.
+        #:
+        #:     English: "Select a File"
+        select_file: LangStr
+
+        #: ::
+        #:
+        #:     Title when selecting a file or folder.
+        #:
+        #:     English: "Select a File or Folder"
+        select_file_or_folder: LangStr
+
+        #: ::
+        #:
+        #:     Title when selecting a folder.
+        #:
+        #:     English: "Select a Folder"
+        select_folder: LangStr
+
+        #: ::
+        #:
+        #:     Button to confirm the current folder.
+        #:
+        #:     English: "Use This Folder"
+        use_this_folder: LangStr
+
+    class StringsGameGroup:
+        """
+        ::
+
+            Generic in-game scoreboard and result vocabulary shared across the
+            various gameplay activities (scores, victory/draw banners, wave
+            progress, bonus labels).
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Label for a level-completion score bonus.
+        #:
+        #:     English: "Completion Bonus"
+        completion_bonus: LangStr
+
+        #: ::
+        #:
+        #:     Banner shown when a game ends in a tie.
+        #:
+        #:     English: "Draw"
+        draw: LangStr
+
+        #: ::
+        #:
+        #:     Banner shown when the player fails a level.
+        #:
+        #:     English: "Fail"
+        fail: LangStr
+
+        #: ::
+        #:
+        #:     Heading over the final score table.
+        #:
+        #:     English: "Final Scores"
+        final_scores: LangStr
+
+        #: ::
+        #:
+        #:     Celebratory banner for clearing a wave flawlessly.
+        #:
+        #:     English: "Flawless Wave!"
+        flawless_wave: LangStr
+
+        #: ::
+        #:
+        #:     Warning that your own flag must be at your base to score.
+        #:
+        #:     English: "Your own flag must be at your base to score!"
+        own_flag_at_base_warning: LangStr
+
+        #: ::
+        #:
+        #:     Prompt to press a button to play again.
+        #:
+        #:     English: "Press any button to play again..."
+        press_any_button_play_again: LangStr
+
+        #: ::
+        #:
+        #:     Prompt to press a key or button to play again.
+        #:
+        #:     English: "Press any key/button to play again..."
+        press_any_key_button_play_again: LangStr
+
+        #: ::
+        #:
+        #:     Flying-map tip: press jump repeatedly to fly.
+        #:
+        #:     English: "** Press jump repeatedly to fly **"
+        press_jump_to_fly: LangStr
+
+        #: ::
+        #:
+        #:     Notice that you must reach wave 2 to rank.
+        #:
+        #:     English: "Reach wave 2 to rank."
+        reach_wave_2: LangStr
+
+        #: ::
+        #:
+        #:     Label for a score value on the in-game scoreboard.
+        #:
+        #:     English: "Score"
+        score: LangStr
+
+        #: ::
+        #:
+        #:     Celebratory banner shown when a game is won.
+        #:
+        #:     English: "Victory!"
+        victory: LangStr
+
+        #: ::
+        #:
+        #:     Small "versus" label shown between two opponents.
+        #:
+        #:     English: "vs."
+        vs: LangStr
+
+    class StringsGatherGroup:
+        """
+        ::
+
+            Party/gather UI strings: hosting-form labels, pre-join prompts, and
+            related networking-flow messages.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Label for the About tab of the gather window.
+        #:
+        #:     English: "About"
+        about: LangStr
+
+        def added_to_favorites(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Confirmation after saving a favorite party.
+
+                English: "Added '{name}' to Favorites."
+            """
+
+        #: ::
+        #:
+        #:     Placeholder shown when addresses cannot be fetched.
+        #:
+        #:     English: "<error fetching addresses>"
+        address_fetch_error: LangStr
+
+        #: ::
+        #:
+        #:     Status shown while checking something.
+        #:
+        #:     English: "checking..."
+        checking: LangStr
+
+        #: ::
+        #:
+        #:     Button to connect to a party.
+        #:
+        #:     English: "Connect"
+        connect: LangStr
+
+        #: ::
+        #:
+        #:     Button to copy the party code.
+        #:
+        #:     English: "Copy Code"
+        copy_code: LangStr
+
+        #: ::
+        #:
+        #:     Confirmation after copying a party code.
+        #:
+        #:     English: "Code copied to clipboard."
+        copy_code_confirm: LangStr
+
+        #: ::
+        #:
+        #:     Tip about setting up a dedicated server.
+        #:
+        #:     English: "For best results, set up a dedicated server. See
+        #:     bombsquadgame.com/server to learn how."
+        dedicated_server_info: LangStr
+
+        def delete_confirm_list(self, *, list: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Confirmation before deleting a named list.
+
+                English: "Delete "{list}"?"
+            """
+
+        #: ::
+        #:
+        #:     Short hint pointing to the gather window.
+        #:
+        #:     English: "Use the gather window to assemble a party."
+        description_short: LangStr
+
+        def disconnect_clients(self, *, count: int) -> LangStr:
+            """
+            ::
+
+                Confirmation before an action disconnects party players.
+
+                English: (one) "This will disconnect the # player in your party.
+                Are you sure?" / (other) "This will disconnect the # players in
+                your party. Are you sure?"
+            """
+
+        #: ::
+        #:
+        #:     Blurb inviting players to the Discord.
+        #:
+        #:     English: "Want to look for new people to play with? Join our
+        #:     Discord and find new friends!"
+        discord_friends: LangStr
+
+        #: ::
+        #:
+        #:     Button to open the Discord invite.
+        #:
+        #:     English: "Join the Discord"
+        discord_join: LangStr
+
+        #: ::
+        #:
+        #:     Label for the favorites list of saved parties.
+        #:
+        #:     English: "Favorites"
+        favorites: LangStr
+
+        #: ::
+        #:
+        #:     Button to save a party as a favorite.
+        #:
+        #:     English: "Save As Favorite"
+        favorites_save: LangStr
+
+        #: ::
+        #:
+        #:     Notice that a free cloud server is available.
+        #:
+        #:     English: "FREE CLOUD SERVER AVAILABLE!"
+        free_cloud_server_available: LangStr
+
+        def free_cloud_server_available_minutes(
+            self, *, minutes: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Countdown to the next free cloud server.
+
+                English: "Next free cloud server available in {minutes}
+                minutes."
+            """
+
+        #: ::
+        #:
+        #:     Button to get a friend invite code.
+        #:
+        #:     English: "Get Friend Invite Code"
+        get_friend_invite_code: LangStr
+
+        #: ::
+        #:
+        #:     Heading for the host-public-party view.
+        #:
+        #:     English: "Host a Public Party"
+        host_public_party: LangStr
+
+        #: ::
+        #:
+        #:     Notice that hosting is unavailable.
+        #:
+        #:     English: "Hosting Unavailable"
+        hosting_unavailable: LangStr
+
+        #: ::
+        #:
+        #:     Error for an invalid server address.
+        #:
+        #:     English: "Error: invalid address."
+        invalid_address_error: LangStr
+
+        #: ::
+        #:
+        #:     Error for an invalid party name.
+        #:
+        #:     English: "Error: invalid name."
+        invalid_name_error: LangStr
+
+        #: ::
+        #:
+        #:     Error for an invalid server port.
+        #:
+        #:     English: "Error: invalid port."
+        invalid_port_error: LangStr
+
+        def invite_a_friend(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Blurb about inviting friends for a ticket reward.
+
+                English: "Friends don't have the game? Invite them to try it and
+                they'll receive {count} free tickets."
+            """
+
+        #: ::
+        #:
+        #:     Button to invite friends.
+        #:
+        #:     English: "Invite Friends"
+        invite_friends: LangStr
+
+        #: ::
+        #:
+        #:     Heading for the join-public-party view.
+        #:
+        #:     English: "Join a Public Party"
+        join_public_party: LangStr
+
+        #: ::
+        #:
+        #:     Question label about internet joinability.
+        #:
+        #:     English: "Are you joinable from the internet?:"
+        joinable_from_internet: LangStr
+
+        #: ::
+        #:
+        #:     Negative joinability status with a caveat marker.
+        #:
+        #:     English: "NO*"
+        joinable_no: LangStr
+
+        #: ::
+        #:
+        #:     Affirmative joinability status.
+        #:
+        #:     English: "YES"
+        joinable_yes: LangStr
+
+        #: ::
+        #:
+        #:     Subtitle for the nearby-party tab.
+        #:
+        #:     English: "Join a Nearby Party (LAN, Bluetooth, etc.)"
+        local_network_description: LangStr
+
+        #: ::
+        #:
+        #:     Button to make the party private.
+        #:
+        #:     English: "Make My Party Private"
+        make_party_private: LangStr
+
+        #: ::
+        #:
+        #:     Button to make the party public.
+        #:
+        #:     English: "Make My Party Public"
+        make_party_public: LangStr
+
+        #: ::
+        #:
+        #:     Label for the Manual (join-by-address) tab.
+        #:
+        #:     English: "Manual"
+        manual: LangStr
+
+        #: ::
+        #:
+        #:     Label for the server address input field.
+        #:
+        #:     English: "Address"
+        manual_address: LangStr
+
+        #: ::
+        #:
+        #:     Subtitle for the manual-connect tab.
+        #:
+        #:     English: "Join a party by address:"
+        manual_description: LangStr
+
+        #: ::
+        #:
+        #:     Heading for the join-by-address section.
+        #:
+        #:     English: "Join By Address"
+        manual_join_section: LangStr
+
+        #: ::
+        #:
+        #:     Label for the max-connections setting.
+        #:
+        #:     English: "Max Connections"
+        max_connections: LangStr
+
+        #: ::
+        #:
+        #:     Label for the max-party-size setting.
+        #:
+        #:     English: "Max Party Size"
+        max_party_size: LangStr
+
+        #: ::
+        #:
+        #:     Label for the Nearby (local network) tab.
+        #:
+        #:     English: "Nearby"
+        nearby: LangStr
+
+        #: ::
+        #:
+        #:     Placeholder shown when there is no connection.
+        #:
+        #:     English: "<no connection>"
+        no_connection: LangStr
+
+        #: ::
+        #:
+        #:     Placeholder when no favorite parties are saved.
+        #:
+        #:     English: "No Parties Added"
+        no_parties_added: LangStr
+
+        #: ::
+        #:
+        #:     Placeholder when no public servers are found.
+        #:
+        #:     English: "No servers found."
+        no_servers_found: LangStr
+
+        #: ::
+        #:
+        #:     Label for the party join code.
+        #:
+        #:     English: "Party Code"
+        party_code: LangStr
+
+        #: ::
+        #:
+        #:     Label for the party name field.
+        #:
+        #:     English: "Party Name"
+        party_name: LangStr
+
+        #: ::
+        #:
+        #:     Description line in the pre-join password prompt dialog, shown
+        #:     above the password entry field when joining a password-protected
+        #:     party.
+        #:
+        #:     English: "This party requires a password."
+        party_requires_password: LangStr
+
+        #: ::
+        #:
+        #:     Status that the party server is running.
+        #:
+        #:     English: "Your party server is running."
+        party_server_running: LangStr
+
+        #: ::
+        #:
+        #:     Lowercase column label for party size.
+        #:
+        #:     English: "party size"
+        party_size: LangStr
+
+        #: ::
+        #:
+        #:     Status shown while checking party status.
+        #:
+        #:     English: "checking status..."
+        party_status_checking: LangStr
+
+        #: ::
+        #:
+        #:     Status that the party is joinable.
+        #:
+        #:     English: "your party is now joinable from the internet"
+        party_status_joinable: LangStr
+
+        #: ::
+        #:
+        #:     Status that the server is unreachable.
+        #:
+        #:     English: "unable to connect to server"
+        party_status_no_connection: LangStr
+
+        #: ::
+        #:
+        #:     Status that the hosted party is not public.
+        #:
+        #:     English: "your party is not public"
+        party_status_not_public: LangStr
+
+        #: ::
+        #:
+        #:     Label for the optional party-password entry field in the gather
+        #:     window's public-hosting form.
+        #:
+        #:     English: "Password (optional)"
+        password_optional: LangStr
+
+        #: ::
+        #:
+        #:     Lowercase column label for network ping.
+        #:
+        #:     English: "ping"
+        ping: LangStr
+
+        #: ::
+        #:
+        #:     Label for the server port input field.
+        #:
+        #:     English: "Port"
+        port: LangStr
+
+        #: ::
+        #:
+        #:     Label for the Private (cloud) party tab.
+        #:
+        #:     English: "Private"
+        private: LangStr
+
+        #: ::
+        #:
+        #:     Explanation of private cloud parties.
+        #:
+        #:     English: "Private parties run on dedicated cloud servers; no
+        #:     router configuration required."
+        private_party_cloud_description: LangStr
+
+        #: ::
+        #:
+        #:     Button to host a private party.
+        #:
+        #:     English: "Host a Private Party"
+        private_party_host: LangStr
+
+        #: ::
+        #:
+        #:     Button to join a private party.
+        #:
+        #:     English: "Join a Private Party"
+        private_party_join: LangStr
+
+        #: ::
+        #:
+        #:     Label for the Public party tab.
+        #:
+        #:     English: "Public"
+        public: LangStr
+
+        #: ::
+        #:
+        #:     Warning about router config for public hosting.
+        #:
+        #:     English: "This may require configuring port-forwarding on your
+        #:     router. For an easier option, host a private party."
+        public_host_router_config: LangStr
+
+        def router_forwarding(self, *, port: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Tip to forward a UDP port on the router.
+
+                English: "*To fix this, forward UDP port {port} to your local
+                address on your router."
+            """
+
+        #: ::
+        #:
+        #:     Button to show the local machine address.
+        #:
+        #:     English: "Show My Address"
+        show_my_address: LangStr
+
+        #: ::
+        #:
+        #:     Button to start hosting.
+        #:
+        #:     English: "Host"
+        start_hosting: LangStr
+
+        def start_hosting_paid(self, *, cost: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Button to start paid hosting for a cost.
+
+                English: "Host Now For {cost}"
+            """
+
+        def start_stop_hosting_minutes(self, *, minutes: int) -> LangStr:
+            """
+            ::
+
+                Notice of the free start/stop-hosting window in minutes.
+
+                English: (one) "You can start and stop hosting for free for the
+                next # minute." / (other) "You can start and stop hosting for
+                free for the next # minutes."
+            """
+
+        #: ::
+        #:
+        #:     Button to stop hosting.
+        #:
+        #:     English: "Stop Hosting"
+        stop_hosting: LangStr
+
+        #: ::
+        #:
+        #:     Title of the Gather section, where players meet up and play with
+        #:     others; also labels the main-menu button leading there and
+        #:     gather-related join-screen hints.
+        #:
+        #:     English: "Gather"
+        title: LangStr
+
+        #: ::
+        #:
+        #:     Error when the host address cannot resolve.
+        #:
+        #:     English: "Error: unable to resolve host."
+        unable_to_resolve_host: LangStr
+
+        #: ::
+        #:
+        #:     Notice that a V2 account is required.
+        #:
+        #:     English: "This requires a V2 account. Upgrade your account and
+        #:     try again."
+        v2_account_required: LangStr
+
+        #: ::
+        #:
+        #:     Label for the internet-facing address.
+        #:
+        #:     English: "Your address from the internet:"
+        your_address_from_internet: LangStr
+
+        #: ::
+        #:
+        #:     Label for the local network address.
+        #:
+        #:     English: "Your local address:"
+        your_local_address: LangStr
+
+    class StringsGetremoteGroup:
+        """
+        ::
+
+            Get-remote-app window: controller/remote-app info blurb.
+
+            See source for the full asset list.
+        """
+
+        def info_short(
+            self, *, app_name: str | LangStr, remote_app_name: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Blurb about using controllers or the remote app.
+
+                English: "{app_name} is most fun when played with family &
+                friends. Connect one or more hardware controllers or install the
+                {remote_app_name} app on phones or tablets to use them as
+                controllers."
+            """
+
+    class StringsGettokensGroup:
+        """
+        ::
+
+            Get-tokens / Gold Pass store window strings.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     The "Gold Pass" product name.
+        #:
+        #:     English: "Gold Pass"
+        gold_pass: LangStr
+
+        #: ::
+        #:
+        #:     Gold Pass benefit: infinite tokens.
+        #:
+        #:     English: "Infinite tokens."
+        gold_pass_desc1: LangStr
+
+        #: ::
+        #:
+        #:     Gold Pass benefit: no ads.
+        #:
+        #:     English: "No ads."
+        gold_pass_desc2: LangStr
+
+        #: ::
+        #:
+        #:     Gold Pass benefit: forever.
+        #:
+        #:     English: "Forever."
+        gold_pass_desc3: LangStr
+
+        #: ::
+        #:
+        #:     Error when the player lacks enough tokens.
+        #:
+        #:     English: "Not enough tokens!"
+        not_enough_tokens: LangStr
+
+        def num_tokens(self, *, count: int) -> LangStr:
+            """
+            ::
+
+                A number of tokens.
+
+                English: (one) "# Token" / (other) "# Tokens"
+            """
+
+        #: ::
+        #:
+        #:     Notice that purchases are unavailable here.
+        #:
+        #:     English: "Sorry, purchases are not available on this build. Try
+        #:     signing into your account on another platform and making
+        #:     purchases from there."
+        purchase_never_available: LangStr
+
+        #: ::
+        #:
+        #:     Notice that a purchase is unavailable.
+        #:
+        #:     English: "This purchase is not available."
+        purchase_not_available: LangStr
+
+        #: ::
+        #:
+        #:     Limited-time offer to remove ads via a token pack.
+        #:
+        #:     English: "LIMITED TIME OFFER: PURCHASE ANY TOKEN PACK TO REMOVE
+        #:     IN-GAME ADS."
+        remove_ads_offer: LangStr
+
+        #: ::
+        #:
+        #:     Tagline describing tokens as the new currency.
+        #:
+        #:     English: "BombSquad's shiny new currency."
+        shiny_new_currency: LangStr
+
+        #: ::
+        #:
+        #:     Notice that the player owns a Gold Pass.
+        #:
+        #:     English: "You have a Gold Pass. All token purchases are free.
+        #:     Enjoy!"
+        you_have_gold_pass: LangStr
+
+    class StringsHelpGroup:
+        """
+        ::
+
+            Help window: section headings and how-to-play text for controls,
+            controllers, devices, friends, and powerups.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     How-to text for the Bomb action.
+        #:
+        #:     English: "- Bomb - Stronger than punches, but can result in grave
+        #:     self-injury. For best results, throw towards enemy before fuse
+        #:     runs out."
+        bomb_info: LangStr
+
+        def can_help(self, *, app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Reassurance that the app can help.
+
+                English: "{app_name} can help."
+            """
+
+        #: ::
+        #:
+        #:     Heading for the controllers section.
+        #:
+        #:     English: "Controllers"
+        controllers: LangStr
+
+        def controllers_info(
+            self, *, app_name: str | LangStr, remote_app_name: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Body text for the controllers section.
+
+                English: "You can play {app_name} with friends over a network,
+                or play together on the same device if you have enough
+                controllers. It supports a variety of controllers, and you can
+                even use phones as controllers via the free '{remote_app_name}'
+                app. See Settings > Controllers for more info."
+            """
+
+        #: ::
+        #:
+        #:     Heading for the controls section.
+        #:
+        #:     English: "Controls"
+        controls: LangStr
+
+        def controls_subtitle(self, *, app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Subtitle introducing the basic actions.
+
+                English: "Your friendly {app_name} character has a few basic
+                actions:"
+            """
+
+        #: ::
+        #:
+        #:     Heading for the devices section.
+        #:
+        #:     English: "Devices"
+        devices: LangStr
+
+        def devices_info(self, *, app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Body text for the devices section.
+
+                English: "The VR version of {app_name} can be played over the
+                network with the regular version, so whip out your extra phones,
+                tablets, and computers and get your game on. It can even be
+                useful to connect a regular version of the game to the VR
+                version just to allow people outside to watch the action."
+            """
+
+        #: ::
+        #:
+        #:     Heading for the friends section.
+        #:
+        #:     English: "Friends"
+        friends: LangStr
+
+        def friends_good(self, *, app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Two-line message about playing with friends.
+
+                English: "These are good to have. {app_name} is most fun with
+                several players and can support up to 8 at a time, which leads
+                us to:"
+            """
+
+        #: ::
+        #:
+        #:     How-to text for the Jump action.
+        #:
+        #:     English: "- Jump - Jump to cross small gaps, to throw things
+        #:     higher, and to express feelings of joy."
+        jump_info: LangStr
+
+        #: ::
+        #:
+        #:     Continued humorous line about punching.
+        #:
+        #:     English: "Or punching something, throwing it off a cliff, and
+        #:     blowing it up on the way down with a sticky bomb."
+        or_punching_something: LangStr
+
+        #: ::
+        #:
+        #:     How-to text for the Pick Up action.
+        #:
+        #:     English: "- Pick Up - Grab flags, enemies, or anything else not
+        #:     bolted to the ground. Press again to throw."
+        pick_up_info: LangStr
+
+        #: ::
+        #:
+        #:     Heading for the powerups section.
+        #:
+        #:     English: "Powerups"
+        powerups: LangStr
+
+        #: ::
+        #:
+        #:     Subtitle introducing powerups.
+        #:
+        #:     English: "Of course, no game is complete without powerups:"
+        powerups_subtitle: LangStr
+
+        #: ::
+        #:
+        #:     How-to text for the Punch action.
+        #:
+        #:     English: "- Punch - Punches do more damage the faster your fists
+        #:     are moving, so run and spin like a madman."
+        punch_info: LangStr
+
+        #: ::
+        #:
+        #:     How-to text for the Run action.
+        #:
+        #:     English: "- Run - Hold ANY button to run. Triggers or shoulder
+        #:     buttons work well if you have them. Running gets you places
+        #:     faster but makes it hard to turn, so watch out for cliffs."
+        run_info: LangStr
+
+        #: ::
+        #:
+        #:     Opening humorous line in the help window.
+        #:
+        #:     English: "Some days you just feel like punching something. Or
+        #:     blowing something up."
+        some_days: LangStr
+
+        def title(self, *, app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Title of the help window.
+
+                English: "{app_name} Help"
+            """
+
+        #: ::
+        #:
+        #:     Lead-in before the list of what you need.
+        #:
+        #:     English: "To get the most out of this game, you'll need:"
+        to_get_the_most: LangStr
+
+        def welcome(self, *, app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Welcome heading in the help window.
+
+                English: "Welcome to {app_name}!"
+            """
+
+    class StringsInboxGroup:
+        """
+        ::
+
+            Message-inbox window: messages, prizes, expiry labels.
+
+            See source for the full asset list.
+        """
+
+        def expired_ago(self, *, t: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Label showing how long ago something expired.
+
+                English: "Expired {t} ago"
+            """
+
+        def expires_in(self, *, t: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Label showing time until a message expires.
+
+                English: "Expires in {t}"
+            """
+
+        #: ::
+        #:
+        #:     Heading for final tournament standings.
+        #:
+        #:     English: "Final Standings"
+        final_standings: LangStr
+
+        #: ::
+        #:
+        #:     Notice that the app must be updated to view content.
+        #:
+        #:     English: "You must update the app to view this."
+        must_update: LangStr
+
+        #: ::
+        #:
+        #:     Placeholder when the inbox is empty.
+        #:
+        #:     English: "No messages."
+        no_messages: LangStr
+
+        #: ::
+        #:
+        #:     Label above a prize the player won.
+        #:
+        #:     English: "Your prize:"
+        your_prize: LangStr
+
+    class StringsIngamemenuGroup:
+        """
+        ::
+
+            In-game pause-menu strings: resume/end/leave buttons and their
+            confirmation prompts.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Label for the in-game pause menu button that ends the current
+        #:     game and returns to the menu.
+        #:
+        #:     English: "End Game"
+        end_game: LangStr
+
+        #: ::
+        #:
+        #:     Label for the in-game pause menu button that stops the replay
+        #:     currently being viewed.
+        #:
+        #:     English: "End Replay"
+        end_replay: LangStr
+
+        #: ::
+        #:
+        #:     Label for the in-game pause menu button that ends the current
+        #:     benchmark/test run (shown in place of the end-game button).
+        #:
+        #:     English: "End Test"
+        end_test: LangStr
+
+        #: ::
+        #:
+        #:     Confirmation question shown before ending the current game and
+        #:     returning to the main menu.
+        #:
+        #:     English: "Exit to menu?"
+        exit_to_menu_confirm: LangStr
+
+        def just_player(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Small annotation under the leave-game button clarifying which
+                player would leave (their name substituted in).
+
+                English: "(Just {name})"
+            """
+
+        #: ::
+        #:
+        #:     Label for the in-game pause menu button that removes the pressing
+        #:     player's character from the game (in local multiplayer with
+        #:     several players).
+        #:
+        #:     English: "Leave Game"
+        leave_game: LangStr
+
+        #: ::
+        #:
+        #:     Label for the in-game pause menu button that disconnects from the
+        #:     party (shown when connected to someone else's game).
+        #:
+        #:     English: "Leave Party"
+        leave_party: LangStr
+
+        #: ::
+        #:
+        #:     Confirmation question shown before disconnecting from a party via
+        #:     the in-game menu.
+        #:
+        #:     English: "Really leave the party?"
+        leave_party_confirm: LangStr
+
+        #: ::
+        #:
+        #:     Label for the in-game pause menu button that closes the menu and
+        #:     resumes playing.
+        #:
+        #:     English: "Resume"
+        resume: LangStr
+
+    class StringsInventoryGroup:
+        """
+        ::
+
+            Client-side inventory window bits: offline/signed-out placeholder
+            variants (the online inventory content itself is server-composed).
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Inventory placeholder message.
+        #:
+        #:     English: "Full inventory is only available when online."
+        only_available_online: LangStr
+
+        #: ::
+        #:
+        #:     Inventory placeholder message.
+        #:
+        #:     English: "Full inventory is only available when signed in."
+        only_available_signed_in: LangStr
+
+        #: ::
+        #:
+        #:     Window title (client-side offline/profiles-only variants; the
+        #:     online inventory title comes from the server).
+        #:
+        #:     English: "Inventory"
+        title: LangStr
+
+    class StringsKioskGroup:
+        """
+        ::
+
+            Kiosk/demo-mode menu strings.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Title of the demo/kiosk menu.
+        #:
+        #:     English: "Demo Menu"
+        demo_menu: LangStr
+
+        #: ::
+        #:
+        #:     Button to open the full menu (kiosk).
+        #:
+        #:     English: "Full Menu"
+        full_menu: LangStr
+
+        #: ::
+        #:
+        #:     Kiosk section: single-player / co-op examples.
+        #:
+        #:     English: "Single Player / Co-op Examples"
+        single_player_examples: LangStr
+
+        #: ::
+        #:
+        #:     Kiosk section: versus examples.
+        #:
+        #:     English: "Versus Examples"
+        versus_examples: LangStr
+
+    class StringsLeagueGroup:
+        """
+        ::
+
+            League/season UI: ranking labels, season timing notices, bonuses,
+            and the league-president title.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Notice that achievement details are unavailable for past seasons.
+        #:
+        #:     English: "Sorry, achievement specifics are not available for old
+        #:     seasons."
+        achievements_unavailable_old_seasons: LangStr
+
+        #: ::
+        #:
+        #:     Label for all-time (non-seasonal) stats.
+        #:
+        #:     English: "All Time"
+        all_time: LangStr
+
+        def current_season(self, *, number: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Label for the current season, with its number.
+
+                English: "Current Season ({number})"
+            """
+
+        #: ::
+        #:
+        #:     The "League" label/heading.
+        #:
+        #:     English: "League"
+        league: LangStr
+
+        #: ::
+        #:
+        #:     Title for the top-ranked player in a league.
+        #:
+        #:     English: "League President"
+        league_president: LangStr
+
+        #: ::
+        #:
+        #:     Label for the player's league rank.
+        #:
+        #:     English: "League Rank"
+        league_rank: LangStr
+
+        #: ::
+        #:
+        #:     Label for score multipliers.
+        #:
+        #:     English: "Multipliers"
+        multipliers: LangStr
+
+        def number_badge(self, *, number: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Rank-number badge (hash + number); substitution-only.
+
+                English: "#{number}"
+            """
+
+        #: ::
+        #:
+        #:     Label for the power-ranking metric.
+        #:
+        #:     English: "Power Ranking"
+        power_ranking: LangStr
+
+        def power_ranking_points_equals(
+            self, *, number: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Badge showing a points equivalence in power ranking.
+
+                English: "= {number} pts"
+            """
+
+        def power_ranking_points_mult(
+            self, *, number: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Badge showing a points multiplier in power ranking.
+
+                English: "(x{number} pts)"
+            """
+
+        def season(self, *, number: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Label naming a season by number.
+
+                English: "Season {number}"
+            """
+
+        def season_ended_days_ago(self, *, days: int) -> LangStr:
+            """
+            ::
+
+                Notice that a season ended a number of days ago.
+
+                English: (one) "Season ended # day ago." / (other) "Season ended
+                # days ago."
+            """
+
+        def season_ends_days(self, *, days: int) -> LangStr:
+            """
+            ::
+
+                Notice that the season ends in a number of days.
+
+                English: (one) "Season ends in # day." / (other) "Season ends in
+                # days."
+            """
+
+        def season_ends_hours(self, *, hours: int) -> LangStr:
+            """
+            ::
+
+                Notice that the season ends in a number of hours.
+
+                English: (one) "Season ends in # hour." / (other) "Season ends
+                in # hours."
+            """
+
+        def season_ends_minutes(self, *, minutes: int) -> LangStr:
+            """
+            ::
+
+                Notice that the season ends in a number of minutes.
+
+                English: (one) "Season ends in # minute." / (other) "Season ends
+                in # minutes."
+            """
+
+        #: ::
+        #:
+        #:     Label for points needed to become ranked.
+        #:
+        #:     English: "To Ranked"
+        to_ranked: LangStr
+
+        #: ::
+        #:
+        #:     Notice that trophy counts reset each season.
+        #:
+        #:     English: "Trophy counts will reset next season."
+        trophy_counts_reset: LangStr
+
+        #: ::
+        #:
+        #:     Label for the up-to-date-version score bonus.
+        #:
+        #:     English: "Up-To-Date Bonus"
+        up_to_date_bonus: LangStr
+
+        def up_to_date_bonus_description(
+            self, *, percent: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Explanation of the up-to-date bonus, with the percentage.
+
+                English: "Players running a recent version of the game receive a
+                {percent}% bonus here."
+            """
+
+        #: ::
+        #:
+        #:     Label above the player's own power ranking.
+        #:
+        #:     English: "Your Power Ranking:"
+        your_power_ranking: LangStr
+
+    class StringsMainmenuGroup:
+        """
+        ::
+
+            Main-menu strings: menu buttons, build watermarks, and menu-scene
+            status text.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Label for the main-menu button showing the game's credits.
+        #:
+        #:     English: "Credits"
+        credits: LangStr
+
+        #: ::
+        #:
+        #:     Label for the main-menu button that exits the app (general
+        #:     wording; the Mac variant uses the 'Quit' string).
+        #:
+        #:     English: "Exit Game"
+        exit_game: LangStr
+
+        def host_navigating_menus(self, *, host: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Shown to connected clients while the party host is navigating
+                menus (so they know why they are looking at an idle screen).
+
+                English: "- {host} is navigating menus like a boss -"
+            """
+
+        #: ::
+        #:
+        #:     Label for the main-menu button opening the
+        #:     how-to-play/instructions section.
+        #:
+        #:     English: "How to Play"
+        how_to_play: LangStr
+
+        #: ::
+        #:
+        #:     Label for the main-menu button switching the game into Arcade
+        #:     mode (a simplified mode designed for stand-up arcade cabinets).
+        #:
+        #:     English: "Arcade Mode"
+        mode_arcade: LangStr
+
+        #: ::
+        #:
+        #:     Label for the main-menu button switching the game into Demo mode
+        #:     (a simple mode providing a few gameplay examples instead of the
+        #:     full experience).
+        #:
+        #:     English: "Demo Mode"
+        mode_demo: LangStr
+
+        #: ::
+        #:
+        #:     Heading shown in the main-menu ticker above the player's next
+        #:     unearned achievements.
+        #:
+        #:     English: "Next Achievements:"
+        next_achievements: LangStr
+
+        #: ::
+        #:
+        #:     Label for the main-menu button that exits the app (wording used
+        #:     on Mac, where apps are 'quit'; other platforms use the 'Exit
+        #:     Game' string).
+        #:
+        #:     English: "Quit"
+        quit: LangStr
+
+        #: ::
+        #:
+        #:     Watermark label shown in the main menu on special test builds of
+        #:     the game.
+        #:
+        #:     English: "Test Build"
+        test_build: LangStr
+
+    class StringsMultiteamGroup:
+        """
+        ::
+
+            Multi-team series victory and score screens: player-award headings
+            (most valuable/violent/destroyed), the "SERIES!" banner, and the
+            score-table column labels.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Column label for the death count in the score table.
+        #:
+        #:     English: "Deaths"
+        deaths: LangStr
+
+        #: ::
+        #:
+        #:     Column label for the kill count in the score table.
+        #:
+        #:     English: "Kills"
+        kills: LangStr
+
+        #: ::
+        #:
+        #:     Heading for the most-destroyed-player award.
+        #:
+        #:     English: "Most Destroyed Player"
+        most_destroyed_player: LangStr
+
+        #: ::
+        #:
+        #:     Heading for the most-valuable-player award.
+        #:
+        #:     English: "Most Valuable Player"
+        most_valuable_player: LangStr
+
+        #: ::
+        #:
+        #:     Heading for the most-violent-player award.
+        #:
+        #:     English: "Most Violent Player"
+        most_violent_player: LangStr
+
+        #: ::
+        #:
+        #:     Column label for the player name in the score table.
+        #:
+        #:     English: "Player"
+        player: LangStr
+
+        #: ::
+        #:
+        #:     All-caps "SERIES!" celebration banner.
+        #:
+        #:     English: "SERIES!"
+        series: LangStr
+
+    class StringsPartyGroup:
+        """
+        ::
+
+            Party window: member list, chat, kick/mute controls.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Button to save a party to favorites.
+        #:
+        #:     English: "Add to Favorites"
+        add_to_favorites: LangStr
+
+        #: ::
+        #:
+        #:     Error when trying to kick the host.
+        #:
+        #:     English: "You can't kick the host."
+        cant_kick_host: LangStr
+
+        #: ::
+        #:
+        #:     Label for the chat message input.
+        #:
+        #:     English: "Chat Message"
+        chat_message: LangStr
+
+        #: ::
+        #:
+        #:     Status that chat is muted.
+        #:
+        #:     English: "Chat Muted"
+        chat_muted: LangStr
+
+        #: ::
+        #:
+        #:     Placeholder when the party has no members.
+        #:
+        #:     English: "Your party is empty"
+        empty: LangStr
+
+        #: ::
+        #:
+        #:     Parenthetical marker for the party host.
+        #:
+        #:     English: "(host)"
+        host: LangStr
+
+        #: ::
+        #:
+        #:     Button to start a vote to kick a player.
+        #:
+        #:     English: "Vote to Kick"
+        kick_vote: LangStr
+
+        #: ::
+        #:
+        #:     Title of the party window.
+        #:
+        #:     English: "Your Party"
+        title: LangStr
+
+        #: ::
+        #:
+        #:     Button to unmute chat.
+        #:
+        #:     English: "Unmute Chat"
+        unmute_chat: LangStr
+
+    class StringsPartyqueueGroup:
+        """
+        ::
+
+            Party-join queue status messages.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Status while waiting in a full-party queue.
+        #:
+        #:     English: "Waiting in line (party is full)..."
+        waiting_in_line: LangStr
+
+    class StringsPlayGroup:
+        """
+        ::
+
+            Play window: player-count range labels.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Player-count label 1-4.
+        #:
+        #:     English: "1-4 players"
+        one_to_four_players: LangStr
+
+        #: ::
+        #:
+        #:     Player-count label 2-8.
+        #:
+        #:     English: "2-8 players"
+        two_to_eight_players: LangStr
+
+    class StringsPlaylistGroup:
+        """
+        ::
+
+            Playlist browser/editor UI:
+            create/edit/delete/duplicate/share/import playlists and add/remove
+            games.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Two-line button to add a game in the editor.
+        #:
+        #:     English: "Add Game"
+        add_game_button: LangStr
+
+        #: ::
+        #:
+        #:     Title of the add-game window.
+        #:
+        #:     English: "Add Game"
+        add_game_title: LangStr
+
+        #: ::
+        #:
+        #:     Error deleting the default playlist.
+        #:
+        #:     English: "You can't delete the default playlist."
+        cant_delete_default: LangStr
+
+        #: ::
+        #:
+        #:     Error editing the default playlist.
+        #:
+        #:     English: "Can't edit the default playlist! Duplicate it or create
+        #:     a new one."
+        cant_edit_default: LangStr
+
+        #: ::
+        #:
+        #:     Error overwriting the default playlist.
+        #:
+        #:     English: "Can't overwrite the default playlist!"
+        cant_overwrite_default: LangStr
+
+        #: ::
+        #:
+        #:     Error when playlist name is taken.
+        #:
+        #:     English: "A playlist with that name already exists!"
+        cant_save_already_exists: LangStr
+
+        #: ::
+        #:
+        #:     Error saving an empty playlist.
+        #:
+        #:     English: "Can't save an empty playlist!"
+        cant_save_empty: LangStr
+
+        #: ::
+        #:
+        #:     Error sharing the default playlist.
+        #:
+        #:     English: "You can't share the default playlist."
+        cant_share_default: LangStr
+
+        #: ::
+        #:
+        #:     Two-line button to delete a playlist.
+        #:
+        #:     English: "Delete Playlist"
+        delete_playlist: LangStr
+
+        #: ::
+        #:
+        #:     Two-line button to duplicate a playlist.
+        #:
+        #:     English: "Duplicate Playlist"
+        duplicate_playlist: LangStr
+
+        #: ::
+        #:
+        #:     Two-line button to edit a game in the editor.
+        #:
+        #:     English: "Edit Game"
+        edit_game_button: LangStr
+
+        #: ::
+        #:
+        #:     Two-line button to edit a playlist.
+        #:
+        #:     English: "Edit Playlist"
+        edit_playlist: LangStr
+
+        #: ::
+        #:
+        #:     Title of the playlist editor window.
+        #:
+        #:     English: "Playlist Editor"
+        editor_title: LangStr
+
+        def export_success(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Confirmation after exporting a named playlist.
+
+                English: "'{name}' exported."
+            """
+
+        #: ::
+        #:
+        #:     Button to get more game types.
+        #:
+        #:     English: "Get More Games..."
+        get_more_games: LangStr
+
+        #: ::
+        #:
+        #:     Button to get more maps.
+        #:
+        #:     English: "Get More Maps..."
+        get_more_maps: LangStr
+
+        #: ::
+        #:
+        #:     Instructions for importing a playlist by code.
+        #:
+        #:     English: "Use the following code to import this playlist
+        #:     elsewhere:"
+        import_instructions: LangStr
+
+        #: ::
+        #:
+        #:     Label for the playlist name field.
+        #:
+        #:     English: "Playlist Name"
+        list_name: LangStr
+
+        #: ::
+        #:
+        #:     Two-line button to create a new playlist.
+        #:
+        #:     English: "New Playlist"
+        new_playlist: LangStr
+
+        #: ::
+        #:
+        #:     Error when no maps suit the game type.
+        #:
+        #:     English: "No valid maps found for this game type."
+        no_valid_maps: LangStr
+
+        #: ::
+        #:
+        #:     Title for the playlists list.
+        #:
+        #:     English: "Playlists"
+        playlists: LangStr
+
+        #: ::
+        #:
+        #:     Two-line button to remove a game in the editor.
+        #:
+        #:     English: "Remove Game"
+        remove_game_button: LangStr
+
+    class StringsPlaymodesGroup:
+        """
+        ::
+
+            Play-mode names (Teams, Free-for-All, ...) shared across playlist
+            UIs, session descriptions, and settings.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     The "Co-op" (cooperative) play-mode name.
+        #:
+        #:     English: "Co-op"
+        coop: LangStr
+
+        #: ::
+        #:
+        #:     The 'Free-for-All' play mode name (every player for themselves).
+        #:
+        #:     English: "Free-for-All"
+        free_for_all: LangStr
+
+        #: ::
+        #:
+        #:     The "Single Player / Co-op" play-mode name.
+        #:
+        #:     English: "Single Player / Co-op"
+        single_player_coop: LangStr
+
+        #: ::
+        #:
+        #:     The 'Teams' play mode name (used in playlist types, session
+        #:     descriptions, etc.).
+        #:
+        #:     English: "Teams"
+        teams: LangStr
+
+    class StringsPlayoptionsGroup:
+        """
+        ::
+
+            Playlist play-options: tutorial/shuffle toggles, team names/colors,
+            unlock notices.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Error when a playlist has no playable games.
+        #:
+        #:     English: "This playlist contains no valid unlocked games."
+        no_valid_games: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox to show the tutorial.
+        #:
+        #:     English: "Show Tutorial"
+        show_tutorial: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox to shuffle the game order.
+        #:
+        #:     English: "Shuffle Game Order"
+        shuffle_game_order: LangStr
+
+        #: ::
+        #:
+        #:     Button to edit team names and colors.
+        #:
+        #:     English: "Team Names/Colors..."
+        team_names_colors: LangStr
+
+        #: ::
+        #:
+        #:     Note that an item must be unlocked in the store.
+        #:
+        #:     English: "This must be unlocked in the store."
+        unlock_in_store: LangStr
+
+    class StringsProfileGroup:
+        """
+        ::
+
+            Player-profile editor strings: create/edit/delete profiles, the
+            local/global/account profile explanations, and global-name upgrade
+            flow.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Parenthetical marker labeling the account-based profile.
+        #:
+        #:     English: "(account profile)"
+        account_profile: LangStr
+
+        def available(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Status shown when a chosen global name is available.
+
+                English: "The name {name} is available."
+            """
+
+        #: ::
+        #:
+        #:     Error when trying to delete the account profile.
+        #:
+        #:     English: "You can't delete your account profile."
+        cant_delete_account_profile: LangStr
+
+        #: ::
+        #:
+        #:     Lowercase field label for the profile character.
+        #:
+        #:     English: "character"
+        character: LangStr
+
+        def checking_availability(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Status shown while checking global-name availability.
+
+                English: "Checking availability for "{name}"..."
+            """
+
+        #: ::
+        #:
+        #:     Lowercase field label for profile color.
+        #:
+        #:     English: "color"
+        color: LangStr
+
+        def delete_confirm(self, *, profile: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Confirmation before deleting a named profile.
+
+                English: "Delete '{profile}'?"
+            """
+
+        #: ::
+        #:
+        #:     Button to get more player characters.
+        #:
+        #:     English: "Get More Characters..."
+        get_more_characters: LangStr
+
+        #: ::
+        #:
+        #:     Button to get more profile icons.
+        #:
+        #:     English: "Get More Icons..."
+        get_more_icons: LangStr
+
+        #: ::
+        #:
+        #:     Parenthetical marker labeling a global profile.
+        #:
+        #:     English: "(global profile)"
+        global_profile: LangStr
+
+        #: ::
+        #:
+        #:     Explanation of global profiles in the edit window.
+        #:
+        #:     English: "Global player profiles are guaranteed to have unique
+        #:     names worldwide. They also include custom icons."
+        global_profile_info: LangStr
+
+        #: ::
+        #:
+        #:     Lowercase field label for profile highlight color.
+        #:
+        #:     English: "highlight"
+        highlight: LangStr
+
+        #: ::
+        #:
+        #:     Lowercase field label for profile icon.
+        #:
+        #:     English: "icon"
+        icon: LangStr
+
+        def in_game_clipped_name(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Preview of how a profile name appears in-game (possibly
+                clipped).
+
+                English: "In-game: {name}"
+            """
+
+        #: ::
+        #:
+        #:     Parenthetical marker labeling a local profile.
+        #:
+        #:     English: "(local profile)"
+        local_profile: LangStr
+
+        #: ::
+        #:
+        #:     Explanation of local profiles in the edit window.
+        #:
+        #:     English: "Local player profiles have no icons and their names are
+        #:     not guaranteed to be unique. Upgrade to a global profile to
+        #:     reserve a unique name and add a custom icon."
+        local_profile_info: LangStr
+
+        #: ::
+        #:
+        #:     Label for the profile name input field.
+        #:
+        #:     English: "Player Name"
+        name_description: LangStr
+
+        #: ::
+        #:
+        #:     Error when the profile name field is empty.
+        #:
+        #:     English: "Name cannot be empty!"
+        name_not_empty: LangStr
+
+        #: ::
+        #:
+        #:     Error when the player lacks enough tickets for an upgrade.
+        #:
+        #:     English: "Not enough tickets!"
+        not_enough_tickets: LangStr
+
+        #: ::
+        #:
+        #:     Error when no item is selected.
+        #:
+        #:     English: "Nothing is selected!"
+        nothing_selected: LangStr
+
+        #: ::
+        #:
+        #:     Error when a profile name is already taken.
+        #:
+        #:     English: "A profile with that name already exists."
+        profile_already_exists: LangStr
+
+        #: ::
+        #:
+        #:     Status shown while a purchase is processing.
+        #:
+        #:     English: "Purchasing..."
+        purchasing: LangStr
+
+        #: ::
+        #:
+        #:     Title of the edit-profile window.
+        #:
+        #:     English: "Edit Profile"
+        title_edit: LangStr
+
+        #: ::
+        #:
+        #:     Title of the new-profile window.
+        #:
+        #:     English: "New Profile"
+        title_new: LangStr
+
+        def unavailable(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Status shown when a chosen global name is taken.
+
+                English: ""{name}" is unavailable. Try another name."
+            """
+
+        #: ::
+        #:
+        #:     Explanation shown in the upgrade-to-global window.
+        #:
+        #:     English: "This will reserve your player name worldwide and allow
+        #:     you to assign a custom icon to it."
+        upgrade_profile_info: LangStr
+
+        #: ::
+        #:
+        #:     Button/title to upgrade a profile to global.
+        #:
+        #:     English: "Upgrade to Global Profile"
+        upgrade_to_global: LangStr
+
+    class StringsProfilesGroup:
+        """
+        ::
+
+            Player-profile management UI: profile lists, creation, and related
+            hints.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Single-line parenthetical hint; keep the parentheses.
+        #:
+        #:     English: "(custom player names and appearances for this account)"
+        explanation: LangStr
+
+        #: ::
+        #:
+        #:     Button label.
+        #:
+        #:     English: "New Profile"
+        new_profile: LangStr
+
+        #: ::
+        #:
+        #:     Section heading / window title for player-profile management.
+        #:
+        #:     English: "Player Profiles"
+        title: LangStr
+
+    class StringsReportGroup:
+        """
+        ::
+
+            Player-report dialog: report reasons and explanation.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Report reason: cheating.
+        #:
+        #:     English: "Cheating"
+        cheating: LangStr
+
+        #: ::
+        #:
+        #:     Explanation atop the report dialog.
+        #:
+        #:     English: "Use this email to report cheating, inappropriate
+        #:     language, or other bad behavior. Please describe below:"
+        explanation: LangStr
+
+        #: ::
+        #:
+        #:     Report reason: inappropriate language.
+        #:
+        #:     English: "Inappropriate Language"
+        inappropriate_language: LangStr
+
+        #: ::
+        #:
+        #:     Prompt asking what to report.
+        #:
+        #:     English: "What would you like to report?"
+        reason: LangStr
+
+    class StringsResourcetypeinfoGroup:
+        """
+        ::
+
+            Currency info popups (tickets/tokens descriptions).
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Button to acquire tokens.
+        #:
+        #:     English: "Get Tokens"
+        get_tokens: LangStr
+
+        #: ::
+        #:
+        #:     Explanation of what tickets are and how to get them.
+        #:
+        #:     English: "Tickets can be used to unlock characters, maps,
+        #:     minigames, and more in the store. Tickets can be found in chests
+        #:     won through campaigns, tournaments, and achievements."
+        tickets_description: LangStr
+
+        #: ::
+        #:
+        #:     Explanation of what tokens are and how to get them.
+        #:
+        #:     English: "Tokens are used to speed up chest unlocks and for other
+        #:     game and account features. You can win tokens in the game or buy
+        #:     them in packs. Or buy a Gold Pass for infinite tokens and never
+        #:     hear about them again."
+        tokens_description: LangStr
+
+    class StringsSendinfoGroup:
+        """
+        ::
+
+            Send-info / promo-code dialog strings.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Explanation in the send-info dialog.
+        #:
+        #:     English: "Sends account and app state info to the developer.
+        #:     Please include your name or reason for sending."
+        send_info_description: LangStr
+
+    class StringsSettingsAdvancedGroup:
+        """
+        ::
+
+            Advanced-settings strings: language/translation section and misc
+            toggles.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Checkbox forcing the in-game on-screen keyboard for text entry.
+        #:
+        #:     English: "Always Use Internal Keyboard"
+        always_use_internal_keyboard: LangStr
+
+        #: ::
+        #:
+        #:     Explanation under the always-use-internal-keyboard checkbox.
+        #:
+        #:     English: "(a simple, controller-friendly on-screen keyboard for
+        #:     text editing)"
+        always_use_internal_keyboard_description: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox disabling gyroscope-driven camera motion (mobile).
+        #:
+        #:     English: "Disable Camera Gyroscope Motion"
+        disable_camera_gyro: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox disabling camera-shake effects.
+        #:
+        #:     English: "Disable Camera Shake"
+        disable_camera_shake: LangStr
+
+        def help_translate(self, *, app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Blurb asking for community translation help, above the
+                translation-site link.
+
+                English: "{app_name}'s non-English translations are a community
+                supported effort. If you'd like to contribute or correct a
+                translation, follow the link below. Thanks in advance!"
+            """
+
+        #: ::
+        #:
+        #:     Checkbox allowing non-TLS server connections (a
+        #:     network-workaround option).
+        #:
+        #:     English: "Use Insecure Connections"
+        insecure_connections: LangStr
+
+        #: ::
+        #:
+        #:     Explanation under the insecure-connections checkbox.
+        #:
+        #:     English: "not recommended, but may allow online play from
+        #:     restricted countries or networks"
+        insecure_connections_description: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox auto-kicking idle players.
+        #:
+        #:     English: "Kick Idle Players"
+        kick_idle_players: LangStr
+
+        #: ::
+        #:
+        #:     Selector for the display language.
+        #:
+        #:     English: "Language"
+        language: LangStr
+
+        #: ::
+        #:
+        #:     Button linking to the online modding guide.
+        #:
+        #:     English: "Modding Guide"
+        modding_guide: LangStr
+
+        #: ::
+        #:
+        #:     Button for submitting info/logs to the developer (also used for
+        #:     entering promo codes).
+        #:
+        #:     English: "Send Info"
+        send_info: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox playing demo games when idle.
+        #:
+        #:     English: "Show Demos When Idle"
+        show_demos_when_idle: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox revealing deprecated login options.
+        #:
+        #:     English: "Show Deprecated Login Types"
+        show_deprecated_login_types: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox showing network ping during games.
+        #:
+        #:     English: "Show In-Game Ping"
+        show_in_game_ping: LangStr
+
+        #: ::
+        #:
+        #:     Button revealing the user mods folder.
+        #:
+        #:     English: "Show Mods Folder"
+        show_mods_folder: LangStr
+
+        #: ::
+        #:
+        #:     Label for the advanced-settings category: language, promo codes,
+        #:     developer options, and other misc settings.
+        #:
+        #:     English: "Advanced"
+        title: LangStr
+
+        #: ::
+        #:
+        #:     Status line while the translation status loads.
+        #:
+        #:     English: "checking translation status..."
+        translation_checking: LangStr
+
+        def translation_editor(self, *, app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Button linking to the web translation editor.
+
+                English: "{app_name} Translation Editor"
+            """
+
+        #: ::
+        #:
+        #:     Status line when the translation-status query fails.
+        #:
+        #:     English: "translation status unavailable"
+        translation_fetch_error: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox subscribing to translation-update notifications for the
+        #:     user's language.
+        #:
+        #:     English: "Inform me when my language needs updates"
+        translation_inform_me: LangStr
+
+        #: ::
+        #:
+        #:     Status line when the current language has missing/outdated
+        #:     translations.
+        #:
+        #:     English: "** The current language needs updates!! **"
+        translation_needs_updates: LangStr
+
+        #: ::
+        #:
+        #:     Status line when the current language needs no translation
+        #:     updates.
+        #:
+        #:     English: "The current language is up to date; woohoo!"
+        translation_up_to_date: LangStr
+
+    class StringsSettingsAudioGroup:
+        """
+        ::
+
+            Audio-settings strings.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Slider for music volume.
+        #:
+        #:     English: "Music Volume"
+        music_volume: LangStr
+
+        #: ::
+        #:
+        #:     Slider for sound-effects volume.
+        #:
+        #:     English: "Sound Volume"
+        sound_volume: LangStr
+
+        #: ::
+        #:
+        #:     Explanation under the soundtracks button.
+        #:
+        #:     English: "(assign your own music to play during games)"
+        soundtrack_description: LangStr
+
+        #: ::
+        #:
+        #:     Button opening the custom-soundtracks feature.
+        #:
+        #:     English: "Soundtracks"
+        soundtracks: LangStr
+
+        #: ::
+        #:
+        #:     Label for the audio-settings category: volume levels and related
+        #:     sound options.
+        #:
+        #:     English: "Audio"
+        title: LangStr
+
+    class StringsSettingsBenchmarksGroup:
+        """
+        ::
+
+            Benchmark & stress-test window strings.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Error when starting a benchmark while another activity is running
+        #:     one.
+        #:
+        #:     English: "Already present in another activity."
+        already_running_in_activity: LangStr
+
+        #: ::
+        #:
+        #:     Selector for stress-test bot count.
+        #:
+        #:     English: "Player Count"
+        player_count: LangStr
+
+        #: ::
+        #:
+        #:     Description heading for the stress-test playlist.
+        #:
+        #:     English: "Stress Test Playlist"
+        playlist_description: LangStr
+
+        #: ::
+        #:
+        #:     Field for stress-test playlist name.
+        #:
+        #:     English: "Playlist Name"
+        playlist_name: LangStr
+
+        #: ::
+        #:
+        #:     Selector for stress-test playlist type.
+        #:
+        #:     English: "Playlist Type"
+        playlist_type: LangStr
+
+        #: ::
+        #:
+        #:     Selector for stress-test round length.
+        #:
+        #:     English: "Round Duration"
+        round_duration: LangStr
+
+        #: ::
+        #:
+        #:     Button running the CPU benchmark.
+        #:
+        #:     English: "Run CPU Benchmark"
+        run_cpu_benchmark: LangStr
+
+        #: ::
+        #:
+        #:     Button running the media-reload benchmark.
+        #:
+        #:     English: "Run Media-Reload Benchmark"
+        run_media_reload_benchmark: LangStr
+
+        #: ::
+        #:
+        #:     Button starting a stress test.
+        #:
+        #:     English: "Run Stress Test"
+        run_stress_test: LangStr
+
+        #: ::
+        #:
+        #:     Section heading for the stress-test options.
+        #:
+        #:     English: "Stress Test"
+        stress_test: LangStr
+
+        #: ::
+        #:
+        #:     Title of the benchmarks window; also labels the button leading
+        #:     there.
+        #:
+        #:     English: "Benchmarks & Stress Tests"
+        title: LangStr
+
+    class StringsSettingsControllersGamepadGroup:
+        """
+        ::
+
+            Game-controller (gamepad) config-window strings: button assignment
+            prompts and advanced options.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Title of the advanced controller-setup window.
+        #:
+        #:     English: "Advanced Controller Setup"
+        advanced_title: LangStr
+
+        #: ::
+        #:
+        #:     Slider for the analog-stick dead zone.
+        #:
+        #:     English: "Analog Stick Dead Zone"
+        analog_stick_dead_zone: LangStr
+
+        #: ::
+        #:
+        #:     Explanation under the dead-zone slider.
+        #:
+        #:     English: "(turn this up if your character 'drifts' when you
+        #:     release the stick)"
+        analog_stick_dead_zone_description: LangStr
+
+        #: ::
+        #:
+        #:     Note that controller-setup changes apply to every controller of
+        #:     the same type.
+        #:
+        #:     English: "(applies to all controllers of this type)"
+        applies_to_all: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox enabling analog-stick auto-recalibration.
+        #:
+        #:     English: "Auto-Recalibrate Analog Stick"
+        auto_recalibrate: LangStr
+
+        #: ::
+        #:
+        #:     Explanation under the auto-recalibrate checkbox.
+        #:
+        #:     English: "(enable this if your character does not move at full
+        #:     speed)"
+        auto_recalibrate_description: LangStr
+
+        #: ::
+        #:
+        #:     Tiny action label clearing one button assignment.
+        #:
+        #:     English: "clear"
+        clear: LangStr
+
+        #: ::
+        #:
+        #:     Tiny label for a controller's directional pad in the button
+        #:     diagram.
+        #:
+        #:     English: "D-Pad"
+        dpad: LangStr
+
+        def dpad_numbered(self, *, num: int) -> LangStr:
+            """
+            ::
+
+                Label for a numbered directional pad in the controller-setup
+                diagram (2-in-1 devices have two).
+
+                English: (one) "dpad #" / (other) "dpad #"
+            """
+
+        #: ::
+        #:
+        #:     Checkbox enabling the secondary-controller feature.
+        #:
+        #:     English: "Enable"
+        enable: LangStr
+
+        #: ::
+        #:
+        #:     Assignment slot for an additional start button.
+        #:
+        #:     English: "Extra Start Button"
+        extra_start_button: LangStr
+
+        #: ::
+        #:
+        #:     Hint shown when a dpad capture gets no input.
+        #:
+        #:     English: "If nothing happens, try assigning to the analog stick
+        #:     instead."
+        if_nothing_try_analog: LangStr
+
+        #: ::
+        #:
+        #:     Hint shown when an analog-stick capture gets no input.
+        #:
+        #:     English: "If nothing happens, try assigning to the d-pad
+        #:     instead."
+        if_nothing_try_dpad: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox making the game ignore this controller entirely.
+        #:
+        #:     English: "Ignore Completely"
+        ignore_completely: LangStr
+
+        #: ::
+        #:
+        #:     Explanation under the ignore-completely checkbox.
+        #:
+        #:     English: "(prevent this controller from affecting either the game
+        #:     or menus)"
+        ignore_completely_description: LangStr
+
+        def ignored_button(self, *, num: int) -> LangStr:
+            """
+            ::
+
+                Assignment slot for a numbered button the game should ignore
+                (slots 1-4).
+
+                English: (one) "Ignored Button #" / (other) "Ignored Button #"
+            """
+
+        #: ::
+        #:
+        #:     Explanation under the ignored-button assignments.
+        #:
+        #:     English: "(use this to prevent 'home' or 'sync' buttons from
+        #:     affecting the UI)"
+        ignored_button_description: LangStr
+
+        #: ::
+        #:
+        #:     Prompt while capturing an analog trigger assignment.
+        #:
+        #:     English: "Press any analog trigger..."
+        press_any_analog_trigger: LangStr
+
+        #: ::
+        #:
+        #:     Prompt while capturing which physical button to assign.
+        #:
+        #:     English: "Press any button..."
+        press_any_button: LangStr
+
+        #: ::
+        #:
+        #:     Prompt while capturing a button or dpad press.
+        #:
+        #:     English: "Press any button or dpad..."
+        press_any_button_or_dpad: LangStr
+
+        #: ::
+        #:
+        #:     Prompt while capturing a horizontal axis assignment.
+        #:
+        #:     English: "Press left or right..."
+        press_left_right: LangStr
+
+        #: ::
+        #:
+        #:     Prompt while capturing a vertical axis assignment.
+        #:
+        #:     English: "Press up or down..."
+        press_up_down: LangStr
+
+        def run_button(self, *, num: int) -> LangStr:
+            """
+            ::
+
+                Assignment slot for a numbered run button (1 or 2).
+
+                English: (one) "Run Button #" / (other) "Run Button #"
+            """
+
+        def run_trigger(self, *, num: int) -> LangStr:
+            """
+            ::
+
+                Assignment slot for a numbered analog run trigger (1 or 2).
+
+                English: (one) "Run Trigger #" / (other) "Run Trigger #"
+            """
+
+        #: ::
+        #:
+        #:     Explanation under the run-trigger assignments.
+        #:
+        #:     English: "(analog triggers let you run at variable speeds)"
+        run_trigger_description: LangStr
+
+        #: ::
+        #:
+        #:     Explanation of the secondary-controller feature for
+        #:     2-controllers-in-1 devices.
+        #:
+        #:     English: "Use this to configure the second half of a
+        #:     2-controllers-in-1 device that shows up as a single controller."
+        second_half: LangStr
+
+        #: ::
+        #:
+        #:     Section title for the secondary-controller settings.
+        #:
+        #:     English: "Secondary Controller"
+        secondary: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox making the start button activate the default widget.
+        #:
+        #:     English: "Start Button Activates Default Widget"
+        start_button_activates_default: LangStr
+
+        #: ::
+        #:
+        #:     Explanation under the start-button checkbox.
+        #:
+        #:     English: "(turn this off if your start button is more of a 'menu'
+        #:     button)"
+        start_button_activates_default_description: LangStr
+
+        #: ::
+        #:
+        #:     Title of the controller-setup window (assigning buttons for one
+        #:     controller type).
+        #:
+        #:     English: "Controller Setup"
+        title: LangStr
+
+        #: ::
+        #:
+        #:     Button opening the 2-controllers-in-1 setup section.
+        #:
+        #:     English: "2-in-1 Controller Setup"
+        two_in_one_setup: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox limiting this controller to menu navigation.
+        #:
+        #:     English: "Limit to Menu Use"
+        ui_only: LangStr
+
+        #: ::
+        #:
+        #:     Explanation under the menu-use-only checkbox.
+        #:
+        #:     English: "(prevent this controller from actually joining a game)"
+        ui_only_description: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox making all unassigned buttons act as run.
+        #:
+        #:     English: "All Unassigned Buttons Run"
+        unassigned_buttons_run: LangStr
+
+        #: ::
+        #:
+        #:     Placeholder shown for a button assignment with no value.
+        #:
+        #:     English: "<unset>"
+        unset: LangStr
+
+        #: ::
+        #:
+        #:     Assignment slot for the VR view-reset button.
+        #:
+        #:     English: "VR Reorient Button"
+        vr_reorient_button: LangStr
+
+    class StringsSettingsControllersKeyboardGroup:
+        """
+        ::
+
+            Keyboard config-window strings.
+
+            See source for the full asset list.
+        """
+
+        def configuring(self, *, device: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Title of the keyboard-config window, naming the device being
+                configured.
+
+                English: "Configuring {device}"
+            """
+
+        #: ::
+        #:
+        #:     Note in the second-keyboard-player config about hardware keypress
+        #:     limits.
+        #:
+        #:     English: "Note: most keyboards can only register a few keypresses
+        #:     at once, so having a second keyboard player may work better if
+        #:     there is a separate keyboard attached for them to use. Note that
+        #:     you'll still need to assign unique keys to the two players even
+        #:     in that case."
+        keyboard2_note: LangStr
+
+        #: ::
+        #:
+        #:     Prompt while capturing which key to assign.
+        #:
+        #:     English: "Press any key..."
+        press_any_key: LangStr
+
+    class StringsSettingsControllersTouchscreenGroup:
+        """
+        ::
+
+            Touchscreen config-window strings.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Slider for action-control size.
+        #:
+        #:     English: "Action Control Scale"
+        action_control_scale: LangStr
+
+        #: ::
+        #:
+        #:     Section heading for action-control options.
+        #:
+        #:     English: "Actions"
+        actions: LangStr
+
+        #: ::
+        #:
+        #:     Option value: actions via on-screen buttons.
+        #:
+        #:     English: "buttons"
+        buttons: LangStr
+
+        #: ::
+        #:
+        #:     Hint that the on-screen controls can be dragged to reposition.
+        #:
+        #:     English: "< drag controls to reposition them >"
+        drag_controls: LangStr
+
+        #: ::
+        #:
+        #:     Option value: movement via an on-screen joystick.
+        #:
+        #:     English: "Joystick"
+        joystick: LangStr
+
+        #: ::
+        #:
+        #:     Section heading for movement-control options.
+        #:
+        #:     English: "Movement"
+        movement: LangStr
+
+        #: ::
+        #:
+        #:     Slider for movement-control size.
+        #:
+        #:     English: "Movement Control Scale"
+        movement_control_scale: LangStr
+
+        #: ::
+        #:
+        #:     Option value: controls via swiping.
+        #:
+        #:     English: "swipe"
+        swipe: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox hiding the swipe-control icons.
+        #:
+        #:     English: "Hide Swipe Icons"
+        swipe_controls_hidden: LangStr
+
+        #: ::
+        #:
+        #:     Explanation of swipe-style controls.
+        #:
+        #:     English: "'Swipe' style controls take a little getting used to
+        #:     but make it easier to play without looking at the controls."
+        swipe_info: LangStr
+
+        #: ::
+        #:
+        #:     Title of the touchscreen-controls config window; also labels the
+        #:     button leading there.
+        #:
+        #:     English: "Configure Touchscreen"
+        title: LangStr
+
+    class StringsSettingsControllersGroup:
+        """
+        ::
+
+            Controller-settings strings: the category title, hub buttons, and
+            device-config notes; per-device-type config windows live in subdirs.
+
+            See source for the full asset list.
+        """
+
+        gamepad: StringsSettingsControllersGamepadGroup
+        keyboard: StringsSettingsControllersKeyboardGroup
+        touchscreen: StringsSettingsControllersTouchscreenGroup
+
+        #: ::
+        #:
+        #:     Note about controller-support variability on Android.
+        #:
+        #:     English: "Note: controller support varies by device and Android
+        #:     version."
+        android_note: LangStr
+
+        def cant_configure_device(self, *, device: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Note shown for input devices that have no configurable options.
+
+                English: "Sorry, {device} is not configurable."
+            """
+
+        #: ::
+        #:
+        #:     Button/title for configuring game controllers (controllers
+        #:     settings window and the controller-select window title).
+        #:
+        #:     English: "Configure Controllers"
+        configure_controllers: LangStr
+
+        def configure_in_system_settings(
+            self, *, device: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Note for devices configured via the OS settings app instead of
+                in-game.
+
+                English: "{device} can be configured in the System Settings
+                app."
+            """
+
+        #: ::
+        #:
+        #:     Button leading to keyboard player-1 key configuration.
+        #:
+        #:     English: "Configure Keyboard"
+        configure_keyboard: LangStr
+
+        #: ::
+        #:
+        #:     Button leading to keyboard player-2 key configuration.
+        #:
+        #:     English: "Configure Keyboard P2"
+        configure_keyboard_p2: LangStr
+
+        #: ::
+        #:
+        #:     Button leading to info about using phones/tablets as controllers.
+        #:
+        #:     English: "Mobile Devices as Controllers"
+        configure_mobile: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox disabling incoming remote-app controller connections.
+        #:
+        #:     English: "Disable Remote-App Connections"
+        disable_remote_app: LangStr
+
+        #: ::
+        #:
+        #:     Windows-only checkbox disabling the XInput controller API.
+        #:
+        #:     English: "Disable XInput"
+        disable_xinput: LangStr
+
+        #: ::
+        #:
+        #:     Explanation under the disable-XInput checkbox.
+        #:
+        #:     English: "Allows more than 4 controllers but may not work as
+        #:     well."
+        disable_xinput_description: LangStr
+
+        #: ::
+        #:
+        #:     Prompt in the controller-select window; displays until a button
+        #:     is pressed on the controller to be configured.
+        #:
+        #:     English: "Press any button on the controller you want to
+        #:     configure..."
+        press_any_button_to_configure: LangStr
+
+        #: ::
+        #:
+        #:     Wifi-quality advice in the mobile-devices-as-controllers info
+        #:     window.
+        #:
+        #:     English: "For best results you'll need a lag-free wifi network.
+        #:     You can reduce wifi lag by turning off other wireless devices, by
+        #:     playing close to your wifi router, and by connecting the game
+        #:     host directly to the network via ethernet."
+        remote_best_results: LangStr
+
+        def remote_configured_in_app(
+            self, *, remote_app_name: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Note shown when trying to configure the remote-control phone app
+                as a controller; its settings live in that app.
+
+                English: "{remote_app_name} is configured in the app itself."
+            """
+
+        def remote_explanation(
+            self, *, remote_app_name: str | LangStr, app_name: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Explanation in the mobile-devices-as-controllers info window;
+                names the remote app and the game.
+
+                English: "To use a smart-phone or tablet as a wireless
+                controller, install the "{remote_app_name}" app on it. Any
+                number of devices can connect to a {app_name} game over Wi-Fi,
+                and it's free!"
+            """
+
+        #: ::
+        #:
+        #:     Label for the controller-settings category: game controllers,
+        #:     keyboards, touch screens, and remote-control setup.
+        #:
+        #:     English: "Controllers"
+        title: LangStr
+
+    class StringsSettingsDevtoolsGroup:
+        """
+        ::
+
+            Dev-tools window strings.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Button copying system scripts into the user scripts dir for
+        #:     modding.
+        #:
+        #:     English: "Create User System Scripts"
+        create_user_system_scripts: LangStr
+
+        #: ::
+        #:
+        #:     Button deleting the user copy of system scripts.
+        #:
+        #:     English: "Delete User System Scripts"
+        delete_user_system_scripts: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox showing the on-screen dev-console button.
+        #:
+        #:     English: "Show Dev Console Button"
+        show_dev_console_button: LangStr
+
+        #: ::
+        #:
+        #:     Title of the dev-tools window; also labels the button leading
+        #:     there.
+        #:
+        #:     English: "Dev Tools"
+        title: LangStr
+
+    class StringsSettingsGraphicsGroup:
+        """
+        ::
+
+            Graphics-settings strings: the category title and option labels
+            (shared quality words like Low/High live in strings/ui).
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Checkbox toggling fullscreen display.
+        #:
+        #:     English: "Fullscreen"
+        fullscreen: LangStr
+
+        def fullscreen_shortcut_format(
+            self, *, name: str | LangStr, shortcut: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Format joining the fullscreen checkbox label with its keyboard
+                shortcut; pure substitution.
+
+                English: "{name} [{shortcut}]"
+            """
+
+        #: ::
+        #:
+        #:     Selector for the frame-rate cap.
+        #:
+        #:     English: "Max FPS"
+        max_fps: LangStr
+
+        #: ::
+        #:
+        #:     Resolution option meaning the display's native resolution.
+        #:
+        #:     English: "Native"
+        native: LangStr
+
+        #: ::
+        #:
+        #:     Selector for render resolution.
+        #:
+        #:     English: "Resolution"
+        resolution: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox showing the FPS counter.
+        #:
+        #:     English: "Show FPS"
+        show_fps: LangStr
+
+        #: ::
+        #:
+        #:     Selector for texture quality.
+        #:
+        #:     English: "Textures"
+        textures: LangStr
+
+        #: ::
+        #:
+        #:     Label for the graphics-settings category: resolution, quality,
+        #:     fullscreen, and similar visual options.
+        #:
+        #:     English: "Graphics"
+        title: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox adding a safe-area border for TVs.
+        #:
+        #:     English: "TV Border"
+        tv_border: LangStr
+
+        #: ::
+        #:
+        #:     Selector for vertical sync.
+        #:
+        #:     English: "Vertical Sync"
+        vertical_sync: LangStr
+
+        #: ::
+        #:
+        #:     Selector for overall visual quality.
+        #:
+        #:     English: "Visuals"
+        visuals: LangStr
+
+    class StringsSettingsNettestingGroup:
+        """
+        ::
+
+            Network-testing window strings.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Title of the network-testing window; also labels the button
+        #:     leading there.
+        #:
+        #:     English: "Network Testing"
+        title: LangStr
+
+    class StringsSettingsPluginsGroup:
+        """
+        ::
+
+            Plugin-management strings.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Checkbox auto-enabling newly-found plugins.
+        #:
+        #:     English: "Auto Enable New Plugins"
+        auto_enable_new: LangStr
+
+        #: ::
+        #:
+        #:     Button disabling every installed plugin.
+        #:
+        #:     English: "Disable All Plugins"
+        disable_all: LangStr
+
+        #: ::
+        #:
+        #:     Button enabling every installed plugin.
+        #:
+        #:     English: "Enable All Plugins"
+        enable_all: LangStr
+
+        #: ::
+        #:
+        #:     Placeholder when the plugins list is empty.
+        #:
+        #:     English: "No Plugins Installed"
+        none_installed: LangStr
+
+        #: ::
+        #:
+        #:     Title of the plugin-settings window.
+        #:
+        #:     English: "Plugin Settings"
+        settings_title: LangStr
+
+        #: ::
+        #:
+        #:     Title of the plugins window; also labels buttons leading there.
+        #:
+        #:     English: "Plugins"
+        title: LangStr
+
+    class StringsSettingsTestingGroup:
+        """
+        ::
+
+            Shared strings for the value-testing windows (net/VR testing
+            subclasses).
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Note atop value-testing windows that tweaks are session-only.
+        #:
+        #:     English: "Note: these values are only for testing and will be
+        #:     lost when the app exits."
+        for_testing_note: LangStr
+
+    class StringsSettingsVrtestingGroup:
+        """
+        ::
+
+            VR-testing window strings.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Title of the VR-testing window; also labels the button leading
+        #:     there.
+        #:
+        #:     English: "VR Testing"
+        title: LangStr
+
+    class StringsSettingsGroup:
+        """
+        ::
+
+            Settings-section strings: the hub window title and category names
+            (each category name also titles its own sub-window).
+
+            See source for the full asset list.
+        """
+
+        advanced: StringsSettingsAdvancedGroup
+        audio: StringsSettingsAudioGroup
+        benchmarks: StringsSettingsBenchmarksGroup
+        controllers: StringsSettingsControllersGroup
+        devtools: StringsSettingsDevtoolsGroup
+        graphics: StringsSettingsGraphicsGroup
+        nettesting: StringsSettingsNettestingGroup
+        plugins: StringsSettingsPluginsGroup
+        testing: StringsSettingsTestingGroup
+        vrtesting: StringsSettingsVrtestingGroup
+
+        #: ::
+        #:
+        #:     Title of the settings section (the hub window listing the
+        #:     settings categories); also labels buttons leading there.
+        #:
+        #:     English: "Settings"
+        title: LangStr
+
+    class StringsSoundtrackGroup:
+        """
+        ::
+
+            Custom-soundtrack editor strings: soundtrack list/edit/delete, music
+            source picker, and playlist selection.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Error when trying to delete the default soundtrack.
+        #:
+        #:     English: "You can't delete the default soundtrack."
+        cant_delete_default: LangStr
+
+        #: ::
+        #:
+        #:     Error when trying to edit the default soundtrack.
+        #:
+        #:     English: "Can't edit default soundtrack. Duplicate it or create a
+        #:     new one."
+        cant_edit_default: LangStr
+
+        #: ::
+        #:
+        #:     Error when trying to overwrite the default soundtrack.
+        #:
+        #:     English: "Can't overwrite default soundtrack"
+        cant_overwrite_default: LangStr
+
+        #: ::
+        #:
+        #:     Error when saving a soundtrack whose name is already taken.
+        #:
+        #:     English: "A soundtrack with that name already exists!"
+        cant_save_already_exists: LangStr
+
+        def copy_of(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Auto-generated name for a duplicated soundtrack.
+
+                English: "{name} Copy"
+            """
+
+        #: ::
+        #:
+        #:     Placeholder label for an entry that plays the game's default
+        #:     music.
+        #:
+        #:     English: "<default game music>"
+        default_game_music: LangStr
+
+        #: ::
+        #:
+        #:     Name of the built-in default soundtrack.
+        #:
+        #:     English: "Default Soundtrack"
+        default_soundtrack_name: LangStr
+
+        def delete_confirm(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Confirmation prompt before deleting a named soundtrack.
+
+                English: "Delete soundtrack '{name}'?"
+            """
+
+        #: ::
+        #:
+        #:     Two-line button label to delete a soundtrack.
+        #:
+        #:     English: "Delete Soundtrack"
+        delete_soundtrack: LangStr
+
+        #: ::
+        #:
+        #:     Two-line button label to duplicate a soundtrack.
+        #:
+        #:     English: "Duplicate Soundtrack"
+        duplicate_soundtrack: LangStr
+
+        #: ::
+        #:
+        #:     Two-line button label to edit a soundtrack.
+        #:
+        #:     English: "Edit Soundtrack"
+        edit_soundtrack: LangStr
+
+        #: ::
+        #:
+        #:     Status while loading Music-app playlists.
+        #:
+        #:     English: "fetching Music App playlists..."
+        fetching_itunes: LangStr
+
+        #: ::
+        #:
+        #:     Title of the music-source picker.
+        #:
+        #:     English: "Music Source"
+        music_source: LangStr
+
+        #: ::
+        #:
+        #:     Warning shown in the editor when music volume is muted.
+        #:
+        #:     English: "Warning: music volume is set to 0"
+        music_volume_zero_warning: LangStr
+
+        #: ::
+        #:
+        #:     Two-line button label to create a new soundtrack.
+        #:
+        #:     English: "New Soundtrack"
+        new_soundtrack: LangStr
+
+        def new_soundtrack_name(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Auto-generated default name for a newly-created soundtrack.
+
+                English: "My Soundtrack {count}"
+            """
+
+        #: ::
+        #:
+        #:     Title of the Music-app playlist picker.
+        #:
+        #:     English: "Select A Playlist"
+        select_a_playlist: LangStr
+
+        #: ::
+        #:
+        #:     Tiny lowercase "test" button to preview a music entry.
+        #:
+        #:     English: "test"
+        test: LangStr
+
+        #: ::
+        #:
+        #:     Title of the soundtracks section; also labels the button leading
+        #:     there.
+        #:
+        #:     English: "Soundtracks"
+        title: LangStr
+
+        #: ::
+        #:
+        #:     Music-source option: the built-in game music.
+        #:
+        #:     English: "Default Game Music"
+        use_default_game_music: LangStr
+
+        #: ::
+        #:
+        #:     Music-source option: a playlist from the system Music app.
+        #:
+        #:     English: "Music App Playlist"
+        use_itunes_playlist: LangStr
+
+        #: ::
+        #:
+        #:     Music-source option: a single music file.
+        #:
+        #:     English: "Music File (mp3, etc)"
+        use_music_file: LangStr
+
+        #: ::
+        #:
+        #:     Music-source option: a folder of music files.
+        #:
+        #:     English: "Folder of Music Files"
+        use_music_folder: LangStr
+
+    class StringsTournamententryGroup:
+        """
+        ::
+
+            Tournament-entry dialog: entry cost and watch-ad options.
+
+            See source for the full asset list.
+        """
+
+        def tickets_count(self, *, count: int) -> LangStr:
+            """
+            ::
+
+                Cost shown as a number of tickets.
+
+                English: (one) "# Ticket" / (other) "# Tickets"
+            """
+
+        #: ::
+        #:
+        #:     Title of the tournament-entry dialog.
+        #:
+        #:     English: "Tournament Entry"
+        title: LangStr
+
+        #: ::
+        #:
+        #:     Button to watch an ad for tournament entry.
+        #:
+        #:     English: "Watch an Ad"
+        watch_an_ad: LangStr
+
+    class StringsTournamentscoresGroup:
+        """
+        ::
+
+            Tournament standings window strings.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Placeholder when a tournament has no scores.
+        #:
+        #:     English: "No scores yet."
+        no_scores_yet: LangStr
+
+        #: ::
+        #:
+        #:     Title for the tournament standings window.
+        #:
+        #:     English: "Tournament Standings"
+        tournament_standings: LangStr
+
+    class StringsTutorialGroup:
+        """
+        ::
+
+            Tutorial narration lines (the coach's spoken tips as you learn the
+            controls) plus the skip-tutorial UI strings.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Notice shown while running the CPU-benchmark tutorial.
+        #:
+        #:     English: "Running tutorial at ludicrous-speed (primarily tests
+        #:     CPU speed)"
+        cpu_benchmark: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial greeting.
+        #:
+        #:     English: "Hi there!"
+        phrase01: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: intro to control tips.
+        #:
+        #:     English: "Here's a few tips for controlling your character:"
+        phrase03: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: punch example lead-in.
+        #:
+        #:     English: "For example, when you punch,.."
+        phrase05: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: punch damage explanation.
+        #:
+        #:     English: "..damage is based on the speed of your fists."
+        phrase06: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: jump-and-spin tip.
+        #:
+        #:     English: "Now let's jump and spin to get more speed."
+        phrase08: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: approval after a good move.
+        #:
+        #:     English: "Ah, that's better."
+        phrase09: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: running tip.
+        #:
+        #:     English: "Running helps too."
+        phrase10: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: how to run.
+        #:
+        #:     English: "Hold down ANY button to run."
+        phrase11: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: combined-move tip.
+        #:
+        #:     English: "For extra-awesome punches, try running AND spinning."
+        phrase12: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: intro to bombs.
+        #:
+        #:     English: "Lastly, there's bombs."
+        phrase15: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: bomb-throwing practice note.
+        #:
+        #:     English: "Throwing bombs takes practice."
+        phrase16: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: bad-throw reaction.
+        #:
+        #:     English: "Ouch! Not a very good throw."
+        phrase17: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: moving-throw tip.
+        #:
+        #:     English: "Moving helps you throw farther."
+        phrase18: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: jumping-throw tip.
+        #:
+        #:     English: "Jumping helps you throw higher."
+        phrase19: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: whiplash-throw tip.
+        #:
+        #:     English: ""Whiplash" your bombs for even longer throws."
+        phrase20: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: bomb-timing note.
+        #:
+        #:     English: "Timing your bombs can be tricky."
+        phrase21: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: mild dismay exclamation.
+        #:
+        #:     English: "Dang."
+        phrase22: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: cook-off-the-fuse tip.
+        #:
+        #:     English: "Try "cooking off" the fuse for a second or two."
+        phrase23: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: praise after a cooked bomb.
+        #:
+        #:     English: "Hooray! Nicely cooked."
+        phrase24: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: wrap-up line.
+        #:
+        #:     English: "Well, that's just about it."
+        phrase25: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: send-off encouragement.
+        #:
+        #:     English: "Now go get 'em, tiger!"
+        phrase26: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: parting motivational line.
+        #:
+        #:     English: "Remember your training, and you WILL come back alive!"
+        phrase27: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: wry qualifier after the pep talk.
+        #:
+        #:     English: "...well, maybe..."
+        phrase28: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: final good-luck wish.
+        #:
+        #:     English: "Good luck!"
+        phrase29: LangStr
+
+        #: ::
+        #:
+        #:     Confirmation prompt before skipping the tutorial.
+        #:
+        #:     English: "Really skip the tutorial? Tap or press to confirm."
+        skip_confirm: LangStr
+
+        #: ::
+        #:
+        #:     Status shown while the tutorial is being skipped.
+        #:
+        #:     English: "skipping tutorial..."
+        skipping: LangStr
+
+        #: ::
+        #:
+        #:     Hint on how to skip the tutorial.
+        #:
+        #:     English: "(tap or press anything to skip tutorial)"
+        to_skip_press_anything: LangStr
+
+    class StringsUiGroup:
+        """
+        ::
+
+            Generic UI vocabulary: short labels (buttons, dialog titles,
+            joiners) shared across many UIs. Purpose-specific wording belongs
+            elsewhere - see each entry's docs for what it is and is not.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Generic "Achievements" label/heading.
+        #:
+        #:     English: "Achievements"
+        achievements: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Activity" label.
+        #:
+        #:     English: "Activity"
+        activity: LangStr
+
+        #: ::
+        #:
+        #:     Generic 'All' filter/category label (e.g. showing all items in a
+        #:     list).
+        #:
+        #:     English: "All"
+        all: LangStr
+
+        #: ::
+        #:
+        #:     Generic 'Always' option value (e.g. when to apply an effect).
+        #:
+        #:     English: "Always"
+        always: LangStr
+
+        #: ::
+        #:
+        #:     The app's name; byte-identical in every language.
+        #:
+        #:     English: "BombSquad"
+        app_name: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Apply" button label.
+        #:
+        #:     English: "Apply"
+        apply: LangStr
+
+        #: ::
+        #:
+        #:     Generic 'Auto' option value (automatic selection, e.g. graphics
+        #:     quality or resolution).
+        #:
+        #:     English: "Auto"
+        auto: LangStr
+
+        #: ::
+        #:
+        #:     Generic back-navigation button label.
+        #:
+        #:     English: "Back"
+        back: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Boost" button label.
+        #:
+        #:     English: "Boost"
+        boost: LangStr
+
+        #: ::
+        #:
+        #:     Abort button label; backs out of a dialog or in-progress action
+        #:     without applying anything. NOT a "no" answer to a question and
+        #:     not "back" navigation.
+        #:
+        #:     English: "Cancel"
+        cancel: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Code" field label.
+        #:
+        #:     English: "Code"
+        code: LangStr
+
+        #: ::
+        #:
+        #:     Confirmation label; commits a pending action (purchases and other
+        #:     are-you-sure moments). Appears on commit buttons and as
+        #:     confirm-dialog titles. Stronger than "ok" — implies something
+        #:     happens as a result.
+        #:
+        #:     English: "Confirm"
+        confirm: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Connect" button label.
+        #:
+        #:     English: "Connect"
+        connect: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Connected." status label.
+        #:
+        #:     English: "Connected."
+        connected: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Connecting..." status label.
+        #:
+        #:     English: "Connecting..."
+        connecting: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Continue" button label.
+        #:
+        #:     English: "Continue"
+        continue_: LangStr
+
+        #: ::
+        #:
+        #:     Confirmation shown after copying text to the clipboard.
+        #:
+        #:     English: "Copied to clipboard."
+        copied_to_clipboard: LangStr
+
+        #: ::
+        #:
+        #:     Generic copy-to-clipboard button label.
+        #:
+        #:     English: "Copy"
+        copy: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Customize..." button label.
+        #:
+        #:     English: "Customize..."
+        customize: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Delete" button label.
+        #:
+        #:     English: "Delete"
+        delete: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Demo" label.
+        #:
+        #:     English: "Demo"
+        demo: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Deprecated" marker for outdated options.
+        #:
+        #:     English: "Deprecated"
+        deprecated: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Description" field label.
+        #:
+        #:     English: "Description"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Instruction to open a URL in a web browser.
+        #:
+        #:     English: "Please direct a web-browser to the following URL:"
+        direct_browser_to_url: LangStr
+
+        #: ::
+        #:
+        #:     Generic 'Disabled' state/filter label.
+        #:
+        #:     English: "Disabled"
+        disabled: LangStr
+
+        #: ::
+        #:
+        #:     Completion button label; closes a screen or flow the user has
+        #:     finished working in. Implies completed work — not a generic
+        #:     "close" or "back".
+        #:
+        #:     English: "Done"
+        done: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Duplicate" button label.
+        #:
+        #:     English: "Duplicate"
+        duplicate: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Easy" difficulty label.
+        #:
+        #:     English: "Easy"
+        easy: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Edit" button label.
+        #:
+        #:     English: "Edit"
+        edit: LangStr
+
+        #: ::
+        #:
+        #:     Generic 'Enabled' state/filter label.
+        #:
+        #:     English: "Enabled"
+        enabled: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Enter" button label.
+        #:
+        #:     English: "Enter"
+        enter: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Epic Mode" label.
+        #:
+        #:     English: "Epic Mode"
+        epic_mode: LangStr
+
+        #: ::
+        #:
+        #:     Error-dialog title label; the dialog body carries the failure
+        #:     details. Title only — never used as a full error message.
+        #:
+        #:     English: "Error"
+        error: LangStr
+
+        #: ::
+        #:
+        #:     Generic error-page message.
+        #:
+        #:     English: "An error has occurred."
+        error_occurred: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Filter" label.
+        #:
+        #:     English: "Filter"
+        filter: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Final Score" label.
+        #:
+        #:     English: "Final Score"
+        final_score: LangStr
+
+        #: ::
+        #:
+        #:     Emphatic "FREE!" label.
+        #:
+        #:     English: "FREE!"
+        free: LangStr
+
+        #: ::
+        #:
+        #:     The Apple "Game Center" service name; byte-identical in every
+        #:     language.
+        #:
+        #:     English: "Game Center"
+        game_center: LangStr
+
+        #: ::
+        #:
+        #:     The "Google Play" service name; byte-identical in every language.
+        #:
+        #:     English: "Google Play"
+        google_play: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Hard" difficulty label.
+        #:
+        #:     English: "Hard"
+        hard: LangStr
+
+        #: ::
+        #:
+        #:     Generic 'High' quality-level option value.
+        #:
+        #:     English: "High"
+        high: LangStr
+
+        #: ::
+        #:
+        #:     Generic 'Higher' quality-level option value (a step above
+        #:     'High').
+        #:
+        #:     English: "Higher"
+        higher: LangStr
+
+        def icon_label(
+            self, *, icon: str | LangStr, label: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Pure-formatting template joining an icon glyph and a text label
+                with a space; substitution-only.
+
+                English: "{icon} {label}"
+            """
+
+        #: ::
+        #:
+        #:     Generic "Import" button label.
+        #:
+        #:     English: "Import"
+        import_: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Importing..." status label.
+        #:
+        #:     English: "Importing..."
+        importing: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Inbox" label.
+        #:
+        #:     English: "Inbox"
+        inbox: LangStr
+
+        #: ::
+        #:
+        #:     Parenthetical "(invalid)" marker.
+        #:
+        #:     English: "(invalid)"
+        invalid: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Kick" button label.
+        #:
+        #:     English: "Kick"
+        kick: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Leaderboards" label.
+        #:
+        #:     English: "Leaderboards"
+        leaderboards: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Learn More" button label.
+        #:
+        #:     English: "Learn More"
+        learn_more: LangStr
+
+        #: ::
+        #:
+        #:     Generic lowercase "loading" status word.
+        #:
+        #:     English: "loading"
+        loading: LangStr
+
+        #: ::
+        #:
+        #:     Generic 'Low' quality-level option value.
+        #:
+        #:     English: "Low"
+        low: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Map" label.
+        #:
+        #:     English: "Map"
+        map: LangStr
+
+        #: ::
+        #:
+        #:     Generic 'Medium' quality-level option value.
+        #:
+        #:     English: "Medium"
+        medium: LangStr
+
+        #: ::
+        #:
+        #:     Generic "More..." label for expanding a list or seeing additional
+        #:     items.
+        #:
+        #:     English: "More..."
+        more: LangStr
+
+        #: ::
+        #:
+        #:     Notice shown when a changed setting only takes effect after an
+        #:     app restart.
+        #:
+        #:     English: "You must restart the game for this to take effect."
+        must_restart: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Name" field label.
+        #:
+        #:     English: "Name"
+        name: LangStr
+
+        #: ::
+        #:
+        #:     Error-page message.
+        #:
+        #:     English: "You must update the app to view this."
+        need_update: LangStr
+
+        #: ::
+        #:
+        #:     Generic 'Never' option value (e.g. when to apply an effect).
+        #:
+        #:     English: "Never"
+        never: LangStr
+
+        #: ::
+        #:
+        #:     Generic "New" button label.
+        #:
+        #:     English: "New"
+        new: LangStr
+
+        #: ::
+        #:
+        #:     Generic "not available" apology.
+        #:
+        #:     English: "Sorry, this is not available."
+        not_available: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Not Now" dismiss button.
+        #:
+        #:     English: "Not Now"
+        not_now: LangStr
+
+        #: ::
+        #:
+        #:     Lowercase "not signed in" status indicator.
+        #:
+        #:     English: "not signed in"
+        not_signed_in_status: LangStr
+
+        #: ::
+        #:
+        #:     Placeholder label shown on an empty doc-ui section with no items
+        #:     to display.
+        #:
+        #:     English: "There is nothing here."
+        nothing_here: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Off" toggle label.
+        #:
+        #:     English: "Off"
+        off: LangStr
+
+        #: ::
+        #:
+        #:     Generic affirmative/acknowledge button label; dismisses a dialog
+        #:     or message with agreement. NOT a "yes" answer to a question (use
+        #:     a dedicated yes/no pair for those).
+        #:
+        #:     English: "Ok"
+        ok: LangStr
+
+        #: ::
+        #:
+        #:     Generic "On" toggle label.
+        #:
+        #:     English: "On"
+        on: LangStr
+
+        #: ::
+        #:
+        #:     Generic "One Moment..." status line.
+        #:
+        #:     English: "One Moment..."
+        one_moment: LangStr
+
+        def or_join(self, *, a: str | LangStr, b: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Joiner between exactly two complete pre-rendered alternatives
+                (e.g. a price payable in either of two currencies: "500 tickets
+                or 10 tokens"). Not for lists of three or more and not a
+                standalone "or" word.
+
+                English: "{a} or {b}"
+            """
+
+        #: ::
+        #:
+        #:     Generic "Other..." option label.
+        #:
+        #:     English: "Other..."
+        other: LangStr
+
+        #: ::
+        #:
+        #:     Transient screen-message.
+        #:
+        #:     English: "Page is refreshing - try again in a moment."
+        page_refreshing_try_again: LangStr
+
+        def paren_suffix(
+            self, *, main: str | LangStr, note: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Pure-formatting template appending a parenthesized note to a
+                main label; substitution-only.
+
+                English: "{main} ({note})"
+            """
+
+        #: ::
+        #:
+        #:     General 'Play' action label; used for the main-menu Play button
+        #:     and the tournament-entry play button.
+        #:
+        #:     English: "Play"
+        play: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Playlist" label.
+        #:
+        #:     English: "Playlist"
+        playlist: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Please wait..." status line.
+        #:
+        #:     English: "Please wait..."
+        please_wait: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Points" label.
+        #:
+        #:     English: "Points"
+        points: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Practice" label.
+        #:
+        #:     English: "Practice"
+        practice: LangStr
+
+        #: ::
+        #:
+        #:     Generic 'Random' option value (e.g. random playlist type).
+        #:
+        #:     English: "Random"
+        random: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Rank" label.
+        #:
+        #:     English: "Rank"
+        rank: LangStr
+
+        #: ::
+        #:
+        #:     The remote-control companion app's name; byte-identical in every
+        #:     language.
+        #:
+        #:     English: "BombSquad Remote"
+        remote_app_name: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Rename" button label.
+        #:
+        #:     English: "Rename"
+        rename: LangStr
+
+        #: ::
+        #:
+        #:     Generic reset-to-defaults button label.
+        #:
+        #:     English: "Reset"
+        reset: LangStr
+
+        #: ::
+        #:
+        #:     Button label.
+        #:
+        #:     English: "Retry"
+        retry: LangStr
+
+        #: ::
+        #:
+        #:     Generic save-changes button label.
+        #:
+        #:     English: "Save"
+        save: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Select" button label.
+        #:
+        #:     English: "Select"
+        select: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Select..." button label.
+        #:
+        #:     English: "Select..."
+        select_ellipsis: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Send" button label.
+        #:
+        #:     English: "Send"
+        send: LangStr
+
+        #: ::
+        #:
+        #:     Error-page message; usually paired with a Retry button.
+        #:
+        #:     English: "Error talking to server."
+        server_error: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Share" button label.
+        #:
+        #:     English: "Share"
+        share: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Sharing..." status label.
+        #:
+        #:     English: "Sharing..."
+        sharing: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Show" button label.
+        #:
+        #:     English: "Show"
+        show: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Stats" label.
+        #:
+        #:     English: "Stats"
+        stats: LangStr
+
+        #: ::
+        #:
+        #:     Notice shown when a feature needs the OS storage-access
+        #:     permission (mobile).
+        #:
+        #:     English: "This requires storage access"
+        storage_permission_needed: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Submit" button label.
+        #:
+        #:     English: "Submit"
+        submit: LangStr
+
+        #: ::
+        #:
+        #:     Lowercase "total" label.
+        #:
+        #:     English: "total"
+        total: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Trophies" label.
+        #:
+        #:     English: "Trophies"
+        trophies: LangStr
+
+        #: ::
+        #:
+        #:     Generic failure message asking the player to retry.
+        #:
+        #:     English: "Unable to complete this right now. Please try again."
+        unable_to_complete: LangStr
+
+        #: ::
+        #:
+        #:     Notice when a feature is unavailable, likely due to no internet.
+        #:
+        #:     English: "This is currently unavailable (no internet
+        #:     connection?)"
+        unavailable_no_connection: LangStr
+
+        #: ::
+        #:
+        #:     Lowercase "unavailable" status indicator.
+        #:
+        #:     English: "unavailable"
+        unavailable_status: LangStr
+
+        #: ::
+        #:
+        #:     Error/placeholder-page message.
+        #:
+        #:     English: "Under construction - check back soon."
+        under_construction: LangStr
+
+        #: ::
+        #:
+        #:     Generic "Upgrade" button label.
+        #:
+        #:     English: "Upgrade"
+        upgrade: LangStr
+
+        #: ::
+        #:
+        #:     Small connector word "via" (as in "signed in via X").
+        #:
+        #:     English: "via"
+        via: LangStr
+
+        #: ::
+        #:
+        #:     Generic "What is this?" help link.
+        #:
+        #:     English: "What is this?"
+        what_is_this: LangStr
+
+    class StringsV2upgradeGroup:
+        """
+        ::
+
+            Device-account -> V2-account upgrade prompt.
+
+            See source for the full asset list.
+        """
+
+        def device_account_upgrade(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Warning to upgrade a device account to a V2 account.
+
+                English: "Warning: You are signed in with a device account
+                ({name}). Device accounts will be removed in a future update.
+                Upgrade to a V2 account to keep your progress."
+            """
+
+    class StringsWatchGroup:
+        """
+        ::
+
+            Watch-section strings: replay browsing and playback UI.
+
+            See source for the full asset list.
+        """
+
+        def delete_confirm(self, *, replay: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Confirmation before deleting a named replay.
+
+                English: "Delete "{replay}"?"
+            """
+
+        #: ::
+        #:
+        #:     Two-line button to delete a replay.
+        #:
+        #:     English: "Delete Replay"
+        delete_replay_button: LangStr
+
+        #: ::
+        #:
+        #:     Heading for the list of the player's replays.
+        #:
+        #:     English: "My Replays"
+        my_replays: LangStr
+
+        #: ::
+        #:
+        #:     Error when no replay is selected.
+        #:
+        #:     English: "No Replay Selected"
+        no_replay_selected: LangStr
+
+        def playback_speed(self, *, speed: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Label showing the current replay playback-speed multiplier
+                (in-game replay controls and the watch section).
+
+                English: "Playback Speed: {speed}"
+            """
+
+        def rename_replay(self, *, replay: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Prompt to rename a named replay.
+
+                English: "Rename "{replay}" to:"
+            """
+
+        #: ::
+        #:
+        #:     Two-line button to rename a replay.
+        #:
+        #:     English: "Rename Replay"
+        rename_replay_button: LangStr
+
+        def rename_warning(self, *, replay: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Warning to rename a replay so it is not overwritten.
+
+                English: "Rename "{replay}" after a game to keep it; otherwise
+                it will be overwritten."
+            """
+
+        #: ::
+        #:
+        #:     Error when deleting a replay fails.
+        #:
+        #:     English: "Error deleting replay."
+        replay_delete_error: LangStr
+
+        #: ::
+        #:
+        #:     Label for the replay name field.
+        #:
+        #:     English: "Replay Name"
+        replay_name: LangStr
+
+        #: ::
+        #:
+        #:     Default name for the most recent replay.
+        #:
+        #:     English: "Last Game Replay"
+        replay_name_default: LangStr
+
+        #: ::
+        #:
+        #:     Error when renaming a replay fails.
+        #:
+        #:     English: "Error renaming replay."
+        replay_rename_error: LangStr
+
+        #: ::
+        #:
+        #:     Error when a replay rename name is bad.
+        #:
+        #:     English: "Can't rename replay; invalid name."
+        replay_rename_error_invalid: LangStr
+
+        #: ::
+        #:
+        #:     Title of the Watch section, where players view replays of
+        #:     previous games; also labels the main-menu button leading there.
+        #:
+        #:     English: "Watch"
+        title: LangStr
+
+        #: ::
+        #:
+        #:     Two-line button to watch a replay.
+        #:
+        #:     English: "Watch Replay"
+        watch_replay_button: LangStr
+
+    class StringsGroup:
+        """
+        ::
+
+            All standard game strings (everything non-bootstrap).
+
+            See source for the full asset list.
+        """
+
+        account: StringsAccountGroup
+        appinvite: StringsAppinviteGroup
+        chest: StringsChestGroup
+        coop: StringsCoopGroup
+        coopscore: StringsCoopscoreGroup
+        credits: StringsCreditsGroup
+        economy: StringsEconomyGroup
+        fileselector: StringsFileselectorGroup
+        game: StringsGameGroup
+        gather: StringsGatherGroup
+        getremote: StringsGetremoteGroup
+        gettokens: StringsGettokensGroup
+        help: StringsHelpGroup
+        inbox: StringsInboxGroup
+        ingamemenu: StringsIngamemenuGroup
+        inventory: StringsInventoryGroup
+        kiosk: StringsKioskGroup
+        league: StringsLeagueGroup
+        mainmenu: StringsMainmenuGroup
+        multiteam: StringsMultiteamGroup
+        party: StringsPartyGroup
+        partyqueue: StringsPartyqueueGroup
+        play: StringsPlayGroup
+        playlist: StringsPlaylistGroup
+        playmodes: StringsPlaymodesGroup
+        playoptions: StringsPlayoptionsGroup
+        profile: StringsProfileGroup
+        profiles: StringsProfilesGroup
+        report: StringsReportGroup
+        resourcetypeinfo: StringsResourcetypeinfoGroup
+        sendinfo: StringsSendinfoGroup
+        settings: StringsSettingsGroup
+        soundtrack: StringsSoundtrackGroup
+        tournamententry: StringsTournamententryGroup
+        tournamentscores: StringsTournamentscoresGroup
+        tutorial: StringsTutorialGroup
+        ui: StringsUiGroup
+        v2upgrade: StringsV2upgradeGroup
+        watch: StringsWatchGroup
+
     class TexturesGroup:
-        """Asset-group type; see source for the full list."""
+        """
+        ::
+
+            All standard game textures (everything non-bootstrap).
+
+            See source for the full asset list.
+        """
 
         achievement_boxer: TextureRef
         achievement_cross_hair: TextureRef
@@ -1128,6 +6713,10 @@ if TYPE_CHECKING:
     #: ``action_hero_fore_arm``, ``action_hero_hand``, ``action_hero_head``,
     #: ``action_hero_lower_leg``, and 355 more). Full list in source.
     meshes: MeshesGroup
+
+    #: The ``strings`` group - 656 strings (``account``, ``appinvite``,
+    #: ``chest``, ``coop``, ``coopscore``, and 651 more). Full list in source.
+    strings: StringsGroup
 
     #: The ``textures`` group - 313 assets (``achievement_boxer``,
     #: ``achievement_cross_hair``, ``achievement_dual_wielding``,
@@ -1912,6 +7501,742 @@ _TREE = {
         'zoe_upper_arm': 'm',
         'zoe_upper_leg': 'm',
     },
+    'strings': {
+        'account': {
+            'accounts': (),
+            'achievement_progress': ('complete', 'total'),
+            'ban_this_player': (),
+            'campaign_progress': ('progress',),
+            'create_an_account': (),
+            'delete_account': (),
+            'manage_account': (),
+            'not_signed_in': (),
+            'player_info': (),
+            'report_this_player': (),
+            'sign_in': (),
+            'sign_in_info': (),
+            'sign_in_no_connection': (),
+            'sign_in_with': ('service',),
+            'sign_in_with_device': (),
+            'sign_in_with_device_info': (),
+            'sign_in_with_email': (),
+            'sign_out': (),
+            'signing_in': (),
+            'signing_out': (),
+            'tickets': ('count',),
+            'title': (),
+            'trophies_this_season': (),
+            'v2_link_instructions': (),
+            'you_are_signed_in_as': (),
+        },
+        'appinvite': {
+            'email_it': (),
+            'enjoy': (),
+            'friend_has_sent_promo': ('count', 'app_name', 'name'),
+            'friend_promo_award': ('count',),
+            'friend_promo_expire': ('expire_hours',),
+            'friend_promo_instructions': ('app_name',),
+            'friend_promo_redeem_short': ('count',),
+            'requesting_code': (),
+            'share_code': (),
+            'you_have_been_sent_promo': ('app_name',),
+        },
+        'chest': {
+            'open': (),
+            'open_me': (),
+            'open_now': (),
+            'open_now_description': (),
+            'prize_odds': (),
+            'reduce_wait': (),
+            'slot_description': (),
+            'slot_number': ('num',),
+            'stop_reminding_me': (),
+            'unlocks_in': (),
+        },
+        'coop': {
+            'achievements_remaining': (),
+            'campaign': (),
+            'chest_slots_full_warning': (),
+            'current_best': (),
+            'custom': (),
+            'difficulty_hard_only': (),
+            'difficulty_hard_unlock_only': (),
+            'entry_fee': (),
+            'level_is_locked': ('level',),
+            'level_must_be_completed_first': ('level',),
+            'no_achievements_remaining': (),
+            'no_tournaments_in_test_build': (),
+            'of_total': ('total',),
+            'player_count_abbreviated': ('count',),
+            'prizes': (),
+            'time_remaining': (),
+            'tournament': (),
+            'tournament_checking_state': (),
+            'tournament_ended': (),
+            'tournament_info': (),
+            'tournaments': (),
+            'tournaments_disabled_workspace': (),
+        },
+        'coopscore': {
+            'complete_level_to_proceed': (),
+            'friend_scores_unavailable': (),
+            'not_enough_players_remaining': (),
+            'score_list_unavailable': (),
+            'tournament_standings': (),
+            'world_scores_unavailable': (),
+            'worlds_best_scores': (),
+            'worlds_best_times': (),
+            'your_best_scores': (),
+            'your_best_times': (),
+        },
+        'credits': {
+            'additional_audio_art_ideas': ('name',),
+            'additional_music_from': ('name',),
+            'all_my_family': (),
+            'coding_graphics_audio': ('name',),
+            'language_translations': (),
+            'legal': (),
+            'public_domain_music_via': ('name',),
+            'software_based_on': ('name',),
+            'sound_and_music': (),
+            'sounds_source': ('source',),
+            'special_thanks': (),
+            'thanks_especially_to': ('name',),
+            'title': ('app_name',),
+            'whoever_invented_coffee': (),
+        },
+        'economy': {'you_got_tokens': ('tokens',)},
+        'fileselector': {
+            'select_file': (),
+            'select_file_or_folder': (),
+            'select_folder': (),
+            'use_this_folder': (),
+        },
+        'game': {
+            'completion_bonus': (),
+            'draw': (),
+            'fail': (),
+            'final_scores': (),
+            'flawless_wave': (),
+            'own_flag_at_base_warning': (),
+            'press_any_button_play_again': (),
+            'press_any_key_button_play_again': (),
+            'press_jump_to_fly': (),
+            'reach_wave_2': (),
+            'score': (),
+            'victory': (),
+            'vs': (),
+        },
+        'gather': {
+            'about': (),
+            'added_to_favorites': ('name',),
+            'address_fetch_error': (),
+            'checking': (),
+            'connect': (),
+            'copy_code': (),
+            'copy_code_confirm': (),
+            'dedicated_server_info': (),
+            'delete_confirm_list': ('list',),
+            'description_short': (),
+            'disconnect_clients': ('count',),
+            'discord_friends': (),
+            'discord_join': (),
+            'favorites': (),
+            'favorites_save': (),
+            'free_cloud_server_available': (),
+            'free_cloud_server_available_minutes': ('minutes',),
+            'get_friend_invite_code': (),
+            'host_public_party': (),
+            'hosting_unavailable': (),
+            'invalid_address_error': (),
+            'invalid_name_error': (),
+            'invalid_port_error': (),
+            'invite_a_friend': ('count',),
+            'invite_friends': (),
+            'join_public_party': (),
+            'joinable_from_internet': (),
+            'joinable_no': (),
+            'joinable_yes': (),
+            'local_network_description': (),
+            'make_party_private': (),
+            'make_party_public': (),
+            'manual': (),
+            'manual_address': (),
+            'manual_description': (),
+            'manual_join_section': (),
+            'max_connections': (),
+            'max_party_size': (),
+            'nearby': (),
+            'no_connection': (),
+            'no_parties_added': (),
+            'no_servers_found': (),
+            'party_code': (),
+            'party_name': (),
+            'party_requires_password': (),
+            'party_server_running': (),
+            'party_size': (),
+            'party_status_checking': (),
+            'party_status_joinable': (),
+            'party_status_no_connection': (),
+            'party_status_not_public': (),
+            'password_optional': (),
+            'ping': (),
+            'port': (),
+            'private': (),
+            'private_party_cloud_description': (),
+            'private_party_host': (),
+            'private_party_join': (),
+            'public': (),
+            'public_host_router_config': (),
+            'router_forwarding': ('port',),
+            'show_my_address': (),
+            'start_hosting': (),
+            'start_hosting_paid': ('cost',),
+            'start_stop_hosting_minutes': ('minutes',),
+            'stop_hosting': (),
+            'title': (),
+            'unable_to_resolve_host': (),
+            'v2_account_required': (),
+            'your_address_from_internet': (),
+            'your_local_address': (),
+        },
+        'getremote': {'info_short': ('app_name', 'remote_app_name')},
+        'gettokens': {
+            'gold_pass': (),
+            'gold_pass_desc1': (),
+            'gold_pass_desc2': (),
+            'gold_pass_desc3': (),
+            'not_enough_tokens': (),
+            'num_tokens': ('count',),
+            'purchase_never_available': (),
+            'purchase_not_available': (),
+            'remove_ads_offer': (),
+            'shiny_new_currency': (),
+            'you_have_gold_pass': (),
+        },
+        'help': {
+            'bomb_info': (),
+            'can_help': ('app_name',),
+            'controllers': (),
+            'controllers_info': ('app_name', 'remote_app_name'),
+            'controls': (),
+            'controls_subtitle': ('app_name',),
+            'devices': (),
+            'devices_info': ('app_name',),
+            'friends': (),
+            'friends_good': ('app_name',),
+            'jump_info': (),
+            'or_punching_something': (),
+            'pick_up_info': (),
+            'powerups': (),
+            'powerups_subtitle': (),
+            'punch_info': (),
+            'run_info': (),
+            'some_days': (),
+            'title': ('app_name',),
+            'to_get_the_most': (),
+            'welcome': ('app_name',),
+        },
+        'inbox': {
+            'expired_ago': ('t',),
+            'expires_in': ('t',),
+            'final_standings': (),
+            'must_update': (),
+            'no_messages': (),
+            'your_prize': (),
+        },
+        'ingamemenu': {
+            'end_game': (),
+            'end_replay': (),
+            'end_test': (),
+            'exit_to_menu_confirm': (),
+            'just_player': ('name',),
+            'leave_game': (),
+            'leave_party': (),
+            'leave_party_confirm': (),
+            'resume': (),
+        },
+        'inventory': {
+            'only_available_online': (),
+            'only_available_signed_in': (),
+            'title': (),
+        },
+        'kiosk': {
+            'demo_menu': (),
+            'full_menu': (),
+            'single_player_examples': (),
+            'versus_examples': (),
+        },
+        'league': {
+            'achievements_unavailable_old_seasons': (),
+            'all_time': (),
+            'current_season': ('number',),
+            'league': (),
+            'league_president': (),
+            'league_rank': (),
+            'multipliers': (),
+            'number_badge': ('number',),
+            'power_ranking': (),
+            'power_ranking_points_equals': ('number',),
+            'power_ranking_points_mult': ('number',),
+            'season': ('number',),
+            'season_ended_days_ago': ('days',),
+            'season_ends_days': ('days',),
+            'season_ends_hours': ('hours',),
+            'season_ends_minutes': ('minutes',),
+            'to_ranked': (),
+            'trophy_counts_reset': (),
+            'up_to_date_bonus': (),
+            'up_to_date_bonus_description': ('percent',),
+            'your_power_ranking': (),
+        },
+        'mainmenu': {
+            'credits': (),
+            'exit_game': (),
+            'host_navigating_menus': ('host',),
+            'how_to_play': (),
+            'mode_arcade': (),
+            'mode_demo': (),
+            'next_achievements': (),
+            'quit': (),
+            'test_build': (),
+        },
+        'multiteam': {
+            'deaths': (),
+            'kills': (),
+            'most_destroyed_player': (),
+            'most_valuable_player': (),
+            'most_violent_player': (),
+            'player': (),
+            'series': (),
+        },
+        'party': {
+            'add_to_favorites': (),
+            'cant_kick_host': (),
+            'chat_message': (),
+            'chat_muted': (),
+            'empty': (),
+            'host': (),
+            'kick_vote': (),
+            'title': (),
+            'unmute_chat': (),
+        },
+        'partyqueue': {'waiting_in_line': ()},
+        'play': {'one_to_four_players': (), 'two_to_eight_players': ()},
+        'playlist': {
+            'add_game_button': (),
+            'add_game_title': (),
+            'cant_delete_default': (),
+            'cant_edit_default': (),
+            'cant_overwrite_default': (),
+            'cant_save_already_exists': (),
+            'cant_save_empty': (),
+            'cant_share_default': (),
+            'delete_playlist': (),
+            'duplicate_playlist': (),
+            'edit_game_button': (),
+            'edit_playlist': (),
+            'editor_title': (),
+            'export_success': ('name',),
+            'get_more_games': (),
+            'get_more_maps': (),
+            'import_instructions': (),
+            'list_name': (),
+            'new_playlist': (),
+            'no_valid_maps': (),
+            'playlists': (),
+            'remove_game_button': (),
+        },
+        'playmodes': {
+            'coop': (),
+            'free_for_all': (),
+            'single_player_coop': (),
+            'teams': (),
+        },
+        'playoptions': {
+            'no_valid_games': (),
+            'show_tutorial': (),
+            'shuffle_game_order': (),
+            'team_names_colors': (),
+            'unlock_in_store': (),
+        },
+        'profile': {
+            'account_profile': (),
+            'available': ('name',),
+            'cant_delete_account_profile': (),
+            'character': (),
+            'checking_availability': ('name',),
+            'color': (),
+            'delete_confirm': ('profile',),
+            'get_more_characters': (),
+            'get_more_icons': (),
+            'global_profile': (),
+            'global_profile_info': (),
+            'highlight': (),
+            'icon': (),
+            'in_game_clipped_name': ('name',),
+            'local_profile': (),
+            'local_profile_info': (),
+            'name_description': (),
+            'name_not_empty': (),
+            'not_enough_tickets': (),
+            'nothing_selected': (),
+            'profile_already_exists': (),
+            'purchasing': (),
+            'title_edit': (),
+            'title_new': (),
+            'unavailable': ('name',),
+            'upgrade_profile_info': (),
+            'upgrade_to_global': (),
+        },
+        'profiles': {'explanation': (), 'new_profile': (), 'title': ()},
+        'report': {
+            'cheating': (),
+            'explanation': (),
+            'inappropriate_language': (),
+            'reason': (),
+        },
+        'resourcetypeinfo': {
+            'get_tokens': (),
+            'tickets_description': (),
+            'tokens_description': (),
+        },
+        'sendinfo': {'send_info_description': ()},
+        'settings': {
+            'advanced': {
+                'always_use_internal_keyboard': (),
+                'always_use_internal_keyboard_description': (),
+                'disable_camera_gyro': (),
+                'disable_camera_shake': (),
+                'help_translate': ('app_name',),
+                'insecure_connections': (),
+                'insecure_connections_description': (),
+                'kick_idle_players': (),
+                'language': (),
+                'modding_guide': (),
+                'send_info': (),
+                'show_demos_when_idle': (),
+                'show_deprecated_login_types': (),
+                'show_in_game_ping': (),
+                'show_mods_folder': (),
+                'title': (),
+                'translation_checking': (),
+                'translation_editor': ('app_name',),
+                'translation_fetch_error': (),
+                'translation_inform_me': (),
+                'translation_needs_updates': (),
+                'translation_up_to_date': (),
+            },
+            'audio': {
+                'music_volume': (),
+                'sound_volume': (),
+                'soundtrack_description': (),
+                'soundtracks': (),
+                'title': (),
+            },
+            'benchmarks': {
+                'already_running_in_activity': (),
+                'player_count': (),
+                'playlist_description': (),
+                'playlist_name': (),
+                'playlist_type': (),
+                'round_duration': (),
+                'run_cpu_benchmark': (),
+                'run_media_reload_benchmark': (),
+                'run_stress_test': (),
+                'stress_test': (),
+                'title': (),
+            },
+            'controllers': {
+                'gamepad': {
+                    'advanced_title': (),
+                    'analog_stick_dead_zone': (),
+                    'analog_stick_dead_zone_description': (),
+                    'applies_to_all': (),
+                    'auto_recalibrate': (),
+                    'auto_recalibrate_description': (),
+                    'clear': (),
+                    'dpad': (),
+                    'dpad_numbered': ('num',),
+                    'enable': (),
+                    'extra_start_button': (),
+                    'if_nothing_try_analog': (),
+                    'if_nothing_try_dpad': (),
+                    'ignore_completely': (),
+                    'ignore_completely_description': (),
+                    'ignored_button': ('num',),
+                    'ignored_button_description': (),
+                    'press_any_analog_trigger': (),
+                    'press_any_button': (),
+                    'press_any_button_or_dpad': (),
+                    'press_left_right': (),
+                    'press_up_down': (),
+                    'run_button': ('num',),
+                    'run_trigger': ('num',),
+                    'run_trigger_description': (),
+                    'second_half': (),
+                    'secondary': (),
+                    'start_button_activates_default': (),
+                    'start_button_activates_default_description': (),
+                    'title': (),
+                    'two_in_one_setup': (),
+                    'ui_only': (),
+                    'ui_only_description': (),
+                    'unassigned_buttons_run': (),
+                    'unset': (),
+                    'vr_reorient_button': (),
+                },
+                'keyboard': {
+                    'configuring': ('device',),
+                    'keyboard2_note': (),
+                    'press_any_key': (),
+                },
+                'touchscreen': {
+                    'action_control_scale': (),
+                    'actions': (),
+                    'buttons': (),
+                    'drag_controls': (),
+                    'joystick': (),
+                    'movement': (),
+                    'movement_control_scale': (),
+                    'swipe': (),
+                    'swipe_controls_hidden': (),
+                    'swipe_info': (),
+                    'title': (),
+                },
+                'android_note': (),
+                'cant_configure_device': ('device',),
+                'configure_controllers': (),
+                'configure_in_system_settings': ('device',),
+                'configure_keyboard': (),
+                'configure_keyboard_p2': (),
+                'configure_mobile': (),
+                'disable_remote_app': (),
+                'disable_xinput': (),
+                'disable_xinput_description': (),
+                'press_any_button_to_configure': (),
+                'remote_best_results': (),
+                'remote_configured_in_app': ('remote_app_name',),
+                'remote_explanation': ('remote_app_name', 'app_name'),
+                'title': (),
+            },
+            'devtools': {
+                'create_user_system_scripts': (),
+                'delete_user_system_scripts': (),
+                'show_dev_console_button': (),
+                'title': (),
+            },
+            'graphics': {
+                'fullscreen': (),
+                'fullscreen_shortcut_format': ('name', 'shortcut'),
+                'max_fps': (),
+                'native': (),
+                'resolution': (),
+                'show_fps': (),
+                'textures': (),
+                'title': (),
+                'tv_border': (),
+                'vertical_sync': (),
+                'visuals': (),
+            },
+            'nettesting': {'title': ()},
+            'plugins': {
+                'auto_enable_new': (),
+                'disable_all': (),
+                'enable_all': (),
+                'none_installed': (),
+                'settings_title': (),
+                'title': (),
+            },
+            'testing': {'for_testing_note': ()},
+            'vrtesting': {'title': ()},
+            'title': (),
+        },
+        'soundtrack': {
+            'cant_delete_default': (),
+            'cant_edit_default': (),
+            'cant_overwrite_default': (),
+            'cant_save_already_exists': (),
+            'copy_of': ('name',),
+            'default_game_music': (),
+            'default_soundtrack_name': (),
+            'delete_confirm': ('name',),
+            'delete_soundtrack': (),
+            'duplicate_soundtrack': (),
+            'edit_soundtrack': (),
+            'fetching_itunes': (),
+            'music_source': (),
+            'music_volume_zero_warning': (),
+            'new_soundtrack': (),
+            'new_soundtrack_name': ('count',),
+            'select_a_playlist': (),
+            'test': (),
+            'title': (),
+            'use_default_game_music': (),
+            'use_itunes_playlist': (),
+            'use_music_file': (),
+            'use_music_folder': (),
+        },
+        'tournamententry': {
+            'tickets_count': ('count',),
+            'title': (),
+            'watch_an_ad': (),
+        },
+        'tournamentscores': {'no_scores_yet': (), 'tournament_standings': ()},
+        'tutorial': {
+            'cpu_benchmark': (),
+            'phrase01': (),
+            'phrase03': (),
+            'phrase05': (),
+            'phrase06': (),
+            'phrase08': (),
+            'phrase09': (),
+            'phrase10': (),
+            'phrase11': (),
+            'phrase12': (),
+            'phrase15': (),
+            'phrase16': (),
+            'phrase17': (),
+            'phrase18': (),
+            'phrase19': (),
+            'phrase20': (),
+            'phrase21': (),
+            'phrase22': (),
+            'phrase23': (),
+            'phrase24': (),
+            'phrase25': (),
+            'phrase26': (),
+            'phrase27': (),
+            'phrase28': (),
+            'phrase29': (),
+            'skip_confirm': (),
+            'skipping': (),
+            'to_skip_press_anything': (),
+        },
+        'ui': {
+            'achievements': (),
+            'activity': (),
+            'all': (),
+            'always': (),
+            'app_name': (),
+            'apply': (),
+            'auto': (),
+            'back': (),
+            'boost': (),
+            'cancel': (),
+            'code': (),
+            'confirm': (),
+            'connect': (),
+            'connected': (),
+            'connecting': (),
+            'continue_': (),
+            'copied_to_clipboard': (),
+            'copy': (),
+            'customize': (),
+            'delete': (),
+            'demo': (),
+            'deprecated': (),
+            'description': (),
+            'direct_browser_to_url': (),
+            'disabled': (),
+            'done': (),
+            'duplicate': (),
+            'easy': (),
+            'edit': (),
+            'enabled': (),
+            'enter': (),
+            'epic_mode': (),
+            'error': (),
+            'error_occurred': (),
+            'filter': (),
+            'final_score': (),
+            'free': (),
+            'game_center': (),
+            'google_play': (),
+            'hard': (),
+            'high': (),
+            'higher': (),
+            'icon_label': ('icon', 'label'),
+            'import_': (),
+            'importing': (),
+            'inbox': (),
+            'invalid': (),
+            'kick': (),
+            'leaderboards': (),
+            'learn_more': (),
+            'loading': (),
+            'low': (),
+            'map': (),
+            'medium': (),
+            'more': (),
+            'must_restart': (),
+            'name': (),
+            'need_update': (),
+            'never': (),
+            'new': (),
+            'not_available': (),
+            'not_now': (),
+            'not_signed_in_status': (),
+            'nothing_here': (),
+            'off': (),
+            'ok': (),
+            'on': (),
+            'one_moment': (),
+            'or_join': ('a', 'b'),
+            'other': (),
+            'page_refreshing_try_again': (),
+            'paren_suffix': ('main', 'note'),
+            'play': (),
+            'playlist': (),
+            'please_wait': (),
+            'points': (),
+            'practice': (),
+            'random': (),
+            'rank': (),
+            'remote_app_name': (),
+            'rename': (),
+            'reset': (),
+            'retry': (),
+            'save': (),
+            'select': (),
+            'select_ellipsis': (),
+            'send': (),
+            'server_error': (),
+            'share': (),
+            'sharing': (),
+            'show': (),
+            'stats': (),
+            'storage_permission_needed': (),
+            'submit': (),
+            'total': (),
+            'trophies': (),
+            'unable_to_complete': (),
+            'unavailable_no_connection': (),
+            'unavailable_status': (),
+            'under_construction': (),
+            'upgrade': (),
+            'via': (),
+            'what_is_this': (),
+        },
+        'v2upgrade': {'device_account_upgrade': ('name',)},
+        'watch': {
+            'delete_confirm': ('replay',),
+            'delete_replay_button': (),
+            'my_replays': (),
+            'no_replay_selected': (),
+            'playback_speed': ('speed',),
+            'rename_replay': ('replay',),
+            'rename_replay_button': (),
+            'rename_warning': ('replay',),
+            'replay_delete_error': (),
+            'replay_name': (),
+            'replay_name_default': (),
+            'replay_rename_error': (),
+            'replay_rename_error_invalid': (),
+            'title': (),
+            'watch_replay_button': (),
+        },
+    },
     'textures': {
         'achievement_boxer': 't',
         'achievement_cross_hair': 't',
@@ -2233,4 +8558,5 @@ _TREE = {
 if not TYPE_CHECKING:
     audio = AssetRefDir(__asset_package__, _TREE['audio'], 'audio')
     meshes = AssetRefDir(__asset_package__, _TREE['meshes'], 'meshes')
+    strings = LangStrDir(__asset_package__, _TREE['strings'], 'strings')
     textures = AssetRefDir(__asset_package__, _TREE['textures'], 'textures')

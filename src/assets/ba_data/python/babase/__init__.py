@@ -74,6 +74,7 @@ from _babase import (
     request_main_ui,
     is_os_playing_music,
     is_xcode_build,
+    LangStr,
     lock_all_input,
     mac_music_app_get_playlists,
     mac_music_app_get_volume,
@@ -112,6 +113,7 @@ from _babase import (
     set_account_sign_in_state,
     set_ui_scale,
     show_progress_bar,
+    split_text_into_lines,
     shutdown_suppress_begin,
     shutdown_suppress_end,
     shutdown_suppress_count,
@@ -189,9 +191,11 @@ from babase._general import (
     verify_object_death,
 )
 from babase._language import (
+    LangStrDir,
     LanguageSubsystem,
     Lstr,
     get_legacy_langdata,
+    resolve_langstrs,
 )
 from babase._locale import LocaleSubsystem
 from babase._logging import (
@@ -215,6 +219,7 @@ from babase._math import normalized_color, is_point_in_box, vec3validate
 from babase._meta import MetadataSubsystem
 from babase._assetsubsystem import (
     AssetSubsystem,
+    make_progress_reporter,
     ResolveResult,
     ResolveProgress,
     ResolvePhase,
@@ -346,10 +351,13 @@ __all__ = [
     'loaded_asset_package_apverids',
     'LocaleSubsystem',
     'lifecyclelog',
+    'LangStr',
+    'LangStrDir',
     'lock_all_input',
     'LoginAdapter',
     'LoginInfo',
     'Lstr',
+    'make_progress_reporter',
     'mac_music_app_get_playlists',
     'mac_music_app_get_volume',
     'mac_music_app_init',
@@ -389,6 +397,7 @@ __all__ = [
     'reload_hooks',
     'reload_media',
     'request_permission',
+    'resolve_langstrs',
     'ResolveResult',
     'ResolveProgress',
     'ResolvePhase',
@@ -406,6 +415,7 @@ __all__ = [
     'set_account_sign_in_state',
     'set_ui_scale',
     'show_progress_bar',
+    'split_text_into_lines',
     'shutdown_suppress_begin',
     'shutdown_suppress_end',
     'shutdown_suppress_count',

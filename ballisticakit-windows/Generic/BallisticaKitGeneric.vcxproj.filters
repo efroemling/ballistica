@@ -100,6 +100,12 @@
     <ClInclude Include="..\..\src\ballistica\base\assets\assets_server.h">
       <Filter>ballistica\base\assets</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\assets\builtin_strings.cc">
+      <Filter>ballistica\base\assets</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\assets\builtin_strings.h">
+      <Filter>ballistica\base\assets</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\assets\collision_mesh_asset.cc">
       <Filter>ballistica\base\assets</Filter>
     </ClCompile>
@@ -682,6 +688,9 @@
     <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_app_timer.h">
       <Filter>ballistica\base\python\class</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_asset_ref.h">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_context_call.cc">
       <Filter>ballistica\base\python\class</Filter>
     </ClCompile>
@@ -710,6 +719,12 @@
       <Filter>ballistica\base\python\class</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_feature_set_data.h">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_lang_str.cc">
+      <Filter>ballistica\base\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_lang_str.h">
       <Filter>ballistica\base\python\class</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_simple_sound.cc">
@@ -782,6 +797,12 @@
       <Filter>ballistica\base\support</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ballistica\base\support\display_timer.h">
+      <Filter>ballistica\base\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\base\support\lang_str.cc">
+      <Filter>ballistica\base\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\base\support\lang_str.h">
       <Filter>ballistica\base\support</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ballistica\base\support\plus_soft.h">
@@ -1303,9 +1324,6 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_node.h">
       <Filter>ballistica\scene_v1\python\class</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_collision_mesh.cc">
-      <Filter>ballistica\scene_v1\python\class</Filter>
-    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_collision_mesh.h">
       <Filter>ballistica\scene_v1\python\class</Filter>
     </ClInclude>
@@ -1315,9 +1333,6 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_data_asset.h">
       <Filter>ballistica\scene_v1\python\class</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_mesh.cc">
-      <Filter>ballistica\scene_v1\python\class</Filter>
-    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_mesh.h">
       <Filter>ballistica\scene_v1\python\class</Filter>
     </ClInclude>
@@ -1327,9 +1342,6 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_sound.h">
       <Filter>ballistica\scene_v1\python\class</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_texture.cc">
-      <Filter>ballistica\scene_v1\python\class</Filter>
-    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_texture.h">
       <Filter>ballistica\scene_v1\python\class</Filter>
     </ClInclude>
@@ -1702,9 +1714,6 @@
     <ClInclude Include="..\..\src\ballistica\template_fs\template_fs.h">
       <Filter>ballistica\template_fs</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_mesh.cc">
-      <Filter>ballistica\ui_v1\python\class</Filter>
-    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_mesh.h">
       <Filter>ballistica\ui_v1\python\class</Filter>
     </ClInclude>
@@ -1714,9 +1723,6 @@
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_sound.h">
       <Filter>ballistica\ui_v1\python\class</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_texture.cc">
-      <Filter>ballistica\ui_v1\python\class</Filter>
-    </ClCompile>
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_texture.h">
       <Filter>ballistica\ui_v1\python\class</Filter>
     </ClInclude>

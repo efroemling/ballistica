@@ -65,7 +65,7 @@ class CoopLevelLockedWindow(bui.Window):
             parent=self._root_widget,
             position=((width - 140) / 2, 30),
             size=(140, 50),
-            label=bui.Lstr(resource='okText'),
+            label=stdassets.strings.ui.ok,
             on_activate_call=self._ok,
         )
         bui.containerwidget(

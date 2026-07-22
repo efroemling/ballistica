@@ -252,9 +252,11 @@ void AppPlatform::InvokeStringEditor(PyObject* string_edit_adapter) {
       string_edit_adapter_.GetAttr("initial_text").ValueAsString();
   auto max_length =
       string_edit_adapter_.GetAttr("max_length").ValueAsOptionalInt();
+  auto is_password = string_edit_adapter_.GetAttr("is_password").ValueAsBool();
   // TODO(ericf): pass along screen_space_center if its ever useful.
 
-  g_base->platform->DoInvokeStringEditor(desc, initial_text, max_length);
+  g_base->platform->DoInvokeStringEditor(desc, initial_text, max_length,
+                                         is_password);
 }
 
 /// Should be called by platform StringEditor to apply a value.
@@ -278,7 +280,8 @@ void AppPlatform::StringEditorCancel() {
 
 void AppPlatform::DoInvokeStringEditor(const std::string& title,
                                        const std::string& value,
-                                       std::optional<int> max_chars) {
+                                       std::optional<int> max_chars,
+                                       bool is_password) {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "FIXME: DoInvokeStringEditor() unimplemented");
 }

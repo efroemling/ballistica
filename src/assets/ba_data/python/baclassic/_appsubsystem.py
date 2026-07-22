@@ -891,7 +891,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # selected_profile: str | None = None,
     ) -> None:
         """Pop up a browser window from within a game."""
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         # from bauiv1lib.profile.browser import ProfileBrowserWindow
         from bauiv1lib.inventory import InventoryUIController
@@ -906,7 +906,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
         babase.app.ui_v1.set_main_window(
             InventoryUIController(player_profiles_only=True).create_window(
-                dui1.Request('/'),
+                dui2.Request('/'),
                 uiopenstateid='classicinventory',
                 transition=transition,
                 origin_widget=origin_widget,

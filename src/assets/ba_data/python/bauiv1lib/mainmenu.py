@@ -279,12 +279,10 @@ class MainMenuWindow(bui.MainWindow):
                 autoselect=True,
                 color=(0.45, 0.55, 0.45),
                 textcolor=(0.7, 0.8, 0.7),
-                label=bui.Lstr(
-                    resource=(
-                        'modeArcadeText'
-                        if variant is vart.ARCADE
-                        else 'modeDemoText'
-                    )
+                label=(
+                    stdassets.strings.mainmenu.mode_arcade
+                    if variant is vart.ARCADE
+                    else stdassets.strings.mainmenu.mode_demo
                 ),
                 transition_delay=demo_menu_delay,
                 on_activate_call=self.main_window_back,
@@ -324,7 +322,7 @@ class MainMenuWindow(bui.MainWindow):
             draw_controller=self._gather_button,
             color=(0.75, 1.0, 0.7),
             maxwidth=side_button_width * side_button_scale * 0.8,
-            text=bui.Lstr(resource='gatherWindow.titleText'),
+            text=stdassets.strings.gather.title,
             h_align='center',
             v_align='center',
         )
@@ -359,7 +357,7 @@ class MainMenuWindow(bui.MainWindow):
             size=(side_button_2_width, side_button_2_height * 2.0),
             button_type='square',
             scale=side_button_2_scale,
-            label=bui.Lstr(resource=f'{self._r}.howToPlayText'),
+            label=stdassets.strings.mainmenu.how_to_play,
             transition_delay=thistdelay,
             on_activate_call=self._howtoplay,
         )
@@ -382,7 +380,7 @@ class MainMenuWindow(bui.MainWindow):
             autoselect=self._use_autoselect,
             scale=play_button_scale,
             text_res_scale=2.0,
-            label=bui.Lstr(resource='playText'),
+            label=stdassets.strings.ui.play,
             transition_delay=thistdelay,
             on_activate_call=self._play_press,
         )
@@ -421,7 +419,7 @@ class MainMenuWindow(bui.MainWindow):
             color=(0.75, 1.0, 0.7),
             draw_controller=self._watch_button,
             maxwidth=side_button_width * side_button_scale * 0.8,
-            text=bui.Lstr(resource='watchWindow.titleText'),
+            text=stdassets.strings.watch.title,
             h_align='center',
             v_align='center',
         )
@@ -460,7 +458,7 @@ class MainMenuWindow(bui.MainWindow):
             ),
             scale=side_button_2_scale,
             autoselect=self._use_autoselect,
-            label=bui.Lstr(resource=f'{self._r}.creditsText'),
+            label=stdassets.strings.mainmenu.credits,
             transition_delay=thistdelay,
             on_activate_call=self._credits,
         )
@@ -477,13 +475,10 @@ class MainMenuWindow(bui.MainWindow):
                 position=(h + 4.0, v),
                 size=(side_button_2_width, side_button_2_height),
                 scale=side_button_2_scale,
-                label=bui.Lstr(
-                    resource=self._r
-                    + (
-                        '.quitText'
-                        if 'Mac' in app.classic.legacy_user_agent_string
-                        else '.exitGameText'
-                    )
+                label=(
+                    stdassets.strings.mainmenu.quit
+                    if 'Mac' in app.classic.legacy_user_agent_string
+                    else stdassets.strings.mainmenu.exit_game
                 ),
                 on_activate_call=self._quit,
                 transition_delay=thistdelay,

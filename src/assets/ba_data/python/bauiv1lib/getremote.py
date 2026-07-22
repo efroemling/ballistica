@@ -56,15 +56,9 @@ class GetBSRemoteWindow(PopupWindow):
             v_align='center',
             maxwidth=self._width * 0.8,
             position=(self._width * 0.5, 60),
-            text=bui.Lstr(
-                resource='remoteAppInfoShortText',
-                subs=[
-                    ('${APP_NAME}', bui.Lstr(resource='titleText')),
-                    (
-                        '${REMOTE_APP_NAME}',
-                        bui.Lstr(resource='remote_app.app_name'),
-                    ),
-                ],
+            text=stdassets.strings.getremote.info_short(
+                app_name=stdassets.strings.ui.app_name,
+                remote_app_name=stdassets.strings.ui.remote_app_name,
             ),
         )
 

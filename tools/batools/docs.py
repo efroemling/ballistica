@@ -717,6 +717,18 @@ def _sphinx_pre_filter_file(path: str) -> None:
     # import is its already-loaded parent feature-set, and the forced
     # ``from __future__ import annotations`` keeps annotations stringized
     # so nothing new is evaluated at import — so it's safe here.
+    #
+    # We ALSO un-guard the ``if not TYPE_CHECKING`` runtime block so it
+    # stays live alongside the typed one. Flipping TYPE_CHECKING alone
+    # would kill it, and then the wrapper exposes no runtime ``strings`` /
+    # ``audio`` / ... attributes — which breaks *consumer* modules that
+    # bind one at module scope (e.g. bauiv1lib/settings/advanced.py's
+    # ``_advstrs = stdassets.strings.settings.advanced``); autodoc then
+    # fails to import them entirely. Both blocks can coexist: the typed
+    # block only declares classes plus bare annotations, and the runtime
+    # block only assigns the matching names (lazy Dir objects that do no
+    # I/O at construction), so the assignment simply fills in the value
+    # the annotation describes.
     if re.search(
         r'Asset-package wrapper for ``[^`]+`` \((?:bascenev1|bauiv1)\)',
         source_code,
@@ -727,6 +739,10 @@ def _sphinx_pre_filter_file(path: str) -> None:
                 '\nTYPE_CHECKING = True  # Docs-generation hack\n'
                 'if TYPE_CHECKING:\n'
             ),
+        )
+        final_code = final_code.replace(
+            '\nif not TYPE_CHECKING:\n',
+            '\nif True:  # Docs-generation hack; keep runtime tree live\n',
         )
     if bool(True):
         final_code = final_code + (

@@ -8,7 +8,7 @@ the asset's logical ``name`` (e.g. ``textures/zoe_icon``). It carries no
 asset *data* -- the server (bamaster) only ever holds the reference; the
 client resolves the package and loads the actual asset for display.
 
-Each asset kind gets its own type (:class:`TextureRef`, :class:`MeshRef`,
+Each asset kind gets its own type (:class:`TextureSpec`, :class:`MeshSpec`,
 ...) so that a consumer schema can enforce *where* each kind may go -- a
 texture-typed field rejects a mesh and vice versa. The types share an
 identical shape but are deliberately distinct classes for that reason.
@@ -27,7 +27,7 @@ from efro.dataclassio import ioprepped, IOAttrs
 
 @ioprepped
 @dataclass
-class TextureRef:
+class TextureSpec:
     """A language-independent reference to a texture in an asset-package.
 
     ``name`` is the texture's logical path within the package (e.g.
@@ -41,7 +41,7 @@ class TextureRef:
 
 @ioprepped
 @dataclass
-class MeshRef:
+class MeshSpec:
     """A language-independent reference to a mesh in an asset-package.
 
     ``name`` is the mesh's logical path within the package (e.g.
@@ -55,7 +55,7 @@ class MeshRef:
 
 @ioprepped
 @dataclass
-class SoundRef:
+class SoundSpec:
     """A language-independent reference to a sound in an asset-package.
 
     ``name`` is the sound's logical path within the package (e.g.

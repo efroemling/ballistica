@@ -24,6 +24,9 @@ class ClientSessionNet : public ClientSession {
   void OnReset(bool rewind) override;
   void OnBaseTimeStepAdded(int step) override;
 
+ protected:
+  void OnAssetPackageTableComplete() override;
+
  private:
   struct SampleBucket {
     int max_delay_from_projection{};

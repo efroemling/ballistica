@@ -6,7 +6,11 @@ import logging
 from typing import cast, override
 
 import bauiv1 as bui
+from bauiv1 import stdassets
+
 import bascenev1 as bs
+
+_bmstrs = stdassets.strings.settings.benchmarks
 
 
 class BenchmarksAndStressTestsWindow(bui.MainWindow):
@@ -104,7 +108,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             size=(0, 0),
             maxwidth=360,
             scale=0.8 if uiscale is bui.UIScale.SMALL else 1.0,
-            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            text=_bmstrs.title,
             h_align='center',
             v_align='center',
             color=bui.app.ui_v1.title_color,
@@ -137,7 +141,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             position=((self._sub_width - button_width) * 0.5, v),
             size=(button_width, 60),
             autoselect=True,
-            label=bui.Lstr(resource=f'{self._r}.runCPUBenchmarkText'),
+            label=_bmstrs.run_cpu_benchmark,
             on_activate_call=self._run_cpu_benchmark_pressed,
         )
         bui.widget(
@@ -151,7 +155,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             position=((self._sub_width - button_width) * 0.5, v),
             size=(button_width, 60),
             autoselect=True,
-            label=bui.Lstr(resource=f'{self._r}.runMediaReloadBenchmarkText'),
+            label=_bmstrs.run_media_reload_benchmark,
             on_activate_call=self._run_media_reload_benchmark_pressed,
         )
         v -= 60
@@ -160,7 +164,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             parent=self._subcontainer,
             position=(self._sub_width * 0.5, v + 22),
             size=(0, 0),
-            text=bui.Lstr(resource=f'{self._r}.stressTestTitleText'),
+            text=_bmstrs.stress_test,
             maxwidth=200,
             color=bui.app.ui_v1.heading_color,
             scale=0.85,
@@ -174,7 +178,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             parent=self._subcontainer,
             position=(x_offs - 10, v + 22),
             size=(0, 0),
-            text=bui.Lstr(resource=f'{self._r}.stressTestPlaylistTypeText'),
+            text=_bmstrs.playlist_type,
             maxwidth=130,
             color=bui.app.ui_v1.heading_color,
             scale=0.65,
@@ -189,12 +193,9 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             width=150,
             choices=['Random', 'Teams', 'Free-For-All'],
             choices_display=[
-                bui.Lstr(resource=a)
-                for a in [
-                    'randomText',
-                    'playModes.teamsText',
-                    'playModes.freeForAllText',
-                ]
+                stdassets.strings.ui.random,
+                stdassets.strings.playmodes.teams,
+                stdassets.strings.playmodes.free_for_all,
             ],
             current_choice='Auto',
             on_value_change_call=self._stress_test_game_type_selected,
@@ -205,7 +206,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             parent=self._subcontainer,
             position=(x_offs - 10, v + 22),
             size=(0, 0),
-            text=bui.Lstr(resource=f'{self._r}.stressTestPlaylistNameText'),
+            text=_bmstrs.playlist_name,
             maxwidth=130,
             color=bui.app.ui_v1.heading_color,
             scale=0.65,
@@ -223,9 +224,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             v_align='center',
             autoselect=True,
             color=(0.9, 0.9, 0.9, 1.0),
-            description=bui.Lstr(
-                resource=f'{self._r}.stressTestPlaylistDescriptionText'
-            ),
+            description=_bmstrs.playlist_description,
             editable=True,
             padding=4,
         )
@@ -237,7 +236,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             parent=self._subcontainer,
             position=(x_offs - 10, v),
             size=(0, 0),
-            text=bui.Lstr(resource=f'{self._r}.stressTestPlayerCountText'),
+            text=_bmstrs.player_count,
             color=(0.8, 0.8, 0.8, 1.0),
             h_align='right',
             v_align='center',
@@ -288,7 +287,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             parent=self._subcontainer,
             position=(x_offs - 10, v),
             size=(0, 0),
-            text=bui.Lstr(resource=f'{self._r}.stressTestRoundDurationText'),
+            text=_bmstrs.round_duration,
             color=(0.8, 0.8, 0.8, 1.0),
             h_align='right',
             v_align='center',
@@ -339,7 +338,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             position=((self._sub_width - button_width) * 0.5, v),
             size=(button_width, 60),
             autoselect=True,
-            label=bui.Lstr(resource=f'{self._r}.runStressTestText'),
+            label=_bmstrs.run_stress_test,
             on_activate_call=self._stress_test_pressed,
         )
         bui.widget(edit=btn, show_buffer_bottom=50)
@@ -425,6 +424,4 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             )
             bui.containerwidget(edit=self._root_widget, transition='out_right')
         else:
-            bui.screenmessage(
-                bui.Lstr(value='Already present in another activity.')
-            )
+            bui.screenmessage(_bmstrs.already_running_in_activity)

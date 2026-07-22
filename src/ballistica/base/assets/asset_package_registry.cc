@@ -2,6 +2,7 @@
 
 #include "ballistica/base/assets/asset_package_registry.h"
 
+#include <algorithm>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -71,6 +72,27 @@ auto AssetPackageRegistry::Snapshot_() const
   return packages_;
 }
 
+auto AssetPackageRegistry::BucketLogicalPathsSorted(
+    const std::string& apverid, const std::string& bucket_id) const
+    -> std::vector<std::string> {
+  auto snapshot = Snapshot_();
+  auto pkg_it = snapshot->find(apverid);
+  if (pkg_it == snapshot->end()) {
+    return {};
+  }
+  auto bucket_it = pkg_it->second.find(bucket_id);
+  if (bucket_it == pkg_it->second.end()) {
+    return {};
+  }
+  std::vector<std::string> paths;
+  paths.reserve(bucket_it->second.size());
+  for (auto&& entry : bucket_it->second) {
+    paths.push_back(entry.first);
+  }
+  std::sort(paths.begin(), paths.end());
+  return paths;
+}
+
 auto AssetPackageRegistry::LookupAssetHash(const std::string& apverid,
                                            const std::string& bucket_id,
                                            const std::string& logical_path,
@@ -96,6 +118,50 @@ auto AssetPackageRegistry::LookupAssetHash(const std::string& apverid,
     return "";
   }
   return part_it->second;
+}
+
+auto AssetPackageRegistry::LookupAssetHashByRole(
+    const std::string& apverid, const std::string& bucket_id,
+    const std::string& logical_path, const std::string& role,
+    const std::vector<std::string>& format_prefs) const -> std::string {
+  auto snapshot = Snapshot_();
+  auto pkg_it = snapshot->find(apverid);
+  if (pkg_it == snapshot->end()) {
+    return "";
+  }
+  auto bucket_it = pkg_it->second.find(bucket_id);
+  if (bucket_it == pkg_it->second.end()) {
+    return "";
+  }
+  auto entry_it = bucket_it->second.find(logical_path);
+  if (entry_it == bucket_it->second.end()) {
+    return "";
+  }
+  // Parts are named ``<role>.<format>`` (decision #35); take the first
+  // format present in preference order (empty if none is, e.g. a null
+  // asset's empty part map).
+  for (auto&& format : format_prefs) {
+    auto part_it = entry_it->second.find(role + "." + format);
+    if (part_it != entry_it->second.end()) {
+      return part_it->second;
+    }
+  }
+  return "";
+}
+
+auto AssetPackageRegistry::DebugDescribePackage(
+    const std::string& apverid) const -> std::string {
+  auto snapshot = Snapshot_();
+  auto pkg_it = snapshot->find(apverid);
+  if (pkg_it == snapshot->end()) {
+    return "package not registered";
+  }
+  std::string out = "registered buckets:";
+  for (auto&& bucket : pkg_it->second) {
+    out +=
+        " " + bucket.first + "(" + std::to_string(bucket.second.size()) + ")";
+  }
+  return out;
 }
 
 auto AssetPackageRegistry::LookupBucketIdWithPrefix_(const std::string& apverid,

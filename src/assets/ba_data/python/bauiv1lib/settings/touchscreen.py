@@ -5,7 +5,11 @@
 from typing import override
 
 import bauiv1 as bui
+from bauiv1 import stdassets
+
 import bascenev1 as bs
+
+_tsstrs = stdassets.strings.settings.controllers.touchscreen
 
 
 class TouchscreenSettingsWindow(bui.MainWindow):
@@ -68,7 +72,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(25, self._height - 57),
             size=(self._width, 25),
-            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            text=_tsstrs.title,
             color=bui.app.ui_v1.title_color,
             maxwidth=280,
             h_align='center',
@@ -133,7 +137,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             parent=self._subcontainer,
             position=(self._sub_width * 0.5, v + 63),
             size=(0, 0),
-            text=bui.Lstr(resource=f'{self._r}.swipeInfoText'),
+            text=_tsstrs.swipe_info,
             flatness=1.0,
             color=(0, 0.9, 0.1, 0.7),
             maxwidth=self._sub_width * 0.9,
@@ -146,7 +150,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             parent=self._subcontainer,
             position=(h, v - 2),
             size=(0, 30),
-            text=bui.Lstr(resource=f'{self._r}.movementText'),
+            text=_tsstrs.movement,
             maxwidth=190,
             color=clr,
             v_align='center',
@@ -155,7 +159,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             parent=self._subcontainer,
             position=(h + hoffs + 220, v),
             size=(170, 30),
-            text=bui.Lstr(resource=f'{self._r}.joystickText'),
+            text=_tsstrs.joystick,
             maxwidth=100,
             textcolor=clr2,
             scale=0.9,
@@ -164,7 +168,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             parent=self._subcontainer,
             position=(h + hoffs + 357, v),
             size=(170, 30),
-            text=bui.Lstr(resource=f'{self._r}.swipeText'),
+            text=_tsstrs.swipe,
             maxwidth=100,
             textcolor=clr2,
             value=False,
@@ -179,9 +183,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             position=(h, v),
             xoffset=hoffs2 + 65,
             configkey='Touch Controls Scale Movement',
-            displayname=bui.Lstr(
-                resource=f'{self._r}.movementControlScaleText'
-            ),
+            displayname=_tsstrs.movement_control_scale,
             changesound=False,
             minval=0.1,
             maxval=4.0,
@@ -193,7 +195,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             parent=self._subcontainer,
             position=(h, v - 2),
             size=(0, 30),
-            text=bui.Lstr(resource=f'{self._r}.actionsText'),
+            text=_tsstrs.actions,
             maxwidth=190,
             color=clr,
             v_align='center',
@@ -202,7 +204,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             parent=self._subcontainer,
             position=(h + hoffs + 220, v),
             size=(170, 30),
-            text=bui.Lstr(resource=f'{self._r}.buttonsText'),
+            text=_tsstrs.buttons,
             maxwidth=100,
             textcolor=clr2,
             scale=0.9,
@@ -211,7 +213,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             parent=self._subcontainer,
             position=(h + hoffs + 357, v),
             size=(170, 30),
-            text=bui.Lstr(resource=f'{self._r}.swipeText'),
+            text=_tsstrs.swipe,
             maxwidth=100,
             textcolor=clr2,
             scale=0.9,
@@ -225,7 +227,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             position=(h, v),
             xoffset=hoffs2 + 65,
             configkey='Touch Controls Scale Actions',
-            displayname=bui.Lstr(resource=f'{self._r}.actionControlScaleText'),
+            displayname=_tsstrs.action_control_scale,
             changesound=False,
             minval=0.1,
             maxval=4.0,
@@ -237,7 +239,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             parent=self._subcontainer,
             position=(h, v - 2),
             size=(0, 30),
-            text=bui.Lstr(resource=f'{self._r}.swipeControlsHiddenText'),
+            text=_tsstrs.swipe_controls_hidden,
             maxwidth=190,
             color=clr,
             v_align='center',
@@ -257,7 +259,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             parent=self._subcontainer,
             position=(self._sub_width * 0.5 - 70, v),
             size=(170, 60),
-            label=bui.Lstr(resource=f'{self._r}.resetText'),
+            label=stdassets.strings.ui.reset,
             scale=0.75,
             on_activate_call=self._reset,
         )
@@ -267,7 +269,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             position=(self._width * 0.5, 38),
             size=(0, 0),
             h_align='center',
-            text=bui.Lstr(resource=f'{self._r}.dragControlsText'),
+            text=_tsstrs.drag_controls,
             maxwidth=self._width * 0.8,
             scale=0.65,
             color=(1, 1, 1, 0.4),

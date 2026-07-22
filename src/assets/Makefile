@@ -291,6 +291,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_playlist.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_powerup.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_profile.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_replay.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_score.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_session.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_settings.py \
@@ -380,12 +381,11 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/_assetref.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_assetwrap.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_automation.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_docuiv2testassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_window.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/bamvpstrings.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/bamvpstrings2.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/builtinassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/stdassets.py \
@@ -413,12 +413,12 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/discord.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_controller.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_v2transcode.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_resolve.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_window.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/_calls.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/_calls2.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/_types.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_calls.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_calls2.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_types.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitest.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__init__.py \
@@ -444,6 +444,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/mainmenu.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/party.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/partyqueue.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/passwordprompt.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/play.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/addgame.py \
@@ -519,9 +520,9 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/analytics.py \
   $(BUILD_DIR)/ba_data/python/bacommon/app.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetcas.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/assetref/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/assetref/_core.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/assetref/_wrapper.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/assetspec/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/assetspec/_core.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/assetspec/_wrapper.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bacloud.py \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
   $(BUILD_DIR)/ba_data/python/bacommon/classic/__init__.py \
@@ -563,6 +564,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/restapi/v1/workspaces.py \
   $(BUILD_DIR)/ba_data/python/bacommon/securedata.py \
   $(BUILD_DIR)/ba_data/python/bacommon/servermanager.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/strbrief.py \
   $(BUILD_DIR)/ba_data/python/bacommon/text.py \
   $(BUILD_DIR)/ba_data/python/bacommon/transfer.py \
   $(BUILD_DIR)/ba_data/python/bacommon/workspace/__init__.py \

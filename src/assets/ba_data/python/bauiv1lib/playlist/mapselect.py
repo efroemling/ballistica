@@ -82,7 +82,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             scale=0.9,
             text_scale=1.0,
             autoselect=True,
-            label=bui.Lstr(resource='cancelText'),
+            label=stdassets.strings.ui.cancel,
             on_activate_call=self.main_window_back,
         )
 
@@ -275,7 +275,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             parent=self._subcontainer,
             size=(self._sub_width * 0.8, 60),
             position=(self._sub_width * 0.1, 30),
-            label=bui.Lstr(resource='mapSelectGetMoreMapsText'),
+            label=stdassets.strings.playlist.get_more_maps,
             on_activate_call=self._on_store_press,
             color=(0.6, 0.53, 0.63),
             textcolor=(0.75, 0.7, 0.8),
@@ -288,7 +288,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             )
 
     def _on_store_press(self) -> None:
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.connectivity import wait_for_connectivity
@@ -317,7 +317,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
                 win_type=DocUIWindow,
                 win_create_call=bui.CallStrict(
                     StoreUIController().create_window,
-                    dui1.Request('/'),
+                    dui2.Request('/'),
                     origin_widget=self._get_more_maps_button,
                     uiopenstateid='classicstore',
                 ),

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <list>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -13,6 +14,8 @@
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_context_ref.h"
+#include "ballistica/base/python/class/python_class_lang_str.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
@@ -38,6 +41,7 @@
 #include "ballistica/scene_v1/python/methods/python_methods_input.h"
 #include "ballistica/scene_v1/python/methods/python_methods_networking.h"
 #include "ballistica/scene_v1/python/methods/python_methods_scene.h"
+#include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
@@ -94,6 +98,85 @@ void SceneV1Python::Reset() {
   assert(g_base->InLogicThread());
   ReleaseJoystickInputCapture();
   ReleaseKeyboardInputCapture();
+}
+
+auto SceneV1Python::BuildLangStrWireValue(PyObject* obj,
+                                          HostSession* host_session)
+    -> std::pair<std::string, std::shared_ptr<const base::LangStr>> {
+  assert(Python::HaveGIL());
+  assert(obj != nullptr);
+
+  if (PyUnicode_Check(obj)) {
+    return {std::string(1, kLangStrWireTagLiteral) + PyUnicode_AsUTF8(obj),
+            nullptr};
+  }
+  if (base::PythonClassLangStr::Check(obj)) {
+    auto val = base::PythonClassLangStr::FromPyObj(obj).value();
+
+    // Serialize with indexed refs against the session's package
+    // universe when possible; fall back to self-describing resource
+    // refs (bigger but always parseable), and as a last resort
+    // evaluate to a literal (fail-visible; better than killing the
+    // stream).
+    std::optional<std::string> json;
+    if (host_session != nullptr) {
+      auto indexed = val->ToIndexedJson(host_session->asset_package_universe());
+      if (indexed.has_value()) {
+        json = *indexed;
+      } else {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                    "Can't serialize LangStr with indexed refs ("
+                        + indexed.error() + "); falling back to resource"
+                        + " refs. Is the referenced package in the hosting"
+                        + " universe?");
+      }
+    }
+    if (!json.has_value()) {
+      auto resource = val->ToResourceJson();
+      if (resource.has_value()) {
+        json = *resource;
+      } else {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                    "Can't serialize LangStr for the wire (" + resource.error()
+                        + "); sending evaluated text.");
+        return {std::string(1, kLangStrWireTagLiteral) + val->Evaluate(),
+                nullptr};
+      }
+    }
+    return {std::string(1, kLangStrWireTagLangStr) + *json, val};
+  }
+
+  // Legacy Lstr: pull its json form (translated on each client via the
+  // legacy resource mechanism; the transitional leg while gameplay
+  // scripts still use Lstr).
+  int result = PyObject_IsInstance(
+      obj,
+      g_base->python->objs().Get(base::BasePython::ObjID::kLStrClass).get());
+  if (result == -1) {
+    PyErr_Clear();
+    result = 0;
+  }
+  if (result == 1) {
+    PythonRef as_json_call(PyObject_GetAttrString(obj, "as_json"),
+                           PythonRef::kSteal);
+    if (as_json_call.CallableCheck()) {
+      PythonRef json = as_json_call.Call();
+      if (PyUnicode_Check(json.get())) {
+        return {std::string(1, kLangStrWireTagLegacyJson)
+                    + PyUnicode_AsUTF8(json.get()),
+                nullptr};
+      }
+    }
+    PyErr_Clear();
+    throw Exception("Error getting json from Lstr.", PyExcType::kRuntime);
+  }
+
+  PyErr_Clear();
+  throw Exception(
+      "Can't put value in a lang-str slot (expected str,"
+      " babase.LangStr, or Lstr): "
+          + Python::ObjToString(obj) + ".",
+      PyExcType::kType);
 }
 
 void SceneV1Python::SetNodeAttr(Node* node, const char* attr_name,
@@ -158,6 +241,22 @@ void SceneV1Python::SetNodeAttr(Node* node, const char* attr_name,
       break;
     }
     case NodeAttributeType::kString: {
+      if (attr.is_lang_str()) {
+        // Lang-str-flagged slots carry the tagged wire form (see
+        // kLangStrWireTag*); native LangStrs stay structured all the
+        // way (each client evaluates in its own locale) rather than
+        // baking in the host locale.
+        auto [wire, parsed] = BuildLangStrWireValue(
+            value_obj, node->context_ref().GetHostSession());
+        if (out_stream) {
+          out_stream->SetNodeAttr(attr, wire);
+        }
+
+        // If something was driving this attr, disconnect it.
+        attr.DisconnectIncoming();
+        attr.SetLangStrWire(wire, std::move(parsed));
+        break;
+      }
       std::string val = g_base->python->GetPyLString(value_obj);
       if (out_stream) {
         out_stream->SetNodeAttr(attr, val);
@@ -457,14 +556,24 @@ auto SceneV1Python::GetNodeAttr(Node* node, const char* attr_name)
       }
       break;
     case NodeAttributeType::kString: {
-      if (g_buildconfig.debug_build()) {
-        std::string s = attr.GetAsString();
-        assert(Utils::IsValidUTF8(s));
-        return PyUnicode_FromString(s.c_str());
-      } else {
-        return PyUnicode_FromString(attr.GetAsString().c_str());
+      // Lang-str-flagged slots holding a parsed native language-string
+      // hand back a babase.LangStr.
+      if (attr.is_lang_str()) {
+        if (auto lang_str = attr.GetLangStr()) {
+          return base::PythonClassLangStr::Create(std::move(lang_str));
+        }
       }
-      break;
+      std::string s = attr.GetAsString();
+      // Other tagged legs (literal, legacy-lstr-json) read as their
+      // payload without the tag byte, matching what a legacy set of
+      // the same value would read back.
+      if (attr.is_lang_str() && IsLangStrWireTagged(s)) {
+        s = s.substr(1);
+      }
+      if (g_buildconfig.debug_build()) {
+        assert(Utils::IsValidUTF8(s));
+      }
+      return PyUnicode_FromString(s.c_str());
     }
     case NodeAttributeType::kNode: {
       // Return a new py ref to this node or create a new empty ref.

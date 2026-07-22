@@ -19,7 +19,7 @@ class PopupText(bs.Actor):
 
     def __init__(
         self,
-        text: str | bs.Lstr,
+        text: str | bs.Lstr | bs.LangStr,
         *,
         position: Sequence[float] = (0.0, 0.0, 0.0),
         color: Sequence[float] = (1.0, 1.0, 1.0, 1.0),

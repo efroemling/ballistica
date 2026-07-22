@@ -403,8 +403,15 @@ def archive_old_builds(
     # this works.
     for fname in sorted(files_to_archive):
         print('Archiving ' + fname, file=sys.stderr)
+        # Concurrent publish jobs (push-all-servers /
+        # push-all-test-packages) can race to archive the same file
+        # between our ls above and this mv; a vanished source means
+        # the other job got it first, which is fine — only fail if
+        # the mv failed with the source still present.
+        src = builds_dir + '/' + fname
         ssh_run(
-            'mv "' + builds_dir + '/' + fname + '" "' + builds_dir + '/old/"'
+            'mv "' + src + '" "' + builds_dir + '/old/"'
+            ' || [ ! -e "' + src + '" ]'
         )
 
 
@@ -584,13 +591,14 @@ def _get_server_config_template_toml(projroot: str) -> str:
     cfg.unclean_exit_minutes = 90
     cfg.idle_exit_minutes = 20
     cfg.admins = ['a-YOUR-ID-HERE', 'a-ANOTHER-ID-HERE']
-    cfg.protocol_version = 37
+    cfg.protocol_version = 38
     cfg.session_max_players_override = 8
     cfg.playlist_inline = []
     cfg.team_names = ('Red', 'Blue')
     cfg.team_colors = ((0.1, 0.25, 1.0), (1.0, 0.25, 0.2))
     cfg.public_ipv4_address = '123.123.123.123'
     cfg.public_ipv6_address = '123A::A123:23A1:A312:12A3:A213:2A13'
+    cfg.password = 'changeme'
     cfg.log_levels = {'ba.lifecycle': 'INFO', 'ba.assets': 'INFO'}
 
     lines_in = _get_server_config_raw_contents(projroot).splitlines()

@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <string>
+#include <utility>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
@@ -12,6 +13,7 @@
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_timer.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -44,6 +46,11 @@ void ButtonWidget::SetText(const std::string& text_in) {
 
   // Also cache our current text width; don't want to calc this with each draw
   // (especially now that we may have to ask the OS to do it).
+  text_width_dirty_ = true;
+}
+
+void ButtonWidget::SetLangStr(std::shared_ptr<const base::LangStr> val) {
+  text_->SetLangStr(std::move(val));
   text_width_dirty_ = true;
 }
 

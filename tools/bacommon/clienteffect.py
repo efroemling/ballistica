@@ -15,6 +15,15 @@ from typing import Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
+from bacommon import langstr
+from bacommon.langstr import LangStrSpec
+from bacommon.assetspec import SoundSpec
+
+#: First engine build carrying the v2 client-effect machinery
+#: (``ScreenMessageV2``/``PlaySoundV2`` + resolve-before-run).
+#: Servers use this to emit the right form per client build.
+V2_EFFECTS_MIN_BUILD = 22931
+
 
 class EffectTypeID(Enum):
     """Type ID for each of our subclasses."""
@@ -22,7 +31,9 @@ class EffectTypeID(Enum):
     UNKNOWN = 'u'
     LEGACY_SCREEN_MESSAGE = 'm'
     SCREEN_MESSAGE = 'sm'
+    SCREEN_MESSAGE_V2 = 'sm2'
     SOUND = 's'
+    SOUND_V2 = 's2'
     DELAY = 'd'
     CHEST_WAIT_TIME_ANIMATION = 't'
     TICKETS_ANIMATION = 'ta'
@@ -63,8 +74,12 @@ class Effect(IOMultiType[EffectTypeID]):
             return LegacyScreenMessage
         if type_id is t.SCREEN_MESSAGE:
             return ScreenMessage
+        if type_id is t.SCREEN_MESSAGE_V2:
+            return ScreenMessageV2
         if type_id is t.SOUND:
             return PlaySound
+        if type_id is t.SOUND_V2:
+            return PlaySoundV2
         if type_id is t.DELAY:
             return Delay
         if type_id is t.CHEST_WAIT_TIME_ANIMATION:
@@ -101,7 +116,7 @@ class Unknown(Effect):
 class LegacyScreenMessage(Effect):
     """Display a screen-message (Legacy version).
 
-    This will be processed as an Lstr with translation category
+    This will be processed as a legacy client Lstr with translation category
     'serverResponses'.
 
     When possible, migrate to using :class:`ScreenMessage`.
@@ -129,7 +144,7 @@ class ScreenMessage(Effect):
     Supported on engine build 22606 or newer.
 
     This version does no translation by default (expecting translation
-    to happen server-side). Pass a Lstr json string and set is_lstr=True
+    to happen server-side). Pass a LangStrSpec json string and set is_lstr=True
     for client-side translation.
     """
 
@@ -143,6 +158,31 @@ class ScreenMessage(Effect):
     @classmethod
     def get_type_id(cls) -> EffectTypeID:
         return EffectTypeID.SCREEN_MESSAGE
+
+
+@ioprepped
+@dataclass
+class ScreenMessageV2(Effect):
+    """Display a screen-message (asset-package l-string version).
+
+    The message is a language-agnostic
+    :class:`~bacommon.langstr.LangStrSpec`; the client resolves the referenced
+    asset-package(s) in its own locale and decodes before display (see
+    :func:`collect_apverids`). Only understood by clients new enough to
+    carry the v2 effect machinery — older ones drop it as
+    :class:`Unknown` — so gate on engine build or dual-send with a
+    legacy form where the message matters.
+    """
+
+    message: Annotated[LangStrSpec, IOAttrs('m')]
+    color: Annotated[
+        tuple[float, float, float], IOAttrs('c', store_default=False)
+    ] = (1.0, 1.0, 1.0)
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> EffectTypeID:
+        return EffectTypeID.SCREEN_MESSAGE_V2
 
 
 class Sound(Enum):
@@ -167,6 +207,44 @@ class PlaySound(Effect):
     @classmethod
     def get_type_id(cls) -> EffectTypeID:
         return EffectTypeID.SOUND
+
+
+@ioprepped
+@dataclass
+class PlaySoundV2(Effect):
+    """Play a sound from an asset-package.
+
+    Unlike :class:`PlaySound`'s fixed :class:`Sound` set, this can play
+    any packaged sound via a typed
+    :class:`~bacommon.assetspec.SoundSpec`; the client resolves the
+    referenced asset-package before playing (see
+    :func:`collect_apverids`). Only understood by clients new enough to
+    carry the v2 effect machinery — older ones drop it as
+    :class:`Unknown`.
+    """
+
+    sound: Annotated[SoundSpec, IOAttrs('s')]
+    volume: Annotated[float, IOAttrs('v', store_default=False)] = 1.0
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> EffectTypeID:
+        return EffectTypeID.SOUND_V2
+
+
+def collect_apverids(effects: list[Effect], acc: set[str]) -> None:
+    """Gather every asset-package-version a list of effects references.
+
+    The v2 effect forms are self-describing (name-based ``LangStrSpec`` values
+    and typed asset refs), so the packages a client must resolve before
+    running the effects are derived by walking them — nothing extra
+    rides the wire. Mirrors the doc-ui-v2 pattern.
+    """
+    for effect in effects:
+        if isinstance(effect, ScreenMessageV2):
+            langstr.collect_apverids(effect.message, acc)
+        elif isinstance(effect, PlaySoundV2):
+            acc.add(effect.sound.apverid)
 
 
 @ioprepped

@@ -25,8 +25,6 @@ values = [
     _hooks.set_config_fullscreen_on,  # kSetConfigFullscreenOnCall
     _hooks.set_config_fullscreen_off,  # kSetConfigFullscreenOffCall
     _hooks.not_signed_in_screen_message,  # kNotSignedInScreenMessageCall
-    _hooks.rejecting_invite_already_in_party_message,  # kRejectingInviteAlreadyInPartyMessageCall
-    _hooks.connection_failed_message,  # kConnectionFailedMessageCall
     _hooks.temporarily_unavailable_message,  # kTemporarilyUnavailableMessageCall
     _hooks.in_progress_message,  # kInProgressMessageCall
     _hooks.error_message,  # kErrorMessageCall

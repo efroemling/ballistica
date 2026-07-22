@@ -129,10 +129,7 @@ class ChestWindow(bui.MainWindow):
                 self._yoffstop - (36 if uiscale is bui.UIScale.SMALL else 10),
             ),
             size=(0, 0),
-            text=bui.Lstr(
-                resource='chests.slotText',
-                subs=[('${NUM}', str(index + 1))],
-            ),
+            text=stdassets.strings.chest.slot_number(num=str(index + 1)),
             color=bui.app.ui_v1.title_color,
             maxwidth=110.0 if uiscale is bui.UIScale.SMALL else 200,
             scale=0.9 if uiscale is bui.UIScale.SMALL else 1.1,
@@ -192,7 +189,7 @@ class ChestWindow(bui.MainWindow):
             return
 
         if plus.accounts.primary is None:
-            self._error(bui.Lstr(resource='notSignedInText'))
+            self._error(stdassets.strings.ui.not_signed_in_status)
             return
 
         # Start by showing info/options for our target chest. Note that
@@ -257,7 +254,7 @@ class ChestWindow(bui.MainWindow):
 
         if isinstance(response, Exception):
             self._error(
-                bui.Lstr(resource='internal.unableToCompleteTryAgainText'),
+                stdassets.strings.ui.unable_to_complete,
                 minor=True,
             )
             return
@@ -282,7 +279,7 @@ class ChestWindow(bui.MainWindow):
         # Communication/local error:
         if isinstance(response, Exception):
             self._error(
-                bui.Lstr(resource='internal.unableToCompleteTryAgainText'),
+                stdassets.strings.ui.unable_to_complete,
                 minor=True,
             )
             return
@@ -381,7 +378,7 @@ class ChestWindow(bui.MainWindow):
                 parent=self._root_widget,
                 position=(self._width * 0.5, self._yoffs - 85 + 18),
                 size=(0, 0),
-                text=bui.Lstr(resource='chests.unlocksInText'),
+                text=stdassets.strings.chest.unlocks_in,
                 maxwidth=700,
                 scale=0.4,
                 color=(0.7, 0.65, 1, 0.55),
@@ -439,7 +436,7 @@ class ChestWindow(bui.MainWindow):
             self._open_now_texts.append(
                 bui.textwidget(
                     parent=self._root_widget,
-                    text=bui.Lstr(resource='openText'),
+                    text=stdassets.strings.chest.open,
                     position=(
                         self._width * 0.5 + boffsx,
                         self._yoffs + bposy + bheight * 0.5,
@@ -457,7 +454,7 @@ class ChestWindow(bui.MainWindow):
             self._open_now_texts.append(
                 bui.textwidget(
                     parent=self._root_widget,
-                    text=bui.Lstr(resource='openNowText'),
+                    text=stdassets.strings.chest.open_now,
                     position=(
                         self._width * 0.5 + boffsx,
                         self._yoffs + bposy + bheight * 1.15,
@@ -488,9 +485,8 @@ class ChestWindow(bui.MainWindow):
                 self._open_now_texts.append(
                     bui.textwidget(
                         parent=self._root_widget,
-                        text=bui.Lstr(
-                            resource='tokens.numTokensText',
-                            subs=[('${COUNT}', str(chest.unlock_tokens))],
+                        text=stdassets.strings.gettokens.num_tokens(
+                            count=chest.unlock_tokens
                         ),
                         position=(
                             self._width * 0.5 + boffsx,
@@ -517,7 +513,7 @@ class ChestWindow(bui.MainWindow):
         if show_ad_button:
             bui.textwidget(
                 parent=self._root_widget,
-                text=bui.Lstr(resource='chests.reduceWaitText'),
+                text=stdassets.strings.chest.reduce_wait,
                 position=(
                     self._width * 0.5 + hspace * 0.5 + bwidth * 0.5,
                     self._yoffs + bposy + bheight * 1.15,
@@ -560,7 +556,7 @@ class ChestWindow(bui.MainWindow):
             # specifically says 'Ad' in it.
             bui.textwidget(
                 parent=self._root_widget,
-                text=bui.Lstr(resource='watchAnAdText'),
+                text=stdassets.strings.tournamententry.watch_an_ad,
                 position=(
                     self._width * 0.5 + hspace * 0.5 + bwidth * 0.5,
                     self._yoffs + bposy + bheight * 0.25,
@@ -630,7 +626,7 @@ class ChestWindow(bui.MainWindow):
                     parent=self._root_widget,
                     position=(open_me_x, open_me_y - 79),
                     size=(0, 0),
-                    text=bui.Lstr(resource='tokens.openNowDescriptionText'),
+                    text=stdassets.strings.chest.open_now_description,
                     maxwidth=175,
                     max_height=55,
                     scale=0.55,
@@ -644,7 +640,7 @@ class ChestWindow(bui.MainWindow):
             btn = bui.buttonwidget(
                 parent=self._root_widget,
                 position=(open_me_x - 70, open_me_y - 140),
-                label=bui.Lstr(resource='stopRemindingMeText'),
+                label=stdassets.strings.chest.stop_reminding_me,
                 size=(140, 30),
                 textcolor=(0.0, 1.0, 0.7),
                 text_scale=0.5,
@@ -718,7 +714,7 @@ class ChestWindow(bui.MainWindow):
         # Title.
         bui.textwidget(
             parent=self._root_widget,
-            text=bui.Lstr(resource='chests.prizeOddsText'),
+            text=stdassets.strings.chest.prize_odds,
             color=(0.7, 0.65, 1, 0.5),
             flatness=1.0,
             shadow=1.0,
@@ -838,9 +834,7 @@ class ChestWindow(bui.MainWindow):
 
         # Allow only one in-flight action at once.
         if self._action_in_flight:
-            bui.screenmessage(
-                bui.Lstr(resource='pleaseWaitText'), color=(1, 0, 0)
-            )
+            bui.screenmessage(stdassets.strings.ui.please_wait, color=(1, 0, 0))
             builtinassets.audio.error.get().play()
             return
 
@@ -848,7 +842,7 @@ class ChestWindow(bui.MainWindow):
         assert plus is not None
 
         if plus.accounts.primary is None:
-            self._error(bui.Lstr(resource='notSignedInText'))
+            self._error(stdassets.strings.ui.not_signed_in_status)
             return
 
         # Offer to purchase tokens if they don't have enough.
@@ -890,9 +884,7 @@ class ChestWindow(bui.MainWindow):
 
         # Allow only one in-flight action at once.
         if self._action_in_flight:
-            bui.screenmessage(
-                bui.Lstr(resource='pleaseWaitText'), color=(1, 0, 0)
-            )
+            bui.screenmessage(stdassets.strings.ui.please_wait, color=(1, 0, 0))
             builtinassets.audio.error.get().play()
             return
 
@@ -926,9 +918,7 @@ class ChestWindow(bui.MainWindow):
 
         # Allow only one in-flight action at once.
         if self._action_in_flight:
-            bui.screenmessage(
-                bui.Lstr(resource='pleaseWaitText'), color=(1, 0, 0)
-            )
+            bui.screenmessage(stdassets.strings.ui.please_wait, color=(1, 0, 0))
             builtinassets.audio.error.get().play()
             return
 
@@ -936,7 +926,7 @@ class ChestWindow(bui.MainWindow):
         assert plus is not None
 
         if plus.accounts.primary is None:
-            self._error(bui.Lstr(resource='notSignedInText'))
+            self._error(stdassets.strings.ui.not_signed_in_status)
             return
 
         self._action_in_flight = True
@@ -963,7 +953,9 @@ class ChestWindow(bui.MainWindow):
                 widget.delete()
         bui.textwidget(edit=self._infotext, text='', color=(1, 1, 1))
 
-    def _error(self, msg: str | bui.Lstr, minor: bool = False) -> None:
+    def _error(
+        self, msg: str | bui.Lstr | bui.LangStr, minor: bool = False
+    ) -> None:
         """Put ourself in an error state with a visible error message."""
         self._reset()
         bui.textwidget(
@@ -980,7 +972,7 @@ class ChestWindow(bui.MainWindow):
         self._reset()
         bui.textwidget(
             edit=self._infotext,
-            text=bui.Lstr(resource='chests.slotDescriptionText'),
+            text=stdassets.strings.chest.slot_description,
             color=(1, 1, 1),
         )
         # This is somewhat redundant with the close button, but we need
@@ -1231,7 +1223,11 @@ class ChestWindow(bui.MainWindow):
                 self._yoffs - 350,
             ),
             size=(bwidth, bheight),
-            label=bui.Lstr(resource='okText' if use_ok_label else 'doneText'),
+            label=(
+                stdassets.strings.ui.ok
+                if use_ok_label
+                else stdassets.strings.ui.done
+            ),
             autoselect=True,
             on_activate_call=self.main_window_back,
         )

@@ -2,6 +2,7 @@
 
 #include "ballistica/base/python/base_python.h"
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -12,12 +13,14 @@
 #include "ballistica/base/python/class/python_class_display_timer.h"
 #include "ballistica/base/python/class/python_class_env.h"
 #include "ballistica/base/python/class/python_class_feature_set_data.h"
+#include "ballistica/base/python/class/python_class_lang_str.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 #include "ballistica/base/python/class/python_class_vec3.h"
 #include "ballistica/base/python/methods/python_methods_base_1.h"
 #include "ballistica/base/python/methods/python_methods_base_2.h"
 #include "ballistica/base/python/methods/python_methods_base_3.h"
 #include "ballistica/base/python/methods/python_methods_test.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/core/core.h"
 #include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
 #include "ballistica/shared/python/python_module_builder.h"
@@ -54,6 +57,7 @@ void BasePython::AddPythonClasses(PyObject* module) {
   PythonModuleBuilder::AddClass<PythonClassDisplayTimer>(module);
   PythonModuleBuilder::AddClass<PythonClassEnv>(module);
   PythonModuleBuilder::AddClass<PythonClassSimpleSound>(module);
+  PythonModuleBuilder::AddClass<PythonClassLangStr>(module);
   PythonModuleBuilder::AddClass<PythonClassContextCall>(module);
   PyObject* vec3 = PythonModuleBuilder::AddClass<PythonClassVec3>(module);
   // Register our Vec3 as an abc.Sequence
@@ -261,8 +265,135 @@ auto BasePython::IsPyLString(PyObject* o) -> bool {
   assert(Python::HaveGIL());
   assert(o != nullptr);
 
-  return (PyUnicode_Check(o)
-          || PyObject_IsInstance(o, objs().Get(ObjID::kLStrClass).get()));
+  return (PyUnicode_Check(o) || PythonClassLangStr::Check(o)
+          || PyObject_IsInstance(o, objs().Get(ObjID::kLStrClass).get())
+          || IsBacommonLangStr_(o));
+}
+
+auto BasePython::IsBacommonLangStr_(PyObject* o) -> bool {
+  assert(Python::HaveGIL());
+  if (!bacommon_lang_str_class_.exists()) {
+    if (bacommon_lang_str_lookup_failed_) {
+      return false;
+    }
+    auto mod = PythonRef::StolenSoft(PyImport_ImportModule("bacommon.langstr"));
+    auto dio = PythonRef::StolenSoft(PyImport_ImportModule("efro.dataclassio"));
+    if (!mod.exists() || !dio.exists()) {
+      PyErr_Clear();
+      bacommon_lang_str_lookup_failed_ = true;
+      return false;
+    }
+    bacommon_lang_str_class_ = mod.GetAttr("LangStrSpec");
+    dataclass_to_json_call_ = dio.GetAttr("dataclass_to_json");
+    dataclass_from_json_call_ = dio.GetAttr("dataclass_from_json");
+  }
+  int result = PyObject_IsInstance(o, bacommon_lang_str_class_.get());
+  if (result == -1) {
+    PyErr_Clear();
+    result = 0;
+  }
+  return result == 1;
+}
+
+auto BasePython::HmacSha256Hex(const std::string& key, const std::string& msg)
+    -> std::string {
+  assert(Python::HaveGIL());
+  // Lazily grab hmac.new + hashlib.sha256 on first use (both stdlib;
+  // avoids a native crypto dependency and keeps this off the bootstrap
+  // path).
+  if (!hmac_new_call_.exists()) {
+    if (hmac_lookup_failed_) {
+      return "";
+    }
+    auto hmac_mod = PythonRef::StolenSoft(PyImport_ImportModule("hmac"));
+    auto hashlib_mod = PythonRef::StolenSoft(PyImport_ImportModule("hashlib"));
+    if (!hmac_mod.exists() || !hashlib_mod.exists()) {
+      PyErr_Clear();
+      hmac_lookup_failed_ = true;
+      return "";
+    }
+    hmac_new_call_ = hmac_mod.GetAttr("new");
+    hashlib_sha256_call_ = hashlib_mod.GetAttr("sha256");
+  }
+  // hmac.new(key.encode(), msg.encode(), hashlib.sha256).hexdigest()
+  auto args = PythonRef::Stolen(Py_BuildValue(
+      "(y#y#O)", key.c_str(), static_cast<Py_ssize_t>(key.size()), msg.c_str(),
+      static_cast<Py_ssize_t>(msg.size()), hashlib_sha256_call_.get()));
+  PythonRef hmac_obj = hmac_new_call_.Call(args);
+  if (!hmac_obj.exists()) {
+    PyErr_Clear();
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "HmacSha256Hex: hmac.new failed.");
+    return "";
+  }
+  PythonRef hexdigest = hmac_obj.GetAttr("hexdigest").Call();
+  if (!hexdigest.exists() || !PyUnicode_Check(hexdigest.get())) {
+    PyErr_Clear();
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "HmacSha256Hex: hexdigest failed.");
+    return "";
+  }
+  return PyUnicode_AsUTF8(hexdigest.get());
+}
+
+auto BasePython::MakeLangStrSpecFromJson(const std::string& json) -> PythonRef {
+  assert(Python::HaveGIL());
+  // Trigger the lazy class/serializer lookups (arg is irrelevant).
+  IsBacommonLangStr_(Py_None);
+  if (!bacommon_lang_str_class_.exists()
+      || !dataclass_from_json_call_.exists()) {
+    return {};
+  }
+  auto args = PythonRef::Stolen(
+      Py_BuildValue("(Os)", bacommon_lang_str_class_.get(), json.c_str()));
+  PythonRef result = dataclass_from_json_call_.Call(args);
+  if (!result.exists()) {
+    PyErr_Clear();
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                         "langstr spec: dataclass parse failed.");
+    return {};
+  }
+  return result;
+}
+
+auto BasePython::ParseBacommonLangStr(PyObject* o)
+    -> std::optional<std::shared_ptr<const LangStr>> {
+  assert(Python::HaveGIL());
+  if (!IsBacommonLangStr_(o)) {
+    return {};
+  }
+  // Serialize the dataclass to its canonical wire JSON and parse
+  // natively.
+  auto args = PythonRef::Stolen(Py_BuildValue("(O)", o));
+  PythonRef json = dataclass_to_json_call_.Call(args);
+  if (!json.exists() || !PyUnicode_Check(json.get())) {
+    PyErr_Clear();
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                         "langstr parse: dataclass serialization failed.");
+    return {};
+  }
+  auto parsed = LangStr::FromJson(PyUnicode_AsUTF8(json.get()));
+  if (!parsed.has_value()) {
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                         "langstr parse: " + parsed.error());
+    return {};
+  }
+  return *parsed;
+}
+
+auto BasePython::EvalBacommonLangStr_(PyObject* o)
+    -> std::optional<std::string> {
+  assert(Python::HaveGIL());
+  if (!IsBacommonLangStr_(o)) {
+    return {};
+  }
+  // Fail-visible from here on (it *is* a language-string; problems
+  // should render as sentinels, not type errors). Parse details are
+  // logged by ParseBacommonLangStr.
+  if (auto parsed = ParseBacommonLangStr(o)) {
+    return (*parsed)->Evaluate();
+  }
+  return "LANGSTR_ERROR:parse failed (see log)";
 }
 
 auto BasePython::GetPyLString(PyObject* o) -> std::string {
@@ -272,6 +403,19 @@ auto BasePython::GetPyLString(PyObject* o) -> std::string {
   PyExcType exctype{PyExcType::kType};
   if (PyUnicode_Check(o)) {
     return PyUnicode_AsUTF8(o);
+  } else if (PythonClassLangStr::Check(o)) {
+    // Native language-strings evaluate to flat display text here
+    // (fail-visible; see LangStr::Evaluate). Checked explicitly by
+    // class -- never by sniffing content (see the language-string
+    // initiative's D-s).
+    return PythonClassLangStr::FromPyObj(o).value()->Evaluate();
+  } else if (auto flat = EvalBacommonLangStr_(o)) {
+    // Likewise for the authoring-spec form (bacommon.langstr
+    // LangStrSpec) -- flatten-at-set is correct for the transient
+    // surfaces this funnel feeds (screen-messages etc.); retained
+    // surfaces (widgets) demand the verified babase.LangStr form
+    // instead (D28).
+    return *flat;
   } else {
     // Check if its a Lstr.  If so; we pull its json string representation.
     int result = PyObject_IsInstance(o, objs().Get(ObjID::kLStrClass).get());

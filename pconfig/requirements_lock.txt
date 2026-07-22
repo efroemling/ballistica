@@ -1025,9 +1025,9 @@ types-certifi==2021.10.8.3 \
     --hash=sha256:72cf7798d165bc0b76e1c10dd1ea3097c7063c42c21d664523b928e88b554a4f \
     --hash=sha256:b2d1e325e69f71f7c78e5943d410e650b4707bb0ef32e4ddf3da37f54176e88a
     # via -r pconfig/requirements.txt
-types-docutils==0.22.3.20260518 \
-    --hash=sha256:2c45ba63a9ac64246335359b68fe9c27602926499c9b67caec3780745f6aadee \
-    --hash=sha256:9c4cbc37d9e37f47dfe971ac09e9880380dc948ff1f23956892e810d0bf08676
+types-docutils==0.22.3.20260712 \
+    --hash=sha256:4bbc5cf949f8b1b1c7e1befa5a4d1c3bcad9f22f823538eea26ba7ff694fa38e \
+    --hash=sha256:bed54a50136c8e7613c03ee1c51eb958b42754915df83535de356b974ca05877
     # via -r pconfig/requirements.txt
 types-filelock==3.2.7 \
     --hash=sha256:0673a25b45725c5c45661fe3744c3d8058653a16e683f0ae4a74afb44a0cdef4 \
@@ -1037,9 +1037,9 @@ types-psutil==7.2.2.20260518 \
     --hash=sha256:6a3d697665754a60d7b5a41d5a2cff12b53f5e0676d77810cd28ba5e14cb4049 \
     --hash=sha256:9f825f631463a5b4d26f19f63aebc9ec25f01140d655026f3ad8a67841f9b331
     # via -r pconfig/requirements.txt
-types-requests==2.33.0.20260518 \
-    --hash=sha256:626d697d1adaaff76e2044dc8c5c051d8f21abc157bdfe204a75558076fe0bf0 \
-    --hash=sha256:df7bd3bfe0ca8402dfb841e7d9be714bb5578203283d66d7dc4ef69343449a5e
+types-requests==2.33.0.20260712 \
+    --hash=sha256:2141b67ab534a5c5cd2dac5034f2a35f42e699c5bf185eee608c5246a069d7fb \
+    --hash=sha256:de027e28c171d3da529689cbfa023b0b4eab188c8dfa22fd834eebd2cee6e7bb
     # via -r pconfig/requirements.txt
 typing-extensions==4.16.0 \
     --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 \

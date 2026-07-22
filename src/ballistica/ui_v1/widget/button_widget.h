@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_UI_V1_WIDGET_BUTTON_WIDGET_H_
 #define BALLISTICA_UI_V1_WIDGET_BUTTON_WIDGET_H_
 
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -69,6 +70,9 @@ class ButtonWidget : public Widget {
   enum class TransitionType : uint8_t { kInLeft, kScale };
   void SetTextLiteral(bool val);
   void SetText(const std::string& text);
+  /// Native language-string label (retained + re-evaluated on
+  /// language changes; see TextWidget::SetLangStr).
+  void SetLangStr(std::shared_ptr<const base::LangStr> val);
   auto text() const -> std::string { return text_->text_raw(); }
   auto set_icon_type(IconType i) { icon_type_ = i; }
   auto set_repeat(bool repeat) { repeat_ = repeat; }

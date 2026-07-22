@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass
 
 import babase
+from bacommon.langstr import LangStrSpecValue
+from efro.dataclassio import dataclass_to_json
 
 import _bascenev1
 
@@ -342,7 +344,7 @@ class Stats:
         victim_player: bascenev1.Player | None = None,
         scale: float = 1.0,
         color: Sequence[float] | None = None,
-        title: str | babase.Lstr | None = None,
+        title: str | babase.Lstr | babase.LangStr | None = None,
         screenmessage: bool = True,
         display: bool = True,
         importance: int = 1,
@@ -408,7 +410,27 @@ class Stats:
                 )
                 activity = self.getactivity()
                 if activity is not None:
-                    if title is not None:
+                    sval: babase.Lstr | babase.LangStr
+                    if isinstance(title, babase.LangStr):
+                        # A LangStr title can't ride legacy Lstr subs;
+                        # build the composite as a native LangStr
+                        # (value-form with the title's spec nested).
+                        # Transitional: subs-bearing value forms lack
+                        # typed args; convert to an authored entry when
+                        # these strings port (see strings-asset-
+                        # migration D34).
+                        sval = babase.LangStr(
+                            json=dataclass_to_json(
+                                LangStrSpecValue(
+                                    '+{points} {title}',
+                                    {
+                                        'points': str(points),
+                                        'title': title.spec,
+                                    },
+                                )
+                            )
+                        )
+                    elif title is not None:
                         sval = babase.Lstr(
                             value='+${A} ${B}',
                             subs=[('${A}', str(points)), ('${B}', title)],

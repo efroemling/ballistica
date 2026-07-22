@@ -201,7 +201,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 yoffs + titleyoffs,
             ),
             size=(0, 0),
-            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            text=stdassets.strings.account.title,
             color=app.ui_v1.title_color,
             scale=titlescale,
             maxwidth=self._width - 340,
@@ -510,10 +510,7 @@ class AccountSettingsWindow(bui.MainWindow):
         self._account_name_text: bui.Widget | None
         if show_signed_in_as:
             v -= signed_in_as_space * 0.2
-            txt = bui.Lstr(
-                resource='accountSettingsWindow.youAreSignedInAsText',
-                fallback_resource='accountSettingsWindow.youAreLoggedInAsText',
-            )
+            txt = stdassets.strings.account.you_are_signed_in_as
             bui.textwidget(
                 parent=self._subcontainer,
                 position=(self._sub_width * 0.5, v),
@@ -607,7 +604,7 @@ class AccountSettingsWindow(bui.MainWindow):
                     v + sign_in_benefits_space * 0.4,
                 ),
                 size=(0, 0),
-                text=bui.Lstr(resource=f'{self._r}.signInInfoText'),
+                text=stdassets.strings.account.sign_in_info,
                 max_height=sign_in_benefits_space * 0.9,
                 scale=0.9,
                 color=(0.75, 0.7, 0.8),
@@ -626,7 +623,7 @@ class AccountSettingsWindow(bui.MainWindow):
                     v + signing_in_text_space * 0.5,
                 ),
                 size=(0, 0),
-                text=bui.Lstr(resource='accountSettingsWindow.signingInText'),
+                text=stdassets.strings.account.signing_in,
                 scale=0.9,
                 color=(0, 1, 0),
                 maxwidth=self._sub_width * 0.8,
@@ -643,26 +640,11 @@ class AccountSettingsWindow(bui.MainWindow):
                 position=((self._sub_width - button_width) * 0.5, v - 20),
                 autoselect=True,
                 size=(button_width, 60),
-                label=bui.Lstr(
-                    value='${A} ${B}',
-                    subs=[
-                        (
-                            '${A}',
-                            bui.charstr(bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO),
-                        ),
-                        (
-                            '${B}',
-                            bui.Lstr(
-                                resource=f'{self._r}.signInWithText',
-                                subs=[
-                                    (
-                                        '${SERVICE}',
-                                        bui.Lstr(resource='googlePlayText'),
-                                    )
-                                ],
-                            ),
-                        ),
-                    ],
+                label=stdassets.strings.ui.icon_label(
+                    icon=bui.charstr(bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO),
+                    label=stdassets.strings.account.sign_in_with(
+                        service=stdassets.strings.ui.google_play
+                    ),
                 ),
                 on_activate_call=lambda: self._sign_in_press(LoginType.GPGS),
             )
@@ -687,21 +669,11 @@ class AccountSettingsWindow(bui.MainWindow):
                 # Note: Apparently Game Center is just called 'Game Center'
                 # in all languages. Can revisit if not true.
                 # https://developer.apple.com/forums/thread/725779
-                label=bui.Lstr(
-                    value='${A} ${B}',
-                    subs=[
-                        (
-                            '${A}',
-                            bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO),
-                        ),
-                        (
-                            '${B}',
-                            bui.Lstr(
-                                resource=f'{self._r}.signInWithText',
-                                subs=[('${SERVICE}', 'Game Center')],
-                            ),
-                        ),
-                    ],
+                label=stdassets.strings.ui.icon_label(
+                    icon=bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO),
+                    label=stdassets.strings.account.sign_in_with(
+                        service=stdassets.strings.ui.game_center
+                    ),
                 ),
                 on_activate_call=lambda: self._sign_in_press(
                     LoginType.GAME_CENTER
@@ -728,21 +700,11 @@ class AccountSettingsWindow(bui.MainWindow):
                 # "Discord" is a brand name so we pass it as a literal
                 # (same pattern Game Center uses); the surrounding
                 # "Sign in with..." comes from a translated resource.
-                label=bui.Lstr(
-                    value='${A} ${B}',
-                    subs=[
-                        (
-                            '${A}',
-                            bui.charstr(bui.SpecialChar.DISCORD_LOGO),
-                        ),
-                        (
-                            '${B}',
-                            bui.Lstr(
-                                resource=f'{self._r}.signInWithText',
-                                subs=[('${SERVICE}', 'Discord')],
-                            ),
-                        ),
-                    ],
+                label=stdassets.strings.ui.icon_label(
+                    icon=bui.charstr(bui.SpecialChar.DISCORD_LOGO),
+                    label=stdassets.strings.account.sign_in_with(
+                        service='Discord'
+                    ),
                 ),
                 on_activate_call=self._discord_sign_in_press,
             )
@@ -768,13 +730,13 @@ class AccountSettingsWindow(bui.MainWindow):
                 on_activate_call=self._v2_proxy_sign_in_press,
             )
 
-            v2labeltext: bui.Lstr | str = (
-                bui.Lstr(resource=f'{self._r}.signInWithAnEmailAddressText')
+            v2labeltext: bui.LangStr | str = (
+                stdassets.strings.account.sign_in_with_email
                 if show_game_center_sign_in_button
                 or show_google_play_sign_in_button
                 or show_discord_sign_in_button
                 or show_device_sign_in_button
-                else bui.Lstr(resource=f'{self._r}.signInText')
+                else stdassets.strings.account.sign_in
             )
             v2infotext: bui.Lstr | str | None = None
 
@@ -788,15 +750,9 @@ class AccountSettingsWindow(bui.MainWindow):
                     self._sub_width * 0.5,
                     v + (17 if v2infotext is not None else 10),
                 ),
-                text=bui.Lstr(
-                    value='${A} ${B}',
-                    subs=[
-                        ('${A}', bui.charstr(bui.SpecialChar.V2_LOGO)),
-                        (
-                            '${B}',
-                            v2labeltext,
-                        ),
-                    ],
+                text=stdassets.strings.ui.icon_label(
+                    icon=bui.charstr(bui.SpecialChar.V2_LOGO),
+                    label=v2labeltext,
                 ),
                 maxwidth=button_width * 0.8,
                 color=(0.75, 1.0, 0.7),
@@ -842,7 +798,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 v_align='center',
                 size=(0, 0),
                 position=(self._sub_width * 0.5, v + 60),
-                text=bui.Lstr(resource='deprecatedText'),
+                text=stdassets.strings.ui.deprecated,
                 scale=0.8,
                 maxwidth=300,
                 color=(0.6, 0.55, 0.45),
@@ -855,17 +811,9 @@ class AccountSettingsWindow(bui.MainWindow):
                 v_align='center',
                 size=(0, 0),
                 position=(self._sub_width * 0.5, v + 17),
-                text=bui.Lstr(
-                    value='${A} ${B}',
-                    subs=[
-                        ('${A}', bui.charstr(bui.SpecialChar.LOCAL_ACCOUNT)),
-                        (
-                            '${B}',
-                            bui.Lstr(
-                                resource=f'{self._r}.signInWithDeviceText'
-                            ),
-                        ),
-                    ],
+                text=stdassets.strings.ui.icon_label(
+                    icon=bui.charstr(bui.SpecialChar.LOCAL_ACCOUNT),
+                    label=stdassets.strings.account.sign_in_with_device,
                 ),
                 maxwidth=button_width * 0.8,
                 color=(0.75, 1.0, 0.7),
@@ -877,7 +825,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 v_align='center',
                 size=(0, 0),
                 position=(self._sub_width * 0.5, v - 4),
-                text=bui.Lstr(resource=f'{self._r}.signInWithDeviceInfoText'),
+                text=stdassets.strings.account.sign_in_with_device_info,
                 flatness=1.0,
                 scale=0.57,
                 maxwidth=button_width * 0.9,
@@ -921,7 +869,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 position=((self._sub_width - button_width) * 0.5, v),
                 autoselect=True,
                 size=(button_width, 60),
-                label=bui.Lstr(resource=f'{self._r}.manageAccountText'),
+                label=stdassets.strings.account.manage_account,
                 color=(0.55, 0.5, 0.6),
                 icon=stdassets.textures.settings_icon.get(),
                 textcolor=(0.75, 0.7, 0.8),
@@ -945,7 +893,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 position=((self._sub_width - button_width) * 0.5, v - 30),
                 autoselect=True,
                 size=(button_width, 60),
-                label=bui.Lstr(resource=f'{self._r}.createAnAccountText'),
+                label=stdassets.strings.account.create_an_account,
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 on_activate_call=bui.WeakCallStrict(
@@ -967,9 +915,9 @@ class AccountSettingsWindow(bui.MainWindow):
                 # Note: Apparently Game Center is just called 'Game Center'
                 # in all languages. Can revisit if not true.
                 # https://developer.apple.com/forums/thread/725779
-                game_center_button_label = bui.Lstr(
-                    value=bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO)
-                    + 'Game Center'
+                game_center_button_label = stdassets.strings.ui.icon_label(
+                    icon=bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO),
+                    label=stdassets.strings.ui.game_center,
                 )
             else:
                 raise ValueError(
@@ -1031,7 +979,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 icon_color=(0.8, 0.95, 0.7),
                 on_activate_call=self._on_leaderboards_press,
                 size=(button_width, 50),
-                label=bui.Lstr(resource='leaderboardsText'),
+                label=stdassets.strings.ui.leaderboards,
             )
             if first_selectable is None:
                 first_selectable = btn
@@ -1089,7 +1037,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 id=f'{self.main_window_id_prefix}|signout',
                 position=((self._sub_width - button_width) * 0.5, v),
                 size=(button_width, 60),
-                label=bui.Lstr(resource=f'{self._r}.signOutText'),
+                label=stdassets.strings.account.sign_out,
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
@@ -1109,7 +1057,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 id=f'{self.main_window_id_prefix}|cancelsignin',
                 position=((self._sub_width - button_width) * 0.5, v),
                 size=(button_width, 60),
-                label=bui.Lstr(resource='cancelText'),
+                label=stdassets.strings.ui.cancel,
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
@@ -1129,7 +1077,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 id=f'{self.main_window_id_prefix}|deleteaccount',
                 position=((self._sub_width - button_width) * 0.5, v),
                 size=(button_width, 60),
-                label=bui.Lstr(resource=f'{self._r}.deleteAccountText'),
+                label=stdassets.strings.account.delete_account,
                 color=(0.85, 0.5, 0.6),
                 textcolor=(0.9, 0.7, 0.8),
                 autoselect=True,
@@ -1194,7 +1142,7 @@ class AccountSettingsWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        bui.screenmessage(bui.Lstr(resource='oneMomentText'))
+        bui.screenmessage(stdassets.strings.ui.one_moment)
 
         # We expect to have a v2 account signed in if we get here.
         if plus.accounts.primary is None:
@@ -1218,7 +1166,7 @@ class AccountSettingsWindow(bui.MainWindow):
             logging.warning(
                 'Got error in manage-account-response: %s.', response
             )
-            bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
+            bui.screenmessage(stdassets.strings.ui.error, color=(1, 0, 0))
             builtinassets.audio.error.get().play()
             return
 
@@ -1238,7 +1186,7 @@ class AccountSettingsWindow(bui.MainWindow):
     def _refresh_campaign_progress_text(self) -> None:
         if self._campaign_progress_text is None:
             return
-        p_str: str | bui.Lstr
+        p_str: str | bui.Lstr | bui.LangStr
         try:
             assert bui.app.classic is not None
             campaign = bui.app.classic.getcampaign('Default')
@@ -1247,9 +1195,8 @@ class AccountSettingsWindow(bui.MainWindow):
 
             # Last level cant be completed; hence the -1;
             progress = min(1.0, float(levels_complete) / (len(levels) - 1))
-            p_str = bui.Lstr(
-                resource=f'{self._r}.campaignProgressText',
-                subs=[('${PROGRESS}', str(int(progress * 100.0)) + '%')],
+            p_str = stdassets.strings.account.campaign_progress(
+                progress=str(int(progress * 100.0)) + '%'
             )
         except Exception:
             p_str = '?'
@@ -1269,9 +1216,7 @@ class AccountSettingsWindow(bui.MainWindow):
             tc_str = '-'
         bui.textwidget(
             edit=self._tickets_text,
-            text=bui.Lstr(
-                resource=f'{self._r}.ticketsText', subs=[('${COUNT}', tc_str)]
-            ),
+            text=stdassets.strings.account.tickets(count=tc_str),
         )
 
     def _refresh_account_name_text(self) -> None:
@@ -1296,9 +1241,8 @@ class AccountSettingsWindow(bui.MainWindow):
             1 if a.complete else 0 for a in bui.app.classic.ach.achievements
         )
         total = len(bui.app.classic.ach.achievements)
-        txt_final = bui.Lstr(
-            resource=f'{self._r}.achievementProgressText',
-            subs=[('${COUNT}', str(complete)), ('${TOTAL}', str(total))],
+        txt_final = stdassets.strings.account.achievement_progress(
+            complete=str(complete), total=str(total)
         )
 
         if self._achievements_text is not None:
@@ -1343,7 +1287,7 @@ class AccountSettingsWindow(bui.MainWindow):
         cfg.commit()
         bui.buttonwidget(
             edit=self._sign_out_button,
-            label=bui.Lstr(resource=f'{self._r}.signingOutText'),
+            label=stdassets.strings.account.signing_out,
         )
 
         # Speed UI updates along.
@@ -1415,7 +1359,7 @@ class AccountSettingsWindow(bui.MainWindow):
             # can get more specific as needed later.
             logging.warning('Got error in v2 sign-in result: %s', result)
             bui.screenmessage(
-                bui.Lstr(resource='internal.signInNoConnectionText'),
+                stdassets.strings.account.sign_in_no_connection,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()
@@ -1479,7 +1423,7 @@ class AccountSettingsWindow(bui.MainWindow):
         if isinstance(result, Exception):
             logging.warning('Got error in discord sign-in result: %s', result)
             bui.screenmessage(
-                bui.Lstr(resource='internal.signInNoConnectionText'),
+                stdassets.strings.account.sign_in_no_connection,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()

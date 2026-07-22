@@ -638,6 +638,20 @@ class ResponseData:
             securedata.Archive | None, IOAttrs('tk', store_default=False)
         ] = None
 
+        #: The flavor-manifest blobs backing ``blobs``
+        #: (content-sha256 -> canonical byte size). Sent by the master
+        #: so the intercepting basn node can mint a fleet-portable
+        #: capability token whose scope any node can verify (see
+        #: ``baserver.assetcap.AssetCapabilityPayload.fm_digests``);
+        #: the node consumes it and strips it from the response, so it
+        #: never reaches the bacloud client. Empty from pre-scope
+        #: masters (and, during rollout, when the basn fleet floor
+        #: predates scope support).
+        flavor_manifest_blobs: Annotated[
+            dict[str, int],
+            IOAttrs('fmb', store_default=False, soft_default_factory=dict),
+        ] = field(default_factory=dict)
+
         #: DEPRECATED / UNUSED -- always empty. Compression is no longer
         #: carried here: a blob's transfer encoding is negotiated per
         #: ``/casblob`` request (the node reports it via its

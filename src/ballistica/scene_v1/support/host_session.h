@@ -104,6 +104,14 @@ class HostSession : public Session {
   auto ContextAllowsDefaultTimerTypes() -> bool override;
   auto TimeToNextEvent() -> std::optional<microsecs_t> override;
 
+  /// The session's fixed asset-package universe (sorted apverids),
+  /// snapshotted from the app-run hosting set at session creation.
+  /// Position in this list is the wire pkg-index (see
+  /// SessionCommand::kDeclareAssetPackage).
+  auto asset_package_universe() const -> const std::vector<std::string>& {
+    return asset_package_universe_;
+  }
+
  private:
   void StepScene();
   void ProcessPlayerTimeOuts();
@@ -111,6 +119,7 @@ class HostSession : public Session {
   void IssuePlayerLeft(Player* player);
 
   bool is_main_menu_;  // FIXME: Remove this.
+  std::vector<std::string> asset_package_universe_;
   Object::Ref<SessionStream> output_stream_;
   Timer* step_scene_timer_;
   millisecs_t base_time_millisecs_{};

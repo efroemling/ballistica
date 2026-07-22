@@ -9,6 +9,7 @@
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/python/class/python_class_lang_str.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -296,7 +297,12 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     b->SetTextLiteral(Python::GetBool(text_literal_obj));
   }
   if (label_obj != Py_None) {
-    b->SetText(g_base->python->GetPyLString(label_obj));
+    // See the textwidget text param note re native language-strings.
+    if (base::PythonClassLangStr::Check(label_obj)) {
+      b->SetLangStr(base::PythonClassLangStr::FromPyObj(label_obj).value());
+    } else {
+      b->SetText(g_base->python->GetPyLString(label_obj));
+    }
   }
   if (on_activate_call_obj != Py_None) {
     b->SetOnActivateCall(on_activate_call_obj);
@@ -517,7 +523,7 @@ static PyMethodDef PyButtonWidgetDef = {
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
     "  on_activate_call: Callable | None = None,\n"
-    "  label: str | bauiv1.Lstr | None = None,\n"
+    "  label: str | bauiv1.Lstr | bauiv1.LangStr | None = None,\n"
     "  color: Sequence[float] | None = None,\n"
     "  down_widget: bauiv1.Widget | None = None,\n"
     "  up_widget: bauiv1.Widget | None = None,\n"
@@ -657,7 +663,13 @@ static auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
     widget->set_auto_select(Python::GetBool(autoselect_obj));
   }
   if (text_obj != Py_None) {
-    widget->SetText(g_base->python->GetPyLString(text_obj));
+    // Native language-strings stay structured (retained +
+    // re-evaluated on language changes; see the textwidget analog).
+    if (base::PythonClassLangStr::Check(text_obj)) {
+      widget->SetLangStr(base::PythonClassLangStr::FromPyObj(text_obj).value());
+    } else {
+      widget->SetText(g_base->python->GetPyLString(text_obj));
+    }
   }
   if (value_obj != Py_None) {
     widget->SetValue(Python::GetBool(value_obj));
@@ -723,7 +735,7 @@ static PyMethodDef PyCheckBoxWidgetDef = {
     "  id: str | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
-    "  text: str | bauiv1.Lstr | None = None,\n"
+    "  text: str | bauiv1.Lstr | bauiv1.LangStr | None = None,\n"
     "  value: bool | None = None,\n"
     "  on_value_change_call: Callable[[bool], None] | None = None,\n"
     "  on_select_call: Callable[[], None] | None = None,\n"
@@ -796,7 +808,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "transition_type",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &color_obj, &texture_obj,
           &opacity_obj, &rotate_obj, &mesh_transparent_obj, &mesh_opaque_obj,
           &has_alpha_channel_obj, &tint_texture_obj, &tint_color_obj,
@@ -2205,6 +2217,8 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* literal_obj{Py_None};
   PyObject* depth_range_obj{Py_None};
   PyObject* transition_type_obj{Py_None};
+  PyObject* password_obj{Py_None};
+  PyObject* query_password_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -2250,9 +2264,11 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "literal",
                                  "depth_range",
                                  "transition_type",
+                                 "password",
+                                 "query_password",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &text_obj, &v_align_obj, &h_align_obj,
           &editable_obj, &padding_obj, &on_return_press_call_obj,
@@ -2266,7 +2282,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &extra_touch_border_scale_obj, &res_scale_obj, &query_max_chars_obj,
           &query_description_obj, &adapter_finished_obj, &glow_type_obj,
           &allow_clear_button_obj, &literal_obj, &depth_range_obj,
-          &transition_type_obj))
+          &transition_type_obj, &password_obj, &query_password_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2283,7 +2299,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
       throw Exception("Invalid or nonexistent widget.",
                       PyExcType::kWidgetNotFound);
     }
-    return PyUnicode_FromString(widget->text_raw().c_str());
+    return PyUnicode_FromString(widget->GetQueryText().c_str());
   }
   if (query_max_chars_obj != Py_None) {
     widget =
@@ -2302,6 +2318,18 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
                       PyExcType::kWidgetNotFound);
     }
     return PyUnicode_FromString(widget->description().c_str());
+  }
+  if (query_password_obj != Py_None) {
+    widget =
+        dynamic_cast<TextWidget*>(UIV1Python::GetPyWidget(query_password_obj));
+    if (!widget.exists()) {
+      throw Exception("Invalid or nonexistent widget.",
+                      PyExcType::kWidgetNotFound);
+    }
+    if (widget->password()) {
+      Py_RETURN_TRUE;
+    }
+    Py_RETURN_FALSE;
   }
 
   // Ok it's not a query; it's a create or edit.
@@ -2407,8 +2435,22 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (literal_obj != Py_None) {
     widget->SetLiteral(Python::GetBool(literal_obj));
   }
+  if (password_obj != Py_None) {
+    widget->set_password(Python::GetBool(password_obj));
+  }
   if (text_obj != Py_None) {
-    widget->SetText(g_base->python->GetPyLString(text_obj));
+    // Native language-strings are retained by the widget and
+    // re-evaluated on language changes (mirroring legacy Lstr
+    // behavior); everything else flattens through the standard string
+    // slot. Per the D28 semantic split, widgets accept only the
+    // verified-local babase.LangStr form — authoring-spec values must
+    // be verified (resolved) before display, so no implicit
+    // spec-conversion here.
+    if (base::PythonClassLangStr::Check(text_obj)) {
+      widget->SetLangStr(base::PythonClassLangStr::FromPyObj(text_obj).value());
+    } else {
+      widget->SetText(g_base->python->GetPyLString(text_obj));
+    }
   }
   if (h_align_obj != Py_None) {
     std::string halign = Python::GetString(h_align_obj);
@@ -2552,7 +2594,7 @@ static PyMethodDef PyTextWidgetDef = {
     "  id: str | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
-    "  text: str | bauiv1.Lstr | None = None,\n"
+    "  text: str | bauiv1.Lstr | bauiv1.LangStr | None = None,\n"
     "  v_align: str | None = None,\n"
     "  h_align: str | None = None,\n"
     "  editable: bool | None = None,\n"
@@ -2569,7 +2611,7 @@ static PyMethodDef PyTextWidgetDef = {
     "  draw_controller: bauiv1.Widget | None = None,\n"
     "  scale: float | None = None,\n"
     "  corner_scale: float | None = None,\n"
-    "  description: str | bauiv1.Lstr | None = None,\n"
+    "  description: str | bauiv1.Lstr | bauiv1.LangStr | None = None,\n"
     "  transition_delay: float | None = None,\n"
     "  maxwidth: float | None = None,\n"
     "  max_height: float | None = None,\n"
@@ -2591,6 +2633,8 @@ static PyMethodDef PyTextWidgetDef = {
     "  literal: bool | None = None,\n"
     "  depth_range: tuple[float, float] | None = None,\n"
     "  transition_type: Literal['in_left', 'scale'] | None = None,\n"
+    "  password: bool | None = None,\n"
+    "  query_password: bauiv1.Widget | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a text widget.\n"

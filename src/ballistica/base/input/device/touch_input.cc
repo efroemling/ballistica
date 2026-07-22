@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/input/input.h"
@@ -972,7 +973,7 @@ auto TouchInput::HandleTouchDown(void* touch, float x, float y) -> bool {
         // controllers active.. (only if we got a player though).
         if (AttachedToPlayer() && g_base->input->HaveControllerWithPlayer()) {
           g_base->ScreenMessage(
-              g_base->assets->GetResourceString("touchScreenJoinWarningText"),
+              BuiltinStrings::Input::TouchScreenJoinWarning()->Evaluate(),
               {1.0f, 1.0f, 0.0f});
         }
       }

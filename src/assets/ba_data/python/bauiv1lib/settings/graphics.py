@@ -7,9 +7,13 @@ from typing import TYPE_CHECKING, cast, override
 from bauiv1lib.popup import PopupMenu
 from bauiv1lib.config import ConfigCheckBox
 import bauiv1 as bui
+from bauiv1 import stdassets
 
 if TYPE_CHECKING:
     from typing import Any
+
+
+_gfxstrs = stdassets.strings.settings.graphics
 
 
 class GraphicsSettingsWindow(bui.MainWindow):
@@ -127,7 +131,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
                 yoffs - (53 if uiscale is bui.UIScale.SMALL else 25),
             ),
             size=(0, 0),
-            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            text=_gfxstrs.title,
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -139,15 +143,14 @@ class GraphicsSettingsWindow(bui.MainWindow):
             # Fullscreen control does not necessarily talk to the
             # app config so we have to wrangle it manually instead of
             # using a config-checkbox.
-            label = bui.Lstr(resource=f'{self._r}.fullScreenText')
+            label = _gfxstrs.fullscreen
 
             # Show keyboard shortcut alongside the control if they
             # provide one.
             shortcut = bui.fullscreen_control_key_shortcut()
             if shortcut is not None:
-                label = bui.Lstr(
-                    value='$(NAME) [$(SHORTCUT)]',
-                    subs=[('$(NAME)', label), ('$(SHORTCUT)', shortcut)],
+                label = _gfxstrs.fullscreen_shortcut_format(
+                    name=label, shortcut=shortcut
                 )
             self._fullscreen_checkbox = bui.checkboxwidget(
                 parent=self._root_widget,
@@ -176,7 +179,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(h_offs + 60, v),
             size=(160, 25),
-            text=bui.Lstr(resource=f'{self._r}.visualsText'),
+            text=_gfxstrs.visuals,
             color=bui.app.ui_v1.heading_color,
             scale=0.65,
             maxwidth=150,
@@ -196,11 +199,11 @@ class GraphicsSettingsWindow(bui.MainWindow):
                 else []
             ),
             choices_display=[
-                bui.Lstr(resource='autoText'),
-                bui.Lstr(resource=f'{self._r}.higherText'),
-                bui.Lstr(resource=f'{self._r}.highText'),
-                bui.Lstr(resource=f'{self._r}.mediumText'),
-                bui.Lstr(resource=f'{self._r}.lowText'),
+                stdassets.strings.ui.auto,
+                stdassets.strings.ui.higher,
+                stdassets.strings.ui.high,
+                stdassets.strings.ui.medium,
+                stdassets.strings.ui.low,
             ],
             current_choice=bui.app.config.resolve('Graphics Quality'),
             on_value_change_call=self._set_quality,
@@ -211,7 +214,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(h_offs + 230, v),
             size=(160, 25),
-            text=bui.Lstr(resource=f'{self._r}.texturesText'),
+            text=_gfxstrs.textures,
             color=bui.app.ui_v1.heading_color,
             scale=0.65,
             maxwidth=150,
@@ -226,10 +229,10 @@ class GraphicsSettingsWindow(bui.MainWindow):
             scale=popup_menu_scale,
             choices=['Auto', 'High', 'Medium', 'Low'],
             choices_display=[
-                bui.Lstr(resource='autoText'),
-                bui.Lstr(resource=f'{self._r}.highText'),
-                bui.Lstr(resource=f'{self._r}.mediumText'),
-                bui.Lstr(resource=f'{self._r}.lowText'),
+                stdassets.strings.ui.auto,
+                stdassets.strings.ui.high,
+                stdassets.strings.ui.medium,
+                stdassets.strings.ui.low,
             ],
             current_choice=bui.app.config.resolve('Texture Quality'),
             on_value_change_call=self._set_textures,
@@ -247,7 +250,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
                 parent=self._root_widget,
                 position=(h_offs + 60, v),
                 size=(160, 25),
-                text=bui.Lstr(resource=f'{self._r}.resolutionText'),
+                text=_gfxstrs.resolution,
                 color=bui.app.ui_v1.heading_color,
                 scale=0.65,
                 maxwidth=150,
@@ -279,9 +282,9 @@ class GraphicsSettingsWindow(bui.MainWindow):
                     native_res = bui.get_display_resolution()
                     assert native_res is not None
                     choices = ['Auto', 'Native']
-                    choices_display = [
-                        bui.Lstr(resource='autoText'),
-                        bui.Lstr(resource='nativeText'),
+                    choices_display: list[bui.Lstr | bui.LangStr] = [
+                        stdassets.strings.ui.auto,
+                        _gfxstrs.native,
                     ]
                     for res in [1440, 1080, 960, 720, 480]:
                         if native_res[1] >= res:
@@ -338,7 +341,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
                 parent=self._root_widget,
                 position=(h_offs + 230, v),
                 size=(160, 25),
-                text=bui.Lstr(resource=f'{self._r}.verticalSyncText'),
+                text=_gfxstrs.vertical_sync,
                 color=bui.app.ui_v1.heading_color,
                 scale=0.65,
                 maxwidth=150,
@@ -353,9 +356,9 @@ class GraphicsSettingsWindow(bui.MainWindow):
                 scale=popup_menu_scale,
                 choices=['Auto', 'Always', 'Never'],
                 choices_display=[
-                    bui.Lstr(resource='autoText'),
-                    bui.Lstr(resource=f'{self._r}.alwaysText'),
-                    bui.Lstr(resource=f'{self._r}.neverText'),
+                    stdassets.strings.ui.auto,
+                    stdassets.strings.ui.always,
+                    stdassets.strings.ui.never,
                 ],
                 current_choice=bui.app.config.resolve('Vertical Sync'),
                 on_value_change_call=self._set_vsync,
@@ -380,7 +383,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
                 parent=self._root_widget,
                 position=(h_offs + 155, v + 10),
                 size=(0, 0),
-                text=bui.Lstr(resource=f'{self._r}.maxFPSText'),
+                text=_gfxstrs.max_fps,
                 color=bui.app.ui_v1.heading_color,
                 scale=0.9,
                 maxwidth=90,
@@ -421,7 +424,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
             size=(210, 30),
             scale=0.86,
             configkey='Show FPS',
-            displayname=bui.Lstr(resource=f'{self._r}.showFPSText'),
+            displayname=_gfxstrs.show_fps,
             maxwidth=130,
         )
         if self._max_fps_text is not None:
@@ -442,7 +445,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
                 size=(210, 30),
                 scale=0.86,
                 configkey='TV Border',
-                displayname=bui.Lstr(resource=f'{self._r}.tvBorderText'),
+                displayname=_gfxstrs.tv_border,
                 maxwidth=130,
             )
             bui.widget(edit=fpsc.widget, right_widget=tvc.widget)

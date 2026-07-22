@@ -20,7 +20,7 @@ class _Entry:
         team: bs.Team,
         do_cover: bool,
         scale: float,
-        label: bs.Lstr | None,
+        label: bs.Lstr | bs.LangStr | None,
         flash_length: float,
         width: float | None = None,
         height: float | None = None,
@@ -143,7 +143,7 @@ class _Entry:
 
         clr = safe_team_color
 
-        team_name_label: str | bs.Lstr
+        team_name_label: str | bs.Lstr | bs.LangStr
         if label is not None:
             team_name_label = label
         else:
@@ -373,7 +373,7 @@ class Scoreboard:
 
     def __init__(
         self,
-        label: bs.Lstr | None = None,
+        label: bs.Lstr | bs.LangStr | None = None,
         score_split: float = 0.7,
         pos: Sequence[float] | None = None,
         width: float | None = None,

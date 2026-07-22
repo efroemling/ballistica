@@ -4,10 +4,12 @@
 
 #include <Python.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <string>
 #include <vector>
 
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
@@ -52,6 +54,20 @@ HostSession::HostSession(PyObject* session_type_obj)
       base_timers_.NewTimer(base_time_millisecs_, kGameStepMilliseconds, 0, -1,
                             NewLambdaRunnable([this] { StepScene(); }).get());
 
+  // Snapshot our fixed asset-package universe: the app-run hosting set
+  // (the launch metascan's discovered ba_meta package versions; see
+  // asset-packages.md decision #36). Sorted, so positions double as
+  // wire pkg-indices. This should never be empty in practice (builtin
+  // wrapper pins always exist); an empty set here means the hosting set
+  // wasn't wired up before session creation.
+  asset_package_universe_ = appmode->GetHostingAssetPackages();
+  std::sort(asset_package_universe_.begin(), asset_package_universe_.end());
+  if (asset_package_universe_.empty()) {
+    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                "HostSession created with empty asset-package universe;"
+                " hosting set should be established before sessions exist.");
+  }
+
   // Set up our output-stream, which will go to a replay and/or the network.
   // We don't dump to a replay if we're doing the main menu; that replay
   // would be boring.
@@ -63,6 +79,13 @@ HostSession::HostSession(PyObject* session_type_obj)
   }
 
   output_stream_ = Object::New<SessionStream>(this, do_replay);
+
+  // First thing on the stream: declare our package table so replays
+  // open with it (joining clients get their own copy via
+  // DumpFullState).
+  if (output_stream_.exists()) {
+    output_stream_->DeclareAssetPackages(asset_package_universe_);
+  }
 
   // Make a scene for our session-level nodes, etc.
   scene_ = Object::New<Scene>(0);
@@ -437,22 +460,19 @@ void HostSession::DecrementPlayerTimeOuts(millisecs_t millisecs) {
     Player* player = i.get();
     assert(player);
     if (player->time_out() < millisecs) {
-      std::string kick_str =
-          g_base->assets->GetResourceString("kickIdlePlayersKickedText");
-      Utils::StringReplaceOne(&kick_str, "${NAME}", player->GetName());
-      g_base->ScreenMessage(kick_str);
+      g_base->ScreenMessage(
+          base::BuiltinStrings::Session::KickIdleKicked(player->GetName())
+              ->Evaluate());
       RemovePlayer(player);
       return;  // Bail for this round since we prolly mucked with the list.
     } else if (player->time_out() > BA_PLAYER_TIME_OUT_WARN
                && (player->time_out() - millisecs <= BA_PLAYER_TIME_OUT_WARN)) {
-      std::string kick_str_1 =
-          g_base->assets->GetResourceString("kickIdlePlayersWarning1Text");
-      Utils::StringReplaceOne(&kick_str_1, "${NAME}", player->GetName());
-      Utils::StringReplaceOne(&kick_str_1, "${COUNT}",
-                              std::to_string(BA_PLAYER_TIME_OUT_WARN / 1000));
-      g_base->ScreenMessage(kick_str_1);
       g_base->ScreenMessage(
-          g_base->assets->GetResourceString("kickIdlePlayersWarning2Text"));
+          base::BuiltinStrings::Session::KickIdleWarning(
+              int64_t{BA_PLAYER_TIME_OUT_WARN / 1000}, player->GetName())
+              ->Evaluate());
+      g_base->ScreenMessage(
+          base::BuiltinStrings::Session::KickIdleWarningSettings()->Evaluate());
     }
     player->set_time_out(player->time_out() - millisecs);
   }
@@ -724,6 +744,12 @@ auto HostSession::GetUnusedPlayerName(Player* p, const std::string& base_name)
 }
 
 void HostSession::DumpFullState(SessionStream* out) {
+  // Our package table goes first: joining clients must have it in hand
+  // before any state that could reference packages by index (and
+  // client-side replay recordings, which capture this dump verbatim,
+  // open with it).
+  out->DeclareAssetPackages(asset_package_universe_);
+
   // Add session-scene.
   if (scene_.exists()) {
     scene_->Dump(out);

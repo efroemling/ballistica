@@ -316,11 +316,19 @@ auto NetworkReader::RunThread_() -> int {
             }
             case BA_PACKET_JSON_PONG: {
               if (rresult2 > 1) {
-                // Parse to validate the payload; the result is currently
-                // unused.
-                JsonDoc::Parse(
+                // Validate the payload (nothing currently uses the parsed
+                // contents). Log-once only; these arrive from the open
+                // internet, so per-packet logging would be a spam vector.
+                auto doc = JsonDoc::Parse(
                     std::string_view(reinterpret_cast<const char*>(buffer + 1),
                                      static_cast<size_t>(rresult2 - 1)));
+                if (!doc.has_value()) {
+                  BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                              "Got malformed json-pong packet ("
+                                  + doc.error().message + " at byte offset "
+                                  + std::to_string(doc.error().byte_offset)
+                                  + ").");
+                }
               }
               break;
             }
@@ -365,7 +373,9 @@ auto NetworkReader::RunThread_() -> int {
               break;
             }
 
-            case BA_PACKET_HOST_QUERY: {
+            case BA_PACKET_HOST_QUERY:
+            case BA_PACKET_HOST_QUERY_V2:
+            case BA_PACKET_HOST_REQUIREMENTS_QUERY: {
               g_base->app_mode()->HandleGameQuery(buffer, rresult2, &from);
               break;
             }

@@ -11,15 +11,19 @@ from functools import partial
 from typing import TYPE_CHECKING, assert_never
 
 from efro.util import strict_partial
-import bacommon.docui.v1 as dui1
+from efro.dataclassio import dataclass_to_json
+import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 from bauiv1 import builtinassets
+from bauiv1 import stdassets
 
-from bauiv1lib.docui.v1prep._types import PagePrep, RowPrep, ButtonPrep
+from bauiv1lib.docui.prep._types import PagePrep, RowPrep, ButtonPrep
 
 if TYPE_CHECKING:
     from typing import Callable
 
+    from bacommon.langstr import LangStrSpec
+    from bacommon.assetspec import TextureSpec, MeshSpec
     from bauiv1lib.docui import DocUIWindow
 
 
@@ -28,9 +32,15 @@ def _btex(name: str) -> str:
     return f'{builtinassets.__asset_package__}:textures/{name}'
 
 
+def refstr(ref: 'TextureSpec | MeshSpec') -> str:
+    """Qualified engine name for a typed asset ref."""
+    return f'{ref.apverid}:{ref.name}'
+
+
 def prep_page(
-    page: dui1.Page,
+    page: dui2.Page,
     *,
+    packages: list[str],
     uiscale: bui.UIScale,
     scroll_width: float,
     scroll_height: float,
@@ -43,31 +53,29 @@ def prep_page(
     # pylint: disable=too-many-locals
     # pylint: disable=cyclic-import
 
-    import bauiv1lib.docui.v1prep._calls2 as prepcalls2
+    import bauiv1lib.docui.prep._calls2 as prepcalls2
+
+    def _n(lstr: 'LangStrSpec') -> bui.LangStr:
+        """Native handle bound against this payload's package list."""
+        return bui.LangStr(dataclass_to_json(lstr), packages=packages)
 
     # Create a filtered list of rows we know how to display.
-    page_rows_filtered: list[dui1.ButtonRow] = []
+    page_rows_filtered: list[dui2.ButtonRow] = []
     for pagerow in page.rows:
-        if isinstance(pagerow, dui1.ButtonRow):
+        if isinstance(pagerow, dui2.ButtonRow):
             if not pagerow.buttons:
                 pagerow = copy.deepcopy(pagerow)
                 pagerow.buttons.append(
-                    dui1.Button(
-                        label=bui.Lstr(
-                            translate=(
-                                'serverResponses',
-                                'There is nothing here.',
-                            )
-                        ).as_json(),
+                    dui2.Button(
+                        label=stdassets.strings.ui.nothing_here.spec,
                         label_color=(1, 1, 1, 0.3),
-                        label_is_lstr=True,
                         size=(220, 100),
                         label_scale=0.6,
-                        texture=_btex('button_square_wide'),
+                        texture=builtinassets.textures.button_square_wide,
                         padding_top=-8,
                         padding_bottom=-10,
                         color=(0.2, 0.2, 0.2, 0.15),
-                        action=dui1.Local(default_sound=False),
+                        action=dui2.Local(default_sound=False),
                     )
                 )
             page_rows_filtered.append(pagerow)
@@ -117,8 +125,7 @@ def prep_page(
     )
     simple_culling_v: float = page.simple_culling_v
     center_vertically: bool = page.center_vertically
-    title: str = page.title
-    title_is_lstr: bool = page.title_is_lstr
+    title: bui.LangStr = _n(page.title)
 
     # Called with root container after construction completes.
     root_post_calls: list[Callable[[bui.Widget], None]] = []
@@ -228,6 +235,7 @@ def prep_page(
             y + header_height_full * 0.5,
             row.header_scale,
             tdelay=None if immediate else (tdelaybase + 0.05),
+            packages=packages,
             highlight=False,
             out_decoration_preps=rowprep.decorations,
         )
@@ -242,6 +250,7 @@ def prep_page(
             y + header_height_full * 0.5,
             row.header_scale,
             tdelay=None if immediate else (tdelaybase + 0.05),
+            packages=packages,
             highlight=False,
             out_decoration_preps=rowprep.decorations,
         )
@@ -256,6 +265,7 @@ def prep_page(
             y + header_height_full * 0.5,
             row.header_scale,
             tdelay=None if immediate else (tdelaybase + 0.05),
+            packages=packages,
             highlight=False,
             out_decoration_preps=rowprep.decorations,
         )
@@ -274,7 +284,7 @@ def prep_page(
                         y - row_subtitle_height * 0.5,
                     ),
                     size=(0, 0),
-                    text=row.title,
+                    text=_n(row.title),
                     color=(
                         (0.85, 0.95, 0.89, 1.0)
                         if row.title_color is None
@@ -296,7 +306,7 @@ def prep_page(
                     ),
                     h_align='center' if row.center_title else 'left',
                     v_align='center',
-                    literal=not row.title_is_lstr,
+                    literal=True,
                     transition_delay=(
                         None if immediate else (tdelaybase + 0.1)
                     ),
@@ -322,7 +332,7 @@ def prep_page(
                         y - row_subtitle_height * 0.5,
                     ),
                     size=(0, 0),
-                    text=row.subtitle,
+                    text=_n(row.subtitle),
                     color=(
                         (0.6, 0.74, 0.6)
                         if row.subtitle_color is None
@@ -344,7 +354,7 @@ def prep_page(
                     ),
                     h_align='center' if row.center_title else 'left',
                     v_align='center',
-                    literal=not row.subtitle_is_lstr,
+                    literal=True,
                     transition_delay=(
                         None if immediate else (tdelaybase + 0.2)
                     ),
@@ -447,23 +457,23 @@ def prep_page(
             center_y = row.padding_bottom + to_button_bottom + bheightfull * 0.5
 
             bstyle: str
-            if button.style is dui1.ButtonStyle.SQUARE:
+            if button.style is dui2.ButtonStyle.SQUARE:
                 bstyle = 'square'
-            elif button.style is dui1.ButtonStyle.TAB:
+            elif button.style is dui2.ButtonStyle.TAB:
                 bstyle = 'tab'
-            elif button.style is dui1.ButtonStyle.SMALL:
+            elif button.style is dui2.ButtonStyle.SMALL:
                 bstyle = 'small'
-            elif button.style is dui1.ButtonStyle.MEDIUM:
+            elif button.style is dui2.ButtonStyle.MEDIUM:
                 bstyle = 'medium'
-            elif button.style is dui1.ButtonStyle.LARGE:
+            elif button.style is dui2.ButtonStyle.LARGE:
                 bstyle = 'large'
-            elif button.style is dui1.ButtonStyle.LARGER:
+            elif button.style is dui2.ButtonStyle.LARGER:
                 bstyle = 'larger'
-            elif button.style is dui1.ButtonStyle.BACK:
+            elif button.style is dui2.ButtonStyle.BACK:
                 bstyle = 'back'
-            elif button.style is dui1.ButtonStyle.BACK_SMALL:
+            elif button.style is dui2.ButtonStyle.BACK_SMALL:
                 bstyle = 'backSmall'
-            elif button.style is dui1.ButtonStyle.SQUARE_WIDE:
+            elif button.style is dui2.ButtonStyle.SQUARE_WIDE:
                 bstyle = 'squareWide'
             else:
                 assert_never(button.style)
@@ -529,8 +539,8 @@ def prep_page(
                     text_scale=button.label_scale,
                     button_type=bstyle,
                     opacity=(1.0 if button.color is None else button.color[3]),
-                    label='' if button.label is None else button.label,
-                    text_literal=not button.label_is_lstr,
+                    label=('' if button.label is None else _n(button.label)),
+                    text_literal=True,
                     autoselect=True,
                     enable_sound=False,
                     transition_delay=None if immediate else tdelay,
@@ -556,10 +566,10 @@ def prep_page(
                 action=button.action,
             )
             if button.texture is not None:
-                buttonprep.textures['texture'] = button.texture
+                buttonprep.textures['texture'] = refstr(button.texture)
 
             if button.icon is not None:
-                buttonprep.textures['icon'] = button.icon
+                buttonprep.textures['icon'] = refstr(button.icon)
 
             # With row-debug on, visualize the area we try to scroll to
             # show when each button is selected. Note that we're clamped
@@ -594,6 +604,7 @@ def prep_page(
                 center_y,
                 bscale,
                 None if immediate else tdelay,
+                packages=packages,
                 highlight=True,
                 out_decoration_preps=buttonprep.decorations,
             )
@@ -659,12 +670,11 @@ def prep_page(
         simple_culling_v=simple_culling_v,
         center_vertically=center_vertically,
         title=title,
-        title_is_lstr=title_is_lstr,
         root_post_calls=root_post_calls,
     )
 
 
-def doc_ui_v1_instantiate_page_prep(
+def instantiate_page_prep(
     pageprep: PagePrep,
     *,
     rootwidget: bui.Widget,

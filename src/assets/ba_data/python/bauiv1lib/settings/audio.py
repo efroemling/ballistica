@@ -5,10 +5,15 @@
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
+from bauiv1 import stdassets
+
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     pass
+
+
+_audstrs = stdassets.strings.settings.audio
 
 
 class AudioSettingsWindow(bui.MainWindow):
@@ -98,7 +103,7 @@ class AudioSettingsWindow(bui.MainWindow):
                 yoffs - (48 if uiscale is bui.UIScale.SMALL else 32),
             ),
             size=(0, 0),
-            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            text=_audstrs.title,
             color=bui.app.ui_v1.title_color,
             maxwidth=180,
             h_align='center',
@@ -116,7 +121,7 @@ class AudioSettingsWindow(bui.MainWindow):
             position=(x, y),
             xoffset=10,
             configkey='Sound Volume',
-            displayname=bui.Lstr(resource=f'{self._r}.soundVolumeText'),
+            displayname=_audstrs.sound_volume,
             minval=0.0,
             maxval=1.0,
             increment=0.05,
@@ -133,7 +138,7 @@ class AudioSettingsWindow(bui.MainWindow):
             position=(x, y),
             xoffset=10,
             configkey='Music Volume',
-            displayname=bui.Lstr(resource=f'{self._r}.musicVolumeText'),
+            displayname=_audstrs.music_volume,
             minval=0.0,
             maxval=1.0,
             increment=0.05,
@@ -153,7 +158,7 @@ class AudioSettingsWindow(bui.MainWindow):
                 position=(width * 0.5 - 155, y),
                 size=(310, 50),
                 autoselect=True,
-                label=bui.Lstr(resource=f'{self._r}.soundtrackButtonText'),
+                label=_audstrs.soundtracks,
                 on_activate_call=self._do_soundtracks,
             )
             y -= spacing * 0.3
@@ -161,7 +166,7 @@ class AudioSettingsWindow(bui.MainWindow):
                 parent=self._root_widget,
                 position=(0.5 * width, y),
                 size=(0.0, 0.0),
-                text=bui.Lstr(resource=f'{self._r}.soundtrackDescriptionText'),
+                text=_audstrs.soundtrack_description,
                 flatness=1.0,
                 h_align='center',
                 v_align='center',
@@ -208,7 +213,7 @@ class AudioSettingsWindow(bui.MainWindow):
         if not bui.have_permission(bui.Permission.STORAGE):
             builtinassets.audio.ding.get().play()
             bui.screenmessage(
-                bui.Lstr(resource='storagePermissionAccessText'),
+                stdassets.strings.ui.storage_permission_needed,
                 color=(0.5, 1, 0.5),
             )
             bui.apptimer(

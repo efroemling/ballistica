@@ -287,7 +287,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         bs.setmusic(bs.MusicType.ONSLAUGHT)
 
         self._scoreboard = Scoreboard(
-            label=bs.Lstr(resource='scoreText'), score_split=0.5
+            label=stdassets.strings.game.score, score_split=0.5
         )
 
     @override
@@ -1019,7 +1019,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
             fail_message = None
         else:
             score = None
-            fail_message = bs.Lstr(resource='reachWave2Text')
+            fail_message = stdassets.strings.game.reach_wave_2
         self.end(
             {
                 'outcome': outcome,
@@ -1091,7 +1091,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
             if won:
                 self.show_zoom_message(
-                    bs.Lstr(resource='victoryText'), scale=1.0, duration=4.0
+                    stdassets.strings.game.victory, scale=1.0, duration=4.0
                 )
                 self.celebrate(20.0)
                 self._award_completion_achievements()
@@ -1128,7 +1128,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                         int(100 / len(self.initialplayerinfos)),
                         scale=1.4,
                         color=(0.6, 0.6, 1.0, 1.0),
-                        title=bs.Lstr(resource='completionBonusText'),
+                        title=stdassets.strings.game.completion_bonus,
                         screenmessage=False,
                     )
             except Exception:
@@ -1161,7 +1161,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     self._flawless_bonus,
                     scale=1.2,
                     color=(0.6, 1.0, 0.6, 1.0),
-                    title=bs.Lstr(resource='flawlessWaveText'),
+                    title=stdassets.strings.game.flawless_wave,
                     screenmessage=False,
                 )
         except Exception:

@@ -379,27 +379,29 @@ def test_prep() -> None:
         class _TestClass:
             ival: Sequence[int]
 
-    # We currently only support Unions with exactly 2 members; one of
-    # which is None. (Optional types get transformed into this by
-    # get_type_hints() so we need to support at least that).
+    # Beyond the simple Optional form, unions must be 'type-disjoint'
+    # (see test_type_disjoint_unions). int and float cannot coexist
+    # since both are numbers on the wire.
     with pytest.raises(TypeError):
 
         @ioprepped
         @dataclass
         class _TestClass2:
-            ival: int | str
+            ival: int | float
 
     @ioprepped
     @dataclass
     class _TestClass3:
         uval: int | None
 
+    # Member types without a distinct wire type (bytes, enums, lists,
+    # etc.) are not allowed in multi-member unions.
     with pytest.raises(TypeError):
 
         @ioprepped
         @dataclass
         class _TestClass4:
-            ival: int | str
+            ival: int | str | bytes
 
     # This will get simplified down to simply int by get_type_hints so is ok.
     @ioprepped
@@ -2430,6 +2432,399 @@ def test_multi_type_missing() -> None:
         _out2c = dataclass_to_dict(val2c)
 
 
+class MTTestDefaultTypeID(Enum):
+    """IDs for our multi-type class."""
+
+    CLASS_1 = 'm1'
+    CLASS_2 = 'm2'
+
+
+class MTTestDefaultBase(IOMultiType[MTTestDefaultTypeID]):
+    """A multi-type that designates a default type.
+
+    Instances of the default type serialize without a type-id value
+    and data containing no type-id value deserializes as that type.
+    """
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: MTTestDefaultTypeID) -> type[MTTestDefaultBase]:
+        val: type[MTTestDefaultBase]
+        if type_id is MTTestDefaultTypeID.CLASS_1:
+            val = MTTestDefaultClass1
+        elif type_id is MTTestDefaultTypeID.CLASS_2:
+            val = MTTestDefaultClass2
+        else:
+            assert_never(type_id)
+        return val
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestDefaultTypeID:
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_default_type_id(cls) -> MTTestDefaultTypeID | None:
+        return MTTestDefaultTypeID.CLASS_1
+
+
+@ioprepped
+@dataclass
+class MTTestDefaultClass1(MTTestDefaultBase):
+    """The default child-class for our multi-type class."""
+
+    ival: int = 0
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestDefaultTypeID:
+        return MTTestDefaultTypeID.CLASS_1
+
+
+@ioprepped
+@dataclass
+class MTTestDefaultClass2(MTTestDefaultBase):
+    """A non-default child-class for our multi-type class."""
+
+    sval: str = ''
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestDefaultTypeID:
+        return MTTestDefaultTypeID.CLASS_2
+
+
+def test_multi_type_default() -> None:
+    """Test multitypes designating a default type."""
+
+    tpname = MTTestDefaultBase.get_type_id_storage_name()
+
+    # The default type should serialize *without* a type-id value.
+    val1: MTTestDefaultBase = MTTestDefaultClass1(ival=123)
+    outdict = dataclass_to_dict(val1)
+    assert outdict == {'ival': 123}
+
+    # Non-default types should get one as usual.
+    val2: MTTestDefaultBase = MTTestDefaultClass2(sval='whee')
+    outdict2 = dataclass_to_dict(val2)
+    assert outdict2 == {'sval': 'whee', tpname: 'm2'}
+
+    # Keyless data loaded as the multitype should give us the default
+    # type.
+    assert_type(
+        dataclass_from_dict(MTTestDefaultBase, outdict), MTTestDefaultBase
+    )
+    val1b = dataclass_from_dict(MTTestDefaultBase, outdict)
+    assert isinstance(val1b, MTTestDefaultClass1)
+    assert val1b == val1
+
+    # An *explicit* type-id for the default type should still work
+    # (data written before a default was introduced looks like this).
+    val1c = dataclass_from_dict(MTTestDefaultBase, {'ival': 123, tpname: 'm1'})
+    assert val1c == val1
+
+    # Non-default types should load as usual.
+    assert dataclass_from_dict(MTTestDefaultBase, outdict2) == val2
+
+    # Loading as an exact concrete type should be unaffected.
+    assert dataclass_from_dict(MTTestDefaultClass1, outdict) == val1
+
+    # An unrecognized type-id must still error even though a default is
+    # designated; the default applies only to *missing* ids.
+    with pytest.raises(ValueError):
+        _val = dataclass_from_dict(MTTestDefaultBase, {tpname: 'bogus'})
+    with pytest.raises(ValueError):
+        _val = dataclass_from_dict(
+            MTTestDefaultBase, {tpname: 'bogus'}, lossy=True
+        )
+
+    # Now the nested/container case (this exercises a separate code
+    # path from the top level load above).
+
+    @ioprepped
+    @dataclass
+    class _TestContainerClass:
+        objs: list[MTTestDefaultBase]
+
+    container = _TestContainerClass(
+        objs=[MTTestDefaultClass1(111), MTTestDefaultClass2('bbb')]
+    )
+    outdict3 = dataclass_to_dict(container)
+
+    # Default entry should be keyless; non-default should not.
+    assert outdict3['objs'][0] == {'ival': 111}
+    assert outdict3['objs'][1] == {'sval': 'bbb', tpname: 'm2'}
+
+    # And the whole thing should round-trip.
+    containerb = dataclass_from_dict(_TestContainerClass, outdict3)
+    assert containerb == container
+
+    # Unrecognized nested type-ids must also still error.
+    outdict3mod = copy.deepcopy(outdict3)
+    outdict3mod['objs'][1][tpname] = 'bogus'
+    with pytest.raises(ValueError):
+        _container = dataclass_from_dict(_TestContainerClass, outdict3mod)
+
+    # The HUMAN codec should also omit the type-id for the default
+    # type (and include it, name-transformed, for others).
+    tpname_human = tpname.replace('_', ' ')
+    hout1 = dataclass_to_dict(val1, codec=Codec.HUMAN)
+    assert tpname not in hout1
+    assert tpname_human not in hout1
+    hout2 = dataclass_to_dict(val2, codec=Codec.HUMAN)
+    assert hout2[tpname_human] == 'class 2'
+
+
+class MTTestDefault2TypeID(Enum):
+    """IDs for our multi-type class."""
+
+    CLASS_1 = 'm1'
+
+
+class MTTestDefault2Base(IOMultiType[MTTestDefault2TypeID]):
+    """A multi-type with both a default type and an unknown-fallback.
+
+    These two mechanisms are related but distinct: the default covers
+    *missing* type-ids (in all modes) while the fallback covers
+    *unrecognized* ones (in lossy mode only).
+    """
+
+    @override
+    @classmethod
+    def get_type(
+        cls, type_id: MTTestDefault2TypeID
+    ) -> type[MTTestDefault2Base]:
+        val: type[MTTestDefault2Base]
+        if type_id is MTTestDefault2TypeID.CLASS_1:
+            val = MTTestDefault2Class1
+        else:
+            assert_never(type_id)
+        return val
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestDefault2TypeID:
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_default_type_id(cls) -> MTTestDefault2TypeID | None:
+        return MTTestDefault2TypeID.CLASS_1
+
+    @override
+    @classmethod
+    def get_unknown_type_fallback(cls) -> MTTestDefault2Class1:
+        return MTTestDefault2Class1(ival=-1)
+
+
+@ioprepped
+@dataclass
+class MTTestDefault2Class1(MTTestDefault2Base):
+    """The default child-class for our multi-type class."""
+
+    ival: int = 0
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestDefault2TypeID:
+        return MTTestDefault2TypeID.CLASS_1
+
+
+def test_multi_type_default_and_fallback() -> None:
+    """Test a multitype with both a default type and unknown-fallback."""
+
+    tpname = MTTestDefault2Base.get_type_id_storage_name()
+
+    # A missing type-id should give us a real parse as the default
+    # type - NOT the fallback object - regardless of lossy mode.
+    val = dataclass_from_dict(MTTestDefault2Base, {'ival': 123})
+    assert isinstance(val, MTTestDefault2Class1)
+    assert val.ival == 123
+    val = dataclass_from_dict(MTTestDefault2Base, {'ival': 123}, lossy=True)
+    assert isinstance(val, MTTestDefault2Class1)
+    assert val.ival == 123
+
+    # An unrecognized type-id should behave as it always has: error
+    # in strict mode; fallback object in lossy mode.
+    baddict = {'ival': 123, tpname: 'bogus'}
+    with pytest.raises(ValueError):
+        _val = dataclass_from_dict(MTTestDefault2Base, baddict)
+    val = dataclass_from_dict(MTTestDefault2Base, baddict, lossy=True)
+    assert isinstance(val, MTTestDefault2Class1)
+    assert val.ival == -1
+
+
+class MTTestDefaultClashTypeID(Enum):
+    """IDs for our multi-type class."""
+
+    CLASS_1 = 'm1'
+
+
+class MTTestDefaultClashBase(IOMultiType[MTTestDefaultClashTypeID]):
+    """A multi-type whose default type clashes with its type-id name."""
+
+    @override
+    @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        return 'type'
+
+    @override
+    @classmethod
+    def get_type(
+        cls, type_id: MTTestDefaultClashTypeID
+    ) -> type[MTTestDefaultClashBase]:
+        val: type[MTTestDefaultClashBase]
+        if type_id is MTTestDefaultClashTypeID.CLASS_1:
+            val = MTTestDefaultClashClass1
+        else:
+            assert_never(type_id)
+        return val
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestDefaultClashTypeID:
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_default_type_id(cls) -> MTTestDefaultClashTypeID | None:
+        return MTTestDefaultClashTypeID.CLASS_1
+
+
+@ioprepped
+@dataclass
+class MTTestDefaultClashClass1(MTTestDefaultClashBase):
+    """A default child-class using the clashing 'type' field name."""
+
+    type: str = ''
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestDefaultClashTypeID:
+        return MTTestDefaultClashTypeID.CLASS_1
+
+
+def test_multi_type_default_storage_clash() -> None:
+    """Test type-id-storage-name clashes on a default type.
+
+    Even though the type-id never gets *written* for a default type,
+    the name still gets special-cased at load time (stripped from
+    input data), so a clashing field would silently lose its value.
+    The existing clash errors must therefore still fire.
+    """
+    # Make sure we still error on output...
+    val: MTTestDefaultClashBase = MTTestDefaultClashClass1(type='hello')
+    with pytest.raises(RuntimeError):
+        _outdict = dataclass_to_dict(val)
+
+    # ...and on keyless input (which resolves to the default type)...
+    with pytest.raises(RuntimeError):
+        _val = dataclass_from_dict(MTTestDefaultClashBase, {})
+
+    # ...and on explicit-type-id input. (Note that input where the
+    # clashing field holds a non-type-id value, e.g. {'type': 'hello'},
+    # is indistinguishable from a bogus type-id and errors as such.)
+    with pytest.raises(RuntimeError):
+        _val = dataclass_from_dict(MTTestDefaultClashBase, {'type': 'm1'})
+
+
+# Simulate 'upgrading' a regular dataclass to a multitype: the old
+# standalone class here stands in for the pre-multitype version of
+# MTTestRetroOriginal below.
+@ioprepped
+@dataclass
+class MTTestRetroOld:
+    """The original plain dataclass (pre-multitype)."""
+
+    ival: int = 0
+    sval: str = ''
+
+
+class MTTestRetroTypeID(Enum):
+    """IDs for our multi-type class."""
+
+    ORIGINAL = 'o'
+    EXTRA = 'e'
+
+
+class MTTestRetroBase(IOMultiType[MTTestRetroTypeID]):
+    """A multi-type retrofitted onto an existing regular dataclass.
+
+    Designating the original dataclass type as the default means old
+    keyless data remains loadable as the multitype and default-type
+    data written by new code remains loadable by old code.
+    """
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: MTTestRetroTypeID) -> type[MTTestRetroBase]:
+        val: type[MTTestRetroBase]
+        if type_id is MTTestRetroTypeID.ORIGINAL:
+            val = MTTestRetroOriginal
+        elif type_id is MTTestRetroTypeID.EXTRA:
+            val = MTTestRetroExtra
+        else:
+            assert_never(type_id)
+        return val
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestRetroTypeID:
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_default_type_id(cls) -> MTTestRetroTypeID | None:
+        return MTTestRetroTypeID.ORIGINAL
+
+
+@ioprepped
+@dataclass
+class MTTestRetroOriginal(MTTestRetroBase):
+    """The multitype version of the original dataclass."""
+
+    ival: int = 0
+    sval: str = ''
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestRetroTypeID:
+        return MTTestRetroTypeID.ORIGINAL
+
+
+@ioprepped
+@dataclass
+class MTTestRetroExtra(MTTestRetroBase):
+    """A new type added alongside the original one."""
+
+    bval: bool = False
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> MTTestRetroTypeID:
+        return MTTestRetroTypeID.EXTRA
+
+
+def test_multi_type_default_retrofit() -> None:
+    """Test upgrading a regular dataclass to a multitype via a default."""
+
+    # Old code's output (no type-id anywhere) should load cleanly as
+    # the new multitype, giving the designated default type.
+    olddict = dataclass_to_dict(MTTestRetroOld(ival=123, sval='foo'))
+    newval = dataclass_from_dict(MTTestRetroBase, olddict)
+    assert isinstance(newval, MTTestRetroOriginal)
+    assert newval.ival == 123
+    assert newval.sval == 'foo'
+
+    # New code's output for the default type should be byte-identical
+    # to the old form and thus fully loadable by old code.
+    newdict = dataclass_to_dict(newval)
+    assert newdict == olddict
+    oldval = dataclass_from_dict(MTTestRetroOld, newdict)
+    assert oldval == MTTestRetroOld(ival=123, sval='foo')
+
+
 def test_human_codec() -> None:
     """Test Codec.HUMAN produces human-readable dicts."""
     import re
@@ -2492,3 +2887,158 @@ def test_human_codec() -> None:
     # Decoding with HUMAN codec should raise ValueError.
     with pytest.raises(ValueError):
         dataclass_from_dict(_HumanTestClass, out, codec=Codec.HUMAN)
+
+
+@ioprepped
+@dataclass
+class _DJUnionSub:
+    ival: Annotated[int, IOAttrs('i')]
+
+
+@ioprepped
+@dataclass
+class _DJUnionHost:
+    val: Annotated[str | int | _DJUnionSub | None, IOAttrs('v')]
+
+
+@ioprepped
+@dataclass
+class _DJUnionBoolHost:
+    val: Annotated[bool | str, IOAttrs('v')]
+
+
+@ioprepped
+@dataclass
+class _DJUnionFloatHost:
+    val: Annotated[str | float, IOAttrs('v')]
+
+
+@ioprepped
+@dataclass
+class _DJUnionMTHost:
+    val: Annotated[str | MTTestBase, IOAttrs('v')]
+
+
+@dataclass
+class _DJUnionRecursive:
+    """Mimics the langstr nested-substitution shape."""
+
+    name: Annotated[str, IOAttrs('n')]
+    subs: Annotated[dict[str, str | int | _DJUnionRecursive], IOAttrs('s')] = (
+        field(default_factory=dict)
+    )
+
+
+def test_type_disjoint_unions() -> None:
+    """Test multi-member 'type-disjoint' unions."""
+
+    # Each member kind round-trips, with primitives staying bare on the
+    # wire and the object-shaped member appearing as a dict.
+    for obj, wire in [
+        (_DJUnionHost(val='hello'), {'v': 'hello'}),
+        (_DJUnionHost(val=5), {'v': 5}),
+        (_DJUnionHost(val=_DJUnionSub(ival=3)), {'v': {'i': 3}}),
+        (_DJUnionHost(val=None), {'v': None}),
+    ]:
+        dataclass_validate(obj)
+        assert dataclass_to_dict(obj) == wire
+        assert dataclass_from_dict(_DJUnionHost, wire) == obj
+
+    # Value types not present in the union get rejected in both
+    # directions. Note that bool is NOT considered an int here (it has
+    # its own wire type), though static type-checking can't catch that
+    # direction since bool is a subtype of int in the type system.
+    with pytest.raises(TypeError):
+        dataclass_to_dict(_DJUnionHost(val=True))
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_DJUnionHost, {'v': True})
+    with pytest.raises(TypeError):
+        dataclass_to_dict(_DJUnionHost(val=1.5))  # type: ignore[arg-type]
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_DJUnionHost, {'v': 1.5})
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_DJUnionHost, {'v': ['nope']})
+
+    # Bool members match bool values exactly, and a union without a
+    # None member rejects None values.
+    assert dataclass_to_dict(_DJUnionBoolHost(val=True)) == {'v': True}
+    assert dataclass_from_dict(_DJUnionBoolHost, {'v': True}).val is True
+    assert dataclass_from_dict(_DJUnionBoolHost, {'v': 'x'}).val == 'x'
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_DJUnionBoolHost, {'v': 5})
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_DJUnionBoolHost, {'v': None})
+    with pytest.raises(TypeError):
+        dataclass_to_dict(_DJUnionBoolHost(val=None))  # type: ignore[arg-type]
+
+    # Int values land on a float member via the usual coercion rules.
+    fobj = dataclass_from_dict(_DJUnionFloatHost, {'v': 5})
+    assert isinstance(fobj.val, float)
+    assert fobj.val == 5.0
+    with pytest.raises(TypeError):
+        dataclass_from_dict(_DJUnionFloatHost, {'v': 5}, coerce_to_float=False)
+
+    # IOMultiType members work; concrete subclasses ride the tagged
+    # dict form.
+    tpname = MTTestBase.get_type_id_storage_name()
+    mtwire = dataclass_to_dict(_DJUnionMTHost(val=MTTestClass1(ival=7)))
+    assert mtwire == {'v': {'ival': 7, tpname: 'm1'}}
+    mtback = dataclass_from_dict(_DJUnionMTHost, mtwire)
+    assert isinstance(mtback.val, MTTestClass1)
+    assert mtback.val.ival == 7
+    assert dataclass_from_dict(_DJUnionMTHost, {'v': 'str'}).val == 'str'
+
+    # Prep-time rejection: only one object-shaped member is allowed
+    # (multiple would be indistinguishable on the wire).
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClassBad1:
+            val: str | _DJUnionSub | MTTestBase
+
+    # Enums lack a distinct wire type (they serialize to str/int).
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClassBad2:
+            val: str | _EnumTest
+
+    # Datetimes too (str in JSON, native in Firestore).
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClassBad3:
+            val: str | datetime.datetime
+
+    # Containers too.
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestClassBad4:
+            val: str | int | list[int]
+
+
+def test_type_disjoint_union_recursive() -> None:
+    """The nested-langstr shape: a self-referential union dict value."""
+
+    # Can't use @ioprepped due to the self-reference; prep explicitly.
+    ioprep(_DJUnionRecursive)
+
+    obj = _DJUnionRecursive(
+        name='hello',
+        subs={
+            'player': 'Bo',
+            'count': 5,
+            'how': _DJUnionRecursive(name='salute'),
+        },
+    )
+    wire = dataclass_to_dict(obj)
+    assert wire == {
+        'n': 'hello',
+        's': {'player': 'Bo', 'count': 5, 'how': {'n': 'salute', 's': {}}},
+    }
+    assert dataclass_from_dict(_DJUnionRecursive, wire) == obj

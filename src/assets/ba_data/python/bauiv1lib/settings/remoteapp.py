@@ -5,6 +5,9 @@
 from typing import override
 
 import bauiv1 as bui
+from bauiv1 import stdassets
+
+_ctlstrs = stdassets.strings.settings.controllers
 
 
 class RemoteAppSettingsWindow(bui.MainWindow):
@@ -83,7 +86,7 @@ class RemoteAppSettingsWindow(bui.MainWindow):
                 yoffs - (62 if uiscale is bui.UIScale.SMALL else 42),
             ),
             size=(0, 0),
-            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            text=_ctlstrs.configure_mobile,
             maxwidth=370,
             color=bui.app.ui_v1.title_color,
             scale=0.8,
@@ -101,12 +104,9 @@ class RemoteAppSettingsWindow(bui.MainWindow):
             maxwidth=width * 0.95,
             color=(0.7, 0.9, 0.7, 1.0),
             scale=0.8,
-            text=bui.Lstr(
-                resource=f'{self._r}.explanationText',
-                subs=[
-                    ('${APP_NAME}', bui.Lstr(resource='titleText')),
-                    ('${REMOTE_APP_NAME}', bui.get_remote_app_name()),
-                ],
+            text=_ctlstrs.remote_explanation(
+                remote_app_name=stdassets.strings.ui.remote_app_name,
+                app_name=stdassets.strings.ui.app_name,
             ),
             max_height=100,
             h_align='center',
@@ -135,7 +135,7 @@ class RemoteAppSettingsWindow(bui.MainWindow):
             size=(0, 0),
             color=(0.7, 0.9, 0.7, 0.8),
             scale=0.65,
-            text=bui.Lstr(resource=f'{self._r}.bestResultsText'),
+            text=_ctlstrs.remote_best_results,
             maxwidth=width * 0.95,
             max_height=100,
             h_align='center',
@@ -150,7 +150,7 @@ class RemoteAppSettingsWindow(bui.MainWindow):
             scale=0.8,
             value=not bui.app.config.resolve('Enable Remote App'),
             autoselect=True,
-            text=bui.Lstr(resource='disableRemoteAppConnectionsText'),
+            text=_ctlstrs.disable_remote_app,
             on_value_change_call=self._on_check_changed,
         )
 

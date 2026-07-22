@@ -20,14 +20,24 @@ pre-marked autogen sections in checked-in source files:
   markers inside ``Assets::StartLoading()``: one
   ``LoadBuiltinTexture(BuiltinTextureID::kFooBar, "<apverid>:foo/bar")``
   call per entry.
+* ``src/ballistica/base/assets/builtin_strings.h`` / ``.cc`` — FULLY
+  generated (no splice markers): the ``BuiltinStrings`` typed accessor
+  tree (strings-asset-migration decision D22). Each ``string``-kind
+  listing entry (which carries the brief's ordered ``params`` + author
+  ``docs``) becomes one static method building a pure resource-form
+  ``LangStr`` — ``count`` params type as ``int64_t``, ``text`` params
+  as ``LangStr::Sub``. String sources must live under a top-level
+  ``strings/`` dir; the remaining path segments map to nested classes
+  (namespaces are barred by the one-namespace-per-featureset rule) and
+  the leaf method name.
 
 This is invoked by ``assetpins`` when the pin changes (it talks to the
 cloud for the listing, so it lives there, not in ``make update`` --
 which only *checks* the splice matches the pin and stays offline; see
-``check_builtin_asset_ids``). The autogen sections live in checked-in
-files. Idempotent — only writes a target file if the spliced result
-differs from what's on disk, so a no-op regen leaves both files (and
-their mtimes) untouched.
+``check_builtin_asset_ids``). All targets live in checked-in files.
+Idempotent — only writes a target file if the generated result differs
+from what's on disk, so a no-op regen leaves the files (and their
+mtimes) untouched.
 """
 
 import re
@@ -88,11 +98,39 @@ class AssetEntry:
 
 
 @dataclass
+class StringEntry:
+    """One ``string``-kind asset, post-validation.
+
+    ``params`` is the brief's ordered call signature as
+    ``(name, kind)`` pairs, kind ``'count'`` (the plural pivot; typed
+    ``int64_t``) or ``'text'`` (typed ``LangStr::Sub``). ``docs`` is
+    the combined author doc text from the ``.bstr``.
+    """
+
+    # Logical asset path within the package (e.g.
+    # ``strings/input/keyboard``); always begins with ``strings/``.
+    logical_name: str
+    params: list[tuple[str, str]]
+    docs: str
+
+    @property
+    def cpp_class_path(self) -> list[str]:
+        """Nested-class names (path segments between root and leaf)."""
+        return [_pascal_case(s) for s in self.logical_name.split('/')[1:-1]]
+
+    @property
+    def cpp_method_name(self) -> str:
+        """``Keyboard`` form (from the leaf segment)."""
+        return _pascal_case(self.logical_name.split('/')[-1])
+
+
+@dataclass
 class BuildResult:
     """Output collected before writing to disk."""
 
     apverid: str
     entries: list[AssetEntry] = field(default_factory=list)
+    string_entries: list[StringEntry] = field(default_factory=list)
 
     def entries_for(self, kind: AssetKind) -> list[AssetEntry]:
         """Entries of a given asset kind, sorted by enum-entry name."""
@@ -112,14 +150,17 @@ def _pascal_case(segment: str) -> str:
     return ''.join(part.capitalize() for part in segment.split('_'))
 
 
-def _fetch_listing(projroot: Path, apverid: str) -> list[dict[str, str]]:
+def _fetch_listing(
+    projroot: Path, apverid: str
+) -> list[dict[str, str | list[dict[str, str]]]]:
     """Fetch the assembly-free asset listing for ``apverid`` via bacloud.
 
     Returns the ``assets`` list of ``{'path', 'kind'}`` dicts (see the
-    bamaster ``assetpackage _listing`` command). This is the one
-    cloud-talking step in builtin-id generation; it is invoked only from
-    ``assetpins`` / ``gen_builtin_asset_ids`` (never ``update_project``,
-    which stays offline).
+    bamaster ``assetpackage _listing`` command; ``string`` entries also
+    carry ``params`` + ``docs``). This is the one cloud-talking step in
+    builtin-id generation; it is invoked only from ``assetpins`` /
+    ``gen_builtin_asset_ids`` (never ``update_project``, which stays
+    offline).
     """
     import os
     import json
@@ -168,6 +209,59 @@ def _fetch_listing(projroot: Path, apverid: str) -> list[dict[str, str]]:
             os.unlink(tmppath)
 
 
+def _collect_string(
+    asset: dict[str, str | list[dict[str, str]]], result: BuildResult
+) -> str | None:
+    """Validate one ``string``-kind listing entry into ``result``.
+
+    Returns an error string (for the caller's aggregated report) or
+    ``None`` on success.
+    """
+    logical_name = asset['path']
+    assert isinstance(logical_name, str)
+    segments = logical_name.split('/')
+    if len(segments) < 2 or segments[0] != 'strings':
+        return (
+            f'String {logical_name!r} is not under a top-level'
+            " 'strings/' dir; the C++ accessor tree requires"
+            " 'strings/<group>/<name>' paths."
+        )
+    try:
+        for seg in segments:
+            _pascal_case(seg)  # validation only
+    except CleanError as exc:
+        return str(exc)
+    if 'params' not in asset or 'docs' not in asset:
+        return (
+            f'String {logical_name!r} listing entry lacks params/docs;'
+            ' the master serving the listing predates typed-string'
+            ' support (deploy bamaster first).'
+        )
+    rawparams = asset['params']
+    assert isinstance(rawparams, list)
+    params: list[tuple[str, str]] = []
+    for rawparam in rawparams:
+        name, pkind = rawparam['name'], rawparam['kind']
+        if not re.fullmatch(r'[a-z][a-z0-9_]*', name):
+            return (
+                f'String {logical_name!r} param {name!r} is not a'
+                ' valid lowercase identifier; rename in the brief.'
+            )
+        if pkind not in ('count', 'text'):
+            return (
+                f'String {logical_name!r} param {name!r} has unknown'
+                f' kind {pkind!r} (this generator understands'
+                " 'count'/'text'; it may need updating)."
+            )
+        params.append((name, pkind))
+    docs = asset['docs']
+    assert isinstance(docs, str)
+    result.string_entries.append(
+        StringEntry(logical_name=logical_name, params=params, docs=docs)
+    )
+    return None
+
+
 def collect(projroot: Path, apverid: str) -> BuildResult:
     """Fetch the asset listing for ``apverid`` and build a validated result.
 
@@ -186,12 +280,18 @@ def collect(projroot: Path, apverid: str) -> BuildResult:
 
     for asset in assets:
         logical_name = asset['path']
+        assert isinstance(logical_name, str)
+        if asset['kind'] == 'string':
+            err = _collect_string(asset, result)
+            if err is not None:
+                errors.append(err)
+            continue
         # Kinds with no C++ id enum (collision_mesh today, plus any
         # future kind the listing gains) have no AssetKind member;
         # skip them. Keeps the generator forward-compatible without a
         # listing-format gate.
         try:
-            kind = AssetKind(asset['kind'])
+            kind = AssetKind(str(asset['kind']))
         except ValueError:
             continue
         segments = logical_name.split('/')
@@ -321,6 +421,222 @@ def render_load_block(result: BuildResult) -> str:
     return '\n'.join(lines)
 
 
+def _wrap_doc_comment(docs: str, indent: str) -> list[str]:
+    """Render doc text as wrapped ``///`` comment lines."""
+    import textwrap
+
+    lines: list[str] = []
+    for i, para in enumerate(p for p in docs.split('\n\n') if p.strip()):
+        if i > 0:
+            lines.append(f'{indent}///')
+        flat = ' '.join(para.split())
+        lines.extend(
+            f'{indent}/// {wrapped}'
+            for wrapped in textwrap.wrap(flat, width=76 - len(indent))
+        )
+    return lines
+
+
+def _string_param_sig(entry: StringEntry) -> str:
+    """C++ parameter list for a string entry's accessor."""
+    return ', '.join(
+        f'int64_t {name}' if kind == 'count' else f'LangStr::Sub {name}'
+        for name, kind in entry.params
+    )
+
+
+@dataclass
+class _StringTreeNode:
+    """One level of the nested-class accessor tree."""
+
+    methods: list[StringEntry] = field(default_factory=list)
+    children: dict[str, '_StringTreeNode'] = field(default_factory=dict)
+
+
+def _string_tree(entries: list[StringEntry]) -> _StringTreeNode:
+    """Group entries into the nested-class tree by their class paths."""
+    root = _StringTreeNode()
+    for entry in sorted(entries, key=lambda e: e.logical_name):
+        node = root
+        for cls in entry.cpp_class_path:
+            node = node.children.setdefault(cls, _StringTreeNode())
+        node.methods.append(entry)
+    return root
+
+
+# NOTE: the license line is emitted separately (for the header it must
+# be immediately followed by the include guard per the project
+# header-guard check).
+_STRINGS_FILE_BANNER = [
+    '// AUTOGENERATED FILE - DO NOT EDIT BY HAND.',
+    '//',
+    '// Generated by ``tools/pcommand gen_builtin_asset_ids`` (run by',
+    '// ``assetpins`` when the construct asset-package pin in',
+    '// ``pconfig/projectconfig.json`` changes) from that pin\'s asset',
+    '// listing. Rerun ``make assetpins-latest`` to regenerate.',
+]
+
+_LICENSE_LINE = '// Released under the MIT License. See LICENSE for details.'
+
+
+def render_strings_h(result: BuildResult) -> str:
+    """Render the full generated ``builtin_strings.h`` content."""
+    guard = 'BALLISTICA_BASE_ASSETS_BUILTIN_STRINGS_H_'
+    lines: list[str] = [
+        _LICENSE_LINE,
+        '',
+        f'#ifndef {guard}',
+        f'#define {guard}',
+        '',
+    ]
+    lines += _STRINGS_FILE_BANNER
+    lines += [
+        '//',
+        f'// Generated from: "{result.apverid}"',
+        '',
+        '#include <memory>',
+        '',
+        '#include "ballistica/base/base.h"',
+        # The full LangStr definition (not just a forward decl) is
+        # needed here: text params type as the nested LangStr::Sub.
+        '#include "ballistica/base/support/lang_str.h"',
+        '',
+        'namespace ballistica::base {',
+        '',
+        '/// Typed accessors for the language-strings shipped in the',
+        '/// builtin asset package (strings-asset-migration decision D22).',
+        '/// Each accessor mirrors one `.bstr` source in the package',
+        '/// (nested classes mirror its dir tree; classes stand in for',
+        '/// namespaces per the one-namespace-per-featureset rule) and',
+        '/// builds a resource-form LangStr addressing that string in the',
+        '/// pinned builtin package (kBuiltinAssetsApverid), with any',
+        '/// parameters attached as keyword substitutions.',
+        '///',
+        '/// The returned values hold tokens, not text: call Evaluate() at',
+        '/// the point flat display text is needed (it resolves against',
+        '/// the current locale\'s native tables and re-runs correctly',
+        '/// after a language switch). Values are immutable and may be',
+        '/// built, held, and evaluated from any thread.',
+        'class BuiltinStrings {',
+        ' public:',
+    ]
+
+    def _emit(node: _StringTreeNode, indent: str) -> None:
+        first = True
+        for clsname, child in sorted(node.children.items()):
+            if not first:
+                lines.append('')
+            first = False
+            lines.append(f'{indent}class {clsname} {{')
+            lines.append(f'{indent} public:')
+            _emit(child, indent + '  ')
+            lines.append(f'{indent}}};')
+        for entry in node.methods:
+            if not first:
+                lines.append('')
+            first = False
+            lines.extend(_wrap_doc_comment(entry.docs, indent))
+            lines.append(
+                f'{indent}static auto '
+                f'{entry.cpp_method_name}({_string_param_sig(entry)})'
+                ' -> std::shared_ptr<const LangStr>;'
+            )
+
+    if result.string_entries:
+        _emit(_string_tree(result.string_entries), '  ')
+    else:
+        lines.append('  // (no string sources in the pinned package)')
+    lines += [
+        '};',
+        '',
+        '}  // namespace ballistica::base',
+        '',
+        f'#endif  // {guard}',
+        '',
+    ]
+    return '\n'.join(lines)
+
+
+def render_strings_cc(result: BuildResult) -> str:
+    """Render the full generated ``builtin_strings.cc`` content."""
+    lines: list[str] = [_LICENSE_LINE, '//']
+    lines += _STRINGS_FILE_BANNER
+    lines += [
+        '',
+        '#include "ballistica/base/assets/builtin_strings.h"',
+        '',
+        '#include <memory>',
+    ]
+    # MakeResource_ moves its subs vector, so <utility> rides with any
+    # entries at all.
+    if result.string_entries:
+        lines.append('#include <utility>')
+    lines += [
+        '#include <vector>',
+        '',
+        '#include "ballistica/base/support/lang_str.h"',
+        '',
+        'namespace ballistica::base {',
+        '',
+    ]
+    if not result.string_entries:
+        lines += [
+            '// (no string sources in the pinned package)',
+            '',
+            '}  // namespace ballistica::base',
+            '',
+        ]
+        return '\n'.join(lines)
+    lines += [
+        'static auto MakeResource_(const char* name,',
+        '                          std::vector<LangStr::SubEntry> subs = {})',
+        '    -> std::shared_ptr<const LangStr> {',
+        '  auto out = std::make_shared<LangStr>();',
+        '  out->form = LangStr::Form::kResource;',
+        '  out->apverid = kBuiltinAssetsApverid;',
+        '  out->name = name;',
+        '  out->subs = std::move(subs);',
+        '  return out;',
+        '}',
+        '',
+    ]
+
+    def _emit(node: _StringTreeNode, class_path: list[str]) -> None:
+        for entry in node.methods:
+            qual = '::'.join(['BuiltinStrings'] + class_path)
+            lines.append(
+                f'auto {qual}::{entry.cpp_method_name}'
+                f'({_string_param_sig(entry)})'
+                ' -> std::shared_ptr<const LangStr> {'
+            )
+            if entry.params:
+                subs = ', '.join(
+                    (
+                        f'{{"{name}", {name}}}'
+                        if kind == 'count'
+                        else f'{{"{name}", std::move({name})}}'
+                    )
+                    for name, kind in entry.params
+                )
+                lines.append(
+                    f'  return MakeResource_("{entry.logical_name}",'
+                    f' {{{subs}}});'
+                )
+            else:
+                lines.append(f'  return MakeResource_("{entry.logical_name}");')
+            lines.append('}')
+            lines.append('')
+        for clsname, child in sorted(node.children.items()):
+            _emit(child, class_path + [clsname])
+
+    _emit(_string_tree(result.string_entries), [])
+    lines += [
+        '}  // namespace ballistica::base',
+        '',
+    ]
+    return '\n'.join(lines)
+
+
 _BEGIN_MARKER_PREFIX = '// __AUTOGENERATED_'
 _END_MARKER_PREFIX = '// __AUTOGENERATED_'
 
@@ -369,6 +685,10 @@ def _splice_autogen(
 TARGET_BASE_H = 'src/ballistica/base/base.h'
 TARGET_ASSETS_CC = 'src/ballistica/base/assets/assets.cc'
 
+# Fully-generated files (no splice markers; whole content is ours).
+TARGET_STRINGS_H = 'src/ballistica/base/assets/builtin_strings.h'
+TARGET_STRINGS_CC = 'src/ballistica/base/assets/builtin_strings.cc'
+
 _MARKERS_BASE_H = (
     '// __AUTOGENERATED_BUILTIN_ASSET_IDS_BEGIN__',
     '// __AUTOGENERATED_BUILTIN_ASSET_IDS_END__',
@@ -385,12 +705,13 @@ def compute_splices(
     base_h_existing: str | None = None,
     assets_cc_existing: str | None = None,
 ) -> dict[str, str]:
-    """Compute spliced contents for both target files.
+    """Compute generated contents for all target files.
 
     Returns a dict keyed by project-relative path with the full new
-    file content (existing content + new autogen section). Caller
-    decides whether to write — typical use is "write only if
-    contents differ from on-disk".
+    file content — the base.h / assets.cc splices (existing content +
+    new autogen section) plus the fully-generated builtin_strings.h /
+    .cc accessor files. Caller decides whether to write — typical use
+    is "write only if contents differ from on-disk".
 
     ``base_h_existing`` / ``assets_cc_existing`` let the caller pass
     in already-read content (e.g. when integrated into a project
@@ -432,17 +753,29 @@ def compute_splices(
             ),
             filename='assets.cc',
         ),
+        # The builtin-strings accessor files are fully generated (no
+        # existing content in play).
+        TARGET_STRINGS_H: format_cpp_str(
+            projroot,
+            render_strings_h(result),
+            filename='builtin_strings.h',
+        ),
+        TARGET_STRINGS_CC: format_cpp_str(
+            projroot,
+            render_strings_cc(result),
+            filename='builtin_strings.cc',
+        ),
     }
 
 
 def generate(projroot: Path, apverid: str, check: bool = False) -> bool:
-    """Splice generated content for ``apverid`` into base.h / assets.cc.
+    """Write generated content for ``apverid`` into all target files.
 
-    Reads each target file, replaces the content between its
-    ``// __AUTOGENERATED_*__`` marker pair, and writes the file
-    only if the resulting content differs from what's on disk.
-    Idempotent: a run with no changes leaves both files (and their
-    mtimes) untouched.
+    Splices the base.h / assets.cc ``// __AUTOGENERATED_*__`` marker
+    sections and fully regenerates the builtin_strings accessor files,
+    writing each file only if the resulting content differs from
+    what's on disk. Idempotent: a run with no changes leaves the files
+    (and their mtimes) untouched.
 
     Returns True if anything was (or would be) changed. (``assetpins``
     stages writes itself via :func:`compute_splices`; this convenience

@@ -5,6 +5,7 @@
 #include <Python.h>
 
 #include <string>
+#include <utility>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
@@ -33,6 +34,12 @@ void CheckBoxWidget::SetOnValueChangeCall(PyObject* call_tuple) {
 void CheckBoxWidget::SetText(const std::string& text) {
   text_.SetText(text);
   have_text_ = (!text.empty());
+}
+
+void CheckBoxWidget::SetLangStr(std::shared_ptr<const base::LangStr> val) {
+  // A set language-string always counts as text present.
+  have_text_ = (val != nullptr);
+  text_.SetLangStr(std::move(val));
 }
 
 void CheckBoxWidget::SetWidth(float width_in) {

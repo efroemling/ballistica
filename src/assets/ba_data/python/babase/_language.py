@@ -3,23 +3,192 @@
 """Language related functionality."""
 
 import json
+import asyncio
 from functools import partial
 from typing import TYPE_CHECKING, overload, override
 
 import _babase
 from babase._appsubsystem import AppSubsystem
-from babase._logging import applog
+from babase._logging import applog, assetmanagerlog
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any, Callable, Sequence
 
     import babase
+    import bacommon.langstr
+    from bacommon.locale import Locale
 
 
 #: Process-lifetime cache for :func:`get_legacy_langdata` (the constant
-#: ``legacylangdata.json`` blob is flavor-invariant, so it is stable for
+#: ``legacylangdata`` blob is flavor-invariant, so it is stable for
 #: the life of the process once read).
 _g_legacy_langdata: dict[str, Any] | None = None
+
+
+def _native_from_spec(spec: bacommon.langstr.LangStrSpec) -> babase.LangStr:
+    """Parse an authoring-spec into the native verified-local form.
+
+    Private on purpose (D28): there is no *public* spec -> verified
+    conversion — verification comes from context. The callers here are
+    the wrapper runtime below, whose asset-package pins are
+    construct-mode-resolved before any wrapper is usable.
+    """
+    from efro.dataclassio import dataclass_to_json
+
+    return _babase.LangStr(dataclass_to_json(spec))
+
+
+async def resolve_langstrs(
+    specs: Sequence[bacommon.langstr.LangStrSpec],
+    *,
+    locale: Locale | None = None,
+    background: bool = False,
+    timeout: float | None = None,
+    allow_apverid: Callable[[str], bool] | None = None,
+) -> bacommon.langstr.LanguageStringNameDecodeContext | None:
+    """Resolve the asset-packages a set of language-string specs reference.
+
+    Gathers every asset-package-version the ``specs`` reference, resolves
+    them via ``app.assets.resolve`` (downloading through the connected node
+    if needed), reads their per-locale string values, and returns a
+    ``LanguageStringNameDecodeContext`` covering them all -- the single
+    audited path from authoring specs to displayable strings (decode each
+    spec via ``ctx.decode(spec)``).
+
+    ``background=True`` marks a decorative/prefetch resolve that queues
+    behind interactive ones. ``timeout`` (seconds) bounds the whole
+    resolve-and-gather; ``None`` means no limit. ``allow_apverid``, if
+    given, is an allowlist predicate applied to every referenced apverid
+    *before* any resolve -- if any apverid fails it, this resolves and
+    downloads nothing and returns ``None`` (the load-bearing gate for
+    untrusted-peer content).
+
+    Returns ``None`` only when gated out by ``allow_apverid``. Raises on
+    resolve/decode failure (including ``TimeoutError``); callers apply
+    their own fail-soft-or-surface policy. Must be awaited on the logic
+    thread; the blocking per-locale string reads hop to the loop's
+    executor.
+    """
+    from bacommon.langstr import (
+        collect_apverids,
+        LanguageStringNameDecodeContext,
+    )
+
+    assert _babase.in_logic_thread()
+
+    if locale is None:
+        locale = _babase.app.locale.current_locale
+
+    apverids: set[str] = set()
+    for spec in specs:
+        collect_apverids(spec, apverids)
+
+    if allow_apverid is not None:
+        for apverid in apverids:
+            if not allow_apverid(apverid):
+                assetmanagerlog.warning(
+                    'resolve_langstrs: rejecting disallowed apverid %r;'
+                    ' resolving nothing.',
+                    apverid,
+                )
+                return None
+
+    ordered = sorted(apverids)
+    assetmanagerlog.debug(
+        'resolve_langstrs: resolving %d package(s) (background=%s): %s.',
+        len(ordered),
+        background,
+        ordered,
+    )
+
+    # timeout=None => no limit.
+    async with asyncio.timeout(timeout):
+        await _babase.app.assets.resolve(
+            ordered, language=locale, background=background
+        )
+        loop = asyncio.get_running_loop()
+        language = {
+            apverid: await loop.run_in_executor(
+                None,
+                partial(
+                    _babase.app.assets.get_package_strings, apverid, locale
+                ),
+            )
+            for apverid in ordered
+        }
+
+    assetmanagerlog.debug(
+        'resolve_langstrs: resolved + gathered strings for %d package(s).',
+        len(ordered),
+    )
+    return LanguageStringNameDecodeContext(language, locale)
+
+
+class _NativeLstrMaker:
+    """Callable leaf: builds a native LangStr from keyword subs."""
+
+    __slots__ = ('_apverid', '_name')
+
+    def __init__(self, apverid: str, name: str) -> None:
+        self._apverid = apverid
+        self._name = name
+
+    def __call__(self, **subs: str | int | babase.LangStr) -> babase.LangStr:
+        from bacommon.langstr import LangStrSpecResource
+
+        return _native_from_spec(
+            LangStrSpecResource(
+                self._apverid,
+                self._name,
+                {
+                    key: (val.spec if isinstance(val, _babase.LangStr) else val)
+                    for key, val in subs.items()
+                },
+            )
+        )
+
+
+class LangStrDir:
+    """Runtime accessor tree for client-destined asset-package wrappers.
+
+    The verified-local counterpart of
+    :class:`bacommon.langstr.LangStrDir`: generated client wrapper
+    modules instantiate this over the same tree data, and string leaves
+    yield native :class:`babase.LangStr` values (per the D28 semantic
+    split — the construct-mode resolve that gates wrapper use
+    guarantees these strings are locally displayable).
+    """
+
+    __slots__ = ('_apverid', '_tree', '_prefix')
+
+    def __init__(
+        self,
+        apverid: str,
+        tree: bacommon.langstr.WrapperTree,
+        prefix: str = '',
+    ) -> None:
+        self._apverid = apverid
+        self._tree = tree
+        self._prefix = prefix
+
+    def __getattr__(
+        self, name: str
+    ) -> babase.LangStr | _NativeLstrMaker | LangStrDir:
+        try:
+            child = self._tree[name]
+        except KeyError:
+            raise AttributeError(name) from None
+        full = f'{self._prefix}/{name}' if self._prefix else name
+        if isinstance(child, dict):
+            return LangStrDir(self._apverid, child, full)
+        # A leaf: its param-keyword tuple. Empty -> a no-arg string,
+        # read as a property yielding the native LangStr directly;
+        # otherwise a maker.
+        if not child:
+            from bacommon.langstr import LangStrSpecResource
+
+            return _native_from_spec(LangStrSpecResource(self._apverid, full))
+        return _NativeLstrMaker(self._apverid, full)
 
 
 def get_legacy_langdata() -> dict[str, Any]:
@@ -27,8 +196,8 @@ def get_legacy_langdata() -> dict[str, Any]:
 
     This is the legacy ``langdata.json`` payload (translated language
     names + translation contributors), now sourced from the builtin
-    asset-package's flavor-invariant ``constant`` bucket
-    (``legacylangdata.json``) rather than a bundled data file.
+    asset-package's flavor-invariant ``constant`` bucket (logical path
+    ``legacylangdata``) rather than a bundled data file.
 
     Returns ``{}`` when the blob is unavailable (headless / no bundled
     asset-package manifest / not yet resolved) or on any read error, so
@@ -48,7 +217,7 @@ def get_legacy_langdata() -> dict[str, Any]:
     result: dict[str, Any] = {}
     for apverid in loaded_asset_package_apverids():
         path = _babase.get_asset_package_constant_blob_path(
-            apverid, 'legacylangdata.json'
+            apverid, 'legacylangdata'
         )
         if path is None:
             continue
@@ -200,7 +369,8 @@ class LanguageSubsystem(AppSubsystem):
         # migration Step A); switching to other locales lands in Step B.
         from babase._asset_packages import loaded_asset_package_apverids
 
-        _babase.reload_language(loaded_asset_package_apverids())
+        plural_locale = _babase.app.locale.current_locale.resolved.locale.value
+        _babase.reload_language(loaded_asset_package_apverids(), plural_locale)
 
         if switched and print_change:
             _babase.screenmessage(

@@ -5,7 +5,9 @@
 #include <Python.h>
 
 #include <algorithm>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_platform/app_platform.h"
@@ -21,6 +23,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/input_types.h"
@@ -240,9 +243,15 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         assert(glow_type_ == GlowType::kUniform);
         base::SimpleComponent c(pass);
         c.SetTransparent(true);
-        c.SetColor(0.9 * m, 1.0f * m, 0, 0.3f * m);
-        c.SetTexture(g_base->assets->BuiltinTexture(
-            base::BuiltinTextureID::kTexturesShadowSharp));
+        auto* tex = g_base->assets->BuiltinTexture(
+            base::BuiltinTextureID::kTexturesShadowSharp);
+        // Premultiply rgb by alpha for premultiplied textures so the
+        // highlight composites 'over' under premult blend instead of adding
+        // full-brightness rgb.
+        float a = 0.3f * m;
+        float cmul = tex->premultiplied() ? a : 1.0f;
+        c.SetColor(0.9f * m * cmul, 1.0f * m * cmul, 0, a);
+        c.SetTexture(tex);
         {
           auto xf = c.ScopedTransform();
           c.Translate(bound_l, bound_b, 0.1f);
@@ -504,8 +513,10 @@ void TextWidget::DoDrawCarat_(base::RenderPass* pass,
         carat_position_ = str_size;
       }
       float h, v;
-      text_group_->GetCaratPts(text_raw_, align_h, align_v, carat_position_, &h,
-                               &v);
+      // In password mode, carat positions must be computed against the
+      // masked display string (same char count; different glyph widths).
+      text_group_->GetCaratPts(password_ ? text_translated_ : text_raw_,
+                               align_h, align_v, carat_position_, &h, &v);
       base::SimpleComponent c(pass);
       c.SetPremultiplied(true);
       c.SetTransparent(true);
@@ -541,13 +552,29 @@ void TextWidget::SetLiteral(bool val) {
   text_translation_dirty_ = true;
 }
 
+auto TextWidget::GetQueryText() -> std::string {
+  if (lang_str_ != nullptr) {
+    UpdateTranslation_();
+    return text_translated_;
+  }
+  return text_raw_;
+}
+
+void TextWidget::SetLangStr(std::shared_ptr<const base::LangStr> val) {
+  lang_str_ = std::move(val);
+  text_raw_.clear();
+  text_translation_dirty_ = true;
+}
+
 void TextWidget::SetText(const std::string& text_in_raw) {
   std::string text_in = Utils::GetValidUTF8(text_in_raw.c_str(), "twst1");
 
-  // Ignore redundant sets.
-  if (text_in == text_raw_) {
+  // Ignore redundant sets (only when not switching away from a native
+  // language-string).
+  if (lang_str_ == nullptr && text_in == text_raw_) {
     return;
   }
+  lang_str_ = nullptr;
 
   // In some cases we want to make sure this is a valid resource-string
   // since catching the error here is much more useful than if we catch it
@@ -990,11 +1017,27 @@ void TextWidget::AddCharsToText_(const std::string& addchars) {
 void TextWidget::UpdateTranslation_() {
   // Apply subs/resources to get our actual text if need be.
   if (text_translation_dirty_) {
-    // We don't run translations on user-editable text or text marked literal.
-    if (editable() || literal_) {
+    if (lang_str_ != nullptr) {
+      // Native language-strings re-evaluate against the current
+      // tables (fail-visible; definition-time wrap applies inside).
+      text_translated_ = lang_str_->Evaluate();
+    } else if (editable() || literal_) {
+      // We don't run translations on user-editable text or text
+      // marked literal.
       text_translated_ = text_raw_;
     } else {
       text_translated_ = g_base->assets->CompileResourceString(text_raw_);
+    }
+    if (password_) {
+      // Password mode masks display only: one bullet per character.
+      // The real text lives on in text_raw_ (queries return it) and
+      // char counts match, so carat indexing stays valid.
+      int len = Utils::UTF8StringLength(text_translated_.c_str());
+      std::string masked;
+      for (int i = 0; i < len; ++i) {
+        masked += "\xE2\x80\xA2";  // U+2022 BULLET.
+      }
+      text_translated_ = masked;
     }
     text_translation_dirty_ = false;
     text_group_dirty_ = true;

@@ -56,7 +56,7 @@ class CoopBrowserWindow(bui.MainWindow):
             bui.apptimer(
                 1.0,
                 lambda: bui.screenmessage(
-                    bui.Lstr(resource='noTournamentsInTestBuildText'),
+                    stdassets.strings.coop.no_tournaments_in_test_build,
                     color=(1, 1, 0),
                 ),
             )
@@ -528,7 +528,7 @@ class CoopBrowserWindow(bui.MainWindow):
             id=f'{self.main_window_id_prefix}|easy',
             position=(h + 30, v2 + 105),
             size=(120, 70),
-            label=bui.Lstr(resource='difficultyEasyText'),
+            label=stdassets.strings.ui.easy,
             button_type='square',
             autoselect=True,
             enable_sound=False,
@@ -563,7 +563,7 @@ class CoopBrowserWindow(bui.MainWindow):
             id=f'{self.main_window_id_prefix}|hard',
             position=(h + 30, v2 + 32),
             size=(120, 70),
-            label=bui.Lstr(resource='difficultyHardText'),
+            label=stdassets.strings.ui.hard,
             button_type='square',
             autoselect=True,
             enable_sound=False,
@@ -659,12 +659,8 @@ class CoopBrowserWindow(bui.MainWindow):
 
         self._campaign_percent_text = bui.textwidget(
             edit=self._campaign_percent_text,
-            text=bui.Lstr(
-                value='${C} (${P})',
-                subs=[
-                    ('${C}', bui.Lstr(resource=f'{self._r}.campaignText')),
-                    ('${P}', p_str),
-                ],
+            text=stdassets.strings.ui.paren_suffix(
+                main=stdassets.strings.coop.campaign, note=p_str
             ),
         )
 
@@ -672,7 +668,7 @@ class CoopBrowserWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.confirm import ConfirmWindow
 
-        txt = bui.Lstr(resource=f'{self._r}.tournamentInfoText')
+        txt = stdassets.strings.coop.tournament_info
         ConfirmWindow(
             txt,
             cancel_button=False,
@@ -811,14 +807,11 @@ class CoopBrowserWindow(bui.MainWindow):
         # not signed in add that as well (that's probably why we see no
         # tournaments).
         if self._tournament_button_count == 0:
-            unavailable_text = bui.Lstr(resource='unavailableText')
+            unavailable_text = stdassets.strings.ui.unavailable_status
             if plus.get_v1_account_state() != 'signed_in':
-                unavailable_text = bui.Lstr(
-                    value='${A} (${B})',
-                    subs=[
-                        ('${A}', unavailable_text),
-                        ('${B}', bui.Lstr(resource='notSignedInText')),
-                    ],
+                unavailable_text = stdassets.strings.ui.paren_suffix(
+                    main=unavailable_text,
+                    note=stdassets.strings.ui.not_signed_in_status,
                 )
             bui.textwidget(
                 parent=w_parent,
@@ -1045,10 +1038,10 @@ class CoopBrowserWindow(bui.MainWindow):
 
         if classic.chest_dock_full:
             ConfirmWindow(
-                bui.Lstr(resource='chests.slotsFullWarningText'),
+                stdassets.strings.coop.chest_slots_full_warning,
                 width=550,
                 height=140,
-                ok_text=bui.Lstr(resource='continueText'),
+                ok_text=stdassets.strings.ui.continue_,
                 origin_widget=origin_widget,
                 action=strict_partial(
                     self._run_game, game=game, origin_widget=origin_widget
@@ -1062,7 +1055,7 @@ class CoopBrowserWindow(bui.MainWindow):
     ) -> None:
         """Run the provided game."""
         # pylint: disable=cyclic-import
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.confirm import ConfirmWindow
         from bauiv1lib.account.signin import show_sign_in_prompt
@@ -1108,7 +1101,7 @@ class CoopBrowserWindow(bui.MainWindow):
                     on_connected=lambda: self.main_window_replace(
                         bui.CallStrict(
                             StoreUIController().create_window,
-                            dui1.Request(
+                            dui2.Request(
                                 '/',
                                 args={'unlockreqs': required_purchases},
                             ),
@@ -1132,7 +1125,7 @@ class CoopBrowserWindow(bui.MainWindow):
         """Run the provided tournament game."""
         # pylint: disable=too-many-return-statements
 
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.tournamententry import TournamentEntryWindow
@@ -1150,7 +1143,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         if bui.workspaces_in_use():
             bui.screenmessage(
-                bui.Lstr(resource='tournamentsDisabledWorkspaceText'),
+                stdassets.strings.coop.tournaments_disabled_workspace,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()
@@ -1158,7 +1151,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         if not self._tourney_data_up_to_date:
             bui.screenmessage(
-                bui.Lstr(resource='tournamentCheckingStateText'),
+                stdassets.strings.coop.tournament_checking_state,
                 color=(1, 1, 0),
             )
             builtinassets.audio.error.get().play()
@@ -1166,7 +1159,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         if tournament_button.tournament_id is None:
             bui.screenmessage(
-                bui.Lstr(resource='internal.unavailableNoConnectionText'),
+                stdassets.strings.ui.unavailable_no_connection,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()
@@ -1220,7 +1213,7 @@ class CoopBrowserWindow(bui.MainWindow):
                         on_connected=lambda: self.main_window_replace(
                             bui.CallStrict(
                                 StoreUIController().create_window,
-                                dui1.Request(
+                                dui2.Request(
                                     '/',
                                     args={'unlockreqs': required_purchases},
                                 ),
@@ -1241,7 +1234,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         if tournament_button.time_remaining <= 0:
             bui.screenmessage(
-                bui.Lstr(resource='tournamentEndedText'), color=(1, 0, 0)
+                stdassets.strings.coop.tournament_ended, color=(1, 0, 0)
             )
             builtinassets.audio.error.get().play()
             return

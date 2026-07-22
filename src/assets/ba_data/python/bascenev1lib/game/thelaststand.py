@@ -118,7 +118,7 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
         super().on_transition_in()
         bs.timer(1.3, self._new_wave_sound.play)
         self._scoreboard = Scoreboard(
-            label=bs.Lstr(resource='scoreText'), score_split=0.5
+            label=stdassets.strings.game.score, score_split=0.5
         )
 
     @override

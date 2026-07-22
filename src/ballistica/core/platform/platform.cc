@@ -2,8 +2,11 @@
 
 #include "ballistica/core/platform/platform.h"
 
+#include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <cstdio>
+#include <limits>
 #include <list>
 #include <mutex>
 #include <string>
@@ -704,6 +707,140 @@ auto Platform::GetTextLineBreakOffsets(const std::string& text)
     }
   }
   return offsets;
+}
+
+auto Platform::SplitTextIntoLines(const std::string& text, int min_lines,
+                                  int max_lines, int max_chars_per_line)
+    -> std::string {
+  assert(Utils::IsValidUTF8(text));
+
+  auto is_edge_space = [](char c) {
+    return c == ' ' || c == '\n' || c == '\r' || c == '\t';
+  };
+
+  // Candidate line boundaries: text start, each break opportunity,
+  // text end.
+  std::vector<int> bounds;
+  bounds.push_back(0);
+  for (int off : GetTextLineBreakOffsets(text)) {
+    bounds.push_back(off);
+  }
+  bounds.push_back(static_cast<int>(text.size()));
+  int bound_count = static_cast<int>(bounds.size());
+  int seg_count = bound_count - 1;
+  int min_l = std::min(std::max(min_lines, 1), seg_count);
+  int max_l = max_lines <= 0 ? seg_count
+                             : std::min(std::max(max_lines, min_l), seg_count);
+
+  // Per-boundary cumulative code-point counts plus the whitespace run
+  // directly preceding each boundary, so any candidate line's visible
+  // length (code-points minus trailing whitespace) is O(1). Counting
+  // non-continuation bytes gives code-point counts; the whitespace we
+  // strip is all ASCII so byte counts suffice there.
+  std::vector<int> cum(bound_count);
+  std::vector<int> trail_ws(bound_count);
+  cum[0] = 0;
+  trail_ws[0] = 0;
+  for (int i = 1; i < bound_count; ++i) {
+    int cp = cum[i - 1];
+    for (int b = bounds[i - 1]; b < bounds[i]; ++b) {
+      if ((static_cast<uint8_t>(text[b]) & 0xC0) != 0x80) {
+        ++cp;
+      }
+    }
+    cum[i] = cp;
+    int ws = 0;
+    for (int b = bounds[i] - 1; b >= bounds[i - 1] && is_edge_space(text[b]);
+         --b) {
+      ++ws;
+    }
+    trail_ws[i] = ws;
+  }
+  auto visible_len = [&](int from, int to) {
+    return std::max(cum[to] - cum[from] - trail_ws[to], 0);
+  };
+
+  // Each candidate line costs (overflow, raggedness): squared excess
+  // over max_chars_per_line, and squared length (with line count and
+  // total fixed, minimizing summed squared lengths yields the most
+  // even lines). Costs add and compare lexicographically, so honoring
+  // the char limit always beats prettiness.
+  struct Cost {
+    int64_t over;
+    int64_t ragged;
+    auto operator<(const Cost& other) const -> bool {
+      return over != other.over ? over < other.over : ragged < other.ragged;
+    }
+  };
+  const Cost kHuge{std::numeric_limits<int64_t>::max(),
+                   std::numeric_limits<int64_t>::max()};
+  auto line_cost = [&](int from, int to) {
+    int64_t len = visible_len(from, to);
+    int64_t excess = max_chars_per_line > 0
+                         ? std::max<int64_t>(len - max_chars_per_line, 0)
+                         : 0;
+    return Cost{excess * excess, len * len};
+  };
+
+  // Boundary counts here are small (UI strings), so the simple
+  // O(max_lines * bounds^2) DP over exact line counts is fine.
+  std::vector<std::vector<Cost>> cost(max_l + 1,
+                                      std::vector<Cost>(bound_count, kHuge));
+  std::vector<std::vector<int>> parent(max_l + 1,
+                                       std::vector<int>(bound_count, -1));
+  cost[0][0] = {0, 0};
+  for (int j = 1; j <= max_l; ++j) {
+    for (int i = j; i < bound_count; ++i) {
+      for (int p = j - 1; p < i; ++p) {
+        if (!(cost[j - 1][p] < kHuge)) {
+          continue;
+        }
+        Cost lc = line_cost(p, i);
+        Cost val{cost[j - 1][p].over + lc.over,
+                 cost[j - 1][p].ragged + lc.ragged};
+        if (val < cost[j][i]) {
+          cost[j][i] = val;
+          parent[j][i] = p;
+        }
+      }
+    }
+  }
+
+  // Use the fewest lines achieving the least overflow (zero when the
+  // char limit is satisfiable in range, and trivially zero with no
+  // limit — so with no limit this is simply min_lines).
+  int lines = min_l;
+  for (int j = min_l + 1; j <= max_l; ++j) {
+    if (cost[j][bound_count - 1].over < cost[lines][bound_count - 1].over) {
+      lines = j;
+    }
+  }
+
+  // Walk back from the end to recover the chosen boundaries.
+  std::vector<int> picks(lines + 1);
+  picks[lines] = bound_count - 1;
+  for (int j = lines; j > 0; --j) {
+    picks[j - 1] = parent[j][picks[j]];
+  }
+
+  // Emit newline-separated lines with edge whitespace stripped.
+  std::string out;
+  out.reserve(text.size());
+  for (int j = 0; j < lines; ++j) {
+    int begin = bounds[picks[j]];
+    int end = bounds[picks[j + 1]];
+    while (begin < end && is_edge_space(text[begin])) {
+      ++begin;
+    }
+    while (end > begin && is_edge_space(text[end - 1])) {
+      --end;
+    }
+    if (j > 0) {
+      out += '\n';
+    }
+    out.append(text, begin, end - begin);
+  }
+  return out;
 }
 
 void Platform::FreeTextTexture(void* tex) { throw Exception(); }

@@ -889,7 +889,7 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
                                 )
                         self._bots.stop_moving()
                         self.show_zoom_message(
-                            bs.Lstr(resource='victoryText'),
+                            stdassets.strings.game.victory,
                             scale=1.0,
                             duration=4.0,
                         )

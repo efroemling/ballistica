@@ -7,15 +7,18 @@
 #include <algorithm>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_platform/app_platform.h"
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/input/device/input_device.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/logging/logging.h"
@@ -39,6 +42,62 @@ static auto MakeServerResponseJson_(const std::string& passed_str)
   std::string result = builder.Write();
 
   return result;
+}
+
+// Resolve a lang-str tagged wire value (see kLangStrWireTag*) from the
+// message layer to flat display text: the string to show plus whether
+// it is literal (bypasses the legacy resource-string compile at draw).
+//
+// SPECIAL CASE -- do not copy this parse-and-evaluate shape to new
+// ingest points. Evaluating wire-supplied LangStrs against local
+// tables with no resolve step is only valid where something has
+// ALREADY structurally guaranteed the referenced packages are
+// resolved locally -- here, the arrive-ready prep contract: this code
+// only runs on an established connection to a host, and unprepped
+// connects to lang-str-era hosts are refused at the handshake. That
+// guarantee is also why refs outside it may simply fail visibly
+// (LANGSTR_ERROR) instead of being accommodated: they indicate a
+// host-side bug, and untrusted peers must never be able to trigger
+// client-side resolve/download machinery from message-level traffic.
+// A new consumer of wire LangStrs must establish an equivalent
+// verified context of its own (see the D28 trust model + D33 in
+// docs/initiatives/strings-asset-migration.md).
+static auto EvalTaggedScreenMessage_(const std::string& val)
+    -> std::pair<std::string, bool> {
+  switch (val[0]) {
+    case kLangStrWireTagLiteral:
+      return {val.substr(1), true};
+    case kLangStrWireTagLegacyJson:
+      return {val.substr(1), false};
+    default: {
+      auto parsed = base::LangStr::FromJson(std::string_view(val).substr(1));
+      if (!parsed.has_value()) {
+        g_core->logging->Log(
+            LogName::kBaNetworking, LogLevel::kWarning,
+            "Error parsing lang-str screen-message value: " + parsed.error());
+        return {"LANGSTR_ERROR:" + parsed.error(), true};
+      }
+      return {(*parsed)->Evaluate(), true};
+    }
+  }
+}
+
+// Map a BA_REJECT_REASON_* join-rejection code to our own localized
+// message for it. Any unrecognized value (e.g. a reason added by a newer
+// peer/server) renders as a generic rejection.
+static auto RejectReasonMessage_(int reason) -> std::string {
+  switch (reason) {
+    case BA_REJECT_REASON_PASSWORD_INCORRECT:
+      return base::BuiltinStrings::Net::IncorrectPassword()->Evaluate();
+    case BA_REJECT_REASON_ACCOUNT_REJECTED:
+      return base::BuiltinStrings::Net::AccountRejected()->Evaluate();
+    case BA_REJECT_REASON_AUTH_ERROR:
+      return base::BuiltinStrings::Net::AuthError()->Evaluate();
+    case BA_REJECT_REASON_MUST_SIGN_IN:
+      return base::BuiltinStrings::Net::MustSignIn()->Evaluate();
+    default:
+      return g_base->assets->GetResourceString("connectionRejectedText");
+  }
 }
 
 ConnectionToHost::ConnectionToHost()
@@ -134,6 +193,23 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
         protocol_version_ = their_protocol_version;
       }
 
+      // Structural backstop for arrive-ready joins: we never proceed
+      // with a lang-str-era host unless the pre-join requirements
+      // exchange ran for this connect (the no-mid-game-downloads design
+      // means an unprepped join could only strand). Normally the
+      // pre-connect probe guarantees this; getting here means some path
+      // skipped it, so fail exactly like a standard connect failure.
+      if (compatible && their_protocol_version >= kProtocolVersionLangStrWire
+          && !prepped_) {
+        g_core->logging->Log(
+            LogName::kBaNetworking, LogLevel::kWarning,
+            "ConnectionToHost: aborting unprepped connect to protocol "
+                + std::to_string(their_protocol_version)
+                + " host (requirements exchange did not run).");
+        Error(g_base->assets->GetResourceString("connectionFailedText"));
+        return;
+      }
+
       // See if the server uses v2 auth.
       if (!got_v2_auth_usage_) {
         // If server requires v2 auth, it will have a 'v2a' value in its
@@ -181,16 +257,34 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
             auto valid_format{false};
             if (result.ValueIsSequence()) {
               auto vals{result.ValueAsSequence()};
-              if (vals.size() == 2 && PyBool_Check(*vals[0])
-                  && vals[1].ValueIsString()) {
+              if (vals.size() == 3 && PyBool_Check(*vals[0])
+                  && vals[1].ValueIsString()
+                  && (vals[2].ValueIsNone() || PyLong_Check(*vals[2]))) {
                 // Success!!!
                 auto success{vals[0].ValueAsBool()};
                 auto sval{vals[1].ValueAsString()};
                 valid_format = true;
 
                 if (!success) {
-                  // If auth rejected us, show auth error message and fail.
-                  Error(MakeServerResponseJson_(sval));
+                  // Auth rejected us; show an error message and fail. If a
+                  // reject-reason code came with the rejection, render our
+                  // own localized string for it; otherwise show the passed
+                  // text (which can be free-form host-supplied text)
+                  // translated via the legacy server-responses mechanism.
+                  if (!vals[2].ValueIsNone()) {
+                    auto reason{static_cast<int>(vals[2].ValueAsInt())};
+                    std::string msg = RejectReasonMessage_(reason);
+                    g_core->logging->Log(
+                        LogName::kBaNetworking, LogLevel::kDebug,
+                        "V2 auth rejected us (reason code "
+                            + std::to_string(reason) + "); showing: " + msg);
+                    Error(msg);
+                  } else {
+                    g_core->logging->Log(
+                        LogName::kBaNetworking, LogLevel::kDebug,
+                        "V2 auth rejected us; showing supplied text: " + sval);
+                    Error(MakeServerResponseJson_(sval));
+                  }
                   return;
                 } else {
                   // Auth accepted us! Pass along this token in our
@@ -284,6 +378,9 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
               }
               if (auto salt = root["l"].as_string()) {
                 peer_hash_input_ += *salt;
+                // Keep the raw salt too; it doubles as the per-connection
+                // nonce for the join-password HMAC (see CLIENT_INFO below).
+                handshake_salt_ = *salt;
               }
             }
           }
@@ -341,6 +438,15 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
           // Pass the hash we generated from their handshake; they can use
           // this for v1 client auth.
           dict.Add("ph", peer_hash_);
+
+          // If we were given a join-password, prove we know it without
+          // sending it in the clear: HMAC it with the host's
+          // per-connection handshake salt. The host recomputes the same
+          // and compares (see ConnectionToClient CLIENT_INFO handling).
+          if (!join_password_.empty()) {
+            dict.Add("pw", g_base->python->HmacSha256Hex(join_password_,
+                                                         handshake_salt_));
+          }
           std::string info = builder.Write();
           std::vector<uint8_t> msg(info.size() + 1);
           msg[0] = BA_MESSAGE_CLIENT_INFO;
@@ -504,8 +610,39 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
                   auto r = static_cast<float>(root["r"].double_or(1.0));
                   auto g = static_cast<float>(root["g"].double_or(1.0));
                   auto b = static_cast<float>(root["b"].double_or(1.0));
-                  g_base->ScreenMessage(std::string(*m), {r, g, b});
+                  // Prefer the lang-str tagged form when the sender
+                  // included one (we render it in our own locale); the
+                  // flat 'm' text covers senders/receivers predating it.
+                  auto m2 = root["m2"].as_string();
+                  if (m2.has_value() && !m2->empty()
+                      && IsLangStrWireTagged(std::string(*m2))) {
+                    auto [text, literal] =
+                        EvalTaggedScreenMessage_(std::string(*m2));
+                    g_core->logging->Log(
+                        LogName::kBaNetworking, LogLevel::kDebug, [&text] {
+                          return "ConnectionToHost: lang-str transient"
+                                 " screen-message: "
+                                 + text;
+                        });
+                    g_base->ScreenMessage(text, {r, g, b}, literal);
+                  } else {
+                    g_base->ScreenMessage(std::string(*m), {r, g, b});
+                  }
                 }
+                break;
+              }
+              case BA_JMESSAGE_REJECT_REASON: {
+                // The host rejected our join with a reason code; render our
+                // OWN localized builtin string for it. Any unrecognized
+                // value (e.g. a reason a newer host added) falls through to
+                // a generic rejection message.
+                auto reason = static_cast<int>(root["r"].double_or(0.0));
+                std::string msg = RejectReasonMessage_(reason);
+                g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug,
+                                     "Join rejected by host (reason code "
+                                         + std::to_string(reason)
+                                         + "); showing: " + msg);
+                g_base->ScreenMessage(msg, {1, 0, 0});
                 break;
               }
               default:

@@ -494,7 +494,8 @@ void ConnectionToClient::Error(const std::string& msg) {
 }
 
 void ConnectionToClient::SendScreenMessage(const std::string& s, float r,
-                                           float g, float b) {
+                                           float g, float b,
+                                           const std::string& tagged) {
   // Older clients don't support the screen-message message, so in that
   // case we just send it as a chat-message from <HOST>.
   if (build_number() < 14248) {
@@ -512,14 +513,28 @@ void ConnectionToClient::SendScreenMessage(const std::string& s, float r,
     SendReliableMessage(msg_out);
   } else {
     JsonBuilder builder;
-    builder.root_object()
-        .Add("t", BA_JMESSAGE_SCREEN_MESSAGE)
+    JsonObjBuilder obj = builder.root_object();
+    obj.Add("t", BA_JMESSAGE_SCREEN_MESSAGE)
         .Add("m", s)
         .Add("r", r)
         .Add("g", g)
         .Add("b", b);
+    // Lang-str tagged form: newer receivers prefer this (rendering in
+    // their own locale); older ones simply ignore the unknown key.
+    if (!tagged.empty()) {
+      obj.Add("m2", tagged);
+    }
     SendJMessage(builder.Write());
   }
+}
+
+void ConnectionToClient::SendRejectReason(int reason) {
+  // Send just the reason code; the joiner maps it to its own localized
+  // builtin string (unrecognized codes -> a generic rejection). No message
+  // text crosses the wire.
+  JsonBuilder builder;
+  builder.root_object().Add("t", BA_JMESSAGE_REJECT_REASON).Add("r", reason);
+  SendJMessage(builder.Write());
 }
 
 void ConnectionToClient::HandleMessagePacket(
@@ -545,11 +560,19 @@ void ConnectionToClient::HandleMessagePacket(
   switch (buffer[0]) {
     case BA_MESSAGE_JMESSAGE: {
       if (buffer.size() >= 3 && buffer[buffer.size() - 1] == 0) {
-        // Parse to validate; the result is currently unused. Payload is the
-        // bytes between the type byte and the trailing null.
-        JsonDoc::Parse(
+        // Validate the payload (nothing currently uses the parsed
+        // contents); it is the bytes between the type byte and the
+        // trailing null. Log-once only; this arrives from remote
+        // clients, so per-packet logging would be a spam vector.
+        auto doc = JsonDoc::Parse(
             std::string_view(reinterpret_cast<const char*>(buffer.data() + 1),
                              buffer.size() - 2));
+        if (!doc.has_value()) {
+          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                      "Got malformed jmessage packet (" + doc.error().message
+                          + " at byte offset "
+                          + std::to_string(doc.error().byte_offset) + ").");
+        }
       }
       break;
     }
@@ -600,6 +623,37 @@ void ConnectionToClient::HandleMessagePacket(
             if (auto ph = root["ph"].as_string()) {
               peer_hash_ = std::string(*ph);
             }
+
+            // Join-password gate: if we host with a password, the client
+            // must prove it knows it via HMAC(password, our handshake
+            // salt). Fail closed — missing or wrong hash is rejected. The
+            // raw password never crosses the (plaintext) wire.
+            auto host_password{appmode->GetHostPassword()};
+            if (!host_password.empty()) {
+              std::string expected{g_base->python->HmacSha256Hex(
+                  host_password, our_handshake_salt_)};
+              auto got{root["pw"].string_or("")};
+              if (expected.empty() || got != expected) {
+                g_core->logging->Log(
+                    LogName::kBaNetworking, LogLevel::kDebug,
+                    "ConnectionToClient rejecting join; bad/missing "
+                    "password.");
+                // Send a reason code to clients new enough to render their
+                // own localized string; fall back to the English literal for
+                // older ones (which don't understand the reject-reason type).
+                if (build_number() >= BA_REJECT_REASON_MIN_BUILD) {
+                  SendRejectReason(BA_REJECT_REASON_PASSWORD_INCORRECT);
+                } else {
+                  SendScreenMessage("Incorrect password.", 1, 0, 0);
+                }
+                // Proactively kick (not just Error(), which only replies
+                // to further incoming packets) so the joiner is cleanly
+                // disconnected rather than left hanging.
+                RequestDisconnect();
+                return;
+              }
+            }
+
             auto doing_v2_auth{appmode->require_client_authentication()
                                && appmode->client_authentication_version()
                                       == 2};
@@ -641,45 +695,36 @@ void ConnectionToClient::HandleMessagePacket(
         BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                     "Ignoring invalid client-player-profiles-json msg.");
       } else {
-        switch (appmode->client_authentication_version()) {
-          case 1: {
-            // Ok; doing old-school V1 auth.
-            //
-            // Only accept peer profiles if we're allowing that and have not
-            // gotten official ones through v1 client auth.
-            if (!appmode->require_client_authentication()
-                && !got_v1_auth_from_master_server_) {
-              // Create a string from bytes 1+ of msg.
-              std::vector<char> b2(buffer.size());  // Preallocate full space.
-              std::copy(buffer.begin() + 1, buffer.end(), b2.begin());
-              b2.back() = 0;  // Null terminate.
+        // Note: what matters here is whether client-auth is actually in
+        // effect for this party — not merely whether our protocol is
+        // v2-auth *capable* (client_authentication_version()). The
+        // client makes the matching send/don't-send call based on
+        // whether our handshake advertised v2-auth.
+        if (appmode->require_client_authentication()) {
+          // With client-auth in effect we get verified profiles through
+          // the auth path (in v2, from the cloud *before* the connection
+          // is allowed), so fully ignore anything coming through here.
+          // But also clients should know from our handshake not to
+          // bother sending profiles, so this should never happen.
+          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                      "Got client-profiles message while client-auth is "
+                      "enabled; this should not happen.");
+        } else if (!got_v1_auth_from_master_server_) {
+          // Auth not required (private/LAN party); accept the profiles
+          // the peer sent us (unless official v1-auth ones arrived).
+          //
+          // Create a string from bytes 1+ of msg.
+          std::vector<char> b2(buffer.size());  // Preallocate full space.
+          std::copy(buffer.begin() + 1, buffer.end(), b2.begin());
+          b2.back() = 0;  // Null terminate.
 
-              PythonRef args(Py_BuildValue("(s)", b2.data()),
-                             PythonRef::kSteal);
-              PythonRef results =
-                  g_core->python->objs()
-                      .Get(core::CorePython::ObjID::kJsonLoadsCall)
-                      .Call(args);
-              if (results.exists()) {
-                player_profiles_ = results;
-              }
-            }
-            break;
+          PythonRef args(Py_BuildValue("(s)", b2.data()), PythonRef::kSteal);
+          PythonRef results = g_core->python->objs()
+                                  .Get(core::CorePython::ObjID::kJsonLoadsCall)
+                                  .Call(args);
+          if (results.exists()) {
+            player_profiles_ = results;
           }
-          case 2: {
-            // In client-auth version 2, profiles are sent to us by the
-            // cloud *before* the connection is allowed, so fully ignore
-            // anything that comes through here. But also clients should
-            // know not to bother sending us profiles so this should never
-            // happen.
-            BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
-                        "Got client-profiles message while v2-auth is enabled; "
-                        "this should not happen.");
-            break;
-          }
-          default:
-            FatalError("Unexpected client-auth version.");
-            break;
         }
       }
       break;
@@ -1041,10 +1086,17 @@ void ConnectionToClient::HandleMasterServerClientInfo(PyObject* info_obj) {
     // and we're not trusting peers, kick this fella right out
     // and ban him for a short bit (to hopefully limit rejoin spam).
     if (appmode->require_client_authentication()) {
-      SendScreenMessage(
-          "{\"t\":[\"serverResponses\","
-          "\"Your account was rejected. Are you signed in?\"]}",
-          1, 0, 0);
+      // Send a reason code to clients new enough to render their own
+      // localized string; fall back to the legacy server-translated
+      // literal for older ones.
+      if (build_number() >= BA_REJECT_REASON_MIN_BUILD) {
+        SendRejectReason(BA_REJECT_REASON_ACCOUNT_REJECTED);
+      } else {
+        SendScreenMessage(
+            "{\"t\":[\"serverResponses\","
+            "\"Your account was rejected. Are you signed in?\"]}",
+            1, 0, 0);
+      }
       g_core->logging->Log(LogName::kBaNetworking, LogLevel::kWarning,
                            "Master server found no valid account for '"
                                + peer_spec().GetShortName() + "'; kicking.");

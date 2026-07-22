@@ -323,6 +323,25 @@ class StringSelector:
     forms: Annotated[dict[str, str], IOAttrs('f')]
 
 
+def substitution_names(value: str | StringSelector) -> set[str]:
+    """Return the substitution-argument names a value consumes.
+
+    For a plain string these are its ``{name}`` tokens; for a
+    :class:`StringSelector` its pivot ``arg`` plus any ``{name}``
+    tokens in its forms. This is the single source consumers use to
+    derive a string's parameter set from its value (e.g. rebuilding
+    positional-substitution order client-side) -- the producer-side
+    round-trip validation guarantees every parameter's token survives
+    into every stored output, so the derivation is total.
+    """
+    if isinstance(value, StringSelector):
+        names = {value.arg}
+        for form in value.forms.values():
+            names.update(_SUB_RE.findall(form))
+        return names
+    return set(_SUB_RE.findall(value))
+
+
 def evaluate(
     value: 'str | StringSelector', locale: Locale, **args: object
 ) -> str:

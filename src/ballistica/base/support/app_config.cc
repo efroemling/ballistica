@@ -217,15 +217,10 @@ void AppConfig::SetupEntries_() {
   int_entries_[IntID::kPort] = IntEntry("Port", kDefaultPort);
   int_entries_[IntID::kMaxFPS] = IntEntry("Max FPS", 60);
 
-  // TEMP - forcing protocol 36 while I test v2 auth.
-  if (g_buildconfig.headless_build() && explicit_bool(false)) {
-    int_entries_[IntID::kSceneV1HostProtocol] =
-        IntEntry("SceneV1 Host Protocol", 36);
-    printf("TEMP DOING PROTOCOL 36 DEFAULT!!!\n");
-  } else {
-    int_entries_[IntID::kSceneV1HostProtocol] =
-        IntEntry("SceneV1 Host Protocol", 33);
-  }
+  // Note: this gets clamped to the valid host range at use time, so
+  // stored values from old configs simply snap forward when mins rise.
+  int_entries_[IntID::kSceneV1HostProtocol] =
+      IntEntry("SceneV1 Host Protocol", 39);
 
   bool_entries_[BoolID::kTouchControlsSwipeHidden] =
       BoolEntry("Touch Controls Swipe Hidden", false);

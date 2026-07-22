@@ -45,13 +45,25 @@ def test_do_once_periodically_reset() -> None:
     def call(**kwargs: Any) -> bool:
         return do_once_periodically(**kwargs)  # stable call site
 
-    td = timedelta(seconds=0.05)
+    period_secs = 0.25
+    td = timedelta(seconds=period_secs)
+
+    # Slices are fixed-width buckets of time.monotonic(), so a burst of
+    # calls can straddle a boundary if it lands near a slice's end --
+    # which made this test flaky on stalled CI runners. Align to just
+    # past a fresh boundary before each burst so the calls run early in
+    # their slice.
+    def align_to_fresh_slice() -> None:
+        now = time.monotonic()
+        next_boundary = (int(now / period_secs) + 1) * period_secs
+        time.sleep(next_boundary - now + 0.01)
+
+    align_to_fresh_slice()
     assert not call(on_iteration=2, period=td)  # count=1, False
     assert call(on_iteration=2, period=td)  # count=2, True
     assert not call(on_iteration=2, period=td)  # count=3, False
 
-    time.sleep(0.06)  # let the slice boundary pass
-
+    align_to_fresh_slice()  # Next slice; count resets.
     assert not call(on_iteration=2, period=td)  # count reset to 1, False
     assert call(on_iteration=2, period=td)  # count=2, True again
 

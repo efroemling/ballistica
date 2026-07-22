@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 from bascenev1 import builtinassets
+from bascenev1 import stdassets
 
 from bascenev1lib.actor.spazfactory import SpazFactory
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -63,7 +64,7 @@ class Icon(bs.Actor):
             'text',
             owner=self.node,
             attrs={
-                'text': bs.Lstr(value=player.getname()),
+                'text': player.getname(),
                 'color': bs.safecolor(player.team.color),
                 'h_align': 'center',
                 'v_align': 'center',
@@ -334,7 +335,7 @@ class EliminationGame(bs.TeamGameActivity[Player, Team]):
                         'scale': 0.6,
                         'v_attach': 'bottom',
                         'color': (0.8, 0.8, 0.3, 1.0),
-                        'text': bs.Lstr(resource='vsText'),
+                        'text': stdassets.strings.game.vs,
                     },
                 )
             )

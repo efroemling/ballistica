@@ -40,6 +40,33 @@ namespace ballistica::base {
 #define BA_PACKET_HOST_QUERY 22
 #define BA_PACKET_HOST_QUERY_RESPONSE 23
 
+// V2 local network scanning (added build 22937 / 1.8.0): query is
+// 1 type byte + 4 byte query-id + a json dict describing the asker
+// ('b': engine-build-number, 'v': query-format-version) so hosts can
+// tailor responses; response is 1 type byte + the echoed 4 byte
+// query-id + a json dict (see ClassicAppMode::HandleGameQuery).
+// Both sides ignore unknown fields, giving this format permanent
+// extension room. Old builds simply drop these packet types, so new
+// clients broadcast V1 + V2 queries and dedupe results (preferring
+// V2) by app-instance-uuid.
+#define BA_PACKET_HOST_QUERY_V2 38
+#define BA_PACKET_HOST_QUERY_RESPONSE_V2 39
+
+// Pre-join requirements query (added build 22937 / 1.8.0): asked of a
+// specific host (unicast, same game port) before joining, returning
+// everything a client must satisfy to join — currently the host's
+// asset-package listing; later possibly requires-password etc. Query is
+// 1 type byte + 4 byte query-id + a json dict ('v': format-version,
+// 'b': engine-build-number, 'p': requested page); response is 1 type
+// byte + the echoed query-id + a json dict ('v': format-version,
+// 'p': page, 'n': page-count, 'r': requirements-fragment). Paging keeps
+// each response inside a single safe datagram; clients merge fragments
+// (arrays concatenate across pages, scalars are first-seen). Old hosts
+// drop the unknown type; clients treat no-response as a legacy host
+// with no requirements.
+#define BA_PACKET_HOST_REQUIREMENTS_QUERY 40
+#define BA_PACKET_HOST_REQUIREMENTS_RESPONSE 41
+
 // Connection/disconnection.
 #define BA_PACKET_CLIENT_REQUEST 24
 #define BA_PACKET_CLIENT_ACCEPT 25
@@ -102,6 +129,28 @@ namespace ballistica::base {
 #define BA_MESSAGE_CLIENT_PLAYER_PROFILES_JSON 21
 
 #define BA_JMESSAGE_SCREEN_MESSAGE 0
+
+// A post-handshake join rejection carrying a reason CODE (its "r" entry;
+// one of the BA_REJECT_REASON_* values). The joiner renders a recognized
+// reason as its OWN localized builtin string and any unrecognized value as
+// a generic rejection -- so no message text crosses the wire. Older clients
+// ignore the unknown type, so hosts gate on the peer build.
+#define BA_JMESSAGE_REJECT_REASON 1
+
+// Reason codes for BA_JMESSAGE_REJECT_REASON. Wire-stable integers, APPEND
+// ONLY: a joiner renders any value it does not recognize as a generic
+// rejection, so reasons added later degrade gracefully on older clients.
+// These same codes also ride the master-server v2-auth-request channel;
+// keep in sync with bacommon.cloud.JoinRejectReason.
+#define BA_REJECT_REASON_UNKNOWN 0
+#define BA_REJECT_REASON_PASSWORD_INCORRECT 1
+#define BA_REJECT_REASON_ACCOUNT_REJECTED 2
+#define BA_REJECT_REASON_AUTH_ERROR 3
+#define BA_REJECT_REASON_MUST_SIGN_IN 4
+
+// Minimum peer build_number that understands BA_JMESSAGE_REJECT_REASON;
+// older clients get a legacy (English-literal) screen-message instead.
+#define BA_REJECT_REASON_MIN_BUILD 22939
 
 // Enable huffman compression for all net packets?
 #define BA_HUFFMAN_NET_COMPRESSION 1

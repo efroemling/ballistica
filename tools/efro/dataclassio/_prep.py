@@ -465,23 +465,72 @@ class PrepSession:
     ) -> None:
         """Run prep on a Union type."""
         typeargs = typing.get_args(anntype)
+
+        # The simple Optional form (SomeType | None) is always allowed;
+        # the non-None member can be anything dataclassio supports.
         if (
-            len(typeargs) != 2
-            or len([c for c in typeargs if c is type(None)]) != 1
+            len(typeargs) == 2
+            and len([c for c in typeargs if c is type(None)]) == 1
         ):  # noqa
+            for childtype in typeargs:
+                self.prep_type(
+                    cls,
+                    attrname,
+                    childtype,
+                    None,
+                    recursion_level=recursion_level + 1,
+                )
+            return
+
+        # Anything else must be a 'type-disjoint' union: each member
+        # must map to a distinct wire type so values can be matched to
+        # members with no tagging. Members may be str, bool, int OR
+        # float (not both; they are both numbers on the wire), None,
+        # and at most one object-shaped type (a dataclass or
+        # IOMultiType).
+        seen_number = False
+        seen_object = False
+        for childtype in typeargs:
+            childorigin = _get_origin(childtype)
+            if childtype is type(None) or childorigin in (str, bool):
+                continue
+            if childorigin in (int, float):
+                if seen_number:
+                    raise TypeError(
+                        f'Union {anntype} for attr \'{attrname}\' on'
+                        f' {cls.__name__} is not supported by dataclassio;'
+                        f' int and float cannot coexist in a union (both'
+                        f' are numbers on the wire).'
+                    )
+                seen_number = True
+                continue
+            if isinstance(childorigin, type) and (
+                dataclasses.is_dataclass(childorigin)
+                or issubclass(childorigin, IOMultiType)
+            ):
+                if seen_object:
+                    raise TypeError(
+                        f'Union {anntype} for attr \'{attrname}\' on'
+                        f' {cls.__name__} is not supported by dataclassio;'
+                        f' only one dataclass or IOMultiType member is'
+                        f' allowed in a union (they are indistinguishable'
+                        f' on the wire).'
+                    )
+                seen_object = True
+                self.prep_type(
+                    cls,
+                    attrname,
+                    childtype,
+                    None,
+                    recursion_level=recursion_level + 1,
+                )
+                continue
             raise TypeError(
                 f'Union {anntype} for attr \'{attrname}\' on'
                 f' {cls.__name__} is not supported by dataclassio;'
-                f' only 2 member Unions with one type being None'
-                f' are supported.'
-            )
-        for childtype in typeargs:
-            self.prep_type(
-                cls,
-                attrname,
-                childtype,
-                None,
-                recursion_level=recursion_level + 1,
+                f' multi-member unions may contain only str, bool,'
+                f' int OR float, None, and at most one dataclass or'
+                f' IOMultiType member (found \'{childtype}\').'
             )
 
     def prep_enum(

@@ -62,11 +62,29 @@ const int kKickVoteFailRetryDelayInitiatorExtra{120000};
 // to kick).
 const int kKickVoteMinimumClients{g_buildconfig.headless_build() ? 3 : 4};
 
+// Budget for the json payload of a v2 host-query packet, keeping the
+// full datagram comfortably inside a single un-fragmented packet on
+// typical LANs.
+const size_t kHostQueryV2MaxJsonBytes{1400};
+
+// Budget for the variable-length portion (the package listing) of a
+// single requirements-response page; the envelope (version/page fields
+// etc.) rides in the headroom up to kHostQueryV2MaxJsonBytes.
+const size_t kRequirementsPageBudgetBytes{1300};
+
 struct ClassicAppMode::ScanResultsEntryPriv_ {
   scene_v1::PlayerSpec player_spec;
   std::string address;
   uint32_t last_query_id{};
   millisecs_t last_contact_time{};
+  // Extras delivered only by V2 query responses.
+  bool has_v2{};
+  std::string party_name;
+  int party_size{};
+  int party_max_size{};
+  bool auth_required{};
+  int build_number{};
+  int protocol_version{};
 };
 
 base::InputDeviceDelegate* ClassicAppMode::CreateInputDeviceDelegate(
@@ -280,6 +298,28 @@ void ClassicAppMode::HostScanCycle() {
 
   // Ok we've got a valid scanner socket. Now lets send out broadcast pings on
   // all available networks.
+  //
+  // We broadcast both query forms: v1 for old hosts and v2 (which
+  // carries a json description of us so hosts can tailor their
+  // response) for new ones. New hosts answer both; results get
+  // deduped by app-instance-uuid with v2 data preferred.
+  uint8_t data[5];
+  data[0] = BA_PACKET_HOST_QUERY;
+  memcpy(data + 1, &next_scan_query_id_, 4);
+
+  std::vector<uint8_t> data_v2;
+  {
+    JsonBuilder builder;
+    JsonObjBuilder dict = builder.root_object();
+    dict.Add("b", kEngineBuildNumber);
+    dict.Add("v", 1);
+    std::string query_json = builder.Write();
+    data_v2.resize(5 + query_json.size());
+    data_v2[0] = BA_PACKET_HOST_QUERY_V2;
+    memcpy(data_v2.data() + 1, &next_scan_query_id_, 4);
+    memcpy(data_v2.data() + 5, query_json.data(), query_json.size());
+  }
+
   std::vector<uint32_t> addrs = g_core->platform->GetBroadcastAddrs();
   for (auto&& i : addrs) {
     sockaddr_in addr{};
@@ -287,32 +327,35 @@ void ClassicAppMode::HostScanCycle() {
     addr.sin_port = htons(kDefaultPort);  // NOLINT
     addr.sin_addr.s_addr = htonl(i);      // NOLINT
 
-    // Include our query id (so we can sort out which responses come back
-    // quickest).
-    uint8_t data[5];
-    data[0] = BA_PACKET_HOST_QUERY;
-    memcpy(data + 1, &next_scan_query_id_, 4);
-    BA_DEBUG_TIME_CHECK_BEGIN(sendto);
-    ssize_t result = sendto(
-        scan_socket_, reinterpret_cast<socket_send_data_t*>(data), sizeof(data),
-        0, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
-    BA_DEBUG_TIME_CHECK_END(sendto, 10);
-    if (result == -1) {
-      int err = g_core->platform->GetSocketError();
-      switch (err) {  // NOLINT(hicpp-multiway-paths-covered)
-        case ENETUNREACH:
-          break;
-        default:
-          g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                               "Error on scan-socket sendto: "
-                                   + g_core->platform->GetSocketErrorString());
+    for (int form = 0; form < 2; ++form) {
+      auto* send_data =
+          (form == 0) ? reinterpret_cast<socket_send_data_t*>(data)
+                      : reinterpret_cast<socket_send_data_t*>(data_v2.data());
+      size_t send_size = (form == 0) ? sizeof(data) : data_v2.size();
+      BA_DEBUG_TIME_CHECK_BEGIN(sendto);
+      ssize_t result = sendto(scan_socket_, send_data, send_size, 0,
+                              reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
+      BA_DEBUG_TIME_CHECK_END(sendto, 10);
+      if (result == -1) {
+        int err = g_core->platform->GetSocketError();
+        switch (err) {  // NOLINT(hicpp-multiway-paths-covered)
+          case ENETUNREACH:
+            break;
+          default:
+            g_core->logging->Log(
+                LogName::kBaNetworking, LogLevel::kError,
+                "Error on scan-socket sendto: "
+                    + g_core->platform->GetSocketErrorString());
+        }
       }
     }
   }
   next_scan_query_id_++;
 
   // ..and see if any responses came in from previous sends.
-  char buffer[256];
+  // (Buffer covers max v1 responses (366 bytes) as well as max-size v2
+  // json responses.)
+  char buffer[5 + kHostQueryV2MaxJsonBytes];
   sockaddr_storage from{};
   socklen_t from_size = sizeof(from);
   while (true) {
@@ -395,6 +438,55 @@ void ClassicAppMode::HostScanCycle() {
             LogName::kBaNetworking, LogLevel::kError,
             "Got invalid BA_PACKET_HOST_QUERY_RESPONSE packet");
       }
+    } else if (result >= 6
+               && static_cast<uint8_t>(buffer[0])
+                      == BA_PACKET_HOST_QUERY_RESPONSE_V2) {
+      uint32_t query_id;
+      memcpy(&query_id, buffer + 1, 4);
+
+      auto doc = JsonDoc::Parse(
+          std::string_view(buffer + 5, static_cast<size_t>(result) - 5),
+          {.max_bytes = kHostQueryV2MaxJsonBytes});
+      if (!doc || !doc->root().is_object()) {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "Got unparsable v2 host-query-response packet.");
+        continue;
+      }
+      JsonRef response = doc->root();
+      auto instance_id = response["i"].as_string();
+      auto player_spec_str = response["s"].as_string();
+      if (!instance_id.has_value() || !player_spec_str.has_value()) {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "Got incomplete v2 host-query-response packet.");
+        continue;
+      }
+
+      // Add or modify an entry for this (ignoring ourself). Unlike v1
+      // responses, v2 always updates the entry — it carries strictly
+      // more info, so it wins whichever order the pair arrives in.
+      {
+        std::scoped_lock lock(scan_results_mutex_);
+        if (*instance_id != g_base->LocalAppInstanceUUID()) {
+          ScanResultsEntryPriv_& entry(
+              scan_results_[std::string(*instance_id)]);
+          entry.player_spec =
+              scene_v1::PlayerSpec(std::string(*player_spec_str));
+          char buffer2[256];
+          entry.address = inet_ntop(
+              AF_INET, &((reinterpret_cast<sockaddr_in*>(&from))->sin_addr),
+              buffer2, sizeof(buffer2));
+          entry.last_query_id = query_id;
+          entry.last_contact_time = g_core->AppTimeMillisecs();
+          entry.has_v2 = true;
+          entry.party_name = std::string(response["n"].string_or(""));
+          entry.party_size = static_cast<int>(response["sz"].int_or(0));
+          entry.party_max_size = static_cast<int>(response["szx"].int_or(0));
+          entry.auth_required = response["a"].bool_or(false);
+          entry.build_number = static_cast<int>(response["b"].int_or(0));
+          entry.protocol_version = static_cast<int>(response["p"].int_or(0));
+        }
+        PruneScanResults_();
+      }
     }
   }
 }
@@ -431,11 +523,41 @@ auto ClassicAppMode::GetScanResults()
       ScanResultsEntry& out(results[out_num]);
       out.display_string = in.player_spec.GetDisplayString();
       out.address = in.address;
+      out.has_v2 = in.has_v2;
+      out.party_name = in.party_name;
+      out.party_size = in.party_size;
+      out.party_max_size = in.party_max_size;
+      out.auth_required = in.auth_required;
+      out.build_number = in.build_number;
+      out.protocol_version = in.protocol_version;
       out_num++;
     }
     PruneScanResults_();
   }
   return results;
+}
+
+void ClassicAppMode::SetHostingAssetPackages(
+    std::vector<std::string> packages) {
+  assert(g_base->InLogicThread());
+  std::scoped_lock lock(hosting_asset_packages_mutex_);
+  hosting_asset_packages_ = std::move(packages);
+}
+
+auto ClassicAppMode::GetHostingAssetPackages() -> std::vector<std::string> {
+  std::scoped_lock lock(hosting_asset_packages_mutex_);
+  return hosting_asset_packages_;
+}
+
+void ClassicAppMode::SetHostPassword(const std::string& password) {
+  assert(g_base->InLogicThread());
+  std::scoped_lock lock(host_password_mutex_);
+  host_password_ = password;
+}
+
+auto ClassicAppMode::GetHostPassword() -> std::string {
+  std::scoped_lock lock(host_password_mutex_);
+  return host_password_;
 }
 
 auto ClassicAppMode::GetActive() -> ClassicAppMode* {
@@ -711,6 +833,11 @@ auto ClassicAppMode::GetGameRosterMessage_() -> std::vector<uint8_t> {
   memcpy(&(msg[1]), s.c_str(), s.size() + 1);  // +1 to include null terminator.
 
   return msg;
+}
+
+auto ClassicAppMode::InReplay() const -> bool {
+  return dynamic_cast<scene_v1::ClientSessionReplay*>(GetForegroundSession())
+         != nullptr;
 }
 
 base::ContextRef ClassicAppMode::GetForegroundContext() {
@@ -1343,7 +1470,7 @@ void ClassicAppMode::PruneSessions_() {
     }
   }
   if (have_dead_session) {
-    std::vector<Object::Ref<scene_v1::Session> > live_list;
+    std::vector<Object::Ref<scene_v1::Session>> live_list;
     for (auto&& i : sessions_) {
       if (i.exists()) {
         live_list.push_back(i);
@@ -1552,65 +1679,247 @@ void ClassicAppMode::SetInternalMusic(base::SoundAsset* music, float volume,
 
 void ClassicAppMode::HandleGameQuery(const char* buffer, size_t size,
                                      sockaddr_storage* from) {
-  if (size == 5) {
-    // If we're already in a party, don't advertise since they wouldn't be
-    // able to join us anyway.
-    if (g_base->app_mode()->HasConnectionToHost()) {
-      return;
+  assert(size >= 1);
+  switch (static_cast<uint8_t>(buffer[0])) {
+    case BA_PACKET_HOST_QUERY: {
+      if (size != 5) {
+        // Log invalid packets only once to avoid weaponized log spam.
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "Got invalid game-query packet of len "
+                        + std::to_string(size) + "; expected 5.");
+        return;
+      }
+      // If we're already in a party, don't advertise since they wouldn't
+      // be able to join us anyway.
+      if (g_base->app_mode()->HasConnectionToHost()) {
+        return;
+      }
+
+      // Pull the query id from the packet.
+      uint32_t query_id;
+      memcpy(&query_id, buffer + 1, 4);
+
+      // Ship them a response packet containing the query id, our protocol
+      // version, our unique-app-instance-id, and our player_spec.
+      char msg[400];
+
+      std::string usid = g_base->LocalAppInstanceUUID();
+      std::string player_spec_string;
+
+      // If we're signed in, send our account spec. Otherwise just send a
+      // dummy made with our device name.
+      player_spec_string =
+          scene_v1::PlayerSpec::GetAccountPlayerSpec().GetSpecString();
+
+      // This should always be the case (len needs to be 1 byte)
+      BA_PRECONDITION_FATAL(player_spec_string.size() < 256);
+
+      BA_PRECONDITION_FATAL(!usid.empty());
+      if (usid.size() > 100) {
+        g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                             "had to truncate session-id; shouldn't happen");
+        usid.resize(100);
+      }
+      if (usid.empty()) {
+        usid = "error";
+      }
+
+      msg[0] = BA_PACKET_HOST_QUERY_RESPONSE;
+      memcpy(msg + 1, &query_id, 4);
+      uint32_t protocol_version = host_protocol_version();
+      memcpy(msg + 5, &protocol_version, 4);
+      msg[9] = static_cast<char>(usid.size());
+      msg[10] = static_cast<char>(player_spec_string.size());
+
+      memcpy(msg + 11, usid.c_str(), usid.size());
+      memcpy(msg + 11 + usid.size(), player_spec_string.c_str(),
+             player_spec_string.size());
+      size_t msg_len = 11 + player_spec_string.size() + usid.size();
+      BA_PRECONDITION_FATAL(msg_len <= sizeof(msg));
+
+      std::vector<uint8_t> msg_buffer(msg_len);
+      memcpy(msg_buffer.data(), msg, msg_len);
+
+      g_base->network_writer->PushSendToCall(msg_buffer, SockAddr(*from));
+      break;
     }
 
-    // Pull the query id from the packet.
-    uint32_t query_id;
-    memcpy(&query_id, buffer + 1, 4);
+    case BA_PACKET_HOST_QUERY_V2: {
+      // Type byte + 4 byte query-id + at minimum '{}'.
+      if (size < 7) {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "Got invalid v2 game-query packet of len "
+                        + std::to_string(size) + ".");
+        return;
+      }
+      // As above: don't advertise if we couldn't be joined.
+      if (g_base->app_mode()->HasConnectionToHost()) {
+        return;
+      }
+      uint32_t query_id;
+      memcpy(&query_id, buffer + 1, 4);
 
-    // Ship them a response packet containing the query id, our protocol
-    // version, our unique-app-instance-id, and our player_spec.
-    char msg[400];
+      auto doc = JsonDoc::Parse(std::string_view(buffer + 5, size - 5),
+                                {.max_bytes = kHostQueryV2MaxJsonBytes});
+      if (!doc || !doc->root().is_object()) {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "Got unparsable v2 game-query packet.");
+        return;
+      }
+      JsonRef query = doc->root();
 
-    std::string usid = g_base->LocalAppInstanceUUID();
-    std::string player_spec_string;
+      // The asker describes themselves; this is where we can tailor
+      // responses per engine-build if formats ever need to shift
+      // (nothing varies yet). Require a valid format version though.
+      auto asker_build = query["b"].int_or(0);
+      auto asker_format_version = query["v"].int_or(0);
+      static_cast<void>(asker_build);
+      if (asker_format_version < 1) {
+        return;
+      }
 
-    // If we're signed in, send our account spec. Otherwise just send a
-    // dummy made with our device name.
-    player_spec_string =
-        scene_v1::PlayerSpec::GetAccountPlayerSpec().GetSpecString();
+      // Build our json response; open-ended so unknown fields are
+      // always ignorable by both sides. This is lightweight *discovery*
+      // info only; anything potentially large (the asset-package
+      // listing, etc.) lives in the paged requirements query below.
+      std::string response;
+      {
+        JsonBuilder builder;
+        JsonObjBuilder dict = builder.root_object();
+        dict.Add("v", 1);
+        dict.Add("b", kEngineBuildNumber);
+        dict.Add("p", host_protocol_version());
+        dict.Add("i", g_base->LocalAppInstanceUUID());
+        dict.Add("s",
+                 scene_v1::PlayerSpec::GetAccountPlayerSpec().GetSpecString());
+        std::string party_name = public_party_name();
+        if (!party_name.empty()) {
+          dict.Add("n", party_name);
+        }
+        dict.Add("sz", public_party_size());
+        dict.Add("szx", public_party_max_size());
+        dict.Add("a", require_client_authentication());
+        response = builder.Write();
+      }
+      if (response.size() > kHostQueryV2MaxJsonBytes) {
+        // Shouldn't be possible (all fields are small/bounded), but
+        // never ship a fragmenting datagram.
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "V2 host-query response exceeded datagram budget ("
+                        + std::to_string(response.size()) + " bytes).");
+        return;
+      }
 
-    // This should always be the case (len needs to be 1 byte)
-    BA_PRECONDITION_FATAL(player_spec_string.size() < 256);
+      std::vector<uint8_t> msg_buffer(5 + response.size());
+      msg_buffer[0] = BA_PACKET_HOST_QUERY_RESPONSE_V2;
+      memcpy(msg_buffer.data() + 1, &query_id, 4);
+      memcpy(msg_buffer.data() + 5, response.data(), response.size());
 
-    BA_PRECONDITION_FATAL(!usid.empty());
-    if (usid.size() > 100) {
-      g_core->logging->Log(LogName::kBa, LogLevel::kError,
-                           "had to truncate session-id; shouldn't happen");
-      usid.resize(100);
+      g_base->network_writer->PushSendToCall(msg_buffer, SockAddr(*from));
+      break;
     }
-    if (usid.empty()) {
-      usid = "error";
+
+    case BA_PACKET_HOST_REQUIREMENTS_QUERY: {
+      // Type byte + 4 byte query-id + at minimum '{}'.
+      if (size < 7) {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "Got invalid requirements-query packet of len "
+                        + std::to_string(size) + ".");
+        return;
+      }
+      // As with discovery queries: don't answer if we couldn't be
+      // joined anyway.
+      if (g_base->app_mode()->HasConnectionToHost()) {
+        return;
+      }
+      uint32_t query_id;
+      memcpy(&query_id, buffer + 1, 4);
+
+      auto doc = JsonDoc::Parse(std::string_view(buffer + 5, size - 5),
+                                {.max_bytes = kHostQueryV2MaxJsonBytes});
+      if (!doc || !doc->root().is_object()) {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "Got unparsable requirements-query packet.");
+        return;
+      }
+      JsonRef query = doc->root();
+
+      // As with the v2 discovery query: the asker describes themselves
+      // ('b' is the future tailoring hook); require a valid format
+      // version.
+      auto asker_build = query["b"].int_or(0);
+      static_cast<void>(asker_build);
+      if (query["v"].int_or(0) < 1) {
+        return;
+      }
+      auto page = query["p"].int_or(0);
+
+      // Snapshot our requirements: the hosting asset-package listing
+      // plus scalar requirements (currently just password-required).
+      // Scalars ride page 0 only; clients merge fragments (arrays
+      // concatenate, scalars are first-seen).
+      std::vector<std::string> packages = GetHostingAssetPackages();
+      bool password_required = !GetHostPassword().empty();
+
+      // Partition the package list into page ranges fitting the
+      // datagram budget (estimated json cost per entry: value + quotes
+      // + comma; the envelope margin covers the rest). The hosting set
+      // is stable for the whole app run, so pages are mutually
+      // consistent across queries with no continuation state.
+      std::vector<std::pair<size_t, size_t>> pages;
+      {
+        size_t begin{0};
+        size_t bytes{0};
+        for (size_t i = 0; i < packages.size(); ++i) {
+          size_t cost = packages[i].size() + 3;
+          if (i > begin && bytes + cost > kRequirementsPageBudgetBytes) {
+            pages.emplace_back(begin, i);
+            begin = i;
+            bytes = 0;
+          }
+          bytes += cost;
+        }
+        // Always at least one (possibly empty) page.
+        pages.emplace_back(begin, packages.size());
+      }
+      if (page < 0 || static_cast<size_t>(page) >= pages.size()) {
+        // Out-of-range page requests are simply dropped.
+        return;
+      }
+
+      std::string response;
+      {
+        JsonBuilder builder;
+        JsonObjBuilder dict = builder.root_object();
+        dict.Add("v", 1);
+        dict.Add("p", static_cast<int>(page));
+        dict.Add("n", static_cast<int>(pages.size()));
+        JsonObjBuilder reqs = dict.AddObject("r");
+        if (page == 0 && password_required) {
+          reqs.Add("pw", true);
+        }
+        JsonArrBuilder arr = reqs.AddArray("ap");
+        auto [range_begin, range_end] = pages[static_cast<size_t>(page)];
+        for (size_t i = range_begin; i < range_end; ++i) {
+          arr.Add(packages[i]);
+        }
+        response = builder.Write();
+      }
+
+      std::vector<uint8_t> msg_buffer(5 + response.size());
+      msg_buffer[0] = BA_PACKET_HOST_REQUIREMENTS_RESPONSE;
+      memcpy(msg_buffer.data() + 1, &query_id, 4);
+      memcpy(msg_buffer.data() + 5, response.data(), response.size());
+
+      g_base->network_writer->PushSendToCall(msg_buffer, SockAddr(*from));
+      break;
     }
 
-    msg[0] = BA_PACKET_HOST_QUERY_RESPONSE;
-    memcpy(msg + 1, &query_id, 4);
-    uint32_t protocol_version = host_protocol_version();
-    memcpy(msg + 5, &protocol_version, 4);
-    msg[9] = static_cast<char>(usid.size());
-    msg[10] = static_cast<char>(player_spec_string.size());
-
-    memcpy(msg + 11, usid.c_str(), usid.size());
-    memcpy(msg + 11 + usid.size(), player_spec_string.c_str(),
-           player_spec_string.size());
-    size_t msg_len = 11 + player_spec_string.size() + usid.size();
-    BA_PRECONDITION_FATAL(msg_len <= sizeof(msg));
-
-    std::vector<uint8_t> msg_buffer(msg_len);
-    memcpy(msg_buffer.data(), msg, msg_len);
-
-    g_base->network_writer->PushSendToCall(msg_buffer, SockAddr(*from));
-
-  } else {
-    // Log invalid packets only once to avoid weaponized log spam.
-    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
-                "Got invalid game-query packet of len " + std::to_string(size)
-                    + "; expected 5.");
+    default:
+      BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                  "Got unexpected game-query packet type "
+                      + std::to_string(static_cast<int>(buffer[0])) + ".");
+      break;
   }
 }
 

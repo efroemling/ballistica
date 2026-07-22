@@ -4,6 +4,7 @@
 #define BALLISTICA_SCENE_V1_SUPPORT_SESSION_STREAM_H_
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "ballistica/base/base.h"
@@ -82,6 +83,14 @@ class SessionStream : public Object, public ClientControllerInterface {
   void OnClientDisconnected(ConnectionToClient* c) override;
   auto GetOutMessage() const -> std::vector<uint8_t>;
 
+  /// Declare the session's full asset-package table (index -> apverid)
+  /// up front. Emitted at the start of the live stream (so replays open
+  /// with it) and at the top of baseline dumps (so every joining client
+  /// receives it before any other session state). Also retained on this
+  /// stream: subsequent asset adds emit compact indexed refs against it
+  /// (kAdd*Indexed) for package-housed assets.
+  void DeclareAssetPackages(const std::vector<std::string>& table);
+
  private:
   // Make sure various components are part of our stream.
   auto IsValidScene(Scene* val) -> bool;
@@ -96,6 +105,24 @@ class SessionStream : public Object, public ClientControllerInterface {
   void Flush();
   void AddMessageToReplay(const std::vector<uint8_t>& message);
   void Fail();
+
+  /// Try emitting a compact indexed add (kAdd*Indexed) for an asset:
+  /// maps possibly-legacy names into package space, then derives
+  /// (pkg_idx, asset_idx) against the declared package table and the
+  /// package's canonical sorted bucket keys. Returns false (emitting
+  /// nothing) for local non-package assets or anything else that can't
+  /// index; the caller then falls back to the legacy string form.
+  auto TryAddAssetIndexed_(SessionCommand cmd, int64_t scene_id,
+                           int64_t stream_id, const std::string& name,
+                           const char* legacy_kind, AssetBucketKind bucket_kind)
+      -> bool;
+
+  /// Cached canonical sorted bucket keys, keyed by
+  /// ``apverid + '\n' + bucket_id`` (immutable for exact apverids, so
+  /// stream-lifetime caching is safe).
+  std::unordered_map<std::string, std::vector<std::string>>
+      asset_index_keys_cache_;
+  std::vector<std::string> declared_packages_;
 
   void ShipSessionCommandsMessage();
   void SendPhysicsCorrection(bool blend);

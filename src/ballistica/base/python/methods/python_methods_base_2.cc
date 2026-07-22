@@ -216,7 +216,8 @@ static PyMethodDef PyScreenMessageDef = {
     (PyCFunction)PyScreenMessage,  // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "screenmessage(message: str | babase.Lstr,\n"
+    "screenmessage(message: str | babase.Lstr | babase.LangStr\n"
+    "    | bacommon.langstr.LangStrSpec,\n"
     "  color: Sequence[float] | None = None,\n"
     "  log: bool = False,\n"
     "  literal: bool = False,\n"
@@ -648,6 +649,68 @@ static PyMethodDef PyCanDisplayCharsDef = {
     "Is this build able to display all chars in the provided string?\n"
     "\n"
     "See also: :meth:`~babase.supports_unicode_display()`.",
+};
+
+// ------------------------- split_text_into_lines -----------------------------
+
+static auto PySplitTextIntoLines(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  const char* text;
+  int min_lines{1};
+  PyObject* max_lines_obj{Py_None};
+  PyObject* max_chars_per_line_obj{Py_None};
+  static const char* kwlist[] = {"text", "min_lines", "max_lines",
+                                 "max_chars_per_line", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "s|iOO", const_cast<char**>(kwlist), &text, &min_lines,
+          &max_lines_obj, &max_chars_per_line_obj)) {
+    return nullptr;
+  }
+  // The C++ layer uses zero for unlimited.
+  int max_lines = max_lines_obj == Py_None ? 0 : Python::GetInt(max_lines_obj);
+  int max_chars_per_line = max_chars_per_line_obj == Py_None
+                               ? 0
+                               : Python::GetInt(max_chars_per_line_obj);
+  std::string result = g_core->platform->SplitTextIntoLines(
+      text, min_lines, max_lines, max_chars_per_line);
+  return PyUnicode_FromStringAndSize(result.c_str(),
+                                     static_cast<Py_ssize_t>(result.size()));
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySplitTextIntoLinesDef = {
+    "split_text_into_lines",            // name
+    (PyCFunction)PySplitTextIntoLines,  // method
+    METH_VARARGS | METH_KEYWORDS,       // flags
+
+    "split_text_into_lines(text: str, min_lines: int = 1,\n"
+    "  max_lines: int | None = None,\n"
+    "  max_chars_per_line: int | None = None) -> str\n"
+    "\n"
+    "Split text into newline-separated lines under simple constraints.\n"
+    "\n"
+    "Breaks only at valid line-break opportunities (determined by the\n"
+    "OS text stack where available), treating all characters as equal\n"
+    "width. Uses the fewest lines that keep every line within\n"
+    "``max_chars_per_line`` (when provided) while staying between\n"
+    "``min_lines`` and ``max_lines`` (None means unlimited), and\n"
+    "balances line lengths within that count. So a bare\n"
+    "``max_chars_per_line`` gives basic wrapping, ``min_lines`` alone\n"
+    "gives an exact line count, and combinations behave sensibly.\n"
+    "\n"
+    "Constraints are best-effort: lines may exceed\n"
+    "``max_chars_per_line`` when unavoidable (unbreakable words or a\n"
+    "``max_lines`` cap) and fewer lines than ``min_lines`` come back\n"
+    "when there are not enough break opportunities. Newlines in the\n"
+    "input are treated as regular break opportunities and whitespace\n"
+    "at line edges is stripped, so splitting the result on newlines\n"
+    "recovers the individual lines.\n"
+    "\n"
+    "This is a simple stopgap for feeding flat translated strings into\n"
+    "places expecting preformatted line counts; it knows nothing about\n"
+    "actual rendered character widths. Logic thread only.",
 };
 
 // ----------------------------- fade_screen -----------------------------------
@@ -1171,9 +1234,10 @@ static PyMethodDef PyRegisterAssetPackageBucketDef = {
     "the C++ runtime registry. Called from the babase startup path after\n"
     "parsing the bundled top-level ``manifest.json`` and each referenced\n"
     "bucket-manifest blob from the CAS store. ``entries`` maps logical\n"
-    "asset paths (e.g. ``textures/helloworld.ktx2``) to a\n"
-    "part-keyed component map ``{part: CAS_hash}`` (e.g. ``t`` = texture\n"
-    "data, ``j`` = descriptor); a null asset maps to an empty dict."};
+    "asset paths (e.g. ``textures/helloworld``) to a part-keyed\n"
+    "component map ``{part: CAS_hash}`` with ``<role>.<format>`` part\n"
+    "names (e.g. ``t.ktx2`` = texture data); a null asset maps to an\n"
+    "empty dict."};
 
 // ---------------- register_asset_package_buckets -----------------------------
 
@@ -1252,7 +1316,8 @@ static auto PyGetAssetPackageConstantBlobPath(PyObject* self, PyObject* args,
   if (bucket_id.empty()) {
     Py_RETURN_NONE;
   }
-  auto hash = registry->LookupAssetHash(apverid, bucket_id, logical_path, "j");
+  auto hash = registry->LookupAssetHashByRole(apverid, bucket_id, logical_path,
+                                              "j", {"json"});
   if (hash.empty()) {
     Py_RETURN_NONE;
   }
@@ -1272,9 +1337,9 @@ static PyMethodDef PyGetAssetPackageConstantBlobPathDef = {
     "path in a registered asset-package to its on-disk CAS blob path.\n"
     "Returns the path, or ``None`` if the package isn't registered, has\n"
     "no constant bucket, or doesn't carry that logical path. The blob is\n"
-    "the JSON (``j``) component. The returned path is where the blob\n"
-    "should live (writable CAS root, else bundle root); a caller must\n"
-    "still handle a genuine ``open()`` failure."};
+    "the JSON (``j.json``) component. The returned path is where the\n"
+    "blob should live (writable CAS root, else bundle root); a caller\n"
+    "must still handle a genuine ``open()`` failure."};
 
 // ---------------- set_asset_name_compat_versions -----------------------------
 
@@ -1370,6 +1435,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PySetCameraManualDef,
       PyAddCleanFrameCallbackDef,
       PyCanDisplayCharsDef,
+      PySplitTextIntoLinesDef,
       PyFadeScreenDef,
       PyScreenMessageDef,
       PyGetStringWidthDef,

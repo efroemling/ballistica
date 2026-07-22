@@ -354,7 +354,7 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
                 if curtime - self._last_home_flag_notice_print_time > 5.0:
                     self._last_home_flag_notice_print_time = curtime
                     bpos = team.base_pos
-                    tval = bs.Lstr(resource='ownFlagAtYourBaseWarning')
+                    tval = stdassets.strings.game.own_flag_at_base_warning
                     tnode = bs.newnode(
                         'text',
                         attrs={

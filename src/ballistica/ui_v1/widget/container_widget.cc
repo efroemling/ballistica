@@ -6,6 +6,7 @@
 #include <string>
 
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
@@ -2049,18 +2050,11 @@ void ContainerWidget::PrintExitListInstructions(
         && (t - last_list_exit_instructions_print_time_ > 5000)) {
       last_list_exit_instructions_print_time_ = t;
       g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioError);
-      std::string s = g_base->assets->GetResourceString("arrowsToExitListText");
-      {
-        // Left arrow.
-        Utils::StringReplaceOne(
-            &s, "${LEFT}", g_base->assets->CharStr(SpecialChar::kLeftArrow));
-      }
-      {
-        // Right arrow.
-        Utils::StringReplaceOne(
-            &s, "${RIGHT}", g_base->assets->CharStr(SpecialChar::kRightArrow));
-      }
-      g_base->ScreenMessage(s);
+      g_base->ScreenMessage(
+          base::BuiltinStrings::Ui::ArrowsToExitList(
+              g_base->assets->CharStr(SpecialChar::kLeftArrow),
+              g_base->assets->CharStr(SpecialChar::kRightArrow))
+              ->Evaluate());
     }
   }
 }

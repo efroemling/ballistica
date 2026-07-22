@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <string>
 
-#include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/ui/ui.h"
@@ -65,9 +65,9 @@ auto InputDevice::GetDeviceNamePretty() -> std::string {
   auto devices_with_name = g_base->input->GetInputDevicesWithName(device_name);
 
   if (device_name == "Keyboard") {
-    translated_name = g_base->assets->GetResourceString("keyboardText");
+    translated_name = BuiltinStrings::Input::Keyboard()->Evaluate();
   } else if (GetDeviceName() == "TouchScreen") {
-    translated_name = g_base->assets->GetResourceString("touchScreenText");
+    translated_name = BuiltinStrings::Input::TouchScreen()->Evaluate();
   } else {
     translated_name = device_name;
   }
@@ -81,16 +81,14 @@ auto InputDevice::GetDeviceNamePretty() -> std::string {
 
 auto InputDevice::GetButtonName(int id) -> std::string {
   // By default just say 'button 1' or whatnot.
-  // FIXME: should return this in Lstr json form.
-  return g_base->assets->GetResourceString("buttonText") + " "
-         + std::to_string(id);
+  // FIXME: should return a LangStr rather than locale-baked text.
+  return BuiltinStrings::Input::Button(int64_t{id})->Evaluate();
 }
 
 auto InputDevice::GetAxisName(int id) -> std::string {
   // By default just return 'axis 5' or whatnot.
-  // FIXME: should return this in Lstr json form.
-  return g_base->assets->GetResourceString("axisText") + " "
-         + std::to_string(id);
+  // FIXME: should return a LangStr rather than locale-baked text.
+  return BuiltinStrings::Input::Axis(int64_t{id})->Evaluate();
 }
 
 auto InputDevice::HasMeaningfulButtonNames() -> bool { return false; }

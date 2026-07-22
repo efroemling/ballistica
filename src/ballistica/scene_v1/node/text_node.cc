@@ -3,12 +3,15 @@
 #include "ballistica/scene_v1/node/text_node.h"
 
 #include <algorithm>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/input/input.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/scene.h"
@@ -26,7 +29,7 @@ class TextNodeType : public NodeType {
   BA_FLOAT_ATTR(project_scale, project_scale, set_project_scale);
   BA_FLOAT_ATTR(scale, scale, set_scale);
   BA_FLOAT_ARRAY_ATTR(position, position, SetPosition);
-  BA_STRING_ATTR(text, getText, SetText);
+  BA_LANG_STR_ATTR(text, getText, SetText, SetTextWire, text_lang_str);
   BA_BOOL_ATTR(big, big, SetBig);
   BA_BOOL_ATTR(trail, trail, set_trail);
   BA_FLOAT_ARRAY_ATTR(color, color, SetColor);
@@ -132,7 +135,42 @@ void TextNode::SetText(const std::string& val) {
     }
     text_translation_dirty_ = true;
     text_raw_ = val;
+    text_mode_ = TextMode::kLegacy;
+    text_lang_str_.reset();
   }
+}
+
+void TextNode::SetTextWire(const std::string& wire,
+                           std::shared_ptr<const base::LangStr> parsed) {
+  // Untagged values (defensive; e.g. shared code paths that don't
+  // know about tagging) get legacy semantics.
+  if (wire.empty()
+      || (wire[0] != kLangStrWireTagLiteral
+          && wire[0] != kLangStrWireTagLegacyJson
+          && wire[0] != kLangStrWireTagLangStr)) {
+    SetText(wire);
+    return;
+  }
+  if (text_raw_ == wire && text_mode_ != TextMode::kLegacy) {
+    return;
+  }
+  assert(Utils::IsValidUTF8(wire));
+  text_raw_ = wire;  // Full tagged value, so gets/dumps round-trip it.
+  switch (wire[0]) {
+    case kLangStrWireTagLiteral:
+      text_mode_ = TextMode::kLiteral;
+      text_lang_str_.reset();
+      break;
+    case kLangStrWireTagLegacyJson:
+      text_mode_ = TextMode::kLegacyJson;
+      text_lang_str_.reset();
+      break;
+    default:
+      text_mode_ = TextMode::kLangStr;
+      text_lang_str_ = std::move(parsed);
+      break;
+  }
+  text_translation_dirty_ = true;
 }
 
 void TextNode::SetBig(bool val) {
@@ -354,7 +392,23 @@ void TextNode::Draw(base::FrameDef* frame_def) {
 
   // Apply subs/resources to get our actual text if need be.
   if (text_translation_dirty_) {
-    text_translated_ = g_base->assets->CompileResourceString(text_raw_);
+    switch (text_mode_) {
+      case TextMode::kLegacy:
+        text_translated_ = g_base->assets->CompileResourceString(text_raw_);
+        break;
+      case TextMode::kLiteral:
+        text_translated_ = text_raw_.substr(1);
+        break;
+      case TextMode::kLegacyJson:
+        text_translated_ =
+            g_base->assets->CompileResourceString(text_raw_.substr(1));
+        break;
+      case TextMode::kLangStr:
+        text_translated_ = text_lang_str_ != nullptr
+                               ? text_lang_str_->Evaluate()
+                               : "LANGSTR_ERROR:unparsed wire value";
+        break;
+    }
     text_translation_dirty_ = false;
     text_group_dirty_ = true;
     text_width_dirty_ = true;

@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 from bacommon.locale import Locale
+from bacommon.langstr import WrapParams
 from bacommon.loctext import StringSelector
 
 if TYPE_CHECKING:
@@ -34,6 +35,18 @@ class WrapperType(Enum):
 
     BASCENEV1 = 'bascenev1'
     BAUIV1 = 'bauiv1'
+
+
+class ConventionsMode(Enum):
+    """Conventions-check enforcement level for an assets_v1 workspace.
+
+    ``STRICT`` blocks test/prod publishes while conventions findings
+    exist (dev-track resolves are never gated); ``RELAXED`` (the
+    default) surfaces findings as informational hints only.
+    """
+
+    RELAXED = 'relaxed'
+    STRICT = 'strict'
 
 
 @ioprepped
@@ -71,6 +84,21 @@ class AssetsV1GlobalVals:
     asset_package_name: Annotated[
         str | None, IOAttrs('asset_package_name', store_default=False)
     ] = None
+
+    #: Conventions-check enforcement level (see
+    #: :class:`ConventionsMode`). First-party workspaces set strict
+    #: (see the asset-packages design doc). Set by hand in
+    #: ``workspace.json`` -- deliberately not exposed in the UI.
+    #: Unknown stored values fall back to relaxed so older servers
+    #: never over-enforce.
+    conventions: Annotated[
+        ConventionsMode,
+        IOAttrs(
+            'conventions',
+            store_default=False,
+            enum_fallback=ConventionsMode.RELAXED,
+        ),
+    ] = ConventionsMode.RELAXED
 
 
 def derive_asset_package_name(workspace_name: str) -> str:
@@ -137,6 +165,42 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
         LOUD = 'loud'
         SOFT = 'soft'
 
+    class FitPreset(Enum):
+        """Preset bounding translated-output size for UI space.
+
+        Mirrors ``StylePreset``: a rough size budget passed to
+        the translator (with UI context) so localized output respects
+        the space available. Budgets are display-width in *Latin*
+        characters -- wide-glyph scripts (CJK) target roughly half the
+        character count -- and are aims, not hard caps (soft
+        enforcement with generous slack; see ``char_budget``).
+        """
+
+        #: No size constraint (the default).
+        NONE = 'none'
+
+        #: Aim for ~20 characters - narrow buttons, tabs, column
+        #: headings.
+        CHARS_20 = 'chars_20'
+
+        #: Aim for ~40 characters - standard buttons and labels.
+        CHARS_40 = 'chars_40'
+
+        #: Aim for ~80 characters / one concise line - transient
+        #: messages, status lines, and the like.
+        CHARS_80 = 'chars_80'
+
+        @property
+        def char_budget(self) -> int | None:
+            """The preset's rough character budget (None for NONE)."""
+            cls = type(self)
+            return {
+                cls.NONE: None,
+                cls.CHARS_20: 20,
+                cls.CHARS_40: 40,
+                cls.CHARS_80: 80,
+            }[self]
+
     @override
     @classmethod
     def get_type_id(cls) -> AssetsV1StringFileTypeID:
@@ -151,16 +215,13 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
             datetime.datetime, IOAttrs('modtime', time_format='float')
         ]
 
-        #: The plain-string output. Set for plain entries; empty (and
-        #: omitted from the wire) when ``selector`` is set -- the selector
-        #: is then the authoritative value, with no separate fallback.
-        value: Annotated[str, IOAttrs('value', store_default=False)] = ''
-
-        #: Optional render-time selector (plural/select); set instead of
-        #: ``value`` for an entry whose value is chosen at render time.
-        selector: Annotated[
-            StringSelector | None, IOAttrs('sel', store_default=False)
-        ] = None
+        #: The localized output -- a plain string, or a render-time
+        #: :class:`~bacommon.loctext.StringSelector` (plural/select)
+        #: whose final form is chosen at display time. (A type-disjoint
+        #: dataclassio union; selectors ride the wire as dicts.)
+        value: Annotated[
+            str | StringSelector, IOAttrs('value', store_default=False)
+        ] = ''
 
     input: Annotated[str, IOAttrs('input')]
     input_modtime: Annotated[
@@ -169,9 +230,89 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
     style_preset: Annotated[
         StylePreset, IOAttrs('style_preset', store_default=False)
     ] = StylePreset.NONE
+
+    #: Optional free-form usage docs describing where this string
+    #: appears and how it is used. Feeds both the generated wrapper
+    #: accessor's docstring
+    #: and the translation prompt (as usage context). Lives in the
+    #: ``.bstr`` itself so edits restale translations via the file's
+    #: content-id; when an edit doesn't warrant regeneration, use the
+    #: UI's mark-translations-clean action.
+    docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
+
+    #: Optional size/fit constraint (see ``FitPreset``). Passed to
+    #: the translator so localized output respects the UI space
+    #: available.
+    fit_preset: Annotated[
+        FitPreset, IOAttrs('fit_preset', store_default=False)
+    ] = FitPreset.NONE
+
     outputs: Annotated[dict[Locale, Output], IOAttrs('outputs')] = field(
         default_factory=dict
     )
+
+
+class AssetsV1AprefFileTypeID(Enum):
+    """Type ID for each of our subclasses."""
+
+    V1 = 'v1'
+
+
+class AssetsV1AprefFile(IOMultiType[AssetsV1AprefFileTypeID]):
+    """Top level class for our multitype.
+
+    An ``<name>.apref`` source in an assets_v1 workspace is an
+    asset-package reference: a pin to a published asset-package
+    version. String briefs can then reference the pinned package's
+    translations via cross-package term refs
+    (``{@<apref-logical-path>:<entry-path>}``).
+    """
+
+    @override
+    @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        return 'apref_file_version'
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AssetsV1AprefFileTypeID:
+        # Require child classes to supply this themselves. If we did a
+        # full type registry/lookup here it would require us to import
+        # everything and would prevent lazy loading.
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_type(
+        cls, type_id: AssetsV1AprefFileTypeID
+    ) -> type[AssetsV1AprefFile]:
+        """Return the subclass for each of our type-ids."""
+        # pylint: disable=cyclic-import
+
+        t = AssetsV1AprefFileTypeID
+        if type_id is t.V1:
+            return AssetsV1AprefFileV1
+
+        # Important to make sure we provide all types.
+        assert_never(type_id)
+
+
+@ioprepped
+@dataclass
+class AssetsV1AprefFileV1(AssetsV1AprefFile):
+    """Our initial version of asset-package-ref file data."""
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AssetsV1AprefFileTypeID:
+        return AssetsV1AprefFileTypeID.V1
+
+    #: The pinned asset-package-version id
+    #: (``<account>.<package>.<version-segment>``). Always a concrete
+    #: version — including on the dev track (a specific ``devN``
+    #: segment, never the bare ``dev`` pseudo-id); pins only move via
+    #: the explicit update/switch-track actions in the workspace UI.
+    apverid: Annotated[str, IOAttrs('apverid')]
 
 
 #: Placeholder value for a string with no generated output in its own locale
@@ -206,12 +347,7 @@ def complete_locale_values(
         output = sfile.outputs.get(locale)
         if output is None:
             output = sfile.outputs.get(Locale.ENGLISH)
-        if output is None:
-            out[name] = STRING_NOT_TRANSLATED
-        elif output.selector is not None:
-            out[name] = output.selector
-        else:
-            out[name] = output.value
+        out[name] = STRING_NOT_TRANSLATED if output is None else output.value
     return out
 
 
@@ -507,13 +643,71 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
 
 @ioprepped
 @dataclass
+class AssetsV1StrTermDeps:
+    """Cached term-ref info for a ``.bstr``, keyed to its content.
+
+    Term refs (``{@term}`` / ``{@pkg:term}`` in the brief) are a pure
+    function of the ``.bstr`` file's content, which is pinned by its
+    content-addressed ``file_id`` -- so this record stays valid exactly
+    as long as ``file_id`` matches the entry's current file. Consumers
+    (dep-aware staleness calcs) use it to skip reading the file; on
+    mismatch they fall back to reading that one file. Maintained
+    automatically by the string save/translate paths; do not hand-edit
+    (a wrong ``local``/``cross`` list with a matching ``file_id`` would
+    be trusted).
+    """
+
+    #: Content-id of the ``.bstr`` file these refs were extracted from.
+    file_id: Annotated[str, IOAttrs('file_id')]
+
+    #: Local term-ref targets (logical ``.bstr`` paths, no extension).
+    local: Annotated[list[str], IOAttrs('local', store_default=False)] = field(
+        default_factory=list
+    )
+
+    #: Cross-package ref targets (``.apref`` paths, no extension).
+    cross: Annotated[list[str], IOAttrs('cross', store_default=False)] = field(
+        default_factory=list
+    )
+
+
+@ioprepped
+@dataclass
 class AssetsV1PathValsStrV1(AssetsV1PathVals):
     """Path-specific values for an assets_v1 workspace path."""
 
     #: Hash generated when all translations for this entry are complete.
     #: Used as a fast-out for checking whether updates are needed.
+    #:
+    #: (Historical note: string author docs briefly lived here as a
+    #: ``docs`` path-val to avoid restaling translations; they moved
+    #: into the ``.bstr`` itself once docs began feeding the translation
+    #: prompt, with the UI's mark-translations-clean action as the
+    #: no-regeneration-needed escape hatch.)
     up_to_date_state: Annotated[
         str | None, IOAttrs('up_to_date_state', store_default=False)
+    ] = None
+
+    #: Optional definition-time line-wrapping hints (decision D-t in
+    #: the language-string-context initiative): applied automatically
+    #: at evaluation everywhere this string displays. Locale-invariant.
+    #: Lives HERE (not in the ``.bstr``) deliberately: the ``.bstr`` is
+    #: by definition the translation input, so its content hash is the
+    #: translation-staleness key, and display-side metadata like this
+    #: must not restale translations (the same reasoning as the docs
+    #: history above, in reverse -- wrap does not feed the translation
+    #: prompt).
+    wrap: Annotated[WrapParams | None, IOAttrs('wrap', store_default=False)] = (
+        None
+    )
+
+    #: Cached term-ref info (see :class:`AssetsV1StrTermDeps`). Absent
+    #: until first extracted; ignored (and lazily recomputed from the
+    #: file) whenever its ``file_id`` no longer matches the entry's
+    #: current content -- so write paths that don't maintain it merely
+    #: cost a read, never a wrong answer.
+    deps: Annotated[
+        AssetsV1StrTermDeps | None, IOAttrs('deps', store_default=False)
     ] = None
 
     @override

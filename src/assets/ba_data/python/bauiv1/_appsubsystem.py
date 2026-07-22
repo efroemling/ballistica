@@ -127,6 +127,57 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         """
         return _bauiv1.is_available()
 
+    async def get_password(
+        self, *, description: str | babase.Lstr | babase.LangStr | None = None
+    ) -> str | None:
+        """Ask the user for a password.
+
+        Returns the entered password, or None if the user cancels or no
+        interactive UI is available (headless, etc.). Overridable
+        ('virtual') so alternate UI layers can substitute their own
+        prompt; this default implementation shows a small
+        :class:`~bauiv1lib.passwordprompt.PasswordPromptWindow`.
+
+        Must be awaited on the logic thread. If the awaiting task is
+        cancelled, the prompt window is dismissed.
+        """
+        assert babase.in_logic_thread()
+
+        # Our default prompt UI lives in bauiv1lib, which is a *higher*
+        # layer that may be absent in spinoffs including ui_v1 alone, so
+        # this whole branch goes away when ui_v1_lib is stripped (such
+        # spinoffs are expected to override this method if they want
+        # interactive prompts).
+        # __SPINOFF_REQUIRE_UI_V1_LIB_BEGIN__
+        if babase.app.env.gui and self.available:
+            import asyncio
+
+            # Deferred up-call into our window library; bauiv1lib is
+            # fully importable by the time an interactive UI can invoke
+            # this, so the cycle is structural only.
+            # pylint: disable-next=cyclic-import
+            from bauiv1lib.passwordprompt import PasswordPromptWindow
+
+            fut: asyncio.Future[str | None] = (
+                babase.app.asyncio_loop.create_future()
+            )
+
+            def _on_result(result: str | None) -> None:
+                if not fut.done():
+                    fut.set_result(result)
+
+            window = PasswordPromptWindow(
+                description=description, on_result=_on_result
+            )
+            try:
+                return await fut
+            except asyncio.CancelledError:
+                window.dismiss()
+                raise
+        # __SPINOFF_REQUIRE_UI_V1_LIB_END__
+
+        return None
+
     @override
     def reset(self) -> None:
         from bauiv1._window import MainWindow

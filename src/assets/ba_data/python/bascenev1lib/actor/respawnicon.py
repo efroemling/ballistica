@@ -75,7 +75,7 @@ class RespawnIcon:
                 attrs={
                     'v_attach': 'top',
                     'h_attach': 'right' if on_right else 'left',
-                    'text': bs.Lstr(value=player.getname()),
+                    'text': player.getname(),
                     'maxwidth': 100,
                     'h_align': 'center',
                     'v_align': 'center',
@@ -184,7 +184,7 @@ class RespawnIcon:
         if not self._dec_text:
             self._dec_timer = None
             return
-        old_text: bs.Lstr | str = self._dec_text.node.text
+        old_text: bs.Lstr | bs.LangStr | str = self._dec_text.node.text
         iterate: int
         # Get the following display text using our current one.
         try:

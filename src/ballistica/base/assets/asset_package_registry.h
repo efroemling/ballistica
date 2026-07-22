@@ -41,9 +41,9 @@ class AssetPackageRegistry {
   AssetPackageRegistry();
 
   // part -> CAS hash. One logical asset can comprise multiple component
-  // files keyed by part (a texture's ``.ktx2`` under part ``t`` plus a
-  // ``.json`` descriptor under part ``j``, etc.; initiative decision
-  // #16). A null/empty asset has an empty part map.
+  // files keyed by ``<role>.<format>`` part names (a texture's ``t.ktx2``,
+  // a sound's ``a.ogg``, a language blob's ``j.json``; asset-packages
+  // decision #35). A null/empty asset has an empty part map.
   using PartMap = std::unordered_map<std::string, std::string>;
   // logical_path -> part-keyed component hashes.
   using EntryMap = std::unordered_map<std::string, PartMap>;
@@ -72,11 +72,34 @@ class AssetPackageRegistry {
   /// Resolve ``(apverid, bucket_id, logical_path, part)`` to a CAS hash.
   /// Returns the hash string, or an empty string if any segment of the
   /// lookup misses (including a missing part — e.g. asking for part
-  /// ``t`` on a null asset whose part map is empty). Safe to call
+  /// ``t.ktx2`` on a null asset whose part map is empty). Safe to call
   /// concurrently with registration.
   auto LookupAssetHash(const std::string& apverid, const std::string& bucket_id,
                        const std::string& logical_path,
                        const std::string& part) const -> std::string;
+
+  /// One-line human-readable summary of a package's registered buckets
+  /// (``bucket-id(entry-count)`` pairs, or a not-registered note) for
+  /// asset-miss diagnostics. A one-shot "asset not found" fatal in the
+  /// field is only diagnosable post-hoc if the error itself says what
+  /// WAS registered (e.g. an old-layout bucket whose keys can't match —
+  /// the decision-#35 poisoned-cache incident).
+  auto DebugDescribePackage(const std::string& apverid) const -> std::string;
+
+  /// Role + format-preference form of :meth:`LookupAssetHash`
+  /// (asset-packages decision #35): parts are named ``<role>.<format>``,
+  /// so this tries ``<role>.<fmt>`` for each format in ``format_prefs``
+  /// (preference order) and returns the first hit. Lets a flavor
+  /// legitimately ship different — or several — formats per part role
+  /// (e.g. a texture flavor carrying ``t.dds`` alongside ``t.ktx2``)
+  /// with the caller's preference list deciding. Empty string if no
+  /// preferred format is present (or any lookup segment misses).
+  auto LookupAssetHashByRole(const std::string& apverid,
+                             const std::string& bucket_id,
+                             const std::string& logical_path,
+                             const std::string& role,
+                             const std::vector<std::string>& format_prefs) const
+      -> std::string;
 
   /// Return the ``textures/...`` bucket id registered for ``apverid`` —
   /// the texture flavor that package actually resolved to (which may be
@@ -112,6 +135,19 @@ class AssetPackageRegistry {
   /// Empty if the package isn't registered or has no language bucket
   /// (strings asset-migration). Analog of :meth:`LookupTextureBucketId`.
   auto LookupLanguageBucketId(const std::string& apverid) const -> std::string;
+
+  /// Return a bucket's logical-path keys in canonical (sorted) order.
+  /// This is the enumeration wire asset indices derive from (scene_v1
+  /// kAdd*Indexed commands): by the asset-packages identical-key-set
+  /// invariant, every flavor of a given bucket kind within one apverid
+  /// carries the same keys, so positions derived here match across
+  /// peers regardless of which flavor each has registered. Empty if
+  /// the package/bucket isn't registered. Callers doing repeated
+  /// lookups should cache the result (bucket contents for an exact
+  /// apverid are immutable).
+  auto BucketLogicalPathsSorted(const std::string& apverid,
+                                const std::string& bucket_id) const
+      -> std::vector<std::string>;
 
   /// Single chokepoint for "where is this CAS blob on disk?". Probes
   /// the writable CAS root (``<cache_dir>/assets/<aa>/<rest>``, where

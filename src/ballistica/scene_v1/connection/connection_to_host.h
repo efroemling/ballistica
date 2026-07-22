@@ -30,10 +30,25 @@ class ConnectionToHost : public Connection {
     return party_name_;
   }
 
+  /// The password to present to the host (empty = none). Set at connect
+  /// time; the client sends HMAC(password, host-salt) in its CLIENT_INFO
+  /// so the host can verify without the raw password ever hitting the
+  /// (plaintext) wire.
+  void set_join_password(const std::string& val) { join_password_ = val; }
+
+  /// Whether the pre-join requirements exchange completed for this
+  /// connect. Set at connect time; the handshake hard-fails joins to
+  /// lang-str-era hosts (protocol 39+) that weren't prepped (the
+  /// no-mid-game-downloads design means such a join could only strand).
+  void set_prepped(bool val) { prepped_ = val; }
+
  private:
   std::string party_name_;
   std::string peer_hash_input_;
   std::string peer_hash_;
+  std::string join_password_;
+  bool prepped_{};
+  std::string handshake_salt_;
   std::optional<std::string> v2_auth_global_app_instance_id_;
   // The client-session that we're driving
   Object::WeakRef<ClientSession> client_session_;

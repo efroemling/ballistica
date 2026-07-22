@@ -57,7 +57,8 @@ class ConnectionSet {
   auto DisconnectClient(int client_id, int ban_seconds) -> bool;
   void ForceDisconnectClients();
   void PushHostConnectedUDPCall(const SockAddr& addr,
-                                bool print_connect_progress);
+                                bool print_connect_progress,
+                                const std::string& password, bool prepped);
   void PushDisconnectFromHostCall();
   void PushDisconnectedFromHostCall();
   auto GetPrintUDPConnectProgress() const -> bool {
@@ -81,18 +82,25 @@ class ConnectionSet {
                        const std::vector<int>* clients = nullptr,
                        const std::string* sender_override = nullptr);
 
-  // Send a screen message to all connected clients AND print it on the host.
-  void SendScreenMessageToAll(const std::string& s, float r, float g, float b);
+  // Send a screen message to all connected clients AND print it on the
+  // host. ``tagged``, when non-empty, is a lang-str tagged wire value
+  // (see kLangStrWireTag*) added alongside the flat text; new enough
+  // clients render it in their own locale while older ones show the
+  // flat text.
+  void SendScreenMessageToAll(const std::string& s, float r, float g, float b,
+                              const std::string& tagged = std::string());
 
   // send a screen message to all connected clients
   void SendScreenMessageToClients(const std::string& s, float r, float g,
-                                  float b);
+                                  float b,
+                                  const std::string& tagged = std::string());
 
   // Send a screen message to specific connected clients (those matching the IDs
   // specified) the id -1 can be used to specify the host.
-  void SendScreenMessageToSpecificClients(const std::string& s, float r,
-                                          float g, float b,
-                                          const std::vector<int>& clients);
+  void SendScreenMessageToSpecificClients(
+      const std::string& s, float r, float g, float b,
+      const std::vector<int>& clients,
+      const std::string& tagged = std::string());
 
   void HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
                                const SockAddr& addr);

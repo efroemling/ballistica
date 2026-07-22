@@ -12,18 +12,21 @@ from babase._language import Lstr
 if TYPE_CHECKING:
     from typing import Callable
 
+    import babase
+
 logger = logging.getLogger(__name__)
 
 
-def _eval(val: str | Lstr | None) -> str:
-    """Flatten a str / Lstr / None field to a plain string for the engine.
+def _eval(val: str | Lstr | babase.LangStr | None) -> str:
+    """Flatten a str / Lstr / LangStr / None field to a plain string.
 
-    ``Lstr`` values are evaluated in the current language; ``None`` becomes
-    the empty string (which the native side reads as 'no button', etc.).
+    ``Lstr`` and ``LangStr`` values are evaluated in the current
+    language; ``None`` becomes the empty string (which the native side
+    reads as 'no button', etc.).
     """
     if val is None:
         return ''
-    if isinstance(val, Lstr):
+    if isinstance(val, (Lstr, _babase.LangStr)):
         return val.evaluate()
     return val
 
@@ -64,11 +67,11 @@ class SimpleDialog:
 
     def __init__(
         self,
-        title: str | Lstr = '',
-        message: str | Lstr = '',
+        title: str | Lstr | babase.LangStr = '',
+        message: str | Lstr | babase.LangStr = '',
         *,
         progress: float | None = None,
-        button_label: str | Lstr | None = None,
+        button_label: str | Lstr | babase.LangStr | None = None,
         on_button: Callable[[], None] | None = None,
     ) -> None:
         assert _babase.in_logic_thread()
@@ -85,10 +88,10 @@ class SimpleDialog:
     def update(
         self,
         *,
-        title: str | Lstr | _Unset = _UNSET,
-        message: str | Lstr | _Unset = _UNSET,
+        title: str | Lstr | babase.LangStr | _Unset = _UNSET,
+        message: str | Lstr | babase.LangStr | _Unset = _UNSET,
         progress: float | None | _Unset = _UNSET,
-        button_label: str | Lstr | None | _Unset = _UNSET,
+        button_label: str | Lstr | babase.LangStr | None | _Unset = _UNSET,
         on_button: Callable[[], None] | None | _Unset = _UNSET,
     ) -> None:
         """Update one or more fields; unspecified fields are left as-is.
@@ -123,8 +126,9 @@ class SimpleDialog:
     def _push(self) -> None:
         """Push our full current state to the native dialog.
 
-        Any ``Lstr`` fields are evaluated to the current language here, so a
-        re-push (e.g. each progress update) picks up the latest translation.
+        Any ``Lstr``/``LangStr`` fields are evaluated to the current
+        language here, so a re-push (e.g. each progress update) picks up
+        the latest translation.
         """
         # Native takes a negative progress as 'no bar' and an empty
         # button-label as 'no button'.

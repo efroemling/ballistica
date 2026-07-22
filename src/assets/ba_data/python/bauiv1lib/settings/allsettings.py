@@ -105,7 +105,7 @@ class AllSettingsWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(0, yoffs - (70 if uiscale is bui.UIScale.SMALL else 60)),
             size=(width, 25),
-            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            text=stdassets.strings.settings.title,
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -133,7 +133,7 @@ class AllSettingsWindow(bui.MainWindow):
             *,
             widgetid: str,
             position: tuple[float, float],
-            label: bui.Lstr,
+            label: bui.Lstr | bui.LangStr,
             call: Callable[[], None],
             texture: bui.Texture,
             imgsize: float,
@@ -178,7 +178,7 @@ class AllSettingsWindow(bui.MainWindow):
         self._controllers_button = _button(
             widgetid=f'{self.main_window_id_prefix}|controllers',
             position=(x, y),
-            label=bui.Lstr(resource=f'{self._r}.controllersText'),
+            label=stdassets.strings.settings.controllers.title,
             call=self._do_controllers,
             texture=stdassets.textures.controller_icon.get(),
             imgsize=150,
@@ -189,7 +189,7 @@ class AllSettingsWindow(bui.MainWindow):
         self._graphics_button = _button(
             widgetid=f'{self.main_window_id_prefix}|graphics',
             position=(x, y),
-            label=bui.Lstr(resource=f'{self._r}.graphicsText'),
+            label=stdassets.strings.settings.graphics.title,
             call=self._do_graphics,
             texture=stdassets.textures.graphics_icon.get(),
             imgsize=135,
@@ -200,7 +200,7 @@ class AllSettingsWindow(bui.MainWindow):
         self._audio_button = _button(
             widgetid=f'{self.main_window_id_prefix}|audio',
             position=(x, y),
-            label=bui.Lstr(resource=f'{self._r}.audioText'),
+            label=stdassets.strings.settings.audio.title,
             call=self._do_audio,
             texture=stdassets.textures.audio_icon.get(),
             imgsize=150,
@@ -211,7 +211,7 @@ class AllSettingsWindow(bui.MainWindow):
         self._advanced_button = _button(
             widgetid=f'{self.main_window_id_prefix}|advanced',
             position=(x, y),
-            label=bui.Lstr(resource=f'{self._r}.advancedText'),
+            label=stdassets.strings.settings.advanced.title,
             call=self._do_advanced,
             texture=stdassets.textures.advanced_icon.get(),
             imgsize=150,

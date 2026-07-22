@@ -62,14 +62,14 @@ class ResourceTypeInfoWindow(PopupWindow):
 
         max_rdesc_height = 160
 
-        rdesc: bui.Lstr | str
+        rdesc: bui.Lstr | bui.LangStr | str
 
         if resource_type == 'tickets':
             yoffs -= 20
-            rdesc = bui.Lstr(resource='ticketsDescriptionText')
+            rdesc = stdassets.strings.resourcetypeinfo.tickets_description
             tex = stdassets.textures.tickets.get()
         elif resource_type == 'tokens':
-            rdesc = bui.Lstr(resource='tokens.tokensDescriptionText')
+            rdesc = stdassets.strings.resourcetypeinfo.tokens_description
             tex = stdassets.textures.coin.get()
             bwidth = 200
             bheight = 50
@@ -87,7 +87,7 @@ class ResourceTypeInfoWindow(PopupWindow):
                     ),
                     color=bg_color,
                     textcolor=(0.8, 0.8, 0.8),
-                    label=bui.Lstr(resource='tokens.getTokensText'),
+                    label=stdassets.strings.resourcetypeinfo.get_tokens,
                     size=(bwidth, bheight),
                     autoselect=True,
                     on_activate_call=bui.WeakCallStrict(

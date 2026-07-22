@@ -8,10 +8,14 @@ from typing import TYPE_CHECKING, assert_never, override
 import bauiv1 as bui
 from bauiv1 import builtinassets
 from bauiv1 import stdassets
+
 from bauiv1lib import popup
 
 if TYPE_CHECKING:
     pass
+
+
+_plgstrs = stdassets.strings.settings.plugins
 
 
 class Category(Enum):
@@ -22,9 +26,15 @@ class Category(Enum):
     DISABLED = 'disabled'
 
     @property
-    def resource(self) -> str:
-        """Resource name for us."""
-        return f'{self.value}Text'
+    def display(self) -> bui.LangStr:
+        """Display string for us."""
+        cls = type(self)
+        if self is cls.ALL:
+            return stdassets.strings.ui.all
+        if self is cls.ENABLED:
+            return stdassets.strings.ui.enabled
+        assert self is cls.DISABLED
+        return stdassets.strings.ui.disabled
 
 
 class PluginWindow(bui.MainWindow):
@@ -118,7 +128,7 @@ class PluginWindow(bui.MainWindow):
                 yoffs - (42 if uiscale is bui.UIScale.SMALL else 30),
             ),
             size=(0, 0),
-            text=bui.Lstr(resource='pluginsText'),
+            text=_plgstrs.title,
             color=app.ui_v1.title_color,
             maxwidth=140,
             h_align='center',
@@ -152,7 +162,7 @@ class PluginWindow(bui.MainWindow):
             scale=0.7,
             position=(settings_button_x - 105, button_row_yoffs - 60),
             size=(130, 60),
-            label=bui.Lstr(resource='allText'),
+            label=stdassets.strings.ui.all,
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(self._show_category_options),
             color=(0.55, 0.73, 0.25),
@@ -247,7 +257,7 @@ class PluginWindow(bui.MainWindow):
 
     def _check_value_changed(self, plug: bui.PluginSpec, value: bool) -> None:
         bui.screenmessage(
-            bui.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
+            stdassets.strings.ui.must_restart,
             color=(1.0, 0.5, 0.0),
         )
         plugstates: dict[str, dict] = bui.app.config.setdefault('Plugins', {})
@@ -275,7 +285,7 @@ class PluginWindow(bui.MainWindow):
                 else 1.65 if uiscale is bui.UIScale.MEDIUM else 1.23
             ),
             choices=[c.value for c in Category],
-            choices_display=[bui.Lstr(resource=c.resource) for c in Category],
+            choices_display=[c.display for c in Category],
             current_choice=self._category.value,
             delegate=self,
         )
@@ -291,7 +301,7 @@ class PluginWindow(bui.MainWindow):
 
         bui.buttonwidget(
             edit=self._category_button,
-            label=bui.Lstr(resource=self._category.resource),
+            label=self._category.display,
         )
 
     def popup_menu_closing(self, popup_window: popup.PopupWindow) -> None:
@@ -369,7 +379,7 @@ class PluginWindow(bui.MainWindow):
             check = bui.checkboxwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|enabled.{classpath}',
-                text=bui.Lstr(value=classpath),
+                text=classpath,
                 autoselect=True,
                 value=enabled,
                 maxwidth=self._scroll_width
@@ -397,7 +407,7 @@ class PluginWindow(bui.MainWindow):
                 button = bui.buttonwidget(
                     parent=self._subcontainer,
                     id=f'{self.main_window_id_prefix}|settings.{classpath}',
-                    label=bui.Lstr(resource='mainMenu.settingsText'),
+                    label=stdassets.strings.settings.title,
                     autoselect=True,
                     size=(100, 40),
                     position=(sub_width - 130, item_y + 6),
@@ -437,5 +447,5 @@ class PluginWindow(bui.MainWindow):
         if num_shown == 0:
             bui.textwidget(
                 edit=self._no_plugins_installed_text,
-                text=bui.Lstr(resource='noPluginsInstalledText'),
+                text=_plgstrs.none_installed,
             )

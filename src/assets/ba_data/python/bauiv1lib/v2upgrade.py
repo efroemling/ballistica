@@ -3,6 +3,7 @@
 """UI for upgrading V1 accounts to V2."""
 
 import bauiv1 as bui
+from bauiv1 import stdassets
 from bauiv1 import builtinassets
 
 
@@ -39,9 +40,8 @@ class V2UpgradeWindow(bui.Window):
             color=app.ui_v1.title_color,
             h_align='center',
             v_align='center',
-            text=bui.Lstr(
-                resource='deviceAccountUpgradeText',
-                subs=[('${NAME}', login_name)],
+            text=stdassets.strings.v2upgrade.device_account_upgrade(
+                name=login_name
             ),
             maxwidth=self._width * 0.95,
         )
@@ -69,7 +69,7 @@ class V2UpgradeWindow(bui.Window):
             position=(20, 25),
             size=(button_width, 65),
             autoselect=True,
-            label=bui.Lstr(resource='notNowText'),
+            label=stdassets.strings.ui.not_now,
             on_activate_call=self._done,
         )
 
@@ -78,7 +78,7 @@ class V2UpgradeWindow(bui.Window):
             position=(self._width * 0.5 - button_width * 0.5, 25),
             size=(button_width, 65),
             autoselect=True,
-            label=bui.Lstr(resource='whatIsThisText'),
+            label=stdassets.strings.ui.what_is_this,
             color=(0.55, 0.5, 0.6),
             textcolor=(0.75, 0.7, 0.8),
             on_activate_call=show_what_is_v2_page,
@@ -89,7 +89,7 @@ class V2UpgradeWindow(bui.Window):
             position=(self._width - button_width - 20, 25),
             size=(button_width, 65),
             autoselect=True,
-            label=bui.Lstr(resource='upgradeText'),
+            label=stdassets.strings.ui.upgrade,
             on_activate_call=self._upgrade_press,
         )
 

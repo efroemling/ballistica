@@ -6,8 +6,12 @@ from typing import override
 
 import babase
 import bauiv1 as bui
+from bauiv1 import stdassets
+
 from bauiv1lib.confirm import ConfirmWindow
 from bauiv1lib.config import ConfigCheckBox
+
+_devstrs = stdassets.strings.settings.devtools
 
 
 class DevToolsWindow(bui.MainWindow):
@@ -87,7 +91,7 @@ class DevToolsWindow(bui.MainWindow):
                 size=(140, 60),
                 scale=0.8,
                 autoselect=True,
-                label=bui.Lstr(resource='backText'),
+                label=stdassets.strings.ui.back,
                 button_type='back',
                 on_activate_call=self.main_window_back,
             )
@@ -104,7 +108,7 @@ class DevToolsWindow(bui.MainWindow):
             size=(0, 25),
             scale=(0.8 if uiscale is bui.UIScale.SMALL else 1.0),
             maxwidth=self._width - 200,
-            text=bui.Lstr(resource='settingsWindowAdvanced.devToolsText'),
+            text=_devstrs.title,
             color=app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -148,9 +152,7 @@ class DevToolsWindow(bui.MainWindow):
             position=(90, v + 40),
             size=(self._sub_width - 100, 30),
             configkey='Show Dev Console Button',
-            displayname=bui.Lstr(
-                resource='settingsWindowAdvanced.showDevConsoleButtonText'
-            ),
+            displayname=_devstrs.show_dev_console_button,
             scale=1.0,
             maxwidth=400,
         )
@@ -167,7 +169,7 @@ class DevToolsWindow(bui.MainWindow):
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
             size=(this_button_width, 60),
             autoselect=True,
-            label=bui.Lstr(resource='userSystemScriptsCreateText'),
+            label=_devstrs.create_user_system_scripts,
             text_scale=1.0,
             on_activate_call=babase.modutils.create_user_system_scripts,
         )
@@ -179,7 +181,7 @@ class DevToolsWindow(bui.MainWindow):
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
             size=(this_button_width, 60),
             autoselect=True,
-            label=bui.Lstr(resource='userSystemScriptsDeleteText'),
+            label=_devstrs.delete_user_system_scripts,
             text_scale=1.0,
             on_activate_call=lambda: ConfirmWindow(
                 action=babase.modutils.delete_user_system_scripts,
@@ -206,6 +208,6 @@ class DevToolsWindow(bui.MainWindow):
         cfg.apply_and_commit()
         if bui.app.ui_v1.uiscale.name != val.upper():
             bui.screenmessage(
-                bui.Lstr(resource='settingsWindowAdvanced.mustRestartText'),
+                stdassets.strings.ui.must_restart,
                 color=(1.0, 0.5, 0.0),
             )

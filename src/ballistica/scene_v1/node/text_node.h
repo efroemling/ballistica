@@ -3,11 +3,16 @@
 #ifndef BALLISTICA_SCENE_V1_NODE_TEXT_NODE_H_
 #define BALLISTICA_SCENE_V1_NODE_TEXT_NODE_H_
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "ballistica/base/graphics/text/text_group.h"
 #include "ballistica/scene_v1/node/node.h"
+
+namespace ballistica::base {
+class LangStr;
+}
 
 namespace ballistica::scene_v1 {
 
@@ -38,7 +43,12 @@ class TextNode : public Node {
   auto trail() const -> bool { return trail_; }
   void set_trail(bool val) { trail_ = val; }
   auto getText() const -> std::string { return text_raw_; }
+  auto text_lang_str() const -> std::shared_ptr<const base::LangStr> {
+    return text_lang_str_;
+  }
   void SetText(const std::string& val);
+  void SetTextWire(const std::string& wire,
+                   std::shared_ptr<const base::LangStr> parsed);
   auto GetHAlign() const -> std::string;
   void SetHAlign(const std::string& val);
   auto GetHAttach() const -> std::string;
@@ -94,6 +104,19 @@ class TextNode : public Node {
   VAttach v_attach_ = VAttach::kCenter;
   float vr_depth_ = 0.0f;
   bool in_world_ = false;
+  // How text_raw_ should be interpreted for display. kLegacy = the
+  // pre-tagged raw-or-resource-json sniffing path (old streams, attr
+  // connections, direct plain sets); the others correspond to the
+  // kLangStrWireTag* wire tags (text_raw_ then stores the full tagged
+  // wire value so dumps/gets round-trip it).
+  enum class TextMode : uint8_t {
+    kLegacy,
+    kLiteral,
+    kLegacyJson,
+    kLangStr,
+  };
+  TextMode text_mode_{TextMode::kLegacy};
+  std::shared_ptr<const base::LangStr> text_lang_str_;
   std::string text_translated_;
   std::string text_raw_;
   std::vector<float> position_ = {0.0f, 0.0f, 0.0f};

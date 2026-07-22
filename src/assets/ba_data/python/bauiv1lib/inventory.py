@@ -7,7 +7,9 @@ import random
 from typing import override, TYPE_CHECKING
 
 from efro.util import asserttype
-import bacommon.docui.v1 as dui1
+import bacommon.docui.v2 as dui2
+from bacommon.assetspec import TextureSpec
+from bacommon.langstr import LangStrSpecValue
 import bauiv1 as bui
 from bauiv1 import builtinassets
 from bauiv1 import stdassets
@@ -22,14 +24,14 @@ if TYPE_CHECKING:
     from bauiv1lib.docui import DocUILocalAction, DocUIWindow
 
 
-def _stex(name: str) -> str:
-    """Qualified stdassets texture ref."""
-    return f'{stdassets.__asset_package__}:textures/{name}'
+def _tex_from_qualified(qualified: str) -> TextureSpec:
+    """Typed ref for a qualified ``<apverid>:<name>`` texture string.
 
-
-def _btex(name: str) -> str:
-    """Qualified ref for a texture in the builtin asset-package."""
-    return f'{builtinassets.__asset_package__}:textures/{name}'
+    (Appearance texture fields carry qualified strings; docui v2 wants
+    typed refs.)
+    """
+    apverid, _, name = qualified.partition(':')
+    return TextureSpec(apverid, name)
 
 
 class InventoryUIController(DocUIController):
@@ -41,26 +43,35 @@ class InventoryUIController(DocUIController):
 
     @override
     def fulfill_request(self, request: DocUIRequest) -> DocUIResponse:
+        # All local authoring here uses strings from BUNDLED packages
+        # (bastdassets/builtin) so these pages keep working offline.
+        invstrs = stdassets.strings.inventory
+        profstrs = stdassets.strings.profiles
 
         response: DocUIResponse
 
         # If we only want player profiles, we can skip the whole cloud
         # request bit.
         if self._player_profiles_only:
-            response = dui1.Response(
-                page=dui1.Page(
-                    title='{"r":"inventoryText"}',
-                    title_is_lstr=True,
+            response = dui2.Response(
+                page=dui2.Page(
+                    title=invstrs.title.spec,
                     rows=[],
                 )
             )
         else:
             # *Most* of our inventory comes from the cloud - we just supply
             # profiles ourself so it works offline.
-            response = self.fulfill_request_cloud(request, 'classicinventory')
+            cloudresponse = self.fulfill_request_cloud(
+                request, 'classicinventory'
+            )
 
-            assert isinstance(request, dui1.Request)
-            assert isinstance(response, dui1.Response)
+            assert isinstance(request, dui2.Request)
+            if not isinstance(cloudresponse, dui2.Response):
+                # A server that doesn't speak v2 for us; show its
+                # response as-is (no local additions).
+                return cloudresponse
+            response = cloudresponse
 
             if request.path != '/':
                 return response
@@ -72,25 +83,21 @@ class InventoryUIController(DocUIController):
 
             # If anything went wrong, replace the error page they sent us with
             # a minimal 'most stuff is only available online' page.
-            inv_only_signin_t = '{"r":"inventoryOnlyAvailableSignedInText"}'
-            inv_only_online_t = '{"r":"inventoryOnlyAvailableOnlineText"}'
-            if response.status is not dui1.ResponseStatus.SUCCESS:
-                response = dui1.Response(
-                    page=dui1.Page(
-                        title='{"r":"inventoryText"}',
-                        title_is_lstr=True,
+            if response.status is not dui2.ResponseStatus.SUCCESS:
+                response = dui2.Response(
+                    page=dui2.Page(
+                        title=invstrs.title.spec,
                         rows=[
-                            dui1.ButtonRow(
+                            dui2.ButtonRow(
                                 center_content=True,
                                 buttons=[
-                                    dui1.Button(
+                                    dui2.Button(
                                         (
-                                            inv_only_signin_t
+                                            invstrs.only_available_signed_in
                                             if not signed_in
-                                            else inv_only_online_t
-                                        ),
-                                        label_is_lstr=True,
-                                        texture=_btex('white'),
+                                            else invstrs.only_available_online
+                                        ).spec,
+                                        texture=builtinassets.textures.white,
                                         size=(600, 100),
                                         color=(1, 1, 1, 0.0),
                                         label_scale=0.7,
@@ -102,52 +109,44 @@ class InventoryUIController(DocUIController):
                     ),
                 )
 
+        # Wire spawn-bot actions onto any buttons the server marked
+        # (structured ids; no display-text sniffing).
         for row in response.page.rows:
-            if (
-                isinstance(row, dui1.ButtonRow)
-                and row.title
-                and '"r":"store.yourCharactersText"' in row.title
-            ):
+            if isinstance(row, dui2.ButtonRow):
                 for button in row.buttons:
-                    if not button.decorations:
-                        continue
-                    for decoration in button.decorations:
-                        if isinstance(decoration, dui1.Text):
-                            button.action = dui1.Local(
-                                immediate_local_action='spawn_bot',
-                                immediate_local_action_args={
-                                    'name': decoration.text
-                                },
-                            )
-                            break
+                    wid = button.widget_id
+                    if wid is not None and wid.startswith('spawn_char:'):
+                        button.action = dui2.Local(
+                            immediate_local_action='spawn_bot',
+                            immediate_local_action_args={
+                                'name': wid.removeprefix('spawn_char:')
+                            },
+                        )
 
         # Now add in our profiles, which we handle locally so it is
         # available offline.
         response.page.rows = [
-            dui1.ButtonRow(
-                title='{"r":"playerProfilesWindow.titleText"}',
-                title_is_lstr=True,
-                subtitle='{"r":"playerProfilesWindow.explanationText"}',
-                subtitle_is_lstr=True,
+            dui2.ButtonRow(
+                title=profstrs.title.spec,
+                subtitle=profstrs.explanation.spec,
                 button_spacing=15,
                 buttons=self._get_profile_buttons(),
             ),
-            dui1.ButtonRow(
+            dui2.ButtonRow(
                 spacing_top=-15,
                 spacing_bottom=15,
                 padding_left=13,
                 buttons=[
-                    dui1.Button(
-                        '{"r":"editProfileWindow.titleNewText"}',
-                        dui1.Local(
+                    dui2.Button(
+                        profstrs.new_profile.spec,
+                        action=dui2.Local(
                             default_sound=False,
                             immediate_local_action='new_profile',
                         ),
-                        icon=_stex('plus_button'),
+                        icon=stdassets.textures.plus_button,
                         icon_scale=1.3,
                         icon_color=(0.7, 0.6, 0.9, 1),
-                        label_is_lstr=True,
-                        style=dui1.ButtonStyle.MEDIUM,
+                        style=dui2.ButtonStyle.MEDIUM,
                         size=(210, 60),
                         scale=0.8,
                         color=(0.6, 0.5, 0.8, 1.0),
@@ -179,7 +178,7 @@ class InventoryUIController(DocUIController):
     ) -> None:
         """Called when a window shared state is being restored."""
 
-        if not isinstance(window.request, dui1.Request):
+        if not isinstance(window.request, dui2.Request):
             return
 
         # If desired, set the profile button that will be selected in
@@ -234,14 +233,14 @@ class InventoryUIController(DocUIController):
         if session is not None:
             session.handlemessage(bs.PlayerProfilesChangedMessage())
 
-    def _get_profile_buttons(self) -> list[dui1.Button]:
+    def _get_profile_buttons(self) -> list[dui2.Button]:
 
         plus = bui.app.plus
         assert plus is not None
         classic = bui.app.classic
         assert classic is not None
 
-        buttons: list[dui1.Button] = []
+        buttons: list[dui2.Button] = []
 
         profiles = bui.app.config.get('Player Profiles', {})
         items = list(profiles.items())
@@ -275,10 +274,10 @@ class InventoryUIController(DocUIController):
                 appearance = spaz_appearance_default
 
             buttons.append(
-                dui1.Button(
-                    texture=_btex('white'),
+                dui2.Button(
+                    texture=builtinassets.textures.white,
                     size=(145, 175),
-                    action=dui1.Local(
+                    action=dui2.Local(
                         default_sound=False,
                         immediate_local_action='edit_profile',
                         immediate_local_action_args={'profile': p_name},
@@ -287,17 +286,22 @@ class InventoryUIController(DocUIController):
                     color=(1, 1, 1, 0.0),
                     widget_id=f'profile.{p_name}',
                     decorations=[
-                        dui1.Image(
-                            appearance.icon_texture,
+                        dui2.Image(
+                            _tex_from_qualified(appearance.icon_texture),
                             position=(0, 15),
                             size=(140, 140),
-                            mask_texture=_btex('character_icon_mask'),
-                            tint_texture=appearance.icon_mask_texture,
+                            mask_texture=(
+                                builtinassets.textures.character_icon_mask
+                            ),
+                            tint_texture=_tex_from_qualified(
+                                appearance.icon_mask_texture
+                            ),
                             tint_color=color,
                             tint2_color=highlight,
                         ),
-                        dui1.Text(
-                            tval,
+                        dui2.Text(
+                            # Raw profile name (+icon glyph); verbatim.
+                            LangStrSpecValue(tval),
                             position=(0, -75),
                             size=(130, 40),
                             flatness=1.0,
@@ -386,6 +390,9 @@ class InventoryUIController(DocUIController):
 
         name = action.args.get('name')
         assert isinstance(name, str)
+        # Modern flow passes the exact internal appearance name (from
+        # the server's spawn_char widget-id markers); the legacy scan
+        # below also tolerates old Lstr-JSON display strings.
 
         activity = bs.get_foreground_host_activity()
         if not isinstance(activity, MainMenuActivity) or activity.map is None:
@@ -400,7 +407,7 @@ class InventoryUIController(DocUIController):
             else:
                 activity.bot_sets.pop(i)
         for appearance in get_appearances(True):
-            if f'"{appearance}"' in name:
+            if appearance == name or f'"{appearance}"' in name:
                 with activity.context:
                     bot_set = DemoSpazBotSet()
                     DemoBot.randomize_traits(appearance)
