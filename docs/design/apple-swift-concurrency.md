@@ -69,6 +69,37 @@ C++-side atomic, mirroring `from_swift.OnNetAvailChanged`) over annotating
 or locking around it — that's the house style (fullscreen state is the
 precedent).
 
+## Don't block the main runloop — GCD main-queue starvation is an input killer
+
+Much of this glue depends on `DispatchQueue.main.async` reaching the main
+thread *promptly*: GameController-framework input (GCKeyboard/GCController
+handlers fire on their default `handlerQueue` — the main queue) and every
+engine main-thread runnable (`FromCpp.pushRawRunnableToMain`). CFRunLoop
+only drains the GCD main queue on its idle/wake cycles — so main-thread
+work that keeps the runloop perpetually busy (a display-link callback that
+blocks in a vsync'd swap being the canonical case) starves the queue, and
+queued blocks then only run when a real NSEvent cycles the AppKit loop.
+
+This bit for real on the mac build (June–July 2026): the
+CVDisplayLink→CADisplayLink modernization moved render+swap into the
+display-link callback on the main runloop, and keyboard input went
+ignored/stuck during mouse-less gameplay — each queued key event was
+delivered only when a mouse-move NSEvent woke the loop. The fix
+(`CocoaGLView.swift`, see its header comment): the CADisplayLink tick just
+*signals*; a dedicated render thread does make-current → render → swap.
+
+Rules of thumb:
+- Display-link callbacks and anything else recurring on the main runloop
+  must return quickly — never block on vsync, drawable availability, locks
+  held across frames, or cross-thread waits.
+- If a symptom looks like "input/events delayed until the user wiggles the
+  mouse or touches the screen", suspect main-queue starvation before
+  suspecting the input path itself.
+- `UIKitGLViewController` still renders inline in its display-link callback
+  (same structural exposure, masked on touch devices by constant UIKit
+  events; watch tvOS) — see the followups entry (2026-07-23) before
+  restructuring.
+
 ## Don't aesthetically restructure sim-unverifiable flows
 
 The `GameCenterContext` façade split (thin nonisolated C++ façade + a fully
