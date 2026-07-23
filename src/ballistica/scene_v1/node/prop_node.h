@@ -75,6 +75,8 @@ class PropNode : public Node {
   void set_max_speed(float val) { max_speed_ = val; }
   auto gravity_scale() const -> float { return gravity_scale_; }
   void set_gravity_scale(float val) { gravity_scale_ = val; }
+  auto rotate() const -> std::vector<float> { return rotate_; }
+  void set_rotate(const std::vector<float>& val) { rotate_ = val; }
 
  protected:
   // FIXME - need to make all this private and add protected getters/setters
@@ -102,6 +104,7 @@ class PropNode : public Node {
   std::vector<float> velocity_{0.0f, 0.0f, 0.0f};
   std::vector<float> position_{0.0f, 0.0f, 0.0f};
   std::vector<float> extra_acceleration_{0.0, 0.0, 0.0};
+  std::vector<float> rotate_{0.0f, 0.0f, 0.0f};
   float extra_mesh_scale_{1.0f};  // For use by subclasses.
   bool sticky_{};
   Object::WeakRef<Node> owner_;
@@ -152,6 +155,7 @@ class PropNodeType : public NodeType {
   BA_FLOAT_ARRAY_ATTR(extra_acceleration, extra_acceleration,
                       SetExtraAcceleration);
   BA_FLOAT_ATTR(gravity_scale, gravity_scale, set_gravity_scale);
+  BA_FLOAT_ARRAY_ATTR(rotate, rotate, set_rotate);
   BA_STRING_ATTR(body, GetBody, SetBody);
 #undef BA_NODE_TYPE_CLASS
 
@@ -180,7 +184,8 @@ class PropNodeType : public NodeType {
         body_scale(this),
         body(this),
         extra_acceleration(this),
-        gravity_scale(this) {}
+        gravity_scale(this),
+        rotate(this) {}
 };
 
 }  // namespace ballistica::scene_v1
