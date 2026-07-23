@@ -93,9 +93,8 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             size=(0, 0),
             maxwidth=260,
             scale=1.1,
-            text=bui.Lstr(
-                resource='mapSelectTitleText',
-                subs=[('${GAME}', self._gametype.get_display_string())],
+            text=classicassets.strings.playlist.map_select_title(
+                game=self._gametype.get_display_string(langstr=True)
             ),
             color=bui.app.ui_v1.title_color,
             h_align='center',

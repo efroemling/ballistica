@@ -97,10 +97,7 @@ class ColorPicker(PopupWindow):
             text_scale=0.5,
             textcolor=(0.8, 0.8, 0.8),
             size=(120, 30),
-            label=bui.Lstr(
-                resource='otherText',
-                fallback_resource='coopSelectWindow.customText',
-            ),
+            label=classicassets.strings.ui.other,
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(self._select_other),
         )

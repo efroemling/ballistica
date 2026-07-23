@@ -5,6 +5,7 @@
 from typing import override
 
 import bascenev1 as bs
+from bascenev1 import classicassets
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 from bascenev1lib.actor.zoomtext import ZoomText
@@ -38,14 +39,12 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         # (revisit in Step B; see followups.md).
         best_of_use_first_to_instead = 0
         if best_of_use_first_to_instead:
-            best_txt = bs.Lstr(
-                resource='firstToSeriesText',
-                subs=[('${COUNT}', str(session.get_series_length() / 2 + 1))],
+            best_txt = classicassets.strings.multiteam.first_to_series(
+                count=int(session.get_series_length() / 2 + 1)
             )
         else:
-            best_txt = bs.Lstr(
-                resource='bestOfSeriesText',
-                subs=[('${COUNT}', str(session.get_series_length()))],
+            best_txt = classicassets.strings.multiteam.best_of_series(
+                count=session.get_series_length()
             )
 
         ZoomText(
@@ -110,7 +109,7 @@ class TeamVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
     ) -> None:
         del kill_delay  # Unused arg.
         ZoomText(
-            bs.Lstr(value='${A}:', subs=[('${A}', team.name)]),
+            classicassets.strings.multiteam.team_label(name=team.name),
             position=(100, pos_v),
             shiftposition=(-150, pos_v),
             shiftdelay=shiftdelay,

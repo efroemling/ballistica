@@ -275,13 +275,8 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
                     assert player.actor
                     player.actor.handlemessage(bs.DieMessage())
                     bs.broadcastmessage(
-                        bs.Lstr(
-                            translate=(
-                                'statements',
-                                'Killing ${NAME} for'
-                                ' skipping part of the track!',
-                            ),
-                            subs=[('${NAME}', player.getname(full=True))],
+                        classicassets.strings.game.killing_track_skipper(
+                            name=player.getname(full=True)
                         ),
                         color=(1, 0, 0),
                     )
@@ -365,12 +360,9 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
                             player.actor.node.connectattr(
                                 'torso_position', mathnode, 'input2'
                             )
-                            tstr = bs.Lstr(
-                                resource='lapNumberText',
-                                subs=[
-                                    ('${CURRENT}', str(player.lap + 1)),
-                                    ('${TOTAL}', str(self._laps)),
-                                ],
+                            tstr = classicassets.strings.game.lap_number(
+                                current=str(player.lap + 1),
+                                total=str(self._laps),
                             )
                             txtnode = bs.newnode(
                                 'text',
@@ -413,15 +405,9 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             and self._entire_team_must_finish
         ):
             bs.broadcastmessage(
-                bs.Lstr(
-                    translate=(
-                        'statements',
-                        '${TEAM} is disqualified because ${PLAYER} left',
-                    ),
-                    subs=[
-                        ('${TEAM}', player.team.name),
-                        ('${PLAYER}', player.getname(full=True)),
-                    ],
+                classicassets.strings.game.disqualified_player_left(
+                    team=player.team.name,
+                    player=player.getname(full=True),
                 ),
                 color=(1, 1, 0),
             )

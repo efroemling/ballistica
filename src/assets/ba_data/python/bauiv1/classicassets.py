@@ -1,20 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.260722`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicassets.260723k`` (bauiv1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.baclassicassets.260722
+# ba_meta require asset-package a-0.baclassicassets.260723k
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
-# pylint: disable=line-too-long
 
-__asset_package__ = 'a-0.baclassicassets.260722'
+__asset_package__ = 'a-0.baclassicassets.260723k'
 
 from typing import TYPE_CHECKING
 
@@ -878,6 +877,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Instructions for switching Google accounts.
+        #:
+        #:     English: "If you want to use a different Google account, use the
+        #:     Google Play Games app to switch."
+        google_play_games_account_switch: LangStr
+
+        #: ::
+        #:
         #:     Button to manage account settings on the web.
         #:
         #:     English: "Manage Account"
@@ -910,6 +917,14 @@ if TYPE_CHECKING:
         #:
         #:     English: "Sign In"
         sign_in: LangStr
+
+        #: ::
+        #:
+        #:     Notice that codes require being signed in.
+        #:
+        #:     English: "You must sign in to an account for codes to take
+        #:     effect."
+        sign_in_for_codes: LangStr
 
         #: ::
         #:
@@ -976,6 +991,13 @@ if TYPE_CHECKING:
         #:
         #:     English: "Signing out..."
         signing_out: LangStr
+
+        #: ::
+        #:
+        #:     Status message while a code is being submitted.
+        #:
+        #:     English: "Submitting Code..."
+        submitting_code: LangStr
 
         def tickets(self, *, count: str | LangStr) -> LangStr:
             """
@@ -1119,6 +1141,251 @@ if TYPE_CHECKING:
                 English: "You have been sent a {app_name} promo code:"
             """
 
+    class StringsCharactersGroup:
+        """
+        ::
+
+            Playable character display names. Mods can register their own
+            characters; those names are shown untranslated.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Translate the "Agent" title;
+        #:     keep/transliterate "Johnson".
+        #:
+        #:     English: "Agent Johnson"
+        agent_johnson: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Robot designation: keep as "B-9000"
+        #:     (transliterate letters/digits only where the script requires).
+        #:
+        #:     English: "B-9000"
+        b9000: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
+        #:     Latin-script locales; transliterate phonetically in non-Latin
+        #:     scripts. Established legacy renames in some locales are
+        #:     intentional and were seeded.
+        #:
+        #:     English: "Bernard"
+        bernard: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. A warm, familiar granny-ish given name:
+        #:     keep/adapt "Betty" or use an equivalent common local name.
+        #:
+        #:     English: "Betty"
+        betty: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Meaningful nickname: playful
+        #:     diminutive/pet-name forms for "bones/skeleton" work well.
+        #:
+        #:     English: "Bones"
+        bones: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. playful given name; transliterate
+        #:     phonetically in non-Latin scripts, or keep an established
+        #:     cowboy-flavored rename.
+        #:
+        #:     English: "Butch"
+        butch: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Use each culture's standard
+        #:     Easter-bunny term.
+        #:
+        #:     English: "Easter Bunny"
+        easter_bunny: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Meaningful name: a frosty/snowy
+        #:     name-like form (playful beats a generic "snowman" where a natural
+        #:     option exists).
+        #:
+        #:     English: "Frosty"
+        frosty: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. invented proper name; transliterate
+        #:     phonetically in non-Latin scripts.
+        #:
+        #:     English: "Gretel"
+        gretel: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Invented wizardly pun name: "grumble" +
+        #:     a Gandalf/Dumbledore-style suffix. A local grumble-pun in the
+        #:     same shape is ideal; otherwise transliterate. Never a generic
+        #:     "wizard" word alone, and never an actual name from other fiction.
+        #:
+        #:     English: "Grumbledorf"
+        grumbledorf: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
+        #:     Latin-script locales; transliterate phonetically in non-Latin
+        #:     scripts. Established legacy renames in some locales are
+        #:     intentional and were seeded. Use local name order conventions.
+        #:
+        #:     English: "Jack Morgan"
+        jack_morgan: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
+        #:     Latin-script locales; transliterate phonetically in non-Latin
+        #:     scripts. Established legacy renames in some locales are
+        #:     intentional and were seeded.
+        #:
+        #:     English: "Kronk"
+        kronk: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. short proper name; transliterate
+        #:     phonetically in non-Latin scripts.
+        #:
+        #:     English: "Lee"
+        lee: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Meaningful name ("fortunate"):
+        #:     translate the meaning as a name-like form.
+        #:
+        #:     English: "Lucky"
+        lucky: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
+        #:     Latin-script locales; transliterate phonetically in non-Latin
+        #:     scripts. Established legacy renames in some locales are
+        #:     intentional and were seeded.
+        #:
+        #:     English: "Mel"
+        mel: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. a compound nickname meaning a neutral
+        #:     intermediary; a fitting localized equivalent works well.
+        #:
+        #:     English: "Middle-Man"
+        middle_man: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
+        #:     Latin-script locales; transliterate phonetically in non-Latin
+        #:     scripts. Established legacy renames in some locales are
+        #:     intentional and were seeded.
+        #:
+        #:     English: "Pascal"
+        pascal: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. English puns pixel/pixie. Either keep
+        #:     "Pixel" (transliterated as needed) or use a fairy/sprite word
+        #:     that lands a similar double meaning.
+        #:
+        #:     English: "Pixel"
+        pixel: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Use each culture's traditional
+        #:     gift-bringer name.
+        #:
+        #:     English: "Santa Claus"
+        santa_claus: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Descriptive name: translate the meaning
+        #:     (snake + shadow, ninja-flavored).
+        #:
+        #:     English: "Snake Shadow"
+        snake_shadow: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. the default character and series
+        #:     mascot; transliterate phonetically, or keep an established
+        #:     playful rename.
+        #:
+        #:     English: "Spaz"
+        spaz: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Chinese locales use the official mascot
+        #:     name 淘公仔; others translate "Taobao Mascot" ("Taobao" stays as the
+        #:     brand).
+        #:
+        #:     English: "Taobao Mascot"
+        taobao_mascot: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. invented proper name; transliterate
+        #:     phonetically in non-Latin scripts.
+        #:
+        #:     English: "Todd McBurton"
+        todd_mcburton: LangStr
+
+        #: ::
+        #:
+        #:     Character display name shown in the store, inventory, character
+        #:     picker, and gameplay UIs. Invented proper name: keep verbatim in
+        #:     Latin-script locales; transliterate phonetically in non-Latin
+        #:     scripts. Established legacy renames in some locales are
+        #:     intentional and were seeded.
+        #:
+        #:     English: "Zoe"
+        zoe: LangStr
+
     class StringsChestGroup:
         """
         ::
@@ -1204,6 +1471,28 @@ if TYPE_CHECKING:
         #:     English: "Unlocks In"
         unlocks_in: LangStr
 
+    class StringsControlsGroup:
+        """
+        ::
+
+            On-screen control guidance shown during play: button hints and
+            input-hardware suggestions.
+
+            See source for the full asset list.
+        """
+
+        def fire_tv_remote_warning(
+            self, *, remote_app_name: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Suggestion to use a controller or the remote app.
+
+                English: "For a better experience, use a controller or install
+                {remote_app_name} on your phone or tablet."
+            """
+
     class StringsCoopGroup:
         """
         ::
@@ -1213,6 +1502,13 @@ if TYPE_CHECKING:
 
             See source for the full asset list.
         """
+
+        #: ::
+        #:
+        #:     Heading label shown before an achievement name.
+        #:
+        #:     English: "Achievement:"
+        achievement_label: LangStr
 
         #: ::
         #:
@@ -1326,6 +1622,15 @@ if TYPE_CHECKING:
                 English: "{count}p"
             """
 
+        def power_ranking_points(self, *, number: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Compact points label for power-ranking scores.
+
+                English: "{number} pts"
+            """
+
         #: ::
         #:
         #:     Label for tournament prizes.
@@ -1384,6 +1689,118 @@ if TYPE_CHECKING:
         #:     English: "Tournaments are disabled when workspaces are active. To
         #:     re-enable tournaments, disable your workspace and restart."
         tournaments_disabled_workspace: LangStr
+
+    class StringsCooplevelsGroup:
+        """
+        ::
+
+            Names of the single-player and co-op campaign levels, including the
+            parameterized difficulty variants.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Name of the Infinite Onslaught co-op level.
+        #:
+        #:     English: "Infinite Onslaught"
+        infinite_onslaught: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Infinite Runaround co-op level.
+        #:
+        #:     English: "Infinite Runaround"
+        infinite_runaround: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Onslaught Training co-op level.
+        #:
+        #:     English: "Onslaught Training"
+        onslaught_training: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Pro Football co-op level.
+        #:
+        #:     English: "Pro Football"
+        pro_football: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Pro Onslaught co-op level.
+        #:
+        #:     English: "Pro Onslaught"
+        pro_onslaught: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Pro Runaround co-op level.
+        #:
+        #:     English: "Pro Runaround"
+        pro_runaround: LangStr
+
+        def pro_variant(self, *, game: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of the Pro difficulty variant of a level.
+
+                English: "Pro {game}"
+            """
+
+        #: ::
+        #:
+        #:     Name of the Rookie Football co-op level.
+        #:
+        #:     English: "Rookie Football"
+        rookie_football: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Rookie Onslaught co-op level.
+        #:
+        #:     English: "Rookie Onslaught"
+        rookie_onslaught: LangStr
+
+        #: ::
+        #:
+        #:     Name of the The Last Stand co-op level.
+        #:
+        #:     English: "The Last Stand"
+        the_last_stand: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Uber Football co-op level.
+        #:
+        #:     English: "Uber Football"
+        uber_football: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Uber Onslaught co-op level.
+        #:
+        #:     English: "Uber Onslaught"
+        uber_onslaught: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Uber Runaround co-op level.
+        #:
+        #:     English: "Uber Runaround"
+        uber_runaround: LangStr
+
+        def uber_variant(self, *, game: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of the Uber difficulty variant of a level.
+
+                English: "Uber {game}"
+            """
 
     class StringsCoopscoreGroup:
         """
@@ -1599,6 +2016,16 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
+        def received_tickets(self, *, count: int) -> LangStr:
+            """
+            ::
+
+                Confirmation of how many tickets were received.
+
+                English: (one) "Received # ticket!" / (other) "Received #
+                tickets!"
+            """
+
         def you_got_tokens(self, *, tokens: int) -> LangStr:
             """
             ::
@@ -1664,12 +2091,51 @@ if TYPE_CHECKING:
         #:     English: "Completion Bonus"
         completion_bonus: LangStr
 
+        def disqualified_player_left(
+            self, *, team: str | LangStr, player: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Notice that a team was disqualified when a player left.
+
+                English: "Team {team} has been disqualified because {player}
+                left the game."
+            """
+
+        #: ::
+        #:
+        #:     Celebratory banner for two kills in quick succession.
+        #:
+        #:     English: "DOUBLE KILL!"
+        double_kill: LangStr
+
         #: ::
         #:
         #:     Banner shown when a game ends in a tie.
         #:
         #:     English: "Draw"
         draw: LangStr
+
+        def epic_description_filter(
+            self, *, description: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Epic-mode wrapper appended to a game description.
+
+                English: "{description} In epic slow motion."
+            """
+
+        def epic_name_filter(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of the slow-motion variant of a minigame.
+
+                English: "Epic {name}"
+            """
 
         #: ::
         #:
@@ -1687,10 +2153,115 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Celebratory banner for five kills in quick succession.
+        #:
+        #:     English: "FIVE KILL!!!"
+        five_kill: LangStr
+
+        #: ::
+        #:
         #:     Celebratory banner for clearing a wave flawlessly.
         #:
         #:     English: "Flawless Wave!"
         flawless_wave: LangStr
+
+        def game_on_map(
+            self, *, name: str | LangStr, mapname: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Pure-formatting template pairing a game with its map;
+                substitution-only.
+
+                English: "{name} @ {mapname}"
+            """
+
+        def killing_track_skipper(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Notice that a racer is killed for cutting the course.
+
+                English: "Killing {name} for skipping part of the track!"
+            """
+
+        def lap_number(
+            self, *, current: str | LangStr, total: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Progress label for the current lap of a race.
+
+                English: "Lap {current}/{total}"
+            """
+
+        def multi_kill(self, *, count: int) -> LangStr:
+            """
+            ::
+
+                Celebratory banner for a kill streak of a given count (six or
+                more).
+
+                English: (one) "#-KILL!!!" / (other) "#-KILLS!!!"
+            """
+
+        def name_betrayed(
+            self, *, name: str | LangStr, victim: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Death announcement: a player killed a teammate.
+
+                English: "{name} betrayed {victim}."
+            """
+
+        def name_died(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Death announcement: a player died.
+
+                English: "{name} died."
+            """
+
+        def name_killed(
+            self, *, name: str | LangStr, victim: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Death announcement: a player killed an opponent.
+
+                English: "{name} killed {victim}."
+            """
+
+        def name_scores(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Announcement that a named player scores.
+
+                English: "{name} Scores!"
+            """
+
+        def name_suicide(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Death announcement: a player killed themselves.
+
+                English: "{name} committed suicide."
+            """
+
+        #: ::
+        #:
+        #:     Error message when no valid maps exist for a game type.
+        #:
+        #:     English: "No valid maps found for this game type."
+        no_valid_maps_error: LangStr
 
         #: ::
         #:
@@ -1701,10 +2272,53 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Notice that the host has paused the game.
+        #:
+        #:     English: "(paused by host)"
+        paused_by_host: LangStr
+
+        def points_gained(self, *, points: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Pure-formatting popup showing points just gained;
+                substitution-only.
+
+                English: "+{points}"
+            """
+
+        def points_gained_titled(
+            self, *, points: str | LangStr, title: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Pure-formatting popup pairing gained points with an award title;
+                substitution-only.
+
+                English: "+{points} {title}"
+            """
+
+        #: ::
+        #:
+        #:     Prompt to press any button to continue.
+        #:
+        #:     English: "Press any button to continue..."
+        press_any_button_continue: LangStr
+
+        #: ::
+        #:
         #:     Prompt to press a button to play again.
         #:
         #:     English: "Press any button to play again..."
         press_any_button_play_again: LangStr
+
+        #: ::
+        #:
+        #:     Prompt to press any key or button to continue.
+        #:
+        #:     English: "Press any key/button to continue..."
+        press_any_key_button_continue: LangStr
 
         #: ::
         #:
@@ -1722,6 +2336,13 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Celebratory banner for four kills in quick succession.
+        #:
+        #:     English: "QUAD KILL!!!"
+        quad_kill: LangStr
+
+        #: ::
+        #:
         #:     Notice that you must reach wave 2 to rank.
         #:
         #:     English: "Reach wave 2 to rank."
@@ -1733,6 +2354,53 @@ if TYPE_CHECKING:
         #:
         #:     English: "Score"
         score: LangStr
+
+        def solo_name_filter(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of the solo variant of a minigame.
+
+                English: "Solo {name}"
+            """
+
+        #: ::
+        #:
+        #:     Banner shown when the game time limit runs out.
+        #:
+        #:     English: "Time Expired"
+        time_expired: LangStr
+
+        #: ::
+        #:
+        #:     Heading label shown before a gameplay tip.
+        #:
+        #:     English: "Tip:"
+        tip_title: LangStr
+
+        #: ::
+        #:
+        #:     Banner shown when the tournament time limit runs out.
+        #:
+        #:     English: "Tournament Time Expired"
+        tournament_time_expired: LangStr
+
+        #: ::
+        #:
+        #:     Celebratory banner for three kills in quick succession.
+        #:
+        #:     English: "TRIPLE KILL!!"
+        triple_kill: LangStr
+
+        def turbo_warning(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Warning that button-spamming will knock a player out.
+
+                English: "Warning {name}: Button-spamming (turbo) will knock you
+                out!"
+            """
 
         #: ::
         #:
@@ -1747,6 +2415,579 @@ if TYPE_CHECKING:
         #:
         #:     English: "vs."
         vs: LangStr
+
+        def waiting_for_host(self, *, host: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Notice that the host must continue the game.
+
+                English: "(Waiting for {host} to continue)"
+            """
+
+    class StringsGamedescriptionsGroup:
+        """
+        ::
+
+            Minigame objective descriptions shown at match start and on game
+            lists. Mods define their own; those show untranslated.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Be the chosen one for a length of time to win. Kill the
+        #:     chosen one to become it."
+        be_the_chosen_one_for_a: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Bomb as many targets as you can."
+        bomb_as_many_targets_as_you: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Carry the flag for a set length of time."
+        carry_the_flag_for_a_set: LangStr
+
+        def carry_the_flag_for_seconds(self, *, arg1: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Carry the flag for {arg1} seconds."
+            """
+
+        def carry_the_flag_for_seconds_2(
+            self, *, arg1: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Carry the flag for {arg1} seconds"
+            """
+
+        def crush_of_your_enemies(self, *, arg1: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Crush {arg1} of your enemies."
+            """
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Defeat all enemies."
+        defeat_all_enemies: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Dodge the falling bombs."
+        dodge_the_falling_bombs: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Final glorious epic slow motion battle to the death."
+        final_glorious_epic_slow_motion_battle: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Gather eggs!"
+        gather_eggs: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Get the flag to the enemy end zone."
+        get_the_flag_to_the_enemy: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "How fast can you defeat the ninjas?"
+        how_fast_can_you_defeat_the: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Kill a set number of enemies to win."
+        kill_a_set_number_of_enemies: LangStr
+
+        def kill_enemies(self, *, arg1: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Defeat {arg1} enemies"
+            """
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Last one standing wins."
+        last_one_standing_wins: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "last one standing wins"
+        last_one_standing_wins_2: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Last remaining alive wins."
+        last_remaining_alive_wins: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Last team standing wins."
+        last_team_standing_wins: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "last team standing wins"
+        last_team_standing_wins_2: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Prevent enemies from reaching the exit."
+        prevent_enemies_from_reaching_the_exit: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Reach the enemy flag to score."
+        reach_the_enemy_flag_to_score: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "return 1 flag"
+        return_1_flag: LangStr
+
+        def return_flags(self, *, arg1: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Return {arg1} flags"
+            """
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Return the enemy flag to score."
+        return_the_enemy_flag_to_score: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Run 1 lap."
+        run_1_lap: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "run 1 lap"
+        run_1_lap_2: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Run 1 lap. Your entire team has to finish."
+        run_1_lap_your_entire_team: LangStr
+
+        def run_laps(self, *, arg1: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Run {arg1} laps."
+            """
+
+        def run_laps_2(self, *, arg1: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Run {arg1} laps"
+            """
+
+        def run_laps_your_entire_team_has(
+            self, *, arg1: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Run {arg1} laps. Your entire team has to finish."
+            """
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Run real fast!"
+        run_real_fast: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Score a goal."
+        score_a_goal: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "score a goal"
+        score_a_goal_2: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Score a touchdown."
+        score_a_touchdown: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "score a touchdown"
+        score_a_touchdown_2: LangStr
+
+        def score_goals(self, *, arg1: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Score {arg1} goals."
+            """
+
+        def score_goals_2(self, *, arg1: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Score {arg1} goals"
+            """
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Score some goals."
+        score_some_goals: LangStr
+
+        def score_touchdowns(self, *, arg1: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Score {arg1} touchdowns."
+            """
+
+        def score_touchdowns_2(self, *, arg1: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "score {arg1} touchdowns"
+            """
+
+        def secure_all_flags(self, *, arg1: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Secure all {arg1} flags."
+            """
+
+        def secure_all_flags_2(self, *, arg1: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Secure all {arg1} flags"
+            """
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Secure all flags on the map to win."
+        secure_all_flags_on_the_map: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Secure the flag for a set length of time."
+        secure_the_flag_for_a_set: LangStr
+
+        def secure_the_flag_for_seconds(
+            self, *, arg1: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Secure the flag for {arg1} seconds."
+            """
+
+        def secure_the_flag_for_seconds_2(
+            self, *, arg1: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Secure the flag for {arg1} seconds"
+            """
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Steal the enemy flag."
+        steal_the_enemy_flag: LangStr
+
+        def steal_the_enemy_flag_times(self, *, arg1: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Steal the enemy flag {arg1} times."
+            """
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "There can be only one."
+        there_can_be_only_one: LangStr
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "touch 1 flag"
+        touch_1_flag: LangStr
+
+        def touch_flags(self, *, arg1: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Touch {arg1} flags"
+            """
+
+        #: ::
+        #:
+        #:     Minigame objective description (start-of-match / game lists).
+        #:
+        #:     English: "Touch the enemy flag."
+        touch_the_enemy_flag: LangStr
+
+        def touch_the_enemy_flag_times(self, *, arg1: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Minigame objective description (start-of-match / game lists).
+
+                English: "Touch the enemy flag {arg1} times."
+            """
+
+    class StringsGamenamesGroup:
+        """
+        ::
+
+            Names of the competitive multiplayer minigames. Mods can add their
+            own games; those names are shown untranslated.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Name of the Assault minigame.
+        #:
+        #:     English: "Assault"
+        assault: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Capture the Flag minigame.
+        #:
+        #:     English: "Capture the Flag"
+        capture_the_flag: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Chosen One minigame.
+        #:
+        #:     English: "Chosen One"
+        chosen_one: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Conquest minigame.
+        #:
+        #:     English: "Conquest"
+        conquest: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Death Match minigame.
+        #:
+        #:     English: "Death Match"
+        death_match: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Easter Egg Hunt minigame.
+        #:
+        #:     English: "Easter Egg Hunt"
+        easter_egg_hunt: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Elimination minigame.
+        #:
+        #:     English: "Elimination"
+        elimination: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Football minigame.
+        #:
+        #:     English: "Football"
+        football: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Hockey minigame.
+        #:
+        #:     English: "Hockey"
+        hockey: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Keep Away minigame.
+        #:
+        #:     English: "Keep Away"
+        keep_away: LangStr
+
+        #: ::
+        #:
+        #:     Name of the King of the Hill minigame.
+        #:
+        #:     English: "King of the Hill"
+        king_of_the_hill: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Meteor Shower minigame.
+        #:
+        #:     English: "Meteor Shower"
+        meteor_shower: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Ninja Fight minigame.
+        #:
+        #:     English: "Ninja Fight"
+        ninja_fight: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Onslaught minigame.
+        #:
+        #:     English: "Onslaught"
+        onslaught: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Race minigame.
+        #:
+        #:     English: "Race"
+        race: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Runaround minigame.
+        #:
+        #:     English: "Runaround"
+        runaround: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Target Practice minigame.
+        #:
+        #:     English: "Target Practice"
+        target_practice: LangStr
+
+        #: ::
+        #:
+        #:     Name of the The Last Stand minigame.
+        #:
+        #:     English: "The Last Stand"
+        the_last_stand: LangStr
 
     class StringsGatherGroup:
         """
@@ -1891,6 +3132,13 @@ if TYPE_CHECKING:
                 English: "Next free cloud server available in {minutes}
                 minutes."
             """
+
+        #: ::
+        #:
+        #:     Notice that no free cloud servers are free right now.
+        #:
+        #:     English: "No free cloud servers available."
+        free_cloud_server_not_available: LangStr
 
         #: ::
         #:
@@ -2770,6 +4018,46 @@ if TYPE_CHECKING:
         #:     English: "Inventory"
         title: LangStr
 
+    class StringsKeyboardGroup:
+        """
+        ::
+
+            Labels and instructions for the on-screen keyboard used for text
+            entry on touch and controller devices.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Instructions for switching on-screen keyboards.
+        #:
+        #:     English: "Double press space to change keyboards."
+        change_instructions: LangStr
+
+        #: ::
+        #:
+        #:     Notice that no other on-screen keyboards exist.
+        #:
+        #:     English: "No other keyboards available."
+        no_others_available: LangStr
+
+        #: ::
+        #:
+        #:     Label on the on-screen keyboard space bar.
+        #:
+        #:     English: "space"
+        space_key: LangStr
+
+        def switched(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Confirmation that the on-screen keyboard changed.
+
+                English: "Keyboard switched to {name}"
+            """
+
     class StringsKioskGroup:
         """
         ::
@@ -2832,6 +4120,13 @@ if TYPE_CHECKING:
         #:     English: "All Time"
         all_time: LangStr
 
+        #: ::
+        #:
+        #:     Name of the Bronze league tier.
+        #:
+        #:     English: "Bronze"
+        bronze: LangStr
+
         def current_season(self, *, number: str | LangStr) -> LangStr:
             """
             ::
@@ -2840,6 +4135,20 @@ if TYPE_CHECKING:
 
                 English: "Current Season ({number})"
             """
+
+        #: ::
+        #:
+        #:     Name of the Diamond league tier.
+        #:
+        #:     English: "Diamond"
+        diamond: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Gold league tier.
+        #:
+        #:     English: "Gold"
+        gold: LangStr
 
         #: ::
         #:
@@ -2958,10 +4267,26 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Name of the Silver league tier.
+        #:
+        #:     English: "Silver"
+        silver: LangStr
+
+        #: ::
+        #:
         #:     Label for points needed to become ranked.
         #:
         #:     English: "To Ranked"
         to_ranked: LangStr
+
+        def tournament_required(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Notice that a higher league is required to enter.
+
+                English: "You must reach {name} to enter this tournament."
+            """
 
         #: ::
         #:
@@ -2995,6 +4320,87 @@ if TYPE_CHECKING:
         #:
         #:     English: "Your Power Ranking:"
         your_power_ranking: LangStr
+
+    class StringsLobbyGroup:
+        """
+        ::
+
+            Join-screen (lobby) prompts and labels shown while players are
+            joining, picking profiles, and readying up.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     The bomb action word, shown emphasized in join prompts.
+        #:
+        #:     English: "BOMB"
+        bomb: LangStr
+
+        #: ::
+        #:
+        #:     Placeholder name while a player is still joining.
+        #:
+        #:     English: "<choosing player>"
+        choosing_player: LangStr
+
+        #: ::
+        #:
+        #:     Lobby profile-list entry for creating or editing a profile.
+        #:
+        #:     English: "<Create/Edit Player>"
+        create_edit_player: LangStr
+
+        #: ::
+        #:
+        #:     Prompt inviting anyone to join by pressing a button.
+        #:
+        #:     English: "press any button to join..."
+        press_any_button_to_join: LangStr
+
+        #: ::
+        #:
+        #:     Prompt to join by pressing the punch button.
+        #:
+        #:     English: "press PUNCH to join..."
+        press_punch_to_join: LangStr
+
+        def press_to_override_character(
+            self, *, buttons: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Prompt for overriding the profile character in the lobby.
+
+                English: "press {buttons} to override your character"
+            """
+
+        def press_to_select_profile(self, *, buttons: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Prompt for selecting a player profile in the lobby.
+
+                English: "press {buttons} to select a player"
+            """
+
+        def press_to_select_team(self, *, buttons: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Prompt for choosing a team in the lobby.
+
+                English: "press {buttons} to select a team"
+            """
+
+        #: ::
+        #:
+        #:     Status note that a joining player is ready.
+        #:
+        #:     English: "ready"
+        ready: LangStr
 
     class StringsMainmenuGroup:
         """
@@ -3081,6 +4487,135 @@ if TYPE_CHECKING:
         #:     English: "Test Build"
         test_build: LangStr
 
+    class StringsMapnamesGroup:
+        """
+        ::
+
+            Names of the play areas (maps) that matches are held in. Mods can
+            add their own maps; those names are shown untranslated.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Name of the Big G play area.
+        #:
+        #:     English: "Big G"
+        big_g: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Bridgit play area.
+        #:
+        #:     English: "Bridgit"
+        bridgit: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Courtyard play area.
+        #:
+        #:     English: "Courtyard"
+        courtyard: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Crag Castle play area.
+        #:
+        #:     English: "Crag Castle"
+        crag_castle: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Doom Shroom play area.
+        #:
+        #:     English: "Doom Shroom"
+        doom_shroom: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Football Stadium play area.
+        #:
+        #:     English: "Football Stadium"
+        football_stadium: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Happy Thoughts play area.
+        #:
+        #:     English: "Happy Thoughts"
+        happy_thoughts: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Hockey Stadium play area.
+        #:
+        #:     English: "Hockey Stadium"
+        hockey_stadium: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Lake Frigid play area.
+        #:
+        #:     English: "Lake Frigid"
+        lake_frigid: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Monkey Face play area.
+        #:
+        #:     English: "Monkey Face"
+        monkey_face: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Rampage play area.
+        #:
+        #:     English: "Rampage"
+        rampage: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Roundabout play area.
+        #:
+        #:     English: "Roundabout"
+        roundabout: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Step Right Up play area.
+        #:
+        #:     English: "Step Right Up"
+        step_right_up: LangStr
+
+        #: ::
+        #:
+        #:     Name of the The Pad play area.
+        #:
+        #:     English: "The Pad"
+        the_pad: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Tip Top play area.
+        #:
+        #:     English: "Tip Top"
+        tip_top: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Tower D play area.
+        #:
+        #:     English: "Tower D"
+        tower_d: LangStr
+
+        #: ::
+        #:
+        #:     Name of the Zigzag play area.
+        #:
+        #:     English: "Zigzag"
+        zigzag: LangStr
+
     class StringsMultiteamGroup:
         """
         ::
@@ -3092,12 +4627,50 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
+        def best_of_series(self, *, count: int) -> LangStr:
+            """
+            ::
+
+                Title for a best-of-N series.
+
+                English: (one) "Best Of # Series:" / (other) "Best Of # Series:"
+            """
+
         #: ::
         #:
         #:     Column label for the death count in the score table.
         #:
         #:     English: "Deaths"
         deaths: LangStr
+
+        def first_to_series(self, *, count: int) -> LangStr:
+            """
+            ::
+
+                Title for a first-to-N-wins series.
+
+                English: (one) "First-To-# Series" / (other) "First-To-# Series"
+            """
+
+        def game_leaders(self, *, count: int) -> LangStr:
+            """
+            ::
+
+                Heading over the leaders of the current game.
+
+                English: (one) "Game # Leaders" / (other) "Game # Leaders"
+            """
+
+        def games_to(
+            self, *, wincount: str | LangStr, losecount: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Series score line reading as wins-to-losses.
+
+                English: "{wincount} games to {losecount}"
+            """
 
         #: ::
         #:
@@ -3127,6 +4700,16 @@ if TYPE_CHECKING:
         #:     English: "Most Violent Player"
         most_violent_player: LangStr
 
+        def must_invite_friends(self, *, gather: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Notice explaining how to get more players in.
+
+                English: "Invite friends via {gather} or connect controllers to
+                play."
+            """
+
         #: ::
         #:
         #:     Column label for the player name in the score table.
@@ -3140,6 +4723,31 @@ if TYPE_CHECKING:
         #:
         #:     English: "SERIES!"
         series: LangStr
+
+        def team_label(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Score-banner label naming a team.
+
+                English: "{name}:"
+            """
+
+        def wins(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Banner announcing the winner of a series.
+
+                English: "{name} Wins!"
+            """
+
+        #: ::
+        #:
+        #:     Opening words of the series-victory banner.
+        #:
+        #:     English: "WINS THE"
+        wins_the_series_intro: LangStr
 
     class StringsPartyGroup:
         """
@@ -3198,6 +4806,13 @@ if TYPE_CHECKING:
         #:
         #:     English: "Vote to Kick"
         kick_vote: LangStr
+
+        #: ::
+        #:
+        #:     Menu choice to mute party chat.
+        #:
+        #:     English: "Mute Chat"
+        mute_chat: LangStr
 
         #: ::
         #:
@@ -3320,6 +4935,33 @@ if TYPE_CHECKING:
         #:     English: "You can't share the default playlist."
         cant_share_default: LangStr
 
+        def customize_title(self, *, type: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Title for the customize-playlists window.
+
+                English: "Customize {type} Playlists"
+            """
+
+        def default_list_name(self, *, playmode: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of the built-in default playlist for a play mode.
+
+                English: "Default {playmode} Playlist"
+            """
+
+        def default_new_list_name(self, *, playmode: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Default name offered for a newly created playlist.
+
+                English: "My {playmode} Playlist"
+            """
+
         #: ::
         #:
         #:     Two-line button to delete a playlist.
@@ -3388,10 +5030,33 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Name of the built-in slow-motion playlist.
+        #:
+        #:     English: "Just Epic"
+        just_epic: LangStr
+
+        #: ::
+        #:
+        #:     Name of the built-in sports-only playlist.
+        #:
+        #:     English: "Just Sports"
+        just_sports: LangStr
+
+        #: ::
+        #:
         #:     Label for the playlist name field.
         #:
         #:     English: "Playlist Name"
         list_name: LangStr
+
+        def map_select_title(self, *, game: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Title of the map-selection window.
+
+                English: "{game}: Select a Map"
+            """
 
         #: ::
         #:
@@ -3479,6 +5144,20 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Setting label for the points needed to win.
+        #:
+        #:     English: "Points To Win"
+        points_to_win: LangStr
+
+        #: ::
+        #:
+        #:     Setting label for how many games a series runs.
+        #:
+        #:     English: "Series Length"
+        series_length: LangStr
+
+        #: ::
+        #:
         #:     Checkbox to show the tutorial.
         #:
         #:     English: "Show Tutorial"
@@ -3522,6 +5201,16 @@ if TYPE_CHECKING:
         #:
         #:     English: "(account profile)"
         account_profile: LangStr
+
+        def account_profile_info(self, *, icons: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Explanation of what an account profile is.
+
+                English: "Uses account details {icons}. Create custom profiles
+                to change."
+            """
 
         def available(self, *, name: str | LangStr) -> LangStr:
             """
@@ -3824,6 +5513,51 @@ if TYPE_CHECKING:
         #:     hear about them again."
         tokens_description: LangStr
 
+    class StringsScoretypesGroup:
+        """
+        ::
+
+            Column labels naming what a game's score measures (goals, flags,
+            time survived, and so on) on score tables.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Score-column label for flags captured.
+        #:
+        #:     English: "Flags"
+        flags: LangStr
+
+        #: ::
+        #:
+        #:     Score-column label for goals scored.
+        #:
+        #:     English: "Goals"
+        goals: LangStr
+
+        #: ::
+        #:
+        #:     Score-column label for time survived.
+        #:
+        #:     English: "Survived"
+        survived: LangStr
+
+        #: ::
+        #:
+        #:     Score-column label for elapsed time.
+        #:
+        #:     English: "Time"
+        time: LangStr
+
+        #: ::
+        #:
+        #:     Score-column label for time spent holding something.
+        #:
+        #:     English: "Time Held"
+        time_held: LangStr
+
     class StringsSendinfoGroup:
         """
         ::
@@ -3840,6 +5574,79 @@ if TYPE_CHECKING:
         #:     English: "Sends account and app state info to the developer.
         #:     Please include your name or reason for sending."
         send_info_description: LangStr
+
+    class StringsServerGroup:
+        """
+        ::
+
+            Broadcast messages sent to connected players about the hosting
+            server's lifecycle.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Broadcast that the server is restarting.
+        #:
+        #:     English: "Server is restarting. Please rejoin in a moment..."
+        restarting: LangStr
+
+        #: ::
+        #:
+        #:     Broadcast that the server is shutting down.
+        #:
+        #:     English: "Server is shutting down..."
+        shutting_down: LangStr
+
+    class StringsSessionGroup:
+        """
+        ::
+
+            Session-level player-flow broadcast messages: joins, departures, and
+            player-limit notices.
+
+            See source for the full asset list.
+        """
+
+        def not_enough_players(self, *, count: int) -> LangStr:
+            """
+            ::
+
+                Warning that more players are needed to start.
+
+                English: (one) "You need at least # player to start this game!"
+                / (other) "You need at least # players to start this game!"
+            """
+
+        def player_delayed_join(self, *, player: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Notice that a joining player enters next round.
+
+                English: "{player} will enter at the start of the next round."
+            """
+
+        def player_left(self, *, player: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Broadcast that a named player left the game.
+
+                English: "{player} left the game."
+            """
+
+        def player_limit_reached(self, *, count: int) -> LangStr:
+            """
+            ::
+
+                Notice that the session player limit blocks joining.
+
+                English: (one) "Player limit of # reached; no more players can
+                join." / (other) "Player limit of # reached; no more players can
+                join."
+            """
 
     class StringsSettingsAdvancedGroup:
         """
@@ -5070,6 +6877,15 @@ if TYPE_CHECKING:
         #:     English: "Edit Soundtrack"
         edit_soundtrack: LangStr
 
+        def error_playing_music(self, *, music: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Error message that a music file would not play.
+
+                English: "Error playing music: {music}"
+            """
+
         #: ::
         #:
         #:     Status while loading Music-app playlists.
@@ -5106,6 +6922,13 @@ if TYPE_CHECKING:
 
                 English: "My Soundtrack {count}"
             """
+
+        #: ::
+        #:
+        #:     Notice that a chosen folder holds no music.
+        #:
+        #:     English: "Folder contains no music files."
+        no_music_files_in_folder: LangStr
 
         #: ::
         #:
@@ -5156,6 +6979,77 @@ if TYPE_CHECKING:
         #:
         #:     English: "Folder of Music Files"
         use_music_folder: LangStr
+
+        #: ::
+        #:
+        #:     Notice that the OS music app supplies the soundtrack.
+        #:
+        #:     English: "Using Music App for soundtrack..."
+        using_music_app: LangStr
+
+    class StringsStoreGroup:
+        """
+        ::
+
+            Store item name labels and shop entry points.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Store label for physical merchandise.
+        #:
+        #:     English: "Merch!"
+        merch: LangStr
+
+        def pro_name(self, *, app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Product name label for the Pro upgrade.
+
+                English: "{app_name} Pro"
+            """
+
+    class StringsTeamsGroup:
+        """
+        ::
+
+            Default team names. Players can rename their teams, so these are the
+            built-in defaults only; custom names are shown as-is and
+            untranslated.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Default name of the enemy team.
+        #:
+        #:     English: "Bad Guys"
+        bad_guys: LangStr
+
+        #: ::
+        #:
+        #:     Default name of the blue team.
+        #:
+        #:     English: "Blue"
+        blue: LangStr
+
+        #: ::
+        #:
+        #:     Default name of the friendly team.
+        #:
+        #:     English: "Good Guys"
+        good_guys: LangStr
+
+        #: ::
+        #:
+        #:     Default name of the red team.
+        #:
+        #:     English: "Red"
+        red: LangStr
 
     class StringsTournamententryGroup:
         """
@@ -5432,6 +7326,13 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Button label to accept an offer or invitation.
+        #:
+        #:     English: "Accept"
+        accept: LangStr
+
+        #: ::
+        #:
         #:     Generic "Achievements" label/heading.
         #:
         #:     English: "Achievements"
@@ -5459,6 +7360,18 @@ if TYPE_CHECKING:
         #:     English: "Always"
         always: LangStr
 
+        def angle_button_suffix(
+            self, *, main: str | LangStr, button: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Pure-formatting template appending an angle-bracketed button
+                hint to a prompt; substitution-only.
+
+                English: "{main} < {button} >"
+            """
+
         #: ::
         #:
         #:     The app's name; byte-identical in every language.
@@ -5472,6 +7385,13 @@ if TYPE_CHECKING:
         #:
         #:     English: "Apply"
         apply: LangStr
+
+        #: ::
+        #:
+        #:     Default confirmation-dialog question.
+        #:
+        #:     English: "Are you sure?"
+        are_you_sure: LangStr
 
         #: ::
         #:
@@ -5503,6 +7423,13 @@ if TYPE_CHECKING:
         #:
         #:     English: "Cancel"
         cancel: LangStr
+
+        #: ::
+        #:
+        #:     Button label to claim a reward.
+        #:
+        #:     English: "Claim"
+        claim: LangStr
 
         #: ::
         #:
@@ -5572,6 +7499,13 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Button label to decline an offer or invitation.
+        #:
+        #:     English: "Decline"
+        decline: LangStr
+
+        #: ::
+        #:
         #:     Generic "Delete" button label.
         #:
         #:     English: "Delete"
@@ -5611,6 +7545,13 @@ if TYPE_CHECKING:
         #:
         #:     English: "Disabled"
         disabled: LangStr
+
+        #: ::
+        #:
+        #:     Button label to discard something.
+        #:
+        #:     English: "Discard"
+        discard: LangStr
 
         #: ::
         #:
@@ -5677,6 +7618,15 @@ if TYPE_CHECKING:
         #:
         #:     English: "An error has occurred."
         error_occurred: LangStr
+
+        def exit_app_confirm(self, *, app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Confirmation question for exiting the app.
+
+                English: "Exit {app_name}?"
+            """
 
         #: ::
         #:
@@ -5747,6 +7697,13 @@ if TYPE_CHECKING:
 
                 English: "{icon} {label}"
             """
+
+        #: ::
+        #:
+        #:     Button label to ignore something.
+        #:
+        #:     English: "Ignore"
+        ignore: LangStr
 
         #: ::
         #:
@@ -6002,6 +7959,15 @@ if TYPE_CHECKING:
         #:     English: "Practice"
         practice: LangStr
 
+        def quit_app_confirm(self, *, app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Confirmation question for quitting the app (Mac wording).
+
+                English: "Quit {app_name}?"
+            """
+
         #: ::
         #:
         #:     Generic 'Random' option value (e.g. random playlist type).
@@ -6037,6 +8003,13 @@ if TYPE_CHECKING:
         #:
         #:     English: "Reset"
         reset: LangStr
+
+        #: ::
+        #:
+        #:     Button label to restart an activity.
+        #:
+        #:     English: "Restart"
+        restart: LangStr
 
         #: ::
         #:
@@ -6312,6 +8285,13 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Error message that a replay name is taken.
+        #:
+        #:     English: "A replay with that name already exists."
+        replay_rename_error_already_exists: LangStr
+
+        #: ::
+        #:
         #:     Error when a replay rename name is bad.
         #:
         #:     English: "Can't rename replay; invalid name."
@@ -6343,13 +8323,18 @@ if TYPE_CHECKING:
 
         account: StringsAccountGroup
         appinvite: StringsAppinviteGroup
+        characters: StringsCharactersGroup
         chest: StringsChestGroup
+        controls: StringsControlsGroup
         coop: StringsCoopGroup
+        cooplevels: StringsCooplevelsGroup
         coopscore: StringsCoopscoreGroup
         credits: StringsCreditsGroup
         economy: StringsEconomyGroup
         fileselector: StringsFileselectorGroup
         game: StringsGameGroup
+        gamedescriptions: StringsGamedescriptionsGroup
+        gamenames: StringsGamenamesGroup
         gather: StringsGatherGroup
         getremote: StringsGetremoteGroup
         gettokens: StringsGettokensGroup
@@ -6357,9 +8342,12 @@ if TYPE_CHECKING:
         inbox: StringsInboxGroup
         ingamemenu: StringsIngamemenuGroup
         inventory: StringsInventoryGroup
+        keyboard: StringsKeyboardGroup
         kiosk: StringsKioskGroup
         league: StringsLeagueGroup
+        lobby: StringsLobbyGroup
         mainmenu: StringsMainmenuGroup
+        mapnames: StringsMapnamesGroup
         multiteam: StringsMultiteamGroup
         party: StringsPartyGroup
         partyqueue: StringsPartyqueueGroup
@@ -6371,9 +8359,14 @@ if TYPE_CHECKING:
         profiles: StringsProfilesGroup
         report: StringsReportGroup
         resourcetypeinfo: StringsResourcetypeinfoGroup
+        scoretypes: StringsScoretypesGroup
         sendinfo: StringsSendinfoGroup
+        server: StringsServerGroup
+        session: StringsSessionGroup
         settings: StringsSettingsGroup
         soundtrack: StringsSoundtrackGroup
+        store: StringsStoreGroup
+        teams: StringsTeamsGroup
         tournamententry: StringsTournamententryGroup
         tournamentscores: StringsTournamentscoresGroup
         tutorial: StringsTutorialGroup
@@ -6714,8 +8707,9 @@ if TYPE_CHECKING:
     #: ``action_hero_lower_leg``, and 355 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 656 strings (``account``, ``appinvite``,
-    #: ``chest``, ``coop``, ``coopscore``, and 651 more). Full list in source.
+    #: The ``strings`` group - 885 strings (``account``, ``appinvite``,
+    #: ``characters``, ``chest``, ``controls``, and 880 more). Full list in
+    #: source.
     strings: StringsGroup
 
     #: The ``textures`` group - 313 assets (``achievement_boxer``,
@@ -7509,11 +9503,13 @@ _TREE = {
             'campaign_progress': ('progress',),
             'create_an_account': (),
             'delete_account': (),
+            'google_play_games_account_switch': (),
             'manage_account': (),
             'not_signed_in': (),
             'player_info': (),
             'report_this_player': (),
             'sign_in': (),
+            'sign_in_for_codes': (),
             'sign_in_info': (),
             'sign_in_no_connection': (),
             'sign_in_with': ('service',),
@@ -7523,6 +9519,7 @@ _TREE = {
             'sign_out': (),
             'signing_in': (),
             'signing_out': (),
+            'submitting_code': (),
             'tickets': ('count',),
             'title': (),
             'trophies_this_season': (),
@@ -7541,6 +9538,32 @@ _TREE = {
             'share_code': (),
             'you_have_been_sent_promo': ('app_name',),
         },
+        'characters': {
+            'agent_johnson': (),
+            'b9000': (),
+            'bernard': (),
+            'betty': (),
+            'bones': (),
+            'butch': (),
+            'easter_bunny': (),
+            'frosty': (),
+            'gretel': (),
+            'grumbledorf': (),
+            'jack_morgan': (),
+            'kronk': (),
+            'lee': (),
+            'lucky': (),
+            'mel': (),
+            'middle_man': (),
+            'pascal': (),
+            'pixel': (),
+            'santa_claus': (),
+            'snake_shadow': (),
+            'spaz': (),
+            'taobao_mascot': (),
+            'todd_mcburton': (),
+            'zoe': (),
+        },
         'chest': {
             'open': (),
             'open_me': (),
@@ -7553,7 +9576,9 @@ _TREE = {
             'stop_reminding_me': (),
             'unlocks_in': (),
         },
+        'controls': {'fire_tv_remote_warning': ('remote_app_name',)},
         'coop': {
+            'achievement_label': (),
             'achievements_remaining': (),
             'campaign': (),
             'chest_slots_full_warning': (),
@@ -7568,6 +9593,7 @@ _TREE = {
             'no_tournaments_in_test_build': (),
             'of_total': ('total',),
             'player_count_abbreviated': ('count',),
+            'power_ranking_points': ('number',),
             'prizes': (),
             'time_remaining': (),
             'tournament': (),
@@ -7576,6 +9602,22 @@ _TREE = {
             'tournament_info': (),
             'tournaments': (),
             'tournaments_disabled_workspace': (),
+        },
+        'cooplevels': {
+            'infinite_onslaught': (),
+            'infinite_runaround': (),
+            'onslaught_training': (),
+            'pro_football': (),
+            'pro_onslaught': (),
+            'pro_runaround': (),
+            'pro_variant': ('game',),
+            'rookie_football': (),
+            'rookie_onslaught': (),
+            'the_last_stand': (),
+            'uber_football': (),
+            'uber_onslaught': (),
+            'uber_runaround': (),
+            'uber_variant': ('game',),
         },
         'coopscore': {
             'complete_level_to_proceed': (),
@@ -7605,7 +9647,10 @@ _TREE = {
             'title': ('app_name',),
             'whoever_invented_coffee': (),
         },
-        'economy': {'you_got_tokens': ('tokens',)},
+        'economy': {
+            'received_tickets': ('count',),
+            'you_got_tokens': ('tokens',),
+        },
         'fileselector': {
             'select_file': (),
             'select_file_or_folder': (),
@@ -7614,18 +9659,121 @@ _TREE = {
         },
         'game': {
             'completion_bonus': (),
+            'disqualified_player_left': ('team', 'player'),
+            'double_kill': (),
             'draw': (),
+            'epic_description_filter': ('description',),
+            'epic_name_filter': ('name',),
             'fail': (),
             'final_scores': (),
+            'five_kill': (),
             'flawless_wave': (),
+            'game_on_map': ('name', 'mapname'),
+            'killing_track_skipper': ('name',),
+            'lap_number': ('current', 'total'),
+            'multi_kill': ('count',),
+            'name_betrayed': ('name', 'victim'),
+            'name_died': ('name',),
+            'name_killed': ('name', 'victim'),
+            'name_scores': ('name',),
+            'name_suicide': ('name',),
+            'no_valid_maps_error': (),
             'own_flag_at_base_warning': (),
+            'paused_by_host': (),
+            'points_gained': ('points',),
+            'points_gained_titled': ('points', 'title'),
+            'press_any_button_continue': (),
             'press_any_button_play_again': (),
+            'press_any_key_button_continue': (),
             'press_any_key_button_play_again': (),
             'press_jump_to_fly': (),
+            'quad_kill': (),
             'reach_wave_2': (),
             'score': (),
+            'solo_name_filter': ('name',),
+            'time_expired': (),
+            'tip_title': (),
+            'tournament_time_expired': (),
+            'triple_kill': (),
+            'turbo_warning': ('name',),
             'victory': (),
             'vs': (),
+            'waiting_for_host': ('host',),
+        },
+        'gamedescriptions': {
+            'be_the_chosen_one_for_a': (),
+            'bomb_as_many_targets_as_you': (),
+            'carry_the_flag_for_a_set': (),
+            'carry_the_flag_for_seconds': ('arg1',),
+            'carry_the_flag_for_seconds_2': ('arg1',),
+            'crush_of_your_enemies': ('arg1',),
+            'defeat_all_enemies': (),
+            'dodge_the_falling_bombs': (),
+            'final_glorious_epic_slow_motion_battle': (),
+            'gather_eggs': (),
+            'get_the_flag_to_the_enemy': (),
+            'how_fast_can_you_defeat_the': (),
+            'kill_a_set_number_of_enemies': (),
+            'kill_enemies': ('arg1',),
+            'last_one_standing_wins': (),
+            'last_one_standing_wins_2': (),
+            'last_remaining_alive_wins': (),
+            'last_team_standing_wins': (),
+            'last_team_standing_wins_2': (),
+            'prevent_enemies_from_reaching_the_exit': (),
+            'reach_the_enemy_flag_to_score': (),
+            'return_1_flag': (),
+            'return_flags': ('arg1',),
+            'return_the_enemy_flag_to_score': (),
+            'run_1_lap': (),
+            'run_1_lap_2': (),
+            'run_1_lap_your_entire_team': (),
+            'run_laps': ('arg1',),
+            'run_laps_2': ('arg1',),
+            'run_laps_your_entire_team_has': ('arg1',),
+            'run_real_fast': (),
+            'score_a_goal': (),
+            'score_a_goal_2': (),
+            'score_a_touchdown': (),
+            'score_a_touchdown_2': (),
+            'score_goals': ('arg1',),
+            'score_goals_2': ('arg1',),
+            'score_some_goals': (),
+            'score_touchdowns': ('arg1',),
+            'score_touchdowns_2': ('arg1',),
+            'secure_all_flags': ('arg1',),
+            'secure_all_flags_2': ('arg1',),
+            'secure_all_flags_on_the_map': (),
+            'secure_the_flag_for_a_set': (),
+            'secure_the_flag_for_seconds': ('arg1',),
+            'secure_the_flag_for_seconds_2': ('arg1',),
+            'steal_the_enemy_flag': (),
+            'steal_the_enemy_flag_times': ('arg1',),
+            'there_can_be_only_one': (),
+            'touch_1_flag': (),
+            'touch_flags': ('arg1',),
+            'touch_the_enemy_flag': (),
+            'touch_the_enemy_flag_times': ('arg1',),
+        },
+        'gamenames': {
+            'assault': (),
+            'capture_the_flag': (),
+            'chosen_one': (),
+            'conquest': (),
+            'death_match': (),
+            'easter_egg_hunt': (),
+            'elimination': (),
+            'football': (),
+            'hockey': (),
+            'keep_away': (),
+            'king_of_the_hill': (),
+            'meteor_shower': (),
+            'ninja_fight': (),
+            'onslaught': (),
+            'race': (),
+            'runaround': (),
+            'target_practice': (),
+            'the_last_stand': (),
         },
         'gather': {
             'about': (),
@@ -7645,6 +9793,7 @@ _TREE = {
             'favorites_save': (),
             'free_cloud_server_available': (),
             'free_cloud_server_available_minutes': ('minutes',),
+            'free_cloud_server_not_available': (),
             'get_friend_invite_code': (),
             'host_public_party': (),
             'hosting_unavailable': (),
@@ -7761,6 +9910,12 @@ _TREE = {
             'only_available_signed_in': (),
             'title': (),
         },
+        'keyboard': {
+            'change_instructions': (),
+            'no_others_available': (),
+            'space_key': (),
+            'switched': ('name',),
+        },
         'kiosk': {
             'demo_menu': (),
             'full_menu': (),
@@ -7770,7 +9925,10 @@ _TREE = {
         'league': {
             'achievements_unavailable_old_seasons': (),
             'all_time': (),
+            'bronze': (),
             'current_season': ('number',),
+            'diamond': (),
+            'gold': (),
             'league': (),
             'league_president': (),
             'league_rank': (),
@@ -7784,11 +9942,24 @@ _TREE = {
             'season_ends_days': ('days',),
             'season_ends_hours': ('hours',),
             'season_ends_minutes': ('minutes',),
+            'silver': (),
             'to_ranked': (),
+            'tournament_required': ('name',),
             'trophy_counts_reset': (),
             'up_to_date_bonus': (),
             'up_to_date_bonus_description': ('percent',),
             'your_power_ranking': (),
+        },
+        'lobby': {
+            'bomb': (),
+            'choosing_player': (),
+            'create_edit_player': (),
+            'press_any_button_to_join': (),
+            'press_punch_to_join': (),
+            'press_to_override_character': ('buttons',),
+            'press_to_select_profile': ('buttons',),
+            'press_to_select_team': ('buttons',),
+            'ready': (),
         },
         'mainmenu': {
             'credits': (),
@@ -7801,14 +9972,41 @@ _TREE = {
             'quit': (),
             'test_build': (),
         },
+        'mapnames': {
+            'big_g': (),
+            'bridgit': (),
+            'courtyard': (),
+            'crag_castle': (),
+            'doom_shroom': (),
+            'football_stadium': (),
+            'happy_thoughts': (),
+            'hockey_stadium': (),
+            'lake_frigid': (),
+            'monkey_face': (),
+            'rampage': (),
+            'roundabout': (),
+            'step_right_up': (),
+            'the_pad': (),
+            'tip_top': (),
+            'tower_d': (),
+            'zigzag': (),
+        },
         'multiteam': {
+            'best_of_series': ('count',),
             'deaths': (),
+            'first_to_series': ('count',),
+            'game_leaders': ('count',),
+            'games_to': ('wincount', 'losecount'),
             'kills': (),
             'most_destroyed_player': (),
             'most_valuable_player': (),
             'most_violent_player': (),
+            'must_invite_friends': ('gather',),
             'player': (),
             'series': (),
+            'team_label': ('name',),
+            'wins': ('name',),
+            'wins_the_series_intro': (),
         },
         'party': {
             'add_to_favorites': (),
@@ -7818,6 +10016,7 @@ _TREE = {
             'empty': (),
             'host': (),
             'kick_vote': (),
+            'mute_chat': (),
             'title': (),
             'unmute_chat': (),
         },
@@ -7832,6 +10031,9 @@ _TREE = {
             'cant_save_already_exists': (),
             'cant_save_empty': (),
             'cant_share_default': (),
+            'customize_title': ('type',),
+            'default_list_name': ('playmode',),
+            'default_new_list_name': ('playmode',),
             'delete_playlist': (),
             'duplicate_playlist': (),
             'edit_game_button': (),
@@ -7841,7 +10043,10 @@ _TREE = {
             'get_more_games': (),
             'get_more_maps': (),
             'import_instructions': (),
+            'just_epic': (),
+            'just_sports': (),
             'list_name': (),
+            'map_select_title': ('game',),
             'new_playlist': (),
             'no_valid_maps': (),
             'playlists': (),
@@ -7855,6 +10060,8 @@ _TREE = {
         },
         'playoptions': {
             'no_valid_games': (),
+            'points_to_win': (),
+            'series_length': (),
             'show_tutorial': (),
             'shuffle_game_order': (),
             'team_names_colors': (),
@@ -7862,6 +10069,7 @@ _TREE = {
         },
         'profile': {
             'account_profile': (),
+            'account_profile_info': ('icons',),
             'available': ('name',),
             'cant_delete_account_profile': (),
             'character': (),
@@ -7901,7 +10109,21 @@ _TREE = {
             'tickets_description': (),
             'tokens_description': (),
         },
+        'scoretypes': {
+            'flags': (),
+            'goals': (),
+            'survived': (),
+            'time': (),
+            'time_held': (),
+        },
         'sendinfo': {'send_info_description': ()},
+        'server': {'restarting': (), 'shutting_down': ()},
+        'session': {
+            'not_enough_players': ('count',),
+            'player_delayed_join': ('player',),
+            'player_left': ('player',),
+            'player_limit_reached': ('count',),
+        },
         'settings': {
             'advanced': {
                 'always_use_internal_keyboard': (),
@@ -8064,11 +10286,13 @@ _TREE = {
             'delete_soundtrack': (),
             'duplicate_soundtrack': (),
             'edit_soundtrack': (),
+            'error_playing_music': ('music',),
             'fetching_itunes': (),
             'music_source': (),
             'music_volume_zero_warning': (),
             'new_soundtrack': (),
             'new_soundtrack_name': ('count',),
+            'no_music_files_in_folder': (),
             'select_a_playlist': (),
             'test': (),
             'title': (),
@@ -8076,7 +10300,10 @@ _TREE = {
             'use_itunes_playlist': (),
             'use_music_file': (),
             'use_music_folder': (),
+            'using_music_app': (),
         },
+        'store': {'merch': (), 'pro_name': ('app_name',)},
+        'teams': {'bad_guys': (), 'blue': (), 'good_guys': (), 'red': ()},
         'tournamententry': {
             'tickets_count': ('count',),
             'title': (),
@@ -8114,16 +10341,20 @@ _TREE = {
             'to_skip_press_anything': (),
         },
         'ui': {
+            'accept': (),
             'achievements': (),
             'activity': (),
             'all': (),
             'always': (),
+            'angle_button_suffix': ('main', 'button'),
             'app_name': (),
             'apply': (),
+            'are_you_sure': (),
             'auto': (),
             'back': (),
             'boost': (),
             'cancel': (),
+            'claim': (),
             'code': (),
             'confirm': (),
             'connect': (),
@@ -8133,12 +10364,14 @@ _TREE = {
             'copied_to_clipboard': (),
             'copy': (),
             'customize': (),
+            'decline': (),
             'delete': (),
             'demo': (),
             'deprecated': (),
             'description': (),
             'direct_browser_to_url': (),
             'disabled': (),
+            'discard': (),
             'done': (),
             'duplicate': (),
             'easy': (),
@@ -8148,6 +10381,7 @@ _TREE = {
             'epic_mode': (),
             'error': (),
             'error_occurred': (),
+            'exit_app_confirm': ('app_name',),
             'filter': (),
             'final_score': (),
             'free': (),
@@ -8157,6 +10391,7 @@ _TREE = {
             'high': (),
             'higher': (),
             'icon_label': ('icon', 'label'),
+            'ignore': (),
             'import_': (),
             'importing': (),
             'inbox': (),
@@ -8191,11 +10426,13 @@ _TREE = {
             'please_wait': (),
             'points': (),
             'practice': (),
+            'quit_app_confirm': ('app_name',),
             'random': (),
             'rank': (),
             'remote_app_name': (),
             'rename': (),
             'reset': (),
+            'restart': (),
             'retry': (),
             'save': (),
             'select': (),
@@ -8232,6 +10469,7 @@ _TREE = {
             'replay_name': (),
             'replay_name_default': (),
             'replay_rename_error': (),
+            'replay_rename_error_already_exists': (),
             'replay_rename_error_invalid': (),
             'title': (),
             'watch_replay_button': (),

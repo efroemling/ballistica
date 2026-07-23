@@ -42,6 +42,9 @@ value_cases: list[LangStrSpec] = [
         {'inner': LangStrSpecValue('{x} rules', {'x': 'recursion'})},
     ),
     LangStrSpecValue('Non-token braces stay literal: {Weird} {9foo} { } {x'),
+    # Escaped braces: {{ -> { and }} -> }, even around a token pattern.
+    LangStrSpecValue('Score {{x}} pts and {{y}}.'),
+    LangStrSpecValue('Mixed {name} with {{lit}}.', {'name': 'Bo'}),
     LangStrSpecValue('Unicode: \\u3053\\u3093\\u306b\\u3061\\u306f {who}',
                  {'who': '\\u4e16\\u754c'}),
 ]
@@ -54,6 +57,18 @@ for case in value_cases:
     native = babase.LangStr(dataclass_to_json(case))
     got = native.evaluate()
     assert got == expected, f'{got!r} != {expected!r} for {case}'
+
+# babase.LangStr.from_text wraps arbitrary text as a literal: any
+# brace survives, including a token-shaped run, on both the native
+# round-trip and the Python-side escape derivation.
+for text in ['ModGame', '100% {x} done', '{v}', '{{already}}', 'C#', 'no{']:
+    got = babase.LangStr.from_text(text).evaluate()
+    assert got == text, f'from_text: {got!r} != {text!r}'
+
+# ...and its wire form parses/evaluates identically through the Python
+# decode path, confirming the escape convention matches.
+ft_json = babase.LangStr.from_text('a {b} c').to_json()
+assert pyctx.decode(dataclass_from_json(LangStrSpec, ft_json)) == 'a {b} c'
 
 # Missing-substitution is fail-visible on both sides.
 missing = LangStrSpecValue('Hi {name}.')

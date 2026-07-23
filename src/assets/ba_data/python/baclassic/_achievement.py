@@ -919,7 +919,7 @@ class Achievement:
 
             if hmo:
                 txtactor = Text(
-                    babase.Lstr(resource='difficultyHardOnlyText'),
+                    classicassets.strings.coop.difficulty_hard_only,
                     host_only=True,
                     maxwidth=txt2_max_w * 0.7,
                     position=(x + 60, y + 5),
@@ -1115,7 +1115,7 @@ class Achievement:
                     # when that's the case.
                     if hmo:
                         txtactor = Text(
-                            babase.Lstr(resource='difficultyHardOnlyText'),
+                            classicassets.strings.coop.difficulty_hard_only,
                             host_only=True,
                             maxwidth=300 * 0.7,
                             position=(x + 60, y + 5),
@@ -1406,10 +1406,7 @@ class Achievement:
         objs.append(obj)
 
         objt = Text(
-            babase.Lstr(
-                value='${A}:',
-                subs=[('${A}', babase.Lstr(resource='achievementText'))],
-            ),
+            classicassets.strings.coop.achievement_label,
             position=(-120, 91 + y_offs),
             front=True,
             v_attach=Text.VAttach.BOTTOM,

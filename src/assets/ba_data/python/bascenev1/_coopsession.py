@@ -272,6 +272,7 @@ class CoopSession(Session):
         from bascenev1lib.activity.coopscore import CoopScoreScreen
         from bascenev1lib.tutorial import TutorialActivity
 
+        from bascenev1 import classicassets
         from bascenev1._gameresults import GameResults
         from bascenev1._player import PlayerInfo
         from bascenev1._activitytypes import JoinActivity, TransitionActivity
@@ -353,7 +354,7 @@ class CoopSession(Session):
                     ):
                         self._custom_menu_ui = [
                             {
-                                'label': babase.Lstr(resource='restartText'),
+                                'label': classicassets.strings.ui.restart,
                                 'resume_on_call': False,
                                 'call': babase.WeakCallPartial(
                                     self._on_tournament_restart_menu_press
@@ -363,7 +364,7 @@ class CoopSession(Session):
                     else:
                         self._custom_menu_ui = [
                             {
-                                'label': babase.Lstr(resource='restartText'),
+                                'label': classicassets.strings.ui.restart,
                                 'call': babase.WeakCallStrict(self.restart),
                             }
                         ]

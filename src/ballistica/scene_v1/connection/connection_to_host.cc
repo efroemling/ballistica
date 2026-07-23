@@ -94,7 +94,7 @@ static auto RejectReasonMessage_(int reason) -> std::string {
     case BA_REJECT_REASON_AUTH_ERROR:
       return base::BuiltinStrings::Net::AuthError()->Evaluate();
     case BA_REJECT_REASON_MUST_SIGN_IN:
-      return base::BuiltinStrings::Net::MustSignIn()->Evaluate();
+      return base::BuiltinStrings::Account::MustSignIn()->Evaluate();
     default:
       return g_base->assets->GetResourceString("connectionRejectedText");
   }

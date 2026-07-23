@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import builtinassets
+from bauiv1 import builtinassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -37,11 +37,11 @@ class ConfirmWindow:
         self._id_prefix = ui.new_id_prefix('confirm')
 
         if text is None:
-            text = bui.Lstr(resource='areYouSureText')
+            text = classicassets.strings.ui.are_you_sure
         if ok_text is None:
-            ok_text = bui.Lstr(resource='okText')
+            ok_text = classicassets.strings.ui.ok
         if cancel_text is None:
-            cancel_text = bui.Lstr(resource='cancelText')
+            cancel_text = classicassets.strings.ui.cancel
         height += 40
         width = max(width, 360)
         self._action = action
@@ -181,17 +181,16 @@ class QuitWindow:
             builtinassets.audio.swish.get().play()
 
         # Generally Macs say Quit and other stuff says Exit
-        quit_resource = (
-            'quitGameText'
+        strs = classicassets.strings.ui
+        confirmstr = (
+            strs.quit_app_confirm
             if platform is type(platform).MACOS
-            else 'exitGameText'
+            else strs.exit_app_confirm
         )
+        quit_text = confirmstr(app_name=strs.app_name)
 
         self._root_widget = ui.quit_window = ConfirmWindow(
-            bui.Lstr(
-                resource=quit_resource,
-                subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
-            ),
+            quit_text,
             lambda: (
                 bui.quit(confirm=False, quit_type=self._quit_type)
                 if self._quit_type is not None

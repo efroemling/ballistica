@@ -249,6 +249,14 @@ def _writefuncs(
                     'import bascenev1  # pylint: disable=cyclic-import\n'
                     'return bascenev1.Player()'
                 )
+            elif returns == 'babase.LangStr':
+                # LangStr's constructor requires an arg, so the generic
+                # 'return babase.LangStr()' below won't type-check; build
+                # a valid empty literal instead.
+                returnstr = (
+                    'import babase  # pylint: disable=cyclic-import\n'
+                    "return babase.LangStr.from_text('')"
+                )
             elif returns.startswith('babase.') and ' | None' not in returns:
                 # We cant import babase at module level so let's
                 # do it within funcs as needed.

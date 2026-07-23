@@ -753,12 +753,17 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
 
   SimpleComponent c(frame_def->overlay_front_pass());
   c.SetTransparent(true);
-  c.SetTexture(
-      g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircleShadow));
+  auto* button_tex =
+      g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircleShadow);
+  c.SetTexture(button_tex);
+  // Premultiply rgb by alpha for the premultiplied texture so the faded
+  // (alpha 0.8) button composites 'over' correctly (see
+  // docs/design/premultiplied-alpha.md).
+  float cmul = button_tex->premultiplied() ? 0.8f : 1.0f;
   if (dev_console_button_pressed_) {
-    c.SetColor(1.0f, 1.0f, 1.0f, 0.8f);
+    c.SetColor(cmul, cmul, cmul, 0.8f);
   } else {
-    c.SetColor(0.5f, 0.5f, 0.5f, 0.8f);
+    c.SetColor(0.5f * cmul, 0.5f * cmul, 0.5f * cmul, 0.8f);
   }
   {
     auto xf = c.ScopedTransform();

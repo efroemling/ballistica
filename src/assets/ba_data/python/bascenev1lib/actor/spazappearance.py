@@ -4,13 +4,87 @@
 
 # pylint: disable=too-many-lines
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
+import babase
 import bascenev1 as bs
 from bascenev1 import classicassets
 
 if TYPE_CHECKING:
+    from typing import Literal
+
     from collections.abc import Container
+
+
+def _character_name_table() -> dict[str, babase.LangStr]:
+    """Appearance name -> its authored display name.
+
+    First-party appearances with an authored name; mirrors the
+    store-side mapping in bamaster ``storeitem.py`` (``OldLady``/
+    ``Zola`` are internal keys whose display names are Betty/Lucky).
+    Appearances absent here -- mods', plus the never-translated
+    Alien/Gladiator/Robot/Warrior/Witch/Wrestler -- show their own
+    name untranslated.
+    """
+    c = classicassets.strings.characters
+    return {
+        'Kronk': c.kronk,
+        'Zoe': c.zoe,
+        'Jack Morgan': c.jack_morgan,
+        'Mel': c.mel,
+        'Snake Shadow': c.snake_shadow,
+        'Bones': c.bones,
+        'Bernard': c.bernard,
+        'Agent Johnson': c.agent_johnson,
+        'Frosty': c.frosty,
+        'Pascal': c.pascal,
+        'Pixel': c.pixel,
+        'Grumbledorf': c.grumbledorf,
+        'B-9000': c.b9000,
+        'Santa Claus': c.santa_claus,
+        'Easter Bunny': c.easter_bunny,
+        'Taobao Mascot': c.taobao_mascot,
+        'OldLady': c.betty,
+        'Zola': c.lucky,
+        'Butch': c.butch,
+        'Gretel': c.gretel,
+        'Lee': c.lee,
+        'Middle-Man': c.middle_man,
+        'Spaz': c.spaz,
+        'Todd McBurton': c.todd_mcburton,
+    }
+
+
+@overload
+def get_appearance_display_name(
+    name: str, *, langstr: Literal[False] = False
+) -> babase.Lstr: ...
+
+
+@overload
+def get_appearance_display_name(
+    name: str, *, langstr: Literal[True]
+) -> babase.LangStr: ...
+
+
+def get_appearance_display_name(
+    name: str, *, langstr: bool = False
+) -> babase.Lstr | babase.LangStr:
+    """Return a displayable name for a spaz appearance.
+
+    ``name`` is an appearance's registered key (see
+    :func:`get_appearances`). First-party characters resolve to their
+    authored name; a mod's character (or one we have no entry for) is
+    shown exactly as its key.
+
+    Pass ``langstr=True`` to receive a :class:`~babase.LangStr`. The
+    legacy :class:`~babase.Lstr` form goes away when api 9 support
+    ends.
+    """
+    if langstr:
+        entry = _character_name_table().get(name)
+        return entry if entry is not None else babase.LangStr.from_text(name)
+    return babase.Lstr(translate=('characterNames', name))
 
 
 def get_appearances(

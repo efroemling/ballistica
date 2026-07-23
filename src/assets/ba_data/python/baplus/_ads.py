@@ -36,6 +36,10 @@ class AdsSubsystem:
 
     def do_remove_in_game_ads_message(self) -> None:
         """:meta private:"""
+        # Safe up-call: the featureset is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from babase import builtinassets
 
         # Print this message once every 10 minutes at most.
         tval = babase.apptime()
@@ -47,9 +51,7 @@ class AdsSubsystem:
                 babase.apptimer(
                     1.0,
                     lambda: babase.screenmessage(
-                        babase.Lstr(
-                            resource='removeInGameAdsTokenPurchaseText'
-                        ),
+                        builtinassets.strings.store.remove_ads_token_offer,
                         color=(1, 1, 0),
                     ),
                 )

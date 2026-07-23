@@ -75,15 +75,15 @@ def set_config_fullscreen_off() -> None:
 
 
 def not_signed_in_screen_message() -> None:
-    from babase._language import Lstr
+    from babase import builtinassets
 
-    _babase.screenmessage(Lstr(resource='notSignedInErrorText'))
+    _babase.screenmessage(builtinassets.strings.account.must_sign_in)
 
 
 def open_url_with_webbrowser_module(url: str) -> None:
     """Show a URL in the browser or print on-screen error if we can't."""
     import webbrowser
-    from babase._language import Lstr
+    from babase import builtinassets
 
     assert _babase.in_logic_thread()
     try:
@@ -91,86 +91,85 @@ def open_url_with_webbrowser_module(url: str) -> None:
     except Exception:
         logging.exception("Error displaying url '%s'.", url)
         _babase.getsimplesound('error').play()
-        _babase.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
+        _babase.screenmessage(builtinassets.strings.ui.error, color=(1, 0, 0))
 
 
 def temporarily_unavailable_message() -> None:
-    from babase._language import Lstr
+    from babase import builtinassets
 
     if _babase.app.env.gui:
         _babase.getsimplesound('error').play()
         _babase.screenmessage(
-            Lstr(resource='getTicketsWindow.unavailableTemporarilyText'),
+            builtinassets.strings.store.unavailable_temporarily,
             color=(1, 0, 0),
         )
 
 
 def in_progress_message() -> None:
-    from babase._language import Lstr
+    from babase import builtinassets
 
     if _babase.app.env.gui:
         _babase.getsimplesound('error').play()
         _babase.screenmessage(
-            Lstr(resource='getTicketsWindow.inProgressText'),
+            builtinassets.strings.store.transaction_in_progress,
             color=(1, 0, 0),
         )
 
 
 def error_message() -> None:
-    from babase._language import Lstr
+    from babase import builtinassets
 
     if _babase.app.env.gui:
         _babase.getsimplesound('error').play()
-        _babase.screenmessage(Lstr(resource='errorText'), color=(1, 0, 0))
+        _babase.screenmessage(builtinassets.strings.ui.error, color=(1, 0, 0))
 
 
 def success_message() -> None:
-    from babase._language import Lstr
+    from babase import builtinassets
 
     if _babase.app.env.gui:
         _babase.getsimplesound('dingSmall').play()
-        _babase.screenmessage(Lstr(resource='successText'), color=(0, 1, 0))
+        _babase.screenmessage(builtinassets.strings.ui.success, color=(0, 1, 0))
 
 
 def purchase_not_valid_error() -> None:
-    from babase._language import Lstr
+    from babase import builtinassets
 
     if _babase.app.env.gui:
         _babase.getsimplesound('error').play()
         _babase.screenmessage(
-            Lstr(
-                resource='store.purchaseNotValidError',
-                subs=[('${EMAIL}', 'support@froemling.net')],
+            builtinassets.strings.store.purchase_not_valid(
+                email='support@froemling.net'
             ),
             color=(1, 0, 0),
         )
 
 
 def purchase_already_in_progress_error() -> None:
-    from babase._language import Lstr
+    from babase import builtinassets
 
     if _babase.app.env.gui:
         _babase.getsimplesound('error').play()
         _babase.screenmessage(
-            Lstr(resource='store.purchaseAlreadyInProgressText'),
+            builtinassets.strings.store.purchase_already_in_progress,
             color=(1, 0, 0),
         )
 
 
 def orientation_reset_cb_message() -> None:
-    from babase._language import Lstr
+    from babase import builtinassets
 
     _babase.screenmessage(
-        Lstr(resource='internal.vrOrientationResetCardboardText'),
+        builtinassets.strings.input.vr_orientation_reset_cardboard,
         color=(0, 1, 0),
     )
 
 
 def orientation_reset_message() -> None:
-    from babase._language import Lstr
+    from babase import builtinassets
 
     _babase.screenmessage(
-        Lstr(resource='internal.vrOrientationResetText'), color=(0, 1, 0)
+        builtinassets.strings.input.vr_orientation_reset, color=(0, 1, 0)
     )
 
 
@@ -229,18 +228,18 @@ def launch_coop_game(name: str) -> None:
 
 
 def purchases_restored_message() -> None:
-    from babase._language import Lstr
+    from babase import builtinassets
 
     _babase.screenmessage(
-        Lstr(resource='getTicketsWindow.purchasesRestoredText'), color=(0, 1, 0)
+        builtinassets.strings.store.purchases_restored, color=(0, 1, 0)
     )
 
 
 def unavailable_message() -> None:
-    from babase._language import Lstr
+    from babase import builtinassets
 
     _babase.screenmessage(
-        Lstr(resource='getTicketsWindow.unavailableText'), color=(1, 0, 0)
+        builtinassets.strings.store.unavailable, color=(1, 0, 0)
     )
 
 
@@ -251,18 +250,20 @@ def set_last_ad_network(sval: str) -> None:
 
 
 def google_play_purchases_not_available_message() -> None:
-    from babase._language import Lstr
+    from babase import builtinassets
 
     _babase.screenmessage(
-        Lstr(resource='googlePlayPurchasesNotAvailableText'), color=(1, 0, 0)
+        builtinassets.strings.store.google_play_purchases_unavailable,
+        color=(1, 0, 0),
     )
 
 
 def google_play_services_not_available_message() -> None:
-    from babase._language import Lstr
+    from babase import builtinassets
 
     _babase.screenmessage(
-        Lstr(resource='googlePlayServicesNotAvailableText'), color=(1, 0, 0)
+        builtinassets.strings.store.google_play_services_unavailable,
+        color=(1, 0, 0),
     )
 
 
@@ -285,14 +286,14 @@ def toggle_fullscreen() -> None:
 
 def ui_remote_press() -> None:
     """Handle a press by a remote device that is only usable for nav."""
-    from babase._language import Lstr
+    from babase import builtinassets
 
     if _babase.app.env.headless:
         return
 
     # Can be called without a context; need a context for getsound.
     _babase.screenmessage(
-        Lstr(resource='internal.controllerForMenusOnlyText'),
+        builtinassets.strings.input.controller_menus_only,
         color=(1, 0, 0),
     )
     _babase.getsimplesound('error').play()
@@ -439,14 +440,14 @@ def get_dev_console_tab_names() -> list[str]:
 
 def unsupported_controller_message(name: str) -> None:
     """Print a message when an unsupported controller is connected."""
-    from babase._language import Lstr
+    from babase import builtinassets
 
     # Ick; this can get called early in the bootstrapping process
     # before we're allowed to load assets. Guard against that.
     if _babase.asset_loads_allowed():
         _babase.getsimplesound('error').play()
     _babase.screenmessage(
-        Lstr(resource='unsupportedControllerText', subs=[('${NAME}', name)]),
+        builtinassets.strings.input.unsupported_controller(name=name),
         color=(1, 0, 0),
     )
 
@@ -454,12 +455,12 @@ def unsupported_controller_message(name: str) -> None:
 def copy_dev_console_history() -> None:
     """Copy log history from the dev console."""
     import baenv
-    from babase._language import Lstr
+    from babase import builtinassets
 
     if not _babase.clipboard_is_supported():
         _babase.getsimplesound('error').play()
         _babase.screenmessage(
-            'Clipboard not supported on this build.',
+            builtinassets.strings.ui.clipboard_not_supported,
             color=(1, 0, 0),
         )
         return
@@ -484,7 +485,9 @@ def copy_dev_console_history() -> None:
         lines.append(f'{reltime:.3f}{level_ex} {entry.name}: {entry.message}')
 
     _babase.clipboard_set_text('\n'.join(lines))
-    _babase.screenmessage(Lstr(resource='copyConfirmText'), color=(0, 1, 0))
+    _babase.screenmessage(
+        builtinassets.strings.ui.copied_to_clipboard, color=(0, 1, 0)
+    )
     _babase.getsimplesound('gunCocking').play()
 
 

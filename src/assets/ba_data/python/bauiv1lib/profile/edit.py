@@ -672,9 +672,8 @@ class EditProfileWindow(
                 ]
             ]
         )
-        txtl = bui.Lstr(
-            resource='editProfileWindow.accountProfileInfoText',
-            subs=[('${ICONS}', icons_str)],
+        txtl = classicassets.strings.profile.account_profile_info(
+            icons=icons_str
         )
         ConfirmWindow(
             txtl,

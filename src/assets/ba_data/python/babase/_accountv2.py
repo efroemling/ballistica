@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
     import bacommon.cloud
 
+    from babase import LangStr
     from babase._login import LoginAdapter, LoginInfo
 
 
@@ -341,7 +342,7 @@ class AccountV2Subsystem:
 
         :meta private:
         """
-        from babase._language import Lstr
+        from babase import builtinassets
 
         assert _babase.in_logic_thread()
 
@@ -370,14 +371,14 @@ class AccountV2Subsystem:
                 self.primary is not None
                 and not self.login_adapters[login_type].is_back_end_active()
             ):
-                service_str: Lstr | None
+                service_str: LangStr | None
                 if login_type is LoginType.GPGS:
-                    service_str = Lstr(resource='googlePlayText')
+                    service_str = builtinassets.strings.ui.google_play
                 elif login_type is LoginType.GAME_CENTER:
                     # Note: Apparently Game Center is just called 'Game
                     # Center' in all languages. Can revisit if not true.
                     # https://developer.apple.com/forums/thread/725779
-                    service_str = Lstr(value='Game Center')
+                    service_str = builtinassets.strings.ui.game_center
                 elif login_type is LoginType.EMAIL:
                     # Not possible; just here for exhaustive coverage.
                     service_str = None
@@ -391,12 +392,8 @@ class AccountV2Subsystem:
                         2.0,
                         partial(
                             _babase.screenmessage,
-                            Lstr(
-                                resource='notUsingAccountText',
-                                subs=[
-                                    ('${ACCOUNT}', state.display_name),
-                                    ('${SERVICE}', service_str),
-                                ],
+                            builtinassets.strings.account.not_using_account(
+                                service=service_str
                             ),
                             (1, 0.5, 0),
                         ),
@@ -533,7 +530,7 @@ class AccountV2Subsystem:
         result: LoginAdapter.SignInResult | Exception,
     ) -> None:
         """A sign-in has completed that the user asked for explicitly."""
-        from babase._language import Lstr
+        from babase import builtinassets
 
         del adapter  # Unused.
 
@@ -553,7 +550,7 @@ class AccountV2Subsystem:
 
             # For now just show 'error'. Should do better than this.
             _babase.screenmessage(
-                Lstr(resource='internal.signInErrorText'),
+                builtinassets.strings.account.sign_in_error,
                 color=(1, 0, 0),
             )
             _babase.getsimplesound('error').play()

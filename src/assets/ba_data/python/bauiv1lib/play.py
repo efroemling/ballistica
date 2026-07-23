@@ -258,10 +258,7 @@ class PlayWindow(bui.MainWindow):
                 draw_controller=btn,
                 position=(hoffs + scl * (-10), v + scl * 95),
                 size=(scl * button_width, scl * 50),
-                text=bui.Lstr(
-                    resource='playModes.singlePlayerCoopText',
-                    fallback_resource='playModes.coopText',
-                ),
+                text=classicassets.strings.playmodes.single_player_coop,
                 maxwidth=scl * button_width * 0.7,
                 res_scale=1.5,
                 h_align='center',
@@ -382,9 +379,7 @@ class PlayWindow(bui.MainWindow):
             draw_controller=btn,
             position=(hoffs + scl * (-10), v + scl * 95),
             size=(scl * button_width, scl * 50),
-            text=bui.Lstr(
-                resource='playModes.teamsText', fallback_resource='teamsText'
-            ),
+            text=classicassets.strings.playmodes.teams,
             res_scale=1.5,
             maxwidth=scl * button_width * 0.7,
             h_align='center',
@@ -499,10 +494,7 @@ class PlayWindow(bui.MainWindow):
             draw_controller=btn,
             position=(hoffs + scl * (-10), v + scl * 95),
             size=(scl * button_width, scl * 50),
-            text=bui.Lstr(
-                resource='playModes.freeForAllText',
-                fallback_resource='freeForAllText',
-            ),
+            text=classicassets.strings.playmodes.free_for_all,
             maxwidth=scl * button_width * 0.7,
             h_align='center',
             v_align='center',

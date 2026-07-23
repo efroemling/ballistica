@@ -96,10 +96,7 @@ class KioskWindow(bui.MainWindow):
                 position=(self._width * 0.5, self._height + y_extra - 34),
                 transition_delay=tdelay,
                 text=(
-                    bui.Lstr(
-                        resource='demoText',
-                        fallback_resource='mainMenu.demoMenuText',
-                    )
+                    classicassets.strings.ui.demo
                     if variant is vart.DEMO
                     else 'ARCADE'
                 ),
@@ -253,7 +250,7 @@ class KioskWindow(bui.MainWindow):
                 size=(0, 0),
                 position=(h, label_height),
                 maxwidth=b_width * 0.7,
-                text=bui.Lstr(translate=('gameNames', 'Capture the Flag')),
+                text=classicassets.strings.gamenames.capture_the_flag,
                 scale=1.3,
                 h_align='center',
                 v_align='center',
@@ -289,7 +286,7 @@ class KioskWindow(bui.MainWindow):
                 size=(0, 0),
                 position=(h, label_height),
                 maxwidth=b_width * 0.7,
-                text=bui.Lstr(translate=('gameNames', 'Hockey')),
+                text=classicassets.strings.gamenames.hockey,
                 scale=1.3,
                 h_align='center',
                 v_align='center',

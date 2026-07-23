@@ -603,7 +603,7 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
         bs.timer(4.0, self._start_powerup_drops)
 
         # Make a bogus team for our bots.
-        bad_team_name = self.get_team_display_string('Bad Guys')
+        bad_team_name = self.get_team_display_string('Bad Guys', langstr=True)
         self._bot_team = Team()
         self._bot_team.manual_init(
             team_id=1, name=bad_team_name, color=(0.5, 0.4, 0.4)

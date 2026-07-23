@@ -14,6 +14,27 @@ if TYPE_CHECKING:
     import bascenev1
 
 
+def get_default_team_display_name(name: str) -> str | babase.LangStr:
+    """Return a displayable name for a team.
+
+    Team names are player-editable, so only the built-in defaults have
+    authored entries; a custom name is shown exactly as the player
+    typed it.
+    """
+    # Safe up-call: bascenev1 is fully imported by the time this runs;
+    # the cycle pylint sees is structural only.
+    # pylint: disable-next=cyclic-import
+    from bascenev1 import classicassets
+
+    strs = classicassets.strings.teams
+    return {
+        'Good Guys': strs.good_guys,
+        'Bad Guys': strs.bad_guys,
+        'Blue': strs.blue,
+        'Red': strs.red,
+    }.get(name, name)
+
+
 class SessionTeam:
     """A team of one or more :class:`~bascenev1.SessionPlayer`.
 
@@ -26,7 +47,11 @@ class SessionTeam:
     # introspectable by docs tools/etc.
 
     #: The team's name.
-    name: babase.Lstr | str
+    #:
+    #: Built-in default names are :class:`~babase.LangStr`
+    #: values; names the player typed themselves are plain
+    #: strings, shown as-is.
+    name: str | babase.LangStr
 
     #: The team's color.
     color: tuple[float, ...]  # FIXME: can't we make this fixed len?
@@ -45,11 +70,13 @@ class SessionTeam:
     def __init__(
         self,
         team_id: int = 0,
-        name: babase.Lstr | str = '',
+        name: str | babase.Lstr | babase.LangStr = '',
         color: Sequence[float] = (1.0, 1.0, 1.0),
     ):
         self.id = team_id
-        self.name = name
+        # A legacy Lstr (from a mod) flattens on the way in so
+        # consumers only ever deal with str | LangStr.
+        self.name = name.evaluate() if isinstance(name, babase.Lstr) else name
         self.color = tuple(color)
         self.players = []
         self.customdata = {}
@@ -76,7 +103,7 @@ class Team[PlayerT]:
     # that types are introspectable (these are still instance attrs).
     players: list[PlayerT]
     id: int
-    name: babase.Lstr | str
+    name: str | babase.LangStr
     color: tuple[float, ...]  # FIXME: can't we make this fixed length?
     _sessionteam: weakref.ref[SessionTeam]
     _expired: bool
@@ -114,11 +141,14 @@ class Team[PlayerT]:
         self._postinited = True
 
     def manual_init(
-        self, team_id: int, name: babase.Lstr | str, color: tuple[float, ...]
+        self,
+        team_id: int,
+        name: str | babase.Lstr | babase.LangStr,
+        color: tuple[float, ...],
     ) -> None:
         """Manually init a team for uses such as bots."""
         self.id = team_id
-        self.name = name
+        self.name = name.evaluate() if isinstance(name, babase.Lstr) else name
         self.color = color
         self._customdata = {}
         self._expired = False

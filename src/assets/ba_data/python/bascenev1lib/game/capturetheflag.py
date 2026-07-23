@@ -330,9 +330,7 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
                 # And show team name which scored (but actually we could
                 # show here player who returned enemy flag).
                 self.show_zoom_message(
-                    bs.Lstr(
-                        resource='nameScoresText', subs=[('${NAME}', team.name)]
-                    ),
+                    classicassets.strings.game.name_scores(name=team.name),
                     color=team.color,
                 )
                 self._score(team)

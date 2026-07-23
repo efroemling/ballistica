@@ -8,7 +8,14 @@ from bauiv1 import classicassets
 
 
 class CoopLevelLockedWindow(bui.Window):
-    """Window showing that a level is locked."""
+    """Window showing that a level is locked.
+
+    Note: both names arrive as legacy translate=coopLevelNames
+    Lstrs, so the surrounding text stays Lstr until that category
+    ports (strings-asset-migration D35). The authored
+    coop/level_is_locked and coop/level_must_be_completed_first
+    entries are ready and waiting for that.
+    """
 
     def __init__(self, name: bui.Lstr, dep_name: bui.Lstr):
         width = 550.0

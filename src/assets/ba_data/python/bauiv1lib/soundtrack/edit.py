@@ -102,13 +102,10 @@ class SoundtrackEditWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(0, yoffs - 50),
             size=(self._width, 25),
-            text=bui.Lstr(
-                resource=self._r
-                + (
-                    '.editSoundtrackText'
-                    if existing_soundtrack is not None
-                    else '.newSoundtrackText'
-                )
+            text=(
+                classicassets.strings.soundtrack.edit_soundtrack
+                if existing_soundtrack is not None
+                else classicassets.strings.soundtrack.new_soundtrack
             ),
             color=bui.app.ui_v1.title_color,
             h_align='center',

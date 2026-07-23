@@ -191,6 +191,7 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
     @override
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
+        from bascenev1 import classicassets
         from bascenev1lib.actor.text import Text
 
         super().on_begin()
@@ -202,9 +203,9 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         if babase.app.ui_v1.uiscale is babase.UIScale.LARGE:
             # FIXME: Need a better way to determine whether we've probably
             #  got a keyboard.
-            sval = babase.Lstr(resource='pressAnyKeyButtonText')
+            sval = classicassets.strings.game.press_any_key_button_continue
         else:
-            sval = babase.Lstr(resource='pressAnyButtonText')
+            sval = classicassets.strings.game.press_any_button_continue
 
         Text(
             (

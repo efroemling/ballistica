@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import classicassets
+from bascenev1 import builtinassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -496,11 +496,10 @@ class ControlsGuide(bs.Actor):
             pickup_button_names.clear()
 
         self._run_text.text = run_text
-        w_text: bs.Lstr | str
+        w_text: bs.Lstr | bs.LangStr | str
         if only_remote and self._lifespan is None:
-            w_text = bs.Lstr(
-                resource='fireTVRemoteWarningText',
-                subs=[('${REMOTE_APP_NAME}', bs.get_remote_app_name())],
+            w_text = classicassets.strings.controls.fire_tv_remote_warning(
+                remote_app_name=(builtinassets.strings.ui.remote_app_name)
             )
         else:
             w_text = ''

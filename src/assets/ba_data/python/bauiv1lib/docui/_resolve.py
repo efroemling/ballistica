@@ -189,7 +189,9 @@ def _resolve_packages_blocking(apverids: list[str], locale: Locale) -> None:
 
     bui.pushcall(_kick, from_other_thread=True)
     if not done.wait(timeout=30.0):
-        raise RuntimeError('Timed out resolving doc-ui asset-packages.')
+        raise RuntimeError(
+            f'Timed out resolving doc-ui asset-packages: {apverids}.'
+        )
     if 'error' in box:
         raise box['error']
 

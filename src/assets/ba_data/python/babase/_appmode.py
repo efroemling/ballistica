@@ -73,6 +73,8 @@ class AppMode:
         # pylint: disable=cyclic-import
         import babase
 
+        from babase import builtinassets
+
         del item_id  # Unused.
 
         # Show nothing for stuff not directly kicked off by the user.
@@ -80,7 +82,7 @@ class AppMode:
             return
 
         babase.screenmessage(
-            babase.Lstr(resource='updatingAccountText'),
+            builtinassets.strings.account.updating_account,
             color=(0, 1, 0),
         )
         # Ick; we can be called early in the bootstrapping process

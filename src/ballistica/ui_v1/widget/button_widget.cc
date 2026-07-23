@@ -584,13 +584,17 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                 base::BuiltinTextureID::kTexturesBombButton));
           }
         } else if (icon_.exists()) {
-          c.SetColor(icon_color_red_
+          // Premultiply rgb by alpha for a premultiplied icon texture so a
+          // faded icon (icon_color_alpha_ < 1) composites 'over' correctly
+          // (see docs/design/premultiplied-alpha.md).
+          float imul = icon_->premultiplied() ? icon_color_alpha_ : 1.0f;
+          c.SetColor(icon_color_red_ * imul
                          * (icon_tint_ * (1.7f * mult * (color_red_))
                             + (1.0f - icon_tint_) * mult),
-                     icon_color_green_
+                     icon_color_green_ * imul
                          * (icon_tint_ * (1.7f * mult * (color_green_))
                             + (1.0f - icon_tint_) * mult),
-                     icon_color_blue_
+                     icon_color_blue_ * imul
                          * (icon_tint_ * (1.7f * mult * (color_blue_))
                             + (1.0f - icon_tint_) * mult),
                      icon_color_alpha_);

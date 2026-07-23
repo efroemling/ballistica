@@ -1385,10 +1385,9 @@ class AccountSettingsWindow(bui.MainWindow):
                     1.5,
                     bui.CallStrict(
                         bui.screenmessage,
-                        bui.Lstr(
-                            resource=self._r
-                            + '.googlePlayGamesAccountSwitchText'
-                        ),
+                        (
+                            classicassets.strings.account
+                        ).google_play_games_account_switch,
                     ),
                 )
 

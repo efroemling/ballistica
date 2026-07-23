@@ -531,10 +531,9 @@ class WatchWindow(bui.MainWindow):
                 if os.path.exists(new_name_full):
                     builtinassets.audio.error.get().play()
                     bui.screenmessage(
-                        bui.Lstr(
-                            resource=self._r
-                            + '.replayRenameErrorAlreadyExistsText'
-                        ),
+                        (
+                            classicassets.strings.watch
+                        ).replay_rename_error_already_exists,
                         color=(1, 0, 0),
                     )
                 elif any(char in new_name_raw for char in ['/', '\\', ':']):

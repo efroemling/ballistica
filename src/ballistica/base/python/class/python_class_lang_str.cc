@@ -187,6 +187,38 @@ auto PythonClassLangStr::ToResourceJson(PythonClassLangStr* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassLangStr::FromText(PyObject* cls, PyObject* arg) -> PyObject* {
+  BA_PYTHON_TRY;
+  if (!PyUnicode_Check(arg)) {
+    throw Exception("Expected a str.", PyExcType::kType);
+  }
+  Py_ssize_t size;
+  const char* utf8 = PyUnicode_AsUTF8AndSize(arg, &size);
+  if (utf8 == nullptr) {
+    throw Exception("Unable to decode str.", PyExcType::kValue);
+  }
+  // Double every brace so any {token}-shaped run in the caller's text
+  // survives evaluation untouched ({{ -> { and }} -> } at eval time).
+  // The result is a pure literal value form: no subs, no package.
+  std::string doubled;
+  doubled.reserve(static_cast<size_t>(size));
+  for (Py_ssize_t i = 0; i < size; ++i) {
+    char c = utf8[i];
+    if (c == '{') {
+      doubled += "{{";
+    } else if (c == '}') {
+      doubled += "}}";
+    } else {
+      doubled += c;
+    }
+  }
+  auto ls = std::make_shared<LangStr>();
+  ls->form = LangStr::Form::kValue;
+  ls->value = std::move(doubled);
+  return Create(std::move(ls));
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassLangStr::GetSpec(PythonClassLangStr* self, void* closure)
     -> PyObject* {
   BA_PYTHON_TRY;
@@ -206,6 +238,18 @@ auto PythonClassLangStr::GetSpec(PythonClassLangStr* self, void* closure)
 std::shared_ptr<const LangStr>* PythonClassLangStr::s_pending_value_ = nullptr;
 PyTypeObject PythonClassLangStr::type_obj;
 PyMethodDef PythonClassLangStr::tp_methods[] = {
+    {"from_text", (PyCFunction)FromText, METH_O | METH_CLASS,
+     "from_text(text: str) -> babase.LangStr\n"
+     "\n"
+     "Wrap a plain string as a literal language-string.\n"
+     "\n"
+     "The text is shown exactly as given in every locale -- any\n"
+     "``{`` or ``}`` displays literally, with no substitution. Use\n"
+     "this to pass a piece of already-final text (a name a mod\n"
+     "supplied, a value with no translation entry) through an API\n"
+     "that wants a :class:`~babase.LangStr`. Anything that needs\n"
+     "substitutions or translation should be an authored\n"
+     "asset-package entry instead, so its arguments are type-checked.\n"},
     {"evaluate", (PyCFunction)Evaluate, METH_NOARGS,
      "evaluate() -> str\n"
      "\n"

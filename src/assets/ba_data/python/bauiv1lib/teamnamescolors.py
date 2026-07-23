@@ -14,6 +14,27 @@ if TYPE_CHECKING:
     from typing import Sequence
 
 
+def _team_display_name(name: str) -> str | bui.LangStr:
+    """Return a displayable name for a default team name.
+
+    Team names are player-editable, so only the built-in defaults have
+    authored entries; a custom name is shown exactly as the player
+    typed it.
+    """
+    strs = classicassets.strings.teams
+    return {
+        'Good Guys': strs.good_guys,
+        'Bad Guys': strs.bad_guys,
+        'Blue': strs.blue,
+        'Red': strs.red,
+    }.get(name, name)
+
+
+def _flat(val: str | bui.LangStr) -> str:
+    """Flatten to text for use in an editable field."""
+    return val if isinstance(val, str) else val.evaluate()
+
+
 class TeamNamesColorsWindow(PopupWindow):
     """A popup window for customizing team names and colors."""
 
@@ -45,9 +66,7 @@ class TeamNamesColorsWindow(PopupWindow):
 
         # We need to flatten the translation since it will be an
         # editable string.
-        self._names = [
-            bui.Lstr(translate=('teamNames', n)).evaluate() for n in self._names
-        ]
+        self._names = [_flat(_team_display_name(n)) for n in self._names]
         self._colors = list(
             appconfig.get('Custom Team Colors', DEFAULT_TEAM_COLORS)
         )
@@ -155,9 +174,7 @@ class TeamNamesColorsWindow(PopupWindow):
 
         for i in range(2):
             self._colors[i] = DEFAULT_TEAM_COLORS[i]
-            name = bui.Lstr(
-                translate=('teamNames', DEFAULT_TEAM_NAMES[i])
-            ).evaluate()
+            name = _flat(_team_display_name(DEFAULT_TEAM_NAMES[i]))
             if len(name) > self._max_name_length:
                 print('GOT DEFAULT TEAM NAME LONGER THAN MAX LENGTH')
             bui.textwidget(edit=self._color_text_fields[i], text=name)
@@ -197,9 +214,9 @@ class TeamNamesColorsWindow(PopupWindow):
             if self._colors[i] != DEFAULT_TEAM_COLORS[i]:
                 is_default = False
             default_team_name = DEFAULT_TEAM_NAMES[i]
-            default_team_name_translated = bui.Lstr(
-                translate=('teamNames', default_team_name)
-            ).evaluate()
+            default_team_name_translated = _flat(
+                _team_display_name(default_team_name)
+            )
             if (
                 new_names[i] != default_team_name
                 and new_names[i] != default_team_name_translated

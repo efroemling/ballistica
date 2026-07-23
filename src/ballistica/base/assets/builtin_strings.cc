@@ -28,6 +28,25 @@ static auto MakeResource_(const char* name,
   return out;
 }
 
+auto BuiltinStrings::Account::MustSignIn() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/account/must_sign_in");
+}
+
+auto BuiltinStrings::Account::NotUsingAccount(LangStr::Sub service)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/account/not_using_account",
+                       {{"service", std::move(service)}});
+}
+
+auto BuiltinStrings::Account::SignInError() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/account/sign_in_error");
+}
+
+auto BuiltinStrings::Account::UpdatingAccount()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/account/updating_account");
+}
+
 auto BuiltinStrings::Assets::AccessDeniedGuidance(LangStr::Sub detail)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/assets/access_denied_guidance",
@@ -123,6 +142,11 @@ auto BuiltinStrings::Input::ControllerDisconnected(LangStr::Sub controller)
                        {{"controller", std::move(controller)}});
 }
 
+auto BuiltinStrings::Input::ControllerMenusOnly()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/input/controller_menus_only");
+}
+
 auto BuiltinStrings::Input::ControllerReconnected(LangStr::Sub controller)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/input/controller_reconnected",
@@ -160,9 +184,20 @@ auto BuiltinStrings::Input::TouchScreenJoinWarning()
   return MakeResource_("strings/input/touch_screen_join_warning");
 }
 
+auto BuiltinStrings::Input::UnsupportedController(LangStr::Sub name)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/input/unsupported_controller",
+                       {{"name", std::move(name)}});
+}
+
 auto BuiltinStrings::Input::VrOrientationReset()
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/input/vr_orientation_reset");
+}
+
+auto BuiltinStrings::Input::VrOrientationResetCardboard()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/input/vr_orientation_reset_cardboard");
 }
 
 auto BuiltinStrings::Net::AccountRejected() -> std::shared_ptr<const LangStr> {
@@ -171,6 +206,10 @@ auto BuiltinStrings::Net::AccountRejected() -> std::shared_ptr<const LangStr> {
 
 auto BuiltinStrings::Net::AuthError() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/auth_error");
+}
+
+auto BuiltinStrings::Net::ConnectionFailed() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/connection_failed");
 }
 
 auto BuiltinStrings::Net::IncorrectPassword()
@@ -182,13 +221,33 @@ auto BuiltinStrings::Net::InvalidAddress() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/invalid_address");
 }
 
-auto BuiltinStrings::Net::MustSignIn() -> std::shared_ptr<const LangStr> {
-  return MakeResource_("strings/net/must_sign_in");
-}
-
 auto BuiltinStrings::Net::UnavailableNoConnection()
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/unavailable_no_connection");
+}
+
+auto BuiltinStrings::Plugins::ClassLoadError(LangStr::Sub plugin,
+                                             LangStr::Sub error)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_(
+      "strings/plugins/class_load_error",
+      {{"plugin", std::move(plugin)}, {"error", std::move(error)}});
+}
+
+auto BuiltinStrings::Plugins::Detected() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/plugins/detected");
+}
+
+auto BuiltinStrings::Plugins::InitError(LangStr::Sub plugin, LangStr::Sub error)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_(
+      "strings/plugins/init_error",
+      {{"plugin", std::move(plugin)}, {"error", std::move(error)}});
+}
+
+auto BuiltinStrings::Plugins::Removed(int64_t count)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/plugins/removed", {{"count", count}});
 }
 
 auto BuiltinStrings::Replay::ReadError() -> std::shared_ptr<const LangStr> {
@@ -197,6 +256,25 @@ auto BuiltinStrings::Replay::ReadError() -> std::shared_ptr<const LangStr> {
 
 auto BuiltinStrings::Replay::VersionError() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/replay/version_error");
+}
+
+auto BuiltinStrings::Scripts::ModuleNeedsUpdate(LangStr::Sub path,
+                                                LangStr::Sub api)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/scripts/module_needs_update",
+                       {{"path", std::move(path)}, {"api", std::move(api)}});
+}
+
+auto BuiltinStrings::Scripts::ModulesNeedUpdate(LangStr::Sub path,
+                                                int64_t count, LangStr::Sub api)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_(
+      "strings/scripts/modules_need_update",
+      {{"path", std::move(path)}, {"count", count}, {"api", std::move(api)}});
+}
+
+auto BuiltinStrings::Scripts::ScanError() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/scripts/scan_error");
 }
 
 auto BuiltinStrings::Session::KickIdleKicked(LangStr::Sub name)
@@ -217,6 +295,51 @@ auto BuiltinStrings::Session::KickIdleWarningSettings()
   return MakeResource_("strings/session/kick_idle_warning_settings");
 }
 
+auto BuiltinStrings::Store::GooglePlayPurchasesUnavailable()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/store/google_play_purchases_unavailable");
+}
+
+auto BuiltinStrings::Store::GooglePlayServicesUnavailable()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/store/google_play_services_unavailable");
+}
+
+auto BuiltinStrings::Store::PurchaseAlreadyInProgress()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/store/purchase_already_in_progress");
+}
+
+auto BuiltinStrings::Store::PurchaseNotValid(LangStr::Sub email)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/store/purchase_not_valid",
+                       {{"email", std::move(email)}});
+}
+
+auto BuiltinStrings::Store::PurchasesRestored()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/store/purchases_restored");
+}
+
+auto BuiltinStrings::Store::RemoveAdsTokenOffer()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/store/remove_ads_token_offer");
+}
+
+auto BuiltinStrings::Store::TransactionInProgress()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/store/transaction_in_progress");
+}
+
+auto BuiltinStrings::Store::Unavailable() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/store/unavailable");
+}
+
+auto BuiltinStrings::Store::UnavailableTemporarily()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/store/unavailable_temporarily");
+}
+
 auto BuiltinStrings::Ui::ArrowsToExitList(LangStr::Sub left, LangStr::Sub right)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_(
@@ -228,8 +351,25 @@ auto BuiltinStrings::Ui::Cancel() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/ui/cancel");
 }
 
+auto BuiltinStrings::Ui::ClipboardNotSupported()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/clipboard_not_supported");
+}
+
+auto BuiltinStrings::Ui::CopiedToClipboard() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/copied_to_clipboard");
+}
+
 auto BuiltinStrings::Ui::Error() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/ui/error");
+}
+
+auto BuiltinStrings::Ui::GameCenter() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/game_center");
+}
+
+auto BuiltinStrings::Ui::GooglePlay() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/google_play");
 }
 
 auto BuiltinStrings::Ui::HasMenuControl(LangStr::Sub name)
@@ -253,6 +393,10 @@ auto BuiltinStrings::Ui::Ok() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/ui/ok");
 }
 
+auto BuiltinStrings::Ui::RemoteAppName() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/remote_app_name");
+}
+
 auto BuiltinStrings::Ui::Retry() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/ui/retry");
 }
@@ -261,8 +405,35 @@ auto BuiltinStrings::Ui::SignIn() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/ui/sign_in");
 }
 
+auto BuiltinStrings::Ui::StoragePermissionNeeded()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/storage_permission_needed");
+}
+
+auto BuiltinStrings::Ui::Success() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/success");
+}
+
 auto BuiltinStrings::Ui::Updating() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/ui/updating");
+}
+
+auto BuiltinStrings::Workspace::Activated(LangStr::Sub thing)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/workspace/activated",
+                       {{"thing", std::move(thing)}});
+}
+
+auto BuiltinStrings::Workspace::SyncError(LangStr::Sub workspace)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/workspace/sync_error",
+                       {{"workspace", std::move(workspace)}});
+}
+
+auto BuiltinStrings::Workspace::SyncReuse(LangStr::Sub workspace)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/workspace/sync_reuse",
+                       {{"workspace", std::move(workspace)}});
 }
 
 }  // namespace ballistica::base

@@ -227,7 +227,9 @@ class PlaylistAddGameWindow(bui.MainWindow):
         ]
 
         # Sort in the current language.
-        self._game_types.sort(key=lambda g: g.get_display_string().evaluate())
+        self._game_types.sort(
+            key=lambda g: g.get_display_string(langstr=True).evaluate()
+        )
 
         # Tell ourself to refresh back in the logic thread.
         bui.pushcall(self._refresh, from_other_thread=True)
@@ -250,7 +252,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
                 parent=self._column,
                 position=(0, 0),
                 size=(self._scroll_width * 1.1, 24),
-                text=gametype.get_display_string(),
+                text=gametype.get_display_string(langstr=True),
                 h_align='left',
                 v_align='center',
                 color=(0.8, 0.8, 0.8, 1.0),
@@ -325,7 +327,8 @@ class PlaylistAddGameWindow(bui.MainWindow):
     def _set_selected_game_type(self, gametype: type[bs.GameActivity]) -> None:
         self._selected_game_type = gametype
         bui.textwidget(
-            edit=self._selected_title_text, text=gametype.get_display_string()
+            edit=self._selected_title_text,
+            text=gametype.get_display_string(langstr=True),
         )
         bui.textwidget(
             edit=self._selected_description_text,

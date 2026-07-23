@@ -5,7 +5,7 @@
 import copy
 import random
 import logging
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, overload, override
 
 import babase
 
@@ -13,7 +13,7 @@ import _bascenev1
 from bascenev1._session import Session
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Literal
 
     import bascenev1
 
@@ -145,13 +145,34 @@ class MultiTeamSession(Session):
         """Return teams series length."""
         return self._series_length
 
-    def get_next_game_description(self) -> babase.Lstr:
-        """Returns a description of the next game on deck."""
+    @overload
+    def get_next_game_description(
+        self, *, langstr: Literal[False] = False
+    ) -> babase.Lstr: ...
+
+    @overload
+    def get_next_game_description(
+        self, *, langstr: Literal[True]
+    ) -> babase.LangStr: ...
+
+    def get_next_game_description(
+        self, *, langstr: bool = False
+    ) -> babase.Lstr | babase.LangStr:
+        """Returns a description of the next game on deck.
+
+        Pass ``langstr=True`` to receive a :class:`~babase.LangStr`. The
+        legacy :class:`~babase.Lstr` form goes away when api 9 support
+        ends.
+        """
         # pylint: disable=cyclic-import
         from bascenev1._gameactivity import GameActivity
 
         gametype: type[GameActivity] = self._next_game_spec['resolved_type']
         assert issubclass(gametype, GameActivity)
+        if langstr:
+            return gametype.get_settings_display_string(
+                self._next_game_spec, langstr=True
+            )
         return gametype.get_settings_display_string(self._next_game_spec)
 
     def get_game_number(self) -> int:
@@ -274,7 +295,6 @@ class MultiTeamSession(Session):
 
         # pylint: disable=cyclic-import
         from bascenev1._gameutils import cameraflash
-        from bascenev1._freeforallsession import FreeForAllSession
         from bascenev1._messages import CelebrateMessage
 
         _bascenev1.timer(delay, classicassets.audio.boxing_bell.play)
@@ -290,14 +310,10 @@ class MultiTeamSession(Session):
                         player.actor.handlemessage(celebrate_msg)
                 cameraflash()
 
-                # Some languages say "FOO WINS" different for teams vs players.
-                if isinstance(self, FreeForAllSession):
-                    wins_resource = 'winsPlayerText'
-                else:
-                    wins_resource = 'winsTeamText'
-                wins_text = babase.Lstr(
-                    resource=wins_resource,
-                    subs=[('${NAME}', winning_sessionteam.name)],
+                # The legacy player-vs-team split existed only
+                # for translation coverage; the text is identical.
+                wins_text = classicassets.strings.multiteam.wins(
+                    name=winning_sessionteam.name
                 )
                 activity.show_zoom_message(
                     wins_text,

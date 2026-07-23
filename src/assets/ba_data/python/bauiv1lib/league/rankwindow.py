@@ -13,6 +13,7 @@ import bauiv1 as bui
 from bauiv1 import classicassets
 from bauiv1 import builtinassets
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
+from bauiv1lib.league import league_display_name
 from bauiv1lib.popup import PopupMenu
 
 if TYPE_CHECKING:
@@ -1063,9 +1064,10 @@ class LeagueRankWindow(bui.MainWindow):
             self._league_url_arg = ''
         else:
             lnum = ('[' + str(data['l']['i']) + ']') if data['l']['i2'] else ''
-            lname = bui.Lstr(
-                translate=('leagueNames', data['l']['n'])
-            ).evaluate()
+            lnameval = league_display_name(data['l']['n'])
+            lname = (
+                lnameval if isinstance(lnameval, str) else lnameval.evaluate()
+            )
             lcolor = data['l']['c']
             self._league_url_arg = (
                 data['l']['n'] + '_' + str(data['l']['i'])

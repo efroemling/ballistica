@@ -825,11 +825,9 @@ class PrivateGatherTab(GatherTab):
                         flatness=1.0,
                         color=(0.0, 1.0, 0.0),
                         position=(self._c_width * 0.5, v),
-                        text=bui.Lstr(
-                            resource=(
-                                'gatherWindow.freeCloudServerAvailableNowText'
-                            )
-                        ),
+                        text=(
+                            classicassets.strings.gather
+                        ).free_cloud_server_available,
                     )
                 else:
                     if hostingstate.minutes_until_free_host is None:
@@ -843,12 +841,9 @@ class PrivateGatherTab(GatherTab):
                             flatness=1.0,
                             color=(1.0, 0.6, 0.0),
                             position=(self._c_width * 0.5, v),
-                            text=bui.Lstr(
-                                resource=(
-                                    'gatherWindow'
-                                    '.freeCloudServerNotAvailableText'
-                                )
-                            ),
+                            text=(
+                                classicassets.strings.gather
+                            ).free_cloud_server_not_available,
                         )
                     else:
                         availmins = hostingstate.minutes_until_free_host

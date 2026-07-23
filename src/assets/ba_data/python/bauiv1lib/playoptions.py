@@ -159,7 +159,7 @@ class PlayOptionsWindow(PopupWindow):
             position=scale_origin, size=(self._width, self._height), scale=scale
         )
 
-        playlist_name: str | bui.Lstr = (
+        playlist_name: str | bui.Lstr | bui.LangStr = (
             self._pvars.default_list_name
             if playlist == '__default__'
             else playlist
@@ -297,13 +297,10 @@ class PlayOptionsWindow(PopupWindow):
                 'FFA' if self._sessiontype is bs.FreeForAllSession else 'Teams'
             )
             + ' Series Length',
-            displayname=bui.Lstr(
-                resource=self._r
-                + (
-                    '.pointsToWinText'
-                    if self._sessiontype is bs.FreeForAllSession
-                    else '.seriesLengthText'
-                )
+            displayname=(
+                classicassets.strings.playoptions.points_to_win
+                if self._sessiontype is bs.FreeForAllSession
+                else classicassets.strings.playoptions.series_length
             ),
             minval=1.0,
             maxval=100.0 if self._sessiontype is bs.FreeForAllSession else 99.0,
@@ -413,12 +410,10 @@ class PlayOptionsWindow(PopupWindow):
             text_res_scale=1.5,
             on_activate_call=self._on_ok_press,
             autoselect=True,
-            label=bui.Lstr(
-                resource=(
-                    'okText'
-                    if self._playlist_select_context is not None
-                    else 'playText'
-                )
+            label=(
+                classicassets.strings.ui.ok
+                if self._playlist_select_context is not None
+                else classicassets.strings.ui.play
             ),
         )
         bui.widget(edit=self._ok_button, allow_preserve_selection=False)

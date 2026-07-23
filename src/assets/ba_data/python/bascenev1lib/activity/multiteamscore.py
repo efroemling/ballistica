@@ -11,6 +11,23 @@ from bascenev1lib.actor.text import Text
 from bascenev1lib.actor.image import Image
 
 
+def _score_label_display(label: str) -> str | bs.LangStr:
+    """Return a displayable name for a score-type label.
+
+    Games declare their own score label, so anything outside the
+    built-in set (a mod's custom label) is shown untranslated.
+    """
+    strs = classicassets.strings
+    return {
+        'Score': strs.game.score,
+        'Flags': strs.scoretypes.flags,
+        'Goals': strs.scoretypes.goals,
+        'Survived': strs.scoretypes.survived,
+        'Time': strs.scoretypes.time,
+        'Time Held': strs.scoretypes.time_held,
+    }.get(label, label)
+
+
 class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
     """Base class for score screens."""
 
@@ -132,7 +149,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
         def _txt(
             xoffs: float,
             yoffs: float,
-            text: bs.Lstr | bs.LangStr,
+            text: str | bs.Lstr | bs.LangStr,
             *,
             h_align: Text.HAlign = Text.HAlign.RIGHT,
             extrascale: float = 1.0,
@@ -155,9 +172,8 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
 
         session = self.session
         assert isinstance(session, bs.MultiTeamSession)
-        tval = bs.Lstr(
-            resource='gameLeadersText',
-            subs=[('${COUNT}', str(session.get_game_number()))],
+        tval = classicassets.strings.multiteam.game_leaders(
+            count=session.get_game_number()
         )
         _txt(
             180,
@@ -177,7 +193,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
         _txt(280, 4, classicassets.strings.multiteam.deaths, maxwidth=100)
 
         score_label = 'Score' if results is None else results.score_label
-        translated = bs.Lstr(translate=('scoreNames', score_label))
+        translated = _score_label_display(score_label)
 
         _txt(390, 0, translated)
 

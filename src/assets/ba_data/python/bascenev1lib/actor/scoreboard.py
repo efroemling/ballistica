@@ -149,20 +149,13 @@ class _Entry:
         else:
             team_name_label = team.name
 
-            # We do our own clipping here; should probably try to tap into some
-            # existing functionality.
-            if isinstance(team_name_label, bs.Lstr):
-                # Hmmm; if the team-name is a non-translatable value lets go
-                # ahead and clip it otherwise we leave it as-is so
-                # translation can occur..
-                if team_name_label.is_flat_value():
-                    val = team_name_label.evaluate()
-                    if len(val) > 10:
-                        team_name_label = bs.Lstr(value=val[:10] + '...')
-            else:
+            # A plain str is a name the player typed, so clip it
+            # to fit; a LangStr is one of our authored defaults,
+            # which we leave whole so it can translate (maxwidth
+            # handles the fitting).
+            if isinstance(team_name_label, str):
                 if len(team_name_label) > 10:
                     team_name_label = team_name_label[:10] + '...'
-                team_name_label = bs.Lstr(value=team_name_label)
 
         flatness = (1.0 if vrmode else 0.5) if self._do_cover else 1.0
         self._name_text = bs.NodeActor(

@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260723a`` (babase).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260723c`` (babase).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,13 +9,13 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260723a
+# ba_meta require asset-package a-0.babuiltinassets.260723c
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260723a'
+__asset_package__ = 'a-0.babuiltinassets.260723c'
 
 from typing import TYPE_CHECKING
 
@@ -23,6 +23,49 @@ from babase._language import LangStrDir
 
 if TYPE_CHECKING:
     from babase import LangStr
+
+    class StringsAccountGroup:
+        """
+        ::
+
+            Account and sign-in vocabulary: status, error, and requirement
+            messages about the player account.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Error screen-message shown to a player who attempts to join a
+        #:     party or server that requires account authentication while they
+        #:     are not signed in to an account.
+        #:
+        #:     English: "You must sign in to do this."
+        must_sign_in: LangStr
+
+        def not_using_account(self, *, service: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Notice that a platform account is being ignored.
+
+                English: "Note: Ignoring this {service} account. Go to Account >
+                Sign In if you want to use it."
+            """
+
+        #: ::
+        #:
+        #:     Error message shown when signing in fails.
+        #:
+        #:     English: "Error signing in."
+        sign_in_error: LangStr
+
+        #: ::
+        #:
+        #:     Notice that the account is being updated.
+        #:
+        #:     English: "Updating your account..."
+        updating_account: LangStr
 
     class StringsAssetsGroup:
         """
@@ -248,6 +291,14 @@ if TYPE_CHECKING:
                 English: "{controller} disconnected."
             """
 
+        #: ::
+        #:
+        #:     Notice that a controller works only in menus.
+        #:
+        #:     English: "This controller can not be used to play; only to
+        #:     navigate menus."
+        controller_menus_only: LangStr
+
         def controller_reconnected(
             self, *, controller: str | LangStr
         ) -> LangStr:
@@ -325,6 +376,15 @@ if TYPE_CHECKING:
         #:     mistake, tap Menu -> Leave Game with it to back out."
         touch_screen_join_warning: LangStr
 
+        def unsupported_controller(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Notice that a controller is not supported.
+
+                English: "Sorry, the {name} controller is not supported."
+            """
+
         #: ::
         #:
         #:     Confirmation screen-message shown in VR mode when the player
@@ -332,6 +392,14 @@ if TYPE_CHECKING:
         #:
         #:     English: "VR orientation reset."
         vr_orientation_reset: LangStr
+
+        #: ::
+        #:
+        #:     Explanation of the VR orientation reset on Cardboard.
+        #:
+        #:     English: "Use this to reset the VR orientation. To play, you'll
+        #:     need an external controller."
+        vr_orientation_reset_cardboard: LangStr
 
     class StringsNetGroup:
         """
@@ -362,6 +430,13 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Notice that connecting to a server failed.
+        #:
+        #:     English: "Connection failed."
+        connection_failed: LangStr
+
+        #: ::
+        #:
         #:     Error screen-message shown to a player whose attempt to join a
         #:     password-protected party or server was rejected for entering the
         #:     wrong party password.
@@ -379,15 +454,6 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Error screen-message shown to a player who attempts to join a
-        #:     party or server that requires account authentication while they
-        #:     are not signed in to an account.
-        #:
-        #:     English: "You must sign in to do this."
-        must_sign_in: LangStr
-
-        #: ::
-        #:
         #:     Error shown when something cannot be reached, most likely because
         #:     there is no internet connection (dialog messages and
         #:     screen-messages).
@@ -395,6 +461,56 @@ if TYPE_CHECKING:
         #:     English: "This is currently unavailable (no internet
         #:     connection?)"
         unavailable_no_connection: LangStr
+
+    class StringsPluginsGroup:
+        """
+        ::
+
+            Messages about user-installed plugins being detected, removed, or
+            failing to load.
+
+            See source for the full asset list.
+        """
+
+        def class_load_error(
+            self, *, plugin: str | LangStr, error: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Error message for a plugin class that failed to load.
+
+                English: "Error loading plugin class '{plugin}': {error}"
+            """
+
+        #: ::
+        #:
+        #:     Notice that new plugins were found.
+        #:
+        #:     English: "New plugin(s) detected. Restart to activate them, or
+        #:     configure them in settings."
+        detected: LangStr
+
+        def init_error(
+            self, *, plugin: str | LangStr, error: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Error message for a plugin that failed to initialize.
+
+                English: "Error initializing plugin {plugin}: {error}"
+            """
+
+        def removed(self, *, count: int) -> LangStr:
+            """
+            ::
+
+                Notice that previously-present plugins are gone.
+
+                English: (one) "# plugin no longer found." / (other) "# plugins
+                no longer found."
+            """
 
     class StringsReplayGroup:
         """
@@ -421,6 +537,48 @@ if TYPE_CHECKING:
         #:     English: "Sorry, this replay was made in a different version of
         #:     the game and can't be used."
         version_error: LangStr
+
+    class StringsScriptsGroup:
+        """
+        ::
+
+            Messages about scanning user script modules and reporting ones that
+            need updating for the current script API.
+
+            See source for the full asset list.
+        """
+
+        def module_needs_update(
+            self, *, path: str | LangStr, api: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Notice that one script module is out of date.
+
+                English: "The module at {path} must be updated for API version
+                {api}."
+            """
+
+        def modules_need_update(
+            self, *, path: str | LangStr, count: int, api: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Notice that several script modules are out of date.
+
+                English: (one) "{path} and # other module must be updated for
+                API {api}" / (other) "{path} and # other modules must be updated
+                for API {api}"
+            """
+
+        #: ::
+        #:
+        #:     Notice that errors occurred scanning scripts.
+        #:
+        #:     English: "Error(s) scanning scripts. See log for details."
+        scan_error: LangStr
 
     class StringsSessionGroup:
         """
@@ -467,6 +625,86 @@ if TYPE_CHECKING:
         #:     English: "(you can turn this off in Settings -> Advanced)"
         kick_idle_warning_settings: LangStr
 
+    class StringsStoreGroup:
+        """
+        ::
+
+            In-app-purchase and store transaction messages: purchase failures,
+            restores, and availability notices.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Notice that Google Play purchases are unavailable.
+        #:
+        #:     English: "Google Play purchases are not available. You may need
+        #:     to update your store app."
+        google_play_purchases_unavailable: LangStr
+
+        #: ::
+        #:
+        #:     Notice that Google Play Services is unavailable.
+        #:
+        #:     English: "Google Play Services is not available. Some app
+        #:     functionality may be disabled."
+        google_play_services_unavailable: LangStr
+
+        #: ::
+        #:
+        #:     Notice that this item is already being purchased.
+        #:
+        #:     English: "A purchase of this item is already in progress."
+        purchase_already_in_progress: LangStr
+
+        def purchase_not_valid(self, *, email: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Error message that a purchase was not valid.
+
+                English: "Purchase not valid. Contact {email} if this is an
+                error."
+            """
+
+        #: ::
+        #:
+        #:     Confirmation that past purchases were restored.
+        #:
+        #:     English: "Purchases restored."
+        purchases_restored: LangStr
+
+        #: ::
+        #:
+        #:     Limited-time offer to remove ads via a token pack.
+        #:
+        #:     English: "LIMITED TIME OFFER: PURCHASE ANY TOKEN PACK TO REMOVE
+        #:     IN-GAME ADS."
+        remove_ads_token_offer: LangStr
+
+        #: ::
+        #:
+        #:     Notice that a transaction is already underway.
+        #:
+        #:     English: "A transaction is in progress; please try again in a
+        #:     moment."
+        transaction_in_progress: LangStr
+
+        #: ::
+        #:
+        #:     Notice that a store item is not available.
+        #:
+        #:     English: "Sorry, this is not available."
+        unavailable: LangStr
+
+        #: ::
+        #:
+        #:     Notice that something is unavailable for now.
+        #:
+        #:     English: "This is currently unavailable; please try again later."
+        unavailable_temporarily: LangStr
+
     class StringsUiGroup:
         """
         ::
@@ -501,11 +739,39 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Notice that the clipboard is unavailable in this build.
+        #:
+        #:     English: "Clipboard not supported on this build."
+        clipboard_not_supported: LangStr
+
+        #: ::
+        #:
+        #:     Confirmation that text was copied to the clipboard.
+        #:
+        #:     English: "Copied to clipboard."
+        copied_to_clipboard: LangStr
+
+        #: ::
+        #:
         #:     Generic Error title used on error dialogs (e.g. the boot-time
         #:     asset-update dialog when a load fails).
         #:
         #:     English: "Error"
         error: LangStr
+
+        #: ::
+        #:
+        #:     Name label for the Apple Game Center service.
+        #:
+        #:     English: "Game Center"
+        game_center: LangStr
+
+        #: ::
+        #:
+        #:     Name label for the Google Play service.
+        #:
+        #:     English: "Google Play"
+        google_play: LangStr
 
         def has_menu_control(self, *, name: str | LangStr) -> LangStr:
             """
@@ -550,6 +816,13 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Name label for the remote-control companion app.
+        #:
+        #:     English: "BombSquad Remote"
+        remote_app_name: LangStr
+
+        #: ::
+        #:
         #:     Generic label for a button that retries a failed operation (used
         #:     by e.g. the boot-time asset-update dialog).
         #:
@@ -566,12 +839,64 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Notice that storage access permission is required.
+        #:
+        #:     English: "This requires storage access"
+        storage_permission_needed: LangStr
+
+        #: ::
+        #:
+        #:     Confirmation label that an operation succeeded.
+        #:
+        #:     English: "Success!"
+        success: LangStr
+
+        #: ::
+        #:
         #:     Generic title for progress dialogs applying updates: asset
         #:     downloads/builds at boot, locale switches, pre-game package
         #:     fetches.
         #:
         #:     English: "Updating…"
         updating: LangStr
+
+    class StringsWorkspaceGroup:
+        """
+        ::
+
+            Messages about syncing and activating account workspaces.
+
+            See source for the full asset list.
+        """
+
+        def activated(self, *, thing: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Confirmation that a workspace was activated.
+
+                English: "{thing} activated."
+            """
+
+        def sync_error(self, *, workspace: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Error message that a workspace failed to sync.
+
+                English: "Error syncing workspace {workspace}. See log for
+                details."
+            """
+
+        def sync_reuse(self, *, workspace: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Notice that a previously synced workspace is being reused.
+
+                English: "Unable to sync {workspace}. Reusing the last synced
+                version."
+            """
 
     class StringsGroup:
         """
@@ -584,20 +909,31 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
+        account: StringsAccountGroup
         assets: StringsAssetsGroup
         audio: StringsAudioGroup
         input: StringsInputGroup
         net: StringsNetGroup
+        plugins: StringsPluginsGroup
         replay: StringsReplayGroup
+        scripts: StringsScriptsGroup
         session: StringsSessionGroup
+        store: StringsStoreGroup
         ui: StringsUiGroup
+        workspace: StringsWorkspaceGroup
 
-    #: The ``strings`` group - 47 strings (``assets``, ``audio``, ``input``,
-    #: ``net``, ``replay``, and 42 more). Full list in source.
+    #: The ``strings`` group - 80 strings (``account``, ``assets``, ``audio``,
+    #: ``input``, ``net``, and 75 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
     'strings': {
+        'account': {
+            'must_sign_in': (),
+            'not_using_account': ('service',),
+            'sign_in_error': (),
+            'updating_account': (),
+        },
         'assets': {
             'access_denied_guidance': ('detail',),
             'authenticating': (),
@@ -619,6 +955,7 @@ _TREE = {
             'controller_connected': ('controller',),
             'controller_detected': (),
             'controller_disconnected': ('controller',),
+            'controller_menus_only': (),
             'controller_reconnected': ('controller',),
             'controllers_connected': ('count',),
             'controllers_detected': ('count',),
@@ -626,33 +963,69 @@ _TREE = {
             'keyboard': (),
             'touch_screen': (),
             'touch_screen_join_warning': (),
+            'unsupported_controller': ('name',),
             'vr_orientation_reset': (),
+            'vr_orientation_reset_cardboard': (),
         },
         'net': {
             'account_rejected': (),
             'auth_error': (),
+            'connection_failed': (),
             'incorrect_password': (),
             'invalid_address': (),
-            'must_sign_in': (),
             'unavailable_no_connection': (),
         },
+        'plugins': {
+            'class_load_error': ('plugin', 'error'),
+            'detected': (),
+            'init_error': ('plugin', 'error'),
+            'removed': ('count',),
+        },
         'replay': {'read_error': (), 'version_error': ()},
+        'scripts': {
+            'module_needs_update': ('path', 'api'),
+            'modules_need_update': ('path', 'count', 'api'),
+            'scan_error': (),
+        },
         'session': {
             'kick_idle_kicked': ('name',),
             'kick_idle_warning': ('seconds', 'name'),
             'kick_idle_warning_settings': (),
         },
+        'store': {
+            'google_play_purchases_unavailable': (),
+            'google_play_services_unavailable': (),
+            'purchase_already_in_progress': (),
+            'purchase_not_valid': ('email',),
+            'purchases_restored': (),
+            'remove_ads_token_offer': (),
+            'transaction_in_progress': (),
+            'unavailable': (),
+            'unavailable_temporarily': (),
+        },
         'ui': {
             'arrows_to_exit_list': ('left', 'right'),
             'cancel': (),
+            'clipboard_not_supported': (),
+            'copied_to_clipboard': (),
             'error': (),
+            'game_center': (),
+            'google_play': (),
             'has_menu_control': ('name',),
             'menu_control_time_out': ('seconds',),
             'menu_control_will_time_out': (),
             'ok': (),
+            'remote_app_name': (),
             'retry': (),
             'sign_in': (),
+            'storage_permission_needed': (),
+            'success': (),
             'updating': (),
+        },
+        'workspace': {
+            'activated': ('thing',),
+            'sync_error': ('workspace',),
+            'sync_reuse': ('workspace',),
         },
     }
 }

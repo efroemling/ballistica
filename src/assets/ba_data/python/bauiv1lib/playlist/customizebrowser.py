@@ -113,9 +113,8 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(0, yoffs - (77 if uiscale is bui.UIScale.SMALL else 77)),
             size=(self._width, 25),
-            text=bui.Lstr(
-                resource=f'{self._r}.titleText',
-                subs=[('${TYPE}', self._pvars.window_title_name)],
+            text=classicassets.strings.playlist.customize_title(
+                type=self._pvars.window_title_name
             ),
             color=bui.app.ui_v1.heading_color,
             maxwidth=290,
@@ -581,7 +580,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
     def _get_playlist_display_name(
         self, playlist: str | bui.Lstr
-    ) -> str | bui.Lstr:
+    ) -> str | bui.Lstr | bui.LangStr:
         if playlist == '__default__':
             return self._pvars.default_list_name
         return playlist
@@ -627,9 +626,11 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         base_name_raw = self._get_playlist_display_name(
             self._selected_playlist_name
         )
+        # Flattening is correct here: the result becomes the new
+        # playlist's actual stored name, not a displayed string.
         base_name = (
             base_name_raw.evaluate()
-            if isinstance(base_name_raw, bui.Lstr)
+            if isinstance(base_name_raw, (bui.Lstr, bui.LangStr))
             else base_name_raw
         )
 

@@ -178,7 +178,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(-8, height - 70 + y_extra2 + yoffs),
             size=(width, 25),
-            text=gametype.get_display_string(),
+            text=gametype.get_display_string(langstr=True),
             color=bui.app.ui_v1.title_color,
             maxwidth=235,
             scale=1.1,

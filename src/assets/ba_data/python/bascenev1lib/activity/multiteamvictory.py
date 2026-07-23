@@ -188,12 +188,8 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
         if not self._is_ffa:
             Text(
-                bs.Lstr(
-                    resource='gamesToText',
-                    subs=[
-                        ('${WINCOUNT}', str(win_score)),
-                        ('${LOSECOUNT}', str(lose_score)),
-                    ],
+                classicassets.strings.multiteam.games_to(
+                    wincount=str(win_score), losecount=str(lose_score)
                 ),
                 color=(0.5, 0.5, 0.5, 1.0),
                 maxwidth=160,
@@ -489,15 +485,12 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
         s_extra = 1.0 if self._is_ffa else 1.0
 
-        # Some languages say "FOO WINS" differently for teams vs players.
-        if isinstance(self.session, bs.FreeForAllSession):
-            wins_resource = 'seriesWinLine1PlayerText'
-        else:
-            wins_resource = 'seriesWinLine1TeamText'
-        wins_text = bs.Lstr(resource=wins_resource)
+        # The legacy system had separate player-vs-team wordings
+        # here purely because translation coverage differed
+        # between them; the opening phrase itself is identical, so
+        # the ported entry is shared.
+        wins_text = classicassets.strings.multiteam.wins_the_series_intro
 
-        # Temp - if these come up as the english default, fall-back to the
-        # unified old form which is more likely to be translated.
         ZoomText(
             wins_text,
             position=(0, -10 + offs_v),

@@ -29,16 +29,22 @@ class JoinInfo:
     """Display useful info for joiners."""
 
     def __init__(self, lobby: bascenev1.Lobby):
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import classicassets
         from bascenev1._nodeactor import NodeActor
 
         self._state = 0
-        self._press_to_punch: str | bascenev1.Lstr = babase.charstr(
+        self._press_to_punch: str | babase.LangStr = babase.charstr(
             babase.SpecialChar.LEFT_BUTTON
         )
-        self._press_to_bomb: str | bascenev1.Lstr = babase.charstr(
+        self._press_to_bomb: str | babase.LangStr = babase.charstr(
             babase.SpecialChar.RIGHT_BUTTON
         )
-        self._joinmsg = babase.Lstr(resource='pressAnyButtonToJoinText')
+        self._joinmsg: babase.LangStr = (
+            classicassets.strings.lobby.press_any_button_to_join
+        )
         can_switch_teams = len(lobby.sessionteams) > 1
 
         # If we have a keyboard, grab keys for punch and pickup.
@@ -70,42 +76,28 @@ class JoinInfo:
         if variant is vart.DEMO or variant is vart.ARCADE:
             self._messages = [self._joinmsg]
         else:
-            msg1 = babase.Lstr(
-                resource='pressToSelectProfileText',
-                subs=[
-                    (
-                        '${BUTTONS}',
-                        babase.charstr(babase.SpecialChar.UP_ARROW)
-                        + ' '
-                        + babase.charstr(babase.SpecialChar.DOWN_ARROW),
-                    )
-                ],
+            msg1 = classicassets.strings.lobby.press_to_select_profile(
+                buttons=(
+                    babase.charstr(babase.SpecialChar.UP_ARROW)
+                    + ' '
+                    + babase.charstr(babase.SpecialChar.DOWN_ARROW)
+                )
             )
-            msg2 = babase.Lstr(
-                resource='pressToOverrideCharacterText',
-                subs=[('${BUTTONS}', babase.Lstr(resource='bombBoldText'))],
+            msg2 = classicassets.strings.lobby.press_to_override_character(
+                buttons=classicassets.strings.lobby.bomb
             )
-            msg3 = babase.Lstr(
-                value='${A} < ${B} >',
-                subs=[('${A}', msg2), ('${B}', self._press_to_bomb)],
+            msg3 = classicassets.strings.ui.angle_button_suffix(
+                main=msg2, button=self._press_to_bomb
             )
             self._messages = (
                 (
                     [
-                        babase.Lstr(
-                            resource='pressToSelectTeamText',
-                            subs=[
-                                (
-                                    '${BUTTONS}',
-                                    babase.charstr(
-                                        babase.SpecialChar.LEFT_ARROW
-                                    )
-                                    + ' '
-                                    + babase.charstr(
-                                        babase.SpecialChar.RIGHT_ARROW
-                                    ),
-                                )
-                            ],
+                        classicassets.strings.lobby.press_to_select_team(
+                            buttons=(
+                                babase.charstr(babase.SpecialChar.LEFT_ARROW)
+                                + ' '
+                                + babase.charstr(babase.SpecialChar.RIGHT_ARROW)
+                            )
                         )
                     ]
                     if can_switch_teams
@@ -121,41 +113,29 @@ class JoinInfo:
         )
 
     def _update_for_keyboard(self, keyboard: bascenev1.InputDevice) -> None:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import classicassets
+
         classic = babase.app.classic
         assert classic is not None
 
         punch_key = keyboard.get_button_name(
             classic.get_input_device_mapped_value(keyboard, 'buttonPunch')
         )
-        self._press_to_punch = babase.Lstr(
-            resource='orText',
-            subs=[
-                (
-                    '${A}',
-                    babase.Lstr(value='\'${K}\'', subs=[('${K}', punch_key)]),
-                ),
-                ('${B}', self._press_to_punch),
-            ],
+        self._press_to_punch = classicassets.strings.ui.or_join(
+            a=f'\'{punch_key}\'', b=self._press_to_punch
         )
         bomb_key = keyboard.get_button_name(
             classic.get_input_device_mapped_value(keyboard, 'buttonBomb')
         )
-        self._press_to_bomb = babase.Lstr(
-            resource='orText',
-            subs=[
-                (
-                    '${A}',
-                    babase.Lstr(value='\'${K}\'', subs=[('${K}', bomb_key)]),
-                ),
-                ('${B}', self._press_to_bomb),
-            ],
+        self._press_to_bomb = classicassets.strings.ui.or_join(
+            a=f'\'{bomb_key}\'', b=self._press_to_bomb
         )
-        self._joinmsg = babase.Lstr(
-            value='${A} < ${B} >',
-            subs=[
-                ('${A}', babase.Lstr(resource='pressPunchToJoinText')),
-                ('${B}', self._press_to_punch),
-            ],
+        self._joinmsg = classicassets.strings.ui.angle_button_suffix(
+            main=classicassets.strings.lobby.press_punch_to_join,
+            button=self._press_to_punch,
         )
 
     def _update(self) -> None:
@@ -278,7 +258,7 @@ class Chooser:
 
         # Set our initial name to '<choosing player>' in case anyone asks.
         self._sessionplayer.setname(
-            babase.Lstr(resource='choosingPlayerText').evaluate(), real=False
+            classicassets.strings.lobby.choosing_player.evaluate(), real=False
         )
 
         # Init these to our rando but they should get switched to the
@@ -577,6 +557,11 @@ class Chooser:
         """Does nothing! (hacky way to disable callbacks)"""
 
     def _getname(self, full: bool = False) -> str:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import classicassets
+
         name_raw = name = self._profilenames[self._profileindex]
         clamp = False
         if name == '_random':
@@ -596,10 +581,7 @@ class Chooser:
         elif name == '_edit':
             # Explicitly flattening this to a str; it's only relevant on
             # the host so that's ok.
-            name = babase.Lstr(
-                resource='createEditPlayerText',
-                fallback_resource='editProfileWindow.titleNewText',
-            ).evaluate()
+            name = classicassets.strings.lobby.create_edit_player.evaluate()
         else:
             # If we have a regular profile marked as global with an icon,
             # use it (for full only).
@@ -856,20 +838,22 @@ class Chooser:
                 self._handle_ready_msg(bool(msg.value))
 
     def _update_text(self) -> None:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import classicassets
+
         assert self._text_node is not None
+        text: str | babase.LangStr
         if self._ready:
             # Once we're ready, we've saved the name, so lets ask the system
             # for it so we get appended numbers and stuff.
-            text = babase.Lstr(value=self._sessionplayer.getname(full=True))
-            text = babase.Lstr(
-                value='${A} (${B})',
-                subs=[
-                    ('${A}', text),
-                    ('${B}', babase.Lstr(resource='readyText')),
-                ],
+            text = classicassets.strings.ui.paren_suffix(
+                main=self._sessionplayer.getname(full=True),
+                note=classicassets.strings.lobby.ready,
             )
         else:
-            text = babase.Lstr(value=self._getname(full=True))
+            text = self._getname(full=True)
 
         can_switch_teams = len(self.lobby.sessionteams) > 1
 

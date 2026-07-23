@@ -109,6 +109,7 @@ class CoopGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
 
     def _show_remaining_achievements(self) -> None:
         # pylint: disable=cyclic-import
+        from bascenev1 import classicassets
         from bascenev1lib.actor.text import Text
 
         assert babase.app.classic is not None
@@ -124,7 +125,7 @@ class CoopGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         vrmode = babase.app.env.vr
         if achievements:
             Text(
-                babase.Lstr(resource='achievementsRemainingText'),
+                classicassets.strings.coop.achievements_remaining,
                 host_only=True,
                 position=(ts_h_offs - 10 + 40, v_offs - 10),
                 transition=Text.Transition.FADE_IN,

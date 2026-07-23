@@ -14,6 +14,52 @@ if TYPE_CHECKING:
     import bascenev1
 
 
+def _get_level_display_name(key: str, game: babase.LangStr) -> babase.LangStr:
+    """Return a displayable name for a campaign level.
+
+    ``key`` is the level's displayname, or its name when it declares
+    none. A bare ``${GAME}`` is simply the game's own name; the
+    difficulty-prefixed forms are parameterized entries. Anything else
+    -- a mod's campaign level -- shows its own text, with any
+    ``${GAME}`` token substituted in flat.
+    """
+    # Safe up-call: bascenev1 is fully imported by the time this runs;
+    # the cycle pylint sees is structural only.
+    # pylint: disable-next=cyclic-import
+    from bascenev1 import classicassets
+
+    if key == '${GAME}':
+        return game
+
+    s = classicassets.strings.cooplevels
+    if key == 'Pro ${GAME}':
+        return s.pro_variant(game=game)
+    if key == 'Uber ${GAME}':
+        return s.uber_variant(game=game)
+
+    entry = {
+        'Infinite Onslaught': s.infinite_onslaught,
+        'Infinite Runaround': s.infinite_runaround,
+        'Onslaught Training': s.onslaught_training,
+        'Pro Football': s.pro_football,
+        'Pro Onslaught': s.pro_onslaught,
+        'Pro Runaround': s.pro_runaround,
+        'Rookie Football': s.rookie_football,
+        'Rookie Onslaught': s.rookie_onslaught,
+        'The Last Stand': s.the_last_stand,
+        'Uber Football': s.uber_football,
+        'Uber Onslaught': s.uber_onslaught,
+        'Uber Runaround': s.uber_runaround,
+    }.get(key)
+    if entry is not None:
+        return entry
+
+    # A mod's level; show its own text.
+    if '${GAME}' in key:
+        key = key.replace('${GAME}', game.evaluate())
+    return babase.LangStr.from_text(key)
+
+
 class Level:
     """An entry in a :class:`~bascenev1.Campaign`."""
 
@@ -61,7 +107,12 @@ class Level:
 
     @property
     def displayname(self) -> bascenev1.Lstr:
-        """The localized name for this level."""
+        """The localized name for this level.
+
+        .. deprecated:: 1.8.0
+           Use :attr:`displayname_langstr`. This property's type changes
+           to :class:`~babase.LangStr` when api 9 support ends.
+        """
         return babase.Lstr(
             translate=(
                 'coopLevelNames',
@@ -74,6 +125,24 @@ class Level:
             subs=[
                 ('${GAME}', self._gametype.get_display_string(self._settings))
             ],
+        )
+
+    @property
+    def displayname_langstr(self) -> babase.LangStr:
+        """The localized name for this level.
+
+        This is the :class:`~babase.LangStr` flavor of
+        :attr:`displayname`. It exists only for the transition; once api
+        9 support ends, :attr:`displayname` returns this and this
+        property goes away with the removal of api 10.
+        """
+        return _get_level_display_name(
+            (
+                self._displayname
+                if self._displayname is not None
+                else self._name
+            ),
+            self._gametype.get_display_string(self._settings, langstr=True),
         )
 
     @property

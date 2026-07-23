@@ -5,6 +5,7 @@
 from typing import override
 
 import bascenev1 as bs
+from bascenev1 import classicassets
 
 from bascenev1lib.actor.text import Text
 
@@ -68,14 +69,8 @@ class MultiTeamJoinActivity(bs.JoinActivity):
                     ).autoretain()
 
         Text(
-            bs.Lstr(
-                resource='mustInviteFriendsText',
-                subs=[
-                    (
-                        '${GATHER}',
-                        bs.Lstr(resource='gatherWindow.titleText'),
-                    )
-                ],
+            classicassets.strings.multiteam.must_invite_friends(
+                gather=classicassets.strings.gather.title
             ),
             h_attach=Text.HAttach.CENTER,
             scale=0.8,

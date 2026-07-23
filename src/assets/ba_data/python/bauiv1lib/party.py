@@ -263,7 +263,11 @@ class PartyWindow(bui.Window):
 
         choices: list[str] = ['unmute' if is_muted else 'mute']
         choices_display: list[bui.Lstr | bui.LangStr] = [
-            bui.Lstr(resource='chatUnMuteText' if is_muted else 'chatMuteText')
+            (
+                classicassets.strings.party.unmute_chat
+                if is_muted
+                else classicassets.strings.party.mute_chat
+            )
         ]
 
         # Allow the 'Add to Favorites' option only if we're actually

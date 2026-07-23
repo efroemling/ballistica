@@ -3,7 +3,7 @@
 """Map related functionality."""
 
 import random
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, overload, override
 
 import babase
 
@@ -11,7 +11,7 @@ import _bascenev1
 from bascenev1._actor import Actor
 
 if TYPE_CHECKING:
-    from typing import Sequence, Any
+    from typing import Sequence, Any, Literal
 
     import bascenev1
 
@@ -29,8 +29,66 @@ def get_filtered_map_name(name: str) -> str:
     return name
 
 
-def get_map_display_string(name: str) -> babase.Lstr:
-    """Return a babase.Lstr for displaying a given map's name."""
+def get_map_display_name(name: str) -> babase.LangStr:
+    """Return a displayable name for a map.
+
+    First-party maps resolve to their authored entry; a mod's map name
+    is shown exactly as the mod provides it.
+
+    :meta private:
+    """
+    # Safe up-call: bascenev1 is fully imported by the time this runs;
+    # the cycle pylint sees is structural only.
+    # pylint: disable-next=cyclic-import
+    from bascenev1 import classicassets
+
+    s = classicassets.strings.mapnames
+    entry = {
+        'Big G': s.big_g,
+        'Bridgit': s.bridgit,
+        'Courtyard': s.courtyard,
+        'Crag Castle': s.crag_castle,
+        'Doom Shroom': s.doom_shroom,
+        'Football Stadium': s.football_stadium,
+        'Happy Thoughts': s.happy_thoughts,
+        'Hockey Stadium': s.hockey_stadium,
+        'Lake Frigid': s.lake_frigid,
+        'Monkey Face': s.monkey_face,
+        'Rampage': s.rampage,
+        'Roundabout': s.roundabout,
+        'Step Right Up': s.step_right_up,
+        'The Pad': s.the_pad,
+        'Tip Top': s.tip_top,
+        'Tower D': s.tower_d,
+        'Zigzag': s.zigzag,
+    }.get(name)
+    return entry if entry is not None else babase.LangStr.from_text(name)
+
+
+@overload
+def get_map_display_string(
+    name: str, *, langstr: Literal[False] = False
+) -> babase.Lstr: ...
+
+
+@overload
+def get_map_display_string(
+    name: str, *, langstr: Literal[True]
+) -> babase.LangStr: ...
+
+
+def get_map_display_string(
+    name: str, *, langstr: bool = False
+) -> babase.Lstr | babase.LangStr:
+    """Return a displayable name for a given map.
+
+    Pass ``langstr=True`` to receive a :class:`~babase.LangStr` (or a
+    plain str for a map we have no entry for, such as a mod's). The
+    legacy :class:`~babase.Lstr` form goes away when api 9 support
+    ends.
+    """
+    if langstr:
+        return get_map_display_name(name)
     return babase.Lstr(translate=('mapsNames', name))
 
 

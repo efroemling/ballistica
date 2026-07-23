@@ -413,8 +413,10 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/credits.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/discord.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_bgrunner.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_controller.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_resolve.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_types.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_window.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_calls.py \

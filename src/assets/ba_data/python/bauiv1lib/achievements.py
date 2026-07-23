@@ -198,7 +198,6 @@ class AchievementsWindow(bui.MainWindow):
             sub_height += 30
 
         eq_rsrc = 'coopSelectWindow.powerRankingPointsEqualsText'
-        pts_rsrc = 'coopSelectWindow.powerRankingPointsText'
 
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
@@ -313,8 +312,8 @@ class AchievementsWindow(bui.MainWindow):
                 flatness=1.0,
                 shadow=0.0,
                 scale=0.6,
-                text=bui.Lstr(
-                    resource=pts_rsrc, subs=[('${NUMBER}', str(pts))]
+                text=classicassets.strings.coop.power_ranking_points(
+                    number=str(pts)
                 ),
                 size=(0, 0),
                 h_align='center',

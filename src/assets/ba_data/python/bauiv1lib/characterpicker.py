@@ -158,8 +158,8 @@ class CharacterPicker(PopupWindow):
                         selected_child=btn,
                         visible_child=btn,
                     )
-                name = bui.Lstr(
-                    translate=('characterNames', self._spazzes[index])
+                name = spazappearance.get_appearance_display_name(
+                    self._spazzes[index], langstr=True
                 )
                 bui.textwidget(
                     parent=self._subcontainer,

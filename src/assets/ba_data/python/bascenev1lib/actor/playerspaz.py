@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, overload, override
 
 import bascenev1 as bs
-from bascenev1 import builtinassets
+from bascenev1 import builtinassets, classicassets
 
 from bascenev1lib.actor.spaz import Spaz
 
@@ -209,16 +209,8 @@ class PlayerSpaz(Spaz):
                     if now > bs.app.classic.last_spaz_turbo_warn_time + 30.0:
                         bs.app.classic.last_spaz_turbo_warn_time = now
                         bs.broadcastmessage(
-                            bs.Lstr(
-                                translate=(
-                                    'statements',
-                                    (
-                                        'Warning to ${NAME}:  '
-                                        'turbo / button-spamming knocks'
-                                        ' you out.'
-                                    ),
-                                ),
-                                subs=[('${NAME}', self.node.name)],
+                            classicassets.strings.game.turbo_warning(
+                                name=self.node.name
                             ),
                             color=(1, 0.5, 0),
                         )

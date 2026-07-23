@@ -6,7 +6,7 @@
 
 import random
 import logging
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, overload, override
 
 import babase
 
@@ -17,14 +17,177 @@ from bascenev1._messages import PlayerDiedMessage, StandMessage
 from bascenev1._score import ScoreConfig
 from bascenev1 import _map
 from bascenev1 import _music
+from bascenev1 import _team
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Sequence
+    from typing import Any, Callable, Literal, Sequence
 
     from bascenev1lib.actor.playerspaz import PlayerSpaz
     from bascenev1lib.actor.bomb import TNTSpawner
 
     import bascenev1
+
+
+def get_game_display_name(name: str) -> babase.LangStr:
+    """Return a displayable name for a minigame.
+
+    ``name`` is the game type's own
+    :meth:`~bascenev1.GameActivity.getname()` value. First-party games
+    resolve to their authored entry; a mod's game name is shown
+    exactly as the mod provides it.
+
+    :meta private:
+    """
+    # Safe up-call: bascenev1 is fully imported by the time this runs;
+    # the cycle pylint sees is structural only.
+    # pylint: disable-next=cyclic-import
+    from bascenev1 import classicassets
+
+    s = classicassets.strings.gamenames
+    entry = {
+        'Assault': s.assault,
+        'Capture the Flag': s.capture_the_flag,
+        'Chosen One': s.chosen_one,
+        'Conquest': s.conquest,
+        'Death Match': s.death_match,
+        'Easter Egg Hunt': s.easter_egg_hunt,
+        'Elimination': s.elimination,
+        'Football': s.football,
+        'Hockey': s.hockey,
+        'Keep Away': s.keep_away,
+        'King of the Hill': s.king_of_the_hill,
+        'Meteor Shower': s.meteor_shower,
+        'Ninja Fight': s.ninja_fight,
+        'Onslaught': s.onslaught,
+        'Race': s.race,
+        'Runaround': s.runaround,
+        'Target Practice': s.target_practice,
+        'The Last Stand': s.the_last_stand,
+    }.get(name)
+    return entry if entry is not None else babase.LangStr.from_text(name)
+
+
+def get_game_description(
+    description: str, *, arg: str | None = None
+) -> babase.LangStr:
+    """Return a displayable minigame objective description.
+
+    ``description`` is a game's English description text (see
+    :meth:`~bascenev1.GameActivity.get_description` and the instance
+    variants); ``arg`` is the single ``${ARG1}`` value when the
+    description is a parameterized template, else None. First-party
+    descriptions resolve to their authored (translated) entry; a mod's
+    description is shown as its own text (with ``${ARG1}`` filled in).
+
+    :meta private:
+    """
+    # Safe up-call: bascenev1 is fully imported by the time this runs;
+    # the cycle pylint sees is structural only.
+    # pylint: disable-next=cyclic-import
+    from bascenev1 import classicassets
+
+    gd = classicassets.strings.gamedescriptions
+    if arg is None:
+        plain: dict[str, babase.LangStr] = {
+            (
+                'Be the chosen one for a length of time to win.\n'
+                'Kill the chosen one to become it.'
+            ): (gd.be_the_chosen_one_for_a),
+            'Bomb as many targets as you can.': (
+                gd.bomb_as_many_targets_as_you
+            ),
+            'Carry the flag for a set length of time.': (
+                gd.carry_the_flag_for_a_set
+            ),
+            'Defeat all enemies.': (gd.defeat_all_enemies),
+            'Dodge the falling bombs.': (gd.dodge_the_falling_bombs),
+            'Final glorious epic slow motion battle to the death.': (
+                gd.final_glorious_epic_slow_motion_battle
+            ),
+            'Gather eggs!': (gd.gather_eggs),
+            'Get the flag to the enemy end zone.': (
+                gd.get_the_flag_to_the_enemy
+            ),
+            'How fast can you defeat the ninjas?': (
+                gd.how_fast_can_you_defeat_the
+            ),
+            'Kill a set number of enemies to win.': (
+                gd.kill_a_set_number_of_enemies
+            ),
+            'Last one standing wins.': (gd.last_one_standing_wins),
+            'Last remaining alive wins.': (gd.last_remaining_alive_wins),
+            'Last team standing wins.': (gd.last_team_standing_wins),
+            'Prevent enemies from reaching the exit.': (
+                gd.prevent_enemies_from_reaching_the_exit
+            ),
+            'Reach the enemy flag to score.': (
+                gd.reach_the_enemy_flag_to_score
+            ),
+            'Return the enemy flag to score.': (
+                gd.return_the_enemy_flag_to_score
+            ),
+            'Run 1 lap.': (gd.run_1_lap),
+            'Run 1 lap. Your entire team has to finish.': (
+                gd.run_1_lap_your_entire_team
+            ),
+            'Run real fast!': (gd.run_real_fast),
+            'Score a goal.': (gd.score_a_goal),
+            'Score a touchdown.': (gd.score_a_touchdown),
+            'Score some goals.': (gd.score_some_goals),
+            'Secure all flags on the map to win.': (
+                gd.secure_all_flags_on_the_map
+            ),
+            'Secure the flag for a set length of time.': (
+                gd.secure_the_flag_for_a_set
+            ),
+            'Steal the enemy flag.': (gd.steal_the_enemy_flag),
+            'There can be only one.': (gd.there_can_be_only_one),
+            'Touch the enemy flag.': (gd.touch_the_enemy_flag),
+            'last one standing wins': (gd.last_one_standing_wins_2),
+            'last team standing wins': (gd.last_team_standing_wins_2),
+            'return 1 flag': (gd.return_1_flag),
+            'run 1 lap': (gd.run_1_lap_2),
+            'score a goal': (gd.score_a_goal_2),
+            'score a touchdown': (gd.score_a_touchdown_2),
+            'touch 1 flag': (gd.touch_1_flag),
+        }
+        entry = plain.get(description)
+        return (
+            entry
+            if entry is not None
+            else babase.LangStr.from_text(description)
+        )
+    argt = {
+        'Carry the flag for ${ARG1} seconds.': (gd.carry_the_flag_for_seconds),
+        'Crush ${ARG1} of your enemies.': (gd.crush_of_your_enemies),
+        'Run ${ARG1} laps.': (gd.run_laps),
+        'Run ${ARG1} laps. Your entire team has to finish.': (
+            gd.run_laps_your_entire_team_has
+        ),
+        'Score ${ARG1} goals.': (gd.score_goals),
+        'Score ${ARG1} touchdowns.': (gd.score_touchdowns),
+        'Secure all ${ARG1} flags.': (gd.secure_all_flags),
+        'Secure the flag for ${ARG1} seconds.': (
+            gd.secure_the_flag_for_seconds
+        ),
+        'Steal the enemy flag ${ARG1} times.': (gd.steal_the_enemy_flag_times),
+        'Touch the enemy flag ${ARG1} times.': (gd.touch_the_enemy_flag_times),
+        'carry the flag for ${ARG1} seconds': (gd.carry_the_flag_for_seconds_2),
+        'kill ${ARG1} enemies': (gd.kill_enemies),
+        'return ${ARG1} flags': (gd.return_flags),
+        'run ${ARG1} laps': (gd.run_laps_2),
+        'score ${ARG1} goals': (gd.score_goals_2),
+        'score ${ARG1} touchdowns': (gd.score_touchdowns_2),
+        'secure all ${ARG1} flags': (gd.secure_all_flags_2),
+        'secure the flag for ${ARG1} seconds': (
+            gd.secure_the_flag_for_seconds_2
+        ),
+        'touch ${ARG1} flags': (gd.touch_flags),
+    }
+    acc = argt.get(description)
+    if acc is not None:
+        return acc(arg1=arg)
+    return babase.LangStr.from_text(description.replace('${ARG1}', arg))
 
 
 # Note: Need to suppress an undefined variable here because our pylint
@@ -79,12 +242,47 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         """
         return cls.name if cls.name is not None else 'Untitled Game'
 
+    @overload
     @classmethod
-    def get_display_string(cls, settings: dict | None = None) -> babase.Lstr:
+    def get_display_string(
+        cls,
+        settings: dict | None = None,
+        *,
+        langstr: Literal[False] = False,
+    ) -> babase.Lstr: ...
+
+    @overload
+    @classmethod
+    def get_display_string(
+        cls, settings: dict | None = None, *, langstr: Literal[True]
+    ) -> babase.LangStr: ...
+
+    @classmethod
+    def get_display_string(
+        cls, settings: dict | None = None, *, langstr: bool = False
+    ) -> babase.Lstr | babase.LangStr:
         """Return a descriptive name for this game/settings combo.
 
         Subclasses should override getname(); not this.
+
+        Pass ``langstr=True`` to receive a :class:`~babase.LangStr` (or
+        a plain str for a game we have no entry for, such as a mod's).
+        The legacy :class:`~babase.Lstr` form goes away when api 9
+        support ends.
         """
+        if langstr:
+            # pylint: disable-next=cyclic-import
+            from bascenev1 import classicassets
+
+            lname = get_game_display_name(cls.getname())
+            if settings is not None:
+                gstrs = classicassets.strings.game
+                if settings.get('Solo Mode'):
+                    lname = gstrs.solo_name_filter(name=lname)
+                if settings.get('Epic Mode'):
+                    lname = gstrs.epic_name_filter(name=lname)
+            return lname
+
         name = babase.Lstr(translate=('gameNames', cls.getname()))
 
         # A few substitutions for 'Epic', 'Solo' etc. modes.
@@ -102,9 +300,31 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
 
         return name
 
+    @overload
     @classmethod
-    def get_team_display_string(cls, name: str) -> babase.Lstr:
-        """Given a team name, returns a localized version of it."""
+    def get_team_display_string(
+        cls, name: str, *, langstr: Literal[False] = False
+    ) -> babase.Lstr: ...
+
+    @overload
+    @classmethod
+    def get_team_display_string(
+        cls, name: str, *, langstr: Literal[True]
+    ) -> str | babase.LangStr: ...
+
+    @classmethod
+    def get_team_display_string(
+        cls, name: str, *, langstr: bool = False
+    ) -> babase.Lstr | str | babase.LangStr:
+        """Given a team name, returns a localized version of it.
+
+        Pass ``langstr=True`` to receive a :class:`~babase.LangStr` (or
+        a plain str for a custom team name the player typed). The
+        legacy :class:`~babase.Lstr` form goes away when api 9 support
+        ends.
+        """
+        if langstr:
+            return _team.get_default_team_display_name(name)
         return babase.Lstr(translate=('teamNames', name))
 
     @classmethod
@@ -118,15 +338,36 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         del sessiontype  # Unused arg.
         return cls.description if cls.description is not None else ''
 
+    @overload
     @classmethod
     def get_description_display_string(
-        cls, sessiontype: type[bascenev1.Session]
-    ) -> babase.Lstr:
+        cls,
+        sessiontype: type[bascenev1.Session],
+        *,
+        langstr: Literal[False] = False,
+    ) -> babase.Lstr: ...
+
+    @overload
+    @classmethod
+    def get_description_display_string(
+        cls, sessiontype: type[bascenev1.Session], *, langstr: Literal[True]
+    ) -> babase.LangStr: ...
+
+    @classmethod
+    def get_description_display_string(
+        cls, sessiontype: type[bascenev1.Session], *, langstr: bool = False
+    ) -> babase.Lstr | babase.LangStr:
         """Return a translated version of get_description().
 
         Sub-classes should override get_description(); not this.
+
+        Pass ``langstr=True`` to receive a :class:`~babase.LangStr`. The
+        legacy :class:`~babase.Lstr` form goes away when api 9 support
+        ends.
         """
         description = cls.get_description(sessiontype)
+        if langstr:
+            return get_game_description(description)
         return babase.Lstr(translate=('gameDescriptions', description))
 
     @classmethod
@@ -152,13 +393,47 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         assert babase.app.classic is not None
         return babase.app.classic.getmaps('melee')
 
+    @overload
     @classmethod
-    def get_settings_display_string(cls, config: dict[str, Any]) -> babase.Lstr:
+    def get_settings_display_string(
+        cls, config: dict[str, Any], *, langstr: Literal[False] = False
+    ) -> babase.Lstr: ...
+
+    @overload
+    @classmethod
+    def get_settings_display_string(
+        cls, config: dict[str, Any], *, langstr: Literal[True]
+    ) -> babase.LangStr: ...
+
+    @classmethod
+    def get_settings_display_string(
+        cls, config: dict[str, Any], *, langstr: bool = False
+    ) -> babase.Lstr | babase.LangStr:
         """Given a game config dict, return a short description for it.
 
         This is used when viewing game-lists or showing what game
         is up next in a series.
+
+        Pass ``langstr=True`` to receive a :class:`~babase.LangStr`. The
+        legacy :class:`~babase.Lstr` form goes away when api 9 support
+        ends.
         """
+        if langstr:
+            # pylint: disable-next=cyclic-import
+            from bascenev1 import classicassets
+
+            lname = cls.get_display_string(config['settings'], langstr=True)
+            mapname = config['settings'].get('map', config.get('map'))
+            if mapname is None:
+                print('invalid game config - expected map entry under settings')
+                return babase.LangStr.from_text('???')
+            return classicassets.strings.game.game_on_map(
+                name=lname,
+                mapname=_map.get_map_display_string(
+                    _map.get_filtered_map_name(mapname), langstr=True
+                ),
+            )
+
         name = cls.get_display_string(config['settings'])
 
         # In newer configs, map is in settings; it used to be in the
@@ -256,15 +531,50 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
             raise babase.MapNotFoundError
         return self._map
 
-    def get_instance_display_string(self) -> babase.Lstr:
-        """Return a name for this particular game instance."""
+    @overload
+    def get_instance_display_string(
+        self, *, langstr: Literal[False] = False
+    ) -> babase.Lstr: ...
+
+    @overload
+    def get_instance_display_string(
+        self, *, langstr: Literal[True]
+    ) -> babase.LangStr: ...
+
+    def get_instance_display_string(
+        self, *, langstr: bool = False
+    ) -> babase.Lstr | babase.LangStr:
+        """Return a name for this particular game instance.
+
+        Pass ``langstr=True`` to receive a :class:`~babase.LangStr`. The
+        legacy :class:`~babase.Lstr` form goes away when api 9 support
+        ends.
+        """
+        if langstr:
+            return self.get_display_string(self.settings_raw, langstr=True)
         return self.get_display_string(self.settings_raw)
 
-    def get_instance_scoreboard_display_string(self) -> babase.Lstr:
+    @overload
+    def get_instance_scoreboard_display_string(
+        self, *, langstr: Literal[False] = False
+    ) -> babase.Lstr: ...
+
+    @overload
+    def get_instance_scoreboard_display_string(
+        self, *, langstr: Literal[True]
+    ) -> babase.LangStr: ...
+
+    def get_instance_scoreboard_display_string(
+        self, *, langstr: bool = False
+    ) -> babase.Lstr | babase.LangStr:
         """Return a name for this particular game instance.
 
         This name is used above the game scoreboard in the corner
         of the screen, so it should be as concise as possible.
+
+        Pass ``langstr=True`` to receive a :class:`~babase.LangStr`. The
+        legacy :class:`~babase.Lstr` form goes away when api 9 support
+        ends.
         """
         # If we're in a co-op session, use the level name.
         # FIXME: Should clean this up.
@@ -274,11 +584,14 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
             if isinstance(self.session, CoopSession):
                 campaign = self.session.campaign
                 assert campaign is not None
-                return campaign.getlevel(
-                    self.session.campaign_level_name
-                ).displayname
+                level = campaign.getlevel(self.session.campaign_level_name)
+                if langstr:
+                    return level.displayname_langstr
+                return level.displayname
         except Exception:
             logging.exception('Error getting campaign level name.')
+        if langstr:
+            return self.get_instance_display_string(langstr=True)
         return self.get_instance_display_string()
 
     def get_instance_description(self) -> str | Sequence:
@@ -461,13 +774,8 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
             raise TypeError('Invalid format for instance description.')
 
         is_empty = sb_desc_l[0] == ''
-        subs = []
-        for i in range(len(sb_desc_l) - 1):
-            subs.append(('${ARG' + str(i + 1) + '}', str(sb_desc_l[i + 1])))
-        translation = babase.Lstr(
-            translate=('gameDescriptions', sb_desc_l[0]), subs=subs
-        )
-        sb_desc = translation
+        arg = str(sb_desc_l[1]) if len(sb_desc_l) > 1 else None
+        sb_desc = get_game_description(sb_desc_l[0], arg=arg)
         vrmode = babase.app.env.vr
         yval = -34 if is_empty else -20
         yval -= 16
@@ -566,18 +874,13 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
             desc_l = desc_in
         if not isinstance(desc_l[0], str):
             raise TypeError('Invalid format for instance description')
-        subs = []
-        for i in range(len(desc_l) - 1):
-            subs.append(('${ARG' + str(i + 1) + '}', str(desc_l[i + 1])))
-        translation = babase.Lstr(
-            translate=('gameDescriptions', desc_l[0]), subs=subs
-        )
+        arg = str(desc_l[1]) if len(desc_l) > 1 else None
+        translation: babase.LangStr = get_game_description(desc_l[0], arg=arg)
 
         # Do some standard filters (epic mode, etc).
         if self.settings_raw.get('Epic Mode', False):
-            translation = babase.Lstr(
-                resource='epicDescriptionFilterText',
-                subs=[('${DESCRIPTION}', translation)],
+            translation = classicassets.strings.game.epic_description_filter(
+                description=translation
             )
         vrmode = babase.app.env.vr
         dnode = _bascenev1.newnode(
@@ -607,14 +910,16 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         _bascenev1.timer(4.0, dnode.delete)
 
     def _show_tip(self) -> None:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import classicassets
         from bascenev1._gameutils import animate, GameTip
 
         # If there's any tips left on the list, display one.
         if self.tips:
             tip = self.tips.pop(random.randrange(len(self.tips)))
-            tip_title = babase.Lstr(
-                value='${A}:', subs=[('${A}', babase.Lstr(resource='tipText'))]
-            )
+            tip_title = classicassets.strings.game.tip_title
             icon: bascenev1.Texture | None = None
             sound: bascenev1.Sound | None = None
             if isinstance(tip, GameTip):
@@ -1004,7 +1309,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                     'color': (1, 0.7, 0, 1),
                     'position': (0, -90),
                     'scale': 1.2,
-                    'text': babase.Lstr(resource='timeExpiredText'),
+                    'text': classicassets.strings.game.time_expired,
                 },
             )
             classicassets.audio.ref_whistle.play()
@@ -1017,6 +1322,10 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         This will be displayed at the top of the screen.
         If the time-limit expires, end_game() will be called.
         """
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import classicassets
         from bascenev1._nodeactor import NodeActor
 
         if duration <= 0.0:
@@ -1046,7 +1355,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                     'position': (-60, 50),
                     'flatness': 1.0,
                     'scale': 0.5,
-                    'text': babase.Lstr(resource='tournamentText'),
+                    'text': classicassets.strings.coop.tournament,
                 },
             )
         )
@@ -1123,10 +1432,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         if self._tournament_time_limit <= 0:
             self._tournament_time_limit_timer = None
             self.end_game()
-            tval = babase.Lstr(
-                resource='tournamentTimeExpiredText',
-                fallback_resource='timeExpiredText',
-            )
+            tval = classicassets.strings.game.tournament_time_expired
             node = _bascenev1.newnode(
                 'text',
                 attrs={
@@ -1187,6 +1493,11 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         ).autoretain()
 
     def _calc_map_name(self, settings: dict) -> str:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import classicassets
+
         map_name: str
         if 'map' in settings:
             map_name = settings['map']
@@ -1205,7 +1516,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
             ]
             if not valid_maps:
                 _bascenev1.broadcastmessage(
-                    babase.Lstr(resource='noValidMapsErrorText')
+                    classicassets.strings.game.no_valid_maps_error
                 )
                 raise RuntimeError('No valid maps')
             map_name = valid_maps[random.randrange(len(valid_maps))]

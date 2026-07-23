@@ -1095,7 +1095,11 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         float amt = transition_scale_ / 0.9f;
         s = std::min((1.0f - amt) * 4.0f, 2.5f) + amt * 1.0f;
       }
-      c.SetColor(red_ * s, green_ * s, blue_ * s, alpha_);
+      // Premultiplied texture + straight faded color; premultiply rgb
+      // ourselves so a faded (alpha_ < 1) background composites 'over'
+      // correctly (see docs/design/premultiplied-alpha.md).
+      float cmul = (tex_.exists() && tex_->premultiplied()) ? alpha_ : 1.0f;
+      c.SetColor(red_ * s * cmul, green_ * s * cmul, blue_ * s * cmul, alpha_);
       c.SetTexture(tex_.get());
       {
         auto xf = c.ScopedTransform();

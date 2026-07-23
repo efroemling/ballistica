@@ -59,6 +59,7 @@ class PythonClassLangStr : public PythonClass {
   static auto tp_richcompare(PythonClassLangStr* self, PyObject* other, int op)
       -> PyObject*;
   static auto tp_hash(PythonClassLangStr* self) -> Py_hash_t;
+  static auto FromText(PyObject* cls, PyObject* arg) -> PyObject*;
   static auto GetSpec(PythonClassLangStr* self, void* closure) -> PyObject*;
   static auto Evaluate(PythonClassLangStr* self) -> PyObject*;
   static auto ToJson(PythonClassLangStr* self) -> PyObject*;

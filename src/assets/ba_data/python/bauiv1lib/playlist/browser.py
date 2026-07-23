@@ -234,8 +234,8 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     .evaluate()
                     .replace(
                         '${GAME}',
-                        bui.Lstr(
-                            translate=('gameNames', 'Death Match')
+                        (
+                            classicassets.strings.gamenames.death_match
                         ).evaluate(),
                     ),
                     'playlist': [
@@ -272,8 +272,8 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     .evaluate()
                     .replace(
                         '${GAME}',
-                        bui.Lstr(
-                            translate=('gameNames', 'Capture the Flag')
+                        (
+                            classicassets.strings.gamenames.capture_the_flag
                         ).evaluate(),
                     ),
                     'playlist': [
@@ -320,8 +320,8 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 {
                     'type': 'ADD_PLAYLIST',
                     'playlistType': 'Team Tournament',
-                    'playlistName': bui.Lstr(
-                        translate=('playlistNames', 'Just Sports')
+                    'playlistName': (
+                        classicassets.strings.playlist.just_sports
                     ).evaluate(),
                     'playlist': [
                         {
@@ -349,8 +349,8 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 {
                     'type': 'ADD_PLAYLIST',
                     'playlistType': 'Free-for-All',
-                    'playlistName': bui.Lstr(
-                        translate=('playlistNames', 'Just Epic')
+                    'playlistName': (
+                        classicassets.strings.playlist.just_epic
                     ).evaluate(),
                     'playlist': [
                         {
@@ -558,7 +558,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     if x == 0:
                         bui.widget(edit=btn, left_widget=self._back_button)
 
-                print_name: str | bui.Lstr | None
+                print_name: str | bui.Lstr | bui.LangStr | None
                 if name == '__default__':
                     print_name = self._pvars.default_list_name
                 else:

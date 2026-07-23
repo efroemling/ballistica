@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.260723a"
+// Generated from: "a-0.babuiltinassets.260723c"
 
 #include <memory>
 
@@ -35,6 +35,33 @@ namespace ballistica::base {
 /// built, held, and evaluated from any thread.
 class BuiltinStrings {
  public:
+  class Account {
+   public:
+    /// Error screen-message shown to a player who attempts to join a party or
+    /// server that requires account authentication while they are not signed in
+    /// to an account.
+    ///
+    /// English: "You must sign in to do this."
+    static auto MustSignIn() -> std::shared_ptr<const LangStr>;
+
+    /// Notice that a platform account is being ignored.
+    ///
+    /// English: "Note: Ignoring this {service} account. Go to Account > Sign In
+    /// if you want to use it."
+    static auto NotUsingAccount(LangStr::Sub service)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Error message shown when signing in fails.
+    ///
+    /// English: "Error signing in."
+    static auto SignInError() -> std::shared_ptr<const LangStr>;
+
+    /// Notice that the account is being updated.
+    ///
+    /// English: "Updating your account..."
+    static auto UpdatingAccount() -> std::shared_ptr<const LangStr>;
+  };
+
   class Assets {
    public:
     /// Wraps a server-supplied asset access-denial explanation with guidance
@@ -177,6 +204,12 @@ class BuiltinStrings {
     static auto ControllerDisconnected(LangStr::Sub controller)
         -> std::shared_ptr<const LangStr>;
 
+    /// Notice that a controller works only in menus.
+    ///
+    /// English: "This controller can not be used to play; only to navigate
+    /// menus."
+    static auto ControllerMenusOnly() -> std::shared_ptr<const LangStr>;
+
     /// Transient screen-message shown when a previously-connected game
     /// controller (e.g. a BombSquad Remote phone client) reconnects, naming the
     /// device.
@@ -233,11 +266,23 @@ class BuiltinStrings {
     /// tap Menu -> Leave Game with it to back out."
     static auto TouchScreenJoinWarning() -> std::shared_ptr<const LangStr>;
 
+    /// Notice that a controller is not supported.
+    ///
+    /// English: "Sorry, the {name} controller is not supported."
+    static auto UnsupportedController(LangStr::Sub name)
+        -> std::shared_ptr<const LangStr>;
+
     /// Confirmation screen-message shown in VR mode when the player resets the
     /// headset's forward orientation via their controller.
     ///
     /// English: "VR orientation reset."
     static auto VrOrientationReset() -> std::shared_ptr<const LangStr>;
+
+    /// Explanation of the VR orientation reset on Cardboard.
+    ///
+    /// English: "Use this to reset the VR orientation. To play, you'll need an
+    /// external controller."
+    static auto VrOrientationResetCardboard() -> std::shared_ptr<const LangStr>;
   };
 
   class Net {
@@ -255,6 +300,11 @@ class BuiltinStrings {
     /// English: "An error has occurred."
     static auto AuthError() -> std::shared_ptr<const LangStr>;
 
+    /// Notice that connecting to a server failed.
+    ///
+    /// English: "Connection failed."
+    static auto ConnectionFailed() -> std::shared_ptr<const LangStr>;
+
     /// Error screen-message shown to a player whose attempt to join a password-
     /// protected party or server was rejected for entering the wrong party
     /// password.
@@ -268,18 +318,38 @@ class BuiltinStrings {
     /// English: "Error: invalid address."
     static auto InvalidAddress() -> std::shared_ptr<const LangStr>;
 
-    /// Error screen-message shown to a player who attempts to join a party or
-    /// server that requires account authentication while they are not signed in
-    /// to an account.
-    ///
-    /// English: "You must sign in to do this."
-    static auto MustSignIn() -> std::shared_ptr<const LangStr>;
-
     /// Error shown when something cannot be reached, most likely because there
     /// is no internet connection (dialog messages and screen-messages).
     ///
     /// English: "This is currently unavailable (no internet connection?)"
     static auto UnavailableNoConnection() -> std::shared_ptr<const LangStr>;
+  };
+
+  class Plugins {
+   public:
+    /// Error message for a plugin class that failed to load.
+    ///
+    /// English: "Error loading plugin class '{plugin}': {error}"
+    static auto ClassLoadError(LangStr::Sub plugin, LangStr::Sub error)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Notice that new plugins were found.
+    ///
+    /// English: "New plugin(s) detected. Restart to activate them, or configure
+    /// them in settings."
+    static auto Detected() -> std::shared_ptr<const LangStr>;
+
+    /// Error message for a plugin that failed to initialize.
+    ///
+    /// English: "Error initializing plugin {plugin}: {error}"
+    static auto InitError(LangStr::Sub plugin, LangStr::Sub error)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Notice that previously-present plugins are gone.
+    ///
+    /// English: (one) "# plugin no longer found." / (other) "# plugins no
+    /// longer found."
+    static auto Removed(int64_t count) -> std::shared_ptr<const LangStr>;
   };
 
   class Replay {
@@ -296,6 +366,28 @@ class BuiltinStrings {
     /// English: "Sorry, this replay was made in a different version of the game
     /// and can't be used."
     static auto VersionError() -> std::shared_ptr<const LangStr>;
+  };
+
+  class Scripts {
+   public:
+    /// Notice that one script module is out of date.
+    ///
+    /// English: "The module at {path} must be updated for API version {api}."
+    static auto ModuleNeedsUpdate(LangStr::Sub path, LangStr::Sub api)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Notice that several script modules are out of date.
+    ///
+    /// English: (one) "{path} and # other module must be updated for API {api}"
+    /// / (other) "{path} and # other modules must be updated for API {api}"
+    static auto ModulesNeedUpdate(LangStr::Sub path, int64_t count,
+                                  LangStr::Sub api)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Notice that errors occurred scanning scripts.
+    ///
+    /// English: "Error(s) scanning scripts. See log for details."
+    static auto ScanError() -> std::shared_ptr<const LangStr>;
   };
 
   class Session {
@@ -324,6 +416,60 @@ class BuiltinStrings {
     static auto KickIdleWarningSettings() -> std::shared_ptr<const LangStr>;
   };
 
+  class Store {
+   public:
+    /// Notice that Google Play purchases are unavailable.
+    ///
+    /// English: "Google Play purchases are not available. You may need to
+    /// update your store app."
+    static auto GooglePlayPurchasesUnavailable()
+        -> std::shared_ptr<const LangStr>;
+
+    /// Notice that Google Play Services is unavailable.
+    ///
+    /// English: "Google Play Services is not available. Some app functionality
+    /// may be disabled."
+    static auto GooglePlayServicesUnavailable()
+        -> std::shared_ptr<const LangStr>;
+
+    /// Notice that this item is already being purchased.
+    ///
+    /// English: "A purchase of this item is already in progress."
+    static auto PurchaseAlreadyInProgress() -> std::shared_ptr<const LangStr>;
+
+    /// Error message that a purchase was not valid.
+    ///
+    /// English: "Purchase not valid. Contact {email} if this is an error."
+    static auto PurchaseNotValid(LangStr::Sub email)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Confirmation that past purchases were restored.
+    ///
+    /// English: "Purchases restored."
+    static auto PurchasesRestored() -> std::shared_ptr<const LangStr>;
+
+    /// Limited-time offer to remove ads via a token pack.
+    ///
+    /// English: "LIMITED TIME OFFER: PURCHASE ANY TOKEN PACK TO REMOVE IN-GAME
+    /// ADS."
+    static auto RemoveAdsTokenOffer() -> std::shared_ptr<const LangStr>;
+
+    /// Notice that a transaction is already underway.
+    ///
+    /// English: "A transaction is in progress; please try again in a moment."
+    static auto TransactionInProgress() -> std::shared_ptr<const LangStr>;
+
+    /// Notice that a store item is not available.
+    ///
+    /// English: "Sorry, this is not available."
+    static auto Unavailable() -> std::shared_ptr<const LangStr>;
+
+    /// Notice that something is unavailable for now.
+    ///
+    /// English: "This is currently unavailable; please try again later."
+    static auto UnavailableTemporarily() -> std::shared_ptr<const LangStr>;
+  };
+
   class Ui {
    public:
     /// Lowercase hint shown (with an error sound) when the player hits the edge
@@ -340,11 +486,31 @@ class BuiltinStrings {
     /// English: "Cancel"
     static auto Cancel() -> std::shared_ptr<const LangStr>;
 
+    /// Notice that the clipboard is unavailable in this build.
+    ///
+    /// English: "Clipboard not supported on this build."
+    static auto ClipboardNotSupported() -> std::shared_ptr<const LangStr>;
+
+    /// Confirmation that text was copied to the clipboard.
+    ///
+    /// English: "Copied to clipboard."
+    static auto CopiedToClipboard() -> std::shared_ptr<const LangStr>;
+
     /// Generic Error title used on error dialogs (e.g. the boot-time asset-
     /// update dialog when a load fails).
     ///
     /// English: "Error"
     static auto Error() -> std::shared_ptr<const LangStr>;
+
+    /// Name label for the Apple Game Center service.
+    ///
+    /// English: "Game Center"
+    static auto GameCenter() -> std::shared_ptr<const LangStr>;
+
+    /// Name label for the Google Play service.
+    ///
+    /// English: "Google Play"
+    static auto GooglePlay() -> std::shared_ptr<const LangStr>;
 
     /// Screen-message shown when an input device tries to use a menu another
     /// device currently controls; names the controlling device. A timeout
@@ -376,6 +542,11 @@ class BuiltinStrings {
     /// English: "OK"
     static auto Ok() -> std::shared_ptr<const LangStr>;
 
+    /// Name label for the remote-control companion app.
+    ///
+    /// English: "BombSquad Remote"
+    static auto RemoteAppName() -> std::shared_ptr<const LangStr>;
+
     /// Generic label for a button that retries a failed operation (used by e.g.
     /// the boot-time asset-update dialog).
     ///
@@ -388,11 +559,41 @@ class BuiltinStrings {
     /// English: "Sign In"
     static auto SignIn() -> std::shared_ptr<const LangStr>;
 
+    /// Notice that storage access permission is required.
+    ///
+    /// English: "This requires storage access"
+    static auto StoragePermissionNeeded() -> std::shared_ptr<const LangStr>;
+
+    /// Confirmation label that an operation succeeded.
+    ///
+    /// English: "Success!"
+    static auto Success() -> std::shared_ptr<const LangStr>;
+
     /// Generic title for progress dialogs applying updates: asset
     /// downloads/builds at boot, locale switches, pre-game package fetches.
     ///
     /// English: "Updating…"
     static auto Updating() -> std::shared_ptr<const LangStr>;
+  };
+
+  class Workspace {
+   public:
+    /// Confirmation that a workspace was activated.
+    ///
+    /// English: "{thing} activated."
+    static auto Activated(LangStr::Sub thing) -> std::shared_ptr<const LangStr>;
+
+    /// Error message that a workspace failed to sync.
+    ///
+    /// English: "Error syncing workspace {workspace}. See log for details."
+    static auto SyncError(LangStr::Sub workspace)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Notice that a previously synced workspace is being reused.
+    ///
+    /// English: "Unable to sync {workspace}. Reusing the last synced version."
+    static auto SyncReuse(LangStr::Sub workspace)
+        -> std::shared_ptr<const LangStr>;
   };
 };
 

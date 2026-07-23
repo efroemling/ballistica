@@ -2,6 +2,12 @@
 #
 """Controller functionality for DocUI."""
 
+# This is the primary hand-written doc-ui controller module. The
+# cleanly-separable pieces (the bg-thread runner and shared types)
+# already live in their own modules; what remains is cohesive controller
+# logic, so allow it to run a bit long.
+# pylint: disable=too-many-lines
+
 from typing import TYPE_CHECKING, assert_never
 from dataclasses import dataclass
 from enum import Enum
@@ -21,6 +27,8 @@ from bacommon.docui import (
 import bauiv1 as bui
 from bauiv1 import builtinassets
 
+from bauiv1lib.docui import _bgrunner
+from bauiv1lib.docui._types import DocUILocalAction
 from bauiv1lib.docui._window import DocUIWindow
 
 if TYPE_CHECKING:
@@ -219,6 +227,10 @@ class DocUIController:
         """
         import bacommon.cloud
 
+        bui.uilog.debug(
+            'Fetching doc-ui request from cloud (domain=%r).', domain
+        )
+
         try:
             plus = bui.app.plus
             if plus is None:
@@ -243,12 +255,23 @@ class DocUIController:
             self._check_server_response(mresponse.response)
             return mresponse.response
 
-        except CommunicationError:
+        except CommunicationError as exc:
             # Label comm-errors so we can possibly show retry buttons.
+            # Expected/transient (bad network, server hiccup), so warn
+            # rather than dumping a traceback.
+            bui.uilog.warning(
+                'Communication error fetching doc-ui (domain=%r): %s',
+                domain,
+                exc,
+            )
             return self.error_response(
                 request, self.ErrorType.COMMUNICATION_ERROR
             )
         except Exception:
+            # Unexpected; this is a real bug worth a full traceback.
+            bui.uilog.exception(
+                'Unexpected error fetching doc-ui (domain=%r).', domain
+            )
             return self.error_response(request)
 
     @staticmethod
@@ -386,7 +409,7 @@ class DocUIController:
 
         # Lock its ui and kick off a bg task to populate it.
         win.lock_ui()
-        bui.app.threadpool.submit_no_wait(
+        _bgrunner.submit(
             bui.CallStrict(
                 self._process_request_in_bg,
                 request,
@@ -468,7 +491,7 @@ class DocUIController:
 
         # Lock the ui and kick off this update.
         win.lock_ui()
-        bui.app.threadpool.submit_no_wait(
+        _bgrunner.submit(
             bui.CallStrict(
                 self._process_request_in_bg,
                 win.request,
@@ -557,7 +580,7 @@ class DocUIController:
             ),
         )
         win.lock_ui(origin_widget)
-        bui.app.threadpool.submit_no_wait(
+        _bgrunner.submit(
             bui.CallStrict(
                 self._process_request_in_bg,
                 win.request,
@@ -589,8 +612,11 @@ class DocUIController:
         # If locked, been and tell them to try again.
         if window.locked:
             builtinassets.audio.error.get().play()
+            from bauiv1 import classicassets
+
             bui.screenmessage(
-                bui.Lstr(resource='pageRefreshingTryAgainText'), color=(1, 0, 0)
+                classicassets.strings.ui.page_refreshing_try_again,
+                color=(1, 0, 0),
             )
             return
 
@@ -805,6 +831,12 @@ class DocUIController:
                     minbuild is not None
                     and minbuild > bui.app.env.engine_build_number
                 ):
+                    bui.uilog.debug(
+                        'doc-ui response requires engine build %d but we'
+                        ' are %d; showing need-update prompt.',
+                        minbuild,
+                        bui.app.env.engine_build_number,
+                    )
                     error = self.ErrorType.NEED_UPDATE
                     response = None
                 else:
@@ -985,13 +1017,3 @@ class DocUIController:
             )
             return
         self.run_action(win, widgetid=None, action=action, is_timed=True)
-
-
-@dataclass
-class DocUILocalAction:
-    """Context for a local-action."""
-
-    name: str
-    args: dict
-    widget: bui.Widget | None
-    window: DocUIWindow

@@ -760,9 +760,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             # because only host can continue the game.
             adisp = plus.get_v1_account_display_string()
             txt = Text(
-                bs.Lstr(
-                    resource='waitingForHostText', subs=[('${HOST}', adisp)]
-                ),
+                classicassets.strings.game.waiting_for_host(host=adisp),
                 maxwidth=300,
                 transition=Text.Transition.FADE_IN,
                 transition_delay=8.0,

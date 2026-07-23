@@ -37,6 +37,30 @@ api-version has not changed. In general it is best to always be running newest
 available builds.
 
 ### Upcoming changes when api 9 support ends (and how to prepare for them)
+- `ba*.Lstr` is going away. Migrate all uses of it to the new `ba*.LangStr`
+  class.
+- Engine calls that return an `Lstr` are growing a `langstr` keyword argument.
+  Passing `langstr=True` gets you a `LangStr` (or a plain `str` for things we
+  have no translation entry for, such as a name your own mod supplied). To
+  prepare, pass `langstr=True` at these call sites and handle the result being
+  `str | LangStr`. When api 9 support ends these calls return the new type
+  unconditionally and the argument becomes inert; it is removed when api 10
+  support ends, so you will then drop it again. Affected so far:
+  `bascenev1.GameActivity.get_display_string()`,
+  `get_settings_display_string()`, `get_instance_display_string()`,
+  `get_instance_scoreboard_display_string()`, `get_team_display_string()`,
+  `bascenev1.get_map_display_string()`, and
+  `bascenev1.MultiTeamSession.get_next_game_description()`.
+- Properties that return an `Lstr` cannot take an argument, so each is gaining
+  a `_langstr` twin. Use `bascenev1.Level.displayname_langstr` instead of
+  `bascenev1.Level.displayname`. When api 9 support ends, `displayname` itself
+  returns a `LangStr`; the `_langstr` twin is then removed when api 10 support
+  ends, at which point you switch back to the plain name.
+- `bascenev1.SessionTeam.name` and `bascenev1.Team.name` are now
+  `str | LangStr` rather than `str | Lstr`. Built-in team names are `LangStr`
+  values and player-customized names are plain strings. If you assign an
+  `Lstr` it is flattened to a `str`, so team names you set will no longer
+  re-translate when the language changes; assign a `LangStr` to keep that.
 - `ba*.Call()` will change to behave like `ba*.CallStrict()` instead of
   `ba*.CallPartial()`. To prepare for this, change all of your existing `Call()`
   usage to `CallPartial()` to lock in current behavior. Or use `CallStrict()` if

@@ -29,12 +29,21 @@ static auto IsSubKeyChar_(char c) -> bool {
 }
 
 // Append each {name} substitution token found in text to names (in
-// order of appearance; duplicates kept). Non-token brace content is
-// skipped, matching Substitute_'s scanning rules.
+// order of appearance; duplicates kept). Escaped braces ({{ and }})
+// and other non-token brace content are skipped, matching Substitute_'s
+// scanning rules.
 static void ScanSubTokens_(const std::string& text,
                            std::vector<std::string>* names) {
   size_t i = 0;
   while (i < text.size()) {
+    // Escaped literal braces consume both chars so the inner brace is
+    // never re-scanned as a token (e.g. {{x}} declares no token 'x').
+    if (i + 1 < text.size()
+        && ((text[i] == '{' && text[i + 1] == '{')
+            || (text[i] == '}' && text[i + 1] == '}'))) {
+      i += 2;
+      continue;
+    }
     if (text[i] == '{' && i + 1 < text.size() && IsSubKeyStart_(text[i + 1])) {
       size_t k = i + 2;
       while (k < text.size() && IsSubKeyChar_(text[k])) {
@@ -347,11 +356,12 @@ static auto PluralCategory_(const std::string& locale, int64_t count)
 }
 
 // Expand {name} placeholders in a template against evaluated args.
-// Mirrors Python loctext._substitute: only tokens matching the keyword
-// pattern are treated as substitutions (and are errors if missing from
-// args); any other brace content passes through untouched. When
-// ``pound`` is set, '#' occurrences are replaced with it first (on the
-// template, so substituted values containing '#' stay untouched).
+// Mirrors Python loctext._substitute: {{ and }} are escaped literal
+// braces; tokens matching the keyword pattern are substitutions (and
+// are errors if missing from args); any other brace content passes
+// through untouched. When ``pound`` is set, '#' occurrences are
+// replaced with it first (on the template, so substituted values
+// containing '#' stay untouched).
 static auto Substitute_(
     const std::string& intext,
     const std::unordered_map<std::string, std::string>& args,
@@ -370,6 +380,14 @@ static auto Substitute_(
   size_t i = 0;
   while (i < text.size()) {
     char c = text[i];
+    // Escaped literal braces: {{ -> { and }} -> }.
+    if (i + 1 < text.size()
+        && ((c == '{' && text[i + 1] == '{')
+            || (c == '}' && text[i + 1] == '}'))) {
+      out.push_back(c);
+      i += 2;
+      continue;
+    }
     if (c != '{') {
       out.push_back(c);
       ++i;

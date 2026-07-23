@@ -14,6 +14,7 @@ from bauiv1 import builtinassets
 from bauiv1 import classicassets
 
 from bauiv1lib.utils import scroll_fade_top, scroll_fade_bottom
+from bauiv1lib.league import league_display_name
 from bauiv1lib.connectivity import wait_for_connectivity
 
 if TYPE_CHECKING:
@@ -244,10 +245,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 yoffs - (50 if uiscale is bui.UIScale.SMALL else 24),
             ),
             size=(0, 0),
-            text=bui.Lstr(
-                resource='playModes.singlePlayerCoopText',
-                fallback_resource='playModes.coopText',
-            ),
+            text=classicassets.strings.playmodes.single_player_coop,
             h_align='center',
             color=app.ui_v1.title_color,
             scale=0.85 if uiscale is bui.UIScale.SMALL else 1.5,
@@ -878,10 +876,7 @@ class CoopBrowserWindow(bui.MainWindow):
             parent=w_parent,
             position=(h_base + 27, v + 30 + 198),
             size=(0, 0),
-            text=bui.Lstr(
-                resource='practiceText',
-                fallback_resource='coopSelectWindow.customText',
-            ),
+            text=classicassets.strings.ui.practice,
             h_align='left',
             v_align='center',
             color=bui.app.ui_v1.title_color,
@@ -1070,10 +1065,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         if game == 'Easy:The Last Stand':
             ConfirmWindow(
-                bui.Lstr(
-                    resource='difficultyHardUnlockOnlyText',
-                    fallback_resource='difficultyHardOnlyText',
-                ),
+                classicassets.strings.coop.difficulty_hard_unlock_only,
                 cancel_button=False,
                 width=460,
                 height=130,
@@ -1167,19 +1159,8 @@ class CoopBrowserWindow(bui.MainWindow):
 
         if tournament_button.required_league is not None:
             bui.screenmessage(
-                bui.Lstr(
-                    resource='league.tournamentLeagueText',
-                    subs=[
-                        (
-                            '${NAME}',
-                            bui.Lstr(
-                                translate=(
-                                    'leagueNames',
-                                    tournament_button.required_league,
-                                )
-                            ),
-                        )
-                    ],
+                classicassets.strings.league.tournament_required(
+                    name=league_display_name(tournament_button.required_league)
                 ),
                 color=(1, 0, 0),
             )

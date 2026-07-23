@@ -505,8 +505,14 @@ def _interpret_probe_result(
             address,
             port,
         )
+        # The wrapper import stays deferred: bascenev1 is fully imported
+        # by the time this runs; the cycle pylint sees is structural
+        # only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import builtinassets
+
         babase.screenmessage(
-            babase.Lstr(resource='internal.connectionFailedText'),
+            builtinassets.strings.net.connection_failed,
             color=(1, 0, 0),
         )
         return None, False
