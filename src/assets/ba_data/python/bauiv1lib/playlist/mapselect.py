@@ -3,6 +3,7 @@
 """Provides UI for selecting maps in playlists."""
 
 import math
+import logging
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
@@ -179,15 +180,17 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             # Disallow ones we don't own.
             if mapname in unowned_maps:
                 continue
-            map_tex_name = get_map_class(mapname).get_preview_texture_name()
-            if map_tex_name is not None:
-                try:
-                    map_tex = bui.gettexture(map_tex_name)
-                    self._maps.append((mapname, map_tex))
-                except Exception:
-                    print(f'Invalid map preview texture: "{map_tex_name}".')
-            else:
+            try:
+                map_tex = get_map_class(mapname).get_preview_texture()
+            except Exception:
+                logging.exception(
+                    'Error loading map preview texture for map %s.', mapname
+                )
+                continue
+            if map_tex is None:
                 print('Error: no map preview texture for map:', mapname)
+                continue
+            self._maps.append((mapname, map_tex))
 
         count = len(self._maps)
         columns = 2

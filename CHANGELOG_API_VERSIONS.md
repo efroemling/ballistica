@@ -85,6 +85,14 @@ available builds.
   identical and return V1 ids for protocol < 36 and V2 ids for protocol >= 36;
   the new one just has a more correct name. The old name will be removed when
   api 9 support ends.
+- `bascenev1.Map.get_preview_texture_name()` is deprecated; override
+  `get_preview_texture()` instead, which returns a loaded `bauiv1.Texture`
+  rather than a name for the caller to look up. Normally you return it
+  straight off an asset-package wrapper, e.g.
+  `return myassets.textures.my_map_preview.get()`. Maps that override only
+  the old call keep working (the new one falls back to it), but built-in maps
+  no longer implement it, so calling it on one now returns `None`. It is
+  removed when api 9 support ends.
 - The `float_times` argument on `efro.dataclassio.IOAttrs` is deprecated and
   will be removed when api 9 support ends. Replace `IOAttrs(float_times=True)`
   with `IOAttrs(time_format='float')`.

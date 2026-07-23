@@ -120,9 +120,9 @@ class PlayOptionsWindow(PopupWindow):
                 except bui.NotFoundError:
                     maptype = None
                 if maptype is not None:
-                    tex_name = maptype.get_preview_texture_name()
-                    if tex_name is not None:
-                        map_textures.append(tex_name)
+                    map_tex = maptype.get_preview_texture()
+                    if map_tex is not None:
+                        map_textures.append(map_tex)
                         map_texture_entries.append(entry)
             rows = (max(0, len(map_textures) - 1) // max_columns) + 1
             columns = min(max_columns, len(map_textures))
@@ -198,7 +198,7 @@ class PlayOptionsWindow(PopupWindow):
             for col in range(columns):
                 tex_index = row * columns + col
                 if tex_index < len(map_textures):
-                    tex_name = map_textures[tex_index]
+                    map_tex = map_textures[tex_index]
                     h = h_offs_img + scl * 250 * col
                     v = v_offs_img - self._row_height * row
                     entry = map_texture_entries[tex_index]
@@ -240,7 +240,7 @@ class PlayOptionsWindow(PopupWindow):
                         size=(scl * 240.0, scl * 120.0),
                         position=(h, v),
                         texture=(
-                            bui.gettexture(tex_name)
+                            map_tex
                             if owned
                             else classicassets.textures.empty.get()
                         ),
@@ -271,7 +271,7 @@ class PlayOptionsWindow(PopupWindow):
                             position=(h - 10.0 * scl, v - 4.0 * scl),
                             draw_controller=btn,
                             color=(1, 1, 1),
-                            texture=bui.gettexture(tex_name),
+                            texture=map_tex,
                             mesh_opaque=mesh_opaque,
                             opacity=0.25,
                             mesh_transparent=mesh_transparent,

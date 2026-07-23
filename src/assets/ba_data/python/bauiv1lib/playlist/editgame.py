@@ -117,10 +117,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
         y_extra2 = 21
         yoffs = -30 if uiscale is bui.UIScale.SMALL else 0
 
-        map_tex_name = get_map_class(self._map).get_preview_texture_name()
-        if map_tex_name is None:
+        map_tex = get_map_class(self._map).get_preview_texture()
+        if map_tex is None:
             raise RuntimeError(f'No map preview tex found for {self._map}.')
-        map_tex = bui.gettexture(map_tex_name)
 
         top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
         super().__init__(

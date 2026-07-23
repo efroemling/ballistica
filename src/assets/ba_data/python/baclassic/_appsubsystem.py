@@ -922,9 +922,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             _ = uiclassicassets.meshes.level_select_button_opaque.get()
             _ = uiclassicassets.meshes.level_select_button_transparent.get()
             for maptype in list(self.maps.values()):
-                map_tex_name = maptype.get_preview_texture_name()
-                if map_tex_name is not None:
-                    bauiv1.gettexture(map_tex_name)
+                _ = maptype.get_preview_texture()
         except Exception:
             logging.exception('Error preloading map preview media.')
 

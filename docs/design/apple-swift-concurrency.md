@@ -95,10 +95,11 @@ Rules of thumb:
 - If a symptom looks like "input/events delayed until the user wiggles the
   mouse or touches the screen", suspect main-queue starvation before
   suspecting the input path itself.
-- `UIKitGLViewController` still renders inline in its display-link callback
-  (same structural exposure, masked on touch devices by constant UIKit
-  events; watch tvOS) — see the followups entry (2026-07-23) before
-  restructuring.
+- `UIKitGLViewController` uses the same pacer+render-thread split (ported
+  2026-07-23), with one iOS-specific addition: `setRenderingPaused(true)`
+  is a *fence* — it drops any queued tick and waits out the in-flight
+  frame, since GPU work after backgrounding gets the app killed. Keep that
+  property intact when touching the render loop.
 
 ## Don't aesthetically restructure sim-unverifiable flows
 

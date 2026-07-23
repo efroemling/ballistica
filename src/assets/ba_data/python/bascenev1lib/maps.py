@@ -8,11 +8,14 @@ from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 from bascenev1 import classicassets
+from bauiv1 import classicassets as uiclassicassets
 
 from bascenev1lib.gameutils import SharedObjects
 
 if TYPE_CHECKING:
     from typing import Any
+
+    import bauiv1
 
 
 def register_all_maps() -> None:
@@ -39,11 +42,6 @@ def register_all_maps() -> None:
         bs.register_map(maptype)
 
 
-def _tex(name: str) -> str:
-    """Qualified classicassets ref for a map texture name."""
-    return f'{classicassets.__asset_package__}:textures/{name}'
-
-
 class HockeyStadium(bs.Map):
     """Stadium map used for ice hockey games."""
 
@@ -59,8 +57,8 @@ class HockeyStadium(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('hockey_stadium_preview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.hockey_stadium_preview.get()
 
     @override
     @classmethod
@@ -154,8 +152,8 @@ class FootballStadium(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('football_stadium_preview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.football_stadium_preview.get()
 
     @override
     @classmethod
@@ -225,8 +223,8 @@ class Bridgit(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('bridgit_preview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.bridgit_preview.get()
 
     @override
     @classmethod
@@ -338,8 +336,8 @@ class BigG(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('big_gpreview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.big_gpreview.get()
 
     @override
     @classmethod
@@ -444,8 +442,8 @@ class Roundabout(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('roundabout_preview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.roundabout_preview.get()
 
     @override
     @classmethod
@@ -551,8 +549,8 @@ class MonkeyFace(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('monkey_face_preview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.monkey_face_preview.get()
 
     @override
     @classmethod
@@ -664,8 +662,8 @@ class ZigZag(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('zigzag_preview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.zigzag_preview.get()
 
     @override
     @classmethod
@@ -768,8 +766,8 @@ class ThePad(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('the_pad_preview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.the_pad_preview.get()
 
     @override
     @classmethod
@@ -880,8 +878,8 @@ class DoomShroom(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('doom_shroom_preview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.doom_shroom_preview.get()
 
     @override
     @classmethod
@@ -979,8 +977,8 @@ class LakeFrigid(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('lake_frigid_preview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.lake_frigid_preview.get()
 
     @override
     @classmethod
@@ -1068,8 +1066,8 @@ class TipTop(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('tip_top_preview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.tip_top_preview.get()
 
     @override
     @classmethod
@@ -1148,8 +1146,8 @@ class CragCastle(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('crag_castle_preview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.crag_castle_preview.get()
 
     @override
     @classmethod
@@ -1244,8 +1242,8 @@ class TowerD(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('tower_dpreview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.tower_dpreview.get()
 
     @override
     @classmethod
@@ -1378,8 +1376,8 @@ class HappyThoughts(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('always_land_preview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.always_land_preview.get()
 
     @override
     @classmethod
@@ -1491,8 +1489,8 @@ class StepRightUp(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('step_right_up_preview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.step_right_up_preview.get()
 
     @override
     @classmethod
@@ -1576,8 +1574,8 @@ class Courtyard(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('courtyard_preview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.courtyard_preview.get()
 
     @override
     @classmethod
@@ -1698,8 +1696,8 @@ class Rampage(bs.Map):
 
     @override
     @classmethod
-    def get_preview_texture_name(cls) -> str:
-        return _tex('rampage_preview')
+    def get_preview_texture(cls) -> bauiv1.Texture:
+        return uiclassicassets.textures.rampage_preview.get()
 
     @override
     @classmethod

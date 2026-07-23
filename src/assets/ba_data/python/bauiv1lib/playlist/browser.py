@@ -617,9 +617,9 @@ class PlaylistBrowserWindow(bui.MainWindow):
                         except bui.NotFoundError:
                             maptype = None
                         if maptype is not None:
-                            tex_name = maptype.get_preview_texture_name()
-                            if tex_name is not None:
-                                map_textures.append(tex_name)
+                            map_tex = maptype.get_preview_texture()
+                            if map_tex is not None:
+                                map_textures.append(map_tex)
                                 map_texture_entries.append(entry)
                         if len(map_textures) >= 6:
                             break
@@ -667,7 +667,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                                     )
                                 )
 
-                                tex_name = map_textures[tex_index]
+                                map_tex = map_textures[tex_index]
                                 h = pos[0] + h_offs_img + scl * 250 * col
                                 v = pos[1] + v_offs_img - scl * 130 * row
                                 map_images.append(
@@ -675,7 +675,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                                         parent=self._subcontainer,
                                         size=(scl * 250.0, scl * 125.0),
                                         position=(h, v),
-                                        texture=bui.gettexture(tex_name),
+                                        texture=map_tex,
                                         opacity=1.0 if owned else 0.25,
                                         draw_controller=btn,
                                         mesh_opaque=mesh_opaque,

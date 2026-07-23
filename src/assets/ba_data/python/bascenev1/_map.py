@@ -13,6 +13,8 @@ from bascenev1._actor import Actor
 if TYPE_CHECKING:
     from typing import Sequence, Any, Literal
 
+    import bauiv1
+
     import bascenev1
 
 
@@ -135,8 +137,40 @@ class Map(Actor):
 
     @classmethod
     def get_preview_texture_name(cls) -> str | None:
-        """Return the name of the preview texture for this map."""
+        """Return the name of the preview texture for this map.
+
+        .. deprecated:: 1.8.0
+           Override :meth:`get_preview_texture` instead, which hands back
+           the loaded texture rather than a name to look up. Overriding
+           this still works -- :meth:`get_preview_texture` falls back to
+           it -- but built-in maps no longer implement it, so calling it
+           on one returns ``None``. Removed when api 9 support ends.
+        """
         return None
+
+    @classmethod
+    def get_preview_texture(cls) -> bauiv1.Texture | None:
+        """Return this map's preview texture, or ``None`` if it has none.
+
+        Map previews are drawn by ui code, so this hands back a loaded
+        :class:`~bauiv1.Texture` -- typically straight off an
+        asset-package wrapper
+        (``someassets.textures.my_map_preview.get()``). Headless builds
+        can call this too; textures there load as null data rather than
+        being unavailable.
+        """
+        # Fall back to the deprecated name-based override so maps
+        # implementing only that still get a preview. Goes away when api
+        # 9 support ends.
+        name = cls.get_preview_texture_name()
+        if name is None:
+            return None
+
+        # Deferred: the ui feature-set is not a dependency of ours, and
+        # only this legacy fallback needs it.
+        import bauiv1
+
+        return bauiv1.gettexture(name)
 
     @classmethod
     def on_preload(cls) -> Any:
