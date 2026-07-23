@@ -13,7 +13,7 @@ from efro.error import CleanError
 from efro.util import strip_exception_tracebacks, strict_partial
 from bauiv1lib.settings.testing import TestingWindow
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -116,7 +116,7 @@ class NetTestingWindow(bui.MainWindow):
             size=(100, 60),
             scale=0.8,
             autoselect=True,
-            label=stdassets.strings.ui.copy,
+            label=classicassets.strings.ui.copy,
             on_activate_call=self._copy,
         )
 
@@ -138,7 +138,7 @@ class NetTestingWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(self._width * 0.5, yoffs - 55),
             size=(0, 0),
-            text=stdassets.strings.settings.nettesting.title,
+            text=classicassets.strings.settings.nettesting.title,
             color=(0.8, 0.8, 0.8, 1.0),
             h_align='center',
             v_align='center',
@@ -492,7 +492,7 @@ def get_net_val_testing_window() -> TestingWindow:
         {'name': 'showNetInfo', 'label': 'Show Net Info', 'increment': 1},
     ]
     return TestingWindow(
-        title=stdassets.strings.settings.nettesting.title,
+        title=classicassets.strings.settings.nettesting.title,
         entries=entries,
     )
 
@@ -516,7 +516,7 @@ def get_net_val_testing_window() -> TestingWindow:
 #             {'name': 'showNetInfo', 'label': 'Show Net Info', 'increment': 1},
 #         ]
 #         super().__init__(
-#             title=stdassets.strings.settings.nettesting.title,
+#             title=classicassets.strings.settings.nettesting.title,
 #             entries=entries,
 #             transition=transition,
 #         )

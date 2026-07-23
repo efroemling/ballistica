@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, override
 from efro.error import CleanError
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 from bauiv1lib.docui import DocUIWindow, DocUIController
 
@@ -27,8 +27,8 @@ def _btex(name: str) -> str:
 
 
 def _stex(name: str) -> str:
-    """Qualified stdassets texture ref."""
-    return f'{stdassets.__asset_package__}:textures/{name}'
+    """Qualified classicassets texture ref."""
+    return f'{classicassets.__asset_package__}:textures/{name}'
 
 
 def show_test_doc_ui_v2_window() -> None:
@@ -112,7 +112,7 @@ def _test_v2_page_root(
     The full v1 test root page, with all text authored as
     language-agnostic ``LangStrSpec`` values from the ``badocuiv2testassets``
     package, textures/meshes as typed refs from
-    ``builtinassets``/``stdassets``, and multi-line labels wrapped via
+    ``builtinassets``/``classicassets``, and multi-line labels wrapped via
     definition-time :class:`~bacommon.langstr.WrapParams` on the
     package's string definitions (decision D-t) instead of v1's
     hand-baked newlines. The client resolves the referenced packages
@@ -421,12 +421,12 @@ def _test_v2_page_root(
                             size=(150, 100),
                             decorations=[
                                 dui2.Image(
-                                    texture=stdassets.textures.zoe_icon,
+                                    texture=classicassets.textures.zoe_icon,
                                     position=(0, 0),
                                     size=(70, 70),
                                     tint_texture=(
-                                        stdassets.textures.zoe_icon_color_mask
-                                    ),
+                                        classicassets.textures
+                                    ).zoe_icon_color_mask,
                                     tint_color=(1, 0, 0),
                                     tint2_color=(0, 1, 0),
                                     mask_texture=(
@@ -439,17 +439,19 @@ def _test_v2_page_root(
                             size=(150, 100),
                             decorations=[
                                 dui2.Image(
-                                    texture=stdassets.textures.bridgit_preview,
+                                    texture=(
+                                        classicassets.textures
+                                    ).bridgit_preview,
                                     position=(0, 10),
                                     size=(120, 60),
                                     mask_texture=(
-                                        stdassets.textures.map_preview_mask
+                                        classicassets.textures.map_preview_mask
                                     ),
                                     mesh_opaque=(
-                                        stdassets.meshes
+                                        classicassets.meshes
                                     ).level_select_button_opaque,
                                     mesh_transparent=(
-                                        stdassets.meshes
+                                        classicassets.meshes
                                     ).level_select_button_transparent,
                                 ),
                             ],
@@ -493,7 +495,7 @@ def _test_v2_page_root(
                             size=(300, 80),
                             style=dui2.ButtonStyle.MEDIUM,
                             color=(0.8, 0.8, 0.8, 1),
-                            icon=stdassets.textures.button_punch,
+                            icon=classicassets.textures.button_punch,
                             icon_color=(0.5, 0.3, 1.0, 1.0),
                             icon_scale=1.2,
                         ),
@@ -558,13 +560,13 @@ def _layout_test_decos(debug: bool) -> list[bacommon.docui.v2.Decoration]:
 
     return [
         dui2.Image(
-            texture=stdassets.textures.powerup_punch,
+            texture=classicassets.textures.powerup_punch,
             position=(-70, 0),
             size=(40, 40),
             h_align=dui2.HAlign.LEFT,
         ),
         dui2.Image(
-            texture=stdassets.textures.powerup_speed,
+            texture=classicassets.textures.powerup_speed,
             position=(0, 75),
             size=(35, 35),
             v_align=dui2.VAlign.TOP,

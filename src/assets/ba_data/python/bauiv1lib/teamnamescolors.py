@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, cast, override
 from bauiv1lib.popup import PopupWindow
 from bauiv1lib.colorpicker import ColorPicker
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -58,7 +58,7 @@ class TeamNamesColorsWindow(PopupWindow):
         resetbtn = bui.buttonwidget(
             parent=self.root_widget,
             id=f'{self._idprefix}|reset',
-            label=stdassets.strings.ui.reset,
+            label=classicassets.strings.ui.reset,
             autoselect=True,
             scale=0.7,
             on_activate_call=self._reset,
@@ -91,7 +91,7 @@ class TeamNamesColorsWindow(PopupWindow):
                     v_align='center',
                     max_chars=self._max_name_length,
                     color=self._colors[i],
-                    description=stdassets.strings.ui.name,
+                    description=classicassets.strings.ui.name,
                     editable=True,
                     padding=4,
                 )
@@ -109,7 +109,7 @@ class TeamNamesColorsWindow(PopupWindow):
         cancelbtn = bui.buttonwidget(
             parent=self.root_widget,
             id=f'{self._idprefix}|cancel',
-            label=stdassets.strings.ui.cancel,
+            label=classicassets.strings.ui.cancel,
             autoselect=True,
             on_activate_call=self._on_cancel_press,
             size=(150, 50),
@@ -118,7 +118,7 @@ class TeamNamesColorsWindow(PopupWindow):
         okbtn = bui.buttonwidget(
             parent=self.root_widget,
             id=f'{self._idprefix}|ok',
-            label=stdassets.strings.ui.ok,
+            label=classicassets.strings.ui.ok,
             autoselect=True,
             on_activate_call=self._ok,
             size=(150, 50),
@@ -186,7 +186,8 @@ class TeamNamesColorsWindow(PopupWindow):
             name = cast(str, bui.textwidget(query=self._color_text_fields[i]))
             if not name:
                 bui.screenmessage(
-                    stdassets.strings.profile.name_not_empty, color=(1, 0, 0)
+                    classicassets.strings.profile.name_not_empty,
+                    color=(1, 0, 0),
                 )
                 builtinassets.audio.error.get().play()
                 return

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -161,7 +161,7 @@ class IconPicker(PopupWindow):
             parent=self._subcontainer,
             size=(self._sub_width * 0.8, 60),
             position=(self._sub_width * 0.1, 30),
-            label=stdassets.strings.profile.get_more_icons,
+            label=classicassets.strings.profile.get_more_icons,
             on_activate_call=self._on_store_press,
             color=(0.6, 0.6, 0.6),
             textcolor=(0.8, 0.8, 0.8),

@@ -1,4 +1,4 @@
-### 1.8.0 (build 22940, api 9, 2026-07-22)
+### 1.8.0 (build 22941, api 9, 2026-07-22)
 - Fully implemented asset packages (more on this soon)
 - Upgraded to Python 3.14. This gives us a few nice useful bits such as zstd
   compression to help speed up online stuff and also means we can get rid of all
@@ -17,6 +17,24 @@
   cursor lag.
 - Upgraded Windows builds from VS2022 to VS2026.
 - Added password option to game hosting.
+- Button and image widgets can now be rotated (thanks vishal332008!)
+- Renamed the `BaStdAssets` asset package to `BaClassicAssets`; its client
+  wrapper modules are now `bauiv1.classicassets` / `bascenev1.classicassets`
+  (previously `stdassets`).
+- The boot-time asset gate now offers an interactive browser sign-in when
+  required assets need an authenticated account and no sign-in is coming on
+  its own. Previously, an app bundling mods that pin restricted asset-package
+  versions (dev/test) could soft-lock before the main menu — the account UI
+  for signing in lives behind the asset gate. Now a dialog surfaces a
+  sign-in URL (with a button to open it) and the app proceeds automatically
+  once the sign-in completes in the browser. On headless servers the same
+  URL is logged at `ba.app` INFO, so a server operator hosting bundled
+  restricted assets can open it, sign in, and have the server continue.
+- The early-boot / asset-download / connect-time dialogs (progress lines,
+  the sign-in gate, and error messages) are now translated rather than
+  hard-coded English, sourced from the `babuiltinassets` package so they
+  are available before any real app-mode loads. (Adds a strings-only
+  `babase` asset-package wrapper type for this pre-featureset layer.)
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

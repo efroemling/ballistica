@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 from bascenev1 import builtinassets
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 from bascenev1lib.gameutils import SharedObjects
 
@@ -89,21 +89,21 @@ class PowerupBoxFactory:
 
         shared = SharedObjects.get()
         self._lastpoweruptype: str | None = None
-        self.mesh = stdassets.meshes.powerup
-        self.mesh_simple = stdassets.meshes.powerup_simple
-        self.tex_bomb = stdassets.textures.powerup_bomb
-        self.tex_punch = stdassets.textures.powerup_punch
-        self.tex_ice_bombs = stdassets.textures.powerup_ice_bombs
-        self.tex_sticky_bombs = stdassets.textures.powerup_sticky_bombs
-        self.tex_shield = stdassets.textures.powerup_shield
-        self.tex_impact_bombs = stdassets.textures.powerup_impact_bombs
-        self.tex_health = stdassets.textures.powerup_health
-        self.tex_land_mines = stdassets.textures.powerup_land_mines
-        self.tex_curse = stdassets.textures.powerup_curse
-        self.health_powerup_sound = stdassets.audio.health_powerup
-        self.powerup_sound = stdassets.audio.powerup01
+        self.mesh = classicassets.meshes.powerup
+        self.mesh_simple = classicassets.meshes.powerup_simple
+        self.tex_bomb = classicassets.textures.powerup_bomb
+        self.tex_punch = classicassets.textures.powerup_punch
+        self.tex_ice_bombs = classicassets.textures.powerup_ice_bombs
+        self.tex_sticky_bombs = classicassets.textures.powerup_sticky_bombs
+        self.tex_shield = classicassets.textures.powerup_shield
+        self.tex_impact_bombs = classicassets.textures.powerup_impact_bombs
+        self.tex_health = classicassets.textures.powerup_health
+        self.tex_land_mines = classicassets.textures.powerup_land_mines
+        self.tex_curse = classicassets.textures.powerup_curse
+        self.health_powerup_sound = classicassets.audio.health_powerup
+        self.powerup_sound = classicassets.audio.powerup01
         self.powerdown_sound = builtinassets.audio.powerdown01
-        self.drop_sound = stdassets.audio.box_drop
+        self.drop_sound = classicassets.audio.box_drop
 
         # Material for powerups.
         self.powerup_material = bs.Material()

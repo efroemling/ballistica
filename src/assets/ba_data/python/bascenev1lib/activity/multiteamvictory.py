@@ -5,7 +5,7 @@
 from typing import override, TYPE_CHECKING, Any, cast
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 
@@ -44,9 +44,9 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         )
         assert bs.app.classic is not None
         if bs.app.ui_v1.uiscale is bs.UIScale.LARGE:
-            sval = stdassets.strings.game.press_any_key_button_play_again
+            sval = classicassets.strings.game.press_any_key_button_play_again
         else:
-            sval = stdassets.strings.game.press_any_button_play_again
+            sval = classicassets.strings.game.press_any_button_play_again
         self._show_up_next = False
         self._custom_continue_message = sval
         super().on_begin()
@@ -223,7 +223,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                     break
             if mvp is not None:
                 Text(
-                    stdassets.strings.multiteam.most_valuable_player,
+                    classicassets.strings.multiteam.most_valuable_player,
                     color=(0.5, 0.5, 0.5, 1.0),
                     v_align=Text.VAlign.CENTER,
                     maxwidth=300,
@@ -264,7 +264,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 most_kills = entry[2].kill_count
         if mvp is not None:
             Text(
-                stdassets.strings.multiteam.most_violent_player,
+                classicassets.strings.multiteam.most_violent_player,
                 color=(0.5, 0.5, 0.5, 1.0),
                 v_align=Text.VAlign.CENTER,
                 maxwidth=300,
@@ -325,7 +325,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 most_killed = entry[2].killed_count
         if mkp is not None:
             Text(
-                stdassets.strings.multiteam.most_destroyed_player,
+                classicassets.strings.multiteam.most_destroyed_player,
                 color=(0.5, 0.5, 0.5, 1.0),
                 v_align=Text.VAlign.CENTER,
                 maxwidth=300,
@@ -378,7 +378,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         # Now show individual scores.
         tdelay = tval
         Text(
-            stdassets.strings.game.final_scores,
+            classicassets.strings.game.final_scores,
             color=(0.5, 0.5, 0.5, 1.0),
             position=(ts_h_offs, ts_height / 2),
             transition=Text.Transition.IN_RIGHT,
@@ -507,7 +507,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             maxwidth=250,
         ).autoretain()
         ZoomText(
-            stdassets.strings.multiteam.series,
+            classicassets.strings.multiteam.series,
             position=(0, -110 + offs_v),
             scale=1.0 * s_extra,
             color=team.color,

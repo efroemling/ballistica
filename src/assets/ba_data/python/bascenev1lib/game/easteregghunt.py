@@ -9,7 +9,7 @@ import random
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 from bascenev1lib.actor.bomb import Bomb
 from bascenev1lib.actor.playerspaz import PlayerSpaz
@@ -71,11 +71,11 @@ class EasterEggHuntGame(bs.TeamGameActivity[Player, Team]):
         shared = SharedObjects.get()
         self._last_player_death_time = None
         self._scoreboard = Scoreboard()
-        self.egg_mesh = stdassets.meshes.egg
-        self.egg_tex_1 = stdassets.textures.egg_tex1
-        self.egg_tex_2 = stdassets.textures.egg_tex2
-        self.egg_tex_3 = stdassets.textures.egg_tex3
-        self._collect_sound = stdassets.audio.powerup01
+        self.egg_mesh = classicassets.meshes.egg
+        self.egg_tex_1 = classicassets.textures.egg_tex1
+        self.egg_tex_2 = classicassets.textures.egg_tex2
+        self.egg_tex_3 = classicassets.textures.egg_tex3
+        self._collect_sound = classicassets.audio.powerup01
         self._pro_mode = settings.get('Pro Mode', False)
         self._epic_mode = settings.get('Epic Mode', False)
         self._max_eggs = 1.0

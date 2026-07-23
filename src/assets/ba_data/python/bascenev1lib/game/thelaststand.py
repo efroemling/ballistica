@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 from bascenev1 import builtinassets
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
@@ -76,8 +76,8 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
     def __init__(self, settings: dict):
         settings['map'] = 'Rampage'
         super().__init__(settings)
-        self._new_wave_sound = stdassets.audio.score_hit01
-        self._winsound = stdassets.audio.score
+        self._new_wave_sound = classicassets.audio.score_hit01
+        self._winsound = classicassets.audio.score
         self._cashregistersound = builtinassets.audio.cash_register
         self._spawn_center = (0, 5.5, -4.14)
         self._tntspawnpos = (0, 5.5, -6)
@@ -88,8 +88,8 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
         self._scoreboard: Scoreboard | None = None
         self._score = 0
         self._bots = SpazBotSet()
-        self._dingsound = stdassets.audio.ding_small
-        self._dingsoundhigh = stdassets.audio.ding_small_high
+        self._dingsound = classicassets.audio.ding_small
+        self._dingsoundhigh = classicassets.audio.ding_small_high
         self._tntspawner: TNTSpawner | None = None
         self._bot_update_interval: float | None = None
         self._bot_update_timer: bs.Timer | None = None
@@ -118,7 +118,7 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
         super().on_transition_in()
         bs.timer(1.3, self._new_wave_sound.play)
         self._scoreboard = Scoreboard(
-            label=stdassets.strings.game.score, score_split=0.5
+            label=classicassets.strings.game.score, score_split=0.5
         )
 
     @override

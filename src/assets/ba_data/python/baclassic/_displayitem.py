@@ -9,15 +9,15 @@ import bacommon.displayitem as ditm
 import bacommon.classic
 import bauiv1
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     pass
 
 
 def _stex(name: str) -> str:
-    """Qualified stdassets texture ref."""
-    return f'{stdassets.__asset_package__}:textures/{name}'
+    """Qualified classicassets texture ref."""
+    return f'{classicassets.__asset_package__}:textures/{name}'
 
 
 # FIXME - migrate to use the doc-ui rendering for these instead.

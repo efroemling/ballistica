@@ -270,14 +270,14 @@ class MultiTeamSession(Session):
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import stdassets
+        from bascenev1 import classicassets
 
         # pylint: disable=cyclic-import
         from bascenev1._gameutils import cameraflash
         from bascenev1._freeforallsession import FreeForAllSession
         from bascenev1._messages import CelebrateMessage
 
-        _bascenev1.timer(delay, stdassets.audio.boxing_bell.play)
+        _bascenev1.timer(delay, classicassets.audio.boxing_bell.play)
 
         if announce_winning_team:
             winning_sessionteam = results.winning_sessionteam

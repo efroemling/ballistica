@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.260721a"
+// Generated from: "a-0.babuiltinassets.260723a"
 
 #include <memory>
 
@@ -35,6 +35,99 @@ namespace ballistica::base {
 /// built, held, and evaluated from any thread.
 class BuiltinStrings {
  public:
+  class Assets {
+   public:
+    /// Wraps a server-supplied asset access-denial explanation with guidance
+    /// for the user; shown on the boot-time asset dialog.
+    ///
+    /// English: "{detail} Remove these mods/changes and try again."
+    static auto AccessDeniedGuidance(LangStr::Sub detail)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Status line in the boot-time asset dialog while waiting for account
+    /// sign-in so restricted assets can load.
+    ///
+    /// English: "Authenticating…"
+    static auto Authenticating() -> std::shared_ptr<const LangStr>;
+
+    /// Progress-dialog line shown while the server builds assets for a package;
+    /// updates live as the remaining count drops.
+    ///
+    /// English: (one) "Building {package} assets (# step remaining)…" / (other)
+    /// "Building {package} assets (# steps remaining)…"
+    static auto BuildingAssets(int64_t count, LangStr::Sub package)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Error on the boot-time asset dialog when this app build is too old to
+    /// load current assets (fallback wording when the server didn't supply its
+    /// own).
+    ///
+    /// English: "This app version is too old to load current assets. Please
+    /// update to continue."
+    static auto ClientTooOld() -> std::shared_ptr<const LangStr>;
+
+    /// Wraps a server-supplied asset build-failure explanation with guidance
+    /// for the package author; shown on the boot-time asset dialog (this state
+    /// is nearly always seen by the author, since dev/test versions only
+    /// resolve for them).
+    ///
+    /// English: "{detail} Fix the file in the source workspace and try again."
+    static auto ContentErrorGuidance(LangStr::Sub detail)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Progress-dialog line shown while asset files download; updates live as
+    /// the remaining count drops.
+    ///
+    /// English: (one) "Downloading assets (# remaining)…" / (other)
+    /// "Downloading assets (# remaining)…"
+    static auto DownloadingAssets(int64_t count)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Generic error on the boot-time asset dialog when asset loading fails
+    /// unexpectedly.
+    ///
+    /// English: "An error occurred loading assets; see log for details."
+    static auto LoadError() -> std::shared_ptr<const LangStr>;
+
+    /// Progress-dialog line shown while a server-side asset build is being
+    /// prepared, before per-step progress is known.
+    ///
+    /// English: "Preparing to build {package}…"
+    static auto PreparingBuild(LangStr::Sub package)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Error on the boot-time asset dialog when a required sign-in was not
+    /// completed (attempted and failed, or timed out); a Retry button sits
+    /// below it.
+    ///
+    /// English: "You must sign in to an account with access to these assets to
+    /// continue. Retry to sign in, or remove these mods/changes."
+    static auto SignInFailed() -> std::shared_ptr<const LangStr>;
+
+    /// Message on the boot-time sign-in dialog when required assets need a
+    /// signed-in account and a web browser is available; a Sign In button sits
+    /// below it.
+    ///
+    /// English: "Sign-in is required to load these assets. Press the button
+    /// below, or visit {address}"
+    static auto SignInNeededBrowser(LangStr::Sub address)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Message on the boot-time sign-in dialog when required assets need a
+    /// signed-in account and this device has no web browser.
+    ///
+    /// English: "Sign-in is required to load these assets. On another device,
+    /// visit {address}"
+    static auto SignInNeededOtherDevice(LangStr::Sub address)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Status line in the boot-time asset dialog after a browser sign-in
+    /// completes, while the account finishes validating.
+    ///
+    /// English: "Signing in…"
+    static auto SigningIn() -> std::shared_ptr<const LangStr>;
+  };
+
   class Audio {
    public:
     /// Error screen-message shown when a custom-soundtrack music file fails to
@@ -181,6 +274,12 @@ class BuiltinStrings {
     ///
     /// English: "You must sign in to do this."
     static auto MustSignIn() -> std::shared_ptr<const LangStr>;
+
+    /// Error shown when something cannot be reached, most likely because there
+    /// is no internet connection (dialog messages and screen-messages).
+    ///
+    /// English: "This is currently unavailable (no internet connection?)"
+    static auto UnavailableNoConnection() -> std::shared_ptr<const LangStr>;
   };
 
   class Replay {
@@ -235,6 +334,18 @@ class BuiltinStrings {
     static auto ArrowsToExitList(LangStr::Sub left, LangStr::Sub right)
         -> std::shared_ptr<const LangStr>;
 
+    /// Generic Cancel button label (used by e.g. asset-download progress
+    /// dialogs).
+    ///
+    /// English: "Cancel"
+    static auto Cancel() -> std::shared_ptr<const LangStr>;
+
+    /// Generic Error title used on error dialogs (e.g. the boot-time asset-
+    /// update dialog when a load fails).
+    ///
+    /// English: "Error"
+    static auto Error() -> std::shared_ptr<const LangStr>;
+
     /// Screen-message shown when an input device tries to use a menu another
     /// device currently controls; names the controlling device. A timeout
     /// suffix (menu_control_time_out or menu_control_will_time_out) is appended
@@ -258,6 +369,30 @@ class BuiltinStrings {
     ///
     /// English: "(will time out if idle)"
     static auto MenuControlWillTimeOut() -> std::shared_ptr<const LangStr>;
+
+    /// Generic label for a button acknowledging/dismissing a message (used by
+    /// e.g. asset-update error dialogs).
+    ///
+    /// English: "OK"
+    static auto Ok() -> std::shared_ptr<const LangStr>;
+
+    /// Generic label for a button that retries a failed operation (used by e.g.
+    /// the boot-time asset-update dialog).
+    ///
+    /// English: "Retry"
+    static auto Retry() -> std::shared_ptr<const LangStr>;
+
+    /// Generic Sign In label used for dialog titles and buttons (e.g. the boot-
+    /// time asset gate's browser sign-in dialog).
+    ///
+    /// English: "Sign In"
+    static auto SignIn() -> std::shared_ptr<const LangStr>;
+
+    /// Generic title for progress dialogs applying updates: asset
+    /// downloads/builds at boot, locale switches, pre-game package fetches.
+    ///
+    /// English: "Updating…"
+    static auto Updating() -> std::shared_ptr<const LangStr>;
   };
 };
 

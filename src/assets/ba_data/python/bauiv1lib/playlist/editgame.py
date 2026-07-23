@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -62,7 +62,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
 
         valid_maps = gametype.get_supported_maps(sessiontype)
         if not valid_maps:
-            bui.screenmessage(stdassets.strings.playlist.no_valid_maps)
+            bui.screenmessage(classicassets.strings.playlist.no_valid_maps)
             raise RuntimeError('No valid maps found.')
 
         self._config = config
@@ -148,7 +148,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             label=(
                 bui.charstr(bui.SpecialChar.BACK)
                 if is_add
-                else stdassets.strings.ui.cancel
+                else classicassets.strings.ui.cancel
             ),
             button_type='backSmall' if is_add else None,
             autoselect=True,
@@ -165,9 +165,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
             scale=0.75,
             text_scale=1.3,
             label=(
-                stdassets.strings.playlist.add_game_title
+                classicassets.strings.playlist.add_game_title
                 if is_add
-                else stdassets.strings.ui.apply
+                else classicassets.strings.ui.apply
             ),
         )
 
@@ -230,21 +230,21 @@ class PlaylistEditGameWindow(bui.MainWindow):
             position=(h + 49, v - 63),
             size=(100, 30),
             maxwidth=110,
-            text=stdassets.strings.ui.map,
+            text=classicassets.strings.ui.map,
             h_align='left',
             color=(0.8, 0.8, 0.8, 1.0),
             v_align='center',
         )
 
-        mesh_trans = stdassets.meshes.level_select_button_transparent.get()
+        mesh_trans = classicassets.meshes.level_select_button_transparent.get()
         bui.imagewidget(
             parent=self._subcontainer,
             size=(256 * 0.7, 125 * 0.7),
             position=(h + 261 - 128 + 128.0 * 0.56, v - 90),
             texture=map_tex,
-            mesh_opaque=stdassets.meshes.level_select_button_opaque.get(),
+            mesh_opaque=classicassets.meshes.level_select_button_opaque.get(),
             mesh_transparent=mesh_trans,
-            mask_texture=stdassets.textures.map_preview_mask.get(),
+            mask_texture=classicassets.textures.map_preview_mask.get(),
         )
         map_button = btn = bui.buttonwidget(
             parent=self._subcontainer,
@@ -252,7 +252,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             position=(h + 448, v - 72),
             on_activate_call=bui.CallStrict(self._select_map),
             scale=0.7,
-            label=stdassets.strings.ui.select_ellipsis,
+            label=classicassets.strings.ui.select_ellipsis,
         )
         widget_column.append([btn])
 
@@ -459,9 +459,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     position=(h + 509 - 95, v),
                     size=(0, 28),
                     text=(
-                        stdassets.strings.ui.on
+                        classicassets.strings.ui.on
                         if value
-                        else stdassets.strings.ui.off
+                        else classicassets.strings.ui.off
                     ),
                     editable=False,
                     color=(0.6, 1.0, 0.6, 1.0),
@@ -608,7 +608,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
         bui.textwidget(
             edit=widget,
             text=(
-                stdassets.strings.ui.on if value else stdassets.strings.ui.off
+                classicassets.strings.ui.on
+                if value
+                else classicassets.strings.ui.off
             ),
         )
         self._settings[setting_name] = value

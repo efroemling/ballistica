@@ -3,7 +3,7 @@
 """UI functionality related to URLs."""
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 
 class ShowURLWindow(bui.Window):
@@ -37,7 +37,7 @@ class ShowURLWindow(bui.Window):
             color=app.ui_v1.title_color,
             h_align='center',
             v_align='center',
-            text=stdassets.strings.ui.direct_browser_to_url,
+            text=classicassets.strings.ui.direct_browser_to_url,
             maxwidth=self._width * 0.95,
         )
         bui.textwidget(
@@ -75,7 +75,7 @@ class ShowURLWindow(bui.Window):
                 ),
                 size=(button_width, 65),
                 autoselect=True,
-                label=stdassets.strings.ui.copy,
+                label=classicassets.strings.ui.copy,
                 on_activate_call=self._copy,
             )
             xoffs = 150
@@ -85,7 +85,7 @@ class ShowURLWindow(bui.Window):
             position=(self._width * 0.5 - button_width * 0.5 + xoffs, 20),
             size=(button_width, 65),
             autoselect=True,
-            label=stdassets.strings.ui.done,
+            label=classicassets.strings.ui.done,
             on_activate_call=self._done,
         )
         # we have no 'cancel' button but still want to be able to
@@ -100,7 +100,7 @@ class ShowURLWindow(bui.Window):
     def _copy(self) -> None:
         bui.clipboard_set_text(self._address)
         bui.screenmessage(
-            stdassets.strings.ui.copied_to_clipboard, color=(0, 1, 0)
+            classicassets.strings.ui.copied_to_clipboard, color=(0, 1, 0)
         )
 
     def _done(self) -> None:

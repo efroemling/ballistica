@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import bacommon.classic
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -67,7 +67,7 @@ class ProfileUpgradeWindow(bui.Window):
             size=(155, 60),
             scale=0.8,
             autoselect=True,
-            label=stdassets.strings.ui.cancel,
+            label=classicassets.strings.ui.cancel,
             on_activate_call=self._cancel,
         )
         self._upgrade_button = bui.buttonwidget(
@@ -76,7 +76,7 @@ class ProfileUpgradeWindow(bui.Window):
             size=(155, 60),
             scale=0.8,
             autoselect=True,
-            label=stdassets.strings.ui.upgrade,
+            label=classicassets.strings.ui.upgrade,
             on_activate_call=self._on_upgrade_press,
         )
         bui.containerwidget(
@@ -91,7 +91,7 @@ class ProfileUpgradeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 38 + yoffs),
             size=(0, 0),
-            text=stdassets.strings.profile.upgrade_to_global,
+            text=classicassets.strings.profile.upgrade_to_global,
             color=bui.app.ui_v1.title_color,
             maxwidth=self._width * 0.45,
             scale=1.0,
@@ -104,7 +104,7 @@ class ProfileUpgradeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 100 + yoffs),
             size=(0, 0),
-            text=stdassets.strings.profile.upgrade_profile_info,
+            text=classicassets.strings.profile.upgrade_profile_info,
             color=bui.app.ui_v1.infotextcolor,
             maxwidth=self._width * 0.8,
             scale=0.7,
@@ -116,7 +116,7 @@ class ProfileUpgradeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 160 + yoffs),
             size=(0, 0),
-            text=stdassets.strings.profile.checking_availability(
+            text=classicassets.strings.profile.checking_availability(
                 name=self._name
             ),
             color=(0.8, 0.4, 0.0),
@@ -159,7 +159,7 @@ class ProfileUpgradeWindow(bui.Window):
         if isinstance(response, Exception):
             bui.textwidget(
                 edit=self._status_text,
-                text=stdassets.strings.ui.unavailable_no_connection,
+                text=classicassets.strings.ui.unavailable_no_connection,
                 color=(1, 0, 0),
             )
             self._status = 'error'
@@ -173,7 +173,9 @@ class ProfileUpgradeWindow(bui.Window):
             if response.available:
                 bui.textwidget(
                     edit=self._status_text,
-                    text=stdassets.strings.profile.available(name=self._name),
+                    text=classicassets.strings.profile.available(
+                        name=self._name
+                    ),
                     color=(0, 1, 0),
                 )
                 bui.textwidget(
@@ -184,7 +186,9 @@ class ProfileUpgradeWindow(bui.Window):
             else:
                 bui.textwidget(
                     edit=self._status_text,
-                    text=stdassets.strings.profile.unavailable(name=self._name),
+                    text=classicassets.strings.profile.unavailable(
+                        name=self._name
+                    ),
                     color=(1, 0, 0),
                 )
                 self._status = 'unavailable'
@@ -208,13 +212,13 @@ class ProfileUpgradeWindow(bui.Window):
             if tickets < self._cost:
                 builtinassets.audio.error.get().play()
                 bui.screenmessage(
-                    stdassets.strings.profile.not_enough_tickets,
+                    classicassets.strings.profile.not_enough_tickets,
                     color=(1, 0, 0),
                 )
                 return
 
             bui.screenmessage(
-                stdassets.strings.profile.purchasing, color=(0, 1, 0)
+                classicassets.strings.profile.purchasing, color=(0, 1, 0)
             )
             self._status = 'pre_upgrading'
 
@@ -228,7 +232,9 @@ class ProfileUpgradeWindow(bui.Window):
             success = edit_profile_window.save(transition_out=False)
             if not success:
                 print('profile upgrade: error occurred saving profile')
-                bui.screenmessage(stdassets.strings.ui.error, color=(1, 0, 0))
+                bui.screenmessage(
+                    classicassets.strings.ui.error, color=(1, 0, 0)
+                )
                 builtinassets.audio.error.get().play()
                 return
             plus.add_v1_account_transaction(

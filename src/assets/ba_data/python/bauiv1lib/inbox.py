@@ -15,7 +15,7 @@ import bacommon.clouddialog.basic as bcdlg
 import bacommon.classic
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -486,7 +486,7 @@ class InboxWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
             scale=0.6 if uiscale is bui.UIScale.SMALL else 0.8,
-            text=stdassets.strings.ui.inbox,
+            text=classicassets.strings.ui.inbox,
             maxwidth=200,
             color=bui.app.ui_v1.title_color,
         )
@@ -494,7 +494,7 @@ class InboxWindow(bui.MainWindow):
         # Kick off request.
         plus = bui.app.plus
         if plus is None or plus.accounts.primary is None:
-            self._error(stdassets.strings.ui.not_signed_in_status)
+            self._error(classicassets.strings.ui.not_signed_in_status)
             return
 
         with plus.accounts.primary:
@@ -552,7 +552,7 @@ class InboxWindow(bui.MainWindow):
         plus = bui.app.plus
         if plus is None or plus.accounts.primary is None:
             bui.screenmessage(
-                stdassets.strings.ui.not_signed_in_status, color=(1, 0, 0)
+                classicassets.strings.ui.not_signed_in_status, color=(1, 0, 0)
             )
             builtinassets.audio.error.get().play()
             return
@@ -659,9 +659,11 @@ class InboxWindow(bui.MainWindow):
         error_message: bui.Lstr | bui.LangStr | None
         if isinstance(response, Exception):
             if isinstance(response, CommunicationError):
-                error_message = stdassets.strings.ui.unavailable_no_connection
+                error_message = (
+                    classicassets.strings.ui.unavailable_no_connection
+                )
             else:
-                error_message = stdassets.strings.ui.error
+                error_message = classicassets.strings.ui.error
         elif response.error_type is not None:
             # If error_type is set, error should be also.
             assert response.error_message is not None
@@ -676,7 +678,9 @@ class InboxWindow(bui.MainWindow):
             bui.screenmessage(error_message, color=(1, 0, 0))
             builtinassets.audio.error.get().play()
             if button is not None:
-                bui.buttonwidget(edit=button, label=stdassets.strings.ui.error)
+                bui.buttonwidget(
+                    edit=button, label=classicassets.strings.ui.error
+                )
             return
 
         # Success!
@@ -693,7 +697,7 @@ class InboxWindow(bui.MainWindow):
             if bui.supports_unicode_display():
                 label = '✓'
             else:
-                label = stdassets.strings.ui.done
+                label = classicassets.strings.ui.done
             bui.buttonwidget(edit=button, label=label)
 
     def _on_inbox_request_response(
@@ -709,7 +713,7 @@ class InboxWindow(bui.MainWindow):
 
         errmsg: str | bui.Lstr | bui.LangStr
         if isinstance(response, Exception):
-            errmsg = stdassets.strings.ui.unavailable_no_connection
+            errmsg = classicassets.strings.ui.unavailable_no_connection
             is_error = True
         else:
             is_error = response.error is not None
@@ -732,7 +736,7 @@ class InboxWindow(bui.MainWindow):
             bui.textwidget(
                 edit=self._infotext,
                 color=(0.4, 0.4, 0.5),
-                text=stdassets.strings.inbox.no_messages,
+                text=classicassets.strings.inbox.no_messages,
             )
             return
 
@@ -935,7 +939,7 @@ class InboxWindow(bui.MainWindow):
 
                         section = _ButtonSection(
                             sub_width=sub_width,
-                            label=stdassets.strings.inbox.final_standings,
+                            label=classicassets.strings.inbox.final_standings,
                             color=color,
                             call=partial(
                                 _do_tourney_scores, component.tournament_id
@@ -950,7 +954,7 @@ class InboxWindow(bui.MainWindow):
                         if component.prizes:
                             section = _TextSection(
                                 sub_width=sub_width,
-                                text=stdassets.strings.inbox.your_prize,
+                                text=classicassets.strings.inbox.your_prize,
                                 spacing_top=6,
                                 color=(1.0, 1.0, 1.0, 0.4),
                                 scale=0.35,

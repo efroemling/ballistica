@@ -366,6 +366,11 @@ async def resolve_asset_packages_with_dialog(
     ``task`` is the enclosing async task, cancelled if the user hits the
     dialog's cancel button; ``context`` is a short label for logs.
     """
+    # The wrapper import stays deferred: bascenev1 is fully imported by
+    # the time this runs; the cycle pylint sees is structural only.
+    # pylint: disable-next=cyclic-import
+    from bascenev1 import builtinassets
+
     dialog: babase.SimpleDialog | None = None
 
     def on_cancel() -> None:
@@ -376,13 +381,15 @@ async def resolve_asset_packages_with_dialog(
         nonlocal dialog
         if dialog is None and babase.app.env.gui:
             dialog = babase.SimpleDialog(
-                title=babase.Lstr(resource='updatingText'),
+                title=builtinassets.strings.ui.updating,
                 progress=0.0,
-                button_label=babase.Lstr(resource='cancelText'),
+                button_label=builtinassets.strings.ui.cancel,
                 on_button=on_cancel,
             )
 
-    def on_update(message: str, progress: float | None) -> None:
+    def on_update(
+        message: str | babase.LangStr, progress: float | None
+    ) -> None:
         if dialog is not None:
             dialog.update(
                 message=message,
@@ -409,17 +416,15 @@ async def resolve_asset_packages_with_dialog(
         netlog.exception('Content resolve failed (%s).', context)
         if dialog is not None:
             dialog.update(
-                title=babase.Lstr(resource='errorText'),
-                message=babase.Lstr(
-                    resource='internal.unavailableNoConnectionText'
-                ),
+                title=builtinassets.strings.ui.error,
+                message=builtinassets.strings.net.unavailable_no_connection,
                 progress=None,
-                button_label=babase.Lstr(resource='okText'),
+                button_label=builtinassets.strings.ui.ok,
                 on_button=dialog.dismiss,
             )
         else:
             babase.screenmessage(
-                babase.Lstr(resource='internal.unavailableNoConnectionText'),
+                builtinassets.strings.net.unavailable_no_connection,
                 color=(1, 0, 0),
             )
         return False

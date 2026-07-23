@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 from bauiv1 import builtinassets
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     )
 
 
-_gpstrs = stdassets.strings.settings.controllers.gamepad
+_gpstrs = classicassets.strings.settings.controllers.gamepad
 
 
 class GamepadAdvancedSettingsWindow(bui.Window):
@@ -77,7 +77,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
             ),
             size=(120, 48),
             text_scale=0.8,
-            label=stdassets.strings.ui.done,
+            label=classicassets.strings.ui.done,
             on_activate_call=self._done,
         )
         bui.containerwidget(

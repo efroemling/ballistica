@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 from bauiv1 import builtinassets
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     pass
 
 
-_audstrs = stdassets.strings.settings.audio
+_audstrs = classicassets.strings.settings.audio
 
 
 class AudioSettingsWindow(bui.MainWindow):
@@ -213,7 +213,7 @@ class AudioSettingsWindow(bui.MainWindow):
         if not bui.have_permission(bui.Permission.STORAGE):
             builtinassets.audio.ding.get().play()
             bui.screenmessage(
-                stdassets.strings.ui.storage_permission_needed,
+                classicassets.strings.ui.storage_permission_needed,
                 color=(0.5, 1, 0.5),
             )
             bui.apptimer(

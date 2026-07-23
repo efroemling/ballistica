@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, override
 from efro.util import strict_partial
 from bauiv1lib.sendinfo import SendInfoWindowLegacyModal
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ class SharePlaylistImportWindow(SendInfoWindowLegacyModal):
 
     def _on_import_response(self, response: dict[str, Any] | None) -> None:
         if response is None:
-            bui.screenmessage(stdassets.strings.ui.error, color=(1, 0, 0))
+            bui.screenmessage(classicassets.strings.ui.error, color=(1, 0, 0))
             builtinassets.audio.error.get().play()
             return
 
@@ -70,7 +70,7 @@ class SharePlaylistImportWindow(SendInfoWindowLegacyModal):
             callback=bui.WeakCallPartial(self._on_import_response),
         )
         plus.run_v1_account_transactions()
-        bui.screenmessage(stdassets.strings.ui.importing)
+        bui.screenmessage(classicassets.strings.ui.importing)
 
 
 class SharePlaylistResultsWindow(bui.Window):
@@ -124,7 +124,7 @@ class SharePlaylistResultsWindow(bui.Window):
             flatness=1.0,
             h_align='center',
             v_align='center',
-            text=stdassets.strings.playlist.export_success(name=name),
+            text=classicassets.strings.playlist.export_success(name=name),
             maxwidth=self._width * 0.85,
         )
 
@@ -137,7 +137,7 @@ class SharePlaylistResultsWindow(bui.Window):
             flatness=1.0,
             h_align='center',
             v_align='center',
-            text=stdassets.strings.playlist.import_instructions,
+            text=classicassets.strings.playlist.import_instructions,
             maxwidth=self._width * 0.85,
         )
 
@@ -159,7 +159,7 @@ class SharePlaylistResultsWindow(bui.Window):
                 textcolor=(1, 1, 1),
                 color=(0.45, 0.63, 0.15),
                 on_activate_call=strict_partial(self._copy_press, code),
-                label=stdassets.strings.gather.copy_code,
+                label=classicassets.strings.gather.copy_code,
                 position=(self._width * 0.5 - 70, 35),
                 autoselect=True,
             )
@@ -170,4 +170,4 @@ class SharePlaylistResultsWindow(bui.Window):
 
     def _copy_press(self, code: str) -> None:
         bui.clipboard_set_text(code)
-        bui.screenmessage(stdassets.strings.gather.copy_code_confirm)
+        bui.screenmessage(classicassets.strings.gather.copy_code_confirm)

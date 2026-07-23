@@ -10,7 +10,7 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 from bascenev1lib.actor.spaz import Spaz
 
 if TYPE_CHECKING:
@@ -984,7 +984,7 @@ class SpazBotSet:
         self._bot_lists: list[list[SpazBot]] = [
             [] for _ in range(self._bot_list_count)
         ]
-        self._spawn_sound = stdassets.audio.spawn
+        self._spawn_sound = classicassets.audio.spawn
         self._spawning_count = 0
         self._bot_update_timer: bs.Timer | None = None
         self.start_moving()

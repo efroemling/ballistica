@@ -15,7 +15,7 @@ import bacommon.displayitem as ditm
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 from bauiv1lib.docui.prep._types import DecorationPrep
 
@@ -37,8 +37,8 @@ def _btex(name: str) -> str:
 
 
 def _stex(name: str) -> str:
-    """Qualified stdassets texture ref."""
-    return f'{stdassets.__asset_package__}:textures/{name}'
+    """Qualified classicassets texture ref."""
+    return f'{classicassets.__asset_package__}:textures/{name}'
 
 
 def _refstr(ref: 'Any') -> str:

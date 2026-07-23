@@ -7,7 +7,7 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -90,7 +90,7 @@ class SendInfoWindow(bui.MainWindow):
         v += -30 if uiscale is bui.UIScale.SMALL else 10
         bui.textwidget(
             parent=self._root_widget,
-            text=stdassets.strings.sendinfo.send_info_description,
+            text=classicassets.strings.sendinfo.send_info_description,
             maxwidth=width * 0.9,
             position=(width * 0.5, v),
             color=(0.7, 0.7, 0.7, 1.0),
@@ -104,7 +104,7 @@ class SendInfoWindow(bui.MainWindow):
         txoffs = -270
         bui.textwidget(
             parent=self._root_widget,
-            text=stdassets.strings.ui.description,
+            text=classicassets.strings.ui.description,
             position=(width * 0.5 + txoffs + 22, v),
             color=(0.8, 0.8, 0.8, 1.0),
             size=(90, 30),
@@ -123,7 +123,7 @@ class SendInfoWindow(bui.MainWindow):
             v_align='center',
             max_chars=64,
             color=(0.9, 0.9, 0.9, 1.0),
-            description=stdassets.strings.ui.description,
+            description=classicassets.strings.ui.description,
             editable=True,
             autoselect=True,
             padding=4,
@@ -273,7 +273,7 @@ class SendInfoWindowLegacyModal(bui.Window):
         txoffs = -200
         bui.textwidget(
             parent=self._root_widget,
-            text=stdassets.strings.ui.code,
+            text=classicassets.strings.ui.code,
             position=(width * 0.5 + txoffs + 22, v),
             color=(0.8, 0.8, 0.8, 1.0),
             size=(90, 30),
@@ -291,7 +291,7 @@ class SendInfoWindowLegacyModal(bui.Window):
             v_align='center',
             max_chars=64,
             color=(0.9, 0.9, 0.9, 1.0),
-            description=stdassets.strings.ui.code,
+            description=classicassets.strings.ui.code,
             editable=True,
             autoselect=True,
             padding=4,
@@ -361,7 +361,7 @@ class SendInfoWindowLegacyModal(bui.Window):
         # accounts: talk directly to V1 server via transactions.
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(
-                stdassets.strings.account.not_signed_in, color=(1, 0, 0)
+                classicassets.strings.account.not_signed_in, color=(1, 0, 0)
             )
             builtinassets.audio.error.get().play()
         else:
@@ -390,7 +390,7 @@ async def _send_info(description: str) -> None:
         # Don't allow *anything* if our V2 transport connection isn't up.
         if not plus.cloud.connected:
             bui.screenmessage(
-                stdassets.strings.ui.unavailable_no_connection,
+                classicassets.strings.ui.unavailable_no_connection,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()
@@ -429,7 +429,7 @@ async def _send_info(description: str) -> None:
         # Ok; V2 didn't handle it. Try V1 if we're signed in there.
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(
-                stdassets.strings.account.not_signed_in, color=(1, 0, 0)
+                classicassets.strings.account.not_signed_in, color=(1, 0, 0)
             )
             builtinassets.audio.error.get().play()
             return

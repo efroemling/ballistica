@@ -9,7 +9,7 @@ import random
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 from bascenev1lib.gameutils import SharedObjects
 
@@ -148,37 +148,37 @@ class BombFactory:
         """
         shared = SharedObjects.get()
 
-        self.bomb_mesh = stdassets.meshes.bomb
-        self.sticky_bomb_mesh = stdassets.meshes.bomb_sticky
-        self.impact_bomb_mesh = stdassets.meshes.impact_bomb
-        self.land_mine_mesh = stdassets.meshes.land_mine
-        self.tnt_mesh = stdassets.meshes.tnt
+        self.bomb_mesh = classicassets.meshes.bomb
+        self.sticky_bomb_mesh = classicassets.meshes.bomb_sticky
+        self.impact_bomb_mesh = classicassets.meshes.impact_bomb
+        self.land_mine_mesh = classicassets.meshes.land_mine
+        self.tnt_mesh = classicassets.meshes.tnt
 
-        self.regular_tex = stdassets.textures.bomb_color
-        self.ice_tex = stdassets.textures.bomb_color_ice
-        self.sticky_tex = stdassets.textures.bomb_sticky_color
-        self.impact_tex = stdassets.textures.impact_bomb_color
-        self.impact_lit_tex = stdassets.textures.impact_bomb_color_lit
-        self.land_mine_tex = stdassets.textures.land_mine
-        self.land_mine_lit_tex = stdassets.textures.land_mine_lit
-        self.tnt_tex = stdassets.textures.tnt
+        self.regular_tex = classicassets.textures.bomb_color
+        self.ice_tex = classicassets.textures.bomb_color_ice
+        self.sticky_tex = classicassets.textures.bomb_sticky_color
+        self.impact_tex = classicassets.textures.impact_bomb_color
+        self.impact_lit_tex = classicassets.textures.impact_bomb_color_lit
+        self.land_mine_tex = classicassets.textures.land_mine
+        self.land_mine_lit_tex = classicassets.textures.land_mine_lit
+        self.tnt_tex = classicassets.textures.tnt
 
-        self.hiss_sound = stdassets.audio.hiss
-        self.debris_fall_sound = stdassets.audio.debris_fall
-        self.wood_debris_fall_sound = stdassets.audio.wood_debris_fall
+        self.hiss_sound = classicassets.audio.hiss
+        self.debris_fall_sound = classicassets.audio.debris_fall
+        self.wood_debris_fall_sound = classicassets.audio.wood_debris_fall
 
         self.explode_sounds = (
-            stdassets.audio.explosion01,
-            stdassets.audio.explosion02,
-            stdassets.audio.explosion03,
-            stdassets.audio.explosion04,
-            stdassets.audio.explosion05,
+            classicassets.audio.explosion01,
+            classicassets.audio.explosion02,
+            classicassets.audio.explosion03,
+            classicassets.audio.explosion04,
+            classicassets.audio.explosion05,
         )
 
-        self.freeze_sound = stdassets.audio.freeze
-        self.fuse_sound = stdassets.audio.fuse01
-        self.activate_sound = stdassets.audio.activate_beep
-        self.warn_sound = stdassets.audio.warn_beep
+        self.freeze_sound = classicassets.audio.freeze
+        self.fuse_sound = classicassets.audio.fuse01
+        self.activate_sound = classicassets.audio.activate_beep
+        self.warn_sound = classicassets.audio.warn_beep
 
         # Set up our material so new bombs don't collide with objects
         # that they are initially overlapping.
@@ -265,11 +265,11 @@ class BombFactory:
         )
 
         self.dink_sounds = (
-            stdassets.audio.bomb_drop01,
-            stdassets.audio.bomb_drop02,
+            classicassets.audio.bomb_drop01,
+            classicassets.audio.bomb_drop02,
         )
-        self.sticky_impact_sound = stdassets.audio.sticky_impact
-        self.roll_sound = stdassets.audio.bomb_roll01
+        self.sticky_impact_sound = classicassets.audio.sticky_impact
+        self.roll_sound = classicassets.audio.bomb_roll01
 
         # Collision sounds.
         self.normal_sound_material.add_actions(

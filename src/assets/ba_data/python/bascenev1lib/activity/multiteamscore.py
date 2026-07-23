@@ -5,7 +5,7 @@
 from typing import override
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 from bascenev1lib.actor.text import Text
 from bascenev1lib.actor.image import Image
@@ -16,8 +16,8 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
 
     def __init__(self, settings: dict):
         super().__init__(settings=settings)
-        self._score_display_sound = stdassets.audio.score_hit01
-        self._score_display_sound_small = stdassets.audio.score_hit02
+        self._score_display_sound = classicassets.audio.score_hit01
+        self._score_display_sound_small = classicassets.audio.score_hit02
 
         self._show_up_next: bool = True
 
@@ -170,11 +170,11 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
         _txt(
             -15,
             4,
-            stdassets.strings.multiteam.player,
+            classicassets.strings.multiteam.player,
             h_align=Text.HAlign.LEFT,
         )
-        _txt(180, 4, stdassets.strings.multiteam.kills)
-        _txt(280, 4, stdassets.strings.multiteam.deaths, maxwidth=100)
+        _txt(180, 4, classicassets.strings.multiteam.kills)
+        _txt(280, 4, classicassets.strings.multiteam.deaths, maxwidth=100)
 
         score_label = 'Score' if results is None else results.score_label
         translated = bs.Lstr(translate=('scoreNames', score_label))

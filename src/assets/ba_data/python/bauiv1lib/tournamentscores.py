@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -74,7 +74,7 @@ class TournamentScoresWindow(PopupWindow):
             h_align='center',
             v_align='center',
             scale=0.6,
-            text=stdassets.strings.tournamentscores.tournament_standings,
+            text=classicassets.strings.tournamentscores.tournament_standings,
             maxwidth=200,
             color=bui.app.ui_v1.title_color,
         )
@@ -132,7 +132,7 @@ class TournamentScoresWindow(PopupWindow):
             else:
                 bui.textwidget(
                     edit=self._loading_text,
-                    text=stdassets.strings.tournamentscores.no_scores_yet,
+                    text=classicassets.strings.tournamentscores.no_scores_yet,
                 )
             incr = 30
             sub_width = self._width - 90

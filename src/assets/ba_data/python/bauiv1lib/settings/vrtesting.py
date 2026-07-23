@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 from bauiv1lib.settings.testing import TestingWindow
 
 if TYPE_CHECKING:
@@ -90,7 +90,7 @@ class VRTestingWindow(TestingWindow):
         ]
 
         super().__init__(
-            stdassets.strings.settings.vrtesting.title,
+            classicassets.strings.settings.vrtesting.title,
             entries,
             transition,
         )

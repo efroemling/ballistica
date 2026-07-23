@@ -98,13 +98,13 @@ class Campaign:
 
 
 def _tex(name: str) -> str:
-    """Qualified stdassets ref for a level preview texture."""
+    """Qualified classicassets ref for a level preview texture."""
     # The wrapper lives inside our own package, so import deferred
     # (we only run after the package is fully imported).
     # pylint: disable-next=cyclic-import
-    from bascenev1 import stdassets
+    from bascenev1 import classicassets
 
-    return f'{stdassets.__asset_package__}:textures/{name}'
+    return f'{classicassets.__asset_package__}:textures/{name}'
 
 
 def init_campaigns() -> None:

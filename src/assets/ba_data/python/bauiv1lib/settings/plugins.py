@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, assert_never, override
 
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 from bauiv1lib import popup
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     pass
 
 
-_plgstrs = stdassets.strings.settings.plugins
+_plgstrs = classicassets.strings.settings.plugins
 
 
 class Category(Enum):
@@ -30,11 +30,11 @@ class Category(Enum):
         """Display string for us."""
         cls = type(self)
         if self is cls.ALL:
-            return stdassets.strings.ui.all
+            return classicassets.strings.ui.all
         if self is cls.ENABLED:
-            return stdassets.strings.ui.enabled
+            return classicassets.strings.ui.enabled
         assert self is cls.DISABLED
-        return stdassets.strings.ui.disabled
+        return classicassets.strings.ui.disabled
 
 
 class PluginWindow(bui.MainWindow):
@@ -162,7 +162,7 @@ class PluginWindow(bui.MainWindow):
             scale=0.7,
             position=(settings_button_x - 105, button_row_yoffs - 60),
             size=(130, 60),
-            label=stdassets.strings.ui.all,
+            label=classicassets.strings.ui.all,
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(self._show_category_options),
             color=(0.55, 0.73, 0.25),
@@ -183,7 +183,7 @@ class PluginWindow(bui.MainWindow):
             position=(settings_button_x + 3, button_row_yoffs - 57),
             draw_controller=self._settings_button,
             size=(35, 35),
-            texture=stdassets.textures.settings_icon.get(),
+            texture=classicassets.textures.settings_icon.get(),
         )
 
         bui.widget(
@@ -257,7 +257,7 @@ class PluginWindow(bui.MainWindow):
 
     def _check_value_changed(self, plug: bui.PluginSpec, value: bool) -> None:
         bui.screenmessage(
-            stdassets.strings.ui.must_restart,
+            classicassets.strings.ui.must_restart,
             color=(1.0, 0.5, 0.0),
         )
         plugstates: dict[str, dict] = bui.app.config.setdefault('Plugins', {})
@@ -407,7 +407,7 @@ class PluginWindow(bui.MainWindow):
                 button = bui.buttonwidget(
                     parent=self._subcontainer,
                     id=f'{self.main_window_id_prefix}|settings.{classpath}',
-                    label=stdassets.strings.settings.title,
+                    label=classicassets.strings.settings.title,
                     autoselect=True,
                     size=(100, 40),
                     position=(sub_width - 130, item_y + 6),

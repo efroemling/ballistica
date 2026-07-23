@@ -12,7 +12,7 @@ from bacommon.assetspec import TextureSpec
 from bacommon.langstr import LangStrSpecValue
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 from bauiv1lib.docui import DocUIController
 
@@ -44,9 +44,9 @@ class InventoryUIController(DocUIController):
     @override
     def fulfill_request(self, request: DocUIRequest) -> DocUIResponse:
         # All local authoring here uses strings from BUNDLED packages
-        # (bastdassets/builtin) so these pages keep working offline.
-        invstrs = stdassets.strings.inventory
-        profstrs = stdassets.strings.profiles
+        # (baclassicassets/builtin) so these pages keep working offline.
+        invstrs = classicassets.strings.inventory
+        profstrs = classicassets.strings.profiles
 
         response: DocUIResponse
 
@@ -143,7 +143,7 @@ class InventoryUIController(DocUIController):
                             default_sound=False,
                             immediate_local_action='new_profile',
                         ),
-                        icon=stdassets.textures.plus_button,
+                        icon=classicassets.textures.plus_button,
                         icon_scale=1.3,
                         icon_color=(0.7, 0.6, 0.9, 1),
                         style=dui2.ButtonStyle.MEDIUM,

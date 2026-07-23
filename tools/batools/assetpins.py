@@ -34,7 +34,7 @@ writes the resolved ``devN`` form back to the pin's source file.
 
 The ``update`` operation takes a TARGET and a VERSION:
 
-- TARGET: ``all``, an asset-package name (e.g. ``bastdassets``)
+- TARGET: ``all``, an asset-package name (e.g. ``baclassicassets``)
   matching any pin of that package across accounts, or a file
   path matching exactly one pin.
 - VERSION: ``latest`` (current track, newest version),
@@ -158,11 +158,11 @@ class Pin:
     pin_type: PinType
     #: ``<account>`` segment from the apverid (e.g. ``a-0``).
     account: str
-    #: ``<name>`` segment from the apverid (e.g. ``bastdassets``).
+    #: ``<name>`` segment from the apverid (e.g. ``baclassicassets``).
     package: str
-    #: For ``wrapper`` pins, which featureset's loader API the
-    #: wrapper uses (``bascenev1`` or ``bauiv1``). None for
-    #: projectconfig pins.
+    #: For ``wrapper`` pins, which loader API the wrapper uses
+    #: (``bascenev1``, ``bauiv1``, or the strings-only ``babase``).
+    #: None for projectconfig pins.
     wrapper_type: str | None = None
     #: Filled by ``do_list`` (master roundtrip); None if not
     #: queried.
@@ -430,7 +430,7 @@ def do_update(
     """Update one or more pins to a chosen version.
 
     ``target_str``: ``all``, an asset-package name (e.g.
-    ``bastdassets``), or a file path matching exactly one pin.
+    ``baclassicassets``), or a file path matching exactly one pin.
 
     ``version_str``: ``latest`` (track-preserving), ``prod`` /
     ``test`` / ``dev`` (track-switching), a full third segment

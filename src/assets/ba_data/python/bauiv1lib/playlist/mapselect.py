@@ -6,7 +6,7 @@ import math
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -82,7 +82,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             scale=0.9,
             text_scale=1.0,
             autoselect=True,
-            label=stdassets.strings.ui.cancel,
+            label=classicassets.strings.ui.cancel,
             on_activate_call=self.main_window_back,
         )
 
@@ -165,9 +165,9 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         if self._subcontainer is not None:
             self._subcontainer.delete()
 
-        mesh_opaque = stdassets.meshes.level_select_button_opaque.get()
+        mesh_opaque = classicassets.meshes.level_select_button_opaque.get()
         mesh_transparent = (
-            stdassets.meshes.level_select_button_transparent.get()
+            classicassets.meshes.level_select_button_transparent.get()
         )
 
         self._maps = []
@@ -207,7 +207,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             background=False,
         )
         index = 0
-        mask_texture = stdassets.textures.map_preview_mask.get()
+        mask_texture = classicassets.textures.map_preview_mask.get()
         h_offs = 130 if len(self._maps) == 1 else 0
         for y in range(rows):
             for x in range(columns):
@@ -275,7 +275,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             parent=self._subcontainer,
             size=(self._sub_width * 0.8, 60),
             position=(self._sub_width * 0.1, 30),
-            label=stdassets.strings.playlist.get_more_maps,
+            label=classicassets.strings.playlist.get_more_maps,
             on_activate_call=self._on_store_press,
             color=(0.6, 0.53, 0.63),
             textcolor=(0.75, 0.7, 0.8),

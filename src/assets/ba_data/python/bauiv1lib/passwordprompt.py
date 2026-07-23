@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, cast
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Callable
@@ -34,7 +34,7 @@ class PasswordPromptWindow:
         self._result_sent = False
 
         if description is None:
-            description = stdassets.strings.gather.party_requires_password
+            description = classicassets.strings.gather.party_requires_password
 
         width = 420.0
         height = 200.0
@@ -85,7 +85,7 @@ class PasswordPromptWindow:
             autoselect=True,
             position=(20, 20),
             size=(150, 50),
-            label=stdassets.strings.ui.cancel,
+            label=classicassets.strings.ui.cancel,
             on_activate_call=self._cancel,
         )
         okbtn = bui.buttonwidget(
@@ -94,7 +94,7 @@ class PasswordPromptWindow:
             autoselect=True,
             position=(width - 175, 20),
             size=(150, 50),
-            label=stdassets.strings.ui.ok,
+            label=classicassets.strings.ui.ok,
             on_activate_call=self._submit,
         )
         bui.containerwidget(

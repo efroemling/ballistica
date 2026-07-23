@@ -6,12 +6,12 @@ from typing import override
 
 import babase
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 from bauiv1lib.confirm import ConfirmWindow
 from bauiv1lib.config import ConfigCheckBox
 
-_devstrs = stdassets.strings.settings.devtools
+_devstrs = classicassets.strings.settings.devtools
 
 
 class DevToolsWindow(bui.MainWindow):
@@ -91,7 +91,7 @@ class DevToolsWindow(bui.MainWindow):
                 size=(140, 60),
                 scale=0.8,
                 autoselect=True,
-                label=stdassets.strings.ui.back,
+                label=classicassets.strings.ui.back,
                 button_type='back',
                 on_activate_call=self.main_window_back,
             )
@@ -208,6 +208,6 @@ class DevToolsWindow(bui.MainWindow):
         cfg.apply_and_commit()
         if bui.app.ui_v1.uiscale.name != val.upper():
             bui.screenmessage(
-                stdassets.strings.ui.must_restart,
+                classicassets.strings.ui.must_restart,
                 color=(1.0, 0.5, 0.0),
             )

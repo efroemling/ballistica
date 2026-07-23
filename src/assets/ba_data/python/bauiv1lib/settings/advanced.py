@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, override
 
 from bacommon.locale import Locale, LocaleResolved
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 from bauiv1lib.popup import PopupMenu
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-_advstrs = stdassets.strings.settings.advanced
+_advstrs = classicassets.strings.settings.advanced
 
 
 class AdvancedSettingsWindow(bui.MainWindow):
@@ -342,7 +342,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
         # Update our existing back button and title.
         if self._back_button is not None:
             bui.buttonwidget(
-                edit=self._back_button, label=stdassets.strings.ui.back
+                edit=self._back_button, label=classicassets.strings.ui.back
             )
             bui.buttonwidget(
                 edit=self._back_button, label=bui.charstr(bui.SpecialChar.BACK)
@@ -405,7 +405,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
                 [
                     bui.Lstr(
                         value=(
-                            stdassets.strings.ui.auto.evaluate()
+                            classicassets.strings.ui.auto.evaluate()
                             + ' ('
                             + bui.Lstr(
                                 translate=(
@@ -436,7 +436,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             position=(90, v + 10),
             size=(0, 0),
             text=_advstrs.help_translate(
-                app_name=stdassets.strings.ui.app_name
+                app_name=classicassets.strings.ui.app_name
             ),
             maxwidth=self._sub_width * 0.9 - 10,
             max_height=55,
@@ -454,7 +454,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             position=(self._sub_width / 2 - this_button_width / 2, v - 24),
             size=(this_button_width, 60),
             label=_advstrs.translation_editor(
-                app_name=stdassets.strings.ui.app_name
+                app_name=classicassets.strings.ui.app_name
             ),
             autoselect=True,
             on_activate_call=bui.CallStrict(
@@ -594,9 +594,9 @@ class AdvancedSettingsWindow(bui.MainWindow):
                 width=180,
                 choices=['always', 'auto', 'never'],
                 choices_display=[
-                    stdassets.strings.ui.always,
-                    stdassets.strings.ui.auto,
-                    stdassets.strings.ui.never,
+                    classicassets.strings.ui.always,
+                    classicassets.strings.ui.auto,
+                    classicassets.strings.ui.never,
                 ],
                 current_choice=current_mode,
                 # WeakCallPartial so the popup's callback reference
@@ -694,7 +694,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
             size=(this_button_width, 60),
             autoselect=True,
-            label=stdassets.strings.settings.devtools.title,
+            label=classicassets.strings.settings.devtools.title,
             text_scale=1.0,
             on_activate_call=self._on_dev_tools_button_press,
         )
@@ -746,7 +746,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
             size=(this_button_width, 60),
             autoselect=True,
-            label=stdassets.strings.settings.plugins.title,
+            label=classicassets.strings.settings.plugins.title,
             text_scale=1.0,
             on_activate_call=self._on_plugins_button_press,
         )
@@ -762,7 +762,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
                 position=(self._sub_width / 2 - this_button_width / 2, v - 14),
                 size=(this_button_width, 60),
                 autoselect=True,
-                label=stdassets.strings.settings.vrtesting.title,
+                label=classicassets.strings.settings.vrtesting.title,
                 text_scale=1.0,
                 on_activate_call=self._on_vr_test_press,
             )
@@ -778,7 +778,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
                 position=(self._sub_width / 2 - this_button_width / 2, v - 14),
                 size=(this_button_width, 60),
                 autoselect=True,
-                label=stdassets.strings.settings.nettesting.title,
+                label=classicassets.strings.settings.nettesting.title,
                 text_scale=1.0,
                 on_activate_call=self._on_net_test_press,
             )
@@ -792,7 +792,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             position=(self._sub_width / 2 - this_button_width / 2, v - 14),
             size=(this_button_width, 60),
             autoselect=True,
-            label=stdassets.strings.settings.benchmarks.title,
+            label=classicassets.strings.settings.benchmarks.title,
             text_scale=1.0,
             on_activate_call=self._on_benchmark_press,
         )
@@ -822,7 +822,9 @@ class AdvancedSettingsWindow(bui.MainWindow):
 
     def _show_restart_needed(self, value: Any) -> None:
         del value  # Unused.
-        bui.screenmessage(stdassets.strings.ui.must_restart, color=(1, 1, 0))
+        bui.screenmessage(
+            classicassets.strings.ui.must_restart, color=(1, 1, 0)
+        )
 
     def _on_lang_inform_value_change(self, val: bool) -> None:
         plus = bui.app.plus

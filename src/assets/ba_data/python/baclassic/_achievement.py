@@ -12,7 +12,7 @@ from baclassic._chest import (
 )
 import babase
 import bascenev1
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 from bascenev1 import builtinassets
 import bauiv1
 
@@ -71,8 +71,8 @@ ACH_LEVEL_NAMES = {
 
 
 def _tex(name: str) -> str:
-    """Qualified stdassets ref for an achievement icon name."""
-    return f'{stdassets.__asset_package__}:textures/{name}'
+    """Qualified classicassets ref for an achievement icon name."""
+    return f'{classicassets.__asset_package__}:textures/{name}'
 
 
 class AchievementSubsystem:
@@ -1028,9 +1028,11 @@ class Achievement:
             if complete:
                 objs.append(
                     Image(
-                        stdassets.textures.achievement_outline,
+                        classicassets.textures.achievement_outline,
                         host_only=True,
-                        mesh_transparent=stdassets.meshes.achievement_outline,
+                        mesh_transparent=(
+                            classicassets.meshes
+                        ).achievement_outline,
                         color=(2, 1.4, 0.4, 1),
                         vr_depth=8,
                         position=(x - 25, y + 5),
@@ -1222,7 +1224,7 @@ class Achievement:
             return
 
         if sound:
-            stdassets.audio.achievement.play(host_only=True)
+            classicassets.audio.achievement.play(host_only=True)
         else:
             bascenev1.timer(
                 0.5, lambda: builtinassets.audio.ding.play(host_only=True)
@@ -1357,8 +1359,8 @@ class Achievement:
         combine.connectattr('output', obj.node, 'color')
 
         obj = Image(
-            stdassets.textures.achievement_outline,
-            mesh_transparent=stdassets.meshes.achievement_outline,
+            classicassets.textures.achievement_outline,
+            mesh_transparent=classicassets.meshes.achievement_outline,
             position=(-180, 60 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,

@@ -7,7 +7,7 @@ from typing import override, TYPE_CHECKING, assert_never
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -66,11 +66,11 @@ class ResourceTypeInfoWindow(PopupWindow):
 
         if resource_type == 'tickets':
             yoffs -= 20
-            rdesc = stdassets.strings.resourcetypeinfo.tickets_description
-            tex = stdassets.textures.tickets.get()
+            rdesc = classicassets.strings.resourcetypeinfo.tickets_description
+            tex = classicassets.textures.tickets.get()
         elif resource_type == 'tokens':
-            rdesc = stdassets.strings.resourcetypeinfo.tokens_description
-            tex = stdassets.textures.coin.get()
+            rdesc = classicassets.strings.resourcetypeinfo.tokens_description
+            tex = classicassets.textures.coin.get()
             bwidth = 200
             bheight = 50
 
@@ -87,7 +87,7 @@ class ResourceTypeInfoWindow(PopupWindow):
                     ),
                     color=bg_color,
                     textcolor=(0.8, 0.8, 0.8),
-                    label=stdassets.strings.resourcetypeinfo.get_tokens,
+                    label=classicassets.strings.resourcetypeinfo.get_tokens,
                     size=(bwidth, bheight),
                     autoselect=True,
                     on_activate_call=bui.WeakCallStrict(
@@ -97,10 +97,10 @@ class ResourceTypeInfoWindow(PopupWindow):
 
         elif resource_type == 'trophies':
             rdesc = 'TODO: Will show trophies & league rankings.'
-            tex = stdassets.textures.cross_out.get()
+            tex = classicassets.textures.cross_out.get()
         elif resource_type == 'xp':
             rdesc = 'TODO: Will describe xp/levels.'
-            tex = stdassets.textures.cross_out.get()
+            tex = classicassets.textures.cross_out.get()
         else:
             assert_never(resource_type)
 

@@ -7,7 +7,7 @@ from typing import override
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 
 class GetBSRemoteWindow(PopupWindow):
@@ -47,7 +47,7 @@ class GetBSRemoteWindow(PopupWindow):
             parent=self.root_widget,
             position=(self._width * 0.5 - 110, self._height * 0.67 - 110),
             size=(220, 220),
-            texture=stdassets.textures.multiplayer_examples.get(),
+            texture=classicassets.textures.multiplayer_examples.get(),
         )
         bui.textwidget(
             parent=self.root_widget,
@@ -56,9 +56,9 @@ class GetBSRemoteWindow(PopupWindow):
             v_align='center',
             maxwidth=self._width * 0.8,
             position=(self._width * 0.5, 60),
-            text=stdassets.strings.getremote.info_short(
-                app_name=stdassets.strings.ui.app_name,
-                remote_app_name=stdassets.strings.ui.remote_app_name,
+            text=classicassets.strings.getremote.info_short(
+                app_name=classicassets.strings.ui.app_name,
+                remote_app_name=classicassets.strings.ui.remote_app_name,
             ),
         )
 

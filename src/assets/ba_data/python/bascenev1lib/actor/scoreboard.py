@@ -6,7 +6,7 @@ import weakref
 from typing import TYPE_CHECKING
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 from bascenev1 import builtinassets
 
 if TYPE_CHECKING:
@@ -34,9 +34,9 @@ class _Entry:
         self._height = (32.0 if height is None else height) * self._scale
         self._bar_width = 2.0 * self._scale
         self._bar_height = 32.0 * self._scale
-        self._bar_tex = self._backing_tex = stdassets.textures.bar
+        self._bar_tex = self._backing_tex = classicassets.textures.bar
         self._cover_tex = builtinassets.textures.ui_atlas
-        self._mesh = stdassets.meshes.meter_transparent
+        self._mesh = classicassets.meshes.meter_transparent
         self._pos: Sequence[float] | None = None
         self._flash_timer: bs.Timer | None = None
         self._flash_counter: int | None = None
@@ -384,7 +384,7 @@ class Scoreboard:
         Label can be something like 'points' and will
         show up on boards if provided.
         """
-        self._flat_tex = stdassets.textures.null
+        self._flat_tex = classicassets.textures.null
         self._entries: dict[int, _Entry] = {}
         self._label = label
         self.score_split = score_split

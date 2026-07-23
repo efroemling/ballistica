@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Sequence
@@ -218,46 +218,48 @@ class CreditsWindow(bui.MainWindow):
         # (or add mesh splitting under the hood)
         credits_text = (
             '  '
-            + stdassets.strings.credits.coding_graphics_audio(
+            + classicassets.strings.credits.coding_graphics_audio(
                 name='Eric Froemling'
             ).evaluate()
             + '\n'
             '\n'
             '  '
-            + stdassets.strings.credits.additional_audio_art_ideas(
+            + classicassets.strings.credits.additional_audio_art_ideas(
                 name='Raphael Suter'
             ).evaluate()
             + '\n'
             '\n'
-            '  ' + stdassets.strings.credits.sound_and_music.evaluate() + '\n'
+            '  '
+            + classicassets.strings.credits.sound_and_music.evaluate()
+            + '\n'
             '\n' + sound_and_music + '\n'
             '\n'
             '     '
-            + stdassets.strings.credits.public_domain_music_via(
+            + classicassets.strings.credits.public_domain_music_via(
                 name='Musopen.com'
             ).evaluate()
             + '\n'
             '        '
-            + stdassets.strings.credits.thanks_especially_to(
+            + classicassets.strings.credits.thanks_especially_to(
                 name='the US Army, Navy, and Marine Bands'
             ).evaluate()
             + '\n'
             '\n'
             '     '
-            + stdassets.strings.credits.additional_music_from(
+            + classicassets.strings.credits.additional_music_from(
                 name='The YouTube Audio Library'
             ).evaluate()
             + '\n'
             '\n'
             '     '
-            + stdassets.strings.credits.sounds_source(
+            + classicassets.strings.credits.sounds_source(
                 source='Freesound.org'
             ).evaluate()
             + '\n'
             '\n' + freesound_names + '\n'
             '\n'
             '  '
-            + stdassets.strings.credits.language_translations.evaluate()
+            + classicassets.strings.credits.language_translations.evaluate()
             + '\n'
             '\n'
             + '\n'.join(translation_names.splitlines()[:146])
@@ -277,22 +279,24 @@ class CreditsWindow(bui.MainWindow):
             '\n'
             '  Holiday theme vector art designed by Freepik\n'
             '\n'
-            '  ' + stdassets.strings.credits.special_thanks.evaluate() + '\n'
+            '  '
+            + classicassets.strings.credits.special_thanks.evaluate()
+            + '\n'
             '\n'
             '     Todd, Laura, and Robert Froemling\n'
             '     '
-            + stdassets.strings.credits.all_my_family.evaluate().replace(
+            + classicassets.strings.credits.all_my_family.evaluate().replace(
                 '\n', '\n     '
             )
             + '\n'
             '     '
-            + stdassets.strings.credits.whoever_invented_coffee.evaluate()
+            + classicassets.strings.credits.whoever_invented_coffee.evaluate()
             + '\n'
             '\n'
-            '  ' + stdassets.strings.credits.legal.evaluate() + '\n'
+            '  ' + classicassets.strings.credits.legal.evaluate() + '\n'
             '\n'
             '     '
-            + stdassets.strings.credits.software_based_on(
+            + classicassets.strings.credits.software_based_on(
                 name='the Khronos Group'
             ).evaluate()
             + '\n'
@@ -338,8 +342,8 @@ class CreditsWindow(bui.MainWindow):
             ),
             size=(0, 0),
             scale=0.8 if uiscale is bui.UIScale.SMALL else 1.0,
-            text=stdassets.strings.credits.title(
-                app_name=stdassets.strings.ui.app_name
+            text=classicassets.strings.credits.title(
+                app_name=classicassets.strings.ui.app_name
             ),
             h_align='center',
             v_align='center',

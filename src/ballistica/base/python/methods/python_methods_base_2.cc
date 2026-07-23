@@ -1376,7 +1376,7 @@ static PyMethodDef PySetAssetNameCompatVersionsDef = {
     "\n"
     "(internal) Register the asset-package version ids backing the\n"
     "legacy asset-name compat table, keyed by package key\n"
-    "('builtinassets' / 'stdassets'). Until a package key is\n"
+    "('builtinassets' / 'classicassets'). Until a package key is\n"
     "registered, legacy names mapping into it pass through unmapped.\n"
     "Called at classic-app-mode activation with values sourced from\n"
     "the asset-package wrapper modules."};

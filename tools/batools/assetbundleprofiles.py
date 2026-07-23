@@ -12,7 +12,7 @@ profile *name* (the cache dir is namespaced by it), so they can't drift.
 Today's profiles are 'minimal' -- just the builtin construct package
 (``gui-minimal`` with real fallback-flavor textures, ``headless-minimal``
 with null textures). New profiles -- e.g. a desktop build that also
-bundles a platform-flavored ``bastdassets`` -- are added here as plain
+bundles a platform-flavored ``baclassicassets`` -- are added here as plain
 data. The assemble + stage + runtime machinery is already package-plural
 (the bundle manifest is keyed by apverid and every consumer iterates it),
 so carrying additional packages needs no code changes -- only a new

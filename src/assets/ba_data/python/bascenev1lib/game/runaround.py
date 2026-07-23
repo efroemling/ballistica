@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, cast, Sequence, override
 
 import bascenev1 as bs
 from bascenev1 import builtinassets
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 from bascenev1lib.actor.popuptext import PopupText
 from bascenev1lib.actor.bomb import TNTSpawner
@@ -138,14 +138,14 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         shared = SharedObjects.get()
         self._preset = Preset(settings.get('preset', 'pro'))
 
-        self._player_death_sound = stdassets.audio.player_death
-        self._new_wave_sound = stdassets.audio.score_hit01
-        self._winsound = stdassets.audio.score
+        self._player_death_sound = classicassets.audio.player_death
+        self._new_wave_sound = classicassets.audio.score_hit01
+        self._winsound = classicassets.audio.score
         self._cashregistersound = builtinassets.audio.cash_register
-        self._bad_guy_score_sound = stdassets.audio.shield_down
-        self._heart_tex = stdassets.textures.heart
-        self._heart_mesh_opaque = stdassets.meshes.heart_opaque
-        self._heart_mesh_transparent = stdassets.meshes.heart_transparent
+        self._bad_guy_score_sound = classicassets.audio.shield_down
+        self._heart_tex = classicassets.textures.heart
+        self._heart_mesh_opaque = classicassets.meshes.heart_opaque
+        self._heart_mesh_transparent = classicassets.meshes.heart_transparent
 
         self._a_player_has_been_killed = False
         self._spawn_center = self._map_type.defs.points['spawn1'][0:3]
@@ -175,8 +175,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         self._score = 0
         self._time_bonus = 0
         self._score_region: bs.Actor | None = None
-        self._dingsound = stdassets.audio.ding_small
-        self._dingsoundhigh = stdassets.audio.ding_small_high
+        self._dingsound = classicassets.audio.ding_small
+        self._dingsoundhigh = classicassets.audio.ding_small_high
         self._exclude_powerups: list[str] | None = None
         self._have_tnt: bool | None = None
         self._waves: list[Wave] | None = None
@@ -201,7 +201,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
         super().on_transition_in()
         self._scoreboard = Scoreboard(
-            label=stdassets.strings.game.score, score_split=0.5
+            label=classicassets.strings.game.score, score_split=0.5
         )
         self._score_region = bs.NodeActor(
             bs.newnode(
@@ -720,7 +720,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
             fail_message = None
         else:
             score = None
-            fail_message = stdassets.strings.game.reach_wave_2
+            fail_message = classicassets.strings.game.reach_wave_2
 
         self.end(
             delay=delay,
@@ -791,7 +791,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
                 # Give remaining players some points and have them celebrate.
                 self.show_zoom_message(
-                    stdassets.strings.game.victory, scale=1.0, duration=4.0
+                    classicassets.strings.game.victory, scale=1.0, duration=4.0
                 )
 
                 self.celebrate(10.0)

@@ -7,7 +7,7 @@
 from typing import TYPE_CHECKING
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 if TYPE_CHECKING:
     from collections.abc import Container
@@ -101,8 +101,8 @@ def get_appearances(
 
 
 def _tex(name: str) -> str:
-    """Qualified stdassets ref for an appearance texture field."""
-    return f'{stdassets.__asset_package__}:textures/{name}'
+    """Qualified classicassets ref for an appearance texture field."""
+    return f'{classicassets.__asset_package__}:textures/{name}'
 
 
 class Appearance:

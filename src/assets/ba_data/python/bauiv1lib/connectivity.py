@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -63,7 +63,7 @@ class WaitForConnectivityWindow(bui.Window):
             scale=1.2,
             h_align='center',
             v_align='center',
-            text=stdassets.strings.ui.connecting,
+            text=classicassets.strings.ui.connecting,
             maxwidth=self._width * 0.9,
         )
 
@@ -94,7 +94,7 @@ class WaitForConnectivityWindow(bui.Window):
             autoselect=True,
             position=(50, 30),
             size=(150, 50),
-            label=stdassets.strings.ui.cancel,
+            label=classicassets.strings.ui.cancel,
             on_activate_call=self._cancel,
         )
         bui.containerwidget(edit=self._root_widget, cancel_button=cancel_button)
@@ -129,7 +129,7 @@ class WaitForConnectivityWindow(bui.Window):
         # Show 'connected.' and kill the spinner for the brief moment
         # we're visible on our way out.
         bui.textwidget(
-            edit=self._info_text, text=stdassets.strings.ui.connected
+            edit=self._info_text, text=classicassets.strings.ui.connected
         )
         if self._spinner:
             self._spinner.delete()

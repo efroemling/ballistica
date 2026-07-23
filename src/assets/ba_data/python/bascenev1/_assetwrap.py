@@ -2,7 +2,7 @@
 #
 """Runtime support for generated bascenev1 asset-package wrappers.
 
-The generated wrapper modules (``builtinassets``, ``stdassets``, etc.)
+The generated wrapper modules (``builtinassets``, ``classicassets``, etc.)
 keep their full typed asset tree in an ``if TYPE_CHECKING:`` block, so
 the type checker sees every asset as a precisely-typed attribute. At
 runtime that block is dead; resolution is driven dynamically by

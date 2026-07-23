@@ -15,12 +15,12 @@ if TYPE_CHECKING:
 
 
 def _tex(name: str) -> str:
-    """Qualified stdassets ref for a store preview texture."""
+    """Qualified classicassets ref for a store preview texture."""
     # Deferred; only runs post-import.
     # pylint: disable-next=cyclic-import
-    from bascenev1 import stdassets
+    from bascenev1 import classicassets
 
-    return f'{stdassets.__asset_package__}:textures/{name}'
+    return f'{classicassets.__asset_package__}:textures/{name}'
 
 
 class StoreSubsystem:

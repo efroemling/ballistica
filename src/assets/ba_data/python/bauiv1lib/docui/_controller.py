@@ -284,9 +284,9 @@ class DocUIController:
         import bacommon.docui.v2 as dui2
         from bacommon.langstr import LangStrSpecValue
 
-        from bauiv1 import stdassets
+        from bauiv1 import classicassets
 
-        uistrs = stdassets.strings.ui
+        uistrs = classicassets.strings.ui
 
         error_msg: LangStrSpec
 

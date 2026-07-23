@@ -15,9 +15,9 @@ from efro.dataclassio import dataclass_from_dict
 import babase
 import bauiv1
 from bauiv1 import builtinassets
-from bauiv1 import stdassets as uistdassets
+from bauiv1 import classicassets as uiclassicassets
 import bascenev1
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 import _baclassic
 from baclassic._music import MusicSubsystem
@@ -406,7 +406,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             with activity.context:
                 globs = activity.globalsnode
                 if not globs.paused:
-                    stdassets.audio.ref_whistle.play()
+                    classicassets.audio.ref_whistle.play()
                     globs.paused = True
 
                 # FIXME: This should not be an attr on Actor.
@@ -436,7 +436,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             with activity.context:
                 globs = activity.globalsnode
                 if globs.paused:
-                    stdassets.audio.ref_whistle.play()
+                    classicassets.audio.ref_whistle.play()
                     globs.paused = False
 
                     # FIXME: This should not be an actor attr.
@@ -920,8 +920,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     def preload_map_preview_media(self) -> None:
         """Preload media needed for map preview UIs."""
         try:
-            _ = uistdassets.meshes.level_select_button_opaque.get()
-            _ = uistdassets.meshes.level_select_button_transparent.get()
+            _ = uiclassicassets.meshes.level_select_button_opaque.get()
+            _ = uiclassicassets.meshes.level_select_button_transparent.get()
             for maptype in list(self.maps.values()):
                 map_tex_name = maptype.get_preview_texture_name()
                 if map_tex_name is not None:

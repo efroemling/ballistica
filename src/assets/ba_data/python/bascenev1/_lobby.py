@@ -196,12 +196,12 @@ class Chooser:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets, stdassets
+        from bascenev1 import builtinassets, classicassets
 
         self._deek_sound = builtinassets.audio.deek
         self._click_sound = builtinassets.audio.click01
         self._punchsound = builtinassets.audio.punch01
-        self._swish_sound = stdassets.audio.punch_swish
+        self._swish_sound = classicassets.audio.punch_swish
         self._errorsound = builtinassets.audio.error
         self._mask_texture = builtinassets.textures.character_icon_mask
         self._vpos = vpos
@@ -503,11 +503,16 @@ class Chooser:
         # (unicode strings, no tuples, etc)
         self._profiles = app.classic.json_prep(self._profiles)
 
-        # Filter out any characters we're unaware of.
+        # Filter out any characters we're unaware of. These profiles can
+        # arrive over the wire from clients, so a malformed 'character'
+        # value (e.g. an unhashable list) must not be allowed to reach
+        # the membership check below; that would raise and abort the
+        # join partway through, leaving the session corrupted.
         for profile in list(self._profiles.items()):
+            character = profile[1].get('character', '')
             if (
-                profile[1].get('character', '')
-                not in app.classic.spaz_appearances
+                not isinstance(character, str)
+                or character not in app.classic.spaz_appearances
             ):
                 profile[1]['character'] = 'Spaz'
 
@@ -943,7 +948,7 @@ class Chooser:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets, stdassets
+        from bascenev1 import builtinassets, classicassets
 
         assert babase.app.classic is not None
         if self._profilenames[self._profileindex] == '_edit':
@@ -964,9 +969,11 @@ class Chooser:
             ].icon_mask_texture
         except Exception:
             logging.exception('Error updating char icon list')
-            tex_name = f'{stdassets.__asset_package__}:textures/neo_spaz_icon'
+            tex_name = (
+                f'{classicassets.__asset_package__}:textures/neo_spaz_icon'
+            )
             tint_tex_name = (
-                f'{stdassets.__asset_package__}'
+                f'{classicassets.__asset_package__}'
                 ':textures/neo_spaz_icon_color_mask'
             )
 

@@ -15,7 +15,7 @@ from efro.dataclassio import dataclass_to_json
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 from bauiv1lib.docui.prep._types import PagePrep, RowPrep, ButtonPrep
 
@@ -67,7 +67,7 @@ def prep_page(
                 pagerow = copy.deepcopy(pagerow)
                 pagerow.buttons.append(
                     dui2.Button(
-                        label=stdassets.strings.ui.nothing_here.spec,
+                        label=classicassets.strings.ui.nothing_here.spec,
                         label_color=(1, 1, 1, 0.3),
                         size=(220, 100),
                         label_scale=0.6,

@@ -8,7 +8,7 @@
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -169,14 +169,14 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
         super().__init__(settings)
         shared = SharedObjects.get()
         self._scoreboard = Scoreboard()
-        self._cheer_sound = stdassets.audio.cheer
-        self._chant_sound = stdassets.audio.crowd_chant
-        self._foghorn_sound = stdassets.audio.foghorn
-        self._swipsound = stdassets.audio.swip
-        self._whistle_sound = stdassets.audio.ref_whistle
-        self.puck_mesh = stdassets.meshes.puck
-        self.puck_tex = stdassets.textures.puck_color
-        self._puck_sound = stdassets.audio.metal_hit
+        self._cheer_sound = classicassets.audio.cheer
+        self._chant_sound = classicassets.audio.crowd_chant
+        self._foghorn_sound = classicassets.audio.foghorn
+        self._swipsound = classicassets.audio.swip
+        self._whistle_sound = classicassets.audio.ref_whistle
+        self.puck_mesh = classicassets.meshes.puck
+        self.puck_tex = classicassets.textures.puck_color
+        self._puck_sound = classicassets.audio.metal_hit
         self.puck_material = bs.Material()
         self.puck_material.add_actions(
             actions=('modify_part_collision', 'friction', 0.5)

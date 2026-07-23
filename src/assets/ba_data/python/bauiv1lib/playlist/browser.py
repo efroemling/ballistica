@@ -10,7 +10,7 @@ from typing import override, TYPE_CHECKING
 import bascenev1 as bs
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from bauiv1lib.play import PlaylistSelectContext
@@ -463,7 +463,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
         assert bui.app.classic is not None
         bui.textwidget(
             parent=self._subcontainer,
-            text=stdassets.strings.playlist.playlists,
+            text=classicassets.strings.playlist.playlists,
             position=(40 + xoffs, self._sub_height + yoffs - 26),
             size=(0, 0),
             scale=1.0,
@@ -476,11 +476,11 @@ class PlaylistBrowserWindow(bui.MainWindow):
         index = 0
         appconfig = bui.app.config
 
-        mesh_opaque = stdassets.meshes.level_select_button_opaque.get()
+        mesh_opaque = classicassets.meshes.level_select_button_opaque.get()
         mesh_transparent = (
-            stdassets.meshes.level_select_button_transparent.get()
+            classicassets.meshes.level_select_button_transparent.get()
         )
-        mask_tex = stdassets.textures.map_preview_mask.get()
+        mask_tex = classicassets.textures.map_preview_mask.get()
 
         # h_offs = 225 if count == 1 else 115 if count == 2 else 0
         h_offs = 2
@@ -688,7 +688,9 @@ class PlaylistBrowserWindow(bui.MainWindow):
                                         parent=self._subcontainer,
                                         size=(scl * 100.0, scl * 100.0),
                                         position=(h + scl * 75, v + scl * 10),
-                                        texture=stdassets.textures.lock.get(),
+                                        texture=(
+                                            classicassets.textures
+                                        ).lock.get(),
                                         draw_controller=btn,
                                     )
                         if v is not None:
@@ -725,7 +727,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
             size=(100, 30),
             position=(34 + h_offs_bottom, 50 + extra_bottom_buffer),
             text_scale=0.6,
-            label=stdassets.strings.ui.customize,
+            label=classicassets.strings.ui.customize,
             on_activate_call=self._on_customize_press,
             color=(0.54, 0.52, 0.67),
             textcolor=(0.7, 0.65, 0.7),

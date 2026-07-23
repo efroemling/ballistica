@@ -7,12 +7,14 @@ from enum import Enum
 from typing import TYPE_CHECKING, override
 
 from efro.util import strip_exception_tracebacks
+from efro.error import CommunicationError
 
 import _babase
+import bacommon.cloud
 from bacommon.app import ExitCode
 from babase._appmode import AppMode
-from babase._language import Lstr
-from babase._logging import assetmanagerlog as logger
+from babase._apputils import is_browser_likely_available
+from babase._logging import applog, assetmanagerlog as logger
 from babase._simpledialog import SimpleDialog
 from babase._assetsubsystem import (
     AssetAuthRequiredError,
@@ -24,7 +26,7 @@ from babase._assetsubsystem import (
 )
 
 if TYPE_CHECKING:
-    from babase import AppIntent
+    from babase import AppIntent, LangStr
     from babase._assetsubsystem import AssetSubsystem
 
 
@@ -38,6 +40,15 @@ _SIGN_IN_WAIT_SECONDS = 15.0
 #: the local primary-account establishment).
 _ACCOUNT_CHANNEL_WAIT_SECONDS = 10.0
 
+#: How long to wait for the user to complete a browser-based sign-in
+#: before giving up. The server expires login-proxies after ~5 minutes,
+#: so polling longer than that is pointless; stay just under it.
+_BROWSER_SIGN_IN_WAIT_SECONDS = 290.0
+
+#: How often to ask the server whether a browser-based sign-in has
+#: completed (mirrors the account-settings sign-in window's cadence).
+_BROWSER_SIGN_IN_POLL_SECONDS = 2.0
+
 
 class _ResolveOutcome(Enum):
     """Result of one construct-mode resolve attempt."""
@@ -50,6 +61,15 @@ class _ResolveOutcome(Enum):
     #: Abandoned because the app is shutting down. Benign -- no message
     #: shown, no failure exit-code set; the caller just stops quietly.
     ABORTED = 'aborted'
+
+
+def _logtext(message: str | LangStr) -> str:
+    """Flatten a possibly-:class:`~babase.LangStr` message for a log record.
+
+    Dialog-bound messages are localized ``LangStr`` values; the log
+    record wants flat text (evaluated in the current locale).
+    """
+    return message if isinstance(message, str) else message.evaluate()
 
 
 def _primary_signed_in() -> bool:
@@ -153,7 +173,9 @@ class ConstructAppMode(AppMode):
           fade-in.
         * If a real download/build is needed, a progress :class:`SimpleDialog`
           appears (gui). If the server then reports authentication is needed,
-          we wait for auto-sign-in then retry. A failure leaves an error
+          we wait for auto-sign-in — or, when no sign-in is coming (no stored
+          credentials), offer an interactive browser-based one (gui) — then
+          retry. A failure leaves an error
           dialog with a **Retry** button (gui) — pressing it re-runs the
           resolve via :meth:`_run`; on headless we exit with a failure code
           for the wrapper to restart. We stay in construct-mode until success.
@@ -199,16 +221,21 @@ class ConstructAppMode(AppMode):
 
             if outcome is _ResolveOutcome.AUTH_REQUIRED:
                 # Wait for auto-sign-in to settle, then retry.
+                from babase import builtinassets
+
                 logger.info(
                     'Construct-mode: resolve needs authentication;'
                     ' waiting for sign-in.'
                 )
-                self._set_status('Authenticating…')
-                if not await self._wait_for_sign_in():
-                    self._fail(
-                        'You must sign in to load these assets. Remove these'
-                        ' mods/changes so you can sign in and then try again.'
-                    )
+                self._set_status(builtinassets.strings.assets.authenticating)
+                signed_in = await self._wait_for_sign_in()
+                if not signed_in:
+                    # No sign-in is coming on its own (typically no
+                    # stored credentials); offer an interactive
+                    # browser-based one (gui only).
+                    signed_in = await self._sign_in_via_browser()
+                if not signed_in:
+                    self._fail(builtinassets.strings.assets.sign_in_failed)
                     return
                 outcome = await self._resolve_signed_in(
                     self._assets, self._required
@@ -229,8 +256,10 @@ class ConstructAppMode(AppMode):
             # Safety net: an unexpected orchestration error must not leave a
             # stuck modal progress dialog. Surface it as a failure (Retry on
             # gui / exit on headless).
+            from babase import builtinassets
+
             logger.exception('Construct-mode bring-up crashed.')
-            self._fail('An error occurred loading assets; see log for details.')
+            self._fail(builtinassets.strings.assets.load_error)
             strip_exception_tracebacks(exc)
 
     async def _resolve_signed_in(
@@ -286,6 +315,9 @@ class ConstructAppMode(AppMode):
         caller to recover from (sign in + retry) or treated as a terminal
         failure (we already tried signing in).
         """
+        from babase import builtinassets
+
+        strs = builtinassets.strings.assets
         try:
             await assets.resolve(
                 required,
@@ -302,7 +334,7 @@ class ConstructAppMode(AppMode):
             logger.exception(
                 'Construct-mode asset bring-up failed; staying put.'
             )
-            self._fail('An error occurred loading assets; see log for details.')
+            self._fail(strs.load_error)
             strip_exception_tracebacks(exc)
         except AssetAccessDeniedError as exc:
             # Surface the server's own message — it names the account
@@ -314,18 +346,14 @@ class ConstructAppMode(AppMode):
                 exc.server_message
                 or 'You do not have permission to load these assets.'
             )
-            self._fail(f'{detail} Remove these mods/changes and try again.')
+            self._fail(strs.access_denied_guidance(detail=detail))
             strip_exception_tracebacks(exc)
         except AssetClientTooOldError as exc:
             # This build can't address the server's current asset
             # manifests; updating is the only fix (Retry won't help, but
             # it's harmless). Prefer the server's own wording.
             logger.warning('Construct-mode: client too old for assets: %s', exc)
-            self._fail(
-                exc.server_message
-                or 'This app version is too old to load current assets.'
-                ' Please update to continue.'
-            )
+            self._fail(exc.server_message or strs.client_too_old)
             strip_exception_tracebacks(exc)
         except AssetContentError as exc:
             # A source asset in the package failed to build — something
@@ -335,10 +363,7 @@ class ConstructAppMode(AppMode):
             # for the owner/dev-team), so speak to them directly.
             logger.warning('Construct-mode: asset content error: %s', exc)
             detail = exc.server_message or 'An asset failed to build.'
-            self._fail(
-                f'{detail} Fix the file in the source workspace and'
-                f' try again.'
-            )
+            self._fail(strs.content_error_guidance(detail=detail))
             strip_exception_tracebacks(exc)
         except AssetResolveAbortedError as exc:
             # The app started shutting down mid-resolve (e.g. the user
@@ -355,7 +380,7 @@ class ConstructAppMode(AppMode):
             logger.exception(
                 'Construct-mode asset bring-up failed; staying put.'
             )
-            self._fail('An error occurred loading assets; see log for details.')
+            self._fail(strs.load_error)
             strip_exception_tracebacks(exc)
         return _ResolveOutcome.FAILED
 
@@ -390,6 +415,152 @@ class ConstructAppMode(AppMode):
                 return True
         return _primary_signed_in()
 
+    async def _sign_in_via_browser(self) -> bool:
+        """Run an interactive browser-based sign-in.
+
+        Used when a resolve needs an account but no sign-in is coming
+        on its own (fresh install / signed out). Without this, an app
+        bundling mods that pin restricted asset-packages (dev/test
+        versions) would soft-lock here — the account UI for signing in
+        lives *behind* the resolve gate we're stuck at.
+
+        Drives the same master-server login-proxy flow the
+        account-settings V2 sign-in window uses: request a proxy,
+        surface its URL, and poll until the user completes the sign-in
+        in their browser, it fails, or the proxy expires. On success,
+        primary credentials are set and we wait for the local account
+        to finish validating.
+
+        Works on **headless** too (a server bundling restricted assets
+        must be signable-in): the URL is always logged at ``ba.app``
+        INFO so a server operator can open it and approve, then this
+        poll picks the sign-in up. On gui we additionally surface the
+        URL in the dialog (with a Sign In button when a browser is
+        likely present).
+
+        Returns whether a primary account is now established.
+        """
+        from babase import builtinassets
+
+        plus = _babase.app.plus
+        if plus is None:
+            return False
+
+        try:
+            proxy = await plus.cloud.send_message_async(
+                bacommon.cloud.LoginProxyRequestMessage()
+            )
+        except Exception as exc:
+            # Covers CommunicationError (offline/flaky) and builds
+            # without cloud support; either way we can't offer this.
+            logger.warning(
+                'Construct-mode: login-proxy request failed (%s).',
+                type(exc).__name__,
+            )
+            strip_exception_tracebacks(exc)
+            return False
+
+        address = plus.get_master_server_address() + proxy.url
+        address_pretty = address.removeprefix('https://')
+
+        # The URL is the actionable operator instruction (the only one a
+        # headless server gets), so log it at ba.app INFO — visible by
+        # default and the logger server operators watch.
+        applog.info(
+            'Sign-in required to load bundled assets;'
+            ' visit %s in a browser to sign in.',
+            address,
+        )
+
+        # On gui, also surface the URL in the dialog. Headless has no
+        # dialog (ensure returns None); the log line above is its record.
+        dialog = self._ensure_dialog()
+        if dialog is not None:
+            if is_browser_likely_available():
+                dialog.update(
+                    title=builtinassets.strings.ui.sign_in,
+                    message=(
+                        builtinassets.strings.assets.sign_in_needed_browser(
+                            address=address_pretty
+                        )
+                    ),
+                    progress=None,
+                    button_label=builtinassets.strings.ui.sign_in,
+                    on_button=lambda: _babase.open_url(address),
+                )
+            else:
+                # No browser on this device (vr/tv/etc.); show the
+                # address to visit from another device. (A QR code would
+                # be ideal here; that's a planned follow-up.)
+                strs = builtinassets.strings
+                dialog.update(
+                    title=strs.ui.sign_in,
+                    message=strs.assets.sign_in_needed_other_device(
+                        address=address_pretty
+                    ),
+                    progress=None,
+                    button_label=None,
+                    on_button=None,
+                )
+
+        deadline = _babase.apptime() + _BROWSER_SIGN_IN_WAIT_SECONDS
+        while True:
+            await asyncio.sleep(_BROWSER_SIGN_IN_POLL_SECONDS)
+            if _babase.apptime() >= deadline:
+                logger.warning(
+                    'Construct-mode: browser sign-in not completed'
+                    ' after %.0f seconds; giving up.',
+                    _BROWSER_SIGN_IN_WAIT_SECONDS,
+                )
+                return False
+            try:
+                status = await plus.cloud.send_message_async(
+                    bacommon.cloud.LoginProxyStateQueryMessage(
+                        proxyid=proxy.proxyid, proxykey=proxy.proxykey
+                    )
+                )
+            except CommunicationError as exc:
+                # Transient connectivity blip; keep polling.
+                strip_exception_tracebacks(exc)
+                continue
+            except Exception as exc:
+                logger.warning(
+                    'Construct-mode: login-proxy status check failed (%s).',
+                    type(exc).__name__,
+                )
+                strip_exception_tracebacks(exc)
+                return False
+            if status.state is status.State.FAIL:
+                logger.warning('Construct-mode: browser sign-in failed.')
+                return False
+            if status.state is status.State.SUCCESS:
+                break
+            # WAITING; keep polling.
+
+        assert status.credentials is not None
+        plus.accounts.set_primary_credentials(status.credentials)
+
+        # Courtesy: tell the server we're done with the proxy (best
+        # effort; it expires on its own regardless).
+        try:
+            await plus.cloud.send_message_async(
+                bacommon.cloud.LoginProxyCompleteMessage(proxyid=proxy.proxyid)
+            )
+        except Exception as exc:
+            strip_exception_tracebacks(exc)
+
+        # Back to progress-style dialog state while the account
+        # validates and the resolve re-runs (gui only).
+        if dialog is not None:
+            dialog.update(
+                title=builtinassets.strings.ui.updating,
+                message=builtinassets.strings.assets.signing_in,
+                progress=None,
+                button_label=None,
+                on_button=None,
+            )
+        return await self._wait_for_sign_in()
+
     def _on_download_starting(self) -> None:
         """Resolve callback: a real asset download is about to begin.
 
@@ -420,12 +591,14 @@ class ConstructAppMode(AppMode):
         with the generic 'updating' title and a zeroed bar; callers set the
         message / progress / button.
         """
+        from babase import builtinassets
+
         if not _babase.app.env.gui:
             return None
         self._begin_visible()
         if self._dialog is None:
             self._dialog = SimpleDialog(
-                title=Lstr(resource='updatingText'), progress=0.0
+                title=builtinassets.strings.ui.updating, progress=0.0
             )
         return self._dialog
 
@@ -436,26 +609,26 @@ class ConstructAppMode(AppMode):
             self._dialog = None
 
     def _on_resolve_progress(
-        self, message: str, progress: float | None
+        self, message: str | LangStr, progress: float | None
     ) -> None:
         """Progress-reporter sink: log + drive the dialog.
 
         The INFO log is the headless + diagnostic record — it must survive
         (it's the only bring-up trace on headless, which has no dialog).
         """
-        logger.info('Construct-mode: %s', message)
+        logger.info('Construct-mode: %s', _logtext(message))
         dialog = self._ensure_dialog()
         if dialog is not None:
             dialog.update(message=message, progress=progress)
 
-    def _set_status(self, message: str) -> None:
+    def _set_status(self, message: str | LangStr) -> None:
         """Log an interim lifecycle status; reflect it in the dialog if up.
 
         Unlike :meth:`_on_resolve_progress` this does NOT create a dialog --
         it's for states (e.g. 'Authenticating…') that may occur before any
         download dialog exists; on headless / pre-dialog it just logs.
         """
-        logger.info('Construct-mode: %s', message)
+        logger.info('Construct-mode: %s', _logtext(message))
         if self._dialog is not None:
             self._dialog.update(message=message)
 
@@ -495,7 +668,7 @@ class ConstructAppMode(AppMode):
         self._dismiss_dialog()
         self._hand_off()
 
-    def _fail(self, message: str) -> None:
+    def _fail(self, message: str | LangStr) -> None:
         """Surface a terminal bring-up failure.
 
         On gui, leave an error dialog up with a **Retry** button (pressing it
@@ -511,7 +684,9 @@ class ConstructAppMode(AppMode):
         self-heal); ``--no-auto-restart``, direct-binary runs, and BASN task
         orchestration can read the code to treat it as a definitive failure.
         """
-        logger.warning('Construct-mode: %s', message)
+        from babase import builtinassets
+
+        logger.warning('Construct-mode: %s', _logtext(message))
 
         if not _babase.app.env.gui:
             _babase.set_app_exit_code(ExitCode.ASSET_BRINGUP_FAILED.value)
@@ -521,10 +696,10 @@ class ConstructAppMode(AppMode):
         dialog = self._ensure_dialog()
         assert dialog is not None
         dialog.update(
-            title=Lstr(resource='errorText'),
+            title=builtinassets.strings.ui.error,
             message=message,
             progress=None,
-            button_label=Lstr(resource='retryText'),
+            button_label=builtinassets.strings.ui.retry,
             on_button=self._on_retry,
         )
 
@@ -535,9 +710,11 @@ class ConstructAppMode(AppMode):
         title, removes the Retry button (so a second press can't fire while we
         re-resolve), and shows that work has resumed.
         """
+        from babase import builtinassets
+
         if self._dialog is not None:
             self._dialog.update(
-                title=Lstr(resource='updatingText'),
+                title=builtinassets.strings.ui.updating,
                 message='',
                 progress=0.0,
                 button_label=None,

@@ -8,7 +8,7 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -38,7 +38,7 @@ class Background(bs.Actor):
                 delegate=self,
                 attrs={
                     'fill_screen': True,
-                    'texture': stdassets.textures.bg,
+                    'texture': classicassets.textures.bg,
                     'tilt_translate': -0.3,
                     'has_alpha_channel': False,
                     'color': (1, 1, 1),
@@ -52,9 +52,9 @@ class Background(bs.Actor):
                     loop=False,
                 )
             if show_logo:
-                logo_texture = stdassets.textures.logo
-                logo_mesh = stdassets.meshes.logo
-                logo_mesh_transparent = stdassets.meshes.logo_transparent
+                logo_texture = classicassets.textures.logo
+                logo_mesh = classicassets.meshes.logo
+                logo_mesh_transparent = classicassets.meshes.logo_transparent
                 self.logo = bs.newnode(
                     'image',
                     owner=self.node,

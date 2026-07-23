@@ -305,14 +305,24 @@ def format_python_str(projroot: Path | str, code: str) -> str:
     if isinstance(projroot, str):
         projroot = Path(projroot)
 
-    cmd = black_base_args(projroot) + ['--code', code]
-    results = subprocess.run(cmd, capture_output=True, check=False)
+    # Feed the code through stdin (black's '-' pseudo-filename) rather
+    # than passing it as a ``--code`` argument. Linux caps a *single*
+    # argv entry at 128k (MAX_ARG_STRLEN = 32 pages, independent of the
+    # much larger total ARG_MAX), and generated sources blow past that
+    # -- an asset-package wrapper is ~250k. With ``--code`` those die at
+    # execve with E2BIG, which surfaced as silently-unformatted
+    # generated wrappers (bamaster's wrappergen logs a warning and falls
+    # back to emitting a line-too-long disable). stdin has no such
+    # limit.
+    cmd = black_base_args(projroot) + ['-']
+    results = subprocess.run(
+        cmd, input=code.encode(), capture_output=True, check=False
+    )
     if results.returncode == 0:
         return results.stdout.decode()
 
-    cmdprint = cmd[:-1] + ['<input text>']
     raise RuntimeError(
-        f'Black command failed: {cmdprint}. stderr: {results.stderr.decode()}'
+        f'Black command failed: {cmd}. stderr: {results.stderr.decode()}'
     )
 
 

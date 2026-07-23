@@ -11,7 +11,7 @@ from bauiv1lib.characterpicker import CharacterPickerDelegate
 from bauiv1lib.iconpicker import IconPickerDelegate
 from bauiv1lib.connectivity import wait_for_connectivity
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 from bauiv1 import builtinassets
 import bascenev1 as bs
 
@@ -87,7 +87,7 @@ class EditProfileWindow(
             size=(155, 60),
             scale=0.8,
             autoselect=True,
-            label=stdassets.strings.ui.cancel,
+            label=classicassets.strings.ui.cancel,
             on_activate_call=self._cancel,
         )
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
@@ -97,7 +97,7 @@ class EditProfileWindow(
             size=(155, 60),
             autoselect=True,
             scale=0.8,
-            label=stdassets.strings.ui.save,
+            label=classicassets.strings.ui.save,
         )
 
         bui.widget(edit=save_button, left_widget=cancel_button)
@@ -108,9 +108,9 @@ class EditProfileWindow(
             position=(self._width * 0.5, height - 38 + yoffs),
             size=(0, 0),
             text=(
-                stdassets.strings.profile.title_new
+                classicassets.strings.profile.title_new
                 if existing_profile is None
-                else stdassets.strings.profile.title_edit
+                else classicassets.strings.profile.title_edit
             ),
             color=bui.app.ui_v1.title_color,
             maxwidth=290,
@@ -198,7 +198,7 @@ class EditProfileWindow(
         if not self._is_account_profile and not self._global:
             bui.textwidget(
                 parent=self._root_widget,
-                text=stdassets.strings.ui.name,
+                text=classicassets.strings.ui.name,
                 position=(200 + x_inset, v - 6),
                 size=(0, 0),
                 h_align='right',
@@ -223,7 +223,7 @@ class EditProfileWindow(
                 h_align='center',
                 v_align='center',
             )
-            txtl = stdassets.strings.profile.account_profile.evaluate()
+            txtl = classicassets.strings.profile.account_profile.evaluate()
             b_width = min(
                 270.0,
                 bui.get_string_width(txtl, suppress_warning=True) * 0.6,
@@ -282,7 +282,7 @@ class EditProfileWindow(
                 position=(self._width * 0.5 - 160, v - 55 - 15),
                 size=(0, 0),
                 draw_controller=btn,
-                text=stdassets.strings.profile.icon,
+                text=classicassets.strings.profile.icon,
                 scale=0.7,
                 color=bui.app.ui_v1.title_color,
                 maxwidth=120,
@@ -301,7 +301,7 @@ class EditProfileWindow(
                 v_align='center',
             )
             # FIXME hard coded strings are bad
-            txtl = stdassets.strings.profile.global_profile.evaluate()
+            txtl = classicassets.strings.profile.global_profile.evaluate()
             b_width = min(
                 240.0,
                 bui.get_string_width(txtl, suppress_warning=True) * 0.6,
@@ -337,7 +337,7 @@ class EditProfileWindow(
                 h_align='left',
                 v_align='center',
                 max_chars=16,
-                description=stdassets.strings.profile.name_description,
+                description=classicassets.strings.profile.name_description,
                 autoselect=True,
                 editable=True,
                 padding=4,
@@ -346,7 +346,7 @@ class EditProfileWindow(
             )
 
             # FIXME hard coded strings are bad
-            txtl = stdassets.strings.profile.local_profile.evaluate()
+            txtl = classicassets.strings.profile.local_profile.evaluate()
             b_width = min(
                 270.0,
                 bui.get_string_width(txtl, suppress_warning=True) * 0.6,
@@ -375,7 +375,7 @@ class EditProfileWindow(
             )
             self._upgrade_button = bui.buttonwidget(
                 parent=self._root_widget,
-                label=stdassets.strings.ui.upgrade,
+                label=classicassets.strings.ui.upgrade,
                 size=(40, 17),
                 text_scale=1.0,
                 button_type='square',
@@ -386,7 +386,7 @@ class EditProfileWindow(
             )
             self._random_name_button = bui.buttonwidget(
                 parent=self._root_widget,
-                label=stdassets.strings.ui.random,
+                label=classicassets.strings.ui.random,
                 size=(30, 20),
                 position=(495 + x_inset, v - 20),
                 button_type='square',
@@ -427,7 +427,7 @@ class EditProfileWindow(
             position=(self._width * 0.5 - b_offs, v - 65),
             size=(0, 0),
             draw_controller=btn,
-            text=stdassets.strings.profile.color,
+            text=classicassets.strings.profile.color,
             scale=0.7,
             color=bui.app.ui_v1.title_color,
             maxwidth=120,
@@ -455,7 +455,7 @@ class EditProfileWindow(
             position=(self._width * 0.5, v - 80),
             size=(0, 0),
             draw_controller=btn,
-            text=stdassets.strings.profile.character,
+            text=classicassets.strings.profile.character,
             scale=0.7,
             color=bui.app.ui_v1.title_color,
             maxwidth=130,
@@ -499,7 +499,7 @@ class EditProfileWindow(
             position=(self._width * 0.5 + b_offs, v - 65),
             size=(0, 0),
             draw_controller=btn,
-            text=stdassets.strings.profile.highlight,
+            text=classicassets.strings.profile.highlight,
             scale=0.7,
             color=bui.app.ui_v1.title_color,
             maxwidth=120,
@@ -522,7 +522,7 @@ class EditProfileWindow(
                     if self._is_account_profile
                     else (1.0, 0.5, 0.5)
                 ),
-                label=stdassets.strings.ui.delete,
+                label=classicassets.strings.ui.delete,
                 on_activate_call=bui.WeakCallStrict(self._delete_press),
                 enable_sound=not self._is_account_profile,
             )
@@ -546,7 +546,7 @@ class EditProfileWindow(
         if self._is_account_profile:
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                stdassets.strings.profile.cant_delete_account_profile,
+                classicassets.strings.profile.cant_delete_account_profile,
                 color=(1, 0, 0),
             )
             return
@@ -554,11 +554,11 @@ class EditProfileWindow(
         if self._existing_profile is None:
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                stdassets.strings.profile.nothing_selected, color=(1, 0, 0)
+                classicassets.strings.profile.nothing_selected, color=(1, 0, 0)
             )
             return
         ConfirmWindow(
-            stdassets.strings.profile.delete_confirm(
+            classicassets.strings.profile.delete_confirm(
                 profile=self._existing_profile
             ),
             self._do_delete_profile,
@@ -587,7 +587,7 @@ class EditProfileWindow(
         )
 
         plus.run_v1_account_transactions()
-        stdassets.audio.shield_down.get().play()
+        classicassets.audio.shield_down.get().play()
 
         if self._on_profile_delete is not None:
             try:
@@ -688,7 +688,7 @@ class EditProfileWindow(
         """Show an explanation of local profiles."""
         from bauiv1lib.confirm import ConfirmWindow
 
-        txtl = stdassets.strings.profile.local_profile_info
+        txtl = classicassets.strings.profile.local_profile_info
         ConfirmWindow(
             txtl,
             cancel_button=False,
@@ -701,7 +701,7 @@ class EditProfileWindow(
         """Show an explanation of global profiles."""
         from bauiv1lib.confirm import ConfirmWindow
 
-        txtl = stdassets.strings.profile.global_profile_info
+        txtl = classicassets.strings.profile.global_profile_info
         ConfirmWindow(
             txtl,
             cancel_button=False,
@@ -929,7 +929,7 @@ class EditProfileWindow(
             display_name = (name[:10] + '...') if len(name) > 10 else name
             bui.textwidget(
                 edit=self._clipped_name_text,
-                text=stdassets.strings.profile.in_game_clipped_name(
+                text=classicassets.strings.profile.in_game_clipped_name(
                     name=display_name
                 ),
             )
@@ -974,14 +974,16 @@ class EditProfileWindow(
         new_name = self.getname().strip()
 
         if not new_name:
-            bui.screenmessage(stdassets.strings.profile.name_not_empty)
+            bui.screenmessage(classicassets.strings.profile.name_not_empty)
             builtinassets.audio.error.get().play()
             return False
 
         # Make sure we're not renaming to another existing profile.
         profiles: dict = bui.app.config.get('Player Profiles', {})
         if self._existing_profile != new_name and new_name in profiles.keys():
-            bui.screenmessage(stdassets.strings.profile.profile_already_exists)
+            bui.screenmessage(
+                classicassets.strings.profile.profile_already_exists
+            )
             builtinassets.audio.error.get().play()
             return False
 

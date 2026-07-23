@@ -6,11 +6,11 @@ import logging
 from typing import cast, override
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 import bascenev1 as bs
 
-_bmstrs = stdassets.strings.settings.benchmarks
+_bmstrs = classicassets.strings.settings.benchmarks
 
 
 class BenchmarksAndStressTestsWindow(bui.MainWindow):
@@ -193,9 +193,9 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             width=150,
             choices=['Random', 'Teams', 'Free-For-All'],
             choices_display=[
-                stdassets.strings.ui.random,
-                stdassets.strings.playmodes.teams,
-                stdassets.strings.playmodes.free_for_all,
+                classicassets.strings.ui.random,
+                classicassets.strings.playmodes.teams,
+                classicassets.strings.playmodes.free_for_all,
             ],
             current_choice='Auto',
             on_value_change_call=self._stress_test_game_type_selected,

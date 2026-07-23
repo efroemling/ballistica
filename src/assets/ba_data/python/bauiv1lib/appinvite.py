@@ -7,7 +7,7 @@ import time
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -64,7 +64,7 @@ class ShowFriendCodeWindow(bui.Window):
             flatness=1.0,
             h_align='center',
             v_align='center',
-            text=stdassets.strings.appinvite.share_code,
+            text=classicassets.strings.appinvite.share_code,
             maxwidth=self._width * 0.85,
         )
 
@@ -149,7 +149,7 @@ class ShowFriendCodeWindow(bui.Window):
                 size=(200, 40),
                 position=(self._width * 0.5 - 100 + xoffs, 39),
                 autoselect=True,
-                label=stdassets.strings.appinvite.email_it,
+                label=classicassets.strings.appinvite.email_it,
                 on_activate_call=bui.WeakCallStrict(self._email),
             )
 
@@ -162,7 +162,7 @@ class ShowFriendCodeWindow(bui.Window):
         # If somehow we got signed out.
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(
-                stdassets.strings.ui.not_signed_in_status, color=(1, 0, 0)
+                classicassets.strings.ui.not_signed_in_status, color=(1, 0, 0)
             )
             builtinassets.audio.error.get().play()
             return
@@ -172,13 +172,17 @@ class ShowFriendCodeWindow(bui.Window):
             bui.Lstr(resource='gatherWindow.friendHasSentPromoCodeText')
             .evaluate()
             .replace('${NAME}', plus.get_v1_account_name())
-            .replace('${APP_NAME}', stdassets.strings.ui.app_name.evaluate())
+            .replace(
+                '${APP_NAME}', classicassets.strings.ui.app_name.evaluate()
+            )
             .replace('${COUNT}', str(self._data['tickets']))
         )
         body = (
             bui.Lstr(resource='gatherWindow.youHaveBeenSentAPromoCodeText')
             .evaluate()
-            .replace('${APP_NAME}', stdassets.strings.ui.app_name.evaluate())
+            .replace(
+                '${APP_NAME}', classicassets.strings.ui.app_name.evaluate()
+            )
             + '\n\n'
             + str(self._data['code'])
             + '\n\n'
@@ -192,13 +196,15 @@ class ShowFriendCodeWindow(bui.Window):
             + '\n\n'
             + bui.Lstr(resource='gatherWindow.friendPromoCodeInstructionsText')
             .evaluate()
-            .replace('${APP_NAME}', stdassets.strings.ui.app_name.evaluate())
+            .replace(
+                '${APP_NAME}', classicassets.strings.ui.app_name.evaluate()
+            )
             + '\n'
             + bui.Lstr(resource='gatherWindow.friendPromoCodeExpireText')
             .evaluate()
             .replace('${EXPIRE_HOURS}', str(self._data['expireHours']))
             + '\n'
-            + stdassets.strings.appinvite.enjoy.evaluate()
+            + classicassets.strings.appinvite.enjoy.evaluate()
         )
         bui.open_url(
             'mailto:?subject='
@@ -219,13 +225,13 @@ def handle_app_invites_press() -> None:
     assert plus is not None
 
     bui.screenmessage(
-        stdassets.strings.appinvite.requesting_code,
+        classicassets.strings.appinvite.requesting_code,
         color=(0, 1, 0),
     )
 
     def handle_result(result: dict[str, Any] | None) -> None:
         if result is None:
-            bui.screenmessage(stdassets.strings.ui.error, color=(1, 0, 0))
+            bui.screenmessage(classicassets.strings.ui.error, color=(1, 0, 0))
             builtinassets.audio.error.get().play()
         else:
             ShowFriendCodeWindow(result)

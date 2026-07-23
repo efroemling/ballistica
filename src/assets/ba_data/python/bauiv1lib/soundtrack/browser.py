@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -85,7 +85,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             ),
             size=(0, 0),
             maxwidth=300,
-            text=stdassets.strings.soundtrack.title,
+            text=classicassets.strings.soundtrack.title,
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -98,7 +98,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         h = 43 + x_inset
         b_color = (0.6, 0.53, 0.63)
         b_textcolor = (0.75, 0.7, 0.8)
-        lock_tex = stdassets.textures.lock.get()
+        lock_tex = classicassets.textures.lock.get()
         self._lock_images: list[bui.Widget] = []
 
         scl = 1.2
@@ -114,7 +114,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             autoselect=True,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=stdassets.strings.soundtrack.new_soundtrack,
+            label=classicassets.strings.soundtrack.new_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -144,7 +144,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             autoselect=True,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=stdassets.strings.soundtrack.edit_soundtrack,
+            label=classicassets.strings.soundtrack.edit_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -173,7 +173,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             color=b_color,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=stdassets.strings.soundtrack.duplicate_soundtrack,
+            label=classicassets.strings.soundtrack.duplicate_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -202,7 +202,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             autoselect=True,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=stdassets.strings.soundtrack.delete_soundtrack,
+            label=classicassets.strings.soundtrack.delete_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -289,7 +289,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         if self._selected_soundtrack in soundtracks:
             del soundtracks[self._selected_soundtrack]
         cfg.commit()
-        stdassets.audio.shield_down.get().play()
+        classicassets.audio.shield_down.get().play()
         assert self._selected_soundtrack_index is not None
         assert self._soundtracks is not None
         self._selected_soundtrack_index = min(
@@ -306,12 +306,12 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         if self._selected_soundtrack == '__default__':
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                stdassets.strings.soundtrack.cant_delete_default,
+                classicassets.strings.soundtrack.cant_delete_default,
                 color=(1, 0, 0),
             )
         else:
             ConfirmWindow(
-                stdassets.strings.soundtrack.delete_confirm(
+                classicassets.strings.soundtrack.delete_confirm(
                     name=self._selected_soundtrack
                 ),
                 self._do_delete_soundtrack,
@@ -398,7 +398,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         if self._selected_soundtrack == '__default__':
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                stdassets.strings.soundtrack.cant_edit_default,
+                classicassets.strings.soundtrack.cant_edit_default,
                 color=(1, 0, 0),
             )
             return
@@ -413,7 +413,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         self, soundtrack: str
     ) -> bui.Lstr | bui.LangStr:
         if soundtrack == '__default__':
-            return stdassets.strings.soundtrack.default_soundtrack_name
+            return classicassets.strings.soundtrack.default_soundtrack_name
         return bui.Lstr(value=soundtrack)
 
     def _refresh(self, select_soundtrack: str | None = None) -> None:

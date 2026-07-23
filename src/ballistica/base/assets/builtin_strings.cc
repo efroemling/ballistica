@@ -28,6 +28,68 @@ static auto MakeResource_(const char* name,
   return out;
 }
 
+auto BuiltinStrings::Assets::AccessDeniedGuidance(LangStr::Sub detail)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/access_denied_guidance",
+                       {{"detail", std::move(detail)}});
+}
+
+auto BuiltinStrings::Assets::Authenticating()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/authenticating");
+}
+
+auto BuiltinStrings::Assets::BuildingAssets(int64_t count, LangStr::Sub package)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/building_assets",
+                       {{"count", count}, {"package", std::move(package)}});
+}
+
+auto BuiltinStrings::Assets::ClientTooOld() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/client_too_old");
+}
+
+auto BuiltinStrings::Assets::ContentErrorGuidance(LangStr::Sub detail)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/content_error_guidance",
+                       {{"detail", std::move(detail)}});
+}
+
+auto BuiltinStrings::Assets::DownloadingAssets(int64_t count)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/downloading_assets", {{"count", count}});
+}
+
+auto BuiltinStrings::Assets::LoadError() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/load_error");
+}
+
+auto BuiltinStrings::Assets::PreparingBuild(LangStr::Sub package)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/preparing_build",
+                       {{"package", std::move(package)}});
+}
+
+auto BuiltinStrings::Assets::SignInFailed() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/sign_in_failed");
+}
+
+auto BuiltinStrings::Assets::SignInNeededBrowser(LangStr::Sub address)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/sign_in_needed_browser",
+                       {{"address", std::move(address)}});
+}
+
+auto BuiltinStrings::Assets::SignInNeededOtherDevice(LangStr::Sub address)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/sign_in_needed_other_device",
+                       {{"address", std::move(address)}});
+}
+
+auto BuiltinStrings::Assets::SigningIn() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/signing_in");
+}
+
 auto BuiltinStrings::Audio::MusicPlayError(LangStr::Sub music)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/audio/music_play_error",
@@ -124,6 +186,11 @@ auto BuiltinStrings::Net::MustSignIn() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/must_sign_in");
 }
 
+auto BuiltinStrings::Net::UnavailableNoConnection()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/unavailable_no_connection");
+}
+
 auto BuiltinStrings::Replay::ReadError() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/replay/read_error");
 }
@@ -157,6 +224,14 @@ auto BuiltinStrings::Ui::ArrowsToExitList(LangStr::Sub left, LangStr::Sub right)
       {{"left", std::move(left)}, {"right", std::move(right)}});
 }
 
+auto BuiltinStrings::Ui::Cancel() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/cancel");
+}
+
+auto BuiltinStrings::Ui::Error() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/error");
+}
+
 auto BuiltinStrings::Ui::HasMenuControl(LangStr::Sub name)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/ui/has_menu_control",
@@ -172,6 +247,22 @@ auto BuiltinStrings::Ui::MenuControlTimeOut(int64_t seconds)
 auto BuiltinStrings::Ui::MenuControlWillTimeOut()
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/ui/menu_control_will_time_out");
+}
+
+auto BuiltinStrings::Ui::Ok() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/ok");
+}
+
+auto BuiltinStrings::Ui::Retry() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/retry");
+}
+
+auto BuiltinStrings::Ui::SignIn() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/sign_in");
+}
+
+auto BuiltinStrings::Ui::Updating() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/updating");
 }
 
 }  // namespace ballistica::base

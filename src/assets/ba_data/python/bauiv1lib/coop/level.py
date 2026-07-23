@@ -4,7 +4,7 @@
 
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 
 class CoopLevelLockedWindow(bui.Window):
@@ -13,7 +13,7 @@ class CoopLevelLockedWindow(bui.Window):
     def __init__(self, name: bui.Lstr, dep_name: bui.Lstr):
         width = 550.0
         height = 250.0
-        lock_tex = stdassets.textures.lock.get()
+        lock_tex = classicassets.textures.lock.get()
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         super().__init__(
@@ -65,7 +65,7 @@ class CoopLevelLockedWindow(bui.Window):
             parent=self._root_widget,
             position=((width - 140) / 2, 30),
             size=(140, 50),
-            label=stdassets.strings.ui.ok,
+            label=classicassets.strings.ui.ok,
             on_activate_call=self._ok,
         )
         bui.containerwidget(

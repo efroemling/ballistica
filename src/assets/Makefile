@@ -235,6 +235,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_text.py \
   $(BUILD_DIR)/ba_data/python/babase/_ui.py \
   $(BUILD_DIR)/ba_data/python/babase/_workspace.py \
+  $(BUILD_DIR)/ba_data/python/babase/builtinassets.py \
   $(BUILD_DIR)/ba_data/python/babase/modutils.py \
   $(BUILD_DIR)/ba_data/python/baclassic/__init__.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_accountv1.py \
@@ -299,7 +300,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_team.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_teamgame.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/builtinassets.py \
-  $(BUILD_DIR)/ba_data/python/bascenev1/stdassets.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/classicassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/coopjoin.py \
@@ -387,8 +388,8 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_window.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/builtinassets.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/classicassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/stdassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/settings.py \

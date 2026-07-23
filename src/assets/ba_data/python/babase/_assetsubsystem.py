@@ -58,6 +58,8 @@ if TYPE_CHECKING:
     from bacommon import securedata
     from bacommon.cloud import AssetPackageBuildProgress
     from bacommon.locale import Locale
+
+    from babase import LangStr
     from bacommon.loctext import StringSelector
     from babase._accountv2 import AccountV2Handle
 
@@ -380,7 +382,7 @@ def _package_display_name(apverid: str | None) -> str:
 
 
 def make_progress_reporter(
-    on_update: Callable[[str, float | None], None],
+    on_update: Callable[[str | LangStr, float | None], None],
 ) -> Callable[[ResolveProgress], None]:
     """Build a throttled progress reporter.
 
@@ -391,9 +393,16 @@ def make_progress_reporter(
     the user informed without spamming). ``progress`` is a ``0.0``–``1.0``
     fraction for a progress bar — ``0.0`` during phases with no known count
     (the bar is held at zero rather than hidden, so the display doesn't resize
-    between phases). A server-provided :attr:`ResolveProgress.detail` is shown
-    verbatim when present.
+    between phases). Messages are localized :class:`~babase.LangStr` values
+    (builtin-package strings), except a server-provided
+    :attr:`ResolveProgress.detail` which is shown verbatim as a raw string.
     """
+    # The wrapper import is function-local by convention (modules
+    # never import their own top-level package at module scope).
+    from babase import builtinassets
+
+    strs = builtinassets.strings.assets
+
     last_time = -1.0e9
     last_phase: ResolvePhase | None = None
     last_apverid: str | None = None
@@ -437,7 +446,7 @@ def make_progress_reporter(
         # Build the message + bar fraction for this phase. A server-provided
         # detail is an escape hatch (unused by the standard flow) and wins if
         # present. The bar sits at 0.0 unless we have a real count.
-        message: str | None
+        message: str | LangStr | None
         fraction = 0.0
         if progress.detail:
             message = progress.detail
@@ -450,7 +459,7 @@ def make_progress_reporter(
             total = progress.build_units_total
             if done is not None and total is not None and total > 0:
                 remaining = max(total - done, 0)
-                message = f'Building {pkg} assets ({remaining} remaining)…'
+                message = strs.building_assets(package=pkg, count=remaining)
                 fraction = done / total
             else:
                 # Counts not reported yet (the initial 'preparing' step:
@@ -459,11 +468,11 @@ def make_progress_reporter(
                 # (vs. the counted "Building … (N remaining)…" line) so a
                 # stuck/looping prepare reads as stuck rather than
                 # masquerading as build progress.
-                message = f'Preparing to build {pkg}…'
+                message = strs.preparing_build(package=pkg)
         elif downloading and progress.blobs_total:
             # Single running total across the whole resolve (all packages).
             remaining = max(progress.blobs_total - progress.blobs_done, 0)
-            message = f'Downloading assets ({remaining} remaining)…'
+            message = strs.downloading_assets(count=remaining)
             fraction = progress.blobs_done / progress.blobs_total
         else:
             # RESOLVING with no detail: nothing to add (the display's own

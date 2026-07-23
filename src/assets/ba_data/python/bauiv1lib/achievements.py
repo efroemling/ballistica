@@ -6,7 +6,7 @@ from typing import override
 
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 
 class AchievementsWindow(bui.MainWindow):
@@ -177,7 +177,7 @@ class AchievementsWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 scale=0.6,
-                text=stdassets.strings.account.achievement_progress(
+                text=classicassets.strings.account.achievement_progress(
                     complete=str(num_complete),
                     total=str(len(achievements)),
                 ),
@@ -251,7 +251,7 @@ class AchievementsWindow(bui.MainWindow):
                     ),
                     size=(28, 28),
                     color=(2, 1.4, 0),
-                    texture=stdassets.textures.achievement_outline.get(),
+                    texture=classicassets.textures.achievement_outline.get(),
                 )
             bui.textwidget(
                 parent=self._subcontainer,

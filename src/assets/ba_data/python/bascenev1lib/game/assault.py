@@ -9,7 +9,7 @@ import random
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.flag import Flag
@@ -93,7 +93,7 @@ class AssaultGame(bs.TeamGameActivity[Player, Team]):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._last_score_time = 0.0
-        self._score_sound = stdassets.audio.score
+        self._score_sound = classicassets.audio.score
         self._base_region_materials: dict[int, bs.Material] = {}
         self._epic_mode = bool(settings['Epic Mode'])
         self._score_to_win = int(settings['Score to Win'])

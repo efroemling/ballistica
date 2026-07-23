@@ -5,11 +5,11 @@
 from typing import override
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 from bauiv1lib.confirm import ConfirmWindow
 
-_plgstrs = stdassets.strings.settings.plugins
+_plgstrs = classicassets.strings.settings.plugins
 
 
 class PluginSettingsWindow(bui.MainWindow):
@@ -181,7 +181,7 @@ class PluginSettingsWindow(bui.MainWindow):
         cfg.apply_and_commit()
 
         bui.screenmessage(
-            stdassets.strings.ui.must_restart,
+            classicassets.strings.ui.must_restart,
             color=(1.0, 0.5, 0.0),
         )
 
@@ -193,7 +193,7 @@ class PluginSettingsWindow(bui.MainWindow):
         cfg.apply_and_commit()
 
         bui.screenmessage(
-            stdassets.strings.ui.must_restart,
+            classicassets.strings.ui.must_restart,
             color=(1.0, 0.5, 0.0),
         )
 

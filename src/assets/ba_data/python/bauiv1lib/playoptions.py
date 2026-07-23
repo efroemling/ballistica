@@ -9,7 +9,7 @@ from bacommon.analytics import ClassicAnalyticsEvent
 import bascenev1 as bs
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 from bauiv1lib.popup import PopupWindow
 
@@ -65,11 +65,11 @@ class PlayOptionsWindow(PopupWindow):
         self._row_height = 45.0
 
         # Grab our maps to display.
-        mesh_opaque = stdassets.meshes.level_select_button_opaque.get()
+        mesh_opaque = classicassets.meshes.level_select_button_opaque.get()
         mesh_transparent = (
-            stdassets.meshes.level_select_button_transparent.get()
+            classicassets.meshes.level_select_button_transparent.get()
         )
-        mask_tex = stdassets.textures.map_preview_mask.get()
+        mask_tex = classicassets.textures.map_preview_mask.get()
 
         # Poke into this playlist and see if we can display some of its
         # maps.
@@ -242,7 +242,7 @@ class PlayOptionsWindow(PopupWindow):
                         texture=(
                             bui.gettexture(tex_name)
                             if owned
-                            else stdassets.textures.empty.get()
+                            else classicassets.textures.empty.get()
                         ),
                         mesh_opaque=mesh_opaque if owned else None,
                         on_activate_call=bui.CallStrict(
@@ -283,7 +283,7 @@ class PlayOptionsWindow(PopupWindow):
                             size=(scl * 100, scl * 100),
                             draw_controller=btn,
                             position=(h + scl * 70, v + scl * 10),
-                            texture=stdassets.textures.lock.get(),
+                            texture=classicassets.textures.lock.get(),
                         )
 
         y_offs = 50 if show_shuffle_check_box else 0
@@ -326,7 +326,7 @@ class PlayOptionsWindow(PopupWindow):
                 ),
                 autoselect=True,
                 textcolor=(0.8, 0.8, 0.8),
-                label=stdassets.strings.playoptions.team_names_colors,
+                label=classicassets.strings.playoptions.team_names_colors,
             )
             bui.widget(
                 edit=self._custom_colors_names_button,
@@ -351,7 +351,7 @@ class PlayOptionsWindow(PopupWindow):
                 scale=1.0,
                 size=(250, 30),
                 autoselect=True,
-                text=stdassets.strings.playoptions.shuffle_game_order,
+                text=classicassets.strings.playoptions.shuffle_game_order,
                 maxwidth=300,
                 textcolor=(0.8, 0.8, 0.8),
                 value=self._do_randomize_val,
@@ -372,7 +372,7 @@ class PlayOptionsWindow(PopupWindow):
             scale=1.0,
             size=(250, 30),
             autoselect=True,
-            text=stdassets.strings.playoptions.show_tutorial,
+            text=classicassets.strings.playoptions.show_tutorial,
             maxwidth=300,
             textcolor=(0.8, 0.8, 0.8),
             value=show_tutorial,
@@ -493,7 +493,7 @@ class PlayOptionsWindow(PopupWindow):
         if not self._have_at_least_one_owned:
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                stdassets.strings.playoptions.no_valid_games,
+                classicassets.strings.playoptions.no_valid_games,
                 color=(1, 0, 0),
             )
             return

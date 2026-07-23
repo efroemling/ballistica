@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 from bascenev1 import builtinassets
 from bascenev1lib.gameutils import SharedObjects
 
@@ -98,30 +98,30 @@ class SpazFactory:
 
         shared = SharedObjects.get()
         self.impact_sounds_medium = (
-            stdassets.audio.impact_medium,
-            stdassets.audio.impact_medium2,
+            classicassets.audio.impact_medium,
+            classicassets.audio.impact_medium2,
         )
         self.impact_sounds_hard = (
-            stdassets.audio.impact_hard,
-            stdassets.audio.impact_hard2,
-            stdassets.audio.impact_hard3,
+            classicassets.audio.impact_hard,
+            classicassets.audio.impact_hard2,
+            classicassets.audio.impact_hard3,
         )
         self.impact_sounds_harder = (
-            stdassets.audio.big_impact,
-            stdassets.audio.big_impact2,
+            classicassets.audio.big_impact,
+            classicassets.audio.big_impact2,
         )
-        self.single_player_death_sound = stdassets.audio.player_death
-        self.punch_sound_weak = stdassets.audio.punch_weak01
+        self.single_player_death_sound = classicassets.audio.player_death
+        self.punch_sound_weak = classicassets.audio.punch_weak01
         self.punch_sound = builtinassets.audio.punch01
         self.punch_sound_strong = (
-            stdassets.audio.punch_strong01,
-            stdassets.audio.punch_strong02,
+            classicassets.audio.punch_strong01,
+            classicassets.audio.punch_strong02,
         )
-        self.punch_sound_stronger = stdassets.audio.super_punch
-        self.swish_sound = stdassets.audio.punch_swish
-        self.block_sound = stdassets.audio.block
-        self.shatter_sound = stdassets.audio.shatter
-        self.splatter_sound = stdassets.audio.splatter
+        self.punch_sound_stronger = classicassets.audio.super_punch
+        self.swish_sound = classicassets.audio.punch_swish
+        self.block_sound = classicassets.audio.block
+        self.shatter_sound = classicassets.audio.shatter
+        self.splatter_sound = classicassets.audio.splatter
         self.spaz_material = bs.Material()
         self.roller_material = bs.Material()
         self.punch_material = bs.Material()
@@ -192,13 +192,13 @@ class SpazFactory:
         )
 
         self.foot_impact_sounds = (
-            stdassets.audio.foot_impact01,
-            stdassets.audio.foot_impact02,
-            stdassets.audio.foot_impact03,
+            classicassets.audio.foot_impact01,
+            classicassets.audio.foot_impact02,
+            classicassets.audio.foot_impact03,
         )
 
-        self.foot_skid_sound = stdassets.audio.skid01
-        self.foot_roll_sound = stdassets.audio.scamper01
+        self.foot_skid_sound = classicassets.audio.skid01
+        self.foot_roll_sound = classicassets.audio.scamper01
 
         self.roller_material.add_actions(
             conditions=('they_have_material', footing_material),
@@ -209,7 +209,7 @@ class SpazFactory:
             ),
         )
 
-        self.skid_sound = stdassets.audio.gravel_skid
+        self.skid_sound = classicassets.audio.gravel_skid
 
         self.spaz_material.add_actions(
             conditions=('they_have_material', footing_material),
@@ -220,9 +220,9 @@ class SpazFactory:
             ),
         )
 
-        self.shield_up_sound = stdassets.audio.shield_up
-        self.shield_down_sound = stdassets.audio.shield_down
-        self.shield_hit_sound = stdassets.audio.shield_hit
+        self.shield_up_sound = classicassets.audio.shield_up
+        self.shield_down_sound = classicassets.audio.shield_down
+        self.shield_hit_sound = classicassets.audio.shield_hit
 
         # We don't want to collide with stuff we're initially overlapping
         # (unless its marked with a special region material).

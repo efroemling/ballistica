@@ -26,7 +26,7 @@ from bauiv1lib.play import PlaylistSelectContext
 from bauiv1lib.gettokens import show_get_tokens_prompt
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
 
 # Module-level alias to keep long accessor chains under the line limit.
-_gs = stdassets.strings.gather
+_gs = classicassets.strings.gather
 
 # Print a bit of info about queries, etc.
 DEBUG_SERVER_COMMUNICATION = os.environ.get('BA_DEBUG_PPTABCOM') == '1'
@@ -135,7 +135,7 @@ class PrivateGatherTab(GatherTab):
                 SubTabType.JOIN,
                 playsound=True,
             ),
-            text=stdassets.strings.gather.private_party_join,
+            text=classicassets.strings.gather.private_party_join,
             glow_type='uniform',
         )
         self._host_sub_tab_text = bui.textwidget(
@@ -155,7 +155,7 @@ class PrivateGatherTab(GatherTab):
                 SubTabType.HOST,
                 playsound=True,
             ),
-            text=stdassets.strings.gather.private_party_host,
+            text=classicassets.strings.gather.private_party_host,
             glow_type='uniform',
         )
         bui.widget(edit=self._join_sub_tab_text, up_widget=tab_button)
@@ -527,7 +527,7 @@ class PrivateGatherTab(GatherTab):
             maxwidth=250,
             h_align='center',
             v_align='center',
-            text=stdassets.strings.gather.party_code,
+            text=classicassets.strings.gather.party_code,
         )
 
         self._join_party_code_text = bui.textwidget(
@@ -539,7 +539,7 @@ class PrivateGatherTab(GatherTab):
             size=(300, 50),
             editable=True,
             max_chars=20,
-            description=stdassets.strings.gather.party_code,
+            description=classicassets.strings.gather.party_code,
             autoselect=True,
             h_align='left',
             v_align='center',
@@ -549,7 +549,7 @@ class PrivateGatherTab(GatherTab):
             parent=self._container,
             id=f'{self._idprefix}|connect',
             size=(300, 70),
-            label=stdassets.strings.ui.connect,
+            label=classicassets.strings.ui.connect,
             position=(self._c_width * 0.5 - 150, self._c_height - 350),
             on_activate_call=self._join_connect_press,
             autoselect=True,
@@ -585,7 +585,7 @@ class PrivateGatherTab(GatherTab):
                 scale=0.8,
                 color=(0.6, 0.56, 0.6),
                 position=(self._c_width * 0.5, self._c_height * 0.5),
-                text=stdassets.strings.account.not_signed_in,
+                text=classicassets.strings.account.not_signed_in,
             )
             self._showing_not_signed_in_screen = True
             return
@@ -601,7 +601,7 @@ class PrivateGatherTab(GatherTab):
                 scale=0.8,
                 color=(0.6, 0.56, 0.6),
                 position=(self._c_width * 0.5, self._c_height * 0.5),
-                text=stdassets.strings.gather.v2_account_required,
+                text=classicassets.strings.gather.v2_account_required,
             )
             self._showing_not_signed_in_screen = True
             return
@@ -653,7 +653,9 @@ class PrivateGatherTab(GatherTab):
                 flatness=1.0,
                 color=(0.5, 0.46, 0.5),
                 position=(self._c_width * 0.5, v),
-                text=stdassets.strings.gather.private_party_cloud_description,
+                text=(
+                    classicassets.strings.gather
+                ).private_party_cloud_description,
             )
 
         v -= 90
@@ -669,7 +671,7 @@ class PrivateGatherTab(GatherTab):
                 scale=0.8,
                 color=(0.6, 0.56, 0.6),
                 position=(self._c_width * 0.5 - 210, v),
-                text=stdassets.strings.ui.playlist,
+                text=classicassets.strings.ui.playlist,
             )
             self._host_playlist_button = bui.buttonwidget(
                 parent=self._container,
@@ -704,7 +706,7 @@ class PrivateGatherTab(GatherTab):
                 scale=0.9,
                 color=(0.7, 0.64, 0.7),
                 position=(self._c_width * 0.5, v + 90),
-                text=stdassets.strings.gather.party_server_running,
+                text=classicassets.strings.gather.party_server_running,
             )
             bui.textwidget(
                 parent=self._container,
@@ -715,7 +717,7 @@ class PrivateGatherTab(GatherTab):
                 scale=0.7,
                 color=(0.7, 0.64, 0.7),
                 position=(self._c_width * 0.5, v + 50),
-                text=stdassets.strings.gather.party_code,
+                text=classicassets.strings.gather.party_code,
             )
             bui.textwidget(
                 parent=self._container,
@@ -737,7 +739,7 @@ class PrivateGatherTab(GatherTab):
                     size=(140, 40),
                     color=(0.6, 0.5, 0.6),
                     textcolor=(0.8, 0.75, 0.8),
-                    label=stdassets.strings.gather.copy_code,
+                    label=classicassets.strings.gather.copy_code,
                     on_activate_call=self._host_copy_press,
                     position=(self._c_width * 0.5 - 150, v - 70),
                     autoselect=True,
@@ -750,7 +752,7 @@ class PrivateGatherTab(GatherTab):
                 size=(140, 40),
                 color=(0.6, 0.5, 0.6),
                 textcolor=(0.8, 0.75, 0.8),
-                label=stdassets.strings.ui.connect,
+                label=classicassets.strings.ui.connect,
                 on_activate_call=self._host_connect_press,
                 position=(self._c_width * 0.5 + cbtnoffs, v - 70),
                 autoselect=True,
@@ -804,7 +806,7 @@ class PrivateGatherTab(GatherTab):
                     else (0.0, 1.0, 0.0)
                 ),
                 position=(self._c_width * 0.5, v),
-                text=stdassets.strings.gather.start_stop_hosting_minutes(
+                text=classicassets.strings.gather.start_stop_hosting_minutes(
                     minutes=int(hostingstate.free_host_minutes_remaining)
                 ),
             )
@@ -871,21 +873,21 @@ class PrivateGatherTab(GatherTab):
             self._waiting_for_start_stop_response
             or self._waiting_for_initial_state
         ):
-            btnlabel = stdassets.strings.ui.one_moment
+            btnlabel = classicassets.strings.ui.one_moment
         else:
             if hostingstate.unavailable_error is not None:
-                btnlabel = stdassets.strings.gather.hosting_unavailable
+                btnlabel = classicassets.strings.gather.hosting_unavailable
             elif hostingstate.party_code is None:
                 ticon = bui.charstr(bui.SpecialChar.TOKEN)
                 nowtokens = hostingstate.tokens_to_host_now
                 if nowtokens > 0 and not havegoldpass:
-                    btnlabel = stdassets.strings.gather.start_hosting_paid(
+                    btnlabel = classicassets.strings.gather.start_hosting_paid(
                         cost=f'{ticon}{nowtokens}'
                     )
                 else:
-                    btnlabel = stdassets.strings.gather.start_hosting
+                    btnlabel = classicassets.strings.gather.start_hosting
             else:
-                btnlabel = stdassets.strings.gather.stop_hosting
+                btnlabel = classicassets.strings.gather.stop_hosting
 
         disabled = (
             hostingstate.unavailable_error is not None
@@ -922,7 +924,7 @@ class PrivateGatherTab(GatherTab):
     def _host_copy_press(self) -> None:
         assert self._hostingstate.party_code is not None
         bui.clipboard_set_text(self._hostingstate.party_code)
-        bui.screenmessage(stdassets.strings.gather.copy_code_confirm)
+        bui.screenmessage(classicassets.strings.gather.copy_code_confirm)
 
     def _host_connect_press(self) -> None:
         assert self._hostingstate.party_code is not None
@@ -980,7 +982,7 @@ class PrivateGatherTab(GatherTab):
             return
 
         if plus.get_v1_account_state() != 'signed_in':
-            bui.screenmessage(stdassets.strings.account.not_signed_in)
+            bui.screenmessage(classicassets.strings.account.not_signed_in)
             builtinassets.audio.error.get().play()
             self._refresh_sub_tab()
             return
@@ -994,7 +996,7 @@ class PrivateGatherTab(GatherTab):
         # We need our v2 info for this.
         if self._v2state is None or self._v2state.datacode is None:
             bui.screenmessage(
-                stdassets.strings.ui.unavailable_no_connection,
+                classicassets.strings.ui.unavailable_no_connection,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()

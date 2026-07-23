@@ -36,6 +36,13 @@ class WrapperType(Enum):
     BASCENEV1 = 'bascenev1'
     BAUIV1 = 'bauiv1'
 
+    #: Strings-only wrapper for the babase layer (no classic asset
+    #: loader APIs exist there); string leaves emit the same native
+    #: ``babase.LangStr`` accessors as the featureset forms. Exists so
+    #: pre-featureset machinery (e.g. construct-mode's bring-up UI) can
+    #: consume package strings.
+    BABASE = 'babase'
+
 
 class ConventionsMode(Enum):
     """Conventions-check enforcement level for an assets_v1 workspace.
@@ -673,6 +680,31 @@ class AssetsV1StrTermDeps:
 
 @ioprepped
 @dataclass
+class AssetsV1StrConvCache:
+    """Cached conventions findings for a ``.bstr``, keyed to its inputs.
+
+    Per-entry conventions findings are a pure function of the ``.bstr``
+    file's content plus the workspace's cross-package term environment
+    (its ``.apref`` files' content-ids) plus the checks' own version --
+    all folded into ``state``. Consumers (the conventions lint) use it
+    to skip reading the file; on mismatch they fall back to reading and
+    re-checking that one entry. Maintained automatically by the string
+    save/translate paths; do not hand-edit (wrong ``findings`` with a
+    matching ``state`` would be trusted).
+    """
+
+    #: Token pinning the inputs these findings were computed from (see
+    #: class docs). Opaque; produced by the conventions module.
+    state: Annotated[str, IOAttrs('state')]
+
+    #: The entry's findings (human-readable one-liners), empty if clean.
+    findings: Annotated[list[str], IOAttrs('findings', store_default=False)] = (
+        field(default_factory=list)
+    )
+
+
+@ioprepped
+@dataclass
 class AssetsV1PathValsStrV1(AssetsV1PathVals):
     """Path-specific values for an assets_v1 workspace path."""
 
@@ -708,6 +740,15 @@ class AssetsV1PathValsStrV1(AssetsV1PathVals):
     #: cost a read, never a wrong answer.
     deps: Annotated[
         AssetsV1StrTermDeps | None, IOAttrs('deps', store_default=False)
+    ] = None
+
+    #: Cached conventions findings (see :class:`AssetsV1StrConvCache`).
+    #: Absent until first computed; ignored (and lazily recomputed from
+    #: the file) whenever its ``state`` no longer matches the entry's
+    #: current inputs -- so write paths that don't maintain it merely
+    #: cost a read, never a wrong answer.
+    conv: Annotated[
+        AssetsV1StrConvCache | None, IOAttrs('conv', store_default=False)
     ] = None
 
     @override

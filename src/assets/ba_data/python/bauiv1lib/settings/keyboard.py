@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupMenuWindow
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 from bauiv1 import builtinassets
 import bascenev1 as bs
@@ -17,8 +17,8 @@ if TYPE_CHECKING:
     from bauiv1lib.popup import PopupWindow
 
 
-_kbstrs = stdassets.strings.settings.controllers.keyboard
-_gpstrs = stdassets.strings.settings.controllers.gamepad
+_kbstrs = classicassets.strings.settings.controllers.keyboard
+_gpstrs = classicassets.strings.settings.controllers.gamepad
 
 
 class ConfigKeyboardWindow(bui.MainWindow):
@@ -119,7 +119,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
             autoselect=True,
             position=(38, self._height - 85),
             size=(170, 60),
-            label=stdassets.strings.ui.cancel,
+            label=classicassets.strings.ui.cancel,
             scale=0.9,
             on_activate_call=self.main_window_back,
         )
@@ -128,7 +128,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
             autoselect=True,
             position=(self._width - 190, self._height - 85),
             size=(180, 60),
-            label=stdassets.strings.ui.save,
+            label=classicassets.strings.ui.save,
             scale=0.9,
             text_scale=0.9,
             on_activate_call=self._save,
@@ -187,28 +187,28 @@ class ConfigKeyboardWindow(bui.MainWindow):
             pos=(h_offs, v + 0.95 * dist),
             color=d_color,
             button='buttonUp',
-            texture=stdassets.textures.up_button.get(),
+            texture=classicassets.textures.up_button.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs - 1.2 * dist, v),
             color=d_color,
             button='buttonLeft',
-            texture=stdassets.textures.left_button.get(),
+            texture=classicassets.textures.left_button.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs + 1.2 * dist, v),
             color=d_color,
             button='buttonRight',
-            texture=stdassets.textures.right_button.get(),
+            texture=classicassets.textures.right_button.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs, v - 0.95 * dist),
             color=d_color,
             button='buttonDown',
-            texture=stdassets.textures.down_button.get(),
+            texture=classicassets.textures.down_button.get(),
             scale=1.0,
         )
 
@@ -227,28 +227,28 @@ class ConfigKeyboardWindow(bui.MainWindow):
             pos=(h_offs, v + 0.95 * dist),
             color=(0.6, 0.4, 0.8),
             button='buttonPickUp',
-            texture=stdassets.textures.button_pick_up.get(),
+            texture=classicassets.textures.button_pick_up.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs - 1.2 * dist, v),
             color=(0.7, 0.5, 0.1),
             button='buttonPunch',
-            texture=stdassets.textures.button_punch.get(),
+            texture=classicassets.textures.button_punch.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs + 1.2 * dist, v),
             color=(0.5, 0.2, 0.1),
             button='buttonBomb',
-            texture=stdassets.textures.button_bomb.get(),
+            texture=classicassets.textures.button_bomb.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs, v - 0.95 * dist),
             color=(0.2, 0.5, 0.2),
             button='buttonJump',
-            texture=stdassets.textures.button_jump.get(),
+            texture=classicassets.textures.button_jump.get(),
             scale=1.0,
         )
 
@@ -358,7 +358,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
             'reset',
         ]
         choices_display: list[bui.Lstr | bui.LangStr] = [
-            stdassets.strings.ui.reset,
+            classicassets.strings.ui.reset,
         ]
 
         uiscale = bui.app.ui_v1.uiscale

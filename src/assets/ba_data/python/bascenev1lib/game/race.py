@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, override
 from dataclasses import dataclass
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 from bascenev1 import builtinassets
 
 from bascenev1lib.actor.bomb import Bomb
@@ -154,13 +154,13 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
         self._race_started = False
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        self._score_sound = stdassets.audio.score
-        self._swipsound = stdassets.audio.swip
+        self._score_sound = classicassets.audio.score
+        self._swipsound = classicassets.audio.swip
         self._last_team_time: float | None = None
         self._front_race_region: int | None = None
         self._nub_tex = builtinassets.textures.nub
-        self._beep_1_sound = stdassets.audio.race_beep1
-        self._beep_2_sound = stdassets.audio.race_beep2
+        self._beep_1_sound = classicassets.audio.race_beep1
+        self._beep_2_sound = classicassets.audio.race_beep2
         self.race_region_material: bs.Material | None = None
         self._regions: list[RaceRegion] = []
         self._team_finish_pts: int | None = None
@@ -428,7 +428,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             player.team.finished = True
             player.team.time = None
             player.team.lap = 0
-            stdassets.audio.boo.play()
+            classicassets.audio.boo.play()
             for otherplayer in player.team.players:
                 otherplayer.lap = 0
                 otherplayer.finished = True

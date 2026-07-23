@@ -6,7 +6,7 @@ import copy
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -114,7 +114,7 @@ class TestingWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
             maxwidth=self._scroll_width * 0.75,
-            text=stdassets.strings.settings.testing.for_testing_note,
+            text=classicassets.strings.settings.testing.for_testing_note,
         )
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
@@ -205,7 +205,7 @@ class TestingWindow(bui.MainWindow):
             autoselect=True,
             size=(200, 50),
             position=(self._sub_width * 0.5 - 100, v),
-            label=stdassets.strings.ui.reset,
+            label=classicassets.strings.ui.reset,
             right_widget=btn,
             on_activate_call=self._on_reset_press,
         )

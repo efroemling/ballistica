@@ -16,7 +16,7 @@ import babase
 from babase import AppMode
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 from bauiv1lib.connectivity import wait_for_connectivity
 
 import _baclassic
@@ -85,12 +85,12 @@ class ClassicAppMode(AppMode):
         # AssetNameCompat in the native layer). Sourcing these from
         # the wrappers means a modder-swapped package keeps working.
         # (The bauiv1 and bascenev1 wrapper flavors carry identical
-        # __asset_package__ ids; builtinassets and stdassets here are
+        # __asset_package__ ids; builtinassets and classicassets here are
         # our module-level bauiv1 imports.)
         babase.set_asset_name_compat_versions(
             {
                 'builtinassets': builtinassets.__asset_package__,
-                'stdassets': stdassets.__asset_package__,
+                'classicassets': classicassets.__asset_package__,
             }
         )
 
@@ -291,7 +291,7 @@ class ClassicAppMode(AppMode):
                 ),
                 clfx.Delay(anim_time),
                 clfx.ScreenMessageV2(
-                    message=stdassets.strings.economy.you_got_tokens(
+                    message=classicassets.strings.economy.you_got_tokens(
                         tokens=tokens
                     ).spec,
                     color=(0, 1, 0),

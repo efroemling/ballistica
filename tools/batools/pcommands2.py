@@ -745,7 +745,7 @@ def asset_bundle_build() -> None:
     builtin construct package with real fallback-flavor textures) and
     ``headless-minimal`` (same package with ``null`` textures -- same
     wrapper-module layout, no image data); richer profiles bundling
-    additional packages (e.g. ``bastdassets``) are added as plain data
+    additional packages (e.g. ``baclassicassets``) are added as plain data
     in that module.
 
     Each package's apverid is read from its projectconfig field. A

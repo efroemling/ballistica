@@ -5,9 +5,9 @@
 from typing import override
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
-_ctlstrs = stdassets.strings.settings.controllers
+_ctlstrs = classicassets.strings.settings.controllers
 
 
 class RemoteAppSettingsWindow(bui.MainWindow):
@@ -105,8 +105,8 @@ class RemoteAppSettingsWindow(bui.MainWindow):
             color=(0.7, 0.9, 0.7, 1.0),
             scale=0.8,
             text=_ctlstrs.remote_explanation(
-                remote_app_name=stdassets.strings.ui.remote_app_name,
-                app_name=stdassets.strings.ui.app_name,
+                remote_app_name=classicassets.strings.ui.remote_app_name,
+                app_name=classicassets.strings.ui.app_name,
             ),
             max_height=100,
             h_align='center',

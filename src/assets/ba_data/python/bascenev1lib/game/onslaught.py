@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 from bascenev1 import builtinassets
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 from bascenev1lib.actor.popuptext import PopupText
 from bascenev1lib.actor.bomb import TNTSpawner
@@ -180,8 +180,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
         super().__init__(settings)
 
-        self._new_wave_sound = stdassets.audio.score_hit01
-        self._winsound = stdassets.audio.score
+        self._new_wave_sound = classicassets.audio.score_hit01
+        self._winsound = classicassets.audio.score
         self._cashregistersound = builtinassets.audio.cash_register
         self._a_player_has_been_hurt = False
         self._player_has_dropped_bomb = False
@@ -206,8 +206,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         self._score = 0
         self._time_bonus = 0
         self._spawn_info_text: bs.NodeActor | None = None
-        self._dingsound = stdassets.audio.ding_small
-        self._dingsoundhigh = stdassets.audio.ding_small_high
+        self._dingsound = classicassets.audio.ding_small
+        self._dingsoundhigh = classicassets.audio.ding_small_high
         self._have_tnt = False
         self._excluded_powerups: list[str] | None = None
         self._waves: list[Wave] = []
@@ -238,7 +238,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 self.tips = [
                     bs.GameTip(
                         'Land-mines are a good way to stop speedy enemies.',
-                        icon=stdassets.textures.powerup_land_mines,
+                        icon=classicassets.textures.powerup_land_mines,
                         sound=builtinassets.audio.ding,
                     )
                 ]
@@ -252,7 +252,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     bs.GameTip(
                         'Take out a group of enemies by\n'
                         'setting off a bomb near a TNT box.',
-                        icon=stdassets.textures.tnt,
+                        icon=classicassets.textures.tnt,
                         sound=builtinassets.audio.ding,
                     )
                 ]
@@ -266,7 +266,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     bs.GameTip(
                         'Curse boxes turn you into a ticking time bomb.\n'
                         'The only cure is to quickly grab a health-pack.',
-                        icon=stdassets.textures.powerup_curse,
+                        icon=classicassets.textures.powerup_curse,
                         sound=builtinassets.audio.ding,
                     )
                 ]
@@ -287,7 +287,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         bs.setmusic(bs.MusicType.ONSLAUGHT)
 
         self._scoreboard = Scoreboard(
-            label=stdassets.strings.game.score, score_split=0.5
+            label=classicassets.strings.game.score, score_split=0.5
         )
 
     @override
@@ -1019,7 +1019,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
             fail_message = None
         else:
             score = None
-            fail_message = stdassets.strings.game.reach_wave_2
+            fail_message = classicassets.strings.game.reach_wave_2
         self.end(
             {
                 'outcome': outcome,
@@ -1091,7 +1091,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
             if won:
                 self.show_zoom_message(
-                    stdassets.strings.game.victory, scale=1.0, duration=4.0
+                    classicassets.strings.game.victory, scale=1.0, duration=4.0
                 )
                 self.celebrate(20.0)
                 self._award_completion_achievements()
@@ -1128,7 +1128,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                         int(100 / len(self.initialplayerinfos)),
                         scale=1.4,
                         color=(0.6, 0.6, 1.0, 1.0),
-                        title=stdassets.strings.game.completion_bonus,
+                        title=classicassets.strings.game.completion_bonus,
                         screenmessage=False,
                     )
             except Exception:
@@ -1161,7 +1161,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     self._flawless_bonus,
                     scale=1.2,
                     color=(0.6, 1.0, 0.6, 1.0),
-                    title=stdassets.strings.game.flawless_wave,
+                    title=classicassets.strings.game.flawless_wave,
                     screenmessage=False,
                 )
         except Exception:

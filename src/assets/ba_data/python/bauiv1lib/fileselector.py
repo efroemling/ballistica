@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
@@ -74,12 +74,14 @@ class FileSelectorWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
             text=(
-                stdassets.strings.fileselector.select_folder
+                classicassets.strings.fileselector.select_folder
                 if (allow_folders and not valid_file_extensions)
                 else (
-                    stdassets.strings.fileselector.select_file
+                    classicassets.strings.fileselector.select_file
                     if not allow_folders
-                    else stdassets.strings.fileselector.select_file_or_folder
+                    else (
+                        classicassets.strings.fileselector
+                    ).select_file_or_folder
                 )
             ),
             maxwidth=210,
@@ -91,7 +93,7 @@ class FileSelectorWindow(bui.MainWindow):
             position=(35 + x_inset, self._height - 67),
             autoselect=True,
             size=(self._button_width, 50),
-            label=stdassets.strings.ui.cancel,
+            label=classicassets.strings.ui.cancel,
             on_activate_call=self._cancel,
         )
         bui.widget(edit=self._cancel_button, left_widget=self._cancel_button)
@@ -110,9 +112,9 @@ class FileSelectorWindow(bui.MainWindow):
             on_activate_call=self._on_back_press,
         )
 
-        self._folder_tex = stdassets.textures.folder.get()
+        self._folder_tex = classicassets.textures.folder.get()
         self._folder_color = (1.1, 0.8, 0.2)
-        self._file_tex = stdassets.textures.file.get()
+        self._file_tex = classicassets.textures.file.get()
         self._file_color = (1, 1, 1)
         self._use_folder_button: bui.Widget | None = None
         self._folder_center = self._width * 0.5 + 15
@@ -406,7 +408,7 @@ class FileSelectorWindow(bui.MainWindow):
                         self._height - 67,
                     ),
                     size=(self._button_width, 50),
-                    label=stdassets.strings.fileselector.use_this_folder,
+                    label=classicassets.strings.fileselector.use_this_folder,
                     on_activate_call=self._on_folder_entry_activated,
                 )
                 bui.widget(

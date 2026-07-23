@@ -217,7 +217,7 @@ class Session:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets, stdassets
+        from bascenev1 import builtinassets, classicassets
 
         # Limit player counts *unless* we're in a stress test.
         if (
@@ -266,7 +266,7 @@ class Session:
                 return False
             self._player_requested_identifiers[player.id] = identifier
 
-        stdassets.audio.dripity.play()
+        classicassets.audio.dripity.play()
         return True
 
     def on_player_leave(self, sessionplayer: bascenev1.SessionPlayer) -> None:
@@ -274,7 +274,7 @@ class Session:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import stdassets
+        from bascenev1 import classicassets
 
         if sessionplayer not in self.sessionplayers:
             print(
@@ -283,7 +283,7 @@ class Session:
             )
             return
 
-        stdassets.audio.player_left.play()
+        classicassets.audio.player_left.play()
 
         activity = self._activity_weak()
 
@@ -611,6 +611,15 @@ class Session:
                     self.lobby.add_chooser(sessionplayer)
                 except Exception:
                     logging.exception('Error in lobby.add_chooser().')
+                    # The player never made it into the lobby, so roll
+                    # back the append above; otherwise we're left with a
+                    # half-joined 'ghost' player in the session, which
+                    # corrupts later activity transitions (and can wedge
+                    # the whole server). Deny the join so the native
+                    # layer doesn't consider them present either.
+                    if sessionplayer in self.sessionplayers:
+                        self.sessionplayers.remove(sessionplayer)
+                    result = False
 
         return result
 

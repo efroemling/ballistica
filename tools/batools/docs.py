@@ -723,7 +723,7 @@ def _sphinx_pre_filter_file(path: str) -> None:
     # would kill it, and then the wrapper exposes no runtime ``strings`` /
     # ``audio`` / ... attributes — which breaks *consumer* modules that
     # bind one at module scope (e.g. bauiv1lib/settings/advanced.py's
-    # ``_advstrs = stdassets.strings.settings.advanced``); autodoc then
+    # ``_advstrs = classicassets.strings.settings.advanced``); autodoc then
     # fails to import them entirely. Both blocks can coexist: the typed
     # block only declares classes plus bare annotations, and the runtime
     # block only assigns the matching names (lazy Dir objects that do no

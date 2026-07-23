@@ -206,8 +206,8 @@ class LocaleSubsystem(AppSubsystem):
     ) -> None:
         import asyncio
 
+        from babase import builtinassets
         from babase._simpledialog import SimpleDialog
-        from babase._language import Lstr
         from babase._asset_packages import loaded_asset_package_apverids
         from babase._assetsubsystem import make_progress_reporter
 
@@ -224,13 +224,15 @@ class LocaleSubsystem(AppSubsystem):
             nonlocal dialog
             if dialog is None and _babase.app.env.gui:
                 dialog = SimpleDialog(
-                    title=Lstr(resource='updatingText'),
+                    title=builtinassets.strings.ui.updating,
                     progress=0.0,
-                    button_label=Lstr(resource='cancelText'),
+                    button_label=builtinassets.strings.ui.cancel,
                     on_button=on_cancel,
                 )
 
-        def on_update(message: str, progress: float | None) -> None:
+        def on_update(
+            message: str | babase.LangStr, progress: float | None
+        ) -> None:
             if dialog is not None:
                 dialog.update(
                     message=message,
@@ -257,12 +259,10 @@ class LocaleSubsystem(AppSubsystem):
             applog.exception('Error switching to locale %s.', locale.name)
             if dialog is not None:
                 dialog.update(
-                    title=Lstr(resource='errorText'),
-                    message=Lstr(
-                        resource='internal.unavailableNoConnectionText'
-                    ),
+                    title=builtinassets.strings.ui.error,
+                    message=builtinassets.strings.net.unavailable_no_connection,
                     progress=None,
-                    button_label=Lstr(resource='okText'),
+                    button_label=builtinassets.strings.ui.ok,
                     on_button=dialog.dismiss,
                 )
             else:

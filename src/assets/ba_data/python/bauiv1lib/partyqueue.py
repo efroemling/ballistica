@@ -8,7 +8,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import classicassets
 from bauiv1 import builtinassets
 import bascenev1 as bs
 
@@ -239,31 +239,33 @@ class PartyQueueWindow(bui.Window):
         self._line_left = 40.0
         self._line_width = self._width - 190
         self._line_bottom = self._height * 0.4
-        self.lineup_tex: bui.Texture = stdassets.textures.player_lineup.get()
+        self.lineup_tex: bui.Texture = (
+            classicassets.textures.player_lineup.get()
+        )
         self._smoothing = 0.0
         self._initial_offset = 0.0
         self._boost_tickets = 0
         self._boost_strength = 0.0
         self._angry_computer_transparent_mesh = (
-            stdassets.meshes.angry_computer_transparent.get()
+            classicassets.meshes.angry_computer_transparent.get()
         )
         self._angry_computer_image: bui.Widget | None = None
         self.lineup_1_transparent_mesh: bui.Mesh = (
-            stdassets.meshes.player_lineup1_transparent.get()
+            classicassets.meshes.player_lineup1_transparent.get()
         )
         self._lineup_2_transparent_mesh: bui.Mesh = (
-            stdassets.meshes.player_lineup2_transparent.get()
+            classicassets.meshes.player_lineup2_transparent.get()
         )
 
         self._lineup_3_transparent_mesh = (
-            stdassets.meshes.player_lineup3_transparent.get()
+            classicassets.meshes.player_lineup3_transparent.get()
         )
         self._lineup_4_transparent_mesh = (
-            stdassets.meshes.player_lineup4_transparent.get()
+            classicassets.meshes.player_lineup4_transparent.get()
         )
         self._line_image: bui.Widget | None = None
         self.eyes_mesh: bui.Mesh = (
-            stdassets.meshes.plastic_eyes_transparent.get()
+            classicassets.meshes.plastic_eyes_transparent.get()
         )
         self._white_tex = builtinassets.textures.white.get()
         uiscale = bui.app.ui_v1.uiscale
@@ -303,7 +305,7 @@ class PartyQueueWindow(bui.Window):
             scale=1.3,
             h_align='center',
             v_align='center',
-            text=stdassets.strings.ui.connecting,
+            text=classicassets.strings.ui.connecting,
             maxwidth=self._width * 0.65,
         )
 
@@ -473,7 +475,7 @@ class PartyQueueWindow(bui.Window):
             if should_show_field:
                 bui.textwidget(
                     edit=self._title_text,
-                    text=stdassets.strings.partyqueue.waiting_in_line,
+                    text=classicassets.strings.partyqueue.waiting_in_line,
                     position=(self._width * 0.5, self._height * 0.85),
                 )
                 self._update_field(response)
@@ -481,7 +483,7 @@ class PartyQueueWindow(bui.Window):
             if not should_show_field and self._field_shown:
                 bui.textwidget(
                     edit=self._title_text,
-                    text=stdassets.strings.ui.connecting,
+                    text=classicassets.strings.ui.connecting,
                     position=(self._width * 0.5, self._height * 0.55),
                 )
                 self._hide_field()
@@ -513,7 +515,7 @@ class PartyQueueWindow(bui.Window):
                         scale=1.5,
                         h_align='center',
                         v_align='center',
-                        text=stdassets.strings.ui.boost,
+                        text=classicassets.strings.ui.boost,
                         maxwidth=150,
                     )
                     self._boost_price = bui.textwidget(
@@ -580,12 +582,12 @@ class PartyQueueWindow(bui.Window):
         if classic.tickets < self._boost_tickets:
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                stdassets.strings.profile.not_enough_tickets,
+                classicassets.strings.profile.not_enough_tickets,
                 color=(1, 0, 0),
             )
             return
 
-        stdassets.audio.laser_reverse.get().play()
+        classicassets.audio.laser_reverse.get().play()
         plus.add_v1_account_transaction(
             {
                 'type': 'PARTY_QUEUE_BOOST',
