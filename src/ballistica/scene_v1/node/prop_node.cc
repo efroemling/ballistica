@@ -128,6 +128,9 @@ void PropNode::Draw(base::FrameDef* frame_def) {
     body_->ApplyToRenderComponent(&c);
     float s = mesh_scale_ * extra_mesh_scale_;
     c.Scale(s, s, s);
+    for (int i = 0; i < 3; ++i) {
+      c.Rotate(rotate_[i], i == 0, i == 1, i == 2);
+    }
     c.DrawMeshAsset(mesh_->mesh_data());
   }
   c.Submit();
@@ -176,6 +179,9 @@ void PropNode::Draw(base::FrameDef* frame_def) {
               float s2 = ss * mesh_scale_ * extra_mesh_scale_
                          * (1.3f - 0.08f * static_cast<float>(i));
               c2.Scale(s2, s2, s2);
+              for (int i = 0; i < 3; ++i) {
+                c2.Rotate(rotate_[i], i == 0, i == 1, i == 2);
+              }
               c2.DrawMeshAsset(light_mesh_->mesh_data());
             }
           }
