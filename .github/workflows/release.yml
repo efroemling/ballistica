@@ -183,7 +183,7 @@ jobs:
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
-        uses: docker/login-action@v4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0  # v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -212,7 +212,7 @@ jobs:
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
-        uses: docker/login-action@v4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0  # v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -241,7 +241,7 @@ jobs:
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
-        uses: docker/login-action@v4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0  # v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -270,7 +270,7 @@ jobs:
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
-        uses: docker/login-action@v4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0  # v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -301,7 +301,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Login to GHCR
-        uses: docker/login-action@v4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0  # v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -325,7 +325,7 @@ jobs:
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
-        uses: docker/login-action@v4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0  # v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -354,7 +354,7 @@ jobs:
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Docker login
-        uses: docker/login-action@v4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0  # v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -385,7 +385,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Login to GHCR
-        uses: docker/login-action@v4
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0  # v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
