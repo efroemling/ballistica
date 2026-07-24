@@ -6,6 +6,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from bacommon.classic import ClassicChestAppearance
+from baclassic import _achievementstrings
 from baclassic._chest import (
     CHEST_APPEARANCE_DISPLAY_INFOS,
     CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,
@@ -535,6 +536,10 @@ def _display_next_achievement() -> None:
 class Achievement:
     """Represents attributes and state for an individual achievement."""
 
+    # Over the limit purely due to the five transitional `_langstr`
+    # display twins; they go away with the removal of api 10.
+    # pylint: disable=too-many-public-methods
+
     def __init__(
         self,
         name: str,
@@ -729,6 +734,78 @@ class Achievement:
             ],
         )
 
+    def _level_display_name(self) -> babase.LangStr:
+        """This achievement's campaign level name, for ``{level}``."""
+        levelname = ACH_LEVEL_NAMES.get(self._name)
+        if levelname is None:
+            return babase.LangStr.from_text('')
+        entry = _achievementstrings.level_name_table().get(levelname)
+        return babase.LangStr.from_text(levelname) if entry is None else entry
+
+    @property
+    def display_name_langstr(self) -> babase.LangStr:
+        """The localized name for this achievement.
+
+        This is the :class:`~babase.LangStr` flavor of
+        :attr:`display_name`. It exists only for the transition; once
+        api 9 support ends, :attr:`display_name` returns this and this
+        property goes away with the removal of api 10.
+        """
+        entry = _achievementstrings.name_table().get(self._name)
+        if entry is None:
+            # A mod's achievement; show its own name.
+            return babase.LangStr.from_text(self._name)
+        return entry(self._level_display_name())
+
+    @property
+    def description_langstr(self) -> babase.LangStr:
+        """The brief description for this achievement.
+
+        This is the :class:`~babase.LangStr` flavor of
+        :attr:`description`; see :attr:`display_name_langstr`.
+        """
+        entry = _achievementstrings.short_description_table().get(self._name)
+        if entry is None:
+            return self.description_full_langstr
+        return entry[0]
+
+    @property
+    def description_complete_langstr(self) -> babase.LangStr:
+        """The brief description for this achievement once earned.
+
+        This is the :class:`~babase.LangStr` flavor of
+        :attr:`description_complete`; see :attr:`display_name_langstr`.
+        """
+        entry = _achievementstrings.short_description_table().get(self._name)
+        if entry is None:
+            return self.description_full_complete_langstr
+        return entry[1]
+
+    @property
+    def description_full_langstr(self) -> babase.LangStr:
+        """The full description for this achievement.
+
+        This is the :class:`~babase.LangStr` flavor of
+        :attr:`description_full`; see :attr:`display_name_langstr`.
+        """
+        entry = _achievementstrings.full_description_table().get(self._name)
+        if entry is None:
+            return babase.LangStr.from_text('')
+        return entry[0](self._level_display_name())
+
+    @property
+    def description_full_complete_langstr(self) -> babase.LangStr:
+        """The full description for this achievement once earned.
+
+        This is the :class:`~babase.LangStr` flavor of
+        :attr:`description_full_complete`; see
+        :attr:`display_name_langstr`.
+        """
+        entry = _achievementstrings.full_description_table().get(self._name)
+        if entry is None:
+            return babase.LangStr.from_text('')
+        return entry[1](self._level_display_name())
+
     def get_award_chest_type(self) -> ClassicChestAppearance:
         """Return the type of chest given for this achievement.
 
@@ -876,7 +953,7 @@ class Achievement:
                     scale=(40, 40),
                 ).autoretain()
             )
-            txt = self.display_name
+            txt = self.display_name_langstr
             txt_s = 0.85
             txt_max_w = 300
             objs.append(
@@ -900,7 +977,11 @@ class Achievement:
             txt2_max_w = 400
             objs.append(
                 Text(
-                    self.description_full if in_main_menu else self.description,
+                    (
+                        self.description_full_langstr
+                        if in_main_menu
+                        else self.description_langstr
+                    ),
                     host_only=True,
                     maxwidth=txt2_max_w,
                     position=(x, y - 14),
@@ -1138,7 +1219,7 @@ class Achievement:
 
             objs.append(
                 Text(
-                    self.display_name,
+                    self.display_name_langstr,
                     host_only=True,
                     maxwidth=300,
                     position=(x, y + 2),
@@ -1158,7 +1239,11 @@ class Achievement:
             )
             objs.append(
                 Text(
-                    self.description_complete if complete else self.description,
+                    (
+                        self.description_complete_langstr
+                        if complete
+                        else self.description_langstr
+                    ),
                     host_only=True,
                     maxwidth=400,
                     position=(x, y - 14),
@@ -1423,7 +1508,7 @@ class Achievement:
         objt.node.host_only = True
 
         objt = Text(
-            self.display_name,
+            self.display_name_langstr,
             position=(-120, 50 + y_offs),
             front=True,
             v_attach=Text.VAttach.BOTTOM,
@@ -1506,7 +1591,7 @@ class Achievement:
         #     objt.node.host_only = True
 
         objt = Text(
-            self.description_complete,
+            self.description_complete_langstr,
             position=(-120, 30 + y_offs),
             front=True,
             v_attach=Text.VAttach.BOTTOM,

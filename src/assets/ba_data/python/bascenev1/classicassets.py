@@ -1,19 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.260723k`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.260724a`` (bascenev1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.baclassicassets.260723k
+# ba_meta require asset-package a-0.baclassicassets.260724a
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.baclassicassets.260723k'
+__asset_package__ = 'a-0.baclassicassets.260724a'
 
 from typing import TYPE_CHECKING
 
@@ -1067,6 +1067,2212 @@ if TYPE_CHECKING:
         #:     English: "You are signed in as:"
         you_are_signed_in_as: LangStr
 
+    class StringsAchievementsBoomGoesTheDynamiteGroup:
+        """
+        ::
+
+            Strings for the "Boom Goes the Dynamite" achievement: its name and
+            its descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Pro Onslaught".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Kill 3 bad guys with TNT"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Killed 3 bad guys with TNT"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete all objectives on {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level}"
+            """
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Boom Goes the Dynamite"
+        name: LangStr
+
+    class StringsAchievementsBoxerGroup:
+        """
+        ::
+
+            Strings for the "Boxer" achievement: its name and its descriptions
+            (short/full, unearned/earned). It is earned on the campaign level
+            "Onslaught Training".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Win without using any bombs"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Won without using any bombs"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete {level} without using any bombs."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level} without using any bombs"
+            """
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Boxer"
+        name: LangStr
+
+    class StringsAchievementsDualWieldingGroup:
+        """
+        ::
+
+            Strings for the "Dual Wielding" achievement: its name and its
+            descriptions (short/full, unearned/earned).
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Full description of what an achievement requires, naming the
+        #:     campaign level it applies to.
+        #:
+        #:     English: "Connect 2 controllers (hardware or app)"
+        description_full: LangStr
+
+        #: ::
+        #:
+        #:     Full description of an achievement the player has already earned,
+        #:     naming the campaign level (past tense).
+        #:
+        #:     English: "Connected 2 controllers (hardware or app)"
+        description_full_complete: LangStr
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Dual Wielding"
+        name: LangStr
+
+    class StringsAchievementsFlawlessVictoryGroup:
+        """
+        ::
+
+            Strings for the "Flawless Victory" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Rookie Onslaught".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Win without getting hit"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Won without getting hit"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Win {level} without getting hit."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Won {level} without getting hit."
+            """
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Flawless Victory"
+        name: LangStr
+
+    class StringsAchievementsFreeLoaderGroup:
+        """
+        ::
+
+            Strings for the "Free Loader" achievement: its name and its
+            descriptions (short/full, unearned/earned).
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Full description of what an achievement requires, naming the
+        #:     campaign level it applies to.
+        #:
+        #:     English: "Start a Free-For-All game with 2+ players"
+        description_full: LangStr
+
+        #: ::
+        #:
+        #:     Full description of an achievement the player has already earned,
+        #:     naming the campaign level (past tense).
+        #:
+        #:     English: "Started a Free-For-All game with 2+ players"
+        description_full_complete: LangStr
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Free Loader"
+        name: LangStr
+
+    class StringsAchievementsGoldMinerGroup:
+        """
+        ::
+
+            Strings for the "Gold Miner" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Uber Onslaught".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Kill 6 bad guys with land-mines"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Killed 6 bad guys with land-mines"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Kill 6 enemies with landmines on {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Killed 6 bad guys with land-mines on {level}"
+            """
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Gold Miner"
+        name: LangStr
+
+    class StringsAchievementsGotTheMovesGroup:
+        """
+        ::
+
+            Strings for the "Got the Moves" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Uber Football".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Win without using punches or bombs"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Won without using punches or bombs"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Win {level} without any punches or bombs."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Won {level} without any punches or bombs"
+            """
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Got the Moves"
+        name: LangStr
+
+    class StringsAchievementsInControlGroup:
+        """
+        ::
+
+            Strings for the "In Control" achievement: its name and its
+            descriptions (short/full, unearned/earned).
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Full description of what an achievement requires, naming the
+        #:     campaign level it applies to.
+        #:
+        #:     English: "Connect a controller (hardware or app)"
+        description_full: LangStr
+
+        #: ::
+        #:
+        #:     Full description of an achievement the player has already earned,
+        #:     naming the campaign level (past tense).
+        #:
+        #:     English: "Connected a controller. (hardware or app)"
+        description_full_complete: LangStr
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "In Control"
+        name: LangStr
+
+    class StringsAchievementsLastStandGodGroup:
+        """
+        ::
+
+            Strings for the "Last Stand God" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "The Last Stand".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Score 1000 points"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Scored 1000 points"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete the mission on {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level}."
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} God"
+            """
+
+    class StringsAchievementsLastStandMasterGroup:
+        """
+        ::
+
+            Strings for the "Last Stand Master" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "The Last Stand".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Score 250 points"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Scored 250 points"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete all objectives on {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level}."
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Master"
+            """
+
+    class StringsAchievementsLastStandWizardGroup:
+        """
+        ::
+
+            Strings for the "Last Stand Wizard" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "The Last Stand".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Score 500 points"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Scored 500 points"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete {level} to unlock this achievement."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level}."
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Champion"
+            """
+
+    class StringsAchievementsMineGamesGroup:
+        """
+        ::
+
+            Strings for the "Mine Games" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Rookie Onslaught".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Kill 3 bad guys with land-mines"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Killed 3 bad guys with land-mines"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Kill 3 bad guys with land-mines on {level}"
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed all objectives on {level}."
+            """
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Mine Games"
+        name: LangStr
+
+    class StringsAchievementsOffYouGoThenGroup:
+        """
+        ::
+
+            Strings for the "Off You Go Then" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Onslaught Training".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Toss 3 bad guys off the map"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Tossed 3 bad guys off the map"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete all objectives in {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Tossed 3 bad guys off the map in {level}"
+            """
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Off You Go Then"
+        name: LangStr
+
+    class StringsAchievementsOnslaughtGodGroup:
+        """
+        ::
+
+            Strings for the "Onslaught God" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Infinite Onslaught".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Score 5000 points"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Scored 5000 points"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete all objectives on {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level}"
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} God"
+            """
+
+    class StringsAchievementsOnslaughtMasterGroup:
+        """
+        ::
+
+            Strings for the "Onslaught Master" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Infinite Onslaught".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Score 500 points"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Scored 500 points"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete all objectives on {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level}"
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Master"
+            """
+
+    class StringsAchievementsOnslaughtTrainingVictoryGroup:
+        """
+        ::
+
+            Strings for the "Onslaught Training Victory" achievement: its name
+            and its descriptions (short/full, unearned/earned). It is earned on
+            the campaign level "Onslaught Training".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Defeat all waves"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Defeated all waves"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Defeat all waves in {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Defeated all waves in {level}."
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Victory"
+            """
+
+    class StringsAchievementsOnslaughtWizardGroup:
+        """
+        ::
+
+            Strings for the "Onslaught Wizard" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Infinite Onslaught".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Score 1000 points"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Scored 1000 points"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete all objectives in {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level}."
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Master"
+            """
+
+    class StringsAchievementsPrecisionBombingGroup:
+        """
+        ::
+
+            Strings for the "Precision Bombing" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Pro Runaround".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Win without any powerups"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Won without any powerups"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Win {level} without using any power-ups."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Won {level} without any power-ups."
+            """
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Precision Bombing"
+        name: LangStr
+
+    class StringsAchievementsProBoxerGroup:
+        """
+        ::
+
+            Strings for the "Pro Boxer" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Pro Onslaught".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Win without using any bombs"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Won without using any bombs"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete {level} without using any bombs."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level} without using any bombs"
+            """
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Pro Boxer"
+        name: LangStr
+
+    class StringsAchievementsProFootballShutoutGroup:
+        """
+        ::
+
+            Strings for the "Pro Football Shutout" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Pro Football".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Win without letting the bad guys score"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Won without letting the bad guys score"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete {level} without taking any damage."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level} without letting the opponent score."
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Shutout"
+            """
+
+    class StringsAchievementsProFootballVictoryGroup:
+        """
+        ::
+
+            Strings for the "Pro Football Victory" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Pro Football".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Win the game"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Won the game"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Win the game in {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level}."
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Victory"
+            """
+
+    class StringsAchievementsProOnslaughtVictoryGroup:
+        """
+        ::
+
+            Strings for the "Pro Onslaught Victory" achievement: its name and
+            its descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Pro Onslaught".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Defeat all waves"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Defeated all waves"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Defeat all waves of {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Defeated all waves of {level}"
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Victory"
+            """
+
+    class StringsAchievementsProRunaroundVictoryGroup:
+        """
+        ::
+
+            Strings for the "Pro Runaround Victory" achievement: its name and
+            its descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Pro Runaround".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Complete all waves"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Completed all waves"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete all waves on {level}"
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed all waves on {level}"
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Victory"
+            """
+
+    class StringsAchievementsRookieFootballShutoutGroup:
+        """
+        ::
+
+            Strings for the "Rookie Football Shutout" achievement: its name and
+            its descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Rookie Football".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Win without letting the bad guys score"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Won without letting the bad guys score"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Win {level} without letting the opponent score."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level}."
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Shutout"
+            """
+
+    class StringsAchievementsRookieFootballVictoryGroup:
+        """
+        ::
+
+            Strings for the "Rookie Football Victory" achievement: its name and
+            its descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Rookie Football".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Win the game"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Won the game"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Win the game in {level}"
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed the campaign on {level}."
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Victory"
+            """
+
+    class StringsAchievementsRookieOnslaughtVictoryGroup:
+        """
+        ::
+
+            Strings for the "Rookie Onslaught Victory" achievement: its name and
+            its descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Rookie Onslaught".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Defeat all waves"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Defeated all waves"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Defeat all waves in {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Defeated all waves in {level}."
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Victory"
+            """
+
+    class StringsAchievementsRunaroundGodGroup:
+        """
+        ::
+
+            Strings for the "Runaround God" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Infinite Runaround".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Score 2000 points"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Scored 2000 points"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete all objectives on {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level}"
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} God"
+            """
+
+    class StringsAchievementsRunaroundMasterGroup:
+        """
+        ::
+
+            Strings for the "Runaround Master" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Infinite Runaround".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Score 500 points"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Scored 500 points"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete all objectives in {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level}"
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Master"
+            """
+
+    class StringsAchievementsRunaroundWizardGroup:
+        """
+        ::
+
+            Strings for the "Runaround Wizard" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Infinite Runaround".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Score 1000 points"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Scored 1000 points"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete the objective on {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Scored 1000 points on {level}"
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "Champion of {level}"
+            """
+
+    class StringsAchievementsSharingIsCaringGroup:
+        """
+        ::
+
+            Strings for the "Sharing is Caring" achievement: its name and its
+            descriptions (short/full, unearned/earned).
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Full description of what an achievement requires, naming the
+        #:     campaign level it applies to.
+        #:
+        #:     English: "Successfully share the game with a friend"
+        description_full: LangStr
+
+        #: ::
+        #:
+        #:     Full description of an achievement the player has already earned,
+        #:     naming the campaign level (past tense).
+        #:
+        #:     English: "Successfully shared the game with a friend"
+        description_full_complete: LangStr
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Sharing is Caring"
+        name: LangStr
+
+    class StringsAchievementsStayinAliveGroup:
+        """
+        ::
+
+            Strings for the "Stayin' Alive" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Uber Runaround".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Win without dying"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Won without dying"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Win {level} without dying."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Won {level} without dying"
+            """
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Stayin' Alive"
+        name: LangStr
+
+    class StringsAchievementsSuperMegaPunchGroup:
+        """
+        ::
+
+            Strings for the "Super Mega Punch" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Pro Football".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Inflict 100% damage with one punch"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Inflicted 100% damage with one punch"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Inflict 100% damage with one punch in {level}"
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level}"
+            """
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Super Mega Punch"
+        name: LangStr
+
+    class StringsAchievementsSuperPunchGroup:
+        """
+        ::
+
+            Strings for the "Super Punch" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Rookie Football".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Inflict 50% damage with one punch"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Inflicted 50% damage with one punch"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete {level} without taking any damage."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Inflicted 50% damage with one punch on {level}"
+            """
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Super Punch"
+        name: LangStr
+
+    class StringsAchievementsTeamPlayerGroup:
+        """
+        ::
+
+            Strings for the "Team Player" achievement: its name and its
+            descriptions (short/full, unearned/earned).
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Full description of what an achievement requires, naming the
+        #:     campaign level it applies to.
+        #:
+        #:     English: "Start a Teams game with 4+ players"
+        description_full: LangStr
+
+        #: ::
+        #:
+        #:     Full description of an achievement the player has already earned,
+        #:     naming the campaign level (past tense).
+        #:
+        #:     English: "Started a Teams game with 4+ players"
+        description_full_complete: LangStr
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "Team Player"
+        name: LangStr
+
+    class StringsAchievementsTheGreatWallGroup:
+        """
+        ::
+
+            Strings for the "The Great Wall" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Uber Runaround".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Stop every single bad guy"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Stopped every single bad guy"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete all objectives in {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Stopped every single bad guy on {level}."
+            """
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "The Great Wall"
+        name: LangStr
+
+    class StringsAchievementsTheWallGroup:
+        """
+        ::
+
+            Strings for the "The Wall" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Pro Runaround".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Stop every single bad guy"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Stopped every single bad guy"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Stop every single bad guy on {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Stopped every single bad guy on {level}"
+            """
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "The Wall"
+        name: LangStr
+
+    class StringsAchievementsTntTerrorGroup:
+        """
+        ::
+
+            Strings for the "TNT Terror" achievement: its name and its
+            descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Uber Onslaught".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Kill 6 bad guys with TNT"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Killed 6 bad guys with TNT"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Kill 6 enemies with TNT on {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Killed 6 bad guys with TNT on {level}"
+            """
+
+        #: ::
+        #:
+        #:     Name of an achievement the player can earn.
+        #:
+        #:     English: "TNT Terror"
+        name: LangStr
+
+    class StringsAchievementsUberFootballShutoutGroup:
+        """
+        ::
+
+            Strings for the "Uber Football Shutout" achievement: its name and
+            its descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Uber Football".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Win without letting the bad guys score"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Won without letting the bad guys score"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete {level} without taking any damage."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed {level}."
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Shutout"
+            """
+
+    class StringsAchievementsUberFootballVictoryGroup:
+        """
+        ::
+
+            Strings for the "Uber Football Victory" achievement: its name and
+            its descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Uber Football".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Win the game"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Won the game"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Win the game in {level}."
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Won the game in {level}"
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Victory"
+            """
+
+    class StringsAchievementsUberOnslaughtVictoryGroup:
+        """
+        ::
+
+            Strings for the "Uber Onslaught Victory" achievement: its name and
+            its descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Uber Onslaught".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Defeat all waves"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Defeated all waves"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Defeat all waves in {level}"
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Defeated all waves in {level}"
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Victory"
+            """
+
+    class StringsAchievementsUberRunaroundVictoryGroup:
+        """
+        ::
+
+            Strings for the "Uber Runaround Victory" achievement: its name and
+            its descriptions (short/full, unearned/earned). It is earned on the
+            campaign level "Uber Runaround".
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Short description of what an achievement requires, shown before
+        #:     it is earned.
+        #:
+        #:     English: "Complete all waves"
+        description: LangStr
+
+        #: ::
+        #:
+        #:     Short description of an achievement the player has already earned
+        #:     (past tense).
+        #:
+        #:     English: "Completed all waves"
+        description_complete: LangStr
+
+        def description_full(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of what an achievement requires, naming the
+                campaign level it applies to.
+
+                English: "Complete all waves on {level}"
+            """
+
+        def description_full_complete(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Full description of an achievement the player has already
+                earned, naming the campaign level (past tense).
+
+                English: "Completed all waves on {level}"
+            """
+
+        def name(self, *, level: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Name of an achievement the player can earn.
+
+                English: "{level} Victory"
+            """
+
+    class StringsAchievementsGroup:
+        """
+        ::
+
+            Achievement strings: the name of each co-op campaign achievement
+            plus its short and full descriptions, in both unearned and earned
+            (past-tense) forms.
+
+            See source for the full asset list.
+        """
+
+        boom_goes_the_dynamite: StringsAchievementsBoomGoesTheDynamiteGroup
+        boxer: StringsAchievementsBoxerGroup
+        dual_wielding: StringsAchievementsDualWieldingGroup
+        flawless_victory: StringsAchievementsFlawlessVictoryGroup
+        free_loader: StringsAchievementsFreeLoaderGroup
+        gold_miner: StringsAchievementsGoldMinerGroup
+        got_the_moves: StringsAchievementsGotTheMovesGroup
+        in_control: StringsAchievementsInControlGroup
+        last_stand_god: StringsAchievementsLastStandGodGroup
+        last_stand_master: StringsAchievementsLastStandMasterGroup
+        last_stand_wizard: StringsAchievementsLastStandWizardGroup
+        mine_games: StringsAchievementsMineGamesGroup
+        off_you_go_then: StringsAchievementsOffYouGoThenGroup
+        onslaught_god: StringsAchievementsOnslaughtGodGroup
+        onslaught_master: StringsAchievementsOnslaughtMasterGroup
+        onslaught_training_victory: (
+            StringsAchievementsOnslaughtTrainingVictoryGroup
+        )
+        onslaught_wizard: StringsAchievementsOnslaughtWizardGroup
+        precision_bombing: StringsAchievementsPrecisionBombingGroup
+        pro_boxer: StringsAchievementsProBoxerGroup
+        pro_football_shutout: StringsAchievementsProFootballShutoutGroup
+        pro_football_victory: StringsAchievementsProFootballVictoryGroup
+        pro_onslaught_victory: StringsAchievementsProOnslaughtVictoryGroup
+        pro_runaround_victory: StringsAchievementsProRunaroundVictoryGroup
+        rookie_football_shutout: StringsAchievementsRookieFootballShutoutGroup
+        rookie_football_victory: StringsAchievementsRookieFootballVictoryGroup
+        rookie_onslaught_victory: StringsAchievementsRookieOnslaughtVictoryGroup
+        runaround_god: StringsAchievementsRunaroundGodGroup
+        runaround_master: StringsAchievementsRunaroundMasterGroup
+        runaround_wizard: StringsAchievementsRunaroundWizardGroup
+        sharing_is_caring: StringsAchievementsSharingIsCaringGroup
+        stayin_alive: StringsAchievementsStayinAliveGroup
+        super_mega_punch: StringsAchievementsSuperMegaPunchGroup
+        super_punch: StringsAchievementsSuperPunchGroup
+        team_player: StringsAchievementsTeamPlayerGroup
+        the_great_wall: StringsAchievementsTheGreatWallGroup
+        the_wall: StringsAchievementsTheWallGroup
+        tnt_terror: StringsAchievementsTntTerrorGroup
+        uber_football_shutout: StringsAchievementsUberFootballShutoutGroup
+        uber_football_victory: StringsAchievementsUberFootballVictoryGroup
+        uber_onslaught_victory: StringsAchievementsUberOnslaughtVictoryGroup
+        uber_runaround_victory: StringsAchievementsUberRunaroundVictoryGroup
+
     class StringsAppinviteGroup:
         """
         ::
@@ -1523,6 +3729,20 @@ if TYPE_CHECKING:
                 {remote_app_name} on your phone or tablet."
             """
 
+        #: ::
+        #:
+        #:     Label for the movement control in the controls guide.
+        #:
+        #:     English: "Move"
+        move: LangStr
+
+        #: ::
+        #:
+        #:     Label for the run control in the controls guide.
+        #:
+        #:     English: "Run"
+        run: LangStr
+
     class StringsCoopGroup:
         """
         ::
@@ -1843,6 +4063,15 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
+        def best_rating(self, *, rating: str | LangStr) -> LangStr:
+            """
+            ::
+
+                The player's best rating on this co-op level.
+
+                English: "Your best rating is {rating}"
+            """
+
         #: ::
         #:
         #:     Notice that the level must be completed to proceed.
@@ -1850,12 +4079,67 @@ if TYPE_CHECKING:
         #:     English: "You must complete this level to proceed!"
         complete_level_to_proceed: LangStr
 
+        def current_standing(self, *, rank: str | LangStr) -> LangStr:
+            """
+            ::
+
+                The player's current rank on this co-op level.
+
+                English: "Your current standing is #{rank}"
+            """
+
+        #: ::
+        #:
+        #:     Label for the finishing time on the co-op results screen.
+        #:
+        #:     English: "Final Time"
+        final_time: LangStr
+
         #: ::
         #:
         #:     Notice that friend scores could not be loaded.
         #:
         #:     English: "Friend scores unavailable."
         friend_scores_unavailable: LangStr
+
+        def last_games(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Note that a rating covers only recent games.
+
+                English: "(last {count} games)"
+            """
+
+        #: ::
+        #:
+        #:     Announcement that a new co-op level became available.
+        #:
+        #:     English: "Level Unlocked!"
+        level_unlocked: LangStr
+
+        def multi_player_count(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Player count for a multi-player co-op score entry.
+
+                English: "{count} players"
+            """
+
+        #: ::
+        #:
+        #:     Celebration for beating your own previous best.
+        #:
+        #:     English: "New personal best!"
+        new_personal_best: LangStr
+
+        #: ::
+        #:
+        #:     Label for the level that follows this one.
+        #:
+        #:     English: "Next Level"
+        next_level: LangStr
 
         #: ::
         #:
@@ -1865,12 +4149,44 @@ if TYPE_CHECKING:
         #:     game."
         not_enough_players_remaining: LangStr
 
+        def out_of(self, *, rank: str | LangStr, all: str | LangStr) -> LangStr:
+            """
+            ::
+
+                The player's rank among all ranked players.
+
+                English: "(#{rank} out of {all})"
+            """
+
+        #: ::
+        #:
+        #:     Label for the score rating on the co-op results screen.
+        #:
+        #:     English: "Rating"
+        rating: LangStr
+
         #: ::
         #:
         #:     Notice that the score list could not be loaded.
         #:
         #:     English: "Score list unavailable."
         score_list_unavailable: LangStr
+
+        def score_was(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                The previous best score, shown when it is beaten.
+
+                English: "(was {count})"
+            """
+
+        #: ::
+        #:
+        #:     Player count for a single-player co-op score entry.
+        #:
+        #:     English: "1 player"
+        single_player_count: LangStr
 
         #: ::
         #:
@@ -2227,6 +4543,13 @@ if TYPE_CHECKING:
                 English: "Lap {current}/{total}"
             """
 
+        #: ::
+        #:
+        #:     Label for the remaining-lives bonus in a co-op score tally.
+        #:
+        #:     English: "Lives Bonus"
+        lives_bonus: LangStr
+
         def multi_kill(self, *, count: int) -> LangStr:
             """
             ::
@@ -2293,6 +4616,17 @@ if TYPE_CHECKING:
         #:     English: "No valid maps found for this game type."
         no_valid_maps_error: LangStr
 
+        def onslaught_respawn(
+            self, *, player: str | LangStr, wave: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Notice of which wave a defeated player returns on.
+
+                English: "{player} will respawn in wave {wave}"
+            """
+
         #: ::
         #:
         #:     Warning that your own flag must be at your base to score.
@@ -2306,6 +4640,13 @@ if TYPE_CHECKING:
         #:
         #:     English: "(paused by host)"
         paused_by_host: LangStr
+
+        #: ::
+        #:
+        #:     Celebration shown for completing a wave without damage.
+        #:
+        #:     English: "Perfect Wave!"
+        perfect_wave: LangStr
 
         def points_gained(self, *, points: str | LangStr) -> LangStr:
             """
@@ -2396,6 +4737,13 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Label for the time-based bonus in a co-op score tally.
+        #:
+        #:     English: "Time Bonus"
+        time_bonus: LangStr
+
+        #: ::
+        #:
         #:     Banner shown when the game time limit runs out.
         #:
         #:     English: "Time Expired"
@@ -2454,6 +4802,13 @@ if TYPE_CHECKING:
 
                 English: "(Waiting for {host} to continue)"
             """
+
+        #: ::
+        #:
+        #:     Label for the current wave number in wave-based games.
+        #:
+        #:     English: "Wave"
+        wave: LangStr
 
     class StringsGamedescriptionsGroup:
         """
@@ -4657,6 +7012,15 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
+        def best_of_final(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Title for a best-of-N final series.
+
+                English: "Best-of-{count} Final"
+            """
+
         def best_of_series(self, *, count: int) -> LangStr:
             """
             ::
@@ -4672,6 +7036,24 @@ if TYPE_CHECKING:
         #:
         #:     English: "Deaths"
         deaths: LangStr
+
+        def deaths_tally(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                A player's death count in the end-of-series tally.
+
+                English: "{count} deaths"
+            """
+
+        def first_to_final(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Title for a first-to-N-wins final series.
+
+                English: "First-to-{count} Final"
+            """
 
         def first_to_series(self, *, count: int) -> LangStr:
             """
@@ -4708,6 +7090,15 @@ if TYPE_CHECKING:
         #:
         #:     English: "Kills"
         kills: LangStr
+
+        def kills_tally(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                A player's kill count in the end-of-series tally.
+
+                English: "{count} kills"
+            """
 
         #: ::
         #:
@@ -4761,6 +7152,22 @@ if TYPE_CHECKING:
                 Score-banner label naming a team.
 
                 English: "{name}:"
+            """
+
+        #: ::
+        #:
+        #:     Label introducing the first game of a series.
+        #:
+        #:     English: "Up first:"
+        up_first: LangStr
+
+        def up_next(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Label introducing the next game of a series.
+
+                English: "Up next in game {count}:"
             """
 
         def wins(self, *, name: str | LangStr) -> LangStr:
@@ -7338,6 +9745,13 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Label preceding a gameplay tip.
+        #:
+        #:     English: "Tip"
+        tip: LangStr
+
+        #: ::
+        #:
         #:     Hint on how to skip the tutorial.
         #:
         #:     English: "(tap or press anything to skip tutorial)"
@@ -8352,6 +10766,7 @@ if TYPE_CHECKING:
         """
 
         account: StringsAccountGroup
+        achievements: StringsAchievementsGroup
         appinvite: StringsAppinviteGroup
         characters: StringsCharactersGroup
         chest: StringsChestGroup
@@ -8737,8 +11152,8 @@ if TYPE_CHECKING:
     #: ``action_hero_lower_leg``, and 385 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 885 strings (``account``, ``appinvite``,
-    #: ``characters``, ``chest``, ``controls``, and 880 more). Full list in
+    #: The ``strings`` group - 1106 strings (``account``, ``achievements``,
+    #: ``appinvite``, ``characters``, ``chest``, and 1101 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -9586,6 +12001,285 @@ _TREE = {
             'v2_link_instructions': (),
             'you_are_signed_in_as': (),
         },
+        'achievements': {
+            'boom_goes_the_dynamite': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': (),
+            },
+            'boxer': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': (),
+            },
+            'dual_wielding': {
+                'description_full': (),
+                'description_full_complete': (),
+                'name': (),
+            },
+            'flawless_victory': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': (),
+            },
+            'free_loader': {
+                'description_full': (),
+                'description_full_complete': (),
+                'name': (),
+            },
+            'gold_miner': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': (),
+            },
+            'got_the_moves': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': (),
+            },
+            'in_control': {
+                'description_full': (),
+                'description_full_complete': (),
+                'name': (),
+            },
+            'last_stand_god': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'last_stand_master': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'last_stand_wizard': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'mine_games': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': (),
+            },
+            'off_you_go_then': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': (),
+            },
+            'onslaught_god': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'onslaught_master': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'onslaught_training_victory': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'onslaught_wizard': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'precision_bombing': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': (),
+            },
+            'pro_boxer': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': (),
+            },
+            'pro_football_shutout': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'pro_football_victory': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'pro_onslaught_victory': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'pro_runaround_victory': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'rookie_football_shutout': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'rookie_football_victory': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'rookie_onslaught_victory': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'runaround_god': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'runaround_master': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'runaround_wizard': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'sharing_is_caring': {
+                'description_full': (),
+                'description_full_complete': (),
+                'name': (),
+            },
+            'stayin_alive': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': (),
+            },
+            'super_mega_punch': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': (),
+            },
+            'super_punch': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': (),
+            },
+            'team_player': {
+                'description_full': (),
+                'description_full_complete': (),
+                'name': (),
+            },
+            'the_great_wall': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': (),
+            },
+            'the_wall': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': (),
+            },
+            'tnt_terror': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': (),
+            },
+            'uber_football_shutout': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'uber_football_victory': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'uber_onslaught_victory': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+            'uber_runaround_victory': {
+                'description': (),
+                'description_complete': (),
+                'description_full': ('level',),
+                'description_full_complete': ('level',),
+                'name': ('level',),
+            },
+        },
         'appinvite': {
             'email_it': (),
             'enjoy': (),
@@ -9636,7 +12330,11 @@ _TREE = {
             'stop_reminding_me': (),
             'unlocks_in': (),
         },
-        'controls': {'fire_tv_remote_warning': ('remote_app_name',)},
+        'controls': {
+            'fire_tv_remote_warning': ('remote_app_name',),
+            'move': (),
+            'run': (),
+        },
         'coop': {
             'achievement_label': (),
             'achievements_remaining': (),
@@ -9680,10 +12378,22 @@ _TREE = {
             'uber_variant': ('game',),
         },
         'coopscore': {
+            'best_rating': ('rating',),
             'complete_level_to_proceed': (),
+            'current_standing': ('rank',),
+            'final_time': (),
             'friend_scores_unavailable': (),
+            'last_games': ('count',),
+            'level_unlocked': (),
+            'multi_player_count': ('count',),
+            'new_personal_best': (),
+            'next_level': (),
             'not_enough_players_remaining': (),
+            'out_of': ('rank', 'all'),
+            'rating': (),
             'score_list_unavailable': (),
+            'score_was': ('count',),
+            'single_player_count': (),
             'tournament_standings': (),
             'world_scores_unavailable': (),
             'worlds_best_scores': (),
@@ -9731,6 +12441,7 @@ _TREE = {
             'game_on_map': ('name', 'mapname'),
             'killing_track_skipper': ('name',),
             'lap_number': ('current', 'total'),
+            'lives_bonus': (),
             'multi_kill': ('count',),
             'name_betrayed': ('name', 'victim'),
             'name_died': ('name',),
@@ -9738,8 +12449,10 @@ _TREE = {
             'name_scores': ('name',),
             'name_suicide': ('name',),
             'no_valid_maps_error': (),
+            'onslaught_respawn': ('player', 'wave'),
             'own_flag_at_base_warning': (),
             'paused_by_host': (),
+            'perfect_wave': (),
             'points_gained': ('points',),
             'points_gained_titled': ('points', 'title'),
             'press_any_button_continue': (),
@@ -9751,6 +12464,7 @@ _TREE = {
             'reach_wave_2': (),
             'score': (),
             'solo_name_filter': ('name',),
+            'time_bonus': (),
             'time_expired': (),
             'tip_title': (),
             'tournament_time_expired': (),
@@ -9759,6 +12473,7 @@ _TREE = {
             'victory': (),
             'vs': (),
             'waiting_for_host': ('host',),
+            'wave': (),
         },
         'gamedescriptions': {
             'be_the_chosen_one_for_a': (),
@@ -10052,12 +12767,16 @@ _TREE = {
             'zigzag': (),
         },
         'multiteam': {
+            'best_of_final': ('count',),
             'best_of_series': ('count',),
             'deaths': (),
+            'deaths_tally': ('count',),
+            'first_to_final': ('count',),
             'first_to_series': ('count',),
             'game_leaders': ('count',),
             'games_to': ('wincount', 'losecount'),
             'kills': (),
+            'kills_tally': ('count',),
             'most_destroyed_player': (),
             'most_valuable_player': (),
             'most_violent_player': (),
@@ -10065,6 +12784,8 @@ _TREE = {
             'player': (),
             'series': (),
             'team_label': ('name',),
+            'up_first': (),
+            'up_next': ('count',),
             'wins': ('name',),
             'wins_the_series_intro': (),
         },
@@ -10398,6 +13119,7 @@ _TREE = {
             'phrase29': (),
             'skip_confirm': (),
             'skipping': (),
+            'tip': (),
             'to_skip_press_anything': (),
         },
         'ui': {

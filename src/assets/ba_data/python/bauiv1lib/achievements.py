@@ -260,7 +260,7 @@ class AchievementsWindow(bui.MainWindow):
                 flatness=1.0,
                 shadow=0.0,
                 color=(1, 1, 1) if complete else (1, 1, 1, 0.2),
-                text=ach.display_name,
+                text=ach.display_name_langstr,
                 size=(0, 0),
                 h_align='left',
                 v_align='center',
@@ -275,9 +275,9 @@ class AchievementsWindow(bui.MainWindow):
                 shadow=0.0,
                 color=(0.83, 0.8, 0.85) if complete else (0.8, 0.8, 0.8, 0.2),
                 text=(
-                    ach.description_full_complete
+                    ach.description_full_complete_langstr
                     if complete
-                    else ach.description_full
+                    else ach.description_full_langstr
                 ),
                 size=(0, 0),
                 h_align='left',

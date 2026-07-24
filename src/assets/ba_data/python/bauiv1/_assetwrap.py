@@ -61,6 +61,10 @@ def _load(
     apverid: str, path: str, kind: str
 ) -> bauiv1.Texture | bauiv1.Sound | bauiv1.Mesh:
     """Load a single leaf asset by its single-char kind code."""
+    from babase import check_asset_package_load
+
+    check_asset_package_load(apverid, path)
+
     import bauiv1
 
     ref = f'{apverid}:{path}'

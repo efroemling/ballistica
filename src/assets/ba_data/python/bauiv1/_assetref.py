@@ -24,6 +24,9 @@ within dataclassio's rules (a nested-dataclass field accepts any
 
 from typing import TYPE_CHECKING
 
+import _bauiv1
+
+from babase import check_asset_package_load
 from bacommon.assetspec import (
     TextureSpec as _TextureSpec,
     MeshSpec as _MeshSpec,
@@ -42,9 +45,8 @@ class TextureRef(_TextureSpec):
 
     def get(self) -> 'bauiv1.Texture':
         """Resolve and return the live engine texture for this reference."""
-        import bauiv1
-
-        return bauiv1.gettexture(f'{self.apverid}:{self.name}')
+        check_asset_package_load(self.apverid, self.name)
+        return _bauiv1.gettexture(f'{self.apverid}:{self.name}')
 
 
 class MeshRef(_MeshSpec):
@@ -52,9 +54,8 @@ class MeshRef(_MeshSpec):
 
     def get(self) -> 'bauiv1.Mesh':
         """Resolve and return the live engine mesh for this reference."""
-        import bauiv1
-
-        return bauiv1.getmesh(f'{self.apverid}:{self.name}')
+        check_asset_package_load(self.apverid, self.name)
+        return _bauiv1.getmesh(f'{self.apverid}:{self.name}')
 
 
 class SoundRef(_SoundSpec):
@@ -62,9 +63,8 @@ class SoundRef(_SoundSpec):
 
     def get(self) -> 'bauiv1.Sound':
         """Resolve and return the live engine sound for this reference."""
-        import bauiv1
-
-        return bauiv1.getsound(f'{self.apverid}:{self.name}')
+        check_asset_package_load(self.apverid, self.name)
+        return _bauiv1.getsound(f'{self.apverid}:{self.name}')
 
 
 #: A node in a wrapper's kind-code tree: each key is one path segment; a

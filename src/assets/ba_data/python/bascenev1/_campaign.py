@@ -97,19 +97,14 @@ class Campaign:
         return val
 
 
-def _tex(name: str) -> str:
-    """Qualified classicassets ref for a level preview texture."""
-    # The wrapper lives inside our own package, so import deferred
-    # (we only run after the package is fully imported).
-    # pylint: disable-next=cyclic-import
-    from bascenev1 import classicassets
-
-    return f'{classicassets.__asset_package__}:textures/{name}'
-
-
 def init_campaigns() -> None:
     """Fill out initial default Campaigns."""
     # pylint: disable=cyclic-import
+    # (bauiv1 deferred alongside these: the ui feature-set is not a
+    # dependency of ours, and level previews are the only thing here
+    # that needs it.)
+    from bauiv1 import classicassets as uiclassicassets
+
     from bascenev1._level import Level
     from bascenev1lib.game.onslaught import OnslaughtGame
     from bascenev1lib.game.football import FootballCoopGame
@@ -120,6 +115,8 @@ def init_campaigns() -> None:
     from bascenev1lib.game.meteorshower import MeteorShowerGame
     from bascenev1lib.game.easteregghunt import EasterEggHuntGame
     from bascenev1lib.game.ninjafight import NinjaFightGame
+
+    uitex = uiclassicassets.textures
 
     # TODO: Campaigns should be load-on-demand; not all imported at launch
     #  like this.
@@ -134,55 +131,55 @@ def init_campaigns() -> None:
                     'Onslaught Training',
                     gametype=OnslaughtGame,
                     settings={'preset': 'training_easy'},
-                    preview_texture_name=_tex('doom_shroom_preview'),
+                    preview_texture=uitex.doom_shroom_preview,
                 ),
                 Level(
                     'Rookie Onslaught',
                     gametype=OnslaughtGame,
                     settings={'preset': 'rookie_easy'},
-                    preview_texture_name=_tex('courtyard_preview'),
+                    preview_texture=uitex.courtyard_preview,
                 ),
                 Level(
                     'Rookie Football',
                     gametype=FootballCoopGame,
                     settings={'preset': 'rookie_easy'},
-                    preview_texture_name=_tex('football_stadium_preview'),
+                    preview_texture=uitex.football_stadium_preview,
                 ),
                 Level(
                     'Pro Onslaught',
                     gametype=OnslaughtGame,
                     settings={'preset': 'pro_easy'},
-                    preview_texture_name=_tex('doom_shroom_preview'),
+                    preview_texture=uitex.doom_shroom_preview,
                 ),
                 Level(
                     'Pro Football',
                     gametype=FootballCoopGame,
                     settings={'preset': 'pro_easy'},
-                    preview_texture_name=_tex('football_stadium_preview'),
+                    preview_texture=uitex.football_stadium_preview,
                 ),
                 Level(
                     'Pro Runaround',
                     gametype=RunaroundGame,
                     settings={'preset': 'pro_easy'},
-                    preview_texture_name=_tex('tower_dpreview'),
+                    preview_texture=uitex.tower_dpreview,
                 ),
                 Level(
                     'Uber Onslaught',
                     gametype=OnslaughtGame,
                     settings={'preset': 'uber_easy'},
-                    preview_texture_name=_tex('courtyard_preview'),
+                    preview_texture=uitex.courtyard_preview,
                 ),
                 Level(
                     'Uber Football',
                     gametype=FootballCoopGame,
                     settings={'preset': 'uber_easy'},
-                    preview_texture_name=_tex('football_stadium_preview'),
+                    preview_texture=uitex.football_stadium_preview,
                 ),
                 Level(
                     'Uber Runaround',
                     gametype=RunaroundGame,
                     settings={'preset': 'uber_easy'},
-                    preview_texture_name=_tex('tower_dpreview'),
+                    preview_texture=uitex.tower_dpreview,
                 ),
             ],
         )
@@ -197,61 +194,61 @@ def init_campaigns() -> None:
                     'Onslaught Training',
                     gametype=OnslaughtGame,
                     settings={'preset': 'training'},
-                    preview_texture_name=_tex('doom_shroom_preview'),
+                    preview_texture=uitex.doom_shroom_preview,
                 ),
                 Level(
                     'Rookie Onslaught',
                     gametype=OnslaughtGame,
                     settings={'preset': 'rookie'},
-                    preview_texture_name=_tex('courtyard_preview'),
+                    preview_texture=uitex.courtyard_preview,
                 ),
                 Level(
                     'Rookie Football',
                     gametype=FootballCoopGame,
                     settings={'preset': 'rookie'},
-                    preview_texture_name=_tex('football_stadium_preview'),
+                    preview_texture=uitex.football_stadium_preview,
                 ),
                 Level(
                     'Pro Onslaught',
                     gametype=OnslaughtGame,
                     settings={'preset': 'pro'},
-                    preview_texture_name=_tex('doom_shroom_preview'),
+                    preview_texture=uitex.doom_shroom_preview,
                 ),
                 Level(
                     'Pro Football',
                     gametype=FootballCoopGame,
                     settings={'preset': 'pro'},
-                    preview_texture_name=_tex('football_stadium_preview'),
+                    preview_texture=uitex.football_stadium_preview,
                 ),
                 Level(
                     'Pro Runaround',
                     gametype=RunaroundGame,
                     settings={'preset': 'pro'},
-                    preview_texture_name=_tex('tower_dpreview'),
+                    preview_texture=uitex.tower_dpreview,
                 ),
                 Level(
                     'Uber Onslaught',
                     gametype=OnslaughtGame,
                     settings={'preset': 'uber'},
-                    preview_texture_name=_tex('courtyard_preview'),
+                    preview_texture=uitex.courtyard_preview,
                 ),
                 Level(
                     'Uber Football',
                     gametype=FootballCoopGame,
                     settings={'preset': 'uber'},
-                    preview_texture_name=_tex('football_stadium_preview'),
+                    preview_texture=uitex.football_stadium_preview,
                 ),
                 Level(
                     'Uber Runaround',
                     gametype=RunaroundGame,
                     settings={'preset': 'uber'},
-                    preview_texture_name=_tex('tower_dpreview'),
+                    preview_texture=uitex.tower_dpreview,
                 ),
                 Level(
                     'The Last Stand',
                     gametype=TheLastStandGame,
                     settings={},
-                    preview_texture_name=_tex('rampage_preview'),
+                    preview_texture=uitex.rampage_preview,
                 ),
             ],
         )
@@ -267,27 +264,27 @@ def init_campaigns() -> None:
                     'Infinite Onslaught',
                     gametype=OnslaughtGame,
                     settings={'preset': 'endless'},
-                    preview_texture_name=_tex('doom_shroom_preview'),
+                    preview_texture=uitex.doom_shroom_preview,
                 ),
                 Level(
                     'Infinite Runaround',
                     gametype=RunaroundGame,
                     settings={'preset': 'endless'},
-                    preview_texture_name=_tex('tower_dpreview'),
+                    preview_texture=uitex.tower_dpreview,
                 ),
                 Level(
                     'Race',
                     displayname='${GAME}',
                     gametype=RaceGame,
                     settings={'map': 'Big G', 'Laps': 3, 'Bomb Spawning': 0},
-                    preview_texture_name=_tex('big_gpreview'),
+                    preview_texture=uitex.big_gpreview,
                 ),
                 Level(
                     'Pro Race',
                     displayname='Pro ${GAME}',
                     gametype=RaceGame,
                     settings={'map': 'Big G', 'Laps': 3, 'Bomb Spawning': 1000},
-                    preview_texture_name=_tex('big_gpreview'),
+                    preview_texture=uitex.big_gpreview,
                 ),
                 Level(
                     'Lake Frigid Race',
@@ -299,63 +296,63 @@ def init_campaigns() -> None:
                         'Mine Spawning': 2000,
                         'Bomb Spawning': 0,
                     },
-                    preview_texture_name=_tex('lake_frigid_preview'),
+                    preview_texture=uitex.lake_frigid_preview,
                 ),
                 Level(
                     'Football',
                     displayname='${GAME}',
                     gametype=FootballCoopGame,
                     settings={'preset': 'tournament'},
-                    preview_texture_name=_tex('football_stadium_preview'),
+                    preview_texture=uitex.football_stadium_preview,
                 ),
                 Level(
                     'Pro Football',
                     displayname='Pro ${GAME}',
                     gametype=FootballCoopGame,
                     settings={'preset': 'tournament_pro'},
-                    preview_texture_name=_tex('football_stadium_preview'),
+                    preview_texture=uitex.football_stadium_preview,
                 ),
                 Level(
                     'Runaround',
                     displayname='${GAME}',
                     gametype=RunaroundGame,
                     settings={'preset': 'tournament'},
-                    preview_texture_name=_tex('tower_dpreview'),
+                    preview_texture=uitex.tower_dpreview,
                 ),
                 Level(
                     'Uber Runaround',
                     displayname='Uber ${GAME}',
                     gametype=RunaroundGame,
                     settings={'preset': 'tournament_uber'},
-                    preview_texture_name=_tex('tower_dpreview'),
+                    preview_texture=uitex.tower_dpreview,
                 ),
                 Level(
                     'The Last Stand',
                     displayname='${GAME}',
                     gametype=TheLastStandGame,
                     settings={'preset': 'tournament'},
-                    preview_texture_name=_tex('rampage_preview'),
+                    preview_texture=uitex.rampage_preview,
                 ),
                 Level(
                     'Tournament Infinite Onslaught',
                     displayname='Infinite Onslaught',
                     gametype=OnslaughtGame,
                     settings={'preset': 'endless_tournament'},
-                    preview_texture_name=_tex('doom_shroom_preview'),
+                    preview_texture=uitex.doom_shroom_preview,
                 ),
                 Level(
                     'Tournament Infinite Runaround',
                     displayname='Infinite Runaround',
                     gametype=RunaroundGame,
                     settings={'preset': 'endless_tournament'},
-                    preview_texture_name=_tex('tower_dpreview'),
+                    preview_texture=uitex.tower_dpreview,
                 ),
                 Level(
                     'Target Practice',
                     displayname='Pro ${GAME}',
                     gametype=TargetPracticeGame,
                     settings={},
-                    preview_texture_name=_tex('doom_shroom_preview'),
+                    preview_texture=uitex.doom_shroom_preview,
                 ),
                 Level(
                     'Target Practice B',
@@ -366,49 +363,49 @@ def init_campaigns() -> None:
                         'Enable Impact Bombs': False,
                         'Enable Triple Bombs': False,
                     },
-                    preview_texture_name=_tex('doom_shroom_preview'),
+                    preview_texture=uitex.doom_shroom_preview,
                 ),
                 Level(
                     'Meteor Shower',
                     displayname='${GAME}',
                     gametype=MeteorShowerGame,
                     settings={},
-                    preview_texture_name=_tex('rampage_preview'),
+                    preview_texture=uitex.rampage_preview,
                 ),
                 Level(
                     'Epic Meteor Shower',
                     displayname='${GAME}',
                     gametype=MeteorShowerGame,
                     settings={'Epic Mode': True},
-                    preview_texture_name=_tex('rampage_preview'),
+                    preview_texture=uitex.rampage_preview,
                 ),
                 Level(
                     'Easter Egg Hunt',
                     displayname='${GAME}',
                     gametype=EasterEggHuntGame,
                     settings={},
-                    preview_texture_name=_tex('tower_dpreview'),
+                    preview_texture=uitex.tower_dpreview,
                 ),
                 Level(
                     'Pro Easter Egg Hunt',
                     displayname='Pro ${GAME}',
                     gametype=EasterEggHuntGame,
                     settings={'Pro Mode': True},
-                    preview_texture_name=_tex('tower_dpreview'),
+                    preview_texture=uitex.tower_dpreview,
                 ),
                 Level(
                     name='Ninja Fight',  # (unique id not seen by player)
                     displayname='${GAME}',  # (readable name seen by player)
                     gametype=NinjaFightGame,
                     settings={'preset': 'regular'},
-                    preview_texture_name=_tex('courtyard_preview'),
+                    preview_texture=uitex.courtyard_preview,
                 ),
                 Level(
                     name='Pro Ninja Fight',
                     displayname='Pro ${GAME}',
                     gametype=NinjaFightGame,
                     settings={'preset': 'pro'},
-                    preview_texture_name=_tex('courtyard_preview'),
+                    preview_texture=uitex.courtyard_preview,
                 ),
             ],
         )

@@ -92,9 +92,7 @@ class GameButton:
             size=(image_width, image_width * 0.5),
             mesh_transparent=window.lsbt,
             mesh_opaque=window.lsbo,
-            texture=bui.gettexture(
-                campaign.getlevel(levelname).preview_texture_name
-            ),
+            texture=campaign.getlevel(levelname).preview_texture,
             mask_texture=classicassets.textures.map_preview_mask.get(),
         )
 

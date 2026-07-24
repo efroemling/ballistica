@@ -136,7 +136,10 @@ from babase._app import App, AppState
 from babase._appcomponent import AppComponentSubsystem
 from babase._appconfig import commit_app_config
 from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
-from babase._asset_packages import loaded_asset_package_apverids
+from babase._asset_packages import (
+    check_asset_package_load,
+    loaded_asset_package_apverids,
+)
 from babase._appmode import AppMode
 from babase._appsubsystem import AppSubsystem
 from babase._appmodeselector import AppModeSelector
@@ -348,6 +351,7 @@ __all__ = [
     'is_point_in_box',
     'is_xcode_build',
     'LanguageSubsystem',
+    'check_asset_package_load',
     'loaded_asset_package_apverids',
     'LocaleSubsystem',
     'lifecyclelog',

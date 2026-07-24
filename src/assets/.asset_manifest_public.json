@@ -45,6 +45,7 @@
  "ba_data/python/baclassic/__init__.py",
  "ba_data/python/baclassic/_accountv1.py",
  "ba_data/python/baclassic/_achievement.py",
+ "ba_data/python/baclassic/_achievementstrings.py",
  "ba_data/python/baclassic/_analytics.py",
  "ba_data/python/baclassic/_appmode.py",
  "ba_data/python/baclassic/_appsubsystem.py",

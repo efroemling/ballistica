@@ -68,6 +68,10 @@ def _load(
     | bascenev1.CollisionMesh
 ):
     """Load a single leaf asset by its single-char kind code."""
+    from babase import check_asset_package_load
+
+    check_asset_package_load(apverid, path)
+
     import bascenev1
 
     ref = f'{apverid}:{path}'

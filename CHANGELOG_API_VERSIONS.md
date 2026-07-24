@@ -93,6 +93,18 @@ available builds.
   the old call keep working (the new one falls back to it), but built-in maps
   no longer implement it, so calling it on one now returns `None`. It is
   removed when api 9 support ends.
+- `bascenev1.Level.preview_texture_name` is deprecated, as is passing
+  `preview_texture_name` to `bascenev1.Level()`. Use the `preview_texture`
+  keyword argument and the matching `preview_texture` property instead, which
+  deal in asset-package wrapper references rather than names to look up:
+  pass the wrapper's texture entry directly —
+  `bs.Level(..., preview_texture=myassets.textures.my_level_preview)`, note
+  no `.get()`, since levels are built before asset-packages are resolved —
+  and read `level.preview_texture` to get the loaded `bauiv1.Texture`.
+  Constructing a level the old way still works (the texture is then looked up
+  from the name on first use), but built-in levels no longer carry a name, so
+  reading `preview_texture_name` on one now returns `None`. Both go away when
+  api 9 support ends.
 - The `float_times` argument on `efro.dataclassio.IOAttrs` is deprecated and
   will be removed when api 9 support ends. Replace `IOAttrs(float_times=True)`
   with `IOAttrs(time_format='float')`.

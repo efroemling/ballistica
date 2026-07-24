@@ -724,6 +724,13 @@ class ConstructAppMode(AppMode):
 
     def _hand_off(self) -> None:
         """Release the deferred launch intent to the normal app-mode."""
+        from babase._asset_packages import mark_construct_complete
+
+        # Every required package is resolved and registered by now; open
+        # the too-early-load gate. Do this before the no-intent early-out
+        # below -- that path is just as resolved as this one.
+        mark_construct_complete()
+
         intent = self._deferred_intent
         if intent is None:
             # Nothing to release (e.g. a plugin already drove an intent).

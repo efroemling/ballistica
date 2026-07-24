@@ -151,6 +151,7 @@ from _bauiv1 import (
     widget,
     widget_by_id,
 )
+from bauiv1._assetref import TextureRef, MeshRef, SoundRef
 from bauiv1._keyboard import Keyboard
 from bauiv1._uitypes import (
     uicleanupcheck,
@@ -256,6 +257,7 @@ __all__ = [
     'MainWindowAutoRecreateSuppress',
     'MainWindowState',
     'Mesh',
+    'MeshRef',
     'native_review_request',
     'native_review_request_supported',
     'netlog',
@@ -288,12 +290,14 @@ __all__ = [
     'shutdown_suppress_begin',
     'shutdown_suppress_end',
     'Sound',
+    'SoundRef',
     'SpecialChar',
     'spinnerwidget',
     'supports_max_fps',
     'supports_vsync',
     'supports_unicode_display',
     'Texture',
+    'TextureRef',
     'textwidget',
     'timestring',
     'uibounds',

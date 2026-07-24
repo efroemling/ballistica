@@ -476,9 +476,7 @@ class TournamentButton:
         bui.imagewidget(edit=self.lock_image, opacity=0.0 if enabled else 1.0)
         bui.imagewidget(
             edit=self.image,
-            texture=bui.gettexture(
-                campaign.getlevel(levelname).preview_texture_name
-            ),
+            texture=campaign.getlevel(levelname).preview_texture,
             opacity=1.0 if enabled else 0.5,
         )
 
