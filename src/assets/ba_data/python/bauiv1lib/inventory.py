@@ -11,6 +11,7 @@ import bacommon.docui.v2 as dui2
 from bacommon.assetspec import TextureSpec
 from bacommon.langstr import LangStrSpecValue
 import bauiv1 as bui
+from bascenev1lib.actor import spazappearance
 from bauiv1 import builtinassets
 from bauiv1 import classicassets
 
@@ -287,13 +288,15 @@ class InventoryUIController(DocUIController):
                     widget_id=f'profile.{p_name}',
                     decorations=[
                         dui2.Image(
-                            _tex_from_qualified(appearance.icon_texture),
+                            spazappearance.texture_spec(
+                                appearance.icon_texture
+                            ),
                             position=(0, 15),
                             size=(140, 140),
                             mask_texture=(
                                 builtinassets.textures.character_icon_mask
                             ),
-                            tint_texture=_tex_from_qualified(
+                            tint_texture=spazappearance.texture_spec(
                                 appearance.icon_mask_texture
                             ),
                             tint_color=color,
@@ -365,13 +368,13 @@ class InventoryUIController(DocUIController):
                 char = p_info.get('character', 'Spaz')
                 appearance = classic.spaz_appearances.get(char)
                 if appearance:
-                    sounds = (
-                        appearance.jump_sounds
-                        + appearance.attack_sounds
-                        + appearance.pickup_sounds
-                    )
+                    sounds = [
+                        *appearance.jump_sounds,
+                        *appearance.attack_sounds,
+                        *appearance.pickup_sounds,
+                    ]
                     if sounds:
-                        bui.getsound(random.choice(sounds)).play()
+                        spazappearance.ui_sound(random.choice(sounds)).play()
 
         action.window.main_window_replace(
             lambda: EditProfileWindow(

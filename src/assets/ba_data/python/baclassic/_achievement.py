@@ -1109,11 +1109,11 @@ class Achievement:
             if complete:
                 objs.append(
                     Image(
-                        classicassets.textures.achievement_outline,
+                        classicassets.textures.achievement_outline.get(),
                         host_only=True,
                         mesh_transparent=(
                             classicassets.meshes
-                        ).achievement_outline,
+                        ).achievement_outline.get(),
                         color=(2, 1.4, 0.4, 1),
                         vr_depth=8,
                         position=(x - 25, y + 5),
@@ -1309,10 +1309,10 @@ class Achievement:
             return
 
         if sound:
-            classicassets.audio.achievement.play(host_only=True)
+            classicassets.audio.achievement.get().play(host_only=True)
         else:
             bascenev1.timer(
-                0.5, lambda: builtinassets.audio.ding.play(host_only=True)
+                0.5, lambda: builtinassets.audio.ding.get().play(host_only=True)
             )
 
         in_time = 0.300
@@ -1340,7 +1340,7 @@ class Achievement:
         y_offs = 110 * self._completion_banner_slot
         objs: list[bascenev1.Actor] = []
         obj = Image(
-            builtinassets.textures.shadow,
+            builtinassets.textures.shadow.get(),
             position=(-30, 30 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,
@@ -1355,7 +1355,7 @@ class Achievement:
         assert obj.node
         obj.node.host_only = True
         obj = Image(
-            builtinassets.textures.light,
+            builtinassets.textures.light.get(),
             position=(-180, 60 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,
@@ -1444,8 +1444,8 @@ class Achievement:
         combine.connectattr('output', obj.node, 'color')
 
         obj = Image(
-            classicassets.textures.achievement_outline,
-            mesh_transparent=classicassets.meshes.achievement_outline,
+            classicassets.textures.achievement_outline.get(),
+            mesh_transparent=classicassets.meshes.achievement_outline.get(),
             position=(-180, 60 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,

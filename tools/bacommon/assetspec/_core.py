@@ -22,7 +22,18 @@ client resolves+renders it. The qualified engine form is ``<apverid>:<name>``
 from dataclasses import dataclass
 from typing import Annotated
 
-from efro.dataclassio import ioprepped, IOAttrs
+from efro.dataclassio import ioprepped, IOAttrs, IO_SLOTS
+
+# These types are created in large volume -- one per asset-package
+# wrapper access mints a spec-subclass (a ref), plus every doc-ui page,
+# langstr resolve, etc. -- and each is a tiny two-field object, so the
+# per-instance ``__dict__`` is a big relative fraction. They're slotted
+# to shed it. Manual ``__slots__`` (rather than ``@dataclass(slots=True)``)
+# is used because the fields have no defaults (so there is no slot/
+# class-var conflict) and it keeps the decorator stack simple; ``IO_SLOTS``
+# reserves dataclassio's per-instance metadata slot. Field-less ref
+# subclasses (``bauiv1._assetref``) must add ``__slots__ = ()`` of their
+# own to stay ``__dict__``-free.
 
 
 @ioprepped
@@ -34,6 +45,8 @@ class TextureSpec:
     ``textures/zoe_icon``). The engine resolves the qualified form
     ``<apverid>:<name>``.
     """
+
+    __slots__ = ('apverid', 'name', *IO_SLOTS)
 
     apverid: Annotated[str, IOAttrs('a')]
     name: Annotated[str, IOAttrs('n')]
@@ -49,6 +62,8 @@ class MeshSpec:
     ``<apverid>:<name>``.
     """
 
+    __slots__ = ('apverid', 'name', *IO_SLOTS)
+
     apverid: Annotated[str, IOAttrs('a')]
     name: Annotated[str, IOAttrs('n')]
 
@@ -62,6 +77,30 @@ class SoundSpec:
     ``audio/swish``). The engine resolves the qualified form
     ``<apverid>:<name>``.
     """
+
+    __slots__ = ('apverid', 'name', *IO_SLOTS)
+
+    apverid: Annotated[str, IOAttrs('a')]
+    name: Annotated[str, IOAttrs('n')]
+
+
+@ioprepped
+@dataclass
+class CollisionMeshSpec:
+    """A language-independent reference to a collision-mesh in a package.
+
+    ``name`` is the collision-mesh's logical path within the package
+    (e.g. ``meshes/courtyard_level_collide``). The engine resolves the
+    qualified form ``<apverid>:<name>``.
+
+    Collision meshes are a scene-only kind (physics; they ride the
+    flavor-invariant ``constant`` bucket -- asset-packages decision
+    #26), so nothing server-side emits one. The type exists so the
+    scene wrapper's verified-spec leaves stay kind-distinct like every
+    other kind.
+    """
+
+    __slots__ = ('apverid', 'name', *IO_SLOTS)
 
     apverid: Annotated[str, IOAttrs('a')]
     name: Annotated[str, IOAttrs('n')]

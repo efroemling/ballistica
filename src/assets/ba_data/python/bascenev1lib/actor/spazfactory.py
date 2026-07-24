@@ -5,8 +5,11 @@
 from typing import TYPE_CHECKING
 
 import bascenev1 as bs
+
 from bascenev1 import classicassets
 from bascenev1 import builtinassets
+
+from bascenev1lib.actor import spazappearance
 from bascenev1lib.gameutils import SharedObjects
 
 if TYPE_CHECKING:
@@ -98,30 +101,30 @@ class SpazFactory:
 
         shared = SharedObjects.get()
         self.impact_sounds_medium = (
-            classicassets.audio.impact_medium,
-            classicassets.audio.impact_medium2,
+            classicassets.audio.impact_medium.get(),
+            classicassets.audio.impact_medium2.get(),
         )
         self.impact_sounds_hard = (
-            classicassets.audio.impact_hard,
-            classicassets.audio.impact_hard2,
-            classicassets.audio.impact_hard3,
+            classicassets.audio.impact_hard.get(),
+            classicassets.audio.impact_hard2.get(),
+            classicassets.audio.impact_hard3.get(),
         )
         self.impact_sounds_harder = (
-            classicassets.audio.big_impact,
-            classicassets.audio.big_impact2,
+            classicassets.audio.big_impact.get(),
+            classicassets.audio.big_impact2.get(),
         )
-        self.single_player_death_sound = classicassets.audio.player_death
-        self.punch_sound_weak = classicassets.audio.punch_weak01
-        self.punch_sound = builtinassets.audio.punch01
+        self.single_player_death_sound = classicassets.audio.player_death.get()
+        self.punch_sound_weak = classicassets.audio.punch_weak01.get()
+        self.punch_sound = builtinassets.audio.punch01.get()
         self.punch_sound_strong = (
-            classicassets.audio.punch_strong01,
-            classicassets.audio.punch_strong02,
+            classicassets.audio.punch_strong01.get(),
+            classicassets.audio.punch_strong02.get(),
         )
-        self.punch_sound_stronger = classicassets.audio.super_punch
-        self.swish_sound = classicassets.audio.punch_swish
-        self.block_sound = classicassets.audio.block
-        self.shatter_sound = classicassets.audio.shatter
-        self.splatter_sound = classicassets.audio.splatter
+        self.punch_sound_stronger = classicassets.audio.super_punch.get()
+        self.swish_sound = classicassets.audio.punch_swish.get()
+        self.block_sound = classicassets.audio.block.get()
+        self.shatter_sound = classicassets.audio.shatter.get()
+        self.splatter_sound = classicassets.audio.splatter.get()
         self.spaz_material = bs.Material()
         self.roller_material = bs.Material()
         self.punch_material = bs.Material()
@@ -192,13 +195,13 @@ class SpazFactory:
         )
 
         self.foot_impact_sounds = (
-            classicassets.audio.foot_impact01,
-            classicassets.audio.foot_impact02,
-            classicassets.audio.foot_impact03,
+            classicassets.audio.foot_impact01.get(),
+            classicassets.audio.foot_impact02.get(),
+            classicassets.audio.foot_impact03.get(),
         )
 
-        self.foot_skid_sound = classicassets.audio.skid01
-        self.foot_roll_sound = classicassets.audio.scamper01
+        self.foot_skid_sound = classicassets.audio.skid01.get()
+        self.foot_roll_sound = classicassets.audio.scamper01.get()
 
         self.roller_material.add_actions(
             conditions=('they_have_material', footing_material),
@@ -209,7 +212,7 @@ class SpazFactory:
             ),
         )
 
-        self.skid_sound = classicassets.audio.gravel_skid
+        self.skid_sound = classicassets.audio.gravel_skid.get()
 
         self.spaz_material.add_actions(
             conditions=('they_have_material', footing_material),
@@ -220,9 +223,9 @@ class SpazFactory:
             ),
         )
 
-        self.shield_up_sound = classicassets.audio.shield_up
-        self.shield_down_sound = classicassets.audio.shield_down
-        self.shield_hit_sound = classicassets.audio.shield_hit
+        self.shield_up_sound = classicassets.audio.shield_up.get()
+        self.shield_down_sound = classicassets.audio.shield_down.get()
+        self.shield_hit_sound = classicassets.audio.shield_hit.get()
 
         # We don't want to collide with stuff we're initially overlapping
         # (unless its marked with a special region material).
@@ -270,23 +273,45 @@ class SpazFactory:
         char = bs.app.classic.spaz_appearances[character]
         if character not in self.spaz_media:
             media = self.spaz_media[character] = {
-                'jump_sounds': [bs.getsound(s) for s in char.jump_sounds],
-                'attack_sounds': [bs.getsound(s) for s in char.attack_sounds],
-                'impact_sounds': [bs.getsound(s) for s in char.impact_sounds],
-                'death_sounds': [bs.getsound(s) for s in char.death_sounds],
-                'pickup_sounds': [bs.getsound(s) for s in char.pickup_sounds],
-                'fall_sounds': [bs.getsound(s) for s in char.fall_sounds],
-                'color_texture': bs.gettexture(char.color_texture),
-                'color_mask_texture': bs.gettexture(char.color_mask_texture),
-                'head_mesh': bs.getmesh(char.head_mesh),
-                'torso_mesh': bs.getmesh(char.torso_mesh),
-                'pelvis_mesh': bs.getmesh(char.pelvis_mesh),
-                'upper_arm_mesh': bs.getmesh(char.upper_arm_mesh),
-                'forearm_mesh': bs.getmesh(char.forearm_mesh),
-                'hand_mesh': bs.getmesh(char.hand_mesh),
-                'upper_leg_mesh': bs.getmesh(char.upper_leg_mesh),
-                'lower_leg_mesh': bs.getmesh(char.lower_leg_mesh),
-                'toes_mesh': bs.getmesh(char.toes_mesh),
+                'jump_sounds': [
+                    spazappearance.scene_sound(s) for s in char.jump_sounds
+                ],
+                'attack_sounds': [
+                    spazappearance.scene_sound(s) for s in char.attack_sounds
+                ],
+                'impact_sounds': [
+                    spazappearance.scene_sound(s) for s in char.impact_sounds
+                ],
+                'death_sounds': [
+                    spazappearance.scene_sound(s) for s in char.death_sounds
+                ],
+                'pickup_sounds': [
+                    spazappearance.scene_sound(s) for s in char.pickup_sounds
+                ],
+                'fall_sounds': [
+                    spazappearance.scene_sound(s) for s in char.fall_sounds
+                ],
+                'color_texture': spazappearance.scene_texture(
+                    char.color_texture
+                ),
+                'color_mask_texture': spazappearance.scene_texture(
+                    char.color_mask_texture
+                ),
+                'head_mesh': spazappearance.scene_mesh(char.head_mesh),
+                'torso_mesh': spazappearance.scene_mesh(char.torso_mesh),
+                'pelvis_mesh': spazappearance.scene_mesh(char.pelvis_mesh),
+                'upper_arm_mesh': spazappearance.scene_mesh(
+                    char.upper_arm_mesh
+                ),
+                'forearm_mesh': spazappearance.scene_mesh(char.forearm_mesh),
+                'hand_mesh': spazappearance.scene_mesh(char.hand_mesh),
+                'upper_leg_mesh': spazappearance.scene_mesh(
+                    char.upper_leg_mesh
+                ),
+                'lower_leg_mesh': spazappearance.scene_mesh(
+                    char.lower_leg_mesh
+                ),
+                'toes_mesh': spazappearance.scene_mesh(char.toes_mesh),
             }
         else:
             media = self.spaz_media[character]

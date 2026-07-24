@@ -97,7 +97,7 @@ class ControlsGuide(bs.Actor):
         self._jump_image = bs.newnode(
             'image',
             attrs={
-                'texture': classicassets.textures.button_jump,
+                'texture': classicassets.textures.button_jump.get(),
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,
@@ -125,7 +125,7 @@ class ControlsGuide(bs.Actor):
         self._punch_image = bs.newnode(
             'image',
             attrs={
-                'texture': classicassets.textures.button_punch,
+                'texture': classicassets.textures.button_punch.get(),
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,
@@ -153,7 +153,7 @@ class ControlsGuide(bs.Actor):
         self._bomb_image = bs.newnode(
             'image',
             attrs={
-                'texture': classicassets.textures.button_bomb,
+                'texture': classicassets.textures.button_bomb.get(),
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,
@@ -181,7 +181,7 @@ class ControlsGuide(bs.Actor):
         self._pickup_image = bs.newnode(
             'image',
             attrs={
-                'texture': classicassets.textures.button_pick_up,
+                'texture': classicassets.textures.button_pick_up.get(),
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,

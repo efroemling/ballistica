@@ -154,13 +154,13 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
         self._race_started = False
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        self._score_sound = classicassets.audio.score
-        self._swipsound = classicassets.audio.swip
+        self._score_sound = classicassets.audio.score.get()
+        self._swipsound = classicassets.audio.swip.get()
         self._last_team_time: float | None = None
         self._front_race_region: int | None = None
-        self._nub_tex = builtinassets.textures.nub
-        self._beep_1_sound = classicassets.audio.race_beep1
-        self._beep_2_sound = classicassets.audio.race_beep2
+        self._nub_tex = builtinassets.textures.nub.get()
+        self._beep_1_sound = classicassets.audio.race_beep1.get()
+        self._beep_2_sound = classicassets.audio.race_beep2.get()
         self.race_region_material: bs.Material | None = None
         self._regions: list[RaceRegion] = []
         self._team_finish_pts: int | None = None
@@ -414,7 +414,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             player.team.finished = True
             player.team.time = None
             player.team.lap = 0
-            classicassets.audio.boo.play()
+            classicassets.audio.boo.get().play()
             for otherplayer in player.team.players:
                 otherplayer.lap = 0
                 otherplayer.finished = True
@@ -514,7 +514,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             lnub = bs.newnode(
                 'image',
                 attrs={
-                    'texture': builtinassets.textures.nub,
+                    'texture': builtinassets.textures.nub.get(),
                     'opacity': 1.0,
                     'absolute_scale': True,
                     'position': (-75 + i * 50, light_y),

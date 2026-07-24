@@ -984,7 +984,7 @@ class SpazBotSet:
         self._bot_lists: list[list[SpazBot]] = [
             [] for _ in range(self._bot_list_count)
         ]
-        self._spawn_sound = classicassets.audio.spawn
+        self._spawn_sound = classicassets.audio.spawn.get()
         self._spawning_count = 0
         self._bot_update_timer: bs.Timer | None = None
         self.start_moving()

@@ -297,7 +297,7 @@ class MultiTeamSession(Session):
         from bascenev1._gameutils import cameraflash
         from bascenev1._messages import CelebrateMessage
 
-        _bascenev1.timer(delay, classicassets.audio.boxing_bell.play)
+        _bascenev1.timer(delay, classicassets.audio.boxing_bell.get().play)
 
         if announce_winning_team:
             winning_sessionteam = results.winning_sessionteam

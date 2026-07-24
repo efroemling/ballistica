@@ -42,7 +42,7 @@ class Icon(bs.Actor):
         self._show_lives = show_lives
         self._show_death = show_death
         self._name_scale = name_scale
-        self._outline_tex = builtinassets.textures.character_icon_mask
+        self._outline_tex = builtinassets.textures.character_icon_mask.get()
 
         icon = player.get_icon()
         self.node = bs.newnode(

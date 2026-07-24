@@ -614,14 +614,14 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self._issued_warning = False
         self._map_type = Rampage
         self._map_type.preload()
-        self._jump_button_tex = classicassets.textures.button_jump
-        self._pick_up_button_tex = classicassets.textures.button_pick_up
-        self._bomb_button_tex = classicassets.textures.button_bomb
-        self._punch_button_tex = classicassets.textures.button_punch
+        self._jump_button_tex = classicassets.textures.button_jump.get()
+        self._pick_up_button_tex = classicassets.textures.button_pick_up.get()
+        self._bomb_button_tex = classicassets.textures.button_bomb.get()
+        self._punch_button_tex = classicassets.textures.button_punch.get()
         self._r = 'tutorial'
         self._have_skipped = False
         self.stick_image_position_x = self.stick_image_position_y = 0.0
-        self.spawn_sound = classicassets.audio.spawn
+        self.spawn_sound = classicassets.audio.spawn.get()
         self.map: bs.Map | None = None
         self.text: bs.Node | None = None
         self._skip_text: bs.Node | None = None
@@ -752,7 +752,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self.punch_image = bs.newnode(
             'image',
             attrs={
-                'texture': classicassets.textures.button_punch,
+                'texture': classicassets.textures.button_punch.get(),
                 'absolute_scale': True,
                 'vr_depth': -20,
                 'position': p,
@@ -765,7 +765,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self.bomb_image = bs.newnode(
             'image',
             attrs={
-                'texture': classicassets.textures.button_bomb,
+                'texture': classicassets.textures.button_bomb.get(),
                 'absolute_scale': True,
                 'vr_depth': -20,
                 'position': p,
@@ -780,7 +780,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self.pickup_image = bs.newnode(
             'image',
             attrs={
-                'texture': classicassets.textures.button_pick_up,
+                'texture': classicassets.textures.button_pick_up.get(),
                 'absolute_scale': True,
                 'vr_depth': -20,
                 'position': p,
@@ -794,7 +794,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self._stick_base_image = bs.newnode(
             'image',
             attrs={
-                'texture': builtinassets.textures.nub,
+                'texture': builtinassets.textures.nub.get(),
                 'absolute_scale': True,
                 'vr_depth': -40,
                 'position': p,
@@ -807,7 +807,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self._stick_nub_image = bs.newnode(
             'image',
             attrs={
-                'texture': builtinassets.textures.nub,
+                'texture': builtinassets.textures.nub.get(),
                 'absolute_scale': True,
                 'position': p,
                 'scale': (nub_size, nub_size),
@@ -2468,7 +2468,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
             bs.increment_analytics_count('Tutorial skip')
             bs.set_analytics_screen('Tutorial Skip')
             self._have_skipped = True
-            builtinassets.audio.swish.play()
+            builtinassets.audio.swish.get().play()
             # self._skip_count_text.text = self._r.skippingText
             self._skip_count_text.text = classicassets.strings.tutorial.skipping
             assert self._skip_text

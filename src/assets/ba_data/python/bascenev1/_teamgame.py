@@ -181,5 +181,7 @@ class TeamGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                 delay = 0.0
             else:
                 delay = 2.0
-                _bascenev1.timer(0.1, classicassets.audio.boxing_bell.play)
+                _bascenev1.timer(
+                    0.1, classicassets.audio.boxing_bell.get().play
+                )
             super().end(results, delay=delay, force=force)

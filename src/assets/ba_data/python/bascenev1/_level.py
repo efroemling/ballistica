@@ -73,7 +73,7 @@ class Level:
         preview_texture_name: str | None = None,
         *,
         displayname: str | None = None,
-        preview_texture: bauiv1.TextureRef | None = None,
+        preview_texture: bauiv1.TextureVerifiedSpec | None = None,
     ):
         if preview_texture is None and preview_texture_name is None:
             raise TypeError(

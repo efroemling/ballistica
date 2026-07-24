@@ -7,7 +7,7 @@ logical name -- carrying no asset data and no guarantee the package is
 locally present (or still exists). Per the D28 semantic split (see
 ``strings-asset-migration.md`` in ballistica-internal), assets ladder
 through three tiers: ``TextureSpec`` (this claim form; wire/model
-currency) -> client ``bauiv1.TextureRef`` (a verified-local subclass
+currency) -> client ``bauiv1.TextureVerifiedSpec`` (a verified-local subclass
 adding ``.get()``; its wrapper pin resolved before use) ->
 ``bauiv1.Texture`` (the loaded engine asset). Servers hold only specs;
 consuming clients verify/resolve before display. Each kind gets a
@@ -17,17 +17,23 @@ schema can enforce where each kind may go.
 Type-safe, ergonomic access to a package's references comes from a generated
 wrapper module (emitted server-side; the codegen lives in
 ``baserver.assetwrappergen``), whose per-kind roots (``textures``, ``meshes``)
-are driven at runtime by :class:`AssetSpecDir` -- mirroring the client-side
+are driven at runtime by :class:`AssetGroup` -- mirroring the client-side
 asset-package wrappers.
 """
 
-from bacommon.assetspec._core import TextureSpec, MeshSpec, SoundSpec
-from bacommon.assetspec._wrapper import AssetSpecDir, AssetSpecTree
+from bacommon.assetspec._core import (
+    TextureSpec,
+    MeshSpec,
+    SoundSpec,
+    CollisionMeshSpec,
+)
+from bacommon.assetspec._wrapper import AssetGroup, AssetGroupTree
 
 __all__ = [
     'TextureSpec',
     'MeshSpec',
     'SoundSpec',
-    'AssetSpecDir',
-    'AssetSpecTree',
+    'CollisionMeshSpec',
+    'AssetGroup',
+    'AssetGroupTree',
 ]

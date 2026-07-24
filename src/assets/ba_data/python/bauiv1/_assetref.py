@@ -4,12 +4,12 @@
 
 This is the bauiv1 (client) flavor of :mod:`bacommon.assetspec` and the
 middle tier of the D28 asset ladder: ``TextureSpec`` (authoring claim)
--> ``TextureRef`` (this module; a *verified-local* reference — its
+-> ``TextureVerifiedSpec`` (this module; a *verified-local* reference — its
 wrapper's pin was construct-mode-resolved before use) ->
 ``bauiv1.Texture`` (the loaded engine asset). A generated reference
 wrapper exposes per-kind roots (``textures``, ``meshes``, ...) whose
 leaves here are thin subclasses of the spec types adding a single
-:meth:`TextureRef.get` method returning the live ``bauiv1.Texture``
+:meth:`TextureVerifiedSpec.get` method returning the live ``bauiv1.Texture``
 (etc.) while remaining ordinary specs on the wire.
 
 The subclasses add no data fields -- only the ``get()`` accessor -- so
@@ -40,8 +40,14 @@ if TYPE_CHECKING:
 # These leaves add only a ``get()`` method (no new fields), so they need no
 # ``@dataclass`` -- they inherit the base's fields, ``__init__``, ``__eq__``,
 # etc., serialize byte-for-byte as the base, and decode back as the base.
-class TextureRef(_TextureSpec):
+# ``__slots__ = ()`` keeps instances ``__dict__``-free: the spec base is
+# slotted, but a subclass that omits ``__slots__`` silently reintroduces a
+# ``__dict__``, and the ref is the object actually allocated (and mostly
+# thrown away) on every wrapper access, so it's the one that matters.
+class TextureVerifiedSpec(_TextureSpec):
     """A texture reference that can also load the live engine texture."""
+
+    __slots__ = ()
 
     def get(self) -> 'bauiv1.Texture':
         """Resolve and return the live engine texture for this reference."""
@@ -49,8 +55,10 @@ class TextureRef(_TextureSpec):
         return _bauiv1.gettexture(f'{self.apverid}:{self.name}')
 
 
-class MeshRef(_MeshSpec):
+class MeshVerifiedSpec(_MeshSpec):
     """A mesh reference that can also load the live engine mesh."""
+
+    __slots__ = ()
 
     def get(self) -> 'bauiv1.Mesh':
         """Resolve and return the live engine mesh for this reference."""
@@ -58,8 +66,10 @@ class MeshRef(_MeshSpec):
         return _bauiv1.getmesh(f'{self.apverid}:{self.name}')
 
 
-class SoundRef(_SoundSpec):
+class SoundVerifiedSpec(_SoundSpec):
     """A sound reference that can also load the live engine sound."""
+
+    __slots__ = ()
 
     def get(self) -> 'bauiv1.Sound':
         """Resolve and return the live engine sound for this reference."""
@@ -70,48 +80,51 @@ class SoundRef(_SoundSpec):
 #: A node in a wrapper's kind-code tree: each key is one path segment; a
 #: ``dict`` value is a subdirectory and a ``str`` value is a leaf asset
 #: whose string is its single-char kind code (see :func:`_make`).
-type AssetRefTree = dict[str, 'str | AssetRefTree']
+type AssetGroupTree = dict[str, 'str | AssetGroupTree']
 
 
-class AssetRefDir:
+class AssetGroup:
     """Dynamic accessor for one subdirectory of an asset-package's refs.
 
     Attribute access resolves against the wrapper's nested kind-code tree:
-    a subdirectory yields another :class:`AssetRefDir`; a leaf yields the
+    a subdirectory yields another :class:`AssetGroup`; a leaf yields the
     reference for its kind. All real type information lives in the wrapper's
     ``if TYPE_CHECKING:`` shadow, so callers never type-check through this
-    class. Mirrors :class:`bauiv1._assetwrap.AssetDir` but yields a
-    reference rather than loading the asset directly.
+    class. Mirrors :class:`bascenev1._assetref.AssetGroup`, differing only
+    in what its leaves' ``get()`` loads (ui vs scene assets).
     """
 
     __slots__ = ('_apverid', '_node', '_prefix')
 
-    def __init__(self, apverid: str, node: AssetRefTree, prefix: str) -> None:
+    def __init__(self, apverid: str, node: AssetGroupTree, prefix: str) -> None:
         self._apverid = apverid
         self._node = node
         self._prefix = prefix
 
     def __getattr__(
         self, name: str
-    ) -> 'AssetRefDir | TextureRef | MeshRef | SoundRef':
+    ) -> (
+        'AssetGroup | TextureVerifiedSpec | MeshVerifiedSpec'
+        ' | SoundVerifiedSpec'
+    ):
         try:
             child = self._node[name]
         except KeyError:
             raise AttributeError(name) from None
         path = f'{self._prefix}/{name}' if self._prefix else name
         if isinstance(child, dict):
-            return AssetRefDir(self._apverid, child, path)
+            return AssetGroup(self._apverid, child, path)
         return _make(self._apverid, path, child)
 
 
 def _make(
     apverid: str, path: str, kind: str
-) -> TextureRef | MeshRef | SoundRef:
+) -> TextureVerifiedSpec | MeshVerifiedSpec | SoundVerifiedSpec:
     """Build a single leaf reference by its single-char kind code."""
     if kind == 't':
-        return TextureRef(apverid, path)
+        return TextureVerifiedSpec(apverid, path)
     if kind == 'm':
-        return MeshRef(apverid, path)
+        return MeshVerifiedSpec(apverid, path)
     if kind == 's':
-        return SoundRef(apverid, path)
+        return SoundVerifiedSpec(apverid, path)
     raise ValueError(f'Invalid asset-ref kind {kind!r} for {apverid}:{path}.')

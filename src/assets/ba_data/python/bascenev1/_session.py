@@ -229,7 +229,7 @@ class Session:
             if len(self.sessionplayers) >= self.max_players >= 0:
                 # Print a rejection message *only* to the client trying to
                 # join (prevents spamming everyone else in the game).
-                builtinassets.audio.error.play()
+                builtinassets.audio.error.get().play()
                 _bascenev1.broadcastmessage(
                     classicassets.strings.session.player_limit_reached(
                         count=self.max_players
@@ -267,7 +267,7 @@ class Session:
                 return False
             self._player_requested_identifiers[player.id] = identifier
 
-        classicassets.audio.dripity.play()
+        classicassets.audio.dripity.get().play()
         return True
 
     def on_player_leave(self, sessionplayer: bascenev1.SessionPlayer) -> None:
@@ -284,7 +284,7 @@ class Session:
             )
             return
 
-        classicassets.audio.player_left.play()
+        classicassets.audio.player_left.get().play()
 
         activity = self._activity_weak()
 
@@ -706,7 +706,7 @@ class Session:
                     ),
                     color=(1, 1, 0),
                 )
-                builtinassets.audio.error.play()
+                builtinassets.audio.error.get().play()
 
         # Otherwise just add players on the fly.
         else:

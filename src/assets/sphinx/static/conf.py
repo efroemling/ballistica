@@ -279,12 +279,12 @@ nitpick_ignore = [
     ('py:class', 'bs.LangStr'),
     ('py:class', 'bui.LangStr'),
     # bacommon.assetspec texture/mesh refs — same story: bare cross-module
-    # class refs to fully-qualify eventually; AssetRefTree is a PEP 695
+    # class refs to fully-qualify eventually; AssetGroupTree is a PEP 695
     # ``type`` alias autodoc renders in signatures but can't cross-ref.
-    ('py:class', 'TextureRef'),
-    ('py:class', 'MeshRef'),
-    ('py:class', 'AssetRefDir'),
-    ('py:class', 'bacommon.assetspec._wrapper.AssetSpecTree'),
+    ('py:class', 'TextureVerifiedSpec'),
+    ('py:class', 'MeshVerifiedSpec'),
+    ('py:class', 'AssetGroup'),
+    ('py:class', 'bacommon.assetspec._wrapper.AssetGroupTree'),
 ]
 
 # Regex-based nitpick ignores for whole categories of references.

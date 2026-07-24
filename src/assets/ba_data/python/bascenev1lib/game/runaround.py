@@ -138,14 +138,16 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         shared = SharedObjects.get()
         self._preset = Preset(settings.get('preset', 'pro'))
 
-        self._player_death_sound = classicassets.audio.player_death
-        self._new_wave_sound = classicassets.audio.score_hit01
-        self._winsound = classicassets.audio.score
-        self._cashregistersound = builtinassets.audio.cash_register
-        self._bad_guy_score_sound = classicassets.audio.shield_down
-        self._heart_tex = classicassets.textures.heart
-        self._heart_mesh_opaque = classicassets.meshes.heart_opaque
-        self._heart_mesh_transparent = classicassets.meshes.heart_transparent
+        self._player_death_sound = classicassets.audio.player_death.get()
+        self._new_wave_sound = classicassets.audio.score_hit01.get()
+        self._winsound = classicassets.audio.score.get()
+        self._cashregistersound = builtinassets.audio.cash_register.get()
+        self._bad_guy_score_sound = classicassets.audio.shield_down.get()
+        self._heart_tex = classicassets.textures.heart.get()
+        self._heart_mesh_opaque = classicassets.meshes.heart_opaque.get()
+        self._heart_mesh_transparent = (
+            classicassets.meshes.heart_transparent.get()
+        )
 
         self._a_player_has_been_killed = False
         self._spawn_center = self._map_type.defs.points['spawn1'][0:3]
@@ -175,8 +177,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         self._score = 0
         self._time_bonus = 0
         self._score_region: bs.Actor | None = None
-        self._dingsound = classicassets.audio.ding_small
-        self._dingsoundhigh = classicassets.audio.ding_small_high
+        self._dingsound = classicassets.audio.ding_small.get()
+        self._dingsoundhigh = classicassets.audio.ding_small_high.get()
         self._exclude_powerups: list[str] | None = None
         self._have_tnt: bool | None = None
         self._waves: list[Wave] | None = None

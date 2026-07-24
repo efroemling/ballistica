@@ -17,15 +17,84 @@ if TYPE_CHECKING:
 # Types which we can pass through as-is.
 SIMPLE_TYPES = {int, bool, str, float, type(None)}
 
-# Attr name for dict of extra attributes included on dataclass
-# instances. Note that this is only added if extra attributes are
-# present.
-EXTRA_ATTRS_ATTR = '_DCIOEXATTRS'
+# Single instance attr holding ALL per-instance dataclassio metadata
+# (lossy flag, preserved extra attrs, and anything added later). It is
+# consolidated into one attr on purpose: slotting an @ioprepped
+# dataclass then requires reserving exactly ONE name regardless of how
+# many metadata kinds exist now or in the future. Only ever added
+# lazily -- an instance with no metadata carries nothing. Slotted
+# @ioprepped classes must reserve this in __slots__ (splat IO_SLOTS);
+# the prep pass enforces it.
+DCIO_META_ATTR = '_dcio'
 
-# Attr name for a bool attr for flagging data as lossy, which means it
-# may have been modified in some way during load and should generally
-# not be written back out.
-LOSSY_ATTR = '_DCIOLOSSY'
+# Keys within the metadata dict.
+_DCIO_LOSSY = 'lossy'  # bool: data modified on load; disallow writing out.
+_DCIO_EXTRA = 'extra'  # dict: unrecognized attrs preserved from input.
+
+# Slot names a slotted @ioprepped dataclass must reserve. Splat into a
+# class' __slots__ so future metadata additions never require touching
+# consumers: ``__slots__ = ('field1', 'field2', *IO_SLOTS)``.
+IO_SLOTS = (DCIO_META_ATTR,)
+
+
+def _io_meta_create(obj: Any) -> dict:
+    """Return an instance's metadata dict, creating it if absent."""
+    meta = getattr(obj, DCIO_META_ATTR, None)
+    if meta is None:
+        meta = {}
+        setattr(obj, DCIO_META_ATTR, meta)
+    return meta
+
+
+def io_meta(obj: Any) -> dict | None:
+    """Return an instance's dataclassio metadata dict, or ``None``.
+
+    The metadata dict is added lazily, so a plainly-decoded instance
+    with no lossy flag or preserved extra-attrs has none.
+    """
+    return getattr(obj, DCIO_META_ATTR, None)
+
+
+def io_is_lossy(obj: Any) -> bool:
+    """Whether an instance is flagged as lossy.
+
+    Lossy means the value may have been modified during load; the
+    outputter refuses to serialize such an instance as a safety net
+    against unintentional round-trips.
+    """
+    meta = getattr(obj, DCIO_META_ATTR, None)
+    return bool(meta and meta.get(_DCIO_LOSSY))
+
+
+def io_mark_lossy(obj: Any) -> None:
+    """Flag an instance as lossy (see :func:`io_is_lossy`)."""
+    _io_meta_create(obj)[_DCIO_LOSSY] = True
+
+
+def io_clear_lossy(obj: Any) -> None:
+    """Clear an instance's lossy flag.
+
+    For the rare case of a deliberate one-way output of data that was
+    loaded lossily (e.g. a read-only human dump); use with care.
+    """
+    meta = getattr(obj, DCIO_META_ATTR, None)
+    if meta is not None:
+        meta.pop(_DCIO_LOSSY, None)
+
+
+def io_extra_attrs(obj: Any) -> dict | None:
+    """Return unrecognized attrs preserved on an instance, or ``None``.
+
+    Populated when tolerant decoding encounters keys not matching any
+    field, so older code can round-trip newer data nondestructively.
+    """
+    meta = getattr(obj, DCIO_META_ATTR, None)
+    return meta.get(_DCIO_EXTRA) if meta is not None else None
+
+
+def io_set_extra_attrs(obj: Any, extra: dict) -> None:
+    """Store preserved unrecognized attrs on an instance."""
+    _io_meta_create(obj)[_DCIO_EXTRA] = extra
 
 
 class Codec(Enum):

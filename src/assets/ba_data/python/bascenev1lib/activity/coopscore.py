@@ -43,10 +43,10 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
         self._do_new_rating: bool = self.session.tournament_id is not None
 
-        self._score_display_sound = classicassets.audio.score_hit01
-        self._score_display_sound_small = classicassets.audio.score_hit02
-        self.drum_roll_sound = classicassets.audio.drum_roll
-        self.cymbal_sound = classicassets.audio.cymbal
+        self._score_display_sound = classicassets.audio.score_hit01.get()
+        self._score_display_sound_small = classicassets.audio.score_hit02.get()
+        self.drum_roll_sound = classicassets.audio.drum_roll.get()
+        self.cymbal_sound = classicassets.audio.cymbal.get()
 
         self._replay_icon_texture = uiclassicassets.textures.replay_icon.get()
         self._menu_icon_texture = uiclassicassets.textures.menu_icon.get()
@@ -96,9 +96,9 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             self._game_service_leaderboards_texture = None
             self._account_has_achievements = False
 
-        self._cashregistersound = builtinassets.audio.cash_register
-        self._gun_cocking_sound = builtinassets.audio.gun_cocking
-        self._dingsound = builtinassets.audio.ding
+        self._cashregistersound = builtinassets.audio.cash_register.get()
+        self._gun_cocking_sound = builtinassets.audio.gun_cocking.get()
+        self._dingsound = builtinassets.audio.ding.get()
         self._score_link: str | None = None
         self._root_ui: bui.Widget | None = None
         self._background: bs.Actor | None = None
@@ -222,13 +222,13 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     classicassets.strings.coop.tournament_checking_state,
                     color=(1, 0, 0),
                 )
-                builtinassets.audio.error.play()
+                builtinassets.audio.error.get().play()
                 return
             if self._tournament_time_remaining <= 0:
                 bui.screenmessage(
                     classicassets.strings.coop.tournament_ended, color=(1, 0, 0)
                 )
-                builtinassets.audio.error.play()
+                builtinassets.audio.error.get().play()
                 return
 
         # If there are currently fewer players than our session min,
@@ -238,7 +238,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 classicassets.strings.coopscore.not_enough_players_remaining,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             return
 
         self._campaign.set_selected_level(self._level_name)
@@ -292,7 +292,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
     def _ui_worlds_best(self) -> None:
         if self._score_link is None:
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             bui.screenmessage(
                 classicassets.strings.coopscore.score_list_unavailable,
                 color=(1, 0.5, 0),
@@ -311,7 +311,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 color=(0.5, 0.7, 0.5, 1),
                 position=(300, -235),
             )
-            builtinassets.audio.error.play()
+            builtinassets.audio.error.get().play()
             bs.timer(
                 2.0,
                 bs.WeakCallStrict(
@@ -1725,7 +1725,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     stars = 1
                 else:
                     stars = 0
-                star_tex = classicassets.textures.star
+                star_tex = classicassets.textures.star.get()
                 star_x = 135 + offs_x
                 for _i in range(stars):
                     img = bs.NodeActor(

@@ -58,7 +58,7 @@ class Spawner:
         """
         self._spawn_callback = spawn_callback
         self._send_spawn_message = send_spawn_message
-        self._spawner_sound = classicassets.audio.swip2
+        self._spawner_sound = classicassets.audio.swip2.get()
         self._data = data
         self._pt = pt
         # create a light where the spawn will happen

@@ -187,8 +187,27 @@ def _bootstrap_networking() -> None:
 
     # Our shared SSL context. Creating these can be expensive so we
     # create it here once and recycle for our various connections.
+    #
+    # When we bring our own Python, baenv points SSL_CERT_FILE at our
+    # bundled certifi root certs; in that case we trust ONLY those and
+    # deliberately do NOT pull in the OS certificate store. Passing
+    # cafile= makes create_default_context() skip load_default_certs(),
+    # which on Windows would otherwise load the system cert store on top
+    # of ours -- and expired legacy roots lingering there (old DST/ISRG
+    # cross-signs and the like) can poison OpenSSL's chain-building and
+    # make it reject currently-valid server certs as expired. The other
+    # platforms never load the OS store anyway, so this just brings
+    # Windows in line with them. Set BA_USE_SYSTEM_CERTS=1 to fall back
+    # to the OS store (e.g. behind a corporate/AV TLS-inspection proxy
+    # whose root lives only in the system store).
     global _g_net_warm_start_ssl_context  # pylint: disable=global-statement
-    _g_net_warm_start_ssl_context = ssl.create_default_context()
+    bundled_ca_file = os.environ.get('SSL_CERT_FILE')
+    if bundled_ca_file and os.environ.get('BA_USE_SYSTEM_CERTS') != '1':
+        _g_net_warm_start_ssl_context = ssl.create_default_context(
+            cafile=bundled_ca_file
+        )
+    else:
+        _g_net_warm_start_ssl_context = ssl.create_default_context()
 
     # I'm finding that urllib3 exceptions tend to give us reference
     # cycles, which we want to avoid as much as possible. We can work

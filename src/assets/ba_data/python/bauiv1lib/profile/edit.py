@@ -572,6 +572,9 @@ class EditProfileWindow(
         assert self._existing_profile is not None
 
         # Play a death sound of the character.
+        # pylint: disable-next=cyclic-import
+        from bascenev1lib.actor import spazappearance
+
         classic = bui.app.classic
         if classic is not None:
             profiles = bui.app.config.get('Player Profiles', {})
@@ -580,7 +583,9 @@ class EditProfileWindow(
                 char = p_info.get('character', 'Spaz')
                 appearance = classic.spaz_appearances.get(char)
                 if appearance:
-                    bui.getsound(random.choice(appearance.death_sounds)).play()
+                    spazappearance.ui_sound(
+                        random.choice(appearance.death_sounds)
+                    ).play()
 
         plus.add_v1_account_transaction(
             {'type': 'REMOVE_PLAYER_PROFILE', 'name': self._existing_profile}
@@ -718,11 +723,13 @@ class EditProfileWindow(
         self._spazzes = spazappearance.get_appearances()
         self._spazzes.sort()
         self._icon_textures = [
-            bui.gettexture(bui.app.classic.spaz_appearances[s].icon_texture)
+            spazappearance.ui_texture(
+                bui.app.classic.spaz_appearances[s].icon_texture
+            )
             for s in self._spazzes
         ]
         self._icon_tint_textures = [
-            bui.gettexture(
+            spazappearance.ui_texture(
                 bui.app.classic.spaz_appearances[s].icon_mask_texture
             )
             for s in self._spazzes

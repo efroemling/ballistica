@@ -107,7 +107,7 @@ class DeathMatchGame(bs.TeamGameActivity[Player, Team]):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._score_to_win: int | None = None
-        self._dingsound = classicassets.audio.ding_small
+        self._dingsound = classicassets.audio.ding_small.get()
         self._epic_mode = bool(settings['Epic Mode'])
         self._kills_to_win_per_player = int(settings['Kills to Win Per Player'])
         self._time_limit = float(settings['Time Limit'])

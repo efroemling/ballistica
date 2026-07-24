@@ -125,8 +125,8 @@ class ConquestGame(bs.TeamGameActivity[Player, Team]):
         super().__init__(settings)
         shared = SharedObjects.get()
         self._scoreboard = Scoreboard()
-        self._score_sound = classicassets.audio.score
-        self._swipsound = classicassets.audio.swip
+        self._score_sound = classicassets.audio.score.get()
+        self._swipsound = classicassets.audio.swip.get()
         self._extraflagmat = bs.Material()
         self._flags: list[ConquestFlag] = []
         self._epic_mode = bool(settings['Epic Mode'])

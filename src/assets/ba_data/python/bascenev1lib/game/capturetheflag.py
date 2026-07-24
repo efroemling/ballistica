@@ -163,10 +163,10 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
     def __init__(self, settings: dict):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        self._alarmsound = classicassets.audio.alarm
-        self._ticking_sound = classicassets.audio.ticking
-        self._score_sound = classicassets.audio.score
-        self._swipsound = classicassets.audio.swip
+        self._alarmsound = classicassets.audio.alarm.get()
+        self._ticking_sound = classicassets.audio.ticking.get()
+        self._score_sound = classicassets.audio.score.get()
+        self._swipsound = classicassets.audio.swip.get()
         self._last_score_time = 0
         self._all_bases_material = bs.Material()
         self._last_home_flag_notice_print_time = 0.0

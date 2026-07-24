@@ -149,11 +149,11 @@ class FootballTeamGame(bs.TeamGameActivity[Player, Team]):
         self._scoreboard: Scoreboard | None = Scoreboard()
 
         # Load some media we need.
-        self._cheer_sound = classicassets.audio.cheer
-        self._chant_sound = classicassets.audio.crowd_chant
-        self._score_sound = classicassets.audio.score
-        self._swipsound = classicassets.audio.swip
-        self._whistle_sound = classicassets.audio.ref_whistle
+        self._cheer_sound = classicassets.audio.cheer.get()
+        self._chant_sound = classicassets.audio.crowd_chant.get()
+        self._score_sound = classicassets.audio.score.get()
+        self._swipsound = classicassets.audio.swip.get()
+        self._whistle_sound = classicassets.audio.ref_whistle.get()
         self._score_region_material = bs.Material()
         self._score_region_material.add_actions(
             conditions=('they_have_material', FlagFactory.get().flagmaterial),
@@ -434,12 +434,12 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
         self._preset = settings.get('preset', 'rookie')
 
         # Load some media we need.
-        self._cheer_sound = classicassets.audio.cheer
-        self._boo_sound = classicassets.audio.boo
-        self._chant_sound = classicassets.audio.crowd_chant
-        self._score_sound = classicassets.audio.score
-        self._swipsound = classicassets.audio.swip
-        self._whistle_sound = classicassets.audio.ref_whistle
+        self._cheer_sound = classicassets.audio.cheer.get()
+        self._boo_sound = classicassets.audio.boo.get()
+        self._chant_sound = classicassets.audio.crowd_chant.get()
+        self._score_sound = classicassets.audio.score.get()
+        self._swipsound = classicassets.audio.swip.get()
+        self._whistle_sound = classicassets.audio.ref_whistle.get()
         self._score_to_win = 21
         self._score_region_material = bs.Material()
         self._score_region_material.add_actions(

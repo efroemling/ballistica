@@ -6,6 +6,7 @@
 
 from typing import TYPE_CHECKING, overload
 
+from bacommon.assetspec import TextureSpec
 import babase
 import bascenev1 as bs
 from bascenev1 import classicassets
@@ -13,7 +14,9 @@ from bascenev1 import classicassets
 if TYPE_CHECKING:
     from typing import Literal
 
-    from collections.abc import Container
+    import bauiv1
+
+    from collections.abc import Container, Sequence
 
 
 def _character_name_table() -> dict[str, babase.LangStr]:
@@ -174,9 +177,91 @@ def get_appearances(
     ]
 
 
-def _tex(name: str) -> str:
-    """Qualified classicassets ref for an appearance texture field."""
-    return f'{classicassets.__asset_package__}:textures/{name}'
+#: An appearance's texture field. Prefer a verified spec off an
+#: asset-package wrapper (``classicassets.textures.zoe_icon``); the bare
+#: ``str`` form is the legacy asset name, kept so existing mods keep
+#: working, and goes away when api 9 support ends.
+type TexVal = str | bs.TextureVerifiedSpec
+
+#: An appearance's mesh field; see :obj:`TexVal`.
+type MeshVal = str | bs.MeshVerifiedSpec
+
+#: An entry in one of an appearance's sound lists; see :obj:`TexVal`.
+type SoundVal = str | bs.SoundVerifiedSpec
+
+
+def scene_texture(val: TexVal) -> bs.Texture:
+    """Load an appearance texture field as a scene texture."""
+    return (
+        val.get()
+        if isinstance(val, bs.TextureVerifiedSpec)
+        else bs.gettexture(val)
+    )
+
+
+def scene_mesh(val: MeshVal) -> bs.Mesh:
+    """Load an appearance mesh field as a scene mesh."""
+    return (
+        val.get() if isinstance(val, bs.MeshVerifiedSpec) else bs.getmesh(val)
+    )
+
+
+def scene_sound(val: SoundVal) -> bs.Sound:
+    """Load an appearance sound entry as a scene sound."""
+    return (
+        val.get() if isinstance(val, bs.SoundVerifiedSpec) else bs.getsound(val)
+    )
+
+
+def ui_texture(val: TexVal) -> bauiv1.Texture:
+    """Load an appearance texture field as a ui texture.
+
+    Converts a scene verified spec to its ui form (see
+    :meth:`bascenev1.TextureVerifiedSpec.ui`) -- appearances hold
+    scene-form refs since they are otherwise scene data.
+    """
+    import bauiv1
+
+    return (
+        val.ui().get()
+        if isinstance(val, bs.TextureVerifiedSpec)
+        else bauiv1.gettexture(val)
+    )
+
+
+def ui_sound(val: SoundVal) -> bauiv1.Sound:
+    """Load an appearance sound entry as a ui sound; see :func:`ui_texture`."""
+    import bauiv1
+
+    return (
+        val.ui().get()
+        if isinstance(val, bs.SoundVerifiedSpec)
+        else bauiv1.getsound(val)
+    )
+
+
+def texture_spec(val: TexVal) -> TextureSpec:
+    """An appearance texture field as a plain spec (for the wire/doc-ui).
+
+    A verified spec *is* a :class:`~bacommon.assetspec.TextureSpec`, so
+    this is a passthrough for the modern form, and a legacy *qualified*
+    (``<apverid>:<name>``) string parses back into one.
+
+    A legacy *bare* name (``'neoSpazIcon'``) carries no asset-package
+    identity on its own -- only the engine's asset-name compat table
+    knows where it now lives -- so it is resolved through that table
+    (the same one the loaders use) before being split. A name with no
+    known home falls back to the default character icon rather than
+    yielding a malformed spec that would fail its package resolve and
+    render blank on the far end.
+    """
+    if isinstance(val, bs.TextureVerifiedSpec):
+        return val
+    qualified = babase.resolve_legacy_asset_name(val, 'textures')
+    apverid, sep, name = qualified.partition(':')
+    if not sep or not name:
+        return classicassets.textures.neo_spaz_icon
+    return TextureSpec(apverid, name)
 
 
 class Appearance:
@@ -190,25 +275,25 @@ class Appearance:
                 f'spaz appearance name "{self.name}" already exists.'
             )
         bs.app.classic.spaz_appearances[self.name] = self
-        self.color_texture = ''
-        self.color_mask_texture = ''
-        self.icon_texture = ''
-        self.icon_mask_texture = ''
-        self.head_mesh = ''
-        self.torso_mesh = ''
-        self.pelvis_mesh = ''
-        self.upper_arm_mesh = ''
-        self.forearm_mesh = ''
-        self.hand_mesh = ''
-        self.upper_leg_mesh = ''
-        self.lower_leg_mesh = ''
-        self.toes_mesh = ''
-        self.jump_sounds: list[str] = []
-        self.attack_sounds: list[str] = []
-        self.impact_sounds: list[str] = []
-        self.death_sounds: list[str] = []
-        self.pickup_sounds: list[str] = []
-        self.fall_sounds: list[str] = []
+        self.color_texture: TexVal = ''
+        self.color_mask_texture: TexVal = ''
+        self.icon_texture: TexVal = ''
+        self.icon_mask_texture: TexVal = ''
+        self.head_mesh: MeshVal = ''
+        self.torso_mesh: MeshVal = ''
+        self.pelvis_mesh: MeshVal = ''
+        self.upper_arm_mesh: MeshVal = ''
+        self.forearm_mesh: MeshVal = ''
+        self.hand_mesh: MeshVal = ''
+        self.upper_leg_mesh: MeshVal = ''
+        self.lower_leg_mesh: MeshVal = ''
+        self.toes_mesh: MeshVal = ''
+        self.jump_sounds: Sequence[SoundVal] = []
+        self.attack_sounds: Sequence[SoundVal] = []
+        self.impact_sounds: Sequence[SoundVal] = []
+        self.death_sounds: Sequence[SoundVal] = []
+        self.pickup_sounds: Sequence[SoundVal] = []
+        self.fall_sounds: Sequence[SoundVal] = []
         self.style = 'spaz'
         self.default_color: tuple[float, float, float] | None = None
         self.default_highlight: tuple[float, float, float] | None = None
@@ -218,870 +303,1104 @@ def register_appearances() -> None:
     # pylint: disable=too-many-statements
     """Register our builtin spaz appearances."""
 
-    # This is quite ugly but will be going away so not worth cleaning up.
+    # A big hand-written table; it wants to be data eventually.
     # pylint: disable=too-many-locals
 
+    # Shorthands for the wrapper groups; these blocks are almost
+    # entirely asset assignments and the full paths drown them out.
+    tex = classicassets.textures
+    mesh = classicassets.meshes
+    snd = classicassets.audio
+
     # Spaz #######################################
-    t = Appearance('Spaz')
-    t.color_texture = _tex('neo_spaz_color')
-    t.color_mask_texture = _tex('neo_spaz_color_mask')
-    t.icon_texture = _tex('neo_spaz_icon')
-    t.icon_mask_texture = _tex('neo_spaz_icon_color_mask')
-    t.head_mesh = 'neoSpazHead'
-    t.torso_mesh = 'neoSpazTorso'
-    t.pelvis_mesh = 'neoSpazPelvis'
-    t.upper_arm_mesh = 'neoSpazUpperArm'
-    t.forearm_mesh = 'neoSpazForeArm'
-    t.hand_mesh = 'neoSpazHand'
-    t.upper_leg_mesh = 'neoSpazUpperLeg'
-    t.lower_leg_mesh = 'neoSpazLowerLeg'
-    t.toes_mesh = 'neoSpazToes'
-    t.jump_sounds = ['spazJump01', 'spazJump02', 'spazJump03', 'spazJump04']
-    t.attack_sounds = [
-        'spazAttack01',
-        'spazAttack02',
-        'spazAttack03',
-        'spazAttack04',
+    a = Appearance('Spaz')
+    a.color_texture = tex.neo_spaz_color
+    a.color_mask_texture = tex.neo_spaz_color_mask
+    a.icon_texture = tex.neo_spaz_icon
+    a.icon_mask_texture = tex.neo_spaz_icon_color_mask
+    a.head_mesh = mesh.neo_spaz_head
+    a.torso_mesh = mesh.neo_spaz_torso
+    a.pelvis_mesh = mesh.neo_spaz_pelvis
+    a.upper_arm_mesh = mesh.neo_spaz_upper_arm
+    a.forearm_mesh = mesh.neo_spaz_fore_arm
+    a.hand_mesh = mesh.neo_spaz_hand
+    a.upper_leg_mesh = mesh.neo_spaz_upper_leg
+    a.lower_leg_mesh = mesh.neo_spaz_lower_leg
+    a.toes_mesh = mesh.neo_spaz_toes
+    a.jump_sounds = [
+        snd.spaz_jump01,
+        snd.spaz_jump02,
+        snd.spaz_jump03,
+        snd.spaz_jump04,
     ]
-    t.impact_sounds = [
-        'spazImpact01',
-        'spazImpact02',
-        'spazImpact03',
-        'spazImpact04',
+    a.attack_sounds = [
+        snd.spaz_attack01,
+        snd.spaz_attack02,
+        snd.spaz_attack03,
+        snd.spaz_attack04,
     ]
-    t.death_sounds = ['spazDeath01']
-    t.pickup_sounds = ['spazPickup01']
-    t.fall_sounds = ['spazFall01']
-    t.style = 'spaz'
+    a.impact_sounds = [
+        snd.spaz_impact01,
+        snd.spaz_impact02,
+        snd.spaz_impact03,
+        snd.spaz_impact04,
+    ]
+    a.death_sounds = [snd.spaz_death01]
+    a.pickup_sounds = [snd.spaz_pickup01]
+    a.fall_sounds = [snd.spaz_fall01]
+    a.style = 'spaz'
 
     # Zoe #####################################
-    t = Appearance('Zoe')
-    t.color_texture = _tex('zoe_color')
-    t.color_mask_texture = _tex('zoe_color_mask')
-    t.icon_texture = _tex('zoe_icon')
-    t.icon_mask_texture = _tex('zoe_icon_color_mask')
-    t.head_mesh = 'zoeHead'
-    t.torso_mesh = 'zoeTorso'
-    t.pelvis_mesh = 'zoePelvis'
-    t.upper_arm_mesh = 'zoeUpperArm'
-    t.forearm_mesh = 'zoeForeArm'
-    t.hand_mesh = 'zoeHand'
-    t.upper_leg_mesh = 'zoeUpperLeg'
-    t.lower_leg_mesh = 'zoeLowerLeg'
-    t.toes_mesh = 'zoeToes'
-    t.jump_sounds = ['zoeJump01', 'zoeJump02', 'zoeJump03']
-    t.attack_sounds = [
-        'zoeAttack01',
-        'zoeAttack02',
-        'zoeAttack03',
-        'zoeAttack04',
+    a = Appearance('Zoe')
+    a.color_texture = tex.zoe_color
+    a.color_mask_texture = tex.zoe_color_mask
+    a.icon_texture = tex.zoe_icon
+    a.icon_mask_texture = tex.zoe_icon_color_mask
+    a.head_mesh = mesh.zoe_head
+    a.torso_mesh = mesh.zoe_torso
+    a.pelvis_mesh = mesh.zoe_pelvis
+    a.upper_arm_mesh = mesh.zoe_upper_arm
+    a.forearm_mesh = mesh.zoe_fore_arm
+    a.hand_mesh = mesh.zoe_hand
+    a.upper_leg_mesh = mesh.zoe_upper_leg
+    a.lower_leg_mesh = mesh.zoe_lower_leg
+    a.toes_mesh = mesh.zoe_toes
+    a.jump_sounds = [
+        snd.zoe_jump01,
+        snd.zoe_jump02,
+        snd.zoe_jump03,
     ]
-    t.impact_sounds = [
-        'zoeImpact01',
-        'zoeImpact02',
-        'zoeImpact03',
-        'zoeImpact04',
+    a.attack_sounds = [
+        snd.zoe_attack01,
+        snd.zoe_attack02,
+        snd.zoe_attack03,
+        snd.zoe_attack04,
     ]
-    t.death_sounds = ['zoeDeath01']
-    t.pickup_sounds = ['zoePickup01']
-    t.fall_sounds = ['zoeFall01']
-    t.style = 'female'
-    t.default_color = (0.6, 0.6, 0.6)
-    t.default_highlight = (0, 1, 0)
+    a.impact_sounds = [
+        snd.zoe_impact01,
+        snd.zoe_impact02,
+        snd.zoe_impact03,
+        snd.zoe_impact04,
+    ]
+    a.death_sounds = [snd.zoe_death01]
+    a.pickup_sounds = [snd.zoe_pickup01]
+    a.fall_sounds = [snd.zoe_fall01]
+    a.style = 'female'
+    a.default_color = (0.6, 0.6, 0.6)
+    a.default_highlight = (0, 1, 0)
 
     # Ninja ##########################################
-    t = Appearance('Snake Shadow')
-    t.color_texture = _tex('ninja_color')
-    t.color_mask_texture = _tex('ninja_color_mask')
-    t.icon_texture = _tex('ninja_icon')
-    t.icon_mask_texture = _tex('ninja_icon_color_mask')
-    t.head_mesh = 'ninjaHead'
-    t.torso_mesh = 'ninjaTorso'
-    t.pelvis_mesh = 'ninjaPelvis'
-    t.upper_arm_mesh = 'ninjaUpperArm'
-    t.forearm_mesh = 'ninjaForeArm'
-    t.hand_mesh = 'ninjaHand'
-    t.upper_leg_mesh = 'ninjaUpperLeg'
-    t.lower_leg_mesh = 'ninjaLowerLeg'
-    t.toes_mesh = 'ninjaToes'
-    ninja_attacks = ['ninjaAttack' + str(i + 1) + '' for i in range(7)]
-    ninja_hits = ['ninjaHit' + str(i + 1) + '' for i in range(8)]
-    ninja_jumps = ['ninjaAttack' + str(i + 1) + '' for i in range(7)]
-    t.jump_sounds = ninja_jumps
-    t.attack_sounds = ninja_attacks
-    t.impact_sounds = ninja_hits
-    t.death_sounds = ['ninjaDeath1']
-    t.pickup_sounds = ninja_attacks
-    t.fall_sounds = ['ninjaFall1']
-    t.style = 'ninja'
-    t.default_color = (1, 1, 1)
-    t.default_highlight = (0.55, 0.8, 0.55)
+    a = Appearance('Snake Shadow')
+    a.color_texture = tex.ninja_color
+    a.color_mask_texture = tex.ninja_color_mask
+    a.icon_texture = tex.ninja_icon
+    a.icon_mask_texture = tex.ninja_icon_color_mask
+    a.head_mesh = mesh.ninja_head
+    a.torso_mesh = mesh.ninja_torso
+    a.pelvis_mesh = mesh.ninja_pelvis
+    a.upper_arm_mesh = mesh.ninja_upper_arm
+    a.forearm_mesh = mesh.ninja_fore_arm
+    a.hand_mesh = mesh.ninja_hand
+    a.upper_leg_mesh = mesh.ninja_upper_leg
+    a.lower_leg_mesh = mesh.ninja_lower_leg
+    a.toes_mesh = mesh.ninja_toes
+    ninja_attacks = [
+        snd.ninja_attack1,
+        snd.ninja_attack2,
+        snd.ninja_attack3,
+        snd.ninja_attack4,
+        snd.ninja_attack5,
+        snd.ninja_attack6,
+        snd.ninja_attack7,
+    ]
+    ninja_hits = [
+        snd.ninja_hit1,
+        snd.ninja_hit2,
+        snd.ninja_hit3,
+        snd.ninja_hit4,
+        snd.ninja_hit5,
+        snd.ninja_hit6,
+        snd.ninja_hit7,
+        snd.ninja_hit8,
+    ]
+    ninja_jumps = [
+        snd.ninja_attack1,
+        snd.ninja_attack2,
+        snd.ninja_attack3,
+        snd.ninja_attack4,
+        snd.ninja_attack5,
+        snd.ninja_attack6,
+        snd.ninja_attack7,
+    ]
+    a.jump_sounds = ninja_jumps
+    a.attack_sounds = ninja_attacks
+    a.impact_sounds = ninja_hits
+    a.death_sounds = [snd.ninja_death1]
+    a.pickup_sounds = ninja_attacks
+    a.fall_sounds = [snd.ninja_fall1]
+    a.style = 'ninja'
+    a.default_color = (1, 1, 1)
+    a.default_highlight = (0.55, 0.8, 0.55)
 
     # Barbarian #####################################
-    t = Appearance('Kronk')
-    t.color_texture = _tex('kronk')
-    t.color_mask_texture = _tex('kronk_color_mask')
-    t.icon_texture = _tex('kronk_icon')
-    t.icon_mask_texture = _tex('kronk_icon_color_mask')
-    t.head_mesh = 'kronkHead'
-    t.torso_mesh = 'kronkTorso'
-    t.pelvis_mesh = 'kronkPelvis'
-    t.upper_arm_mesh = 'kronkUpperArm'
-    t.forearm_mesh = 'kronkForeArm'
-    t.hand_mesh = 'kronkHand'
-    t.upper_leg_mesh = 'kronkUpperLeg'
-    t.lower_leg_mesh = 'kronkLowerLeg'
-    t.toes_mesh = 'kronkToes'
+    a = Appearance('Kronk')
+    a.color_texture = tex.kronk
+    a.color_mask_texture = tex.kronk_color_mask
+    a.icon_texture = tex.kronk_icon
+    a.icon_mask_texture = tex.kronk_icon_color_mask
+    a.head_mesh = mesh.kronk_head
+    a.torso_mesh = mesh.kronk_torso
+    a.pelvis_mesh = mesh.kronk_pelvis
+    a.upper_arm_mesh = mesh.kronk_upper_arm
+    a.forearm_mesh = mesh.kronk_fore_arm
+    a.hand_mesh = mesh.kronk_hand
+    a.upper_leg_mesh = mesh.kronk_upper_leg
+    a.lower_leg_mesh = mesh.kronk_lower_leg
+    a.toes_mesh = mesh.kronk_toes
     kronk_sounds = [
-        'kronk1',
-        'kronk2',
-        'kronk3',
-        'kronk4',
-        'kronk5',
-        'kronk6',
-        'kronk7',
-        'kronk8',
-        'kronk9',
-        'kronk10',
+        snd.kronk1,
+        snd.kronk2,
+        snd.kronk3,
+        snd.kronk4,
+        snd.kronk5,
+        snd.kronk6,
+        snd.kronk7,
+        snd.kronk8,
+        snd.kronk9,
+        snd.kronk10,
     ]
-    t.jump_sounds = kronk_sounds
-    t.attack_sounds = kronk_sounds
-    t.impact_sounds = kronk_sounds
-    t.death_sounds = ['kronkDeath']
-    t.pickup_sounds = kronk_sounds
-    t.fall_sounds = ['kronkFall']
-    t.style = 'kronk'
-    t.default_color = (0.4, 0.5, 0.4)
-    t.default_highlight = (1, 0.5, 0.3)
+    a.jump_sounds = kronk_sounds
+    a.attack_sounds = kronk_sounds
+    a.impact_sounds = kronk_sounds
+    a.death_sounds = [snd.kronk_death]
+    a.pickup_sounds = kronk_sounds
+    a.fall_sounds = [snd.kronk_fall]
+    a.style = 'kronk'
+    a.default_color = (0.4, 0.5, 0.4)
+    a.default_highlight = (1, 0.5, 0.3)
 
     # Chef ###########################################
-    t = Appearance('Mel')
-    t.color_texture = _tex('mel_color')
-    t.color_mask_texture = _tex('mel_color_mask')
-    t.icon_texture = _tex('mel_icon')
-    t.icon_mask_texture = _tex('mel_icon_color_mask')
-    t.head_mesh = 'melHead'
-    t.torso_mesh = 'melTorso'
-    t.pelvis_mesh = 'kronkPelvis'
-    t.upper_arm_mesh = 'melUpperArm'
-    t.forearm_mesh = 'melForeArm'
-    t.hand_mesh = 'melHand'
-    t.upper_leg_mesh = 'melUpperLeg'
-    t.lower_leg_mesh = 'melLowerLeg'
-    t.toes_mesh = 'melToes'
+    a = Appearance('Mel')
+    a.color_texture = tex.mel_color
+    a.color_mask_texture = tex.mel_color_mask
+    a.icon_texture = tex.mel_icon
+    a.icon_mask_texture = tex.mel_icon_color_mask
+    a.head_mesh = mesh.mel_head
+    a.torso_mesh = mesh.mel_torso
+    a.pelvis_mesh = mesh.kronk_pelvis
+    a.upper_arm_mesh = mesh.mel_upper_arm
+    a.forearm_mesh = mesh.mel_fore_arm
+    a.hand_mesh = mesh.mel_hand
+    a.upper_leg_mesh = mesh.mel_upper_leg
+    a.lower_leg_mesh = mesh.mel_lower_leg
+    a.toes_mesh = mesh.mel_toes
     mel_sounds = [
-        'mel01',
-        'mel02',
-        'mel03',
-        'mel04',
-        'mel05',
-        'mel06',
-        'mel07',
-        'mel08',
-        'mel09',
-        'mel10',
+        snd.mel01,
+        snd.mel02,
+        snd.mel03,
+        snd.mel04,
+        snd.mel05,
+        snd.mel06,
+        snd.mel07,
+        snd.mel08,
+        snd.mel09,
+        snd.mel10,
     ]
-    t.jump_sounds = mel_sounds
-    t.attack_sounds = mel_sounds
-    t.impact_sounds = mel_sounds
-    t.death_sounds = ['melDeath01']
-    t.pickup_sounds = mel_sounds
-    t.fall_sounds = ['melFall01']
-    t.style = 'mel'
-    t.default_color = (1, 1, 1)
-    t.default_highlight = (0.1, 0.6, 0.1)
+    a.jump_sounds = mel_sounds
+    a.attack_sounds = mel_sounds
+    a.impact_sounds = mel_sounds
+    a.death_sounds = [snd.mel_death01]
+    a.pickup_sounds = mel_sounds
+    a.fall_sounds = [snd.mel_fall01]
+    a.style = 'mel'
+    a.default_color = (1, 1, 1)
+    a.default_highlight = (0.1, 0.6, 0.1)
 
     # Pirate #######################################
-    t = Appearance('Jack Morgan')
-    t.color_texture = _tex('jack_color')
-    t.color_mask_texture = _tex('jack_color_mask')
-    t.icon_texture = _tex('jack_icon')
-    t.icon_mask_texture = _tex('jack_icon_color_mask')
-    t.head_mesh = 'jackHead'
-    t.torso_mesh = 'jackTorso'
-    t.pelvis_mesh = 'kronkPelvis'
-    t.upper_arm_mesh = 'jackUpperArm'
-    t.forearm_mesh = 'jackForeArm'
-    t.hand_mesh = 'jackHand'
-    t.upper_leg_mesh = 'jackUpperLeg'
-    t.lower_leg_mesh = 'jackLowerLeg'
-    t.toes_mesh = 'jackToes'
+    a = Appearance('Jack Morgan')
+    a.color_texture = tex.jack_color
+    a.color_mask_texture = tex.jack_color_mask
+    a.icon_texture = tex.jack_icon
+    a.icon_mask_texture = tex.jack_icon_color_mask
+    a.head_mesh = mesh.jack_head
+    a.torso_mesh = mesh.jack_torso
+    a.pelvis_mesh = mesh.kronk_pelvis
+    a.upper_arm_mesh = mesh.jack_upper_arm
+    a.forearm_mesh = mesh.jack_fore_arm
+    a.hand_mesh = mesh.jack_hand
+    a.upper_leg_mesh = mesh.jack_upper_leg
+    a.lower_leg_mesh = mesh.jack_lower_leg
+    a.toes_mesh = mesh.jack_toes
     hit_sounds = [
-        'jackHit01',
-        'jackHit02',
-        'jackHit03',
-        'jackHit04',
-        'jackHit05',
-        'jackHit06',
-        'jackHit07',
+        snd.jack_hit01,
+        snd.jack_hit02,
+        snd.jack_hit03,
+        snd.jack_hit04,
+        snd.jack_hit05,
+        snd.jack_hit06,
+        snd.jack_hit07,
     ]
-    sounds = ['jack01', 'jack02', 'jack03', 'jack04', 'jack05', 'jack06']
-    t.jump_sounds = sounds
-    t.attack_sounds = sounds
-    t.impact_sounds = hit_sounds
-    t.death_sounds = ['jackDeath01']
-    t.pickup_sounds = sounds
-    t.fall_sounds = ['jackFall01']
-    t.style = 'pirate'
-    t.default_color = (1, 0.2, 0.1)
-    t.default_highlight = (1, 1, 0)
+    sounds = [
+        snd.jack01,
+        snd.jack02,
+        snd.jack03,
+        snd.jack04,
+        snd.jack05,
+        snd.jack06,
+    ]
+    a.jump_sounds = sounds
+    a.attack_sounds = sounds
+    a.impact_sounds = hit_sounds
+    a.death_sounds = [snd.jack_death01]
+    a.pickup_sounds = sounds
+    a.fall_sounds = [snd.jack_fall01]
+    a.style = 'pirate'
+    a.default_color = (1, 0.2, 0.1)
+    a.default_highlight = (1, 1, 0)
 
     # Santa ######################################
-    t = Appearance('Santa Claus')
-    t.color_texture = _tex('santa_color')
-    t.color_mask_texture = _tex('santa_color_mask')
-    t.icon_texture = _tex('santa_icon')
-    t.icon_mask_texture = _tex('santa_icon_color_mask')
-    t.head_mesh = 'santaHead'
-    t.torso_mesh = 'santaTorso'
-    t.pelvis_mesh = 'kronkPelvis'
-    t.upper_arm_mesh = 'santaUpperArm'
-    t.forearm_mesh = 'santaForeArm'
-    t.hand_mesh = 'santaHand'
-    t.upper_leg_mesh = 'santaUpperLeg'
-    t.lower_leg_mesh = 'santaLowerLeg'
-    t.toes_mesh = 'santaToes'
-    hit_sounds = ['santaHit01', 'santaHit02', 'santaHit03', 'santaHit04']
-    sounds = ['santa01', 'santa02', 'santa03', 'santa04', 'santa05']
-    t.jump_sounds = sounds
-    t.attack_sounds = sounds
-    t.impact_sounds = hit_sounds
-    t.death_sounds = ['santaDeath']
-    t.pickup_sounds = sounds
-    t.fall_sounds = ['santaFall']
-    t.style = 'santa'
-    t.default_color = (1, 0, 0)
-    t.default_highlight = (1, 1, 1)
+    a = Appearance('Santa Claus')
+    a.color_texture = tex.santa_color
+    a.color_mask_texture = tex.santa_color_mask
+    a.icon_texture = tex.santa_icon
+    a.icon_mask_texture = tex.santa_icon_color_mask
+    a.head_mesh = mesh.santa_head
+    a.torso_mesh = mesh.santa_torso
+    a.pelvis_mesh = mesh.kronk_pelvis
+    a.upper_arm_mesh = mesh.santa_upper_arm
+    a.forearm_mesh = mesh.santa_fore_arm
+    a.hand_mesh = mesh.santa_hand
+    a.upper_leg_mesh = mesh.santa_upper_leg
+    a.lower_leg_mesh = mesh.santa_lower_leg
+    a.toes_mesh = mesh.santa_toes
+    hit_sounds = [
+        snd.santa_hit01,
+        snd.santa_hit02,
+        snd.santa_hit03,
+        snd.santa_hit04,
+    ]
+    sounds = [
+        snd.santa01,
+        snd.santa02,
+        snd.santa03,
+        snd.santa04,
+        snd.santa05,
+    ]
+    a.jump_sounds = sounds
+    a.attack_sounds = sounds
+    a.impact_sounds = hit_sounds
+    a.death_sounds = [snd.santa_death]
+    a.pickup_sounds = sounds
+    a.fall_sounds = [snd.santa_fall]
+    a.style = 'santa'
+    a.default_color = (1, 0, 0)
+    a.default_highlight = (1, 1, 1)
 
     # Snowman ###################################
-    t = Appearance('Frosty')
-    t.color_texture = _tex('frosty_color')
-    t.color_mask_texture = _tex('frosty_color_mask')
-    t.icon_texture = _tex('frosty_icon')
-    t.icon_mask_texture = _tex('frosty_icon_color_mask')
-    t.head_mesh = 'frostyHead'
-    t.torso_mesh = 'frostyTorso'
-    t.pelvis_mesh = 'frostyPelvis'
-    t.upper_arm_mesh = 'frostyUpperArm'
-    t.forearm_mesh = 'frostyForeArm'
-    t.hand_mesh = 'frostyHand'
-    t.upper_leg_mesh = 'frostyUpperLeg'
-    t.lower_leg_mesh = 'frostyLowerLeg'
-    t.toes_mesh = 'frostyToes'
-    frosty_sounds = ['frosty01', 'frosty02', 'frosty03', 'frosty04', 'frosty05']
-    frosty_hit_sounds = ['frostyHit01', 'frostyHit02', 'frostyHit03']
-    t.jump_sounds = frosty_sounds
-    t.attack_sounds = frosty_sounds
-    t.impact_sounds = frosty_hit_sounds
-    t.death_sounds = ['frostyDeath']
-    t.pickup_sounds = frosty_sounds
-    t.fall_sounds = ['frostyFall']
-    t.style = 'frosty'
-    t.default_color = (0.5, 0.5, 1)
-    t.default_highlight = (1, 0.5, 0)
+    a = Appearance('Frosty')
+    a.color_texture = tex.frosty_color
+    a.color_mask_texture = tex.frosty_color_mask
+    a.icon_texture = tex.frosty_icon
+    a.icon_mask_texture = tex.frosty_icon_color_mask
+    a.head_mesh = mesh.frosty_head
+    a.torso_mesh = mesh.frosty_torso
+    a.pelvis_mesh = mesh.frosty_pelvis
+    a.upper_arm_mesh = mesh.frosty_upper_arm
+    a.forearm_mesh = mesh.frosty_fore_arm
+    a.hand_mesh = mesh.frosty_hand
+    a.upper_leg_mesh = mesh.frosty_upper_leg
+    a.lower_leg_mesh = mesh.frosty_lower_leg
+    a.toes_mesh = mesh.frosty_toes
+    frosty_sounds = [
+        snd.frosty01,
+        snd.frosty02,
+        snd.frosty03,
+        snd.frosty04,
+        snd.frosty05,
+    ]
+    frosty_hit_sounds = [
+        snd.frosty_hit01,
+        snd.frosty_hit02,
+        snd.frosty_hit03,
+    ]
+    a.jump_sounds = frosty_sounds
+    a.attack_sounds = frosty_sounds
+    a.impact_sounds = frosty_hit_sounds
+    a.death_sounds = [snd.frosty_death]
+    a.pickup_sounds = frosty_sounds
+    a.fall_sounds = [snd.frosty_fall]
+    a.style = 'frosty'
+    a.default_color = (0.5, 0.5, 1)
+    a.default_highlight = (1, 0.5, 0)
 
     # Skeleton ################################
-    t = Appearance('Bones')
-    t.color_texture = _tex('bones_color')
-    t.color_mask_texture = _tex('bones_color_mask')
-    t.icon_texture = _tex('bones_icon')
-    t.icon_mask_texture = _tex('bones_icon_color_mask')
-    t.head_mesh = 'bonesHead'
-    t.torso_mesh = 'bonesTorso'
-    t.pelvis_mesh = 'bonesPelvis'
-    t.upper_arm_mesh = 'bonesUpperArm'
-    t.forearm_mesh = 'bonesForeArm'
-    t.hand_mesh = 'bonesHand'
-    t.upper_leg_mesh = 'bonesUpperLeg'
-    t.lower_leg_mesh = 'bonesLowerLeg'
-    t.toes_mesh = 'bonesToes'
-    bones_sounds = ['bones1', 'bones2', 'bones3']
-    bones_hit_sounds = ['bones1', 'bones2', 'bones3']
-    t.jump_sounds = bones_sounds
-    t.attack_sounds = bones_sounds
-    t.impact_sounds = bones_hit_sounds
-    t.death_sounds = ['bonesDeath']
-    t.pickup_sounds = bones_sounds
-    t.fall_sounds = ['bonesFall']
-    t.style = 'bones'
-    t.default_color = (0.6, 0.9, 1)
-    t.default_highlight = (0.6, 0.9, 1)
+    a = Appearance('Bones')
+    a.color_texture = tex.bones_color
+    a.color_mask_texture = tex.bones_color_mask
+    a.icon_texture = tex.bones_icon
+    a.icon_mask_texture = tex.bones_icon_color_mask
+    a.head_mesh = mesh.bones_head
+    a.torso_mesh = mesh.bones_torso
+    a.pelvis_mesh = mesh.bones_pelvis
+    a.upper_arm_mesh = mesh.bones_upper_arm
+    a.forearm_mesh = mesh.bones_fore_arm
+    a.hand_mesh = mesh.bones_hand
+    a.upper_leg_mesh = mesh.bones_upper_leg
+    a.lower_leg_mesh = mesh.bones_lower_leg
+    a.toes_mesh = mesh.bones_toes
+    bones_sounds = [
+        snd.bones1,
+        snd.bones2,
+        snd.bones3,
+    ]
+    bones_hit_sounds = [
+        snd.bones1,
+        snd.bones2,
+        snd.bones3,
+    ]
+    a.jump_sounds = bones_sounds
+    a.attack_sounds = bones_sounds
+    a.impact_sounds = bones_hit_sounds
+    a.death_sounds = [snd.bones_death]
+    a.pickup_sounds = bones_sounds
+    a.fall_sounds = [snd.bones_fall]
+    a.style = 'bones'
+    a.default_color = (0.6, 0.9, 1)
+    a.default_highlight = (0.6, 0.9, 1)
 
     # Bear ###################################
-    t = Appearance('Bernard')
-    t.color_texture = _tex('bear_color')
-    t.color_mask_texture = _tex('bear_color_mask')
-    t.icon_texture = _tex('bear_icon')
-    t.icon_mask_texture = _tex('bear_icon_color_mask')
-    t.head_mesh = 'bearHead'
-    t.torso_mesh = 'bearTorso'
-    t.pelvis_mesh = 'bearPelvis'
-    t.upper_arm_mesh = 'bearUpperArm'
-    t.forearm_mesh = 'bearForeArm'
-    t.hand_mesh = 'bearHand'
-    t.upper_leg_mesh = 'bearUpperLeg'
-    t.lower_leg_mesh = 'bearLowerLeg'
-    t.toes_mesh = 'bearToes'
-    bear_sounds = ['bear1', 'bear2', 'bear3', 'bear4']
-    bear_hit_sounds = ['bearHit1', 'bearHit2']
-    t.jump_sounds = bear_sounds
-    t.attack_sounds = bear_sounds
-    t.impact_sounds = bear_hit_sounds
-    t.death_sounds = ['bearDeath']
-    t.pickup_sounds = bear_sounds
-    t.fall_sounds = ['bearFall']
-    t.style = 'bear'
-    t.default_color = (0.7, 0.5, 0.0)
+    a = Appearance('Bernard')
+    a.color_texture = tex.bear_color
+    a.color_mask_texture = tex.bear_color_mask
+    a.icon_texture = tex.bear_icon
+    a.icon_mask_texture = tex.bear_icon_color_mask
+    a.head_mesh = mesh.bear_head
+    a.torso_mesh = mesh.bear_torso
+    a.pelvis_mesh = mesh.bear_pelvis
+    a.upper_arm_mesh = mesh.bear_upper_arm
+    a.forearm_mesh = mesh.bear_fore_arm
+    a.hand_mesh = mesh.bear_hand
+    a.upper_leg_mesh = mesh.bear_upper_leg
+    a.lower_leg_mesh = mesh.bear_lower_leg
+    a.toes_mesh = mesh.bear_toes
+    bear_sounds = [
+        snd.bear1,
+        snd.bear2,
+        snd.bear3,
+        snd.bear4,
+    ]
+    bear_hit_sounds = [
+        snd.bear_hit1,
+        snd.bear_hit2,
+    ]
+    a.jump_sounds = bear_sounds
+    a.attack_sounds = bear_sounds
+    a.impact_sounds = bear_hit_sounds
+    a.death_sounds = [snd.bear_death]
+    a.pickup_sounds = bear_sounds
+    a.fall_sounds = [snd.bear_fall]
+    a.style = 'bear'
+    a.default_color = (0.7, 0.5, 0.0)
 
     # Penguin ###################################
-    t = Appearance('Pascal')
-    t.color_texture = _tex('penguin_color')
-    t.color_mask_texture = _tex('penguin_color_mask')
-    t.icon_texture = _tex('penguin_icon')
-    t.icon_mask_texture = _tex('penguin_icon_color_mask')
-    t.head_mesh = 'penguinHead'
-    t.torso_mesh = 'penguinTorso'
-    t.pelvis_mesh = 'penguinPelvis'
-    t.upper_arm_mesh = 'penguinUpperArm'
-    t.forearm_mesh = 'penguinForeArm'
-    t.hand_mesh = 'penguinHand'
-    t.upper_leg_mesh = 'penguinUpperLeg'
-    t.lower_leg_mesh = 'penguinLowerLeg'
-    t.toes_mesh = 'penguinToes'
-    penguin_sounds = ['penguin1', 'penguin2', 'penguin3', 'penguin4']
-    penguin_hit_sounds = ['penguinHit1', 'penguinHit2']
-    t.jump_sounds = penguin_sounds
-    t.attack_sounds = penguin_sounds
-    t.impact_sounds = penguin_hit_sounds
-    t.death_sounds = ['penguinDeath']
-    t.pickup_sounds = penguin_sounds
-    t.fall_sounds = ['penguinFall']
-    t.style = 'penguin'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
+    a = Appearance('Pascal')
+    a.color_texture = tex.penguin_color
+    a.color_mask_texture = tex.penguin_color_mask
+    a.icon_texture = tex.penguin_icon
+    a.icon_mask_texture = tex.penguin_icon_color_mask
+    a.head_mesh = mesh.penguin_head
+    a.torso_mesh = mesh.penguin_torso
+    a.pelvis_mesh = mesh.penguin_pelvis
+    a.upper_arm_mesh = mesh.penguin_upper_arm
+    a.forearm_mesh = mesh.penguin_fore_arm
+    a.hand_mesh = mesh.penguin_hand
+    a.upper_leg_mesh = mesh.penguin_upper_leg
+    a.lower_leg_mesh = mesh.penguin_lower_leg
+    a.toes_mesh = mesh.penguin_toes
+    penguin_sounds = [
+        snd.penguin1,
+        snd.penguin2,
+        snd.penguin3,
+        snd.penguin4,
+    ]
+    penguin_hit_sounds = [
+        snd.penguin_hit1,
+        snd.penguin_hit2,
+    ]
+    a.jump_sounds = penguin_sounds
+    a.attack_sounds = penguin_sounds
+    a.impact_sounds = penguin_hit_sounds
+    a.death_sounds = [snd.penguin_death]
+    a.pickup_sounds = penguin_sounds
+    a.fall_sounds = [snd.penguin_fall]
+    a.style = 'penguin'
+    a.default_color = (0.3, 0.5, 0.8)
+    a.default_highlight = (1, 0, 0)
 
     # Ali ###################################
-    t = Appearance('Taobao Mascot')
-    t.color_texture = _tex('ali_color')
-    t.color_mask_texture = _tex('ali_color_mask')
-    t.icon_texture = _tex('ali_icon')
-    t.icon_mask_texture = _tex('ali_icon_color_mask')
-    t.head_mesh = 'aliHead'
-    t.torso_mesh = 'aliTorso'
-    t.pelvis_mesh = 'aliPelvis'
-    t.upper_arm_mesh = 'aliUpperArm'
-    t.forearm_mesh = 'aliForeArm'
-    t.hand_mesh = 'aliHand'
-    t.upper_leg_mesh = 'aliUpperLeg'
-    t.lower_leg_mesh = 'aliLowerLeg'
-    t.toes_mesh = 'aliToes'
-    ali_sounds = ['ali1', 'ali2', 'ali3', 'ali4']
-    ali_hit_sounds = ['aliHit1', 'aliHit2']
-    t.jump_sounds = ali_sounds
-    t.attack_sounds = ali_sounds
-    t.impact_sounds = ali_hit_sounds
-    t.death_sounds = ['aliDeath']
-    t.pickup_sounds = ali_sounds
-    t.fall_sounds = ['aliFall']
-    t.style = 'ali'
-    t.default_color = (1, 0.5, 0)
-    t.default_highlight = (1, 1, 1)
+    a = Appearance('Taobao Mascot')
+    a.color_texture = tex.ali_color
+    a.color_mask_texture = tex.ali_color_mask
+    a.icon_texture = tex.ali_icon
+    a.icon_mask_texture = tex.ali_icon_color_mask
+    a.head_mesh = mesh.ali_head
+    a.torso_mesh = mesh.ali_torso
+    a.pelvis_mesh = mesh.ali_pelvis
+    a.upper_arm_mesh = mesh.ali_upper_arm
+    a.forearm_mesh = mesh.ali_fore_arm
+    a.hand_mesh = mesh.ali_hand
+    a.upper_leg_mesh = mesh.ali_upper_leg
+    a.lower_leg_mesh = mesh.ali_lower_leg
+    a.toes_mesh = mesh.ali_toes
+    ali_sounds = [
+        snd.ali1,
+        snd.ali2,
+        snd.ali3,
+        snd.ali4,
+    ]
+    ali_hit_sounds = [
+        snd.ali_hit1,
+        snd.ali_hit2,
+    ]
+    a.jump_sounds = ali_sounds
+    a.attack_sounds = ali_sounds
+    a.impact_sounds = ali_hit_sounds
+    a.death_sounds = [snd.ali_death]
+    a.pickup_sounds = ali_sounds
+    a.fall_sounds = [snd.ali_fall]
+    a.style = 'ali'
+    a.default_color = (1, 0.5, 0)
+    a.default_highlight = (1, 1, 1)
 
     # Cyborg ###################################
-    t = Appearance('B-9000')
-    t.color_texture = _tex('cyborg_color')
-    t.color_mask_texture = _tex('cyborg_color_mask')
-    t.icon_texture = _tex('cyborg_icon')
-    t.icon_mask_texture = _tex('cyborg_icon_color_mask')
-    t.head_mesh = 'cyborgHead'
-    t.torso_mesh = 'cyborgTorso'
-    t.pelvis_mesh = 'cyborgPelvis'
-    t.upper_arm_mesh = 'cyborgUpperArm'
-    t.forearm_mesh = 'cyborgForeArm'
-    t.hand_mesh = 'cyborgHand'
-    t.upper_leg_mesh = 'cyborgUpperLeg'
-    t.lower_leg_mesh = 'cyborgLowerLeg'
-    t.toes_mesh = 'cyborgToes'
-    cyborg_sounds = ['cyborg1', 'cyborg2', 'cyborg3', 'cyborg4']
-    cyborg_hit_sounds = ['cyborgHit1', 'cyborgHit2']
-    t.jump_sounds = cyborg_sounds
-    t.attack_sounds = cyborg_sounds
-    t.impact_sounds = cyborg_hit_sounds
-    t.death_sounds = ['cyborgDeath']
-    t.pickup_sounds = cyborg_sounds
-    t.fall_sounds = ['cyborgFall']
-    t.style = 'cyborg'
-    t.default_color = (0.5, 0.5, 0.5)
-    t.default_highlight = (1, 0, 0)
+    a = Appearance('B-9000')
+    a.color_texture = tex.cyborg_color
+    a.color_mask_texture = tex.cyborg_color_mask
+    a.icon_texture = tex.cyborg_icon
+    a.icon_mask_texture = tex.cyborg_icon_color_mask
+    a.head_mesh = mesh.cyborg_head
+    a.torso_mesh = mesh.cyborg_torso
+    a.pelvis_mesh = mesh.cyborg_pelvis
+    a.upper_arm_mesh = mesh.cyborg_upper_arm
+    a.forearm_mesh = mesh.cyborg_fore_arm
+    a.hand_mesh = mesh.cyborg_hand
+    a.upper_leg_mesh = mesh.cyborg_upper_leg
+    a.lower_leg_mesh = mesh.cyborg_lower_leg
+    a.toes_mesh = mesh.cyborg_toes
+    cyborg_sounds = [
+        snd.cyborg1,
+        snd.cyborg2,
+        snd.cyborg3,
+        snd.cyborg4,
+    ]
+    cyborg_hit_sounds = [
+        snd.cyborg_hit1,
+        snd.cyborg_hit2,
+    ]
+    a.jump_sounds = cyborg_sounds
+    a.attack_sounds = cyborg_sounds
+    a.impact_sounds = cyborg_hit_sounds
+    a.death_sounds = [snd.cyborg_death]
+    a.pickup_sounds = cyborg_sounds
+    a.fall_sounds = [snd.cyborg_fall]
+    a.style = 'cyborg'
+    a.default_color = (0.5, 0.5, 0.5)
+    a.default_highlight = (1, 0, 0)
 
     # Agent ###################################
-    t = Appearance('Agent Johnson')
-    t.color_texture = _tex('agent_color')
-    t.color_mask_texture = _tex('agent_color_mask')
-    t.icon_texture = _tex('agent_icon')
-    t.icon_mask_texture = _tex('agent_icon_color_mask')
-    t.head_mesh = 'agentHead'
-    t.torso_mesh = 'agentTorso'
-    t.pelvis_mesh = 'agentPelvis'
-    t.upper_arm_mesh = 'agentUpperArm'
-    t.forearm_mesh = 'agentForeArm'
-    t.hand_mesh = 'agentHand'
-    t.upper_leg_mesh = 'agentUpperLeg'
-    t.lower_leg_mesh = 'agentLowerLeg'
-    t.toes_mesh = 'agentToes'
-    agent_sounds = ['agent1', 'agent2', 'agent3', 'agent4']
-    agent_hit_sounds = ['agentHit1', 'agentHit2']
-    t.jump_sounds = agent_sounds
-    t.attack_sounds = agent_sounds
-    t.impact_sounds = agent_hit_sounds
-    t.death_sounds = ['agentDeath']
-    t.pickup_sounds = agent_sounds
-    t.fall_sounds = ['agentFall']
-    t.style = 'agent'
-    t.default_color = (0.3, 0.3, 0.33)
-    t.default_highlight = (1, 0.5, 0.3)
+    a = Appearance('Agent Johnson')
+    a.color_texture = tex.agent_color
+    a.color_mask_texture = tex.agent_color_mask
+    a.icon_texture = tex.agent_icon
+    a.icon_mask_texture = tex.agent_icon_color_mask
+    a.head_mesh = mesh.agent_head
+    a.torso_mesh = mesh.agent_torso
+    a.pelvis_mesh = mesh.agent_pelvis
+    a.upper_arm_mesh = mesh.agent_upper_arm
+    a.forearm_mesh = mesh.agent_fore_arm
+    a.hand_mesh = mesh.agent_hand
+    a.upper_leg_mesh = mesh.agent_upper_leg
+    a.lower_leg_mesh = mesh.agent_lower_leg
+    a.toes_mesh = mesh.agent_toes
+    agent_sounds = [
+        snd.agent1,
+        snd.agent2,
+        snd.agent3,
+        snd.agent4,
+    ]
+    agent_hit_sounds = [
+        snd.agent_hit1,
+        snd.agent_hit2,
+    ]
+    a.jump_sounds = agent_sounds
+    a.attack_sounds = agent_sounds
+    a.impact_sounds = agent_hit_sounds
+    a.death_sounds = [snd.agent_death]
+    a.pickup_sounds = agent_sounds
+    a.fall_sounds = [snd.agent_fall]
+    a.style = 'agent'
+    a.default_color = (0.3, 0.3, 0.33)
+    a.default_highlight = (1, 0.5, 0.3)
 
     # Jumpsuit ###################################
-    t = Appearance('Lee')
-    t.color_texture = _tex('jumpsuit_color')
-    t.color_mask_texture = _tex('jumpsuit_color_mask')
-    t.icon_texture = _tex('jumpsuit_icon')
-    t.icon_mask_texture = _tex('jumpsuit_icon_color_mask')
-    t.head_mesh = 'jumpsuitHead'
-    t.torso_mesh = 'jumpsuitTorso'
-    t.pelvis_mesh = 'jumpsuitPelvis'
-    t.upper_arm_mesh = 'jumpsuitUpperArm'
-    t.forearm_mesh = 'jumpsuitForeArm'
-    t.hand_mesh = 'jumpsuitHand'
-    t.upper_leg_mesh = 'jumpsuitUpperLeg'
-    t.lower_leg_mesh = 'jumpsuitLowerLeg'
-    t.toes_mesh = 'jumpsuitToes'
-    jumpsuit_sounds = ['jumpsuit1', 'jumpsuit2', 'jumpsuit3', 'jumpsuit4']
-    jumpsuit_hit_sounds = ['jumpsuitHit1', 'jumpsuitHit2']
-    t.jump_sounds = jumpsuit_sounds
-    t.attack_sounds = jumpsuit_sounds
-    t.impact_sounds = jumpsuit_hit_sounds
-    t.death_sounds = ['jumpsuitDeath']
-    t.pickup_sounds = jumpsuit_sounds
-    t.fall_sounds = ['jumpsuitFall']
-    t.style = 'spaz'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
+    a = Appearance('Lee')
+    a.color_texture = tex.jumpsuit_color
+    a.color_mask_texture = tex.jumpsuit_color_mask
+    a.icon_texture = tex.jumpsuit_icon
+    a.icon_mask_texture = tex.jumpsuit_icon_color_mask
+    a.head_mesh = mesh.jumpsuit_head
+    a.torso_mesh = mesh.jumpsuit_torso
+    a.pelvis_mesh = mesh.jumpsuit_pelvis
+    a.upper_arm_mesh = mesh.jumpsuit_upper_arm
+    a.forearm_mesh = mesh.jumpsuit_fore_arm
+    a.hand_mesh = mesh.jumpsuit_hand
+    a.upper_leg_mesh = mesh.jumpsuit_upper_leg
+    a.lower_leg_mesh = mesh.jumpsuit_lower_leg
+    a.toes_mesh = mesh.jumpsuit_toes
+    jumpsuit_sounds = [
+        snd.jumpsuit1,
+        snd.jumpsuit2,
+        snd.jumpsuit3,
+        snd.jumpsuit4,
+    ]
+    jumpsuit_hit_sounds = [
+        snd.jumpsuit_hit1,
+        snd.jumpsuit_hit2,
+    ]
+    a.jump_sounds = jumpsuit_sounds
+    a.attack_sounds = jumpsuit_sounds
+    a.impact_sounds = jumpsuit_hit_sounds
+    a.death_sounds = [snd.jumpsuit_death]
+    a.pickup_sounds = jumpsuit_sounds
+    a.fall_sounds = [snd.jumpsuit_fall]
+    a.style = 'spaz'
+    a.default_color = (0.3, 0.5, 0.8)
+    a.default_highlight = (1, 0, 0)
 
     # ActionHero ###################################
-    t = Appearance('Todd McBurton')
-    t.color_texture = _tex('action_hero_color')
-    t.color_mask_texture = _tex('action_hero_color_mask')
-    t.icon_texture = _tex('action_hero_icon')
-    t.icon_mask_texture = _tex('action_hero_icon_color_mask')
-    t.head_mesh = 'actionHeroHead'
-    t.torso_mesh = 'actionHeroTorso'
-    t.pelvis_mesh = 'actionHeroPelvis'
-    t.upper_arm_mesh = 'actionHeroUpperArm'
-    t.forearm_mesh = 'actionHeroForeArm'
-    t.hand_mesh = 'actionHeroHand'
-    t.upper_leg_mesh = 'actionHeroUpperLeg'
-    t.lower_leg_mesh = 'actionHeroLowerLeg'
-    t.toes_mesh = 'actionHeroToes'
+    a = Appearance('Todd McBurton')
+    a.color_texture = tex.action_hero_color
+    a.color_mask_texture = tex.action_hero_color_mask
+    a.icon_texture = tex.action_hero_icon
+    a.icon_mask_texture = tex.action_hero_icon_color_mask
+    a.head_mesh = mesh.action_hero_head
+    a.torso_mesh = mesh.action_hero_torso
+    a.pelvis_mesh = mesh.action_hero_pelvis
+    a.upper_arm_mesh = mesh.action_hero_upper_arm
+    a.forearm_mesh = mesh.action_hero_fore_arm
+    a.hand_mesh = mesh.action_hero_hand
+    a.upper_leg_mesh = mesh.action_hero_upper_leg
+    a.lower_leg_mesh = mesh.action_hero_lower_leg
+    a.toes_mesh = mesh.action_hero_toes
     action_hero_sounds = [
-        'actionHero1',
-        'actionHero2',
-        'actionHero3',
-        'actionHero4',
+        snd.action_hero1,
+        snd.action_hero2,
+        snd.action_hero3,
+        snd.action_hero4,
     ]
-    action_hero_hit_sounds = ['actionHeroHit1', 'actionHeroHit2']
-    t.jump_sounds = action_hero_sounds
-    t.attack_sounds = action_hero_sounds
-    t.impact_sounds = action_hero_hit_sounds
-    t.death_sounds = ['actionHeroDeath']
-    t.pickup_sounds = action_hero_sounds
-    t.fall_sounds = ['actionHeroFall']
-    t.style = 'spaz'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
+    action_hero_hit_sounds = [
+        snd.action_hero_hit1,
+        snd.action_hero_hit2,
+    ]
+    a.jump_sounds = action_hero_sounds
+    a.attack_sounds = action_hero_sounds
+    a.impact_sounds = action_hero_hit_sounds
+    a.death_sounds = [snd.action_hero_death]
+    a.pickup_sounds = action_hero_sounds
+    a.fall_sounds = [snd.action_hero_fall]
+    a.style = 'spaz'
+    a.default_color = (0.3, 0.5, 0.8)
+    a.default_highlight = (1, 0, 0)
 
     # Lucky the Leprechaun ############################
     #
     # Note: repurposing assassin slot. Lucky is not actually an
     # assassin. He is a good and friendly Leprechaun.
-    t = Appearance('Zola')
-    t.color_texture = _tex('assassin_color')
-    t.color_mask_texture = _tex('assassin_color_mask')
-    t.icon_texture = _tex('assassin_icon')
-    t.icon_mask_texture = _tex('assassin_icon_color_mask')
-    t.head_mesh = 'assassinHead'
-    t.torso_mesh = 'assassinTorso'
-    t.pelvis_mesh = 'assassinPelvis'
-    t.upper_arm_mesh = 'assassinUpperArm'
-    t.forearm_mesh = 'assassinForeArm'
-    t.hand_mesh = 'assassinHand'
-    t.upper_leg_mesh = 'assassinUpperLeg'
-    t.lower_leg_mesh = 'assassinLowerLeg'
-    t.toes_mesh = 'assassinToes'
-    assassin_sounds = ['assassin1', 'assassin2', 'assassin3', 'assassin4']
-    assassin_hit_sounds = ['assassinHit1', 'assassinHit2']
-    t.jump_sounds = assassin_sounds
-    t.attack_sounds = assassin_sounds
-    t.impact_sounds = assassin_hit_sounds
-    t.death_sounds = ['assassinDeath']
-    t.pickup_sounds = assassin_sounds
-    t.fall_sounds = ['assassinFall']
-    t.style = 'spaz'
-    t.default_color = (0.2, 1.0, 0.5)
-    t.default_highlight = (1.0, 0.3, 0)
+    a = Appearance('Zola')
+    a.color_texture = tex.assassin_color
+    a.color_mask_texture = tex.assassin_color_mask
+    a.icon_texture = tex.assassin_icon
+    a.icon_mask_texture = tex.assassin_icon_color_mask
+    a.head_mesh = mesh.assassin_head
+    a.torso_mesh = mesh.assassin_torso
+    a.pelvis_mesh = mesh.assassin_pelvis
+    a.upper_arm_mesh = mesh.assassin_upper_arm
+    a.forearm_mesh = mesh.assassin_fore_arm
+    a.hand_mesh = mesh.assassin_hand
+    a.upper_leg_mesh = mesh.assassin_upper_leg
+    a.lower_leg_mesh = mesh.assassin_lower_leg
+    a.toes_mesh = mesh.assassin_toes
+    assassin_sounds = [
+        snd.assassin1,
+        snd.assassin2,
+        snd.assassin3,
+        snd.assassin4,
+    ]
+    assassin_hit_sounds = [
+        snd.assassin_hit1,
+        snd.assassin_hit2,
+    ]
+    a.jump_sounds = assassin_sounds
+    a.attack_sounds = assassin_sounds
+    a.impact_sounds = assassin_hit_sounds
+    a.death_sounds = [snd.assassin_death]
+    a.pickup_sounds = assassin_sounds
+    a.fall_sounds = [snd.assassin_fall]
+    a.style = 'spaz'
+    a.default_color = (0.2, 1.0, 0.5)
+    a.default_highlight = (1.0, 0.3, 0)
 
     # Wizard ###################################
-    t = Appearance('Grumbledorf')
-    t.color_texture = _tex('wizard_color')
-    t.color_mask_texture = _tex('wizard_color_mask')
-    t.icon_texture = _tex('wizard_icon')
-    t.icon_mask_texture = _tex('wizard_icon_color_mask')
-    t.head_mesh = 'wizardHead'
-    t.torso_mesh = 'wizardTorso'
-    t.pelvis_mesh = 'wizardPelvis'
-    t.upper_arm_mesh = 'wizardUpperArm'
-    t.forearm_mesh = 'wizardForeArm'
-    t.hand_mesh = 'wizardHand'
-    t.upper_leg_mesh = 'wizardUpperLeg'
-    t.lower_leg_mesh = 'wizardLowerLeg'
-    t.toes_mesh = 'wizardToes'
-    wizard_sounds = ['wizard1', 'wizard2', 'wizard3', 'wizard4']
-    wizard_hit_sounds = ['wizardHit1', 'wizardHit2']
-    t.jump_sounds = wizard_sounds
-    t.attack_sounds = wizard_sounds
-    t.impact_sounds = wizard_hit_sounds
-    t.death_sounds = ['wizardDeath']
-    t.pickup_sounds = wizard_sounds
-    t.fall_sounds = ['wizardFall']
-    t.style = 'spaz'
-    t.default_color = (0.2, 0.4, 1.0)
-    t.default_highlight = (0.06, 0.15, 0.4)
+    a = Appearance('Grumbledorf')
+    a.color_texture = tex.wizard_color
+    a.color_mask_texture = tex.wizard_color_mask
+    a.icon_texture = tex.wizard_icon
+    a.icon_mask_texture = tex.wizard_icon_color_mask
+    a.head_mesh = mesh.wizard_head
+    a.torso_mesh = mesh.wizard_torso
+    a.pelvis_mesh = mesh.wizard_pelvis
+    a.upper_arm_mesh = mesh.wizard_upper_arm
+    a.forearm_mesh = mesh.wizard_fore_arm
+    a.hand_mesh = mesh.wizard_hand
+    a.upper_leg_mesh = mesh.wizard_upper_leg
+    a.lower_leg_mesh = mesh.wizard_lower_leg
+    a.toes_mesh = mesh.wizard_toes
+    wizard_sounds = [
+        snd.wizard1,
+        snd.wizard2,
+        snd.wizard3,
+        snd.wizard4,
+    ]
+    wizard_hit_sounds = [
+        snd.wizard_hit1,
+        snd.wizard_hit2,
+    ]
+    a.jump_sounds = wizard_sounds
+    a.attack_sounds = wizard_sounds
+    a.impact_sounds = wizard_hit_sounds
+    a.death_sounds = [snd.wizard_death]
+    a.pickup_sounds = wizard_sounds
+    a.fall_sounds = [snd.wizard_fall]
+    a.style = 'spaz'
+    a.default_color = (0.2, 0.4, 1.0)
+    a.default_highlight = (0.06, 0.15, 0.4)
 
     # Cowboy ###################################
-    t = Appearance('Butch')
-    t.color_texture = _tex('cowboy_color')
-    t.color_mask_texture = _tex('cowboy_color_mask')
-    t.icon_texture = _tex('cowboy_icon')
-    t.icon_mask_texture = _tex('cowboy_icon_color_mask')
-    t.head_mesh = 'cowboyHead'
-    t.torso_mesh = 'cowboyTorso'
-    t.pelvis_mesh = 'cowboyPelvis'
-    t.upper_arm_mesh = 'cowboyUpperArm'
-    t.forearm_mesh = 'cowboyForeArm'
-    t.hand_mesh = 'cowboyHand'
-    t.upper_leg_mesh = 'cowboyUpperLeg'
-    t.lower_leg_mesh = 'cowboyLowerLeg'
-    t.toes_mesh = 'cowboyToes'
-    cowboy_sounds = ['cowboy1', 'cowboy2', 'cowboy3', 'cowboy4']
-    cowboy_hit_sounds = ['cowboyHit1', 'cowboyHit2']
-    t.jump_sounds = cowboy_sounds
-    t.attack_sounds = cowboy_sounds
-    t.impact_sounds = cowboy_hit_sounds
-    t.death_sounds = ['cowboyDeath']
-    t.pickup_sounds = cowboy_sounds
-    t.fall_sounds = ['cowboyFall']
-    t.style = 'spaz'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
+    a = Appearance('Butch')
+    a.color_texture = tex.cowboy_color
+    a.color_mask_texture = tex.cowboy_color_mask
+    a.icon_texture = tex.cowboy_icon
+    a.icon_mask_texture = tex.cowboy_icon_color_mask
+    a.head_mesh = mesh.cowboy_head
+    a.torso_mesh = mesh.cowboy_torso
+    a.pelvis_mesh = mesh.cowboy_pelvis
+    a.upper_arm_mesh = mesh.cowboy_upper_arm
+    a.forearm_mesh = mesh.cowboy_fore_arm
+    a.hand_mesh = mesh.cowboy_hand
+    a.upper_leg_mesh = mesh.cowboy_upper_leg
+    a.lower_leg_mesh = mesh.cowboy_lower_leg
+    a.toes_mesh = mesh.cowboy_toes
+    cowboy_sounds = [
+        snd.cowboy1,
+        snd.cowboy2,
+        snd.cowboy3,
+        snd.cowboy4,
+    ]
+    cowboy_hit_sounds = [
+        snd.cowboy_hit1,
+        snd.cowboy_hit2,
+    ]
+    a.jump_sounds = cowboy_sounds
+    a.attack_sounds = cowboy_sounds
+    a.impact_sounds = cowboy_hit_sounds
+    a.death_sounds = [snd.cowboy_death]
+    a.pickup_sounds = cowboy_sounds
+    a.fall_sounds = [snd.cowboy_fall]
+    a.style = 'spaz'
+    a.default_color = (0.3, 0.5, 0.8)
+    a.default_highlight = (1, 0, 0)
 
     # Witch ###################################
-    t = Appearance('Witch')
-    t.color_texture = _tex('witch_color')
-    t.color_mask_texture = _tex('witch_color_mask')
-    t.icon_texture = _tex('witch_icon')
-    t.icon_mask_texture = _tex('witch_icon_color_mask')
-    t.head_mesh = 'witchHead'
-    t.torso_mesh = 'witchTorso'
-    t.pelvis_mesh = 'witchPelvis'
-    t.upper_arm_mesh = 'witchUpperArm'
-    t.forearm_mesh = 'witchForeArm'
-    t.hand_mesh = 'witchHand'
-    t.upper_leg_mesh = 'witchUpperLeg'
-    t.lower_leg_mesh = 'witchLowerLeg'
-    t.toes_mesh = 'witchToes'
-    witch_sounds = ['witch1', 'witch2', 'witch3', 'witch4']
-    witch_hit_sounds = ['witchHit1', 'witchHit2']
-    t.jump_sounds = witch_sounds
-    t.attack_sounds = witch_sounds
-    t.impact_sounds = witch_hit_sounds
-    t.death_sounds = ['witchDeath']
-    t.pickup_sounds = witch_sounds
-    t.fall_sounds = ['witchFall']
-    t.style = 'spaz'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
+    a = Appearance('Witch')
+    a.color_texture = tex.witch_color
+    a.color_mask_texture = tex.witch_color_mask
+    a.icon_texture = tex.witch_icon
+    a.icon_mask_texture = tex.witch_icon_color_mask
+    a.head_mesh = mesh.witch_head
+    a.torso_mesh = mesh.witch_torso
+    a.pelvis_mesh = mesh.witch_pelvis
+    a.upper_arm_mesh = mesh.witch_upper_arm
+    a.forearm_mesh = mesh.witch_fore_arm
+    a.hand_mesh = mesh.witch_hand
+    a.upper_leg_mesh = mesh.witch_upper_leg
+    a.lower_leg_mesh = mesh.witch_lower_leg
+    a.toes_mesh = mesh.witch_toes
+    witch_sounds = [
+        snd.witch1,
+        snd.witch2,
+        snd.witch3,
+        snd.witch4,
+    ]
+    witch_hit_sounds = [
+        snd.witch_hit1,
+        snd.witch_hit2,
+    ]
+    a.jump_sounds = witch_sounds
+    a.attack_sounds = witch_sounds
+    a.impact_sounds = witch_hit_sounds
+    a.death_sounds = [snd.witch_death]
+    a.pickup_sounds = witch_sounds
+    a.fall_sounds = [snd.witch_fall]
+    a.style = 'spaz'
+    a.default_color = (0.3, 0.5, 0.8)
+    a.default_highlight = (1, 0, 0)
 
     # Warrior ###################################
-    t = Appearance('Warrior')
-    t.color_texture = _tex('warrior_color')
-    t.color_mask_texture = _tex('warrior_color_mask')
-    t.icon_texture = _tex('warrior_icon')
-    t.icon_mask_texture = _tex('warrior_icon_color_mask')
-    t.head_mesh = 'warriorHead'
-    t.torso_mesh = 'warriorTorso'
-    t.pelvis_mesh = 'warriorPelvis'
-    t.upper_arm_mesh = 'warriorUpperArm'
-    t.forearm_mesh = 'warriorForeArm'
-    t.hand_mesh = 'warriorHand'
-    t.upper_leg_mesh = 'warriorUpperLeg'
-    t.lower_leg_mesh = 'warriorLowerLeg'
-    t.toes_mesh = 'warriorToes'
-    warrior_sounds = ['warrior1', 'warrior2', 'warrior3', 'warrior4']
-    warrior_hit_sounds = ['warriorHit1', 'warriorHit2']
-    t.jump_sounds = warrior_sounds
-    t.attack_sounds = warrior_sounds
-    t.impact_sounds = warrior_hit_sounds
-    t.death_sounds = ['warriorDeath']
-    t.pickup_sounds = warrior_sounds
-    t.fall_sounds = ['warriorFall']
-    t.style = 'spaz'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
+    a = Appearance('Warrior')
+    a.color_texture = tex.warrior_color
+    a.color_mask_texture = tex.warrior_color_mask
+    a.icon_texture = tex.warrior_icon
+    a.icon_mask_texture = tex.warrior_icon_color_mask
+    a.head_mesh = mesh.warrior_head
+    a.torso_mesh = mesh.warrior_torso
+    a.pelvis_mesh = mesh.warrior_pelvis
+    a.upper_arm_mesh = mesh.warrior_upper_arm
+    a.forearm_mesh = mesh.warrior_fore_arm
+    a.hand_mesh = mesh.warrior_hand
+    a.upper_leg_mesh = mesh.warrior_upper_leg
+    a.lower_leg_mesh = mesh.warrior_lower_leg
+    a.toes_mesh = mesh.warrior_toes
+    warrior_sounds = [
+        snd.warrior1,
+        snd.warrior2,
+        snd.warrior3,
+        snd.warrior4,
+    ]
+    warrior_hit_sounds = [
+        snd.warrior_hit1,
+        snd.warrior_hit2,
+    ]
+    a.jump_sounds = warrior_sounds
+    a.attack_sounds = warrior_sounds
+    a.impact_sounds = warrior_hit_sounds
+    a.death_sounds = [snd.warrior_death]
+    a.pickup_sounds = warrior_sounds
+    a.fall_sounds = [snd.warrior_fall]
+    a.style = 'spaz'
+    a.default_color = (0.3, 0.5, 0.8)
+    a.default_highlight = (1, 0, 0)
 
     # Superhero ###################################
-    t = Appearance('Middle-Man')
-    t.color_texture = _tex('superhero_color')
-    t.color_mask_texture = _tex('superhero_color_mask')
-    t.icon_texture = _tex('superhero_icon')
-    t.icon_mask_texture = _tex('superhero_icon_color_mask')
-    t.head_mesh = 'superheroHead'
-    t.torso_mesh = 'superheroTorso'
-    t.pelvis_mesh = 'superheroPelvis'
-    t.upper_arm_mesh = 'superheroUpperArm'
-    t.forearm_mesh = 'superheroForeArm'
-    t.hand_mesh = 'superheroHand'
-    t.upper_leg_mesh = 'superheroUpperLeg'
-    t.lower_leg_mesh = 'superheroLowerLeg'
-    t.toes_mesh = 'superheroToes'
-    superhero_sounds = ['superhero1', 'superhero2', 'superhero3', 'superhero4']
-    superhero_hit_sounds = ['superheroHit1', 'superheroHit2']
-    t.jump_sounds = superhero_sounds
-    t.attack_sounds = superhero_sounds
-    t.impact_sounds = superhero_hit_sounds
-    t.death_sounds = ['superheroDeath']
-    t.pickup_sounds = superhero_sounds
-    t.fall_sounds = ['superheroFall']
-    t.style = 'spaz'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
+    a = Appearance('Middle-Man')
+    a.color_texture = tex.superhero_color
+    a.color_mask_texture = tex.superhero_color_mask
+    a.icon_texture = tex.superhero_icon
+    a.icon_mask_texture = tex.superhero_icon_color_mask
+    a.head_mesh = mesh.superhero_head
+    a.torso_mesh = mesh.superhero_torso
+    a.pelvis_mesh = mesh.superhero_pelvis
+    a.upper_arm_mesh = mesh.superhero_upper_arm
+    a.forearm_mesh = mesh.superhero_fore_arm
+    a.hand_mesh = mesh.superhero_hand
+    a.upper_leg_mesh = mesh.superhero_upper_leg
+    a.lower_leg_mesh = mesh.superhero_lower_leg
+    a.toes_mesh = mesh.superhero_toes
+    superhero_sounds = [
+        snd.superhero1,
+        snd.superhero2,
+        snd.superhero3,
+        snd.superhero4,
+    ]
+    superhero_hit_sounds = [
+        snd.superhero_hit1,
+        snd.superhero_hit2,
+    ]
+    a.jump_sounds = superhero_sounds
+    a.attack_sounds = superhero_sounds
+    a.impact_sounds = superhero_hit_sounds
+    a.death_sounds = [snd.superhero_death]
+    a.pickup_sounds = superhero_sounds
+    a.fall_sounds = [snd.superhero_fall]
+    a.style = 'spaz'
+    a.default_color = (0.3, 0.5, 0.8)
+    a.default_highlight = (1, 0, 0)
 
     # Alien ###################################
-    t = Appearance('Alien')
-    t.color_texture = _tex('alien_color')
-    t.color_mask_texture = _tex('alien_color_mask')
-    t.icon_texture = _tex('alien_icon')
-    t.icon_mask_texture = _tex('alien_icon_color_mask')
-    t.head_mesh = 'alienHead'
-    t.torso_mesh = 'alienTorso'
-    t.pelvis_mesh = 'alienPelvis'
-    t.upper_arm_mesh = 'alienUpperArm'
-    t.forearm_mesh = 'alienForeArm'
-    t.hand_mesh = 'alienHand'
-    t.upper_leg_mesh = 'alienUpperLeg'
-    t.lower_leg_mesh = 'alienLowerLeg'
-    t.toes_mesh = 'alienToes'
-    alien_sounds = ['alien1', 'alien2', 'alien3', 'alien4']
-    alien_hit_sounds = ['alienHit1', 'alienHit2']
-    t.jump_sounds = alien_sounds
-    t.attack_sounds = alien_sounds
-    t.impact_sounds = alien_hit_sounds
-    t.death_sounds = ['alienDeath']
-    t.pickup_sounds = alien_sounds
-    t.fall_sounds = ['alienFall']
-    t.style = 'spaz'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
+    a = Appearance('Alien')
+    a.color_texture = tex.alien_color
+    a.color_mask_texture = tex.alien_color_mask
+    a.icon_texture = tex.alien_icon
+    a.icon_mask_texture = tex.alien_icon_color_mask
+    a.head_mesh = mesh.alien_head
+    a.torso_mesh = mesh.alien_torso
+    a.pelvis_mesh = mesh.alien_pelvis
+    a.upper_arm_mesh = mesh.alien_upper_arm
+    a.forearm_mesh = mesh.alien_fore_arm
+    a.hand_mesh = mesh.alien_hand
+    a.upper_leg_mesh = mesh.alien_upper_leg
+    a.lower_leg_mesh = mesh.alien_lower_leg
+    a.toes_mesh = mesh.alien_toes
+    alien_sounds = [
+        snd.alien1,
+        snd.alien2,
+        snd.alien3,
+        snd.alien4,
+    ]
+    alien_hit_sounds = [
+        snd.alien_hit1,
+        snd.alien_hit2,
+    ]
+    a.jump_sounds = alien_sounds
+    a.attack_sounds = alien_sounds
+    a.impact_sounds = alien_hit_sounds
+    a.death_sounds = [snd.alien_death]
+    a.pickup_sounds = alien_sounds
+    a.fall_sounds = [snd.alien_fall]
+    a.style = 'spaz'
+    a.default_color = (0.3, 0.5, 0.8)
+    a.default_highlight = (1, 0, 0)
 
     # OldLady ###################################
-    t = Appearance('OldLady')
-    t.color_texture = _tex('old_lady_color')
-    t.color_mask_texture = _tex('old_lady_color_mask')
-    t.icon_texture = _tex('old_lady_icon')
-    t.icon_mask_texture = _tex('old_lady_icon_color_mask')
-    t.head_mesh = 'oldLadyHead'
-    t.torso_mesh = 'oldLadyTorso'
-    t.pelvis_mesh = 'oldLadyPelvis'
-    t.upper_arm_mesh = 'oldLadyUpperArm'
-    t.forearm_mesh = 'oldLadyForeArm'
-    t.hand_mesh = 'oldLadyHand'
-    t.upper_leg_mesh = 'oldLadyUpperLeg'
-    t.lower_leg_mesh = 'oldLadyLowerLeg'
-    t.toes_mesh = 'oldLadyToes'
-    old_lady_sounds = ['oldLady1', 'oldLady2', 'oldLady3', 'oldLady4']
-    old_lady_hit_sounds = ['oldLadyHit1', 'oldLadyHit2']
-    t.jump_sounds = old_lady_sounds
-    t.attack_sounds = old_lady_sounds
-    t.impact_sounds = old_lady_hit_sounds
-    t.death_sounds = ['oldLadyDeath']
-    t.pickup_sounds = old_lady_sounds
-    t.fall_sounds = ['oldLadyFall']
-    t.style = 'bones'
-    t.default_color = (0.2, 1.0, 1.0)
-    t.default_highlight = (0.5, 0.25, 1.0)
+    a = Appearance('OldLady')
+    a.color_texture = tex.old_lady_color
+    a.color_mask_texture = tex.old_lady_color_mask
+    a.icon_texture = tex.old_lady_icon
+    a.icon_mask_texture = tex.old_lady_icon_color_mask
+    a.head_mesh = mesh.old_lady_head
+    a.torso_mesh = mesh.old_lady_torso
+    a.pelvis_mesh = mesh.old_lady_pelvis
+    a.upper_arm_mesh = mesh.old_lady_upper_arm
+    a.forearm_mesh = mesh.old_lady_fore_arm
+    a.hand_mesh = mesh.old_lady_hand
+    a.upper_leg_mesh = mesh.old_lady_upper_leg
+    a.lower_leg_mesh = mesh.old_lady_lower_leg
+    a.toes_mesh = mesh.old_lady_toes
+    old_lady_sounds = [
+        snd.old_lady1,
+        snd.old_lady2,
+        snd.old_lady3,
+        snd.old_lady4,
+    ]
+    old_lady_hit_sounds = [
+        snd.old_lady_hit1,
+        snd.old_lady_hit2,
+    ]
+    a.jump_sounds = old_lady_sounds
+    a.attack_sounds = old_lady_sounds
+    a.impact_sounds = old_lady_hit_sounds
+    a.death_sounds = [snd.old_lady_death]
+    a.pickup_sounds = old_lady_sounds
+    a.fall_sounds = [snd.old_lady_fall]
+    a.style = 'bones'
+    a.default_color = (0.2, 1.0, 1.0)
+    a.default_highlight = (0.5, 0.25, 1.0)
 
     # Gladiator ###################################
-    t = Appearance('Gladiator')
-    t.color_texture = _tex('gladiator_color')
-    t.color_mask_texture = _tex('gladiator_color_mask')
-    t.icon_texture = _tex('gladiator_icon')
-    t.icon_mask_texture = _tex('gladiator_icon_color_mask')
-    t.head_mesh = 'gladiatorHead'
-    t.torso_mesh = 'gladiatorTorso'
-    t.pelvis_mesh = 'gladiatorPelvis'
-    t.upper_arm_mesh = 'gladiatorUpperArm'
-    t.forearm_mesh = 'gladiatorForeArm'
-    t.hand_mesh = 'gladiatorHand'
-    t.upper_leg_mesh = 'gladiatorUpperLeg'
-    t.lower_leg_mesh = 'gladiatorLowerLeg'
-    t.toes_mesh = 'gladiatorToes'
-    gladiator_sounds = ['gladiator1', 'gladiator2', 'gladiator3', 'gladiator4']
-    gladiator_hit_sounds = ['gladiatorHit1', 'gladiatorHit2']
-    t.jump_sounds = gladiator_sounds
-    t.attack_sounds = gladiator_sounds
-    t.impact_sounds = gladiator_hit_sounds
-    t.death_sounds = ['gladiatorDeath']
-    t.pickup_sounds = gladiator_sounds
-    t.fall_sounds = ['gladiatorFall']
-    t.style = 'spaz'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
+    a = Appearance('Gladiator')
+    a.color_texture = tex.gladiator_color
+    a.color_mask_texture = tex.gladiator_color_mask
+    a.icon_texture = tex.gladiator_icon
+    a.icon_mask_texture = tex.gladiator_icon_color_mask
+    a.head_mesh = mesh.gladiator_head
+    a.torso_mesh = mesh.gladiator_torso
+    a.pelvis_mesh = mesh.gladiator_pelvis
+    a.upper_arm_mesh = mesh.gladiator_upper_arm
+    a.forearm_mesh = mesh.gladiator_fore_arm
+    a.hand_mesh = mesh.gladiator_hand
+    a.upper_leg_mesh = mesh.gladiator_upper_leg
+    a.lower_leg_mesh = mesh.gladiator_lower_leg
+    a.toes_mesh = mesh.gladiator_toes
+    gladiator_sounds = [
+        snd.gladiator1,
+        snd.gladiator2,
+        snd.gladiator3,
+        snd.gladiator4,
+    ]
+    gladiator_hit_sounds = [
+        snd.gladiator_hit1,
+        snd.gladiator_hit2,
+    ]
+    a.jump_sounds = gladiator_sounds
+    a.attack_sounds = gladiator_sounds
+    a.impact_sounds = gladiator_hit_sounds
+    a.death_sounds = [snd.gladiator_death]
+    a.pickup_sounds = gladiator_sounds
+    a.fall_sounds = [snd.gladiator_fall]
+    a.style = 'spaz'
+    a.default_color = (0.3, 0.5, 0.8)
+    a.default_highlight = (1, 0, 0)
 
     # Wrestler ###################################
-    t = Appearance('Wrestler')
-    t.color_texture = _tex('wrestler_color')
-    t.color_mask_texture = _tex('wrestler_color_mask')
-    t.icon_texture = _tex('wrestler_icon')
-    t.icon_mask_texture = _tex('wrestler_icon_color_mask')
-    t.head_mesh = 'wrestlerHead'
-    t.torso_mesh = 'wrestlerTorso'
-    t.pelvis_mesh = 'wrestlerPelvis'
-    t.upper_arm_mesh = 'wrestlerUpperArm'
-    t.forearm_mesh = 'wrestlerForeArm'
-    t.hand_mesh = 'wrestlerHand'
-    t.upper_leg_mesh = 'wrestlerUpperLeg'
-    t.lower_leg_mesh = 'wrestlerLowerLeg'
-    t.toes_mesh = 'wrestlerToes'
-    wrestler_sounds = ['wrestler1', 'wrestler2', 'wrestler3', 'wrestler4']
-    wrestler_hit_sounds = ['wrestlerHit1', 'wrestlerHit2']
-    t.jump_sounds = wrestler_sounds
-    t.attack_sounds = wrestler_sounds
-    t.impact_sounds = wrestler_hit_sounds
-    t.death_sounds = ['wrestlerDeath']
-    t.pickup_sounds = wrestler_sounds
-    t.fall_sounds = ['wrestlerFall']
-    t.style = 'spaz'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
+    a = Appearance('Wrestler')
+    a.color_texture = tex.wrestler_color
+    a.color_mask_texture = tex.wrestler_color_mask
+    a.icon_texture = tex.wrestler_icon
+    a.icon_mask_texture = tex.wrestler_icon_color_mask
+    a.head_mesh = mesh.wrestler_head
+    a.torso_mesh = mesh.wrestler_torso
+    a.pelvis_mesh = mesh.wrestler_pelvis
+    a.upper_arm_mesh = mesh.wrestler_upper_arm
+    a.forearm_mesh = mesh.wrestler_fore_arm
+    a.hand_mesh = mesh.wrestler_hand
+    a.upper_leg_mesh = mesh.wrestler_upper_leg
+    a.lower_leg_mesh = mesh.wrestler_lower_leg
+    a.toes_mesh = mesh.wrestler_toes
+    wrestler_sounds = [
+        snd.wrestler1,
+        snd.wrestler2,
+        snd.wrestler3,
+        snd.wrestler4,
+    ]
+    wrestler_hit_sounds = [
+        snd.wrestler_hit1,
+        snd.wrestler_hit2,
+    ]
+    a.jump_sounds = wrestler_sounds
+    a.attack_sounds = wrestler_sounds
+    a.impact_sounds = wrestler_hit_sounds
+    a.death_sounds = [snd.wrestler_death]
+    a.pickup_sounds = wrestler_sounds
+    a.fall_sounds = [snd.wrestler_fall]
+    a.style = 'spaz'
+    a.default_color = (0.3, 0.5, 0.8)
+    a.default_highlight = (1, 0, 0)
 
     # OperaSinger ###################################
-    t = Appearance('Gretel')
-    t.color_texture = _tex('opera_singer_color')
-    t.color_mask_texture = _tex('opera_singer_color_mask')
-    t.icon_texture = _tex('opera_singer_icon')
-    t.icon_mask_texture = _tex('opera_singer_icon_color_mask')
-    t.head_mesh = 'operaSingerHead'
-    t.torso_mesh = 'operaSingerTorso'
-    t.pelvis_mesh = 'operaSingerPelvis'
-    t.upper_arm_mesh = 'operaSingerUpperArm'
-    t.forearm_mesh = 'operaSingerForeArm'
-    t.hand_mesh = 'operaSingerHand'
-    t.upper_leg_mesh = 'operaSingerUpperLeg'
-    t.lower_leg_mesh = 'operaSingerLowerLeg'
-    t.toes_mesh = 'operaSingerToes'
+    a = Appearance('Gretel')
+    a.color_texture = tex.opera_singer_color
+    a.color_mask_texture = tex.opera_singer_color_mask
+    a.icon_texture = tex.opera_singer_icon
+    a.icon_mask_texture = tex.opera_singer_icon_color_mask
+    a.head_mesh = mesh.opera_singer_head
+    a.torso_mesh = mesh.opera_singer_torso
+    a.pelvis_mesh = mesh.opera_singer_pelvis
+    a.upper_arm_mesh = mesh.opera_singer_upper_arm
+    a.forearm_mesh = mesh.opera_singer_fore_arm
+    a.hand_mesh = mesh.opera_singer_hand
+    a.upper_leg_mesh = mesh.opera_singer_upper_leg
+    a.lower_leg_mesh = mesh.opera_singer_lower_leg
+    a.toes_mesh = mesh.opera_singer_toes
     opera_singer_sounds = [
-        'operaSinger1',
-        'operaSinger2',
-        'operaSinger3',
-        'operaSinger4',
+        snd.opera_singer1,
+        snd.opera_singer2,
+        snd.opera_singer3,
+        snd.opera_singer4,
     ]
-    opera_singer_hit_sounds = ['operaSingerHit1', 'operaSingerHit2']
-    t.jump_sounds = opera_singer_sounds
-    t.attack_sounds = opera_singer_sounds
-    t.impact_sounds = opera_singer_hit_sounds
-    t.death_sounds = ['operaSingerDeath']
-    t.pickup_sounds = opera_singer_sounds
-    t.fall_sounds = ['operaSingerFall']
-    t.style = 'spaz'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
+    opera_singer_hit_sounds = [
+        snd.opera_singer_hit1,
+        snd.opera_singer_hit2,
+    ]
+    a.jump_sounds = opera_singer_sounds
+    a.attack_sounds = opera_singer_sounds
+    a.impact_sounds = opera_singer_hit_sounds
+    a.death_sounds = [snd.opera_singer_death]
+    a.pickup_sounds = opera_singer_sounds
+    a.fall_sounds = [snd.opera_singer_fall]
+    a.style = 'spaz'
+    a.default_color = (0.3, 0.5, 0.8)
+    a.default_highlight = (1, 0, 0)
 
     # Pixie ###################################
-    t = Appearance('Pixel')
-    t.color_texture = _tex('pixie_color')
-    t.color_mask_texture = _tex('pixie_color_mask')
-    t.icon_texture = _tex('pixie_icon')
-    t.icon_mask_texture = _tex('pixie_icon_color_mask')
-    t.head_mesh = 'pixieHead'
-    t.torso_mesh = 'pixieTorso'
-    t.pelvis_mesh = 'pixiePelvis'
-    t.upper_arm_mesh = 'pixieUpperArm'
-    t.forearm_mesh = 'pixieForeArm'
-    t.hand_mesh = 'pixieHand'
-    t.upper_leg_mesh = 'pixieUpperLeg'
-    t.lower_leg_mesh = 'pixieLowerLeg'
-    t.toes_mesh = 'pixieToes'
-    pixie_sounds = ['pixie1', 'pixie2', 'pixie3', 'pixie4']
-    pixie_hit_sounds = ['pixieHit1', 'pixieHit2']
-    t.jump_sounds = pixie_sounds
-    t.attack_sounds = pixie_sounds
-    t.impact_sounds = pixie_hit_sounds
-    t.death_sounds = ['pixieDeath']
-    t.pickup_sounds = pixie_sounds
-    t.fall_sounds = ['pixieFall']
-    t.style = 'pixie'
-    t.default_color = (0, 1, 0.7)
-    t.default_highlight = (0.65, 0.35, 0.75)
+    a = Appearance('Pixel')
+    a.color_texture = tex.pixie_color
+    a.color_mask_texture = tex.pixie_color_mask
+    a.icon_texture = tex.pixie_icon
+    a.icon_mask_texture = tex.pixie_icon_color_mask
+    a.head_mesh = mesh.pixie_head
+    a.torso_mesh = mesh.pixie_torso
+    a.pelvis_mesh = mesh.pixie_pelvis
+    a.upper_arm_mesh = mesh.pixie_upper_arm
+    a.forearm_mesh = mesh.pixie_fore_arm
+    a.hand_mesh = mesh.pixie_hand
+    a.upper_leg_mesh = mesh.pixie_upper_leg
+    a.lower_leg_mesh = mesh.pixie_lower_leg
+    a.toes_mesh = mesh.pixie_toes
+    pixie_sounds = [
+        snd.pixie1,
+        snd.pixie2,
+        snd.pixie3,
+        snd.pixie4,
+    ]
+    pixie_hit_sounds = [
+        snd.pixie_hit1,
+        snd.pixie_hit2,
+    ]
+    a.jump_sounds = pixie_sounds
+    a.attack_sounds = pixie_sounds
+    a.impact_sounds = pixie_hit_sounds
+    a.death_sounds = [snd.pixie_death]
+    a.pickup_sounds = pixie_sounds
+    a.fall_sounds = [snd.pixie_fall]
+    a.style = 'pixie'
+    a.default_color = (0, 1, 0.7)
+    a.default_highlight = (0.65, 0.35, 0.75)
 
     # Robot ###################################
-    t = Appearance('Robot')
-    t.color_texture = _tex('robot_color')
-    t.color_mask_texture = _tex('robot_color_mask')
-    t.icon_texture = _tex('robot_icon')
-    t.icon_mask_texture = _tex('robot_icon_color_mask')
-    t.head_mesh = 'robotHead'
-    t.torso_mesh = 'robotTorso'
-    t.pelvis_mesh = 'robotPelvis'
-    t.upper_arm_mesh = 'robotUpperArm'
-    t.forearm_mesh = 'robotForeArm'
-    t.hand_mesh = 'robotHand'
-    t.upper_leg_mesh = 'robotUpperLeg'
-    t.lower_leg_mesh = 'robotLowerLeg'
-    t.toes_mesh = 'robotToes'
-    robot_sounds = ['robot1', 'robot2', 'robot3', 'robot4']
-    robot_hit_sounds = ['robotHit1', 'robotHit2']
-    t.jump_sounds = robot_sounds
-    t.attack_sounds = robot_sounds
-    t.impact_sounds = robot_hit_sounds
-    t.death_sounds = ['robotDeath']
-    t.pickup_sounds = robot_sounds
-    t.fall_sounds = ['robotFall']
-    t.style = 'spaz'
-    t.default_color = (0.3, 0.5, 0.8)
-    t.default_highlight = (1, 0, 0)
+    a = Appearance('Robot')
+    a.color_texture = tex.robot_color
+    a.color_mask_texture = tex.robot_color_mask
+    a.icon_texture = tex.robot_icon
+    a.icon_mask_texture = tex.robot_icon_color_mask
+    a.head_mesh = mesh.robot_head
+    a.torso_mesh = mesh.robot_torso
+    a.pelvis_mesh = mesh.robot_pelvis
+    a.upper_arm_mesh = mesh.robot_upper_arm
+    a.forearm_mesh = mesh.robot_fore_arm
+    a.hand_mesh = mesh.robot_hand
+    a.upper_leg_mesh = mesh.robot_upper_leg
+    a.lower_leg_mesh = mesh.robot_lower_leg
+    a.toes_mesh = mesh.robot_toes
+    robot_sounds = [
+        snd.robot1,
+        snd.robot2,
+        snd.robot3,
+        snd.robot4,
+    ]
+    robot_hit_sounds = [
+        snd.robot_hit1,
+        snd.robot_hit2,
+    ]
+    a.jump_sounds = robot_sounds
+    a.attack_sounds = robot_sounds
+    a.impact_sounds = robot_hit_sounds
+    a.death_sounds = [snd.robot_death]
+    a.pickup_sounds = robot_sounds
+    a.fall_sounds = [snd.robot_fall]
+    a.style = 'spaz'
+    a.default_color = (0.3, 0.5, 0.8)
+    a.default_highlight = (1, 0, 0)
 
     # Bunny ###################################
-    t = Appearance('Easter Bunny')
-    t.color_texture = _tex('bunny_color')
-    t.color_mask_texture = _tex('bunny_color_mask')
-    t.icon_texture = _tex('bunny_icon')
-    t.icon_mask_texture = _tex('bunny_icon_color_mask')
-    t.head_mesh = 'bunnyHead'
-    t.torso_mesh = 'bunnyTorso'
-    t.pelvis_mesh = 'bunnyPelvis'
-    t.upper_arm_mesh = 'bunnyUpperArm'
-    t.forearm_mesh = 'bunnyForeArm'
-    t.hand_mesh = 'bunnyHand'
-    t.upper_leg_mesh = 'bunnyUpperLeg'
-    t.lower_leg_mesh = 'bunnyLowerLeg'
-    t.toes_mesh = 'bunnyToes'
-    bunny_sounds = ['bunny1', 'bunny2', 'bunny3', 'bunny4']
-    bunny_hit_sounds = ['bunnyHit1', 'bunnyHit2']
-    t.jump_sounds = ['bunnyJump']
-    t.attack_sounds = bunny_sounds
-    t.impact_sounds = bunny_hit_sounds
-    t.death_sounds = ['bunnyDeath']
-    t.pickup_sounds = bunny_sounds
-    t.fall_sounds = ['bunnyFall']
-    t.style = 'bunny'
-    t.default_color = (1, 1, 1)
-    t.default_highlight = (1, 0.5, 0.5)
+    a = Appearance('Easter Bunny')
+    a.color_texture = tex.bunny_color
+    a.color_mask_texture = tex.bunny_color_mask
+    a.icon_texture = tex.bunny_icon
+    a.icon_mask_texture = tex.bunny_icon_color_mask
+    a.head_mesh = mesh.bunny_head
+    a.torso_mesh = mesh.bunny_torso
+    a.pelvis_mesh = mesh.bunny_pelvis
+    a.upper_arm_mesh = mesh.bunny_upper_arm
+    a.forearm_mesh = mesh.bunny_fore_arm
+    a.hand_mesh = mesh.bunny_hand
+    a.upper_leg_mesh = mesh.bunny_upper_leg
+    a.lower_leg_mesh = mesh.bunny_lower_leg
+    a.toes_mesh = mesh.bunny_toes
+    bunny_sounds = [
+        snd.bunny1,
+        snd.bunny2,
+        snd.bunny3,
+        snd.bunny4,
+    ]
+    bunny_hit_sounds = [
+        snd.bunny_hit1,
+        snd.bunny_hit2,
+    ]
+    a.jump_sounds = [snd.bunny_jump]
+    a.attack_sounds = bunny_sounds
+    a.impact_sounds = bunny_hit_sounds
+    a.death_sounds = [snd.bunny_death]
+    a.pickup_sounds = bunny_sounds
+    a.fall_sounds = [snd.bunny_fall]
+    a.style = 'bunny'
+    a.default_color = (1, 1, 1)
+    a.default_highlight = (1, 0.5, 0.5)

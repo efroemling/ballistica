@@ -178,12 +178,12 @@ class Chooser:
         # pylint: disable-next=cyclic-import
         from bascenev1 import builtinassets, classicassets
 
-        self._deek_sound = builtinassets.audio.deek
-        self._click_sound = builtinassets.audio.click01
-        self._punchsound = builtinassets.audio.punch01
-        self._swish_sound = classicassets.audio.punch_swish
-        self._errorsound = builtinassets.audio.error
-        self._mask_texture = builtinassets.textures.character_icon_mask
+        self._deek_sound = builtinassets.audio.deek.get()
+        self._click_sound = builtinassets.audio.click01.get()
+        self._punchsound = builtinassets.audio.punch01.get()
+        self._swish_sound = classicassets.audio.punch_swish.get()
+        self._errorsound = builtinassets.audio.error.get()
+        self._mask_texture = builtinassets.textures.character_icon_mask.get()
         self._vpos = vpos
         self._lobby = weakref.ref(lobby)
         self._sessionplayer = sessionplayer
@@ -815,7 +815,7 @@ class Chooser:
                 if len(self._profilenames) == 1:
                     # This should be pretty hard to hit now with
                     # automatic local accounts.
-                    builtinassets.audio.error.play()
+                    builtinassets.audio.error.get().play()
                 else:
                     # Pick the next player profile and assign our name
                     # and character based on that.
@@ -936,33 +936,34 @@ class Chooser:
 
         assert babase.app.classic is not None
         if self._profilenames[self._profileindex] == '_edit':
-            tex = builtinassets.textures.black
-            tint_tex = builtinassets.textures.black
+            tex = builtinassets.textures.black.get()
+            tint_tex = builtinassets.textures.black.get()
             self.icon.color = (1, 1, 1)
             self.icon.texture = tex
             self.icon.tint_texture = tint_tex
             self.icon.tint_color = (0, 1, 0)
             return
 
+        # Safe up-call: bascenev1lib is fully imported by the time a
+        # lobby exists; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1lib.actor import spazappearance
+
+        texval: spazappearance.TexVal
+        tintval: spazappearance.TexVal
         try:
-            tex_name = babase.app.classic.spaz_appearances[
+            appearance = babase.app.classic.spaz_appearances[
                 self._character_names[self._character_index]
-            ].icon_texture
-            tint_tex_name = babase.app.classic.spaz_appearances[
-                self._character_names[self._character_index]
-            ].icon_mask_texture
+            ]
+            texval = appearance.icon_texture
+            tintval = appearance.icon_mask_texture
         except Exception:
             logging.exception('Error updating char icon list')
-            tex_name = (
-                f'{classicassets.__asset_package__}:textures/neo_spaz_icon'
-            )
-            tint_tex_name = (
-                f'{classicassets.__asset_package__}'
-                ':textures/neo_spaz_icon_color_mask'
-            )
+            texval = classicassets.textures.neo_spaz_icon
+            tintval = classicassets.textures.neo_spaz_icon_color_mask
 
-        tex = _bascenev1.gettexture(tex_name)
-        tint_tex = _bascenev1.gettexture(tint_tex_name)
+        tex = spazappearance.scene_texture(texval)
+        tint_tex = spazappearance.scene_texture(tintval)
 
         self.icon.color = (1, 1, 1)
         self.icon.texture = tex
@@ -991,7 +992,16 @@ class Chooser:
         self.icon.tint2_color = clr2
 
         # Store the icon info the the player.
-        self._sessionplayer.set_icon_info(tex_name, tint_tex_name, clr, clr2)
+        # set_icon_info is a native call taking qualified engine
+        # names (they ride the wire to other clients).
+        texspec = spazappearance.texture_spec(texval)
+        tintspec = spazappearance.texture_spec(tintval)
+        self._sessionplayer.set_icon_info(
+            f'{texspec.apverid}:{texspec.name}',
+            f'{tintspec.apverid}:{tintspec.name}',
+            clr,
+            clr2,
+        )
 
 
 class Lobby:

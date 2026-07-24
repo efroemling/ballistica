@@ -27,6 +27,10 @@ from efro.dataclassio import (
     ioprepped,
     ioprep,
     IOAttrs,
+    IO_SLOTS,
+    io_meta,
+    io_is_lossy,
+    io_extra_attrs,
     Codec,
     DataclassFieldLookup,
     IOExtendedData,
@@ -516,6 +520,65 @@ def test_extra_data() -> None:
     assert isinstance(obj, _TestClass)
     out = dataclass_to_dict(obj)
     assert 'nonexistent' not in out
+
+
+def test_instance_metadata_and_slots() -> None:
+    """Per-instance metadata consolidation (_dcio) and slotting."""
+
+    @ioprepped
+    @dataclass
+    class _TestClass:
+        ival: int = 0
+        sval: str = ''
+
+    # A plainly-decoded instance carries NO metadata (lazy).
+    clean = dataclass_from_dict(_TestClass, {'ival': 1})
+    assert io_meta(clean) is None
+    assert not io_is_lossy(clean)
+    assert io_extra_attrs(clean) is None
+
+    # Extra attrs land in the metadata dict and still round-trip.
+    exobj = dataclass_from_dict(_TestClass, {'ival': 1, 'nonexistent': 'x'})
+    assert io_extra_attrs(exobj) == {'nonexistent': 'x'}
+    assert not io_is_lossy(exobj)
+    assert dataclass_to_dict(exobj).get('nonexistent') == 'x'
+
+    # A lossy load flags the top-level instance, and the outputter then
+    # refuses it as a safety net against unintentional round-trips.
+    lobj = dataclass_from_dict(_TestClass, {'ival': 1}, lossy=True)
+    assert io_is_lossy(lobj)
+    with pytest.raises(ValueError):
+        dataclass_to_dict(lobj)
+
+    # A SLOTTED ioprepped class that reserves the metadata slot works
+    # for all three paths, with no __dict__ on its instances.
+    @ioprepped
+    @dataclass
+    class _TestSlotted:
+        __slots__ = ('ival', 'sval', *IO_SLOTS)
+        ival: int
+        sval: str
+
+    sobj = dataclass_from_dict(_TestSlotted, {'ival': 2, 'sval': 'y'})
+    assert not hasattr(sobj, '__dict__')
+    assert io_meta(sobj) is None  # clean; nothing stamped
+    # Extra-attrs decode stamps the reserved slot rather than a __dict__.
+    sobj2 = dataclass_from_dict(
+        _TestSlotted, {'ival': 2, 'sval': 'y', 'extra': 'z'}
+    )
+    assert not hasattr(sobj2, '__dict__')
+    assert io_extra_attrs(sobj2) == {'extra': 'z'}
+    assert dataclass_to_dict(sobj2).get('extra') == 'z'
+
+    # A slotted ioprepped class that FORGETS the metadata slot fails
+    # loudly at prep time, not later at a rare decode.
+    with pytest.raises(TypeError):
+
+        @ioprepped
+        @dataclass
+        class _TestSlottedBad:
+            __slots__ = ('ival',)
+            ival: int
 
 
 def test_ioattrs() -> None:

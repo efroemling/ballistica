@@ -18,8 +18,8 @@ from efro.util import check_utc
 from efro.dataclassio._base import (
     Codec,
     parse_annotated,
-    EXTRA_ATTRS_ATTR,
-    LOSSY_ATTR,
+    io_is_lossy,
+    io_extra_attrs,
     _is_valid_for_codec,
     _get_origin,
     SIMPLE_TYPES,
@@ -64,7 +64,7 @@ class _Outputter:
         # If this data has been flagged as lossy, don't allow outputting
         # it. This hopefully helps avoid unintentional data
         # modification/loss.
-        if getattr(obj, LOSSY_ATTR, False):
+        if io_is_lossy(obj):
             raise ValueError(
                 'Object has been flagged as lossy; output is disallowed.'
             )
@@ -153,7 +153,7 @@ class _Outputter:
 
         # If there's extra-attrs stored on us, check/include them.
         if not self._discard_extra_attrs:
-            extra_attrs = getattr(obj, EXTRA_ATTRS_ATTR, None)
+            extra_attrs = io_extra_attrs(obj)
             if isinstance(extra_attrs, dict):
                 if not _is_valid_for_codec(extra_attrs, self._codec):
                     raise TypeError(

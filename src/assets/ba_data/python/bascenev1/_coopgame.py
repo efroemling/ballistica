@@ -54,7 +54,7 @@ class CoopGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
 
         self._life_warning_beep: bascenev1.Actor | None = None
         self._life_warning_beep_timer: bascenev1.Timer | None = None
-        self._warn_beeps_sound = classicassets.audio.warn_beeps
+        self._warn_beeps_sound = classicassets.audio.warn_beeps.get()
 
     @override
     def on_begin(self) -> None:

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, override
 import logging
 
 import bauiv1 as bui
+from bascenev1lib.actor import spazappearance
 from bauiv1 import classicassets
 from bauiv1 import builtinassets
 
@@ -303,8 +304,10 @@ class AccountViewerWindow(PopupWindow):
                                     size=(80, 80),
                                     color=(1, 1, 1),
                                     mask_texture=mask_texture,
-                                    texture=bui.gettexture(icon_tex),
-                                    tint_texture=bui.gettexture(tint_tex),
+                                    texture=spazappearance.ui_texture(icon_tex),
+                                    tint_texture=spazappearance.ui_texture(
+                                        tint_tex
+                                    ),
                                     tint_color=tint_color,
                                     tint2_color=tint2_color,
                                 )

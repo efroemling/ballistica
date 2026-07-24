@@ -38,7 +38,7 @@ class Background(bs.Actor):
                 delegate=self,
                 attrs={
                     'fill_screen': True,
-                    'texture': classicassets.textures.bg,
+                    'texture': classicassets.textures.bg.get(),
                     'tilt_translate': -0.3,
                     'has_alpha_channel': False,
                     'color': (1, 1, 1),
@@ -52,9 +52,11 @@ class Background(bs.Actor):
                     loop=False,
                 )
             if show_logo:
-                logo_texture = classicassets.textures.logo
-                logo_mesh = classicassets.meshes.logo
-                logo_mesh_transparent = classicassets.meshes.logo_transparent
+                logo_texture = classicassets.textures.logo.get()
+                logo_mesh = classicassets.meshes.logo.get()
+                logo_mesh_transparent = (
+                    classicassets.meshes.logo_transparent.get()
+                )
                 self.logo = bs.newnode(
                     'image',
                     owner=self.node,

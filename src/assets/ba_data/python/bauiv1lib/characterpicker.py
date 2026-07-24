@@ -61,11 +61,13 @@ class CharacterPicker(PopupWindow):
         self._spazzes = spazappearance.get_appearances()
         self._spazzes.sort()
         self._icon_textures = [
-            bui.gettexture(bui.app.classic.spaz_appearances[s].icon_texture)
+            spazappearance.ui_texture(
+                bui.app.classic.spaz_appearances[s].icon_texture
+            )
             for s in self._spazzes
         ]
         self._icon_tint_textures = [
-            bui.gettexture(
+            spazappearance.ui_texture(
                 bui.app.classic.spaz_appearances[s].icon_mask_texture
             )
             for s in self._spazzes

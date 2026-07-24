@@ -33,8 +33,8 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
 
     def __init__(self, settings: dict):
         super().__init__(settings=settings)
-        self._score_display_sound = classicassets.audio.score_hit01
-        self._score_display_sound_small = classicassets.audio.score_hit02
+        self._score_display_sound = classicassets.audio.score_hit01.get()
+        self._score_display_sound_small = classicassets.audio.score_hit02.get()
 
         self._show_up_next: bool = True
 

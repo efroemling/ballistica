@@ -62,7 +62,7 @@ class NinjaFightGame(bs.TeamGameActivity[Player, Team]):
     # ...but not actually create anything yet.
     def __init__(self, settings: dict):
         super().__init__(settings)
-        self._winsound = classicassets.audio.score
+        self._winsound = classicassets.audio.score.get()
         self._won = False
         self._timer: OnScreenTimer | None = None
         self._bots = SpazBotSet()

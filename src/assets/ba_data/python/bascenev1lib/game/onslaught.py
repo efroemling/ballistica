@@ -180,9 +180,9 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
         super().__init__(settings)
 
-        self._new_wave_sound = classicassets.audio.score_hit01
-        self._winsound = classicassets.audio.score
-        self._cashregistersound = builtinassets.audio.cash_register
+        self._new_wave_sound = classicassets.audio.score_hit01.get()
+        self._winsound = classicassets.audio.score.get()
+        self._cashregistersound = builtinassets.audio.cash_register.get()
         self._a_player_has_been_hurt = False
         self._player_has_dropped_bomb = False
 
@@ -206,8 +206,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         self._score = 0
         self._time_bonus = 0
         self._spawn_info_text: bs.NodeActor | None = None
-        self._dingsound = classicassets.audio.ding_small
-        self._dingsoundhigh = classicassets.audio.ding_small_high
+        self._dingsound = classicassets.audio.ding_small.get()
+        self._dingsoundhigh = classicassets.audio.ding_small_high.get()
         self._have_tnt = False
         self._excluded_powerups: list[str] | None = None
         self._waves: list[Wave] = []
@@ -238,8 +238,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 self.tips = [
                     bs.GameTip(
                         'Land-mines are a good way to stop speedy enemies.',
-                        icon=classicassets.textures.powerup_land_mines,
-                        sound=builtinassets.audio.ding,
+                        icon=classicassets.textures.powerup_land_mines.get(),
+                        sound=builtinassets.audio.ding.get(),
                     )
                 ]
 
@@ -252,8 +252,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     bs.GameTip(
                         'Take out a group of enemies by\n'
                         'setting off a bomb near a TNT box.',
-                        icon=classicassets.textures.tnt,
-                        sound=builtinassets.audio.ding,
+                        icon=classicassets.textures.tnt.get(),
+                        sound=builtinassets.audio.ding.get(),
                     )
                 ]
 
@@ -266,8 +266,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     bs.GameTip(
                         'Curse boxes turn you into a ticking time bomb.\n'
                         'The only cure is to quickly grab a health-pack.',
-                        icon=classicassets.textures.powerup_curse,
-                        sound=builtinassets.audio.ding,
+                        icon=classicassets.textures.powerup_curse.get(),
+                        sound=builtinassets.audio.ding.get(),
                     )
                 ]
 

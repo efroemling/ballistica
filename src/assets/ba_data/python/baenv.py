@@ -55,8 +55,8 @@ logger = logging.getLogger('ba.env')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22945
-TARGET_BALLISTICA_VERSION = '1.8.0a55'
+TARGET_BALLISTICA_BUILD = 22946
+TARGET_BALLISTICA_VERSION = '1.8.0a56'
 
 
 @dataclass
@@ -534,6 +534,11 @@ def _setup_certs(contains_python_dist: bool) -> None:
     # overriding this in particular embedded cases if we can verify that
     # system certs are working. We also allow forcing this via an env
     # var if the user desires.
+    #
+    # Note: when this is in effect, our shared SSL context
+    # (babase._env._bootstrap_networking) trusts ONLY these bundled certs
+    # and skips the OS cert store entirely; BA_USE_SYSTEM_CERTS=1 there
+    # opts back into the OS store for corporate/AV TLS-inspection cases.
     if (
         contains_python_dist
         or os.environ.get('BA_USE_BUNDLED_ROOT_CERTS') == '1'

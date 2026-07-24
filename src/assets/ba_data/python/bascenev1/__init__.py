@@ -161,6 +161,12 @@ from _bascenev1 import (
 )
 from bascenev1._activity import Activity
 from bascenev1._activitytypes import JoinActivity, ScoreScreenActivity
+from bascenev1._assetref import (
+    TextureVerifiedSpec,
+    MeshVerifiedSpec,
+    SoundVerifiedSpec,
+    CollisionMeshVerifiedSpec,
+)
 from bascenev1._actor import Actor
 from bascenev1._campaign import init_campaigns, Campaign
 from bascenev1._collision import Collision, getcollision
@@ -265,6 +271,10 @@ __all__ = [
     'ActivityData',
     'ActivityNotFoundError',
     'Actor',
+    'TextureVerifiedSpec',
+    'SoundVerifiedSpec',
+    'MeshVerifiedSpec',
+    'CollisionMeshVerifiedSpec',
     'animate',
     'animate_array',
     'add_clean_frame_callback',

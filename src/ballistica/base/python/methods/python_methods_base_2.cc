@@ -1381,6 +1381,43 @@ static PyMethodDef PySetAssetNameCompatVersionsDef = {
     "Called at classic-app-mode activation with values sourced from\n"
     "the asset-package wrapper modules."};
 
+// ---------------- resolve_legacy_asset_name ----------------------------------
+
+static auto PyResolveLegacyAssetName(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* name;
+  const char* kind;
+  static const char* kwlist[] = {"name", "kind", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss",
+                                   const_cast<char**>(kwlist), &name, &kind)) {
+    return nullptr;
+  }
+  return PyUnicode_FromString(AssetNameCompat::FromLegacy(name, kind).c_str());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyResolveLegacyAssetNameDef = {
+    "resolve_legacy_asset_name",            // name
+    (PyCFunction)PyResolveLegacyAssetName,  // method
+    METH_VARARGS | METH_KEYWORDS,           // flags
+
+    "resolve_legacy_asset_name(name: str, kind: str) -> str\n"
+    "\n"
+    "(internal) Map a possibly-legacy bare asset name to the qualified\n"
+    "'<apverid>:<logical-path>' ref it now lives at, or return it\n"
+    "unchanged if it has no asset-package home (or that package's\n"
+    "version is not registered yet). Already-qualified names pass\n"
+    "through untouched.\n"
+    "\n"
+    "'kind' is the logical-path head to look under ('textures',\n"
+    "'audio', 'meshes', ...); legacy names were only unique per asset\n"
+    "type, so lookups are kind-scoped.\n"
+    "\n"
+    "This is the read side of the same table the engine's loaders use,\n"
+    "exposed so Python can turn a legacy name into a real asset-package\n"
+    "reference (e.g. to build a spec for the wire) rather than guessing."};
+
 // ---------------- preferred_texture_profile ----------------------------------
 
 static auto PyPreferredTextureProfile(PyObject* self, PyObject* args,
@@ -1421,6 +1458,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyRegisterAssetPackageBucketsDef,
       PyGetAssetPackageConstantBlobPathDef,
       PySetAssetNameCompatVersionsDef,
+      PyResolveLegacyAssetNameDef,
       PyPreferredTextureProfileDef,
       PyOpenURLDef,
       PyOverlayWebBrowserIsSupportedDef,

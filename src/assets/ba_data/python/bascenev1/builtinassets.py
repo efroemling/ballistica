@@ -19,12 +19,16 @@ __asset_package__ = 'a-0.babuiltinassets.260723c'
 
 from typing import TYPE_CHECKING
 
-from bascenev1._assetwrap import AssetDir
+from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
 if TYPE_CHECKING:
-    import bascenev1
+    from bascenev1._assetref import (
+        MeshVerifiedSpec,
+        SoundVerifiedSpec,
+        TextureVerifiedSpec,
+    )
     from babase import LangStr
 
     class AudioGroup:
@@ -37,26 +41,26 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
-        blank: bascenev1.Sound
-        blip: bascenev1.Sound
-        cash_register: bascenev1.Sound
-        click01: bascenev1.Sound
-        cork_pop: bascenev1.Sound
-        deek: bascenev1.Sound
-        ding: bascenev1.Sound
-        error: bascenev1.Sound
-        gun_cocking: bascenev1.Sound
-        powerdown01: bascenev1.Sound
-        punch01: bascenev1.Sound
-        score_increase: bascenev1.Sound
-        sparkle01: bascenev1.Sound
-        sparkle02: bascenev1.Sound
-        sparkle03: bascenev1.Sound
-        swish: bascenev1.Sound
-        swish2: bascenev1.Sound
-        swish3: bascenev1.Sound
-        tap: bascenev1.Sound
-        ticking_crazy: bascenev1.Sound
+        blank: SoundVerifiedSpec
+        blip: SoundVerifiedSpec
+        cash_register: SoundVerifiedSpec
+        click01: SoundVerifiedSpec
+        cork_pop: SoundVerifiedSpec
+        deek: SoundVerifiedSpec
+        ding: SoundVerifiedSpec
+        error: SoundVerifiedSpec
+        gun_cocking: SoundVerifiedSpec
+        powerdown01: SoundVerifiedSpec
+        punch01: SoundVerifiedSpec
+        score_increase: SoundVerifiedSpec
+        sparkle01: SoundVerifiedSpec
+        sparkle02: SoundVerifiedSpec
+        sparkle03: SoundVerifiedSpec
+        swish: SoundVerifiedSpec
+        swish2: SoundVerifiedSpec
+        swish3: SoundVerifiedSpec
+        tap: SoundVerifiedSpec
+        ticking_crazy: SoundVerifiedSpec
 
     class MeshesGroup:
         """
@@ -67,78 +71,78 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
-        action_button_bottom: bascenev1.Mesh
-        action_button_left: bascenev1.Mesh
-        action_button_right: bascenev1.Mesh
-        action_button_top: bascenev1.Mesh
-        arrow_back: bascenev1.Mesh
-        arrow_front: bascenev1.Mesh
-        box: bascenev1.Mesh
-        boxing_glove: bascenev1.Mesh
-        button_back_opaque: bascenev1.Mesh
-        button_back_small_opaque: bascenev1.Mesh
-        button_back_small_transparent: bascenev1.Mesh
-        button_back_transparent: bascenev1.Mesh
-        button_large_opaque: bascenev1.Mesh
-        button_large_transparent: bascenev1.Mesh
-        button_larger_opaque: bascenev1.Mesh
-        button_larger_transparent: bascenev1.Mesh
-        button_medium_opaque: bascenev1.Mesh
-        button_medium_transparent: bascenev1.Mesh
-        button_small_opaque: bascenev1.Mesh
-        button_small_transparent: bascenev1.Mesh
-        button_square_opaque: bascenev1.Mesh
-        button_square_transparent: bascenev1.Mesh
-        button_tab_opaque: bascenev1.Mesh
-        button_tab_transparent: bascenev1.Mesh
-        check_transparent: bascenev1.Mesh
-        cross_out: bascenev1.Mesh
-        cylinder: bascenev1.Mesh
-        eye_ball: bascenev1.Mesh
-        eye_ball_iris: bascenev1.Mesh
-        eye_lid: bascenev1.Mesh
-        flag_pole: bascenev1.Mesh
-        flag_stand: bascenev1.Mesh
-        flash: bascenev1.Mesh
-        hair_tuft1: bascenev1.Mesh
-        hair_tuft1b: bascenev1.Mesh
-        hair_tuft2: bascenev1.Mesh
-        hair_tuft3: bascenev1.Mesh
-        hair_tuft4: bascenev1.Mesh
-        image16x1: bascenev1.Mesh
-        image1x1: bascenev1.Mesh
-        image1x1_full_screen: bascenev1.Mesh
-        image1x1_vrfull_screen: bascenev1.Mesh
-        image2x1: bascenev1.Mesh
-        image4x1: bascenev1.Mesh
-        locator: bascenev1.Mesh
-        locator_box: bascenev1.Mesh
-        locator_circle: bascenev1.Mesh
-        locator_circle_outline: bascenev1.Mesh
-        overlay_guide: bascenev1.Mesh
-        scorch: bascenev1.Mesh
-        scroll_bar_thumb_opaque: bascenev1.Mesh
-        scroll_bar_thumb_short_opaque: bascenev1.Mesh
-        scroll_bar_thumb_short_simple: bascenev1.Mesh
-        scroll_bar_thumb_short_transparent: bascenev1.Mesh
-        scroll_bar_thumb_simple: bascenev1.Mesh
-        scroll_bar_thumb_transparent: bascenev1.Mesh
-        scroll_bar_trough_transparent: bascenev1.Mesh
-        shield: bascenev1.Mesh
-        shock_wave: bascenev1.Mesh
-        shrapnel1: bascenev1.Mesh
-        shrapnel_board: bascenev1.Mesh
-        shrapnel_slime: bascenev1.Mesh
-        soft_edge_inside: bascenev1.Mesh
-        soft_edge_outside: bascenev1.Mesh
-        text_box_transparent: bascenev1.Mesh
-        vr_fade: bascenev1.Mesh
-        vr_overlay: bascenev1.Mesh
-        window_hsmall_vmed_opaque: bascenev1.Mesh
-        window_hsmall_vmed_transparent: bascenev1.Mesh
-        window_hsmall_vsmall_opaque: bascenev1.Mesh
-        window_hsmall_vsmall_transparent: bascenev1.Mesh
-        wing: bascenev1.Mesh
+        action_button_bottom: MeshVerifiedSpec
+        action_button_left: MeshVerifiedSpec
+        action_button_right: MeshVerifiedSpec
+        action_button_top: MeshVerifiedSpec
+        arrow_back: MeshVerifiedSpec
+        arrow_front: MeshVerifiedSpec
+        box: MeshVerifiedSpec
+        boxing_glove: MeshVerifiedSpec
+        button_back_opaque: MeshVerifiedSpec
+        button_back_small_opaque: MeshVerifiedSpec
+        button_back_small_transparent: MeshVerifiedSpec
+        button_back_transparent: MeshVerifiedSpec
+        button_large_opaque: MeshVerifiedSpec
+        button_large_transparent: MeshVerifiedSpec
+        button_larger_opaque: MeshVerifiedSpec
+        button_larger_transparent: MeshVerifiedSpec
+        button_medium_opaque: MeshVerifiedSpec
+        button_medium_transparent: MeshVerifiedSpec
+        button_small_opaque: MeshVerifiedSpec
+        button_small_transparent: MeshVerifiedSpec
+        button_square_opaque: MeshVerifiedSpec
+        button_square_transparent: MeshVerifiedSpec
+        button_tab_opaque: MeshVerifiedSpec
+        button_tab_transparent: MeshVerifiedSpec
+        check_transparent: MeshVerifiedSpec
+        cross_out: MeshVerifiedSpec
+        cylinder: MeshVerifiedSpec
+        eye_ball: MeshVerifiedSpec
+        eye_ball_iris: MeshVerifiedSpec
+        eye_lid: MeshVerifiedSpec
+        flag_pole: MeshVerifiedSpec
+        flag_stand: MeshVerifiedSpec
+        flash: MeshVerifiedSpec
+        hair_tuft1: MeshVerifiedSpec
+        hair_tuft1b: MeshVerifiedSpec
+        hair_tuft2: MeshVerifiedSpec
+        hair_tuft3: MeshVerifiedSpec
+        hair_tuft4: MeshVerifiedSpec
+        image16x1: MeshVerifiedSpec
+        image1x1: MeshVerifiedSpec
+        image1x1_full_screen: MeshVerifiedSpec
+        image1x1_vrfull_screen: MeshVerifiedSpec
+        image2x1: MeshVerifiedSpec
+        image4x1: MeshVerifiedSpec
+        locator: MeshVerifiedSpec
+        locator_box: MeshVerifiedSpec
+        locator_circle: MeshVerifiedSpec
+        locator_circle_outline: MeshVerifiedSpec
+        overlay_guide: MeshVerifiedSpec
+        scorch: MeshVerifiedSpec
+        scroll_bar_thumb_opaque: MeshVerifiedSpec
+        scroll_bar_thumb_short_opaque: MeshVerifiedSpec
+        scroll_bar_thumb_short_simple: MeshVerifiedSpec
+        scroll_bar_thumb_short_transparent: MeshVerifiedSpec
+        scroll_bar_thumb_simple: MeshVerifiedSpec
+        scroll_bar_thumb_transparent: MeshVerifiedSpec
+        scroll_bar_trough_transparent: MeshVerifiedSpec
+        shield: MeshVerifiedSpec
+        shock_wave: MeshVerifiedSpec
+        shrapnel1: MeshVerifiedSpec
+        shrapnel_board: MeshVerifiedSpec
+        shrapnel_slime: MeshVerifiedSpec
+        soft_edge_inside: MeshVerifiedSpec
+        soft_edge_outside: MeshVerifiedSpec
+        text_box_transparent: MeshVerifiedSpec
+        vr_fade: MeshVerifiedSpec
+        vr_overlay: MeshVerifiedSpec
+        window_hsmall_vmed_opaque: MeshVerifiedSpec
+        window_hsmall_vmed_transparent: MeshVerifiedSpec
+        window_hsmall_vsmall_opaque: MeshVerifiedSpec
+        window_hsmall_vsmall_transparent: MeshVerifiedSpec
+        wing: MeshVerifiedSpec
 
     class StringsAccountGroup:
         """
@@ -1048,88 +1052,88 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
-        action_buttons: bascenev1.Texture
-        arrow: bascenev1.Texture
-        back_icon: bascenev1.Texture
-        black: bascenev1.Texture
-        bomb_button: bascenev1.Texture
-        boxing_gloves_color: bascenev1.Texture
-        button_square: bascenev1.Texture
-        button_square_wide: bascenev1.Texture
-        character_icon_mask: bascenev1.Texture
-        circle: bascenev1.Texture
-        circle_no_alpha: bascenev1.Texture
-        circle_outline: bascenev1.Texture
-        circle_outline_no_alpha: bascenev1.Texture
-        circle_shadow: bascenev1.Texture
-        circle_soft: bascenev1.Texture
-        cursor: bascenev1.Texture
-        explosion: bascenev1.Texture
-        eye_color: bascenev1.Texture
-        eye_color_tint_mask: bascenev1.Texture
-        flag_pole_color: bascenev1.Texture
-        font_big: bascenev1.Texture
-        font_extras: bascenev1.Texture
-        font_extras2: bascenev1.Texture
-        font_extras3: bascenev1.Texture
-        font_extras4: bascenev1.Texture
-        font_extras5: bascenev1.Texture
-        font_small0: bascenev1.Texture
-        font_small1: bascenev1.Texture
-        font_small2: bascenev1.Texture
-        font_small3: bascenev1.Texture
-        font_small4: bascenev1.Texture
-        font_small5: bascenev1.Texture
-        font_small6: bascenev1.Texture
-        font_small7: bascenev1.Texture
-        fuse: bascenev1.Texture
-        glow: bascenev1.Texture
-        light: bascenev1.Texture
-        light_sharp: bascenev1.Texture
-        light_soft: bascenev1.Texture
-        menu_button: bascenev1.Texture
-        nub: bascenev1.Texture
-        ouya_abutton: bascenev1.Texture
-        page_left_right: bascenev1.Texture
-        rgb_stripes: bascenev1.Texture
-        scorch: bascenev1.Texture
-        scorch_big: bascenev1.Texture
-        scroll_widget: bascenev1.Texture
-        scroll_widget_glow: bascenev1.Texture
-        shadow: bascenev1.Texture
-        shadow_sharp: bascenev1.Texture
-        shadow_soft: bascenev1.Texture
-        shield: bascenev1.Texture
-        shrapnel1_color: bascenev1.Texture
-        smoke: bascenev1.Texture
-        soft_rect: bascenev1.Texture
-        soft_rect2: bascenev1.Texture
-        soft_rect_vertical: bascenev1.Texture
-        sparks: bascenev1.Texture
-        spinner: bascenev1.Texture
-        spinner0: bascenev1.Texture
-        spinner1: bascenev1.Texture
-        spinner10: bascenev1.Texture
-        spinner11: bascenev1.Texture
-        spinner2: bascenev1.Texture
-        spinner3: bascenev1.Texture
-        spinner4: bascenev1.Texture
-        spinner5: bascenev1.Texture
-        spinner6: bascenev1.Texture
-        spinner7: bascenev1.Texture
-        spinner8: bascenev1.Texture
-        spinner9: bascenev1.Texture
-        start_button: bascenev1.Texture
-        text_clear_button: bascenev1.Texture
-        touch_arrows: bascenev1.Texture
-        touch_arrows_actions: bascenev1.Texture
-        ui_atlas: bascenev1.Texture
-        ui_atlas2: bascenev1.Texture
-        users_button: bascenev1.Texture
-        white: bascenev1.Texture
-        window_hsmall_vmed: bascenev1.Texture
-        window_hsmall_vsmall: bascenev1.Texture
-        wings: bascenev1.Texture
+        action_buttons: TextureVerifiedSpec
+        arrow: TextureVerifiedSpec
+        back_icon: TextureVerifiedSpec
+        black: TextureVerifiedSpec
+        bomb_button: TextureVerifiedSpec
+        boxing_gloves_color: TextureVerifiedSpec
+        button_square: TextureVerifiedSpec
+        button_square_wide: TextureVerifiedSpec
+        character_icon_mask: TextureVerifiedSpec
+        circle: TextureVerifiedSpec
+        circle_no_alpha: TextureVerifiedSpec
+        circle_outline: TextureVerifiedSpec
+        circle_outline_no_alpha: TextureVerifiedSpec
+        circle_shadow: TextureVerifiedSpec
+        circle_soft: TextureVerifiedSpec
+        cursor: TextureVerifiedSpec
+        explosion: TextureVerifiedSpec
+        eye_color: TextureVerifiedSpec
+        eye_color_tint_mask: TextureVerifiedSpec
+        flag_pole_color: TextureVerifiedSpec
+        font_big: TextureVerifiedSpec
+        font_extras: TextureVerifiedSpec
+        font_extras2: TextureVerifiedSpec
+        font_extras3: TextureVerifiedSpec
+        font_extras4: TextureVerifiedSpec
+        font_extras5: TextureVerifiedSpec
+        font_small0: TextureVerifiedSpec
+        font_small1: TextureVerifiedSpec
+        font_small2: TextureVerifiedSpec
+        font_small3: TextureVerifiedSpec
+        font_small4: TextureVerifiedSpec
+        font_small5: TextureVerifiedSpec
+        font_small6: TextureVerifiedSpec
+        font_small7: TextureVerifiedSpec
+        fuse: TextureVerifiedSpec
+        glow: TextureVerifiedSpec
+        light: TextureVerifiedSpec
+        light_sharp: TextureVerifiedSpec
+        light_soft: TextureVerifiedSpec
+        menu_button: TextureVerifiedSpec
+        nub: TextureVerifiedSpec
+        ouya_abutton: TextureVerifiedSpec
+        page_left_right: TextureVerifiedSpec
+        rgb_stripes: TextureVerifiedSpec
+        scorch: TextureVerifiedSpec
+        scorch_big: TextureVerifiedSpec
+        scroll_widget: TextureVerifiedSpec
+        scroll_widget_glow: TextureVerifiedSpec
+        shadow: TextureVerifiedSpec
+        shadow_sharp: TextureVerifiedSpec
+        shadow_soft: TextureVerifiedSpec
+        shield: TextureVerifiedSpec
+        shrapnel1_color: TextureVerifiedSpec
+        smoke: TextureVerifiedSpec
+        soft_rect: TextureVerifiedSpec
+        soft_rect2: TextureVerifiedSpec
+        soft_rect_vertical: TextureVerifiedSpec
+        sparks: TextureVerifiedSpec
+        spinner: TextureVerifiedSpec
+        spinner0: TextureVerifiedSpec
+        spinner1: TextureVerifiedSpec
+        spinner10: TextureVerifiedSpec
+        spinner11: TextureVerifiedSpec
+        spinner2: TextureVerifiedSpec
+        spinner3: TextureVerifiedSpec
+        spinner4: TextureVerifiedSpec
+        spinner5: TextureVerifiedSpec
+        spinner6: TextureVerifiedSpec
+        spinner7: TextureVerifiedSpec
+        spinner8: TextureVerifiedSpec
+        spinner9: TextureVerifiedSpec
+        start_button: TextureVerifiedSpec
+        text_clear_button: TextureVerifiedSpec
+        touch_arrows: TextureVerifiedSpec
+        touch_arrows_actions: TextureVerifiedSpec
+        ui_atlas: TextureVerifiedSpec
+        ui_atlas2: TextureVerifiedSpec
+        users_button: TextureVerifiedSpec
+        white: TextureVerifiedSpec
+        window_hsmall_vmed: TextureVerifiedSpec
+        window_hsmall_vsmall: TextureVerifiedSpec
+        wings: TextureVerifiedSpec
 
     #: The ``audio`` group - 20 assets (``blank``, ``blip``, ``cash_register``,
     #: ``click01``, ``cork_pop``, and 15 more). Full list in source.
@@ -1435,7 +1439,7 @@ _TREE = {
 
 
 if not TYPE_CHECKING:
-    audio = AssetDir(__asset_package__, _TREE['audio'], 'audio')
-    meshes = AssetDir(__asset_package__, _TREE['meshes'], 'meshes')
+    audio = AssetGroup(__asset_package__, _TREE['audio'], 'audio')
+    meshes = AssetGroup(__asset_package__, _TREE['meshes'], 'meshes')
     strings = LangStrDir(__asset_package__, _TREE['strings'], 'strings')
-    textures = AssetDir(__asset_package__, _TREE['textures'], 'textures')
+    textures = AssetGroup(__asset_package__, _TREE['textures'], 'textures')

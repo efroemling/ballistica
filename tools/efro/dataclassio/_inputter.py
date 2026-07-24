@@ -17,8 +17,8 @@ from efro.util import check_utc
 from efro.dataclassio._base import (
     Codec,
     parse_annotated,
-    EXTRA_ATTRS_ATTR,
-    LOSSY_ATTR,
+    io_mark_lossy,
+    io_set_extra_attrs,
     _is_valid_for_codec,
     _get_origin,
     SIMPLE_TYPES,
@@ -137,7 +137,7 @@ class _Inputter:
         # Is that worth worrying about? Though perfect is the enemy of
         # good I suppose.
         if self._lossy:
-            setattr(out, LOSSY_ATTR, True)
+            io_mark_lossy(out)
 
         return out
 
@@ -156,7 +156,7 @@ class _Inputter:
                 # Ok; they provided a fallback. Flag it as lossy
                 # to prevent it from being written back out by
                 # default, and return it.
-                setattr(fallback, LOSSY_ATTR, True)
+                io_mark_lossy(fallback)
                 return fallback
         else:
             # If we're *not* in lossy mode, inform the user if
@@ -503,7 +503,7 @@ class _Inputter:
                 f' at {fieldpath}: {exc}'
             ) from exc
         if extra_attrs:
-            setattr(out, EXTRA_ATTRS_ATTR, extra_attrs)
+            io_set_extra_attrs(out, extra_attrs)
         if is_ext:
             assert isinstance(out, IOExtendedData)
             out.did_input()

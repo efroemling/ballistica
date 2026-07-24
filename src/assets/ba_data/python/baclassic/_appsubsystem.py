@@ -405,7 +405,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             with activity.context:
                 globs = activity.globalsnode
                 if not globs.paused:
-                    classicassets.audio.ref_whistle.play()
+                    classicassets.audio.ref_whistle.get().play()
                     globs.paused = True
 
                 # FIXME: This should not be an attr on Actor.
@@ -435,7 +435,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             with activity.context:
                 globs = activity.globalsnode
                 if globs.paused:
-                    classicassets.audio.ref_whistle.play()
+                    classicassets.audio.ref_whistle.get().play()
                     globs.paused = False
 
                     # FIXME: This should not be an actor attr.

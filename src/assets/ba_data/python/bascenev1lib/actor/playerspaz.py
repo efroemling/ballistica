@@ -214,7 +214,7 @@ class PlayerSpaz(Spaz):
                             ),
                             color=(1, 0.5, 0),
                         )
-                        builtinassets.audio.error.play()
+                        builtinassets.audio.error.get().play()
         else:
             self._turbo_filter_times = {}
             self._turbo_filter_time_bucket = t_bucket

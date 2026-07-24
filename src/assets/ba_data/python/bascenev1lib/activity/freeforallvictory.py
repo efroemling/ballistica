@@ -21,7 +21,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
         # Keep prev activity alive while we fade in.
         self.transition_time = 0.5
-        self._cymbal_sound = classicassets.audio.cymbal
+        self._cymbal_sound = classicassets.audio.cymbal.get()
 
     @override
     def on_begin(self) -> None:

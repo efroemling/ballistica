@@ -290,10 +290,10 @@ class Stats:
         # pylint: disable-next=cyclic-import
         from bascenev1 import classicassets
 
-        self.orchestrahitsound1 = classicassets.audio.orchestra_hit
-        self.orchestrahitsound2 = classicassets.audio.orchestra_hit2
-        self.orchestrahitsound3 = classicassets.audio.orchestra_hit3
-        self.orchestrahitsound4 = classicassets.audio.orchestra_hit4
+        self.orchestrahitsound1 = classicassets.audio.orchestra_hit.get()
+        self.orchestrahitsound2 = classicassets.audio.orchestra_hit2.get()
+        self.orchestrahitsound3 = classicassets.audio.orchestra_hit3.get()
+        self.orchestrahitsound4 = classicassets.audio.orchestra_hit4.get()
 
     def reset(self) -> None:
         """Reset the stats instance completely."""

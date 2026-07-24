@@ -20,6 +20,7 @@ from efro.dataclassio._base import (
     _get_origin,
     SIMPLE_TYPES,
     IOMultiType,
+    DCIO_META_ATTR,
 )
 
 if TYPE_CHECKING:
@@ -28,6 +29,39 @@ if TYPE_CHECKING:
 
 # Use a single logger for all dataclassio stuff.
 logger = logging.getLogger('efro.dataclassio')
+
+
+def _instances_have_dict(cls: type) -> bool:
+    """Whether instances of ``cls`` carry a ``__dict__``.
+
+    True unless every class in the MRO (excluding ``object``) declares
+    ``__slots__`` without reintroducing ``__dict__``.
+    """
+    for c in cls.__mro__:
+        if c is object:
+            continue
+        slots = getattr(c, '__slots__', None)
+        if slots is None or '__dict__' in slots:
+            return True
+    return False
+
+
+def _check_slotted_reserves_meta(cls: type) -> None:
+    """Ensure a slotted ioprepped class reserves the metadata slot."""
+    if _instances_have_dict(cls):
+        return  # Has a __dict__; the metadata attr can live there.
+    names: set[str] = set()
+    for c in cls.__mro__:
+        slots = getattr(c, '__slots__', ())
+        names.update((slots,) if isinstance(slots, str) else slots)
+    if DCIO_META_ATTR not in names:
+        raise TypeError(
+            f'ioprepped dataclass {cls} is slotted but its __slots__ does'
+            f' not reserve {DCIO_META_ATTR!r} (needed to stamp lossy /'
+            f' extra-attrs metadata during load). Add it -- splat'
+            f' efro.dataclassio.IO_SLOTS into __slots__.'
+        )
+
 
 # How deep we go when prepping nested types (basically for detecting
 # recursive types)
@@ -157,6 +191,14 @@ class PrepSession:
         cls_any: Any = cls
         if not isinstance(cls_any, type) or not dataclasses.is_dataclass(cls):
             raise TypeError(f'Passed arg {cls} is not a dataclass type.')
+
+        # If the class is slotted (instances have no __dict__), it must
+        # reserve a slot for our per-instance metadata attr, or lossy /
+        # extra-attrs decode would fail with AttributeError on the rare
+        # paths that stamp it -- a landmine that passes basic tests and
+        # blows up only on tolerant/lossy loads. Catch it here, loudly,
+        # at prep time.
+        _check_slotted_reserves_meta(cls)
 
         # Add a pointer to the prep-session while doing the prep. This
         # way we can ignore types that we're already in the process of

@@ -62,8 +62,8 @@ class FlagFactory:
             ),
         )
 
-        self.impact_sound = classicassets.audio.metal_hit
-        self.skid_sound = classicassets.audio.metal_skid
+        self.impact_sound = classicassets.audio.metal_hit.get()
+        self.skid_sound = classicassets.audio.metal_skid.get()
         self.flagmaterial.add_actions(
             conditions=(
                 'they_have_material',
@@ -98,7 +98,7 @@ class FlagFactory:
             ),
         )
 
-        self.flag_texture = classicassets.textures.flag_color
+        self.flag_texture = classicassets.textures.flag_color.get()
 
     @classmethod
     def get(cls) -> FlagFactory:
