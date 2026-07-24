@@ -141,7 +141,7 @@ from batools.pcommands2 import (
     spinoff_check_submodule_parent,
     tests_warm_start,
     wsl_path_to_win,
-    wsl_build_check_win_drive,
+    wsl_build_check,
     get_modern_make,
     assetpins,
     asset_bundle_build,

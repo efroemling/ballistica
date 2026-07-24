@@ -1,5 +1,6 @@
 # Released under the MIT License. See LICENSE for details.
 #
+# pylint: disable=too-many-lines
 """A simple cloud caching system for making built binaries & assets.
 
 The basic idea here is the ballistica-internal project can flag file
@@ -11,6 +12,7 @@ of the pubsync process.
 
 import os
 import json
+import time
 import zlib
 import shlex
 import subprocess
@@ -28,6 +30,8 @@ from efro.dataclassio import (
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     import efro.terminal
 
 
@@ -52,6 +56,38 @@ class CacheMetadata:
 
 _g_cache_prefix_noexec: bytes | None = None
 _g_cache_prefix_exec: bytes | None = None
+
+# Have we already mentioned the wsl-exec-bit oddity this run? (see
+# _cache_prefix_for_file). We only want to say it once; otherwise it
+# gets repeated for every single file we touch.
+_g_noted_wsl_exec_bits = False
+
+# Rough guidance for the curl exit codes we're most likely to see, so a
+# failed download can point at a probable cause instead of just asking
+# whether the internet is working.
+CURL_ERROR_HINTS: dict[int, str] = {
+    5: 'Could not resolve the proxy set in the environment.',
+    6: 'Could not resolve the server name (dns problem?).',
+    7: 'Could not connect to the server (blocked by a firewall/proxy?).',
+    28: 'The transfer timed out.',
+    35: 'Ssl/tls handshake failed (tls-intercepting proxy?).',
+    56: 'The connection dropped part way through the transfer.',
+    60: 'Could not verify the server cert (stale ca-certificates?).',
+}
+
+# Curl exit codes we'll take another swing at. These are all
+# connection-level gripes (dns, connect, timeout, dropped transfer)
+# which are commonly just a momentary hiccup.
+CURL_RETRY_CODES: set[int] = {5, 6, 7, 18, 28, 35, 52, 55, 56}
+
+# Http codes we'll take another swing at. Anything else the server says
+# (404s and friends) won't be fixed by asking again.
+HTTP_RETRY_CODES: set[int] = {408, 425, 429, 500, 502, 503, 504}
+
+# How many times we'll try a single download, and how long we wait
+# before the second try (doubling for each try after that).
+DOWNLOAD_ATTEMPTS = 4
+DOWNLOAD_RETRY_DELAY = 2.0
 
 
 def get_local_cache_dir() -> str:
@@ -111,15 +147,157 @@ def _project_centric_path(path: str) -> str:
     return abspath[len(projpath) :]
 
 
+@dataclass
+class _DownloadFailure:
+    """The state of a download that never panned out."""
+
+    url: str
+    returncode: int
+    http_code: int | None
+    proxy_code: int | None
+    stderr: bytes | None
+    attempts: int
+
+    @property
+    def status_code(self) -> int | None:
+        """The most meaningful http code we got, if any."""
+        return self.http_code if self.http_code is not None else self.proxy_code
+
+    def summary(self) -> str:
+        """Return a short single-line reason (for retry messages)."""
+        if self.status_code is not None:
+            via = '' if self.http_code is not None else ' from proxy'
+            return f'http {self.status_code}{via}'
+        return f'curl error {self.returncode}'
+
+    def describe(self) -> str:
+        """Return indented lines saying everything we know.
+
+        Downloads are the most common failure point for folks building
+        the public repo, so we want to say exactly what went wrong
+        instead of leaving them staring at a generic message.
+        """
+        lines = [f'url: {self.url}']
+        if self.http_code is not None:
+            lines.append(f'server returned: http {self.http_code}')
+        elif self.proxy_code is not None:
+            # We never reached the server; a proxy answered our connect.
+            lines.append(f'proxy returned: http {self.proxy_code}')
+        lines.append(f'curl exit code: {self.returncode}')
+        curlmsg = (
+            ''
+            if self.stderr is None
+            else self.stderr.decode(errors='replace').strip()
+        )
+        if curlmsg:
+            # Curl error output is generally a single 'curl: (N) blah'
+            # line, but be tidy if it ever spans more.
+            lines += [f'curl says: {line}' for line in curlmsg.splitlines()]
+        hint = CURL_ERROR_HINTS.get(self.returncode)
+        if hint is not None:
+            lines.append(f'likely cause: {hint}')
+        if self.attempts > 1:
+            lines.append(f'gave up after {self.attempts} attempts')
+        return '\n'.join(f'  {line}' for line in lines)
+
+
+def _parse_http_codes(rawout: bytes) -> tuple[int | None, int | None]:
+    """Pull the (response, proxy-connect) codes out of curl write-out.
+
+    Curl gives us zeros for codes it never got; those become None, as
+    does a 200 connect (a healthy tunnel isn't worth mentioning).
+    """
+    codes: list[int | None] = [None, None]
+    vals = rawout.decode(errors='replace').split()
+    for i in range(min(len(vals), 2)):
+        code = int(vals[i]) if vals[i].isdigit() else 0
+        codes[i] = code if code and not (i == 1 and code == 200) else None
+    return codes[0], codes[1]
+
+
+def _download(
+    url: str,
+    outpath: str,
+    *,
+    what: str,
+    quiet: bool,
+    log: Callable[[str], None],
+) -> _DownloadFailure | None:
+    """Curl a url to a path, retrying transient failures.
+
+    Returns None on success or a _DownloadFailure describing the last
+    attempt if we ran out of them. With quiet False we leave curl's
+    progress meter visible, which means its stderr can't be captured
+    for error output.
+    """
+    failure: _DownloadFailure | None = None
+    delay = DOWNLOAD_RETRY_DELAY
+
+    for attempt in range(1, DOWNLOAD_ATTEMPTS + 1):
+        cmd = ['curl', '--fail', '--show-error']
+        if quiet:
+            cmd.append('--silent')
+        # Ask for the http codes so we can tell 'this file is gone' from
+        # 'the server is having a moment' (--fail collapses both into
+        # exit code 22). http_connect is what a proxy said to our
+        # connect request; it's the only code we get when a proxy
+        # refuses to tunnel us through.
+        wout = '%{http_code} %{http_connect}'
+        cmd += ['--write-out', wout, url, '--output', outpath]
+        result = subprocess.run(
+            cmd,
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE if quiet else None,
+        )
+        if result.returncode == 0:
+            return None
+
+        codes = _parse_http_codes(result.stdout)
+        failure = _DownloadFailure(
+            url=url,
+            returncode=result.returncode,
+            http_code=codes[0],
+            proxy_code=codes[1],
+            stderr=result.stderr,
+            attempts=attempt,
+        )
+
+        status = failure.status_code
+        retryable = result.returncode in CURL_RETRY_CODES or (
+            status is not None and status in HTTP_RETRY_CODES
+        )
+        if not retryable or attempt == DOWNLOAD_ATTEMPTS:
+            break
+
+        log(
+            f'Download of {what} failed ({failure.summary()});'
+            f' retrying in {delay:.0f}s'
+            f' (attempt {attempt + 1} of {DOWNLOAD_ATTEMPTS})...'
+        )
+        time.sleep(delay)
+        delay *= 2.0
+
+    assert failure is not None
+    return failure
+
+
 def get_target(path: str, batch: bool, clr: type[efro.terminal.ClrBase]) -> str:
     """Fetch a target path from the cache, downloading if need be."""
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-branches
     import tempfile
 
     from efro.error import CleanError
 
     output_lines: list[str] = []
+
+    def _log(msg: str) -> None:
+        # In batch mode we hand our output back to the client to print;
+        # otherwise we print it ourself.
+        if batch:
+            output_lines.append(msg)
+        else:
+            print(msg, flush=True)
 
     local_cache_dir = get_local_cache_dir()
 
@@ -151,11 +329,7 @@ def get_target(path: str, batch: bool, clr: type[efro.terminal.ClrBase]) -> str:
         existing_hash = get_existing_file_hash(path)
         if existing_hash == hashval:
             os.utime(path, None)
-            msg = f'Refreshing from cache: {path}'
-            if batch:
-                output_lines.append(msg)
-            else:
-                print(msg)
+            _log(f'Refreshing from cache: {path}')
             return '\n'.join(output_lines)
 
     # Ok we need to download the cache file.
@@ -168,39 +342,43 @@ def get_target(path: str, batch: bool, clr: type[efro.terminal.ClrBase]) -> str:
     if not os.path.exists(local_cache_path):
         with tempfile.TemporaryDirectory() as tmpdir:
             local_cache_dl_path = os.path.join(tmpdir, 'dl')
-            msg = f'Downloading: {clr.BLU}{path}{clr.RST}'
-            if batch:
-                output_lines.append(msg)
-            else:
-                print(msg)
-            result = subprocess.run(
-                [
-                    'curl',
-                    '--fail',
-                    '--silent',
-                    url,
-                    '--output',
-                    local_cache_dl_path,
-                ],
-                check=False,
-            )
+            _log(f'Downloading: {clr.BLU}{path}{clr.RST}')
 
-            # We prune old cache files on the server, so its possible for
-            # one to be trying to build something the server can no longer
-            # provide. try to explain the situation.
-            if result.returncode == 22:
-                raise CleanError(
-                    'Server gave an error. Old build files may no longer'
-                    ' be available on the server; make sure you are using'
-                    ' a recent commit.\n'
-                    'Note that build files will remain available'
-                    ' indefinitely once downloaded, even if deleted by the'
-                    f' server. So as long as your {local_cache_dir} directory'
-                    ' stays intact you should be able to repeat any builds you'
-                    ' have run before.'
+            failure = _download(
+                url,
+                local_cache_dl_path,
+                what=f'build file {path}',
+                quiet=True,
+                log=_log,
+            )
+            if failure is not None:
+                # We prune old cache files on the server, so its
+                # possible for one to be trying to build something the
+                # server can no longer provide. Try to explain the
+                # situation.
+                gone = (
+                    failure.http_code in {404, 410}
+                    if failure.http_code is not None
+                    else failure.proxy_code is None and failure.returncode == 22
                 )
-            if result.returncode != 0:
-                raise CleanError('Download failed; is your internet working?')
+                if gone:
+                    raise CleanError(
+                        f'Build file {path} was not found on the server:\n'
+                        f'{failure.describe()}\n'
+                        'Old build files may no longer be available on the'
+                        ' server; make sure you are using a recent commit.\n'
+                        'Note that build files will remain available'
+                        ' indefinitely once downloaded, even if deleted by'
+                        f' the server. So as long as your {local_cache_dir}'
+                        ' directory stays intact you should be able to repeat'
+                        ' any builds you have run before.'
+                    )
+                raise CleanError(
+                    f'Download failed for build file {path}:\n'
+                    f'{failure.describe()}\n'
+                    'Check your internet connection (and any'
+                    ' proxy/vpn/firewall in the way) and try again.'
+                )
 
             # Ok; cache download finished. Lastly move it in place to be
             # as atomic as possible.
@@ -212,11 +390,7 @@ def get_target(path: str, batch: bool, clr: type[efro.terminal.ClrBase]) -> str:
     # Ok we should have a valid file in our cache dir at this point.
     # Just expand it to the target path.
 
-    msg = f'Extracting: {path}'
-    if batch:
-        output_lines.append(msg)
-    else:
-        print(msg)
+    _log(f'Extracting: {path}')
 
     # Extract and stage the file in a temp dir before doing a final move
     # to the target location to be as atomic as possible.
@@ -655,6 +829,7 @@ def _cache_prefix_for_file(fname: str) -> bytes:
 
     global _g_cache_prefix_exec
     global _g_cache_prefix_noexec
+    global _g_noted_wsl_exec_bits
 
     # We'll be calling this a lot when checking existing files, so we
     # want it to be efficient. Let's cache the two options there are at
@@ -671,9 +846,17 @@ def _cache_prefix_for_file(fname: str) -> bytes:
         # redundantly extract the few things that ARE executable instead
         # of all the things that aren't.
 
-        # Make ourself aware if this situation ever changes.
-        if not executable:
-            print('GOT WSL PATH NON-EXECUTABLE; NOT EXPECTED')
+        # Make ourself aware if this situation ever changes, but say it
+        # exactly once; otherwise it repeats for every file we touch and
+        # looks like something is badly wrong when nothing is.
+        if not executable and not _g_noted_wsl_exec_bits:
+            _g_noted_wsl_exec_bits = True
+            print(
+                'Note: this wsl filesystem reports real executable bits;'
+                ' the efrocache exec-bit workaround may no longer be'
+                ' needed here. This is harmless; builds are unaffected.'
+                ' (silencing further occurrences)'
+            )
 
         executable = False
 
@@ -720,6 +903,8 @@ def warm_start_cache(cachetype: str) -> None:
     """
     import tempfile
 
+    from efro.error import CleanError
+
     if cachetype not in {'gui', 'server'}:
         raise ValueError(f"Invalid cachetype '{cachetype}'.")
 
@@ -746,16 +931,23 @@ def warm_start_cache(cachetype: str) -> None:
             starter_cache_file_path = os.path.join(
                 tmpdir, f'{cachefname}.tar.xz'
             )
-            subprocess.run(
-                [
-                    'curl',
-                    '--fail',
-                    f'{base_url}/{cachefname}.tar.xz',
-                    '--output',
-                    starter_cache_file_path,
-                ],
-                check=True,
+            # Note: leaving curl's progress meter visible here since
+            # this is a big download; that means its error output isn't
+            # captured for us, but it lands on the terminal anyway.
+            failure = _download(
+                f'{base_url}/{cachefname}.tar.xz',
+                starter_cache_file_path,
+                what='the starter-archive',
+                quiet=False,
+                log=lambda msg: print(msg, flush=True),
             )
+            if failure is not None:
+                raise CleanError(
+                    'Download of the efrocache starter-archive failed:\n'
+                    f'{failure.describe()}\n'
+                    'Check your internet connection (and any'
+                    ' proxy/vpn/firewall in the way) and try again.'
+                )
             print('Decompressing starter-cache...', flush=True)
             subprocess.run(
                 ['tar', '--no-same-owner', '-xf', starter_cache_file_path],

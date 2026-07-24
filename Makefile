@@ -1237,7 +1237,7 @@ windows-debug-build: env \
    build/prefab/lib/windows/Debug_$(WINPREVSP)/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Debug_$(WINPREVSP)/BallisticaKitGenericPlus.pdb
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform $(WINPREPLT)
-	@$(PCOMMAND) wsl_build_check_win_drive
+	@$(PCOMMAND) wsl_build_check $(WIN_MSBUILD_EXE_B)
 	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=$(WINPREVSP) \
  $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug \
@@ -1248,7 +1248,7 @@ windows-debug-rebuild: env \
    build/prefab/lib/windows/Debug_$(WINPREVSP)/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Debug_$(WINPREVSP)/BallisticaKitGenericPlus.pdb
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform $(WINPREPLT)
-	@$(PCOMMAND) wsl_build_check_win_drive
+	@$(PCOMMAND) wsl_build_check $(WIN_MSBUILD_EXE_B)
 	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=$(WINPREVSP) \
  $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug \
@@ -1259,7 +1259,7 @@ windows-release-build: env \
    build/prefab/lib/windows/Release_$(WINPREVSP)/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Release_$(WINPREVSP)/BallisticaKitGenericPlus.pdb
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform $(WINPREPLT)
-	@$(PCOMMAND) wsl_build_check_win_drive
+	@$(PCOMMAND) wsl_build_check $(WIN_MSBUILD_EXE_B)
 	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=$(WINPREVSP) \
  $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release \
@@ -1270,7 +1270,7 @@ windows-release-rebuild: env \
    build/prefab/lib/windows/Release_$(WINPREVSP)/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Release_$(WINPREVSP)/BallisticaKitGenericPlus.pdb
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform $(WINPREPLT)
-	@$(PCOMMAND) wsl_build_check_win_drive
+	@$(PCOMMAND) wsl_build_check $(WIN_MSBUILD_EXE_B)
 	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=$(WINPREVSP) \
  $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release \
@@ -1768,7 +1768,7 @@ ballisticakit-cmake/.clang-format: .clang-format
 	@$(PCOMMANDBATCH) echo BLU Created compile commands db at $@
 
 _windows-wsl-build: env
-	@$(PCOMMAND) wsl_build_check_win_drive
+	@$(PCOMMAND) wsl_build_check $(WIN_MSBUILD_EXE_B)
 	$(WIN_MSBUILD_EXE_B) \
    $(shell $(PCOMMAND) wsl_path_to_win --escape \
    ballisticakit-windows/$(WINPRJ)/BallisticaKit$(WINPRJ).vcxproj) \
@@ -1779,7 +1779,7 @@ _windows-wsl-build: env
 	@$(PCOMMAND) echo BLU BLD Built build/windows/BallisticaKit$(WINPRJ).exe.
 
 _windows-wsl-rebuild: env
-	@$(PCOMMAND) wsl_build_check_win_drive
+	@$(PCOMMAND) wsl_build_check $(WIN_MSBUILD_EXE_B)
 	$(WIN_MSBUILD_EXE_B) \
    $(shell $(PCOMMAND) wsl_path_to_win --escape \
     ballisticakit-windows/$(WINPRJ)/BallisticaKit$(WINPRJ).vcxproj) \
