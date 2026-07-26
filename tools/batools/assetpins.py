@@ -54,6 +54,7 @@ other. Track-switching is an explicit, deliberate operation.
 
 import re
 import enum
+import time
 import subprocess
 import concurrent.futures
 from dataclasses import dataclass
@@ -421,6 +422,148 @@ def _print_help_pointer() -> None:
     )
 
 
+def _stage_update_writes(
+    projroot: Path,
+    matched: list[Pin],
+    *,
+    version_str: str,
+    force: bool,
+    staged: dict[Path, str],
+    pin_msgs: list[str],
+) -> tuple[bool, str, bool, float, float]:
+    """Resolve pins and stage all writes for ``do_update`` (no disk I/O).
+
+    Everything we intend to write is computed into ``staged`` first and
+    applied only once every resolve / cloud fetch / splice computation
+    has succeeded. A failure partway through (server unreachable, a bad
+    wrapper, etc.) raises before any file is touched, so the tree never
+    ends up half-updated. Returns ``(projectconfig_changed, pc_apverid,
+    enum_selfheal, resolve_secs, fetch_secs)``.
+    """
+    # Multiple matched pins often reference the same package (e.g.
+    # babuiltinassets' projectconfig + wrapper pins all resolve to the
+    # same version). Resolving once per pin would fire redundant master
+    # roundtrips — and for the dev track each is a write that
+    # delete-alls-and-recreates the dev version — so memoize the resolve
+    # and reuse the resolved apverid. The key includes the pin's current
+    # track because ``version_str='latest'`` is track-preserving (it
+    # resolves against ``pin.pin_type``); other version specs ignore the
+    # current track, so including it is just harmlessly conservative.
+    resolve_cache: dict[tuple[str, str, PinType, str], str] = {}
+
+    def _resolve_for(pin: Pin) -> str:
+        key = (pin.account, pin.package, pin.pin_type, version_str)
+        cached = resolve_cache.get(key)
+        if cached is None:
+            cached = _compute_new_apverid(projroot, pin, version_str)
+            resolve_cache[key] = cached
+        return cached
+
+    # Resolve every matched pin up front, sequentially: resolves share
+    # the memo cache above, and dev-track resolves mutate server state
+    # (delete-all-and-recreate of the dev version), so we want exactly
+    # one in flight.
+    resolve_start = time.monotonic()
+    resolved: list[tuple[Pin, str]] = [
+        (pin, _resolve_for(pin)) for pin in matched
+    ]
+    resolve_secs = time.monotonic() - resolve_start
+
+    # Pins whose content we actually need to (re)compute. --force
+    # re-fetches wrappers even when the version is unchanged (for
+    # server-side format changes that move no pin).
+    to_compute = [
+        (pin, apv)
+        for pin, apv in resolved
+        if apv != pin.apverid or (force and pin.kind == 'wrapper')
+    ]
+
+    # Plan the builtin-asset enum regen (base.h / assets.cc splices)
+    # now — it only needs the resolved projectconfig pin — so its
+    # listing fetch can ride the parallel batch below.
+    pc_apverid, enum_fetch_needed, enum_selfheal = _plan_enum_splices(
+        projroot, resolved
+    )
+
+    # Fetch/compute all new content in parallel. Everything left at
+    # this point is an independent master roundtrip (each wrapper
+    # fetch and the enum listing is its own bacloud call); running
+    # them sequentially dominated update wall-time.
+    computed: dict[int, tuple[Path, str]] = {}
+    fetch_start = time.monotonic()
+    if to_compute or enum_fetch_needed:
+        from batools.builtinassetids import compute_splices
+
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=min(8, len(to_compute) + 1)
+        ) as pool:
+            pin_futures = {
+                id(pin): pool.submit(_compute_pin_write, projroot, pin, apv)
+                for pin, apv in to_compute
+            }
+            splice_future = (
+                pool.submit(compute_splices, projroot, pc_apverid)
+                if enum_fetch_needed
+                else None
+            )
+            computed = {
+                key: future.result() for key, future in pin_futures.items()
+            }
+            if splice_future is not None:
+                for rel_path, content in splice_future.result().items():
+                    staged[projroot / rel_path] = content
+    fetch_secs = time.monotonic() - fetch_start
+
+    projectconfig_changed = _assemble_pin_stages(
+        resolved, computed, staged, pin_msgs
+    )
+    return (
+        projectconfig_changed,
+        pc_apverid,
+        enum_selfheal,
+        resolve_secs,
+        fetch_secs,
+    )
+
+
+def _assemble_pin_stages(
+    resolved: list[tuple[Pin, str]],
+    computed: dict[int, tuple[Path, str]],
+    staged: dict[Path, str],
+    pin_msgs: list[str],
+) -> bool:
+    """Stage computed pin writes + build report lines, in pin order.
+
+    Returns whether the projectconfig pin changed.
+    """
+    projectconfig_changed = False
+    for pin, new_apverid in resolved:
+        write = computed.get(id(pin))
+        if write is None:
+            pin_msgs.append(
+                f'  {Clr.BLD}{pin.file_path}{Clr.RST}'
+                f' is already at {Clr.CYN}{pin.apverid}{Clr.RST}.'
+            )
+            continue
+        path, content = write
+        staged[path] = content
+        if new_apverid == pin.apverid:
+            pin_msgs.append(
+                f'  {Clr.BLD}{pin.file_path}{Clr.RST}'
+                f' regenerated at {Clr.CYN}{pin.apverid}{Clr.RST}.'
+            )
+        else:
+            pin_msgs.append(
+                f'  {Clr.BLD}{pin.file_path}{Clr.RST}'
+                f' updated: {Clr.CYN}{pin.apverid}{Clr.RST}'
+                f' -> {Clr.GRN}{new_apverid}{Clr.RST}'
+            )
+        if pin.kind == 'projectconfig':
+            projectconfig_changed = True
+        pin.apverid = new_apverid
+    return projectconfig_changed
+
+
 def do_update(
     projroot: Path,
     target_str: str,
@@ -445,74 +588,30 @@ def do_update(
     current pinned version. Has no effect on the projectconfig pin
     (there's nothing to regenerate — only the apverid string).
     """
+    starttime = time.monotonic()
+    print(f'{Clr.BLD}Updating asset pins...{Clr.RST}')
+
     pins = _discover_pins(projroot)
     if not pins:
         raise CleanError('No asset-package pins detected.')
 
     matched = _match_target(pins, target_str)
 
-    # Multiple matched pins often reference the same package (e.g.
-    # babuiltinassets' projectconfig + wrapper pins all resolve to the
-    # same version). Resolving once per pin would fire redundant master
-    # roundtrips — and for the dev track each is a write that
-    # delete-alls-and-recreates the dev version — so memoize the resolve
-    # and reuse the resolved apverid. The key includes the pin's current
-    # track because ``version_str='latest'`` is track-preserving (it
-    # resolves against ``pin.pin_type``); other version specs ignore the
-    # current track, so including it is just harmlessly conservative.
-    resolve_cache: dict[tuple[str, str, PinType, str], str] = {}
-
-    def _resolve_for(pin: Pin) -> str:
-        key = (pin.account, pin.package, pin.pin_type, version_str)
-        cached = resolve_cache.get(key)
-        if cached is None:
-            cached = _compute_new_apverid(projroot, pin, version_str)
-            resolve_cache[key] = cached
-        return cached
-
-    # ---- Phase 1: resolve + compute all writes (NO disk mutation). ----
-    #
-    # Everything we intend to write is computed into ``staged`` first and
-    # applied only once every resolve / cloud fetch / splice computation
-    # has succeeded. A failure partway through (server unreachable, a bad
-    # wrapper, etc.) raises before any file is touched, so the tree never
-    # ends up half-updated.
     staged: dict[Path, str] = {}
     pin_msgs: list[str] = []
-    projectconfig_changed = False
-
-    for pin in matched:
-        new_apverid = _resolve_for(pin)
-        # --force re-fetches wrappers even when the version is unchanged
-        # (for server-side format changes that move no pin).
-        regen = force and pin.kind == 'wrapper'
-        if new_apverid == pin.apverid and not regen:
-            pin_msgs.append(
-                f'  {Clr.BLD}{pin.file_path}{Clr.RST}'
-                f' is already at {Clr.CYN}{pin.apverid}{Clr.RST}.'
-            )
-            continue
-        path, content = _compute_pin_write(projroot, pin, new_apverid)
-        staged[path] = content
-        if new_apverid == pin.apverid:
-            pin_msgs.append(
-                f'  {Clr.BLD}{pin.file_path}{Clr.RST}'
-                f' regenerated at {Clr.CYN}{pin.apverid}{Clr.RST}.'
-            )
-        else:
-            pin_msgs.append(
-                f'  {Clr.BLD}{pin.file_path}{Clr.RST}'
-                f' updated: {Clr.CYN}{pin.apverid}{Clr.RST}'
-                f' -> {Clr.GRN}{new_apverid}{Clr.RST}'
-            )
-        if pin.kind == 'projectconfig':
-            projectconfig_changed = True
-        pin.apverid = new_apverid
-
-    # Stage the builtin-asset id enum regen (base.h / assets.cc splices)
-    # if the projectconfig pin moved or the on-disk splice drifted.
-    pc_apverid, enum_selfheal = _stage_enum_splices(
-        projroot, matched, projectconfig_changed, staged
+    (
+        projectconfig_changed,
+        pc_apverid,
+        enum_selfheal,
+        resolve_secs,
+        fetch_secs,
+    ) = _stage_update_writes(
+        projroot,
+        matched,
+        version_str=version_str,
+        force=force,
+        staged=staged,
+        pin_msgs=pin_msgs,
     )
 
     # ---- Phase 2: apply all staged writes at once (skipping no-op
@@ -552,62 +651,67 @@ def do_update(
             f' {verb} {clr}{pc_apverid}{Clr.RST}.'
         )
 
+    plural = 's' if len(matched) != 1 else ''
+    print(
+        f'{Clr.GRN}Processed {len(matched)} pin{plural}'
+        f' in {time.monotonic() - starttime:.1f}s'
+        f' (resolve {resolve_secs:.1f}s, fetch {fetch_secs:.1f}s).{Clr.RST}'
+    )
 
-def _stage_enum_splices(
+
+def _plan_enum_splices(
     projroot: Path,
-    matched: list[Pin],
-    projectconfig_changed: bool,
-    staged: dict[Path, str],
-) -> tuple[str, bool]:
-    """Stage builtin-asset id enum regen into ``staged`` when needed.
+    resolved: list[tuple[Pin, str]],
+) -> tuple[str, bool, bool]:
+    """Plan the builtin-asset id enum regen (base.h / assets.cc splices).
 
-    Regenerates the ``base.h`` / ``assets.cc`` autogen splices (plus the
-    fully-generated ``builtin_strings.{h,cc}`` accessor files) whenever
-    the projectconfig pin moved OR the on-disk splice is out of sync with
-    it. (Wrapper pins don't drive this — they're per-package runtime
-    references; the construct-mode pin in projectconfig is what the
-    builtin enums track.) This is the *real* header update;
+    The regen (via ``batools.builtinassetids.compute_splices``, which
+    ``do_update`` runs in its parallel fetch batch) is needed whenever
+    the projectconfig pin moved OR the on-disk splice is out of sync
+    with it. (Wrapper pins don't drive this — they're per-package
+    runtime references; the construct-mode pin in projectconfig is what
+    the builtin enums track.) This is the *real* header update;
     ``update_project --check`` only verifies the splice matches the pin,
     it never regenerates.
 
-    No asset *assembly* happens here — the enums come from the
-    assembly-free ``assetpackage _listing`` query (see
-    ``batools.builtinassetids``). Bundle manifests + CAS blobs are built
-    by the normal asset build (``make cmake-build``), not by pin updates.
+    No asset *assembly* happens there — the enums come from the
+    assembly-free ``assetpackage _listing`` query. Bundle manifests +
+    CAS blobs are built by the normal asset build (``make cmake-build``),
+    not by pin updates.
 
     The splice-staleness condition makes this self-healing: the regen
     depends on the master (the listing fetch), so an update that advanced
     the pin but died before regenerating — e.g. the server was briefly
     unreachable — leaves the pin "already at" the target. A bare
-    ``projectconfig_changed`` check would then never retry, and the
-    half-applied state (pin new, splice stale) sticks until a manual fix.
-    Comparing the splice's embedded apverid to the pin lets any re-run of
+    pin-moved check would then never retry, and the half-applied state
+    (pin new, splice stale) sticks until a manual fix. Comparing the
+    splice's embedded apverid to the pin lets any re-run of
     ``assetpins update`` converge to a consistent state.
 
-    We compute against ``pc_apverid`` explicitly rather than letting the
-    generator read projectconfig: the projectconfig write is still only
-    staged at this point, so disk would show the *old* pin.
+    We plan against the *resolved* pin value explicitly rather than
+    letting the generator read projectconfig: the projectconfig write is
+    only ever staged, so disk would show the *old* pin.
 
-    Returns ``(pc_apverid, selfheal)`` -- the apverid the enums track
-    (``''`` if no projectconfig pin matched) and whether this was a pure
-    self-heal (splice stale but pin unchanged).
+    Returns ``(pc_apverid, fetch_needed, selfheal)`` — the apverid the
+    enums track (``''`` if no projectconfig pin matched), whether the
+    splices need regenerating, and whether that's a pure self-heal
+    (splice stale but pin unchanged).
     """
-    projectconfig_pins = [p for p in matched if p.kind == 'projectconfig']
-    if not projectconfig_pins:
-        return '', False
-    pc_apverid = projectconfig_pins[0].apverid
+    pc_resolved = next(
+        ((pin, apv) for pin, apv in resolved if pin.kind == 'projectconfig'),
+        None,
+    )
+    if pc_resolved is None:
+        return '', False, False
+    pc_pin, pc_apverid = pc_resolved
+    pc_changed = pc_apverid != pc_pin.apverid
     # The splice embeds the pin as ``kBuiltinAssetsApverid = "<id>";``; a
     # quoted-substring check is insensitive to clang-format wrapping
     # (mirrors check_builtin_asset_ids in batools/project/_checks.py).
     base_h = (projroot / 'src/ballistica/base/base.h').read_text()
     splice_stale = f'"{pc_apverid}"' not in base_h
-    if not projectconfig_changed and not splice_stale:
-        return pc_apverid, False
-    from batools.builtinassetids import compute_splices
-
-    for rel_path, content in compute_splices(projroot, pc_apverid).items():
-        staged[projroot / rel_path] = content
-    return pc_apverid, splice_stale and not projectconfig_changed
+    fetch_needed = pc_changed or splice_stale
+    return pc_apverid, fetch_needed, splice_stale and not pc_changed
 
 
 def _apply_staged_writes(staged: dict[Path, str]) -> set[Path]:
@@ -1114,7 +1218,11 @@ def _fetch_wrapper(projroot: Path, apverid: str, wrapper_type: str) -> str:
     """
     tmpdir = projroot / 'build' / 'tmp'
     tmpdir.mkdir(parents=True, exist_ok=True)
-    out_rel = f'build/tmp/assetpins_wrapper_{wrapper_type}.py'
+    # Key the scratch file on the apverid too — wrapper fetches now run
+    # concurrently (do_update's parallel batch), and two packages can
+    # share a wrapper_type (e.g. a bauiv1 wrapper each).
+    apverid_slug = re.sub(r'[^A-Za-z0-9]+', '_', apverid)
+    out_rel = f'build/tmp/assetpins_wrapper_{wrapper_type}_{apverid_slug}.py'
     out_path = projroot / out_rel
     result = subprocess.run(
         [

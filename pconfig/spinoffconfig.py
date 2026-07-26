@@ -182,7 +182,6 @@ ctx.filter_file_names = {
     'testfoo.py',
     'testfoo2.py',
     'assets_phase_xcode',
-    'ballistica_maya_tools.mel',
     'check_python_syntax',
     'pcommand',
     'vmshell',

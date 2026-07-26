@@ -53,7 +53,15 @@ fast-path (`kSimpleComponentInlineColor`), which a centralized premultiply in
 in the renderer.
 
 Callers that follow this: `text_node`, `image_node`, `text_widget`,
-`screen_messages`, `image_widget`, the dev-console caret glow.
+`screen_messages`, `image_widget`, `button_widget` (background + icon),
+`spinner_widget`, `scroll_widget` / `h_scroll_widget` (troughs, page
+buttons, outlines), `container_widget`, `touch_input` (on-screen joystick +
+action buttons), `locator_node`, `scorch_node`, `spaz_node` (name text,
+billboards, radial meters), the dev-console (`DrawRect`/`DrawText` helpers,
+drop shadow, output lines, caret glow), and the on-screen dev-console toggle
+button in `ui.cc`. `ObjectComponent` does the same premultiply centrally in
+its `WriteConfig` (transparent, non-`SetPremultiplied` case), so its callers
+(e.g. `terrain_node`, mesh fades) get it for free.
 
 ## `SetPremultiplied(true)` means "I manage premult myself"
 

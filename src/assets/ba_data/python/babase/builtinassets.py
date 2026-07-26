@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260723c`` (babase).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260726`` (babase).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,13 +9,13 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260723c
+# ba_meta require asset-package a-0.babuiltinassets.260726
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260723c'
+__asset_package__ = 'a-0.babuiltinassets.260726'
 
 from typing import TYPE_CHECKING
 

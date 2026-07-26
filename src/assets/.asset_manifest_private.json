@@ -11,6 +11,8 @@
  "ba_data/python-site-packages/certifi/__main__.py",
  "ba_data/python-site-packages/certifi/cacert.pem",
  "ba_data/python-site-packages/certifi/core.py",
+ "ba_data/python-site-packages/certifi/tests/__init__.py",
+ "ba_data/python-site-packages/certifi/tests/test_certify.py",
  "ba_data/python-site-packages/typing_extensions.py",
  "ba_data/python-site-packages/urllib3/__init__.py",
  "ba_data/python-site-packages/urllib3/_base_connection.py",

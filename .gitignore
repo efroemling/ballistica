@@ -13,7 +13,6 @@ local.properties
 *.vscode
 .sconsign.dblite
 .efrocache
-.mayaSwatches
 .gdb_history
 .dmypy.json
 .cache

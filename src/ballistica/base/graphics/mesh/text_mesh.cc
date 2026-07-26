@@ -267,8 +267,12 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
             os_span.clear();
           }
 
-          // Draw this glyph.
-          if (draw) {
+          // Draw this glyph. Zero-area glyphs (spaces, and anything else
+          // whose metrics carry no ink) still advance the pen but emit no
+          // geometry; a fully-transparent quad costs vertices and blended
+          // fragments for nothing. The buffers are trimmed to what we
+          // actually write below, so skipping is safe.
+          if (draw && glyph->x_size > 0.0f && glyph->y_size > 0.0f) {
             float v_min = glyph->tex_min_y;
             float v_max = glyph->tex_max_y;
             float u_min = glyph->tex_min_x;

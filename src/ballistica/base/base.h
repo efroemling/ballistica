@@ -448,7 +448,7 @@ enum class SystemDataID : uint8_t {};
 // their callsites migrate.
 
 inline constexpr const char* kBuiltinAssetsApverid =
-    "a-0.babuiltinassets.260723c";
+    "a-0.babuiltinassets.260726";
 
 enum class BuiltinTextureID : uint16_t {
   kTexturesActionButtons,         // textures/action_buttons

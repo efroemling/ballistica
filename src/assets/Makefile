@@ -115,12 +115,9 @@ ASSET_TARGETS_WIN_SERVER_X64 =
 ASSET_TARGETS_IOS =
 ASSET_TARGETS_ANDROID =
 
-# (The legacy Maya master -> src .obj export flow lived here until
-# 2026-06-12; mesh sources now live in the asset-package workspaces
-# (decision #26), so the maya dependency scan + export rules are
-# retired. Future Maya exports should target workspace checkouts.
-# Audio/texture/mesh compiles followed in the same sweep once those
-# kinds finished migrating to asset-packages.)
+# (Mesh/audio/texture master -> src export and compile rules lived here
+# until 2026-06-12; those asset kinds now live in the asset-package
+# workspaces (decision #26), so the rules are retired.)
 
 # FontData.
 ifeq ($(MAKE_FONTS),1)
@@ -1673,6 +1670,8 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__init__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__main__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/core.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/certifi/tests/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/certifi/tests/test_certify.py \
   $(BUILD_DIR)/ba_data/python-site-packages/typing_extensions.py \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__init__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/_base_connection.py \
