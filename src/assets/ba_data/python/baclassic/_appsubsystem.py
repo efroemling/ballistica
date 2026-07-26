@@ -474,8 +474,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                     break
                 if not level.complete:
                     CoopLevelLockedWindow(
-                        campaign.getlevel(levelname).displayname,
-                        campaign.getlevel(level.name).displayname,
+                        campaign.getlevel(levelname).displayname_langstr,
+                        campaign.getlevel(level.name).displayname_langstr,
                     )
                     return False
 

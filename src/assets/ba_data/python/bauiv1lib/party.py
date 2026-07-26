@@ -24,7 +24,6 @@ class PartyWindow(bui.Window):
     def __init__(self, origin: Sequence[float] = (0, 0)):
 
         self._uiopenstate = bui.UIOpenState('classicparty')
-        self._r = 'partyWindow'
         self._popup_type: str | None = None
         self._popup_party_member_client_id: int | None = None
         self._popup_party_member_is_host: bool | None = None
@@ -98,9 +97,9 @@ class PartyWindow(bui.Window):
         info = bs.get_connection_to_host_info_2()
 
         if info is not None and info.name != '':
-            title = bui.Lstr(value=info.name)
+            title = bui.LangStr.from_text(info.name)
         else:
-            title = bui.Lstr(resource=f'{self._r}.titleText')
+            title = classicassets.strings.party.title
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
@@ -175,7 +174,7 @@ class PartyWindow(bui.Window):
             maxwidth=494,
             shadow=0.3,
             flatness=1.0,
-            description=bui.Lstr(resource=f'{self._r}.chatMessageText'),
+            description=classicassets.strings.party.chat_message,
             autoselect=True,
             v_align='center',
             corner_scale=0.7,
@@ -200,7 +199,7 @@ class PartyWindow(bui.Window):
             parent=self._root_widget,
             id=f'{self._idprefix}|send',
             size=(50, 35),
-            label=bui.Lstr(resource=f'{self._r}.sendText'),
+            label=classicassets.strings.ui.send,
             button_type='square',
             autoselect=True,
             position=(self._width - 70, 35),
@@ -329,7 +328,7 @@ class PartyWindow(bui.Window):
                 top_section_height = 60
                 bui.textwidget(
                     edit=self._empty_str,
-                    text=bui.Lstr(resource=f'{self._r}.emptyText'),
+                    text=classicassets.strings.party.empty,
                 )
                 bui.textwidget(
                     edit=self._empty_str_2,
@@ -409,7 +408,7 @@ class PartyWindow(bui.Window):
                                 selectable=True,
                                 autoselect=True,
                                 click_activate=True,
-                                text=bui.Lstr(value=p_str),
+                                text=bui.LangStr.from_text(p_str),
                                 h_align='left',
                                 v_align='center',
                             )
@@ -466,9 +465,7 @@ class PartyWindow(bui.Window):
                                         v_align='center',
                                         maxwidth=c_width * 0.96 - twd,
                                         color=(0.1, 1, 0.1, 0.5),
-                                        text=bui.Lstr(
-                                            resource=f'{self._r}.hostText'
-                                        ),
+                                        text=classicassets.strings.party.host,
                                         scale=0.4,
                                         shadow=0.1,
                                         flatness=1.0,

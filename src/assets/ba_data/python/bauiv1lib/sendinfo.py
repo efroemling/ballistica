@@ -140,9 +140,7 @@ class SendInfoWindow(bui.MainWindow):
             position=(width * 0.5 - b_width * 0.5, v),
             size=(b_width, 60),
             scale=1.0,
-            label=bui.Lstr(
-                resource='submitText', fallback_resource=f'{self._r}.enterText'
-            ),
+            label=classicassets.strings.ui.submit,
             on_activate_call=self._do_enter,
             autoselect=True,
         )
@@ -307,9 +305,7 @@ class SendInfoWindowLegacyModal(bui.Window):
             position=(width * 0.5 - b_width * 0.5, v),
             size=(b_width, 60),
             scale=1.0,
-            label=bui.Lstr(
-                resource='submitText', fallback_resource=f'{self._r}.enterText'
-            ),
+            label=classicassets.strings.ui.submit,
             on_activate_call=self._do_enter,
             autoselect=True,
         )

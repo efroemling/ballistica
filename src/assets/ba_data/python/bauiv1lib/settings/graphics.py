@@ -290,7 +290,9 @@ class GraphicsSettingsWindow(bui.MainWindow):
                         if native_res[1] >= res:
                             res_str = f'{res}p'
                             choices.append(res_str)
-                            choices_display.append(bui.Lstr(value=res_str))
+                            choices_display.append(
+                                bui.LangStr.from_text(res_str)
+                            )
                     current_res_android = bui.app.config.resolve(
                         'Resolution (Android)'
                     )

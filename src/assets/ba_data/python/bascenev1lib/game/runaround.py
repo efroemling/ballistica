@@ -820,12 +820,9 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         bonus = 200
         self._cashregistersound.play()
         PopupText(
-            bs.Lstr(
-                value='+${A} ${B}',
-                subs=[
-                    ('${A}', str(bonus)),
-                    ('${B}', bs.Lstr(resource='completionBonusText')),
-                ],
+            classicassets.strings.game.points_gained_titled(
+                points=str(bonus),
+                title=classicassets.strings.game.completion_bonus,
             ),
             color=(0.7, 0.7, 1.0, 1),
             scale=1.6,
@@ -838,12 +835,9 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         bonus = self._lives * 30
         self._cashregistersound.play()
         PopupText(
-            bs.Lstr(
-                value='+${A} ${B}',
-                subs=[
-                    ('${A}', str(bonus)),
-                    ('${B}', bs.Lstr(resource='livesBonusText')),
-                ],
+            classicassets.strings.game.points_gained_titled(
+                points=str(bonus),
+                title=classicassets.strings.game.lives_bonus,
             ),
             color=(0.7, 1.0, 0.3, 1),
             scale=1.3,
@@ -855,12 +849,9 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
     def _award_time_bonus(self, bonus: int) -> None:
         self._cashregistersound.play()
         PopupText(
-            bs.Lstr(
-                value='+${A} ${B}',
-                subs=[
-                    ('${A}', str(bonus)),
-                    ('${B}', bs.Lstr(resource='timeBonusText')),
-                ],
+            classicassets.strings.game.points_gained_titled(
+                points=str(bonus),
+                title=classicassets.strings.game.time_bonus,
             ),
             color=(1, 1, 0.5, 1),
             scale=1.0,
@@ -873,12 +864,9 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
     def _award_flawless_bonus(self) -> None:
         self._cashregistersound.play()
         PopupText(
-            bs.Lstr(
-                value='+${A} ${B}',
-                subs=[
-                    ('${A}', str(self._flawless_bonus)),
-                    ('${B}', bs.Lstr(resource='perfectWaveText')),
-                ],
+            classicassets.strings.game.points_gained_titled(
+                points=str(self._flawless_bonus),
+                title=classicassets.strings.game.perfect_wave,
             ),
             color=(1, 1, 0.2, 1),
             scale=1.2,
@@ -900,13 +888,7 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         # pylint: disable=too-many-locals
         # pylint: disable=too-many-branches
         self.show_zoom_message(
-            bs.Lstr(
-                value='${A} ${B}',
-                subs=[
-                    ('${A}', bs.Lstr(resource='waveText')),
-                    ('${B}', str(self._wavenum)),
-                ],
-            ),
+            classicassets.strings.game.wave_number(number=str(self._wavenum)),
             scale=1.0,
             duration=1.0,
             trail=True,
@@ -1131,12 +1113,8 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         self._time_bonus = 150
         self._flawless_bonus = this_flawless_bonus
         assert self._time_bonus_mult is not None
-        txtval = bs.Lstr(
-            value='${A}: ${B}',
-            subs=[
-                ('${A}', bs.Lstr(resource='timeBonusText')),
-                ('${B}', str(int(self._time_bonus * self._time_bonus_mult))),
-            ],
+        txtval = classicassets.strings.game.time_bonus_amount(
+            amount=str(int(self._time_bonus * self._time_bonus_mult))
         )
         self._time_bonus_text = bs.NodeActor(
             bs.newnode(
@@ -1163,21 +1141,13 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         # player could fill the whole map with them)
         self._last_wave_end_time = bs.Time(bs.time() + t_sec)
         totalwaves = str(len(self._waves)) if self._waves is not None else '??'
-        txtval = bs.Lstr(
-            value='${A} ${B}',
-            subs=[
-                ('${A}', bs.Lstr(resource='waveText')),
-                (
-                    '${B}',
-                    str(self._wavenum)
-                    + (
-                        ''
-                        if self._preset
-                        in {Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT}
-                        else f'/{totalwaves}'
-                    ),
-                ),
-            ],
+        txtval = classicassets.strings.game.wave_number(
+            number=str(self._wavenum)
+            + (
+                ''
+                if self._preset in {Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT}
+                else f'/{totalwaves}'
+            )
         )
         self._wave_text = bs.NodeActor(
             bs.newnode(
@@ -1232,15 +1202,10 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         if self._time_bonus > 0 and self._time_bonus_text is not None:
             assert self._time_bonus_text.node
             assert self._time_bonus_mult
-            self._time_bonus_text.node.text = bs.Lstr(
-                value='${A}: ${B}',
-                subs=[
-                    ('${A}', bs.Lstr(resource='timeBonusText')),
-                    (
-                        '${B}',
-                        str(int(self._time_bonus * self._time_bonus_mult)),
-                    ),
-                ],
+            self._time_bonus_text.node.text = (
+                classicassets.strings.game.time_bonus_amount(
+                    amount=str(int(self._time_bonus * self._time_bonus_mult))
+                )
             )
         else:
             self._time_bonus_text = None

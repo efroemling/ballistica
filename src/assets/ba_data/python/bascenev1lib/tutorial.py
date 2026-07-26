@@ -255,7 +255,7 @@ class SpawnSpaz:
         color: Sequence[float] = (1.0, 1.0, 1.0),
         make_current: bool = False,
         relative_to: int | None = None,
-        name: str | bs.Lstr = '',
+        name: str | bs.Lstr | bs.LangStr = '',
         flash: bool = True,
         angle: float = 0.0,
     ):
@@ -294,12 +294,12 @@ class SpawnSpaz:
             demo_mode=True,
         )
 
-        # FIXME: Should extend spaz to support Lstr names.
+        # FIXME: Should extend spaz to support deferred names.
         assert s.node
-        if isinstance(self._name, bs.Lstr):
-            s.node.name = self._name.evaluate()
-        else:
+        if isinstance(self._name, str):
             s.node.name = self._name
+        else:
+            s.node.name = self._name.evaluate()
         s.node.name_color = self._color
         s.handlemessage(bs.StandMessage(pos, self._angle))
         if self._make_current:
@@ -618,7 +618,6 @@ class TutorialActivity(bs.Activity[Player, Team]):
         self._pick_up_button_tex = classicassets.textures.button_pick_up.get()
         self._bomb_button_tex = classicassets.textures.button_bomb.get()
         self._punch_button_tex = classicassets.textures.button_punch.get()
-        self._r = 'tutorial'
         self._have_skipped = False
         self.stick_image_position_x = self.stick_image_position_y = 0.0
         self.spawn_sound = classicassets.audio.spawn.get()
@@ -872,11 +871,8 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     Celebrate('left'),
                     DelayOld(2000),
                     Text(
-                        bs.Lstr(
-                            resource=f'{self._r}.phrase02Text',
-                            subs=[
-                                ('${APP_NAME}', bs.Lstr(resource='titleText'))
-                            ],
+                        classicassets.strings.tutorial.phrase02(
+                            app_name=classicassets.strings.ui.app_name
                         )
                     ),  # welcome to <appname>
                     DelayOld(80),
@@ -914,11 +910,8 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     DelayOld(1000),
                     AnalyticsScreen('Tutorial Section 2'),
                     Text(
-                        bs.Lstr(
-                            resource=f'{self._r}.phrase04Text',
-                            subs=[
-                                ('${APP_NAME}', bs.Lstr(resource='titleText'))
-                            ],
+                        classicassets.strings.tutorial.phrase04(
+                            app_name=classicassets.strings.ui.app_name
                         )
                     ),  # many things are based on physics
                     DelayOld(20),
@@ -1294,7 +1287,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         (-3.1, 4.3, -2.0),
                         make_current=False,
                         color=(1, 1, 0.4),
-                        name=bs.Lstr(resource=f'{self._r}.randomName1Text'),
+                        name=classicassets.strings.tutorial.random_name1,
                     ),
                     Move(-1.0, 0),
                     DelayOld(1050),
@@ -1318,16 +1311,8 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     DelayOld(100),
                     Move(0, 0),
                     Text(
-                        bs.Lstr(
-                            resource=f'{self._r}.phrase07Text',
-                            subs=[
-                                (
-                                    '${NAME}',
-                                    bs.Lstr(
-                                        resource=f'{self._r}.randomName1Text'
-                                    ),
-                                )
-                            ],
+                        classicassets.strings.tutorial.phrase07(
+                            name=classicassets.strings.tutorial.random_name1
                         )
                     ),  # see that didn't hurt fred
                     DelayOld(2000),
@@ -1551,7 +1536,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         (3.3, 4.2, -5.8),
                         make_current=False,
                         color=(0.9, 0.5, 1.0),
-                        name=bs.Lstr(resource=f'{self._r}.randomName2Text'),
+                        name=classicassets.strings.tutorial.random_name2,
                     ),
                     DelayOld(1800),
                     Text(
@@ -1831,7 +1816,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         make_current=False,
                         color=(1.0, 0.7, 0.3),
                         # name=R.randomName3Text),
-                        name=bs.Lstr(resource=f'{self._r}.randomName3Text'),
+                        name=classicassets.strings.tutorial.random_name3,
                     ),
                     DelayOld(100),
                     Powerup(1, (2.5, 0.0, 0), relative_to=0),
@@ -2029,32 +2014,16 @@ class TutorialActivity(bs.Activity[Player, Team]):
                     DelayOld(750),
                     MoveLR(0),
                     Text(
-                        bs.Lstr(
-                            resource=f'{self._r}.phrase13Text',
-                            subs=[
-                                (
-                                    '${NAME}',
-                                    bs.Lstr(
-                                        resource=f'{self._r}.randomName3Text'
-                                    ),
-                                )
-                            ],
+                        classicassets.strings.tutorial.phrase13(
+                            name=classicassets.strings.tutorial.random_name3
                         )
                     ),  # whoops sorry bill
                     RemoveGloves(),
                     DelayOld(2000),
                     AnalyticsScreen('Tutorial Section 5'),
                     Text(
-                        bs.Lstr(
-                            resource=f'{self._r}.phrase14Text',
-                            subs=[
-                                (
-                                    '${NAME}',
-                                    bs.Lstr(
-                                        resource=f'{self._r}.randomName4Text'
-                                    ),
-                                )
-                            ],
+                        classicassets.strings.tutorial.phrase14(
+                            name=classicassets.strings.tutorial.random_name4
                         )
                     ),  # you can pick up and throw things such as chuck here
                     SpawnSpaz(
@@ -2070,7 +2039,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         relative_to=0,
                         make_current=False,
                         color=(0.4, 1.0, 0.7),
-                        name=bs.Lstr(resource=f'{self._r}.randomName4Text'),
+                        name=classicassets.strings.tutorial.random_name4,
                     ),
                     DelayOld(1000),
                     Celebrate('left', 1, duration=1000),
@@ -2338,7 +2307,7 @@ class TutorialActivity(bs.Activity[Player, Team]):
                         relative_to=0,
                         make_current=False,
                         color=(0.3, 0.8, 1.0),
-                        name=bs.Lstr(resource=f'{self._r}.randomName5Text'),
+                        name=classicassets.strings.tutorial.random_name5,
                     ),
                     DelayOld2(1000),
                     Move(-1, 0),
@@ -2450,12 +2419,8 @@ class TutorialActivity(bs.Activity[Player, Team]):
         count = sum(1 for player in self.players if player.pressed)
         assert self._skip_count_text
         self._skip_count_text.text = (
-            bs.Lstr(
-                resource=f'{self._r}.skipVoteCountText',
-                subs=[
-                    ('${COUNT}', str(count)),
-                    ('${TOTAL}', str(len(self.players))),
-                ],
+            classicassets.strings.tutorial.skip_vote_count(
+                count=str(count), total=str(len(self.players))
             )
             if count > 0
             else ''
@@ -2469,7 +2434,9 @@ class TutorialActivity(bs.Activity[Player, Team]):
             bs.set_analytics_screen('Tutorial Skip')
             self._have_skipped = True
             builtinassets.audio.swish.get().play()
-            # self._skip_count_text.text = self._r.skippingText
+            # self._skip_count_text.text = (
+            #     classicassets.strings.tutorial.skipping
+            # )
             self._skip_count_text.text = classicassets.strings.tutorial.skipping
             assert self._skip_text
             self._skip_text.text = ''

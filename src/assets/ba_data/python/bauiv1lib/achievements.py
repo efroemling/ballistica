@@ -155,13 +155,11 @@ class AchievementsWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 scale=0.6,
-                text=bui.Lstr(
-                    value='${A}: ${C}/${T}',
-                    subs=[
-                        ('${A}', bui.Lstr(resource='achievementsText')),
-                        ('${C}', str(num_complete)),
-                        ('${T}', str(len(achievements))),
-                    ],
+                text=classicassets.strings.ui.spaced_pair(
+                    first=classicassets.strings.ui.heading_suffix(
+                        main=classicassets.strings.ui.achievements
+                    ),
+                    second=f'{num_complete}/{len(achievements)}',
                 ),
                 maxwidth=86,
                 color=bui.app.ui_v1.title_color,
@@ -196,8 +194,6 @@ class AchievementsWindow(bui.MainWindow):
         # For fullscreen scrollable, account for toolbar.
         if uiscale is bui.UIScale.SMALL:
             sub_height += 30
-
-        eq_rsrc = 'coopSelectWindow.powerRankingPointsEqualsText'
 
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
@@ -333,18 +329,11 @@ class AchievementsWindow(bui.MainWindow):
             color=(0.7, 0.8, 1.0),
             flatness=1.0,
             shadow=0.0,
-            text=bui.Lstr(
-                value='${A} ${B}',
-                subs=[
-                    ('${A}', bui.Lstr(resource='coopSelectWindow.totalText')),
-                    (
-                        '${B}',
-                        bui.Lstr(
-                            resource=eq_rsrc,
-                            subs=[('${NUMBER}', str(total_pts))],
-                        ),
-                    ),
-                ],
+            text=classicassets.strings.ui.spaced_pair(
+                first=classicassets.strings.ui.total,
+                second=(
+                    classicassets.strings.league
+                ).power_ranking_points_equals(number=str(total_pts)),
             ),
             size=(0, 0),
             h_align='right',

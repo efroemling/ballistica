@@ -169,6 +169,7 @@ class TournamentScoresWindow(PopupWindow):
                         bui.timestring(
                             (entry[0] * 10) / 1000.0,
                             centi=True,
+                            langstr=True,
                         )
                         if data_t[0]['scoreType'] == 'time'
                         else str(entry[0])
@@ -188,7 +189,7 @@ class TournamentScoresWindow(PopupWindow):
                     scale=0.7,
                     flatness=1.0,
                     shadow=0.0,
-                    text=bui.Lstr(value=entry[1]),
+                    text=bui.LangStr.from_text(entry[1]),
                     selectable=True,
                     click_activate=True,
                     autoselect=True,

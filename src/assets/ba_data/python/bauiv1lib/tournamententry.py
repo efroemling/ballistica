@@ -452,7 +452,9 @@ class TournamentEntryWindow(PopupWindow):
                 self._seconds_remaining = max(0, self._seconds_remaining - 1)
                 bui.textwidget(
                     edit=self._time_remaining_text,
-                    text=bui.timestring(self._seconds_remaining, centi=False),
+                    text=bui.timestring(
+                        self._seconds_remaining, centi=False, langstr=True
+                    ),
                 )
 
         # Keep price up-to-date and update the button with it.

@@ -170,6 +170,7 @@ def assetworkspace() -> None:
     signature stable for sandbox permission grants).
     """
     import os
+    import time
     import subprocess
 
     from efro.error import CleanError
@@ -225,12 +226,30 @@ def assetworkspace() -> None:
     env = dict(os.environ)
     if fleet is not None:
         env['BA_FLEET'] = fleet
-    try:
-        subprocess.run(cmd, check=True, env=env)
-    except subprocess.CalledProcessError as exc:
-        raise CleanError(
-            f'bacloud workspace {subcmd} failed for {name!r}.'
-        ) from exc
+    # A `get` is a read-only sync into a local cache, so re-running it
+    # is always safe; retry it a couple of times so a transient network
+    # hiccup doesn't surface as a hard failure. (Observed 2026-07-26: a
+    # run of `SSLError: UNEXPECTED_EOF_WHILE_READING` failures through
+    # an egress proxy, which recovered on their own.) A `put` is
+    # deliberately NOT retried -- it mutates the cloud workspace, and
+    # bacloud owns that retry policy.
+    attempts = 3 if subcmd == 'get' else 1
+    for attempt in range(1, attempts + 1):
+        try:
+            subprocess.run(cmd, check=True, env=env)
+            break
+        except subprocess.CalledProcessError as exc:
+            if attempt >= attempts:
+                raise CleanError(
+                    f'bacloud workspace {subcmd} failed for {name!r}'
+                    + (f' after {attempts} attempts.' if attempts > 1 else '.')
+                ) from exc
+            delay = 2.0 * attempt
+            print(
+                f'bacloud workspace {subcmd} failed for {name!r}; retrying'
+                f' in {delay:.0f}s ({attempt}/{attempts - 1})...'
+            )
+            time.sleep(delay)
     verb = 'synced to' if subcmd == 'get' else 'pushed from'
     print(f'Workspace {name!r} {verb} {ws_dir}')
 

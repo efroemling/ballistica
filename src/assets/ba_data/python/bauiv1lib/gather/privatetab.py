@@ -624,9 +624,8 @@ class PrivateGatherTab(GatherTab):
                 scale=0.8,
                 color=(0.6, 0.56, 0.6),
                 position=(self._c_width * 0.5, self._c_height * 0.5),
-                text=bui.Lstr(
-                    value='${A}...',
-                    subs=[('${A}', bui.Lstr(resource='store.loadingText'))],
+                text=classicassets.strings.ui.ellipsis_suffix(
+                    main=classicassets.strings.ui.loading
                 ),
             )
             return

@@ -1,19 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.260726`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.260726c`` (bascenev1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.baclassicassets.260726
+# ba_meta require asset-package a-0.baclassicassets.260726c
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.baclassicassets.260726'
+__asset_package__ = 'a-0.baclassicassets.260726c'
 
 from typing import TYPE_CHECKING
 
@@ -3347,6 +3347,20 @@ if TYPE_CHECKING:
                 download links for all supported platforms."
             """
 
+        def friend_promo_redeem_long(
+            self, *, count: int, max_uses: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                How many free tickets a promo code grants and to how many
+                people.
+
+                English: (one) "It can be redeemed for # free ticket by up to
+                {max_uses} people." / (other) "It can be redeemed for # free
+                tickets by up to {max_uses} people."
+            """
+
         def friend_promo_redeem_short(self, *, count: int) -> LangStr:
             """
             ::
@@ -3370,6 +3384,13 @@ if TYPE_CHECKING:
         #:
         #:     English: "Share this code with friends:"
         share_code: LangStr
+
+        #: ::
+        #:
+        #:     Parenthetical pointer to where a promo code is entered.
+        #:
+        #:     English: "(in "Settings->Advanced->Send Info")"
+        where_to_enter: LangStr
 
         def you_have_been_sent_promo(
             self, *, app_name: str | LangStr
@@ -4747,6 +4768,16 @@ if TYPE_CHECKING:
         #:     English: "Time Bonus"
         time_bonus: LangStr
 
+        def time_bonus_amount(self, *, amount: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Time-bonus label with its current amount, shown on the co-op
+                HUD.
+
+                English: "Time Bonus: {amount}"
+            """
+
         #: ::
         #:
         #:     Banner shown when the game time limit runs out.
@@ -4814,6 +4845,16 @@ if TYPE_CHECKING:
         #:
         #:     English: "Wave"
         wave: LangStr
+
+        def wave_number(self, *, number: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Label for the current wave with its number, shown on the co-op
+                HUD.
+
+                English: "Wave {number}"
+            """
 
     class StringsGamedescriptionsGroup:
         """
@@ -9573,12 +9614,30 @@ if TYPE_CHECKING:
         #:     English: "Hi there!"
         phrase01: LangStr
 
+        def phrase02(self, *, app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Tutorial: welcome line.
+
+                English: "Welcome to {app_name}!"
+            """
+
         #: ::
         #:
         #:     Tutorial: intro to control tips.
         #:
         #:     English: "Here's a few tips for controlling your character:"
         phrase03: LangStr
+
+        def phrase04(self, *, app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Tutorial: physics intro.
+
+                English: "Many things in {app_name} are PHYSICS based."
+            """
 
         #: ::
         #:
@@ -9593,6 +9652,15 @@ if TYPE_CHECKING:
         #:
         #:     English: "..damage is based on the speed of your fists."
         phrase06: LangStr
+
+        def phrase07(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Tutorial: weak-punch explanation.
+
+                English: "See? We weren't moving, so that barely hurt {name}."
+            """
 
         #: ::
         #:
@@ -9628,6 +9696,25 @@ if TYPE_CHECKING:
         #:
         #:     English: "For extra-awesome punches, try running AND spinning."
         phrase12: LangStr
+
+        def phrase13(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Tutorial: apology after a hard hit.
+
+                English: "Whoops; sorry 'bout that {name}."
+            """
+
+        def phrase14(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Tutorial: pick-up-and-throw tip.
+
+                English: "You can pick up and throw things such as flags.. or
+                {name}."
+            """
 
         #: ::
         #:
@@ -9736,10 +9823,56 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Tutorial: stand-in practice-character name.
+        #:
+        #:     English: "Fred"
+        random_name1: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: stand-in practice-character name.
+        #:
+        #:     English: "Harry"
+        random_name2: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: stand-in practice-character name.
+        #:
+        #:     English: "Bill"
+        random_name3: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: stand-in practice-character name.
+        #:
+        #:     English: "Chuck"
+        random_name4: LangStr
+
+        #: ::
+        #:
+        #:     Tutorial: stand-in practice-character name.
+        #:
+        #:     English: "Phil"
+        random_name5: LangStr
+
+        #: ::
+        #:
         #:     Confirmation prompt before skipping the tutorial.
         #:
         #:     English: "Really skip the tutorial? Tap or press to confirm."
         skip_confirm: LangStr
+
+        def skip_vote_count(
+            self, *, count: str | LangStr, total: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Tutorial: skip-vote tally.
+
+                English: "{count}/{total} skip votes"
+            """
 
         #: ::
         #:
@@ -9946,6 +10079,16 @@ if TYPE_CHECKING:
         #:     English: "Customize..."
         customize: LangStr
 
+        def dash_wrap(self, *, main: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Pure-formatting template flanking a label with dashes;
+                substitution-only.
+
+                English: "- {main} -"
+            """
+
         #: ::
         #:
         #:     Button label to decline an offer or invitation.
@@ -10032,6 +10175,16 @@ if TYPE_CHECKING:
         #:     English: "Edit"
         edit: LangStr
 
+        def ellipsis_suffix(self, *, main: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Pure-formatting template appending an ellipsis to a status
+                label; substitution-only.
+
+                English: "{main}..."
+            """
+
         #: ::
         #:
         #:     Generic 'Enabled' state/filter label.
@@ -10106,6 +10259,18 @@ if TYPE_CHECKING:
         #:     English: "Game Center"
         game_center: LangStr
 
+        def gapped_pair(
+            self, *, first: str | LangStr, second: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Pure-formatting template joining two labels with a wide gap;
+                substitution-only.
+
+                English: "{first} {second}"
+            """
+
         #: ::
         #:
         #:     The "Google Play" service name; byte-identical in every language.
@@ -10119,6 +10284,16 @@ if TYPE_CHECKING:
         #:
         #:     English: "Hard"
         hard: LangStr
+
+        def heading_suffix(self, *, main: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Pure-formatting template appending a colon to a heading label;
+                substitution-only.
+
+                English: "{main}:"
+            """
 
         #: ::
         #:
@@ -10202,6 +10377,18 @@ if TYPE_CHECKING:
         #:
         #:     English: "Learn More"
         learn_more: LangStr
+
+        def line_pair(
+            self, *, first: str | LangStr, second: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Pure-formatting template stacking two labels on separate lines;
+                substitution-only.
+
+                English: "{first} {second}"
+            """
 
         #: ::
         #:
@@ -10372,6 +10559,16 @@ if TYPE_CHECKING:
                 English: "{main} ({note})"
             """
 
+        def parenthesized(self, *, note: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Pure-formatting template wrapping a whole value in parentheses;
+                substitution-only.
+
+                English: "({note})"
+            """
+
         #: ::
         #:
         #:     General 'Play' action label; used for the main-menu Play button
@@ -10522,6 +10719,18 @@ if TYPE_CHECKING:
         #:
         #:     English: "Show"
         show: LangStr
+
+        def spaced_pair(
+            self, *, first: str | LangStr, second: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Pure-formatting template joining two labels with a space;
+                substitution-only.
+
+                English: "{first} {second}"
+            """
 
         #: ::
         #:
@@ -11157,8 +11366,8 @@ if TYPE_CHECKING:
     #: ``action_hero_lower_leg``, and 385 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1106 strings (``account``, ``achievements``,
-    #: ``appinvite``, ``characters``, ``chest``, and 1101 more). Full list in
+    #: The ``strings`` group - 1128 strings (``account``, ``achievements``,
+    #: ``appinvite``, ``characters``, ``chest``, and 1123 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -12292,9 +12501,11 @@ _TREE = {
             'friend_promo_award': ('count',),
             'friend_promo_expire': ('expire_hours',),
             'friend_promo_instructions': ('app_name',),
+            'friend_promo_redeem_long': ('count', 'max_uses'),
             'friend_promo_redeem_short': ('count',),
             'requesting_code': (),
             'share_code': (),
+            'where_to_enter': (),
             'you_have_been_sent_promo': ('app_name',),
         },
         'characters': {
@@ -12470,6 +12681,7 @@ _TREE = {
             'score': (),
             'solo_name_filter': ('name',),
             'time_bonus': (),
+            'time_bonus_amount': ('amount',),
             'time_expired': (),
             'tip_title': (),
             'tournament_time_expired': (),
@@ -12479,6 +12691,7 @@ _TREE = {
             'vs': (),
             'waiting_for_host': ('host',),
             'wave': (),
+            'wave_number': ('number',),
         },
         'gamedescriptions': {
             'be_the_chosen_one_for_a': (),
@@ -13099,14 +13312,19 @@ _TREE = {
         'tutorial': {
             'cpu_benchmark': (),
             'phrase01': (),
+            'phrase02': ('app_name',),
             'phrase03': (),
+            'phrase04': ('app_name',),
             'phrase05': (),
             'phrase06': (),
+            'phrase07': ('name',),
             'phrase08': (),
             'phrase09': (),
             'phrase10': (),
             'phrase11': (),
             'phrase12': (),
+            'phrase13': ('name',),
+            'phrase14': ('name',),
             'phrase15': (),
             'phrase16': (),
             'phrase17': (),
@@ -13122,7 +13340,13 @@ _TREE = {
             'phrase27': (),
             'phrase28': (),
             'phrase29': (),
+            'random_name1': (),
+            'random_name2': (),
+            'random_name3': (),
+            'random_name4': (),
+            'random_name5': (),
             'skip_confirm': (),
+            'skip_vote_count': ('count', 'total'),
             'skipping': (),
             'tip': (),
             'to_skip_press_anything': (),
@@ -13151,6 +13375,7 @@ _TREE = {
             'copied_to_clipboard': (),
             'copy': (),
             'customize': (),
+            'dash_wrap': ('main',),
             'decline': (),
             'delete': (),
             'demo': (),
@@ -13163,6 +13388,7 @@ _TREE = {
             'duplicate': (),
             'easy': (),
             'edit': (),
+            'ellipsis_suffix': ('main',),
             'enabled': (),
             'enter': (),
             'epic_mode': (),
@@ -13173,8 +13399,10 @@ _TREE = {
             'final_score': (),
             'free': (),
             'game_center': (),
+            'gapped_pair': ('first', 'second'),
             'google_play': (),
             'hard': (),
+            'heading_suffix': ('main',),
             'high': (),
             'higher': (),
             'icon_label': ('icon', 'label'),
@@ -13186,6 +13414,7 @@ _TREE = {
             'kick': (),
             'leaderboards': (),
             'learn_more': (),
+            'line_pair': ('first', 'second'),
             'loading': (),
             'low': (),
             'map': (),
@@ -13208,6 +13437,7 @@ _TREE = {
             'other': (),
             'page_refreshing_try_again': (),
             'paren_suffix': ('main', 'note'),
+            'parenthesized': ('note',),
             'play': (),
             'playlist': (),
             'please_wait': (),
@@ -13229,6 +13459,7 @@ _TREE = {
             'share': (),
             'sharing': (),
             'show': (),
+            'spaced_pair': ('first', 'second'),
             'stats': (),
             'storage_permission_needed': (),
             'submit': (),

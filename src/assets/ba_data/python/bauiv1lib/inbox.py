@@ -247,32 +247,24 @@ class _ExpireTimeSection(_Section):
 
         now = bui.utc_now_cloud()
 
-        val: bui.Lstr
+        val: bui.LangStr
         if now < self.time:
             color = (1.0, 1.0, 1.0, 0.3)
-            val = bui.Lstr(
-                resource='expiresInText',
-                subs=[
-                    (
-                        '${T}',
-                        bui.timestring(
-                            (self.time - now).total_seconds(), centi=False
-                        ),
-                    ),
-                ],
+            val = classicassets.strings.inbox.expires_in(
+                t=bui.timestring(
+                    (self.time - now).total_seconds(),
+                    centi=False,
+                    langstr=True,
+                )
             )
         else:
             color = (1.0, 0.3, 0.3, 0.5)
-            val = bui.Lstr(
-                resource='expiredAgoText',
-                subs=[
-                    (
-                        '${T}',
-                        bui.timestring(
-                            (now - self.time).total_seconds(), centi=False
-                        ),
-                    ),
-                ],
+            val = classicassets.strings.inbox.expired_ago(
+                t=bui.timestring(
+                    (now - self.time).total_seconds(),
+                    centi=False,
+                    langstr=True,
+                )
             )
         bui.textwidget(edit=self._widget, text=val, color=color)
 
@@ -857,23 +849,15 @@ class InboxWindow(bui.MainWindow):
                         assert bui.app.classic is not None
                         campaign = bui.app.classic.getcampaign(campaignname)
 
-                        tourney_name = bui.Lstr(
-                            value='${A} ${B}',
-                            subs=[
-                                (
-                                    '${A}',
-                                    campaign.getlevel(levelname).displayname,
-                                ),
-                                (
-                                    '${B}',
-                                    bui.Lstr(
-                                        resource='playerCountAbbreviatedText',
-                                        subs=[
-                                            ('${COUNT}', str(component.players))
-                                        ],
-                                    ),
-                                ),
-                            ],
+                        tourney_name = classicassets.strings.ui.spaced_pair(
+                            first=campaign.getlevel(
+                                levelname
+                            ).displayname_langstr,
+                            second=(
+                                classicassets.strings.coop
+                            ).player_count_abbreviated(
+                                count=str(component.players)
+                            ),
                         )
 
                         if component.trophy is not None:
@@ -1000,9 +984,7 @@ class InboxWindow(bui.MainWindow):
 
                 section = _TextSection(
                     sub_width=sub_width,
-                    text=bui.Lstr(
-                        value='You must update the app to view this.'
-                    ),
+                    text=classicassets.strings.inbox.must_update,
                 )
                 total_height += section.get_height()
                 sections.append(section)

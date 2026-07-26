@@ -43,20 +43,11 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
         super().on_begin()
         session = self.session
         if self._show_up_next and isinstance(session, bs.MultiTeamSession):
-            txt = bs.Lstr(
-                value='${A}   ${B}',
-                subs=[
-                    (
-                        '${A}',
-                        bs.Lstr(
-                            resource='upNextText',
-                            subs=[
-                                ('${COUNT}', str(session.get_game_number() + 1))
-                            ],
-                        ),
-                    ),
-                    ('${B}', session.get_next_game_description()),
-                ],
+            txt = classicassets.strings.ui.gapped_pair(
+                first=classicassets.strings.multiteam.up_next(
+                    count=str(session.get_game_number() + 1)
+                ),
+                second=session.get_next_game_description(langstr=True),
             )
             Text(
                 txt,
@@ -99,11 +90,15 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
                 return val
             return p_rec.accumscore
 
-        def _get_prec_score_str(p_rec: bs.PlayerRecord) -> str | bs.Lstr:
+        def _get_prec_score_str(
+            p_rec: bs.PlayerRecord,
+        ) -> str | bs.LangStr:
             if is_free_for_all and results is not None:
                 assert isinstance(results, bs.GameResults)
                 assert p_rec.team.activityteam is not None
-                val = results.get_sessionteam_score_str(p_rec.team)
+                val = results.get_sessionteam_score_str(
+                    p_rec.team, langstr=True
+                )
                 assert val is not None
                 return val
             return str(p_rec.accumscore)
@@ -208,7 +203,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
             topkilledcount = min(topkilledcount, prec.accum_killed_count)
 
         def _scoretxt(
-            text: str | bs.Lstr,
+            text: str | bs.Lstr | bs.LangStr,
             x_offs: float,
             highlight: bool,
             delay2: float,

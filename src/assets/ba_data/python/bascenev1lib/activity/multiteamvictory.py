@@ -103,22 +103,10 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         session = self.session
         if self._is_ffa:
             assert isinstance(session, bs.FreeForAllSession)
-            txt = bs.Lstr(
-                value='${A}:',
-                subs=[
-                    (
-                        '${A}',
-                        bs.Lstr(
-                            resource='firstToFinalText',
-                            subs=[
-                                (
-                                    '${COUNT}',
-                                    str(session.get_ffa_series_length()),
-                                )
-                            ],
-                        ),
-                    )
-                ],
+            txt = classicassets.strings.ui.heading_suffix(
+                main=classicassets.strings.multiteam.first_to_final(
+                    count=str(session.get_ffa_series_length())
+                )
             )
         else:
             assert isinstance(session, bs.MultiTeamSession)
@@ -129,42 +117,16 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             #  they're not using this language. Should try to come up
             #  with a wording that works everywhere.
             if always_use_first_to:
-                txt = bs.Lstr(
-                    value='${A}:',
-                    subs=[
-                        (
-                            '${A}',
-                            bs.Lstr(
-                                resource='firstToFinalText',
-                                subs=[
-                                    (
-                                        '${COUNT}',
-                                        str(
-                                            session.get_series_length() / 2 + 1
-                                        ),
-                                    )
-                                ],
-                            ),
-                        )
-                    ],
+                txt = classicassets.strings.ui.heading_suffix(
+                    main=classicassets.strings.multiteam.first_to_final(
+                        count=str(session.get_series_length() / 2 + 1)
+                    )
                 )
             else:
-                txt = bs.Lstr(
-                    value='${A}:',
-                    subs=[
-                        (
-                            '${A}',
-                            bs.Lstr(
-                                resource='bestOfFinalText',
-                                subs=[
-                                    (
-                                        '${COUNT}',
-                                        str(session.get_series_length()),
-                                    )
-                                ],
-                            ),
-                        )
-                    ],
+                txt = classicassets.strings.ui.heading_suffix(
+                    main=classicassets.strings.multiteam.best_of_final(
+                        count=str(session.get_series_length())
+                    )
                 )
 
         Text(
@@ -270,17 +232,10 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 transition_delay=tval,
             ).autoretain()
             Text(
-                bs.Lstr(
-                    value='(${A})',
-                    subs=[
-                        (
-                            '${A}',
-                            bs.Lstr(
-                                resource='killsTallyText',
-                                subs=[('${COUNT}', str(most_kills))],
-                            ),
-                        )
-                    ],
+                classicassets.strings.ui.parenthesized(
+                    note=classicassets.strings.multiteam.kills_tally(
+                        count=str(most_kills)
+                    )
                 ),
                 position=(260, ts_height / 2 - 150 - 15 + v_extra),
                 color=(0.3, 0.3, 0.3, 1.0),
@@ -331,17 +286,10 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 transition_delay=tval,
             ).autoretain()
             Text(
-                bs.Lstr(
-                    value='(${A})',
-                    subs=[
-                        (
-                            '${A}',
-                            bs.Lstr(
-                                resource='deathsTallyText',
-                                subs=[('${COUNT}', str(most_killed))],
-                            ),
-                        )
-                    ],
+                classicassets.strings.ui.parenthesized(
+                    note=classicassets.strings.multiteam.deaths_tally(
+                        count=str(most_killed)
+                    )
                 ),
                 position=(260, ts_height / 2 - 300 - 15 + v_extra),
                 h_align=Text.HAlign.LEFT,

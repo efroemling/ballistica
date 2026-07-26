@@ -409,12 +409,10 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             )
         )
 
-    def _get_soundtrack_display_name(
-        self, soundtrack: str
-    ) -> bui.Lstr | bui.LangStr:
+    def _get_soundtrack_display_name(self, soundtrack: str) -> bui.LangStr:
         if soundtrack == '__default__':
             return classicassets.strings.soundtrack.default_soundtrack_name
-        return bui.Lstr(value=soundtrack)
+        return bui.LangStr.from_text(soundtrack)
 
     def _refresh(self, select_soundtrack: str | None = None) -> None:
         from efro.util import asserttype

@@ -240,7 +240,7 @@ class ChestWindow(bui.MainWindow):
         now = bui.utc_now_cloud()
         secs_till_open = max(0.0, (unlock_time - now).total_seconds())
         tstr = (
-            bui.timestring(secs_till_open, centi=False)
+            bui.timestring(secs_till_open, centi=False, langstr=True)
             if secs_till_open > 0
             else ''
         )

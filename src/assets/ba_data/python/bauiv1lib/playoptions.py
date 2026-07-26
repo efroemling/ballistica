@@ -214,14 +214,19 @@ class PlayOptionsWindow(PopupWindow):
                         self._have_at_least_one_owned = True
 
                     try:
-                        desc = bui.getclass(
+                        # The settings-display twin and the unlock
+                        # composite below are both still legacy, so keep
+                        # an Lstr-typed local for the composite's sub and
+                        # let `desc` hold either flavor for display.
+                        descbase = bui.getclass(
                             entry['type'], subclassof=bs.GameActivity
                         ).get_settings_display_string(entry)
+                        desc: bui.Lstr | bui.LangStr = descbase
                         if not owned:
                             desc = bui.Lstr(
                                 value='${DESC}\n${UNLOCK}',
                                 subs=[
-                                    ('${DESC}', desc),
+                                    ('${DESC}', descbase),
                                     (
                                         '${UNLOCK}',
                                         bui.Lstr(
@@ -232,7 +237,7 @@ class PlayOptionsWindow(PopupWindow):
                             )
                         desc_color = (0, 1, 0) if owned else (1, 0, 0)
                     except Exception:
-                        desc = bui.Lstr(value='(invalid)')
+                        desc = classicassets.strings.ui.invalid
                         desc_color = (1, 0, 0)
 
                     btn = bui.buttonwidget(

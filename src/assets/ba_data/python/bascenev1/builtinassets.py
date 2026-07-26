@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260726`` (bascenev1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260726a`` (bascenev1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,13 +9,13 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260726
+# ba_meta require asset-package a-0.babuiltinassets.260726a
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260726'
+__asset_package__ = 'a-0.babuiltinassets.260726a'
 
 from typing import TYPE_CHECKING
 
@@ -825,6 +825,43 @@ if TYPE_CHECKING:
         #:     English: "This is currently unavailable; please try again later."
         unavailable_temporarily: LangStr
 
+    class StringsTimeGroup:
+        """
+        ::
+
+            Compact unit suffixes and glue for formatted time values (the
+            hours/minutes/seconds pieces babase.timestring assembles).
+
+            See source for the full asset list.
+        """
+
+        def suffix_hours(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Compact hours suffix used in formatted time values.
+
+                English: "{count}h"
+            """
+
+        def suffix_minutes(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Compact minutes suffix used in formatted time values.
+
+                English: "{count}m"
+            """
+
+        def suffix_seconds(self, *, count: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Compact seconds suffix used in formatted time values.
+
+                English: "{count}s"
+            """
+
     class StringsUiGroup:
         """
         ::
@@ -957,6 +994,18 @@ if TYPE_CHECKING:
         #:     English: "Sign In"
         sign_in: LangStr
 
+        def spaced_pair(
+            self, *, first: str | LangStr, second: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Pure-formatting template joining two labels with a space;
+                substitution-only.
+
+                English: "{first} {second}"
+            """
+
         #: ::
         #:
         #:     Notice that storage access permission is required.
@@ -1039,6 +1088,7 @@ if TYPE_CHECKING:
         scripts: StringsScriptsGroup
         session: StringsSessionGroup
         store: StringsStoreGroup
+        time: StringsTimeGroup
         ui: StringsUiGroup
         workspace: StringsWorkspaceGroup
 
@@ -1144,8 +1194,8 @@ if TYPE_CHECKING:
     #: ``arrow_back``, and 67 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 80 strings (``account``, ``assets``, ``audio``,
-    #: ``input``, ``net``, and 75 more). Full list in source.
+    #: The ``strings`` group - 84 strings (``account``, ``assets``, ``audio``,
+    #: ``input``, ``net``, and 79 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 82 assets (``action_buttons``, ``arrow``,
@@ -1326,6 +1376,11 @@ _TREE = {
             'unavailable': (),
             'unavailable_temporarily': (),
         },
+        'time': {
+            'suffix_hours': ('count',),
+            'suffix_minutes': ('count',),
+            'suffix_seconds': ('count',),
+        },
         'ui': {
             'arrows_to_exit_list': ('left', 'right'),
             'cancel': (),
@@ -1341,6 +1396,7 @@ _TREE = {
             'remote_app_name': (),
             'retry': (),
             'sign_in': (),
+            'spaced_pair': ('first', 'second'),
             'storage_permission_needed': (),
             'success': (),
             'updating': (),

@@ -5,6 +5,7 @@
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -31,9 +32,7 @@ class TipsText(bs.Actor):
                 'v_attach': 'bottom',
             },
         )
-        tval = bs.Lstr(
-            value='${A}:', subs=[('${A}', bs.Lstr(resource='tipText'))]
-        )
+        tval = classicassets.strings.game.tip_title
         self.title_node = bs.newnode(
             'text',
             delegate=self,

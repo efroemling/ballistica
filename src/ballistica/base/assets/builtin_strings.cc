@@ -340,6 +340,24 @@ auto BuiltinStrings::Store::UnavailableTemporarily()
   return MakeResource_("strings/store/unavailable_temporarily");
 }
 
+auto BuiltinStrings::Time::SuffixHours(LangStr::Sub count)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/time/suffix_hours",
+                       {{"count", std::move(count)}});
+}
+
+auto BuiltinStrings::Time::SuffixMinutes(LangStr::Sub count)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/time/suffix_minutes",
+                       {{"count", std::move(count)}});
+}
+
+auto BuiltinStrings::Time::SuffixSeconds(LangStr::Sub count)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/time/suffix_seconds",
+                       {{"count", std::move(count)}});
+}
+
 auto BuiltinStrings::Ui::ArrowsToExitList(LangStr::Sub left, LangStr::Sub right)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_(
@@ -403,6 +421,13 @@ auto BuiltinStrings::Ui::Retry() -> std::shared_ptr<const LangStr> {
 
 auto BuiltinStrings::Ui::SignIn() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/ui/sign_in");
+}
+
+auto BuiltinStrings::Ui::SpacedPair(LangStr::Sub first, LangStr::Sub second)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_(
+      "strings/ui/spaced_pair",
+      {{"first", std::move(first)}, {"second", std::move(second)}});
 }
 
 auto BuiltinStrings::Ui::StoragePermissionNeeded()

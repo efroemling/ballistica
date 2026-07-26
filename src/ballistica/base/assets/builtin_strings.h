@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.260726"
+// Generated from: "a-0.babuiltinassets.260726a"
 
 #include <memory>
 
@@ -470,6 +470,27 @@ class BuiltinStrings {
     static auto UnavailableTemporarily() -> std::shared_ptr<const LangStr>;
   };
 
+  class Time {
+   public:
+    /// Compact hours suffix used in formatted time values.
+    ///
+    /// English: "{count}h"
+    static auto SuffixHours(LangStr::Sub count)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Compact minutes suffix used in formatted time values.
+    ///
+    /// English: "{count}m"
+    static auto SuffixMinutes(LangStr::Sub count)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Compact seconds suffix used in formatted time values.
+    ///
+    /// English: "{count}s"
+    static auto SuffixSeconds(LangStr::Sub count)
+        -> std::shared_ptr<const LangStr>;
+  };
+
   class Ui {
    public:
     /// Lowercase hint shown (with an error sound) when the player hits the edge
@@ -558,6 +579,13 @@ class BuiltinStrings {
     ///
     /// English: "Sign In"
     static auto SignIn() -> std::shared_ptr<const LangStr>;
+
+    /// Pure-formatting template joining two labels with a space; substitution-
+    /// only.
+    ///
+    /// English: "{first} {second}"
+    static auto SpacedPair(LangStr::Sub first, LangStr::Sub second)
+        -> std::shared_ptr<const LangStr>;
 
     /// Notice that storage access permission is required.
     ///

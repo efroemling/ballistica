@@ -29,12 +29,9 @@ class MultiTeamJoinActivity(bs.JoinActivity):
 
         # Show info about the next up game.
         self._next_up_text = Text(
-            bs.Lstr(
-                value='${1} ${2}',
-                subs=[
-                    ('${1}', bs.Lstr(resource='upFirstText')),
-                    ('${2}', session.get_next_game_description()),
-                ],
+            classicassets.strings.ui.spaced_pair(
+                first=classicassets.strings.multiteam.up_first,
+                second=session.get_next_game_description(langstr=True),
             ),
             h_attach=Text.HAttach.CENTER,
             scale=0.7,

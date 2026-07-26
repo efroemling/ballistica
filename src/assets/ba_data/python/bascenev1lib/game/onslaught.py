@@ -1137,12 +1137,9 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
     def _award_time_bonus(self, bonus: int) -> None:
         self._cashregistersound.play()
         PopupText(
-            bs.Lstr(
-                value='+${A} ${B}',
-                subs=[
-                    ('${A}', str(bonus)),
-                    ('${B}', bs.Lstr(resource='timeBonusText')),
-                ],
+            classicassets.strings.game.points_gained_titled(
+                points=str(bonus),
+                title=classicassets.strings.game.time_bonus,
             ),
             color=(1, 1, 0.5, 1),
             scale=1.0,
@@ -1179,6 +1176,10 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         if not any(player.is_alive() for player in self.teams[0].players):
             self._spawn_info_text.node.text = ''
         else:
+            # DEFERRED (LangStr drain): this accumulates one nested
+            # level per dead player, which LangStr has no concatenation
+            # operator for and which would nest arbitrarily deep. Needs
+            # a multi-line list surface rather than a mechanical port.
             text: str | bs.Lstr = ''
             for player in self.players:
                 if not player.is_alive() and (
@@ -1282,13 +1283,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
     def _update_wave_ui_and_bonuses(self) -> None:
         self.show_zoom_message(
-            bs.Lstr(
-                value='${A} ${B}',
-                subs=[
-                    ('${A}', bs.Lstr(resource='waveText')),
-                    ('${B}', str(self._wavenum)),
-                ],
-            ),
+            classicassets.strings.game.wave_number(number=str(self._wavenum)),
             scale=1.0,
             duration=1.0,
             trail=True,
@@ -1296,12 +1291,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
         # Reset our time bonus.
         tbtcolor = (1, 1, 0, 1)
-        tbttxt = bs.Lstr(
-            value='${A}: ${B}',
-            subs=[
-                ('${A}', bs.Lstr(resource='timeBonusText')),
-                ('${B}', str(self._time_bonus)),
-            ],
+        tbttxt = classicassets.strings.game.time_bonus_amount(
+            amount=str(self._time_bonus)
         )
         self._time_bonus_text = bs.NodeActor(
             bs.newnode(
@@ -1323,21 +1314,13 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
         bs.timer(5.0, bs.WeakCallStrict(self._start_time_bonus_timer))
         wtcolor = (1, 1, 1, 1)
-        wttxt = bs.Lstr(
-            value='${A} ${B}',
-            subs=[
-                ('${A}', bs.Lstr(resource='waveText')),
-                (
-                    '${B}',
-                    str(self._wavenum)
-                    + (
-                        ''
-                        if self._preset
-                        in [Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT]
-                        else ('/' + str(len(self._waves)))
-                    ),
-                ),
-            ],
+        wttxt = classicassets.strings.game.wave_number(
+            number=str(self._wavenum)
+            + (
+                ''
+                if self._preset in [Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT]
+                else ('/' + str(len(self._waves)))
+            )
         )
         self._wave_text = bs.NodeActor(
             bs.newnode(
@@ -1501,12 +1484,10 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         self._time_bonus = int(self._time_bonus * 0.93)
         if self._time_bonus > 0 and self._time_bonus_text is not None:
             assert self._time_bonus_text.node
-            self._time_bonus_text.node.text = bs.Lstr(
-                value='${A}: ${B}',
-                subs=[
-                    ('${A}', bs.Lstr(resource='timeBonusText')),
-                    ('${B}', str(self._time_bonus)),
-                ],
+            self._time_bonus_text.node.text = (
+                classicassets.strings.game.time_bonus_amount(
+                    amount=str(self._time_bonus)
+                )
             )
         else:
             self._time_bonus_text = None

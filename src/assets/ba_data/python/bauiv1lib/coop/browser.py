@@ -394,7 +394,9 @@ class CoopBrowserWindow(bui.MainWindow):
                 bui.textwidget(
                     edit=tbtn.time_remaining_value_text,
                     text=(
-                        bui.timestring(tbtn.time_remaining, centi=False)
+                        bui.timestring(
+                            tbtn.time_remaining, centi=False, langstr=True
+                        )
                         if (
                             tbtn.has_time_remaining
                             and self._tourney_data_up_to_date
@@ -767,10 +769,8 @@ class CoopBrowserWindow(bui.MainWindow):
 
         v -= 53
         # FIXME shouldn't use hard-coded strings here.
-        txt = bui.Lstr(
-            resource='tournamentsText', fallback_resource='tournamentText'
-        ).evaluate()
-        t_width = bui.get_string_width(txt, suppress_warning=True)
+        txt = classicassets.strings.coop.tournaments
+        t_width = bui.get_string_width(txt.evaluate(), suppress_warning=True)
         bui.textwidget(
             parent=w_parent,
             position=(h_base + 27, v + 30),

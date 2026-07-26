@@ -617,12 +617,14 @@ class TournamentButton:
         classic.set_tournament_prize_image(entry, 2, self.prize_chest_3_image)
 
         leader_name = '-'
-        leader_score: str | bui.Lstr = '-'
+        leader_score: str | bui.LangStr = '-'
         if entry['scores']:
             score = self.leader = copy.deepcopy(entry['scores'][0])
             leader_name = score[1]
             leader_score = (
-                bui.timestring((score[0] * 10) / 1000.0, centi=True)
+                bui.timestring(
+                    (score[0] * 10) / 1000.0, centi=True, langstr=True
+                )
                 if entry['scoreType'] == 'time'
                 else str(score[0])
             )
@@ -630,24 +632,21 @@ class TournamentButton:
             self.leader = None
 
         bui.textwidget(
-            edit=self.current_leader_name_text, text=bui.Lstr(value=leader_name)
+            edit=self.current_leader_name_text,
+            text=bui.LangStr.from_text(leader_name),
         )
         bui.textwidget(edit=self.current_leader_score_text, text=leader_score)
         bui.buttonwidget(
             edit=self.more_scores_button,
             label=classicassets.strings.ui.more,
         )
-        out_of_time_text: str | bui.Lstr = (
+        out_of_time_text: str | bui.LangStr = (
             '-'
             if 'totalTime' not in entry
-            else bui.Lstr(
-                resource=f'{self._r}.ofTotalTimeText',
-                subs=[
-                    (
-                        '${TOTAL}',
-                        bui.timestring(entry['totalTime'], centi=False),
-                    )
-                ],
+            else classicassets.strings.coop.of_total(
+                total=bui.timestring(
+                    entry['totalTime'], centi=False, langstr=True
+                )
             )
         )
         bui.textwidget(
@@ -666,18 +665,11 @@ class TournamentButton:
             self.tournament_id
         ]['maxPlayers']
 
-        txt = bui.Lstr(
-            value='${A} ${B}',
-            subs=[
-                ('${A}', campaign.getlevel(levelname).displayname),
-                (
-                    '${B}',
-                    bui.Lstr(
-                        resource='playerCountAbbreviatedText',
-                        subs=[('${COUNT}', str(max_players))],
-                    ),
-                ),
-            ],
+        txt = classicassets.strings.ui.spaced_pair(
+            first=campaign.getlevel(levelname).displayname_langstr,
+            second=classicassets.strings.coop.player_count_abbreviated(
+                count=str(max_players)
+            ),
         )
         bui.textwidget(edit=self.button_text, text=txt)
 

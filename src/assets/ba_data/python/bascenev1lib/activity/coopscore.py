@@ -677,6 +677,10 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             and self._is_more_levels
             and not arcade_or_demo
         ):
+            # DEFERRED (LangStr drain): the trailing newline is layout
+            # spacing baked into the string. ui.heading_suffix covers
+            # the colon, but dropping the newline shifts this block
+            # against the level name below it -- needs a visual pass.
             Text(
                 (
                     bs.Lstr(
@@ -700,7 +704,9 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             ).autoretain()
             assert self._next_level_name is not None
             Text(
-                bs.Lstr(translate=('coopLevelNames', self._next_level_name)),
+                self._campaign.getlevel(
+                    self._next_level_name
+                ).displayname_langstr,
                 transition=Text.Transition.IN_RIGHT,
                 transition_delay=5.2,
                 flash=self._newly_complete,
@@ -716,22 +722,14 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
         offs_x = -195
         if len(self._playerinfos) > 1:
-            pstr = bs.Lstr(
-                value='- ${A} -',
-                subs=[
-                    (
-                        '${A}',
-                        bs.Lstr(
-                            resource='multiPlayerCountText',
-                            subs=[('${COUNT}', str(len(self._playerinfos)))],
-                        ),
-                    )
-                ],
+            pstr = classicassets.strings.ui.dash_wrap(
+                main=classicassets.strings.coopscore.multi_player_count(
+                    count=str(len(self._playerinfos))
+                )
             )
         else:
-            pstr = bs.Lstr(
-                value='- ${A} -',
-                subs=[('${A}', bs.Lstr(resource='singlePlayerCountText'))],
+            pstr = classicassets.strings.ui.dash_wrap(
+                main=classicassets.strings.coopscore.single_player_count
             )
         ZoomText(
             self._campaign.getlevel(self._level_name).displayname,
@@ -804,9 +802,8 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         )
 
         self._score_loading_status = Text(
-            bs.Lstr(
-                value='${A}...',
-                subs=[('${A}', bs.Lstr(resource='loadingText'))],
+            classicassets.strings.ui.ellipsis_suffix(
+                main=classicassets.strings.ui.loading
             ),
             position=(280, 150 + 30),
             color=(1, 1, 1, 0.4),
@@ -990,7 +987,9 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 (
                     str(display_scores[i][0])
                     if self._score_type == 'points'
-                    else bs.timestring((display_scores[i][0] * 10) / 1000.0)
+                    else bs.timestring(
+                        (display_scores[i][0] * 10) / 1000.0, langstr=True
+                    )
                 ),
                 position=(
                     ts_h_offs + 20 + h_offs_extra,
@@ -1167,7 +1166,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     (
                         str(score)
                         if self._score_type == 'points'
-                        else bs.timestring((score * 10) / 1000.0)
+                        else bs.timestring((score * 10) / 1000.0, langstr=True)
                     ),
                     position=(
                         ts_h_offs + 20 + h_offs_extra,
@@ -1328,14 +1327,8 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 # list (except for in tournaments).
                 if self.session.tournament_id is None:
                     Text(
-                        bs.Lstr(
-                            resource='lastGamesText',
-                            subs=[
-                                (
-                                    '${COUNT}',
-                                    str(self._show_info['results']['total']),
-                                )
-                            ],
+                        classicassets.strings.coopscore.last_games(
+                            count=str(self._show_info['results']['total'])
                         ),
                         position=(
                             ts_h_offs - 35 + 95,
@@ -1398,7 +1391,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                                     str(score)
                                     if self._score_type == 'points'
                                     else bs.timestring(
-                                        (score * 10) / 1000.0
+                                        (score * 10) / 1000.0, langstr=True
                                     ).evaluate()
                                 ),
                                 suppress_warning=True,
@@ -1429,7 +1422,9 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                         sstr = (
                             str(score)
                             if self._score_type == 'points'
-                            else bs.timestring((score * 10) / 1000.0)
+                            else bs.timestring(
+                                (score * 10) / 1000.0, langstr=True
+                            )
                         )
 
                         # Line number.
@@ -1507,6 +1502,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             val = bs.timestring(
                 self._tournament_time_remaining,
                 centi=False,
+                langstr=True,
             )
             self._tournament_time_remaining_text.node.text = val
 
@@ -1673,9 +1669,8 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 ).autoretain()
 
                 Text(
-                    bs.Lstr(
-                        value='${A}:',
-                        subs=[('${A}', bs.Lstr(resource='rankText'))],
+                    classicassets.strings.ui.heading_suffix(
+                        main=classicassets.strings.ui.rank
                     ),
                     position=(0, 36),
                     maxwidth=300,
@@ -1686,10 +1681,8 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 ).autoretain()
                 if best_player_rank is not None:
                     Text(
-                        bs.Lstr(
-                            resource='currentStandingText',
-                            fallback_resource='bestRankText',
-                            subs=[('${RANK}', str(best_player_rank))],
+                        classicassets.strings.coopscore.current_standing(
+                            rank=str(best_player_rank)
                         ),
                         position=(0, -155),
                         color=(1, 1, 1, 0.7),
@@ -1805,18 +1798,9 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
             if available:
                 Text(
-                    bs.Lstr(
-                        resource='outOfText',
-                        subs=[
-                            (
-                                '${RANK}',
-                                str(int(self._show_info['results']['rank'])),
-                            ),
-                            (
-                                '${ALL}',
-                                str(self._show_info['results']['total']),
-                            ),
-                        ],
+                    classicassets.strings.coopscore.out_of(
+                        rank=str(int(self._show_info['results']['rank'])),
+                        all=str(self._show_info['results']['total']),
                     ),
                     position=(0, -155 if self._newly_complete else -145),
                     color=(1, 1, 1, 0.7),
@@ -1827,30 +1811,21 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 ).autoretain()
 
             new_best = best_rank > self._old_best_rank and best_rank > 0.0
-            was_string = bs.Lstr(
-                value=' ${A}',
-                subs=[
-                    ('${A}', bs.Lstr(resource='scoreWasText')),
-                    ('${COUNT}', str(self._old_best_rank)),
-                ],
+            was_string = classicassets.strings.coopscore.score_was(
+                count=str(self._old_best_rank)
             )
             if not self._newly_complete:
                 Text(
                     (
-                        bs.Lstr(
-                            value='${A}${B}',
-                            subs=[
-                                (
-                                    '${A}',
-                                    bs.Lstr(resource='newPersonalBestText'),
-                                ),
-                                ('${B}', was_string),
-                            ],
+                        classicassets.strings.ui.spaced_pair(
+                            first=(
+                                classicassets.strings.coopscore
+                            ).new_personal_best,
+                            second=was_string,
                         )
                         if new_best
-                        else bs.Lstr(
-                            resource='bestRatingText',
-                            subs=[('${RATING}', str(best_rank))],
+                        else classicassets.strings.coopscore.best_rating(
+                            rating=str(best_rank)
                         )
                     ),
                     position=(0, -165),
@@ -1867,9 +1842,8 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 ).autoretain()
 
             Text(
-                bs.Lstr(
-                    value='${A}:',
-                    subs=[('${A}', bs.Lstr(resource='ratingText'))],
+                classicassets.strings.ui.heading_suffix(
+                    main=classicassets.strings.coopscore.rating
                 ),
                 position=(0, 36),
                 maxwidth=300,
@@ -1914,7 +1888,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             (
                 str(self._score)
                 if self._score_type == 'points'
-                else bs.timestring((self._score * 10) / 1000.0)
+                else bs.timestring((self._score * 10) / 1000.0, langstr=True)
             ),
             maxwidth=300,
             flash=True,
@@ -1927,14 +1901,12 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         ).autoretain()
         Text(
             (
-                bs.Lstr(
-                    value='${A}:',
-                    subs=[('${A}', bs.Lstr(resource='finalScoreText'))],
+                classicassets.strings.ui.heading_suffix(
+                    main=classicassets.strings.ui.final_score
                 )
                 if self._score_type == 'points'
-                else bs.Lstr(
-                    value='${A}:',
-                    subs=[('${A}', bs.Lstr(resource='finalTimeText'))],
+                else classicassets.strings.ui.heading_suffix(
+                    main=classicassets.strings.coopscore.final_time
                 )
             ),
             maxwidth=300,

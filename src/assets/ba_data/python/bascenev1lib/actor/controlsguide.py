@@ -73,8 +73,8 @@ class ControlsGuide(bs.Actor):
                 position[1] + 139.0 * scale,
             )
             clr = (1, 1, 1) if bright else (0.7, 0.7, 0.7)
-            tval = bs.Lstr(
-                value='${A}:', subs=[('${A}', bs.Lstr(resource='controlsText'))]
+            tval = classicassets.strings.ui.heading_suffix(
+                main=classicassets.strings.help.controls
             )
             self._title_text = bs.newnode(
                 'text',
@@ -275,7 +275,9 @@ class ControlsGuide(bs.Actor):
         )
         # -1 means unset; let's show that.
         if button == -1:
-            return bs.Lstr(resource='configGamepadWindow.unsetText').evaluate()
+            return (
+                classicassets.strings.settings.controllers.gamepad.unset
+            ).evaluate()
         return device.get_button_name(button).evaluate()
 
     def _start_updating(self) -> None:

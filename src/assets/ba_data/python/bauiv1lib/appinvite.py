@@ -14,6 +14,20 @@ if TYPE_CHECKING:
     from typing import Any
 
 
+def _lines(*parts: str | bui.LangStr) -> bui.LangStr:
+    """Stack parts on separate lines via the join template.
+
+    LangStr has no concatenation, so this folds the parts through
+    ``ui.line_pair`` right-to-left.
+    """
+    assert parts
+    out: str | bui.LangStr = parts[-1]
+    for part in reversed(parts[:-1]):
+        out = classicassets.strings.ui.line_pair(first=part, second=out)
+    assert isinstance(out, bui.LangStr)
+    return out
+
+
 class ShowFriendCodeWindow(bui.Window):
     """Window showing a code for sharing with friends."""
 
@@ -80,11 +94,10 @@ class ShowFriendCodeWindow(bui.Window):
             maxwidth=self._width * 0.85,
         )
 
-        award_str: str | bui.Lstr | None
+        award_str: str | bui.LangStr
         if self._data['awardTickets'] != 0:
-            award_str = bui.Lstr(
-                resource='gatherWindow.friendPromoCodeAwardText',
-                subs=[('${COUNT}', str(self._data['awardTickets']))],
+            award_str = classicassets.strings.appinvite.friend_promo_award(
+                count=self._data['awardTickets']
             )
         else:
             award_str = ''
@@ -97,46 +110,19 @@ class ShowFriendCodeWindow(bui.Window):
             flatness=1.0,
             h_align='center',
             v_align='center',
-            text=bui.Lstr(
-                value='${A}\n${B}\n${C}\n${D}',
-                subs=[
-                    (
-                        '${A}',
-                        bui.Lstr(
-                            resource=(
-                                'gatherWindow.friendPromoCodeRedeemLongText'
-                            ),
-                            subs=[
-                                ('${COUNT}', str(self._data['tickets'])),
-                                (
-                                    '${MAX_USES}',
-                                    str(self._data['usesRemaining']),
-                                ),
-                            ],
-                        ),
-                    ),
-                    (
-                        '${B}',
-                        bui.Lstr(
-                            resource=(
-                                'gatherWindow.friendPromoCodeWhereToEnterText'
-                            )
-                        ),
-                    ),
-                    ('${C}', award_str),
-                    (
-                        '${D}',
-                        bui.Lstr(
-                            resource='gatherWindow.friendPromoCodeExpireText',
-                            subs=[
-                                (
-                                    '${EXPIRE_HOURS}',
-                                    str(self._data['expireHours']),
-                                )
-                            ],
-                        ),
-                    ),
-                ],
+            # Four independently-varying lines (the award line is
+            # empty when no award applies, matching the legacy blank
+            # line), stacked via the newline join template.
+            text=_lines(
+                (classicassets.strings.appinvite).friend_promo_redeem_long(
+                    count=self._data['tickets'],
+                    max_uses=str(self._data['usesRemaining']),
+                ),
+                classicassets.strings.appinvite.where_to_enter,
+                award_str,
+                (classicassets.strings.appinvite).friend_promo_expire(
+                    expire_hours=self._data['expireHours']
+                ),
             ),
             maxwidth=self._width * 0.9,
             max_height=self._height * 0.35,
@@ -168,41 +154,39 @@ class ShowFriendCodeWindow(bui.Window):
             return
 
         bui.set_analytics_screen('Email Friend Code')
+        appname = classicassets.strings.ui.app_name
         subject = (
-            bui.Lstr(resource='gatherWindow.friendHasSentPromoCodeText')
-            .evaluate()
-            .replace('${NAME}', plus.get_v1_account_name())
-            .replace(
-                '${APP_NAME}', classicassets.strings.ui.app_name.evaluate()
+            (classicassets.strings.appinvite)
+            .friend_has_sent_promo(
+                count=self._data['tickets'],
+                app_name=appname,
+                name=plus.get_v1_account_name(),
             )
-            .replace('${COUNT}', str(self._data['tickets']))
+            .evaluate()
         )
+
+        # A mail body is genuinely a flat string, so evaluating here is
+        # not a retained-surface flatten.
         body = (
-            bui.Lstr(resource='gatherWindow.youHaveBeenSentAPromoCodeText')
+            (classicassets.strings.appinvite)
+            .you_have_been_sent_promo(app_name=appname)
             .evaluate()
-            .replace(
-                '${APP_NAME}', classicassets.strings.ui.app_name.evaluate()
-            )
             + '\n\n'
             + str(self._data['code'])
             + '\n\n'
         )
         body += (
-            (
-                bui.Lstr(resource='gatherWindow.friendPromoCodeRedeemShortText')
-                .evaluate()
-                .replace('${COUNT}', str(self._data['tickets']))
-            )
+            (classicassets.strings.appinvite)
+            .friend_promo_redeem_short(count=self._data['tickets'])
+            .evaluate()
             + '\n\n'
-            + bui.Lstr(resource='gatherWindow.friendPromoCodeInstructionsText')
+            + (classicassets.strings.appinvite)
+            .friend_promo_instructions(app_name=appname)
             .evaluate()
-            .replace(
-                '${APP_NAME}', classicassets.strings.ui.app_name.evaluate()
-            )
             + '\n'
-            + bui.Lstr(resource='gatherWindow.friendPromoCodeExpireText')
+            + (classicassets.strings.appinvite)
+            .friend_promo_expire(expire_hours=self._data['expireHours'])
             .evaluate()
-            .replace('${EXPIRE_HOURS}', str(self._data['expireHours']))
             + '\n'
             + classicassets.strings.appinvite.enjoy.evaluate()
         )

@@ -4,22 +4,81 @@
 
 import time
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 import _babase
 
 if TYPE_CHECKING:
+    from typing import Literal
+
     import babase
+
+
+def _timestring_parts(
+    timeval: float | int, centi: bool
+) -> list[tuple[str, str]]:
+    """Split a time value into (unit, count-text) pieces, largest first.
+
+    Units are ``'h'``/``'m'``/``'s'``. Always returns at least one piece
+    (seconds stand in when everything larger is zero).
+    """
+    # We take float seconds but operate on int milliseconds internally.
+    timeval = int(1000 * timeval)
+    parts: list[tuple[str, str]] = []
+
+    hval = (timeval // 1000) // (60 * 60)
+    if hval != 0:
+        parts.append(('h', str(hval)))
+
+    mval = ((timeval // 1000) // 60) % 60
+    if mval != 0:
+        parts.append(('m', str(mval)))
+
+    # We add seconds if its non-zero *or* we haven't added anything else.
+    if centi:
+        sval = timeval / 1000.0 % 60.0
+        if sval >= 0.005 or not parts:
+            parts.append(('s', f'{sval:.2f}'))
+    else:
+        svalint = timeval // 1000 % 60
+        if svalint != 0 or not parts:
+            parts.append(('s', str(svalint)))
+
+    assert parts
+    return parts
+
+
+@overload
+def timestring(
+    timeval: float | int,
+    centi: bool = True,
+    *,
+    langstr: Literal[False] = False,
+) -> babase.Lstr: ...
+
+
+@overload
+def timestring(
+    timeval: float | int,
+    centi: bool = True,
+    *,
+    langstr: Literal[True],
+) -> babase.LangStr: ...
 
 
 def timestring(
     timeval: float | int,
     centi: bool = True,
-) -> babase.Lstr:
+    *,
+    langstr: bool = False,
+) -> babase.Lstr | babase.LangStr:
     """Generate a localized string for displaying a time value.
 
     Given a time value, returns a localized string with:
     (hours if > 0 ) : minutes : seconds : (centiseconds if centi=True).
+
+    Pass ``langstr=True`` to receive a :class:`~babase.LangStr`. The
+    legacy :class:`~babase.Lstr` form goes away when api 9 support ends.
 
     .. warning::
 
@@ -29,66 +88,47 @@ def timestring(
       you should use things like 'timedisplay' nodes and attribute
       connections.
     """
+    parts = _timestring_parts(timeval, centi)
+
+    if langstr:
+        # Safe up-call: babase is fully imported by the time this runs;
+        # the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from babase import builtinassets
+
+        tstrs = builtinassets.strings.time
+        accessors = {
+            'h': tstrs.suffix_hours,
+            'm': tstrs.suffix_minutes,
+            's': tstrs.suffix_seconds,
+        }
+        vals = [accessors[unit](count=count) for unit, count in parts]
+
+        # LangStr has no concatenation, so fold the pieces through the
+        # join template (at most three deep for h/m/s).
+        out = vals[0]
+        for val in vals[1:]:
+            out = builtinassets.strings.ui.spaced_pair(first=out, second=val)
+        return out
+
     from babase._language import Lstr
 
-    # We take float seconds but operate on int milliseconds internally.
-    timeval = int(1000 * timeval)
-    bits = []
-    subs = []
-    hval = (timeval // 1000) // (60 * 60)
-    if hval != 0:
-        bits.append('${H}')
-        subs.append(
+    resources = {
+        'h': 'timeSuffixHoursText',
+        'm': 'timeSuffixMinutesText',
+        's': 'timeSuffixSecondsText',
+    }
+    tokens = {'h': '${H}', 'm': '${M}', 's': '${S}'}
+    return Lstr(
+        value=' '.join(tokens[unit] for unit, _count in parts),
+        subs=[
             (
-                '${H}',
-                Lstr(
-                    resource='timeSuffixHoursText',
-                    subs=[('${COUNT}', str(hval))],
-                ),
+                tokens[unit],
+                Lstr(resource=resources[unit], subs=[('${COUNT}', count)]),
             )
-        )
-    mval = ((timeval // 1000) // 60) % 60
-    if mval != 0:
-        bits.append('${M}')
-        subs.append(
-            (
-                '${M}',
-                Lstr(
-                    resource='timeSuffixMinutesText',
-                    subs=[('${COUNT}', str(mval))],
-                ),
-            )
-        )
-
-    # We add seconds if its non-zero *or* we haven't added anything else.
-    if centi:
-        # pylint: disable=consider-using-f-string
-        sval = timeval / 1000.0 % 60.0
-        if sval >= 0.005 or not bits:
-            bits.append('${S}')
-            subs.append(
-                (
-                    '${S}',
-                    Lstr(
-                        resource='timeSuffixSecondsText',
-                        subs=[('${COUNT}', ('%.2f' % sval))],
-                    ),
-                )
-            )
-    else:
-        sval = timeval // 1000 % 60
-        if sval != 0 or not bits:
-            bits.append('${S}')
-            subs.append(
-                (
-                    '${S}',
-                    Lstr(
-                        resource='timeSuffixSecondsText',
-                        subs=[('${COUNT}', str(sval))],
-                    ),
-                )
-            )
-    return Lstr(value=' '.join(bits), subs=subs)
+            for unit, count in parts
+        ],
+    )
 
 
 def run_line_break_selftest(iterations: int = 500) -> None:
