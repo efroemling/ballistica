@@ -1752,9 +1752,16 @@ void SpazNode::HandleMessage(const char* data_in) {
 
       // Update knockout if we're applying this.
       if (!calc_force_only) {
-        knockout_ = static_cast_check_fit<uint8_t>(
-            std::min(40, std::max(static_cast<int>(knockout_),
-                                  static_cast<int>(dmg * 0.02f) - 20)));
+        // Newer behavior - versions have less punishing stun
+        if (behavior_version_ >= 2) {
+          knockout_ = static_cast_check_fit<uint8_t>(
+              std::min(26, std::max(static_cast<int>(knockout_),
+                                    static_cast<int>(dmg * 0.02f) - 24)));
+        } else {
+          knockout_ = static_cast_check_fit<uint8_t>(
+              std::min(40, std::max(static_cast<int>(knockout_),
+                                    static_cast<int>(dmg * 0.02f) - 20)));
+        }
         trying_to_fly_ = false;
       }
       break;
