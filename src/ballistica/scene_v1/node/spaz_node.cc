@@ -1026,11 +1026,6 @@ void SpazNode::SetPunchPressed(bool val) {
     if (holding_something_) {
       Throw(false);
     } else {
-      // Do not punch before grab hitbox comes out, if it's coming
-      if (behavior_version_ >= 2
-          && (pickup_ >= kPickupCooldown - kPickupHitboxDelay)) {
-        return;
-      }
 
       if (!holding_something_ && (!knockout_) && (!frozen_)) {
         punch_ = kPunchDuration;
