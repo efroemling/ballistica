@@ -53,6 +53,11 @@ auto BuiltinStrings::Assets::AccessDeniedGuidance(LangStr::Sub detail)
                        {{"detail", std::move(detail)}});
 }
 
+auto BuiltinStrings::Assets::AllAssetsRequestedQuality()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/all_assets_requested_quality");
+}
+
 auto BuiltinStrings::Assets::Authenticating()
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/assets/authenticating");
@@ -90,6 +95,11 @@ auto BuiltinStrings::Assets::LoadError() -> std::shared_ptr<const LangStr> {
 auto BuiltinStrings::Assets::PreparingBuild()
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/assets/preparing_build");
+}
+
+auto BuiltinStrings::Assets::RequestedQualityAssetsBuilding()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/requested_quality_assets_building");
 }
 
 auto BuiltinStrings::Assets::SignInFailed() -> std::shared_ptr<const LangStr> {

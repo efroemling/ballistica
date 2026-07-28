@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260728`` (babase).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260728b`` (babase).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,13 +9,13 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260728
+# ba_meta require asset-package a-0.babuiltinassets.260728b
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260728'
+__asset_package__ = 'a-0.babuiltinassets.260728b'
 
 from typing import TYPE_CHECKING
 
@@ -87,6 +87,15 @@ if TYPE_CHECKING:
 
                 English: "{detail} Remove these mods/changes and try again."
             """
+
+        #: ::
+        #:
+        #:     Screen message shown when a resolve finally lands the requested
+        #:     asset quality after previously showing lower-quality fallbacks.
+        #:     Paired with requested_quality_assets_building.
+        #:
+        #:     English: "All assets are now requested quality."
+        all_assets_requested_quality: LangStr
 
         #: ::
         #:
@@ -166,6 +175,17 @@ if TYPE_CHECKING:
         #:
         #:     English: "Preparing to build assets…"
         preparing_build: LangStr
+
+        #: ::
+        #:
+        #:     Screen message shown after a resolve that had to serve
+        #:     lower-quality textures because the requested quality was still
+        #:     being built. Paired with all_assets_requested_quality, which
+        #:     announces the recovery.
+        #:
+        #:     English: "Requested quality assets are still building; showing
+        #:     lower quality fallbacks."
+        requested_quality_assets_building: LangStr
 
         #: ::
         #:
@@ -978,8 +998,8 @@ if TYPE_CHECKING:
         ui: StringsUiGroup
         workspace: StringsWorkspaceGroup
 
-    #: The ``strings`` group - 85 strings (``account``, ``assets``, ``audio``,
-    #: ``input``, ``net``, and 80 more). Full list in source.
+    #: The ``strings`` group - 87 strings (``account``, ``assets``, ``audio``,
+    #: ``input``, ``net``, and 82 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
@@ -992,6 +1012,7 @@ _TREE = {
         },
         'assets': {
             'access_denied_guidance': ('detail',),
+            'all_assets_requested_quality': (),
             'authenticating': (),
             'building_assets': ('count',),
             'building_assets_no_count': (),
@@ -1000,6 +1021,7 @@ _TREE = {
             'downloading_assets': ('count',),
             'load_error': (),
             'preparing_build': (),
+            'requested_quality_assets_building': (),
             'sign_in_failed': (),
             'sign_in_needed_browser': ('address',),
             'sign_in_needed_other_device': ('address',),

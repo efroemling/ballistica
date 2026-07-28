@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.260728"
+// Generated from: "a-0.babuiltinassets.260728b"
 
 #include <memory>
 
@@ -71,6 +71,13 @@ class BuiltinStrings {
     static auto AccessDeniedGuidance(LangStr::Sub detail)
         -> std::shared_ptr<const LangStr>;
 
+    /// Screen message shown when a resolve finally lands the requested asset
+    /// quality after previously showing lower-quality fallbacks. Paired with
+    /// requested_quality_assets_building.
+    ///
+    /// English: "All assets are now requested quality."
+    static auto AllAssetsRequestedQuality() -> std::shared_ptr<const LangStr>;
+
     /// Status line in the boot-time asset dialog while waiting for account
     /// sign-in so restricted assets can load.
     ///
@@ -128,6 +135,15 @@ class BuiltinStrings {
     ///
     /// English: "Preparing to build assets…"
     static auto PreparingBuild() -> std::shared_ptr<const LangStr>;
+
+    /// Screen message shown after a resolve that had to serve lower-quality
+    /// textures because the requested quality was still being built. Paired
+    /// with all_assets_requested_quality, which announces the recovery.
+    ///
+    /// English: "Requested quality assets are still building; showing lower
+    /// quality fallbacks."
+    static auto RequestedQualityAssetsBuilding()
+        -> std::shared_ptr<const LangStr>;
 
     /// Error on the boot-time asset dialog when a required sign-in was not
     /// completed (attempted and failed, or timed out); a Retry button sits

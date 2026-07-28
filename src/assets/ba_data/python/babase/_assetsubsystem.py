@@ -53,7 +53,7 @@ from bacommon.cloud import (
 from bacommon import assetcas
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
 
     from bacommon import securedata
     from bacommon.cloud import AssetPackageBuildProgress
@@ -146,6 +146,20 @@ _BUCKETS = (
 #: guaranteed bundled. Every other package is exact-or-fail. Single
 #: fallback per bucket for now; :meth:`AssetSubsystem._fallback_coord`
 #: wraps this so a fallback *chain* is a non-breaking later change.
+#: Texture tiers cheapest-first. The server may hand back a *lower* tier
+#: than we asked for when the requested one isn't built yet, so we can
+#: play now and pick up full quality on a later resolve. Only tier may
+#: ever be substituted -- profile and render_space are capability axes
+#: (what this device can actually decode), so a mismatch there is an
+#: error, not a downgrade.
+_TEXTURE_TIER_ORDER = ('preview', 'regular', 'ultra')
+
+#: App-config key recording that the player is on reduced-quality assets.
+#: Persisted (rather than kept in memory) so the all-clear can be shown on
+#: a later run — the upgrade usually lands between sessions, since nothing
+#: re-resolves mid-session today.
+_FALLBACK_ASSETS_CONFIG_KEY = 'ShowingFallbackAssets'
+
 _BUCKET_FALLBACKS: dict[str, str | None] = {
     'constant': None,  # No flavor dimension; 'constant' is always present.
     'language': 'language/eng',
@@ -912,6 +926,75 @@ class AssetSubsystem(AppSubsystem):
             'meshes': f'meshes/{self._mesh_profile}.{self._mesh_tier}',
         }
 
+    def _flavor_candidates(self, bucket: str, desired_coord: str) -> list[str]:
+        """Coords acceptable for ``bucket`` this run, best first.
+
+        Just the desired coord for everything except textures, which may
+        also be satisfied by a *cheaper tier* of the same profile and
+        render_space — the server serves one when the requested tier is
+        still building. Only tiers at or below the request are offered:
+        a client asking for `preview` (the dev fast-iteration flavor)
+        must not silently get something more expensive.
+
+        Candidates are *constructed*, never parsed out of what came back
+        — coords are strictly one-way (see :meth:`_desired_coords`) — so
+        anything the server returns that we did not ask for simply is
+        not among these and cannot be used.
+        """
+        if bucket != 'textures':
+            return [desired_coord]
+        try:
+            idx = _TEXTURE_TIER_ORDER.index(self._texture_tier)
+        except ValueError:
+            return [desired_coord]
+        return [
+            f'textures/{self._texture_profile}.{self._render_space}.{tier}'
+            for tier in reversed(_TEXTURE_TIER_ORDER[: idx + 1])
+        ]
+
+    def _acceptable_coords(self, language: Locale) -> set[str]:
+        """Every coord a resolve is allowed to hand us, for validation.
+
+        A served coord outside this set means the server substituted on a
+        *capability* axis (profile / render_space) or used a coord
+        vocabulary this build doesn't know — a bug, not a degradation,
+        and potentially unrenderable. See :meth:`_validate_served_coords`.
+        """
+        desired = self._desired_coords(language)
+        out: set[str] = set()
+        for bucket, coord in desired.items():
+            out.update(self._flavor_candidates(bucket, coord))
+        return out
+
+    def _validate_served_coords(
+        self, apverid: str, served: Iterable[str], language: Locale
+    ) -> None:
+        """Fail loudly if a resolve served a coord we can't accept.
+
+        Tier substitution is expected and fine. A profile/render_space
+        substitution is not: those encode what the device can decode, so
+        registering one would be wrong rather than merely lower quality.
+        Raising keeps the documented all-or-nothing contract of
+        :class:`AssetResolveError` — nothing is committed — and makes a
+        server-side mistake loud instead of leaving players quietly on
+        the wrong assets with nothing in the logs to explain it.
+        """
+        acceptable = self._acceptable_coords(language)
+        bad = [coord for coord in served if coord not in acceptable]
+        if bad:
+            logger.error(
+                'Resolve for %s served unusable coord(s) %s;'
+                ' acceptable were %s. This is a server-side bug --'
+                ' only texture tier may ever be substituted.',
+                apverid,
+                sorted(bad),
+                sorted(acceptable),
+            )
+            raise AssetResolveError(
+                f'{apverid}: server returned unusable asset flavor(s):'
+                f' {sorted(bad)}.'
+            )
+
     @staticmethod
     def _fallback_coord(bucket: str) -> str | None:
         """The fallback flavor coord for a bucket (builtin package only)."""
@@ -1386,7 +1469,61 @@ class AssetSubsystem(AppSubsystem):
             self._progress.blobs_done,
             self._progress.bytes_done / (1024.0 * 1024.0),
         )
+        self._report_flavor_quality(allow_downloads, fell_back)
         return ResolveResult(apverids=list(apverids), fell_back=fell_back)
+
+    def _report_flavor_quality(
+        self, allow_downloads: bool, fell_back: dict[str, str]
+    ) -> None:
+        """Tell the player when they are (or stop being) on reduced assets.
+
+        Fires only on a *successful, downloads-allowed* resolve. Those two
+        qualifiers are what make this safe to word as "still building":
+
+        - ``allow_downloads`` excludes the pre-network bootstrap resolve,
+          which is exactly where the bundled profile fallback legitimately
+          gets used. A device whose real ideal flavor *is* the bundled
+          fallback has desired == selected, so it never trips this either.
+        - Reaching here at all means the resolve committed, so this can't
+          fire on a half-finished or errored one.
+
+        Evaluating over the whole ``fell_back`` set (rather than per
+        bucket) is what makes the all-clear honest: it clears only when
+        *nothing* is downgraded, not on the first bucket to recover.
+
+        The flag lives in app-config so the all-clear can land on a later
+        run — a player downgraded tonight sees the green message at their
+        next launch, once the tier they asked for has finished building.
+        """
+        if not allow_downloads:
+            return
+
+        # Function-local by convention (modules never import their own
+        # top-level package at module scope).
+        from babase import builtinassets
+
+        cfg = _babase.app.config
+        was_showing = bool(cfg.get(_FALLBACK_ASSETS_CONFIG_KEY, False))
+        now_showing = bool(fell_back)
+        if now_showing == was_showing:
+            # Nothing to say, and nothing to write -- don't churn the
+            # config file on every boot of a steady state.
+            return
+
+        strs = builtinassets.strings.assets
+        if now_showing:
+            cfg[_FALLBACK_ASSETS_CONFIG_KEY] = True
+            _babase.screenmessage(
+                strs.requested_quality_assets_building,
+                color=(1.0, 1.0, 0.0),
+            )
+        else:
+            del cfg[_FALLBACK_ASSETS_CONFIG_KEY]
+            _babase.screenmessage(
+                strs.all_assets_requested_quality,
+                color=(0.0, 1.0, 0.0),
+            )
+        cfg.commit()
 
     def _resolve_offline_sync(
         self, apverids: list[str], language: Locale
@@ -1653,10 +1790,25 @@ class AssetSubsystem(AppSubsystem):
         entries: dict[str, dict[str, dict[str, str]]] = {}
         fell_back: dict[str, str] = {}
         for bucket, desired_coord in desired.items():
-            fm_hash = available.get(desired_coord)
-            if fm_hash is not None and self._coord_complete(fm_hash):
-                coords[desired_coord] = fm_hash
-                entries[desired_coord] = self._read_entries(fm_hash)
+            # Best acceptable flavor we actually have: the desired one,
+            # else a cheaper texture tier (the server serves one while
+            # the requested tier builds; a better one may also just be
+            # sitting in our cache from a previous session). Ranked
+            # best-first, so this picks the same winner regardless of
+            # whether it arrived now or was already local.
+            chosen: str | None = None
+            chosen_hash: str | None = None
+            for cand in self._flavor_candidates(bucket, desired_coord):
+                cand_hash = available.get(cand)
+                if cand_hash is not None and self._coord_complete(cand_hash):
+                    chosen = cand
+                    chosen_hash = cand_hash
+                    break
+            if chosen is not None and chosen_hash is not None:
+                coords[chosen] = chosen_hash
+                entries[chosen] = self._read_entries(chosen_hash)
+                if chosen != desired_coord:
+                    fell_back[desired_coord] = chosen
                 continue
             if is_builtin:
                 fallback = self._fallback_coord(bucket)
@@ -1830,6 +1982,11 @@ class AssetSubsystem(AppSubsystem):
             raise errcls(msg, code, response.error)
         if not response.buckets:
             raise AssetResolveError(f'{apverid}: resolve returned no buckets.')
+
+        # Reject anything substituted on a capability axis before we
+        # commit a byte of it (tier substitution is expected; profile /
+        # render_space substitution is a server bug).
+        self._validate_served_coords(apverid, response.buckets.keys(), language)
 
         coords: dict[str, str] = {}
         fm_writes: dict[str, bytes] = {}
