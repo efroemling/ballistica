@@ -8,6 +8,12 @@ for use in client-side workspace modification tools. There may be
 advanced settings that are not accessible through the UI/etc.
 """
 
+# This is the hand-written schema module for the whole assets-v1
+# workspace format -- one cohesive set of types that callers import
+# together -- so it legitimately runs long. (Not an _implN spill; there
+# is nothing to split out to.)
+# pylint: disable=too-many-lines
+
 import datetime
 from enum import Enum
 from dataclasses import dataclass, field
@@ -54,6 +60,55 @@ class ConventionsMode(Enum):
 
     RELAXED = 'relaxed'
     STRICT = 'strict'
+
+
+class PackageVisibility(Enum):
+    """Who may resolve a package's *prod* versions.
+
+    Orthogonal to the version track: a track says how released a
+    version is, this says who may have it. ``PRIVATE`` applies the same
+    owner-or-dev-team check that dev/test versions always get, so
+    visibility only ever *adds* restriction to prod -- it can never make
+    a dev/test version public.
+
+    ``PUBLIC`` is the default and what every package had before this
+    existed. Exists for server-side packages (content the master
+    evaluates itself and never ships as language-strings), not as a
+    general publishing control.
+    """
+
+    PUBLIC = 'public'
+    PRIVATE = 'private'
+
+
+class PackageSourceSharing(Enum):
+    """Who can start a new workspace from a package's source.
+
+    Governs *source* availability only -- who may copy the exporting
+    workspace's snapshot as the starting point for a workspace of their
+    own. It says nothing about who can *use* the published assets;
+    that's the track plus :class:`PackageVisibility`.
+
+    Package-wide (not per-version): sharing intent belongs to the
+    package, and a per-version value meant every republish silently
+    reset it.
+    """
+
+    PRIVATE = 'private'
+    DEV_TEAM_ONLY = 'devteam'
+    PUBLIC = 'public'
+
+    @property
+    def pretty(self) -> str:
+        """Human-facing display name (use in UIs; not wire values)."""
+        cls = PackageSourceSharing
+        if self is cls.PRIVATE:
+            return 'Private'
+        if self is cls.DEV_TEAM_ONLY:
+            return 'Dev Team Only'
+        if self is cls.PUBLIC:
+            return 'Public'
+        assert_never(self)
 
 
 @ioprepped
@@ -106,6 +161,36 @@ class AssetsV1GlobalVals:
             enum_fallback=ConventionsMode.RELAXED,
         ),
     ] = ConventionsMode.RELAXED
+
+    #: Who may resolve this package's *prod* versions (see
+    #: :class:`PackageVisibility`). Set by hand in ``workspace.json`` --
+    #: deliberately not exposed in the UI, same as ``conventions``,
+    #: since its use is limited to server-side packages. Unknown stored
+    #: values fall back to public: failing closed here would break asset
+    #: resolves for every client, and private packages are private from
+    #: birth and reached by their owner (who short-circuits before this
+    #: is ever consulted).
+    visibility: Annotated[
+        PackageVisibility,
+        IOAttrs(
+            'visibility',
+            store_default=False,
+            enum_fallback=PackageVisibility.PUBLIC,
+        ),
+    ] = PackageVisibility.PUBLIC
+
+    #: Who may start a workspace of their own from this package's source
+    #: (see :class:`PackageSourceSharing`). Package-wide policy, resolved
+    #: live -- it moved here from a per-version field in 2026-07-27,
+    #: which republishing silently reset each time.
+    source_sharing: Annotated[
+        PackageSourceSharing,
+        IOAttrs(
+            'source_sharing',
+            store_default=False,
+            enum_fallback=PackageSourceSharing.PRIVATE,
+        ),
+    ] = PackageSourceSharing.PRIVATE
 
 
 def derive_asset_package_name(workspace_name: str) -> str:
@@ -172,18 +257,27 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
         LOUD = 'loud'
         SOFT = 'soft'
 
-    class FitPreset(Enum):
-        """Preset bounding translated-output size for UI space.
+    class LayoutPreset(Enum):
+        """What kind of slot a string occupies, and how it may size.
 
-        Mirrors ``StylePreset``: a rough size budget passed to
-        the translator (with UI context) so localized output respects
-        the space available. Budgets are display-width in *Latin*
-        characters -- wide-glyph scripts (CJK) target roughly half the
-        character count -- and are aims, not hard caps (soft
-        enforcement with generous slack; see ``char_budget``).
+        (Named ``FitPreset`` until 2026-07-27; the stored key stays
+        ``fit_preset``. Renamed because the values describe the *slot*
+        -- a narrow tab, a standard button, a body paragraph -- and only
+        some of them are a size constraint at all.)
+
+        Mirrors ``StylePreset``: passed to the translator with UI
+        context, so localized output respects both the space available
+        and the register the slot implies. The CHARS_* budgets are
+        display-width in *Latin* characters -- wide-glyph scripts (CJK)
+        target roughly half the character count -- and are aims, not
+        hard caps (soft enforcement with generous slack; see
+        ``char_budget``).
         """
 
-        #: No size constraint (the default).
+        #: Unset -- no slot declared and no size constraint. Note this
+        #: is the *absence* of a choice, which is why the authoring
+        #: check nags on a long English string that is still NONE: use
+        #: PROSE to say "unbounded on purpose".
         NONE = 'none'
 
         #: Aim for ~20 characters - narrow buttons, tabs, column
@@ -197,15 +291,22 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
         #: messages, status lines, and the like.
         CHARS_80 = 'chars_80'
 
+        #: Body prose - paragraphs in a document or web page. No size
+        #: constraint, but unlike NONE that is a deliberate statement,
+        #: and it tells the translator to write flowing multi-sentence
+        #: text rather than terse UI wording.
+        PROSE = 'prose'
+
         @property
         def char_budget(self) -> int | None:
-            """The preset's rough character budget (None for NONE)."""
+            """The preset's rough character budget (None if unbounded)."""
             cls = type(self)
             return {
                 cls.NONE: None,
                 cls.CHARS_20: 20,
                 cls.CHARS_40: 40,
                 cls.CHARS_80: 80,
+                cls.PROSE: None,
             }[self]
 
     @override
@@ -247,12 +348,19 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
     #: UI's mark-translations-clean action.
     docs: Annotated[str, IOAttrs('docs', store_default=False)] = ''
 
-    #: Optional size/fit constraint (see ``FitPreset``). Passed to
+    #: Which kind of slot this string occupies (see
+    #: ``LayoutPreset``). The stored key remains ``fit_preset`` from
+    #: before the rename -- values on disk must not move. Passed to
     #: the translator so localized output respects the UI space
     #: available.
-    fit_preset: Annotated[
-        FitPreset, IOAttrs('fit_preset', store_default=False)
-    ] = FitPreset.NONE
+    layout_preset: Annotated[
+        LayoutPreset,
+        IOAttrs(
+            'fit_preset',
+            store_default=False,
+            enum_fallback=LayoutPreset.NONE,
+        ),
+    ] = LayoutPreset.NONE
 
     outputs: Annotated[dict[Locale, Output], IOAttrs('outputs')] = field(
         default_factory=dict

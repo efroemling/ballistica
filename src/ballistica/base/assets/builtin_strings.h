@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.260726a"
+// Generated from: "a-0.babuiltinassets.260728"
 
 #include <memory>
 
@@ -77,13 +77,20 @@ class BuiltinStrings {
     /// English: "Authenticating…"
     static auto Authenticating() -> std::shared_ptr<const LangStr>;
 
-    /// Progress-dialog line shown while the server builds assets for a package;
-    /// updates live as the remaining count drops.
+    /// Progress-dialog line shown while the server builds assets; updates live
+    /// as the remaining count drops. Spans every package being built, so it
+    /// names no package.
     ///
-    /// English: (one) "Building {package} assets (# step remaining)…" / (other)
-    /// "Building {package} assets (# steps remaining)…"
-    static auto BuildingAssets(int64_t count, LangStr::Sub package)
-        -> std::shared_ptr<const LangStr>;
+    /// English: (one) "Building assets (# remaining)…" / (other) "Building
+    /// assets (# remaining)…"
+    static auto BuildingAssets(int64_t count) -> std::shared_ptr<const LangStr>;
+
+    /// Progress-dialog line shown once asset builds have started but before the
+    /// total step count is known (some packages have not reported yet).
+    /// Replaced by the counted line once it is.
+    ///
+    /// English: "Building assets…"
+    static auto BuildingAssetsNoCount() -> std::shared_ptr<const LangStr>;
 
     /// Error on the boot-time asset dialog when this app build is too old to
     /// load current assets (fallback wording when the server didn't supply its
@@ -116,12 +123,11 @@ class BuiltinStrings {
     /// English: "An error occurred loading assets; see log for details."
     static auto LoadError() -> std::shared_ptr<const LangStr>;
 
-    /// Progress-dialog line shown while a server-side asset build is being
+    /// Progress-dialog line shown while server-side asset builds are being
     /// prepared, before per-step progress is known.
     ///
-    /// English: "Preparing to build {package}…"
-    static auto PreparingBuild(LangStr::Sub package)
-        -> std::shared_ptr<const LangStr>;
+    /// English: "Preparing to build assets…"
+    static auto PreparingBuild() -> std::shared_ptr<const LangStr>;
 
     /// Error on the boot-time asset dialog when a required sign-in was not
     /// completed (attempted and failed, or timed out); a Retry button sits

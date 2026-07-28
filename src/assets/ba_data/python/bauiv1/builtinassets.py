@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260726a`` (bauiv1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260728`` (bauiv1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,13 +9,13 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260726a
+# ba_meta require asset-package a-0.babuiltinassets.260728
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260726a'
+__asset_package__ = 'a-0.babuiltinassets.260728'
 
 from typing import TYPE_CHECKING
 
@@ -216,18 +216,26 @@ if TYPE_CHECKING:
         #:     English: "Authenticating…"
         authenticating: LangStr
 
-        def building_assets(
-            self, *, count: int, package: str | LangStr
-        ) -> LangStr:
+        def building_assets(self, *, count: int) -> LangStr:
             """
             ::
 
-                Progress-dialog line shown while the server builds assets for a
-                package; updates live as the remaining count drops.
+                Progress-dialog line shown while the server builds assets;
+                updates live as the remaining count drops. Spans every package
+                being built, so it names no package.
 
-                English: (one) "Building {package} assets (# step remaining)…" /
-                (other) "Building {package} assets (# steps remaining)…"
+                English: (one) "Building assets (# remaining)…" / (other)
+                "Building assets (# remaining)…"
             """
+
+        #: ::
+        #:
+        #:     Progress-dialog line shown once asset builds have started but
+        #:     before the total step count is known (some packages have not
+        #:     reported yet). Replaced by the counted line once it is.
+        #:
+        #:     English: "Building assets…"
+        building_assets_no_count: LangStr
 
         #: ::
         #:
@@ -271,15 +279,13 @@ if TYPE_CHECKING:
         #:     English: "An error occurred loading assets; see log for details."
         load_error: LangStr
 
-        def preparing_build(self, *, package: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Progress-dialog line shown while a server-side asset build is
-                being prepared, before per-step progress is known.
-
-                English: "Preparing to build {package}…"
-            """
+        #: ::
+        #:
+        #:     Progress-dialog line shown while server-side asset builds are
+        #:     being prepared, before per-step progress is known.
+        #:
+        #:     English: "Preparing to build assets…"
+        preparing_build: LangStr
 
         #: ::
         #:
@@ -1194,8 +1200,8 @@ if TYPE_CHECKING:
     #: ``arrow_back``, and 67 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 84 strings (``account``, ``assets``, ``audio``,
-    #: ``input``, ``net``, and 79 more). Full list in source.
+    #: The ``strings`` group - 85 strings (``account``, ``assets``, ``audio``,
+    #: ``input``, ``net``, and 80 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 82 assets (``action_buttons``, ``arrow``,
@@ -1310,12 +1316,13 @@ _TREE = {
         'assets': {
             'access_denied_guidance': ('detail',),
             'authenticating': (),
-            'building_assets': ('count', 'package'),
+            'building_assets': ('count',),
+            'building_assets_no_count': (),
             'client_too_old': (),
             'content_error_guidance': ('detail',),
             'downloading_assets': ('count',),
             'load_error': (),
-            'preparing_build': ('package',),
+            'preparing_build': (),
             'sign_in_failed': (),
             'sign_in_needed_browser': ('address',),
             'sign_in_needed_other_device': ('address',),

@@ -42,6 +42,7 @@ from typing import TYPE_CHECKING
 from efro.error import CleanError
 
 if TYPE_CHECKING:
+    from typing import NoReturn
     from collections.abc import Iterable
 
 
@@ -178,7 +179,7 @@ def parse_brief(text: str) -> BriefSignature:
                     f' `{{{body}}}`.'
                 )
             if name in seen_names:
-                raise CleanError(f"Duplicate tag name '{name}' in brief.")
+                _raise_duplicate_tag(name)
             seen_names.add(name)
             number_count += 1
             tags.append(BriefTag(BriefTagKind.NUMBER, name, modifier))
@@ -190,7 +191,7 @@ def parse_brief(text: str) -> BriefSignature:
                 ' (lowercase snake_case identifier expected).'
             )
         if body in seen_names:
-            raise CleanError(f"Duplicate tag name '{body}' in brief.")
+            _raise_duplicate_tag(body)
         seen_names.add(body)
         tags.append(BriefTag(BriefTagKind.TEXT, body))
 
@@ -201,6 +202,25 @@ def parse_brief(text: str) -> BriefSignature:
         )
 
     return BriefSignature(tags)
+
+
+def _raise_duplicate_tag(name: str) -> 'NoReturn':
+    """Report a repeated substitution tag, with the usual fix.
+
+    Nearly always this is a tag named in prose guidance *as well as* in
+    the text to be translated -- the parser can't tell those apart, so
+    it reads as two declarations. Failing here is deliberate: deduping
+    silently would leave the token twice in the translation prompt, and
+    a model that then emitted it twice would sail through
+    :func:`validate_round_trip` (which checks that declared tokens are
+    present, not how often) and render the substitution twice.
+    """
+    raise CleanError(
+        f"Duplicate tag name '{name}' in brief. Use each substitution"
+        f' exactly once, in the text to be translated -- put any'
+        f" guidance *about* it in the entry's docs (which also feed the"
+        f' translation prompt).'
+    )
 
 
 def validate_round_trip(

@@ -113,17 +113,21 @@ def _validate_bstr_briefs(ws_dir: str) -> None:
             if isinstance(strfile, AssetsV1StringFileV1):
                 parse_brief(strfile.input)
                 englen = _eng_len(strfile)
+                # NONE means "no slot declared", not "unbounded on
+                # purpose" -- that's PROSE. So a long English string
+                # still sitting at NONE is the case worth asking about.
                 if (
                     englen is not None
                     and englen > 90
-                    and strfile.fit_preset
-                    is AssetsV1StringFileV1.FitPreset.NONE
+                    and strfile.layout_preset
+                    is AssetsV1StringFileV1.LayoutPreset.NONE
                     and str(rel) not in wrapped
                 ):
                     warnings.append(
                         f'  {rel}: long English ({englen} chars) with no'
-                        f' fit preset and no wrap path-val — should this'
-                        f' pin a line count? (D21)'
+                        f' layout preset and no wrap path-val — set'
+                        f' `prose` if it is meant to be unbounded,'
+                        f' or pin a line count. (D21)'
                     )
         except CleanError as exc:
             errors.append(f'  {rel}: {exc}')

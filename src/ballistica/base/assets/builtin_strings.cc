@@ -58,10 +58,14 @@ auto BuiltinStrings::Assets::Authenticating()
   return MakeResource_("strings/assets/authenticating");
 }
 
-auto BuiltinStrings::Assets::BuildingAssets(int64_t count, LangStr::Sub package)
+auto BuiltinStrings::Assets::BuildingAssets(int64_t count)
     -> std::shared_ptr<const LangStr> {
-  return MakeResource_("strings/assets/building_assets",
-                       {{"count", count}, {"package", std::move(package)}});
+  return MakeResource_("strings/assets/building_assets", {{"count", count}});
+}
+
+auto BuiltinStrings::Assets::BuildingAssetsNoCount()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/building_assets_no_count");
 }
 
 auto BuiltinStrings::Assets::ClientTooOld() -> std::shared_ptr<const LangStr> {
@@ -83,10 +87,9 @@ auto BuiltinStrings::Assets::LoadError() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/assets/load_error");
 }
 
-auto BuiltinStrings::Assets::PreparingBuild(LangStr::Sub package)
+auto BuiltinStrings::Assets::PreparingBuild()
     -> std::shared_ptr<const LangStr> {
-  return MakeResource_("strings/assets/preparing_build",
-                       {{"package", std::move(package)}});
+  return MakeResource_("strings/assets/preparing_build");
 }
 
 auto BuiltinStrings::Assets::SignInFailed() -> std::shared_ptr<const LangStr> {

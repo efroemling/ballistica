@@ -681,12 +681,62 @@ class LocaleResolved(Enum):
         return val
 
     @staticmethod
-    @lru_cache(maxsize=128)
     def from_tag(tag: str) -> LocaleResolved:
         """Return a locale for a given string tag.
 
         Tags can be provided in BCP 47 form ('en-US') or POSIX locale
-        string form ('en_US.UTF-8').
+        string form ('en_US.UTF-8'). A tag naming a language we have no
+        locale for falls back to English (with a warning, so we can add
+        it); a malformed tag raises :class:`ValueError`.
+
+        Use :meth:`from_tag_or_none` when a non-match is an ordinary
+        outcome rather than something to complain about -- negotiating a
+        browser's ``Accept-Language`` list, say, where most entries are
+        expected to miss.
+        """
+        out = LocaleResolved._from_tag_impl(tag)
+        if out is None:
+            # Make noise if we come across something unexpected so we
+            # can add it.
+            fallback = LocaleResolved.ENGLISH
+            logging.warning(
+                '%s: Unknown tag "%s"; returning %s.',
+                LocaleResolved.__name__,
+                tag,
+                fallback.name,
+            )
+            return fallback
+        return out
+
+    @staticmethod
+    def from_tag_or_none(tag: str) -> LocaleResolved | None:
+        """Return a locale for a string tag, or None if we have none.
+
+        The quiet counterpart to :meth:`from_tag`: returns ``None``
+        instead of warning and falling back to English, and swallows the
+        malformed-tag :class:`ValueError`. This is what locale
+        negotiation wants -- walking a client's preference list, a miss
+        is the normal case and must be distinguishable from a genuine
+        match on English.
+
+        Note that an unknown *region* within a known language is still a
+        match (``zh-XX`` resolves to simplified Chinese), and still
+        warns -- that one is worth adding.
+        """
+        try:
+            return LocaleResolved._from_tag_impl(tag)
+        except ValueError:
+            return None
+
+    @staticmethod
+    @lru_cache(maxsize=128)
+    def _from_tag_impl(tag: str) -> LocaleResolved | None:
+        """Resolve a tag, or None if its language is unknown to us.
+
+        Raises :class:`ValueError` for a structurally invalid tag. The
+        shared implementation behind :meth:`from_tag` and
+        :meth:`from_tag_or_none`, which differ only in how they report a
+        non-match.
         """
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-return-statements
@@ -854,13 +904,6 @@ class LocaleResolved(Enum):
         if lang == 'ja':
             return cls.JAPANESE
 
-        # Make noise if we come across something unexpected so we can
-        # add it.
-        fallback = cls.ENGLISH
-        logging.warning(
-            '%s: Unknown tag "%s"; returning %s.',
-            cls.__name__,
-            tag,
-            fallback.name,
-        )
-        return fallback
+        # An unknown language. Callers decide whether that's worth
+        # complaining about (see from_tag / from_tag_or_none).
+        return None

@@ -533,6 +533,20 @@ class ResolveAssetPackageMessage(Message):
     #: build 0 -- always below the floor.
     build_number: Annotated[int, IOAttrs('bn', soft_default=0)] = 0
 
+    #: End-to-end asset-pipeline test seed. Normally empty. A non-empty
+    #: value asks the master to rebuild this package's entire build graph
+    #: from scratch (workspace compile, every leaf build, and the resolve
+    #: meta-build) rather than serving any of it from cache, so a client
+    #: launch can be measured against a genuinely cold pipeline. Seeded
+    #: output is byte-identical to unseeded output, so this disturbs no
+    #: live cache entry and costs only compute; the master accordingly
+    #: gates it to a single operator account and refuses it (with
+    #: ``ACCESS_DENIED``) for anyone else rather than quietly ignoring
+    #: it. Set on the client via the ``BA_ASSET_TEST_SEED`` env var.
+    #: ``soft_default`` keeps older clients / basn nodes (which don't
+    #: send it) reading as unseeded.
+    testseed: Annotated[str, IOAttrs('ts', soft_default='')] = ''
+
     @override
     @classmethod
     def get_response_types(cls) -> list[type[Response] | None]:
