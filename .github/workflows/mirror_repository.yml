@@ -1,4 +1,4 @@
-name: Mirror to GitLab
+name: Mirror Repository
 
 on:
   push:
