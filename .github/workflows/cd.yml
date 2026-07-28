@@ -18,7 +18,7 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
         with:
@@ -45,7 +45,7 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
         with:
@@ -64,7 +64,7 @@ jobs:
   # make_mac_x86_64_gui_debug_build:
   #   runs-on: ubuntu-latest
   #   steps:
-  #   - uses: actions/checkout@v6
+  #   - uses: actions/checkout@v7
   #   - name: Set up Python
   #     uses: actions/setup-python@v5
   #     with:
@@ -82,7 +82,7 @@ jobs:
   # make_mac_x86_64_server_debug_build:
   #   runs-on: ubuntu-latest
   #   steps:
-  #   - uses: actions/checkout@v6
+  #   - uses: actions/checkout@v7
   #   - name: Set up Python
   #     uses: actions/setup-python@v5
   #     with:
@@ -100,7 +100,7 @@ jobs:
   make_mac_arm64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
@@ -114,7 +114,7 @@ jobs:
   make_mac_arm64_server_debug_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
@@ -128,7 +128,7 @@ jobs:
   make_windows_x86_64_gui_debug_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
@@ -142,7 +142,7 @@ jobs:
   make_windows_x86_64_server_debug_build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
       - name: Make the build
