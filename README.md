@@ -104,6 +104,6 @@ This repository can be cloned from the following sources:
   `git clone https://gitlab.com/efroemling/ballistica.git`
 
 * **Codeberg**:
-  * Link: https://codeberg.org/3ra/ballistica
+  * Link: https://codeberg.org/efroemling/ballistica
   * Cloning via [git](https://git-scm.com):
-  `git clone https://codeberg.org/3ra/ballistica.git`
+  `git clone https://codeberg.org/efroemling/ballistica.git`

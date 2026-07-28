@@ -196,7 +196,7 @@ ctx.filter_file_names = {
     'ci.yml',
     'cd.yml',
     'deploy_docs.yml',
-    'mirror_to_gitlab.yml',
+    'mirror_repository.yml',
     'nightly.yml',
     'release.yml',
     'ballistica_dev_dockerfile',

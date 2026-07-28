@@ -17,5 +17,15 @@ jobs:
       - name: Push to GitLab
         run: |
           git remote add gitlab https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/efroemling/ballistica.git
-          git push gitlab main --force
+          if [ "${{ github.ref_type }}" = "branch" ]; then
+            git push gitlab HEAD:main --force
+          fi
           git push gitlab --tags --force
+
+      - name: Push to Codeberg
+        run: |
+          git remote add codeberg https://${{ secrets.CODEBERG_TOKEN }}@codeberg.org/efroemling/ballistica.git
+          if [ "${{ github.ref_type }}" = "branch" ]; then
+            git push codeberg HEAD:main --force
+          fi
+          git push codeberg --tags --force
