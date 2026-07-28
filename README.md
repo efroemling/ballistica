@@ -89,8 +89,9 @@ PlayStation / My toaster??**
 
 ### Cloning And Contributing
 
-This repository can be cloned and accepts issues and pull requests from the
-following sources
+You can contribute to this repository by reporting issues or creating pull
+requests in GitHub.
+This repository can be cloned from the following sources:
 
 * **GitHub**
   * Link: https://github.com/efroemling/ballistica
