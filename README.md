@@ -97,6 +97,11 @@ following sources
   * Cloning via [git](https://git-scm.com):
   `git clone https://github.com/efroemling/ballistica.git`
 
+* **GitLab**:
+  * Link: https://gitlab.com/efroemling/ballistica
+  * Cloning via [git](https://git-scm.com):
+  `git clone https://gitlab.com/efroemling/ballistica.git`
+
 * **Codeberg**:
   * Link: https://codeberg.org/3ra/ballistica
   * Cloning via [git](https://git-scm.com):
