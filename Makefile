@@ -286,9 +286,39 @@ venv: .venv/.efro_venv_complete
 # (further down) handles the actual regeneration based on
 # requirements.txt's mtime — calling ``make`` again here pulls
 # that rule in once requirements_upgrade has finished writing.
+# Two distinct ways the lockfile moves, and they mean different things:
+#
+# - Editing pconfig/requirements.txt (adding or bumping a direct dep)
+#   makes the requirements_lock.txt rule fire on the next make of
+#   anything -- it is a file target, reached via
+#   env -> tools/pcommand -> .venv/.efro_venv_complete. That re-resolve
+#   is *minimal*: the edit is honored in full, along with whatever it
+#   transitively requires, and every other pin stays put. So adding one
+#   package can't quietly reformat the repo by dragging a new black in
+#   with it.
+#
+# - `make upgrade` (via this target) passes --upgrade, which discards
+#   existing pins and re-resolves the whole graph to the newest versions
+#   the constraints permit -- transitive deps included. Direct deps are
+#   exact-pinned in requirements.txt so they move only via
+#   requirements_upgrade below; --upgrade is the only thing that keeps
+#   *transitives* from rotting. They rot invisibly: they have no entry
+#   in requirements.txt, and only one of our repos has Dependabot
+#   watching (which is how four CVEs sat frozen until 2026-07-29).
+#
+# Same split as bundle install/update, cargo build/update, and
+# pip-compile with and without --upgrade. Keep them distinct: collapsing
+# them means either transitives freeze forever, or every trivial
+# requirements.txt edit becomes an unplanned full upgrade.
 venv-upgrade: env
 	$(PCOMMAND) requirements_upgrade pconfig/requirements.txt
-	@$(MAKE) pconfig/requirements_lock.txt
+# --always-make because the lock rule is a *file* target: when
+# requirements_upgrade finds no direct dep to bump (the common case)
+# requirements.txt is untouched, make would call the lock up to date,
+# and the sweep would silently do nothing -- which is the exact
+# failure this target exists to prevent.
+	@$(MAKE) --always-make pconfig/requirements_lock.txt \
+      UV_COMPILE_UPGRADE=--upgrade
 
 venv-clean:
 	rm -rf .venv
@@ -1652,7 +1682,11 @@ pconfig/requirements_lock.txt: pconfig/requirements.txt
 # .venv exists at compile time (libcst, e.g., declares
 # environment-marker-conditional deps that change with the
 # resolver's view of the target Python).
+# ``UV_COMPILE_UPGRADE`` is empty for a normal (minimal) re-resolve and
+# ``--upgrade`` when invoked from venv-upgrade; see the comment on that
+# target for why the two cases are kept apart.
 	@uv pip compile --universal --generate-hashes --quiet \
+ $(UV_COMPILE_UPGRADE) \
  --python $(VENV_PYTHON) \
  pconfig/requirements.txt -o pconfig/requirements_lock.txt
 
