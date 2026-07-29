@@ -475,6 +475,7 @@ class AssetsV1PathValsTypeID(Enum):
     MESH_V1 = 'mesh_v1'
     GROUP_V1 = 'group_v1'
     CUBE_MAP_V1 = 'cube_map_v1'
+    APREF_V1 = 'apref_v1'
 
 
 class AssetsV1PathVals(IOMultiType[AssetsV1PathValsTypeID]):
@@ -498,7 +499,7 @@ class AssetsV1PathVals(IOMultiType[AssetsV1PathValsTypeID]):
     def get_type(
         cls, type_id: AssetsV1PathValsTypeID
     ) -> type[AssetsV1PathVals]:
-        # pylint: disable=cyclic-import
+        # pylint: disable=cyclic-import,too-many-return-statements
         t = AssetsV1PathValsTypeID
 
         if type_id is t.TEX_V1:
@@ -518,6 +519,9 @@ class AssetsV1PathVals(IOMultiType[AssetsV1PathValsTypeID]):
 
         if type_id is t.CUBE_MAP_V1:
             return AssetsV1PathValsCubeMapV1
+
+        if type_id is t.APREF_V1:
+            return AssetsV1PathValsAprefV1
 
         # Important to make sure we provide all types.
         assert_never(type_id)
@@ -775,15 +779,75 @@ class AssetsV1StrTermDeps:
     #: Content-id of the ``.bstr`` file these refs were extracted from.
     file_id: Annotated[str, IOAttrs('file_id')]
 
-    #: Local term-ref targets (logical ``.bstr`` paths, no extension).
+    #: Digest of the entry's *translation inputs* (brief, docs, style
+    #: and layout presets) -- everything that shapes what the model
+    #: produces, and nothing else. Notably NOT the entry's own outputs
+    #: or modtimes: staleness folds this in per locale, so including
+    #: outputs would mean writing one locale's translation restaled
+    #: every other locale. Empty on records predating the field, which
+    #: consumers treat as a cache miss.
+    inputs_digest: Annotated[str, IOAttrs('idig', store_default=False)] = ''
+
+    #: Retired -- same-package term refs, which no longer exist. Kept
+    #: only so stored records carrying it still parse; a non-empty
+    #: value means the record predates the removal, and consumers
+    #: treat that as a cache miss and re-extract. Never populate it.
     local: Annotated[list[str], IOAttrs('local', store_default=False)] = field(
         default_factory=list
     )
 
-    #: Cross-package ref targets (``.apref`` paths, no extension).
+    #: Term-ref targets, whole (``<apref-path>:<entry-path>``, no
+    #: extensions) -- consumers key staleness on the individual
+    #: referenced term, not just its package. (Historical note: this
+    #: briefly held bare apref paths; consumers ignore any entry
+    #: lacking the ``:`` half and re-extract from the file.)
     cross: Annotated[list[str], IOAttrs('cross', store_default=False)] = field(
         default_factory=list
     )
+
+
+@ioprepped
+@dataclass
+class AssetsV1StrState:
+    """A ``.bstr``'s up-to-date state, resolved per locale.
+
+    A locale's output is a pure function of the entry's own content
+    plus, for each ``{@…}`` term it references, that term's translated
+    **value for that locale** in the pinned version. So staleness is
+    per-locale: fixing one locale of a shared term must cost its
+    dependents that one locale, not all ~41.
+
+    Two shapes, because per-locale resolution is only ever needed by
+    the minority of entries that reference terms:
+
+    - ``uniform`` -- one state covering every locale. Used when the
+      entry has no term refs, so nothing about its translation inputs
+      varies by locale.
+    - ``per_locale`` -- one state per locale. Used when it does.
+
+    Storing per-locale for everything would be far larger than the
+    rest of ``workspace.json`` combined (BaClassicAssets: 32 of 1128
+    entries carry refs), hence the split. Read through
+    :meth:`for_locale`, which hides it.
+    """
+
+    #: State shared by every locale (entries with no term refs).
+    uniform: Annotated[str | None, IOAttrs('u', store_default=False)] = None
+
+    #: Per-locale states (entries with term refs).
+    per_locale: Annotated[
+        dict[Locale, str], IOAttrs('pl', store_default=False)
+    ] = field(default_factory=dict)
+
+    def for_locale(self, locale: Locale) -> str | None:
+        """This entry's state for one locale, or None if unstamped."""
+        if self.uniform is not None:
+            return self.uniform
+        return self.per_locale.get(locale)
+
+    def locales_stamped(self) -> bool:
+        """Whether anything is stamped at all."""
+        return self.uniform is not None or bool(self.per_locale)
 
 
 @ioprepped
@@ -816,8 +880,10 @@ class AssetsV1StrConvCache:
 class AssetsV1PathValsStrV1(AssetsV1PathVals):
     """Path-specific values for an assets_v1 workspace path."""
 
-    #: Hash generated when all translations for this entry are complete.
-    #: Used as a fast-out for checking whether updates are needed.
+    #: Retired -- the single whole-entry up-to-date state, superseded by
+    #: the per-locale :attr:`state` below. Kept only so stored records
+    #: carrying it still parse; never read, and cleared on the next
+    #: stamp. Never populate it.
     #:
     #: (Historical note: string author docs briefly lived here as a
     #: ``docs`` path-val to avoid restaling translations; they moved
@@ -826,6 +892,14 @@ class AssetsV1PathValsStrV1(AssetsV1PathVals):
     #: no-regeneration-needed escape hatch.)
     up_to_date_state: Annotated[
         str | None, IOAttrs('up_to_date_state', store_default=False)
+    ] = None
+
+    #: Per-locale up-to-date state (see :class:`AssetsV1StrState`).
+    #: Stamped by the translate / mark-clean paths for exactly the
+    #: locales they brought current; a locale absent here (or whose
+    #: stamp no longer matches a fresh calc) needs regenerating.
+    state: Annotated[
+        AssetsV1StrState | None, IOAttrs('st', store_default=False)
     ] = None
 
     #: Optional definition-time line-wrapping hints (decision D-t in
@@ -841,20 +915,22 @@ class AssetsV1PathValsStrV1(AssetsV1PathVals):
         None
     )
 
-    #: Cached term-ref info (see :class:`AssetsV1StrTermDeps`). Absent
-    #: until first extracted; ignored (and lazily recomputed from the
-    #: file) whenever its ``file_id`` no longer matches the entry's
-    #: current content -- so write paths that don't maintain it merely
-    #: cost a read, never a wrong answer.
+    #: Retired -- cached term-ref info, now held in a content-addressed
+    #: Valkey group instead (``assetsv1str.term_deps_group``). Kept only
+    #: so stored records carrying it still parse; never read or
+    #: written. It moved because a cache keyed by immutable content
+    #: needs no home in the snapshot -- and living here meant only
+    #: write paths could fill it, since a path-vals write mints a
+    #: snapshot and races user saves. It was also ~23% of a large
+    #: workspace's ``workspace.json``.
     deps: Annotated[
         AssetsV1StrTermDeps | None, IOAttrs('deps', store_default=False)
     ] = None
 
-    #: Cached conventions findings (see :class:`AssetsV1StrConvCache`).
-    #: Absent until first computed; ignored (and lazily recomputed from
-    #: the file) whenever its ``state`` no longer matches the entry's
-    #: current inputs -- so write paths that don't maintain it merely
-    #: cost a read, never a wrong answer.
+    #: Retired -- cached conventions findings, now held in a
+    #: content-addressed Valkey group instead
+    #: (``assetsv1conventions.conv_findings_group``). Same reasoning as
+    #: :attr:`deps` above; it was a further ~16%.
     conv: Annotated[
         AssetsV1StrConvCache | None, IOAttrs('conv', store_default=False)
     ] = None
@@ -1019,3 +1095,45 @@ class AssetsV1PathValsCubeMapV1(AssetsV1PathVals):
     @classmethod
     def get_type_id(cls) -> AssetsV1PathValsTypeID:
         return AssetsV1PathValsTypeID.CUBE_MAP_V1
+
+
+@ioprepped
+@dataclass
+class AssetsV1PathValsAprefV1(AssetsV1PathVals):
+    """Path-specific values for an ``.apref`` asset-package ref.
+
+    Keyed in ``workspace.json``\'s ``path`` dict by the ``.apref``
+    file\'s path. Carries per-pin settings that are *not* part of the
+    pin itself -- the pinned apverid lives in the ``.apref`` file, since
+    that is content the workspace owns and syncs.
+
+    NOTE: adding a member to :class:`AssetsV1PathValsTypeID` is a wire
+    change with a cross-repo rollout. Workspace compiles parse this map
+    via ``WorkspaceCompileInput.parse_path_config_data``, which raises
+    ``PermanentBuildError`` on an entry it cannot decode -- and those
+    compiles run on basn nodes carrying their own copy of this file. So
+    a node that predates this type hard-fails any build of a workspace
+    using it. Rolling one out means: define here -> ``make efrosync``
+    -> deploy basn -> bump ``CLOUD_BUILD_MIN_BASN_VERSION`` -> only then
+    let bamaster start writing it.
+    """
+
+    #: Whether pending updates should include bumping this pin to the
+    #: newest version on its own track. See
+    #: ``docs/initiatives/pin_keep_up_to_date.md``.
+    #:
+    #: **On by default**, to encourage modders to keep what they depend
+    #: on current. With ``store_default=False`` that means the absence
+    #: of this field reads as enabled, so every existing workspace
+    #: inherits the behavior with no migration and the common case
+    #: costs no bytes. The trade is that "never set" and "explicitly
+    #: enabled" are indistinguishable -- fine here, but it does mean an
+    #: explicit opt-*out* is the only thing that leaves a trace.
+    keep_up_to_date: Annotated[bool, IOAttrs('kutd', store_default=False)] = (
+        True
+    )
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AssetsV1PathValsTypeID:
+        return AssetsV1PathValsTypeID.APREF_V1
