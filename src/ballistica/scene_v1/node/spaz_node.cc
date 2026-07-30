@@ -507,6 +507,7 @@ class SpazNodeType : public NodeType {
   BA_BOOL_ATTR(demo_mode, demo_mode, set_demo_mode);
   BA_INT_ATTR(behavior_version, behavior_version, set_behavior_version);
   BA_BOOL_ATTR_READONLY(pickup_before_hitbox, get_pickup_before_hitbox);
+  BA_FLOAT_ATTR_READONLY(pickup_release_time_ms, get_pickup_release_time_ms);
 #undef BA_NODE_TYPE_CLASS
 
   SpazNodeType()
@@ -591,7 +592,8 @@ class SpazNodeType : public NodeType {
         move_up_down(this),
         demo_mode(this),
         behavior_version(this),
-        pickup_before_hitbox(this) {}
+        pickup_before_hitbox(this),
+        pickup_release_time_ms(this) {}
 };
 
 static NodeType* node_type{};
@@ -6084,6 +6086,7 @@ void SpazNode::DropHeldObject() {
     }
     assert(!pickup_joint_.IsAlive());
 
+    pickup_release_time_ms_ = scene()->time();
     holding_something_ = false;
     hold_body_ = 0;
 

@@ -503,6 +503,7 @@ def _special_class_cases(classname: str) -> str:
             '    hold_body: int = 0\n'
             '    behavior_version: int = 0\n'
             '    pickup_before_hitbox: bool = False\n'
+            '    pickup_release_time_ms: float = 0\n'
             '    host_only: bool = False\n'
             '    premultiplied: bool = False\n'
             '    source_player: bascenev1.Player | None = None\n'
