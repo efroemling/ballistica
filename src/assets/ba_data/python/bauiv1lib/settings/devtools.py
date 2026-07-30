@@ -11,7 +11,7 @@ from bauiv1 import _commonassets, classicassets
 from bauiv1lib.confirm import ConfirmWindow
 from bauiv1lib.config import ConfigCheckBox
 
-_devstrs = classicassets.strings.settings.devtools
+_devstrs = classicassets.strings.settings.dev_tools
 
 
 class DevToolsWindow(bui.MainWindow):

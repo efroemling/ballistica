@@ -30,7 +30,7 @@ class MultiTeamJoinActivity(bs.JoinActivity):
         # Show info about the next up game.
         self._next_up_text = Text(
             _commonassets.strings.compose.spaced_pair(
-                first=classicassets.strings.multiteam.up_first,
+                first=classicassets.strings.multi_team.up_first,
                 second=session.get_next_game_description(langstr=True),
             ),
             h_attach=Text.HAttach.CENTER,
@@ -66,7 +66,7 @@ class MultiTeamJoinActivity(bs.JoinActivity):
                     ).autoretain()
 
         Text(
-            classicassets.strings.multiteam.must_invite_friends(
+            classicassets.strings.multi_team.must_invite_friends(
                 gather=classicassets.strings.gather.title
             ),
             h_attach=Text.HAttach.CENTER,

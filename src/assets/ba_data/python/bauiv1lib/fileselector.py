@@ -74,13 +74,13 @@ class FileSelectorWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
             text=(
-                classicassets.strings.fileselector.select_folder
+                classicassets.strings.file_selector.select_folder
                 if (allow_folders and not valid_file_extensions)
                 else (
-                    classicassets.strings.fileselector.select_file
+                    classicassets.strings.file_selector.select_file
                     if not allow_folders
                     else (
-                        classicassets.strings.fileselector
+                        classicassets.strings.file_selector
                     ).select_file_or_folder
                 )
             ),
@@ -408,7 +408,7 @@ class FileSelectorWindow(bui.MainWindow):
                         self._height - 67,
                     ),
                     size=(self._button_width, 50),
-                    label=classicassets.strings.fileselector.use_this_folder,
+                    label=classicassets.strings.file_selector.use_this_folder,
                     on_activate_call=self._on_folder_entry_activated,
                 )
                 bui.widget(

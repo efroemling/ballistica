@@ -145,7 +145,7 @@ class TournamentEntryWindow(PopupWindow):
             h_align='center',
             v_align='center',
             scale=0.6,
-            text=classicassets.strings.tournamententry.title,
+            text=classicassets.strings.tournament_entry.title,
             maxwidth=180,
             color=bui.app.ui_v1.title_color,
         )
@@ -234,7 +234,7 @@ class TournamentEntryWindow(PopupWindow):
                 scale=0.6,
                 # Note to self: AdMob requires rewarded ad usage
                 # specifically says 'Ad' in it.
-                text=classicassets.strings.tournamententry.watch_an_ad,
+                text=classicassets.strings.tournament_entry.watch_an_ad,
                 maxwidth=95,
                 color=(0, 1, 0),
             )

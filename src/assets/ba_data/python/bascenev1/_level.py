@@ -33,7 +33,7 @@ def _get_level_display_name(key: str, game: babase.LangStr) -> babase.LangStr:
     if key == '${GAME}':
         return game
 
-    s = classicassets.strings.cooplevels
+    s = classicassets.strings.coop_levels
     if key == 'Pro ${GAME}':
         return s.pro_variant(game=game)
     if key == 'Uber ${GAME}':

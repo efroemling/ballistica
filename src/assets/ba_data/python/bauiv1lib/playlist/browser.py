@@ -235,7 +235,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     .replace(
                         '${GAME}',
                         (
-                            classicassets.strings.gamenames.death_match
+                            classicassets.strings.game_names.death_match
                         ).evaluate(),
                     ),
                     'playlist': [
@@ -273,7 +273,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     .replace(
                         '${GAME}',
                         (
-                            classicassets.strings.gamenames.capture_the_flag
+                            classicassets.strings.game_names.capture_the_flag
                         ).evaluate(),
                     ),
                     'playlist': [

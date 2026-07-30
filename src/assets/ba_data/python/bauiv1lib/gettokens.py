@@ -110,7 +110,7 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        classicassets.strings.gettokens.num_tokens(
+                        classicassets.strings.get_tokens.num_tokens(
                             count=bacommon.classic.TOKENS1_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
@@ -149,7 +149,7 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        classicassets.strings.gettokens.num_tokens(
+                        classicassets.strings.get_tokens.num_tokens(
                             count=bacommon.classic.TOKENS2_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
@@ -188,7 +188,7 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        classicassets.strings.gettokens.num_tokens(
+                        classicassets.strings.get_tokens.num_tokens(
                             count=bacommon.classic.TOKENS3_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
@@ -227,7 +227,7 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        classicassets.strings.gettokens.num_tokens(
+                        classicassets.strings.get_tokens.num_tokens(
                             count=bacommon.classic.TOKENS4_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
@@ -265,28 +265,28 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        classicassets.strings.gettokens.gold_pass,
+                        classicassets.strings.get_tokens.gold_pass,
                         pos=(bwidthwide * 0.5, pos1 + 27),
                         color=(1.1, 1.05, 1.0),
                         scale=titlescale,
                         maxwidth=bwidthwide * 0.8,
                     ),
                     _TxtDef(
-                        classicassets.strings.gettokens.gold_pass_desc1,
+                        classicassets.strings.get_tokens.gold_pass_desc1,
                         pos=(bwidthwide * 0.5, pos1 + 6),
                         color=(1.1, 1.05, 1.0),
                         scale=0.4,
                         maxwidth=bwidthwide * 0.8,
                     ),
                     _TxtDef(
-                        classicassets.strings.gettokens.gold_pass_desc2,
+                        classicassets.strings.get_tokens.gold_pass_desc2,
                         pos=(bwidthwide * 0.5, pos1 + 6 - 13 * 1),
                         color=(1.1, 1.05, 1.0),
                         scale=0.4,
                         maxwidth=bwidthwide * 0.8,
                     ),
                     _TxtDef(
-                        classicassets.strings.gettokens.gold_pass_desc3,
+                        classicassets.strings.get_tokens.gold_pass_desc3,
                         pos=(bwidthwide * 0.5, pos1 + 6 - 13 * 2),
                         color=(1.1, 1.05, 1.0),
                         scale=0.4,
@@ -396,7 +396,7 @@ class GetTokensWindow(bui.MainWindow):
             scale=1.2,
             h_align='center',
             v_align='center',
-            text=classicassets.strings.resourcetypeinfo.get_tokens,
+            text=classicassets.strings.resource_type_info.get_tokens,
             maxwidth=260,
         )
 
@@ -526,7 +526,7 @@ class GetTokensWindow(bui.MainWindow):
             bui.textwidget(
                 edit=self._status_text,
                 color=(0, 1, 0),
-                text=classicassets.strings.gettokens.you_have_gold_pass,
+                text=classicassets.strings.get_tokens.you_have_gold_pass,
             )
         elif state is self.State.SHOWING_STORE:
             assert self._last_query_response is not None
@@ -731,7 +731,7 @@ class GetTokensWindow(bui.MainWindow):
                 size=(0, 0),
                 h_align='center',
                 v_align='center',
-                text=classicassets.strings.gettokens.shiny_new_currency,
+                text=classicassets.strings.get_tokens.shiny_new_currency,
             )
 
         has_removed_ads = classic is not None and (
@@ -757,7 +757,7 @@ class GetTokensWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 maxwidth=self._scroll_width * 0.9,
-                text=classicassets.strings.gettokens.remove_ads_offer,
+                text=classicassets.strings.get_tokens.remove_ads_offer,
             )
 
         # Most of our UI won't exist until this point so we need to
@@ -776,11 +776,11 @@ class GetTokensWindow(bui.MainWindow):
         if price is None:
             if plus is not None and plus.supports_purchases():
                 # Looks like internet is down or something temporary.
-                errmsg = classicassets.strings.gettokens.purchase_not_available
+                errmsg = classicassets.strings.get_tokens.purchase_not_available
             else:
                 # Looks like purchases will never work here.
                 errmsg = (
-                    classicassets.strings.gettokens.purchase_never_available
+                    classicassets.strings.get_tokens.purchase_never_available
                 )
 
             bui.screenmessage(errmsg, color=(1, 0.5, 0))
@@ -813,18 +813,18 @@ def show_get_tokens_prompt(origin_widget: bui.Widget | None = None) -> None:
     # Currently always allowing token purchases.
     if bool(True):
         ConfirmWindow(
-            classicassets.strings.gettokens.not_enough_tokens,
+            classicassets.strings.get_tokens.not_enough_tokens,
             bui.CallStrict(
                 show_get_tokens_window, origin_widget=get_tokens_button
             ),
-            ok_text=classicassets.strings.resourcetypeinfo.get_tokens,
+            ok_text=classicassets.strings.resource_type_info.get_tokens,
             width=460,
             height=130,
             origin_widget=origin_widget,
         )
     else:
         ConfirmWindow(
-            classicassets.strings.gettokens.not_enough_tokens,
+            classicassets.strings.get_tokens.not_enough_tokens,
             cancel_button=False,
             width=460,
             height=130,

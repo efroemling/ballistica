@@ -194,8 +194,8 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             choices=['Random', 'Teams', 'Free-For-All'],
             choices_display=[
                 _commonassets.strings.values.random,
-                classicassets.strings.playmodes.teams,
-                classicassets.strings.playmodes.free_for_all,
+                classicassets.strings.play_modes.teams,
+                classicassets.strings.play_modes.free_for_all,
             ],
             current_choice='Auto',
             on_value_change_call=self._stress_test_game_type_selected,

@@ -1,19 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.260730`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.260730b`` (bascenev1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.baclassicassets.260730
+# ba_meta require asset-package a-0.baclassicassets.260730b
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.baclassicassets.260730'
+__asset_package__ = 'a-0.baclassicassets.260730b'
 
 from typing import TYPE_CHECKING
 
@@ -965,7 +965,7 @@ if TYPE_CHECKING:
         #:
         #:     Blurb explaining the benefits of signing in.
         #:
-        #:     English: "Sign in to collect tickets, compete online, and share
+        #:     English: "Sign in to collect Tickets, compete online, and share
         #:     progress across devices."
         sign_in_info: LangStr
 
@@ -3278,7 +3278,7 @@ if TYPE_CHECKING:
         uber_onslaught_victory: StringsAchievementsUberOnslaughtVictoryGroup
         uber_runaround_victory: StringsAchievementsUberRunaroundVictoryGroup
 
-    class StringsAppinviteGroup:
+    class StringsAppInviteGroup:
         """
         ::
 
@@ -3309,8 +3309,8 @@ if TYPE_CHECKING:
 
                 Header naming a ticket gift from a friend.
 
-                English: (one) "# {app_name} ticket from {name}" / (other) "#
-                {app_name} tickets from {name}"
+                English: (one) "# {app_name} Ticket from {name}" / (other) "#
+                {app_name} Tickets from {name}"
             """
 
         def friend_promo_award(self, *, count: int) -> LangStr:
@@ -3319,8 +3319,8 @@ if TYPE_CHECKING:
 
                 Explanation of the ticket reward per redemption.
 
-                English: (one) "You will receive # ticket each time it is used."
-                / (other) "You will receive # tickets each time it is used."
+                English: (one) "You will receive # Ticket each time it is used."
+                / (other) "You will receive # Tickets each time it is used."
             """
 
         def friend_promo_expire(self, *, expire_hours: int) -> LangStr:
@@ -3367,8 +3367,8 @@ if TYPE_CHECKING:
 
                 Short note of ticket value for a code.
 
-                English: (one) "It can be redeemed for # ticket in the game." /
-                (other) "It can be redeemed for # tickets in the game."
+                English: (one) "It can be redeemed for # Ticket in the game." /
+                (other) "It can be redeemed for # Tickets in the game."
             """
 
         #: ::
@@ -3683,7 +3683,7 @@ if TYPE_CHECKING:
         #:
         #:     Note that the player can open a chest early.
         #:
-        #:     English: "You have enough tokens to open this now - you don't
+        #:     English: "You have enough Tokens to open this now - you don't
         #:     need to wait."
         open_now_description: LangStr
 
@@ -3966,7 +3966,7 @@ if TYPE_CHECKING:
         #:     re-enable tournaments, disable your workspace and restart."
         tournaments_disabled_workspace: LangStr
 
-    class StringsCooplevelsGroup:
+    class StringsCoopLevelsGroup:
         """
         ::
 
@@ -4078,7 +4078,7 @@ if TYPE_CHECKING:
                 English: "Uber {game}"
             """
 
-    class StringsCoopscoreGroup:
+    class StringsCoopScoreGroup:
         """
         ::
 
@@ -4394,8 +4394,8 @@ if TYPE_CHECKING:
 
                 Confirmation of how many tickets were received.
 
-                English: (one) "Received # ticket!" / (other) "Received #
-                tickets!"
+                English: (one) "Received # Ticket!" / (other) "Received #
+                Tickets!"
             """
 
         def you_got_tokens(self, *, tokens: int) -> LangStr:
@@ -4405,10 +4405,10 @@ if TYPE_CHECKING:
                 Confirmation effect sent to game clients when tokens are
                 credited (store purchases, promo codes, and other grant flows).
 
-                English: (one) "You got # token!" / (other) "You got # tokens!"
+                English: (one) "You got # Token!" / (other) "You got # Tokens!"
             """
 
-    class StringsFileselectorGroup:
+    class StringsFileSelectorGroup:
         """
         ::
 
@@ -4856,7 +4856,7 @@ if TYPE_CHECKING:
                 English: "Wave {number}"
             """
 
-    class StringsGamedescriptionsGroup:
+    class StringsGameDescriptionsGroup:
         """
         ::
 
@@ -5284,7 +5284,7 @@ if TYPE_CHECKING:
                 English: "Touch the enemy flag {arg1} times."
             """
 
-    class StringsGamenamesGroup:
+    class StringsGameNamesGroup:
         """
         ::
 
@@ -5620,7 +5620,7 @@ if TYPE_CHECKING:
                 Blurb about inviting friends for a ticket reward.
 
                 English: "Friends don't have the game? Invite them to try it and
-                they'll receive {count} free tickets."
+                they'll receive {count} free Tickets."
             """
 
         #: ::
@@ -5969,7 +5969,7 @@ if TYPE_CHECKING:
         #:     English: "Your local address:"
         your_local_address: LangStr
 
-    class StringsGetremoteGroup:
+    class StringsGetRemoteGroup:
         """
         ::
 
@@ -5992,7 +5992,7 @@ if TYPE_CHECKING:
                 controllers."
             """
 
-    class StringsGettokensGroup:
+    class StringsGetTokensGroup:
         """
         ::
 
@@ -6012,7 +6012,7 @@ if TYPE_CHECKING:
         #:
         #:     Gold Pass benefit: infinite tokens.
         #:
-        #:     English: "Infinite tokens."
+        #:     English: "Infinite Tokens."
         gold_pass_desc1: LangStr
 
         #: ::
@@ -6065,8 +6065,8 @@ if TYPE_CHECKING:
         #:
         #:     Limited-time offer to remove ads via a token pack.
         #:
-        #:     English: "LIMITED TIME OFFER: Purchase ANY token pack to remove
-        #:     in-game ads."
+        #:     English: "LIMITED TIME OFFER: PURCHASE ANY TOKEN PACK TO REMOVE
+        #:     IN-GAME ADS."
         remove_ads_offer: LangStr
 
         #: ::
@@ -6277,62 +6277,7 @@ if TYPE_CHECKING:
                 English: "Welcome to {app_name}!"
             """
 
-    class StringsInboxGroup:
-        """
-        ::
-
-            Message-inbox window: messages, prizes, expiry labels.
-
-            See source for the full asset list.
-        """
-
-        def expired_ago(self, *, t: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Label showing how long ago something expired.
-
-                English: "Expired {t} ago"
-            """
-
-        def expires_in(self, *, t: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Label showing time until a message expires.
-
-                English: "Expires in {t}"
-            """
-
-        #: ::
-        #:
-        #:     Heading for final tournament standings.
-        #:
-        #:     English: "Final Standings"
-        final_standings: LangStr
-
-        #: ::
-        #:
-        #:     Notice that the app must be updated to view content.
-        #:
-        #:     English: "You must update the app to view this."
-        must_update: LangStr
-
-        #: ::
-        #:
-        #:     Placeholder when the inbox is empty.
-        #:
-        #:     English: "No messages."
-        no_messages: LangStr
-
-        #: ::
-        #:
-        #:     Label above a prize the player won.
-        #:
-        #:     English: "Your prize:"
-        your_prize: LangStr
-
-    class StringsIngamemenuGroup:
+    class StringsInGameMenuGroup:
         """
         ::
 
@@ -6416,6 +6361,61 @@ if TYPE_CHECKING:
         #:
         #:     English: "Resume"
         resume: LangStr
+
+    class StringsInboxGroup:
+        """
+        ::
+
+            Message-inbox window: messages, prizes, expiry labels.
+
+            See source for the full asset list.
+        """
+
+        def expired_ago(self, *, t: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Label showing how long ago something expired.
+
+                English: "Expired {t} ago"
+            """
+
+        def expires_in(self, *, t: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Label showing time until a message expires.
+
+                English: "Expires in {t}"
+            """
+
+        #: ::
+        #:
+        #:     Heading for final tournament standings.
+        #:
+        #:     English: "Final Standings"
+        final_standings: LangStr
+
+        #: ::
+        #:
+        #:     Notice that the app must be updated to view content.
+        #:
+        #:     English: "You must update the app to view this."
+        must_update: LangStr
+
+        #: ::
+        #:
+        #:     Placeholder when the inbox is empty.
+        #:
+        #:     English: "No messages."
+        no_messages: LangStr
+
+        #: ::
+        #:
+        #:     Label above a prize the player won.
+        #:
+        #:     English: "Your prize:"
+        your_prize: LangStr
 
     class StringsInventoryGroup:
         """
@@ -6833,7 +6833,7 @@ if TYPE_CHECKING:
         #:     English: "ready"
         ready: LangStr
 
-    class StringsMainmenuGroup:
+    class StringsMainMenuGroup:
         """
         ::
 
@@ -6918,7 +6918,7 @@ if TYPE_CHECKING:
         #:     English: "Test Build"
         test_build: LangStr
 
-    class StringsMapnamesGroup:
+    class StringsMapNamesGroup:
         """
         ::
 
@@ -7047,7 +7047,7 @@ if TYPE_CHECKING:
         #:     English: "Zigzag"
         zigzag: LangStr
 
-    class StringsMultiteamGroup:
+    class StringsMultiTeamGroup:
         """
         ::
 
@@ -7311,7 +7311,7 @@ if TYPE_CHECKING:
         #:     English: "Unmute Chat"
         unmute_chat: LangStr
 
-    class StringsPartyqueueGroup:
+    class StringsPartyQueueGroup:
         """
         ::
 
@@ -7349,6 +7349,104 @@ if TYPE_CHECKING:
         #:
         #:     English: "2-8 players"
         two_to_eight_players: LangStr
+
+    class StringsPlayModesGroup:
+        """
+        ::
+
+            Play-mode names (Teams, Free-for-All, ...) shared across playlist
+            UIs, session descriptions, and settings.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     The "Co-op" (cooperative) play-mode name.
+        #:
+        #:     English: "Co-op"
+        coop: LangStr
+
+        #: ::
+        #:
+        #:     The 'Free-for-All' play mode name (every player for themselves).
+        #:
+        #:     English: "Free-for-All"
+        free_for_all: LangStr
+
+        #: ::
+        #:
+        #:     The "Single Player / Co-op" play-mode name.
+        #:
+        #:     English: "Single Player / Co-op"
+        single_player_coop: LangStr
+
+        #: ::
+        #:
+        #:     The 'Teams' play mode name (used in playlist types, session
+        #:     descriptions, etc.).
+        #:
+        #:     English: "Teams"
+        teams: LangStr
+
+    class StringsPlayOptionsGroup:
+        """
+        ::
+
+            Playlist play-options: tutorial/shuffle toggles, team names/colors,
+            unlock notices.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Error when a playlist has no playable games.
+        #:
+        #:     English: "This playlist contains no valid unlocked games."
+        no_valid_games: LangStr
+
+        #: ::
+        #:
+        #:     Setting label for the points needed to win.
+        #:
+        #:     English: "Points To Win"
+        points_to_win: LangStr
+
+        #: ::
+        #:
+        #:     Setting label for how many games a series runs.
+        #:
+        #:     English: "Series Length"
+        series_length: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox to show the tutorial.
+        #:
+        #:     English: "Show Tutorial"
+        show_tutorial: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox to shuffle the game order.
+        #:
+        #:     English: "Shuffle Game Order"
+        shuffle_game_order: LangStr
+
+        #: ::
+        #:
+        #:     Button to edit team names and colors.
+        #:
+        #:     English: "Team Names/Colors..."
+        team_names_colors: LangStr
+
+        #: ::
+        #:
+        #:     Note that an item must be unlocked in the store.
+        #:
+        #:     English: "This must be unlocked in the store."
+        unlock_in_store: LangStr
 
     class StringsPlaylistGroup:
         """
@@ -7569,104 +7667,6 @@ if TYPE_CHECKING:
         #:     English: "Remove Game"
         remove_game_button: LangStr
 
-    class StringsPlaymodesGroup:
-        """
-        ::
-
-            Play-mode names (Teams, Free-for-All, ...) shared across playlist
-            UIs, session descriptions, and settings.
-
-            See source for the full asset list.
-        """
-
-        #: ::
-        #:
-        #:     The "Co-op" (cooperative) play-mode name.
-        #:
-        #:     English: "Co-op"
-        coop: LangStr
-
-        #: ::
-        #:
-        #:     The 'Free-for-All' play mode name (every player for themselves).
-        #:
-        #:     English: "Free-for-All"
-        free_for_all: LangStr
-
-        #: ::
-        #:
-        #:     The "Single Player / Co-op" play-mode name.
-        #:
-        #:     English: "Single Player / Co-op"
-        single_player_coop: LangStr
-
-        #: ::
-        #:
-        #:     The 'Teams' play mode name (used in playlist types, session
-        #:     descriptions, etc.).
-        #:
-        #:     English: "Teams"
-        teams: LangStr
-
-    class StringsPlayoptionsGroup:
-        """
-        ::
-
-            Playlist play-options: tutorial/shuffle toggles, team names/colors,
-            unlock notices.
-
-            See source for the full asset list.
-        """
-
-        #: ::
-        #:
-        #:     Error when a playlist has no playable games.
-        #:
-        #:     English: "This playlist contains no valid unlocked games."
-        no_valid_games: LangStr
-
-        #: ::
-        #:
-        #:     Setting label for the points needed to win.
-        #:
-        #:     English: "Points To Win"
-        points_to_win: LangStr
-
-        #: ::
-        #:
-        #:     Setting label for how many games a series runs.
-        #:
-        #:     English: "Series Length"
-        series_length: LangStr
-
-        #: ::
-        #:
-        #:     Checkbox to show the tutorial.
-        #:
-        #:     English: "Show Tutorial"
-        show_tutorial: LangStr
-
-        #: ::
-        #:
-        #:     Checkbox to shuffle the game order.
-        #:
-        #:     English: "Shuffle Game Order"
-        shuffle_game_order: LangStr
-
-        #: ::
-        #:
-        #:     Button to edit team names and colors.
-        #:
-        #:     English: "Team Names/Colors..."
-        team_names_colors: LangStr
-
-        #: ::
-        #:
-        #:     Note that an item must be unlocked in the store.
-        #:
-        #:     English: "This must be unlocked in the store."
-        unlock_in_store: LangStr
-
     class StringsProfileGroup:
         """
         ::
@@ -7830,7 +7830,7 @@ if TYPE_CHECKING:
         #:
         #:     Error when the player lacks enough tickets for an upgrade.
         #:
-        #:     English: "Not enough tickets!"
+        #:     English: "Not enough Tickets!"
         not_enough_tickets: LangStr
 
         #: ::
@@ -7961,7 +7961,7 @@ if TYPE_CHECKING:
         #:     English: "What would you like to report?"
         reason: LangStr
 
-    class StringsResourcetypeinfoGroup:
+    class StringsResourceTypeInfoGroup:
         """
         ::
 
@@ -7990,13 +7990,13 @@ if TYPE_CHECKING:
         #:
         #:     Explanation of what tokens are and how to get them.
         #:
-        #:     English: "Tokens are used to speed up chest unlocks and for other
-        #:     game and account features. You can win tokens in the game or buy
-        #:     them in packs. Or buy a Gold Pass for infinite tokens and never
+        #:     English: "Tokens are used to speed up Chest unlocks and for other
+        #:     game and account features. You can win Tokens in the game or buy
+        #:     them in packs. Or buy a Gold Pass for infinite Tokens and never
         #:     hear about them again."
         tokens_description: LangStr
 
-    class StringsScoretypesGroup:
+    class StringsScoreTypesGroup:
         """
         ::
 
@@ -8041,7 +8041,7 @@ if TYPE_CHECKING:
         #:     English: "Time Held"
         time_held: LangStr
 
-    class StringsSendinfoGroup:
+    class StringsSendInfoGroup:
         """
         ::
 
@@ -9003,7 +9003,7 @@ if TYPE_CHECKING:
         #:     English: "Controllers"
         title: LangStr
 
-    class StringsSettingsDevtoolsGroup:
+    class StringsSettingsDevToolsGroup:
         """
         ::
 
@@ -9135,7 +9135,7 @@ if TYPE_CHECKING:
         #:     English: "Visuals"
         visuals: LangStr
 
-    class StringsSettingsNettestingGroup:
+    class StringsSettingsNetTestingGroup:
         """
         ::
 
@@ -9221,7 +9221,7 @@ if TYPE_CHECKING:
         #:     lost when the app exits."
         for_testing_note: LangStr
 
-    class StringsSettingsVrtestingGroup:
+    class StringsSettingsVrTestingGroup:
         """
         ::
 
@@ -9252,12 +9252,12 @@ if TYPE_CHECKING:
         audio: StringsSettingsAudioGroup
         benchmarks: StringsSettingsBenchmarksGroup
         controllers: StringsSettingsControllersGroup
-        devtools: StringsSettingsDevtoolsGroup
+        dev_tools: StringsSettingsDevToolsGroup
         graphics: StringsSettingsGraphicsGroup
-        nettesting: StringsSettingsNettestingGroup
+        net_testing: StringsSettingsNetTestingGroup
         plugins: StringsSettingsPluginsGroup
         testing: StringsSettingsTestingGroup
-        vrtesting: StringsSettingsVrtestingGroup
+        vr_testing: StringsSettingsVrTestingGroup
 
         #: ::
         #:
@@ -9534,7 +9534,7 @@ if TYPE_CHECKING:
         #:     English: "Red"
         red: LangStr
 
-    class StringsTournamententryGroup:
+    class StringsTournamentEntryGroup:
         """
         ::
 
@@ -9566,7 +9566,7 @@ if TYPE_CHECKING:
         #:     English: "Watch an Ad"
         watch_an_ad: LangStr
 
-    class StringsTournamentscoresGroup:
+    class StringsTournamentScoresGroup:
         """
         ::
 
@@ -10109,7 +10109,7 @@ if TYPE_CHECKING:
         #:     English: "Trophies"
         trophies: LangStr
 
-    class StringsV2upgradeGroup:
+    class StringsV2UpgradeGroup:
         """
         ::
 
@@ -10272,56 +10272,56 @@ if TYPE_CHECKING:
 
         account: StringsAccountGroup
         achievements: StringsAchievementsGroup
-        appinvite: StringsAppinviteGroup
+        app_invite: StringsAppInviteGroup
         characters: StringsCharactersGroup
         chest: StringsChestGroup
         controls: StringsControlsGroup
         coop: StringsCoopGroup
-        cooplevels: StringsCooplevelsGroup
-        coopscore: StringsCoopscoreGroup
+        coop_levels: StringsCoopLevelsGroup
+        coop_score: StringsCoopScoreGroup
         credits: StringsCreditsGroup
         economy: StringsEconomyGroup
-        fileselector: StringsFileselectorGroup
+        file_selector: StringsFileSelectorGroup
         game: StringsGameGroup
-        gamedescriptions: StringsGamedescriptionsGroup
-        gamenames: StringsGamenamesGroup
+        game_descriptions: StringsGameDescriptionsGroup
+        game_names: StringsGameNamesGroup
         gather: StringsGatherGroup
-        getremote: StringsGetremoteGroup
-        gettokens: StringsGettokensGroup
+        get_remote: StringsGetRemoteGroup
+        get_tokens: StringsGetTokensGroup
         help: StringsHelpGroup
+        in_game_menu: StringsInGameMenuGroup
         inbox: StringsInboxGroup
-        ingamemenu: StringsIngamemenuGroup
         inventory: StringsInventoryGroup
         keyboard: StringsKeyboardGroup
         kiosk: StringsKioskGroup
         league: StringsLeagueGroup
         lobby: StringsLobbyGroup
-        mainmenu: StringsMainmenuGroup
-        mapnames: StringsMapnamesGroup
-        multiteam: StringsMultiteamGroup
+        main_menu: StringsMainMenuGroup
+        map_names: StringsMapNamesGroup
+        multi_team: StringsMultiTeamGroup
         party: StringsPartyGroup
-        partyqueue: StringsPartyqueueGroup
+        party_queue: StringsPartyQueueGroup
         play: StringsPlayGroup
+        play_modes: StringsPlayModesGroup
+        play_options: StringsPlayOptionsGroup
         playlist: StringsPlaylistGroup
-        playmodes: StringsPlaymodesGroup
-        playoptions: StringsPlayoptionsGroup
         profile: StringsProfileGroup
         profiles: StringsProfilesGroup
         report: StringsReportGroup
-        resourcetypeinfo: StringsResourcetypeinfoGroup
-        scoretypes: StringsScoretypesGroup
-        sendinfo: StringsSendinfoGroup
+        resource_type_info: StringsResourceTypeInfoGroup
+        score_types: StringsScoreTypesGroup
+        send_info: StringsSendInfoGroup
         server: StringsServerGroup
         session: StringsSessionGroup
         settings: StringsSettingsGroup
         soundtrack: StringsSoundtrackGroup
         store: StringsStoreGroup
         teams: StringsTeamsGroup
-        tournamententry: StringsTournamententryGroup
-        tournamentscores: StringsTournamentscoresGroup
+        tournament_entry: StringsTournamentEntryGroup
+        tournament_scores: StringsTournamentScoresGroup
         tutorial: StringsTutorialGroup
         ui: StringsUiGroup
-        v2upgrade: StringsV2upgradeGroup
+        v2_upgrade: StringsV2UpgradeGroup
         watch: StringsWatchGroup
 
     class TexturesGroup:
@@ -10658,7 +10658,7 @@ if TYPE_CHECKING:
     meshes: MeshesGroup
 
     #: The ``strings`` group - 1036 strings (``account``, ``achievements``,
-    #: ``appinvite``, ``characters``, ``chest``, and 1031 more). Full list in
+    #: ``app_invite``, ``characters``, ``chest``, and 1031 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -11785,7 +11785,7 @@ _TREE = {
                 'name': ('level',),
             },
         },
-        'appinvite': {
+        'app_invite': {
             'email_it': (),
             'enjoy': (),
             'friend_has_sent_promo': ('count', 'app_name', 'name'),
@@ -11868,7 +11868,7 @@ _TREE = {
             'tournaments': (),
             'tournaments_disabled_workspace': (),
         },
-        'cooplevels': {
+        'coop_levels': {
             'infinite_onslaught': (),
             'infinite_runaround': (),
             'onslaught_training': (),
@@ -11884,7 +11884,7 @@ _TREE = {
             'uber_runaround': (),
             'uber_variant': ('game',),
         },
-        'coopscore': {
+        'coop_score': {
             'best_rating': ('rating',),
             'complete_level_to_proceed': (),
             'current_standing': ('rank',),
@@ -11928,7 +11928,7 @@ _TREE = {
             'received_tickets': ('count',),
             'you_got_tokens': ('tokens',),
         },
-        'fileselector': {
+        'file_selector': {
             'select_file': (),
             'select_file_or_folder': (),
             'select_folder': (),
@@ -11984,7 +11984,7 @@ _TREE = {
             'wave': (),
             'wave_number': ('number',),
         },
-        'gamedescriptions': {
+        'game_descriptions': {
             'be_the_chosen_one_for_a': (),
             'bomb_as_many_targets_as_you': (),
             'carry_the_flag_for_a_set': (),
@@ -12039,7 +12039,7 @@ _TREE = {
             'touch_the_enemy_flag': (),
             'touch_the_enemy_flag_times': ('arg1',),
         },
-        'gamenames': {
+        'game_names': {
             'assault': (),
             'capture_the_flag': (),
             'chosen_one': (),
@@ -12133,8 +12133,8 @@ _TREE = {
             'your_address_from_internet': (),
             'your_local_address': (),
         },
-        'getremote': {'info_short': ('app_name', 'remote_app_name')},
-        'gettokens': {
+        'get_remote': {'info_short': ('app_name', 'remote_app_name')},
+        'get_tokens': {
             'gold_pass': (),
             'gold_pass_desc1': (),
             'gold_pass_desc2': (),
@@ -12170,15 +12170,7 @@ _TREE = {
             'to_get_the_most': (),
             'welcome': ('app_name',),
         },
-        'inbox': {
-            'expired_ago': ('t',),
-            'expires_in': ('t',),
-            'final_standings': (),
-            'must_update': (),
-            'no_messages': (),
-            'your_prize': (),
-        },
-        'ingamemenu': {
+        'in_game_menu': {
             'end_game': (),
             'end_replay': (),
             'end_test': (),
@@ -12188,6 +12180,14 @@ _TREE = {
             'leave_party': (),
             'leave_party_confirm': (),
             'resume': (),
+        },
+        'inbox': {
+            'expired_ago': ('t',),
+            'expires_in': ('t',),
+            'final_standings': (),
+            'must_update': (),
+            'no_messages': (),
+            'your_prize': (),
         },
         'inventory': {
             'only_available_online': (),
@@ -12245,7 +12245,7 @@ _TREE = {
             'press_to_select_team': ('buttons',),
             'ready': (),
         },
-        'mainmenu': {
+        'main_menu': {
             'credits': (),
             'exit_game': (),
             'host_navigating_menus': ('host',),
@@ -12256,7 +12256,7 @@ _TREE = {
             'quit': (),
             'test_build': (),
         },
-        'mapnames': {
+        'map_names': {
             'big_g': (),
             'bridgit': (),
             'courtyard': (),
@@ -12275,7 +12275,7 @@ _TREE = {
             'tower_d': (),
             'zigzag': (),
         },
-        'multiteam': {
+        'multi_team': {
             'best_of_final': ('count',),
             'best_of_series': ('count',),
             'deaths': (),
@@ -12310,8 +12310,23 @@ _TREE = {
             'title': (),
             'unmute_chat': (),
         },
-        'partyqueue': {'waiting_in_line': ()},
+        'party_queue': {'waiting_in_line': ()},
         'play': {'one_to_four_players': (), 'two_to_eight_players': ()},
+        'play_modes': {
+            'coop': (),
+            'free_for_all': (),
+            'single_player_coop': (),
+            'teams': (),
+        },
+        'play_options': {
+            'no_valid_games': (),
+            'points_to_win': (),
+            'series_length': (),
+            'show_tutorial': (),
+            'shuffle_game_order': (),
+            'team_names_colors': (),
+            'unlock_in_store': (),
+        },
         'playlist': {
             'add_game_button': (),
             'add_game_title': (),
@@ -12341,21 +12356,6 @@ _TREE = {
             'no_valid_maps': (),
             'playlists': (),
             'remove_game_button': (),
-        },
-        'playmodes': {
-            'coop': (),
-            'free_for_all': (),
-            'single_player_coop': (),
-            'teams': (),
-        },
-        'playoptions': {
-            'no_valid_games': (),
-            'points_to_win': (),
-            'series_length': (),
-            'show_tutorial': (),
-            'shuffle_game_order': (),
-            'team_names_colors': (),
-            'unlock_in_store': (),
         },
         'profile': {
             'account_profile': (),
@@ -12394,19 +12394,19 @@ _TREE = {
             'inappropriate_language': (),
             'reason': (),
         },
-        'resourcetypeinfo': {
+        'resource_type_info': {
             'get_tokens': (),
             'tickets_description': (),
             'tokens_description': (),
         },
-        'scoretypes': {
+        'score_types': {
             'flags': (),
             'goals': (),
             'survived': (),
             'time': (),
             'time_held': (),
         },
-        'sendinfo': {'send_info_description': ()},
+        'send_info': {'send_info_description': ()},
         'server': {'restarting': (), 'shutting_down': ()},
         'session': {
             'not_enough_players': ('count',),
@@ -12532,7 +12532,7 @@ _TREE = {
                 'remote_explanation': ('remote_app_name', 'app_name'),
                 'title': (),
             },
-            'devtools': {
+            'dev_tools': {
                 'create_user_system_scripts': (),
                 'delete_user_system_scripts': (),
                 'show_dev_console_button': (),
@@ -12551,7 +12551,7 @@ _TREE = {
                 'vertical_sync': (),
                 'visuals': (),
             },
-            'nettesting': {'title': ()},
+            'net_testing': {'title': ()},
             'plugins': {
                 'auto_enable_new': (),
                 'disable_all': (),
@@ -12561,7 +12561,7 @@ _TREE = {
                 'title': (),
             },
             'testing': {'for_testing_note': ()},
-            'vrtesting': {'title': ()},
+            'vr_testing': {'title': ()},
             'title': (),
         },
         'soundtrack': {
@@ -12594,12 +12594,12 @@ _TREE = {
         },
         'store': {'merch': (), 'pro_name': ('app_name',)},
         'teams': {'bad_guys': (), 'blue': (), 'good_guys': (), 'red': ()},
-        'tournamententry': {
+        'tournament_entry': {
             'tickets_count': ('count',),
             'title': (),
             'watch_an_ad': (),
         },
-        'tournamentscores': {'no_scores_yet': (), 'tournament_standings': ()},
+        'tournament_scores': {'no_scores_yet': (), 'tournament_standings': ()},
         'tutorial': {
             'cpu_benchmark': (),
             'phrase01': (),
@@ -12672,7 +12672,7 @@ _TREE = {
             'stats': (),
             'trophies': (),
         },
-        'v2upgrade': {'device_account_upgrade': ('name',)},
+        'v2_upgrade': {'device_account_upgrade': ('name',)},
         'watch': {
             'delete_confirm': ('replay',),
             'delete_replay_button': (),

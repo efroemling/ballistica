@@ -44,7 +44,7 @@ def get_map_display_name(name: str) -> babase.LangStr:
     # pylint: disable-next=cyclic-import
     from bascenev1 import classicassets
 
-    s = classicassets.strings.mapnames
+    s = classicassets.strings.map_names
     entry = {
         'Big G': s.big_g,
         'Bridgit': s.bridgit,

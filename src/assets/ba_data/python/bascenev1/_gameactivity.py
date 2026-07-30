@@ -43,7 +43,7 @@ def get_game_display_name(name: str) -> babase.LangStr:
     # pylint: disable-next=cyclic-import
     from bascenev1 import classicassets
 
-    s = classicassets.strings.gamenames
+    s = classicassets.strings.game_names
     entry = {
         'Assault': s.assault,
         'Capture the Flag': s.capture_the_flag,
@@ -86,7 +86,7 @@ def get_game_description(
     # pylint: disable-next=cyclic-import
     from bascenev1 import classicassets
 
-    gd = classicassets.strings.gamedescriptions
+    gd = classicassets.strings.game_descriptions
     if arg is None:
         plain: dict[str, babase.LangStr] = {
             (

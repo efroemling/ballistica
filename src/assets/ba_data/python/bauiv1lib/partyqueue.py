@@ -475,7 +475,7 @@ class PartyQueueWindow(bui.Window):
             if should_show_field:
                 bui.textwidget(
                     edit=self._title_text,
-                    text=classicassets.strings.partyqueue.waiting_in_line,
+                    text=classicassets.strings.party_queue.waiting_in_line,
                     position=(self._width * 0.5, self._height * 0.85),
                 )
                 self._update_field(response)

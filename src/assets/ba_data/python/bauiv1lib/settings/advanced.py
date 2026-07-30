@@ -705,7 +705,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
             size=(this_button_width, 60),
             autoselect=True,
-            label=classicassets.strings.settings.devtools.title,
+            label=classicassets.strings.settings.dev_tools.title,
             text_scale=1.0,
             on_activate_call=self._on_dev_tools_button_press,
         )
@@ -773,7 +773,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
                 position=(self._sub_width / 2 - this_button_width / 2, v - 14),
                 size=(this_button_width, 60),
                 autoselect=True,
-                label=classicassets.strings.settings.vrtesting.title,
+                label=classicassets.strings.settings.vr_testing.title,
                 text_scale=1.0,
                 on_activate_call=self._on_vr_test_press,
             )
@@ -789,7 +789,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
                 position=(self._sub_width / 2 - this_button_width / 2, v - 14),
                 size=(this_button_width, 60),
                 autoselect=True,
-                label=classicassets.strings.settings.nettesting.title,
+                label=classicassets.strings.settings.net_testing.title,
                 text_scale=1.0,
                 on_activate_call=self._on_net_test_press,
             )

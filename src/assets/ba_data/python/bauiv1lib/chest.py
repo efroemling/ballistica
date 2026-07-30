@@ -485,7 +485,7 @@ class ChestWindow(bui.MainWindow):
                 self._open_now_texts.append(
                     bui.textwidget(
                         parent=self._root_widget,
-                        text=classicassets.strings.gettokens.num_tokens(
+                        text=classicassets.strings.get_tokens.num_tokens(
                             count=chest.unlock_tokens
                         ),
                         position=(
@@ -556,7 +556,7 @@ class ChestWindow(bui.MainWindow):
             # specifically says 'Ad' in it.
             bui.textwidget(
                 parent=self._root_widget,
-                text=classicassets.strings.tournamententry.watch_an_ad,
+                text=classicassets.strings.tournament_entry.watch_an_ad,
                 position=(
                     self._width * 0.5 + hspace * 0.5 + bwidth * 0.5,
                     self._yoffs + bposy + bheight * 0.25,

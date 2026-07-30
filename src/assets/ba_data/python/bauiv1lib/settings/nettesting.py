@@ -138,7 +138,7 @@ class NetTestingWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(self._width * 0.5, yoffs - 55),
             size=(0, 0),
-            text=classicassets.strings.settings.nettesting.title,
+            text=classicassets.strings.settings.net_testing.title,
             color=(0.8, 0.8, 0.8, 1.0),
             h_align='center',
             v_align='center',
@@ -492,7 +492,7 @@ def get_net_val_testing_window() -> TestingWindow:
         {'name': 'showNetInfo', 'label': 'Show Net Info', 'increment': 1},
     ]
     return TestingWindow(
-        title=classicassets.strings.settings.nettesting.title,
+        title=classicassets.strings.settings.net_testing.title,
         entries=entries,
     )
 
@@ -516,7 +516,7 @@ def get_net_val_testing_window() -> TestingWindow:
 #             {'name': 'showNetInfo', 'label': 'Show Net Info', 'increment': 1},
 #         ]
 #         super().__init__(
-#             title=classicassets.strings.settings.nettesting.title,
+#             title=classicassets.strings.settings.net_testing.title,
 #             entries=entries,
 #             transition=transition,
 #         )

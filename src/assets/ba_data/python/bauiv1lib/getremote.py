@@ -56,7 +56,7 @@ class GetBSRemoteWindow(PopupWindow):
             v_align='center',
             maxwidth=self._width * 0.8,
             position=(self._width * 0.5, 60),
-            text=classicassets.strings.getremote.info_short(
+            text=classicassets.strings.get_remote.info_short(
                 app_name=classicassets.strings.ui.app_name,
                 remote_app_name=classicassets.strings.ui.remote_app_name,
             ),

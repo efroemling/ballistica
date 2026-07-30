@@ -40,7 +40,7 @@ class V2UpgradeWindow(bui.Window):
             color=app.ui_v1.title_color,
             h_align='center',
             v_align='center',
-            text=classicassets.strings.v2upgrade.device_account_upgrade(
+            text=classicassets.strings.v2_upgrade.device_account_upgrade(
                 name=login_name
             ),
             maxwidth=self._width * 0.95,

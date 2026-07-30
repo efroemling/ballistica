@@ -90,7 +90,7 @@ class SendInfoWindow(bui.MainWindow):
         v += -30 if uiscale is bui.UIScale.SMALL else 10
         bui.textwidget(
             parent=self._root_widget,
-            text=classicassets.strings.sendinfo.send_info_description,
+            text=classicassets.strings.send_info.send_info_description,
             maxwidth=width * 0.9,
             position=(width * 0.5, v),
             color=(0.7, 0.7, 0.7, 1.0),

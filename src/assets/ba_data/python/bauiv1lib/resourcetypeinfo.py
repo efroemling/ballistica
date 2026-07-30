@@ -66,10 +66,10 @@ class ResourceTypeInfoWindow(PopupWindow):
 
         if resource_type == 'tickets':
             yoffs -= 20
-            rdesc = classicassets.strings.resourcetypeinfo.tickets_description
+            rdesc = classicassets.strings.resource_type_info.tickets_description
             tex = classicassets.textures.tickets.get()
         elif resource_type == 'tokens':
-            rdesc = classicassets.strings.resourcetypeinfo.tokens_description
+            rdesc = classicassets.strings.resource_type_info.tokens_description
             tex = classicassets.textures.coin.get()
             bwidth = 200
             bheight = 50
@@ -87,7 +87,7 @@ class ResourceTypeInfoWindow(PopupWindow):
                     ),
                     color=bg_color,
                     textcolor=(0.8, 0.8, 0.8),
-                    label=classicassets.strings.resourcetypeinfo.get_tokens,
+                    label=classicassets.strings.resource_type_info.get_tokens,
                     size=(bwidth, bheight),
                     autoselect=True,
                     on_activate_call=bui.WeakCallStrict(

@@ -460,7 +460,7 @@ def level_name_table() -> 'dict[str, babase.LangStr]':
     The levels the built-in achievements are earned on; substituted into
     the parameterized names and full descriptions above.
     """
-    c = classicassets.strings.cooplevels
+    c = classicassets.strings.coop_levels
     return {
         'Infinite Onslaught': c.infinite_onslaught,
         'Infinite Runaround': c.infinite_runaround,

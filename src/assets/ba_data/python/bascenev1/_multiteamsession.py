@@ -312,7 +312,7 @@ class MultiTeamSession(Session):
 
                 # The legacy player-vs-team split existed only
                 # for translation coverage; the text is identical.
-                wins_text = classicassets.strings.multiteam.wins(
+                wins_text = classicassets.strings.multi_team.wins(
                     name=winning_sessionteam.name
                 )
                 activity.show_zoom_message(

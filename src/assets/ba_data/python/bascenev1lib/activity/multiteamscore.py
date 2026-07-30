@@ -20,11 +20,11 @@ def _score_label_display(label: str) -> str | bs.LangStr:
     strs = classicassets.strings
     return {
         'Score': strs.game.score,
-        'Flags': strs.scoretypes.flags,
-        'Goals': strs.scoretypes.goals,
-        'Survived': strs.scoretypes.survived,
-        'Time': strs.scoretypes.time,
-        'Time Held': strs.scoretypes.time_held,
+        'Flags': strs.score_types.flags,
+        'Goals': strs.score_types.goals,
+        'Survived': strs.score_types.survived,
+        'Time': strs.score_types.time,
+        'Time Held': strs.score_types.time_held,
     }.get(label, label)
 
 
@@ -44,7 +44,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
         session = self.session
         if self._show_up_next and isinstance(session, bs.MultiTeamSession):
             txt = _commonassets.strings.compose.gapped_pair(
-                first=classicassets.strings.multiteam.up_next(
+                first=classicassets.strings.multi_team.up_next(
                     count=str(session.get_game_number() + 1)
                 ),
                 second=session.get_next_game_description(langstr=True),
@@ -167,7 +167,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
 
         session = self.session
         assert isinstance(session, bs.MultiTeamSession)
-        tval = classicassets.strings.multiteam.game_leaders(
+        tval = classicassets.strings.multi_team.game_leaders(
             count=session.get_game_number()
         )
         _txt(
@@ -181,11 +181,11 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
         _txt(
             -15,
             4,
-            classicassets.strings.multiteam.player,
+            classicassets.strings.multi_team.player,
             h_align=Text.HAlign.LEFT,
         )
-        _txt(180, 4, classicassets.strings.multiteam.kills)
-        _txt(280, 4, classicassets.strings.multiteam.deaths, maxwidth=100)
+        _txt(180, 4, classicassets.strings.multi_team.kills)
+        _txt(280, 4, classicassets.strings.multi_team.deaths, maxwidth=100)
 
         score_label = 'Score' if results is None else results.score_label
         translated = _score_label_display(score_label)

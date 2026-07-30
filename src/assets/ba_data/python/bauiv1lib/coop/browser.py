@@ -245,7 +245,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 yoffs - (50 if uiscale is bui.UIScale.SMALL else 24),
             ),
             size=(0, 0),
-            text=classicassets.strings.playmodes.single_player_coop,
+            text=classicassets.strings.play_modes.single_player_coop,
             h_align='center',
             color=app.ui_v1.title_color,
             scale=0.85 if uiscale is bui.UIScale.SMALL else 1.5,
