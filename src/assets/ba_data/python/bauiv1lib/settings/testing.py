@@ -6,7 +6,7 @@ import copy
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -205,7 +205,7 @@ class TestingWindow(bui.MainWindow):
             autoselect=True,
             size=(200, 50),
             position=(self._sub_width * 0.5 - 100, v),
-            label=classicassets.strings.ui.reset,
+            label=_commonassets.strings.actions.reset,
             right_widget=btn,
             on_activate_call=self._on_reset_press,
         )

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, assert_never, override
 
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1lib import popup
 
@@ -30,11 +30,11 @@ class Category(Enum):
         """Display string for us."""
         cls = type(self)
         if self is cls.ALL:
-            return classicassets.strings.ui.all
+            return _commonassets.strings.values.all
         if self is cls.ENABLED:
-            return classicassets.strings.ui.enabled
+            return _commonassets.strings.values.enabled
         assert self is cls.DISABLED
-        return classicassets.strings.ui.disabled
+        return _commonassets.strings.values.disabled
 
 
 class PluginWindow(bui.MainWindow):
@@ -162,7 +162,7 @@ class PluginWindow(bui.MainWindow):
             scale=0.7,
             position=(settings_button_x - 105, button_row_yoffs - 60),
             size=(130, 60),
-            label=classicassets.strings.ui.all,
+            label=_commonassets.strings.values.all,
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(self._show_category_options),
             color=(0.55, 0.73, 0.25),
@@ -257,7 +257,7 @@ class PluginWindow(bui.MainWindow):
 
     def _check_value_changed(self, plug: bui.PluginSpec, value: bool) -> None:
         bui.screenmessage(
-            classicassets.strings.ui.must_restart,
+            _commonassets.strings.status.must_restart,
             color=(1.0, 0.5, 0.0),
         )
         plugstates: dict[str, dict] = bui.app.config.setdefault('Plugins', {})

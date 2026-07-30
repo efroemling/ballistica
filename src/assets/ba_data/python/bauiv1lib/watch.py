@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -479,7 +479,7 @@ class WatchWindow(bui.MainWindow):
         cbtn = bui.buttonwidget(
             parent=cnt,
             id=f'{self.main_window_id_prefix}|replayrenamecancel',
-            label=classicassets.strings.ui.cancel,
+            label=_commonassets.strings.actions.cancel,
             on_activate_call=bui.CallStrict(
                 lambda c: bui.containerwidget(edit=c, transition='out_scale'),
                 cnt,
@@ -491,7 +491,7 @@ class WatchWindow(bui.MainWindow):
         okb = bui.buttonwidget(
             parent=cnt,
             id=f'{self.main_window_id_prefix}|replayrename',
-            label=classicassets.strings.ui.rename,
+            label=_commonassets.strings.actions.rename,
             size=(180, 60),
             position=(c_width - 230, 30),
             on_activate_call=bui.CallStrict(

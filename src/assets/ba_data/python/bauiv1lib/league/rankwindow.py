@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, override
 
 import bacommon.classic
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 from bauiv1lib.league import league_display_name
@@ -698,7 +698,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(0, 0),
             color=(0.6, 0.6, 0.7),
             maxwidth=200,
-            text=classicassets.strings.ui.show,
+            text=_commonassets.strings.actions.show,
             h_align='right',
             v_align='center',
             scale=0.8,
@@ -889,7 +889,7 @@ class LeagueRankWindow(bui.MainWindow):
         if not self._can_do_more_button or our_login_id is None:
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                classicassets.strings.ui.unavailable_status, color=(1, 0, 0)
+                _commonassets.strings.status.unavailable_status, color=(1, 0, 0)
             )
             return
         if self._season is None:

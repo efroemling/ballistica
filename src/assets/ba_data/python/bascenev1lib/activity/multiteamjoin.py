@@ -5,7 +5,7 @@
 from typing import override
 
 import bascenev1 as bs
-from bascenev1 import classicassets
+from bascenev1 import _commonassets, classicassets
 
 from bascenev1lib.actor.text import Text
 
@@ -29,7 +29,7 @@ class MultiTeamJoinActivity(bs.JoinActivity):
 
         # Show info about the next up game.
         self._next_up_text = Text(
-            classicassets.strings.ui.spaced_pair(
+            _commonassets.strings.compose.spaced_pair(
                 first=classicassets.strings.multiteam.up_first,
                 second=session.get_next_game_description(langstr=True),
             ),

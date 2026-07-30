@@ -8,7 +8,7 @@ import time
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -159,41 +159,41 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         new_button = _make_button(
             5,
             f'{self.main_window_id_prefix}|new',
-            classicassets.strings.ui.new,
+            _commonassets.strings.values.new,
             self._new_playlist,
         )
         self._edit_button = _make_button(
             4,
             f'{self.main_window_id_prefix}|edit',
-            classicassets.strings.ui.edit,
+            _commonassets.strings.actions.edit,
             self._edit_playlist,
         )
 
         duplicate_button = _make_button(
             3,
             f'{self.main_window_id_prefix}|duplicate',
-            classicassets.strings.ui.duplicate,
+            _commonassets.strings.actions.duplicate,
             self._duplicate_playlist,
         )
 
         delete_button = _make_button(
             2,
             f'{self.main_window_id_prefix}|delete',
-            classicassets.strings.ui.delete,
+            _commonassets.strings.actions.delete,
             self._delete_playlist,
         )
 
         self._import_button = _make_button(
             1,
             f'{self.main_window_id_prefix}|import',
-            classicassets.strings.ui.import_,
+            _commonassets.strings.actions.import_,
             self._import_playlist,
         )
 
         share_button = _make_button(
             0,
             f'{self.main_window_id_prefix}|share',
-            classicassets.strings.ui.share,
+            _commonassets.strings.actions.share,
             self._share_playlist,
         )
 
@@ -515,7 +515,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
         if response is None:
             bui.screenmessage(
-                classicassets.strings.ui.unavailable_no_connection,
+                _commonassets.strings.status.unavailable_no_connection,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()
@@ -556,7 +556,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             ),
         )
         plus.run_v1_account_transactions()
-        bui.screenmessage(classicassets.strings.ui.sharing)
+        bui.screenmessage(_commonassets.strings.status.sharing)
 
     def _delete_playlist(self) -> None:
         from bauiv1lib.confirm import ConfirmWindow

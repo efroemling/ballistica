@@ -6,7 +6,7 @@ import logging
 from typing import cast, override
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 import bascenev1 as bs
 
@@ -193,7 +193,7 @@ class BenchmarksAndStressTestsWindow(bui.MainWindow):
             width=150,
             choices=['Random', 'Teams', 'Free-For-All'],
             choices_display=[
-                classicassets.strings.ui.random,
+                _commonassets.strings.values.random,
                 classicassets.strings.playmodes.teams,
                 classicassets.strings.playmodes.free_for_all,
             ],

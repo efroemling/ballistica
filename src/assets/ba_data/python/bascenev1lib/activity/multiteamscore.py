@@ -5,7 +5,7 @@
 from typing import override
 
 import bascenev1 as bs
-from bascenev1 import classicassets
+from bascenev1 import _commonassets, classicassets
 
 from bascenev1lib.actor.text import Text
 from bascenev1lib.actor.image import Image
@@ -43,7 +43,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
         super().on_begin()
         session = self.session
         if self._show_up_next and isinstance(session, bs.MultiTeamSession):
-            txt = classicassets.strings.ui.gapped_pair(
+            txt = _commonassets.strings.compose.gapped_pair(
                 first=classicassets.strings.multiteam.up_next(
                     count=str(session.get_game_number() + 1)
                 ),

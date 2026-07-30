@@ -5,7 +5,7 @@
 from typing import override, TYPE_CHECKING, Any, cast
 
 import bascenev1 as bs
-from bascenev1 import classicassets
+from bascenev1 import _commonassets, classicassets
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 
@@ -103,7 +103,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         session = self.session
         if self._is_ffa:
             assert isinstance(session, bs.FreeForAllSession)
-            txt = classicassets.strings.ui.heading_suffix(
+            txt = _commonassets.strings.compose.heading_suffix(
                 main=classicassets.strings.multiteam.first_to_final(
                     count=str(session.get_ffa_series_length())
                 )
@@ -117,13 +117,13 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             #  they're not using this language. Should try to come up
             #  with a wording that works everywhere.
             if always_use_first_to:
-                txt = classicassets.strings.ui.heading_suffix(
+                txt = _commonassets.strings.compose.heading_suffix(
                     main=classicassets.strings.multiteam.first_to_final(
                         count=str(session.get_series_length() / 2 + 1)
                     )
                 )
             else:
-                txt = classicassets.strings.ui.heading_suffix(
+                txt = _commonassets.strings.compose.heading_suffix(
                     main=classicassets.strings.multiteam.best_of_final(
                         count=str(session.get_series_length())
                     )
@@ -232,7 +232,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 transition_delay=tval,
             ).autoretain()
             Text(
-                classicassets.strings.ui.parenthesized(
+                _commonassets.strings.compose.parenthesized(
                     note=classicassets.strings.multiteam.kills_tally(
                         count=str(most_kills)
                     )
@@ -286,7 +286,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 transition_delay=tval,
             ).autoretain()
             Text(
-                classicassets.strings.ui.parenthesized(
+                _commonassets.strings.compose.parenthesized(
                     note=classicassets.strings.multiteam.deaths_tally(
                         count=str(most_killed)
                     )

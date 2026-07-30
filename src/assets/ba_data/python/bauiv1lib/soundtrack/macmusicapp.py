@@ -6,7 +6,7 @@ import copy
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -44,7 +44,7 @@ class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(35, self._height - 65),
             size=(130, 50),
-            label=classicassets.strings.ui.cancel,
+            label=_commonassets.strings.actions.cancel,
             on_activate_call=self._back,
             autoselect=True,
         )

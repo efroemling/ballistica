@@ -9,7 +9,7 @@ from bacommon.analytics import ClassicAnalyticsEvent
 import bascenev1 as bs
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1lib.popup import PopupWindow
 
@@ -237,7 +237,7 @@ class PlayOptionsWindow(PopupWindow):
                             )
                         desc_color = (0, 1, 0) if owned else (1, 0, 0)
                     except Exception:
-                        desc = classicassets.strings.ui.invalid
+                        desc = _commonassets.strings.status.invalid
                         desc_color = (1, 0, 0)
 
                     btn = bui.buttonwidget(
@@ -416,7 +416,7 @@ class PlayOptionsWindow(PopupWindow):
             on_activate_call=self._on_ok_press,
             autoselect=True,
             label=(
-                classicassets.strings.ui.ok
+                _commonassets.strings.actions.ok
                 if self._playlist_select_context is not None
                 else classicassets.strings.ui.play
             ),

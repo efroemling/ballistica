@@ -32,7 +32,7 @@ class JoinInfo:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _commonassets, classicassets
         from bascenev1._nodeactor import NodeActor
 
         self._state = 0
@@ -86,7 +86,7 @@ class JoinInfo:
             msg2 = classicassets.strings.lobby.press_to_override_character(
                 buttons=classicassets.strings.lobby.bomb
             )
-            msg3 = classicassets.strings.ui.angle_button_suffix(
+            msg3 = _commonassets.strings.compose.angle_button_suffix(
                 main=msg2, button=self._press_to_bomb
             )
             self._messages = (
@@ -116,7 +116,7 @@ class JoinInfo:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _commonassets, classicassets
 
         classic = babase.app.classic
         assert classic is not None
@@ -124,16 +124,16 @@ class JoinInfo:
         punch_key = keyboard.get_button_name(
             classic.get_input_device_mapped_value(keyboard, 'buttonPunch')
         )
-        self._press_to_punch = classicassets.strings.ui.or_join(
+        self._press_to_punch = _commonassets.strings.compose.or_join(
             a=f'\'{punch_key}\'', b=self._press_to_punch
         )
         bomb_key = keyboard.get_button_name(
             classic.get_input_device_mapped_value(keyboard, 'buttonBomb')
         )
-        self._press_to_bomb = classicassets.strings.ui.or_join(
+        self._press_to_bomb = _commonassets.strings.compose.or_join(
             a=f'\'{bomb_key}\'', b=self._press_to_bomb
         )
-        self._joinmsg = classicassets.strings.ui.angle_button_suffix(
+        self._joinmsg = _commonassets.strings.compose.angle_button_suffix(
             main=classicassets.strings.lobby.press_punch_to_join,
             button=self._press_to_punch,
         )
@@ -176,7 +176,7 @@ class Chooser:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets, classicassets
+        from bascenev1 import _commonassets, builtinassets, classicassets
 
         self._deek_sound = builtinassets.audio.deek.get()
         self._click_sound = builtinassets.audio.click01.get()
@@ -560,7 +560,7 @@ class Chooser:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _commonassets, classicassets
 
         name_raw = name = self._profilenames[self._profileindex]
         clamp = False
@@ -841,14 +841,14 @@ class Chooser:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _commonassets, classicassets
 
         assert self._text_node is not None
         text: str | babase.LangStr
         if self._ready:
             # Once we're ready, we've saved the name, so lets ask the system
             # for it so we get appended numbers and stuff.
-            text = classicassets.strings.ui.paren_suffix(
+            text = _commonassets.strings.compose.paren_suffix(
                 main=self._sessionplayer.getname(full=True),
                 note=classicassets.strings.lobby.ready,
             )
@@ -932,7 +932,7 @@ class Chooser:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets, classicassets
+        from bascenev1 import _commonassets, builtinassets, classicassets
 
         assert babase.app.classic is not None
         if self._profilenames[self._profileindex] == '_edit':

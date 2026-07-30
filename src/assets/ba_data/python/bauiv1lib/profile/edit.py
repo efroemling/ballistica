@@ -11,7 +11,7 @@ from bauiv1lib.characterpicker import CharacterPickerDelegate
 from bauiv1lib.iconpicker import IconPickerDelegate
 from bauiv1lib.connectivity import wait_for_connectivity
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 import bascenev1 as bs
 
@@ -87,7 +87,7 @@ class EditProfileWindow(
             size=(155, 60),
             scale=0.8,
             autoselect=True,
-            label=classicassets.strings.ui.cancel,
+            label=_commonassets.strings.actions.cancel,
             on_activate_call=self._cancel,
         )
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)
@@ -97,7 +97,7 @@ class EditProfileWindow(
             size=(155, 60),
             autoselect=True,
             scale=0.8,
-            label=classicassets.strings.ui.save,
+            label=_commonassets.strings.actions.save,
         )
 
         bui.widget(edit=save_button, left_widget=cancel_button)
@@ -198,7 +198,7 @@ class EditProfileWindow(
         if not self._is_account_profile and not self._global:
             bui.textwidget(
                 parent=self._root_widget,
-                text=classicassets.strings.ui.name,
+                text=_commonassets.strings.values.name,
                 position=(200 + x_inset, v - 6),
                 size=(0, 0),
                 h_align='right',
@@ -375,7 +375,7 @@ class EditProfileWindow(
             )
             self._upgrade_button = bui.buttonwidget(
                 parent=self._root_widget,
-                label=classicassets.strings.ui.upgrade,
+                label=_commonassets.strings.actions.upgrade,
                 size=(40, 17),
                 text_scale=1.0,
                 button_type='square',
@@ -386,7 +386,7 @@ class EditProfileWindow(
             )
             self._random_name_button = bui.buttonwidget(
                 parent=self._root_widget,
-                label=classicassets.strings.ui.random,
+                label=_commonassets.strings.values.random,
                 size=(30, 20),
                 position=(495 + x_inset, v - 20),
                 button_type='square',
@@ -522,7 +522,7 @@ class EditProfileWindow(
                     if self._is_account_profile
                     else (1.0, 0.5, 0.5)
                 ),
-                label=classicassets.strings.ui.delete,
+                label=_commonassets.strings.actions.delete,
                 on_activate_call=bui.WeakCallStrict(self._delete_press),
                 enable_sound=not self._is_account_profile,
             )

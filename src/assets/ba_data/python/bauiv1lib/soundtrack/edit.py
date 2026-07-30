@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, cast, override
 import bascenev1 as bs
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -80,7 +80,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             position=(x_inset + 10, yoffs - 60),
             size=(160, 60),
             autoselect=True,
-            label=classicassets.strings.ui.cancel,
+            label=_commonassets.strings.actions.cancel,
             scale=0.8,
         )
         save_button = bui.buttonwidget(
@@ -93,7 +93,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             ),
             autoselect=True,
             size=(160, 60),
-            label=classicassets.strings.ui.save,
+            label=_commonassets.strings.actions.save,
             scale=0.8,
         )
         bui.widget(edit=save_button, left_widget=cancel_button)
@@ -146,7 +146,7 @@ class SoundtrackEditWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            text=classicassets.strings.ui.name,
+            text=_commonassets.strings.values.name,
             maxwidth=80,
             scale=0.8,
             position=(105 + x_inset, v + 19),
@@ -180,7 +180,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             v_align='center',
             max_chars=32,
             autoselect=True,
-            description=classicassets.strings.ui.name,
+            description=_commonassets.strings.values.name,
             editable=True,
             padding=4,
             on_return_press_call=self._do_it_with_sound,

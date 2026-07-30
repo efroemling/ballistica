@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1 import builtinassets
 
@@ -51,7 +51,7 @@ class GamepadSelectWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(20, height - 60),
             size=(130, 60),
-            label=classicassets.strings.ui.back,
+            label=_commonassets.strings.actions.back,
             button_type='back',
             scale=0.8,
             on_activate_call=self.main_window_back,
@@ -211,7 +211,7 @@ class _NotConfigurableWindow(bui.MainWindow):
             parent=self._root_widget,
             position=((width - button_width) / 2, 20),
             size=(button_width, 60),
-            label=classicassets.strings.ui.ok,
+            label=_commonassets.strings.actions.ok,
             on_activate_call=self.main_window_back,
         )
         bui.containerwidget(edit=self._root_widget, cancel_button=btn)

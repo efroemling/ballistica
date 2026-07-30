@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, cast, override
 from bacommon.analytics import ClassicAnalyticsEvent
 from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 import bascenev1 as bs
 
@@ -607,7 +607,7 @@ class PublicGatherTab(GatherTab):
         )
         v = c_height - 35
         v -= 60
-        filter_txt = classicassets.strings.ui.filter
+        filter_txt = _commonassets.strings.actions.filter
         self._filter_text = bui.textwidget(
             parent=self._container,
             id=f'{self._idprefix}|filter',
@@ -635,7 +635,7 @@ class PublicGatherTab(GatherTab):
         )
 
         bui.textwidget(
-            text=classicassets.strings.ui.name,
+            text=_commonassets.strings.values.name,
             parent=self._container,
             size=(0, 0),
             position=((c_width - sub_scroll_width) * 0.5 + 50, v - 8),
@@ -1040,7 +1040,7 @@ class PublicGatherTab(GatherTab):
                     if self._have_server_list_response:
                         bui.textwidget(
                             edit=self._join_status_text,
-                            text=classicassets.strings.ui.error,
+                            text=_commonassets.strings.values.error,
                         )
                         bui.spinnerwidget(
                             edit=self._join_status_spinner, visible=False

@@ -2,13 +2,105 @@
 #
 """Functionality for wrangling locale info."""
 
+# Length here is exhaustive per-locale data, not accumulated cruft: five
+# properties each if-chain over all ~44 values so assert_never() makes a
+# missed locale a type error. Those chains have to sit next to the enum
+# to do that, so splitting them out would trade the guarantee for a line
+# count.
+# pylint: disable=too-many-lines
+
 import logging
+import unicodedata
 from enum import Enum
 from functools import cached_property, lru_cache
 from typing import TYPE_CHECKING, assert_never, assert_type
 
 if TYPE_CHECKING:
     pass
+
+
+#: Separator between a language picker entry's two halves.
+#:
+#: **This is a workaround for an engine text-layout quirk, and the exact
+#: character matters. Do not "clean this up" to an em dash.**
+#:
+#: The game client absorbs punctuation into an adjacent OS-rendered text
+#: span on purpose, so punctuation next to OS-drawn glyphs doesn't
+#: visually mismatch it (``TextGraphics::IsOSDrawableAscii``, whose
+#: comment says as much). The layout loop is roughly::
+#:
+#:     if (IsOSDrawableAscii(val) && !os_span.empty()) {
+#:         os_span.push_back(val);          // absorbed
+#:     } else if (Glyph* g = GetGlyph(val, big)) {
+#:         ...                              // baked glyph; CLOSES the span
+#:     } else {
+#:         os_span.push_back(val);          // no glyph -> absorbed anyway
+#:     }
+#:
+#: An RTL endonym opens an OS span. A separator that gets absorbed joins
+#: that span, so bidi runs over "<arabic> - " as one unit, resolves the
+#: trailing neutrals against an RTL paragraph, and draws them on the
+#: *left*: ``- العربية Arabic``. A separator that instead closes the span
+#: leaves the Arabic alone in it, where it shapes correctly.
+#:
+#: U+00B7 MIDDLE DOT closes it because it clears **both** gates, and each
+#: is independently required:
+#:
+#: 1. It is above every ASCII range ``IsOSDrawableAscii`` tests
+#:    (32-47, 58-64, 91-96, 123-126), so it is not absorbed. An ASCII
+#:    hyphen (45) sits in the first range and IS absorbed -- which is why
+#:    swapping the em dash for a hyphen changed nothing.
+#: 2. It is under ``kGlyphCount`` (1280) and ``g_glyph_map[183]`` is a
+#:    real font page, so it has a baked glyph and takes the span-closing
+#:    branch.
+#:
+#: Miss either and it breaks: an em dash (U+2014) clears gate 1 but is
+#: above 1280, so it has no baked glyph, falls to the final ``else``, and
+#: is absorbed regardless. Same for a bullet (U+2022). **So the rule is
+#: NOT "use any non-ASCII character"** -- it is "128-1279 with a baked
+#: glyph", or one of the ASCII characters ``IsOSDrawableAscii``
+#: explicitly excludes (parens, quotes, brackets).
+#:
+#: Parentheses would work too and were the original form, but they nest
+#: badly: the qualified variants already carry their own parenthetical on
+#: both sides, giving ``Português (Brasil) (Portuguese (Brazil))``.
+#:
+#: Verified on Android 2026-07-30. That generalizes across platforms in a
+#: way the earlier bidi-isolate attempt did not: this hinges on the baked
+#: font sheet and on platform-independent engine code, not on each
+#: platform's text stack. Full trace, including two failed approaches, in
+#: ballistica-internal ``docs/followups.md``.
+LANGUAGE_PICKER_SEPARATOR = '\u00b7'  # MIDDLE DOT
+
+
+def language_picker_label(locale: LocaleResolved, translated_name: str) -> str:
+    """Build one entry for a language picker.
+
+    Reads ``"<endonym> · <name in the reader's language>"``, e.g.
+    ``"Svenska · Swedish"``, collapsing to just the endonym when the two
+    would be identical (the entry for the language you already use).
+    The endonym lets a speaker find their own language whatever the ui
+    is set to; the translated name lets everyone else identify a script
+    they cannot read. Shape follows macOS's language list, which uses a
+    dash; see :data:`LANGUAGE_PICKER_SEPARATOR` for why we cannot.
+
+    Known remaining wart, engine-side: the space *before* the separator
+    still gets absorbed into an RTL endonym's span, so those rows render
+    slightly tight on that side (``العربية· Arabic``). And when *both*
+    halves are non-ASCII -- an RTL endonym in a CJK ui -- everything
+    lands in one span whatever the separator, and one of the two orders
+    always reverses. That one needs real mixed-direction layout in the
+    engine (docs/followups.md). The master server's html picker is
+    unaffected throughout: the browser lays out the whole string itself.
+
+    Lives beside the data rather than in either picker because there
+    are two of them -- the client's settings window and the master
+    server's account-settings page -- and they have already drifted
+    once on ordering.
+    """
+    if locale.endonym == translated_name:
+        return locale.endonym
+    return f'{locale.endonym} {LANGUAGE_PICKER_SEPARATOR} {translated_name}'
 
 
 class Locale(Enum):
@@ -559,6 +651,155 @@ class LocaleResolved(Enum):
 
         # Make sure we're covering all cases.
         assert_never(self)
+
+    @cached_property
+    def endonym(self) -> str:
+        """This locale's name written in this locale's own language.
+
+        Static per-locale data, deliberately *not* a translated string:
+        a language picker shows every option at once, which no
+        single-locale string table can do (a client holds one locale's
+        strings at a time). It is also what lets a user find their
+        language whatever the ui is currently set to. Pair it with a
+        translated language name -- see the ``strings/locales`` group in
+        BaCommonAssets -- to render e.g. "Svenska (Swedish)".
+
+        Values match what shipped in the legacy ``lang_names_translated``
+        blob, so players see no churn, with these deliberate deviations:
+
+        * English was simply absent there and is supplied here.
+        * Slovak's stray trailing space is dropped.
+        * Latin-American Spanish gains the accent it was missing
+          ("Latinoamérica").
+        * Gibberish's was 'Abuktarika', which sorted it to the very top
+          of every picker -- a surprising spot for a joke locale. It now
+          starts with a G so it lands where someone hunting for it would
+          look, keeping the mock-English style of the locale's own
+          output ('Germaunish', 'Sveendishsprok').
+        * Persian's wrapping bidi controls (U+2066/U+200E) are dropped.
+          Directional isolation is a *rendering* concern, and both
+          consumers already give each entry its own container (an html
+          ``<option>``, a popup-menu row), so the run cannot bleed into
+          a neighbor. A caller placing one of these inline in mixed
+          text should isolate it there.
+        """
+        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-return-statements
+
+        cls = LocaleResolved
+
+        if self is cls.ENGLISH:
+            return 'English'
+        if self is cls.CHINESE_TRADITIONAL:
+            return '繁體中文'
+        if self is cls.CHINESE_SIMPLIFIED:
+            return '简体中文'
+        if self is cls.PORTUGUESE_PORTUGAL:
+            return 'Português (Portugal)'
+        if self is cls.PORTUGUESE_BRAZIL:
+            return 'Português (Brasil)'
+        if self is cls.ARABIC:
+            return 'العربية'
+        if self is cls.BELARUSSIAN:
+            return 'Беларуская'
+        if self is cls.CROATIAN:
+            return 'Hrvatski'
+        if self is cls.CZECH:
+            return 'Čeština'
+        if self is cls.DANISH:
+            return 'Dansk'
+        if self is cls.DUTCH:
+            return 'Nederlands'
+        if self is cls.PIRATE_SPEAK:
+            return 'Pirate Speak'
+        if self is cls.ESPERANTO:
+            return 'Esperanto'
+        if self is cls.FILIPINO:
+            return 'Wikang Pilipino'
+        if self is cls.FRENCH:
+            return 'Français'
+        if self is cls.GERMAN:
+            return 'Deutsch'
+        if self is cls.GIBBERISH:
+            return 'Gibbereesh'
+        if self is cls.GREEK:
+            return 'Ελληνικά'
+        if self is cls.HINDI:
+            return 'हिंदी'
+        if self is cls.HUNGARIAN:
+            return 'Magyar'
+        if self is cls.INDONESIAN:
+            return 'Bahasa Indonesia'
+        if self is cls.ITALIAN:
+            return 'Italiano'
+        if self is cls.KOREAN:
+            return '한국어'
+        if self is cls.MALAY:
+            return 'Melayu'
+        if self is cls.PERSIAN:
+            return 'فارسی'
+        if self is cls.POLISH:
+            return 'Polski'
+        if self is cls.ROMANIAN:
+            return 'Română'
+        if self is cls.RUSSIAN:
+            return 'Русский'
+        if self is cls.SERBIAN:
+            return 'Српски'
+        if self is cls.SPANISH_LATIN_AMERICA:
+            return 'Español (Latinoamérica)'
+        if self is cls.SPANISH_SPAIN:
+            return 'Español (España)'
+        if self is cls.SLOVAK:
+            return 'Slovenčina'
+        if self is cls.SWEDISH:
+            return 'Svenska'
+        if self is cls.TAMIL:
+            return 'தமிழ்'
+        if self is cls.THAI:
+            return 'ภาษาไทย'
+        if self is cls.TURKISH:
+            return 'Türkçe'
+        if self is cls.UKRAINIAN:
+            return 'Українська'
+        if self is cls.VENETIAN:
+            return 'Veneto'
+        if self is cls.VIETNAMESE:
+            return 'Tiếng Việt'
+        if self is cls.KAZAKH:
+            return 'Қазақша'
+        if self is cls.JAPANESE:
+            return '日本語'
+
+        # Make sure we're covering all cases.
+        assert_never(self)
+
+    @cached_property
+    def endonym_sort_key(self) -> str:
+        """Sort key for listing locales by :attr:`endonym`.
+
+        Endonym order is what a language picker wants: it is the half of
+        the label the eye scans for, and unlike ordering by translated
+        name it does not reshuffle the whole list when the ui language
+        changes.
+
+        Accents are folded so a leading diacritic doesn't exile an entry
+        from its own alphabet -- raw codepoint order files "Čeština"
+        after "Wikang Pilipino". Non-Latin scripts still land after Latin
+        ones, which reads as a reasonable grouping rather than an error.
+        Deliberately not full locale-aware collation: that needs ICU, and
+        the result here is stable and good enough for a few dozen
+        entries.
+
+        Lives here rather than in each picker because there are two of
+        them -- the client's settings window and the master server's
+        account-settings page -- and they silently disagreed about
+        ordering until 2026-07-30.
+        """
+        decomposed = unicodedata.normalize('NFD', self.endonym)
+        return ''.join(
+            c for c in decomposed if not unicodedata.combining(c)
+        ).casefold()
 
     @cached_property
     def tag(self) -> str:

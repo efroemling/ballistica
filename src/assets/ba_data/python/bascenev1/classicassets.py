@@ -1,19 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.260726c`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.260729`` (bascenev1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.baclassicassets.260726c
+# ba_meta require asset-package a-0.baclassicassets.260729
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.baclassicassets.260726c'
+__asset_package__ = 'a-0.baclassicassets.260729'
 
 from typing import TYPE_CHECKING
 
@@ -965,7 +965,7 @@ if TYPE_CHECKING:
         #:
         #:     Blurb explaining the benefits of signing in.
         #:
-        #:     English: "Sign in to collect tickets, compete online, and share
+        #:     English: "Sign in to collect Tickets, compete online, and share
         #:     progress across devices."
         sign_in_info: LangStr
 
@@ -3309,8 +3309,8 @@ if TYPE_CHECKING:
 
                 Header naming a ticket gift from a friend.
 
-                English: (one) "# {app_name} ticket from {name}" / (other) "#
-                {app_name} tickets from {name}"
+                English: (one) "# {app_name} Ticket from {name}" / (other) "#
+                {app_name} Tickets from {name}"
             """
 
         def friend_promo_award(self, *, count: int) -> LangStr:
@@ -3319,8 +3319,8 @@ if TYPE_CHECKING:
 
                 Explanation of the ticket reward per redemption.
 
-                English: (one) "You will receive # ticket each time it is used."
-                / (other) "You will receive # tickets each time it is used."
+                English: (one) "You will receive # Ticket each time it is used."
+                / (other) "You will receive # Tickets each time it is used."
             """
 
         def friend_promo_expire(self, *, expire_hours: int) -> LangStr:
@@ -3356,9 +3356,9 @@ if TYPE_CHECKING:
                 How many free tickets a promo code grants and to how many
                 people.
 
-                English: (one) "It can be redeemed for # free ticket by up to
+                English: (one) "It can be redeemed for # free Ticket by up to
                 {max_uses} people." / (other) "It can be redeemed for # free
-                tickets by up to {max_uses} people."
+                Tickets by up to {max_uses} people."
             """
 
         def friend_promo_redeem_short(self, *, count: int) -> LangStr:
@@ -3367,8 +3367,8 @@ if TYPE_CHECKING:
 
                 Short note of ticket value for a code.
 
-                English: (one) "It can be redeemed for # ticket in the game." /
-                (other) "It can be redeemed for # tickets in the game."
+                English: (one) "It can be redeemed for # Ticket in the game." /
+                (other) "It can be redeemed for # Tickets in the game."
             """
 
         #: ::
@@ -3683,7 +3683,7 @@ if TYPE_CHECKING:
         #:
         #:     Note that the player can open a chest early.
         #:
-        #:     English: "You have enough tokens to open this now - you don't
+        #:     English: "You have enough Tokens to open this now - you don't
         #:     need to wait."
         open_now_description: LangStr
 
@@ -3705,7 +3705,7 @@ if TYPE_CHECKING:
         #:
         #:     Explanation of what a chest slot holds.
         #:
-        #:     English: "This slot can hold a chest. Earn chests by playing
+        #:     English: "This slot can hold a Chest. Earn Chests by playing
         #:     campaign levels, placing in tournaments, and completing
         #:     achievements."
         slot_description: LangStr
@@ -4394,8 +4394,8 @@ if TYPE_CHECKING:
 
                 Confirmation of how many tickets were received.
 
-                English: (one) "Received # ticket!" / (other) "Received #
-                tickets!"
+                English: (one) "Received # Ticket!" / (other) "Received #
+                Tickets!"
             """
 
         def you_got_tokens(self, *, tokens: int) -> LangStr:
@@ -4405,7 +4405,7 @@ if TYPE_CHECKING:
                 Confirmation effect sent to game clients when tokens are
                 credited (store purchases, promo codes, and other grant flows).
 
-                English: (one) "You got # token!" / (other) "You got # tokens!"
+                English: (one) "You got # Token!" / (other) "You got # Tokens!"
             """
 
     class StringsFileselectorGroup:
@@ -5620,7 +5620,7 @@ if TYPE_CHECKING:
                 Blurb about inviting friends for a ticket reward.
 
                 English: "Friends don't have the game? Invite them to try it and
-                they'll receive {count} free tickets."
+                they'll receive {count} free Tickets."
             """
 
         #: ::
@@ -6080,7 +6080,7 @@ if TYPE_CHECKING:
         #:
         #:     Notice that the player owns a Gold Pass.
         #:
-        #:     English: "You have a Gold Pass. All token purchases are free.
+        #:     English: "You have a Gold Pass. All Token purchases are free.
         #:     Enjoy!"
         you_have_gold_pass: LangStr
 
@@ -7982,7 +7982,7 @@ if TYPE_CHECKING:
         #:     Explanation of what tickets are and how to get them.
         #:
         #:     English: "Tickets can be used to unlock characters, maps,
-        #:     minigames, and more in the store. Tickets can be found in chests
+        #:     minigames, and more in the store. Tickets can be found in Chests
         #:     won through campaigns, tournaments, and achievements."
         tickets_description: LangStr
 
@@ -7990,7 +7990,7 @@ if TYPE_CHECKING:
         #:
         #:     Explanation of what tokens are and how to get them.
         #:
-        #:     English: "Tokens are used to speed up chest unlocks and for other
+        #:     English: "Tokens are used to speed up Chest unlocks and for other
         #:     game and account features. You can win tokens in the game or buy
         #:     them in packs. Or buy a Gold Pass for infinite tokens and never
         #:     hear about them again."
@@ -9908,13 +9908,6 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Button label to accept an offer or invitation.
-        #:
-        #:     English: "Accept"
-        accept: LangStr
-
-        #: ::
-        #:
         #:     Generic "Achievements" label/heading.
         #:
         #:     English: "Achievements"
@@ -9929,66 +9922,10 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Generic 'All' filter/category label (e.g. showing all items in a
-        #:     list).
-        #:
-        #:     English: "All"
-        all: LangStr
-
-        #: ::
-        #:
-        #:     Generic 'Always' option value (e.g. when to apply an effect).
-        #:
-        #:     English: "Always"
-        always: LangStr
-
-        def angle_button_suffix(
-            self, *, main: str | LangStr, button: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template appending an angle-bracketed button
-                hint to a prompt; substitution-only.
-
-                English: "{main} < {button} >"
-            """
-
-        #: ::
-        #:
         #:     The app's name; byte-identical in every language.
         #:
         #:     English: "BombSquad"
         app_name: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Apply" button label.
-        #:
-        #:     English: "Apply"
-        apply: LangStr
-
-        #: ::
-        #:
-        #:     Default confirmation-dialog question.
-        #:
-        #:     English: "Are you sure?"
-        are_you_sure: LangStr
-
-        #: ::
-        #:
-        #:     Generic 'Auto' option value (automatic selection, e.g. graphics
-        #:     quality or resolution).
-        #:
-        #:     English: "Auto"
-        auto: LangStr
-
-        #: ::
-        #:
-        #:     Generic back-navigation button label.
-        #:
-        #:     English: "Back"
-        back: LangStr
 
         #: ::
         #:
@@ -9999,109 +9936,10 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Abort button label; backs out of a dialog or in-progress action
-        #:     without applying anything. NOT a "no" answer to a question and
-        #:     not "back" navigation.
-        #:
-        #:     English: "Cancel"
-        cancel: LangStr
-
-        #: ::
-        #:
         #:     Button label to claim a reward.
         #:
         #:     English: "Claim"
         claim: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Code" field label.
-        #:
-        #:     English: "Code"
-        code: LangStr
-
-        #: ::
-        #:
-        #:     Confirmation label; commits a pending action (purchases and other
-        #:     are-you-sure moments). Appears on commit buttons and as
-        #:     confirm-dialog titles. Stronger than "ok" — implies something
-        #:     happens as a result.
-        #:
-        #:     English: "Confirm"
-        confirm: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Connect" button label.
-        #:
-        #:     English: "Connect"
-        connect: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Connected." status label.
-        #:
-        #:     English: "Connected."
-        connected: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Connecting..." status label.
-        #:
-        #:     English: "Connecting..."
-        connecting: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Continue" button label.
-        #:
-        #:     English: "Continue"
-        continue_: LangStr
-
-        #: ::
-        #:
-        #:     Confirmation shown after copying text to the clipboard.
-        #:
-        #:     English: "Copied to clipboard."
-        copied_to_clipboard: LangStr
-
-        #: ::
-        #:
-        #:     Generic copy-to-clipboard button label.
-        #:
-        #:     English: "Copy"
-        copy: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Customize..." button label.
-        #:
-        #:     English: "Customize..."
-        customize: LangStr
-
-        def dash_wrap(self, *, main: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template flanking a label with dashes;
-                substitution-only.
-
-                English: "- {main} -"
-            """
-
-        #: ::
-        #:
-        #:     Button label to decline an offer or invitation.
-        #:
-        #:     English: "Decline"
-        decline: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Delete" button label.
-        #:
-        #:     English: "Delete"
-        delete: LangStr
 
         #: ::
         #:
@@ -10112,57 +9950,6 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Generic "Deprecated" marker for outdated options.
-        #:
-        #:     English: "Deprecated"
-        deprecated: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Description" field label.
-        #:
-        #:     English: "Description"
-        description: LangStr
-
-        #: ::
-        #:
-        #:     Instruction to open a URL in a web browser.
-        #:
-        #:     English: "Please direct a web-browser to the following URL:"
-        direct_browser_to_url: LangStr
-
-        #: ::
-        #:
-        #:     Generic 'Disabled' state/filter label.
-        #:
-        #:     English: "Disabled"
-        disabled: LangStr
-
-        #: ::
-        #:
-        #:     Button label to discard something.
-        #:
-        #:     English: "Discard"
-        discard: LangStr
-
-        #: ::
-        #:
-        #:     Completion button label; closes a screen or flow the user has
-        #:     finished working in. Implies completed work — not a generic
-        #:     "close" or "back".
-        #:
-        #:     English: "Done"
-        done: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Duplicate" button label.
-        #:
-        #:     English: "Duplicate"
-        duplicate: LangStr
-
-        #: ::
-        #:
         #:     Generic "Easy" difficulty label.
         #:
         #:     English: "Easy"
@@ -10170,56 +9957,10 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Generic "Edit" button label.
-        #:
-        #:     English: "Edit"
-        edit: LangStr
-
-        def ellipsis_suffix(self, *, main: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template appending an ellipsis to a status
-                label; substitution-only.
-
-                English: "{main}..."
-            """
-
-        #: ::
-        #:
-        #:     Generic 'Enabled' state/filter label.
-        #:
-        #:     English: "Enabled"
-        enabled: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Enter" button label.
-        #:
-        #:     English: "Enter"
-        enter: LangStr
-
-        #: ::
-        #:
         #:     Generic "Epic Mode" label.
         #:
         #:     English: "Epic Mode"
         epic_mode: LangStr
-
-        #: ::
-        #:
-        #:     Error-dialog title label; the dialog body carries the failure
-        #:     details. Title only — never used as a full error message.
-        #:
-        #:     English: "Error"
-        error: LangStr
-
-        #: ::
-        #:
-        #:     Generic error-page message.
-        #:
-        #:     English: "An error has occurred."
-        error_occurred: LangStr
 
         def exit_app_confirm(self, *, app_name: str | LangStr) -> LangStr:
             """
@@ -10229,13 +9970,6 @@ if TYPE_CHECKING:
 
                 English: "Exit {app_name}?"
             """
-
-        #: ::
-        #:
-        #:     Generic "Filter" label.
-        #:
-        #:     English: "Filter"
-        filter: LangStr
 
         #: ::
         #:
@@ -10259,18 +9993,6 @@ if TYPE_CHECKING:
         #:     English: "Game Center"
         game_center: LangStr
 
-        def gapped_pair(
-            self, *, first: str | LangStr, second: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template joining two labels with a wide gap;
-                substitution-only.
-
-                English: "{first} {second}"
-            """
-
         #: ::
         #:
         #:     The "Google Play" service name; byte-identical in every language.
@@ -10285,77 +10007,12 @@ if TYPE_CHECKING:
         #:     English: "Hard"
         hard: LangStr
 
-        def heading_suffix(self, *, main: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template appending a colon to a heading label;
-                substitution-only.
-
-                English: "{main}:"
-            """
-
-        #: ::
-        #:
-        #:     Generic 'High' quality-level option value.
-        #:
-        #:     English: "High"
-        high: LangStr
-
-        #: ::
-        #:
-        #:     Generic 'Higher' quality-level option value (a step above
-        #:     'High').
-        #:
-        #:     English: "Higher"
-        higher: LangStr
-
-        def icon_label(
-            self, *, icon: str | LangStr, label: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template joining an icon glyph and a text label
-                with a space; substitution-only.
-
-                English: "{icon} {label}"
-            """
-
-        #: ::
-        #:
-        #:     Button label to ignore something.
-        #:
-        #:     English: "Ignore"
-        ignore: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Import" button label.
-        #:
-        #:     English: "Import"
-        import_: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Importing..." status label.
-        #:
-        #:     English: "Importing..."
-        importing: LangStr
-
         #: ::
         #:
         #:     Generic "Inbox" label.
         #:
         #:     English: "Inbox"
         inbox: LangStr
-
-        #: ::
-        #:
-        #:     Parenthetical "(invalid)" marker.
-        #:
-        #:     English: "(invalid)"
-        invalid: LangStr
 
         #: ::
         #:
@@ -10373,39 +10030,6 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Generic "Learn More" button label.
-        #:
-        #:     English: "Learn More"
-        learn_more: LangStr
-
-        def line_pair(
-            self, *, first: str | LangStr, second: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template stacking two labels on separate lines;
-                substitution-only.
-
-                English: "{first} {second}"
-            """
-
-        #: ::
-        #:
-        #:     Generic lowercase "loading" status word.
-        #:
-        #:     English: "loading"
-        loading: LangStr
-
-        #: ::
-        #:
-        #:     Generic 'Low' quality-level option value.
-        #:
-        #:     English: "Low"
-        low: LangStr
-
-        #: ::
-        #:
         #:     Generic "Map" label.
         #:
         #:     English: "Map"
@@ -10413,161 +10037,10 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Generic 'Medium' quality-level option value.
-        #:
-        #:     English: "Medium"
-        medium: LangStr
-
-        #: ::
-        #:
-        #:     Generic "More..." label for expanding a list or seeing additional
-        #:     items.
-        #:
-        #:     English: "More..."
-        more: LangStr
-
-        #: ::
-        #:
-        #:     Notice shown when a changed setting only takes effect after an
-        #:     app restart.
-        #:
-        #:     English: "You must restart the game for this to take effect."
-        must_restart: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Name" field label.
-        #:
-        #:     English: "Name"
-        name: LangStr
-
-        #: ::
-        #:
-        #:     Error-page message.
-        #:
-        #:     English: "You must update the app to view this."
-        need_update: LangStr
-
-        #: ::
-        #:
-        #:     Generic 'Never' option value (e.g. when to apply an effect).
-        #:
-        #:     English: "Never"
-        never: LangStr
-
-        #: ::
-        #:
-        #:     Generic "New" button label.
-        #:
-        #:     English: "New"
-        new: LangStr
-
-        #: ::
-        #:
-        #:     Generic "not available" apology.
-        #:
-        #:     English: "Sorry, this is not available."
-        not_available: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Not Now" dismiss button.
-        #:
-        #:     English: "Not Now"
-        not_now: LangStr
-
-        #: ::
-        #:
         #:     Lowercase "not signed in" status indicator.
         #:
         #:     English: "not signed in"
         not_signed_in_status: LangStr
-
-        #: ::
-        #:
-        #:     Placeholder label shown on an empty doc-ui section with no items
-        #:     to display.
-        #:
-        #:     English: "There is nothing here."
-        nothing_here: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Off" toggle label.
-        #:
-        #:     English: "Off"
-        off: LangStr
-
-        #: ::
-        #:
-        #:     Generic affirmative/acknowledge button label; dismisses a dialog
-        #:     or message with agreement. NOT a "yes" answer to a question (use
-        #:     a dedicated yes/no pair for those).
-        #:
-        #:     English: "Ok"
-        ok: LangStr
-
-        #: ::
-        #:
-        #:     Generic "On" toggle label.
-        #:
-        #:     English: "On"
-        on: LangStr
-
-        #: ::
-        #:
-        #:     Generic "One Moment..." status line.
-        #:
-        #:     English: "One Moment..."
-        one_moment: LangStr
-
-        def or_join(self, *, a: str | LangStr, b: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Joiner between exactly two complete pre-rendered alternatives
-                (e.g. a price payable in either of two currencies: "500 tickets
-                or 10 tokens"). Not for lists of three or more and not a
-                standalone "or" word.
-
-                English: "{a} or {b}"
-            """
-
-        #: ::
-        #:
-        #:     Generic "Other..." option label.
-        #:
-        #:     English: "Other..."
-        other: LangStr
-
-        #: ::
-        #:
-        #:     Transient screen-message.
-        #:
-        #:     English: "Page is refreshing - try again in a moment."
-        page_refreshing_try_again: LangStr
-
-        def paren_suffix(
-            self, *, main: str | LangStr, note: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template appending a parenthesized note to a
-                main label; substitution-only.
-
-                English: "{main} ({note})"
-            """
-
-        def parenthesized(self, *, note: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template wrapping a whole value in parentheses;
-                substitution-only.
-
-                English: "({note})"
-            """
 
         #: ::
         #:
@@ -10583,13 +10056,6 @@ if TYPE_CHECKING:
         #:
         #:     English: "Playlist"
         playlist: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Please wait..." status line.
-        #:
-        #:     English: "Please wait..."
-        please_wait: LangStr
 
         #: ::
         #:
@@ -10616,13 +10082,6 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Generic 'Random' option value (e.g. random playlist type).
-        #:
-        #:     English: "Random"
-        random: LangStr
-
-        #: ::
-        #:
         #:     Generic "Rank" label.
         #:
         #:     English: "Rank"
@@ -10638,102 +10097,6 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Generic "Rename" button label.
-        #:
-        #:     English: "Rename"
-        rename: LangStr
-
-        #: ::
-        #:
-        #:     Generic reset-to-defaults button label.
-        #:
-        #:     English: "Reset"
-        reset: LangStr
-
-        #: ::
-        #:
-        #:     Button label to restart an activity.
-        #:
-        #:     English: "Restart"
-        restart: LangStr
-
-        #: ::
-        #:
-        #:     Button label.
-        #:
-        #:     English: "Retry"
-        retry: LangStr
-
-        #: ::
-        #:
-        #:     Generic save-changes button label.
-        #:
-        #:     English: "Save"
-        save: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Select" button label.
-        #:
-        #:     English: "Select"
-        select: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Select..." button label.
-        #:
-        #:     English: "Select..."
-        select_ellipsis: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Send" button label.
-        #:
-        #:     English: "Send"
-        send: LangStr
-
-        #: ::
-        #:
-        #:     Error-page message; usually paired with a Retry button.
-        #:
-        #:     English: "Error talking to server."
-        server_error: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Share" button label.
-        #:
-        #:     English: "Share"
-        share: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Sharing..." status label.
-        #:
-        #:     English: "Sharing..."
-        sharing: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Show" button label.
-        #:
-        #:     English: "Show"
-        show: LangStr
-
-        def spaced_pair(
-            self, *, first: str | LangStr, second: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template joining two labels with a space;
-                substitution-only.
-
-                English: "{first} {second}"
-            """
-
-        #: ::
-        #:
         #:     Generic "Stats" label.
         #:
         #:     English: "Stats"
@@ -10741,82 +10104,10 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Notice shown when a feature needs the OS storage-access
-        #:     permission (mobile).
-        #:
-        #:     English: "This requires storage access"
-        storage_permission_needed: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Submit" button label.
-        #:
-        #:     English: "Submit"
-        submit: LangStr
-
-        #: ::
-        #:
-        #:     Lowercase "total" label.
-        #:
-        #:     English: "total"
-        total: LangStr
-
-        #: ::
-        #:
         #:     Generic "Trophies" label.
         #:
         #:     English: "Trophies"
         trophies: LangStr
-
-        #: ::
-        #:
-        #:     Generic failure message asking the player to retry.
-        #:
-        #:     English: "Unable to complete this right now. Please try again."
-        unable_to_complete: LangStr
-
-        #: ::
-        #:
-        #:     Notice when a feature is unavailable, likely due to no internet.
-        #:
-        #:     English: "This is currently unavailable (no internet
-        #:     connection?)"
-        unavailable_no_connection: LangStr
-
-        #: ::
-        #:
-        #:     Lowercase "unavailable" status indicator.
-        #:
-        #:     English: "unavailable"
-        unavailable_status: LangStr
-
-        #: ::
-        #:
-        #:     Error/placeholder-page message.
-        #:
-        #:     English: "Under construction - check back soon."
-        under_construction: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Upgrade" button label.
-        #:
-        #:     English: "Upgrade"
-        upgrade: LangStr
-
-        #: ::
-        #:
-        #:     Small connector word "via" (as in "signed in via X").
-        #:
-        #:     English: "via"
-        via: LangStr
-
-        #: ::
-        #:
-        #:     Generic "What is this?" help link.
-        #:
-        #:     English: "What is this?"
-        what_is_this: LangStr
 
     class StringsV2upgradeGroup:
         """
@@ -11366,8 +10657,8 @@ if TYPE_CHECKING:
     #: ``action_hero_lower_leg``, and 385 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1128 strings (``account``, ``achievements``,
-    #: ``appinvite``, ``characters``, ``chest``, and 1123 more). Full list in
+    #: The ``strings`` group - 1036 strings (``account``, ``achievements``,
+    #: ``appinvite``, ``characters``, ``chest``, and 1031 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -13352,126 +12643,34 @@ _TREE = {
             'to_skip_press_anything': (),
         },
         'ui': {
-            'accept': (),
             'achievements': (),
             'activity': (),
-            'all': (),
-            'always': (),
-            'angle_button_suffix': ('main', 'button'),
             'app_name': (),
-            'apply': (),
-            'are_you_sure': (),
-            'auto': (),
-            'back': (),
             'boost': (),
-            'cancel': (),
             'claim': (),
-            'code': (),
-            'confirm': (),
-            'connect': (),
-            'connected': (),
-            'connecting': (),
-            'continue_': (),
-            'copied_to_clipboard': (),
-            'copy': (),
-            'customize': (),
-            'dash_wrap': ('main',),
-            'decline': (),
-            'delete': (),
             'demo': (),
-            'deprecated': (),
-            'description': (),
-            'direct_browser_to_url': (),
-            'disabled': (),
-            'discard': (),
-            'done': (),
-            'duplicate': (),
             'easy': (),
-            'edit': (),
-            'ellipsis_suffix': ('main',),
-            'enabled': (),
-            'enter': (),
             'epic_mode': (),
-            'error': (),
-            'error_occurred': (),
             'exit_app_confirm': ('app_name',),
-            'filter': (),
             'final_score': (),
             'free': (),
             'game_center': (),
-            'gapped_pair': ('first', 'second'),
             'google_play': (),
             'hard': (),
-            'heading_suffix': ('main',),
-            'high': (),
-            'higher': (),
-            'icon_label': ('icon', 'label'),
-            'ignore': (),
-            'import_': (),
-            'importing': (),
             'inbox': (),
-            'invalid': (),
             'kick': (),
             'leaderboards': (),
-            'learn_more': (),
-            'line_pair': ('first', 'second'),
-            'loading': (),
-            'low': (),
             'map': (),
-            'medium': (),
-            'more': (),
-            'must_restart': (),
-            'name': (),
-            'need_update': (),
-            'never': (),
-            'new': (),
-            'not_available': (),
-            'not_now': (),
             'not_signed_in_status': (),
-            'nothing_here': (),
-            'off': (),
-            'ok': (),
-            'on': (),
-            'one_moment': (),
-            'or_join': ('a', 'b'),
-            'other': (),
-            'page_refreshing_try_again': (),
-            'paren_suffix': ('main', 'note'),
-            'parenthesized': ('note',),
             'play': (),
             'playlist': (),
-            'please_wait': (),
             'points': (),
             'practice': (),
             'quit_app_confirm': ('app_name',),
-            'random': (),
             'rank': (),
             'remote_app_name': (),
-            'rename': (),
-            'reset': (),
-            'restart': (),
-            'retry': (),
-            'save': (),
-            'select': (),
-            'select_ellipsis': (),
-            'send': (),
-            'server_error': (),
-            'share': (),
-            'sharing': (),
-            'show': (),
-            'spaced_pair': ('first', 'second'),
             'stats': (),
-            'storage_permission_needed': (),
-            'submit': (),
-            'total': (),
             'trophies': (),
-            'unable_to_complete': (),
-            'unavailable_no_connection': (),
-            'unavailable_status': (),
-            'under_construction': (),
-            'upgrade': (),
-            'via': (),
-            'what_is_this': (),
         },
         'v2upgrade': {'device_account_upgrade': ('name',)},
         'watch': {

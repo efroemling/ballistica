@@ -12,7 +12,7 @@ from bacommon.login import LoginType
 import bacommon.cloud
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 from bauiv1lib.connectivity import wait_for_connectivity
@@ -640,7 +640,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 position=((self._sub_width - button_width) * 0.5, v - 20),
                 autoselect=True,
                 size=(button_width, 60),
-                label=classicassets.strings.ui.icon_label(
+                label=_commonassets.strings.compose.icon_label(
                     icon=bui.charstr(bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO),
                     label=classicassets.strings.account.sign_in_with(
                         service=classicassets.strings.ui.google_play
@@ -669,7 +669,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 # Note: Apparently Game Center is just called 'Game Center'
                 # in all languages. Can revisit if not true.
                 # https://developer.apple.com/forums/thread/725779
-                label=classicassets.strings.ui.icon_label(
+                label=_commonassets.strings.compose.icon_label(
                     icon=bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO),
                     label=classicassets.strings.account.sign_in_with(
                         service=classicassets.strings.ui.game_center
@@ -700,7 +700,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 # "Discord" is a brand name so we pass it as a literal
                 # (same pattern Game Center uses); the surrounding
                 # "Sign in with..." comes from a translated resource.
-                label=classicassets.strings.ui.icon_label(
+                label=_commonassets.strings.compose.icon_label(
                     icon=bui.charstr(bui.SpecialChar.DISCORD_LOGO),
                     label=classicassets.strings.account.sign_in_with(
                         service='Discord'
@@ -750,7 +750,7 @@ class AccountSettingsWindow(bui.MainWindow):
                     self._sub_width * 0.5,
                     v + (17 if v2infotext is not None else 10),
                 ),
-                text=classicassets.strings.ui.icon_label(
+                text=_commonassets.strings.compose.icon_label(
                     icon=bui.charstr(bui.SpecialChar.V2_LOGO),
                     label=v2labeltext,
                 ),
@@ -798,7 +798,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 v_align='center',
                 size=(0, 0),
                 position=(self._sub_width * 0.5, v + 60),
-                text=classicassets.strings.ui.deprecated,
+                text=_commonassets.strings.values.deprecated,
                 scale=0.8,
                 maxwidth=300,
                 color=(0.6, 0.55, 0.45),
@@ -811,7 +811,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 v_align='center',
                 size=(0, 0),
                 position=(self._sub_width * 0.5, v + 17),
-                text=classicassets.strings.ui.icon_label(
+                text=_commonassets.strings.compose.icon_label(
                     icon=bui.charstr(bui.SpecialChar.LOCAL_ACCOUNT),
                     label=classicassets.strings.account.sign_in_with_device,
                 ),
@@ -915,9 +915,11 @@ class AccountSettingsWindow(bui.MainWindow):
                 # Note: Apparently Game Center is just called 'Game Center'
                 # in all languages. Can revisit if not true.
                 # https://developer.apple.com/forums/thread/725779
-                game_center_button_label = classicassets.strings.ui.icon_label(
-                    icon=bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO),
-                    label=classicassets.strings.ui.game_center,
+                game_center_button_label = (
+                    _commonassets.strings.compose.icon_label(
+                        icon=bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO),
+                        label=classicassets.strings.ui.game_center,
+                    )
                 )
             else:
                 raise ValueError(
@@ -1057,7 +1059,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 id=f'{self.main_window_id_prefix}|cancelsignin',
                 position=((self._sub_width - button_width) * 0.5, v),
                 size=(button_width, 60),
-                label=classicassets.strings.ui.cancel,
+                label=_commonassets.strings.actions.cancel,
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
@@ -1142,7 +1144,7 @@ class AccountSettingsWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        bui.screenmessage(classicassets.strings.ui.one_moment)
+        bui.screenmessage(_commonassets.strings.status.one_moment)
 
         # We expect to have a v2 account signed in if we get here.
         if plus.accounts.primary is None:
@@ -1166,7 +1168,9 @@ class AccountSettingsWindow(bui.MainWindow):
             logging.warning(
                 'Got error in manage-account-response: %s.', response
             )
-            bui.screenmessage(classicassets.strings.ui.error, color=(1, 0, 0))
+            bui.screenmessage(
+                _commonassets.strings.values.error, color=(1, 0, 0)
+            )
             builtinassets.audio.error.get().play()
             return
 

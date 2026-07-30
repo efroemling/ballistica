@@ -13,7 +13,7 @@ import bacommon.classic
 from bacommon.login import LoginType
 import bascenev1 as bs
 from bascenev1 import builtinassets
-from bascenev1 import classicassets
+from bascenev1 import _commonassets, classicassets
 import bauiv1 as bui
 from bauiv1 import classicassets as uiclassicassets
 
@@ -722,13 +722,13 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
 
         offs_x = -195
         if len(self._playerinfos) > 1:
-            pstr = classicassets.strings.ui.dash_wrap(
+            pstr = _commonassets.strings.compose.dash_wrap(
                 main=classicassets.strings.coopscore.multi_player_count(
                     count=str(len(self._playerinfos))
                 )
             )
         else:
-            pstr = classicassets.strings.ui.dash_wrap(
+            pstr = _commonassets.strings.compose.dash_wrap(
                 main=classicassets.strings.coopscore.single_player_count
             )
         ZoomText(
@@ -802,8 +802,8 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         )
 
         self._score_loading_status = Text(
-            classicassets.strings.ui.ellipsis_suffix(
-                main=classicassets.strings.ui.loading
+            _commonassets.strings.compose.ellipsis_suffix(
+                main=_commonassets.strings.status.loading
             ),
             position=(280, 150 + 30),
             color=(1, 1, 1, 0.4),
@@ -1656,7 +1656,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     (
                         ('#' + str(player_rank))
                         if player_rank is not None
-                        else classicassets.strings.ui.unavailable_status
+                        else _commonassets.strings.status.unavailable_status
                     ),
                     flash=True,
                     trail=True,
@@ -1669,7 +1669,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 ).autoretain()
 
                 Text(
-                    classicassets.strings.ui.heading_suffix(
+                    _commonassets.strings.compose.heading_suffix(
                         main=classicassets.strings.ui.rank
                     ),
                     position=(0, 36),
@@ -1697,7 +1697,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 (
                     f'{rating:.1f}'
                     if available
-                    else classicassets.strings.ui.unavailable_status
+                    else _commonassets.strings.status.unavailable_status
                 ),
                 flash=True,
                 trail=True,
@@ -1817,7 +1817,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             if not self._newly_complete:
                 Text(
                     (
-                        classicassets.strings.ui.spaced_pair(
+                        _commonassets.strings.compose.spaced_pair(
                             first=(
                                 classicassets.strings.coopscore
                             ).new_personal_best,
@@ -1842,7 +1842,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 ).autoretain()
 
             Text(
-                classicassets.strings.ui.heading_suffix(
+                _commonassets.strings.compose.heading_suffix(
                     main=classicassets.strings.coopscore.rating
                 ),
                 position=(0, 36),
@@ -1901,11 +1901,11 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
         ).autoretain()
         Text(
             (
-                classicassets.strings.ui.heading_suffix(
+                _commonassets.strings.compose.heading_suffix(
                     main=classicassets.strings.ui.final_score
                 )
                 if self._score_type == 'points'
-                else classicassets.strings.ui.heading_suffix(
+                else _commonassets.strings.compose.heading_suffix(
                     main=classicassets.strings.coopscore.final_time
                 )
             ),

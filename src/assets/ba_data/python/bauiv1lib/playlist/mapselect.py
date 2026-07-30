@@ -7,7 +7,7 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -83,7 +83,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             scale=0.9,
             text_scale=1.0,
             autoselect=True,
-            label=classicassets.strings.ui.cancel,
+            label=_commonassets.strings.actions.cancel,
             on_activate_call=self.main_window_back,
         )
 

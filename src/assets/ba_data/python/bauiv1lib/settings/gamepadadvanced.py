@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1 import builtinassets
 
@@ -77,7 +77,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
             ),
             size=(120, 48),
             text_scale=0.8,
-            label=classicassets.strings.ui.done,
+            label=_commonassets.strings.actions.done,
             on_activate_call=self._done,
         )
         bui.containerwidget(

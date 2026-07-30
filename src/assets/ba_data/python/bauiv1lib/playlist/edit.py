@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -62,7 +62,7 @@ class PlaylistEditWindow(bui.MainWindow):
             scale=0.8,
             size=(175, 60),
             autoselect=True,
-            label=classicassets.strings.ui.cancel,
+            label=_commonassets.strings.actions.cancel,
             text_scale=1.2,
         )
         save_button = btn = bui.buttonwidget(
@@ -72,7 +72,7 @@ class PlaylistEditWindow(bui.MainWindow):
             size=(190, 60),
             autoselect=True,
             left_widget=cancel_button,
-            label=classicassets.strings.ui.save,
+            label=_commonassets.strings.actions.save,
             text_scale=1.2,
         )
 

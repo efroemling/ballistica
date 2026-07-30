@@ -13,7 +13,7 @@ from efro.error import CleanError
 from efro.util import strip_exception_tracebacks, strict_partial
 from bauiv1lib.settings.testing import TestingWindow
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -116,7 +116,7 @@ class NetTestingWindow(bui.MainWindow):
             size=(100, 60),
             scale=0.8,
             autoselect=True,
-            label=classicassets.strings.ui.copy,
+            label=_commonassets.strings.actions.copy,
             on_activate_call=self._copy,
         )
 

@@ -784,14 +784,18 @@ auto Assets::GetMesh(const std::string& file_name) -> Object::Ref<MeshAsset> {
   // Anything handing us a possibly-legacy bare name (old peers over the
   // scene_v1 wire, old replays, modder code) gets routed to its
   // asset-package home if it has one (mirrors GetTexture's hook).
-  return GetAsset(AssetNameCompat::FromLegacy(file_name, "meshes"), &meshes_);
+  auto name = AssetNameCompat::FromLegacy(file_name, "meshes");
+  CheckAssetPackageAccess_(name);
+  return GetAsset(name, &meshes_);
 }
 
 auto Assets::GetSound(const std::string& file_name) -> Object::Ref<SoundAsset> {
   // Anything handing us a possibly-legacy bare name (old peers over the
   // scene_v1 wire, old replays, modder code) gets routed to its
   // asset-package home if it has one (mirrors GetTexture's hook).
-  return GetAsset(AssetNameCompat::FromLegacy(file_name, "audio"), &sounds_);
+  auto name = AssetNameCompat::FromLegacy(file_name, "audio");
+  CheckAssetPackageAccess_(name);
+  return GetAsset(name, &sounds_);
 }
 
 auto Assets::GetDataAsset(const std::string& file_name)
@@ -803,8 +807,9 @@ auto Assets::GetCollisionMesh(const std::string& file_name)
     -> Object::Ref<CollisionMeshAsset> {
   // Same legacy-name routing as GetMesh above; collision meshes cross
   // the scene_v1 wire too (kAddCollisionMesh).
-  return GetAsset(AssetNameCompat::FromLegacy(file_name, "meshes"),
-                  &collision_meshes_);
+  auto name = AssetNameCompat::FromLegacy(file_name, "meshes");
+  CheckAssetPackageAccess_(name);
+  return GetAsset(name, &collision_meshes_);
 }
 
 template <typename T>
@@ -867,6 +872,7 @@ auto Assets::GetCubeMapTexture(const std::string& file_name)
     -> Object::Ref<TextureAsset> {
   assert(g_base->InLogicThread());
   assert(asset_lists_locked_);
+  CheckAssetPackageAccess_(file_name);
   auto i = textures_.find(file_name);
   if (i != textures_.end()) {
     return Object::Ref<TextureAsset>(i->second.get());
@@ -891,6 +897,7 @@ auto Assets::GetTexture(const std::string& file_name_in)
   // the scene_v1 wire, old replays, server-driven docui content,
   // modder code) gets routed to its asset-package home if it has one.
   std::string file_name = AssetNameCompat::FromLegacy(file_name_in, "textures");
+  CheckAssetPackageAccess_(file_name);
   auto i = textures_.find(file_name);
   if (i != textures_.end()) {
     return Object::Ref<TextureAsset>(i->second.get());
@@ -906,6 +913,15 @@ auto Assets::GetTexture(const std::string& file_name_in)
     d->set_last_used_time(g_core->AppTimeMillisecs());
     return Object::Ref<TextureAsset>(d);
   }
+}
+
+void Assets::CheckAssetPackageAccess_(const std::string& name) {
+  auto colon_pos = name.find(':');
+  if (colon_pos == std::string::npos) {
+    return;  // A bare legacy name; not an asset-package ref.
+  }
+  g_base->assets->package_registry()->CheckPreConstructAccess(
+      name.substr(0, colon_pos), name.substr(colon_pos + 1));
 }
 
 void Assets::MarkAssetForLoad(Asset* c) {

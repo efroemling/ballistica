@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, cast
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Callable
@@ -85,7 +85,7 @@ class PasswordPromptWindow:
             autoselect=True,
             position=(20, 20),
             size=(150, 50),
-            label=classicassets.strings.ui.cancel,
+            label=_commonassets.strings.actions.cancel,
             on_activate_call=self._cancel,
         )
         okbtn = bui.buttonwidget(
@@ -94,7 +94,7 @@ class PasswordPromptWindow:
             autoselect=True,
             position=(width - 175, 20),
             size=(150, 50),
-            label=classicassets.strings.ui.ok,
+            label=_commonassets.strings.actions.ok,
             on_activate_call=self._submit,
         )
         bui.containerwidget(

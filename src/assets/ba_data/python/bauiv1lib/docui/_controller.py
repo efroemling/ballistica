@@ -307,9 +307,11 @@ class DocUIController:
         import bacommon.docui.v2 as dui2
         from bacommon.langstr import LangStrSpecValue
 
-        from bauiv1 import classicassets
+        from bauiv1 import _commonassets
 
-        uistrs = classicassets.strings.ui
+        uiact = _commonassets.strings.actions
+        uistat = _commonassets.strings.status
+        uival = _commonassets.strings.values
 
         error_msg: LangStrSpec
 
@@ -318,14 +320,14 @@ class DocUIController:
         if custom_message is not None:
             error_msg = LangStrSpecValue(custom_message)
         elif error_type is self.ErrorType.GENERIC:
-            error_msg = uistrs.error_occurred.spec
+            error_msg = uistat.error_occurred.spec
         elif error_type is self.ErrorType.NEED_UPDATE:
-            error_msg = uistrs.need_update.spec
+            error_msg = uistat.need_update.spec
         elif error_type is self.ErrorType.UNDER_CONSTRUCTION:
-            error_msg = uistrs.under_construction.spec
+            error_msg = uistat.under_construction.spec
         elif error_type is self.ErrorType.COMMUNICATION_ERROR:
             status_code = dui2.ResponseStatus.COMMUNICATION_ERROR
-            error_msg = uistrs.server_error.spec
+            error_msg = uistat.server_error.spec
         else:
             assert_never(error_type)
 
@@ -343,13 +345,13 @@ class DocUIController:
         return dui2.Response(
             status=status_code,
             page=dui2.Page(
-                title=uistrs.error.spec,
+                title=uival.error.spec,
                 center_vertically=True,
                 rows=[
                     dui2.ButtonRow(
                         buttons=[
                             dui2.Button(
-                                (uistrs.retry if do_retry else uistrs.ok).spec,
+                                (uiact.retry if do_retry else uiact.ok).spec,
                                 action=(
                                     dui2.Replace(
                                         asserttype(request, dui2.Request)
@@ -612,10 +614,10 @@ class DocUIController:
         # If locked, been and tell them to try again.
         if window.locked:
             builtinassets.audio.error.get().play()
-            from bauiv1 import classicassets
+            from bauiv1 import _commonassets
 
             bui.screenmessage(
-                classicassets.strings.ui.page_refreshing_try_again,
+                _commonassets.strings.status.page_refreshing_try_again,
                 color=(1, 0, 0),
             )
             return

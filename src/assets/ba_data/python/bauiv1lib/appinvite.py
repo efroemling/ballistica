@@ -7,7 +7,7 @@ import time
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ def _lines(*parts: str | bui.LangStr) -> bui.LangStr:
     assert parts
     out: str | bui.LangStr = parts[-1]
     for part in reversed(parts[:-1]):
-        out = classicassets.strings.ui.line_pair(first=part, second=out)
+        out = _commonassets.strings.compose.line_pair(first=part, second=out)
     assert isinstance(out, bui.LangStr)
     return out
 
@@ -215,7 +215,9 @@ def handle_app_invites_press() -> None:
 
     def handle_result(result: dict[str, Any] | None) -> None:
         if result is None:
-            bui.screenmessage(classicassets.strings.ui.error, color=(1, 0, 0))
+            bui.screenmessage(
+                _commonassets.strings.values.error, color=(1, 0, 0)
+            )
             builtinassets.audio.error.get().play()
         else:
             ShowFriendCodeWindow(result)

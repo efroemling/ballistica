@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import copy
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -638,7 +638,7 @@ class TournamentButton:
         bui.textwidget(edit=self.current_leader_score_text, text=leader_score)
         bui.buttonwidget(
             edit=self.more_scores_button,
-            label=classicassets.strings.ui.more,
+            label=_commonassets.strings.actions.more,
         )
         out_of_time_text: str | bui.LangStr = (
             '-'
@@ -665,7 +665,7 @@ class TournamentButton:
             self.tournament_id
         ]['maxPlayers']
 
-        txt = classicassets.strings.ui.spaced_pair(
+        txt = _commonassets.strings.compose.spaced_pair(
             first=campaign.getlevel(levelname).displayname_langstr,
             second=classicassets.strings.coop.player_count_abbreviated(
                 count=str(max_players)

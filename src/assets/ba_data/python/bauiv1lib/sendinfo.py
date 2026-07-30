@@ -7,7 +7,7 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -104,7 +104,7 @@ class SendInfoWindow(bui.MainWindow):
         txoffs = -270
         bui.textwidget(
             parent=self._root_widget,
-            text=classicassets.strings.ui.description,
+            text=_commonassets.strings.values.description,
             position=(width * 0.5 + txoffs + 22, v),
             color=(0.8, 0.8, 0.8, 1.0),
             size=(90, 30),
@@ -123,7 +123,7 @@ class SendInfoWindow(bui.MainWindow):
             v_align='center',
             max_chars=64,
             color=(0.9, 0.9, 0.9, 1.0),
-            description=classicassets.strings.ui.description,
+            description=_commonassets.strings.values.description,
             editable=True,
             autoselect=True,
             padding=4,
@@ -140,7 +140,7 @@ class SendInfoWindow(bui.MainWindow):
             position=(width * 0.5 - b_width * 0.5, v),
             size=(b_width, 60),
             scale=1.0,
-            label=classicassets.strings.ui.submit,
+            label=_commonassets.strings.actions.submit,
             on_activate_call=self._do_enter,
             autoselect=True,
         )
@@ -271,7 +271,7 @@ class SendInfoWindowLegacyModal(bui.Window):
         txoffs = -200
         bui.textwidget(
             parent=self._root_widget,
-            text=classicassets.strings.ui.code,
+            text=_commonassets.strings.values.code,
             position=(width * 0.5 + txoffs + 22, v),
             color=(0.8, 0.8, 0.8, 1.0),
             size=(90, 30),
@@ -289,7 +289,7 @@ class SendInfoWindowLegacyModal(bui.Window):
             v_align='center',
             max_chars=64,
             color=(0.9, 0.9, 0.9, 1.0),
-            description=classicassets.strings.ui.code,
+            description=_commonassets.strings.values.code,
             editable=True,
             autoselect=True,
             padding=4,
@@ -305,7 +305,7 @@ class SendInfoWindowLegacyModal(bui.Window):
             position=(width * 0.5 - b_width * 0.5, v),
             size=(b_width, 60),
             scale=1.0,
-            label=classicassets.strings.ui.submit,
+            label=_commonassets.strings.actions.submit,
             on_activate_call=self._do_enter,
             autoselect=True,
         )
@@ -386,7 +386,7 @@ async def _send_info(description: str) -> None:
         # Don't allow *anything* if our V2 transport connection isn't up.
         if not plus.cloud.connected:
             bui.screenmessage(
-                classicassets.strings.ui.unavailable_no_connection,
+                _commonassets.strings.status.unavailable_no_connection,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()

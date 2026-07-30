@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, cast, override
 
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 import bascenev1 as bs
 
@@ -429,7 +429,7 @@ class ManualGatherTab(GatherTab):
             textcolor=(0.75, 0.7, 0.8),
             on_activate_call=self._on_favorites_connect_press,
             text_scale=1.0 if uiscale is bui.UIScale.SMALL else 1.2,
-            label=classicassets.strings.ui.connect,
+            label=_commonassets.strings.actions.connect,
             autoselect=True,
         )
         if uiscale is bui.UIScale.SMALL:
@@ -448,7 +448,7 @@ class ManualGatherTab(GatherTab):
             textcolor=(0.75, 0.7, 0.8),
             on_activate_call=self._on_favorites_edit_press,
             text_scale=1.0 if uiscale is bui.UIScale.SMALL else 1.2,
-            label=classicassets.strings.ui.edit,
+            label=_commonassets.strings.actions.edit,
             autoselect=True,
         )
         btnv -= b_height + b_space_extra
@@ -462,7 +462,7 @@ class ManualGatherTab(GatherTab):
             textcolor=(0.75, 0.7, 0.8),
             on_activate_call=self._on_favorite_delete_press,
             text_scale=1.0 if uiscale is bui.UIScale.SMALL else 1.2,
-            label=classicassets.strings.ui.delete,
+            label=_commonassets.strings.actions.delete,
             autoselect=True,
         )
 
@@ -550,7 +550,7 @@ class ManualGatherTab(GatherTab):
             size=(0, 0),
             h_align='center',
             v_align='center',
-            text=classicassets.strings.ui.edit,
+            text=_commonassets.strings.actions.edit,
             color=(0.6, 1.0, 0.6),
             maxwidth=c_width * 0.8,
             position=(c_width * 0.5, c_height - 60),
@@ -565,7 +565,7 @@ class ManualGatherTab(GatherTab):
             maxwidth=60,
             h_align='right',
             v_align='center',
-            text=classicassets.strings.ui.name,
+            text=_commonassets.strings.values.name,
         )
 
         self._party_edit_name_text = bui.textwidget(
@@ -577,7 +577,7 @@ class ManualGatherTab(GatherTab):
                 'name'
             ],
             editable=True,
-            description=classicassets.strings.ui.name,
+            description=_commonassets.strings.values.name,
             position=(c_width * 0.2, c_height - 140),
             autoselect=True,
             maxwidth=c_width * 0.6,
@@ -641,7 +641,7 @@ class ManualGatherTab(GatherTab):
         )
         cbtn = bui.buttonwidget(
             parent=cnt,
-            label=classicassets.strings.ui.cancel,
+            label=_commonassets.strings.actions.cancel,
             on_activate_call=bui.CallStrict(
                 lambda c: bui.containerwidget(edit=c, transition='out_scale'),
                 cnt,
@@ -652,7 +652,7 @@ class ManualGatherTab(GatherTab):
         )
         okb = bui.buttonwidget(
             parent=cnt,
-            label=classicassets.strings.ui.save,
+            label=_commonassets.strings.actions.save,
             size=(180, 60),
             position=(c_width - 230, 30),
             on_activate_call=bui.CallStrict(self._edit_saved_party),

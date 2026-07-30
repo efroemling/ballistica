@@ -4,7 +4,7 @@
 
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 
 class CoopLevelLockedWindow(bui.Window):
@@ -62,7 +62,7 @@ class CoopLevelLockedWindow(bui.Window):
             parent=self._root_widget,
             position=((width - 140) / 2, 30),
             size=(140, 50),
-            label=classicassets.strings.ui.ok,
+            label=_commonassets.strings.actions.ok,
             on_activate_call=self._ok,
         )
         bui.containerwidget(

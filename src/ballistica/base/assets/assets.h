@@ -306,6 +306,19 @@ class Assets {
   auto FindAssetFileCas_(FileType type, const std::string& name,
                          size_t colon_pos) -> std::string;
 
+  /// Gate a qualified-ref access on construct-mode completion (see
+  /// :meth:`AssetPackageRegistry::CheckPreConstructAccess`). Called from
+  /// each ``Get*`` entry point *after* legacy-name routing, so it sees
+  /// the same name the load will use. Bare names are ignored -- they
+  /// aren't asset-package refs.
+  ///
+  /// Deliberately here at the entry points rather than down in
+  /// ``FindAssetFileCas_``: that would be a single chokepoint, but it
+  /// runs on the asset-server thread at load time, long after the
+  /// offending caller's stack is gone. A violation you cannot attribute
+  /// is a lot less useful than one that names its call site.
+  static void CheckAssetPackageAccess_(const std::string& name);
+
   static void MarkAssetForLoad(Asset* c);
   void LoadSystemData(SystemDataID id, const char* name);
   // CAS-backed builtin loaders; called from the autogen section

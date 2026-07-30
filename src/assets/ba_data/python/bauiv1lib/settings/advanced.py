@@ -5,9 +5,13 @@
 
 from typing import TYPE_CHECKING, override
 
-from bacommon.locale import Locale, LocaleResolved
+from bacommon.locale import (
+    Locale,
+    LocaleResolved,
+    language_picker_label,
+)
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 from bauiv1lib.popup import PopupMenu
@@ -302,12 +306,23 @@ class AdvancedSettingsWindow(bui.MainWindow):
 
         locale_ss = bui.app.locale
 
-        # Build a list of long-values for locales we are able to display.
-        available_languages = sorted(
+        # Build a list of long-values for locales we are able to display,
+        # ordered by endonym -- the half of each label the user actually
+        # scans. (Was sorted by long_value, i.e. the English name, which
+        # meant "Svenska — Swedish" filed under S and "Deutsch — German"
+        # under G: correctly ordered by something invisible, so the list
+        # read as unsorted. The master server's picker uses this same key.)
+        available_languages = [
             lr.locale.long_value
-            for lr in LocaleResolved
-            if (locale_ss.can_display_locale(lr.locale))
-        )
+            for lr in sorted(
+                (
+                    lr
+                    for lr in LocaleResolved
+                    if locale_ss.can_display_locale(lr.locale)
+                ),
+                key=lambda lr: lr.endonym_sort_key,
+            )
+        ]
 
         # Don't rebuild if the menu is open or if our language and
         # language-list hasn't changed.
@@ -342,7 +357,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
         # Update our existing back button and title.
         if self._back_button is not None:
             bui.buttonwidget(
-                edit=self._back_button, label=classicassets.strings.ui.back
+                edit=self._back_button, label=_commonassets.strings.actions.back
             )
             bui.buttonwidget(
                 edit=self._back_button, label=bui.charstr(bui.SpecialChar.BACK)
@@ -370,25 +385,23 @@ class AdvancedSettingsWindow(bui.MainWindow):
 
         cur_lang = bui.app.locale.current_locale.long_value
 
-        # We have a special dict of language names in that language so
-        # we don't have to go digging through each full language.
-        lang_names_translated = bui.get_legacy_langdata().get(
-            'lang_names_translated', {}
-        )
-
-        langs_translated = {}
-        for lang in available_languages:
-            langs_translated[lang] = lang_names_translated.get(lang, lang)
+        # Label shape lives in
+        # bacommon.locale.language_picker_label, shared with the master
+        # server's account-settings picker so the two can't drift. (It
+        # documents a known RTL-ordering defect that is engine-level, not
+        # fixable here.)
+        resolved_by_long_value = {
+            lr.locale.long_value: lr for lr in LocaleResolved
+        }
+        locale_strs = _commonassets.strings.locales
 
         langs_full = {}
         for lang in available_languages:
-            lang_translated = bui.Lstr(translate=('languages', lang)).evaluate()
-            if langs_translated[lang] == lang_translated:
-                langs_full[lang] = lang_translated
-            else:
-                langs_full[lang] = (
-                    langs_translated[lang] + ' (' + lang_translated + ')'
-                )
+            lang_resolved = resolved_by_long_value[lang]
+            langs_full[lang] = language_picker_label(
+                lang_resolved,
+                getattr(locale_strs, lang_resolved.value).evaluate(),
+            )
 
         self._language_popup = PopupMenu(
             parent=self._subcontainer,
@@ -405,13 +418,11 @@ class AdvancedSettingsWindow(bui.MainWindow):
                 [
                     bui.Lstr(
                         value=(
-                            classicassets.strings.ui.auto.evaluate()
+                            _commonassets.strings.values.auto.evaluate()
                             + ' ('
-                            + bui.Lstr(
-                                translate=(
-                                    'languages',
-                                    bui.app.locale.default_locale.long_value,
-                                )
+                            + getattr(
+                                locale_strs,
+                                bui.app.locale.default_locale.resolved.value,
                             ).evaluate()
                             + ')'
                         )
@@ -594,9 +605,9 @@ class AdvancedSettingsWindow(bui.MainWindow):
                 width=180,
                 choices=['always', 'auto', 'never'],
                 choices_display=[
-                    classicassets.strings.ui.always,
-                    classicassets.strings.ui.auto,
-                    classicassets.strings.ui.never,
+                    _commonassets.strings.values.always,
+                    _commonassets.strings.values.auto,
+                    _commonassets.strings.values.never,
                 ],
                 current_choice=current_mode,
                 # WeakCallPartial so the popup's callback reference
@@ -823,7 +834,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
     def _show_restart_needed(self, value: Any) -> None:
         del value  # Unused.
         bui.screenmessage(
-            classicassets.strings.ui.must_restart, color=(1, 1, 0)
+            _commonassets.strings.status.must_restart, color=(1, 1, 0)
         )
 
     def _on_lang_inform_value_change(self, val: bool) -> None:

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, override
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -97,7 +97,7 @@ class ColorPicker(PopupWindow):
             text_scale=0.5,
             textcolor=(0.8, 0.8, 0.8),
             size=(120, 30),
-            label=classicassets.strings.ui.other,
+            label=_commonassets.strings.actions.other,
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(self._select_other),
         )
@@ -270,7 +270,7 @@ class ColorPickerExact(PopupWindow):
             text_scale=0.6,
             color=(0.6, 0.6, 0.6),
             textcolor=(0.7, 0.7, 0.7),
-            label=classicassets.strings.ui.done,
+            label=_commonassets.strings.actions.done,
             on_activate_call=bui.WeakCallStrict(self._transition_out),
             autoselect=True,
         )

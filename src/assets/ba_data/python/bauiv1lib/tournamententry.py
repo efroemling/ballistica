@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, override
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1lib.popup import PopupWindow
 
@@ -263,7 +263,7 @@ class TournamentEntryWindow(PopupWindow):
                 h_align='center',
                 v_align='center',
                 scale=0.6,
-                text=classicassets.strings.ui.or_join(a='', b=''),
+                text=_commonassets.strings.compose.or_join(a='', b=''),
                 maxwidth=35,
                 color=(1, 1, 1, 0.5),
             )
@@ -807,7 +807,9 @@ class TournamentEntryWindow(PopupWindow):
         # (otherwise the server will ignore our tournament entry anyway)
         if 'tournament_entry_ad' not in bui.app.classic.purchases:
             print('no tournament_entry_ad purchase present in _on_ad_complete')
-            bui.screenmessage(classicassets.strings.ui.error, color=(1, 0, 0))
+            bui.screenmessage(
+                _commonassets.strings.values.error, color=(1, 0, 0)
+            )
             builtinassets.audio.error.get().play()
             return
 

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
@@ -93,7 +93,7 @@ class FileSelectorWindow(bui.MainWindow):
             position=(35 + x_inset, self._height - 67),
             autoselect=True,
             size=(self._button_width, 50),
-            label=classicassets.strings.ui.cancel,
+            label=_commonassets.strings.actions.cancel,
             on_activate_call=self._cancel,
         )
         bui.widget(edit=self._cancel_button, left_widget=self._cancel_button)

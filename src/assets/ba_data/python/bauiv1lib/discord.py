@@ -3,7 +3,7 @@
 """UI functionality for the Discord window."""
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 
 class DiscordWindow(bui.Window):
@@ -62,7 +62,7 @@ class DiscordWindow(bui.Window):
                 size=(140, 60),
                 scale=0.8,
                 autoselect=True,
-                label=classicassets.strings.ui.back,
+                label=_commonassets.strings.actions.back,
                 button_type='back',
                 on_activate_call=self._do_back,
             )

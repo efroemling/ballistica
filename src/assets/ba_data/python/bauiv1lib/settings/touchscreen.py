@@ -5,7 +5,7 @@
 from typing import override
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 import bascenev1 as bs
 
@@ -259,7 +259,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             parent=self._subcontainer,
             position=(self._sub_width * 0.5 - 70, v),
             size=(170, 60),
-            label=classicassets.strings.ui.reset,
+            label=_commonassets.strings.actions.reset,
             scale=0.75,
             on_activate_call=self._reset,
         )

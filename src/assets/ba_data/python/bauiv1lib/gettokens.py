@@ -11,7 +11,7 @@ import bacommon.cloud
 import bacommon.classic
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -541,7 +541,7 @@ class GetTokensWindow(bui.MainWindow):
     def _on_load_error(self) -> None:
         bui.textwidget(
             edit=self._status_text,
-            text=classicassets.strings.ui.unavailable_no_connection,
+            text=_commonassets.strings.status.unavailable_no_connection,
             color=(1, 0, 0),
         )
 
@@ -615,7 +615,7 @@ class GetTokensWindow(bui.MainWindow):
             parent=self._root_widget,
             id=f'{self.main_window_id_prefix}|learnmore',
             autoselect=True,
-            label=classicassets.strings.ui.learn_more,
+            label=_commonassets.strings.actions.learn_more,
             text_scale=0.7,
             position=(
                 self._width * 0.5 - 75,
@@ -689,7 +689,7 @@ class GetTokensWindow(bui.MainWindow):
                             (1, 1, 1, 0.5) if price is None else txtdef.color
                         )
                         txt = (
-                            classicassets.strings.ui.unavailable_status
+                            _commonassets.strings.status.unavailable_status
                             if price is None
                             else price
                         )

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, cast, override
 from bauiv1lib.popup import PopupMenu
 from bauiv1lib.config import ConfigCheckBox
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -199,11 +199,11 @@ class GraphicsSettingsWindow(bui.MainWindow):
                 else []
             ),
             choices_display=[
-                classicassets.strings.ui.auto,
-                classicassets.strings.ui.higher,
-                classicassets.strings.ui.high,
-                classicassets.strings.ui.medium,
-                classicassets.strings.ui.low,
+                _commonassets.strings.values.auto,
+                _commonassets.strings.values.higher,
+                _commonassets.strings.values.high,
+                _commonassets.strings.values.medium,
+                _commonassets.strings.values.low,
             ],
             current_choice=bui.app.config.resolve('Graphics Quality'),
             on_value_change_call=self._set_quality,
@@ -229,10 +229,10 @@ class GraphicsSettingsWindow(bui.MainWindow):
             scale=popup_menu_scale,
             choices=['Auto', 'High', 'Medium', 'Low'],
             choices_display=[
-                classicassets.strings.ui.auto,
-                classicassets.strings.ui.high,
-                classicassets.strings.ui.medium,
-                classicassets.strings.ui.low,
+                _commonassets.strings.values.auto,
+                _commonassets.strings.values.high,
+                _commonassets.strings.values.medium,
+                _commonassets.strings.values.low,
             ],
             current_choice=bui.app.config.resolve('Texture Quality'),
             on_value_change_call=self._set_textures,
@@ -283,7 +283,7 @@ class GraphicsSettingsWindow(bui.MainWindow):
                     assert native_res is not None
                     choices = ['Auto', 'Native']
                     choices_display: list[bui.Lstr | bui.LangStr] = [
-                        classicassets.strings.ui.auto,
+                        _commonassets.strings.values.auto,
                         _gfxstrs.native,
                     ]
                     for res in [1440, 1080, 960, 720, 480]:
@@ -358,9 +358,9 @@ class GraphicsSettingsWindow(bui.MainWindow):
                 scale=popup_menu_scale,
                 choices=['Auto', 'Always', 'Never'],
                 choices_display=[
-                    classicassets.strings.ui.auto,
-                    classicassets.strings.ui.always,
-                    classicassets.strings.ui.never,
+                    _commonassets.strings.values.auto,
+                    _commonassets.strings.values.always,
+                    _commonassets.strings.values.never,
                 ],
                 current_choice=bui.app.config.resolve('Vertical Sync'),
                 on_value_change_call=self._set_vsync,

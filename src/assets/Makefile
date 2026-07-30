@@ -208,6 +208,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_automation.py \
   $(BUILD_DIR)/ba_data/python/babase/_baeventloop.py \
   $(BUILD_DIR)/ba_data/python/babase/_cloud.py \
+  $(BUILD_DIR)/ba_data/python/babase/_commonassets.py \
   $(BUILD_DIR)/ba_data/python/babase/_constructmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsole.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsoletabs.py \
@@ -268,6 +269,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_assetref.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_campaign.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_collision.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_commonassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_coopgame.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_coopsession.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_debug.py \
@@ -379,6 +381,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_assetref.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_automation.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_commonassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_docuiv2testassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \

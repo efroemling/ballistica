@@ -51,6 +51,118 @@ def ios_sim_log() -> None:
     )
 
 
+#: Master-server host per fleet, for the freshness check below. Kept
+#: local and tiny on purpose: this is a best-effort diagnostic, so it
+#: must not drag bacloud's fleet-resolution machinery (and its import
+#: cost) into a command whose whole job is to print a path fast.
+_FLEET_HOSTS = {
+    None: 'www.ballistica.net',
+    'prod': 'www.ballistica.net',
+    'test': 'test.ballistica.net',
+    'dev': 'dev.ballistica.net',
+}
+
+
+def _local_snapshot_id(ws_dir: str) -> str | None:
+    """The snapshot id a local checkout was last synced to, if known."""
+    import os
+    import json
+
+    path = os.path.join(ws_dir, '.bacloudstate.json')
+    try:
+        with open(path, encoding='utf-8') as infile:
+            val = json.load(infile).get('snapshotid')
+        return val if isinstance(val, str) else None
+    except Exception:
+        return None
+
+
+def _cloud_snapshot_id(name: str, fleet: str | None) -> str | None:
+    """The workspace's current cloud snapshot id, or None if unknown.
+
+    Best effort by construction -- every failure mode (no api key, no
+    network, an unexpected payload) returns None so callers degrade to
+    saying nothing rather than blocking work on a diagnostic.
+    """
+    import os
+    import json
+    import urllib.request
+
+    host = _FLEET_HOSTS.get(fleet)
+    if host is None:
+        return None
+    try:
+        cfgpath = os.path.join(pcommand.PROJROOT, 'pconfig/localconfig.json')
+        with open(cfgpath, encoding='utf-8') as infile:
+            api_key = json.load(infile).get('ballistica_api_key')
+        if not api_key:
+            return None
+        req = urllib.request.Request(
+            f'https://{host}/api/v1/admin/workspace-size/{name}',
+            headers={'Authorization': f'Bearer {api_key}'},
+        )
+        with urllib.request.urlopen(req, timeout=10.0) as response:
+            val = json.loads(response.read().decode()).get('snapshot_id')
+        return val if isinstance(val, str) else None
+    except Exception:
+        return None
+
+
+def _warn_if_stale(ws_dir: str, name: str, fleet: str | None) -> bool:
+    """Warn (to stderr) when a local checkout is behind the cloud.
+
+    Returns whether it is known-stale. The write path is already
+    protected -- ``put`` sends the stashed snapshot id and the server
+    refuses a stale write -- but *reading* a stale checkout has no such
+    guard, and acting on one is silent: content copied out of it looks
+    entirely valid downstream. So flag it at the moment a caller asks
+    where the files are.
+    """
+    import sys
+
+    from efro.terminal import Clr
+
+    local = _local_snapshot_id(ws_dir)
+    cloud = _cloud_snapshot_id(name, fleet)
+    if local is None or cloud is None or local == cloud:
+        return False
+
+    print(
+        f'{Clr.YLW}WARNING: local checkout of {name!r} is out of date'
+        f' (local snapshot {local}, cloud {cloud}).\n'
+        f'  Run `tools/pcommand assetworkspace get {name}` before reading'
+        f' or copying from it.\n'
+        f'  A put from here would be refused, but reads are unguarded:'
+        f' stale content looks valid to everything downstream.{Clr.RST}',
+        file=sys.stderr,
+    )
+    return True
+
+
+def _print_workspace_status(ws_dir: str, name: str, fleet: str | None) -> None:
+    """Report whether a local checkout matches the cloud workspace."""
+    import os
+
+    from efro.terminal import Clr
+
+    if not os.path.isdir(ws_dir):
+        print(f'{name}: no local checkout at {ws_dir}.')
+        return
+    local = _local_snapshot_id(ws_dir)
+    cloud = _cloud_snapshot_id(name, fleet)
+    if local is None:
+        print(f'{name}: local checkout has no recorded snapshot id.')
+    elif cloud is None:
+        print(
+            f'{name}: local snapshot {local};'
+            f' could not reach the cloud to compare.'
+        )
+    elif local == cloud:
+        print(f'{Clr.GRN}{name}: up to date ({local}).{Clr.RST}')
+    else:
+        _warn_if_stale(ws_dir, name, fleet)
+
+
 def _validate_bstr_briefs(ws_dir: str) -> None:
     """Parse every ``.bstr`` brief under a workspace checkout.
 
@@ -161,17 +273,28 @@ def assetworkspace() -> None:
     overrides). So the only discipline is the standard cycle: ``get`` ->
     edit the files under the printed path -> ``put``.
 
+    That guard covers *writes* only. Reading a stale checkout is
+    unguarded and fails silently -- content copied out of one looks
+    entirely valid to everything downstream -- so ``path`` and
+    ``status`` check freshness and warn. **Always ``get`` before you
+    read, not just before you write**, especially when copying content
+    between workspaces.
+
     Subcommands::
 
       assetworkspace get <NAME> [--fleet <FLEET>]
       assetworkspace put <NAME> [--force] [--fleet <FLEET>]
-      assetworkspace path <NAME>
+      assetworkspace path <NAME> [--fleet <FLEET>]
+      assetworkspace status <NAME> [--fleet <FLEET>]
 
     ``<NAME>`` is the case-sensitive cloud workspace name (e.g.
-    ``BaBuiltinAssets``); ``path`` just prints the cache dir (no network).
-    ``--fleet`` targets a non-default master fleet (sets ``BA_FLEET``
-    for the underlying bacloud call; flag form keeps the command
-    signature stable for sandbox permission grants).
+    ``BaBuiltinAssets``). ``path`` prints the cache dir on stdout (so
+    it stays usable in command substitution) plus a staleness warning
+    on stderr; ``status`` reports whether the checkout is current.
+    Both are best-effort: no api key or no network means no verdict
+    rather than a failure. ``--fleet`` targets a non-default master
+    fleet (sets ``BA_FLEET`` for the underlying bacloud call; flag form
+    keeps the command signature stable for sandbox permission grants).
     """
     import os
     import time
@@ -183,7 +306,7 @@ def assetworkspace() -> None:
     if len(args) < 2:
         raise CleanError(
             'Expected: <subcommand> <workspace-name> [flags].'
-            ' Subcommands: get, put, path.'
+            ' Subcommands: get, put, path, status.'
         )
     subcmd, name = args[0], args[1]
     flags = args[2:]
@@ -202,11 +325,20 @@ def assetworkspace() -> None:
     bacloud = os.path.join(pcommand.PROJROOT, 'tools', 'bacloud')
 
     if subcmd == 'path':
+        # Path goes to stdout so `$(... path NAME)` keeps working; the
+        # staleness verdict goes to stderr.
+        _warn_if_stale(ws_dir, name, fleet)
         print(ws_dir)
         return
 
+    if subcmd == 'status':
+        _print_workspace_status(ws_dir, name, fleet)
+        return
+
     if subcmd not in ('get', 'put'):
-        raise CleanError(f'Unknown subcommand {subcmd!r}; use get, put, path.')
+        raise CleanError(
+            f'Unknown subcommand {subcmd!r};' f' use get, put, path, status.'
+        )
 
     if subcmd == 'get':
         os.makedirs(ws_dir, exist_ok=True)

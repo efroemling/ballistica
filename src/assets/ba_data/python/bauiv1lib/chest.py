@@ -12,7 +12,7 @@ import bacommon.classic
 import bacommon.displayitem as ditm
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     import datetime
@@ -254,7 +254,7 @@ class ChestWindow(bui.MainWindow):
 
         if isinstance(response, Exception):
             self._error(
-                classicassets.strings.ui.unable_to_complete,
+                _commonassets.strings.status.unable_to_complete,
                 minor=True,
             )
             return
@@ -279,7 +279,7 @@ class ChestWindow(bui.MainWindow):
         # Communication/local error:
         if isinstance(response, Exception):
             self._error(
-                classicassets.strings.ui.unable_to_complete,
+                _commonassets.strings.status.unable_to_complete,
                 minor=True,
             )
             return
@@ -835,7 +835,7 @@ class ChestWindow(bui.MainWindow):
         # Allow only one in-flight action at once.
         if self._action_in_flight:
             bui.screenmessage(
-                classicassets.strings.ui.please_wait, color=(1, 0, 0)
+                _commonassets.strings.status.please_wait, color=(1, 0, 0)
             )
             builtinassets.audio.error.get().play()
             return
@@ -887,7 +887,7 @@ class ChestWindow(bui.MainWindow):
         # Allow only one in-flight action at once.
         if self._action_in_flight:
             bui.screenmessage(
-                classicassets.strings.ui.please_wait, color=(1, 0, 0)
+                _commonassets.strings.status.please_wait, color=(1, 0, 0)
             )
             builtinassets.audio.error.get().play()
             return
@@ -923,7 +923,7 @@ class ChestWindow(bui.MainWindow):
         # Allow only one in-flight action at once.
         if self._action_in_flight:
             bui.screenmessage(
-                classicassets.strings.ui.please_wait, color=(1, 0, 0)
+                _commonassets.strings.status.please_wait, color=(1, 0, 0)
             )
             builtinassets.audio.error.get().play()
             return
@@ -1230,9 +1230,9 @@ class ChestWindow(bui.MainWindow):
             ),
             size=(bwidth, bheight),
             label=(
-                classicassets.strings.ui.ok
+                _commonassets.strings.actions.ok
                 if use_ok_label
-                else classicassets.strings.ui.done
+                else _commonassets.strings.actions.done
             ),
             autoselect=True,
             on_activate_call=self.main_window_back,

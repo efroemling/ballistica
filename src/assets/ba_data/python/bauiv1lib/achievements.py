@@ -6,7 +6,7 @@ from typing import override
 
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 
 class AchievementsWindow(bui.MainWindow):
@@ -155,8 +155,8 @@ class AchievementsWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 scale=0.6,
-                text=classicassets.strings.ui.spaced_pair(
-                    first=classicassets.strings.ui.heading_suffix(
+                text=_commonassets.strings.compose.spaced_pair(
+                    first=_commonassets.strings.compose.heading_suffix(
                         main=classicassets.strings.ui.achievements
                     ),
                     second=f'{num_complete}/{len(achievements)}',
@@ -329,8 +329,8 @@ class AchievementsWindow(bui.MainWindow):
             color=(0.7, 0.8, 1.0),
             flatness=1.0,
             shadow=0.0,
-            text=classicassets.strings.ui.spaced_pair(
-                first=classicassets.strings.ui.total,
+            text=_commonassets.strings.compose.spaced_pair(
+                first=_commonassets.strings.values.total,
                 second=(
                     classicassets.strings.league
                 ).power_ranking_points_equals(number=str(total_pts)),

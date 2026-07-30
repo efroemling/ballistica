@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import builtinassets, classicassets
+from bauiv1 import _commonassets, builtinassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -37,11 +37,11 @@ class ConfirmWindow:
         self._id_prefix = ui.new_id_prefix('confirm')
 
         if text is None:
-            text = classicassets.strings.ui.are_you_sure
+            text = _commonassets.strings.status.are_you_sure
         if ok_text is None:
-            ok_text = classicassets.strings.ui.ok
+            ok_text = _commonassets.strings.actions.ok
         if cancel_text is None:
-            cancel_text = classicassets.strings.ui.cancel
+            cancel_text = _commonassets.strings.actions.cancel
         height += 40
         width = max(width, 360)
         self._action = action
