@@ -8,6 +8,12 @@ package is bundled into the build at hand, which makes the failure
 build-profile-dependent: silently fine for a developer, blank textures
 for a player.
 
+Every case here needs the engine binary -- even the "in-process"
+ones run their snippet under it -- so all are gated on
+``apprun.test_runs_disabled()``. Without that they fail on the
+Windows CI runner, which can't assemble a complete build without
+WSL (caught by public CI on 2026-07-30).
+
 These tests are mostly about the mechanism staying armed. A gate that
 has quietly stopped firing looks exactly like a codebase with no
 violations, so the positive controls here matter more than the negative
@@ -22,6 +28,9 @@ import pytest
 from batools import apprun
 
 
+@pytest.mark.skipif(
+    apprun.test_runs_disabled(), reason=apprun.test_runs_disabled_reason()
+)
 def test_python_gate_blocks_non_builtin() -> None:
     """A non-builtin package access pre-hand-off is refused."""
     # Run in-process: the gate is pure Python bookkeeping, so it needs
@@ -42,6 +51,9 @@ def test_python_gate_blocks_non_builtin() -> None:
     assert 'BLOCKED' in out, out
 
 
+@pytest.mark.skipif(
+    apprun.test_runs_disabled(), reason=apprun.test_runs_disabled_reason()
+)
 def test_python_gate_allows_builtin() -> None:
     """The construct/builtin package stays loadable during bring-up."""
     code = (
@@ -55,6 +67,9 @@ def test_python_gate_allows_builtin() -> None:
     assert 'ALLOWED' in out, out
 
 
+@pytest.mark.skipif(
+    apprun.test_runs_disabled(), reason=apprun.test_runs_disabled_reason()
+)
 def test_python_gate_opens_after_handoff() -> None:
     """Once construct-mode completes, any package is fair game."""
     code = (
@@ -67,6 +82,9 @@ def test_python_gate_opens_after_handoff() -> None:
     assert 'ALLOWED' in out, out
 
 
+@pytest.mark.skipif(
+    apprun.test_runs_disabled(), reason=apprun.test_runs_disabled_reason()
+)
 def test_langstr_leaf_access_is_gated() -> None:
     """String leaves go through the gate, not just loadable assets.
 
@@ -94,6 +112,9 @@ def test_langstr_leaf_access_is_gated() -> None:
     assert 'BLOCKED' in out, out
 
 
+@pytest.mark.skipif(
+    apprun.test_runs_disabled(), reason=apprun.test_runs_disabled_reason()
+)
 def test_devconsole_appmodes_tab_gated() -> None:
     """The dev-console AppModes tab refuses to run during construct mode.
 
@@ -131,6 +152,9 @@ def test_devconsole_appmodes_tab_gated() -> None:
     assert 'BLOCKED' in out, out
 
 
+@pytest.mark.skipif(
+    apprun.test_runs_disabled(), reason=apprun.test_runs_disabled_reason()
+)
 def test_devconsole_appmodes_tab_works_after_handoff() -> None:
     """...and does its normal job once assets are acquired.
 
@@ -160,6 +184,9 @@ def test_devconsole_appmodes_tab_works_after_handoff() -> None:
     assert 'ALLOWED' in out, out
 
 
+@pytest.mark.skipif(
+    apprun.test_runs_disabled(), reason=apprun.test_runs_disabled_reason()
+)
 def test_real_app_run_has_no_violations() -> None:
     """A real headless boot reaches hand-off without tripping the gate.
 
