@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260728b`` (bauiv1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260730`` (bauiv1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,13 +9,13 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260728b
+# ba_meta require asset-package a-0.babuiltinassets.260730
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260728b'
+__asset_package__ = 'a-0.babuiltinassets.260730'
 
 from typing import TYPE_CHECKING
 
@@ -169,8 +169,8 @@ if TYPE_CHECKING:
 
                 Notice that a platform account is being ignored.
 
-                English: "Note: Ignoring this {service} account. Go to Account >
-                Sign In if you want to use it."
+                English: "Note: Ignoring that {service} account. Go to 'Account
+                -> Sign in' to use it."
             """
 
         #: ::

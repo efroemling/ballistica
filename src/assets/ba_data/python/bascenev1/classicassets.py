@@ -1,19 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.260729`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.260730`` (bascenev1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.baclassicassets.260729
+# ba_meta require asset-package a-0.baclassicassets.260730
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.baclassicassets.260729'
+__asset_package__ = 'a-0.baclassicassets.260730'
 
 from typing import TYPE_CHECKING
 
@@ -965,7 +965,7 @@ if TYPE_CHECKING:
         #:
         #:     Blurb explaining the benefits of signing in.
         #:
-        #:     English: "Sign in to collect Tickets, compete online, and share
+        #:     English: "Sign in to collect tickets, compete online, and share
         #:     progress across devices."
         sign_in_info: LangStr
 
@@ -3309,8 +3309,8 @@ if TYPE_CHECKING:
 
                 Header naming a ticket gift from a friend.
 
-                English: (one) "# {app_name} Ticket from {name}" / (other) "#
-                {app_name} Tickets from {name}"
+                English: (one) "# {app_name} ticket from {name}" / (other) "#
+                {app_name} tickets from {name}"
             """
 
         def friend_promo_award(self, *, count: int) -> LangStr:
@@ -3319,8 +3319,8 @@ if TYPE_CHECKING:
 
                 Explanation of the ticket reward per redemption.
 
-                English: (one) "You will receive # Ticket each time it is used."
-                / (other) "You will receive # Tickets each time it is used."
+                English: (one) "You will receive # ticket each time it is used."
+                / (other) "You will receive # tickets each time it is used."
             """
 
         def friend_promo_expire(self, *, expire_hours: int) -> LangStr:
@@ -3356,9 +3356,9 @@ if TYPE_CHECKING:
                 How many free tickets a promo code grants and to how many
                 people.
 
-                English: (one) "It can be redeemed for # free Ticket by up to
+                English: (one) "It can be redeemed for # free ticket by up to
                 {max_uses} people." / (other) "It can be redeemed for # free
-                Tickets by up to {max_uses} people."
+                tickets by up to {max_uses} people."
             """
 
         def friend_promo_redeem_short(self, *, count: int) -> LangStr:
@@ -3367,8 +3367,8 @@ if TYPE_CHECKING:
 
                 Short note of ticket value for a code.
 
-                English: (one) "It can be redeemed for # Ticket in the game." /
-                (other) "It can be redeemed for # Tickets in the game."
+                English: (one) "It can be redeemed for # ticket in the game." /
+                (other) "It can be redeemed for # tickets in the game."
             """
 
         #: ::
@@ -3683,7 +3683,7 @@ if TYPE_CHECKING:
         #:
         #:     Note that the player can open a chest early.
         #:
-        #:     English: "You have enough Tokens to open this now - you don't
+        #:     English: "You have enough tokens to open this now - you don't
         #:     need to wait."
         open_now_description: LangStr
 
@@ -3705,7 +3705,7 @@ if TYPE_CHECKING:
         #:
         #:     Explanation of what a chest slot holds.
         #:
-        #:     English: "This slot can hold a Chest. Earn Chests by playing
+        #:     English: "This slot can hold a chest. Earn chests by playing
         #:     campaign levels, placing in tournaments, and completing
         #:     achievements."
         slot_description: LangStr
@@ -4394,8 +4394,8 @@ if TYPE_CHECKING:
 
                 Confirmation of how many tickets were received.
 
-                English: (one) "Received # Ticket!" / (other) "Received #
-                Tickets!"
+                English: (one) "Received # ticket!" / (other) "Received #
+                tickets!"
             """
 
         def you_got_tokens(self, *, tokens: int) -> LangStr:
@@ -4405,7 +4405,7 @@ if TYPE_CHECKING:
                 Confirmation effect sent to game clients when tokens are
                 credited (store purchases, promo codes, and other grant flows).
 
-                English: (one) "You got # Token!" / (other) "You got # Tokens!"
+                English: (one) "You got # token!" / (other) "You got # tokens!"
             """
 
     class StringsFileselectorGroup:
@@ -5620,7 +5620,7 @@ if TYPE_CHECKING:
                 Blurb about inviting friends for a ticket reward.
 
                 English: "Friends don't have the game? Invite them to try it and
-                they'll receive {count} free Tickets."
+                they'll receive {count} free tickets."
             """
 
         #: ::
@@ -6065,8 +6065,8 @@ if TYPE_CHECKING:
         #:
         #:     Limited-time offer to remove ads via a token pack.
         #:
-        #:     English: "LIMITED TIME OFFER: PURCHASE ANY TOKEN PACK TO REMOVE
-        #:     IN-GAME ADS."
+        #:     English: "LIMITED TIME OFFER: Purchase ANY token pack to remove
+        #:     in-game ads."
         remove_ads_offer: LangStr
 
         #: ::
@@ -6080,7 +6080,7 @@ if TYPE_CHECKING:
         #:
         #:     Notice that the player owns a Gold Pass.
         #:
-        #:     English: "You have a Gold Pass. All Token purchases are free.
+        #:     English: "You have a Gold Pass. All token purchases are free.
         #:     Enjoy!"
         you_have_gold_pass: LangStr
 
@@ -7982,7 +7982,7 @@ if TYPE_CHECKING:
         #:     Explanation of what tickets are and how to get them.
         #:
         #:     English: "Tickets can be used to unlock characters, maps,
-        #:     minigames, and more in the store. Tickets can be found in Chests
+        #:     minigames, and more in the store. Tickets can be found in chests
         #:     won through campaigns, tournaments, and achievements."
         tickets_description: LangStr
 
@@ -7990,7 +7990,7 @@ if TYPE_CHECKING:
         #:
         #:     Explanation of what tokens are and how to get them.
         #:
-        #:     English: "Tokens are used to speed up Chest unlocks and for other
+        #:     English: "Tokens are used to speed up chest unlocks and for other
         #:     game and account features. You can win tokens in the game or buy
         #:     them in packs. Or buy a Gold Pass for infinite tokens and never
         #:     hear about them again."

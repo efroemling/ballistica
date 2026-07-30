@@ -8,8 +8,8 @@
 namespace ballistica::base {
 
 GraphicsClientContext::GraphicsClientContext()
-    : auto_graphics_quality{g_base->graphics_server->renderer()
-                                ->GetAutoGraphicsQuality()},
+    : auto_graphics_quality{
+          g_base->graphics_server->renderer()->GetAutoGraphicsQuality()},
       auto_texture_quality{
           g_base->graphics_server->renderer()->GetAutoTextureQuality()},
       texture_compression_types{

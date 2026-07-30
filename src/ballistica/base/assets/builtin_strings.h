@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.260728b"
+// Generated from: "a-0.babuiltinassets.260730"
 
 #include <memory>
 
@@ -46,8 +46,8 @@ class BuiltinStrings {
 
     /// Notice that a platform account is being ignored.
     ///
-    /// English: "Note: Ignoring this {service} account. Go to Account > Sign In
-    /// if you want to use it."
+    /// English: "Note: Ignoring that {service} account. Go to 'Account -> Sign
+    /// in' to use it."
     static auto NotUsingAccount(LangStr::Sub service)
         -> std::shared_ptr<const LangStr>;
 
