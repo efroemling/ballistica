@@ -1219,8 +1219,8 @@ class Spaz(bs.Actor):
             )
             if (
                 node.getdelegate(Spaz)
-                and (0 <= punch_time_diff <= 70)
-                or (release_time_diff <= 360)
+                and (0 <= punch_time_diff <= 70
+                or release_time_diff <= 360)
             ):
                 return None
 
