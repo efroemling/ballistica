@@ -21,6 +21,11 @@
 - Renamed the `BaStdAssets` asset package to `BaClassicAssets`; its client
   wrapper modules are now `bauiv1.classicassets` / `bascenev1.classicassets`
   (previously `stdassets`).
+- Punches now deal no damage to other Spaz characters shortly
+  before and after grabbing. This behavior replaces an old one where punches
+  were ignored if executed during a grab. This patches the punch grab infinite
+  exploit without impacting other game techiques like "bomb jumps"
+  (Thanks TheMikirog!)
 - The boot-time asset gate now offers an interactive browser sign-in when
   required assets need an authenticated account and no sign-in is coming on
   its own. Previously, an app bundling mods that pin restricted asset-package
