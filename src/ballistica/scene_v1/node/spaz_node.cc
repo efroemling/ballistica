@@ -1028,7 +1028,6 @@ void SpazNode::SetPunchPressed(bool val) {
     if (holding_something_) {
       Throw(false);
     } else {
-
       if (!holding_something_ && (!knockout_) && (!frozen_)) {
         punch_ = kPunchDuration;
 

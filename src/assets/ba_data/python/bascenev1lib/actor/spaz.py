@@ -1214,7 +1214,9 @@ class Spaz(bs.Actor):
 
             # Prevent punches shortly before or after grabbing
             punch_time_diff = self.last_punch_time_ms - self.last_pickup_time_ms
-            release_time_diff = int(bs.time() * 1000) - self.node.pickup_release_time_ms
+            release_time_diff = (
+                int(bs.time() * 1000) - self.node.pickup_release_time_ms
+            )
             if (0 <= punch_time_diff <= 70) or (release_time_diff <= 360):
                 return None
 

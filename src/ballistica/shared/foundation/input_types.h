@@ -713,7 +713,7 @@ typedef struct BAMouseButtonEvent {
   int y;
 } BAMouseButtonEvent;
 
-#define BA_BUTTON(X) (1 << ((X) - 1))
+#define BA_BUTTON(X) (1 << ((X)-1))
 #define BA_BUTTON_LEFT 1
 #define BA_BUTTON_MIDDLE 2
 #define BA_BUTTON_RIGHT 3
