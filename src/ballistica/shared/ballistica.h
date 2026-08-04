@@ -3,8 +3,11 @@
 #ifndef BALLISTICA_SHARED_BALLISTICA_H_
 #define BALLISTICA_SHARED_BALLISTICA_H_
 
+#include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdio>
+#include <limits>
 #include <string>
 #include <type_traits>
 
@@ -377,6 +380,32 @@ template <typename OUT_TYPE, typename IN_TYPE>
 auto static_cast_check_fit(IN_TYPE in) -> OUT_TYPE {
   assert(check_static_cast_fit<OUT_TYPE>(in));
   return static_cast<OUT_TYPE>(in);
+}
+
+/// Convert a floating-point value to an integer type, clamping to the
+/// target's range and mapping non-finite values to zero.
+///
+/// Use this wherever the input may have come from outside the engine
+/// (the network, a file, mod code). A plain static_cast is *undefined
+/// behavior* for NaN, for infinities, and for anything outside the
+/// target's range -- not merely inaccurate -- and floats from those
+/// sources can be any of them. There is no assert here on purpose:
+/// untrusted input arriving out of range is not an engine bug.
+///
+/// For values the engine itself produced, where out-of-range really does
+/// mean a bug, prefer static_cast_check_fit above.
+template <typename OUT_TYPE, typename IN_TYPE>
+auto clamped_float_to_int(IN_TYPE in) -> OUT_TYPE {
+  static_assert(std::is_floating_point_v<IN_TYPE>);
+  static_assert(std::is_integral_v<OUT_TYPE>);
+  if (!std::isfinite(in)) {
+    return 0;
+  }
+  // Compare in the float domain; converting the bounds the other way
+  // would hit the very conversion we are guarding against.
+  auto lo = static_cast<IN_TYPE>(std::numeric_limits<OUT_TYPE>::lowest());
+  auto hi = static_cast<IN_TYPE>(std::numeric_limits<OUT_TYPE>::max());
+  return static_cast<OUT_TYPE>(std::clamp(in, lo, hi));
 }
 
 /// Simply a static_cast, but in debug builds also runs a dynamic cast to

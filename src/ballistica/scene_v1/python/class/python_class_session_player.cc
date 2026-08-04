@@ -2,16 +2,24 @@
 
 #include "ballistica/scene_v1/python/class/python_class_session_player.h"
 
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+#include <optional>
 #include <string>
 #include <vector>
 
+#include "ballistica/base/input/device/input_device.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/host_session.h"
+#include "ballistica/scene_v1/support/player.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
+#include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/generic/json_facade.h"
 #include "ballistica/shared/python/python.h"
 
 namespace ballistica::scene_v1 {
@@ -428,6 +436,70 @@ auto PythonClassSessionPlayer::ResetInput(PythonClassSessionPlayer* self)
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassSessionPlayer::SendFeedback(PythonClassSessionPlayer* self,
+                                            PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base->InLogicThread());
+
+  const char* event_name{"impact_received"};
+  static const char* kwlist[] = {"event", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|$s",
+                                   const_cast<char**>(kwlist), &event_name)) {
+    return nullptr;
+  }
+
+  // Readable names in the API; terse codes on the wire. The two are
+  // deliberately decoupled -- wire codes are effectively frozen once
+  // shipped, and the public API should stay renameable.
+  auto type_parsed = base::FeedbackEvent::TypeFromName(event_name);
+  if (!type_parsed.has_value()) {
+    throw Exception(
+        "Invalid feedback event: '" + std::string(event_name) + "'.",
+        PyExcType::kValue);
+  }
+  auto event = base::FeedbackEvent{*type_parsed};
+
+  // Cosmetic fire-and-forget effect, and callers reach this from message
+  // handlers where the player may have just left -- so a departed player
+  // is a quiet no-op rather than an exception. (Diverges from most other
+  // methods on this class, which raise.)
+  Player* p = self->player_->get();
+  if (!p) {
+    Py_RETURN_NONE;
+  }
+
+  JsonBuilder builder;
+  auto obj = builder.root_object();
+  // Omitted when it is the default type, which is what keeps the
+  // commonest event a two-byte payload.
+  if (event.type != base::FeedbackEvent::kDefaultType) {
+    char code[2] = {base::FeedbackEvent::ProfileForType(event.type).code, 0};
+    obj.Add("e", code);
+  }
+
+  // Ship to clients and replays.
+  if (HostSession* host_session = p->GetHostSession()) {
+    if (SessionStream* output_stream = host_session->GetSceneStream()) {
+      output_stream->EmitInputDeviceFeedback(p->id(), builder.Write());
+    }
+  }
+
+  // Depict locally. The host does not consume its own stream, so a
+  // player sitting at the host machine needs this second path; for a
+  // player on a connected client the device here is a ClientInputDevice,
+  // whose DoApplyFeedback is an intentional no-op (the stream already
+  // covers them).
+  if (auto* delegate = p->input_device_delegate()) {
+    if (delegate->InputDeviceExists()) {
+      delegate->input_device().ApplyFeedback(event);
+    }
+  }
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassSessionPlayer::AssignInputCall(PythonClassSessionPlayer* self,
                                                PyObject* args, PyObject* keywds)
     -> PyObject* {
@@ -738,6 +810,21 @@ PyMethodDef PythonClassSessionPlayer::tp_methods[] = {
      "resetinput() -> None\n"
      "\n"
      "Clears out the player's assigned input actions."},
+    {"send_feedback", (PyCFunction)SendFeedback, METH_VARARGS | METH_KEYWORDS,
+     "send_feedback(*, event: str = 'impact_received') -> None\n"
+     "\n"
+     "Request physical feedback (controller rumble, device vibration) for\n"
+     "whoever is controlling this player.\n"
+     "\n"
+     "``event`` says what happened, not what it should feel like; each\n"
+     "platform renders it however it does that best. Valid values are\n"
+     "'join', 'collect', 'grab', 'impact_dealt', 'impact_received' and\n"
+     "'death'. Note a device may render nothing at all for an event its\n"
+     "hardware cannot represent well, so don't rely on any particular one\n"
+     "always being felt.\n"
+     "\n"
+
+     "Does nothing if the player has already left the game."},
     {"exists", (PyCFunction)Exists, METH_NOARGS,
      "exists() -> bool\n"
      "\n"

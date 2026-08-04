@@ -2,7 +2,11 @@
 
 #include "ballistica/scene_v1/support/client_session.h"
 
+#include <algorithm>
+#include <functional>
 #include <memory>
+#include <optional>
+#include <set>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -15,11 +19,14 @@
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/screen_messages.h"
+#include "ballistica/base/input/device/input_device.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/support/lang_str.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
 #include "ballistica/scene_v1/assets/scene_sound.h"
@@ -31,7 +38,9 @@
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/scene.h"
+#include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
+#include "ballistica/shared/generic/json_facade.h"
 
 namespace ballistica::scene_v1 {
 
@@ -73,6 +82,122 @@ static auto EvalLangStrWireValue_(const std::string& val,
       }
       return {(*parsed)->Evaluate(), true};
     }
+  }
+}
+
+// Ceiling on how much of a feedback payload we will attempt to parse.
+// Wire data is untrusted and this sits far above any legitimate payload
+// (the common one is two bytes: '{}').
+constexpr size_t kFeedbackPayloadMaxBytes{512};
+
+// How many distinct unrecognized type codes we remember for once-only
+// logging. Bounded on purpose: this set is fed directly by untrusted
+// wire data, so an unbounded one is a slow leak a bad host could drive
+// at will -- and it grows whether or not anyone is listening at debug
+// level.
+constexpr size_t kMaxRememberedUnknownTypes{16};
+
+// Longest type code we will even store for logging purposes.
+constexpr size_t kMaxTypeCodeLength{16};
+
+// Note an unrecognized feedback type, once per distinct code.
+//
+// Debug level and nothing more, deliberately. An unknown type here means
+// the sender is a newer build (or a replay written by one) that knows an
+// event we do not -- entirely expected as the vocabulary grows, and not
+// a problem worth shouting about. The case that DOES deserve a fuss is a
+// type defined locally that some backend forgot to handle, and that is
+// caught at compile time by the static_asserts on the profile and motor
+// tables rather than at runtime.
+//
+// Deliberately not BA_LOG_ONCE: that fires once per *call site*, so the
+// first unknown code ever seen would silently swallow every different
+// one after it -- the opposite of what is wanted when the whole point is
+// learning which unknown types are showing up.
+static void ReportUnknownFeedbackType_(std::string_view code) {
+  assert(g_base->InLogicThread());
+  static std::set<std::string, std::less<>> reported;
+  if (reported.size() >= kMaxRememberedUnknownTypes
+      || code.size() > kMaxTypeCodeLength || reported.contains(code)) {
+    return;
+  }
+  auto code_str = std::string(code);
+  reported.insert(code_str);
+  g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug, [&code_str] {
+    return "Ignoring input-device feedback with unrecognized type '" + code_str
+           + "'.";
+  });
+}
+
+void ClientSession::HandleInputDeviceFeedback_(int32_t player_id,
+                                               const std::string& payload) {
+  assert(g_base->InLogicThread());
+
+  // Find whichever of our local devices (if any) currently drive this
+  // player. Done *before* parsing: the stream is a broadcast, so most
+  // events belong to somebody else's player and should cost a device
+  // scan and nothing more.
+  //
+  // Note this is also what keeps the feature app-mode agnostic. The
+  // delegate type is chosen by the active app-mode
+  // (Input::AddInputDevice), so under any other app-mode the cast simply
+  // fails, nothing matches, and feedback is inert rather than wrong.
+  std::vector<base::InputDevice*> targets;
+  for (auto* device : g_base->input->GetInputDevices()) {
+    auto* delegate =
+        dynamic_cast<SceneV1InputDeviceDelegate*>(&device->delegate());
+
+    // Require an actual attachment rather than trusting the id alone.
+    // player_id arrives off the wire, so a host sending the detached
+    // sentinel (-1) would otherwise match every idle device at once.
+    if (delegate != nullptr && delegate->GetRemotePlayer() != nullptr
+        && delegate->remote_player_id() == player_id) {
+      targets.push_back(device);
+    }
+  }
+  if (targets.empty()) {
+    return;
+  }
+
+  auto doc = JsonDoc::Parse(payload, {.max_bytes = kFeedbackPayloadMaxBytes});
+  if (!doc.has_value()) {
+    BA_LOG_ONCE(LogName::kBaInput, LogLevel::kDebug,
+                "Ignoring unparsable input-device feedback payload.");
+    return;
+  }
+  JsonRef root = doc->root();
+
+  // Every key is optional and anything absent, malformed, or unknown
+  // falls back to its client-side default. That is what lets the payload
+  // grow over time without an older build losing the effect entirely --
+  // and what lets the feel of a bare '{}' be retuned later without
+  // touching already-shipped game code.
+  // Absent means the default type, which is why the commonest event
+  // ships as a bare '{}'.
+  auto type = base::FeedbackEvent::kDefaultType;
+  if (auto code = root["e"].as_string()) {
+    auto parsed = code->size() == 1
+                      ? base::FeedbackEvent::TypeFromCode((*code)[0])
+                      : std::nullopt;
+    if (!parsed.has_value()) {
+      // Unrecognized types are dropped rather than approximated. A newer
+      // build introducing a type is expected to be fine with older ones
+      // feeling nothing for it (decision D6).
+      ReportUnknownFeedbackType_(*code);
+      return;
+    }
+    type = *parsed;
+  }
+
+  // Note there is nothing else to read. The payload carries an event
+  // type and nothing more -- how strong and how long are each backend's
+  // decisions, so a host cannot dictate them. That also means there are
+  // no caller-supplied magnitudes to clamp here, which removes a whole
+  // class of untrusted-number handling this ingest point used to need.
+  auto event = base::FeedbackEvent{type};
+
+  for (auto* device : targets) {
+    device->ApplyFeedback(event);
   }
 }
 
@@ -1005,6 +1130,14 @@ void ClientSession::Update(int time_advance_millisecs, double time_advance) {
           g_base->graphics->LocalCameraShake(intensity);
           break;
         }
+        case SessionCommand::kInputDeviceFeedback: {
+          // Both reads must happen unconditionally to keep the stream in
+          // sync, however little we end up doing with them.
+          auto player_id = ReadInt32();
+          auto payload = ReadString();
+          HandleInputDeviceFeedback_(player_id, payload);
+          break;
+        }
         case SessionCommand::kEmitBGDynamics: {
           int cmdvals[4];
           ReadInt32_4(cmdvals);
@@ -1338,7 +1471,7 @@ auto ClientSession::GetForegroundContext() -> base::ContextRef {
 }
 
 void ClientSession::GetCorrectionMessages(
-    bool blend, std::vector<std::vector<uint8_t> >* messages) {
+    bool blend, std::vector<std::vector<uint8_t>>* messages) {
   std::vector<uint8_t> message;
   for (auto&& i : scenes_) {
     if (Scene* sg = i.get()) {

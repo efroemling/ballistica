@@ -257,6 +257,28 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
         LOUD = 'loud'
         SOFT = 'soft'
 
+    class TranslationEffort(Enum):
+        """How much model effort a string's translations warrant.
+
+        Deliberately describes *intent*, not a model or a vendor
+        setting: the server maps these onto whatever (model, thinking
+        level) pair is current, so retuning that never touches stored
+        ``.bstr`` data or restales translations.
+
+        ``AUTO`` is the right answer for nearly every string -- short
+        UI labels translate identically at any effort. It runs cheap
+        first and escalates on its own when the brief looks structurally
+        hard or when a generated attempt fails validation. Reach for
+        ``HIGH`` only for *semantic* subtlety no heuristic can see:
+        wordplay, brand voice, a line whose tone has to land.
+        """
+
+        #: Server decides -- cheap by default, escalating when warranted.
+        AUTO = 'auto'
+
+        #: Always translate at maximum effort.
+        HIGH = 'high'
+
     class LayoutPreset(Enum):
         """What kind of slot a string occupies, and how it may size.
 
@@ -361,6 +383,20 @@ class AssetsV1StringFileV1(AssetsV1StringFile):
             enum_fallback=LayoutPreset.NONE,
         ),
     ] = LayoutPreset.NONE
+
+    #: How much model effort this string's translations warrant (see
+    #: ``TranslationEffort``). Unlike the other presets this is folded
+    #: into the translation digest only when it is *not* ``AUTO``, so
+    #: adding the field left every existing entry's digest byte-identical
+    #: rather than restaling the whole corpus.
+    translation_effort: Annotated[
+        TranslationEffort,
+        IOAttrs(
+            'translation_effort',
+            store_default=False,
+            enum_fallback=TranslationEffort.AUTO,
+        ),
+    ] = TranslationEffort.AUTO
 
     outputs: Annotated[dict[Locale, Output], IOAttrs('outputs')] = field(
         default_factory=dict

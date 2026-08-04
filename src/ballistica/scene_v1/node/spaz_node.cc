@@ -1627,9 +1627,13 @@ void SpazNode::HandleMessage(const char* data_in) {
     }
     case NodeMessageType::kKnockout: {
       float amt = Utils::ExtractFloat16NBO(&data);
+      // Clamped conversion, not a plain cast: `amt` is decoded straight
+      // off the wire, so a hostile or buggy host can hand us NaN or a
+      // huge value here -- and casting either to an int is undefined
+      // behavior.
       knockout_ = static_cast_check_fit<uint8_t>(
           std::min(40, std::max(static_cast<int>(knockout_),
-                                static_cast<int>(amt * 0.07f))));
+                                clamped_float_to_int<int>(amt * 0.07f))));
       trying_to_fly_ = false;
       break;
     }
@@ -1752,9 +1756,11 @@ void SpazNode::HandleMessage(const char* data_in) {
 
       // Update knockout if we're applying this.
       if (!calc_force_only) {
-        knockout_ = static_cast_check_fit<uint8_t>(
-            std::min(40, std::max(static_cast<int>(knockout_),
-                                  static_cast<int>(dmg * 0.02f) - 20)));
+        // As above: dmg derives from wire-supplied impulse values, so
+        // narrow it defensively rather than casting.
+        knockout_ = static_cast_check_fit<uint8_t>(std::min(
+            40, std::max(static_cast<int>(knockout_),
+                         clamped_float_to_int<int>(dmg * 0.02f) - 20)));
         trying_to_fly_ = false;
       }
       break;

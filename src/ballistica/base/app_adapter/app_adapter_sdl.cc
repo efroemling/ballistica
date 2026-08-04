@@ -5,9 +5,11 @@
 #include "ballistica/base/app_adapter/app_adapter_sdl.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -857,14 +859,31 @@ void AppAdapterSDL::OnSDLJoystickAdded_(int instance_id) {
   // enumeration is the instance-id directly.
   SDL_Joystick* handle = SDL_OpenJoystick(instance_id);
   if (handle == nullptr) {
+    // Routine on macOS with PlayStation controllers: the OS surfaces the
+    // pad over more than one path and SDL's HIDAPI backend claims it,
+    // tearing down the handle we are mid-way through opening. SDL then
+    // sends the matching removed-event and re-announces the device, which
+    // succeeds. So this is debug-level noise, not a failure -- a genuinely
+    // unusable controller shows up as one that simply never works, which
+    // is far more legible to a user than a scary line in a log they were
+    // not reading.
+    //
+    // Remember the id so the removal that follows can be told apart from
+    // real bookkeeping loss (see RemoveSDLInputDevice_).
+    if (sdl_failed_open_joystick_ids_.size() < 64) {
+      sdl_failed_open_joystick_ids_.insert(instance_id);
+    }
     auto* err = SDL_GetError();
-    g_core->logging->Log(
-        LogName::kBaInput, LogLevel::kError,
-        std::string("Error in SDL_OpenJoystick for instance-id "
-                    + std::to_string(instance_id) + ": ")
-            + (err ? err : "Unknown SDL error."));
+    g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug,
+                         std::string("SDL_OpenJoystick failed for instance-id "
+                                     + std::to_string(instance_id) + ": ")
+                             + (err ? err : "Unknown SDL error.")
+                             + " Expecting a matching removed-event.");
     return;
   }
+
+  // It opened, so any earlier failure for this id is resolved.
+  sdl_failed_open_joystick_ids_.erase(instance_id);
 
   std::string name{"Unknown Controller"};
   if (auto* n = SDL_GetJoystickName(handle)) {
@@ -923,8 +942,22 @@ void AppAdapterSDL::RemoveSDLInputDevice_(int index) {
   assert(index >= 0);
   JoystickInput* j = GetSDLJoystickInput_(index);
 
-  // Note: am running into this with a PS5 controller on macOS Sequoia beta.
   if (!j) {
+    // Expected half of a transient: we were told this device arrived,
+    // failed to open it, and are now being told it went away. Nothing was
+    // ever registered, so there is nothing to clean up. Routine on macOS
+    // with PlayStation controllers (see OnSDLJoystickAdded_).
+    if (sdl_failed_open_joystick_ids_.erase(index) > 0) {
+      g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug,
+                           "Ignoring removed-event for instance-id "
+                               + std::to_string(index)
+                               + "; its open had failed.");
+      return;
+    }
+
+    // Anything else means we lost track of a device we did register --
+    // keep this loud. It used to be indistinguishable from the benign
+    // case above, which is exactly what made it useless.
     g_core->logging->Log(
         LogName::kBaInput, LogLevel::kError,
         "GetSDLJoystickInput_() returned nullptr on RemoveSDLInputDevice_();"
@@ -979,6 +1012,132 @@ auto AppAdapterSDL::GetSDLJoystickInput_(const SDL_Event* e) const
       return nullptr;
   }
   return GetSDLJoystickInput_(joy_id);
+}
+
+auto AppAdapterSDL::GetSDLJoystickHandle_(int sdl_joystick_id) const
+    -> SDL_Joystick* {
+  assert(g_core->InMainThread());
+  if (sdl_joystick_id < 0
+      || sdl_joystick_id
+             >= static_cast_check_fit<int>(sdl_joystick_handles_.size())) {
+    return nullptr;
+  }
+  return sdl_joystick_handles_[sdl_joystick_id];
+}
+
+void AppAdapterSDL::RumbleSDLJoystick_(int sdl_joystick_id,
+                                       uint16_t low_magnitude,
+                                       uint16_t high_magnitude,
+                                       uint32_t duration_millisecs) {
+  assert(g_base->InLogicThread());
+
+  // Handles are main-thread-only, so hop. Capture the instance-id rather
+  // than anything resolved now: the controller can be unplugged between
+  // this push and the call running, in which case the lookup simply
+  // fails.
+  PushMainThreadCall([this, sdl_joystick_id, low_magnitude, high_magnitude,
+                      duration_millisecs] {
+    auto* handle = GetSDLJoystickHandle_(sdl_joystick_id);
+    if (handle == nullptr) {
+      return;
+    }
+    SDL_RumbleJoystick(handle, low_magnitude, high_magnitude,
+                       duration_millisecs);
+  });
+}
+
+// How SDL renders each event type: what it drives the two motors at
+// (0-1 each) and for how long.
+//
+// These are absolute magnitudes -- read a row and you know what that
+// event produces, with no arithmetic. The low-frequency motor carries a
+// heavier weight (a deep growl); the high-frequency one is lighter and
+// faster (a sharp buzz), so leaning on one or the other is what gives an
+// event its character rather than just its volume.
+//
+// Two things to keep in mind when tuning:
+//
+// - Anything below the ERM dead zone (~0.15-0.25) contributes NOTHING.
+//   A motor value under that is not a subtle hint, it is silence.
+// - The heavy motor has far more inertia and barely spins up inside a
+//   short event, so short events skew crisp on real hardware whatever is
+//   asked for here. These values work with that rather than against it.
+//
+// The durations here are ours alone and are deliberately NOT tied to the
+// type's hold_millisecs. A hold window slightly longer than the render
+// may well feel best, and other platforms cannot control render length
+// at all. The only rule is not to run PAST the window, since that lets a
+// lower-priority event interrupt something still buzzing -- checked
+// below.
+struct SDLTypeRender_ {
+  float low;
+  float high;
+  int duration_millisecs;
+};
+
+/// Indexed by FeedbackEvent::Type; see the static_assert below.
+static constexpr SDLTypeRender_ kSDLTypeRender[] = {
+    // join
+    {0.5f, 0.5f, 100},
+    // collect
+    {0.0f, 1.0f, 60},
+    // grab
+    {0.0f, 1.0f, 100},
+    // impact-dealt
+    {0.4f, 0.6f, 80},
+    // impact-received
+    {0.6f, 0.4f, 80},
+    // death
+    {1.0f, 1.0f, 200},
+};
+
+static_assert(std::size(kSDLTypeRender)
+                  == static_cast<size_t>(FeedbackEvent::Type::kLast),
+              "Every FeedbackEvent::Type needs an SDL render mapping, in"
+              " enum order.");
+
+auto AppAdapterSDL::ApplyJoystickFeedback(JoystickInput* device,
+                                          const FeedbackEvent& event) -> int {
+  // Grab our addressing off the device now, in the logic thread; the
+  // rumble itself happens on the main thread, by which point the device
+  // may be gone.
+  auto sdl_joystick_id = device->sdl_joystick_id();
+  if (!device->IsSDLController() || sdl_joystick_id < 0) {
+    return 0;
+  }
+
+  auto index = static_cast<size_t>(event.type);
+  assert(index < std::size(kSDLTypeRender));
+  const auto& render = kSDLTypeRender[index];
+
+  // Straight linear map onto SDL's documented 0-0xFFFF range, on purpose.
+  //
+  // It is tempting to bend this -- ERM motors have a real dead zone at the
+  // bottom, so low values go unfelt on some hardware. Resisted for now
+  // because we would be layering a guessed curve on top of whatever SDL's
+  // per-platform backends, the driver, and the controller firmware already
+  // do, none of which is documented: SDL specifies these parameters purely
+  // as a magnitude range and promises nothing about perceptibility. Two
+  // stacked corrections are far harder to reason about than one missing
+  // one, and a linear pass-through is the only baseline a real calibration
+  // pass can measure against.
+  //
+  // Note SDL also defines 0 as "stop any rumbling", which is why a zero
+  // motor value must reach hardware as 0 rather than as some
+  // minimum-perceptible floor.
+  auto low = static_cast<uint16_t>(render.low * 65535.0f);
+  auto high = static_cast<uint16_t>(render.high * 65535.0f);
+  RumbleSDLJoystick_(sdl_joystick_id, low, high,
+                     static_cast<uint32_t>(render.duration_millisecs));
+  return render.duration_millisecs;
+}
+
+void AppAdapterSDL::StopJoystickFeedback(JoystickInput* device) {
+  auto sdl_joystick_id = device->sdl_joystick_id();
+  if (!device->IsSDLController() || sdl_joystick_id < 0) {
+    return;
+  }
+  RumbleSDLJoystick_(sdl_joystick_id, 0, 0, 0);
 }
 
 auto AppAdapterSDL::GetSDLJoystickInput_(int sdl_joystick_id) const

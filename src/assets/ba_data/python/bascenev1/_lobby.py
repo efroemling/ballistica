@@ -273,6 +273,13 @@ class Chooser:
 
         self._set_ready(False)
 
+        # Confirm the join physically. This is the moment someone pressed
+        # a button and got in, so it is exactly the kind of
+        # tied-to-your-own-action event haptics read well for. Fired once
+        # per session join (Session.on_player_request), so unlike the
+        # in-game events it needs no rate limiting.
+        self._sessionplayer.send_feedback(event='join')
+
     def _select_initial_profile(self) -> int:
         app = babase.app
         assert app.classic is not None

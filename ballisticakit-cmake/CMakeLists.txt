@@ -512,6 +512,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/ktx2.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/pvr.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/pvr.h
+  ${BA_SRC_ROOT}/ballistica/base/input/device/feedback_event.h
   ${BA_SRC_ROOT}/ballistica/base/input/device/input_device.cc
   ${BA_SRC_ROOT}/ballistica/base/input/device/input_device.h
   ${BA_SRC_ROOT}/ballistica/base/input/device/input_device_delegate.cc

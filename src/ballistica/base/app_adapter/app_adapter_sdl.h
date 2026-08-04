@@ -6,6 +6,7 @@
 #include "ballistica/base/base.h"
 #if BA_SDL_BUILD
 
+#include <set>
 #include <string>
 #include <vector>
 
@@ -53,6 +54,10 @@ class AppAdapterSDL : public AppAdapter {
 
   auto GetKeyName(int keycode) -> std::string override;
 
+  auto ApplyJoystickFeedback(JoystickInput* device, const FeedbackEvent& event)
+      -> int override;
+  void StopJoystickFeedback(JoystickInput* device) override;
+
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;
   void RunMainThreadEventLoopToCompletion() override;
@@ -76,6 +81,9 @@ class AppAdapterSDL : public AppAdapter {
   void OnSDLJoystickRemoved_(int index);
   // Given an SDL joystick ID, returns our Ballistica input for it.
   auto GetSDLJoystickInput_(int sdl_joystick_id) const -> JoystickInput*;
+  auto GetSDLJoystickHandle_(int sdl_joystick_id) const -> SDL_Joystick*;
+  void RumbleSDLJoystick_(int sdl_joystick_id, uint16_t low_magnitude,
+                          uint16_t high_magnitude, uint32_t duration_millisecs);
   // The same but using sdl events.
   auto GetSDLJoystickInput_(const SDL_Event* e) const -> JoystickInput*;
   void AddSDLInputDevice_(JoystickInput* input, SDL_Joystick* handle,
@@ -113,6 +121,12 @@ class AppAdapterSDL : public AppAdapter {
   // SDL instance-id). We open these in OnSDLJoystickAdded_ and close them
   // in RemoveSDLInputDevice_.
   std::vector<SDL_Joystick*> sdl_joystick_handles_;
+
+  /// Instance-ids we were told about but failed to open, so the removal
+  /// that follows can be recognized as the expected other half of a
+  /// transient rather than reported as lost bookkeeping. Bounded, since
+  /// entries are only consumed if a matching removal actually arrives.
+  std::set<int> sdl_failed_open_joystick_ids_;
   Vector2f window_size_{1.0f, 1.0f};
   SDL_Window* sdl_window_{};
   void* sdl_gl_context_{};

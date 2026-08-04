@@ -1187,6 +1187,13 @@ void SessionStream::EmitCameraShake(float intensity) {
   EndCommand();
 }
 
+void SessionStream::EmitInputDeviceFeedback(int player_id,
+                                            const std::string& json_payload) {
+  WriteCommandInt32(SessionCommand::kInputDeviceFeedback, player_id);
+  WriteString(json_payload);
+  EndCommand();
+}
+
 void SessionStream::PlaySound(SceneSound* sound, float volume) {
   assert(IsValidSound(sound));
   assert(IsValidScene(sound->scene()));

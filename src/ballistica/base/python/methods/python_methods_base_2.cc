@@ -729,8 +729,11 @@ static auto PyFadeScreen(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   BA_PRECONDITION(g_base->InLogicThread());
+  // Via IntFromDouble: `time` arrives straight from a PyArg "f", so it
+  // can be NaN or infinite, and casting either to an int is undefined
+  // behavior.
   g_base->graphics->FadeScreen(static_cast<bool>(fade),
-                               static_cast<int>(1000.0f * time), endcall);
+                               Python::IntFromDouble(1000.0 * time), endcall);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

@@ -34,7 +34,7 @@ namespace ballistica::scene_v1 {
 // anything emitting or ingesting scene streams.
 
 // Oldest protocol version we can act as a host for.
-const int kProtocolVersionHostMin = 39;
+const int kProtocolVersionHostMin = 40;
 
 // Oldest protocol version we can act as a client to. This can generally be
 // left as-is as long as only new nodes/attrs/commands are added and old
@@ -42,7 +42,7 @@ const int kProtocolVersionHostMin = 39;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 39;
+const int kProtocolVersionMax = 40;
 
 // The protocol version we actually host is now read as a setting; see
 // kSceneV1HostProtocol in ballistica/base/support/app_config.h.
@@ -94,12 +94,33 @@ const int kProtocolVersionMax = 39;
 //     asset-package-native-worlds stream work originally slated to land
 //     incrementally under 38 moved to 39.
 //
-// 39: Asset-package-native worlds (in progress; landing incrementally
-//     during the 1.8 alpha cycle under this single version). Stream-level
-//     exact-apverid package tables with integer-indexed LangStr string
-//     refs and asset refs; fixed per-session package universes declared
-//     fully in stream baselines (see strings-asset-migration.md D23/D25
-//     and asset-packages.md #36).
+// 39: Asset-package-native worlds. Stream-level exact-apverid package
+//     tables with integer-indexed LangStr string refs and asset refs;
+//     fixed per-session package universes declared fully in stream
+//     baselines (see strings-asset-migration.md D23/D25 and
+//     asset-packages.md #36). Frozen as-is once it reached public builds
+//     (2026-07-30); further stream work moves to 40.
+//
+// 40: Two changes, both landing after 39 froze on the 2026-07-30 public
+//     push.
+//
+//     New image-node 'in_world' bool attr (public PR #950), letting an
+//     image render into the world like a text node rather than as
+//     overlay. Node attrs are addressed over the wire by their position
+//     in the type's attribute table (NodeType::attributes_by_index_), so
+//     this was APPENDED after 'front' -- existing indices are untouched
+//     and only a new trailing one appears. A pre-40 client receiving a
+//     set-attr for that index would fail its GetAttribute precondition,
+//     which is what makes an added attr protocol-visible even though it
+//     shifts nothing.
+//
+//     Controller force feedback: kInputDeviceFeedback, carrying
+//     (player_id, opaque json payload) so whoever controls a player can
+//     be asked for rumble/haptics. Needed a version bump because new
+//     stream commands are unskippable by older clients -- but it is
+//     deliberately the LAST bump this feature should ever need, since
+//     its framing is frozen and all future growth happens inside the
+//     json dict (see controller-force-feedback.md D1/D2).
 
 // Sim step size in milliseconds.
 const int kGameStepMilliseconds = 8;
@@ -302,7 +323,25 @@ enum class SessionCommand {
   kAddTextureIndexed,
   kAddMeshIndexed,
   kAddSoundIndexed,
-  kAddCollisionMeshIndexed
+  kAddCollisionMeshIndexed,
+  // (protocol 40+) Request physical feedback (rumble/haptics) for
+  // whoever is controlling a player: (player_id, json_payload). Clients
+  // filter to their own devices and drop the rest; a client with no
+  // device on that player (including any client during replay playback)
+  // ignores it entirely.
+  //
+  // FRAMING IS FROZEN AS OF PROTOCOL 40 AND MUST NEVER CHANGE. The
+  // payload is an opaque length-prefixed string, so a client that cannot
+  // make sense of its contents reads it, discards it, and stays in sync
+  // with the stream -- that is the entire forward-compatibility story
+  // for this feature. It only holds while this stays ONE command with
+  // NO additional binary fields; everything future goes inside the json
+  // dict, whose keys are all optional with client-side defaults. Adding
+  // a second feedback command or a new binary field would be a hard
+  // protocol break, because unrecognized commands cannot be skipped (see
+  // ClientSession's command dispatch). See decisions D1/D2 in
+  // docs/initiatives/controller-force-feedback.md.
+  kInputDeviceFeedback
 };
 
 enum class NodeCollideAttr {

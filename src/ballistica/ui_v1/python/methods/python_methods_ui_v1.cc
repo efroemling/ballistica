@@ -1484,8 +1484,14 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
   if (selected_child_obj != Py_None) {
     // Special case: passing 0 implies deselect.
+    //
+    // Tested for truthiness rather than by extracting a C value: Python
+    // ints are arbitrary precision, and PyLong_AsLong on a large one
+    // returns -1 (compares unequal to 0, so we would take the right
+    // branch by luck) while leaving an OverflowError set for something
+    // unrelated to trip over.
     if (PyLong_Check(selected_child_obj)
-        && (PyLong_AsLong(selected_child_obj) == 0)) {
+        && !Python::GetBool(selected_child_obj)) {
       widget->SelectWidget(nullptr);
     } else {
       widget->SelectWidget(UIV1Python::GetPyWidget(selected_child_obj));
@@ -2358,8 +2364,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // Set applicable values.
   if (max_chars_obj != Py_None) {
-    widget->set_max_chars(
-        static_cast_check_fit<int>(Python::GetInt64(max_chars_obj)));
+    widget->set_max_chars(Python::GetInt(max_chars_obj));
   }
   if (size_obj != Py_None) {
     Point2D p = Python::GetPoint2D(size_obj);

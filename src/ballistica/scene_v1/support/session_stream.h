@@ -72,6 +72,16 @@ class SessionStream : public Object, public ClientControllerInterface {
   void PlaySound(SceneSound* sound, float volume);
   void EmitBGDynamics(const base::BGDynamicsEmission& e);
   void EmitCameraShake(float intensity);
+
+  /// Request physical feedback (rumble/haptics) for whoever controls the
+  /// given player. ``json_payload`` is an already-serialized dict of
+  /// optional overrides; ``{}`` means a default impact. Clients that own
+  /// a device on this player render it and everyone else drops it.
+  ///
+  /// The payload is opaque at this layer by design -- see the framing
+  /// contract on SessionCommand::kInputDeviceFeedback before changing
+  /// anything about how this is written.
+  void EmitInputDeviceFeedback(int player_id, const std::string& json_payload);
   auto GetSoundID(SceneSound* s) -> int64_t;
   auto GetMaterialID(Material* m) -> int64_t;
   void ScreenMessageBottom(const std::string& val, float r, float g, float b);

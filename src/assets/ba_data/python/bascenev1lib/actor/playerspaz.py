@@ -7,10 +7,65 @@ from typing import TYPE_CHECKING, overload, override
 import bascenev1 as bs
 from bascenev1 import builtinassets, classicassets
 
-from bascenev1lib.actor.spaz import Spaz
+from bascenev1lib.actor.spaz import Spaz, PickupMessage
 
 if TYPE_CHECKING:
     from typing import Any, Sequence, Literal
+
+
+# Minimum seconds between haptic events of the same kind for one player.
+#
+# This is a bandwidth-and-game-feel knob and belongs here rather than in
+# the engine: one explosion resolves into a separate hit event per
+# victim, all attributed to the same attacker inside a single step. (The
+# engine has its own arbiter for the *perceptual* side, since haptic
+# hardware cannot mix overlapping effects.)
+#
+# Landing a hit is information -- it confirms an attack connected, tied
+# to a button just pressed -- so suppressing it reads as unresponsiveness
+# and each punch in a combo should still confirm. Taking a hit is an
+# alarm: it fires far more often in a melee and goes numb fast if it
+# never lets up. Death is zero on purpose; dying should never be the
+# event suppressed because you were punched a moment earlier.
+#
+# Keyed by the engine's event names, which are a Literal type -- so a
+# typo here is a type error rather than a silent no-op at runtime.
+_FEEDBACK_COOLDOWNS: dict[bs.FeedbackEvent, float] = {
+    'grab': 0.15,
+    'collect': 0.15,
+    'impact_dealt': 0.15,
+    'impact_received': 0.5,
+    'death': 0.0,
+}
+
+# Single attribute we stash per-player cooldown state under. Player
+# objects are per-activity and expire with it, so nothing accumulates.
+_FEEDBACK_TIMES_ATTR = '_ffb_times'
+
+
+def _send_player_feedback(
+    player: bs.Player | None, event: bs.FeedbackEvent
+) -> None:
+    """Send a haptic event to a player, rate-limited per event kind.
+
+    Magnitude and length come from the event itself, so there is
+    deliberately no way to pass them here -- keeping the feel tunable in
+    one place rather than drifting across call sites.
+    """
+    if player is None or not player.exists():
+        return
+    now = bs.time()
+    times: dict[bs.FeedbackEvent, float] | None = getattr(
+        player, _FEEDBACK_TIMES_ATTR, None
+    )
+    if times is None:
+        times = {}
+        setattr(player, _FEEDBACK_TIMES_ATTR, times)
+    last = times.get(event)
+    if last is not None and now - last < _FEEDBACK_COOLDOWNS[event]:
+        return
+    times[event] = now
+    player.send_feedback(event=event)
 
 
 class PlayerSpazHurtMessage:
@@ -287,6 +342,31 @@ class PlayerSpaz(Spaz):
                 self.last_player_attacked_by = picked_up_by
                 self.last_attacked_time = bs.time()
                 self.last_attacked_type = ('picked_up', 'default')
+        elif isinstance(msg, bs.PowerupMessage):
+            result = super().handlemessage(msg)  # Augment standard behavior.
+
+            # Note we can't key off the return value: Spaz accepts the
+            # message (so the box goes away) even when dead, in which case
+            # nothing was actually gained and there is nothing to confirm.
+            # Mirror its own guard instead.
+            if not self._dead and self.node:
+                _send_player_feedback(self._player, 'collect')
+            return result
+        elif isinstance(msg, PickupMessage):
+            result = super().handlemessage(msg)  # Augment standard behavior.
+
+            # Spaz returns True from this handler to mean *rejected* (no
+            # collision, an invincible target, already holding a flag);
+            # falling through to None is what says hold_node actually got
+            # set.
+            #
+            # Note this hooks PickupMessage rather than watching
+            # hold_node: whipping out a bomb reaches Spaz._pick_up()
+            # directly and never sends this message, so it stays silent
+            # here without needing to be special-cased.
+            if result is None and self.node and self.node.hold_node:
+                _send_player_feedback(self._player, 'grab')
+            return result
         elif isinstance(msg, bs.StandMessage):
             super().handlemessage(msg)  # Augment standard behavior.
 
@@ -354,6 +434,8 @@ class PlayerSpaz(Spaz):
                         )
                     )
 
+                    _send_player_feedback(player, 'death')
+
             super().handlemessage(msg)  # Augment standard behavior.
 
         # Keep track of the player who last hit us for point rewarding.
@@ -363,10 +445,16 @@ class PlayerSpaz(Spaz):
                 self.last_player_attacked_by = source_player
                 self.last_attacked_time = bs.time()
                 self.last_attacked_type = (msg.hit_type, msg.hit_subtype)
+
+                # Hit confirmation for whoever landed it.
+                _send_player_feedback(source_player, 'impact_dealt')
             super().handlemessage(msg)  # Augment standard behavior.
             activity = self._activity()
             if activity is not None and self._player.exists():
                 activity.handlemessage(PlayerSpazHurtMessage(self))
+
+                # And an alarm for whoever took it.
+                _send_player_feedback(self._player, 'impact_received')
         else:
             return super().handlemessage(msg)
         return None

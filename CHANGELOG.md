@@ -1,4 +1,4 @@
-### 1.8.0 (build 22957, api 9, 2026-07-30)
+### 1.8.0 (build 22958, api 9, 2026-08-03)
 - Fully implemented asset packages (more on this soon)
 - Upgraded to Python 3.14. This gives us a few nice useful bits such as zstd
   compression to help speed up online stuff and also means we can get rid of all
@@ -36,6 +36,7 @@
   are available before any real app-mode loads. (Adds a strings-only
   `babase` asset-package wrapper type for this pre-featureset layer.)
 - Add `in_world` attribute to image node, as in text node (Thanks Dliwk!).
+- Game Controller Haptics!
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

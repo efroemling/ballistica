@@ -240,7 +240,13 @@ from bascenev1._profile import (
     get_player_profile_icon,
     get_player_profile_colors,
 )
-from bascenev1._player import PlayerInfo, Player, EmptyPlayer, StandLocation
+from bascenev1._player import (
+    PlayerInfo,
+    Player,
+    EmptyPlayer,
+    StandLocation,
+    FeedbackEvent,
+)
 from bascenev1._playlist import (
     get_default_free_for_all_playlist,
     get_default_teams_playlist,
@@ -486,6 +492,7 @@ __all__ = [
     'show_damage_count',
     'Sound',
     'StandLocation',
+    'FeedbackEvent',
     'StandMessage',
     'Stats',
     'storagename',

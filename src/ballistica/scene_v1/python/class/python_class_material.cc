@@ -540,7 +540,7 @@ void DoAddConditions(PyObject* cond_obj,
                     + cond_str + "\".",
                 PyExcType::kType);
           }
-          (*c)->val1 = static_cast<int>(PyLong_AsLong(o));
+          (*c)->val1 = Python::GetInt(o);
         }
       }
       if (argc > 1) {
@@ -551,7 +551,7 @@ void DoAddConditions(PyObject* cond_obj,
                   + cond_str + "\".",
               PyExcType::kType);
         }
-        (*c)->val1 = static_cast<int>(PyLong_AsLong(o));
+        (*c)->val1 = Python::GetInt(o);
       }
     } else if (PyTuple_Check(first)) {
       // First item is a tuple - assume its a tuple of size 3+2*n
