@@ -29,12 +29,15 @@ class ShieldNode : public Node {
     return always_show_health_bar_;
   }
   void set_always_show_health_bar(bool val) { always_show_health_bar_ = val; }
+  auto hide_health_bar() const -> bool { return hide_health_bar_; }
+  void set_hide_health_bar(bool val) { hide_health_bar_ = val; }
 
  private:
 #if !BA_HEADLESS_BUILD
   base::BGDynamicsShadow shadow_;
 #endif  // BA_HEADLESS_BUILD
   bool always_show_health_bar_ = false;
+  bool hide_health_bar_        = false;
   float hurt_smoothed_ = 1.0f;
   millisecs_t last_hurt_change_time_ = 0;
   float d_r_scale_ = 0.0f;
