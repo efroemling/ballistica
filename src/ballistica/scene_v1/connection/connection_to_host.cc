@@ -102,7 +102,7 @@ static auto RejectReasonMessage_(int reason) -> std::string {
 
 ConnectionToHost::ConnectionToHost()
     : protocol_version_{
-          classic::ClassicAppMode::GetSingleton()->host_protocol_version()} {}
+        classic::ClassicAppMode::GetSingleton()->host_protocol_version()} {}
 
 auto ConnectionToHost::GetAsUDP() -> ConnectionToHostUDP* { return nullptr; }
 
@@ -232,7 +232,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
                         "(global-app-instance="
                         + *v2_auth_global_app_instance_id_ + ").")
                      : std::string(
-                           "ConnectionToHost: host does not use v2-auth.");
+                         "ConnectionToHost: host does not use v2-auth.");
         });
       }
 

@@ -507,6 +507,7 @@ class SpazNodeType : public NodeType {
   BA_BOOL_ATTR(demo_mode, demo_mode, set_demo_mode);
   BA_INT_ATTR(behavior_version, behavior_version, set_behavior_version);
   BA_BOOL_ATTR_READONLY(pickup_before_hitbox, get_pickup_before_hitbox);
+  BA_FLOAT_ATTR_READONLY(pickup_release_time_ms, get_pickup_release_time_ms);
 #undef BA_NODE_TYPE_CLASS
 
   SpazNodeType()
@@ -591,7 +592,8 @@ class SpazNodeType : public NodeType {
         move_up_down(this),
         demo_mode(this),
         behavior_version(this),
-        pickup_before_hitbox(this) {}
+        pickup_before_hitbox(this),
+        pickup_release_time_ms(this) {}
 };
 
 static NodeType* node_type{};
@@ -1026,12 +1028,6 @@ void SpazNode::SetPunchPressed(bool val) {
     if (holding_something_) {
       Throw(false);
     } else {
-      // Do not punch before grab hitbox comes out, if it's coming
-      if (behavior_version_ >= 2
-          && (pickup_ >= kPickupCooldown - kPickupHitboxDelay)) {
-        return;
-      }
-
       if (!holding_something_ && (!knockout_) && (!frozen_)) {
         punch_ = kPunchDuration;
 
@@ -1756,11 +1752,16 @@ void SpazNode::HandleMessage(const char* data_in) {
 
       // Update knockout if we're applying this.
       if (!calc_force_only) {
-        // As above: dmg derives from wire-supplied impulse values, so
-        // narrow it defensively rather than casting.
-        knockout_ = static_cast_check_fit<uint8_t>(std::min(
-            40, std::max(static_cast<int>(knockout_),
-                         clamped_float_to_int<int>(dmg * 0.02f) - 20)));
+        // Newer behavior - versions have less punishing stun
+        if (behavior_version_ >= 2) {
+          knockout_ = static_cast_check_fit<uint8_t>(
+              std::min(26, std::max(static_cast<int>(knockout_),
+                                    static_cast<int>(dmg * 0.02f) - 24)));
+        } else {
+          knockout_ = static_cast_check_fit<uint8_t>(
+              std::min(40, std::max(static_cast<int>(knockout_),
+                                    static_cast<int>(dmg * 0.02f) - 20)));
+        }
         trying_to_fly_ = false;
       }
       break;
@@ -6088,6 +6089,7 @@ void SpazNode::DropHeldObject() {
     }
     assert(!pickup_joint_.IsAlive());
 
+    pickup_release_time_ms_ = scene()->time();
     holding_something_ = false;
     hold_body_ = 0;
 

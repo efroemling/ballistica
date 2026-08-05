@@ -281,7 +281,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                              UIV1Python::GetPyWidget(parent_obj));
+                            UIV1Python::GetPyWidget(parent_obj));
     if (parent_widget == nullptr) {
       throw Exception("Parent widget nonexistent or not a container.",
                       PyExcType::kWidgetNotFound);
@@ -638,7 +638,7 @@ static auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                              UIV1Python::GetPyWidget(parent_obj));
+                            UIV1Python::GetPyWidget(parent_obj));
     if (parent_widget == nullptr) {
       throw Exception("Parent widget nonexistent or not a container.",
                       PyExcType::kWidgetNotFound);
@@ -836,7 +836,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                              UIV1Python::GetPyWidget(parent_obj));
+                            UIV1Python::GetPyWidget(parent_obj));
     if (parent_widget == nullptr) {
       throw Exception("Parent widget nonexistent or not a container.",
                       PyExcType::kWidgetNotFound);
@@ -1037,7 +1037,7 @@ static auto PySpinnerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                              UIV1Python::GetPyWidget(parent_obj));
+                            UIV1Python::GetPyWidget(parent_obj));
     if (parent_widget == nullptr) {
       throw Exception("Parent widget nonexistent or not a container.",
                       PyExcType::kWidgetNotFound);
@@ -1174,7 +1174,7 @@ static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                              UIV1Python::GetPyWidget(parent_obj));
+                            UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
       throw Exception("Invalid or nonexistent parent widget.",
                       PyExcType::kWidgetNotFound);
@@ -1405,7 +1405,7 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                              UIV1Python::GetPyWidget(parent_obj));
+                            UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
       throw Exception("Invalid or nonexistent parent widget.",
                       PyExcType::kWidgetNotFound);
@@ -1736,7 +1736,7 @@ static auto PyRowWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                              UIV1Python::GetPyWidget(parent_obj));
+                            UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
       throw Exception("invalid or nonexistent parent widget.",
                       PyExcType::kWidgetNotFound);
@@ -1884,7 +1884,7 @@ static auto PyScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                              UIV1Python::GetPyWidget(parent_obj));
+                            UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
       throw Exception("Invalid or nonexistent parent widget.",
                       PyExcType::kWidgetNotFound);
@@ -2072,7 +2072,7 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                              UIV1Python::GetPyWidget(parent_obj));
+                            UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
       throw Exception("Invalid or nonexistent parent widget.",
                       PyExcType::kWidgetNotFound);
@@ -2354,7 +2354,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
     parent_widget = parent_obj == Py_None
                         ? g_ui_v1->screen_root_widget()
                         : dynamic_cast<ContainerWidget*>(
-                              UIV1Python::GetPyWidget(parent_obj));
+                            UIV1Python::GetPyWidget(parent_obj));
     if (!parent_widget) {
       throw Exception("Invalid or nonexistent parent widget.",
                       PyExcType::kWidgetNotFound);
