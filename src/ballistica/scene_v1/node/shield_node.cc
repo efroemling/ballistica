@@ -309,3 +309,4 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
 }
 
 }  // namespace ballistica::scene_v1
+ 
