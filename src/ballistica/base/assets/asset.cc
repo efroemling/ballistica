@@ -150,7 +150,9 @@ void Asset::PublishOwned_(State from, State to) {
   // Wake waiters. The empty lock/unlock pairs with the waiters'
   // check-state-then-wait under this mutex so no waiter can park between
   // our store and our notify.
-  { std::scoped_lock lock(g_asset_state_wait_mutex); }
+  {
+    std::scoped_lock lock(g_asset_state_wait_mutex);
+  }
   g_asset_state_wait_cv.notify_all();
 }
 
@@ -166,7 +168,9 @@ void Asset::FailOwned_(State from, const std::string& message) {
 #endif
   Python::PopNoGilLockZone();
   state_.store(State::kFailed, std::memory_order_release);
-  { std::scoped_lock lock(g_asset_state_wait_mutex); }
+  {
+    std::scoped_lock lock(g_asset_state_wait_mutex);
+  }
   g_asset_state_wait_cv.notify_all();
 }
 

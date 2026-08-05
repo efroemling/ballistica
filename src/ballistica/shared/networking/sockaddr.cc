@@ -11,7 +11,7 @@ SockAddr::SockAddr(const std::string& addr, int port) {
 
   // Try ipv4 and then ipv6.
   {
-    struct in_addr addr_out {};
+    struct in_addr addr_out{};
     int result = inet_pton(AF_INET, addr.c_str(), &addr_out);
     if (result == 1) {
       auto* a = reinterpret_cast<sockaddr_in*>(&addr_);
@@ -20,7 +20,7 @@ SockAddr::SockAddr(const std::string& addr, int port) {
       a->sin_addr = addr_out;
       return;
     } else {
-      struct in6_addr addr6_out {};
+      struct in6_addr addr6_out{};
       result = inet_pton(AF_INET6, addr.c_str(), &addr6_out);
       if (result == 1) {
         auto* a = reinterpret_cast<sockaddr_in6*>(&addr_);

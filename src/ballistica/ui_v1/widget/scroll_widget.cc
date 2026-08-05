@@ -1017,7 +1017,7 @@ void ScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                 sb_thumb_height > 100
                     ? base::BuiltinMeshID::kMeshesScrollBarThumbTransparent
                     : base::BuiltinMeshID::
-                        kMeshesScrollBarThumbShortTransparent));
+                          kMeshesScrollBarThumbShortTransparent));
           } else {
             c.DrawMeshAsset(g_base->assets->BuiltinMesh(
                 sb_thumb_height > 100
