@@ -280,9 +280,9 @@ class MainMenuWindow(bui.MainWindow):
                 color=(0.45, 0.55, 0.45),
                 textcolor=(0.7, 0.8, 0.7),
                 label=(
-                    classicassets.strings.mainmenu.mode_arcade
+                    classicassets.strings.main_menu.mode_arcade
                     if variant is vart.ARCADE
-                    else classicassets.strings.mainmenu.mode_demo
+                    else classicassets.strings.main_menu.mode_demo
                 ),
                 transition_delay=demo_menu_delay,
                 on_activate_call=self.main_window_back,
@@ -357,7 +357,7 @@ class MainMenuWindow(bui.MainWindow):
             size=(side_button_2_width, side_button_2_height * 2.0),
             button_type='square',
             scale=side_button_2_scale,
-            label=classicassets.strings.mainmenu.how_to_play,
+            label=classicassets.strings.main_menu.how_to_play,
             transition_delay=thistdelay,
             on_activate_call=self._howtoplay,
         )
@@ -458,7 +458,7 @@ class MainMenuWindow(bui.MainWindow):
             ),
             scale=side_button_2_scale,
             autoselect=self._use_autoselect,
-            label=classicassets.strings.mainmenu.credits,
+            label=classicassets.strings.main_menu.credits,
             transition_delay=thistdelay,
             on_activate_call=self._credits,
         )
@@ -476,9 +476,9 @@ class MainMenuWindow(bui.MainWindow):
                 size=(side_button_2_width, side_button_2_height),
                 scale=side_button_2_scale,
                 label=(
-                    classicassets.strings.mainmenu.quit
+                    classicassets.strings.main_menu.quit
                     if 'Mac' in app.classic.legacy_user_agent_string
-                    else classicassets.strings.mainmenu.exit_game
+                    else classicassets.strings.main_menu.exit_game
                 ),
                 on_activate_call=self._quit,
                 transition_delay=thistdelay,

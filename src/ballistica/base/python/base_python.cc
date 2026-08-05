@@ -594,7 +594,11 @@ auto BasePython::GetRawConfigValue(const char* name, int default_value) -> int {
     return default_value;
   }
   try {
-    return static_cast_check_fit<int>(Python::GetInt64(value));
+    // Plain GetInt rather than narrowing a GetInt64: config values come
+    // off disk and users hand-edit them, so an out-of-range one must
+    // reach the catch below instead of tripping the assert inside
+    // static_cast_check_fit -- which it could not do in a debug build.
+    return Python::GetInt(value);
   } catch (const std::exception&) {
     g_core->logging->Log(
         LogName::kBa, LogLevel::kError,
@@ -648,7 +652,12 @@ auto BasePython::GetPyEnum_(ObjID enum_class_id, PyObject* obj) -> T {
         Python::ObjToString(obj) + " is not a valid int-valued enum.",
         PyExcType::kType);
   }
-  auto value = PyLong_AS_LONG(value_obj.get());
+  // Via the helper rather than PyLong_AS_LONG. Defense in depth rather
+  // than a live fix: the IsInstance gate above means only our own enum
+  // classes get here, whose values are small by construction, so an
+  // overflow is unreachable today. It is one guard away from being
+  // reachable though, and the helper costs nothing.
+  auto value = Python::GetInt64(value_obj.get());
   if (value < 0 || value >= static_cast<int>(T::kLast)) {
     throw Exception(
         Python::ObjToString(obj) + " is an invalid out-of-range enum value.",

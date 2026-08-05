@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib import popup
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -110,8 +110,8 @@ class TrophiesWindow(popup.PopupWindow):
             color=(0.7, 0.8, 1.0),
             flatness=1.0,
             shadow=0.0,
-            text=classicassets.strings.ui.spaced_pair(
-                first=classicassets.strings.ui.total,
+            text=_commonassets.strings.compose.spaced_pair(
+                first=_commonassets.strings.values.total,
                 second=(
                     classicassets.strings.league
                 ).power_ranking_points_equals(number=str(total_pts)),

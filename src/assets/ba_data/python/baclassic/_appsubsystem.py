@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, override, assert_never, final
 from efro.dataclassio import dataclass_from_dict
 import babase
 import bauiv1
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, builtinassets
 from bauiv1 import classicassets as uiclassicassets
 import bascenev1
 from bascenev1 import classicassets
@@ -1062,6 +1062,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         import bacommon.clouddialog.basic as bcdlg
 
         strs = uiclassicassets.strings.ui
+        acts = _commonassets.strings.actions
 
         cls = bcdlg.ButtonLabel
         if label is cls.UNKNOWN:
@@ -1073,21 +1074,21 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             return builtinassets.strings.ui.error
 
         if label is cls.OK:
-            return strs.ok
+            return acts.ok
         if label is cls.APPLY:
-            return strs.apply
+            return acts.apply
         if label is cls.CANCEL:
-            return strs.cancel
+            return acts.cancel
         if label is cls.ACCEPT:
-            return strs.accept
+            return acts.accept
         if label is cls.DECLINE:
-            return strs.decline
+            return acts.decline
         if label is cls.IGNORE:
-            return strs.ignore
+            return acts.ignore
         if label is cls.CLAIM:
             return strs.claim
         if label is cls.DISCARD:
-            return strs.discard
+            return acts.discard
         assert_never(label)
 
     def required_purchases_for_game(self, game: str) -> list[str]:

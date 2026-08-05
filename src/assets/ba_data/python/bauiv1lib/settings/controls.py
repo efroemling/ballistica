@@ -6,7 +6,7 @@ from typing import override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1 import builtinassets
 
@@ -317,7 +317,7 @@ class ControlsSettingsWindow(bui.MainWindow):
 
             def do_toggle(value: bool) -> None:
                 bui.screenmessage(
-                    classicassets.strings.ui.must_restart,
+                    _commonassets.strings.status.must_restart,
                     color=(1, 1, 0),
                 )
                 builtinassets.audio.gun_cocking.get().play()

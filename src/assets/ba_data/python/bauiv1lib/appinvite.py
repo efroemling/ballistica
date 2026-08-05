@@ -7,7 +7,7 @@ import time
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -23,7 +23,7 @@ def _lines(*parts: str | bui.LangStr) -> bui.LangStr:
     assert parts
     out: str | bui.LangStr = parts[-1]
     for part in reversed(parts[:-1]):
-        out = classicassets.strings.ui.line_pair(first=part, second=out)
+        out = _commonassets.strings.compose.line_pair(first=part, second=out)
     assert isinstance(out, bui.LangStr)
     return out
 
@@ -78,7 +78,7 @@ class ShowFriendCodeWindow(bui.Window):
             flatness=1.0,
             h_align='center',
             v_align='center',
-            text=classicassets.strings.appinvite.share_code,
+            text=classicassets.strings.app_invite.share_code,
             maxwidth=self._width * 0.85,
         )
 
@@ -96,7 +96,7 @@ class ShowFriendCodeWindow(bui.Window):
 
         award_str: str | bui.LangStr
         if self._data['awardTickets'] != 0:
-            award_str = classicassets.strings.appinvite.friend_promo_award(
+            award_str = classicassets.strings.app_invite.friend_promo_award(
                 count=self._data['awardTickets']
             )
         else:
@@ -114,13 +114,13 @@ class ShowFriendCodeWindow(bui.Window):
             # empty when no award applies, matching the legacy blank
             # line), stacked via the newline join template.
             text=_lines(
-                (classicassets.strings.appinvite).friend_promo_redeem_long(
+                (classicassets.strings.app_invite).friend_promo_redeem_long(
                     count=self._data['tickets'],
                     max_uses=str(self._data['usesRemaining']),
                 ),
-                classicassets.strings.appinvite.where_to_enter,
+                classicassets.strings.app_invite.where_to_enter,
                 award_str,
-                (classicassets.strings.appinvite).friend_promo_expire(
+                (classicassets.strings.app_invite).friend_promo_expire(
                     expire_hours=self._data['expireHours']
                 ),
             ),
@@ -135,7 +135,7 @@ class ShowFriendCodeWindow(bui.Window):
                 size=(200, 40),
                 position=(self._width * 0.5 - 100 + xoffs, 39),
                 autoselect=True,
-                label=classicassets.strings.appinvite.email_it,
+                label=classicassets.strings.app_invite.email_it,
                 on_activate_call=bui.WeakCallStrict(self._email),
             )
 
@@ -156,7 +156,7 @@ class ShowFriendCodeWindow(bui.Window):
         bui.set_analytics_screen('Email Friend Code')
         appname = classicassets.strings.ui.app_name
         subject = (
-            (classicassets.strings.appinvite)
+            (classicassets.strings.app_invite)
             .friend_has_sent_promo(
                 count=self._data['tickets'],
                 app_name=appname,
@@ -168,7 +168,7 @@ class ShowFriendCodeWindow(bui.Window):
         # A mail body is genuinely a flat string, so evaluating here is
         # not a retained-surface flatten.
         body = (
-            (classicassets.strings.appinvite)
+            (classicassets.strings.app_invite)
             .you_have_been_sent_promo(app_name=appname)
             .evaluate()
             + '\n\n'
@@ -176,19 +176,19 @@ class ShowFriendCodeWindow(bui.Window):
             + '\n\n'
         )
         body += (
-            (classicassets.strings.appinvite)
+            (classicassets.strings.app_invite)
             .friend_promo_redeem_short(count=self._data['tickets'])
             .evaluate()
             + '\n\n'
-            + (classicassets.strings.appinvite)
+            + (classicassets.strings.app_invite)
             .friend_promo_instructions(app_name=appname)
             .evaluate()
             + '\n'
-            + (classicassets.strings.appinvite)
+            + (classicassets.strings.app_invite)
             .friend_promo_expire(expire_hours=self._data['expireHours'])
             .evaluate()
             + '\n'
-            + classicassets.strings.appinvite.enjoy.evaluate()
+            + classicassets.strings.app_invite.enjoy.evaluate()
         )
         bui.open_url(
             'mailto:?subject='
@@ -209,13 +209,15 @@ def handle_app_invites_press() -> None:
     assert plus is not None
 
     bui.screenmessage(
-        classicassets.strings.appinvite.requesting_code,
+        classicassets.strings.app_invite.requesting_code,
         color=(0, 1, 0),
     )
 
     def handle_result(result: dict[str, Any] | None) -> None:
         if result is None:
-            bui.screenmessage(classicassets.strings.ui.error, color=(1, 0, 0))
+            bui.screenmessage(
+                _commonassets.strings.values.error, color=(1, 0, 0)
+            )
             builtinassets.audio.error.get().play()
         else:
             ShowFriendCodeWindow(result)

@@ -8,7 +8,7 @@ import logging
 from efro.error import CommunicationError
 import bacommon.cloud
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 STATUS_CHECK_INTERVAL_SECONDS = 2.0
@@ -58,7 +58,7 @@ class V2ProxySignInWindow(bui.Window):
             maxwidth=0.9 * self._width,
             # text=bui.Lstr(
             #     value='${A}...',
-            #     subs=[('${A}', classicassets.strings.ui.loading)],
+            #     subs=[('${A}', _commonassets.strings.status.loading)],
             # ),
             text='',
             color=(1, 1, 1),
@@ -89,7 +89,7 @@ class V2ProxySignInWindow(bui.Window):
             position=(30, self._height - 65),
             size=(130, 50),
             scale=0.8,
-            label=classicassets.strings.ui.cancel,
+            label=_commonassets.strings.actions.cancel,
             on_activate_call=self._done,
             autoselect=True,
         )
@@ -208,7 +208,7 @@ class V2ProxySignInWindow(bui.Window):
         if bui.overlay_web_browser_is_supported():
             bui.textwidget(
                 edit=self._state_text,
-                text=classicassets.strings.ui.please_wait,
+                text=_commonassets.strings.status.please_wait,
             )
             self._show_overlay_sign_in_ui(response)
             self._overlay_web_browser_open = True
@@ -319,7 +319,9 @@ class V2ProxySignInWindow(bui.Window):
         ):
             logging.info('LoginProxy failed.')
             builtinassets.audio.error.get().play()
-            bui.screenmessage(classicassets.strings.ui.error, color=(1, 0, 0))
+            bui.screenmessage(
+                _commonassets.strings.values.error, color=(1, 0, 0)
+            )
             self._done()
             return
 
@@ -375,7 +377,8 @@ class V2ProxySignInWindow(bui.Window):
         if bui.clipboard_is_supported():
             bui.clipboard_set_text(link)
             bui.screenmessage(
-                classicassets.strings.ui.copied_to_clipboard, color=(0, 1, 0)
+                _commonassets.strings.status.copied_to_clipboard,
+                color=(0, 1, 0),
             )
 
     def _done(self) -> None:

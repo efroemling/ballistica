@@ -19,20 +19,20 @@ class PlaylistTypeVars:
         self.sessiontype: type[bs.Session]
 
         if issubclass(sessiontype, bs.DualTeamSession):
-            play_mode_name = classicassets.strings.playmodes.teams
+            play_mode_name = classicassets.strings.play_modes.teams
             self.get_default_list_call = get_default_teams_playlist
             self.session_type_name = 'bascenev1.DualTeamSession'
             self.config_name = 'Team Tournament'
-            self.window_title_name = classicassets.strings.playmodes.teams
+            self.window_title_name = classicassets.strings.play_modes.teams
             self.sessiontype = bs.DualTeamSession
 
         elif issubclass(sessiontype, bs.FreeForAllSession):
-            play_mode_name = classicassets.strings.playmodes.free_for_all
+            play_mode_name = classicassets.strings.play_modes.free_for_all
             self.get_default_list_call = get_default_free_for_all_playlist
             self.session_type_name = 'bascenev1.FreeForAllSession'
             self.config_name = 'Free-for-All'
             self.window_title_name = (
-                classicassets.strings.playmodes.free_for_all
+                classicassets.strings.play_modes.free_for_all
             )
             self.sessiontype = bs.FreeForAllSession
 

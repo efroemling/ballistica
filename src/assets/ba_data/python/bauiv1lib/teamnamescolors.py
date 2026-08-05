@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, cast, override
 from bauiv1lib.popup import PopupWindow
 from bauiv1lib.colorpicker import ColorPicker
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -77,7 +77,7 @@ class TeamNamesColorsWindow(PopupWindow):
         resetbtn = bui.buttonwidget(
             parent=self.root_widget,
             id=f'{self._idprefix}|reset',
-            label=classicassets.strings.ui.reset,
+            label=_commonassets.strings.actions.reset,
             autoselect=True,
             scale=0.7,
             on_activate_call=self._reset,
@@ -110,7 +110,7 @@ class TeamNamesColorsWindow(PopupWindow):
                     v_align='center',
                     max_chars=self._max_name_length,
                     color=self._colors[i],
-                    description=classicassets.strings.ui.name,
+                    description=_commonassets.strings.values.name,
                     editable=True,
                     padding=4,
                 )
@@ -128,7 +128,7 @@ class TeamNamesColorsWindow(PopupWindow):
         cancelbtn = bui.buttonwidget(
             parent=self.root_widget,
             id=f'{self._idprefix}|cancel',
-            label=classicassets.strings.ui.cancel,
+            label=_commonassets.strings.actions.cancel,
             autoselect=True,
             on_activate_call=self._on_cancel_press,
             size=(150, 50),
@@ -137,7 +137,7 @@ class TeamNamesColorsWindow(PopupWindow):
         okbtn = bui.buttonwidget(
             parent=self.root_widget,
             id=f'{self._idprefix}|ok',
-            label=classicassets.strings.ui.ok,
+            label=_commonassets.strings.actions.ok,
             autoselect=True,
             on_activate_call=self._ok,
             size=(150, 50),

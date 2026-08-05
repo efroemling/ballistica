@@ -285,6 +285,11 @@ nitpick_ignore = [
     ('py:class', 'MeshVerifiedSpec'),
     ('py:class', 'AssetGroup'),
     ('py:class', 'bacommon.assetspec._wrapper.AssetGroupTree'),
+    # Same story: FeedbackEvent is a PEP 695 ``type`` alias (a Literal of
+    # the haptic event names) that autodoc renders into
+    # ``bascenev1.Player.send_feedback``'s signature under its defining
+    # module rather than the package that re-exports it.
+    ('py:class', 'bascenev1._player.FeedbackEvent'),
 ]
 
 # Regex-based nitpick ignores for whole categories of references.

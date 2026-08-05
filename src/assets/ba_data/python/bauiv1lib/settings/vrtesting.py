@@ -90,7 +90,7 @@ class VRTestingWindow(TestingWindow):
         ]
 
         super().__init__(
-            classicassets.strings.settings.vrtesting.title,
+            classicassets.strings.settings.vr_testing.title,
             entries,
             transition,
         )

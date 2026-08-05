@@ -71,7 +71,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         # Throw up some text that only clients can see so they know that
         # the host is navigating menus while they're just staring at an
         # empty-ish screen.
-        tval = classicassets.strings.mainmenu.host_navigating_menus(
+        tval = classicassets.strings.main_menu.host_navigating_menus(
             host=plus.get_v1_account_display_string()
         )
         self._host_is_navigating_text = bs.NodeActor(
@@ -106,7 +106,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                         'scale': 1,
                         'vr_depth': -60,
                         'position': pos,
-                        'text': classicassets.strings.mainmenu.test_build,
+                        'text': classicassets.strings.main_menu.test_build,
                     },
                 )
             )
@@ -711,7 +711,7 @@ class NewsDisplay:
                 if val == '__ACH__':
                     vrmode = app.env.vr
                     Text(
-                        classicassets.strings.mainmenu.next_achievements,
+                        classicassets.strings.main_menu.next_achievements,
                         color=((1, 1, 1, 1) if vrmode else (0.95, 0.9, 1, 0.4)),
                         host_only=True,
                         maxwidth=200,

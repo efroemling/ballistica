@@ -26,7 +26,7 @@ class OnScreenKeyboardWindow(Window):
         # Safe up-call: bauiv1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bauiv1 import classicassets
+        from bauiv1 import _commonassets
 
         self._adapter = adapter
         self._width = 700
@@ -70,7 +70,7 @@ class OnScreenKeyboardWindow(Window):
             position=(self._width - 200, 44),
             size=(140, 60),
             autoselect=True,
-            label=classicassets.strings.ui.done,
+            label=_commonassets.strings.actions.done,
             on_activate_call=self._done,
         )
         _bauiv1.containerwidget(
@@ -132,7 +132,7 @@ class OnScreenKeyboardWindow(Window):
         # Safe up-call: bauiv1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bauiv1 import builtinassets, classicassets
+        from bauiv1 import _commonassets, builtinassets, classicassets
 
         self._keyboard = self._get_keyboard()
         # We want to get just chars without column data, etc.
@@ -396,7 +396,7 @@ class OnScreenKeyboardWindow(Window):
         # Safe up-call: bauiv1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bauiv1 import builtinassets, classicassets
+        from bauiv1 import _commonassets, builtinassets, classicassets
 
         assert babase.app.meta.scanresults is not None
         kbexports = babase.app.meta.scanresults.exports_by_name(

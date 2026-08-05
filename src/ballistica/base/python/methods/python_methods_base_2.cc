@@ -729,8 +729,11 @@ static auto PyFadeScreen(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   BA_PRECONDITION(g_base->InLogicThread());
+  // Via IntFromDouble: `time` arrives straight from a PyArg "f", so it
+  // can be NaN or infinite, and casting either to an int is undefined
+  // behavior.
   g_base->graphics->FadeScreen(static_cast<bool>(fade),
-                               static_cast<int>(1000.0f * time), endcall);
+                               Python::IntFromDouble(1000.0 * time), endcall);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1298,6 +1301,30 @@ static PyMethodDef PyRegisterAssetPackageBucketsDef = {
     "sees a half-registered package. Safe to call while other threads are\n"
     "doing asset lookups."};
 
+// ---------------- mark_construct_assets_complete -----------------------------
+
+static auto PyMarkConstructAssetsComplete(PyObject* self, PyObject* args)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  g_base->assets->package_registry()->SetConstructComplete();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyMarkConstructAssetsCompleteDef = {
+    "mark_construct_assets_complete",            // name
+    (PyCFunction)PyMarkConstructAssetsComplete,  // method
+    METH_NOARGS,                                 // flags
+
+    "mark_construct_assets_complete() -> None\n"
+    "\n"
+    "(internal) Note that construct-mode has finished resolving every\n"
+    "asset-package the meta-scan requires. Opens the native gate that\n"
+    "complains about non-builtin asset access before that point (see\n"
+    "``AssetPackageRegistry::CheckPreConstructAccess``). Called from\n"
+    "``babase._asset_packages.mark_construct_complete()`` so the native\n"
+    "and Python gates open together."};
+
 // ---------------- get_asset_package_constant_blob_path -----------------------
 
 static auto PyGetAssetPackageConstantBlobPath(PyObject* self, PyObject* args,
@@ -1456,6 +1483,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
   return {
       PyRegisterAssetPackageBucketDef,
       PyRegisterAssetPackageBucketsDef,
+      PyMarkConstructAssetsCompleteDef,
       PyGetAssetPackageConstantBlobPathDef,
       PySetAssetNameCompatVersionsDef,
       PyResolveLegacyAssetNameDef,

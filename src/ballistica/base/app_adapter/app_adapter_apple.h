@@ -55,6 +55,10 @@ class AppAdapterApple : public AppAdapter {
   /// touch_mode == !using_pointing_device.
   void SetUsingPointingDevice(bool pointing);
 
+  auto ApplyJoystickFeedback(JoystickInput* device, const FeedbackEvent& event)
+      -> int override;
+  void StopJoystickFeedback(JoystickInput* device) override;
+
   auto HasDirectKeyboardInput() -> bool override;
   void EnableResizeFriendlyMode(int width, int height);
 

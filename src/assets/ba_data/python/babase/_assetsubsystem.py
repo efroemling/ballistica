@@ -53,7 +53,7 @@ from bacommon.cloud import (
 from bacommon import assetcas
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterable
 
     from bacommon import securedata
     from bacommon.cloud import AssetPackageBuildProgress
@@ -146,6 +146,20 @@ _BUCKETS = (
 #: guaranteed bundled. Every other package is exact-or-fail. Single
 #: fallback per bucket for now; :meth:`AssetSubsystem._fallback_coord`
 #: wraps this so a fallback *chain* is a non-breaking later change.
+#: Texture tiers cheapest-first. The server may hand back a *lower* tier
+#: than we asked for when the requested one isn't built yet, so we can
+#: play now and pick up full quality on a later resolve. Only tier may
+#: ever be substituted -- profile and render_space are capability axes
+#: (what this device can actually decode), so a mismatch there is an
+#: error, not a downgrade.
+_TEXTURE_TIER_ORDER = ('preview', 'regular', 'ultra')
+
+#: App-config key recording that the player is on reduced-quality assets.
+#: Persisted (rather than kept in memory) so the all-clear can be shown on
+#: a later run — the upgrade usually lands between sessions, since nothing
+#: re-resolves mid-session today.
+_FALLBACK_ASSETS_CONFIG_KEY = 'ShowingFallbackAssets'
+
 _BUCKET_FALLBACKS: dict[str, str | None] = {
     'constant': None,  # No flavor dimension; 'constant' is always present.
     'language': 'language/eng',
@@ -278,6 +292,28 @@ class _OneResult:
 
 
 @dataclass
+class _PkgManifests:
+    """One package's Tier-1 result, before its blobs are fetched (internal).
+
+    The seam between the two halves of acquiring a package: what the
+    server resolved (``coords``), what that implies we still need
+    (``needed``), and the capability token to fetch it with. Splitting
+    these lets every package's fetches share one pool.
+    """
+
+    apverid: str
+    #: Resolved ``coord -> flavor-manifest hash``.
+    coords: dict[str, str]
+    #: Every data blob the resolved flavor-manifests reference, as
+    #: ``hash -> canonical size`` (including ones already on disk;
+    #: :meth:`AssetSubsystem._fetch_blobs` filters).
+    needed: dict[str, int]
+    #: Short-lived ``/casblob`` capability token; ``None`` when the
+    #: server returned none (fine when nothing needs fetching).
+    token: securedata.Archive | None
+
+
+@dataclass
 class ResolveResult:
     """Outcome of a successful :meth:`AssetSubsystem.resolve`."""
 
@@ -340,6 +376,14 @@ class ResolveProgress:
     build_units_done: int | None = None
     build_units_total: int | None = None
 
+    #: True once *any* package has started building, even if the total
+    #: step count isn't known yet (other packages still working out their
+    #: own counts). Lets the display say "Building assets…" the moment
+    #: work actually starts instead of sitting on "Preparing to build…"
+    #: until the slowest package reports -- which reads as nothing
+    #: happening while builds are in fact already running.
+    build_started: bool = False
+
     #: Data blobs fetched so far, and the number known to need fetching.
     #: Unlike the build counts, these are a running total across ALL
     #: packages in the resolve (they only grow), so a single
@@ -366,19 +410,6 @@ _PROGRESS_UPDATE_INTERVAL = 0.05
 #: Seconds between Tier-1 resolve polls while the server reports it's
 #: still building the requested flavors.
 _BUILD_POLL_INTERVAL_SECONDS = 1.0
-
-
-def _package_display_name(apverid: str | None) -> str:
-    """Package name from an apverid, for progress messages.
-
-    ``a-0.babuiltinassets.dev260605g`` -> ``babuiltinassets``. Falls back
-    to the raw apverid (or a generic word) if it isn't the expected
-    ``account.package.version`` shape.
-    """
-    if not apverid:
-        return 'package'
-    parts = apverid.split('.')
-    return parts[1] if len(parts) == 3 and parts[1] else apverid
 
 
 def make_progress_reporter(
@@ -451,29 +482,42 @@ def make_progress_reporter(
         if progress.detail:
             message = progress.detail
         elif progress.phase is ResolvePhase.BUILDING:
-            # Per-package build (the server builds one package at a time);
-            # name the package so successive packages don't look like a
-            # single bar restarting, and count its buckets down.
-            pkg = _package_display_name(progress.apverid)
+            # One countdown spanning every package being built (they run
+            # concurrently), so the bar advances steadily instead of
+            # restarting per package.
             done = progress.build_units_done
             total = progress.build_units_total
             if done is not None and total is not None and total > 0:
                 remaining = max(total - done, 0)
-                message = strs.building_assets(package=pkg, count=remaining)
+                message = strs.building_assets(count=remaining)
                 fraction = done / total
+            elif progress.build_started:
+                # Building, but the total isn't final -- a package that
+                # hasn't reported yet would make the count jump upward,
+                # and a count that climbs is worse than no count. Say
+                # what's true (building) and add the number once it can
+                # be trusted, rather than holding an idle-sounding
+                # message while work is already running.
+                message = strs.building_assets_no_count
             else:
-                # Counts not reported yet (the initial 'preparing' step:
-                # workspace compile + leaf-build queue, before any leaf
-                # build reports). A distinct "Preparing to build…" verb
-                # (vs. the counted "Building … (N remaining)…" line) so a
-                # stuck/looping prepare reads as stuck rather than
-                # masquerading as build progress.
-                message = strs.preparing_build(package=pkg)
+                # Nothing has started yet: the workspace compile and
+                # leaf-build queue are still being worked out. A distinct
+                # "Preparing to build…" verb so a stuck/looping prepare
+                # reads as stuck rather than masquerading as progress.
+                message = strs.preparing_build
         elif downloading and progress.blobs_total:
             # Single running total across the whole resolve (all packages).
+            # The bar is weighted by BYTES, not blob count: sizes span
+            # kilobyte icons to multi-megabyte atlases, so a count-based
+            # bar lurches. The text stays a count -- 'N remaining' reads
+            # more concretely than a byte figure.
             remaining = max(progress.blobs_total - progress.blobs_done, 0)
             message = strs.downloading_assets(count=remaining)
-            fraction = progress.blobs_done / progress.blobs_total
+            fraction = (
+                progress.bytes_done / progress.bytes_total
+                if progress.bytes_total > 0
+                else progress.blobs_done / progress.blobs_total
+            )
         else:
             # RESOLVING with no detail: nothing to add (the display's own
             # title/initial state covers it).
@@ -536,7 +580,7 @@ class _CachedPackage:
 #: flush caches poisoned during the #35 rollout window, when servers
 #: could still hand a new client old-shape manifests that were then
 #: committed under epoch 2 (see the ingestion-time shape validation
-#: in ``_tier1_download``, which prevents that class going forward).
+#: in ``_tier1_manifests``, which prevents that class going forward).
 _CACHE_MANIFEST_LAYOUT_VERSION = 3
 
 
@@ -649,6 +693,27 @@ class AssetSubsystem(AppSubsystem):
         # per-resolve by resolve(on_progress=...).
         self._progress = ResolveProgress()
         self._progress_cb: Callable[[ResolveProgress], None] | None = None
+        # Phase-transition trace (_emit_progress): when the current
+        # resolve began, and the last phase we logged a transition for.
+        self._progress_t_start = 0.0
+        self._progress_phase_logged: ResolvePhase | None = None
+        # Last server build-phase we logged, so identical re-polls of a
+        # still-running build don't each get an INFO line.
+        self._progress_build_phase: str | None = None
+        # Packages whose server-side build we're still waiting on, and the
+        # (done, total) units each has reported. Aggregated into one
+        # countdown; the download readout is held back until this empties
+        # (see _emit_progress).
+        self._build_pending: set[str] = set()
+        self._build_units: dict[str, tuple[int, int]] = {}
+        # Packages not yet finished *acquiring* -- manifest resolved AND
+        # blob totals registered. The phase flip waits on this rather than
+        # on _build_pending, so the first download frame already knows the
+        # full byte total instead of briefly reading '0 remaining'.
+        self._acquire_pending: set[str] = set()
+        # Data-blob hashes already claimed by some package's fetch, so two
+        # packages referencing the same blob don't both download it.
+        self._fetch_claimed: set[str] = set()
 
         # Texture tier is hard-coded for now; language is wired from the
         # real locale at resolve time; texture profile comes from the
@@ -678,7 +743,27 @@ class AssetSubsystem(AppSubsystem):
         # into the writable cache — lets the download+write leg be
         # exercised against an otherwise-fully-bundled package. Set via
         # BA_ASSET_NO_BUNDLE_REUSE=1 (test_game_run --asset-no-bundle-reuse).
+        # Only takes effect for resolves that can download (see
+        # _bundle_hidden below).
         self._reuse_bundle = os.environ.get('BA_ASSET_NO_BUNDLE_REUSE') != '1'
+
+        # End-to-end asset-pipeline test seed (BA_ASSET_TEST_SEED;
+        # test_game_run --asset-test-seed). Sent verbatim on every Tier-1
+        # resolve: a non-empty value asks the server to rebuild the
+        # package's whole build graph from scratch rather than serving
+        # cache, so a launch can be timed against a genuinely cold
+        # pipeline. Restricted server-side to one operator account (a
+        # seeded resolve from anyone else is refused, not ignored).
+        # Read once at construction -- it's a per-run choice.
+        self._testseed = os.environ.get('BA_ASSET_TEST_SEED', '')
+
+        # Whether bundle-hiding is active right now. Only ever true
+        # during a resolve that is *allowed to download*: hiding the
+        # bundle from a resolve that cannot download (the bootstrap
+        # resolve_local, which has no network) doesn't exercise
+        # anything, it just makes the builtin package unresolvable and
+        # fatals the app. See _present.
+        self._bundle_hidden = False
 
         # Dedicated, deliberately-small pool for CAS-blob downloads, kept
         # separate from the shared app threadpool so a big download burst can't
@@ -753,15 +838,22 @@ class AssetSubsystem(AppSubsystem):
         """Path a CAS blob would occupy in the writable root."""
         return assetcas.cas_blob_path(self._writable_assets_root, filehash)
 
-    def _locate_blob(self, filehash: str) -> str | None:
+    def _locate_blob(
+        self, filehash: str, *, hide_bundle: bool = False
+    ) -> str | None:
         """Path of a CAS blob if present (writable then bundle), else None.
 
         Existence probe used by GC's mark phase to read flavor-manifest
         blobs and to honor "a live flavor-manifest absent on disk → drop
         the ref". Unlike :meth:`_present` this needs no expected size.
+
+        ``hide_bundle`` opts a caller into the debug bundle-hiding mode
+        (see :meth:`_present`); it defaults off so GC always sees the
+        real on-disk truth. GC deletes files, and a GC that believed
+        bundled blobs were missing would drop live refs.
         """
         roots = [self._writable_assets_root]
-        if self._reuse_bundle:
+        if not (hide_bundle and self._bundle_hidden):
             roots.append(self._bundle_assets_root)
         for root in roots:
             path = os.path.join(root, filehash[:2], filehash[2:])
@@ -833,6 +925,75 @@ class AssetSubsystem(AppSubsystem):
             # need no entry — they ride 'constant'.
             'meshes': f'meshes/{self._mesh_profile}.{self._mesh_tier}',
         }
+
+    def _flavor_candidates(self, bucket: str, desired_coord: str) -> list[str]:
+        """Coords acceptable for ``bucket`` this run, best first.
+
+        Just the desired coord for everything except textures, which may
+        also be satisfied by a *cheaper tier* of the same profile and
+        render_space — the server serves one when the requested tier is
+        still building. Only tiers at or below the request are offered:
+        a client asking for `preview` (the dev fast-iteration flavor)
+        must not silently get something more expensive.
+
+        Candidates are *constructed*, never parsed out of what came back
+        — coords are strictly one-way (see :meth:`_desired_coords`) — so
+        anything the server returns that we did not ask for simply is
+        not among these and cannot be used.
+        """
+        if bucket != 'textures':
+            return [desired_coord]
+        try:
+            idx = _TEXTURE_TIER_ORDER.index(self._texture_tier)
+        except ValueError:
+            return [desired_coord]
+        return [
+            f'textures/{self._texture_profile}.{self._render_space}.{tier}'
+            for tier in reversed(_TEXTURE_TIER_ORDER[: idx + 1])
+        ]
+
+    def _acceptable_coords(self, language: Locale) -> set[str]:
+        """Every coord a resolve is allowed to hand us, for validation.
+
+        A served coord outside this set means the server substituted on a
+        *capability* axis (profile / render_space) or used a coord
+        vocabulary this build doesn't know — a bug, not a degradation,
+        and potentially unrenderable. See :meth:`_validate_served_coords`.
+        """
+        desired = self._desired_coords(language)
+        out: set[str] = set()
+        for bucket, coord in desired.items():
+            out.update(self._flavor_candidates(bucket, coord))
+        return out
+
+    def _validate_served_coords(
+        self, apverid: str, served: Iterable[str], language: Locale
+    ) -> None:
+        """Fail loudly if a resolve served a coord we can't accept.
+
+        Tier substitution is expected and fine. A profile/render_space
+        substitution is not: those encode what the device can decode, so
+        registering one would be wrong rather than merely lower quality.
+        Raising keeps the documented all-or-nothing contract of
+        :class:`AssetResolveError` — nothing is committed — and makes a
+        server-side mistake loud instead of leaving players quietly on
+        the wrong assets with nothing in the logs to explain it.
+        """
+        acceptable = self._acceptable_coords(language)
+        bad = [coord for coord in served if coord not in acceptable]
+        if bad:
+            logger.error(
+                'Resolve for %s served unusable coord(s) %s;'
+                ' acceptable were %s. This is a server-side bug --'
+                ' only texture tier may ever be substituted.',
+                apverid,
+                sorted(bad),
+                sorted(acceptable),
+            )
+            raise AssetResolveError(
+                f'{apverid}: server returned unusable asset flavor(s):'
+                f' {sorted(bad)}.'
+            )
 
     @staticmethod
     def _fallback_coord(bucket: str) -> str | None:
@@ -925,6 +1086,16 @@ class AssetSubsystem(AppSubsystem):
 
         self._progress = ResolveProgress()
         self._progress_cb = on_progress
+        # Phase-transition trace state (see _emit_progress). Reset per
+        # resolve so each one's timeline starts at zero.
+        self._progress_t_start = _babase.apptime()
+        self._progress_phase_logged = None
+        self._progress_build_phase = None
+        # Bundle-hiding (BA_ASSET_NO_BUNDLE_REUSE) applies only to a
+        # resolve that can actually download what it then considers
+        # missing. Scoped to the resolve so the bootstrap local resolve
+        # and the GC sweep always see the real bundle.
+        self._bundle_hidden = not self._reuse_bundle and allow_downloads
         try:
             return await self._resolve(
                 apverids, allow_downloads, on_download_starting, language
@@ -948,6 +1119,7 @@ class AssetSubsystem(AppSubsystem):
                 self._download_pool.shutdown(wait=True, cancel_futures=True)
                 self._download_pool = None
             self._progress_cb = None
+            self._bundle_hidden = False
             await self._gate.release()
             logger.debug('resolve: released (background=%s).', background)
 
@@ -956,10 +1128,77 @@ class AssetSubsystem(AppSubsystem):
 
         A copy is passed so a consumer can stash it without aliasing our
         mutable running state.
+
+        Also emits one INFO line per phase transition. Phase changes are
+        the moments the user sees the dialog change what it's saying
+        ('Building…' -> 'Downloading…'), and they're rare (a handful per
+        resolve), so logging them unconditionally gives a readable
+        launch-to-bootstrapped timeline from any ordinary log capture --
+        without needing ``ba.assetmanager=DEBUG``, which traces every
+        individual progress tick.
         """
+        self._derive_aggregate_progress()
+        phase = self._progress.phase
+        if phase is not self._progress_phase_logged:
+            self._progress_phase_logged = phase
+            logger.info(
+                'resolve phase -> %s at +%.2fs (%s).',
+                phase.value,
+                _babase.apptime() - self._progress_t_start,
+                self._progress.apverid or 'no package',
+            )
         cb = self._progress_cb
         if cb is not None:
             cb(replace(self._progress))
+
+    def _derive_aggregate_progress(self) -> None:
+        """Fold per-package state into the single readout the user sees.
+
+        Two rules, both about not showing a number until it means
+        something:
+
+        - **Builds outrank downloads.** Downloads for an early-finishing
+          package overlap the builds still running, but showing both at
+          once is exactly the vagueness this replaced. So while *any*
+          build is outstanding the readout stays on builds; the download
+          totals accumulate silently in the background.
+        - **No count until every total is known.** A package's unit total
+          only arrives once its build gets past 'preparing', so summing
+          early would show a remaining-count that climbs as packages
+          report in. Until every outstanding package has reported, we say
+          'preparing' instead; after that the count only falls.
+
+        The payoff for holding downloads back is that by the time they're
+        shown, every manifest is in, so ``bytes_total`` is final -- the
+        download bar is accurate and monotonic from its first frame, and
+        legitimately starts partway along when downloads overlapped the
+        builds.
+        """
+        if self._acquire_pending:
+            self._progress.phase = ResolvePhase.BUILDING
+            # A package "reports" when its meta-build finishes working out
+            # its recipe list -- i.e. when it *starts* building, with zero
+            # units done. So any report at all means work is underway.
+            self._progress.build_started = bool(self._build_units)
+            if self._build_units and all(
+                a in self._build_units for a in self._build_pending
+            ):
+                # Sum over every package that has reported -- including
+                # ones already finished (pinned at done==total) -- so the
+                # denominator holds still and the count reaches zero.
+                units = self._build_units.values()
+                self._progress.build_units_done = sum(d for d, _t in units)
+                self._progress.build_units_total = sum(t for _d, t in units)
+            else:
+                # Some package hasn't reported a total yet -> 'preparing'.
+                self._progress.build_units_done = None
+                self._progress.build_units_total = None
+        elif self._progress.blobs_total > 0:
+            # Builds done and there's transfer to show. Stays here for the
+            # rest of the resolve so the final caught-up frame lands.
+            self._progress.phase = ResolvePhase.DOWNLOADING
+        # Otherwise leave the phase alone: nothing to download means no
+        # download line at all rather than one that flashes at 100%.
 
     async def _run_in_pool[T](
         self,
@@ -1019,18 +1258,35 @@ class AssetSubsystem(AppSubsystem):
         ``phase``/``units`` are the source of truth. (``detail`` remains
         on the wire as a future escape hatch.)
         """
-        self._progress.phase = ResolvePhase.BUILDING
-        self._progress.apverid = apverid
+        # Advanced = the server reported something new since the last
+        # poll. We log those at INFO (they're the server-side build
+        # actually moving, and a build wait is the longest thing a user
+        # ever waits on here) and the identical re-polls in between at
+        # DEBUG, so a multi-minute build leaves a readable progression
+        # rather than one line per second of polling.
+        prev = self._build_units.get(apverid)
+        advanced = (
+            bp.phase.value != self._progress_build_phase
+            or prev is None
+            or (bp.units_done, bp.units_total) != prev
+        )
         self._progress.detail = None
-        self._progress.build_units_done = bp.units_done
-        self._progress.build_units_total = bp.units_total
-        logger.debug(
-            'resolve build-progress %s: phase=%s units=%s/%s detail=%r',
+        # Record this package's contribution; the readout is the sum over
+        # every still-building package (see _derive_aggregate_progress).
+        # A package that hasn't reported counts yet stays absent, which is
+        # what holds the display on 'preparing'.
+        if bp.units_done is not None and bp.units_total is not None:
+            self._build_units[apverid] = (bp.units_done, bp.units_total)
+        self._progress_build_phase = bp.phase.value
+        (logger.info if advanced else logger.debug)(
+            'resolve build-progress %s: phase=%s units=%s/%s detail=%r'
+            ' at +%.2fs.',
             apverid,
             bp.phase.value,
             bp.units_done,
             bp.units_total,
             bp.detail,
+            _babase.apptime() - self._progress_t_start,
         )
         self._emit_progress()
 
@@ -1149,10 +1405,18 @@ class AssetSubsystem(AppSubsystem):
         if language is None:
             language = _babase.app.locale.current_locale
         now = time.time()
+        # Log the exact dimensions being asked for (and the test seed, if
+        # any) alongside the packages: this line is the client end of the
+        # resolve transcript, and the server logs the same coordinates,
+        # so the two sides can be lined up after the fact.
         logger.info(
-            'Resolving %d asset-package(s) (downloads=%s): %s',
+            'Resolving %d asset-package(s) (downloads=%s, dims=%s/%s/%s%s): %s',
             len(apverids),
             allow_downloads,
+            self._texture_profile,
+            self._texture_tier,
+            language.value,
+            f', testseed={self._testseed}' if self._testseed else '',
             ', '.join(apverids),
         )
         t_start = _babase.apptime()
@@ -1195,14 +1459,71 @@ class AssetSubsystem(AppSubsystem):
         await self._run_in_pool(self._commit_manifest, manifest_pkgs, now)
 
         logger.info(
-            'Resolved %d package(s): %d bucket(s) registered%s (%s, %.0f ms).',
+            'Resolved %d package(s): %d bucket(s) registered%s'
+            ' (%s, %.0f ms, %d blob(s)/%.1f MB downloaded).',
             len(apverids),
             len(register_specs),
             f', {len(fell_back)} fell back' if fell_back else '',
             mode,
             (_babase.apptime() - t_start) * 1000.0,
+            self._progress.blobs_done,
+            self._progress.bytes_done / (1024.0 * 1024.0),
         )
+        self._report_flavor_quality(allow_downloads, fell_back)
         return ResolveResult(apverids=list(apverids), fell_back=fell_back)
+
+    def _report_flavor_quality(
+        self, allow_downloads: bool, fell_back: dict[str, str]
+    ) -> None:
+        """Tell the player when they are (or stop being) on reduced assets.
+
+        Fires only on a *successful, downloads-allowed* resolve. Those two
+        qualifiers are what make this safe to word as "still building":
+
+        - ``allow_downloads`` excludes the pre-network bootstrap resolve,
+          which is exactly where the bundled profile fallback legitimately
+          gets used. A device whose real ideal flavor *is* the bundled
+          fallback has desired == selected, so it never trips this either.
+        - Reaching here at all means the resolve committed, so this can't
+          fire on a half-finished or errored one.
+
+        Evaluating over the whole ``fell_back`` set (rather than per
+        bucket) is what makes the all-clear honest: it clears only when
+        *nothing* is downgraded, not on the first bucket to recover.
+
+        The flag lives in app-config so the all-clear can land on a later
+        run — a player downgraded tonight sees the green message at their
+        next launch, once the tier they asked for has finished building.
+        """
+        if not allow_downloads:
+            return
+
+        # Function-local by convention (modules never import their own
+        # top-level package at module scope).
+        from babase import builtinassets
+
+        cfg = _babase.app.config
+        was_showing = bool(cfg.get(_FALLBACK_ASSETS_CONFIG_KEY, False))
+        now_showing = bool(fell_back)
+        if now_showing == was_showing:
+            # Nothing to say, and nothing to write -- don't churn the
+            # config file on every boot of a steady state.
+            return
+
+        strs = builtinassets.strings.assets
+        if now_showing:
+            cfg[_FALLBACK_ASSETS_CONFIG_KEY] = True
+            _babase.screenmessage(
+                strs.requested_quality_assets_building,
+                color=(1.0, 1.0, 0.0),
+            )
+        else:
+            del cfg[_FALLBACK_ASSETS_CONFIG_KEY]
+            _babase.screenmessage(
+                strs.all_assets_requested_quality,
+                color=(0.0, 1.0, 0.0),
+            )
+        cfg.commit()
 
     def _resolve_offline_sync(
         self, apverids: list[str], language: Locale
@@ -1235,17 +1556,158 @@ class AssetSubsystem(AppSubsystem):
     async def _resolve_online(
         self, apverids: list[str], language: Locale, allow_downloads: bool
     ) -> _ResolveAccum:
-        """Per-package resolve with optional Tier-1 downloads + fallback.
+        """Resolve the set through one build pool and one download pool.
 
-        Used when the warm fast-path can't satisfy the set locally. Each
-        package scans, optionally fetches missing flavors, and finalizes.
+        Used when the warm fast-path can't satisfy the set locally.
+
+        Every package that needs the network is kicked off *together*
+        rather than run to completion one at a time. Two reasons:
+
+        - **Speed.** Package N's server-side build used to wait on package
+          N-1's downloads, so a multi-package bring-up serialized into a
+          chain of build/download/build/download. Now all the builds
+          overlap, and each package's blobs start downloading the moment
+          *its* manifest lands, while other packages are still building.
+          Overlapping those two is free -- builds are server CPU, downloads
+          are client network.
+        - **Legibility.** The user sees one countdown for all builds and
+          one for all downloads, instead of a bar that restarts per
+          package and never conveys overall progress.
+
+        Failure semantics are unchanged: the builtin/bootstrap package
+        falls back to its bundled flavors, everything else is
+        exact-or-fail, and the commit stays all-or-nothing.
         """
-        results: list[_OneResult] = []
-        for apverid in apverids:
-            results.append(
-                await self._resolve_one(apverid, language, allow_downloads)
-            )
-        return self._accumulate_results(apverids, results)
+        desired = self._desired_coords(language)
+
+        # Scan every package's local state up front (off-thread, all at
+        # once) so we know the full set of work before starting any of it.
+        scans = await asyncio.gather(
+            *[
+                self._run_in_pool(self._scan_local, apverid, desired)
+                for apverid in apverids
+            ]
+        )
+        locals_by_id = {
+            apverid: local
+            for apverid, (local, _missing) in zip(apverids, scans)
+        }
+        needs_net = [
+            apverid
+            for apverid, (_local, missing) in zip(apverids, scans)
+            if allow_downloads and missing
+        ]
+
+        # Everything below reports into one aggregate readout.
+        self._build_pending = set(needs_net)
+        self._acquire_pending = set(needs_net)
+        self._build_units = {}
+        self._emit_progress()
+
+        downloaded = await self._acquire_all(needs_net, language)
+
+        # Finalize per package (desired-if-complete, else builtin
+        # fallback), then fold into the shared accumulator.
+        results = await asyncio.gather(
+            *[
+                self._run_in_pool(
+                    self._finalize_one,
+                    apverid,
+                    desired,
+                    {**locals_by_id[apverid], **downloaded.get(apverid, {})},
+                    self._is_builtin(apverid),
+                )
+                for apverid in apverids
+            ]
+        )
+        return self._accumulate_results(apverids, list(results))
+
+    async def _acquire_all(
+        self, apverids: list[str], language: Locale
+    ) -> dict[str, dict[str, str]]:
+        """Run every package's resolve+fetch concurrently; collect coords.
+
+        Returns ``apverid -> coord->flavor-manifest-hash`` for what each
+        package obtained from the server (absent/empty when a builtin
+        package fell back to bundled flavors).
+
+        A failure in one package dooms the whole resolve, but siblings are
+        already in flight; we surface the first failure untouched and strip
+        the rest so their tracebacks don't leave reference cycles behind
+        (the same terminal-consumer duty ``_fetch_blobs`` performs).
+        """
+        if not apverids:
+            return {}
+        acquired = await asyncio.gather(
+            *[self._acquire_one(apverid, language) for apverid in apverids],
+            return_exceptions=True,
+        )
+        out: dict[str, dict[str, str]] = {}
+        first_exc: BaseException | None = None
+        for apverid, result in zip(apverids, acquired):
+            if isinstance(result, BaseException):
+                if first_exc is None:
+                    first_exc = result
+                elif isinstance(result, Exception):
+                    strip_exception_tracebacks(result)
+                continue
+            out[apverid] = result
+        if first_exc is not None:
+            raise first_exc
+        return out
+
+    async def _acquire_one(
+        self, apverid: str, language: Locale
+    ) -> dict[str, str]:
+        """Resolve one package's manifests, then fetch its blobs.
+
+        The per-package half of the global flow: wait out this package's
+        server-side build, then hand its blobs to the shared download
+        pool. Returns the coords obtained from the server, or an empty map
+        when the builtin package fell back to its bundled flavors.
+        """
+        is_builtin = self._is_builtin(apverid)
+        try:
+            pkg = await self._tier1_manifests(apverid, language)
+        except AssetResolveAbortedError:
+            # App is shutting down -- not a resolve failure; don't
+            # fall back to bundled, just abandon the whole resolve.
+            self._mark_build_done(apverid, acquired=True)
+            raise
+        except AssetResolveError as exc:
+            # The builtin/bootstrap package must still come up offline;
+            # other packages are exact-or-fail. Log the underlying
+            # reason either way (it's otherwise swallowed).
+            logger.warning('%s: online resolve failed (%s).', apverid, exc)
+            self._mark_build_done(apverid, acquired=True)
+            if not is_builtin:
+                raise
+            strip_exception_tracebacks(exc)
+            return {}
+
+        # Built, but not yet 'acquired' -- _fetch_blobs still has to
+        # register this package's byte totals, and the phase must not flip
+        # to downloading before it does.
+        self._mark_build_done(apverid, acquired=False)
+        await self._fetch_blobs(pkg)
+        return pkg.coords
+
+    def _mark_build_done(self, apverid: str, *, acquired: bool) -> None:
+        """Retire one package from the build readout.
+
+        Pins its unit count at done==total rather than dropping it, so the
+        aggregate denominator stays put and the countdown walks to zero.
+        Removing it instead would make the total shrink as packages land,
+        and the count would stop partway (at whatever the stragglers still
+        owed) instead of reaching 0.
+        """
+        units = self._build_units.get(apverid)
+        if units is not None:
+            self._build_units[apverid] = (units[1], units[1])
+        self._build_pending.discard(apverid)
+        if acquired:
+            self._acquire_pending.discard(apverid)
+        self._emit_progress()
 
     @staticmethod
     def _accumulate_results(
@@ -1277,59 +1739,6 @@ class AssetSubsystem(AppSubsystem):
         for apverid, coords in manifest_pkgs.items():
             self._pinned_apverids.add(apverid)
             self._pinned_fm_hashes.update(coords.values())
-
-    async def _resolve_one(
-        self, apverid: str, language: Locale, allow_downloads: bool
-    ) -> _OneResult:
-        """Resolve one apverid's buckets to local-or-fetched flavors.
-
-        Scans local coords, optionally does one Tier-1 download to obtain
-        any desired flavors not present locally, then picks per bucket:
-        desired-if-complete, else (builtin only) bundled-fallback, else
-        fail.
-        """
-        is_builtin = self._is_builtin(apverid)
-        desired = self._desired_coords(language)
-
-        self._progress.phase = ResolvePhase.RESOLVING
-        self._progress.apverid = apverid
-        self._progress.detail = None
-        # Clear any prior package's build counts as we start this one.
-        self._progress.build_units_done = None
-        self._progress.build_units_total = None
-        self._emit_progress()
-
-        # Scan local state (off-thread): which desired coords are already
-        # complete on disk, and the full local coord→hash map.
-        local_coords, missing_buckets = await self._run_in_pool(
-            self._scan_local, apverid, desired
-        )
-
-        # If any desired flavor isn't local and downloads are allowed, do
-        # one Tier-1 resolve + fetch to obtain the desired flavors.
-        downloaded: dict[str, str] = {}
-        if allow_downloads and missing_buckets:
-            try:
-                downloaded = await self._tier1_download(apverid, language)
-            except AssetResolveAbortedError:
-                # App is shutting down -- not a resolve failure; don't
-                # fall back to bundled, just abandon the whole resolve.
-                raise
-            except AssetResolveError as exc:
-                # The builtin/bootstrap package must still come up offline;
-                # other packages are exact-or-fail. Log the underlying
-                # reason either way (it's otherwise swallowed).
-                logger.warning('%s: online resolve failed (%s).', apverid, exc)
-                if not is_builtin:
-                    raise
-                strip_exception_tracebacks(exc)
-
-        # Finalize per-bucket selection + read registry entries (off-thread).
-        # local ∪ just-downloaded — what's actually available to choose from.
-        available = {**local_coords, **downloaded}
-        return await self._run_in_pool(
-            self._finalize_one, apverid, desired, available, is_builtin
-        )
 
     def _resolve_one_local(
         self, apverid: str, desired: dict[str, str]
@@ -1381,10 +1790,25 @@ class AssetSubsystem(AppSubsystem):
         entries: dict[str, dict[str, dict[str, str]]] = {}
         fell_back: dict[str, str] = {}
         for bucket, desired_coord in desired.items():
-            fm_hash = available.get(desired_coord)
-            if fm_hash is not None and self._coord_complete(fm_hash):
-                coords[desired_coord] = fm_hash
-                entries[desired_coord] = self._read_entries(fm_hash)
+            # Best acceptable flavor we actually have: the desired one,
+            # else a cheaper texture tier (the server serves one while
+            # the requested tier builds; a better one may also just be
+            # sitting in our cache from a previous session). Ranked
+            # best-first, so this picks the same winner regardless of
+            # whether it arrived now or was already local.
+            chosen: str | None = None
+            chosen_hash: str | None = None
+            for cand in self._flavor_candidates(bucket, desired_coord):
+                cand_hash = available.get(cand)
+                if cand_hash is not None and self._coord_complete(cand_hash):
+                    chosen = cand
+                    chosen_hash = cand_hash
+                    break
+            if chosen is not None and chosen_hash is not None:
+                coords[chosen] = chosen_hash
+                entries[chosen] = self._read_entries(chosen_hash)
+                if chosen != desired_coord:
+                    fell_back[desired_coord] = chosen
                 continue
             if is_builtin:
                 fallback = self._fallback_coord(bucket)
@@ -1454,7 +1878,7 @@ class AssetSubsystem(AppSubsystem):
 
     def _coord_complete(self, fm_hash: str) -> bool:
         """Is this flavor fully present? (fm blob + all its data blobs)."""
-        fm_path = self._locate_blob(fm_hash)
+        fm_path = self._locate_blob(fm_hash, hide_bundle=True)
         if fm_path is None:
             return False
         try:
@@ -1513,15 +1937,17 @@ class AssetSubsystem(AppSubsystem):
                         f' later.'
                     )
 
-    async def _tier1_download(
+    async def _tier1_manifests(
         self, apverid: str, language: Locale
-    ) -> dict[str, str]:
-        """One Tier-1 resolve + parallel Tier-2 fetch of the desired flavors.
+    ) -> _PkgManifests:
+        """One Tier-1 resolve: poll until built, write the flavor-manifests.
 
-        Returns the resolved ``coord -> flavor-manifest hash`` map; the
-        flavor-manifest blobs are written and all referenced data blobs
-        fetched (those not already present) before returning. Raises
-        :class:`AssetResolveError` on any resolve/fetch failure.
+        The *first* half of acquiring a package. Returns what the server
+        resolved plus what still has to be fetched; the fetching itself is
+        driven globally (see :meth:`_fetch_blobs`) so every package's blobs
+        share one pool instead of draining one package at a time.
+
+        Raises :class:`AssetResolveError` on any resolve failure.
         """
         # Downloads route through the connected node, which comes up a beat
         # after boot; wait briefly for it rather than failing a resolve
@@ -1557,6 +1983,11 @@ class AssetSubsystem(AppSubsystem):
         if not response.buckets:
             raise AssetResolveError(f'{apverid}: resolve returned no buckets.')
 
+        # Reject anything substituted on a capability axis before we
+        # commit a byte of it (tier substitution is expected; profile /
+        # render_space substitution is a server bug).
+        self._validate_served_coords(apverid, response.buckets.keys(), language)
+
         coords: dict[str, str] = {}
         fm_writes: dict[str, bytes] = {}
         data_needed: dict[str, int] = {}
@@ -1585,60 +2016,93 @@ class AssetSubsystem(AppSubsystem):
                 ]
             )
 
-        to_fetch = [
-            (h, s) for h, s in data_needed.items() if not self._present(h, s)
-        ]
-        if to_fetch:
-            if response.token is None:
-                raise AssetResolveError(
-                    f'{apverid}: resolve returned no download token.'
-                )
-            base_url = self._node_base_url()
-            if base_url is None:
-                raise AssetResolveError(
-                    f'{apverid}: not connected to a node; cannot download.'
-                )
-            token_header = self._encode_token(response.token)
+        return _PkgManifests(
+            apverid=apverid,
+            coords=coords,
+            needed=data_needed,
+            # Only meaningful if something actually needs fetching; a
+            # fully-local package legitimately has neither.
+            token=response.token,
+        )
 
-            # Progress: bump the running totals, then count each blob off as
-            # its fetch completes (each _fetch resumes on the logic thread
-            # after the off-thread fetch, so updating progress there is safe).
-            self._progress.phase = ResolvePhase.DOWNLOADING
-            self._progress.apverid = apverid
-            self._progress.blobs_total += len(to_fetch)
-            self._progress.bytes_total += sum(s for _h, s in to_fetch)
+    async def _fetch_blobs(self, pkg: _PkgManifests) -> None:
+        """Fetch whatever of one package's blobs isn't already here.
+
+        The *second* half of acquiring a package, and deliberately not
+        bound to it: every package's fetches run through the one shared
+        download pool, so a late-resolving package's blobs queue behind
+        an early one's instead of waiting for a whole separate batch.
+
+        Blobs claimed here are recorded globally, so two packages
+        referencing the same blob (common for shared flavor-manifests)
+        fetch it once rather than racing to fetch it twice.
+        """
+        to_fetch = [
+            (h, s)
+            for h, s in pkg.needed.items()
+            if h not in self._fetch_claimed and not self._present(h, s)
+        ]
+        if not to_fetch:
+            self._acquire_pending.discard(pkg.apverid)
+            self._emit_progress()
+            return
+        # Claim before the first await: another package's task may reach
+        # here while we're suspended, and must see these as taken.
+        self._fetch_claimed.update(h for h, _s in to_fetch)
+
+        if pkg.token is None:
+            raise AssetResolveError(
+                f'{pkg.apverid}: resolve returned no download token.'
+            )
+        base_url = self._node_base_url()
+        if base_url is None:
+            raise AssetResolveError(
+                f'{pkg.apverid}: not connected to a node; cannot download.'
+            )
+        token_header = self._encode_token(pkg.token)
+
+        # Progress: bump the running totals, then count each blob off as
+        # its fetch completes (each _fetch resumes on the logic thread
+        # after the off-thread fetch, so updating progress there is safe).
+        # These totals are global across the resolve; the display only
+        # surfaces them once every build has finished (see _emit_progress).
+        self._progress.blobs_total += len(to_fetch)
+        self._progress.bytes_total += sum(s for _h, s in to_fetch)
+        # Totals are in; this package is fully acquired. Once the last one
+        # clears, the readout flips to downloading with a complete (and
+        # therefore monotonic) byte total.
+        self._acquire_pending.discard(pkg.apverid)
+        self._emit_progress()
+
+        # gather() surfaces only the first failure to our caller;
+        # sibling fetches failing after that get consumed *inside*
+        # gather with tracebacks (and thus ref cycles) intact. So
+        # be the terminal consumer for those ourselves: first
+        # failure propagates untouched, later ones are stripped and
+        # swallowed (the resolve is already doomed at that point).
+        have_failure = False
+
+        async def _fetch(h: str, s: int) -> None:
+            nonlocal have_failure
+            try:
+                await self._run_in_pool(
+                    self._acquire_data_blob,
+                    base_url,
+                    token_header,
+                    (h, s),
+                    executor=self._download_executor(),
+                )
+            except Exception as exc:
+                if have_failure:
+                    strip_exception_tracebacks(exc)
+                    return
+                have_failure = True
+                raise
+            self._progress.blobs_done += 1
+            self._progress.bytes_done += s
             self._emit_progress()
 
-            # gather() surfaces only the first failure to our caller;
-            # sibling fetches failing after that get consumed *inside*
-            # gather with tracebacks (and thus ref cycles) intact. So
-            # be the terminal consumer for those ourselves: first
-            # failure propagates untouched, later ones are stripped and
-            # swallowed (the resolve is already doomed at that point).
-            have_failure = False
-
-            async def _fetch(h: str, s: int) -> None:
-                nonlocal have_failure
-                try:
-                    await self._run_in_pool(
-                        self._acquire_data_blob,
-                        base_url,
-                        token_header,
-                        (h, s),
-                        executor=self._download_executor(),
-                    )
-                except Exception as exc:
-                    if have_failure:
-                        strip_exception_tracebacks(exc)
-                        return
-                    have_failure = True
-                    raise
-                self._progress.blobs_done += 1
-                self._progress.bytes_done += s
-                self._emit_progress()
-
-            await asyncio.gather(*[_fetch(h, s) for h, s in to_fetch])
-        return coords
+        await asyncio.gather(*[_fetch(h, s) for h, s in to_fetch])
 
     def _resolve_tier1(
         self,
@@ -1668,6 +2132,7 @@ class AssetSubsystem(AppSubsystem):
             texture_profile=self._texture_profile,
             texture_tier=self._texture_tier,
             build_number=_babase.app.env.engine_build_number,
+            testseed=self._testseed,
         )
         # A transport-level hiccup (node mid-rollout, flaky link, etc.)
         # surfaces as CommunicationError. Convert it to an AssetResolveError
@@ -1857,12 +2322,13 @@ class AssetSubsystem(AppSubsystem):
         """Is this CAS blob already present at the expected size?
 
         Probes the writable cache root and (unless bundle reuse is
-        disabled) the bundle root. Present-but-wrong-size counts as absent
-        so it gets refetched/overwritten. The free ``st_size`` check is a
-        cheap catch for external truncation/tampering, not a content proof.
+        disabled for the resolve in flight) the bundle root.
+        Present-but-wrong-size counts as absent so it gets
+        refetched/overwritten. The free ``st_size`` check is a cheap catch
+        for external truncation/tampering, not a content proof.
         """
         roots = [self._writable_assets_root]
-        if self._reuse_bundle:
+        if not self._bundle_hidden:
             roots.append(self._bundle_assets_root)
         return assetcas.blob_present(roots, filehash, size)
 

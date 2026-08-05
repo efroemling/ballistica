@@ -6,6 +6,7 @@
 #include <string>
 
 #include "ballistica/base/base.h"
+#include "ballistica/base/input/device/feedback_event.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 
 namespace ballistica::base {
@@ -63,6 +64,35 @@ class AppAdapter {
   void PushMainThreadCall(const F& lambda) {
     DoPushMainThreadRunnable(NewLambdaRunnableUnmanaged(lambda));
   }
+
+  /// Play haptic feedback on a game controller, if this platform can.
+  ///
+  /// The device is passed rather than any particular id because how a
+  /// controller is addressed is itself platform-specific: the SDL adapter
+  /// wants an SDL instance id, the Apple one a handle its Swift layer can
+  /// resolve back to a GCController. Each adapter reads what it needs off
+  /// the device here in the logic thread and carries *that* to its own
+  /// thread; the device pointer itself must not outlive this call.
+  ///
+  /// How the event maps onto real hardware is likewise each platform's own
+  /// business -- a response curve tuned for eccentric-rotating-mass motors
+  /// would be wrong for a linear actuator, and the type vocabulary exists
+  /// precisely so each platform renders an event its own way rather than
+  /// replaying someone else's waveform.
+  ///
+  /// An implementation may deliberately render NOTHING for a type it
+  /// understands but whose hardware cannot do it justice; see
+  /// FeedbackEvent::Type.
+  ///
+  /// Called in the logic thread; implementations hop to wherever their
+  /// platform requires. Default does nothing, so platforms without a
+  /// haptics implementation are silently inert rather than broken.
+  virtual auto ApplyJoystickFeedback(JoystickInput* device,
+                                     const FeedbackEvent& event) -> int;
+
+  /// Stop any haptic feedback in progress on a controller. Default does
+  /// nothing.
+  virtual void StopJoystickFeedback(JoystickInput* device);
 
   /// Should return whether the current thread and/or context setup is the
   /// one where graphics calls should be made. For the default

@@ -136,6 +136,13 @@ class ClientSession : public Session {
   auto ResolveIndexedAssetRef_(int32_t pkg_index, int32_t asset_index,
                                AssetBucketKind bucket_kind) -> std::string;
 
+  /// Dispatch a kInputDeviceFeedback command: find whichever local input
+  /// devices are driving the named player and render the payload on
+  /// them. A no-op when none are (the common case, since the stream is a
+  /// broadcast -- and always the case during replay playback).
+  void HandleInputDeviceFeedback_(int32_t player_id,
+                                  const std::string& payload);
+
   auto ReadByte() -> uint8_t;
   auto ReadInt32() -> int32_t;
   void ReadInt32_2(int32_t* vals);

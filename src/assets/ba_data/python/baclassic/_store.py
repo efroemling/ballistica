@@ -60,9 +60,9 @@ class StoreSubsystem:
         if item_name.startswith('icons.'):
             return classicassets.strings.profile.icon
         if item_name == 'upgrades.infinite_runaround':
-            return classicassets.strings.cooplevels.infinite_runaround
+            return classicassets.strings.coop_levels.infinite_runaround
         if item_name == 'upgrades.infinite_onslaught':
-            return classicassets.strings.cooplevels.infinite_onslaught
+            return classicassets.strings.coop_levels.infinite_onslaught
         raise ValueError('unrecognized item: ' + item_name)
 
     def get_store_item_display_size(

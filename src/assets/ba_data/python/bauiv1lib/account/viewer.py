@@ -7,7 +7,7 @@ import logging
 
 import bauiv1 as bui
 from bascenev1lib.actor import spazappearance
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 from bauiv1lib.popup import PopupWindow, PopupMenuWindow
@@ -172,7 +172,7 @@ class AccountViewerWindow(PopupWindow):
     def _on_extras_menu_press(self) -> None:
         choices = ['more', 'report']
         choices_display = [
-            classicassets.strings.ui.more,
+            _commonassets.strings.actions.more,
             classicassets.strings.account.report_this_player,
         ]
         is_admin = False
@@ -232,7 +232,7 @@ class AccountViewerWindow(PopupWindow):
         if data is None:
             bui.textwidget(
                 edit=self._loading_text,
-                text=classicassets.strings.ui.unavailable_no_connection,
+                text=_commonassets.strings.status.unavailable_no_connection,
             )
             bui.spinnerwidget(edit=self._loading_spinner, visible=False)
         else:

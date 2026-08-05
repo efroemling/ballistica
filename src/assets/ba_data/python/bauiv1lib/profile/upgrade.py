@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import bacommon.classic
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -67,7 +67,7 @@ class ProfileUpgradeWindow(bui.Window):
             size=(155, 60),
             scale=0.8,
             autoselect=True,
-            label=classicassets.strings.ui.cancel,
+            label=_commonassets.strings.actions.cancel,
             on_activate_call=self._cancel,
         )
         self._upgrade_button = bui.buttonwidget(
@@ -76,7 +76,7 @@ class ProfileUpgradeWindow(bui.Window):
             size=(155, 60),
             scale=0.8,
             autoselect=True,
-            label=classicassets.strings.ui.upgrade,
+            label=_commonassets.strings.actions.upgrade,
             on_activate_call=self._on_upgrade_press,
         )
         bui.containerwidget(
@@ -159,7 +159,7 @@ class ProfileUpgradeWindow(bui.Window):
         if isinstance(response, Exception):
             bui.textwidget(
                 edit=self._status_text,
-                text=classicassets.strings.ui.unavailable_no_connection,
+                text=_commonassets.strings.status.unavailable_no_connection,
                 color=(1, 0, 0),
             )
             self._status = 'error'
@@ -233,7 +233,7 @@ class ProfileUpgradeWindow(bui.Window):
             if not success:
                 print('profile upgrade: error occurred saving profile')
                 bui.screenmessage(
-                    classicassets.strings.ui.error, color=(1, 0, 0)
+                    _commonassets.strings.values.error, color=(1, 0, 0)
                 )
                 builtinassets.audio.error.get().play()
                 return

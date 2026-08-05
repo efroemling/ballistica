@@ -15,7 +15,7 @@ import bacommon.clouddialog.basic as bcdlg
 import bacommon.classic
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -652,10 +652,10 @@ class InboxWindow(bui.MainWindow):
         if isinstance(response, Exception):
             if isinstance(response, CommunicationError):
                 error_message = (
-                    classicassets.strings.ui.unavailable_no_connection
+                    _commonassets.strings.status.unavailable_no_connection
                 )
             else:
-                error_message = classicassets.strings.ui.error
+                error_message = _commonassets.strings.values.error
         elif response.error_type is not None:
             # If error_type is set, error should be also.
             assert response.error_message is not None
@@ -671,7 +671,7 @@ class InboxWindow(bui.MainWindow):
             builtinassets.audio.error.get().play()
             if button is not None:
                 bui.buttonwidget(
-                    edit=button, label=classicassets.strings.ui.error
+                    edit=button, label=_commonassets.strings.values.error
                 )
             return
 
@@ -689,7 +689,7 @@ class InboxWindow(bui.MainWindow):
             if bui.supports_unicode_display():
                 label = '✓'
             else:
-                label = classicassets.strings.ui.done
+                label = _commonassets.strings.actions.done
             bui.buttonwidget(edit=button, label=label)
 
     def _on_inbox_request_response(
@@ -705,7 +705,7 @@ class InboxWindow(bui.MainWindow):
 
         errmsg: str | bui.Lstr | bui.LangStr
         if isinstance(response, Exception):
-            errmsg = classicassets.strings.ui.unavailable_no_connection
+            errmsg = _commonassets.strings.status.unavailable_no_connection
             is_error = True
         else:
             is_error = response.error is not None
@@ -849,15 +849,17 @@ class InboxWindow(bui.MainWindow):
                         assert bui.app.classic is not None
                         campaign = bui.app.classic.getcampaign(campaignname)
 
-                        tourney_name = classicassets.strings.ui.spaced_pair(
-                            first=campaign.getlevel(
-                                levelname
-                            ).displayname_langstr,
-                            second=(
-                                classicassets.strings.coop
-                            ).player_count_abbreviated(
-                                count=str(component.players)
-                            ),
+                        tourney_name = (
+                            _commonassets.strings.compose.spaced_pair(
+                                first=campaign.getlevel(
+                                    levelname
+                                ).displayname_langstr,
+                                second=(
+                                    classicassets.strings.coop
+                                ).player_count_abbreviated(
+                                    count=str(component.players)
+                                ),
+                            )
                         )
 
                         if component.trophy is not None:

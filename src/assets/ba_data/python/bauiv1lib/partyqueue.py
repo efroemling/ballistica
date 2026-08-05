@@ -8,7 +8,7 @@ import logging
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 import bascenev1 as bs
 
@@ -305,7 +305,7 @@ class PartyQueueWindow(bui.Window):
             scale=1.3,
             h_align='center',
             v_align='center',
-            text=classicassets.strings.ui.connecting,
+            text=_commonassets.strings.status.connecting,
             maxwidth=self._width * 0.65,
         )
 
@@ -475,7 +475,7 @@ class PartyQueueWindow(bui.Window):
             if should_show_field:
                 bui.textwidget(
                     edit=self._title_text,
-                    text=classicassets.strings.partyqueue.waiting_in_line,
+                    text=classicassets.strings.party_queue.waiting_in_line,
                     position=(self._width * 0.5, self._height * 0.85),
                 )
                 self._update_field(response)
@@ -483,7 +483,7 @@ class PartyQueueWindow(bui.Window):
             if not should_show_field and self._field_shown:
                 bui.textwidget(
                     edit=self._title_text,
-                    text=classicassets.strings.ui.connecting,
+                    text=_commonassets.strings.status.connecting,
                     position=(self._width * 0.5, self._height * 0.55),
                 )
                 self._hide_field()

@@ -9,7 +9,7 @@ from bacommon.analytics import ClassicAnalyticsEvent
 import bascenev1 as bs
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1lib.popup import PopupWindow
 
@@ -237,7 +237,7 @@ class PlayOptionsWindow(PopupWindow):
                             )
                         desc_color = (0, 1, 0) if owned else (1, 0, 0)
                     except Exception:
-                        desc = classicassets.strings.ui.invalid
+                        desc = _commonassets.strings.status.invalid
                         desc_color = (1, 0, 0)
 
                     btn = bui.buttonwidget(
@@ -303,9 +303,9 @@ class PlayOptionsWindow(PopupWindow):
             )
             + ' Series Length',
             displayname=(
-                classicassets.strings.playoptions.points_to_win
+                classicassets.strings.play_options.points_to_win
                 if self._sessiontype is bs.FreeForAllSession
-                else classicassets.strings.playoptions.series_length
+                else classicassets.strings.play_options.series_length
             ),
             minval=1.0,
             maxval=100.0 if self._sessiontype is bs.FreeForAllSession else 99.0,
@@ -328,7 +328,7 @@ class PlayOptionsWindow(PopupWindow):
                 ),
                 autoselect=True,
                 textcolor=(0.8, 0.8, 0.8),
-                label=classicassets.strings.playoptions.team_names_colors,
+                label=classicassets.strings.play_options.team_names_colors,
             )
             bui.widget(
                 edit=self._custom_colors_names_button,
@@ -353,7 +353,7 @@ class PlayOptionsWindow(PopupWindow):
                 scale=1.0,
                 size=(250, 30),
                 autoselect=True,
-                text=classicassets.strings.playoptions.shuffle_game_order,
+                text=classicassets.strings.play_options.shuffle_game_order,
                 maxwidth=300,
                 textcolor=(0.8, 0.8, 0.8),
                 value=self._do_randomize_val,
@@ -374,7 +374,7 @@ class PlayOptionsWindow(PopupWindow):
             scale=1.0,
             size=(250, 30),
             autoselect=True,
-            text=classicassets.strings.playoptions.show_tutorial,
+            text=classicassets.strings.play_options.show_tutorial,
             maxwidth=300,
             textcolor=(0.8, 0.8, 0.8),
             value=show_tutorial,
@@ -416,7 +416,7 @@ class PlayOptionsWindow(PopupWindow):
             on_activate_call=self._on_ok_press,
             autoselect=True,
             label=(
-                classicassets.strings.ui.ok
+                _commonassets.strings.actions.ok
                 if self._playlist_select_context is not None
                 else classicassets.strings.ui.play
             ),
@@ -493,7 +493,7 @@ class PlayOptionsWindow(PopupWindow):
         if not self._have_at_least_one_owned:
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                classicassets.strings.playoptions.no_valid_games,
+                classicassets.strings.play_options.no_valid_games,
                 color=(1, 0, 0),
             )
             return

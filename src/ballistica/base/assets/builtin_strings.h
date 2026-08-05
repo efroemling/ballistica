@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.260726a"
+// Generated from: "a-0.babuiltinassets.260804a"
 
 #include <memory>
 
@@ -46,8 +46,8 @@ class BuiltinStrings {
 
     /// Notice that a platform account is being ignored.
     ///
-    /// English: "Note: Ignoring this {service} account. Go to Account > Sign In
-    /// if you want to use it."
+    /// English: "Note: Ignoring that {service} account. Go to 'Account -> Sign
+    /// in' if you want to use it."
     static auto NotUsingAccount(LangStr::Sub service)
         -> std::shared_ptr<const LangStr>;
 
@@ -71,19 +71,33 @@ class BuiltinStrings {
     static auto AccessDeniedGuidance(LangStr::Sub detail)
         -> std::shared_ptr<const LangStr>;
 
+    /// Screen message shown when a resolve finally lands full asset quality
+    /// after previously showing reduced-quality versions. Paired with
+    /// requested_quality_assets_building.
+    ///
+    /// English: "All assets are now full quality."
+    static auto AllAssetsRequestedQuality() -> std::shared_ptr<const LangStr>;
+
     /// Status line in the boot-time asset dialog while waiting for account
     /// sign-in so restricted assets can load.
     ///
     /// English: "Authenticating…"
     static auto Authenticating() -> std::shared_ptr<const LangStr>;
 
-    /// Progress-dialog line shown while the server builds assets for a package;
-    /// updates live as the remaining count drops.
+    /// Progress-dialog line shown while the server builds assets; updates live
+    /// as the remaining count drops. Spans every package being built, so it
+    /// names no package.
     ///
-    /// English: (one) "Building {package} assets (# step remaining)…" / (other)
-    /// "Building {package} assets (# steps remaining)…"
-    static auto BuildingAssets(int64_t count, LangStr::Sub package)
-        -> std::shared_ptr<const LangStr>;
+    /// English: (one) "Building assets (# remaining)…" / (other) "Building
+    /// assets (# remaining)…"
+    static auto BuildingAssets(int64_t count) -> std::shared_ptr<const LangStr>;
+
+    /// Progress-dialog line shown once asset builds have started but before the
+    /// total step count is known (some packages have not reported yet).
+    /// Replaced by the counted line once it is.
+    ///
+    /// English: "Building assets…"
+    static auto BuildingAssetsNoCount() -> std::shared_ptr<const LangStr>;
 
     /// Error on the boot-time asset dialog when this app build is too old to
     /// load current assets (fallback wording when the server didn't supply its
@@ -98,7 +112,7 @@ class BuiltinStrings {
     /// is nearly always seen by the author, since dev/test versions only
     /// resolve for them).
     ///
-    /// English: "{detail} Fix the file in the source workspace and try again."
+    /// English: "{detail} Fix the file in the source Workspace and try again."
     static auto ContentErrorGuidance(LangStr::Sub detail)
         -> std::shared_ptr<const LangStr>;
 
@@ -116,11 +130,19 @@ class BuiltinStrings {
     /// English: "An error occurred loading assets; see log for details."
     static auto LoadError() -> std::shared_ptr<const LangStr>;
 
-    /// Progress-dialog line shown while a server-side asset build is being
+    /// Progress-dialog line shown while server-side asset builds are being
     /// prepared, before per-step progress is known.
     ///
-    /// English: "Preparing to build {package}…"
-    static auto PreparingBuild(LangStr::Sub package)
+    /// English: "Preparing to build assets…"
+    static auto PreparingBuild() -> std::shared_ptr<const LangStr>;
+
+    /// Screen message shown after a resolve that had to serve lower-quality
+    /// textures because the requested quality was still being built. Paired
+    /// with all_assets_requested_quality, which announces the recovery.
+    ///
+    /// English: "Assets are still building; some may appear with reduced
+    /// quality."
+    static auto RequestedQualityAssetsBuilding()
         -> std::shared_ptr<const LangStr>;
 
     /// Error on the boot-time asset dialog when a required sign-in was not
@@ -608,18 +630,19 @@ class BuiltinStrings {
    public:
     /// Confirmation that a workspace was activated.
     ///
-    /// English: "{thing} activated."
+    /// English: "Workspace {thing} activated."
     static auto Activated(LangStr::Sub thing) -> std::shared_ptr<const LangStr>;
 
     /// Error message that a workspace failed to sync.
     ///
-    /// English: "Error syncing workspace {workspace}. See log for details."
+    /// English: "Error syncing Workspace {workspace}. See log for details."
     static auto SyncError(LangStr::Sub workspace)
         -> std::shared_ptr<const LangStr>;
 
     /// Notice that a previously synced workspace is being reused.
     ///
-    /// English: "Unable to sync {workspace}. Reusing the last synced version."
+    /// English: "Can't sync Workspace '{workspace}'. Reusing previously synced
+    /// version."
     static auto SyncReuse(LangStr::Sub workspace)
         -> std::shared_ptr<const LangStr>;
   };

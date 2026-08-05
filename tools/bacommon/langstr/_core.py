@@ -792,10 +792,31 @@ class LanguageStringNameDecodeContext:
         self,
         language: dict[str, dict[str, str | StringSelector]],
         locale: Locale,
+        *,
+        param_kinds: dict[str, dict[str, dict[str, str]]] | None = None,
+        components: dict[str, dict[str, str | StringSelector]] | None = None,
     ) -> None:
         #: ``language`` maps apverid -> {string-name: value} for ``locale``.
         self._language = language
         self._locale = locale
+        #: apverid -> {string-name: {param: kind}} for params the
+        #: translated text cannot describe (a byte count renders as
+        #: "1.2 GB", but the text holds only a ``{size}`` token).
+        self._param_kinds = param_kinds or {}
+        #: apverid -> that package's build-embedded formatter
+        #: components. Embedded rather than resolved cross-package, so
+        #: rendering never depends on another package being present.
+        self._components = components or {}
+
+    def _render_param(self, kind: str, value: str | int, apverid: str) -> str:
+        """Render one spec'd param value for this locale."""
+        from bacommon.langstr._format import data_size_str
+
+        if kind == 'bytes':
+            return data_size_str(
+                int(value), self._locale, self._components.get(apverid, {})
+            )
+        raise _DecodeFail(f'unknown display param kind {kind!r}')
 
     def decode(self, lstr: LangStrSpec) -> str:
         """Resolve a :class:`LangStrSpec` to a flat string in this locale.
@@ -813,6 +834,10 @@ class LanguageStringNameDecodeContext:
         if depth > MAX_NESTING_DEPTH:
             raise _DecodeFail('max nesting depth exceeded')
         value: str | StringSelector
+        # Only a resource carries spec'd params; a literal has no
+        # package to have declared them.
+        kinds: dict[str, str] = {}
+        kindsrc = ''
         if isinstance(lstr, LangStrSpecValue):
             # A raw literal; the value itself is the (locale-free) text.
             value = lstr.value
@@ -830,16 +855,25 @@ class LanguageStringNameDecodeContext:
             value = resval
             subs = lstr.subs
             desc = lstr.name
+            kinds = self._param_kinds.get(lstr.apverid, {}).get(lstr.name, {})
+            kindsrc = lstr.apverid
         else:
             # The indexed form needs an index context, not this one.
             raise _DecodeFail(f'cannot name-decode a {type(lstr).__name__}.')
         kwargs: dict[str, str | int] = {}
         for key, sub in subs.items():
-            # A nested LangStrSpec renders recursively to a flat string.
+            if isinstance(sub, LangStrSpec):
+                # A nested LangStrSpec renders recursively to a flat
+                # string.
+                kwargs[key] = self._decode(sub, depth + 1)
+                continue
+            kind = kinds.get(key)
+            # A spec'd param renders through locale-aware formatting
+            # here, at display time -- which is what keeps the string a
+            # template with a slot rather than a value baked in at
+            # construction (so a live value can re-render cheaply).
             kwargs[key] = (
-                self._decode(sub, depth + 1)
-                if isinstance(sub, LangStrSpec)
-                else sub
+                sub if kind is None else self._render_param(kind, sub, kindsrc)
             )
         try:
             return evaluate(value, self._locale, **kwargs)

@@ -165,6 +165,11 @@ void SceneV1InputDeviceDelegate::DetachFromPlayer() {
     data[1] = static_cast_check_fit<unsigned char>(input_device().index());
     connection_to_host->SendReliableMessage(data);
     remote_player_.Clear();
+
+    // Reset this alongside the ref it goes with. Leaving it set means we
+    // keep claiming to drive a player we detached from, which anything
+    // looking devices up *by* player-id would believe.
+    remote_player_id_ = -1;
   }
 }
 
@@ -244,6 +249,7 @@ auto SceneV1InputDeviceDelegate::GetPyInputDevice(bool new_ref) -> PyObject* {
 
 void SceneV1InputDeviceDelegate::InvalidateConnectionToHost() {
   remote_player_.Clear();
+  remote_player_id_ = -1;
 }
 
 auto SceneV1InputDeviceDelegate::GetAccountID() const -> std::string {

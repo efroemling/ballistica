@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import builtinassets, classicassets
+from bascenev1 import _commonassets, builtinassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -73,7 +73,7 @@ class ControlsGuide(bs.Actor):
                 position[1] + 139.0 * scale,
             )
             clr = (1, 1, 1) if bright else (0.7, 0.7, 0.7)
-            tval = classicassets.strings.ui.heading_suffix(
+            tval = _commonassets.strings.compose.heading_suffix(
                 main=classicassets.strings.help.controls
             )
             self._title_text = bs.newnode(

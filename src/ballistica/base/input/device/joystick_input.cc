@@ -398,6 +398,18 @@ void JoystickInput::SetStandardExtendedButtons() {
   remote_enter_button_ = 13;
 }
 
+auto JoystickInput::DoApplyFeedback(const FeedbackEvent& event) -> int {
+  // Whether this particular device is one the adapter can actually drive
+  // is the adapter's call, not ours -- it is the only thing that knows how
+  // its controllers are addressed. Devices it doesn't recognize (the
+  // remote app, test inputs) simply come back inert.
+  return g_base->app_adapter->ApplyJoystickFeedback(this, event);
+}
+
+void JoystickInput::DoStopFeedback() {
+  g_base->app_adapter->StopJoystickFeedback(this);
+}
+
 void JoystickInput::ResetHeldStates() {
   // So we push events through even if there's a dialog in the way.
   resetting_ = true;

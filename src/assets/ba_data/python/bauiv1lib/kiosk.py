@@ -6,7 +6,7 @@ from typing import override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 
 class KioskWindow(bui.MainWindow):
@@ -160,7 +160,7 @@ class KioskWindow(bui.MainWindow):
             size=(0, 0),
             position=(h, label_height),
             maxwidth=b_width * 0.7,
-            text=classicassets.strings.ui.medium,
+            text=_commonassets.strings.values.medium,
             scale=1.3,
             h_align='center',
             v_align='center',
@@ -250,7 +250,7 @@ class KioskWindow(bui.MainWindow):
                 size=(0, 0),
                 position=(h, label_height),
                 maxwidth=b_width * 0.7,
-                text=classicassets.strings.gamenames.capture_the_flag,
+                text=classicassets.strings.game_names.capture_the_flag,
                 scale=1.3,
                 h_align='center',
                 v_align='center',
@@ -286,7 +286,7 @@ class KioskWindow(bui.MainWindow):
                 size=(0, 0),
                 position=(h, label_height),
                 maxwidth=b_width * 0.7,
-                text=classicassets.strings.gamenames.hockey,
+                text=classicassets.strings.game_names.hockey,
                 scale=1.3,
                 h_align='center',
                 v_align='center',

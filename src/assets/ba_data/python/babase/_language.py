@@ -181,6 +181,15 @@ class LangStrDir:
         full = f'{self._prefix}/{name}' if self._prefix else name
         if isinstance(child, dict):
             return LangStrDir(self._apverid, child, full)
+        # A leaf access is the point a string actually gets read out of a
+        # package, so gate it the same way loadable assets are. Strings
+        # need their own check: they resolve through the native language
+        # table (see Assets::ReloadLanguage) rather than FindAssetFile,
+        # so the native asset-load gate never sees them.
+        # pylint: disable-next=cyclic-import
+        from babase._asset_packages import check_asset_package_load
+
+        check_asset_package_load(self._apverid, full)
         # A leaf: its param-keyword tuple. Empty -> a no-arg string,
         # read as a property yielding the native LangStr directly;
         # otherwise a maker.

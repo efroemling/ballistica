@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupMenuWindow
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1 import builtinassets
 import bascenev1 as bs
@@ -119,7 +119,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
             autoselect=True,
             position=(38, self._height - 85),
             size=(170, 60),
-            label=classicassets.strings.ui.cancel,
+            label=_commonassets.strings.actions.cancel,
             scale=0.9,
             on_activate_call=self.main_window_back,
         )
@@ -128,7 +128,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
             autoselect=True,
             position=(self._width - 190, self._height - 85),
             size=(180, 60),
-            label=classicassets.strings.ui.save,
+            label=_commonassets.strings.actions.save,
             scale=0.9,
             text_scale=0.9,
             on_activate_call=self._save,
@@ -358,7 +358,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
             'reset',
         ]
         choices_display: list[bui.Lstr | bui.LangStr] = [
-            classicassets.strings.ui.reset,
+            _commonassets.strings.actions.reset,
         ]
 
         uiscale = bui.app.ui_v1.uiscale

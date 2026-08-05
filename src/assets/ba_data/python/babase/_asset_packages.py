@@ -54,9 +54,35 @@ def mark_construct_complete() -> None:
     point at which every package the meta-scan requires is guaranteed
     resolved and registered. Opens the gate enforced by
     :func:`check_asset_package_load`.
+
+    Also opens the native gate
+    (``AssetPackageRegistry::CheckPreConstructAccess``), which covers the
+    load paths that never touch Python: direct C++ ``Assets::Get*``
+    calls, and scene_v1 wire traffic / replays arriving as legacy bare
+    names. Both open here so they cannot disagree about when bring-up
+    ended.
     """
     global _g_construct_complete  # pylint: disable=global-statement
     _g_construct_complete = True
+    _babase.mark_construct_assets_complete()
+
+    # Logged because this is otherwise an invisible state change on a
+    # load-ordering invariant -- and because it is the only reliable
+    # marker that bring-up ended: the caller's own hand-off log is
+    # skipped on the no-deferred-intent path (headless), which made a
+    # test keyed on that line silently vacuous.
+    _lifecyclelog.debug('Construct-mode asset gate opened.')
+
+
+def construct_assets_complete() -> bool:
+    """Whether construct-mode has finished resolving asset-packages.
+
+    For callers that need to *avoid* doing something too early rather
+    than be scolded for it -- notably the dev console's AppModes tab,
+    which would otherwise exec app-mode modules (wrapper modules
+    included) while their packages are still unresolved.
+    """
+    return _g_construct_complete
 
 
 def check_asset_package_load(apverid: str, path: str) -> None:
@@ -104,6 +130,11 @@ def check_asset_package_load(apverid: str, path: str) -> None:
         f' available this early. Hold the wrapper reference and load it'
         f' on first use instead.'
     )
+    # Keyed on debug-build, matching the native gate
+    # (``AssetPackageRegistry::CheckPreConstructAccess``) so the two
+    # cannot disagree about how loud to be. Note the *check* itself runs
+    # everywhere -- release builds log this error rather than skipping
+    # it; only the raise-vs-log severity varies.
     if _babase.app.env.debug_build:
         raise RuntimeError(msg)
     _lifecyclelog.error(msg)

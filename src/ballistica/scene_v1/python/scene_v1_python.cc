@@ -1349,21 +1349,24 @@ void SceneV1Python::DoBuildNodeMessage(PyObject* args, int arg_offset,
     obj = PyTuple_GET_ITEM(args, i);
     BA_PRECONDITION(obj);
     switch (*f) {
+      // Note the width-specific getters: these values come straight from
+      // whoever called handlemessage(), so a value too big for the slot
+      // its format char declares is a caller error and should say so.
+      // Narrowing a GetInt64() with static_cast_check_fit() instead would
+      // abort debug builds and, worse, silently truncate in shipped ones
+      // -- and node messages go out over the session stream, so the
+      // mangled value would reach every client.
       case 'I':
-        Utils::EmbedInt32NBO(
-            &ptr, static_cast_check_fit<int32_t>(Python::GetInt64(obj)));
+        Utils::EmbedInt32NBO(&ptr, Python::GetInt32(obj));
         break;
       case 'i':
-        Utils::EmbedInt16NBO(
-            &ptr, static_cast_check_fit<int16_t>(Python::GetInt64(obj)));
+        Utils::EmbedInt16NBO(&ptr, Python::GetInt16(obj));
         break;
       case 'c':  // NOLINT(bugprone-branch-clone)
-        Utils::EmbedInt8(&ptr,
-                         static_cast_check_fit<int8_t>(Python::GetInt64(obj)));
+        Utils::EmbedInt8(&ptr, Python::GetInt8(obj));
         break;
       case 'b':
-        Utils::EmbedInt8(&ptr,
-                         static_cast_check_fit<int8_t>(Python::GetInt64(obj)));
+        Utils::EmbedInt8(&ptr, Python::GetInt8(obj));
         break;
       case 'F':
         Utils::EmbedFloat32(&ptr, Python::GetFloat(obj));

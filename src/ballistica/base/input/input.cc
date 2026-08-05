@@ -501,6 +501,18 @@ auto Input::GetInputDevicesWithName(const std::string& name)
   return vals;
 }
 
+auto Input::GetInputDevices() -> std::vector<InputDevice*> {
+  assert(g_base->InLogicThread());
+  std::vector<InputDevice*> vals;
+  vals.reserve(input_devices_.size());
+  for (auto& input_device : input_devices_) {
+    if (input_device.exists()) {
+      vals.push_back(input_device.get());
+    }
+  }
+  return vals;
+}
+
 auto Input::GetConfigurableGameControllers() -> std::vector<InputDevice*> {
   assert(g_base->InLogicThread());
   std::vector<InputDevice*> vals;
@@ -534,6 +546,14 @@ void Input::OnAppStart() {
 void Input::OnAppSuspend() {
   assert(g_base->InLogicThread());
   SetGyroEnabled(false);
+
+  // Never leave a motor running while we're backgrounded; nothing will be
+  // around to end it and it burns the user's battery until they notice.
+  for (auto& input_device : input_devices_) {
+    if (input_device.exists()) {
+      input_device->StopFeedback();
+    }
+  }
 }
 
 void Input::OnAppUnsuspend() {

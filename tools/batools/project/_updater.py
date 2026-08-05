@@ -152,14 +152,14 @@ class ProjectUpdater:
 
         # Run some lovely checks.
         if self.run_file_checks:
-            from batools.project import _checks
+            from batools.project import _checks, _checks_cpp
 
             _checks.check_makefiles(self)
             _checks.check_python_files(self)
             _checks.check_sync_states(self)
             _checks.check_misc(self)
-            _checks.check_source_files(self)
-            _checks.check_headers(self)
+            _checks_cpp.check_source_files(self)
+            _checks_cpp.check_headers(self)
             _checks.check_builtin_asset_ids(self)
             _checks.check_asset_name_compat(self)
 

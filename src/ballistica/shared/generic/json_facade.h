@@ -4,6 +4,7 @@
 #define BALLISTICA_SHARED_GENERIC_JSON_FACADE_H_
 
 #include <cassert>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <expected>
@@ -320,6 +321,25 @@ class JsonBuilder {
 /// `a"b` -> `"a\"b"`). Handy for splicing a string into manually-assembled
 /// JSON; prefer JsonBuilder when emitting a whole document.
 auto JsonEncodeString(std::string_view value) -> std::string;
+
+/// Round a value to `places` decimal places before emitting it, so it
+/// serializes to something short.
+///
+/// The writer already emits the shortest representation that round-trips,
+/// so there is nothing to gain by post-processing its output: a long
+/// rendering means the *value* is genuinely long, and the only fix is
+/// quantizing at the source. Worth doing wherever compact payloads matter
+/// more than the last few digits of precision.
+///
+/// Takes and returns `double` deliberately. Rounding in `float` and letting
+/// it widen defeats the purpose -- `0.43f` becomes `0.4300000071525574` as a
+/// double, and that long string *is* its shortest correct rendering, so you
+/// get exactly the output you were trying to avoid from code that looks like
+/// it is rounding.
+inline auto JsonRoundForEmit(double value, int places = 2) -> double {
+  double scale = std::pow(10.0, places);
+  return std::round(value * scale) / scale;
+}
 
 }  // namespace ballistica
 

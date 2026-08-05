@@ -50,6 +50,33 @@ class DevConsoleTabAppModes(DevConsoleTab):
     @override
     def refresh(self) -> None:
         from babase import AppMode
+        from babase._asset_packages import construct_assets_complete
+
+        # Refuse to do anything while the app is still in construct
+        # mode. Two reasons, and the first is why this guard sits here
+        # rather than on the switch buttons: the load below execs the
+        # modules that export app-modes -- wrapper modules among them --
+        # and those may name asset-packages construct-mode has not
+        # acquired yet. Switching into such a mode then lands us
+        # somewhere whose assets were never resolved, which is the exact
+        # situation construct mode exists to prevent.
+        if not construct_assets_complete():
+            self.text(
+                'Unavailable until asset acquisition completes.',
+                pos=(0, 42),
+                h_anchor='center',
+                h_align='center',
+                scale=0.8,
+            )
+            self.text(
+                '(the app is still in construct mode)',
+                pos=(0, 18),
+                h_anchor='center',
+                h_align='center',
+                scale=0.6,
+                style='faded',
+            )
+            return
 
         # Kick off a load if applicable.
         if self._app_modes is None and not self._app_modes_loading:

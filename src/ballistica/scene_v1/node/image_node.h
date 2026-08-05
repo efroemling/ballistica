@@ -70,6 +70,11 @@ class ImageNode : public Node {
   void set_host_only(bool val) { host_only_ = val; }
   auto front() const -> bool { return front_; }
   void set_front(bool val) { front_ = val; }
+  auto in_world() const -> bool { return in_world_; }
+  void set_in_world(bool val) {
+    in_world_ = val;
+    dirty_ = true;
+  }
 
  private:
   enum class Attach : uint8_t {
@@ -86,6 +91,7 @@ class ImageNode : public Node {
 
   bool host_only_{};
   bool front_{};
+  bool in_world_{};
   bool absolute_scale_{true};
   bool premultiplied_{};
   bool fill_screen_{};
@@ -97,6 +103,7 @@ class ImageNode : public Node {
   float opacity_{1.0f};
   float center_x_{};
   float center_y_{};
+  float center_z_{};
   float width_{};
   float height_{};
   float tilt_translate_{};

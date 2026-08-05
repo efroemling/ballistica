@@ -1,4 +1,4 @@
-### 1.8.0 (build 22949, api 9, 2026-07-26)
+### 1.8.0 (build 22959, api 9, 2026-08-05)
 - Fully implemented asset packages (more on this soon)
 - Upgraded to Python 3.14. This gives us a few nice useful bits such as zstd
   compression to help speed up online stuff and also means we can get rid of all
@@ -40,6 +40,8 @@
   hard-coded English, sourced from the `babuiltinassets` package so they
   are available before any real app-mode loads. (Adds a strings-only
   `babase` asset-package wrapper type for this pre-featureset layer.)
+- Add `in_world` attribute to image node, as in text node (Thanks Dliwk!).
+- Game Controller Haptics!
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.
@@ -93,7 +95,7 @@
   connection or when we're in airplane mode or whatever which should save some
   battery, and also it lets us reconnect *exactly* when the network comes back
   online.
-  
+
 
 ### 1.7.61 (build 22772, api 9, 2026-03-16)
 - Lucky the Leprechaun, just in time for ol' St. Patty's day (Thanks SoK!)
@@ -191,9 +193,9 @@
   from something like `a-0.bastdassets.260116` (YYMMDD).
 - Flatpak package name is now `net.froemling.bombsquad` instead of
   `net.froemling.BombSquad` along with improved package metadata.
-  Installing new flatpak builds alongside old flatpak builds will create 2 
+  Installing new flatpak builds alongside old flatpak builds will create 2
   seperate installs.
-- Added `flatpak-generate-flathub-manifest` make target that will generate 
+- Added `flatpak-generate-flathub-manifest` make target that will generate
   manifest for flathub in `build/flathub`
 - Updated Android audio stack to OpenALSoft 1.25.1 and oboe 1.10.0.
 - Updated Mac and Window audio stack to OpenALSoft 1.25.1.
@@ -214,7 +216,7 @@
 - Added a null audio device to prevent crash when no audio device is available
 - Flatpak permissions adjusted to allow gamepads to be properly detected and the
   configuration directory to be created if it does not already exist.
-  
+
 ### 1.7.59 (build 22677, api 9, 2025-12-12)
 - Added a 'League President' button in the league-rank window. The back-end is
   still under construction, but it'll soon be possible to bid tickets to become
@@ -253,7 +255,7 @@
 - On Android builds, mice and trackpads now function the same as on Desktop
   builds instead of behaving like touches. This means buttons will highlight on
   mouse-over, scrollbars can be dragged, etc.
-  
+
 
 ### 1.7.55 (build 22649, api 9, 2025-12-01)
 - The 'get-tokens' plus button now allows going back to whatever window one was
@@ -301,7 +303,7 @@
   spinner appear/disappear immediately instead of fading.
 - Widget ids can now be any string; there are no longer restrictions on which
   characters can be used.
-  
+
 ### 1.7.53 (build 22597, api 9, 2025-10-25)
 - Fixes an issue where deleting player profiles would error.
 - App audio output should now update when the default sound device changes
@@ -487,7 +489,7 @@
   possible, the app now starts bootstrapping network stuff earlier in the boot
   process so it can proceed in parallel with other bootstrappy stuff (see
   `babase._env._bootstrap_networking()`).
-  
+
 ### 1.7.46 (build 22472, api 9, 2025-08-05)
 - Resolves some networking issues from certain internet providers.
 - Working towards more consistent toolbar visibility more on small ui mode.
@@ -673,7 +675,7 @@
   shutdown. If you run into cases where the app consistently gets stuck when
   trying to exit or you see warnings about unexpected threads still running,
   please holler.
-  
+
 ### 1.7.41 (build 22382, api 9, 2025-05-25)
 - Fixed a few unsafe accesses of cJSON objects that could be exploited to crash
   servers by feeding them bad json data. If you ever come across CXX code
@@ -742,7 +744,7 @@
   please let me know.
 - Added highlights to show players when they have unclaimed chests in their
   inbox or chests that can be opened.
-  
+
 ### 1.7.38 (build 22318, api 9, 2025-03-20)
 - Added animations for reducing chest wait times or gaining tickets or tokens
 - Made MainWindow auto-recreate smarter. If something such as text input or a
@@ -750,7 +752,7 @@
   recreate once the suppression ends.
 - (build 22313) Fixed a possible client crash due to uninitialized memory when
   handling `BA_MESSAGE_HOST_INFO` data.
-  
+
 ### 1.7.37 (build 22304, api 9, 2025-03-10)
 - Bumping api version to 9. As you'll see below, there's some UI changes that
   will require a bit of work for any UI mods to adapt to. If your mods don't
@@ -993,7 +995,7 @@
   see https://ballistica.net/whataretokens
 - Paid private hosting now uses tokens instead of tickets.
 - Wired up initial support for using asset-packages for bundled assets.
-- bacloud workspace commands are now a bit smarter; you can now do things like 
+- bacloud workspace commands are now a bit smarter; you can now do things like
   `bacloud workspace put .` or even just `bacloud workspace put` and it will
   work. Previously such cases required explicitly passing the workspace name
   as a second argument. Both `workspace get` and `workspace put` now also have
@@ -1031,7 +1033,7 @@
   version and then upgrading to later builds of the same version containing
   incompatibilities with the older sys scripts. This should help with that
   problem.
-  
+
 ### 1.7.35 (build 21889, api 8, 2024-06-20)
 - Fixed an issue where the engine would block at exit on some version of Linux
   until Ctrl-D was pressed in the calling terminal.
@@ -1081,7 +1083,7 @@
   two forms. Now it is possible to provide both.
 - Spaz classes now have a `default_hitpoints` which makes customizing that
   easier (Thanks rabbitboom!)
-- Added `docker-gui-release`, `docker-gui-debug`, `docker-server-release`, 
+- Added `docker-gui-release`, `docker-gui-debug`, `docker-server-release`,
   `docker-server-debug`, `docker-clean` and `docker-save` targets
   to Makefile.
 - Fixed an issue in Assault where being teleported back to base with a sticky
@@ -1106,7 +1108,7 @@
   when running builds after pulling small updates from git.
 - Added github workflow for making docker image and sphinx docs nightly
 - Added github workflow for making build release on tag creation
-  
+
 ### 1.7.34 (build 21823, api 8, 2024-04-26)
 - Bumped Python version from 3.11 to 3.12 for all builds and project tools. One
   of the things this means is that we can use `typing.override` instead of the
@@ -1163,7 +1165,7 @@
   default `.toml`. This can be handy when procedurally generating server
   configs. If no `--config` path is explicitly passed, it will look for
   `config.json` and `config.toml` in the same dir as the script in that order.
-  
+
 ### 1.7.33 (build 21795, api 8, 2024-03-24)
 - Stress test input-devices are now a bit smarter; they won't press any buttons
   while UIs are up (this could cause lots of chaos if it happened).

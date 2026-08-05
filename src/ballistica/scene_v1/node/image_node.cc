@@ -40,6 +40,7 @@ class ImageNodeType : public NodeType {
   BA_FLOAT_ATTR(vr_depth, vr_depth, set_vr_depth);
   BA_BOOL_ATTR(host_only, host_only, set_host_only);
   BA_BOOL_ATTR(front, front, set_front);
+  BA_BOOL_ATTR(in_world, in_world, set_in_world);
 #undef BA_NODE_TYPE_CLASS
 
   ImageNodeType()
@@ -64,7 +65,8 @@ class ImageNodeType : public NodeType {
         mesh_transparent(this),
         vr_depth(this),
         host_only(this),
-        front(this) {}
+        front(this),
+        in_world(this) {}
 };
 static NodeType* node_type{};
 
@@ -184,8 +186,8 @@ void ImageNode::SetScale(const std::vector<float>& vals) {
 }
 
 void ImageNode::SetPosition(const std::vector<float>& vals) {
-  if (vals.size() != 2) {
-    throw Exception("Expected float array of length 2 for position",
+  if (vals.size() != 2 && vals.size() != 3) {
+    throw Exception("Expected float array of length 2 or 3 for position",
                     PyExcType::kValue);
   }
   dirty_ = true;
@@ -227,9 +229,10 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
     vr_use_fixed = false;
   }
 
-  base::RenderPass& pass(*(vr_use_fixed ? frame_def->GetOverlayFixedPass()
-                           : front_     ? frame_def->overlay_front_pass()
-                                        : frame_def->overlay_pass()));
+  base::RenderPass& pass(*(in_world_      ? frame_def->overlay_3d_pass()
+                           : vr_use_fixed ? frame_def->GetOverlayFixedPass()
+                           : front_       ? frame_def->overlay_front_pass()
+                                          : frame_def->overlay_pass()));
 
   // If the pass we're drawing into changes dimensions, recalc.
   // Otherwise we break if a window is resized.
@@ -252,45 +255,51 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
       tx *= scale_mult_x;
       ty *= scale_mult_y;
     }
-    switch (attach_) {
-      case Attach::BOTTOM_LEFT:
-      case Attach::BOTTOM_CENTER:
-      case Attach::BOTTOM_RIGHT: {
-        center_y = ty;
-        break;
+    if (in_world_) {
+      // World space; use position directly with no screen alignment.
+      center_x = tx;
+      center_y = ty;
+    } else {
+      switch (attach_) {
+        case Attach::BOTTOM_LEFT:
+        case Attach::BOTTOM_CENTER:
+        case Attach::BOTTOM_RIGHT: {
+          center_y = ty;
+          break;
+        }
+        case Attach::TOP_LEFT:
+        case Attach::TOP_CENTER:
+        case Attach::TOP_RIGHT: {
+          center_y = screen_height + ty;
+          break;
+        }
+        case Attach::CENTER_LEFT:
+        case Attach::CENTER_RIGHT:
+        case Attach::CENTER: {
+          center_y = screen_center_y + ty;
+          break;
+        }
       }
-      case Attach::TOP_LEFT:
-      case Attach::TOP_CENTER:
-      case Attach::TOP_RIGHT: {
-        center_y = screen_height + ty;
-        break;
-      }
-      case Attach::CENTER_LEFT:
-      case Attach::CENTER_RIGHT:
-      case Attach::CENTER: {
-        center_y = screen_center_y + ty;
-        break;
-      }
-    }
 
-    switch (attach_) {
-      case Attach::TOP_LEFT:
-      case Attach::CENTER_LEFT:
-      case Attach::BOTTOM_LEFT: {
-        center_x = tx;
-        break;
-      }
-      case Attach::TOP_CENTER:
-      case Attach::CENTER:
-      case Attach::BOTTOM_CENTER: {
-        center_x = screen_center_x + tx;
-        break;
-      }
-      case Attach::TOP_RIGHT:
-      case Attach::CENTER_RIGHT:
-      case Attach::BOTTOM_RIGHT: {
-        center_x = screen_width + tx;
-        break;
+      switch (attach_) {
+        case Attach::TOP_LEFT:
+        case Attach::CENTER_LEFT:
+        case Attach::BOTTOM_LEFT: {
+          center_x = tx;
+          break;
+        }
+        case Attach::TOP_CENTER:
+        case Attach::CENTER:
+        case Attach::BOTTOM_CENTER: {
+          center_x = screen_center_x + tx;
+          break;
+        }
+        case Attach::TOP_RIGHT:
+        case Attach::CENTER_RIGHT:
+        case Attach::BOTTOM_RIGHT: {
+          center_x = screen_width + tx;
+          break;
+        }
       }
     }
     if (fill_screen_) {
@@ -304,6 +313,7 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
       width_ = width;
       height_ = height;
     }
+    center_z_ = position_.size() > 2 ? position_[2] : 0.0f;
     dirty_ = false;
   }
   float fin_center_x = center_x_;
@@ -395,7 +405,9 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
     {
       auto xf = c.ScopedTransform();
       c.Translate(fin_center_x, fin_center_y,
-                  vr ? vr_depth_ : g_base->graphics->overlay_node_z_depth());
+                  in_world_ ? center_z_
+                  : vr      ? vr_depth_
+                            : g_base->graphics->overlay_node_z_depth());
       if (rotate_ != 0.0f) {
         c.Rotate(rotate_, 0, 0, 1);
       }
@@ -421,7 +433,9 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
     {
       auto xf = c.ScopedTransform();
       c.Translate(fin_center_x, fin_center_y,
-                  vr ? vr_depth_ : g_base->graphics->overlay_node_z_depth());
+                  in_world_ ? center_z_
+                  : vr      ? vr_depth_
+                            : g_base->graphics->overlay_node_z_depth());
       if (rotate_ != 0.0f) {
         c.Rotate(rotate_, 0, 0, 1);
       }

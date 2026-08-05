@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/macros.h"
 
@@ -251,6 +252,37 @@ auto AssetPackageRegistry::CasBlobPath(const std::string& hash) const
   // the writable root.)
   return g_core->GetDataDirectory() + BA_DIRSLASH + "ba_data" + BA_DIRSLASH
          + "assets" + BA_DIRSLASH + shard;
+}
+
+void AssetPackageRegistry::SetConstructComplete() {
+  construct_complete_.store(true, std::memory_order_release);
+}
+
+void AssetPackageRegistry::CheckPreConstructAccess(
+    const std::string& apverid, const std::string& logical_path) const {
+  // Steady state after hand-off: a single relaxed-ish atomic load and
+  // out. Everything below runs only during bring-up.
+  if (construct_complete_.load(std::memory_order_acquire)) {
+    return;
+  }
+  if (apverid == kBuiltinAssetsApverid) {
+    return;
+  }
+  auto msg = std::string("Asset '") + apverid + ":" + logical_path
+             + "' accessed before construct-mode finished resolving"
+               " asset-packages; only "
+             + kBuiltinAssetsApverid
+             + " is guaranteed available this early. Hold the wrapper"
+               " reference and load it on first use instead.";
+  if (g_buildconfig.debug_build()) {
+    FatalError(msg);
+  } else {
+    // Log-once: a violation on a hot path would otherwise flood.
+    if (!did_log_pre_construct_access_.exchange(true,
+                                                std::memory_order_acq_rel)) {
+      g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kError, msg);
+    }
+  }
 }
 
 }  // namespace ballistica::base

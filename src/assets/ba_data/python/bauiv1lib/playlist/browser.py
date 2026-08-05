@@ -10,7 +10,7 @@ from typing import override, TYPE_CHECKING
 import bascenev1 as bs
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from bauiv1lib.play import PlaylistSelectContext
@@ -235,7 +235,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     .replace(
                         '${GAME}',
                         (
-                            classicassets.strings.gamenames.death_match
+                            classicassets.strings.game_names.death_match
                         ).evaluate(),
                     ),
                     'playlist': [
@@ -273,7 +273,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     .replace(
                         '${GAME}',
                         (
-                            classicassets.strings.gamenames.capture_the_flag
+                            classicassets.strings.game_names.capture_the_flag
                         ).evaluate(),
                     ),
                     'playlist': [
@@ -727,7 +727,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
             size=(100, 30),
             position=(34 + h_offs_bottom, 50 + extra_bottom_buffer),
             text_scale=0.6,
-            label=classicassets.strings.ui.customize,
+            label=_commonassets.strings.actions.customize,
             on_activate_call=self._on_customize_press,
             color=(0.54, 0.52, 0.67),
             textcolor=(0.7, 0.65, 0.7),

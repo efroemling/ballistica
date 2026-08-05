@@ -26,7 +26,7 @@ from bauiv1lib.play import PlaylistSelectContext
 from bauiv1lib.gettokens import show_get_tokens_prompt
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -549,7 +549,7 @@ class PrivateGatherTab(GatherTab):
             parent=self._container,
             id=f'{self._idprefix}|connect',
             size=(300, 70),
-            label=classicassets.strings.ui.connect,
+            label=_commonassets.strings.actions.connect,
             position=(self._c_width * 0.5 - 150, self._c_height - 350),
             on_activate_call=self._join_connect_press,
             autoselect=True,
@@ -624,8 +624,8 @@ class PrivateGatherTab(GatherTab):
                 scale=0.8,
                 color=(0.6, 0.56, 0.6),
                 position=(self._c_width * 0.5, self._c_height * 0.5),
-                text=classicassets.strings.ui.ellipsis_suffix(
-                    main=classicassets.strings.ui.loading
+                text=_commonassets.strings.compose.ellipsis_suffix(
+                    main=_commonassets.strings.status.loading
                 ),
             )
             return
@@ -751,7 +751,7 @@ class PrivateGatherTab(GatherTab):
                 size=(140, 40),
                 color=(0.6, 0.5, 0.6),
                 textcolor=(0.8, 0.75, 0.8),
-                label=classicassets.strings.ui.connect,
+                label=_commonassets.strings.actions.connect,
                 on_activate_call=self._host_connect_press,
                 position=(self._c_width * 0.5 + cbtnoffs, v - 70),
                 autoselect=True,
@@ -867,7 +867,7 @@ class PrivateGatherTab(GatherTab):
             self._waiting_for_start_stop_response
             or self._waiting_for_initial_state
         ):
-            btnlabel = classicassets.strings.ui.one_moment
+            btnlabel = _commonassets.strings.status.one_moment
         else:
             if hostingstate.unavailable_error is not None:
                 btnlabel = classicassets.strings.gather.hosting_unavailable
@@ -990,7 +990,7 @@ class PrivateGatherTab(GatherTab):
         # We need our v2 info for this.
         if self._v2state is None or self._v2state.datacode is None:
             bui.screenmessage(
-                classicassets.strings.ui.unavailable_no_connection,
+                _commonassets.strings.status.unavailable_no_connection,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()

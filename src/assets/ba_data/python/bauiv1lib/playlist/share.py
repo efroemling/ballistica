@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, override
 from efro.util import strict_partial
 from bauiv1lib.sendinfo import SendInfoWindowLegacyModal
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -28,7 +28,9 @@ class SharePlaylistImportWindow(SendInfoWindowLegacyModal):
 
     def _on_import_response(self, response: dict[str, Any] | None) -> None:
         if response is None:
-            bui.screenmessage(classicassets.strings.ui.error, color=(1, 0, 0))
+            bui.screenmessage(
+                _commonassets.strings.values.error, color=(1, 0, 0)
+            )
             builtinassets.audio.error.get().play()
             return
 
@@ -70,7 +72,7 @@ class SharePlaylistImportWindow(SendInfoWindowLegacyModal):
             callback=bui.WeakCallPartial(self._on_import_response),
         )
         plus.run_v1_account_transactions()
-        bui.screenmessage(classicassets.strings.ui.importing)
+        bui.screenmessage(_commonassets.strings.status.importing)
 
 
 class SharePlaylistResultsWindow(bui.Window):

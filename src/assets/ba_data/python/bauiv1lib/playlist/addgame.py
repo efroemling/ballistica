@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from bauiv1lib.playlist.editcontroller import PlaylistEditController
@@ -92,7 +92,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
             size=(160, 60),
             scale=0.75,
             text_scale=1.2,
-            label=classicassets.strings.ui.select,
+            label=_commonassets.strings.actions.select,
             on_activate_call=self._add,
         )
 

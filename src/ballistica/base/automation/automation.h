@@ -53,6 +53,7 @@ class Automation {
  private:
   void RunReader();
   void DispatchLine(const std::string& line);
+  auto WaitForLogicEventLoop() -> bool;
 
   std::string fifo_path_;
   int fifo_fd_{-1};

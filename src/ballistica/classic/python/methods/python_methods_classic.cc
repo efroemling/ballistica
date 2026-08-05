@@ -56,10 +56,10 @@ static auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
 
     if (have_change) {
       appmode->set_buffer_time(appmode->buffer_time()
-                               + static_cast<int>(change));
+                               + Python::IntFromDouble(change));
     }
     if (have_absolute) {
-      appmode->set_buffer_time(static_cast<int>(absolute));
+      appmode->set_buffer_time(Python::IntFromDouble(absolute));
     }
     appmode->set_buffer_time(std::max(0, appmode->buffer_time()));
     return_val = appmode->buffer_time();
@@ -67,10 +67,10 @@ static auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
     auto* appmode = ClassicAppMode::GetSingleton();
     if (have_change) {
       appmode->set_delay_bucket_samples(appmode->delay_bucket_samples()
-                                        + static_cast<int>(change));
+                                        + Python::IntFromDouble(change));
     }
     if (have_absolute) {
-      appmode->set_buffer_time(static_cast<int>(absolute));
+      appmode->set_buffer_time(Python::IntFromDouble(absolute));
     }
     appmode->set_delay_bucket_samples(
         std::max(1, appmode->delay_bucket_samples()));
@@ -79,10 +79,10 @@ static auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
     auto* appmode = ClassicAppMode::GetSingleton();
     if (have_change) {
       appmode->set_dynamics_sync_time(appmode->dynamics_sync_time()
-                                      + static_cast<int>(change));
+                                      + Python::IntFromDouble(change));
     }
     if (have_absolute) {
-      appmode->set_dynamics_sync_time(static_cast<int>(absolute));
+      appmode->set_dynamics_sync_time(Python::IntFromDouble(absolute));
     }
     appmode->set_dynamics_sync_time(std::max(0, appmode->dynamics_sync_time()));
     return_val = appmode->dynamics_sync_time();

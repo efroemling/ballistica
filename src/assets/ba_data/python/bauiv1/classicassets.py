@@ -1,19 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.260726c`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicassets.260730b`` (bauiv1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.baclassicassets.260726c
+# ba_meta require asset-package a-0.baclassicassets.260730b
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.baclassicassets.260726c'
+__asset_package__ = 'a-0.baclassicassets.260730b'
 
 from typing import TYPE_CHECKING
 
@@ -934,7 +934,7 @@ if TYPE_CHECKING:
         #:
         #:     Blurb explaining the benefits of signing in.
         #:
-        #:     English: "Sign in to collect tickets, compete online, and share
+        #:     English: "Sign in to collect Tickets, compete online, and share
         #:     progress across devices."
         sign_in_info: LangStr
 
@@ -3247,7 +3247,7 @@ if TYPE_CHECKING:
         uber_onslaught_victory: StringsAchievementsUberOnslaughtVictoryGroup
         uber_runaround_victory: StringsAchievementsUberRunaroundVictoryGroup
 
-    class StringsAppinviteGroup:
+    class StringsAppInviteGroup:
         """
         ::
 
@@ -3278,8 +3278,8 @@ if TYPE_CHECKING:
 
                 Header naming a ticket gift from a friend.
 
-                English: (one) "# {app_name} ticket from {name}" / (other) "#
-                {app_name} tickets from {name}"
+                English: (one) "# {app_name} Ticket from {name}" / (other) "#
+                {app_name} Tickets from {name}"
             """
 
         def friend_promo_award(self, *, count: int) -> LangStr:
@@ -3288,8 +3288,8 @@ if TYPE_CHECKING:
 
                 Explanation of the ticket reward per redemption.
 
-                English: (one) "You will receive # ticket each time it is used."
-                / (other) "You will receive # tickets each time it is used."
+                English: (one) "You will receive # Ticket each time it is used."
+                / (other) "You will receive # Tickets each time it is used."
             """
 
         def friend_promo_expire(self, *, expire_hours: int) -> LangStr:
@@ -3336,8 +3336,8 @@ if TYPE_CHECKING:
 
                 Short note of ticket value for a code.
 
-                English: (one) "It can be redeemed for # ticket in the game." /
-                (other) "It can be redeemed for # tickets in the game."
+                English: (one) "It can be redeemed for # Ticket in the game." /
+                (other) "It can be redeemed for # Tickets in the game."
             """
 
         #: ::
@@ -3652,7 +3652,7 @@ if TYPE_CHECKING:
         #:
         #:     Note that the player can open a chest early.
         #:
-        #:     English: "You have enough tokens to open this now - you don't
+        #:     English: "You have enough Tokens to open this now - you don't
         #:     need to wait."
         open_now_description: LangStr
 
@@ -3935,7 +3935,7 @@ if TYPE_CHECKING:
         #:     re-enable tournaments, disable your workspace and restart."
         tournaments_disabled_workspace: LangStr
 
-    class StringsCooplevelsGroup:
+    class StringsCoopLevelsGroup:
         """
         ::
 
@@ -4047,7 +4047,7 @@ if TYPE_CHECKING:
                 English: "Uber {game}"
             """
 
-    class StringsCoopscoreGroup:
+    class StringsCoopScoreGroup:
         """
         ::
 
@@ -4363,8 +4363,8 @@ if TYPE_CHECKING:
 
                 Confirmation of how many tickets were received.
 
-                English: (one) "Received # ticket!" / (other) "Received #
-                tickets!"
+                English: (one) "Received # Ticket!" / (other) "Received #
+                Tickets!"
             """
 
         def you_got_tokens(self, *, tokens: int) -> LangStr:
@@ -4374,10 +4374,10 @@ if TYPE_CHECKING:
                 Confirmation effect sent to game clients when tokens are
                 credited (store purchases, promo codes, and other grant flows).
 
-                English: (one) "You got # token!" / (other) "You got # tokens!"
+                English: (one) "You got # Token!" / (other) "You got # Tokens!"
             """
 
-    class StringsFileselectorGroup:
+    class StringsFileSelectorGroup:
         """
         ::
 
@@ -4825,7 +4825,7 @@ if TYPE_CHECKING:
                 English: "Wave {number}"
             """
 
-    class StringsGamedescriptionsGroup:
+    class StringsGameDescriptionsGroup:
         """
         ::
 
@@ -5253,7 +5253,7 @@ if TYPE_CHECKING:
                 English: "Touch the enemy flag {arg1} times."
             """
 
-    class StringsGamenamesGroup:
+    class StringsGameNamesGroup:
         """
         ::
 
@@ -5589,7 +5589,7 @@ if TYPE_CHECKING:
                 Blurb about inviting friends for a ticket reward.
 
                 English: "Friends don't have the game? Invite them to try it and
-                they'll receive {count} free tickets."
+                they'll receive {count} free Tickets."
             """
 
         #: ::
@@ -5938,7 +5938,7 @@ if TYPE_CHECKING:
         #:     English: "Your local address:"
         your_local_address: LangStr
 
-    class StringsGetremoteGroup:
+    class StringsGetRemoteGroup:
         """
         ::
 
@@ -5961,7 +5961,7 @@ if TYPE_CHECKING:
                 controllers."
             """
 
-    class StringsGettokensGroup:
+    class StringsGetTokensGroup:
         """
         ::
 
@@ -5981,7 +5981,7 @@ if TYPE_CHECKING:
         #:
         #:     Gold Pass benefit: infinite tokens.
         #:
-        #:     English: "Infinite tokens."
+        #:     English: "Infinite Tokens."
         gold_pass_desc1: LangStr
 
         #: ::
@@ -6246,62 +6246,7 @@ if TYPE_CHECKING:
                 English: "Welcome to {app_name}!"
             """
 
-    class StringsInboxGroup:
-        """
-        ::
-
-            Message-inbox window: messages, prizes, expiry labels.
-
-            See source for the full asset list.
-        """
-
-        def expired_ago(self, *, t: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Label showing how long ago something expired.
-
-                English: "Expired {t} ago"
-            """
-
-        def expires_in(self, *, t: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Label showing time until a message expires.
-
-                English: "Expires in {t}"
-            """
-
-        #: ::
-        #:
-        #:     Heading for final tournament standings.
-        #:
-        #:     English: "Final Standings"
-        final_standings: LangStr
-
-        #: ::
-        #:
-        #:     Notice that the app must be updated to view content.
-        #:
-        #:     English: "You must update the app to view this."
-        must_update: LangStr
-
-        #: ::
-        #:
-        #:     Placeholder when the inbox is empty.
-        #:
-        #:     English: "No messages."
-        no_messages: LangStr
-
-        #: ::
-        #:
-        #:     Label above a prize the player won.
-        #:
-        #:     English: "Your prize:"
-        your_prize: LangStr
-
-    class StringsIngamemenuGroup:
+    class StringsInGameMenuGroup:
         """
         ::
 
@@ -6385,6 +6330,61 @@ if TYPE_CHECKING:
         #:
         #:     English: "Resume"
         resume: LangStr
+
+    class StringsInboxGroup:
+        """
+        ::
+
+            Message-inbox window: messages, prizes, expiry labels.
+
+            See source for the full asset list.
+        """
+
+        def expired_ago(self, *, t: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Label showing how long ago something expired.
+
+                English: "Expired {t} ago"
+            """
+
+        def expires_in(self, *, t: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Label showing time until a message expires.
+
+                English: "Expires in {t}"
+            """
+
+        #: ::
+        #:
+        #:     Heading for final tournament standings.
+        #:
+        #:     English: "Final Standings"
+        final_standings: LangStr
+
+        #: ::
+        #:
+        #:     Notice that the app must be updated to view content.
+        #:
+        #:     English: "You must update the app to view this."
+        must_update: LangStr
+
+        #: ::
+        #:
+        #:     Placeholder when the inbox is empty.
+        #:
+        #:     English: "No messages."
+        no_messages: LangStr
+
+        #: ::
+        #:
+        #:     Label above a prize the player won.
+        #:
+        #:     English: "Your prize:"
+        your_prize: LangStr
 
     class StringsInventoryGroup:
         """
@@ -6802,7 +6802,7 @@ if TYPE_CHECKING:
         #:     English: "ready"
         ready: LangStr
 
-    class StringsMainmenuGroup:
+    class StringsMainMenuGroup:
         """
         ::
 
@@ -6887,7 +6887,7 @@ if TYPE_CHECKING:
         #:     English: "Test Build"
         test_build: LangStr
 
-    class StringsMapnamesGroup:
+    class StringsMapNamesGroup:
         """
         ::
 
@@ -7016,7 +7016,7 @@ if TYPE_CHECKING:
         #:     English: "Zigzag"
         zigzag: LangStr
 
-    class StringsMultiteamGroup:
+    class StringsMultiTeamGroup:
         """
         ::
 
@@ -7280,7 +7280,7 @@ if TYPE_CHECKING:
         #:     English: "Unmute Chat"
         unmute_chat: LangStr
 
-    class StringsPartyqueueGroup:
+    class StringsPartyQueueGroup:
         """
         ::
 
@@ -7318,6 +7318,104 @@ if TYPE_CHECKING:
         #:
         #:     English: "2-8 players"
         two_to_eight_players: LangStr
+
+    class StringsPlayModesGroup:
+        """
+        ::
+
+            Play-mode names (Teams, Free-for-All, ...) shared across playlist
+            UIs, session descriptions, and settings.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     The "Co-op" (cooperative) play-mode name.
+        #:
+        #:     English: "Co-op"
+        coop: LangStr
+
+        #: ::
+        #:
+        #:     The 'Free-for-All' play mode name (every player for themselves).
+        #:
+        #:     English: "Free-for-All"
+        free_for_all: LangStr
+
+        #: ::
+        #:
+        #:     The "Single Player / Co-op" play-mode name.
+        #:
+        #:     English: "Single Player / Co-op"
+        single_player_coop: LangStr
+
+        #: ::
+        #:
+        #:     The 'Teams' play mode name (used in playlist types, session
+        #:     descriptions, etc.).
+        #:
+        #:     English: "Teams"
+        teams: LangStr
+
+    class StringsPlayOptionsGroup:
+        """
+        ::
+
+            Playlist play-options: tutorial/shuffle toggles, team names/colors,
+            unlock notices.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Error when a playlist has no playable games.
+        #:
+        #:     English: "This playlist contains no valid unlocked games."
+        no_valid_games: LangStr
+
+        #: ::
+        #:
+        #:     Setting label for the points needed to win.
+        #:
+        #:     English: "Points To Win"
+        points_to_win: LangStr
+
+        #: ::
+        #:
+        #:     Setting label for how many games a series runs.
+        #:
+        #:     English: "Series Length"
+        series_length: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox to show the tutorial.
+        #:
+        #:     English: "Show Tutorial"
+        show_tutorial: LangStr
+
+        #: ::
+        #:
+        #:     Checkbox to shuffle the game order.
+        #:
+        #:     English: "Shuffle Game Order"
+        shuffle_game_order: LangStr
+
+        #: ::
+        #:
+        #:     Button to edit team names and colors.
+        #:
+        #:     English: "Team Names/Colors..."
+        team_names_colors: LangStr
+
+        #: ::
+        #:
+        #:     Note that an item must be unlocked in the store.
+        #:
+        #:     English: "This must be unlocked in the store."
+        unlock_in_store: LangStr
 
     class StringsPlaylistGroup:
         """
@@ -7538,104 +7636,6 @@ if TYPE_CHECKING:
         #:     English: "Remove Game"
         remove_game_button: LangStr
 
-    class StringsPlaymodesGroup:
-        """
-        ::
-
-            Play-mode names (Teams, Free-for-All, ...) shared across playlist
-            UIs, session descriptions, and settings.
-
-            See source for the full asset list.
-        """
-
-        #: ::
-        #:
-        #:     The "Co-op" (cooperative) play-mode name.
-        #:
-        #:     English: "Co-op"
-        coop: LangStr
-
-        #: ::
-        #:
-        #:     The 'Free-for-All' play mode name (every player for themselves).
-        #:
-        #:     English: "Free-for-All"
-        free_for_all: LangStr
-
-        #: ::
-        #:
-        #:     The "Single Player / Co-op" play-mode name.
-        #:
-        #:     English: "Single Player / Co-op"
-        single_player_coop: LangStr
-
-        #: ::
-        #:
-        #:     The 'Teams' play mode name (used in playlist types, session
-        #:     descriptions, etc.).
-        #:
-        #:     English: "Teams"
-        teams: LangStr
-
-    class StringsPlayoptionsGroup:
-        """
-        ::
-
-            Playlist play-options: tutorial/shuffle toggles, team names/colors,
-            unlock notices.
-
-            See source for the full asset list.
-        """
-
-        #: ::
-        #:
-        #:     Error when a playlist has no playable games.
-        #:
-        #:     English: "This playlist contains no valid unlocked games."
-        no_valid_games: LangStr
-
-        #: ::
-        #:
-        #:     Setting label for the points needed to win.
-        #:
-        #:     English: "Points To Win"
-        points_to_win: LangStr
-
-        #: ::
-        #:
-        #:     Setting label for how many games a series runs.
-        #:
-        #:     English: "Series Length"
-        series_length: LangStr
-
-        #: ::
-        #:
-        #:     Checkbox to show the tutorial.
-        #:
-        #:     English: "Show Tutorial"
-        show_tutorial: LangStr
-
-        #: ::
-        #:
-        #:     Checkbox to shuffle the game order.
-        #:
-        #:     English: "Shuffle Game Order"
-        shuffle_game_order: LangStr
-
-        #: ::
-        #:
-        #:     Button to edit team names and colors.
-        #:
-        #:     English: "Team Names/Colors..."
-        team_names_colors: LangStr
-
-        #: ::
-        #:
-        #:     Note that an item must be unlocked in the store.
-        #:
-        #:     English: "This must be unlocked in the store."
-        unlock_in_store: LangStr
-
     class StringsProfileGroup:
         """
         ::
@@ -7799,7 +7799,7 @@ if TYPE_CHECKING:
         #:
         #:     Error when the player lacks enough tickets for an upgrade.
         #:
-        #:     English: "Not enough tickets!"
+        #:     English: "Not enough Tickets!"
         not_enough_tickets: LangStr
 
         #: ::
@@ -7930,7 +7930,7 @@ if TYPE_CHECKING:
         #:     English: "What would you like to report?"
         reason: LangStr
 
-    class StringsResourcetypeinfoGroup:
+    class StringsResourceTypeInfoGroup:
         """
         ::
 
@@ -7959,13 +7959,13 @@ if TYPE_CHECKING:
         #:
         #:     Explanation of what tokens are and how to get them.
         #:
-        #:     English: "Tokens are used to speed up chest unlocks and for other
-        #:     game and account features. You can win tokens in the game or buy
-        #:     them in packs. Or buy a Gold Pass for infinite tokens and never
+        #:     English: "Tokens are used to speed up Chest unlocks and for other
+        #:     game and account features. You can win Tokens in the game or buy
+        #:     them in packs. Or buy a Gold Pass for infinite Tokens and never
         #:     hear about them again."
         tokens_description: LangStr
 
-    class StringsScoretypesGroup:
+    class StringsScoreTypesGroup:
         """
         ::
 
@@ -8010,7 +8010,7 @@ if TYPE_CHECKING:
         #:     English: "Time Held"
         time_held: LangStr
 
-    class StringsSendinfoGroup:
+    class StringsSendInfoGroup:
         """
         ::
 
@@ -8972,7 +8972,7 @@ if TYPE_CHECKING:
         #:     English: "Controllers"
         title: LangStr
 
-    class StringsSettingsDevtoolsGroup:
+    class StringsSettingsDevToolsGroup:
         """
         ::
 
@@ -9104,7 +9104,7 @@ if TYPE_CHECKING:
         #:     English: "Visuals"
         visuals: LangStr
 
-    class StringsSettingsNettestingGroup:
+    class StringsSettingsNetTestingGroup:
         """
         ::
 
@@ -9190,7 +9190,7 @@ if TYPE_CHECKING:
         #:     lost when the app exits."
         for_testing_note: LangStr
 
-    class StringsSettingsVrtestingGroup:
+    class StringsSettingsVrTestingGroup:
         """
         ::
 
@@ -9221,12 +9221,12 @@ if TYPE_CHECKING:
         audio: StringsSettingsAudioGroup
         benchmarks: StringsSettingsBenchmarksGroup
         controllers: StringsSettingsControllersGroup
-        devtools: StringsSettingsDevtoolsGroup
+        dev_tools: StringsSettingsDevToolsGroup
         graphics: StringsSettingsGraphicsGroup
-        nettesting: StringsSettingsNettestingGroup
+        net_testing: StringsSettingsNetTestingGroup
         plugins: StringsSettingsPluginsGroup
         testing: StringsSettingsTestingGroup
-        vrtesting: StringsSettingsVrtestingGroup
+        vr_testing: StringsSettingsVrTestingGroup
 
         #: ::
         #:
@@ -9503,7 +9503,7 @@ if TYPE_CHECKING:
         #:     English: "Red"
         red: LangStr
 
-    class StringsTournamententryGroup:
+    class StringsTournamentEntryGroup:
         """
         ::
 
@@ -9535,7 +9535,7 @@ if TYPE_CHECKING:
         #:     English: "Watch an Ad"
         watch_an_ad: LangStr
 
-    class StringsTournamentscoresGroup:
+    class StringsTournamentScoresGroup:
         """
         ::
 
@@ -9877,13 +9877,6 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Button label to accept an offer or invitation.
-        #:
-        #:     English: "Accept"
-        accept: LangStr
-
-        #: ::
-        #:
         #:     Generic "Achievements" label/heading.
         #:
         #:     English: "Achievements"
@@ -9898,66 +9891,10 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Generic 'All' filter/category label (e.g. showing all items in a
-        #:     list).
-        #:
-        #:     English: "All"
-        all: LangStr
-
-        #: ::
-        #:
-        #:     Generic 'Always' option value (e.g. when to apply an effect).
-        #:
-        #:     English: "Always"
-        always: LangStr
-
-        def angle_button_suffix(
-            self, *, main: str | LangStr, button: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template appending an angle-bracketed button
-                hint to a prompt; substitution-only.
-
-                English: "{main} < {button} >"
-            """
-
-        #: ::
-        #:
         #:     The app's name; byte-identical in every language.
         #:
         #:     English: "BombSquad"
         app_name: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Apply" button label.
-        #:
-        #:     English: "Apply"
-        apply: LangStr
-
-        #: ::
-        #:
-        #:     Default confirmation-dialog question.
-        #:
-        #:     English: "Are you sure?"
-        are_you_sure: LangStr
-
-        #: ::
-        #:
-        #:     Generic 'Auto' option value (automatic selection, e.g. graphics
-        #:     quality or resolution).
-        #:
-        #:     English: "Auto"
-        auto: LangStr
-
-        #: ::
-        #:
-        #:     Generic back-navigation button label.
-        #:
-        #:     English: "Back"
-        back: LangStr
 
         #: ::
         #:
@@ -9968,109 +9905,10 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Abort button label; backs out of a dialog or in-progress action
-        #:     without applying anything. NOT a "no" answer to a question and
-        #:     not "back" navigation.
-        #:
-        #:     English: "Cancel"
-        cancel: LangStr
-
-        #: ::
-        #:
         #:     Button label to claim a reward.
         #:
         #:     English: "Claim"
         claim: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Code" field label.
-        #:
-        #:     English: "Code"
-        code: LangStr
-
-        #: ::
-        #:
-        #:     Confirmation label; commits a pending action (purchases and other
-        #:     are-you-sure moments). Appears on commit buttons and as
-        #:     confirm-dialog titles. Stronger than "ok" — implies something
-        #:     happens as a result.
-        #:
-        #:     English: "Confirm"
-        confirm: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Connect" button label.
-        #:
-        #:     English: "Connect"
-        connect: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Connected." status label.
-        #:
-        #:     English: "Connected."
-        connected: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Connecting..." status label.
-        #:
-        #:     English: "Connecting..."
-        connecting: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Continue" button label.
-        #:
-        #:     English: "Continue"
-        continue_: LangStr
-
-        #: ::
-        #:
-        #:     Confirmation shown after copying text to the clipboard.
-        #:
-        #:     English: "Copied to clipboard."
-        copied_to_clipboard: LangStr
-
-        #: ::
-        #:
-        #:     Generic copy-to-clipboard button label.
-        #:
-        #:     English: "Copy"
-        copy: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Customize..." button label.
-        #:
-        #:     English: "Customize..."
-        customize: LangStr
-
-        def dash_wrap(self, *, main: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template flanking a label with dashes;
-                substitution-only.
-
-                English: "- {main} -"
-            """
-
-        #: ::
-        #:
-        #:     Button label to decline an offer or invitation.
-        #:
-        #:     English: "Decline"
-        decline: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Delete" button label.
-        #:
-        #:     English: "Delete"
-        delete: LangStr
 
         #: ::
         #:
@@ -10081,57 +9919,6 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Generic "Deprecated" marker for outdated options.
-        #:
-        #:     English: "Deprecated"
-        deprecated: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Description" field label.
-        #:
-        #:     English: "Description"
-        description: LangStr
-
-        #: ::
-        #:
-        #:     Instruction to open a URL in a web browser.
-        #:
-        #:     English: "Please direct a web-browser to the following URL:"
-        direct_browser_to_url: LangStr
-
-        #: ::
-        #:
-        #:     Generic 'Disabled' state/filter label.
-        #:
-        #:     English: "Disabled"
-        disabled: LangStr
-
-        #: ::
-        #:
-        #:     Button label to discard something.
-        #:
-        #:     English: "Discard"
-        discard: LangStr
-
-        #: ::
-        #:
-        #:     Completion button label; closes a screen or flow the user has
-        #:     finished working in. Implies completed work — not a generic
-        #:     "close" or "back".
-        #:
-        #:     English: "Done"
-        done: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Duplicate" button label.
-        #:
-        #:     English: "Duplicate"
-        duplicate: LangStr
-
-        #: ::
-        #:
         #:     Generic "Easy" difficulty label.
         #:
         #:     English: "Easy"
@@ -10139,56 +9926,10 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Generic "Edit" button label.
-        #:
-        #:     English: "Edit"
-        edit: LangStr
-
-        def ellipsis_suffix(self, *, main: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template appending an ellipsis to a status
-                label; substitution-only.
-
-                English: "{main}..."
-            """
-
-        #: ::
-        #:
-        #:     Generic 'Enabled' state/filter label.
-        #:
-        #:     English: "Enabled"
-        enabled: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Enter" button label.
-        #:
-        #:     English: "Enter"
-        enter: LangStr
-
-        #: ::
-        #:
         #:     Generic "Epic Mode" label.
         #:
         #:     English: "Epic Mode"
         epic_mode: LangStr
-
-        #: ::
-        #:
-        #:     Error-dialog title label; the dialog body carries the failure
-        #:     details. Title only — never used as a full error message.
-        #:
-        #:     English: "Error"
-        error: LangStr
-
-        #: ::
-        #:
-        #:     Generic error-page message.
-        #:
-        #:     English: "An error has occurred."
-        error_occurred: LangStr
 
         def exit_app_confirm(self, *, app_name: str | LangStr) -> LangStr:
             """
@@ -10198,13 +9939,6 @@ if TYPE_CHECKING:
 
                 English: "Exit {app_name}?"
             """
-
-        #: ::
-        #:
-        #:     Generic "Filter" label.
-        #:
-        #:     English: "Filter"
-        filter: LangStr
 
         #: ::
         #:
@@ -10228,18 +9962,6 @@ if TYPE_CHECKING:
         #:     English: "Game Center"
         game_center: LangStr
 
-        def gapped_pair(
-            self, *, first: str | LangStr, second: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template joining two labels with a wide gap;
-                substitution-only.
-
-                English: "{first} {second}"
-            """
-
         #: ::
         #:
         #:     The "Google Play" service name; byte-identical in every language.
@@ -10254,77 +9976,12 @@ if TYPE_CHECKING:
         #:     English: "Hard"
         hard: LangStr
 
-        def heading_suffix(self, *, main: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template appending a colon to a heading label;
-                substitution-only.
-
-                English: "{main}:"
-            """
-
-        #: ::
-        #:
-        #:     Generic 'High' quality-level option value.
-        #:
-        #:     English: "High"
-        high: LangStr
-
-        #: ::
-        #:
-        #:     Generic 'Higher' quality-level option value (a step above
-        #:     'High').
-        #:
-        #:     English: "Higher"
-        higher: LangStr
-
-        def icon_label(
-            self, *, icon: str | LangStr, label: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template joining an icon glyph and a text label
-                with a space; substitution-only.
-
-                English: "{icon} {label}"
-            """
-
-        #: ::
-        #:
-        #:     Button label to ignore something.
-        #:
-        #:     English: "Ignore"
-        ignore: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Import" button label.
-        #:
-        #:     English: "Import"
-        import_: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Importing..." status label.
-        #:
-        #:     English: "Importing..."
-        importing: LangStr
-
         #: ::
         #:
         #:     Generic "Inbox" label.
         #:
         #:     English: "Inbox"
         inbox: LangStr
-
-        #: ::
-        #:
-        #:     Parenthetical "(invalid)" marker.
-        #:
-        #:     English: "(invalid)"
-        invalid: LangStr
 
         #: ::
         #:
@@ -10342,39 +9999,6 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Generic "Learn More" button label.
-        #:
-        #:     English: "Learn More"
-        learn_more: LangStr
-
-        def line_pair(
-            self, *, first: str | LangStr, second: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template stacking two labels on separate lines;
-                substitution-only.
-
-                English: "{first} {second}"
-            """
-
-        #: ::
-        #:
-        #:     Generic lowercase "loading" status word.
-        #:
-        #:     English: "loading"
-        loading: LangStr
-
-        #: ::
-        #:
-        #:     Generic 'Low' quality-level option value.
-        #:
-        #:     English: "Low"
-        low: LangStr
-
-        #: ::
-        #:
         #:     Generic "Map" label.
         #:
         #:     English: "Map"
@@ -10382,161 +10006,10 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Generic 'Medium' quality-level option value.
-        #:
-        #:     English: "Medium"
-        medium: LangStr
-
-        #: ::
-        #:
-        #:     Generic "More..." label for expanding a list or seeing additional
-        #:     items.
-        #:
-        #:     English: "More..."
-        more: LangStr
-
-        #: ::
-        #:
-        #:     Notice shown when a changed setting only takes effect after an
-        #:     app restart.
-        #:
-        #:     English: "You must restart the game for this to take effect."
-        must_restart: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Name" field label.
-        #:
-        #:     English: "Name"
-        name: LangStr
-
-        #: ::
-        #:
-        #:     Error-page message.
-        #:
-        #:     English: "You must update the app to view this."
-        need_update: LangStr
-
-        #: ::
-        #:
-        #:     Generic 'Never' option value (e.g. when to apply an effect).
-        #:
-        #:     English: "Never"
-        never: LangStr
-
-        #: ::
-        #:
-        #:     Generic "New" button label.
-        #:
-        #:     English: "New"
-        new: LangStr
-
-        #: ::
-        #:
-        #:     Generic "not available" apology.
-        #:
-        #:     English: "Sorry, this is not available."
-        not_available: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Not Now" dismiss button.
-        #:
-        #:     English: "Not Now"
-        not_now: LangStr
-
-        #: ::
-        #:
         #:     Lowercase "not signed in" status indicator.
         #:
         #:     English: "not signed in"
         not_signed_in_status: LangStr
-
-        #: ::
-        #:
-        #:     Placeholder label shown on an empty doc-ui section with no items
-        #:     to display.
-        #:
-        #:     English: "There is nothing here."
-        nothing_here: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Off" toggle label.
-        #:
-        #:     English: "Off"
-        off: LangStr
-
-        #: ::
-        #:
-        #:     Generic affirmative/acknowledge button label; dismisses a dialog
-        #:     or message with agreement. NOT a "yes" answer to a question (use
-        #:     a dedicated yes/no pair for those).
-        #:
-        #:     English: "Ok"
-        ok: LangStr
-
-        #: ::
-        #:
-        #:     Generic "On" toggle label.
-        #:
-        #:     English: "On"
-        on: LangStr
-
-        #: ::
-        #:
-        #:     Generic "One Moment..." status line.
-        #:
-        #:     English: "One Moment..."
-        one_moment: LangStr
-
-        def or_join(self, *, a: str | LangStr, b: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Joiner between exactly two complete pre-rendered alternatives
-                (e.g. a price payable in either of two currencies: "500 tickets
-                or 10 tokens"). Not for lists of three or more and not a
-                standalone "or" word.
-
-                English: "{a} or {b}"
-            """
-
-        #: ::
-        #:
-        #:     Generic "Other..." option label.
-        #:
-        #:     English: "Other..."
-        other: LangStr
-
-        #: ::
-        #:
-        #:     Transient screen-message.
-        #:
-        #:     English: "Page is refreshing - try again in a moment."
-        page_refreshing_try_again: LangStr
-
-        def paren_suffix(
-            self, *, main: str | LangStr, note: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template appending a parenthesized note to a
-                main label; substitution-only.
-
-                English: "{main} ({note})"
-            """
-
-        def parenthesized(self, *, note: str | LangStr) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template wrapping a whole value in parentheses;
-                substitution-only.
-
-                English: "({note})"
-            """
 
         #: ::
         #:
@@ -10552,13 +10025,6 @@ if TYPE_CHECKING:
         #:
         #:     English: "Playlist"
         playlist: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Please wait..." status line.
-        #:
-        #:     English: "Please wait..."
-        please_wait: LangStr
 
         #: ::
         #:
@@ -10585,13 +10051,6 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Generic 'Random' option value (e.g. random playlist type).
-        #:
-        #:     English: "Random"
-        random: LangStr
-
-        #: ::
-        #:
         #:     Generic "Rank" label.
         #:
         #:     English: "Rank"
@@ -10607,128 +10066,10 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Generic "Rename" button label.
-        #:
-        #:     English: "Rename"
-        rename: LangStr
-
-        #: ::
-        #:
-        #:     Generic reset-to-defaults button label.
-        #:
-        #:     English: "Reset"
-        reset: LangStr
-
-        #: ::
-        #:
-        #:     Button label to restart an activity.
-        #:
-        #:     English: "Restart"
-        restart: LangStr
-
-        #: ::
-        #:
-        #:     Button label.
-        #:
-        #:     English: "Retry"
-        retry: LangStr
-
-        #: ::
-        #:
-        #:     Generic save-changes button label.
-        #:
-        #:     English: "Save"
-        save: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Select" button label.
-        #:
-        #:     English: "Select"
-        select: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Select..." button label.
-        #:
-        #:     English: "Select..."
-        select_ellipsis: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Send" button label.
-        #:
-        #:     English: "Send"
-        send: LangStr
-
-        #: ::
-        #:
-        #:     Error-page message; usually paired with a Retry button.
-        #:
-        #:     English: "Error talking to server."
-        server_error: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Share" button label.
-        #:
-        #:     English: "Share"
-        share: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Sharing..." status label.
-        #:
-        #:     English: "Sharing..."
-        sharing: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Show" button label.
-        #:
-        #:     English: "Show"
-        show: LangStr
-
-        def spaced_pair(
-            self, *, first: str | LangStr, second: str | LangStr
-        ) -> LangStr:
-            """
-            ::
-
-                Pure-formatting template joining two labels with a space;
-                substitution-only.
-
-                English: "{first} {second}"
-            """
-
-        #: ::
-        #:
         #:     Generic "Stats" label.
         #:
         #:     English: "Stats"
         stats: LangStr
-
-        #: ::
-        #:
-        #:     Notice shown when a feature needs the OS storage-access
-        #:     permission (mobile).
-        #:
-        #:     English: "This requires storage access"
-        storage_permission_needed: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Submit" button label.
-        #:
-        #:     English: "Submit"
-        submit: LangStr
-
-        #: ::
-        #:
-        #:     Lowercase "total" label.
-        #:
-        #:     English: "total"
-        total: LangStr
 
         #: ::
         #:
@@ -10737,57 +10078,7 @@ if TYPE_CHECKING:
         #:     English: "Trophies"
         trophies: LangStr
 
-        #: ::
-        #:
-        #:     Generic failure message asking the player to retry.
-        #:
-        #:     English: "Unable to complete this right now. Please try again."
-        unable_to_complete: LangStr
-
-        #: ::
-        #:
-        #:     Notice when a feature is unavailable, likely due to no internet.
-        #:
-        #:     English: "This is currently unavailable (no internet
-        #:     connection?)"
-        unavailable_no_connection: LangStr
-
-        #: ::
-        #:
-        #:     Lowercase "unavailable" status indicator.
-        #:
-        #:     English: "unavailable"
-        unavailable_status: LangStr
-
-        #: ::
-        #:
-        #:     Error/placeholder-page message.
-        #:
-        #:     English: "Under construction - check back soon."
-        under_construction: LangStr
-
-        #: ::
-        #:
-        #:     Generic "Upgrade" button label.
-        #:
-        #:     English: "Upgrade"
-        upgrade: LangStr
-
-        #: ::
-        #:
-        #:     Small connector word "via" (as in "signed in via X").
-        #:
-        #:     English: "via"
-        via: LangStr
-
-        #: ::
-        #:
-        #:     Generic "What is this?" help link.
-        #:
-        #:     English: "What is this?"
-        what_is_this: LangStr
-
-    class StringsV2upgradeGroup:
+    class StringsV2UpgradeGroup:
         """
         ::
 
@@ -10950,56 +10241,56 @@ if TYPE_CHECKING:
 
         account: StringsAccountGroup
         achievements: StringsAchievementsGroup
-        appinvite: StringsAppinviteGroup
+        app_invite: StringsAppInviteGroup
         characters: StringsCharactersGroup
         chest: StringsChestGroup
         controls: StringsControlsGroup
         coop: StringsCoopGroup
-        cooplevels: StringsCooplevelsGroup
-        coopscore: StringsCoopscoreGroup
+        coop_levels: StringsCoopLevelsGroup
+        coop_score: StringsCoopScoreGroup
         credits: StringsCreditsGroup
         economy: StringsEconomyGroup
-        fileselector: StringsFileselectorGroup
+        file_selector: StringsFileSelectorGroup
         game: StringsGameGroup
-        gamedescriptions: StringsGamedescriptionsGroup
-        gamenames: StringsGamenamesGroup
+        game_descriptions: StringsGameDescriptionsGroup
+        game_names: StringsGameNamesGroup
         gather: StringsGatherGroup
-        getremote: StringsGetremoteGroup
-        gettokens: StringsGettokensGroup
+        get_remote: StringsGetRemoteGroup
+        get_tokens: StringsGetTokensGroup
         help: StringsHelpGroup
+        in_game_menu: StringsInGameMenuGroup
         inbox: StringsInboxGroup
-        ingamemenu: StringsIngamemenuGroup
         inventory: StringsInventoryGroup
         keyboard: StringsKeyboardGroup
         kiosk: StringsKioskGroup
         league: StringsLeagueGroup
         lobby: StringsLobbyGroup
-        mainmenu: StringsMainmenuGroup
-        mapnames: StringsMapnamesGroup
-        multiteam: StringsMultiteamGroup
+        main_menu: StringsMainMenuGroup
+        map_names: StringsMapNamesGroup
+        multi_team: StringsMultiTeamGroup
         party: StringsPartyGroup
-        partyqueue: StringsPartyqueueGroup
+        party_queue: StringsPartyQueueGroup
         play: StringsPlayGroup
+        play_modes: StringsPlayModesGroup
+        play_options: StringsPlayOptionsGroup
         playlist: StringsPlaylistGroup
-        playmodes: StringsPlaymodesGroup
-        playoptions: StringsPlayoptionsGroup
         profile: StringsProfileGroup
         profiles: StringsProfilesGroup
         report: StringsReportGroup
-        resourcetypeinfo: StringsResourcetypeinfoGroup
-        scoretypes: StringsScoretypesGroup
-        sendinfo: StringsSendinfoGroup
+        resource_type_info: StringsResourceTypeInfoGroup
+        score_types: StringsScoreTypesGroup
+        send_info: StringsSendInfoGroup
         server: StringsServerGroup
         session: StringsSessionGroup
         settings: StringsSettingsGroup
         soundtrack: StringsSoundtrackGroup
         store: StringsStoreGroup
         teams: StringsTeamsGroup
-        tournamententry: StringsTournamententryGroup
-        tournamentscores: StringsTournamentscoresGroup
+        tournament_entry: StringsTournamentEntryGroup
+        tournament_scores: StringsTournamentScoresGroup
         tutorial: StringsTutorialGroup
         ui: StringsUiGroup
-        v2upgrade: StringsV2upgradeGroup
+        v2_upgrade: StringsV2UpgradeGroup
         watch: StringsWatchGroup
 
     class TexturesGroup:
@@ -11335,8 +10626,8 @@ if TYPE_CHECKING:
     #: ``action_hero_lower_leg``, and 355 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1128 strings (``account``, ``achievements``,
-    #: ``appinvite``, ``characters``, ``chest``, and 1123 more). Full list in
+    #: The ``strings`` group - 1036 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``characters``, ``chest``, and 1031 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -12433,7 +11724,7 @@ _TREE = {
                 'name': ('level',),
             },
         },
-        'appinvite': {
+        'app_invite': {
             'email_it': (),
             'enjoy': (),
             'friend_has_sent_promo': ('count', 'app_name', 'name'),
@@ -12516,7 +11807,7 @@ _TREE = {
             'tournaments': (),
             'tournaments_disabled_workspace': (),
         },
-        'cooplevels': {
+        'coop_levels': {
             'infinite_onslaught': (),
             'infinite_runaround': (),
             'onslaught_training': (),
@@ -12532,7 +11823,7 @@ _TREE = {
             'uber_runaround': (),
             'uber_variant': ('game',),
         },
-        'coopscore': {
+        'coop_score': {
             'best_rating': ('rating',),
             'complete_level_to_proceed': (),
             'current_standing': ('rank',),
@@ -12576,7 +11867,7 @@ _TREE = {
             'received_tickets': ('count',),
             'you_got_tokens': ('tokens',),
         },
-        'fileselector': {
+        'file_selector': {
             'select_file': (),
             'select_file_or_folder': (),
             'select_folder': (),
@@ -12632,7 +11923,7 @@ _TREE = {
             'wave': (),
             'wave_number': ('number',),
         },
-        'gamedescriptions': {
+        'game_descriptions': {
             'be_the_chosen_one_for_a': (),
             'bomb_as_many_targets_as_you': (),
             'carry_the_flag_for_a_set': (),
@@ -12687,7 +11978,7 @@ _TREE = {
             'touch_the_enemy_flag': (),
             'touch_the_enemy_flag_times': ('arg1',),
         },
-        'gamenames': {
+        'game_names': {
             'assault': (),
             'capture_the_flag': (),
             'chosen_one': (),
@@ -12781,8 +12072,8 @@ _TREE = {
             'your_address_from_internet': (),
             'your_local_address': (),
         },
-        'getremote': {'info_short': ('app_name', 'remote_app_name')},
-        'gettokens': {
+        'get_remote': {'info_short': ('app_name', 'remote_app_name')},
+        'get_tokens': {
             'gold_pass': (),
             'gold_pass_desc1': (),
             'gold_pass_desc2': (),
@@ -12818,15 +12109,7 @@ _TREE = {
             'to_get_the_most': (),
             'welcome': ('app_name',),
         },
-        'inbox': {
-            'expired_ago': ('t',),
-            'expires_in': ('t',),
-            'final_standings': (),
-            'must_update': (),
-            'no_messages': (),
-            'your_prize': (),
-        },
-        'ingamemenu': {
+        'in_game_menu': {
             'end_game': (),
             'end_replay': (),
             'end_test': (),
@@ -12836,6 +12119,14 @@ _TREE = {
             'leave_party': (),
             'leave_party_confirm': (),
             'resume': (),
+        },
+        'inbox': {
+            'expired_ago': ('t',),
+            'expires_in': ('t',),
+            'final_standings': (),
+            'must_update': (),
+            'no_messages': (),
+            'your_prize': (),
         },
         'inventory': {
             'only_available_online': (),
@@ -12893,7 +12184,7 @@ _TREE = {
             'press_to_select_team': ('buttons',),
             'ready': (),
         },
-        'mainmenu': {
+        'main_menu': {
             'credits': (),
             'exit_game': (),
             'host_navigating_menus': ('host',),
@@ -12904,7 +12195,7 @@ _TREE = {
             'quit': (),
             'test_build': (),
         },
-        'mapnames': {
+        'map_names': {
             'big_g': (),
             'bridgit': (),
             'courtyard': (),
@@ -12923,7 +12214,7 @@ _TREE = {
             'tower_d': (),
             'zigzag': (),
         },
-        'multiteam': {
+        'multi_team': {
             'best_of_final': ('count',),
             'best_of_series': ('count',),
             'deaths': (),
@@ -12958,8 +12249,23 @@ _TREE = {
             'title': (),
             'unmute_chat': (),
         },
-        'partyqueue': {'waiting_in_line': ()},
+        'party_queue': {'waiting_in_line': ()},
         'play': {'one_to_four_players': (), 'two_to_eight_players': ()},
+        'play_modes': {
+            'coop': (),
+            'free_for_all': (),
+            'single_player_coop': (),
+            'teams': (),
+        },
+        'play_options': {
+            'no_valid_games': (),
+            'points_to_win': (),
+            'series_length': (),
+            'show_tutorial': (),
+            'shuffle_game_order': (),
+            'team_names_colors': (),
+            'unlock_in_store': (),
+        },
         'playlist': {
             'add_game_button': (),
             'add_game_title': (),
@@ -12989,21 +12295,6 @@ _TREE = {
             'no_valid_maps': (),
             'playlists': (),
             'remove_game_button': (),
-        },
-        'playmodes': {
-            'coop': (),
-            'free_for_all': (),
-            'single_player_coop': (),
-            'teams': (),
-        },
-        'playoptions': {
-            'no_valid_games': (),
-            'points_to_win': (),
-            'series_length': (),
-            'show_tutorial': (),
-            'shuffle_game_order': (),
-            'team_names_colors': (),
-            'unlock_in_store': (),
         },
         'profile': {
             'account_profile': (),
@@ -13042,19 +12333,19 @@ _TREE = {
             'inappropriate_language': (),
             'reason': (),
         },
-        'resourcetypeinfo': {
+        'resource_type_info': {
             'get_tokens': (),
             'tickets_description': (),
             'tokens_description': (),
         },
-        'scoretypes': {
+        'score_types': {
             'flags': (),
             'goals': (),
             'survived': (),
             'time': (),
             'time_held': (),
         },
-        'sendinfo': {'send_info_description': ()},
+        'send_info': {'send_info_description': ()},
         'server': {'restarting': (), 'shutting_down': ()},
         'session': {
             'not_enough_players': ('count',),
@@ -13180,7 +12471,7 @@ _TREE = {
                 'remote_explanation': ('remote_app_name', 'app_name'),
                 'title': (),
             },
-            'devtools': {
+            'dev_tools': {
                 'create_user_system_scripts': (),
                 'delete_user_system_scripts': (),
                 'show_dev_console_button': (),
@@ -13199,7 +12490,7 @@ _TREE = {
                 'vertical_sync': (),
                 'visuals': (),
             },
-            'nettesting': {'title': ()},
+            'net_testing': {'title': ()},
             'plugins': {
                 'auto_enable_new': (),
                 'disable_all': (),
@@ -13209,7 +12500,7 @@ _TREE = {
                 'title': (),
             },
             'testing': {'for_testing_note': ()},
-            'vrtesting': {'title': ()},
+            'vr_testing': {'title': ()},
             'title': (),
         },
         'soundtrack': {
@@ -13242,12 +12533,12 @@ _TREE = {
         },
         'store': {'merch': (), 'pro_name': ('app_name',)},
         'teams': {'bad_guys': (), 'blue': (), 'good_guys': (), 'red': ()},
-        'tournamententry': {
+        'tournament_entry': {
             'tickets_count': ('count',),
             'title': (),
             'watch_an_ad': (),
         },
-        'tournamentscores': {'no_scores_yet': (), 'tournament_standings': ()},
+        'tournament_scores': {'no_scores_yet': (), 'tournament_standings': ()},
         'tutorial': {
             'cpu_benchmark': (),
             'phrase01': (),
@@ -13291,128 +12582,36 @@ _TREE = {
             'to_skip_press_anything': (),
         },
         'ui': {
-            'accept': (),
             'achievements': (),
             'activity': (),
-            'all': (),
-            'always': (),
-            'angle_button_suffix': ('main', 'button'),
             'app_name': (),
-            'apply': (),
-            'are_you_sure': (),
-            'auto': (),
-            'back': (),
             'boost': (),
-            'cancel': (),
             'claim': (),
-            'code': (),
-            'confirm': (),
-            'connect': (),
-            'connected': (),
-            'connecting': (),
-            'continue_': (),
-            'copied_to_clipboard': (),
-            'copy': (),
-            'customize': (),
-            'dash_wrap': ('main',),
-            'decline': (),
-            'delete': (),
             'demo': (),
-            'deprecated': (),
-            'description': (),
-            'direct_browser_to_url': (),
-            'disabled': (),
-            'discard': (),
-            'done': (),
-            'duplicate': (),
             'easy': (),
-            'edit': (),
-            'ellipsis_suffix': ('main',),
-            'enabled': (),
-            'enter': (),
             'epic_mode': (),
-            'error': (),
-            'error_occurred': (),
             'exit_app_confirm': ('app_name',),
-            'filter': (),
             'final_score': (),
             'free': (),
             'game_center': (),
-            'gapped_pair': ('first', 'second'),
             'google_play': (),
             'hard': (),
-            'heading_suffix': ('main',),
-            'high': (),
-            'higher': (),
-            'icon_label': ('icon', 'label'),
-            'ignore': (),
-            'import_': (),
-            'importing': (),
             'inbox': (),
-            'invalid': (),
             'kick': (),
             'leaderboards': (),
-            'learn_more': (),
-            'line_pair': ('first', 'second'),
-            'loading': (),
-            'low': (),
             'map': (),
-            'medium': (),
-            'more': (),
-            'must_restart': (),
-            'name': (),
-            'need_update': (),
-            'never': (),
-            'new': (),
-            'not_available': (),
-            'not_now': (),
             'not_signed_in_status': (),
-            'nothing_here': (),
-            'off': (),
-            'ok': (),
-            'on': (),
-            'one_moment': (),
-            'or_join': ('a', 'b'),
-            'other': (),
-            'page_refreshing_try_again': (),
-            'paren_suffix': ('main', 'note'),
-            'parenthesized': ('note',),
             'play': (),
             'playlist': (),
-            'please_wait': (),
             'points': (),
             'practice': (),
             'quit_app_confirm': ('app_name',),
-            'random': (),
             'rank': (),
             'remote_app_name': (),
-            'rename': (),
-            'reset': (),
-            'restart': (),
-            'retry': (),
-            'save': (),
-            'select': (),
-            'select_ellipsis': (),
-            'send': (),
-            'server_error': (),
-            'share': (),
-            'sharing': (),
-            'show': (),
-            'spaced_pair': ('first', 'second'),
             'stats': (),
-            'storage_permission_needed': (),
-            'submit': (),
-            'total': (),
             'trophies': (),
-            'unable_to_complete': (),
-            'unavailable_no_connection': (),
-            'unavailable_status': (),
-            'under_construction': (),
-            'upgrade': (),
-            'via': (),
-            'what_is_this': (),
         },
-        'v2upgrade': {'device_account_upgrade': ('name',)},
+        'v2_upgrade': {'device_account_upgrade': ('name',)},
         'watch': {
             'delete_confirm': ('replay',),
             'delete_replay_button': (),

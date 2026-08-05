@@ -7,7 +7,7 @@ import logging
 from typing import TYPE_CHECKING, cast
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 import bascenev1 as bs
 from bauiv1lib.popup import PopupMenuWindow
@@ -199,7 +199,7 @@ class PartyWindow(bui.Window):
             parent=self._root_widget,
             id=f'{self._idprefix}|send',
             size=(50, 35),
-            label=classicassets.strings.ui.send,
+            label=_commonassets.strings.actions.send,
             button_type='square',
             autoselect=True,
             position=(self._width - 70, 35),
@@ -252,7 +252,8 @@ class PartyWindow(bui.Window):
 
             bui.clipboard_set_text(content)
             bui.screenmessage(
-                classicassets.strings.ui.copied_to_clipboard, color=(0, 1, 0)
+                _commonassets.strings.status.copied_to_clipboard,
+                color=(0, 1, 0),
             )
 
     def _on_menu_button_press(self) -> None:
@@ -504,7 +505,7 @@ class PartyWindow(bui.Window):
                 if not result:
                     builtinassets.audio.error.get().play()
                     bui.screenmessage(
-                        classicassets.strings.ui.not_available,
+                        _commonassets.strings.status.not_available,
                         color=(1, 0, 0),
                     )
         elif self._popup_type == 'menu':
@@ -526,7 +527,7 @@ class PartyWindow(bui.Window):
                     # We should not allow the user to see this option
                     # if they aren't in a server; this is our bad.
                     bui.screenmessage(
-                        classicassets.strings.ui.error, color=(1, 0, 0)
+                        _commonassets.strings.values.error, color=(1, 0, 0)
                     )
                     builtinassets.audio.error.get().play()
         else:

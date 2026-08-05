@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, override
 from bauiv1lib.popup import PopupMenuWindow
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1 import builtinassets
 
@@ -191,7 +191,7 @@ class GamepadSettingsWindow(bui.MainWindow):
                 position=(self._width - 180, self._height - 65),
                 autoselect=True,
                 size=(160, 60),
-                label=classicassets.strings.ui.done,
+                label=_commonassets.strings.actions.done,
                 scale=0.9,
                 on_activate_call=self._save,
             )
@@ -207,7 +207,7 @@ class GamepadSettingsWindow(bui.MainWindow):
                 position=(51, self._height - 65),
                 autoselect=True,
                 size=(160, 60),
-                label=classicassets.strings.ui.cancel,
+                label=_commonassets.strings.actions.cancel,
                 scale=0.9,
                 on_activate_call=self._cancel,
             )
@@ -222,7 +222,7 @@ class GamepadSettingsWindow(bui.MainWindow):
                 position=(self._width - 195, self._height - 65),
                 size=(180, 60),
                 autoselect=True,
-                label=classicassets.strings.ui.save,
+                label=_commonassets.strings.actions.save,
                 scale=0.9,
                 on_activate_call=self._save,
             )
@@ -877,7 +877,7 @@ class GamepadSettingsWindow(bui.MainWindow):
         ]
         choices_display: list[bui.Lstr | bui.LangStr] = [
             classicassets.strings.settings.advanced.title,
-            classicassets.strings.ui.reset,
+            _commonassets.strings.actions.reset,
         ]
 
         uiscale = bui.app.ui_v1.uiscale

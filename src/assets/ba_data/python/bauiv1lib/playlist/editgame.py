@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -147,7 +147,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             label=(
                 bui.charstr(bui.SpecialChar.BACK)
                 if is_add
-                else classicassets.strings.ui.cancel
+                else _commonassets.strings.actions.cancel
             ),
             button_type='backSmall' if is_add else None,
             autoselect=True,
@@ -166,7 +166,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             label=(
                 classicassets.strings.playlist.add_game_title
                 if is_add
-                else classicassets.strings.ui.apply
+                else _commonassets.strings.actions.apply
             ),
         )
 
@@ -251,7 +251,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             position=(h + 448, v - 72),
             on_activate_call=bui.CallStrict(self._select_map),
             scale=0.7,
-            label=classicassets.strings.ui.select_ellipsis,
+            label=_commonassets.strings.actions.select_ellipsis,
         )
         widget_column.append([btn])
 
@@ -458,9 +458,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     position=(h + 509 - 95, v),
                     size=(0, 28),
                     text=(
-                        classicassets.strings.ui.on
+                        _commonassets.strings.values.on
                         if value
-                        else classicassets.strings.ui.off
+                        else _commonassets.strings.values.off
                     ),
                     editable=False,
                     color=(0.6, 1.0, 0.6, 1.0),
@@ -607,9 +607,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
         bui.textwidget(
             edit=widget,
             text=(
-                classicassets.strings.ui.on
+                _commonassets.strings.values.on
                 if value
-                else classicassets.strings.ui.off
+                else _commonassets.strings.values.off
             ),
         )
         self._settings[setting_name] = value

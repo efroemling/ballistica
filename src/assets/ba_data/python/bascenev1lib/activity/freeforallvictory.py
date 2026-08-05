@@ -110,7 +110,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         session = self.session
         assert isinstance(session, bs.FreeForAllSession)
         title = Text(
-            classicassets.strings.multiteam.first_to_series(
+            classicassets.strings.multi_team.first_to_series(
                 count=session.get_ffa_series_length()
             ),
             scale=1.05 * scale,

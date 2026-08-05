@@ -5,7 +5,7 @@
 from typing import override
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1lib.confirm import ConfirmWindow
 
@@ -181,7 +181,7 @@ class PluginSettingsWindow(bui.MainWindow):
         cfg.apply_and_commit()
 
         bui.screenmessage(
-            classicassets.strings.ui.must_restart,
+            _commonassets.strings.status.must_restart,
             color=(1.0, 0.5, 0.0),
         )
 
@@ -193,7 +193,7 @@ class PluginSettingsWindow(bui.MainWindow):
         cfg.apply_and_commit()
 
         bui.screenmessage(
-            classicassets.strings.ui.must_restart,
+            _commonassets.strings.status.must_restart,
             color=(1.0, 0.5, 0.0),
         )
 

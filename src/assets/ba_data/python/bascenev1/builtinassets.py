@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260726a`` (bascenev1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260804a`` (bascenev1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,13 +9,13 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260726a
+# ba_meta require asset-package a-0.babuiltinassets.260804a
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260726a'
+__asset_package__ = 'a-0.babuiltinassets.260804a'
 
 from typing import TYPE_CHECKING
 
@@ -169,8 +169,8 @@ if TYPE_CHECKING:
 
                 Notice that a platform account is being ignored.
 
-                English: "Note: Ignoring this {service} account. Go to Account >
-                Sign In if you want to use it."
+                English: "Note: Ignoring that {service} account. Go to 'Account
+                -> Sign in' if you want to use it."
             """
 
         #: ::
@@ -210,24 +210,41 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Screen message shown when a resolve finally lands full asset
+        #:     quality after previously showing reduced-quality versions. Paired
+        #:     with requested_quality_assets_building.
+        #:
+        #:     English: "All assets are now full quality."
+        all_assets_requested_quality: LangStr
+
+        #: ::
+        #:
         #:     Status line in the boot-time asset dialog while waiting for
         #:     account sign-in so restricted assets can load.
         #:
         #:     English: "Authenticating…"
         authenticating: LangStr
 
-        def building_assets(
-            self, *, count: int, package: str | LangStr
-        ) -> LangStr:
+        def building_assets(self, *, count: int) -> LangStr:
             """
             ::
 
-                Progress-dialog line shown while the server builds assets for a
-                package; updates live as the remaining count drops.
+                Progress-dialog line shown while the server builds assets;
+                updates live as the remaining count drops. Spans every package
+                being built, so it names no package.
 
-                English: (one) "Building {package} assets (# step remaining)…" /
-                (other) "Building {package} assets (# steps remaining)…"
+                English: (one) "Building assets (# remaining)…" / (other)
+                "Building assets (# remaining)…"
             """
+
+        #: ::
+        #:
+        #:     Progress-dialog line shown once asset builds have started but
+        #:     before the total step count is known (some packages have not
+        #:     reported yet). Replaced by the counted line once it is.
+        #:
+        #:     English: "Building assets…"
+        building_assets_no_count: LangStr
 
         #: ::
         #:
@@ -248,7 +265,7 @@ if TYPE_CHECKING:
                 dialog (this state is nearly always seen by the author, since
                 dev/test versions only resolve for them).
 
-                English: "{detail} Fix the file in the source workspace and try
+                English: "{detail} Fix the file in the source Workspace and try
                 again."
             """
 
@@ -271,15 +288,24 @@ if TYPE_CHECKING:
         #:     English: "An error occurred loading assets; see log for details."
         load_error: LangStr
 
-        def preparing_build(self, *, package: str | LangStr) -> LangStr:
-            """
-            ::
+        #: ::
+        #:
+        #:     Progress-dialog line shown while server-side asset builds are
+        #:     being prepared, before per-step progress is known.
+        #:
+        #:     English: "Preparing to build assets…"
+        preparing_build: LangStr
 
-                Progress-dialog line shown while a server-side asset build is
-                being prepared, before per-step progress is known.
-
-                English: "Preparing to build {package}…"
-            """
+        #: ::
+        #:
+        #:     Screen message shown after a resolve that had to serve
+        #:     lower-quality textures because the requested quality was still
+        #:     being built. Paired with all_assets_requested_quality, which
+        #:     announces the recovery.
+        #:
+        #:     English: "Assets are still building; some may appear with reduced
+        #:     quality."
+        requested_quality_assets_building: LangStr
 
         #: ::
         #:
@@ -1044,7 +1070,7 @@ if TYPE_CHECKING:
 
                 Confirmation that a workspace was activated.
 
-                English: "{thing} activated."
+                English: "Workspace {thing} activated."
             """
 
         def sync_error(self, *, workspace: str | LangStr) -> LangStr:
@@ -1053,7 +1079,7 @@ if TYPE_CHECKING:
 
                 Error message that a workspace failed to sync.
 
-                English: "Error syncing workspace {workspace}. See log for
+                English: "Error syncing Workspace {workspace}. See log for
                 details."
             """
 
@@ -1063,8 +1089,8 @@ if TYPE_CHECKING:
 
                 Notice that a previously synced workspace is being reused.
 
-                English: "Unable to sync {workspace}. Reusing the last synced
-                version."
+                English: "Can't sync Workspace '{workspace}'. Reusing previously
+                synced version."
             """
 
     class StringsGroup:
@@ -1194,8 +1220,8 @@ if TYPE_CHECKING:
     #: ``arrow_back``, and 67 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 84 strings (``account``, ``assets``, ``audio``,
-    #: ``input``, ``net``, and 79 more). Full list in source.
+    #: The ``strings`` group - 87 strings (``account``, ``assets``, ``audio``,
+    #: ``input``, ``net``, and 82 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 82 assets (``action_buttons``, ``arrow``,
@@ -1309,13 +1335,16 @@ _TREE = {
         },
         'assets': {
             'access_denied_guidance': ('detail',),
+            'all_assets_requested_quality': (),
             'authenticating': (),
-            'building_assets': ('count', 'package'),
+            'building_assets': ('count',),
+            'building_assets_no_count': (),
             'client_too_old': (),
             'content_error_guidance': ('detail',),
             'downloading_assets': ('count',),
             'load_error': (),
-            'preparing_build': ('package',),
+            'preparing_build': (),
+            'requested_quality_assets_building': (),
             'sign_in_failed': (),
             'sign_in_needed_browser': ('address',),
             'sign_in_needed_other_device': ('address',),

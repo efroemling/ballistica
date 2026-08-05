@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, override
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1lib.utils import scroll_fade_top, scroll_fade_bottom
 from bauiv1lib.league import league_display_name
@@ -245,7 +245,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 yoffs - (50 if uiscale is bui.UIScale.SMALL else 24),
             ),
             size=(0, 0),
-            text=classicassets.strings.playmodes.single_player_coop,
+            text=classicassets.strings.play_modes.single_player_coop,
             h_align='center',
             color=app.ui_v1.title_color,
             scale=0.85 if uiscale is bui.UIScale.SMALL else 1.5,
@@ -659,7 +659,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         self._campaign_percent_text = bui.textwidget(
             edit=self._campaign_percent_text,
-            text=classicassets.strings.ui.paren_suffix(
+            text=_commonassets.strings.compose.paren_suffix(
                 main=classicassets.strings.coop.campaign, note=p_str
             ),
         )
@@ -805,9 +805,9 @@ class CoopBrowserWindow(bui.MainWindow):
         # not signed in add that as well (that's probably why we see no
         # tournaments).
         if self._tournament_button_count == 0:
-            unavailable_text = classicassets.strings.ui.unavailable_status
+            unavailable_text = _commonassets.strings.status.unavailable_status
             if plus.get_v1_account_state() != 'signed_in':
-                unavailable_text = classicassets.strings.ui.paren_suffix(
+                unavailable_text = _commonassets.strings.compose.paren_suffix(
                     main=unavailable_text,
                     note=classicassets.strings.ui.not_signed_in_status,
                 )
@@ -1036,7 +1036,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 classicassets.strings.coop.chest_slots_full_warning,
                 width=550,
                 height=140,
-                ok_text=classicassets.strings.ui.continue_,
+                ok_text=_commonassets.strings.actions.continue_,
                 origin_widget=origin_widget,
                 action=strict_partial(
                     self._run_game, game=game, origin_widget=origin_widget
@@ -1151,7 +1151,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         if tournament_button.tournament_id is None:
             bui.screenmessage(
-                classicassets.strings.ui.unavailable_no_connection,
+                _commonassets.strings.status.unavailable_no_connection,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()

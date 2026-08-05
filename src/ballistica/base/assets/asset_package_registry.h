@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_ASSETS_ASSET_PACKAGE_REGISTRY_H_
 #define BALLISTICA_BASE_ASSETS_ASSET_PACKAGE_REGISTRY_H_
 
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -161,6 +162,42 @@ class AssetPackageRegistry {
   /// bundled blobs are never copied into the writable root.
   auto CasBlobPath(const std::string& hash) const -> std::string;
 
+  /// Note that construct-mode has finished resolving every asset-package
+  /// the meta-scan requires. Called (via
+  /// ``_babase.mark_construct_assets_complete()``) from the same
+  /// hand-off point that opens the Python-side gate, so the two agree by
+  /// construction. Opens the gate enforced by
+  /// :meth:`CheckPreConstructAccess`.
+  void SetConstructComplete();
+
+  /// Complain if ``apverid`` is accessed before construct-mode finished.
+  ///
+  /// Before hand-off the only package guaranteed registered is the
+  /// construct/builtin one; touching any other is a bug **even when it
+  /// happens to work**, which it does whenever that package is bundled
+  /// into this particular build. That makes the failure mode
+  /// build-profile-dependent -- the same code silently succeeds for a
+  /// developer and draws blank for a player -- so this keys on the
+  /// construct package rather than on what merely happens to be
+  /// registered.
+  ///
+  /// Lives here rather than in the Python layer because loads reach the
+  /// engine from several directions that never touch Python: direct
+  /// ``Assets::Get*`` calls from C++, scene_v1 wire traffic and replays
+  /// arriving as legacy bare names via ``AssetNameCompat::FromLegacy``,
+  /// and server-driven docui content.
+  ///
+  /// The check runs in **every** build -- nothing here is compiled out;
+  /// only the severity varies. Fatal on debug builds (so it stops dev
+  /// and CI dead), a log-once error otherwise. Deliberately not fatal in
+  /// release builds: a violation's natural consequence is a blank
+  /// texture or a missing string, and the paths most likely to trip it
+  /// are error-display paths -- turning "show the user an error" into
+  /// "abort the process" trades a cosmetic bug for a crash. Release
+  /// builds stay diagnosable via the error log.
+  void CheckPreConstructAccess(const std::string& apverid,
+                               const std::string& logical_path) const;
+
  private:
   /// Return the current immutable snapshot (never null). Briefly takes
   /// the write lock to copy the shared_ptr.
@@ -176,6 +213,15 @@ class AssetPackageRegistry {
   // registration. Guarded by mutex_ for the pointer swap; the pointed-to
   // map is never mutated after publish.
   std::shared_ptr<const PackagesMap> packages_;
+
+  // Construct-mode gate (see :meth:`CheckPreConstructAccess`). Atomic
+  // rather than mutex-guarded because it is read on the hot load path
+  // from both the logic and asset-server threads; the write happens once.
+  std::atomic<bool> construct_complete_{false};
+
+  // Log-once latch for the non-developer-build path of
+  // :meth:`CheckPreConstructAccess`.
+  mutable std::atomic<bool> did_log_pre_construct_access_{false};
 };
 
 }  // namespace ballistica::base
