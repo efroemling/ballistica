@@ -109,6 +109,13 @@ SPECS: dict[str, SpecDef] = {
     'ordinal': SpecDef(
         param_kind='count', form_producing=True, supported=False
     ),
+    # A byte count rendered as human-readable size ("1.2 GB"). Takes no
+    # arguments: the decimal places are adaptive (one below ten units,
+    # none above), matching ``efro.util.data_size_str``, whose
+    # ``compact`` flag is deliberately not carried over -- the short
+    # forms exist for width-constrained debug output, not for
+    # translated UI.
+    'data_size': SpecDef(param_kind='bytes'),
 }
 
 

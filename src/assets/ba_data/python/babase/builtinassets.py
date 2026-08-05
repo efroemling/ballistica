@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260730a`` (babase).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260804a`` (babase).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,13 +9,13 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260730a
+# ba_meta require asset-package a-0.babuiltinassets.260804a
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260730a'
+__asset_package__ = 'a-0.babuiltinassets.260804a'
 
 from typing import TYPE_CHECKING
 
@@ -49,8 +49,8 @@ if TYPE_CHECKING:
 
                 Notice that a platform account is being ignored.
 
-                English: "Note: Ignoring your {service} account. Go to Account >
-                Sign in to use it."
+                English: "Note: Ignoring that {service} account. Go to 'Account
+                -> Sign in' if you want to use it."
             """
 
         #: ::
@@ -90,11 +90,11 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Screen message shown when a resolve finally lands the requested
-        #:     asset quality after previously showing lower-quality fallbacks.
-        #:     Paired with requested_quality_assets_building.
+        #:     Screen message shown when a resolve finally lands full asset
+        #:     quality after previously showing reduced-quality versions. Paired
+        #:     with requested_quality_assets_building.
         #:
-        #:     English: "All assets are now requested quality."
+        #:     English: "All assets are now full quality."
         all_assets_requested_quality: LangStr
 
         #: ::
@@ -145,7 +145,7 @@ if TYPE_CHECKING:
                 dialog (this state is nearly always seen by the author, since
                 dev/test versions only resolve for them).
 
-                English: "{detail} Fix the file in the source workspace and try
+                English: "{detail} Fix the file in the source Workspace and try
                 again."
             """
 
@@ -183,8 +183,8 @@ if TYPE_CHECKING:
         #:     being built. Paired with all_assets_requested_quality, which
         #:     announces the recovery.
         #:
-        #:     English: "Requested quality assets are still building; showing
-        #:     lower quality fallbacks."
+        #:     English: "Assets are still building; some may appear with reduced
+        #:     quality."
         requested_quality_assets_building: LangStr
 
         #: ::
@@ -950,7 +950,7 @@ if TYPE_CHECKING:
 
                 Confirmation that a workspace was activated.
 
-                English: "{thing} activated."
+                English: "Workspace {thing} activated."
             """
 
         def sync_error(self, *, workspace: str | LangStr) -> LangStr:
@@ -959,7 +959,7 @@ if TYPE_CHECKING:
 
                 Error message that a workspace failed to sync.
 
-                English: "Error syncing workspace {workspace}. See log for
+                English: "Error syncing Workspace {workspace}. See log for
                 details."
             """
 
@@ -969,8 +969,8 @@ if TYPE_CHECKING:
 
                 Notice that a previously synced workspace is being reused.
 
-                English: "Unable to sync {workspace}. Reusing the last synced
-                version."
+                English: "Can't sync Workspace '{workspace}'. Reusing previously
+                synced version."
             """
 
     class StringsGroup:

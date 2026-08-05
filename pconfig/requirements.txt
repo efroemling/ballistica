@@ -1,9 +1,9 @@
 cpplint==2.0.2
-cryptography==49.0.0
+cryptography==50.0.0
 dmgbuild==1.6.7
-filelock==3.32.0
+filelock==3.32.2
 furo==2025.12.19
-libcst==1.8.6
+libcst==1.9.0
 mypy==2.3.0
 pbxproj==4.3.3
 pur==7.4.0
@@ -24,5 +24,5 @@ types-psutil==7.2.2.20260518
 types-requests==2.33.0.20260712
 typing_extensions==4.16.0
 urllib3==2.7.0
-websockets==16.1.1
-zuban==0.9.0
+websockets==17.0.1
+zuban==0.9.1

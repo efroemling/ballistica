@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.260730a"
+// Generated from: "a-0.babuiltinassets.260804a"
 
 #include <memory>
 
@@ -46,8 +46,8 @@ class BuiltinStrings {
 
     /// Notice that a platform account is being ignored.
     ///
-    /// English: "Note: Ignoring your {service} account. Go to Account > Sign in
-    /// to use it."
+    /// English: "Note: Ignoring that {service} account. Go to 'Account -> Sign
+    /// in' if you want to use it."
     static auto NotUsingAccount(LangStr::Sub service)
         -> std::shared_ptr<const LangStr>;
 
@@ -71,11 +71,11 @@ class BuiltinStrings {
     static auto AccessDeniedGuidance(LangStr::Sub detail)
         -> std::shared_ptr<const LangStr>;
 
-    /// Screen message shown when a resolve finally lands the requested asset
-    /// quality after previously showing lower-quality fallbacks. Paired with
+    /// Screen message shown when a resolve finally lands full asset quality
+    /// after previously showing reduced-quality versions. Paired with
     /// requested_quality_assets_building.
     ///
-    /// English: "All assets are now requested quality."
+    /// English: "All assets are now full quality."
     static auto AllAssetsRequestedQuality() -> std::shared_ptr<const LangStr>;
 
     /// Status line in the boot-time asset dialog while waiting for account
@@ -112,7 +112,7 @@ class BuiltinStrings {
     /// is nearly always seen by the author, since dev/test versions only
     /// resolve for them).
     ///
-    /// English: "{detail} Fix the file in the source workspace and try again."
+    /// English: "{detail} Fix the file in the source Workspace and try again."
     static auto ContentErrorGuidance(LangStr::Sub detail)
         -> std::shared_ptr<const LangStr>;
 
@@ -140,8 +140,8 @@ class BuiltinStrings {
     /// textures because the requested quality was still being built. Paired
     /// with all_assets_requested_quality, which announces the recovery.
     ///
-    /// English: "Requested quality assets are still building; showing lower
-    /// quality fallbacks."
+    /// English: "Assets are still building; some may appear with reduced
+    /// quality."
     static auto RequestedQualityAssetsBuilding()
         -> std::shared_ptr<const LangStr>;
 
@@ -630,18 +630,19 @@ class BuiltinStrings {
    public:
     /// Confirmation that a workspace was activated.
     ///
-    /// English: "{thing} activated."
+    /// English: "Workspace {thing} activated."
     static auto Activated(LangStr::Sub thing) -> std::shared_ptr<const LangStr>;
 
     /// Error message that a workspace failed to sync.
     ///
-    /// English: "Error syncing workspace {workspace}. See log for details."
+    /// English: "Error syncing Workspace {workspace}. See log for details."
     static auto SyncError(LangStr::Sub workspace)
         -> std::shared_ptr<const LangStr>;
 
     /// Notice that a previously synced workspace is being reused.
     ///
-    /// English: "Unable to sync {workspace}. Reusing the last synced version."
+    /// English: "Can't sync Workspace '{workspace}'. Reusing previously synced
+    /// version."
     static auto SyncReuse(LangStr::Sub workspace)
         -> std::shared_ptr<const LangStr>;
   };

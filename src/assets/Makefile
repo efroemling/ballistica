@@ -548,6 +548,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_blob.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_core.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/langstr/_format.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_wrapper.py \
   $(BUILD_DIR)/ba_data/python/bacommon/locale.py \
   $(BUILD_DIR)/ba_data/python/bacommon/loctext.py \
@@ -1715,9 +1716,7 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/__init__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/__main__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/__init__.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/async_timeout.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/client.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/compatibility.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/connection.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/messages.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/router.py \
@@ -1733,7 +1732,6 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/extensions/permessage_deflate.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/frames.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/headers.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/websockets/http.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/http11.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/imports.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/legacy/__init__.py \
@@ -1756,6 +1754,13 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/sync/router.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/sync/server.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/sync/utils.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/trio/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/trio/client.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/trio/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/trio/messages.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/trio/router.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/trio/server.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/trio/utils.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/typing.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/uri.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/utils.py \

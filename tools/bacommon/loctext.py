@@ -360,9 +360,15 @@ def _scan_token_names(text: str) -> set[str]:
 
 
 def evaluate(
-    value: 'str | StringSelector', locale: Locale, **args: object
+    value: 'str | StringSelector', locale: Locale, /, **args: object
 ) -> str:
     """Resolve a localized ``value`` to a final string.
+
+    ``value`` and ``locale`` are positional-only so they cannot collide
+    with a substitution *named* ``value`` or ``locale`` -- without that,
+    an authored string using ``{value}`` is unrenderable through this
+    function, which is a trap that surfaces only once someone writes
+    such a string.
 
     ``value`` is a plain ``str`` (``{name}`` substitutions only) or a
     :class:`StringSelector` (plural/select choice, then substitution).

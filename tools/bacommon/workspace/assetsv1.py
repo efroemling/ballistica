@@ -502,6 +502,57 @@ def complete_locale_values(
     return out
 
 
+def display_param_kinds(
+    string_files: dict[str, AssetsV1StringFileV1],
+) -> dict[str, dict[str, str]]:
+    """Per-string ``{param: kind}`` for params the display side must know.
+
+    A spec'd brief param (``{size|data_size}``) renders through logic the
+    translated text cannot describe -- the text holds only a ``{size}``
+    token -- so its kind has to travel to the evaluator in the language
+    blob. Plain text subs and the plural pivot are omitted: text is the
+    default, and the pivot is not a named output token at all (it
+    renders as the ICU ``#`` count placeholder inside each form).
+
+    Entries with nothing to declare are absent, so a package using no
+    spec'd params serializes byte-identically to before this existed.
+
+    The shared derivation both the asset-build string recipe and the
+    `langstr vendor` command route through, alongside
+    :func:`complete_locale_values`, so the built and vendored blobs
+    can't drift on this either. Briefs that don't parse contribute
+    nothing rather than failing the build -- consistent with how broken
+    briefs degrade everywhere else.
+    """
+    out: dict[str, dict[str, str]] = {}
+    for name, sfile in string_files.items():
+        try:
+            kinds = display_param_kinds_for_brief(sfile.input)
+        except Exception:  # pylint: disable=broad-except
+            continue
+        if kinds:
+            out[name] = kinds
+    return out
+
+
+def display_param_kinds_for_brief(brief: str) -> dict[str, str]:
+    """Per-param display kinds for a single brief.
+
+    The one-entry unit :func:`display_param_kinds` aggregates; see it
+    for what qualifies as a display kind. Raises on a malformed brief
+    -- callers that must degrade softly (listing renders, builds)
+    wrap it, matching how broken briefs degrade everywhere else.
+    """
+    from bacommon.strbrief import parse_brief
+
+    sig = parse_brief(brief)
+    return {
+        tag.name: tag.param_kind
+        for tag in sig.token_params
+        if tag.param_kind != 'text'
+    }
+
+
 class AssetsV1PathValsTypeID(Enum):
     """Types of vals we can store for paths."""
 
@@ -840,6 +891,16 @@ class AssetsV1StrTermDeps:
     cross: Annotated[list[str], IOAttrs('cross', store_default=False)] = field(
         default_factory=list
     )
+
+    #: Sorted unique display-param kinds this entry's brief uses
+    #: (``'bytes'`` etc.; the union over
+    #: :func:`display_param_kinds_for_brief`). What the master consults
+    #: to decide which formatter components a package build must embed,
+    #: without reading the file. ``None`` on records predating the
+    #: field, which consumers treat as a cache miss so the record gets
+    #: repaired (mirroring ``inputs_digest``); an extracted brief using
+    #: no spec'd params stores ``[]``.
+    kinds: Annotated[list[str] | None, IOAttrs('k', store_default=False)] = None
 
 
 @ioprepped

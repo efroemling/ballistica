@@ -94,6 +94,7 @@
  "ba_data/python/bacommon/langstr/__init__.py",
  "ba_data/python/bacommon/langstr/_blob.py",
  "ba_data/python/bacommon/langstr/_core.py",
+ "ba_data/python/bacommon/langstr/_format.py",
  "ba_data/python/bacommon/langstr/_wrapper.py",
  "ba_data/python/bacommon/locale.py",
  "ba_data/python/bacommon/loctext.py",

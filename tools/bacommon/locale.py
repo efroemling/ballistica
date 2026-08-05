@@ -2,7 +2,7 @@
 #
 """Functionality for wrangling locale info."""
 
-# Length here is exhaustive per-locale data, not accumulated cruft: five
+# Length here is exhaustive per-locale data, not accumulated cruft: six
 # properties each if-chain over all ~44 values so assert_never() makes a
 # missed locale a type error. Those chains have to sit next to the enum
 # to do that, so splitting them out would trade the guarantee for a line
@@ -800,6 +800,118 @@ class LocaleResolved(Enum):
         return ''.join(
             c for c in decomposed if not unicodedata.combining(c)
         ).casefold()
+
+    @cached_property
+    def decimal_mark(self) -> str:
+        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-return-statements
+        """The character separating a number's whole and fraction parts.
+
+        Locale *data*, not translated content: a decimal mark is a
+        fact about a language, and asking a translation model for
+        one invites a confidently wrong answer that no reviewer
+        would catch by reading the string. So it is curated here
+        and applied by formatting code rather than authored into
+        any asset package.
+
+        Deliberately covers only the mark. Digit grouping is not
+        modelled: our formatted numbers scale their units (``1.2
+        GB``, never ``1234.5 MB``), so a group separator has
+        nothing to separate, and skipping it avoids the messier
+        per-locale rules (``1,234,567`` / ``1 234 567`` /
+        ``12,34,567``). Digit *shaping* is likewise out: locales
+        that could use non-ASCII digits read Western ones fine.
+
+        Arabic and Persian are ``'.'`` rather than ``'\u066b'``
+        on purpose -- that mark pairs with Eastern Arabic digits,
+        which we do not emit.
+        """
+        cls = LocaleResolved
+
+        if self is cls.ENGLISH:
+            return '.'
+        if self is cls.CHINESE_TRADITIONAL:
+            return '.'
+        if self is cls.CHINESE_SIMPLIFIED:
+            return '.'
+        if self is cls.PORTUGUESE_PORTUGAL:
+            return ','
+        if self is cls.PORTUGUESE_BRAZIL:
+            return ','
+        if self is cls.ARABIC:
+            return '.'
+        if self is cls.BELARUSSIAN:
+            return ','
+        if self is cls.CROATIAN:
+            return ','
+        if self is cls.CZECH:
+            return ','
+        if self is cls.DANISH:
+            return ','
+        if self is cls.DUTCH:
+            return ','
+        if self is cls.PIRATE_SPEAK:
+            return '.'
+        if self is cls.ESPERANTO:
+            return ','
+        if self is cls.FILIPINO:
+            return '.'
+        if self is cls.FRENCH:
+            return ','
+        if self is cls.GERMAN:
+            return ','
+        if self is cls.GIBBERISH:
+            return '.'
+        if self is cls.GREEK:
+            return ','
+        if self is cls.HINDI:
+            return '.'
+        if self is cls.HUNGARIAN:
+            return ','
+        if self is cls.INDONESIAN:
+            return ','
+        if self is cls.ITALIAN:
+            return ','
+        if self is cls.KOREAN:
+            return '.'
+        if self is cls.MALAY:
+            return '.'
+        if self is cls.PERSIAN:
+            return '.'
+        if self is cls.POLISH:
+            return ','
+        if self is cls.ROMANIAN:
+            return ','
+        if self is cls.RUSSIAN:
+            return ','
+        if self is cls.SERBIAN:
+            return ','
+        if self is cls.SPANISH_LATIN_AMERICA:
+            return ','
+        if self is cls.SPANISH_SPAIN:
+            return ','
+        if self is cls.SLOVAK:
+            return ','
+        if self is cls.SWEDISH:
+            return ','
+        if self is cls.TAMIL:
+            return '.'
+        if self is cls.THAI:
+            return '.'
+        if self is cls.TURKISH:
+            return ','
+        if self is cls.UKRAINIAN:
+            return ','
+        if self is cls.VENETIAN:
+            return ','
+        if self is cls.VIETNAMESE:
+            return ','
+        if self is cls.KAZAKH:
+            return ','
+        if self is cls.JAPANESE:
+            return '.'
+
+        assert_never(self)
 
     @cached_property
     def tag(self) -> str:

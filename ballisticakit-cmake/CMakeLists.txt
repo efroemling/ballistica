@@ -216,6 +216,15 @@ target_compile_options(common_deps INTERFACE
   $<$<NOT:$<CONFIG:Debug>>:-O3>
 )
 
+# GCC on ARM emits informational -Wpsabi notes about the GCC 10.1
+# C++17 calling-convention fix (e.g. for std::pair<float, float>
+# returns). They only matter when mixing objects from pre-10.1 and
+# post-10.1 compilers in one binary, which we never do, so silence
+# them.
+target_compile_options(common_deps INTERFACE
+  $<$<CXX_COMPILER_ID:GNU>:-Wno-psabi>
+)
+
 set(ODE_SRC_ROOT ${BA_SRC_ROOT}/external/open_dynamics_engine-ef)
 
 add_library(ode
