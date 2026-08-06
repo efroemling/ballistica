@@ -25,7 +25,8 @@ pre-marked autogen sections in checked-in source files:
   tree (strings-asset-migration decision D22). Each ``string``-kind
   listing entry (which carries the brief's ordered ``params`` + author
   ``docs``) becomes one static method building a pure resource-form
-  ``LangStr`` — ``count`` params type as ``int64_t``, ``text`` params
+  ``LangStr`` — integer-valued params (``count``, plus the display-kind
+  wire ints ``millis``/``bytes``) type as ``int64_t``, ``text`` params
   as ``LangStr::Sub``. String sources must live under a top-level
   ``strings/`` dir; the remaining path segments map to nested classes
   (namespaces are barred by the one-namespace-per-featureset rule) and
@@ -97,14 +98,25 @@ class AssetEntry:
         )
 
 
+# Param kinds carried as plain integers on the wire (and thus typed
+# ``int64_t`` in the accessors): the plural-pivot ``count`` plus the
+# display-formatter value kinds (signed target-minus-now milliseconds
+# for ``millis``; byte counts for ``bytes``). Kind semantics live
+# server-side in bacommon.strbrief.SPECS; here they only pick a C++
+# type.
+INT_PARAM_KINDS = ('count', 'millis', 'bytes')
+
+
 @dataclass
 class StringEntry:
     """One ``string``-kind asset, post-validation.
 
     ``params`` is the brief's ordered call signature as
-    ``(name, kind)`` pairs, kind ``'count'`` (the plural pivot; typed
-    ``int64_t``) or ``'text'`` (typed ``LangStr::Sub``). ``docs`` is
-    the combined author doc text from the ``.bstr``.
+    ``(name, kind)`` pairs. Integer-valued kinds -- ``'count'`` (the
+    plural pivot) and the display-formatter wire ints ``'millis'`` /
+    ``'bytes'`` -- type as ``int64_t``; ``'text'`` types as
+    ``LangStr::Sub``. ``docs`` is the combined author doc text from
+    the ``.bstr``.
     """
 
     # Logical asset path within the package (e.g.
@@ -247,11 +259,12 @@ def _collect_string(
                 f'String {logical_name!r} param {name!r} is not a'
                 ' valid lowercase identifier; rename in the brief.'
             )
-        if pkind not in ('count', 'text'):
+        if pkind != 'text' and pkind not in INT_PARAM_KINDS:
             return (
                 f'String {logical_name!r} param {name!r} has unknown'
                 f' kind {pkind!r} (this generator understands'
-                " 'count'/'text'; it may need updating)."
+                f" 'text' plus the int kinds {INT_PARAM_KINDS};"
+                ' it may need updating).'
             )
         params.append((name, pkind))
     docs = asset['docs']
@@ -440,7 +453,11 @@ def _wrap_doc_comment(docs: str, indent: str) -> list[str]:
 def _string_param_sig(entry: StringEntry) -> str:
     """C++ parameter list for a string entry's accessor."""
     return ', '.join(
-        f'int64_t {name}' if kind == 'count' else f'LangStr::Sub {name}'
+        (
+            f'int64_t {name}'
+            if kind in INT_PARAM_KINDS
+            else f'LangStr::Sub {name}'
+        )
         for name, kind in entry.params
     )
 
@@ -613,7 +630,7 @@ def render_strings_cc(result: BuildResult) -> str:
                 subs = ', '.join(
                     (
                         f'{{"{name}", {name}}}'
-                        if kind == 'count'
+                        if kind in INT_PARAM_KINDS
                         else f'{{"{name}", std::move({name})}}'
                     )
                     for name, kind in entry.params

@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260804a`` (babase).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260806`` (babase).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,19 +9,20 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260804a
+# ba_meta require asset-package a-0.babuiltinassets.260806
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260804a'
+__asset_package__ = 'a-0.babuiltinassets.260806'
 
 from typing import TYPE_CHECKING
 
 from babase._language import LangStrDir
 
 if TYPE_CHECKING:
+    import datetime
     from babase import LangStr
 
     class StringsAccountGroup:
@@ -741,6 +742,25 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
+        def duration_value(
+            self,
+            *,
+            t: datetime.timedelta | datetime.datetime,
+            now: datetime.datetime | None = None,
+        ) -> LangStr:
+            """
+            ::
+
+                A bare length of time such as "1h 23m", shown by itself as a
+                plain value. Doubles as the string that keeps the duration
+                formatter components embedded in this package: engine-level
+                displays (the timedisplay node, the toolbar chest countdowns)
+                read their unit words from those embedded components, so this
+                entry must always exist here.
+
+                English: "{t}"
+            """
+
         def suffix_hours(self, *, count: str | LangStr) -> LangStr:
             """
             ::
@@ -998,8 +1018,8 @@ if TYPE_CHECKING:
         ui: StringsUiGroup
         workspace: StringsWorkspaceGroup
 
-    #: The ``strings`` group - 87 strings (``account``, ``assets``, ``audio``,
-    #: ``input``, ``net``, and 82 more). Full list in source.
+    #: The ``strings`` group - 88 strings (``account``, ``assets``, ``audio``,
+    #: ``input``, ``net``, and 83 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
@@ -1083,6 +1103,7 @@ _TREE = {
             'unavailable_temporarily': (),
         },
         'time': {
+            'duration_value': ('t',),
             'suffix_hours': ('count',),
             'suffix_minutes': ('count',),
             'suffix_seconds': ('count',),
@@ -1114,7 +1135,13 @@ _TREE = {
         },
     }
 }
+_DISPLAY_KINDS = {'strings/time/duration_value': {'t': 'millis'}}
 
 
 if not TYPE_CHECKING:
-    strings = LangStrDir(__asset_package__, _TREE['strings'], 'strings')
+    strings = LangStrDir(
+        __asset_package__,
+        _TREE['strings'],
+        'strings',
+        display_kinds=_DISPLAY_KINDS,
+    )

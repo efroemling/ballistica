@@ -808,15 +808,33 @@ class LanguageStringNameDecodeContext:
         #: rendering never depends on another package being present.
         self._components = components or {}
 
-    def _render_param(self, kind: str, value: str | int, apverid: str) -> str:
-        """Render one spec'd param value for this locale."""
-        from bacommon.langstr._format import data_size_str
+    def _render_param(
+        self, kindexpr: str, value: str | int, apverid: str
+    ) -> str:
+        """Render one spec'd param value for this locale.
 
-        if kind == 'bytes':
-            return data_size_str(
-                int(value), self._locale, self._components.get(apverid, {})
+        ``kindexpr`` is the blob's display-kind expression -- the bare
+        kind, or kind plus spec args (``'bytes(compact=true)'``); see
+        :attr:`~bacommon.strbrief.BriefTag.display_kind`. Routes
+        through the shared dispatch
+        (:func:`~bacommon.langstr._format.render_display_param`) so
+        this and the client wrapper runtime can't drift.
+        """
+        from bacommon.langstr._format import render_display_param
+
+        try:
+            return render_display_param(
+                kindexpr,
+                value,
+                self._locale,
+                self._components.get(apverid, {}),
             )
-        raise _DecodeFail(f'unknown display param kind {kind!r}')
+        except _DecodeFail:
+            raise
+        except Exception as exc:
+            raise _DecodeFail(
+                f'display param render failed ({kindexpr!r}): {exc}'
+            ) from exc
 
     def decode(self, lstr: LangStrSpec) -> str:
         """Resolve a :class:`LangStrSpec` to a flat string in this locale.

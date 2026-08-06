@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bacommonassets.260730b`` (bascenev1).
+"""Asset-package wrapper for ``a-0.bacommonassets.260805`` (bascenev1).
 
 Cross-cutting assets used everywhere -- by the engine, by every game built on
 it, and by the master server's own web pages. Content here must be free of any
@@ -9,13 +9,13 @@ single game's concepts, which is what distinguishes it from BaClassicAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bacommonassets.260730b
+# ba_meta require asset-package a-0.bacommonassets.260805
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.bacommonassets.260730b'
+__asset_package__ = 'a-0.bacommonassets.260805'
 
 from typing import TYPE_CHECKING
 
@@ -331,6 +331,18 @@ if TYPE_CHECKING:
                 substitution-only.
 
                 English: "- {main} -"
+            """
+
+        def data_size(self, *, size: int) -> LangStr:
+            """
+            ::
+
+                A bare human-readable data size (the value alone, no surrounding
+                words) for value-position slots: table cells, size readouts,
+                storage meters. Rendered through the data_size display
+                formatter, so every locale gets its own units and decimal mark.
+
+                English: "{size}"
             """
 
         def ellipsis_suffix(self, *, main: str | LangStr) -> LangStr:
@@ -1142,8 +1154,8 @@ if TYPE_CHECKING:
         status: StringsStatusGroup
         values: StringsValuesGroup
 
-    #: The ``strings`` group - 133 strings (``actions``, ``compose``,
-    #: ``locales``, ``status``, ``values``, and 128 more). Full list in source.
+    #: The ``strings`` group - 134 strings (``actions``, ``compose``,
+    #: ``locales``, ``status``, ``values``, and 129 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
@@ -1189,6 +1201,7 @@ _TREE = {
         'compose': {
             'angle_button_suffix': ('main', 'button'),
             'dash_wrap': ('main',),
+            'data_size': ('size',),
             'ellipsis_suffix': ('main',),
             'gapped_pair': ('first', 'second'),
             'heading_suffix': ('main',),
@@ -1293,7 +1306,13 @@ _TREE = {
         },
     }
 }
+_DISPLAY_KINDS = {'strings/compose/data_size': {'size': 'bytes'}}
 
 
 if not TYPE_CHECKING:
-    strings = LangStrDir(__asset_package__, _TREE['strings'], 'strings')
+    strings = LangStrDir(
+        __asset_package__,
+        _TREE['strings'],
+        'strings',
+        display_kinds=_DISPLAY_KINDS,
+    )

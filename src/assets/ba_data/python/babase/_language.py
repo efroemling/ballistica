@@ -4,6 +4,7 @@
 
 import json
 import asyncio
+import datetime
 from functools import partial
 from typing import TYPE_CHECKING, overload, override
 
@@ -107,11 +108,13 @@ async def resolve_langstrs(
             ordered, language=locale, background=background
         )
         loop = asyncio.get_running_loop()
-        language = {
+        langdata = {
             apverid: await loop.run_in_executor(
                 None,
                 partial(
-                    _babase.app.assets.get_package_strings, apverid, locale
+                    _babase.app.assets.get_package_language_data,
+                    apverid,
+                    locale,
                 ),
             )
             for apverid in ordered
@@ -121,28 +124,117 @@ async def resolve_langstrs(
         'resolve_langstrs: resolved + gathered strings for %d package(s).',
         len(ordered),
     )
-    return LanguageStringNameDecodeContext(language, locale)
+    # Kinds + components let the context render display-formatted
+    # params ({size|data_size}) instead of passing raw values through;
+    # nearly every package has neither, so pass only non-empty entries.
+    return LanguageStringNameDecodeContext(
+        {apverid: data[0] for apverid, data in langdata.items()},
+        locale,
+        param_kinds={
+            apverid: data[1] for apverid, data in langdata.items() if data[1]
+        },
+        components={
+            apverid: data[2] for apverid, data in langdata.items() if data[2]
+        },
+    )
 
 
 class _NativeLstrMaker:
     """Callable leaf: builds a native LangStr from keyword subs."""
 
-    __slots__ = ('_apverid', '_name')
+    __slots__ = ('_apverid', '_name', '_display_kinds')
 
-    def __init__(self, apverid: str, name: str) -> None:
+    def __init__(
+        self,
+        apverid: str,
+        name: str,
+        display_kinds: dict[str, str] | None = None,
+    ) -> None:
         self._apverid = apverid
         self._name = name
+        self._display_kinds = display_kinds
 
-    def __call__(self, **subs: str | int | babase.LangStr) -> babase.LangStr:
-        from bacommon.langstr import LangStrSpecResource
+    def _format_display_sub(
+        self, key: str, val: str | int | babase.LangStr
+    ) -> str | int | babase.LangStr:
+        """Preformat one display-formatted sub value for the current locale.
 
+        The native language table substitutes plain text; it has no
+        formatter hook, so a display-formatted param (a byte count
+        rendered as "1.2 GB") gets its final text here, at LangStr
+        construction. The known trade against true display-time
+        rendering: an already-built LangStr keeps the construction
+        locale's rendering until rebuilt (the language-change cascade
+        rebuilds visible UI, so this matches how other dynamic values
+        behave). Fail-soft: any render problem falls back to the raw
+        value, so UI shows an unformatted number rather than an error.
+        """
+        from bacommon.langstr import render_display_param
+
+        assert self._display_kinds is not None
+        if isinstance(val, _babase.LangStr):
+            return val
+        try:
+            locale = _babase.app.locale.current_locale
+            return render_display_param(
+                self._display_kinds[key],
+                val,
+                locale,
+                _babase.app.assets.get_package_components_cached(
+                    self._apverid, locale
+                ),
+            )
+        except Exception:
+            applog.warning(
+                'Error display-formatting sub %r of %s:%s; passing raw'
+                ' value through.',
+                key,
+                self._apverid,
+                self._name,
+                exc_info=True,
+            )
+            return val
+
+    def __call__(
+        self,
+        now: datetime.datetime | None = None,
+        **subs: (
+            str | int | babase.LangStr | datetime.datetime | datetime.timedelta
+        ),
+    ) -> babase.LangStr:
+        from bacommon.langstr import LangStrSpecResource, time_sub_millis
+
+        # Time-typed values (duration params take a timedelta or an
+        # aware datetime; the ms-int wire form is an implementation
+        # detail) convert first, sharing one ``now`` so a batch of
+        # renders can't drift. ``now`` can never shadow a real param:
+        # the brief grammar reserves the name for exactly this use.
+        converted: dict[str, str | int | babase.LangStr] = {}
+        for key, val in subs.items():
+            if isinstance(val, (datetime.datetime, datetime.timedelta)):
+                if now is None and isinstance(val, datetime.datetime):
+                    from efro.util import utc_now
+
+                    now = utc_now()
+                converted[key] = time_sub_millis(val, now)
+            else:
+                converted[key] = val
+
+        kinds = self._display_kinds
+        if kinds:
+            converted = {
+                key: (
+                    self._format_display_sub(key, val) if key in kinds else val
+                )
+                for key, val in converted.items()
+            }
         return _native_from_spec(
             LangStrSpecResource(
                 self._apverid,
                 self._name,
                 {
                     key: (val.spec if isinstance(val, _babase.LangStr) else val)
-                    for key, val in subs.items()
+                    for key, val in converted.items()
                 },
             )
         )
@@ -159,17 +251,23 @@ class LangStrDir:
     guarantees these strings are locally displayable).
     """
 
-    __slots__ = ('_apverid', '_tree', '_prefix')
+    __slots__ = ('_apverid', '_tree', '_prefix', '_display_kinds')
 
     def __init__(
         self,
         apverid: str,
         tree: bacommon.langstr.WrapperTree,
         prefix: str = '',
+        display_kinds: dict[str, dict[str, str]] | None = None,
     ) -> None:
         self._apverid = apverid
         self._tree = tree
         self._prefix = prefix
+        #: ``{leaf-path: {param: display-kind expression}}`` baked into
+        #: the generated module for display-formatted params
+        #: (``{size|data_size}``); absent on formatter-free packages
+        #: and on modules generated before this existed.
+        self._display_kinds = display_kinds
 
     def __getattr__(
         self, name: str
@@ -180,7 +278,9 @@ class LangStrDir:
             raise AttributeError(name) from None
         full = f'{self._prefix}/{name}' if self._prefix else name
         if isinstance(child, dict):
-            return LangStrDir(self._apverid, child, full)
+            return LangStrDir(
+                self._apverid, child, full, display_kinds=self._display_kinds
+            )
         # A leaf access is the point a string actually gets read out of a
         # package, so gate it the same way loadable assets are. Strings
         # need their own check: they resolve through the native language
@@ -197,7 +297,15 @@ class LangStrDir:
             from bacommon.langstr import LangStrSpecResource
 
             return _native_from_spec(LangStrSpecResource(self._apverid, full))
-        return _NativeLstrMaker(self._apverid, full)
+        return _NativeLstrMaker(
+            self._apverid,
+            full,
+            display_kinds=(
+                None
+                if self._display_kinds is None
+                else self._display_kinds.get(full)
+            ),
+        )
 
 
 def get_legacy_langdata() -> dict[str, Any]:

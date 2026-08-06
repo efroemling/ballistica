@@ -678,6 +678,15 @@ class AssetSubsystem(AppSubsystem):
         # loop on first use.
         self._gate = _ResolveGate()
 
+        # Formatter components per (apverid, locale-value) -- the
+        # build-embedded unit words display formatters render through.
+        # A resolved package's per-locale blob is immutable, so entries
+        # can never go stale; bounded by resolved-packages x locales
+        # actually displayed (tiny).
+        self._components_cache: dict[
+            tuple[str, str], dict[str, str | StringSelector]
+        ] = {}
+
         # Pinned set: the monotonic union of every apverid + flavor-manifest
         # hash committed into the native registry this process lifetime.
         # Never un-pinned until exit, so once we've told the engine an asset
@@ -1342,8 +1351,30 @@ class AssetSubsystem(AppSubsystem):
         it off the logic thread. Missing/absent data fails soft -- an empty
         map -- leaving the caller's decode to surface per-string sentinels.
         """
+        return self.get_package_language_data(apverid, locale)[0]
+
+    def get_package_language_data(self, apverid: str, locale: Locale) -> tuple[
+        dict[str, 'str | StringSelector'],
+        dict[str, dict[str, str]],
+        dict[str, 'str | StringSelector'],
+    ]:
+        """All three language-blob sections for an already-resolved package.
+
+        Returns ``(values, param_kinds, components)`` -- the string
+        values :meth:`get_package_strings` returns, plus the display
+        param-kinds map (``{name: {param: kind-expression}}``) and the
+        build-embedded formatter components, both needed for a decode
+        context to render spec'd params (``{size|data_size}``) rather
+        than passing the raw value through. Same IO/threading/fail-soft
+        contract as :meth:`get_package_strings` (one blob read serves
+        all three sections).
+        """
         # Deferred: keep bacommon.langstr out of babase's module-load graph.
-        from bacommon.langstr import parse_language_blob
+        from bacommon.langstr import (
+            parse_language_blob,
+            parse_language_param_kinds,
+            parse_language_components,
+        )
 
         coord = f'language/{locale.value}'
 
@@ -1356,19 +1387,43 @@ class AssetSubsystem(AppSubsystem):
         if fm_hash is None:
             fm_hash = self._read_bundle_manifest().get(apverid, {}).get(coord)
         if fm_hash is None or self._locate_blob(fm_hash) is None:
-            return {}
+            return {}, {}, {}
 
         # The blob lives at logical path 'language' part 'j.json' (the
         # same one native ReloadLanguage looks up).
         parts = self._read_entries(fm_hash).get('language')
         blob_hash = parts.get('j.json') if parts else None
         if blob_hash is None:
-            return {}
+            return {}, {}, {}
         path = self._locate_blob(blob_hash)
         if path is None:
-            return {}
+            return {}, {}, {}
         with open(path, 'rb') as infile:
-            return parse_language_blob(infile.read().decode())
+            text = infile.read().decode()
+        return (
+            parse_language_blob(text),
+            parse_language_param_kinds(text),
+            parse_language_components(text),
+        )
+
+    def get_package_components_cached(
+        self, apverid: str, locale: Locale
+    ) -> dict[str, 'str | StringSelector']:
+        """A resolved package's formatter components, cached per locale.
+
+        The hot-path accessor the native-wrapper runtime uses to
+        preformat display params (``{size|data_size}``) at LangStr
+        construction: first access per (package, locale) reads the
+        language blob (small, local); afterwards it is a dict hit. Safe
+        to cache indefinitely -- a resolved version's per-locale blob is
+        immutable content.
+        """
+        key = (apverid, locale.value)
+        cached = self._components_cache.get(key)
+        if cached is None:
+            cached = self.get_package_language_data(apverid, locale)[2]
+            self._components_cache[key] = cached
+        return cached
 
     @staticmethod
     def _reload_language() -> None:

@@ -12,6 +12,7 @@ builds an :class:`LangStrSpec` from keyword substitutions, and a subdir is a
 nested :class:`LangStrDir`.
 """
 
+import datetime
 from typing import TYPE_CHECKING
 
 from bacommon.langstr._core import LangStrSpecResource, PackageStructure
@@ -49,6 +50,60 @@ def _flatten_tree(
             flat[full] = value
 
 
+def time_sub_millis(
+    value: 'datetime.datetime | datetime.timedelta',
+    now: 'datetime.datetime | None' = None,
+) -> int:
+    """One time-typed sub value's wire form (signed ms int).
+
+    The single shared arithmetic for wrapper accessors' *useful*
+    duration types: a :class:`datetime.timedelta` is already a signed
+    length; a :class:`datetime.datetime` is an absolute time,
+    converted to signed ``target - now`` per D12 so the string's
+    ``dir`` handles past/future. ``now`` defaults to
+    :func:`efro.util.utc_now`; batch callers pass one shared value so
+    a page of renders can't drift against itself. Datetimes must be
+    timezone-aware (naive ones raise from the subtraction, per stdlib
+    rules).
+    """
+    from efro.util import utc_now
+
+    if isinstance(value, datetime.timedelta):
+        return int(value.total_seconds() * 1000)
+    if now is None:
+        now = utc_now()
+    return int((value - now).total_seconds() * 1000)
+
+
+def convert_time_subs(
+    subs: dict[
+        str,
+        'str | int | LangStrSpec | datetime.datetime | datetime.timedelta',
+    ],
+    now: 'datetime.datetime | None' = None,
+) -> dict[str, 'str | int | LangStrSpec']:
+    """Convert any time-typed sub values to their wire form.
+
+    The integer-milliseconds wire value is an implementation detail of
+    the duration machinery; conversion is driven purely by each
+    value's *type* (see :func:`time_sub_millis`), so no per-param kind
+    knowledge is needed -- the typed stubs are what hold authors to
+    passing time types only for duration params. ``now`` is resolved
+    at most once per call.
+    """
+    from efro.util import utc_now
+
+    out: dict[str, str | int | LangStrSpec] = {}
+    for key, val in subs.items():
+        if isinstance(val, (datetime.datetime, datetime.timedelta)):
+            if now is None and isinstance(val, datetime.datetime):
+                now = utc_now()
+            out[key] = time_sub_millis(val, now)
+        else:
+            out[key] = val
+    return out
+
+
 class _LstrMaker:
     """Callable leaf: builds a :class:`LangStrSpec` from keyword subs."""
 
@@ -58,8 +113,19 @@ class _LstrMaker:
         self._apverid = apverid
         self._name = name
 
-    def __call__(self, **subs: 'str | int | LangStrSpec') -> 'LangStrSpec':
-        return LangStrSpecResource(self._apverid, self._name, dict(subs))
+    def __call__(
+        self,
+        now: 'datetime.datetime | None' = None,
+        **subs: (
+            'str | int | LangStrSpec | datetime.datetime'
+            ' | datetime.timedelta'
+        ),
+    ) -> 'LangStrSpec':
+        # ``now`` can never shadow a real param: the brief grammar
+        # reserves the name for exactly this use.
+        return LangStrSpecResource(
+            self._apverid, self._name, convert_time_subs(subs, now)
+        )
 
 
 class LangStrDir:

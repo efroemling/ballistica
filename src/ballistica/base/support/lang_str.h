@@ -62,6 +62,14 @@ struct LangStrTableEntry {
 struct LangStrPackageTable {
   std::unordered_map<std::string, LangStrTableEntry> values;
   std::vector<std::string> sorted_names;
+  /// Build-embedded formatter components from the blob's sibling
+  /// ``components`` key (unit words for duration/data_size display
+  /// formatting) -- present only in packages whose strings use display
+  /// formatters, plus the builtin package (which embeds the duration
+  /// group for engine-level consumers like timedisplay). Deliberately
+  /// outside ``values``/``sorted_names``: component names must never
+  /// perturb string indices (the load-bearing D5 rule).
+  std::unordered_map<std::string, LangStrTableValue> components;
 };
 
 /// The native language-string tables for the client's current locale:

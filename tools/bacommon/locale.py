@@ -802,6 +802,107 @@ class LocaleResolved(Enum):
         ).casefold()
 
     @cached_property
+    def duration_separator(self) -> str:
+        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-return-statements
+        """The joiner between composed duration parts ("1h 23m").
+
+        Locale *data*, not translated content, same as
+        :attr:`decimal_mark`: most languages join abbreviated duration
+        parts with a space, while CJK compounds join with none
+        ("1\u6642\u959345\u5206"). Curated here and applied by
+        formatting code so it can never be a confidently wrong
+        translation, and so a new locale is a *type* error rather than
+        a silent space.
+        """
+        cls = LocaleResolved
+
+        if self is cls.ENGLISH:
+            return ' '
+        if self is cls.CHINESE_TRADITIONAL:
+            return ''
+        if self is cls.CHINESE_SIMPLIFIED:
+            return ''
+        if self is cls.PORTUGUESE_PORTUGAL:
+            return ' '
+        if self is cls.PORTUGUESE_BRAZIL:
+            return ' '
+        if self is cls.ARABIC:
+            return ' '
+        if self is cls.BELARUSSIAN:
+            return ' '
+        if self is cls.CROATIAN:
+            return ' '
+        if self is cls.CZECH:
+            return ' '
+        if self is cls.DANISH:
+            return ' '
+        if self is cls.DUTCH:
+            return ' '
+        if self is cls.PIRATE_SPEAK:
+            return ' '
+        if self is cls.ESPERANTO:
+            return ' '
+        if self is cls.FILIPINO:
+            return ' '
+        if self is cls.FRENCH:
+            return ' '
+        if self is cls.GERMAN:
+            return ' '
+        if self is cls.GIBBERISH:
+            return ' '
+        if self is cls.GREEK:
+            return ' '
+        if self is cls.HINDI:
+            return ' '
+        if self is cls.HUNGARIAN:
+            return ' '
+        if self is cls.INDONESIAN:
+            return ' '
+        if self is cls.ITALIAN:
+            return ' '
+        if self is cls.KOREAN:
+            return ' '
+        if self is cls.MALAY:
+            return ' '
+        if self is cls.PERSIAN:
+            return ' '
+        if self is cls.POLISH:
+            return ' '
+        if self is cls.ROMANIAN:
+            return ' '
+        if self is cls.RUSSIAN:
+            return ' '
+        if self is cls.SERBIAN:
+            return ' '
+        if self is cls.SPANISH_LATIN_AMERICA:
+            return ' '
+        if self is cls.SPANISH_SPAIN:
+            return ' '
+        if self is cls.SLOVAK:
+            return ' '
+        if self is cls.SWEDISH:
+            return ' '
+        if self is cls.TAMIL:
+            return ' '
+        if self is cls.THAI:
+            return ' '
+        if self is cls.TURKISH:
+            return ' '
+        if self is cls.UKRAINIAN:
+            return ' '
+        if self is cls.VENETIAN:
+            return ' '
+        if self is cls.VIETNAMESE:
+            return ' '
+        if self is cls.KAZAKH:
+            return ' '
+        if self is cls.JAPANESE:
+            return ''
+        # Make sure we cover all cases.
+        assert_never(self)
+
+    @cached_property
     def decimal_mark(self) -> str:
         # pylint: disable=too-many-branches
         # pylint: disable=too-many-return-statements

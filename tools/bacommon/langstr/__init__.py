@@ -47,13 +47,18 @@ from bacommon.langstr._core import (
 from bacommon.langstr._wrapper import (
     LangStrDir,
     WrapperTree,
+    convert_time_subs,
+    time_sub_millis,
     package_structure,
 )
 from bacommon.langstr._format import (
     COMPONENT_GROUP_BY_KIND,
     DATA_SIZE_GROUP,
+    DURATION_GROUP,
     data_size_str,
+    duration_str,
     format_number,
+    render_display_param,
 )
 from bacommon.langstr._blob import (
     serialize_language_blob,
@@ -84,14 +89,19 @@ __all__ = [
     'collect_apverids',
     'LangStrDir',
     'WrapperTree',
+    'convert_time_subs',
+    'time_sub_millis',
     'package_structure',
     'serialize_language_blob',
     'parse_language_blob',
     'parse_language_components',
     'COMPONENT_GROUP_BY_KIND',
     'DATA_SIZE_GROUP',
+    'DURATION_GROUP',
+    'duration_str',
     'data_size_str',
     'format_number',
+    'render_display_param',
     'parse_language_param_kinds',
     'LANGUAGE_BLOB_STRINGS_KEY',
 ]

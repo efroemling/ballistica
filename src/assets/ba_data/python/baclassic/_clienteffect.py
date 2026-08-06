@@ -66,11 +66,11 @@ async def _resolve_and_run_effects(
                 apverids, language=locale, background=True
             )
             loop = asyncio.get_running_loop()
-            language = {
+            langdata = {
                 apverid: await loop.run_in_executor(
                     None,
                     partial(
-                        bauiv1.app.assets.get_package_strings,
+                        bauiv1.app.assets.get_package_language_data,
                         apverid,
                         locale,
                     ),
@@ -97,10 +97,26 @@ async def _resolve_and_run_effects(
         )
         strip_exception_tracebacks(exc)
         return
+    # Kinds + components let display-formatted params ({size|data_size})
+    # render rather than passing raw values through; nearly every
+    # package has neither, so pass only non-empty entries.
     _run_effects(
         effects,
         delay=delay,
-        decodectx=LanguageStringNameDecodeContext(language, locale),
+        decodectx=LanguageStringNameDecodeContext(
+            {apverid: data[0] for apverid, data in langdata.items()},
+            locale,
+            param_kinds={
+                apverid: data[1]
+                for apverid, data in langdata.items()
+                if data[1]
+            },
+            components={
+                apverid: data[2]
+                for apverid, data in langdata.items()
+                if data[2]
+            },
+        ),
     )
 
 

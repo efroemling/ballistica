@@ -169,6 +169,23 @@ class Assets {
   /// thread may call and read. Null until the first ReloadLanguage.
   auto LangStrTablesSnapshot() -> std::shared_ptr<const LangStrTables>;
 
+  /// Abbreviated per-locale duration unit templates for the composed
+  /// h/m/s displays (timedisplay node, root-widget countdowns), each
+  /// carrying an ``{amount}`` placeholder for the count. Sourced from
+  /// the ``duration/`` formatter components any resolved package
+  /// embeds (in practice the builtin package guarantees them); falls
+  /// back to the legacy ``timeSuffix*Text`` strings -- normalized to
+  /// the same ``{amount}`` placeholder -- while stale bundled blobs
+  /// lack components. This fallback (and the legacy entries behind it)
+  /// exists only for the transition; engine code must not grow new
+  /// legacy-resource dependencies.
+  struct DurationUnitTemplates {
+    std::string hours;
+    std::string minutes;
+    std::string seconds;
+  };
+  auto GetDurationUnitTemplates() -> DurationUnitTemplates;
+
   /// Resolve a resource by full dot-path key, trying ``fallback_resource``
   /// (if non-null) on a miss. Nullopt if neither resolves. Backs both the
   /// ``Lstr`` ``r`` compile path and the Python ``get_resource`` API.

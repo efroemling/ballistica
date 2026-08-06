@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.260804a"
+// Generated from: "a-0.babuiltinassets.260806"
 
 #include <memory>
 
@@ -494,6 +494,15 @@ class BuiltinStrings {
 
   class Time {
    public:
+    /// A bare length of time such as "1h 23m", shown by itself as a plain
+    /// value. Doubles as the string that keeps the duration formatter
+    /// components embedded in this package: engine-level displays (the
+    /// timedisplay node, the toolbar chest countdowns) read their unit words
+    /// from those embedded components, so this entry must always exist here.
+    ///
+    /// English: "{t}"
+    static auto DurationValue(int64_t t) -> std::shared_ptr<const LangStr>;
+
     /// Compact hours suffix used in formatted time values.
     ///
     /// English: "{count}h"

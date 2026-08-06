@@ -63,7 +63,7 @@ from efro.error import CleanError
 
 if TYPE_CHECKING:
     from typing import NoReturn
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Callable
 
 
 class BriefTagKind(Enum):
@@ -88,15 +88,41 @@ class SpecDef:
     the *string* into per-plural-category forms rather than merely
     rendering a value into it -- the property the one-pivot rule is
     checked against. ``args`` maps each accepted keyword to its type
-    (an ``int`` literal is accepted where ``float`` is declared).
-    ``supported`` is False for a name that is reserved but not
-    implemented; it parses, then fails with a tailored message.
+    (an ``int`` literal is accepted where ``float`` is declared);
+    ``arg_choices`` optionally restricts a string-typed arg to an
+    enumerated value set, and ``validate_args`` optionally checks the
+    whole parsed arg map (returning an error message or None) -- both
+    enforced at parse so a bad brief fails at author time, not at
+    display. ``supported`` is False for a name that is reserved but
+    not implemented; it parses, then fails with a tailored message.
     """
 
     param_kind: str
     form_producing: bool = False
     args: dict[str, type] = field(default_factory=dict)
+    arg_choices: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    validate_args: (
+        'Callable[[dict[str, int | float | bool | str]], str | None] | None'
+    ) = None
     supported: bool = True
+
+
+def _validate_duration_args(
+    args: dict[str, int | float | bool | str],
+) -> str | None:
+    """Whole-arg-map validation for the ``duration`` spec."""
+    if 'dir' in args and 'clamp' in args:
+        return (
+            "'clamp' is implied by 'dir' (the wrong-signed side"
+            ' always floors to zero); use one or the other'
+        )
+    maxparts = args.get('maxparts')
+    if isinstance(maxparts, int) and maxparts < 1:
+        return "'maxparts' must be at least 1"
+    decimals = args.get('decimals')
+    if isinstance(decimals, int) and decimals < 0:
+        return "'decimals' cannot be negative"
+    return None
 
 
 #: The spec registry -- the whole extension point. A new rendering form
@@ -109,13 +135,33 @@ SPECS: dict[str, SpecDef] = {
     'ordinal': SpecDef(
         param_kind='count', form_producing=True, supported=False
     ),
-    # A byte count rendered as human-readable size ("1.2 GB"). Takes no
-    # arguments: the decimal places are adaptive (one below ten units,
-    # none above), matching ``efro.util.data_size_str``, whose
-    # ``compact`` flag is deliberately not carried over -- the short
-    # forms exist for width-constrained debug output, not for
-    # translated UI.
-    'data_size': SpecDef(param_kind='bytes'),
+    # A byte count rendered as human-readable size ("1.2 GB"). The
+    # decimal places are adaptive (one below ten units, none above),
+    # matching ``efro.util.data_size_str``. ``compact`` mirrors that
+    # helper's flag for width-constrained slots; the only rung it
+    # changes is bytes ("37 B" instead of "37 bytes" -- larger rungs
+    # are already abbreviated).
+    'data_size': SpecDef(param_kind='bytes', args={'compact': bool}),
+    # A signed length of time rendered as composed abbreviated units
+    # ("1h 23m"), mirroring ``efro.util.timedelta_str``
+    # (``maxparts``/``decimals``). The value is signed ``target - now``
+    # in integer MILLISECONDS (int because the sub wire type must stay
+    # int -- dataclassio unions cannot hold int and float together, and
+    # switching the member would rewrite every existing count sub as a
+    # float on the wire; ms keeps ``decimals`` meaningful and matches
+    # the scene-node ``millisecs_t`` convention). ``dir`` declares a
+    # string's temporal orientation (render the magnitude of that
+    # sign, floor the other to zero -- countdown-safe), while direction
+    # *words* ("in", "ago") belong in the surrounding sentence per D12
+    # in the langstr-formatters journal. ``clamp`` floors negatives for
+    # an undirected length (implied by ``dir``, so combining them is
+    # rejected).
+    'duration': SpecDef(
+        param_kind='millis',
+        args={'maxparts': int, 'decimals': int, 'dir': str, 'clamp': bool},
+        arg_choices={'dir': ('past', 'future')},
+        validate_args=_validate_duration_args,
+    ),
 }
 
 
@@ -125,6 +171,13 @@ class BriefSpec:
 
     name: str
     args: dict[str, int | float | bool | str] = field(default_factory=dict)
+
+    @property
+    def canonical_src(self) -> str:
+        """This spec as canonical ``name`` / ``name(args)`` source."""
+        if not self.args:
+            return self.name
+        return f'{self.name}({_encode_spec_args(self.args)})'
 
 
 @dataclass
@@ -146,6 +199,23 @@ class BriefTag:
         if self.spec is None:
             return 'text'
         return SPECS[self.spec.name].param_kind
+
+    @property
+    def display_kind(self) -> str:
+        """The kind plus any spec args, in canonical encoded form.
+
+        What the language blob's ``k`` carrier stores for a spec'd
+        param: the bare :attr:`param_kind` when the spec carries no
+        args (keeping pre-args blobs byte-identical), else
+        ``kind(name=value,...)`` -- the same ``name(args)`` shape spec
+        bodies use, with args sorted by name and rendered canonically
+        so identical briefs can never produce differing blob bytes.
+        Decoded at render time by :func:`parse_display_kind`.
+        """
+        kind = self.param_kind
+        if self.spec is None or not self.spec.args:
+            return kind
+        return f'{kind}({_encode_spec_args(self.spec.args)})'
 
     @property
     def form_producing(self) -> bool:
@@ -311,6 +381,15 @@ def _parse_tag_body(body: str) -> BriefTag:
             )
         return BriefTag(BriefTagKind.TERM, path)
 
+    if target == 'now':
+        # Wrapper accessors take a `now=` keyword (the shared reference
+        # point for datetime-valued duration subs); a param of the same
+        # name would be silently swallowed by it at every call site.
+        raise CleanError(
+            "Param name 'now' is reserved (wrapper accessors use it as"
+            ' the time-conversion reference point); pick another name.'
+        )
+
     if not _IDENT_RE.match(target):
         if not target:
             raise CleanError(
@@ -386,6 +465,20 @@ def _parse_spec(specsrc: str, body: str) -> BriefSpec:
                     f' (`{{{body}}}`). Accepted: {accepted}.'
                 )
             args[key] = _parse_spec_value(rawval, key, specdef.args[key], body)
+            choices = specdef.arg_choices.get(key)
+            if choices is not None and args[key] not in choices:
+                allowed = ', '.join(choices)
+                raise CleanError(
+                    f"Spec argument '{key}' in `{{{body}}}` must be one"
+                    f' of: {allowed}.'
+                )
+
+    if specdef.validate_args is not None:
+        problem = specdef.validate_args(args)
+        if problem is not None:
+            raise CleanError(
+                f"Bad '{name}' arguments in `{{{body}}}`:" f' {problem}.'
+            )
 
     return BriefSpec(name, args)
 
@@ -426,6 +519,78 @@ def _parse_spec_value(
                 f" `{{{body}}}`; got '{raw}'."
             )
     return value
+
+
+def _encode_spec_value(value: int | float | bool | str) -> str:
+    """Render one spec-arg value as its canonical literal.
+
+    The exact inverse of the literal shapes :func:`_parse_spec_value`
+    accepts, so :attr:`BriefTag.display_kind` round-trips through
+    :func:`parse_display_kind`. bool first -- it is an int subclass.
+    """
+    if isinstance(value, bool):
+        return 'true' if value else 'false'
+    return str(value)
+
+
+def _encode_spec_args(args: dict[str, int | float | bool | str]) -> str:
+    """Canonical ``a=1,b=true`` rendering of a spec-arg map.
+
+    Sorted by name, no spaces -- so equal arg maps always render to
+    equal strings regardless of how the author ordered or spaced them
+    (blob bytes are cache keys).
+    """
+    return ','.join(
+        f'{key}={_encode_spec_value(args[key])}' for key in sorted(args)
+    )
+
+
+def parse_display_kind(
+    expr: str,
+) -> tuple[str, dict[str, int | float | bool | str]]:
+    """Split a ``k``-carrier kind expression into (kind, args).
+
+    The inverse of :attr:`BriefTag.display_kind`: a bare kind
+    (``'bytes'``) yields empty args; ``'bytes(compact=true)'`` yields
+    the decoded arg map. Arg values are typed by literal shape
+    (``true``/``false`` -> bool, digits -> int/float, else identifier
+    string) -- the declared spec-arg types that governed authoring are
+    not consulted here, since the display side dispatches on the kind
+    and reads only the args it knows. Raises
+    :class:`~efro.error.CleanError` on a malformed expression;
+    display-time callers surface that through their usual fail-visible
+    path.
+    """
+    match = _SPEC_RE.match(expr)
+    if match is None:
+        raise CleanError(f"Malformed display-kind expression '{expr}'.")
+    kind = match.group(1)
+    argsrc = match.group(2)
+    args: dict[str, int | float | bool | str] = {}
+    if argsrc is not None and argsrc.strip():
+        for chunk in argsrc.split(','):
+            key, eq, rawval = chunk.partition('=')
+            key = key.strip()
+            rawval = rawval.strip()
+            if not eq or not _IDENT_RE.match(key) or key in args:
+                raise CleanError(
+                    f"Malformed display-kind argument '{chunk.strip()}'"
+                    f" in '{expr}'."
+                )
+            if rawval in ('true', 'false'):
+                args[key] = rawval == 'true'
+            elif _INT_RE.match(rawval):
+                args[key] = int(rawval)
+            elif _FLOAT_RE.match(rawval):
+                args[key] = float(rawval)
+            elif _IDENT_RE.match(rawval):
+                args[key] = rawval
+            else:
+                raise CleanError(
+                    f"Invalid display-kind argument value '{rawval}'"
+                    f" in '{expr}'."
+                )
+    return kind, args
 
 
 def _raise_duplicate_tag(name: str) -> 'NoReturn':

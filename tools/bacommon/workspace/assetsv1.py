@@ -539,15 +539,19 @@ def display_param_kinds_for_brief(brief: str) -> dict[str, str]:
     """Per-param display kinds for a single brief.
 
     The one-entry unit :func:`display_param_kinds` aggregates; see it
-    for what qualifies as a display kind. Raises on a malformed brief
-    -- callers that must degrade softly (listing renders, builds)
-    wrap it, matching how broken briefs degrade everywhere else.
+    for what qualifies as a display kind. Values are display-kind
+    *expressions*: the bare kind for an argless spec, else the kind
+    plus its spec args in canonical form (``'bytes(compact=true)'``)
+    -- see :attr:`~bacommon.strbrief.BriefTag.display_kind`. Raises on
+    a malformed brief -- callers that must degrade softly (listing
+    renders, builds) wrap it, matching how broken briefs degrade
+    everywhere else.
     """
     from bacommon.strbrief import parse_brief
 
     sig = parse_brief(brief)
     return {
-        tag.name: tag.param_kind
+        tag.name: tag.display_kind
         for tag in sig.token_params
         if tag.param_kind != 'text'
     }

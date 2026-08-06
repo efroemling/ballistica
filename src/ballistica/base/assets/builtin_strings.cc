@@ -353,6 +353,11 @@ auto BuiltinStrings::Store::UnavailableTemporarily()
   return MakeResource_("strings/store/unavailable_temporarily");
 }
 
+auto BuiltinStrings::Time::DurationValue(int64_t t)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/time/duration_value", {{"t", t}});
+}
+
 auto BuiltinStrings::Time::SuffixHours(LangStr::Sub count)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/time/suffix_hours",
