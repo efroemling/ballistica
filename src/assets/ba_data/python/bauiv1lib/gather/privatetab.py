@@ -776,12 +776,7 @@ class PrivateGatherTab(GatherTab):
                 flatness=1.0,
                 color=(1.0, 0.0, 0.0),
                 position=(self._c_width * 0.5, v),
-                text=bui.Lstr(
-                    translate=(
-                        'serverResponses',
-                        hostingstate.unavailable_error,
-                    )
-                ),
+                text=bui.translate_server_text(hostingstate.unavailable_error),
             )
         elif havegoldpass:
             # If we have a gold pass, none of the
@@ -1065,7 +1060,7 @@ class PrivateGatherTab(GatherTab):
             if cresult.error is not None:
                 self._debug_server_comm('got error connect response')
                 bui.screenmessage(
-                    bui.Lstr(translate=('serverResponses', cresult.error)),
+                    bui.translate_server_text(cresult.error),
                     (1, 0, 0),
                 )
                 builtinassets.audio.error.get().play()

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from bauiv1lib.gather import GatherWindow
@@ -66,27 +66,17 @@ class AboutGatherTab(GatherTab):
             c_height += discord_height
 
         party_button_label = bui.charstr(bui.SpecialChar.TOP_BUTTON)
-        message = bui.Lstr(
-            resource='gatherWindow.aboutDescriptionText',
-            subs=[
-                ('${PARTY}', bui.charstr(bui.SpecialChar.PARTY_ICON)),
-                ('${BUTTON}', party_button_label),
-            ],
+        message = classicassets.strings.gather.about_description(
+            party=bui.charstr(bui.SpecialChar.PARTY_ICON),
+            button=party_button_label,
         )
 
         if show_message_extra:
-            message = bui.Lstr(
-                value='${A}\n\n${B}',
-                subs=[
-                    ('${A}', message),
-                    (
-                        '${B}',
-                        bui.Lstr(
-                            resource='gatherWindow.'
-                            'aboutDescriptionLocalMultiplayerExtraText'
-                        ),
-                    ),
-                ],
+            message = _commonassets.strings.compose.para_pair(
+                first=message,
+                second=(
+                    classicassets.strings.gather.about_local_multiplayer_extra
+                ),
             )
 
         scroll_widget = bui.scrollwidget(

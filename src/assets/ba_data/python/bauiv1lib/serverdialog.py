@@ -32,9 +32,7 @@ class ServerDialogWindow(bui.Window):
 
     def __init__(self, data: ServerDialogData):
         self._data = data
-        txt = bui.Lstr(
-            translate=('serverResponses', data.text), subs=data.subs
-        ).evaluate()
+        txt = bui.translate_server_text(data.text, subs=data.subs).evaluate()
         txt = txt.strip()
         txt_scale = 1.5
         txt_height = (

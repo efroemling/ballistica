@@ -201,6 +201,7 @@ from babase._language import (
     get_legacy_langdata,
     langstr_value,
     resolve_langstrs,
+    translate_server_text,
 )
 from babase._locale import LocaleSubsystem
 from babase._logging import (
@@ -405,6 +406,7 @@ __all__ = [
     'reload_media',
     'request_permission',
     'resolve_langstrs',
+    'translate_server_text',
     'ResolveResult',
     'ResolveProgress',
     'ResolvePhase',

@@ -682,16 +682,15 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
             # the colon, but dropping the newline shifts this block
             # against the level name below it -- needs a visual pass.
             Text(
-                (
-                    bs.Lstr(
-                        value='${A}:\n',
-                        subs=[('${A}', bs.Lstr(resource='levelUnlockedText'))],
-                    )
-                    if self._newly_complete
-                    else bs.Lstr(
-                        value='${A}:\n',
-                        subs=[('${A}', bs.Lstr(resource='nextLevelText'))],
-                    )
+                _commonassets.strings.compose.line_pair(
+                    first=_commonassets.strings.compose.heading_suffix(
+                        main=(
+                            classicassets.strings.coop.level_unlocked
+                            if self._newly_complete
+                            else classicassets.strings.coop.next_level
+                        )
+                    ),
+                    second='',
                 ),
                 transition=Text.Transition.IN_RIGHT,
                 transition_delay=5.2,
@@ -1641,7 +1640,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                     jitter=1.0,
                 ).autoretain()
                 Text(
-                    bs.Lstr(translate=('serverResponses', error)),
+                    bs.translate_server_text(error),
                     position=(0, -140),
                     color=(1, 1, 1, 0.7),
                     h_align=Text.HAlign.CENTER,

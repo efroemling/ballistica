@@ -927,7 +927,13 @@ class LeagueRankWindow(bui.MainWindow):
             f'{self._r}.powerRankingPointsEqualsText'
         )
         pts_txt = bui.app.lang.get_resource(f'{self._r}.powerRankingPointsText')
-        num_text = bui.Lstr(resource='numberText').evaluate()
+
+        def num_str(number: str) -> str:
+            # Layout code (flat widths/placement); evaluate locally.
+            return (
+                classicassets.strings.league.number_badge(number=number)
+            ).evaluate()
+
         do_percent = False
         finished_season_unranked = False
         self._can_do_more_button = True
@@ -940,7 +946,7 @@ class LeagueRankWindow(bui.MainWindow):
             )
         elif in_top:
             assert data is not None
-            status_text = num_text.replace('${NUMBER}', str(data['rank']))
+            status_text = num_str(str(data['rank']))
         elif data is not None:
             try:
                 # Handle old seasons where we didn't wind up ranked at
@@ -1282,7 +1288,7 @@ class LeagueRankWindow(bui.MainWindow):
                     maxwidth=40,
                     flatness=1.0,
                     shadow=0.0,
-                    text=num_text.replace('${NUMBER}', str(score[0])),
+                    text=num_str(str(score[0])),
                     h_align='right',
                     v_align='center',
                     scale=0.5,

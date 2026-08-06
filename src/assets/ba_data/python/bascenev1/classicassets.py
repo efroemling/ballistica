@@ -1,19 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.260806`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.260806e`` (bascenev1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.baclassicassets.260806
+# ba_meta require asset-package a-0.baclassicassets.260806e
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.baclassicassets.260806'
+__asset_package__ = 'a-0.baclassicassets.260806e'
 
 from typing import TYPE_CHECKING
 
@@ -3762,12 +3762,45 @@ if TYPE_CHECKING:
         #:     English: "Move"
         move: LangStr
 
+        def move_directions(
+            self,
+            *,
+            up: str | LangStr,
+            left: str | LangStr,
+            down: str | LangStr,
+            right: str | LangStr,
+        ) -> LangStr:
+            """
+            ::
+
+                On-screen controls guide line listing the four movement
+                keys/buttons; the placeholders are key/button names.
+
+                English: "Move: {up}, {left}, {down}, {right}"
+            """
+
         #: ::
         #:
         #:     Label for the run control in the controls guide.
         #:
         #:     English: "Run"
         run: LangStr
+
+        #: ::
+        #:
+        #:     On-screen controls guide line telling controller players how to
+        #:     run.
+        #:
+        #:     English: "Run: <hold any button>"
+        run_hold_any_button: LangStr
+
+        #: ::
+        #:
+        #:     On-screen controls guide line telling keyboard players how to
+        #:     run.
+        #:
+        #:     English: "Run: <hold any key>"
+        run_hold_any_key: LangStr
 
     class StringsCoopGroup:
         """
@@ -3864,6 +3897,21 @@ if TYPE_CHECKING:
 
                 English: "{level} must be completed first."
             """
+
+        #: ::
+        #:
+        #:     Celebration heading on the co-op score screen when the next level
+        #:     was just unlocked.
+        #:
+        #:     English: "Level Unlocked!"
+        level_unlocked: LangStr
+
+        #: ::
+        #:
+        #:     Heading on the co-op score screen labeling the upcoming level.
+        #:
+        #:     English: "Next Level"
+        next_level: LangStr
 
         #: ::
         #:
@@ -4648,7 +4696,8 @@ if TYPE_CHECKING:
             """
             ::
 
-                Notice of which wave a defeated player returns on.
+                In-game notice that a fallen co-op player will rejoin at a given
+                enemy wave; placeholders are the player name and wave number.
 
                 English: "{player} will respawn in wave {wave}"
             """
@@ -5437,6 +5486,32 @@ if TYPE_CHECKING:
         #:     English: "About"
         about: LangStr
 
+        def about_description(
+            self, *, party: str | LangStr, button: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Intro text on the gather window About tab explaining parties;
+                {party} is the party icon glyph and {button} the
+                top-controller-button glyph (both single characters).
+
+                English: "Use these tabs to assemble a party. Parties let you
+                play games and tournaments with your friends across different
+                devices. Use the {party} button at the top right to chat and
+                interact with your party. (on a controller, press {button} while
+                in a menu)"
+            """
+
+        #: ::
+        #:
+        #:     Addendum on the gather About tab noting one device can host
+        #:     several players.
+        #:
+        #:     English: "Remember: any device in a party can have more than one
+        #:     player if you have enough controllers."
+        about_local_multiplayer_extra: LangStr
+
         def added_to_favorites(self, *, name: str | LangStr) -> LangStr:
             """
             ::
@@ -6011,6 +6086,13 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Excited price label for a no-cost option.
+        #:
+        #:     English: "FREE!"
+        free: LangStr
+
+        #: ::
+        #:
         #:     The "Gold Pass" product name.
         #:
         #:     English: "Gold Pass"
@@ -6420,6 +6502,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Attention label on the root-UI inbox button when unopened prize
+        #:     messages await.
+        #:
+        #:     English: "You have unclaimed prizes!"
+        unclaimed_prizes: LangStr
+
+        #: ::
+        #:
         #:     Label above a prize the player won.
         #:
         #:     English: "Your prize:"
@@ -6473,6 +6563,16 @@ if TYPE_CHECKING:
         #:
         #:     English: "Double press space to change keyboards."
         change_instructions: LangStr
+
+        def configuring(self, *, device: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Title while remapping keys for a given keyboard device; the
+                placeholder is the device name.
+
+                English: "Configuring {device}"
+            """
 
         #: ::
         #:
@@ -6653,6 +6753,25 @@ if TYPE_CHECKING:
                 Badge showing a points multiplier in power ranking.
 
                 English: "(x{number} pts)"
+            """
+
+        def rank_in_league(
+            self,
+            *,
+            rank: str | LangStr,
+            name: str | LangStr,
+            suffix: str | LangStr,
+        ) -> LangStr:
+            """
+            ::
+
+                Compact line showing a player's numeric rank within a named
+                league tier (account viewer / league standings). {rank} is the
+                numeric rank, {name} the tier name (e.g. Bronze, Gold), {suffix}
+                an optional trailing marker that is usually empty (layout code
+                probes whether it lands at the end).
+
+                English: "#{rank}, {name} League{suffix}"
             """
 
         def season(self, *, number: str | LangStr) -> LangStr:
@@ -7618,6 +7737,19 @@ if TYPE_CHECKING:
         #:     elsewhere:"
         import_instructions: LangStr
 
+        def import_success(
+            self, *, type: str | LangStr, name: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Screen-message confirming a shared playlist was imported; {type}
+                is the play-mode name (e.g. Teams, Free-for-All) and {name} the
+                quoted playlist name.
+
+                English: "Imported {type} playlist '{name}'"
+            """
+
         #: ::
         #:
         #:     Name of the built-in slow-motion playlist.
@@ -7683,6 +7815,16 @@ if TYPE_CHECKING:
         #:
         #:     English: "Remove Game"
         remove_game_button: LangStr
+
+        def single_game_name(self, *, game: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Auto-generated playlist name for a playlist containing just one
+                game; the placeholder is the game name.
+
+                English: "Just {game}"
+            """
 
     class StringsProfileGroup:
         """
@@ -9520,6 +9662,14 @@ if TYPE_CHECKING:
                 English: "{app_name} Pro"
             """
 
+        #: ::
+        #:
+        #:     Notice on locked play options that the item must be bought in the
+        #:     store first.
+        #:
+        #:     English: "This must be unlocked in the store."
+        unlock_in_store: LangStr
+
     class StringsTeamsGroup:
         """
         ::
@@ -10690,8 +10840,8 @@ if TYPE_CHECKING:
     #: ``action_hero_lower_leg``, and 385 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1040 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``characters``, ``chest``, and 1035 more). Full list in
+    #: The ``strings`` group - 1054 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``characters``, ``chest``, and 1049 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -11873,7 +12023,10 @@ _TREE = {
         'controls': {
             'fire_tv_remote_warning': ('remote_app_name',),
             'move': (),
+            'move_directions': ('up', 'left', 'down', 'right'),
             'run': (),
+            'run_hold_any_button': (),
+            'run_hold_any_key': (),
         },
         'coop': {
             'achievement_label': (),
@@ -11887,6 +12040,8 @@ _TREE = {
             'entry_fee': (),
             'level_is_locked': ('level',),
             'level_must_be_completed_first': ('level',),
+            'level_unlocked': (),
+            'next_level': (),
             'no_achievements_remaining': (),
             'no_tournaments_in_test_build': (),
             'of_total': ('total',),
@@ -12094,6 +12249,8 @@ _TREE = {
         },
         'gather': {
             'about': (),
+            'about_description': ('party', 'button'),
+            'about_local_multiplayer_extra': (),
             'added_to_favorites': ('name',),
             'address_fetch_error': (),
             'checking': (),
@@ -12169,6 +12326,7 @@ _TREE = {
         },
         'get_remote': {'info_short': ('app_name', 'remote_app_name')},
         'get_tokens': {
+            'free': (),
             'gold_pass': (),
             'gold_pass_desc1': (),
             'gold_pass_desc2': (),
@@ -12221,6 +12379,7 @@ _TREE = {
             'final_standings': (),
             'must_update': (),
             'no_messages': (),
+            'unclaimed_prizes': (),
             'your_prize': (),
         },
         'inventory': {
@@ -12230,6 +12389,7 @@ _TREE = {
         },
         'keyboard': {
             'change_instructions': (),
+            'configuring': ('device',),
             'no_others_available': (),
             'space_key': (),
             'switched': ('name',),
@@ -12255,6 +12415,7 @@ _TREE = {
             'power_ranking': (),
             'power_ranking_points_equals': ('number',),
             'power_ranking_points_mult': ('number',),
+            'rank_in_league': ('rank', 'name', 'suffix'),
             'season': ('number',),
             'season_ended_days_ago': ('days',),
             'season_ends_days': ('days',),
@@ -12382,6 +12543,7 @@ _TREE = {
             'get_more_games': (),
             'get_more_maps': (),
             'import_instructions': (),
+            'import_success': ('type', 'name'),
             'just_epic': (),
             'just_sports': (),
             'list_name': (),
@@ -12391,6 +12553,7 @@ _TREE = {
             'no_valid_maps': (),
             'playlists': (),
             'remove_game_button': (),
+            'single_game_name': ('game',),
         },
         'profile': {
             'account_profile': (),
@@ -12632,7 +12795,11 @@ _TREE = {
             'use_music_folder': (),
             'using_music_app': (),
         },
-        'store': {'merch': (), 'pro_name': ('app_name',)},
+        'store': {
+            'merch': (),
+            'pro_name': ('app_name',),
+            'unlock_in_store': (),
+        },
         'teams': {'bad_guys': (), 'blue': (), 'good_guys': (), 'red': ()},
         'tournament_entry': {
             'entering': (),

@@ -1384,51 +1384,25 @@ class PublicGatherTab(GatherTab):
                 )
             else:
                 if not data.get('accessible', False):
-                    ex_line: str | bui.Lstr
+                    gstrs = classicassets.strings.gather
+                    compose = _commonassets.strings.compose
+                    status = compose.line_pair(
+                        first=gstrs.party_status_not_public,
+                        second=gstrs.router_forwarding(
+                            port=str(bs.get_game_port())
+                        ),
+                    )
                     if self._local_address is not None:
-                        ex_line = bui.Lstr(
-                            value='\n${A} ${B}',
-                            subs=[
-                                (
-                                    '${A}',
-                                    bui.Lstr(
-                                        resource='gatherWindow.'
-                                        'manualYourLocalAddressText'
-                                    ),
-                                ),
-                                ('${B}', self._local_address),
-                            ],
+                        status = compose.line_pair(
+                            first=status,
+                            second=compose.spaced_pair(
+                                first=gstrs.your_local_address,
+                                second=self._local_address,
+                            ),
                         )
-                    else:
-                        ex_line = ''
                     bui.textwidget(
                         edit=text,
-                        text=bui.Lstr(
-                            value='${A}\n${B}${C}',
-                            subs=[
-                                (
-                                    '${A}',
-                                    bui.Lstr(
-                                        resource='gatherWindow.'
-                                        'partyStatusNotJoinableText'
-                                    ),
-                                ),
-                                (
-                                    '${B}',
-                                    bui.Lstr(
-                                        resource='gatherWindow.'
-                                        'manualRouterForwardingText',
-                                        subs=[
-                                            (
-                                                '${PORT}',
-                                                str(bs.get_game_port()),
-                                            )
-                                        ],
-                                    ),
-                                ),
-                                ('${C}', ex_line),
-                            ],
-                        ),
+                        text=status,
                         color=(1, 0, 0),
                     )
                 else:

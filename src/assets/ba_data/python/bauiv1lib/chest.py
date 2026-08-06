@@ -615,9 +615,8 @@ class ChestWindow(bui.MainWindow):
                     parent=self._root_widget,
                     position=(open_me_x, open_me_y - 40),
                     size=(0, 0),
-                    text=bui.Lstr(
-                        value='*${A}',
-                        subs=[('${A}', bui.Lstr(resource='openMeText'))],
+                    text=_commonassets.strings.compose.star_prefix(
+                        text=builtinassets.strings.ui.open_me
                     ),
                     maxwidth=175,
                     scale=0.7,

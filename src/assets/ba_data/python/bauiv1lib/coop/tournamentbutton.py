@@ -735,9 +735,7 @@ class TournamentButton:
                     opacity=1.0 if ads_enabled else 0.25,
                 )
                 or_text = (
-                    bui.Lstr(
-                        resource='orText', subs=[('${A}', ''), ('${B}', '')]
-                    )
+                    _commonassets.strings.compose.or_join(a='', b='')
                     .evaluate()
                     .strip()
                 )

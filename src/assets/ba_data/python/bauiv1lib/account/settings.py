@@ -561,9 +561,10 @@ class AccountSettingsWindow(bui.MainWindow):
                     parent=self._subcontainer,
                     position=(self._sub_width * 0.5 - swidth * 0.5 - 5, v),
                     size=(0, 0),
-                    text=bui.Lstr(
-                        value='(${VIA}',
-                        subs=[('${VIA}', bui.Lstr(resource='viaText'))],
+                    # Layout fragment: the open-paren pairs with a
+                    # close-paren widget placed separately.
+                    text=bui.langstr_value(
+                        '(' + _commonassets.strings.values.via.evaluate()
                     ),
                     scale=0.5,
                     color=(0.4, 0.6, 0.4, 0.5),

@@ -610,7 +610,7 @@ class ClassicAppMode(AppMode):
             inbox_count=val.inbox_count,
             inbox_count_is_max=val.inbox_count_is_max,
             inbox_announce_text=(
-                bui.Lstr(resource='unclaimedPrizesText').evaluate()
+                classicassets.strings.inbox.unclaimed_prizes.evaluate()
                 if val.inbox_contains_prize
                 else ''
             ),

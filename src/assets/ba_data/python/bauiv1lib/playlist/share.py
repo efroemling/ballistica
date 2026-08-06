@@ -34,20 +34,19 @@ class SharePlaylistImportWindow(SendInfoWindowLegacyModal):
             builtinassets.audio.error.get().play()
             return
 
-        if response['playlistType'] == 'Team Tournament':
-            playlist_type_name = bui.Lstr(resource='playModes.teamsText')
-        elif response['playlistType'] == 'Free-for-All':
-            playlist_type_name = bui.Lstr(resource='playModes.freeForAllText')
-        else:
-            playlist_type_name = bui.Lstr(value=response['playlistType'])
+        # Server-sent playlist-type values map to authored mode names
+        # (type-checked refs); anything unknown displays verbatim.
+        playlist_type_name = {
+            'Team Tournament': classicassets.strings.play_modes.teams,
+            'Free-for-All': classicassets.strings.play_modes.free_for_all,
+        }.get(response['playlistType'])
+        if playlist_type_name is None:
+            playlist_type_name = bui.langstr_value(response['playlistType'])
 
         bui.screenmessage(
-            bui.Lstr(
-                resource='importPlaylistSuccessText',
-                subs=[
-                    ('${TYPE}', playlist_type_name),
-                    ('${NAME}', response['playlistName']),
-                ],
+            classicassets.strings.playlist.import_success(
+                type=playlist_type_name,
+                name=response['playlistName'],
             ),
             color=(0, 1, 0),
         )

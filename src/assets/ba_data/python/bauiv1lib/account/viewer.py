@@ -18,6 +18,27 @@ if TYPE_CHECKING:
     from bauiv1lib.popup import PopupMenu
 
 
+def _league_tier_name(name: str) -> bui.LangStr:
+    """Display form for a server-sent league tier name.
+
+    Known tiers map to their authored entries; anything else (a future
+    tier from a newer server) shows verbatim.
+    """
+    lstrs = classicassets.strings.league
+    entry = {
+        'Bronze': lstrs.bronze,
+        'Silver': lstrs.silver,
+        'Gold': lstrs.gold,
+        'Diamond': lstrs.diamond,
+    }.get(name)
+    return bui.langstr_value(name) if entry is None else entry
+
+
+#: Probe marker for checking whether a locale's rank line places the
+#: suffix slot at the end (drives the bracketed points layout).
+_SUFFIX_MARKER = '\x01'
+
+
 class AccountViewerWindow(PopupWindow):
     """Popup window that displays info for an account."""
 
@@ -386,22 +407,22 @@ class AccountViewerWindow(PopupWindow):
                     rank_str = '-'
                     suffix_offset = None
                 else:
-                    str_raw = bui.Lstr(
-                        resource='league.rankInLeagueText'
-                    ).evaluate()
-                    # FIXME: Would be nice to not have to eval this.
-                    rank_str = bui.Lstr(
-                        resource='league.rankInLeagueText',
-                        subs=[
-                            ('${RANK}', str(data['rank'][2])),
-                            (
-                                '${NAME}',
-                                bui.Lstr(
-                                    translate=('leagueNames', data['rank'][0])
-                                ),
-                            ),
-                            ('${SUFFIX}', ''),
-                        ],
+                    # This is inherently layout code (we measure widths
+                    # and hand-place a bracketed suffix), so we evaluate
+                    # to flat text locally.
+                    suffix_at_end = (
+                        classicassets.strings.league.rank_in_league(
+                            rank=str(data['rank'][2]),
+                            name=_league_tier_name(data['rank'][0]),
+                            suffix=_SUFFIX_MARKER,
+                        )
+                        .evaluate()
+                        .endswith(_SUFFIX_MARKER)
+                    )
+                    rank_str = classicassets.strings.league.rank_in_league(
+                        rank=str(data['rank'][2]),
+                        name=_league_tier_name(data['rank'][0]),
+                        suffix='',
                     ).evaluate()
                     rank_str_width = min(
                         sub_width * maxwidth_scale,
@@ -411,10 +432,7 @@ class AccountViewerWindow(PopupWindow):
 
                     # Only tack our suffix on if its at the end and only for
                     # non-diamond leagues.
-                    if (
-                        str_raw.endswith('${SUFFIX}')
-                        and data['rank'][0] != 'Diamond'
-                    ):
+                    if suffix_at_end and data['rank'][0] != 'Diamond':
                         suffix_offset = rank_str_width * 0.5 + 2
                     else:
                         suffix_offset = None
@@ -443,43 +461,29 @@ class AccountViewerWindow(PopupWindow):
                     )
                 v -= 14
 
-                str_raw = bui.Lstr(
-                    resource='league.rankInLeagueText'
-                ).evaluate()
+                suffix_at_end = (
+                    classicassets.strings.league.rank_in_league(
+                        rank='0',
+                        name='',
+                        suffix=_SUFFIX_MARKER,
+                    )
+                    .evaluate()
+                    .endswith(_SUFFIX_MARKER)
+                )
                 old_offs = -50
                 prev_ranks_shown = 0
                 for prev_rank in data['prevRanks']:
-                    rank_str = bui.Lstr(
-                        value='${S}:    ${I}',
-                        subs=[
-                            (
-                                '${S}',
-                                bui.Lstr(
-                                    resource='league.seasonText',
-                                    subs=[('${NUMBER}', str(prev_rank[0]))],
-                                ),
-                            ),
-                            (
-                                '${I}',
-                                bui.Lstr(
-                                    resource='league.rankInLeagueText',
-                                    subs=[
-                                        ('${RANK}', str(prev_rank[3])),
-                                        (
-                                            '${NAME}',
-                                            bui.Lstr(
-                                                translate=(
-                                                    'leagueNames',
-                                                    prev_rank[1],
-                                                )
-                                            ),
-                                        ),
-                                        ('${SUFFIX}', ''),
-                                    ],
-                                ),
-                            ),
-                        ],
+                    # Layout code again: measure/place flat text. The
+                    # ':    ' glue is locale-invariant.
+                    season_str = classicassets.strings.league.season(
+                        number=str(prev_rank[0])
                     ).evaluate()
+                    rank_part = classicassets.strings.league.rank_in_league(
+                        rank=str(prev_rank[3]),
+                        name=_league_tier_name(prev_rank[1]),
+                        suffix='',
+                    ).evaluate()
+                    rank_str = f'{season_str}:    {rank_part}'
                     rank_str_width = min(
                         sub_width * maxwidth_scale,
                         bui.get_string_width(rank_str, suppress_warning=True)
@@ -488,10 +492,7 @@ class AccountViewerWindow(PopupWindow):
 
                     # Only tack our suffix on if its at the end and only for
                     # non-diamond leagues.
-                    if (
-                        str_raw.endswith('${SUFFIX}')
-                        and prev_rank[1] != 'Diamond'
-                    ):
+                    if suffix_at_end and prev_rank[1] != 'Diamond':
                         suffix_offset = rank_str_width + 2
                     else:
                         suffix_offset = None

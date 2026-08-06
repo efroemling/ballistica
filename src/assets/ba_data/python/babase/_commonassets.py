@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bacommonassets.260806`` (babase).
+"""Asset-package wrapper for ``a-0.bacommonassets.260806b`` (babase).
 
 Cross-cutting assets used everywhere -- by the engine, by every game built on
 it, and by the master server's own web pages. Content here must be free of any
@@ -9,13 +9,13 @@ single game's concepts, which is what distinguishes it from BaClassicAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bacommonassets.260806
+# ba_meta require asset-package a-0.bacommonassets.260806b
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.bacommonassets.260806'
+__asset_package__ = 'a-0.bacommonassets.260806b'
 
 from typing import TYPE_CHECKING
 
@@ -323,6 +323,16 @@ if TYPE_CHECKING:
                 English: "{main} < {button} >"
             """
 
+        def copy_name(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Naming template for a duplicated item (playlist, soundtrack);
+                the placeholder is the original name.
+
+                English: "{name} Copy"
+            """
+
         def dash_wrap(self, *, main: str | LangStr) -> LangStr:
             """
             ::
@@ -413,6 +423,18 @@ if TYPE_CHECKING:
                 English: "{a} or {b}"
             """
 
+        def para_pair(
+            self, *, first: str | LangStr, second: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Pure-formatting template stacking two blocks separated by a
+                blank line (paragraph gap); substitution-only.
+
+                English: "{first} {second}"
+            """
+
         def paren_suffix(
             self, *, main: str | LangStr, note: str | LangStr
         ) -> LangStr:
@@ -445,6 +467,16 @@ if TYPE_CHECKING:
                 substitution-only.
 
                 English: "{first} {second}"
+            """
+
+        def star_prefix(self, *, text: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Pure-formatting template prefixing a label with an asterisk
+                attention marker; substitution-only.
+
+                English: "*{text}"
             """
 
     class StringsLocalesGroup:
@@ -1154,8 +1186,8 @@ if TYPE_CHECKING:
         status: StringsStatusGroup
         values: StringsValuesGroup
 
-    #: The ``strings`` group - 134 strings (``actions``, ``compose``,
-    #: ``locales``, ``status``, ``values``, and 129 more). Full list in source.
+    #: The ``strings`` group - 137 strings (``actions``, ``compose``,
+    #: ``locales``, ``status``, ``values``, and 132 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
@@ -1200,6 +1232,7 @@ _TREE = {
         },
         'compose': {
             'angle_button_suffix': ('main', 'button'),
+            'copy_name': ('name',),
             'dash_wrap': ('main',),
             'data_size': ('size',),
             'ellipsis_suffix': ('main',),
@@ -1208,9 +1241,11 @@ _TREE = {
             'icon_label': ('icon', 'label'),
             'line_pair': ('first', 'second'),
             'or_join': ('a', 'b'),
+            'para_pair': ('first', 'second'),
             'paren_suffix': ('main', 'note'),
             'parenthesized': ('note',),
             'spaced_pair': ('first', 'second'),
+            'star_prefix': ('text',),
         },
         'locales': {
             'arabc': (),

@@ -228,15 +228,10 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 {
                     'type': 'ADD_PLAYLIST',
                     'playlistType': 'Free-for-All',
-                    'playlistName': bui.Lstr(
-                        resource='singleGamePlaylistNameText'
-                    )
-                    .evaluate()
-                    .replace(
-                        '${GAME}',
-                        (
-                            classicassets.strings.game_names.death_match
-                        ).evaluate(),
+                    'playlistName': (
+                        classicassets.strings.playlist.single_game_name(
+                            game=classicassets.strings.game_names.death_match
+                        ).evaluate()
                     ),
                     'playlist': [
                         {
@@ -266,15 +261,12 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 {
                     'type': 'ADD_PLAYLIST',
                     'playlistType': 'Team Tournament',
-                    'playlistName': bui.Lstr(
-                        resource='singleGamePlaylistNameText'
-                    )
-                    .evaluate()
-                    .replace(
-                        '${GAME}',
-                        (
-                            classicassets.strings.game_names.capture_the_flag
-                        ).evaluate(),
+                    'playlistName': (
+                        classicassets.strings.playlist.single_game_name(
+                            game=(
+                                classicassets.strings.game_names
+                            ).capture_the_flag
+                        ).evaluate()
                     ),
                     'playlist': [
                         {

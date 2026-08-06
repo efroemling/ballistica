@@ -58,6 +58,32 @@ def langstr_value(value: str) -> babase.LangStr:
     return _native_from_spec(_bclangstr.LangStrSpecValue(value))
 
 
+def translate_server_text(
+    text: str, subs: Sequence[tuple[str, str]] | None = None
+) -> babase.LangStr:
+    """Translate legacy-server-sent English text for display.
+
+    The class-free replacement for
+    ``Lstr(translate=('serverResponses', text))`` (D38): V1-era servers
+    send English display text which we translate by exact lookup in the
+    legacy ``serverResponses`` corpus (missing translations pass the
+    text through unchanged, per the legacy convention). ``subs`` are
+    ``('${TOKEN}', value)`` replacement pairs applied after
+    translation. The result is a verbatim value-form
+    :class:`~babase.LangStr`, so no further interpretation is applied
+    anywhere along the display path.
+
+    Exists only to serve V1-sourced flows; new server flows should send
+    display-final or LangStr forms per the lifetime rule instead (see
+    'Server-sent strings' in efrohome's asset-packages design doc).
+    """
+    out = _babase.translate('serverResponses', text)
+    if subs:
+        for key, val in subs:
+            out = out.replace(key, val)
+    return langstr_value(out)
+
+
 async def resolve_langstrs(
     specs: Sequence[bacommon.langstr.LangStrSpec],
     *,

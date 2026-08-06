@@ -450,21 +450,10 @@ class ControlsGuide(bs.Actor):
                 bomb_button_names.add('B')
                 pickup_button_names.add('Y')
 
-        run_text = bs.Lstr(
-            value='${R}: ${B}',
-            subs=[
-                ('${R}', bs.Lstr(resource='runText')),
-                (
-                    '${B}',
-                    bs.Lstr(
-                        resource=(
-                            'holdAnyKeyText'
-                            if all_keyboards
-                            else 'holdAnyButtonText'
-                        )
-                    ),
-                ),
-            ],
+        run_text: bs.LangStr = (
+            classicassets.strings.controls.run_hold_any_key
+            if all_keyboards
+            else classicassets.strings.controls.run_hold_any_button
         )
 
         # If we're all keyboards, lets show move keys too.
@@ -479,16 +468,14 @@ class ControlsGuide(bs.Actor):
             down_text = list(down_button_names)[0]
             left_text = list(left_button_names)[0]
             right_text = list(right_button_names)[0]
-            run_text = bs.Lstr(
-                value='${M}: ${U}, ${L}, ${D}, ${R}\n${RUN}',
-                subs=[
-                    ('${M}', bs.Lstr(resource='moveText')),
-                    ('${U}', up_text),
-                    ('${L}', left_text),
-                    ('${D}', down_text),
-                    ('${R}', right_text),
-                    ('${RUN}', run_text),
-                ],
+            run_text = _commonassets.strings.compose.line_pair(
+                first=classicassets.strings.controls.move_directions(
+                    up=up_text,
+                    left=left_text,
+                    down=down_text,
+                    right=right_text,
+                ),
+                second=run_text,
             )
 
         if self._force_hide_button_names:

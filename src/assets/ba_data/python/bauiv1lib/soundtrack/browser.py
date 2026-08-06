@@ -7,7 +7,7 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, builtinassets
 from bauiv1 import classicassets
 
 if TYPE_CHECKING:
@@ -334,9 +334,10 @@ class SoundtrackBrowserWindow(bui.MainWindow):
 
         # Find a valid dup name that doesn't exist.
         test_index = 1
-        copy_text = bui.Lstr(resource='copyOfText').evaluate()
-        # Get just 'Copy' or whatnot.
-        copy_word = copy_text.replace('${NAME}', '').strip()
+        # Flattening is correct here: these feed *stored* soundtrack
+        # names, not displayed strings.
+        copy_name = _commonassets.strings.compose.copy_name
+        copy_word = copy_name(name='').evaluate().strip()
         base_name = self._get_soundtrack_display_name(
             self._selected_soundtrack
         ).evaluate()
@@ -350,7 +351,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             if copy_word in base_name:
                 test_name = base_name
             else:
-                test_name = copy_text.replace('${NAME}', base_name)
+                test_name = copy_name(name=base_name).evaluate()
             if test_index > 1:
                 test_name += ' ' + str(test_index)
             if test_name not in cfg['Soundtracks']:
