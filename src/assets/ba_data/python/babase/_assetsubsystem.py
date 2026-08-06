@@ -26,6 +26,7 @@ selection (step 5) layer on top of this in later steps.
 import os
 import json
 import time
+import random
 import asyncio
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
@@ -66,11 +67,13 @@ if TYPE_CHECKING:
 #: Accumulated resolve output: ``(register_specs, manifest_pkgs, fell_back)``
 #: where ``register_specs`` is ``[(apverid, coord, entries), ...]``,
 #: ``manifest_pkgs`` is ``{apverid: {coord: fm_hash}}`` and ``fell_back`` is
-#: ``{desired_coord: fallback_coord}``.
+#: ``{apverid: {desired_coord: fallback_coord}}`` — per package (an entry
+#: for *every* resolved apverid, empty when nothing fell back, so
+#: consumers can see recoveries, not just degradations).
 _ResolveAccum = tuple[
     list[tuple[str, str, dict[str, dict[str, str]]]],
     dict[str, dict[str, str]],
-    dict[str, str],
+    dict[str, dict[str, str]],
 ]
 
 #: Max concurrent CAS-blob downloads, run on a dedicated thread pool (NOT the
@@ -99,6 +102,22 @@ _BLOB_DOWNLOAD_TIMEOUT_SECONDS = 60.0
 def _init_blob_download_thread() -> None:
     """Name dedicated blob-download threads for profiling clarity."""
     _babase.set_thread_name('ballistica asset-dl')
+
+
+def _flatten_fell_back(
+    fell_back_by_pkg: dict[str, dict[str, str]],
+) -> dict[str, str]:
+    """Merge per-package fell-back maps into the flat public form.
+
+    The flat ``{desired_coord: chosen_coord}`` shape
+    (:attr:`ResolveResult.fell_back`) loses per-package attribution but
+    is what callers and log lines want for a quick "did anything
+    degrade" readout.
+    """
+    out: dict[str, str] = {}
+    for pkg_fell_back in fell_back_by_pkg.values():
+        out.update(pkg_fell_back)
+    return out
 
 
 #: How long a download leg waits for the connected node to come up before
@@ -155,10 +174,21 @@ _BUCKETS = (
 _TEXTURE_TIER_ORDER = ('preview', 'regular', 'ultra')
 
 #: App-config key recording that the player is on reduced-quality assets.
-#: Persisted (rather than kept in memory) so the all-clear can be shown on
-#: a later run — the upgrade usually lands between sessions, since nothing
-#: re-resolves mid-session today.
+#: Persisted (rather than kept in memory) so the all-clear can be shown
+#: on a later run when that's where the upgrade lands. Only ever cleared
+#: from :meth:`AssetSubsystem._report_flavor_quality` — i.e. on the heels
+#: of an actual successful full-quality resolve, never from a mere
+#: startup check.
 _FALLBACK_ASSETS_CONFIG_KEY = 'ShowingFallbackAssets'
+
+#: Backoff bounds for the background full-quality re-resolve loop that
+#: runs while any resolved package is on fallback-quality flavors (see
+#: :meth:`AssetSubsystem._quality_retry_loop`). The server enqueues the
+#: requested tier's build the moment it serves a substitute, and those
+#: builds typically land within a few minutes, so we start checking
+#: soon-ish and back off to a gentle steady-state poll.
+_QUALITY_RETRY_MIN_SECONDS = 30.0
+_QUALITY_RETRY_MAX_SECONDS = 900.0
 
 _BUCKET_FALLBACKS: dict[str, str | None] = {
     'constant': None,  # No flavor dimension; 'constant' is always present.
@@ -321,9 +351,8 @@ class ResolveResult:
     apverids: list[str]
 
     #: Buckets that fell back to a different flavor than requested,
-    #: as ``coord -> flavor`` (always empty until step 4 lands the
-    #: fallback policy; kept here so callers can wire UI/observability
-    #: against it now).
+    #: as ``{desired_coord: chosen_coord}``, merged across the resolved
+    #: packages.
     fell_back: dict[str, str] = field(default_factory=dict)
 
 
@@ -773,6 +802,21 @@ class AssetSubsystem(AppSubsystem):
         # anything, it just makes the builtin package unresolvable and
         # fatals the app. See _present.
         self._bundle_hidden = False
+
+        # Which resolved packages are currently registered on fallback-
+        # quality flavors, as {apverid: {desired_coord: chosen_coord}}.
+        # Updated by every successful downloads-allowed resolve (entries
+        # appear when a package falls back and clear when a later resolve
+        # of that package comes back all-ideal), so the union is an
+        # honest "is anything in use degraded right now" signal spanning
+        # every package resolved this session -- not just whichever set
+        # the latest resolve happened to cover. Session-local; the
+        # persistent half is the bool app-config flag.
+        self._fallback_apverids: dict[str, dict[str, str]] = {}
+
+        # Whether the background full-quality retry task is alive (see
+        # _ensure_quality_retry_task). Logic-thread only.
+        self._quality_retry_active = False
 
         # Dedicated, deliberately-small pool for CAS-blob downloads, kept
         # separate from the shared app threadpool so a big download burst can't
@@ -1321,9 +1365,10 @@ class AssetSubsystem(AppSubsystem):
         assert _babase.in_logic_thread()
         desired = self._desired_coords(_babase.app.locale.current_locale)
         results = [self._resolve_one_local(apv, desired) for apv in apverids]
-        register_specs, manifest_pkgs, fell_back = self._accumulate_results(
-            apverids, results
+        register_specs, manifest_pkgs, fell_back_by_pkg = (
+            self._accumulate_results(apverids, results)
         )
+        fell_back = _flatten_fell_back(fell_back_by_pkg)
         _babase.register_asset_package_buckets(register_specs)
         self._pin(manifest_pkgs)
         self._reload_language()
@@ -1484,7 +1529,7 @@ class AssetSubsystem(AppSubsystem):
             self._resolve_offline_sync, apverids, language
         )
         if offline is not None:
-            register_specs, manifest_pkgs, fell_back = offline
+            register_specs, manifest_pkgs, fell_back_by_pkg = offline
             mode = 'offline'
         else:
             # Something isn't fully local. Signal the caller a download is
@@ -1492,10 +1537,11 @@ class AssetSubsystem(AppSubsystem):
             # scans, fetches if allowed, and falls back as appropriate.
             if allow_downloads and on_download_starting is not None:
                 on_download_starting()
-            register_specs, manifest_pkgs, fell_back = (
+            register_specs, manifest_pkgs, fell_back_by_pkg = (
                 await self._resolve_online(apverids, language, allow_downloads)
             )
             mode = 'online'
+        fell_back = _flatten_fell_back(fell_back_by_pkg)
 
         # Commit point: everything resolved + landed on disk. Register all
         # buckets into native in one atomic swap, then persist the manifest.
@@ -1524,11 +1570,11 @@ class AssetSubsystem(AppSubsystem):
             self._progress.blobs_done,
             self._progress.bytes_done / (1024.0 * 1024.0),
         )
-        self._report_flavor_quality(allow_downloads, fell_back)
+        self._report_flavor_quality(allow_downloads, fell_back_by_pkg)
         return ResolveResult(apverids=list(apverids), fell_back=fell_back)
 
     def _report_flavor_quality(
-        self, allow_downloads: bool, fell_back: dict[str, str]
+        self, allow_downloads: bool, fell_back_by_pkg: dict[str, dict[str, str]]
     ) -> None:
         """Tell the player when they are (or stop being) on reduced assets.
 
@@ -1542,16 +1588,45 @@ class AssetSubsystem(AppSubsystem):
         - Reaching here at all means the resolve committed, so this can't
           fire on a half-finished or errored one.
 
-        Evaluating over the whole ``fell_back`` set (rather than per
-        bucket) is what makes the all-clear honest: it clears only when
-        *nothing* is downgraded, not on the first bucket to recover.
+        Degradation is tracked per package across the whole session
+        (``_fallback_apverids``): this resolve's per-package results are
+        folded in, and the flag/messages key off the resulting *union*.
+        That's what makes the all-clear honest — a clean resolve of some
+        unrelated package (say, one inbox message's assets) can't declare
+        victory while the boot packages are still showing preview-tier
+        textures. It clears only once every package resolved this session
+        is at its requested quality — which the background retry loop
+        (kicked below) actively works toward instead of leaving the
+        upgrade to land at whatever random moment next re-resolves.
 
-        The flag lives in app-config so the all-clear can land on a later
-        run — a player downgraded tonight sees the green message at their
-        next launch, once the tier they asked for has finished building.
+        The flag lives in app-config so a degradation can be resolved on
+        a later run: nothing clears it at startup; the boot resolve
+        re-seeds the session state and either shows the green all-clear
+        itself (its packages all came back ideal — the common next-launch
+        case, no retry loop needed) or leaves the state degraded and the
+        retry loop takes over. Packages from a previous session that
+        aren't resolved again simply aren't in use, so they don't hold
+        the flag hostage.
         """
         if not allow_downloads:
             return
+
+        # Fold this resolve's outcome into the session-wide picture.
+        # Every resolved apverid has an entry (possibly empty), so
+        # recoveries clear their slots here too.
+        for apverid, fell_back in fell_back_by_pkg.items():
+            if fell_back:
+                self._fallback_apverids[apverid] = dict(fell_back)
+            else:
+                self._fallback_apverids.pop(apverid, None)
+        now_showing = bool(self._fallback_apverids)
+
+        # Keep working toward full quality in the background whenever
+        # anything is degraded -- including the steady no-transition case
+        # (e.g. a next-launch boot resolve that came back still-preview
+        # with the flag already set from last session).
+        if now_showing:
+            self._ensure_quality_retry_task()
 
         # Function-local by convention (modules never import their own
         # top-level package at module scope).
@@ -1559,7 +1634,6 @@ class AssetSubsystem(AppSubsystem):
 
         cfg = _babase.app.config
         was_showing = bool(cfg.get(_FALLBACK_ASSETS_CONFIG_KEY, False))
-        now_showing = bool(fell_back)
         if now_showing == was_showing:
             # Nothing to say, and nothing to write -- don't churn the
             # config file on every boot of a steady state.
@@ -1579,6 +1653,79 @@ class AssetSubsystem(AppSubsystem):
                 color=(0.0, 1.0, 0.0),
             )
         cfg.commit()
+
+    def _ensure_quality_retry_task(self) -> None:
+        """Start the background full-quality retry loop if not running.
+
+        Idempotent; called from every downloads-allowed resolve that
+        leaves something degraded. The task exits when nothing is
+        degraded anymore (or at shutdown), and a later degradation
+        simply spawns a fresh one — which also resets the backoff, so a
+        newly-degraded package gets checked promptly.
+        """
+        assert _babase.in_logic_thread()
+        if self._quality_retry_active or _babase.app.shutting_down:
+            return
+        self._quality_retry_active = True
+        _babase.app.create_async_task(
+            self._quality_retry_loop(), name='asset full-quality retry'
+        )
+
+    async def _quality_retry_loop(self) -> None:
+        """Periodically re-resolve packages stuck on fallback quality.
+
+        Runs while any resolved package is registered on fallback-quality
+        flavors, re-resolving exactly those packages so the requested
+        tier is picked up as soon as the server has it built — instead of
+        the upgrade landing at whatever arbitrary later moment happens to
+        trigger a resolve (which read as random to users). Exponential
+        backoff between attempts, jittered so a fleet of clients
+        recovering from the same cold pin doesn't poll in lockstep.
+
+        Each attempt is a full normal resolve, so success flows through
+        the standard commit: flavors swap in atomically, and
+        ``_report_flavor_quality`` shows the green all-clear / clears the
+        persistent flag only when the *union* of degraded packages
+        actually empties. ``background=True`` keeps these attempts queued
+        behind any interactive resolve, and no progress callback is
+        passed, so retries are invisible unless they succeed.
+
+        A failed attempt (offline, server trouble) just extends the
+        backoff — the resolve's own logging covers the details. The task
+        exits once nothing is degraded or the app is shutting down.
+        """
+        delay = _QUALITY_RETRY_MIN_SECONDS
+        try:
+            while True:
+                await asyncio.sleep(delay * random.uniform(0.9, 1.1))
+                if _babase.app.shutting_down:
+                    return
+                targets = sorted(self._fallback_apverids)
+                if not targets:
+                    return
+                logger.info(
+                    'Retrying full-quality resolve for %d degraded'
+                    ' package(s): %s.',
+                    len(targets),
+                    ', '.join(targets),
+                )
+                try:
+                    await self.resolve(targets, background=True)
+                except AssetResolveAbortedError:
+                    return
+                except AssetResolveError as exc:
+                    logger.debug(
+                        'Full-quality retry resolve failed (%s);'
+                        ' will retry later.',
+                        exc,
+                    )
+                    strip_exception_tracebacks(exc)
+                if not self._fallback_apverids:
+                    # The resolve's commit already handled the all-clear.
+                    return
+                delay = min(delay * 2.0, _QUALITY_RETRY_MAX_SECONDS)
+        finally:
+            self._quality_retry_active = False
 
     def _resolve_offline_sync(
         self, apverids: list[str], language: Locale
@@ -1723,7 +1870,7 @@ class AssetSubsystem(AppSubsystem):
         """
         is_builtin = self._is_builtin(apverid)
         try:
-            pkg = await self._tier1_manifests(apverid, language)
+            pkg = await self._tier1_manifests_with_retries(apverid, language)
         except AssetResolveAbortedError:
             # App is shutting down -- not a resolve failure; don't
             # fall back to bundled, just abandon the whole resolve.
@@ -1776,12 +1923,12 @@ class AssetSubsystem(AppSubsystem):
         """
         register_specs: list[tuple[str, str, dict[str, dict[str, str]]]] = []
         manifest_pkgs: dict[str, dict[str, str]] = {}
-        fell_back: dict[str, str] = {}
+        fell_back: dict[str, dict[str, str]] = {}
         for apverid, result in zip(apverids, results):
             manifest_pkgs[apverid] = result.coords
             for coord in result.coords:
                 register_specs.append((apverid, coord, result.entries[coord]))
-            fell_back.update(result.fell_back)
+            fell_back[apverid] = result.fell_back
         return register_specs, manifest_pkgs, fell_back
 
     def _pin(self, manifest_pkgs: dict[str, dict[str, str]]) -> None:
@@ -1991,6 +2138,50 @@ class AssetSubsystem(AppSubsystem):
                         f' to ingest. The server may be mid-update; retry'
                         f' later.'
                     )
+
+    async def _tier1_manifests_with_retries(
+        self, apverid: str, language: Locale
+    ) -> _PkgManifests:
+        """Run :meth:`_tier1_manifests`, retrying transient failures.
+
+        The resolve crosses two network hops (us -> node -> master) and
+        a single dropped packet on either one otherwise fails the whole
+        acquire (seen in the wild 2026-08-06: master served its answer
+        in under a second but the response never reached the node).
+        Only clearly-transient failures are retried -- a comm error on
+        our own hop or the server's ``INTERNAL`` code (which is also
+        what the node reports for comm errors on *its* hop). Structured
+        outcomes that a retry can't change (auth/access/too-old/content
+        errors, unknown ids, bad dimensions) surface immediately.
+        """
+        attempt = 1
+        max_attempts = 3
+        while True:
+            try:
+                return await self._tier1_manifests(apverid, language)
+            except AssetResolveAbortedError:
+                raise
+            except AssetResolveError as exc:
+                transient = exc.code is (
+                    AssetPackageResolveError.INTERNAL
+                ) or isinstance(exc.__cause__, CommunicationError)
+                if not transient or attempt >= max_attempts:
+                    raise
+                delay = 2.0 * attempt
+                logger.info(
+                    '%s: transient resolve failure'
+                    ' (attempt %d of %d); retrying in %.0fs (%s).',
+                    apverid,
+                    attempt,
+                    max_attempts,
+                    delay,
+                    exc,
+                )
+                # We're consuming this exception; strip its traceback so
+                # frame locals don't linger in a reference cycle.
+                strip_exception_tracebacks(exc)
+                await asyncio.sleep(delay)
+                attempt += 1
 
     async def _tier1_manifests(
         self, apverid: str, language: Locale
