@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260806`` (babase).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260806d`` (babase).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,13 +9,13 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260806
+# ba_meta require asset-package a-0.babuiltinassets.260806d
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260806'
+__asset_package__ = 'a-0.babuiltinassets.260806d'
 
 from typing import TYPE_CHECKING
 
@@ -67,6 +67,17 @@ if TYPE_CHECKING:
         #:
         #:     English: "Updating your account..."
         updating_account: LangStr
+
+        def you_got_item(self, *, item: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Screen-message acknowledging the player received a
+                purchased/awarded item; the placeholder is the item name (may be
+                raw text or a nested translated name).
+
+                English: "You got a {item}!"
+            """
 
     class StringsAssetsGroup:
         """
@@ -455,12 +466,106 @@ if TYPE_CHECKING:
         #:     English: "An error has occurred."
         auth_error: LangStr
 
+        def connected_to_game(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Screen-message after successfully joining a named hosted game;
+                the placeholder is the game/party name (already quoted in the
+                English form).
+
+                English: "Joined '{name}'"
+            """
+
+        def connected_to_party(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Screen-message after successfully joining another player's
+                party; the placeholder is that player's display name.
+
+                English: "Joined {name}'s party!"
+            """
+
+        #: ::
+        #:
+        #:     Progress screen-message shown while attempting to connect to a
+        #:     multiplayer party.
+        #:
+        #:     English: "Connecting..."
+        connecting: LangStr
+
         #: ::
         #:
         #:     Notice that connecting to a server failed.
         #:
         #:     English: "Connection failed."
         connection_failed: LangStr
+
+        #: ::
+        #:
+        #:     Screen-message when connecting fails because the target host is
+        #:     itself in another party.
+        #:
+        #:     English: "Connection failed; host is in another party."
+        connection_failed_host_in_other_party: LangStr
+
+        #: ::
+        #:
+        #:     Screen-message when connecting fails because the party has no
+        #:     free slots.
+        #:
+        #:     English: "Connection failed; the party is full."
+        connection_failed_party_full: LangStr
+
+        #: ::
+        #:
+        #:     Screen-message when connecting fails because the host runs a
+        #:     different game version.
+        #:
+        #:     English: "Connection failed; host is running a different version
+        #:     of the game. Make sure you are both up-to-date and try again."
+        connection_failed_version_mismatch: LangStr
+
+        #: ::
+        #:
+        #:     Generic screen-message when a host refuses the connection for an
+        #:     unspecified reason.
+        #:
+        #:     English: "Connection rejected."
+        connection_rejected: LangStr
+
+        #: ::
+        #:
+        #:     Screen-message when connecting fails because the host runs a
+        #:     NEWER game version (so updating locally will fix it).
+        #:
+        #:     English: "Host is running a newer version. Update your game and
+        #:     try again."
+        incompatible_newer_version_host: LangStr
+
+        #: ::
+        #:
+        #:     Screen-message when connecting fails because the host runs a
+        #:     different game version (direction unknown).
+        #:
+        #:     English: "Host is running a different version of the game. Make
+        #:     sure you are both up-to-date and try again."
+        incompatible_version_host: LangStr
+
+        def incompatible_version_player(
+            self, *, name: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Screen-message when a joining player is refused because their
+                game version differs from the host; the placeholder is their
+                display name.
+
+                English: "{name} is running a different version of the game.
+                Make sure you are both up-to-date and try again."
+            """
 
         #: ::
         #:
@@ -478,6 +583,56 @@ if TYPE_CHECKING:
         #:
         #:     English: "Error: invalid address."
         invalid_address: LangStr
+
+        def left_game(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Screen-message after leaving a named hosted game; the
+                placeholder is the game/party name (already quoted in the
+                English form).
+
+                English: "Left '{name}'."
+            """
+
+        def left_party(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Screen-message after leaving another player's party; the
+                placeholder is that player's display name.
+
+                English: "Left {name}'s party."
+            """
+
+        def player_joined_party(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Screen-message when another player joins the party you are in;
+                the placeholder is their display name.
+
+                English: "{name} joined the party!"
+            """
+
+        def player_left_party(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Screen-message when another player leaves the party you are in;
+                the placeholder is their display name.
+
+                English: "{name} left the party."
+            """
+
+        #: ::
+        #:
+        #:     Screen-message when connecting to game servers is refused because
+        #:     this app version is too old for them.
+        #:
+        #:     English: "Server functionality is no longer supported in this
+        #:     version of the game; Please update to a newer version."
+        server_unsupported: LangStr
 
         #: ::
         #:
@@ -617,6 +772,29 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
+        def chat_blocked(self, *, seconds: int, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Screen-message when a player is temporarily blocked from
+                chatting; placeholders are their display name and the block
+                duration in seconds.
+
+                English: (one) "{name} is chat-blocked for # second." / (other)
+                "{name} is chat-blocked for # seconds."
+            """
+
+        def join_cooldown(self, *, seconds: int) -> LangStr:
+            """
+            ::
+
+                Screen-message telling a recently-departed player how long until
+                they may rejoin the game session.
+
+                English: (one) "You can join in # second." / (other) "You can
+                join in # seconds."
+            """
+
         def kick_idle_kicked(self, *, name: str | LangStr) -> LangStr:
             """
             ::
@@ -651,6 +829,132 @@ if TYPE_CHECKING:
         #:
         #:     English: "(you can turn this off in Settings -> Advanced)"
         kick_idle_warning_settings: LangStr
+
+        def kick_occurred(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Screen-message when a player is kicked from the party after a
+                successful vote; the placeholder is their display name.
+
+                English: "{name} was kicked."
+            """
+
+        def kick_question(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Prompt asking the party whether a player should be kicked; the
+                placeholder is their display name.
+
+                English: "Kick {name}?"
+            """
+
+        #: ::
+        #:
+        #:     Error screen-message when a player tries to start a kick vote
+        #:     against a server admin.
+        #:
+        #:     English: "Admins can't be kicked."
+        kick_vote_cant_kick_admins: LangStr
+
+        #: ::
+        #:
+        #:     Error screen-message when a player tries to start a kick vote
+        #:     against themselves.
+        #:
+        #:     English: "You can't kick yourself."
+        kick_vote_cant_kick_self: LangStr
+
+        #: ::
+        #:
+        #:     Screen-message when a kick vote ends without enough yes votes.
+        #:
+        #:     English: "Kick-vote failed."
+        kick_vote_failed: LangStr
+
+        #: ::
+        #:
+        #:     Error screen-message when there are too few players present for a
+        #:     kick vote to be meaningful.
+        #:
+        #:     English: "Not enough players for a vote."
+        kick_vote_not_enough_players: LangStr
+
+        def kick_vote_started(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Screen-message announcing that a kick vote has begun against a
+                player; the placeholder is their display name.
+
+                English: "A kick vote has been started for {name}."
+            """
+
+        def kick_votes_needed(self, *, count: int) -> LangStr:
+            """
+            ::
+
+                Screen-message showing how many more yes votes a kick vote needs
+                to pass.
+
+                English: (one) "# vote needed" / (other) "# votes needed"
+            """
+
+        #: ::
+        #:
+        #:     Error screen-message when kick voting is turned off on this
+        #:     server.
+        #:
+        #:     English: "Kick voting is disabled."
+        kick_voting_disabled: LangStr
+
+        def kick_with_chat(
+            self, *, yes: str | LangStr, no: str | LangStr
+        ) -> LangStr:
+            """
+            ::
+
+                Instructions for voting via chat; the placeholders are the exact
+                text to type into chat for yes and for no (e.g. "1" and "2").
+
+                English: "Type {yes} in chat for yes and {no} for no."
+            """
+
+        #: ::
+        #:
+        #:     Screen-message when a client tries to do something while the host
+        #:     is still loading.
+        #:
+        #:     English: "Loading; try again in a moment..."
+        loading_try_again: LangStr
+
+        def vote_delay(self, *, seconds: int) -> LangStr:
+            """
+            ::
+
+                Error screen-message telling a player how long until they may
+                start another vote.
+
+                English: (one) "You can't start another vote for # second." /
+                (other) "You can't start another vote for # seconds."
+            """
+
+        #: ::
+        #:
+        #:     Error screen-message when a player tries to start a vote while
+        #:     another vote is still running.
+        #:
+        #:     English: "A vote is already in progress."
+        vote_in_progress: LangStr
+
+        #: ::
+        #:
+        #:     Error screen-message when a player tries to vote twice in the
+        #:     same vote.
+        #:
+        #:     English: "You already voted"
+        voted_already: LangStr
 
     class StringsStoreGroup:
         """
@@ -899,6 +1203,15 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Label on an unopenable-yet treasure chest slot in the root UI
+        #:     inviting the player to open it once its timer completes. Replaces
+        #:     the legacy openMeText resource.
+        #:
+        #:     English: "Open Me!"
+        open_me: LangStr
+
+        #: ::
+        #:
         #:     Name label for the remote-control companion app.
         #:
         #:     English: "BombSquad Remote"
@@ -945,6 +1258,14 @@ if TYPE_CHECKING:
         #:
         #:     English: "Success!"
         success: LangStr
+
+        #: ::
+        #:
+        #:     Generic screen-message for a failure with no more specific
+        #:     explanation available.
+        #:
+        #:     English: "Unknown error"
+        unknown_error: LangStr
 
         #: ::
         #:
@@ -1018,8 +1339,8 @@ if TYPE_CHECKING:
         ui: StringsUiGroup
         workspace: StringsWorkspaceGroup
 
-    #: The ``strings`` group - 88 strings (``account``, ``assets``, ``audio``,
-    #: ``input``, ``net``, and 83 more). Full list in source.
+    #: The ``strings`` group - 122 strings (``account``, ``assets``, ``audio``,
+    #: ``input``, ``net``, and 117 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
@@ -1029,6 +1350,7 @@ _TREE = {
             'not_using_account': ('service',),
             'sign_in_error': (),
             'updating_account': (),
+            'you_got_item': ('item',),
         },
         'assets': {
             'access_denied_guidance': ('detail',),
@@ -1069,9 +1391,24 @@ _TREE = {
         'net': {
             'account_rejected': (),
             'auth_error': (),
+            'connected_to_game': ('name',),
+            'connected_to_party': ('name',),
+            'connecting': (),
             'connection_failed': (),
+            'connection_failed_host_in_other_party': (),
+            'connection_failed_party_full': (),
+            'connection_failed_version_mismatch': (),
+            'connection_rejected': (),
+            'incompatible_newer_version_host': (),
+            'incompatible_version_host': (),
+            'incompatible_version_player': ('name',),
             'incorrect_password': (),
             'invalid_address': (),
+            'left_game': ('name',),
+            'left_party': ('name',),
+            'player_joined_party': ('name',),
+            'player_left_party': ('name',),
+            'server_unsupported': (),
             'unavailable_no_connection': (),
         },
         'plugins': {
@@ -1087,9 +1424,25 @@ _TREE = {
             'scan_error': (),
         },
         'session': {
+            'chat_blocked': ('seconds', 'name'),
+            'join_cooldown': ('seconds',),
             'kick_idle_kicked': ('name',),
             'kick_idle_warning': ('seconds', 'name'),
             'kick_idle_warning_settings': (),
+            'kick_occurred': ('name',),
+            'kick_question': ('name',),
+            'kick_vote_cant_kick_admins': (),
+            'kick_vote_cant_kick_self': (),
+            'kick_vote_failed': (),
+            'kick_vote_not_enough_players': (),
+            'kick_vote_started': ('name',),
+            'kick_votes_needed': ('count',),
+            'kick_voting_disabled': (),
+            'kick_with_chat': ('yes', 'no'),
+            'loading_try_again': (),
+            'vote_delay': ('seconds',),
+            'vote_in_progress': (),
+            'voted_already': (),
         },
         'store': {
             'google_play_purchases_unavailable': (),
@@ -1120,12 +1473,14 @@ _TREE = {
             'menu_control_time_out': ('seconds',),
             'menu_control_will_time_out': (),
             'ok': (),
+            'open_me': (),
             'remote_app_name': (),
             'retry': (),
             'sign_in': (),
             'spaced_pair': ('first', 'second'),
             'storage_permission_needed': (),
             'success': (),
+            'unknown_error': (),
             'updating': (),
         },
         'workspace': {

@@ -478,6 +478,18 @@ inline constexpr char kLangStrWireTagLegacyJson = '\x02';  // legacy Lstr json
 inline constexpr char kLangStrWireTagLangStr = '\x03';     // LangStr json
                                                            // (indexed refs)
 
+// First build whose BA_JMESSAGE_SCREEN_MESSAGE receive path tolerates a
+// missing legacy 'm' field (rendering the tagged 'm2' form alone). When a
+// peer's reported build is at or above this, hosts send ONLY the tagged
+// lang-str form; older peers get ONLY the legacy flat/resource-json 'm'.
+// Build-number gating (not protocol) is correct here: this is transient
+// message-layer traffic, never stored in streams/replays (see the note
+// above kProtocolVersionHostMin). The tagged form's indexed refs remain
+// sound because we never host below kProtocolVersionLangStrWire
+// (kProtocolVersionHostMin exceeds it), so every connected client did the
+// package-universe prep at join.
+inline constexpr int kScreenMessageLangStrOnlyMinBuild = 22962;
+
 // Which asset-package bucket kind a scene asset type's wire indices
 // derive from (see the kAdd*Indexed commands). Collision meshes live
 // in the flavor-invariant constant bucket (asset-packages decision

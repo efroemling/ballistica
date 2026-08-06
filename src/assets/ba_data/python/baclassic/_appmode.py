@@ -302,14 +302,8 @@ class ClassicAppMode(AppMode):
 
         elif item_id.startswith('gold_pass'):
             bui.screenmessage(
-                bui.Lstr(
-                    translate=('serverResponses', 'You got a ${ITEM}!'),
-                    subs=[
-                        (
-                            '${ITEM}',
-                            bui.Lstr(resource='goldPass.goldPassText'),
-                        )
-                    ],
+                builtinassets.strings.account.you_got_item(
+                    item=classicassets.strings.get_tokens.gold_pass
                 ),
                 color=(0, 1, 0),
             )
@@ -323,10 +317,7 @@ class ClassicAppMode(AppMode):
                 'on_purchase_process_end got unexpected item_id: %s.', item_id
             )
             bui.screenmessage(
-                bui.Lstr(
-                    translate=('serverResponses', 'You got a ${ITEM}!'),
-                    subs=[('${ITEM}', item_id)],
-                ),
+                builtinassets.strings.account.you_got_item(item=item_id),
                 color=(0, 1, 0),
             )
             if bui.asset_loads_allowed():

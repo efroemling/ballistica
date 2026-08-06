@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"
 #include "ballistica/classic/support/classic_app_mode.h"
@@ -46,7 +47,7 @@ ConnectionToHostUDP::ConnectionToHostUDP(const SockAddr& addr)
   if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
     if (appmode->connections()->GetPrintUDPConnectProgress()) {
       g_base->ScreenMessage(
-          g_base->assets->GetResourceString("connectingToPartyText"));
+          base::BuiltinStrings::Net::Connecting()->Evaluate());
     }
   }
 }
@@ -111,7 +112,7 @@ void ConnectionToHostUDP::Update() {
     // If the connection never got established, announce it failed.
     if (!can_communicate()) {
       g_base->ScreenMessage(
-          g_base->assets->GetResourceString("connectionFailedText"), {1, 0, 0});
+          base::BuiltinStrings::Net::ConnectionFailed()->Evaluate(), {1, 0, 0});
     }
 
     // Die immediately in this case; no use trying to wait for a

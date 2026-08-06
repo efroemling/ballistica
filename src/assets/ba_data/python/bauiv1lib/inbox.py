@@ -659,8 +659,15 @@ class InboxWindow(bui.MainWindow):
         elif response.error_type is not None:
             # If error_type is set, error should be also.
             assert response.error_message is not None
-            error_message = bui.Lstr(
-                translate=('serverResponses', response.error_message)
+            # Final-form errors arrive pre-translated to our locale
+            # (the lifetime rule); display verbatim. Otherwise it's
+            # legacy English we translate against our local corpus.
+            error_message = (
+                bui.langstr_value(response.error_message)
+                if response.error_message_is_final
+                else bui.Lstr(
+                    translate=('serverResponses', response.error_message)
+                )
             )
         else:
             error_message = None

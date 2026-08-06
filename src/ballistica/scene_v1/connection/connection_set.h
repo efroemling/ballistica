@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_SCENE_V1_CONNECTION_CONNECTION_SET_H_
 #define BALLISTICA_SCENE_V1_CONNECTION_CONNECTION_SET_H_
 
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -10,6 +11,10 @@
 #include "ballistica/base/base.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/foundation/object.h"
+
+namespace ballistica::base {
+class LangStr;
+}
 
 namespace ballistica::scene_v1 {
 
@@ -81,6 +86,15 @@ class ConnectionSet {
   void SendChatMessage(const std::string& message,
                        const std::vector<int>* clients = nullptr,
                        const std::string* sender_override = nullptr);
+
+  /// Build the lang-str tagged wire form (see kLangStrWireTag*) of a
+  /// native LangStr for message-level screen-message sends: LangStr
+  /// json with self-describing resource refs (no stream package-index
+  /// needed; sound for established connections per the D28 ingest
+  /// contract). Falls back to locally-evaluated literal text if
+  /// serialization fails.
+  static auto LangStrWireTagged(const std::shared_ptr<const base::LangStr>& val)
+      -> std::string;
 
   // Send a screen message to all connected clients AND print it on the
   // host. ``tagged``, when non-empty, is a lang-str tagged wire value

@@ -331,12 +331,7 @@ class InventoryUIController(DocUIController):
         profiles = bui.app.config.get('Player Profiles', {})
         if len(profiles) > 100:
             bui.screenmessage(
-                bui.Lstr(
-                    translate=(
-                        'serverResponses',
-                        'Max number of profiles reached.',
-                    )
-                ),
+                classicassets.strings.profiles.max_reached,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()

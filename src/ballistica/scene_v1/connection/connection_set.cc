@@ -4,12 +4,15 @@
 
 #include <Python.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/connection/connection_to_client_udp.h"
@@ -233,6 +236,19 @@ void ConnectionSet::Shutdown() {
   if (connection_to_host_.exists()) {
     connection_to_host_->RequestDisconnect();
   }
+}
+
+auto ConnectionSet::LangStrWireTagged(
+    const std::shared_ptr<const base::LangStr>& val) -> std::string {
+  assert(val != nullptr);
+  auto resource = val->ToResourceJson();
+  if (resource.has_value()) {
+    return std::string(1, kLangStrWireTagLangStr) + *resource;
+  }
+  BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+              "Can't serialize LangStr for message wire (" + resource.error()
+                  + "); sending evaluated text.");
+  return std::string(1, kLangStrWireTagLiteral) + val->Evaluate();
 }
 
 void ConnectionSet::SendScreenMessageToClients(const std::string& s, float r,
@@ -584,8 +600,8 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
             if (!keep_trying) {
               if (!printed_host_disconnect_) {
                 g_base->ScreenMessage(
-                    g_base->assets->GetResourceString(
-                        "connectionFailedVersionMismatchText"),
+                    base::BuiltinStrings::Net::ConnectionFailedVersionMismatch()
+                        ->Evaluate(),
                     {1, 0, 0});
                 printed_host_disconnect_ = true;
               }
@@ -593,24 +609,25 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
           } else if (data[0] == BA_PACKET_CLIENT_DENY_PARTY_FULL) {
             if (!printed_host_disconnect_) {
               if (print_udp_connect_progress_) {
-                g_base->ScreenMessage(g_base->assets->GetResourceString(
-                                          "connectionFailedPartyFullText"),
-                                      {1, 0, 0});
+                g_base->ScreenMessage(
+                    base::BuiltinStrings::Net::ConnectionFailedPartyFull()
+                        ->Evaluate(),
+                    {1, 0, 0});
               }
               printed_host_disconnect_ = true;
             }
           } else if (data[0] == BA_PACKET_CLIENT_DENY_ALREADY_IN_PARTY) {
             if (!printed_host_disconnect_) {
               g_base->ScreenMessage(
-                  g_base->assets->GetResourceString(
-                      "connectionFailedHostAlreadyInPartyText"),
+                  base::BuiltinStrings::Net::ConnectionFailedHostInOtherParty()
+                      ->Evaluate(),
                   {1, 0, 0});
               printed_host_disconnect_ = true;
             }
           } else {
             if (!printed_host_disconnect_) {
               g_base->ScreenMessage(
-                  g_base->assets->GetResourceString("connectionRejectedText"),
+                  base::BuiltinStrings::Net::ConnectionRejected()->Evaluate(),
                   {1, 0, 0});
               printed_host_disconnect_ = true;
             }

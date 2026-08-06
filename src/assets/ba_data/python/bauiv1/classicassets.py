@@ -1,19 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.260730b`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicassets.260806`` (bauiv1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.baclassicassets.260730b
+# ba_meta require asset-package a-0.baclassicassets.260806
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.baclassicassets.260730b'
+__asset_package__ = 'a-0.baclassicassets.260806'
 
 from typing import TYPE_CHECKING
 
@@ -3931,8 +3931,8 @@ if TYPE_CHECKING:
         #:
         #:     Notice that tournaments are off while a workspace is active.
         #:
-        #:     English: "Tournaments are disabled when workspaces are active. To
-        #:     re-enable tournaments, disable your workspace and restart."
+        #:     English: "Tournaments are disabled when Workspaces are active. To
+        #:     re-enable tournaments, disable your Workspace and restart."
         tournaments_disabled_workspace: LangStr
 
     class StringsCoopLevelsGroup:
@@ -5570,6 +5570,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Error screen-message when a friend/party invite code the player
+        #:     entered is not valid.
+        #:
+        #:     English: "Invalid code."
+        invalid_code_error: LangStr
+
+        #: ::
+        #:
         #:     Error for an invalid party name.
         #:
         #:     English: "Error: invalid name."
@@ -6685,7 +6693,8 @@ if TYPE_CHECKING:
 
                 Notice that a higher league is required to enter.
 
-                English: "You must reach {name} to enter this tournament."
+                English: "You must reach the {name} league to enter this
+                tournament."
             """
 
         #: ::
@@ -7610,6 +7619,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Error screen-message when creating another playlist would exceed
+        #:     the account limit.
+        #:
+        #:     English: "Max number of playlists reached."
+        max_reached: LangStr
+
+        #: ::
+        #:
         #:     Two-line button to create a new playlist.
         #:
         #:     English: "New Playlist"
@@ -7660,8 +7677,8 @@ if TYPE_CHECKING:
 
                 Explanation of what an account profile is.
 
-                English: "Uses account details {icons}. Create custom profiles
-                to change."
+                English: "This profile uses your account name and icon {icons}.
+                Create custom profiles for different names or icons."
             """
 
         def available(self, *, name: str | LangStr) -> LangStr:
@@ -7877,6 +7894,14 @@ if TYPE_CHECKING:
         #:
         #:     English: "(custom player names and appearances for this account)"
         explanation: LangStr
+
+        #: ::
+        #:
+        #:     Error screen-message when creating another player profile would
+        #:     exceed the account limit.
+        #:
+        #:     English: "Max number of profiles reached."
+        max_reached: LangStr
 
         #: ::
         #:
@@ -9512,6 +9537,14 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
+        #: ::
+        #:
+        #:     Progress screen-message shown right after paying to enter a
+        #:     tournament.
+        #:
+        #:     English: "Entering tournament..."
+        entering: LangStr
+
         def tickets_count(self, *, count: int) -> LangStr:
             """
             ::
@@ -10626,8 +10659,8 @@ if TYPE_CHECKING:
     #: ``action_hero_lower_leg``, and 355 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1036 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``characters``, ``chest``, and 1031 more). Full list in
+    #: The ``strings`` group - 1040 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``characters``, ``chest``, and 1035 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -12021,6 +12054,7 @@ _TREE = {
             'host_public_party': (),
             'hosting_unavailable': (),
             'invalid_address_error': (),
+            'invalid_code_error': (),
             'invalid_name_error': (),
             'invalid_port_error': (),
             'invite_a_friend': ('count',),
@@ -12291,6 +12325,7 @@ _TREE = {
             'just_sports': (),
             'list_name': (),
             'map_select_title': ('game',),
+            'max_reached': (),
             'new_playlist': (),
             'no_valid_maps': (),
             'playlists': (),
@@ -12326,7 +12361,12 @@ _TREE = {
             'upgrade_profile_info': (),
             'upgrade_to_global': (),
         },
-        'profiles': {'explanation': (), 'new_profile': (), 'title': ()},
+        'profiles': {
+            'explanation': (),
+            'max_reached': (),
+            'new_profile': (),
+            'title': (),
+        },
         'report': {
             'cheating': (),
             'explanation': (),
@@ -12534,6 +12574,7 @@ _TREE = {
         'store': {'merch': (), 'pro_name': ('app_name',)},
         'teams': {'bad_guys': (), 'blue': (), 'good_guys': (), 'red': ()},
         'tournament_entry': {
+            'entering': (),
             'tickets_count': ('count',),
             'title': (),
             'watch_an_ad': (),

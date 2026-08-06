@@ -60,6 +60,13 @@ def requirements_upgrade() -> None:
             # ('Sphinx==9.1.0', 'Sphinx==8.2.3'),
             # ('gunicorn==24.0.0', 'gunicorn==23.0.0'),
         ]
+        if 'google-genai' in reqs_new:
+            # google-genai (all versions as of 2026-08) caps websockets
+            # <17, so repos carrying it hold websockets back; everyone
+            # else floats. Exact-match means a future websockets release
+            # goes stale loudly (resolver conflict) rather than silently
+            # pinning forever; re-check genai's cap when that fires.
+            filterlines.append(('websockets==17.0.1', 'websockets==16.1.1'))
         for fsrc, fdst in filterlines:
             if fsrc in reqs_new:
                 reqs_new = reqs_new.replace(fsrc, fdst)

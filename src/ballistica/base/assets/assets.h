@@ -148,10 +148,6 @@ class Assets {
     std::unordered_map<std::string,
                        std::unordered_map<std::string, std::string> >
         translations;
-    /// Curated 'internal' slice keyed by bare name, for the C++
-    /// ``GetResourceString`` consumers (everything under ``internal`` by
-    /// bare name, plus a few cherry-picked top-level keys).
-    std::unordered_map<std::string, std::string> internal;
   };
 
   /// (Re)build the native language table from the registered
@@ -173,12 +169,11 @@ class Assets {
   /// h/m/s displays (timedisplay node, root-widget countdowns), each
   /// carrying an ``{amount}`` placeholder for the count. Sourced from
   /// the ``duration/`` formatter components any resolved package
-  /// embeds (in practice the builtin package guarantees them); falls
-  /// back to the legacy ``timeSuffix*Text`` strings -- normalized to
-  /// the same ``{amount}`` placeholder -- while stale bundled blobs
-  /// lack components. This fallback (and the legacy entries behind it)
-  /// exists only for the transition; engine code must not grow new
-  /// legacy-resource dependencies.
+  /// embeds; the builtin package guarantees a hit by construction (its
+  /// ``strings/time/duration_value`` string keeps the group embedded,
+  /// and its blobs bundle in lockstep with the code). Missing
+  /// components are therefore a bug: the getter warns loudly and
+  /// serves hardcoded English units rather than garbling timers.
   struct DurationUnitTemplates {
     std::string hours;
     std::string minutes;
@@ -200,9 +195,6 @@ class Assets {
   auto GetTranslation(const std::string& category, const std::string& value)
       -> std::string;
 
-  /// Look up a curated 'internal' string by bare key (C++ consumers).
-  /// Empty string if absent.
-  auto GetResourceString(const std::string& key) -> std::string;
   auto CharStr(SpecialChar id) -> std::string;
   auto CompileResourceString(const std::string& s, bool* valid = nullptr)
       -> std::string;

@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bacommonassets.260805`` (bascenev1).
+"""Asset-package wrapper for ``a-0.bacommonassets.260806`` (bascenev1).
 
 Cross-cutting assets used everywhere -- by the engine, by every game built on
 it, and by the master server's own web pages. Content here must be free of any
@@ -9,13 +9,13 @@ single game's concepts, which is what distinguishes it from BaClassicAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bacommonassets.260805
+# ba_meta require asset-package a-0.bacommonassets.260806
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.bacommonassets.260805'
+__asset_package__ = 'a-0.bacommonassets.260806'
 
 from typing import TYPE_CHECKING
 
@@ -889,8 +889,8 @@ if TYPE_CHECKING:
 
         #: ::
         #:
-        #:     Placeholder label shown on an empty doc-ui section with no items
-        #:     to display.
+        #:     Placeholder shown for an empty page or list with no content to
+        #:     display.
         #:
         #:     English: "There is nothing here."
         nothing_here: LangStr

@@ -47,6 +47,12 @@ auto BuiltinStrings::Account::UpdatingAccount()
   return MakeResource_("strings/account/updating_account");
 }
 
+auto BuiltinStrings::Account::YouGotItem(LangStr::Sub item)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/account/you_got_item",
+                       {{"item", std::move(item)}});
+}
+
 auto BuiltinStrings::Assets::AccessDeniedGuidance(LangStr::Sub detail)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/assets/access_denied_guidance",
@@ -221,8 +227,60 @@ auto BuiltinStrings::Net::AuthError() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/auth_error");
 }
 
+auto BuiltinStrings::Net::ConnectedToGame(LangStr::Sub name)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/connected_to_game",
+                       {{"name", std::move(name)}});
+}
+
+auto BuiltinStrings::Net::ConnectedToParty(LangStr::Sub name)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/connected_to_party",
+                       {{"name", std::move(name)}});
+}
+
+auto BuiltinStrings::Net::Connecting() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/connecting");
+}
+
 auto BuiltinStrings::Net::ConnectionFailed() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/connection_failed");
+}
+
+auto BuiltinStrings::Net::ConnectionFailedHostInOtherParty()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/connection_failed_host_in_other_party");
+}
+
+auto BuiltinStrings::Net::ConnectionFailedPartyFull()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/connection_failed_party_full");
+}
+
+auto BuiltinStrings::Net::ConnectionFailedVersionMismatch()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/connection_failed_version_mismatch");
+}
+
+auto BuiltinStrings::Net::ConnectionRejected()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/connection_rejected");
+}
+
+auto BuiltinStrings::Net::IncompatibleNewerVersionHost()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/incompatible_newer_version_host");
+}
+
+auto BuiltinStrings::Net::IncompatibleVersionHost()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/incompatible_version_host");
+}
+
+auto BuiltinStrings::Net::IncompatibleVersionPlayer(LangStr::Sub name)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/incompatible_version_player",
+                       {{"name", std::move(name)}});
 }
 
 auto BuiltinStrings::Net::IncorrectPassword()
@@ -232,6 +290,33 @@ auto BuiltinStrings::Net::IncorrectPassword()
 
 auto BuiltinStrings::Net::InvalidAddress() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/invalid_address");
+}
+
+auto BuiltinStrings::Net::LeftGame(LangStr::Sub name)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/left_game", {{"name", std::move(name)}});
+}
+
+auto BuiltinStrings::Net::LeftParty(LangStr::Sub name)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/left_party", {{"name", std::move(name)}});
+}
+
+auto BuiltinStrings::Net::PlayerJoinedParty(LangStr::Sub name)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/player_joined_party",
+                       {{"name", std::move(name)}});
+}
+
+auto BuiltinStrings::Net::PlayerLeftParty(LangStr::Sub name)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/player_left_party",
+                       {{"name", std::move(name)}});
+}
+
+auto BuiltinStrings::Net::ServerUnsupported()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/server_unsupported");
 }
 
 auto BuiltinStrings::Net::UnavailableNoConnection()
@@ -290,6 +375,17 @@ auto BuiltinStrings::Scripts::ScanError() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/scripts/scan_error");
 }
 
+auto BuiltinStrings::Session::ChatBlocked(int64_t seconds, LangStr::Sub name)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/chat_blocked",
+                       {{"seconds", seconds}, {"name", std::move(name)}});
+}
+
+auto BuiltinStrings::Session::JoinCooldown(int64_t seconds)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/join_cooldown", {{"seconds", seconds}});
+}
+
 auto BuiltinStrings::Session::KickIdleKicked(LangStr::Sub name)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/session/kick_idle_kicked",
@@ -306,6 +402,79 @@ auto BuiltinStrings::Session::KickIdleWarning(int64_t seconds,
 auto BuiltinStrings::Session::KickIdleWarningSettings()
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/session/kick_idle_warning_settings");
+}
+
+auto BuiltinStrings::Session::KickOccurred(LangStr::Sub name)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/kick_occurred",
+                       {{"name", std::move(name)}});
+}
+
+auto BuiltinStrings::Session::KickQuestion(LangStr::Sub name)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/kick_question",
+                       {{"name", std::move(name)}});
+}
+
+auto BuiltinStrings::Session::KickVoteCantKickAdmins()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/kick_vote_cant_kick_admins");
+}
+
+auto BuiltinStrings::Session::KickVoteCantKickSelf()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/kick_vote_cant_kick_self");
+}
+
+auto BuiltinStrings::Session::KickVoteFailed()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/kick_vote_failed");
+}
+
+auto BuiltinStrings::Session::KickVoteNotEnoughPlayers()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/kick_vote_not_enough_players");
+}
+
+auto BuiltinStrings::Session::KickVoteStarted(LangStr::Sub name)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/kick_vote_started",
+                       {{"name", std::move(name)}});
+}
+
+auto BuiltinStrings::Session::KickVotesNeeded(int64_t count)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/kick_votes_needed", {{"count", count}});
+}
+
+auto BuiltinStrings::Session::KickVotingDisabled()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/kick_voting_disabled");
+}
+
+auto BuiltinStrings::Session::KickWithChat(LangStr::Sub yes, LangStr::Sub no)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/kick_with_chat",
+                       {{"yes", std::move(yes)}, {"no", std::move(no)}});
+}
+
+auto BuiltinStrings::Session::LoadingTryAgain()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/loading_try_again");
+}
+
+auto BuiltinStrings::Session::VoteDelay(int64_t seconds)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/vote_delay", {{"seconds", seconds}});
+}
+
+auto BuiltinStrings::Session::VoteInProgress()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/vote_in_progress");
+}
+
+auto BuiltinStrings::Session::VotedAlready() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/session/voted_already");
 }
 
 auto BuiltinStrings::Store::GooglePlayPurchasesUnavailable()
@@ -429,6 +598,10 @@ auto BuiltinStrings::Ui::Ok() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/ui/ok");
 }
 
+auto BuiltinStrings::Ui::OpenMe() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/open_me");
+}
+
 auto BuiltinStrings::Ui::RemoteAppName() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/ui/remote_app_name");
 }
@@ -455,6 +628,10 @@ auto BuiltinStrings::Ui::StoragePermissionNeeded()
 
 auto BuiltinStrings::Ui::Success() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/ui/success");
+}
+
+auto BuiltinStrings::Ui::UnknownError() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/unknown_error");
 }
 
 auto BuiltinStrings::Ui::Updating() -> std::shared_ptr<const LangStr> {

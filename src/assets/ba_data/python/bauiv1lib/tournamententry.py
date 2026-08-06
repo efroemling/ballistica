@@ -642,9 +642,7 @@ class TournamentEntryWindow(PopupWindow):
                 )
                 # bui.apptimer(0.1, builtinassets.audio.cash_register.play)
                 bui.screenmessage(
-                    bui.Lstr(
-                        translate=('serverResponses', 'Entering tournament...')
-                    ),
+                    classicassets.strings.tournament_entry.entering,
                     color=(0, 1, 0),
                 )
             bui.apptimer(

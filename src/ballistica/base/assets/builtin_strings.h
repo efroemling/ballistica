@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.260806"
+// Generated from: "a-0.babuiltinassets.260806d"
 
 #include <memory>
 
@@ -60,6 +60,13 @@ class BuiltinStrings {
     ///
     /// English: "Updating your account..."
     static auto UpdatingAccount() -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message acknowledging the player received a purchased/awarded
+    /// item; the placeholder is the item name (may be raw text or a nested
+    /// translated name).
+    ///
+    /// English: "You got a {item}!"
+    static auto YouGotItem(LangStr::Sub item) -> std::shared_ptr<const LangStr>;
   };
 
   class Assets {
@@ -322,10 +329,80 @@ class BuiltinStrings {
     /// English: "An error has occurred."
     static auto AuthError() -> std::shared_ptr<const LangStr>;
 
+    /// Screen-message after successfully joining a named hosted game; the
+    /// placeholder is the game/party name (already quoted in the English form).
+    ///
+    /// English: "Joined '{name}'"
+    static auto ConnectedToGame(LangStr::Sub name)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message after successfully joining another player's party; the
+    /// placeholder is that player's display name.
+    ///
+    /// English: "Joined {name}'s party!"
+    static auto ConnectedToParty(LangStr::Sub name)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Progress screen-message shown while attempting to connect to a
+    /// multiplayer party.
+    ///
+    /// English: "Connecting..."
+    static auto Connecting() -> std::shared_ptr<const LangStr>;
+
     /// Notice that connecting to a server failed.
     ///
     /// English: "Connection failed."
     static auto ConnectionFailed() -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message when connecting fails because the target host is itself
+    /// in another party.
+    ///
+    /// English: "Connection failed; host is in another party."
+    static auto ConnectionFailedHostInOtherParty()
+        -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message when connecting fails because the party has no free
+    /// slots.
+    ///
+    /// English: "Connection failed; the party is full."
+    static auto ConnectionFailedPartyFull() -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message when connecting fails because the host runs a different
+    /// game version.
+    ///
+    /// English: "Connection failed; host is running a different version of the
+    /// game. Make sure you are both up-to-date and try again."
+    static auto ConnectionFailedVersionMismatch()
+        -> std::shared_ptr<const LangStr>;
+
+    /// Generic screen-message when a host refuses the connection for an
+    /// unspecified reason.
+    ///
+    /// English: "Connection rejected."
+    static auto ConnectionRejected() -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message when connecting fails because the host runs a NEWER game
+    /// version (so updating locally will fix it).
+    ///
+    /// English: "Host is running a newer version. Update your game and try
+    /// again."
+    static auto IncompatibleNewerVersionHost()
+        -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message when connecting fails because the host runs a different
+    /// game version (direction unknown).
+    ///
+    /// English: "Host is running a different version of the game. Make sure you
+    /// are both up-to-date and try again."
+    static auto IncompatibleVersionHost() -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message when a joining player is refused because their game
+    /// version differs from the host; the placeholder is their display name.
+    ///
+    /// English: "{name} is running a different version of the game. Make sure
+    /// you are both up-to-date and try again."
+    static auto IncompatibleVersionPlayer(LangStr::Sub name)
+        -> std::shared_ptr<const LangStr>;
 
     /// Error screen-message shown to a player whose attempt to join a password-
     /// protected party or server was rejected for entering the wrong party
@@ -339,6 +416,39 @@ class BuiltinStrings {
     ///
     /// English: "Error: invalid address."
     static auto InvalidAddress() -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message after leaving a named hosted game; the placeholder is the
+    /// game/party name (already quoted in the English form).
+    ///
+    /// English: "Left '{name}'."
+    static auto LeftGame(LangStr::Sub name) -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message after leaving another player's party; the placeholder is
+    /// that player's display name.
+    ///
+    /// English: "Left {name}'s party."
+    static auto LeftParty(LangStr::Sub name) -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message when another player joins the party you are in; the
+    /// placeholder is their display name.
+    ///
+    /// English: "{name} joined the party!"
+    static auto PlayerJoinedParty(LangStr::Sub name)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message when another player leaves the party you are in; the
+    /// placeholder is their display name.
+    ///
+    /// English: "{name} left the party."
+    static auto PlayerLeftParty(LangStr::Sub name)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message when connecting to game servers is refused because this
+    /// app version is too old for them.
+    ///
+    /// English: "Server functionality is no longer supported in this version of
+    /// the game; Please update to a newer version."
+    static auto ServerUnsupported() -> std::shared_ptr<const LangStr>;
 
     /// Error shown when something cannot be reached, most likely because there
     /// is no internet connection (dialog messages and screen-messages).
@@ -414,6 +524,21 @@ class BuiltinStrings {
 
   class Session {
    public:
+    /// Screen-message when a player is temporarily blocked from chatting;
+    /// placeholders are their display name and the block duration in seconds.
+    ///
+    /// English: (one) "{name} is chat-blocked for # second." / (other) "{name}
+    /// is chat-blocked for # seconds."
+    static auto ChatBlocked(int64_t seconds, LangStr::Sub name)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message telling a recently-departed player how long until they
+    /// may rejoin the game session.
+    ///
+    /// English: (one) "You can join in # second." / (other) "You can join in #
+    /// seconds."
+    static auto JoinCooldown(int64_t seconds) -> std::shared_ptr<const LangStr>;
+
     /// Screen-message shown on the host when a player is removed from the game
     /// for being idle too long (the kick-idle-players option).
     ///
@@ -436,6 +561,93 @@ class BuiltinStrings {
     ///
     /// English: "(you can turn this off in Settings -> Advanced)"
     static auto KickIdleWarningSettings() -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message when a player is kicked from the party after a successful
+    /// vote; the placeholder is their display name.
+    ///
+    /// English: "{name} was kicked."
+    static auto KickOccurred(LangStr::Sub name)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Prompt asking the party whether a player should be kicked; the
+    /// placeholder is their display name.
+    ///
+    /// English: "Kick {name}?"
+    static auto KickQuestion(LangStr::Sub name)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Error screen-message when a player tries to start a kick vote against a
+    /// server admin.
+    ///
+    /// English: "Admins can't be kicked."
+    static auto KickVoteCantKickAdmins() -> std::shared_ptr<const LangStr>;
+
+    /// Error screen-message when a player tries to start a kick vote against
+    /// themselves.
+    ///
+    /// English: "You can't kick yourself."
+    static auto KickVoteCantKickSelf() -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message when a kick vote ends without enough yes votes.
+    ///
+    /// English: "Kick-vote failed."
+    static auto KickVoteFailed() -> std::shared_ptr<const LangStr>;
+
+    /// Error screen-message when there are too few players present for a kick
+    /// vote to be meaningful.
+    ///
+    /// English: "Not enough players for a vote."
+    static auto KickVoteNotEnoughPlayers() -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message announcing that a kick vote has begun against a player;
+    /// the placeholder is their display name.
+    ///
+    /// English: "A kick vote has been started for {name}."
+    static auto KickVoteStarted(LangStr::Sub name)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message showing how many more yes votes a kick vote needs to
+    /// pass.
+    ///
+    /// English: (one) "# vote needed" / (other) "# votes needed"
+    static auto KickVotesNeeded(int64_t count)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Error screen-message when kick voting is turned off on this server.
+    ///
+    /// English: "Kick voting is disabled."
+    static auto KickVotingDisabled() -> std::shared_ptr<const LangStr>;
+
+    /// Instructions for voting via chat; the placeholders are the exact text to
+    /// type into chat for yes and for no (e.g. "1" and "2").
+    ///
+    /// English: "Type {yes} in chat for yes and {no} for no."
+    static auto KickWithChat(LangStr::Sub yes, LangStr::Sub no)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message when a client tries to do something while the host is
+    /// still loading.
+    ///
+    /// English: "Loading; try again in a moment..."
+    static auto LoadingTryAgain() -> std::shared_ptr<const LangStr>;
+
+    /// Error screen-message telling a player how long until they may start
+    /// another vote.
+    ///
+    /// English: (one) "You can't start another vote for # second." / (other)
+    /// "You can't start another vote for # seconds."
+    static auto VoteDelay(int64_t seconds) -> std::shared_ptr<const LangStr>;
+
+    /// Error screen-message when a player tries to start a vote while another
+    /// vote is still running.
+    ///
+    /// English: "A vote is already in progress."
+    static auto VoteInProgress() -> std::shared_ptr<const LangStr>;
+
+    /// Error screen-message when a player tries to vote twice in the same vote.
+    ///
+    /// English: "You already voted"
+    static auto VotedAlready() -> std::shared_ptr<const LangStr>;
   };
 
   class Store {
@@ -594,6 +806,13 @@ class BuiltinStrings {
     /// English: "OK"
     static auto Ok() -> std::shared_ptr<const LangStr>;
 
+    /// Label on an unopenable-yet treasure chest slot in the root UI inviting
+    /// the player to open it once its timer completes. Replaces the legacy
+    /// openMeText resource.
+    ///
+    /// English: "Open Me!"
+    static auto OpenMe() -> std::shared_ptr<const LangStr>;
+
     /// Name label for the remote-control companion app.
     ///
     /// English: "BombSquad Remote"
@@ -627,6 +846,12 @@ class BuiltinStrings {
     ///
     /// English: "Success!"
     static auto Success() -> std::shared_ptr<const LangStr>;
+
+    /// Generic screen-message for a failure with no more specific explanation
+    /// available.
+    ///
+    /// English: "Unknown error"
+    static auto UnknownError() -> std::shared_ptr<const LangStr>;
 
     /// Generic title for progress dialogs applying updates: asset
     /// downloads/builds at boot, locale switches, pre-game package fetches.

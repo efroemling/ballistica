@@ -199,6 +199,7 @@ from babase._language import (
     LanguageSubsystem,
     Lstr,
     get_legacy_langdata,
+    langstr_value,
     resolve_langstrs,
 )
 from babase._locale import LocaleSubsystem
@@ -400,6 +401,7 @@ __all__ = [
     'quit',
     'QuitType',
     'reload_hooks',
+    'langstr_value',
     'reload_media',
     'request_permission',
     'resolve_langstrs',

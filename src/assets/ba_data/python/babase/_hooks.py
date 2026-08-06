@@ -395,8 +395,6 @@ def discord_sign_in_token_response(
 
 def show_client_too_old_error() -> None:
     """Called at launch if the server tells us we're too old to talk to it."""
-    from babase._language import Lstr
-
     # If you are using an old build of the app and would like to stop
     # seeing this error at launch, do:
     #  ba.app.config['SuppressClientTooOldErrorForBuild'] = ba.app.build_number
@@ -412,15 +410,10 @@ def show_client_too_old_error() -> None:
     if _babase.app.env.gui:
         _babase.getsimplesound('error').play()
 
+    from babase import builtinassets
+
     _babase.screenmessage(
-        Lstr(
-            translate=(
-                'serverResponses',
-                'Server functionality is no longer supported'
-                ' in this version of the game;\n'
-                'Please update to a newer version.',
-            )
-        ),
+        builtinassets.strings.net.server_unsupported,
         color=(1, 0, 0),
     )
 

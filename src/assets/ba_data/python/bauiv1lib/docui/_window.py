@@ -5,6 +5,7 @@
 from typing import TYPE_CHECKING, override, assert_never
 
 import bauiv1 as bui
+from bauiv1 import _commonassets
 
 from bacommon.docui import DocUIRequestTypeID, DocUIResponseTypeID
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
@@ -460,9 +461,7 @@ class DocUIWindow(bui.MainWindow):
                 parent=self._scrollwidget,
                 h_align='center',
                 v_align='center',
-                text=bui.Lstr(
-                    translate=('serverResponses', 'There is nothing here.')
-                ),
+                text=_commonassets.strings.status.nothing_here,
                 scale=0.75,
                 color=(1, 1, 1, 0.5),
                 size=(0, 0),

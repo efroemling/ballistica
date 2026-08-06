@@ -286,7 +286,14 @@ class ChestWindow(bui.MainWindow):
 
         # Server-side error:
         if response.error is not None:
-            self._error(bui.Lstr(translate=('serverResponses', response.error)))
+            # Final-form errors arrive pre-translated to our locale
+            # (the lifetime rule); display verbatim. Otherwise it's
+            # legacy English we translate against our local corpus.
+            self._error(
+                bui.langstr_value(response.error)
+                if response.error_is_final
+                else bui.Lstr(translate=('serverResponses', response.error))
+            )
             return
 
         toffs = 0.0

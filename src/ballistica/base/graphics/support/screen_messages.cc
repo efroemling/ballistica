@@ -111,10 +111,11 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
       {
         SimpleComponent c(pass);
         c.SetTransparent(true);
-        c.SetTexture(
-            // g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesSoftRectVertical));
+        TextureAsset* shadow_tex =
+            // g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesSoftRectVertical);
             g_base->assets->BuiltinTexture(
-                BuiltinTextureID::kTexturesShadowSharp));
+                BuiltinTextureID::kTexturesShadowSharp);
+        c.SetTexture(shadow_tex);
 
         float screen_width = g_base->graphics->screen_virtual_width();
 
@@ -182,7 +183,11 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
             // showing which looks nice.
             fade = std::max(0.07f, (200.0f - static_cast<float>(age)) / 100.0f);
           }
-          c.SetColor(r * fade, g * fade, b * fade, a);
+          // The shadow texture is premultiplied, so the fade-out must scale
+          // rgb as well as alpha; otherwise the rgb contribution holds
+          // constant through the fade and pops off when the message dies.
+          float cmul = shadow_tex->premultiplied() ? a : 1.0f;
+          c.SetColor(r * fade * cmul, g * fade * cmul, b * fade * cmul, a);
 
           {
             auto xf = c.ScopedTransform();
@@ -411,7 +416,12 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
             c2.SetMaskTexture(g_base->assets->BuiltinTexture(
                 BuiltinTextureID::kTexturesCharacterIconMask));
           }
-          c2.SetColor(1, 1, 1, a);
+          // Premultiply rgb by alpha for premultiplied icon textures so
+          // fading icons composite 'over' under premult blend instead of
+          // staying full-brightness (colorize colors stay raw; they modulate
+          // the texture before the base color applies).
+          float icmul = i->texture->premultiplied() ? a : 1.0f;
+          c2.SetColor(icmul, icmul, icmul, a);
           {
             auto xf = c2.ScopedTransform();
             c2.Translate(h - 14, v_base + 10 + i->v_smoothed,
@@ -474,6 +484,12 @@ void ScreenMessages::AddScreenMessage(const std::string& msg, bool literal,
                                       const Vector3f& tint,
                                       const Vector3f& tint2) {
   assert(g_base->InLogicThread());
+
+  // With no renderer there is nothing to ever display OR trim these;
+  // queueing them would leak for the life of the process.
+  if (g_core->HeadlessMode()) {
+    return;
+  }
 
   // So we know we're always dealing with valid utf8.
   std::string m = Utils::GetValidUTF8(msg.c_str(), "ga9msg");

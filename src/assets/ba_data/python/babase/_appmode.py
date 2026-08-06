@@ -117,11 +117,10 @@ class AppMode:
 
         # By default just announce the item id we got. Real app-modes
         # probably want to do something more specific based on item-id.
+        from babase import builtinassets
+
         babase.screenmessage(
-            babase.Lstr(
-                translate=('serverResponses', 'You got a ${ITEM}!'),
-                subs=[('${ITEM}', item_id)],
-            ),
+            builtinassets.strings.account.you_got_item(item=item_id),
             color=(0, 1, 0),
         )
         if babase.asset_loads_allowed():

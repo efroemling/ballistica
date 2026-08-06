@@ -1046,7 +1046,7 @@ class PrivateGatherTab(GatherTab):
             code = cast(str, bui.textwidget(query=self._join_party_code_text))
         if not code:
             bui.screenmessage(
-                bui.Lstr(translate=('serverResponses', 'Invalid code.')),
+                _gs.invalid_code_error,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()

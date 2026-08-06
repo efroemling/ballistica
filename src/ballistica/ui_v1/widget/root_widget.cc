@@ -11,6 +11,7 @@
 
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/base/base.h"
@@ -2784,14 +2785,11 @@ void RootWidget::UpdateChests_() {
     // Unit templates come from the duration formatter components
     // (LangStr-era translated content; the builtin package embeds
     // them), keeping this display off the legacy language corpus.
-    // (open_me_text_ below is still legacy; it belongs to the broader
-    // Lstr text drain, not the duration one.)
     auto units = g_base->assets->GetDurationUnitTemplates();
     time_suffix_hours_ = units.hours;
     time_suffix_minutes_ = units.minutes;
     time_suffix_seconds_ = units.seconds;
-    open_me_text_ =
-        g_base->assets->CompileResourceString(R"({"r":"openMeText"})");
+    open_me_text_ = base::BuiltinStrings::Ui::OpenMe()->Evaluate();
     translations_dirty_ = false;
   }
 

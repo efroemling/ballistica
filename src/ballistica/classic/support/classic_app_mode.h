@@ -211,14 +211,6 @@ class ClassicAppMode : public base::AppMode {
 
   /// Thread-safe copy of the hosting asset-package set.
   auto GetHostingAssetPackages() -> std::vector<std::string>;
-  // void set_client_authentication_version(int version) {
-  //   assert(version == 1 || version == 2);
-  //   client_authentication_version_ = version;
-  // }
-  auto client_authentication_version() const {
-    assert(host_protocol_version_ != -1);
-    return host_protocol_version_ >= 36 ? 2 : 1;
-  }
   auto IsPlayerBanned(const scene_v1::PlayerSpec& spec) -> bool;
   void BanPlayer(const scene_v1::PlayerSpec& spec, millisecs_t duration);
   void OnAppStart() override;

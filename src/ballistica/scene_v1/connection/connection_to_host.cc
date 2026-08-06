@@ -96,7 +96,7 @@ static auto RejectReasonMessage_(int reason) -> std::string {
     case BA_REJECT_REASON_MUST_SIGN_IN:
       return base::BuiltinStrings::Account::MustSignIn()->Evaluate();
     default:
-      return g_base->assets->GetResourceString("connectionRejectedText");
+      return base::BuiltinStrings::Net::ConnectionRejected()->Evaluate();
   }
 }
 
@@ -116,17 +116,16 @@ ConnectionToHost::~ConnectionToHost() {
       // '${PEER-NAME}'s party'.
       std::string s;
       if (!party_name_.empty()) {
-        s = g_base->assets->GetResourceString("leftGameText");
-        Utils::StringReplaceOne(&s, "${NAME}", party_name_);
+        s = base::BuiltinStrings::Net::LeftGame(party_name_)->Evaluate();
       } else {
-        s = g_base->assets->GetResourceString("leftPartyText");
-        Utils::StringReplaceOne(&s, "${NAME}", peer_spec().GetDisplayString());
+        s = base::BuiltinStrings::Net::LeftParty(peer_spec().GetDisplayString())
+                ->Evaluate();
       }
       g_base->ScreenMessage(s, {1, 0.5f, 0.0f});
       g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioCorkPop);
     } else {
       g_base->ScreenMessage(
-          g_base->assets->GetResourceString("connectionRejectedText"),
+          base::BuiltinStrings::Net::ConnectionRejected()->Evaluate(),
           {1, 0, 0});
     }
   }
@@ -206,7 +205,7 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
             "ConnectionToHost: aborting unprepped connect to protocol "
                 + std::to_string(their_protocol_version)
                 + " host (requirements exchange did not run).");
-        Error(g_base->assets->GetResourceString("connectionFailedText"));
+        Error(base::BuiltinStrings::Net::ConnectionFailed()->Evaluate());
         return;
       }
 
@@ -350,11 +349,11 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
 
       if (!compatible) {
         if (their_protocol_version > protocol_version()) {
-          Error(g_base->assets->GetResourceString(
-              "incompatibleNewerVersionHostText"));
+          Error(base::BuiltinStrings::Net::IncompatibleNewerVersionHost()
+                    ->Evaluate());
         } else {
           Error(
-              g_base->assets->GetResourceString("incompatibleVersionHostText"));
+              base::BuiltinStrings::Net::IncompatibleVersionHost()->Evaluate());
         }
         return;
       }
@@ -606,28 +605,29 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
           if (auto type = root["t"].as_double()) {
             switch (static_cast<int>(*type)) {
               case BA_JMESSAGE_SCREEN_MESSAGE: {
-                if (auto m = root["m"].as_string()) {
-                  auto r = static_cast<float>(root["r"].double_or(1.0));
-                  auto g = static_cast<float>(root["g"].double_or(1.0));
-                  auto b = static_cast<float>(root["b"].double_or(1.0));
-                  // Prefer the lang-str tagged form when the sender
-                  // included one (we render it in our own locale); the
-                  // flat 'm' text covers senders/receivers predating it.
-                  auto m2 = root["m2"].as_string();
-                  if (m2.has_value() && !m2->empty()
-                      && IsLangStrWireTagged(std::string(*m2))) {
-                    auto [text, literal] =
-                        EvalTaggedScreenMessage_(std::string(*m2));
-                    g_core->logging->Log(
-                        LogName::kBaNetworking, LogLevel::kDebug, [&text] {
-                          return "ConnectionToHost: lang-str transient"
-                                 " screen-message: "
-                                 + text;
-                        });
-                    g_base->ScreenMessage(text, {r, g, b}, literal);
-                  } else {
-                    g_base->ScreenMessage(std::string(*m), {r, g, b});
-                  }
+                auto r = static_cast<float>(root["r"].double_or(1.0));
+                auto g = static_cast<float>(root["g"].double_or(1.0));
+                auto b = static_cast<float>(root["b"].double_or(1.0));
+                // Prefer the lang-str tagged form when the sender
+                // included one (we render it in our own locale); the
+                // flat 'm' text covers senders predating it. Hosts new
+                // enough to know we understand the tagged form (build
+                // gate) send ONLY it -- 'm' may be absent entirely.
+                auto m = root["m"].as_string();
+                auto m2 = root["m2"].as_string();
+                if (m2.has_value() && !m2->empty()
+                    && IsLangStrWireTagged(std::string(*m2))) {
+                  auto [text, literal] =
+                      EvalTaggedScreenMessage_(std::string(*m2));
+                  g_core->logging->Log(
+                      LogName::kBaNetworking, LogLevel::kDebug, [&text] {
+                        return "ConnectionToHost: lang-str transient"
+                               " screen-message: "
+                               + text;
+                      });
+                  g_base->ScreenMessage(text, {r, g, b}, literal);
+                } else if (m.has_value()) {
+                  g_base->ScreenMessage(std::string(*m), {r, g, b});
                 }
                 break;
               }
@@ -659,11 +659,11 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         std::vector<char> str_buffer(buffer.size());
         memcpy(&(str_buffer[0]), &(buffer[1]), buffer.size() - 1);
         str_buffer[str_buffer.size() - 1] = 0;
-        std::string s =
-            g_base->assets->GetResourceString("playerJoinedPartyText");
-        Utils::StringReplaceOne(
-            &s, "${NAME}", PlayerSpec(str_buffer.data()).GetDisplayString());
-        g_base->ScreenMessage(s, {0.5f, 1.0f, 0.5f});
+        g_base->ScreenMessage(
+            base::BuiltinStrings::Net::PlayerJoinedParty(
+                PlayerSpec(str_buffer.data()).GetDisplayString())
+                ->Evaluate(),
+            {0.5f, 1.0f, 0.5f});
         g_base->audio->SafePlayBuiltinSound(
             base::BuiltinSoundID::kAudioGunCocking);
       }
@@ -676,11 +676,11 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         std::vector<char> str_buffer(buffer.size());
         memcpy(&(str_buffer[0]), &(buffer[1]), buffer.size() - 1);
         str_buffer[str_buffer.size() - 1] = 0;
-        std::string s =
-            g_base->assets->GetResourceString("playerLeftPartyText");
-        Utils::StringReplaceOne(
-            &s, "${NAME}", PlayerSpec(&(str_buffer[0])).GetDisplayString());
-        g_base->ScreenMessage(s, {1, 0.5f, 0.0f});
+        g_base->ScreenMessage(
+            base::BuiltinStrings::Net::PlayerLeftParty(
+                PlayerSpec(&(str_buffer[0])).GetDisplayString())
+                ->Evaluate(),
+            {1, 0.5f, 0.0f});
         g_base->audio->SafePlayBuiltinSound(
             base::BuiltinSoundID::kAudioCorkPop);
       }
@@ -833,11 +833,11 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
     // If we've got a name for their party, use it; otherwise call it
     // '${NAME}'s party'.
     if (!party_name_.empty()) {
-      s = g_base->assets->GetResourceString("connectedToGameText");
-      Utils::StringReplaceOne(&s, "${NAME}", party_name_);
+      s = base::BuiltinStrings::Net::ConnectedToGame(party_name_)->Evaluate();
     } else {
-      s = g_base->assets->GetResourceString("connectedToPartyText");
-      Utils::StringReplaceOne(&s, "${NAME}", peer_spec().GetDisplayString());
+      s = base::BuiltinStrings::Net::ConnectedToParty(
+              peer_spec().GetDisplayString())
+              ->Evaluate();
     }
     g_base->ScreenMessage(s, {0.5f, 1, 0.5f});
     g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioGunCocking);

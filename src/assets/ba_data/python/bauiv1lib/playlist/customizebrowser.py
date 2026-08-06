@@ -429,12 +429,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         # Clamp at our max playlist number.
         if len(bui.app.config[self._config_name_full]) > self._max_playlists:
             bui.screenmessage(
-                bui.Lstr(
-                    translate=(
-                        'serverResponses',
-                        'Max number of playlists reached.',
-                    )
-                ),
+                classicassets.strings.playlist.max_reached,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()
@@ -605,12 +600,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         # Clamp at our max playlist number.
         if len(bui.app.config[self._config_name_full]) > self._max_playlists:
             bui.screenmessage(
-                bui.Lstr(
-                    translate=(
-                        'serverResponses',
-                        'Max number of playlists reached.',
-                    )
-                ),
+                classicassets.strings.playlist.max_reached,
                 color=(1, 0, 0),
             )
             builtinassets.audio.error.get().play()

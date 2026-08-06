@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/base/graphics/graphics.h"
@@ -890,8 +891,7 @@ void ClassicAppMode::UpdateGameRoster() {
     }
 
     // Add all connected clients.
-    bool doing_v2_auth =
-        require_client_authentication() && client_authentication_version() == 2;
+    bool doing_v2_auth = require_client_authentication();
     for (auto&& i : connections()->connections_to_clients()) {
       if (i.second->can_communicate()) {
         GameRosterEntry entry;
@@ -985,8 +985,10 @@ void ClassicAppMode::UpdateKickVote_() {
   }
 
   if (vote_failed) {
-    connections()->SendScreenMessageToClients(R"({"r":"kickVoteFailedText"})",
-                                              1, 1, 0);
+    connections()->SendScreenMessageToClients(
+        R"({"r":"kickVoteFailedText"})", 1, 1, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::KickVoteFailed()));
     kick_vote_in_progress_ = false;
 
     // Disallow kicking for a while for everyone.. but ESPECIALLY so for the
@@ -1035,7 +1037,10 @@ void ClassicAppMode::UpdateKickVote_() {
                                          .GetDisplayString()
                                          .c_str())
               + "]]}",
-          1, 1, 0);
+          1, 1, 0,
+          scene_v1::ConnectionSet::LangStrWireTagged(
+              base::BuiltinStrings::Session::KickOccurred(
+                  kick_vote_target->GetCombinedSpec().GetDisplayString())));
       kick_vote_in_progress_ = false;
       connections()->DisconnectClient(kick_vote_target->id(), kKickBanSeconds);
 
@@ -1044,7 +1049,9 @@ void ClassicAppMode::UpdateKickVote_() {
       connections()->SendScreenMessageToClients(
           R"({"r":"votesNeededText","s":[["${NUMBER}",")"
               + std::to_string(votes_needed) + "\"]]}",
-          1, 1, 0);
+          1, 1, 0,
+          scene_v1::ConnectionSet::LangStrWireTagged(
+              base::BuiltinStrings::Session::KickVotesNeeded(votes_needed)));
     }
   }
 }
@@ -1056,14 +1063,20 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
 
   if (starter == target) {
     // Don't let anyone kick themselves.
-    starter->SendScreenMessage(R"({"r":"kickVoteCantKickSelfText",)"
-                               R"("f":"kickVoteFailedText"})",
-                               1, 0, 0);
+    starter->SendScreenMessage(
+        R"({"r":"kickVoteCantKickSelfText",)"
+        R"("f":"kickVoteFailedText"})",
+        1, 0, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::KickVoteCantKickSelf()));
   } else if (target->IsAdmin()) {
     // Admins are immune to kicking
-    starter->SendScreenMessage(R"({"r":"kickVoteCantKickAdminText",)"
-                               R"("f":"kickVoteFailedText"})",
-                               1, 0, 0);
+    starter->SendScreenMessage(
+        R"({"r":"kickVoteCantKickAdminText",)"
+        R"("f":"kickVoteFailedText"})",
+        1, 0, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::KickVoteCantKickAdmins()));
   } else if (starter->IsAdmin()) {
     // Admin doing the kicking succeeds instantly.
     connections()->SendScreenMessageToClients(
@@ -1071,34 +1084,51 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
             + Utils::GetJSONString(
                 target->GetCombinedSpec().GetDisplayString().c_str())
             + "]]}",
-        1, 1, 0);
+        1, 1, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::KickOccurred(
+                target->GetCombinedSpec().GetDisplayString())));
     connections()->DisconnectClient(target->id(), kKickBanSeconds);
-    starter->SendScreenMessage(R"({"r":"kickVoteCantKickAdminText",)"
-                               R"("f":"kickVoteFailedText"})",
-                               1, 0, 0);
+    starter->SendScreenMessage(
+        R"({"r":"kickVoteCantKickAdminText",)"
+        R"("f":"kickVoteFailedText"})",
+        1, 0, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::KickVoteCantKickAdmins()));
   } else if (!kick_voting_enabled_) {
     // No kicking otherwise if its disabled.
-    starter->SendScreenMessage(R"({"r":"kickVotingDisabledText",)"
-                               R"("f":"kickVoteFailedText"})",
-                               1, 0, 0);
+    starter->SendScreenMessage(
+        R"({"r":"kickVotingDisabledText",)"
+        R"("f":"kickVoteFailedText"})",
+        1, 0, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::KickVotingDisabled()));
   } else if (kick_vote_in_progress_) {
     // Vote in progress error.
-    starter->SendScreenMessage(R"({"r":"voteInProgressText"})", 1, 0, 0);
+    starter->SendScreenMessage(
+        R"({"r":"voteInProgressText"})", 1, 0, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::VoteInProgress()));
   } else if (connections()->GetConnectedClientCount()
              < kKickVoteMinimumClients) {
     // There's too few clients to effectively vote.
-    starter->SendScreenMessage(R"({"r":"kickVoteFailedNotEnoughVotersText",)"
-                               R"("f":"kickVoteFailedText"})",
-                               1, 0, 0);
+    starter->SendScreenMessage(
+        R"({"r":"kickVoteFailedNotEnoughVotersText",)"
+        R"("f":"kickVoteFailedText"})",
+        1, 0, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::KickVoteNotEnoughPlayers()));
   } else if (current_time < starter->next_kick_vote_allow_time()) {
     // Not yet allowed error.
+    auto delay_seconds =
+        std::max(millisecs_t{1},
+                 (starter->next_kick_vote_allow_time() - current_time) / 1000);
     starter->SendScreenMessage(
         R"({"r":"voteDelayText","s":[["${NUMBER}",")"
-            + std::to_string(std::max(
-                millisecs_t{1},
-                (starter->next_kick_vote_allow_time() - current_time) / 1000))
-            + "\"]]}",
-        1, 0, 0);
+            + std::to_string(delay_seconds) + "\"]]}",
+        1, 0, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::VoteDelay(delay_seconds)));
   } else {
     std::vector<scene_v1::ConnectionToClient*> connected_clients =
         connections()->GetConnectionsToClients();
@@ -1112,10 +1142,18 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
                 + Utils::GetJSONString(
                     target->GetCombinedSpec().GetDisplayString().c_str())
                 + "]]}",
-            1, 1, 0);
-        client->SendScreenMessage(R"({"r":"kickWithChatText","s":)"
-                                  R"([["${YES}","'1'"],["${NO}","'0'"]]})",
-                                  1, 1, 0);
+            1, 1, 0,
+            scene_v1::ConnectionSet::LangStrWireTagged(
+                base::BuiltinStrings::Session::KickQuestion(
+                    target->GetCombinedSpec().GetDisplayString())));
+        // (The vote handler takes chat '1' as yes and '2' as no; the
+        // legacy text long said '0' for no, which did nothing.)
+        client->SendScreenMessage(
+            R"({"r":"kickWithChatText","s":)"
+            R"([["${YES}","'1'"],["${NO}","'2'"]]})",
+            1, 1, 0,
+            scene_v1::ConnectionSet::LangStrWireTagged(
+                base::BuiltinStrings::Session::KickWithChat("'1'", "'2'")));
       } else {
         // For the kicker/kickee, simply print that a kick vote has been
         // started.
@@ -1124,7 +1162,10 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
                 + Utils::GetJSONString(
                     target->GetCombinedSpec().GetDisplayString().c_str())
                 + "]]}",
-            1, 1, 0);
+            1, 1, 0,
+            scene_v1::ConnectionSet::LangStrWireTagged(
+                base::BuiltinStrings::Session::KickVoteStarted(
+                    target->GetCombinedSpec().GetDisplayString())));
       }
     }
     kick_vote_end_time_ = current_time + kKickVoteDuration;

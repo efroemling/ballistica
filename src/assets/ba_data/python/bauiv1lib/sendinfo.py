@@ -408,10 +408,13 @@ async def _send_info(description: str) -> None:
                 SendInfoMessage(description)
             )
 
-        # Support simple message printing from v2 server.
+        # Support simple message printing from v2 server. (Current
+        # servers only populate this for old builds -- new ones get
+        # client-effects -- so treat anything arriving as literal
+        # display text rather than legacy-translating it.)
         if response.message is not None:
             bui.screenmessage(
-                bui.Lstr(translate=('serverResponses', response.message)),
+                bui.langstr_value(response.message),
                 color=(0, 1, 0),
             )
         # As of newer builds we support client-effects too.

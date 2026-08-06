@@ -39,6 +39,25 @@ def _native_from_spec(spec: bacommon.langstr.LangStrSpec) -> babase.LangStr:
     return _babase.LangStr(dataclass_to_json(spec))
 
 
+def langstr_value(value: str) -> babase.LangStr:
+    """Return a :class:`~babase.LangStr` displaying ``value`` verbatim.
+
+    For text that is already display-final -- notably server-sent flat
+    text pre-translated to our locale under the lifetime rule (see
+    'Server-sent strings' in efrohome's asset-packages design doc).
+    The result renders exactly as given in every locale, with no
+    resource lookup, legacy translation, or legacy Lstr-json
+    interpretation applied anywhere along the display path.
+
+    (Safe to build publicly, unlike resource-bearing specs: a value
+    form carries no package refs, so the D28 verified-context rule has
+    nothing to verify.)
+    """
+    import bacommon.langstr as _bclangstr
+
+    return _native_from_spec(_bclangstr.LangStrSpecValue(value))
+
+
 async def resolve_langstrs(
     specs: Sequence[bacommon.langstr.LangStrSpec],
     *,

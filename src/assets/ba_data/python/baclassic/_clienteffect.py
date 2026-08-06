@@ -132,23 +132,13 @@ def _run_effects(
     for effect in effects:
         effecttype = effect.get_type_id()
         if effecttype is clfx.EffectTypeID.LEGACY_SCREEN_MESSAGE:
-            assert isinstance(effect, clfx.LegacyScreenMessage)
-            textfin = bauiv1.Lstr(
-                translate=('serverResponses', effect.message)
-            ).evaluate()
-            if effect.subs is not None:
-                # Should always be even.
-                assert len(effect.subs) % 2 == 0
-                for j in range(0, len(effect.subs) - 1, 2):
-                    textfin = textfin.replace(
-                        effect.subs[j],
-                        effect.subs[j + 1],
-                    )
-            bauiv1.apptimer(
-                delay,
-                strict_partial(
-                    bauiv1.screenmessage, textfin, color=effect.color
-                ),
+            # Unreachable on current builds: servers only emit this
+            # effect to pre-v2-effects builds (< 22311), so a build
+            # containing this code never receives one. Ignore rather
+            # than carrying the dead legacy-translation display path.
+            logging.warning(
+                'Ignoring legacy screen-message client-effect'
+                ' (should not be sent to this build).'
             )
         elif effecttype is clfx.EffectTypeID.SCREEN_MESSAGE:
             assert isinstance(effect, clfx.ScreenMessage)

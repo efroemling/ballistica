@@ -245,21 +245,11 @@ class Session:
         if identifier:
             leave_time = self._players_on_wait.get(identifier)
             if leave_time:
-                diff = str(
-                    math.ceil(
-                        _g_player_rejoin_cooldown
-                        - babase.apptime()
-                        + leave_time
-                    )
+                diff = math.ceil(
+                    _g_player_rejoin_cooldown - babase.apptime() + leave_time
                 )
                 _bascenev1.broadcastmessage(
-                    babase.Lstr(
-                        translate=(
-                            'serverResponses',
-                            'You can join in ${COUNT} seconds.',
-                        ),
-                        subs=[('${COUNT}', diff)],
-                    ),
+                    builtinassets.strings.session.join_cooldown(seconds=diff),
                     color=(1, 1, 0),
                     clients=[player.inputdevice.client_id],
                     transient=True,

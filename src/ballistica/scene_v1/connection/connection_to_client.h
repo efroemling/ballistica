@@ -82,7 +82,6 @@ class ConnectionToClient : public Connection {
   }
 
  private:
-  virtual auto ShouldPrintIncompatibleClientErrors() const -> bool;
   auto GetClientInputDevice(int remote_id) -> ClientInputDevice*;
   void Error(const std::string& error_msg) override;
 

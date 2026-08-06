@@ -668,6 +668,15 @@ class ChestActionResponse(Response):
     # Printable error if something goes wrong.
     error: Annotated[str | None, IOAttrs('e')] = None
 
+    # If True, ``error`` is display-final text already translated to
+    # the client's held locale server-side (the lifetime-rule
+    # convention; see 'Server-sent strings' in efrohome
+    # asset-packages.md). Clients seeing this must render the text via
+    # the literal path -- never legacy serverResponses translation or
+    # Lstr-json interpretation. Absent/False means legacy behavior:
+    # English text the client may translate via its local corpus.
+    error_is_final: Annotated[bool, IOAttrs('ef', store_default=False)] = False
+
     # Printable warning. Shown in orange with an error sound. Does not
     # mean the action failed; only that there's something to tell the
     # users such as 'It looks like you are faking ad views; stop it or
