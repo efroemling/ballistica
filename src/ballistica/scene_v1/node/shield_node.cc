@@ -29,6 +29,7 @@ class ShieldNodeType : public NodeType {
   BA_FLOAT_ARRAY_ATTR(color, color, SetColor);
   BA_BOOL_ATTR(always_show_health_bar, always_show_health_bar,
                set_always_show_health_bar);
+  BA_BOOL_ATTR(hide_health_bar, hide_health_bar, set_hide_health_bar);
 #undef BA_NODE_TYPE_CLASS
 
   ShieldNodeType()
@@ -37,7 +38,8 @@ class ShieldNodeType : public NodeType {
         radius(this),
         hurt(this),
         color(this),
-        always_show_health_bar(this) {}
+        always_show_health_bar(this),
+        hide_health_bar(this) {}
 };
 static NodeType* node_type{};
 
@@ -140,6 +142,8 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
 
   // Life bar.
   {
+  // Life bar — skipped entirely when hide_health_bar is true.
+  if (!hide_health_bar_) {
     millisecs_t fade_time = 2000;
 
     millisecs_t since_last_hurt_change =
@@ -213,7 +217,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
       }
       c.Submit();
     }
-  }
+  }  // !hide_health_bar_
 
   // main bubble
   float r = hurt_rand_;
@@ -305,3 +309,4 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
 }
 
 }  // namespace ballistica::scene_v1
+ 
