@@ -185,9 +185,11 @@ _FALLBACK_ASSETS_CONFIG_KEY = 'ShowingFallbackAssets'
 #: runs while any resolved package is on fallback-quality flavors (see
 #: :meth:`AssetSubsystem._quality_retry_loop`). The server enqueues the
 #: requested tier's build the moment it serves a substitute, and those
-#: builds typically land within a few minutes, so we start checking
-#: soon-ish and back off to a gentle steady-state poll.
-_QUALITY_RETRY_MIN_SECONDS = 30.0
+#: builds typically land within minutes (sometimes seconds when only a
+#: little was missing), so we start checking almost immediately —
+#: no-progress retries are just a cheap Tier-1 round-trip — and double
+#: our way out to a gentle steady-state poll.
+_QUALITY_RETRY_MIN_SECONDS = 5.0
 _QUALITY_RETRY_MAX_SECONDS = 900.0
 
 _BUCKET_FALLBACKS: dict[str, str | None] = {

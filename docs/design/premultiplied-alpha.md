@@ -53,7 +53,11 @@ fast-path (`kSimpleComponentInlineColor`), which a centralized premultiply in
 in the renderer.
 
 Callers that follow this: `text_node`, `image_node`, `text_widget`,
-`screen_messages`, `image_widget`, `button_widget` (background + icon),
+`screen_messages` (both text passes, plus — missed until a 2026-08 fix for
+a fade-end pop — the bottom-message shadow nine-patch and top-message
+icons; a "follower" here can still be only partial, so when hunting a
+fade bug check every `SetColor` in the file, not just this list),
+`image_widget`, `button_widget` (background + icon),
 `spinner_widget`, `scroll_widget` / `h_scroll_widget` (troughs, page
 buttons, outlines), `container_widget`, `touch_input` (on-screen joystick +
 action buttons), `locator_node`, `scorch_node`, `spaz_node` (name text,
