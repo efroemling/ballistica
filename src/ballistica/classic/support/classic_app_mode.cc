@@ -1028,7 +1028,7 @@ void ClassicAppMode::UpdateKickVote_() {
         votes_required = total_client_count - 3;
         break;
     }
-    int votes_needed = votes_required - yes_votes;
+    int votes_needed = votes_required - (yes_votes - no_votes);
     if (votes_needed <= 0) {
       // ZOMG the vote passed; perform the kick.
       connections()->SendScreenMessageToClients(
