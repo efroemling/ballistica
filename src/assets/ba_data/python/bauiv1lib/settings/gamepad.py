@@ -572,9 +572,7 @@ class GamepadSettingsWindow(bui.MainWindow):
             transition_out='out_scale',
         )
 
-    def get_control_value_name(
-        self, control: str
-    ) -> str | bui.Lstr | bui.LangStr:
+    def get_control_value_name(self, control: str) -> str | bui.LangStr:
         """(internal)"""
         # pylint: disable=too-many-return-statements
         assert self._settings is not None

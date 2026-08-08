@@ -159,6 +159,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* pos_obj{Py_None};
   PyObject* label_obj{Py_None};
   PyObject* edit_obj{Py_None};
+  PyObject* query_obj{Py_None};
   ContainerWidget* parent_widget{};
   PyObject* on_activate_call_obj{Py_None};
   PyObject* color_obj{Py_None};
@@ -244,9 +245,10 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "rotate",
                                  "better_bg_fit",
                                  "transition_type",
+                                 "query",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &on_activate_call_obj, &label_obj, &color_obj,
           &down_widget_obj, &up_widget_obj, &left_widget_obj, &right_widget_obj,
@@ -258,11 +260,21 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &autoselect_obj, &mask_texture_obj, &tint_texture_obj,
           &tint_color_obj, &tint2_color_obj, &text_flatness_obj,
           &text_res_scale_obj, &enabled_obj, &text_literal_obj, &opacity_obj,
-          &rotate_obj, &better_bg_fit_obj, &transition_type_obj))
+          &rotate_obj, &better_bg_fit_obj, &transition_type_obj, &query_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
     throw Exception("UI functions must be called with no context set.");
+  }
+
+  // Handle the query special case first (mirrors textwidget's `query`).
+  if (query_obj != Py_None) {
+    auto* qb = dynamic_cast<ButtonWidget*>(UIV1Python::GetPyWidget(query_obj));
+    if (qb == nullptr) {
+      throw Exception("Invalid or nonexistent widget.",
+                      PyExcType::kWidgetNotFound);
+    }
+    return PyUnicode_FromString(qb->GetQueryText().c_str());
   }
 
   // Gather up any user code triggered by this stuff and run it at the end
@@ -560,13 +572,20 @@ static PyMethodDef PyButtonWidgetDef = {
     "  rotate: float | None = None,\n"
     "  better_bg_fit: bool | None = None,\n"
     "  transition_type: Literal['in_left', 'scale'] | None = None,\n"
+    "  query: bauiv1.Widget | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a button widget.\n"
     "\n"
     "Pass a valid existing bauiv1.Widget as 'edit' to modify it; otherwise\n"
     "a new one is created and returned. Arguments that are not set to None\n"
-    "are applied to the Widget.",
+    "are applied to the Widget.\n"
+    "\n"
+    "Pass a button as 'query' to instead return its current label text as\n"
+    "a str (the translated form when the label is a language-string). This\n"
+    "mirrors textwidget's 'query' and is the only way to read a label that\n"
+    "was set directly on the button rather than via a separate overlaid\n"
+    "text widget.",
 };
 
 // --------------------------- checkboxwidget ----------------------------------

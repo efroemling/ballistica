@@ -77,18 +77,66 @@ def _click_widget(widget: object, tag: str, label: str) -> None:
     _emit(tag, 'ok', f'{label} @ {vx:.0f},{vy:.0f}')
 
 
+#: Cap on how many construction sites a failure message lists. Enough
+#: to be actionable without turning one failed press into a wall of log.
+_MAX_ORIGINS = 8
+
+
+def _origin(widget: object) -> str:
+    """Where a widget was constructed, as ``file.py:line``.
+
+    Read off the widget's repr, which carries ``origin='...'`` from the
+    native ``Widget::source_location()`` (populated for every widget,
+    always). Returns ``'?'`` if the repr doesn't carry one.
+    """
+    text = repr(widget)
+    marker = "origin='"
+    start = text.find(marker)
+    if start < 0:
+        return '?'
+    start += len(marker)
+    end = text.find("'", start)
+    return text[start:end] if end > start else '?'
+
+
+def _describe(widgets: list[object]) -> str:
+    """Render widgets as ``id@origin`` for a failure message.
+
+    The whole point of naming construction sites in a failure is that
+    the fix -- usually adding an ``id=`` -- happens at exactly that
+    line, so the message should hand it over rather than making the
+    caller go hunting with dump_widgets.
+    """
+    shown = widgets[:_MAX_ORIGINS]
+    parts = []
+    for w in shown:
+        wid = _widget_id(w)
+        shown_id = wid if wid != 'None' else '<no-id>'
+        parts.append(f'{shown_id}@{_origin(w)}')
+    out = ', '.join(parts)
+    if len(widgets) > len(shown):
+        out += f', ...(+{len(widgets) - len(shown)} more)'
+    return out
+
+
 def press_by_id(widget_id: str, tag: str = 'press') -> None:
     """Click the (first) widget with the given string ID.
 
     Fails the operation (``[automation] <tag> fail no_widget:<id>``)
-    if no widget with the ID is currently in the UI tree. Note that
-    not every widget in the codebase has an ID — for those, use
-    :func:`press_by_label` or add an ``id=`` to the widget's
+    if no widget with the ID is currently in the UI tree. The failure
+    also lists the IDs that *are* present, which catches the common
+    cases of a typo or a stale window prefix.
+
+    Note that not every widget in the codebase has an ID — for those,
+    use :func:`press_by_label` or add an ``id=`` to the widget's
     construction site.
     """
     w = _bauiv1.widget_by_id(widget_id)
     if w is None:
-        _emit(tag, 'fail', f'no_widget:{widget_id}')
+        present = _find_widgets(lambda x: _widget_id(x) != 'None')
+        ids = sorted(_widget_id(x) for x in present)[:_MAX_ORIGINS]
+        extra = f' present={ids}' if ids else ' (no ids in tree)'
+        _emit(tag, 'fail', f'no_widget:{widget_id}{extra}')
         return
     _click_widget(w, tag, widget_id)
 
@@ -107,10 +155,15 @@ def press_by_label(label_text: str, tag: str = 'press') -> None:
     textwidgets (rare but possible).
 
     Fails with:
-      * ``no_label:<text>`` — no textwidget with that text exists.
-      * ``ambiguous_label:<text> count=N`` — multiple textwidgets
-        match. Use :func:`dump_widgets` to disambiguate, or use
-        :func:`press_by_id` instead.
+      * ``no_label:<text>`` — nothing with that text exists. The
+        message lists label-less buttons as ``<no-id>@file.py:line``,
+        since one of them is usually what was meant and the fix is an
+        ``id=`` (or a label) at that exact line.
+      * ``ambiguous_label:<text> count=N`` — several match. The
+        message names each one's id and construction site, so the
+        duplicate is identifiable without a dump_widgets hunt. Fix by
+        giving the intended one an ``id=`` and using
+        :func:`press_by_id`.
 
     For ambiguity-resolution we could later add label+location
     or label+container filters, but exact-match is simplest for now.
@@ -119,7 +172,22 @@ def press_by_label(label_text: str, tag: str = 'press') -> None:
         predicate=lambda w: _label_text(w) == label_text,
     )
     if not candidates:
-        _emit(tag, 'fail', f'no_label:{label_text!r}')
+        # Point at the buttons that are genuinely unreachable -- no
+        # label AND no id. Those are both the likely intended target
+        # and the ones actually worth fixing; a label-less button that
+        # already has an id is reachable via press_by_id and would only
+        # be noise here (the toolbar is full of them).
+        blank: list[object] = []
+        for w in _find_widgets(
+            lambda x: _label_text(x) == '' and _widget_id(x) == 'None'
+        ):
+            try:
+                _bauiv1.buttonwidget(query=w)  # type: ignore[arg-type]
+            except Exception:  # pylint: disable=broad-except
+                continue
+            blank.append(w)
+        extra = f' unreachable_buttons=[{_describe(blank)}]' if blank else ''
+        _emit(tag, 'fail', f'no_label:{label_text!r}{extra}')
         return
 
     # Resolve each textwidget candidate to its draw_controller (the
@@ -148,7 +216,8 @@ def press_by_label(label_text: str, tag: str = 'press') -> None:
         _emit(
             tag,
             'fail',
-            f'ambiguous_label:{label_text!r} count={len(unique)}',
+            f'ambiguous_label:{label_text!r} count={len(unique)}'
+            f' [{_describe([w for w, _ in unique])}]',
         )
         return
     target, how = unique[0]
@@ -315,21 +384,33 @@ def _label_text(widget: object) -> str:
     """Best-effort extraction of a widget's visible text.
 
     Tries ``bui.textwidget(query=widget)`` first, which works for any
-    widget that's actually a TextWidget. Returns empty string for
-    widgets that aren't textwidgets (the query raises) — including
-    ButtonWidgets, whose visible labels typically live in a separate
-    overlaid TextWidget (with ``draw_controller`` pointing back to
-    the button).
+    widget that's actually a TextWidget. Many button labels live in a
+    separate overlaid TextWidget (with ``draw_controller`` pointing
+    back to the button) and are found that way.
+
+    Falls back to ``bui.buttonwidget(query=widget)`` for buttons whose
+    label was set directly on the button instead (``buttonwidget(
+    label=...)``), which has no overlaid text widget to find. Without
+    that fallback such buttons report no label at all and are
+    unreachable by :func:`press_by_label` — notably the close buttons
+    on popup windows, which also carry no widget id.
+
+    Returns empty string for widgets that are neither.
 
     If the raw text is a JSON-encoded ``Lstr`` (the common case for
     localized labels — they look like ``{"r":"someResourceKey"}``),
     we evaluate it to its translated form so callers can match
     against display text rather than the JSON blob.
     """
-    try:
-        # Cast through Any since we accept opaque widget refs.
-        raw = str(_bauiv1.textwidget(query=widget))  # type: ignore[arg-type]
-    except Exception:  # pylint: disable=broad-except
+    raw: str | None = None
+    for query in (_bauiv1.textwidget, _bauiv1.buttonwidget):
+        try:
+            # Cast through Any since we accept opaque widget refs.
+            raw = str(query(query=widget))  # type: ignore[arg-type]
+            break
+        except Exception:  # pylint: disable=broad-except
+            continue
+    if raw is None:
         return ''
     if raw.startswith('{') and raw.endswith('}'):
         try:

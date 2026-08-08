@@ -165,6 +165,43 @@ def _evaluate_lstr_json(raw: str) -> str:
     return str(_babase.evaluate_lstr(raw))
 
 
+def click_at(x: float, y: float, *, tag: str = 'click') -> None:
+    """Synthesize a mouse click at virtual-screen coords.
+
+    Coords are absolute virtual-screen, origin **bottom-left**, y
+    growing upward (the OpenGL convention the rest of the automation
+    surface uses). To convert from a screenshot pixel ``(px, py)``
+    measured top-left in an image of size ``(iw, ih)``::
+
+        vx = px * vw / iw
+        vy = vh - py * vh / ih
+
+    where ``(vw, vh)`` is :func:`babase.get_virtual_screen_size()`.
+
+    Prefer :func:`bauiv1._automation.press_by_id` or ``press_by_label``
+    whenever the target is a widget you can name -- they are stable
+    against layout changes, where coords are not. This exists for the
+    cases those cannot reach: overlays and popups that never appear in
+    the main-window widget tree (the get-remote window, for one), and
+    non-widget hit targets.
+
+    Emits ``[automation] <tag> fail not_compiled_in`` when the build
+    was made without ``BA_ENABLE_AUTOMATION``, or ``fail
+    headless_mode`` when called from a headless build.
+    """
+    if not hasattr(_babase, 'automation_press_at_virtual'):
+        _emit(tag, 'fail', 'not_compiled_in')
+        return
+    try:
+        _badev.automation_press_at_virtual(button=1, x=x, y=y)
+    except RuntimeError as exc:
+        if 'headless' in str(exc).lower():
+            _emit(tag, 'fail', 'headless_mode')
+            return
+        raise
+    _emit(tag, 'ok', f'@ {x:.0f},{y:.0f}')
+
+
 def scroll_at(
     x: float,
     y: float,

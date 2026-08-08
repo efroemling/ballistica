@@ -121,17 +121,18 @@ class JoinInfo:
         classic = babase.app.classic
         assert classic is not None
 
+        compose = _commonassets.strings.compose
         punch_key = keyboard.get_button_name(
             classic.get_input_device_mapped_value(keyboard, 'buttonPunch')
         )
-        self._press_to_punch = _commonassets.strings.compose.or_join(
-            a=f'\'{punch_key}\'', b=self._press_to_punch
+        self._press_to_punch = compose.or_join(
+            a=compose.quoted(text=punch_key), b=self._press_to_punch
         )
         bomb_key = keyboard.get_button_name(
             classic.get_input_device_mapped_value(keyboard, 'buttonBomb')
         )
-        self._press_to_bomb = _commonassets.strings.compose.or_join(
-            a=f'\'{bomb_key}\'', b=self._press_to_bomb
+        self._press_to_bomb = compose.or_join(
+            a=compose.quoted(text=bomb_key), b=self._press_to_bomb
         )
         self._joinmsg = _commonassets.strings.compose.angle_button_suffix(
             main=classicassets.strings.lobby.press_punch_to_join,

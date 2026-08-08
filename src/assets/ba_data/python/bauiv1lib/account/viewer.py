@@ -89,6 +89,7 @@ class AccountViewerWindow(PopupWindow):
         )
 
         self._cancel_button = bui.buttonwidget(
+            id=f'{self._idprefix}|close',
             parent=self.root_widget,
             position=(50, self._height - 30),
             size=(50, 50),
@@ -148,6 +149,7 @@ class AccountViewerWindow(PopupWindow):
             )
         ):
             self._extras_menu_button = bui.buttonwidget(
+                id=f'{self._idprefix}|more',
                 parent=self.root_widget,
                 size=(20, 20),
                 position=(self._width - 60, self._height - 30),

@@ -535,13 +535,24 @@ class LanguageSubsystem(AppSubsystem):
         _babase.reload_language(loaded_asset_package_apverids(), plural_locale)
 
         if switched and print_change:
+            # Safe up-call: babase is fully imported by the time a
+            # language switch can happen; the cycle pylint sees is
+            # structural only.
+            # pylint: disable-next=cyclic-import
+            from babase import _commonassets
+
+            from bacommon.locale import LocaleResolved
+
+            resolved = {lr.locale.long_value: lr for lr in LocaleResolved}.get(
+                language
+            )
+            langname: str | babase.LangStr = (
+                getattr(_commonassets.strings.locales, resolved.value)
+                if resolved is not None
+                else language
+            )
             _babase.screenmessage(
-                Lstr(
-                    resource='languageSetText',
-                    subs=[
-                        ('${LANGUAGE}', Lstr(translate=('languages', language)))
-                    ],
-                ),
+                _commonassets.strings.locales.language_set(language=langname),
                 color=(0, 1, 0),
             )
 

@@ -139,6 +139,15 @@ class LangStr {
                        const std::vector<std::string>* packages = nullptr)
       -> std::expected<std::shared_ptr<const LangStr>, std::string>;
 
+  /// Build a pure-literal value form displaying ``text`` verbatim: no
+  /// subs, no package, no resource lookup. Every brace in ``text`` is
+  /// doubled so any ``{token}``-shaped run survives evaluation
+  /// untouched (``{{`` -> ``{`` and ``}}`` -> ``}`` at eval time), which
+  /// makes this safe for arbitrary OS-supplied text (key names, device
+  /// names) that we neither author nor control.
+  static auto MakeLiteral(std::string_view text)
+      -> std::shared_ptr<const LangStr>;
+
   /// Convert (recursively) to the self-describing resource form's wire
   /// JSON: bound indexed nodes become resource nodes (name + keyword
   /// subs, resolved via the current native tables); resource/value

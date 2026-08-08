@@ -2,6 +2,7 @@
 
 #include "ballistica/base/input/device/keyboard_input.h"
 
+#include <memory>
 #include <string>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
@@ -476,8 +477,11 @@ void KeyboardInput::UpdateArrowKeys_(BAKeycode key) {
   }
 }
 
-auto KeyboardInput::GetButtonName(int index) -> std::string {
-  return g_base->app_adapter->GetKeyName(index);
+auto KeyboardInput::GetButtonName(int index) -> std::shared_ptr<const LangStr> {
+  // OS-supplied key names ('A', 'Space', 'Left Shift') are English and
+  // untranslated by design -- they name a physical key, so they ship as
+  // literal value forms (and may contain braces; MakeLiteral escapes).
+  return LangStr::MakeLiteral(g_base->app_adapter->GetKeyName(index));
 }
 
 auto KeyboardInput::DoGetDeviceName() -> std::string { return "Keyboard"; }

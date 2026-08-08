@@ -4,6 +4,7 @@
 #define BALLISTICA_BASE_INPUT_DEVICE_JOYSTICK_INPUT_H_
 
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 
@@ -102,7 +103,7 @@ class JoystickInput : public InputDevice {
 
   auto HasMeaningfulButtonNames() -> bool override;
 
-  auto GetButtonName(int index) -> std::string override;
+  auto GetButtonName(int index) -> std::shared_ptr<const LangStr> override;
 
   /// Custom controller types can pass in controller-specific button names.
   void SetButtonName(int button, const std::string& name);
@@ -118,6 +119,10 @@ class JoystickInput : public InputDevice {
  private:
   void UpdateRunningState();
   auto GetCalibratedValue(float raw, float neutral) const -> int32_t;
+
+  /// Device-specific glyph name for a button, or empty if we have none
+  /// (in which case the caller falls back to the generic 'Button N').
+  auto DeviceButtonNameText_(int index) -> std::string;
 
   JoystickInput* child_joy_stick_{};
   JoystickInput* parent_joy_stick_{};

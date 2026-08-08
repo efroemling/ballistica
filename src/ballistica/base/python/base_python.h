@@ -111,7 +111,6 @@ class BasePython {
     kInputTypeClass,
     kPermissionClass,
     kSpecialCharClass,
-    kLstrFromJsonCall,
     kHashStringsCall,
     kHaveAccountV2CredentialsCall,
     kImplicitSignInCall,

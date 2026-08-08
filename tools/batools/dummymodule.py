@@ -198,10 +198,10 @@ def _writefuncs(
                 returns = returns[1:-1]
             if returns == 'None':
                 returnstr = 'return None'
-            elif returns == 'babase.Lstr':
+            elif returns == 'babase.LangStr':
                 returnstr = (
                     'import babase  # pylint: disable=cyclic-import\n'
-                    "return babase.Lstr(value='')"
+                    "return babase.LangStr.from_text('')"
                 )
             elif returns == 'babase.AppTime':
                 returnstr = (

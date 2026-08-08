@@ -24,14 +24,14 @@ namespace ballistica::base {
 
 BGDynamics::BGDynamics() = default;
 
-void BGDynamics::AddTerrain(CollisionMeshAsset* o) {
+void BGDynamics::AddTerrain(CollisionMeshAsset* o, const Matrix44f& transform) {
   assert(g_base->InLogicThread());
 
   // Allocate a fresh reference to keep this collision-mesh alive as long as
   // we're using it. Once we're done, we'll pass the pointer back to the
   // main thread to free.
   auto* mesh_ref = new Object::Ref<CollisionMeshAsset>(o);
-  g_base->bg_dynamics_server->PushAddTerrainCall(mesh_ref);
+  g_base->bg_dynamics_server->PushAddTerrainCall(mesh_ref, transform);
 }
 
 void BGDynamics::RemoveTerrain(CollisionMeshAsset* o) {

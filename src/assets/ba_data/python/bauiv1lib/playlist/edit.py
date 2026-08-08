@@ -405,7 +405,7 @@ class PlaylistEditWindow(bui.MainWindow):
         for index, pentry in enumerate(self._editcontroller.get_playlist()):
             try:
                 cls = bui.getclass(pentry['type'], subclassof=bs.GameActivity)
-                desc = cls.get_settings_display_string(pentry)
+                desc = cls.get_settings_display_string(pentry, langstr=True)
             except Exception:
                 logging.exception('Error in playlist refresh.')
                 desc = "(invalid: '" + pentry['type'] + "')"

@@ -244,44 +244,6 @@ auto Platform::DoGetCacheDirectoryMonolithicDefault()
   return {};
 }
 
-// FIXME: should make this unnecessary.
-auto Platform::GetLowLevelConfigValue(const char* key, int default_value)
-    -> int {
-  std::string path =
-      g_core->GetConfigDirectory() + BA_DIRSLASH + ".cvar_" + key;
-  int val = default_value;
-  FILE* f = FOpen(path.c_str(), "r");
-  if (f) {
-    int val2;
-    int result = fscanf(f, "%d", &val2);  // NOLINT
-    if (result == 1) {
-      // I'm guessing scanned val is probably untouched on failure
-      // but why risk it? Let's only copy it in if it looks successful.
-      val = val2;
-    }
-    fclose(f);
-  }
-  return val;
-}
-
-// FIXME: should make this unnecessary.
-void Platform::SetLowLevelConfigValue(const char* key, int value) {
-  std::string path =
-      g_core->GetConfigDirectory() + BA_DIRSLASH + ".cvar_" + key;
-  std::string out = std::to_string(value);
-  FILE* f = FOpen(path.c_str(), "w");
-  if (f) {
-    size_t result = fwrite(out.c_str(), out.size(), 1, f);
-    if (result != 1)
-      g_core->logging->Log(LogName::kBa, LogLevel::kError,
-                           "unable to write low level config file.");
-    fclose(f);
-  } else {
-    g_core->logging->Log(LogName::kBa, LogLevel::kError,
-                         "unable to open low level config file for writing.");
-  }
-}
-
 // auto Platform::GetCacheDirectory() -> std::string {
 //   if (!made_cache_dir_) {
 //     cache_dir_ = GetDefaultCacheDirectory();

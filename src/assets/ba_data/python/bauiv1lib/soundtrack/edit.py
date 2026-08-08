@@ -159,14 +159,15 @@ class SoundtrackEditWindow(bui.MainWindow):
         # if there's no initial value, find a good initial unused name
         if existing_soundtrack is None:
             i = 1
-            st_name_text = bui.Lstr(
-                resource=f'{self._r}.newSoundtrackNameText'
-            ).evaluate()
-            if '${COUNT}' not in st_name_text:
-                # make sure we insert number *somewhere*
-                st_name_text = st_name_text + ' ${COUNT}'
             while True:
-                self._soundtrack_name = st_name_text.replace('${COUNT}', str(i))
+                # Flat text on purpose: the name is stored in config and
+                # edited by the user from here on, so it stops being a
+                # language-string the moment we pick it.
+                self._soundtrack_name = (
+                    classicassets.strings.soundtrack.new_soundtrack_name(
+                        count=str(i)
+                    ).evaluate()
+                )
                 if self._soundtrack_name not in appconfig['Soundtracks']:
                     break
                 i += 1

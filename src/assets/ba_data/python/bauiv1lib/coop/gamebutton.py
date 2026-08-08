@@ -96,7 +96,7 @@ class GameButton:
             mask_texture=classicassets.textures.map_preview_mask.get(),
         )
 
-        translated = campaign.getlevel(levelname).displayname
+        translated = campaign.getlevel(levelname).displayname_langstr
         self._achievements = bui.app.classic.ach.achievements_for_coop_level(
             game
         )

@@ -34,6 +34,22 @@ class PopupWindow:
         darken_behind: bool = True,
     ):
         # pylint: disable=too-many-locals
+
+        # Unique-per-instance prefix for widget ids -- the popup
+        # analogue of MainWindow.main_window_id_prefix, and the same
+        # `_idprefix` several popups already roll by hand (which is why
+        # we leave theirs alone if they set it before calling us).
+        #
+        # Popups are the surface automation has the most trouble
+        # reaching: they are modal, they appear unbidden, and several
+        # can be onscreen at once, so labels alone are often ambiguous.
+        # Subclasses should id at least their close/action buttons as
+        # f'{self._idprefix}|<thing>'.
+        if not hasattr(self, '_idprefix'):
+            self._idprefix = bui.app.ui_v1.new_id_prefix(
+                type(self).__name__.lower()
+            )
+
         if focus_size is None:
             focus_size = size
 

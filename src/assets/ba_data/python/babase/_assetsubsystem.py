@@ -38,7 +38,10 @@ import _babase
 from babase._appsubsystem import AppSubsystem
 from babase._logging import assetmanagerlog as logger
 
-from efro.error import CommunicationError
+from efro.error import (
+    CommunicationError,
+    is_urllib3_communication_error,
+)
 from efro.util import strip_exception_tracebacks
 from efro.dataclassio import (
     ioprepped,
@@ -97,6 +100,28 @@ _BLOB_DOWNLOAD_CONCURRENCY = int(
 #: link is slow, so they get their own more generous budget. Still a
 #: *total* cap so a wedged request can't hang a resolve indefinitely.
 _BLOB_DOWNLOAD_TIMEOUT_SECONDS = 60.0
+
+#: Attempts per individual CAS-blob download before failing the resolve.
+#:
+#: The shared urllib3 pool runs with ``retries=False`` on purpose (see
+#: ``_env.py`` -- urllib3's retry machinery hides exceptions from us,
+#: which breaks the strip_exception_tracebacks cycle discipline), so
+#: without this a single transient stall on ONE blob fails an entire
+#: bring-up. That matters because blobs are by far the most numerous
+#: request a resolve makes -- dozens to hundreds across
+#: ``_BLOB_DOWNLOAD_CONCURRENCY`` workers -- so they are where a blip is
+#: overwhelmingly most likely to land. Observed 2026-08-07: one blob's
+#: TLS handshake stalled and took construct-mode down with it.
+#:
+#: The manifest path already does this (``_tier1_manifests_with_retries``)
+#: and this mirrors its shape. Kept deliberately small: with N workers a
+#: genuine outage costs N x (timeout + backoff) before we give up, so
+#: two attempts buys blip-immunity without dragging out real failures.
+_BLOB_DOWNLOAD_MAX_ATTEMPTS = 2
+
+#: Backoff before a retried blob download. Short -- the failures worth
+#: retrying here are packet-level blips, not server recovery windows.
+_BLOB_DOWNLOAD_RETRY_DELAY_SECONDS = 1.0
 
 
 def _init_blob_download_thread() -> None:
@@ -2285,6 +2310,18 @@ class AssetSubsystem(AppSubsystem):
         referencing the same blob (common for shared flavor-manifests)
         fetch it once rather than racing to fetch it twice.
         """
+        # The node can drop between the manifest phase (which waits for
+        # it) and here -- our blobs may have queued behind another
+        # package's in the shared pool. No-op when connected; otherwise
+        # this spends the same budget the manifest phase would have,
+        # which beats failing the resolve over a blip and making the user
+        # press Retry.
+        #
+        # Deliberately before `to_fetch` is computed: an await between
+        # that and the claim below would let a sibling package list the
+        # same blobs and double-fetch them.
+        await self._wait_for_node()
+
         to_fetch = [
             (h, s)
             for h, s in pkg.needed.items()
@@ -2294,10 +2331,6 @@ class AssetSubsystem(AppSubsystem):
             self._acquire_pending.discard(pkg.apverid)
             self._emit_progress()
             return
-        # Claim before the first await: another package's task may reach
-        # here while we're suspended, and must see these as taken.
-        self._fetch_claimed.update(h for h, _s in to_fetch)
-
         if pkg.token is None:
             raise AssetResolveError(
                 f'{pkg.apverid}: resolve returned no download token.'
@@ -2308,6 +2341,17 @@ class AssetSubsystem(AppSubsystem):
                 f'{pkg.apverid}: not connected to a node; cannot download.'
             )
         token_header = self._encode_token(pkg.token)
+
+        # Claim before the first await: another package's task may reach
+        # here while we're suspended, and must see these as taken.
+        #
+        # Deliberately *after* the bail-outs above (all synchronous, so
+        # the no-await invariant still holds). Claiming first meant a
+        # missing token or a node lost mid-resolve left blobs claimed
+        # but never downloaded, and a claimed-but-absent blob is skipped
+        # by the filter above -- so the Retry the user is about to press
+        # would quietly no-op instead of fetching them.
+        self._fetch_claimed.update(h for h, _s in to_fetch)
 
         # Progress: bump the running totals, then count each blob off as
         # its fetch completes (each _fetch resumes on the logic thread
@@ -2341,6 +2385,14 @@ class AssetSubsystem(AppSubsystem):
                     executor=self._download_executor(),
                 )
             except Exception as exc:
+                # Un-claim so a later resolve retries this blob. Claims
+                # exist to stop two packages fetching the same blob at
+                # once; a blob that failed is not on disk, so leaving it
+                # claimed makes every subsequent resolve -- including the
+                # user pressing Retry -- silently skip it (_fetch_blobs
+                # filters on `claimed or present`) and believe it has
+                # content it never downloaded.
+                self._fetch_claimed.discard(h)
                 if have_failure:
                     strip_exception_tracebacks(exc)
                     return
@@ -2427,6 +2479,11 @@ class AssetSubsystem(AppSubsystem):
         resolve/fetch fail with a clear "not connected" error.
         """
         if self._node_base_url() is not None:
+            return
+        # Don't hold up a quit: with no node coming back this would sit
+        # on its full timeout, and a resolve in flight during shutdown is
+        # abandoned anyway (AssetResolveAbortedError).
+        if _babase.app.shutting_down:
             return
         plus = _babase.app.plus
         if plus is None:
@@ -2599,18 +2656,54 @@ class AssetSubsystem(AppSubsystem):
         blobs. Off-thread; blocking.
         """
         filehash, size = blob
-        try:
-            assetcas.download_cas_blob(
-                _babase.app.net.urllib3pool,
-                base_url,
-                filehash,
-                size,
-                token_header=token_header,
-                dest_root=self._writable_assets_root,
-                timeout_seconds=_BLOB_DOWNLOAD_TIMEOUT_SECONDS,
-            )
-        except assetcas.CasDownloadError as exc:
-            raise AssetResolveError(str(exc)) from exc
+        url = f'{base_url}/casblob/{filehash}'
+        attempt = 1
+        while True:
+            try:
+                assetcas.download_cas_blob(
+                    _babase.app.net.urllib3pool,
+                    base_url,
+                    filehash,
+                    size,
+                    token_header=token_header,
+                    dest_root=self._writable_assets_root,
+                    timeout_seconds=_BLOB_DOWNLOAD_TIMEOUT_SECONDS,
+                )
+                return
+            except assetcas.CasDownloadError as exc:
+                # A structured refusal from the node (non-200, bad or
+                # missing encoding header, verify failure). Not a blip;
+                # retrying won't change the answer.
+                raise AssetResolveError(str(exc)) from exc
+            except Exception as exc:
+                # Network-level failure escaping urllib3 (timeouts, reset
+                # connections, dns). download_cas_blob only converts its
+                # own structured errors, so these arrive raw.
+                if (
+                    not is_urllib3_communication_error(exc, url=url)
+                    or attempt >= _BLOB_DOWNLOAD_MAX_ATTEMPTS
+                ):
+                    raise AssetResolveError(
+                        f'casblob GET for {filehash} failed: {exc}'
+                    ) from exc
+                logger.info(
+                    'casblob %s: transient download failure'
+                    ' (attempt %d of %d); retrying in %.0fs (%s).',
+                    filehash[:12],
+                    attempt,
+                    _BLOB_DOWNLOAD_MAX_ATTEMPTS,
+                    _BLOB_DOWNLOAD_RETRY_DELAY_SECONDS,
+                    exc,
+                )
+                # We're consuming this exception; strip its traceback so
+                # frame locals don't linger in a reference cycle. This is
+                # exactly the discipline that keeps urllib3's own retries
+                # switched off, so it matters here.
+                strip_exception_tracebacks(exc)
+                # Blocking sleep is correct -- we're already off-thread
+                # in a blob-download worker.
+                time.sleep(_BLOB_DOWNLOAD_RETRY_DELAY_SECONDS)
+                attempt += 1
 
     def _cas_write(self, filehash: str, data: bytes) -> None:
         """Atomically write a CAS blob into the writable root.

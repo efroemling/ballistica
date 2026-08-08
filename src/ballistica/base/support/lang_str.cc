@@ -229,6 +229,25 @@ auto LangStr::FromJson(std::string_view json,
   return out;
 }
 
+auto LangStr::MakeLiteral(std::string_view text)
+    -> std::shared_ptr<const LangStr> {
+  std::string doubled;
+  doubled.reserve(text.size());
+  for (char c : text) {
+    if (c == '{') {
+      doubled += "{{";
+    } else if (c == '}') {
+      doubled += "}}";
+    } else {
+      doubled += c;
+    }
+  }
+  auto out = std::make_shared<LangStr>();
+  out->form = Form::kValue;
+  out->value = std::move(doubled);
+  return out;
+}
+
 // The substitution-argument names a table value consumes, in canonical
 // (sorted) order: for plain text its {name} tokens; for a selector its
 // pivot arg plus any tokens in its forms. Mirrors Python

@@ -2,6 +2,7 @@
 
 #include "ballistica/scene_v1/dynamics/rigid_body.h"
 
+#include "ballistica/base/dynamics/geom_transform.h"
 #include "ballistica/base/graphics/component/render_component.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
@@ -192,6 +193,19 @@ void RigidBody::ApplyToRenderComponent(base::RenderComponent* c) {
   matrix[14] = pos[2];
   matrix[15] = 1;
   c->MultMatrix(matrix);
+}
+
+void RigidBody::SetStaticTransform(const Matrix44f& t) {
+  // Only meaningful for static geometry; a real body's transform belongs to
+  // the solver, and multi-geom shapes would need their sub-geom offsets
+  // rebuilt instead of a single geom being moved.
+  assert(type_ == Type::kGeomOnly && geoms_.size() == 1);
+
+  base::GeomSetTransform(geoms_[0], t);
+
+  if (shape_ == Shape::kTrimesh) {
+    dynamics_->MarkTrimeshMoved(geoms_[0]);
+  }
 }
 
 void RigidBody::Check() {

@@ -92,7 +92,10 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
 
         # Throw in test build info.
         self.beta_info = self.beta_info_2 = None
+        badge_text: bs.LangStr | str | None = None
         if env.variant is type(env.variant).TEST_BUILD:
+            badge_text = classicassets.strings.main_menu.test_build
+        if badge_text is not None:
             pos = (230, 35)
             self.beta_info = bs.NodeActor(
                 bs.newnode(
@@ -106,7 +109,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                         'scale': 1,
                         'vr_depth': -60,
                         'position': pos,
-                        'text': classicassets.strings.main_menu.test_build,
+                        'text': badge_text,
                     },
                 )
             )

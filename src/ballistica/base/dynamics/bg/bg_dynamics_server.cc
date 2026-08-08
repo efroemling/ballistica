@@ -14,6 +14,7 @@
 #include "ballistica/base/dynamics/bg/bg_dynamics_shadow_data.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics_volume_light_data.h"
 #include "ballistica/base/dynamics/collision_cache.h"
+#include "ballistica/base/dynamics/geom_transform.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/core/logging/logging_macros.h"
@@ -77,11 +78,13 @@ void BGDynamicsServer::CalcERPCFM(dReal stiffness, dReal damping, dReal* erp,
 class BGDynamicsServer::Terrain {
  public:
   Terrain(BGDynamicsServer* t,
-          Object::Ref<CollisionMeshAsset>* collision_mesh_in)
+          Object::Ref<CollisionMeshAsset>* collision_mesh_in,
+          const Matrix44f& transform)
       : collision_mesh_(collision_mesh_in) {
     assert((**collision_mesh_).loaded());
     geom_ = dCreateTriMesh(nullptr, (**collision_mesh_).GetBGMeshData(),
                            nullptr, nullptr, nullptr);
+    GeomSetTransform(geom_, transform);
   }
 
   auto GetCollisionMesh() const -> CollisionMeshAsset* {
@@ -2376,8 +2379,9 @@ void BGDynamicsServer::PushStep(StepData* data) {
 }
 
 void BGDynamicsServer::PushAddTerrainCall(
-    Object::Ref<CollisionMeshAsset>* collision_mesh) {
-  event_loop()->PushCall([this, collision_mesh] {
+    Object::Ref<CollisionMeshAsset>* collision_mesh,
+    const Matrix44f& transform) {
+  event_loop()->PushCall([this, collision_mesh, transform] {
     assert(g_base->InBGDynamicsThread());
     assert(collision_mesh != nullptr);
 
@@ -2385,7 +2389,7 @@ void BGDynamicsServer::PushAddTerrainCall(
     (**collision_mesh).Load();
 
     // (the terrain now owns the ref pointer passed in)
-    terrains_.push_back(new Terrain(this, collision_mesh));
+    terrains_.push_back(new Terrain(this, collision_mesh, transform));
 
     // Rebuild geom list from our present terrains.
     std::vector<dGeomID> geoms;

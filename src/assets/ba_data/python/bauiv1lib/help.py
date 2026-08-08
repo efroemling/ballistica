@@ -625,28 +625,55 @@ class HelpWindow(bui.MainWindow):
 
         shadow_tex = builtinassets.textures.shadow_sharp.get()
 
-        for reskey, tex in [
-            ('powerupPunch', classicassets.textures.powerup_punch.get()),
-            ('powerupShield', classicassets.textures.powerup_shield.get()),
-            ('powerupBomb', classicassets.textures.powerup_bomb.get()),
-            ('powerupHealth', classicassets.textures.powerup_health.get()),
-            ('powerupIceBombs', classicassets.textures.powerup_ice_bombs.get()),
+        hstrs = classicassets.strings.help
+        htex = classicassets.textures
+        for name, desc, tex in [
             (
-                'powerupImpactBombs',
-                classicassets.textures.powerup_impact_bombs.get(),
+                hstrs.powerup_punch_name,
+                hstrs.powerup_punch_description,
+                htex.powerup_punch.get(),
             ),
             (
-                'powerupStickyBombs',
-                classicassets.textures.powerup_sticky_bombs.get(),
+                hstrs.powerup_shield_name,
+                hstrs.powerup_shield_description,
+                htex.powerup_shield.get(),
             ),
             (
-                'powerupLandMines',
-                classicassets.textures.powerup_land_mines.get(),
+                hstrs.powerup_triple_bombs_name,
+                hstrs.powerup_triple_bombs_description,
+                htex.powerup_bomb.get(),
             ),
-            ('powerupCurse', classicassets.textures.powerup_curse.get()),
+            (
+                hstrs.powerup_health_name,
+                hstrs.powerup_health_description,
+                htex.powerup_health.get(),
+            ),
+            (
+                hstrs.powerup_ice_bombs_name,
+                hstrs.powerup_ice_bombs_description,
+                htex.powerup_ice_bombs.get(),
+            ),
+            (
+                hstrs.powerup_impact_bombs_name,
+                hstrs.powerup_impact_bombs_description,
+                htex.powerup_impact_bombs.get(),
+            ),
+            (
+                hstrs.powerup_sticky_bombs_name,
+                hstrs.powerup_sticky_bombs_description,
+                htex.powerup_sticky_bombs.get(),
+            ),
+            (
+                hstrs.powerup_land_mines_name,
+                hstrs.powerup_land_mines_description,
+                htex.powerup_land_mines.get(),
+            ),
+            (
+                hstrs.powerup_curse_name,
+                hstrs.powerup_curse_description,
+                htex.powerup_curse.get(),
+            ),
         ]:
-            name = bui.Lstr(resource=f'{self._r}.' + reskey + 'NameText')
-            desc = bui.Lstr(resource=f'{self._r}.' + reskey + 'DescriptionText')
 
             v -= spacing * 60.0
 

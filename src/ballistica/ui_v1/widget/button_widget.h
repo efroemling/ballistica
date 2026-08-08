@@ -74,6 +74,12 @@ class ButtonWidget : public Widget {
   /// language changes; see TextWidget::SetLangStr).
   void SetLangStr(std::shared_ptr<const base::LangStr> val);
   auto text() const -> std::string { return text_->text_raw(); }
+
+  /// Label text as it is currently displayed -- the translated form
+  /// when the label is a language-string, the raw string otherwise.
+  /// Mirrors TextWidget::GetQueryText(); this is what `buttonwidget(
+  /// query=...)` returns.
+  auto GetQueryText() -> std::string { return text_->GetQueryText(); }
   auto set_icon_type(IconType i) { icon_type_ = i; }
   auto set_repeat(bool repeat) { repeat_ = repeat; }
   auto set_text_scale(float val) { text_scale_ = val; }

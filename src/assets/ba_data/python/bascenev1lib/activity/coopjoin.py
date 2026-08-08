@@ -30,7 +30,7 @@ class CoopJoinActivity(bs.JoinActivity):
         Text(
             self.session.campaign.getlevel(
                 self.session.campaign_level_name
-            ).displayname,
+            ).displayname_langstr,
             scale=1.3,
             h_attach=Text.HAttach.CENTER,
             h_align=Text.HAlign.CENTER,

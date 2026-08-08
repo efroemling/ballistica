@@ -132,12 +132,10 @@ class PlayWindow(bui.MainWindow):
                 yoffs - (50 if uiscale is bui.UIScale.SMALL else 70),
             ),
             size=(0, 0),
-            text=bui.Lstr(
-                resource=(
-                    (f'{self._r}.titleText')
-                    if self._playlist_select_context is None
-                    else 'playlistsText'
-                )
+            text=(
+                classicassets.strings.ui.play
+                if self._playlist_select_context is None
+                else classicassets.strings.playlist.playlists
             ),
             scale=1.2 if uiscale is bui.UIScale.SMALL else 1.7,
             res_scale=2.0,

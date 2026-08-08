@@ -182,6 +182,7 @@ class CharacterPicker(PopupWindow):
             if index >= count:
                 break
         self._get_more_characters_button = btn = bui.buttonwidget(
+            id=f'{self._idprefix}|getmorecharacters',
             parent=self._subcontainer,
             size=(self._sub_width * 0.8, 60),
             position=(self._sub_width * 0.1, 30),

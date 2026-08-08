@@ -220,7 +220,7 @@ void AppConfig::SetupEntries_() {
   // Note: this gets clamped to the valid host range at use time, so
   // stored values from old configs simply snap forward when mins rise.
   int_entries_[IntID::kSceneV1HostProtocol] =
-      IntEntry("SceneV1 Host Protocol", 40);
+      IntEntry("SceneV1 Host Protocol", 41);
 
   bool_entries_[BoolID::kTouchControlsSwipeHidden] =
       BoolEntry("Touch Controls Swipe Hidden", false);
@@ -257,6 +257,15 @@ void AppConfig::SetupEntries_() {
       BoolEntry("Highlight Potential Token Purchases", true);
   bool_entries_[BoolID::kUseNativePythonREPL] =
       BoolEntry("Use Native Python REPL", false);
+
+  // Windows-only; SDL's XInput path can misbehave with some devices so we
+  // allow turning it off. Note that this value is consumed *before* the app
+  // (and thus this class) exists - it has to be known by the time we init
+  // SDL - so the actual read happens in CoreFeatureSet::ApplyBaEnvConfig()
+  // which snapshots it straight out of the raw config dict. We register it
+  // here anyway so it shows up in builtin-keys, resolve(), etc. Keep this
+  // default synced with the one there.
+  bool_entries_[BoolID::kEnableXInput] = BoolEntry("Enable XInput", true);
 
   // Now add everything to our name map and make sure all is kosher.
   CompleteMap_(float_entries_);

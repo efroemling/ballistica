@@ -254,7 +254,9 @@ class PlaylistMapSelectWindow(bui.MainWindow):
                         selected_child=btn,
                         visible_child=btn,
                     )
-                name = get_map_display_string(self._maps[index][0])
+                name = get_map_display_string(
+                    self._maps[index][0], langstr=True
+                )
                 bui.textwidget(
                     parent=self._subcontainer,
                     text=name,

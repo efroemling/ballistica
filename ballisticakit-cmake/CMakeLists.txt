@@ -407,6 +407,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_volume_light_data.h
   ${BA_SRC_ROOT}/ballistica/base/dynamics/collision_cache.cc
   ${BA_SRC_ROOT}/ballistica/base/dynamics/collision_cache.h
+  ${BA_SRC_ROOT}/ballistica/base/dynamics/geom_transform.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/component/empty_component.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/component/object_component.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/component/object_component.h

@@ -13,6 +13,7 @@ import os
 import json
 import base64
 import hashlib
+import logging
 import tempfile
 from typing import TYPE_CHECKING
 
@@ -31,6 +32,18 @@ from bacommon.cloudfilecodec import (
 
 if TYPE_CHECKING:
     from bacommon import securedata
+
+logger = logging.getLogger(__name__)
+
+#: Marker prefixed to the two failures that mean "we received bytes and
+#: they were wrong" (hash mismatch, decompress failure) as opposed to a
+#: server saying no. Both are logged at ERROR and are greppable by this
+#: token, because we currently have **no data** on whether they happen in
+#: the field -- they would be either corruption in transit or a node
+#: serving bytes that don't match their hash, and those want very
+#: different responses. Retrying them is deliberately NOT done until
+#: there's evidence; see docs/followups.md (2026-08-07).
+CAS_INTEGRITY_MARKER = 'CAS-INTEGRITY'
 
 
 class CasDownloadError(Exception):
@@ -109,6 +122,17 @@ def cas_write(dest_root: str, filehash: str, data: bytes) -> None:
     """
     actual = hashlib.sha256(data).hexdigest()
     if actual != filehash:
+        # Loud on purpose: this means either the bytes were corrupted
+        # reaching us or a node served content that doesn't match its
+        # own hash. The second would be a serious server-side bug, so
+        # this should never be quiet.
+        logger.error(
+            '%s: hash mismatch writing blob %s (%d bytes); got %s.',
+            CAS_INTEGRITY_MARKER,
+            filehash,
+            len(data),
+            actual,
+        )
         raise CasDownloadError(
             f'CAS write hash mismatch for {filehash}: got {actual}.'
         )
@@ -156,7 +180,10 @@ def download_cas_blob(
     back to canonical before :func:`cas_write` sha256-verifies them
     against ``filehash`` and writes them -- so the local cache always
     holds uncompressed blobs and the hash check still validates content.
-    One attempt only; the caller owns concurrency and retry. Raises
+    One attempt only; the caller owns concurrency and retry. Callers do
+    retry -- the client's asset subsystem loops on transient network
+    failures -- so do not add a loop here as well, or attempts (and the
+    per-attempt timeout budget) multiply. Raises
     :class:`CasDownloadError` on a non-200 response, a missing/unknown
     served-encoding header, a decompress failure, or a verify failure.
     """
@@ -199,6 +226,16 @@ def download_cas_blob(
         try:
             data = decompress_for_type(data, served)
         except Exception as exc:
+            # Same class as a hash mismatch: bytes arrived and were not
+            # what they claimed. Most likely truncation in transit.
+            logger.error(
+                '%s: decompress failed for blob %s (%s, %d bytes): %s.',
+                CAS_INTEGRITY_MARKER,
+                filehash,
+                served.value,
+                len(data),
+                exc,
+            )
             raise CasDownloadError(
                 f'casblob decompress for {filehash} ({served.value})'
                 f' failed: {exc}'

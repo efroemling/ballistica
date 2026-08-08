@@ -42,6 +42,8 @@ class TerrainNodeType : public NodeType {
   BA_COLLISION_MESH_ATTR(collision_mesh, collision_mesh, set_collision_mesh);
   BA_MATERIAL_ARRAY_ATTR(materials, materials, set_materials);
   BA_BOOL_ATTR(vr_only, vr_only, set_vr_only);
+  BA_FLOAT_ARRAY_ATTR(position, position, SetPosition);
+  BA_FLOAT_ARRAY_ATTR(rotate, rotate, SetRotate);
 #undef BA_NODE_TYPE_CLASS
 
   TerrainNodeType()
@@ -61,7 +63,9 @@ class TerrainNodeType : public NodeType {
         color_texture(this),
         collision_mesh(this),
         materials(this),
-        vr_only(this) {}
+        vr_only(this),
+        position(this),
+        rotate(this) {}
 };
 static NodeType* node_type{};
 
@@ -139,6 +143,9 @@ void TerrainNode::set_collision_mesh(SceneCollisionMesh* val) {
         RigidBody::kCollideAll ^ RigidBody::kCollideBackground,
         collision_mesh_.get(), flags);
     body_->set_can_cause_impact_damage(true);
+    if (transformed_) {
+      body_->SetStaticTransform(transform_);
+    }
 
     // also ship it to the BG-Dynamics thread..
     if (!bumper_ && affect_bg_dynamics_) {
@@ -182,6 +189,50 @@ void TerrainNode::SetColor(const std::vector<float>& vals) {
   }
 }
 
+void TerrainNode::SetPosition(const std::vector<float>& vals) {
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of length 3 for position",
+                    PyExcType::kValue);
+  }
+  position_ = vals;
+  UpdateTransform_();
+}
+
+void TerrainNode::SetRotate(const std::vector<float>& vals) {
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of length 3 for rotate",
+                    PyExcType::kValue);
+  }
+  rotate_ = vals;
+  UpdateTransform_();
+}
+
+void TerrainNode::UpdateTransform_() {
+  transformed_ =
+      (position_[0] != 0.0f || position_[1] != 0.0f || position_[2] != 0.0f
+       || rotate_[0] != 0.0f || rotate_[1] != 0.0f || rotate_[2] != 0.0f);
+
+  // Euler degrees, applied x then y then z, and the result translated.
+  // Deriving this once and handing the same matrix to rendering, physics,
+  // and bg-dynamics is what keeps those three from drifting apart.
+  transform_ = Matrix44fRotate(Vector3f(1.0f, 0.0f, 0.0f), rotate_[0])
+               * Matrix44fRotate(Vector3f(0.0f, 1.0f, 0.0f), rotate_[1])
+               * Matrix44fRotate(Vector3f(0.0f, 0.0f, 1.0f), rotate_[2])
+               * Matrix44fTranslate(position_[0], position_[1], position_[2]);
+
+  if (body_.exists()) {
+    body_->SetStaticTransform(transform_);
+  }
+
+  // Bg-dynamics bakes the transform in at add time, so a change means
+  // re-adding. Only ever a handful of terrains, and this is attr-set time,
+  // not per-frame.
+  if (bg_dynamics_collision_mesh_ != nullptr) {
+    RemoveFromBGDynamics();
+    AddToBGDynamics();
+  }
+}
+
 auto TerrainNode::GetReflection() const -> std::string {
   return base::Graphics::StringFromReflectionType(reflection_);
 }
@@ -207,7 +258,7 @@ void TerrainNode::AddToBGDynamics() {
   bg_dynamics_collision_mesh_ = collision_mesh_.get();
 #if !BA_HEADLESS_BUILD
   g_base->bg_dynamics->AddTerrain(
-      bg_dynamics_collision_mesh_->collision_mesh_data());
+      bg_dynamics_collision_mesh_->collision_mesh_data(), transform_);
 #endif  // !BA_HEADLESS_BUILD
 }
 
@@ -231,7 +282,12 @@ void TerrainNode::Draw(base::FrameDef* frame_def) {
   base::ObjectComponent c(overlay_      ? frame_def->overlay_3d_pass()
                           : background_ ? frame_def->beauty_pass_bg()
                                         : frame_def->beauty_pass());
-  c.SetWorldSpace(true);
+  // World-space mode has the shader treat vert positions as already being
+  // world-space (skipping the model-world matrix), which is only true while
+  // we're drawing untransformed. Left on, a transformed terrain would move
+  // on screen but keep sampling light/shadow and reflections from where it
+  // used to be.
+  c.SetWorldSpace(!transformed_);
   if (color_texture_.exists()) {
     c.SetTexture(color_texture_->texture_data());
   }
@@ -265,7 +321,14 @@ void TerrainNode::Draw(base::FrameDef* frame_def) {
   if (!visible_in_reflections_) {
     draw_flags |= base::kMeshDrawFlagNoReflection;
   }
+  if (transformed_) {
+    c.PushTransform();
+    c.MultMatrix(transform_.m);
+  }
   c.DrawMeshAsset(mesh_->mesh_data(), draw_flags);
+  if (transformed_) {
+    c.PopTransform();
+  }
   c.Submit();
 }
 

@@ -270,7 +270,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
                 selected_child=self._more_button,
             )
 
-    def _pretty_button_name(self, button_name: str) -> bui.Lstr | bui.LangStr:
+    def _pretty_button_name(self, button_name: str) -> bui.LangStr:
         button_id = self._settings[button_name]
         if button_id == -1:
             return _gpstrs.unset

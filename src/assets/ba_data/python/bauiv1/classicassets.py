@@ -1,19 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.260806e`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicassets.260807c`` (bauiv1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.baclassicassets.260806e
+# ba_meta require asset-package a-0.baclassicassets.260807c
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.baclassicassets.260806e'
+__asset_package__ = 'a-0.baclassicassets.260807c'
 
 from typing import TYPE_CHECKING
 
@@ -4348,6 +4348,30 @@ if TYPE_CHECKING:
                 English: "This software is based in part on the work of {name}."
             """
 
+        def song_credit(
+            self,
+            *,
+            title: str | LangStr,
+            performer: str | LangStr,
+            composer: str | LangStr,
+            arranger: str | LangStr,
+            publisher: str | LangStr,
+            source: str | LangStr,
+        ) -> LangStr:
+            """
+            ::
+
+                Credit line for the menu music, naming its title, performer,
+                composer, arranger, publisher and source. Every placeholder is
+                filled with a proper name that stays in English; only the
+                connecting words are translated. The two line breaks are part of
+                the layout and must be preserved.
+
+                English: "{title} Performed by {performer} Composed by
+                {composer}, Arranged by {arranger}, Published by {publisher},
+                Courtesy of {source}"
+            """
+
         #: ::
         #:
         #:     Section heading for sound/music credits.
@@ -6274,6 +6298,170 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Playful one-or-two-sentence description of the curse power-up,
+        #:     shown under its name in the help screen. The tone is deliberately
+        #:     light -- keep the joke rather than translating literally.
+        #:
+        #:     English: "You probably want to avoid these. ...or do you?"
+        powerup_curse_description: LangStr
+
+        #: ::
+        #:
+        #:     Name of the curse power-up, labelling its icon in the help
+        #:     screen's power-up list.
+        #:
+        #:     English: "Curse"
+        powerup_curse_name: LangStr
+
+        #: ::
+        #:
+        #:     Playful one-or-two-sentence description of the med-pack power-up,
+        #:     shown under its name in the help screen. The tone is deliberately
+        #:     light -- keep the joke rather than translating literally.
+        #:
+        #:     English: "Restores you to full health. You'd never have guessed."
+        powerup_health_description: LangStr
+
+        #: ::
+        #:
+        #:     Name of the med-pack power-up, labelling its icon in the help
+        #:     screen's power-up list.
+        #:
+        #:     English: "Med-Pack"
+        powerup_health_name: LangStr
+
+        #: ::
+        #:
+        #:     Playful one-or-two-sentence description of the ice-bombs
+        #:     power-up, shown under its name in the help screen. The tone is
+        #:     deliberately light -- keep the joke rather than translating
+        #:     literally.
+        #:
+        #:     English: "Weaker than normal bombs, but they'll leave your
+        #:     enemies frozen and extra brittle."
+        powerup_ice_bombs_description: LangStr
+
+        #: ::
+        #:
+        #:     Name of the ice-bombs power-up, labelling its icon in the help
+        #:     screen's power-up list.
+        #:
+        #:     English: "Ice-Bombs"
+        powerup_ice_bombs_name: LangStr
+
+        #: ::
+        #:
+        #:     Playful one-or-two-sentence description of the trigger-bombs
+        #:     power-up, shown under its name in the help screen. The tone is
+        #:     deliberately light -- keep the joke rather than translating
+        #:     literally.
+        #:
+        #:     English: "Slightly weaker than regular bombs, but they explode on
+        #:     impact."
+        powerup_impact_bombs_description: LangStr
+
+        #: ::
+        #:
+        #:     Name of the trigger-bombs power-up, labelling its icon in the
+        #:     help screen's power-up list.
+        #:
+        #:     English: "Trigger-Bombs"
+        powerup_impact_bombs_name: LangStr
+
+        #: ::
+        #:
+        #:     Playful one-or-two-sentence description of the land-mines
+        #:     power-up, shown under its name in the help screen. The tone is
+        #:     deliberately light -- keep the joke rather than translating
+        #:     literally.
+        #:
+        #:     English: "These come in packs of 3 — perfect for base defense or
+        #:     stopping speedy enemies!"
+        powerup_land_mines_description: LangStr
+
+        #: ::
+        #:
+        #:     Name of the land-mines power-up, labelling its icon in the help
+        #:     screen's power-up list.
+        #:
+        #:     English: "Land-Mines"
+        powerup_land_mines_name: LangStr
+
+        #: ::
+        #:
+        #:     Playful one-or-two-sentence description of the boxing-gloves
+        #:     power-up, shown under its name in the help screen. The tone is
+        #:     deliberately light -- keep the joke rather than translating
+        #:     literally.
+        #:
+        #:     English: "Makes your punches harder, faster, better, stronger."
+        powerup_punch_description: LangStr
+
+        #: ::
+        #:
+        #:     Name of the boxing-gloves power-up, labelling its icon in the
+        #:     help screen's power-up list.
+        #:
+        #:     English: "Boxing-Gloves"
+        powerup_punch_name: LangStr
+
+        #: ::
+        #:
+        #:     Playful one-or-two-sentence description of the energy-shield
+        #:     power-up, shown under its name in the help screen. The tone is
+        #:     deliberately light -- keep the joke rather than translating
+        #:     literally.
+        #:
+        #:     English: "Absorbs a bit of damage so you don't have to."
+        powerup_shield_description: LangStr
+
+        #: ::
+        #:
+        #:     Name of the energy-shield power-up, labelling its icon in the
+        #:     help screen's power-up list.
+        #:
+        #:     English: "Energy-Shield"
+        powerup_shield_name: LangStr
+
+        #: ::
+        #:
+        #:     Playful one-or-two-sentence description of the sticky-bombs
+        #:     power-up, shown under its name in the help screen. The tone is
+        #:     deliberately light -- keep the joke rather than translating
+        #:     literally.
+        #:
+        #:     English: "Stick to anything they hit. Hilarity ensues."
+        powerup_sticky_bombs_description: LangStr
+
+        #: ::
+        #:
+        #:     Name of the sticky-bombs power-up, labelling its icon in the help
+        #:     screen's power-up list.
+        #:
+        #:     English: "Sticky-Bombs"
+        powerup_sticky_bombs_name: LangStr
+
+        #: ::
+        #:
+        #:     Playful one-or-two-sentence description of the triple-bombs
+        #:     power-up, shown under its name in the help screen. The tone is
+        #:     deliberately light -- keep the joke rather than translating
+        #:     literally.
+        #:
+        #:     English: "Lets you whip out three bombs in a row instead of just
+        #:     one."
+        powerup_triple_bombs_description: LangStr
+
+        #: ::
+        #:
+        #:     Name of the triple-bombs power-up, labelling its icon in the help
+        #:     screen's power-up list.
+        #:
+        #:     English: "Triple-Bombs"
+        powerup_triple_bombs_name: LangStr
+
+        #: ::
+        #:
         #:     Heading for the powerups section.
         #:
         #:     English: "Powerups"
@@ -6620,6 +6808,23 @@ if TYPE_CHECKING:
         #:     English: "Sorry, achievement specifics are not available for old
         #:     seasons."
         achievements_unavailable_old_seasons: LangStr
+
+        #: ::
+        #:
+        #:     Note that the activeness multiplier does not affect all-time
+        #:     rankings. Shown from the league-rank window.
+        #:
+        #:     English: "This does not apply to all-time rankings."
+        activeness_all_time_info: LangStr
+
+        #: ::
+        #:
+        #:     Explains how the activeness multiplier rises and falls with daily
+        #:     play. Shown from the league-rank window.
+        #:
+        #:     English: "This multiplier rises on days when you play and drops
+        #:     on days when you do not."
+        activeness_info: LangStr
 
         #: ::
         #:
@@ -10809,8 +11014,8 @@ if TYPE_CHECKING:
     #: ``action_hero_lower_leg``, and 355 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1054 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``characters``, ``chest``, and 1049 more). Full list in
+    #: The ``strings`` group - 1075 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``characters``, ``chest``, and 1070 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -12044,6 +12249,14 @@ _TREE = {
             'legal': (),
             'public_domain_music_via': ('name',),
             'software_based_on': ('name',),
+            'song_credit': (
+                'title',
+                'performer',
+                'composer',
+                'arranger',
+                'publisher',
+                'source',
+            ),
             'sound_and_music': (),
             'sounds_source': ('source',),
             'special_thanks': (),
@@ -12292,6 +12505,24 @@ _TREE = {
             'jump_info': (),
             'or_punching_something': (),
             'pick_up_info': (),
+            'powerup_curse_description': (),
+            'powerup_curse_name': (),
+            'powerup_health_description': (),
+            'powerup_health_name': (),
+            'powerup_ice_bombs_description': (),
+            'powerup_ice_bombs_name': (),
+            'powerup_impact_bombs_description': (),
+            'powerup_impact_bombs_name': (),
+            'powerup_land_mines_description': (),
+            'powerup_land_mines_name': (),
+            'powerup_punch_description': (),
+            'powerup_punch_name': (),
+            'powerup_shield_description': (),
+            'powerup_shield_name': (),
+            'powerup_sticky_bombs_description': (),
+            'powerup_sticky_bombs_name': (),
+            'powerup_triple_bombs_description': (),
+            'powerup_triple_bombs_name': (),
             'powerups': (),
             'powerups_subtitle': (),
             'punch_info': (),
@@ -12341,6 +12572,8 @@ _TREE = {
         },
         'league': {
             'achievements_unavailable_old_seasons': (),
+            'activeness_all_time_info': (),
+            'activeness_info': (),
             'all_time': (),
             'bronze': (),
             'current_season': ('number',),

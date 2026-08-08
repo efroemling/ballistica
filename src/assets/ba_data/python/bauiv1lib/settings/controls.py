@@ -321,7 +321,9 @@ class ControlsSettingsWindow(bui.MainWindow):
                     color=(1, 1, 0),
                 )
                 builtinassets.audio.gun_cocking.get().play()
-                bui.set_low_level_config_value('enablexinput', not value)
+                cfg = bui.app.config
+                cfg['Enable XInput'] = not value
+                cfg.apply_and_commit()
 
             xinput_checkbox = bui.checkboxwidget(
                 parent=self._root_widget,
@@ -330,7 +332,7 @@ class ControlsSettingsWindow(bui.MainWindow):
                     v + 3,
                 ),
                 size=(120, 30),
-                value=(not bui.get_low_level_config_value('enablexinput', 1)),
+                value=(not bui.app.config.resolve('Enable XInput')),
                 maxwidth=200,
                 on_value_change_call=do_toggle,
                 text=_ctlstrs.disable_xinput,

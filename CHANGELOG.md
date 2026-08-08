@@ -1,4 +1,4 @@
-### 1.8.0 (build 22966, api 9, 2026-08-06)
+### 1.8.0 (build 22967, api 9, 2026-08-08)
 - Fully implemented asset packages (more on this soon)
 - Upgraded to Python 3.14. This gives us a few nice useful bits such as zstd
   compression to help speed up online stuff and also means we can get rid of all
@@ -18,6 +18,10 @@
 - Upgraded Windows builds from VS2022 to VS2026.
 - Added password option to game hosting.
 - Button and image widgets can now be rotated (thanks vishal332008!)
+- Terrain nodes now have `position` and `rotate` attrs, so a terrain can be
+  placed and oriented instead of being stuck wherever its mesh was authored.
+  Rendering, collision, and bg-dynamics (debris/smoke/shadows) all follow.
+  Note that this bumps the scene-v1 protocol to 41 (thanks vishal332008!)
 - Renamed the `BaStdAssets` asset package to `BaClassicAssets`; its client
   wrapper modules are now `bauiv1.classicassets` / `bascenev1.classicassets`
   (previously `stdassets`).

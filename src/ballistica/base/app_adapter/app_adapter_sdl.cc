@@ -122,9 +122,12 @@ void AppAdapterSDL::OnMainThreadStartApp() {
                          " Remember to turn this off.");
   }
 
-  // We may or may not want xinput on windows.
+  // We may or may not want xinput on windows. Note that this comes from
+  // the snapshot core grabbed out of the raw app-config back at
+  // baenv-config time; the regular app-config path isn't available this
+  // early (and wouldn't be in time for SDL init anyway).
   if (g_buildconfig.platform_windows()) {
-    if (!g_core->platform->GetLowLevelConfigValue("enablexinput", 1)) {
+    if (!g_core->app_config_enable_xinput()) {
       SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
     }
   }

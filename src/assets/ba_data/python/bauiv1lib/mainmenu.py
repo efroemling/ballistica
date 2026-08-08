@@ -107,10 +107,11 @@ class MainMenuWindow(bui.MainWindow):
             try:
                 force_test = False
                 bs.get_local_active_input_devices_count()
-                if (
+                show = (
                     (app.env.tv or app.classic.platform == 'mac')
                     and bui.app.config.get('launchCount', 0) <= 1
-                ) or force_test:
+                ) or force_test
+                if show:
 
                     def _check_show_bs_remote_window() -> None:
                         try:

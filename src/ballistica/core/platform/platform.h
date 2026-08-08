@@ -39,13 +39,6 @@ class Platform {
   virtual void OnScreenSizeChange();
   virtual void StepDisplayTime();
 
-  // Get/set values before standard game settings are available (for values
-  // needed before SDL init/etc). FIXME: We should have some sort of
-  // 'bootconfig.json' file for these. (or simply read the regular config in
-  // via c++ immediately)
-  auto GetLowLevelConfigValue(const char* key, int default_value) -> int;
-  void SetLowLevelConfigValue(const char* key, int value);
-
 #pragma mark FILES -------------------------------------------------------------
 
   /// remove() supporting UTF8 strings.

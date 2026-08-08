@@ -286,20 +286,13 @@ class LeagueRankWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        txt = bui.Lstr(
-            resource=(
-                'coopSelectWindow.activenessAllTimeInfoText'
-                if self._season == 'a'
-                else 'coopSelectWindow.activenessInfoText'
-            ),
-            subs=[
-                (
-                    '${MAX}',
-                    str(
-                        plus.get_v1_account_misc_read_val('activenessMax', 1.0)
-                    ),
-                )
-            ],
+        # (The legacy form passed a ${MAX} sub that neither string
+        # actually contained; dropped with the port.)
+        lstrs = classicassets.strings.league
+        txt = (
+            lstrs.activeness_all_time_info
+            if self._season == 'a'
+            else lstrs.activeness_info
         )
         confirm.ConfirmWindow(
             txt,

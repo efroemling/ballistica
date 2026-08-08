@@ -61,6 +61,15 @@ available builds.
   values and player-customized names are plain strings. If you assign an
   `Lstr` it is flattened to a `str`, so team names you set will no longer
   re-translate when the language changes; assign a `LangStr` to keep that.
+- `bascenev1.InputDevice.get_button_name()` now returns a `LangStr` rather
+  than an `Lstr`. It could not take a `langstr` argument like the calls above
+  because it is implemented natively and the old return value existed only to
+  be converted straight back for display. Calling `.evaluate()` on the result
+  or passing it to a text/label slot works unchanged; the one thing that
+  breaks is using the result as a substitution inside an `Lstr`, which
+  `LangStr` values cannot ride. A side benefit: generic names such as
+  'button 5' now re-translate when the language changes instead of being
+  baked at the time you asked for them.
 - `ba*.Call()` will change to behave like `ba*.CallStrict()` instead of
   `ba*.CallPartial()`. To prepare for this, change all of your existing `Call()`
   usage to `CallPartial()` to lock in current behavior. Or use `CallStrict()` if

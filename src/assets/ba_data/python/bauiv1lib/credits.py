@@ -154,26 +154,17 @@ class CreditsWindow(bui.MainWindow):
                 sval += nline + '\n'
             return sval
 
-        sound_and_music = bui.Lstr(
-            resource=f'{self._r}.songCreditText'
+        # Flat text on purpose: the credits body is assembled as one
+        # big pre-laid-out string below (indenting, name-column
+        # wrapping), so this gets evaluated at the boundary.
+        sound_and_music = classicassets.strings.credits.song_credit(
+            title="'William Tell (Trumpet Entry)'",
+            performer='The Apollo Symphony Orchestra',
+            composer='Gioacchino Rossini',
+            arranger='Chris Worth',
+            publisher='BMI',
+            source='www.AudioSparx.com',
         ).evaluate()
-        sound_and_music = sound_and_music.replace(
-            '${TITLE}', "'William Tell (Trumpet Entry)'"
-        )
-        sound_and_music = sound_and_music.replace(
-            '${PERFORMER}', 'The Apollo Symphony Orchestra'
-        )
-        sound_and_music = sound_and_music.replace(
-            '${PERFORMER}', 'The Apollo Symphony Orchestra'
-        )
-        sound_and_music = sound_and_music.replace(
-            '${COMPOSER}', 'Gioacchino Rossini'
-        )
-        sound_and_music = sound_and_music.replace('${ARRANGER}', 'Chris Worth')
-        sound_and_music = sound_and_music.replace('${PUBLISHER}', 'BMI')
-        sound_and_music = sound_and_music.replace(
-            '${SOURCE}', 'www.AudioSparx.com'
-        )
         spc = '     '
         sound_and_music = spc + sound_and_music.replace('\n', '\n' + spc)
         names = [

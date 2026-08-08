@@ -954,58 +954,6 @@ static PyMethodDef PyResolveAppConfigValueDef = {
     ":meta private:",
 };
 
-// --------------------- get_low_level_config_value ----------------------------
-
-static auto PyGetLowLevelConfigValue(PyObject* self, PyObject* args,
-                                     PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* key;
-  int default_value;
-  static const char* kwlist[] = {"key", "default_value", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "si", const_cast<char**>(kwlist), &key, &default_value))
-    return nullptr;
-  return PyLong_FromLong(
-      g_core->platform->GetLowLevelConfigValue(key, default_value));
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyGetLowLevelConfigValueDef = {
-    "get_low_level_config_value",           // name
-    (PyCFunction)PyGetLowLevelConfigValue,  // method
-    METH_VARARGS | METH_KEYWORDS,           // flags
-
-    "get_low_level_config_value(key: str, default_value: int) -> int\n"
-    "\n"
-    ":meta private:",
-};
-
-// --------------------- set_low_level_config_value ----------------------------
-
-static auto PySetLowLevelConfigValue(PyObject* self, PyObject* args,
-                                     PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* key;
-  int value;
-  static const char* kwlist[] = {"key", "value", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "si",
-                                   const_cast<char**>(kwlist), &key, &value))
-    return nullptr;
-  g_core->platform->SetLowLevelConfigValue(key, value);
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PySetLowLevelConfigValueDef = {
-    "set_low_level_config_value",           // name
-    (PyCFunction)PySetLowLevelConfigValue,  // method
-    METH_VARARGS | METH_KEYWORDS,           // flags
-
-    "set_low_level_config_value(key: str, value: int) -> None\n"
-    "\n"
-    ":meta private:",
-};
-
 // --------------------- set_platform_misc_read_vals ---------------------------
 
 static auto PySetPlatformMiscReadVals(PyObject* self, PyObject* args,
@@ -2454,8 +2402,6 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyIsLogFullDef,
       PyGetLogFilePathDef,
       PySetPlatformMiscReadValsDef,
-      PySetLowLevelConfigValueDef,
-      PyGetLowLevelConfigValueDef,
       PyResolveAppConfigValueDef,
       PyGetAppConfigDefaultValueDef,
       PyAppConfigGetBuiltinKeysDef,

@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_INPUT_DEVICE_KEYBOARD_INPUT_H_
 #define BALLISTICA_BASE_INPUT_DEVICE_KEYBOARD_INPUT_H_
 
+#include <memory>
 #include <set>
 #include <string>
 
@@ -28,7 +29,7 @@ class KeyboardInput : public InputDevice {
   auto GetPartyButtonName() const -> std::string override;
   auto IsKeyboard() -> bool override { return true; }
   auto HasMeaningfulButtonNames() -> bool override;
-  auto GetButtonName(int index) -> std::string override;
+  auto GetButtonName(int index) -> std::shared_ptr<const LangStr> override;
 
  private:
   void UpdateArrowKeys_(BAKeycode key);

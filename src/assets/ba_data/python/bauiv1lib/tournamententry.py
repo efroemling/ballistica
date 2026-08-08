@@ -554,6 +554,7 @@ class TournamentEntryWindow(PopupWindow):
                 edit=self._pay_with_ad_img, opacity=1.0 if enabled else 0.2
             )
             bui.buttonwidget(
+                id=f'{self._idprefix}|getmoretickets',
                 edit=self._pay_with_ad_btn,
                 color=(0.5, 0.7, 0.2) if enabled else (0.5, 0.5, 0.5),
             )
@@ -574,6 +575,7 @@ class TournamentEntryWindow(PopupWindow):
             t_str = '?'
         if self._get_tickets_button:
             bui.buttonwidget(
+                id=f'{self._idprefix}|ticketcost',
                 edit=self._get_tickets_button,
                 label=bui.charstr(bui.SpecialChar.TICKET) + t_str,
             )

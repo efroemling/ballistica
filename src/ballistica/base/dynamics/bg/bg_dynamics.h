@@ -8,6 +8,7 @@
 
 #include "ballistica/base/base.h"
 #include "ballistica/shared/foundation/object.h"
+#include "ballistica/shared/math/matrix44f.h"
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
@@ -62,7 +63,9 @@ class BGDynamics {
   void Draw(FrameDef* frame_def);
   void SetDebrisFriction(float val);
   void SetDebrisKillHeight(float val);
-  void AddTerrain(CollisionMeshAsset* o);
+  /// Add a terrain to the bg-dynamics world. The transform is baked in at
+  /// add time; to move an existing terrain, remove and re-add it.
+  void AddTerrain(CollisionMeshAsset* o, const Matrix44f& transform);
   void RemoveTerrain(CollisionMeshAsset* o);
 
   // (sent to us by the bg dynamics server)

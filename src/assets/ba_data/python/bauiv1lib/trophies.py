@@ -44,6 +44,7 @@ class TrophiesWindow(popup.PopupWindow):
         )
 
         self._cancel_button = bui.buttonwidget(
+            id=f'{self._idprefix}|close',
             parent=self.root_widget,
             position=(50, self._height - 30),
             size=(50, 50),

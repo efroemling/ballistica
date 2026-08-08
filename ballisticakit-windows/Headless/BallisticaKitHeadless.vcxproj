@@ -269,6 +269,7 @@
     <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_volume_light_data.h" />
     <ClCompile Include="..\..\src\ballistica\base\dynamics\collision_cache.cc" />
     <ClInclude Include="..\..\src\ballistica\base\dynamics\collision_cache.h" />
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\geom_transform.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\component\empty_component.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\component\object_component.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\component\object_component.h" />

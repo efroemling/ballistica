@@ -197,25 +197,8 @@ auto PythonClassLangStr::FromText(PyObject* cls, PyObject* arg) -> PyObject* {
   if (utf8 == nullptr) {
     throw Exception("Unable to decode str.", PyExcType::kValue);
   }
-  // Double every brace so any {token}-shaped run in the caller's text
-  // survives evaluation untouched ({{ -> { and }} -> } at eval time).
-  // The result is a pure literal value form: no subs, no package.
-  std::string doubled;
-  doubled.reserve(static_cast<size_t>(size));
-  for (Py_ssize_t i = 0; i < size; ++i) {
-    char c = utf8[i];
-    if (c == '{') {
-      doubled += "{{";
-    } else if (c == '}') {
-      doubled += "}}";
-    } else {
-      doubled += c;
-    }
-  }
-  auto ls = std::make_shared<LangStr>();
-  ls->form = LangStr::Form::kValue;
-  ls->value = std::move(doubled);
-  return Create(std::move(ls));
+  return Create(
+      LangStr::MakeLiteral(std::string_view(utf8, static_cast<size_t>(size))));
   BA_PYTHON_CATCH;
 }
 

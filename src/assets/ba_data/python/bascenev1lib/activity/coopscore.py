@@ -731,7 +731,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                 main=classicassets.strings.coop_score.single_player_count
             )
         ZoomText(
-            self._campaign.getlevel(self._level_name).displayname,
+            self._campaign.getlevel(self._level_name).displayname_langstr,
             maxwidth=800,
             flash=False,
             trail=False,

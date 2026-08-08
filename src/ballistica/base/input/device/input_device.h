@@ -3,10 +3,12 @@
 #ifndef BALLISTICA_BASE_INPUT_DEVICE_INPUT_DEVICE_H_
 #define BALLISTICA_BASE_INPUT_DEVICE_INPUT_DEVICE_H_
 
+#include <memory>
 #include <string>
 
 #include "ballistica/base/input/device/feedback_event.h"
 #include "ballistica/base/input/device/input_device_delegate.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/shared/foundation/input_types.h"
 
 namespace ballistica::base {
@@ -133,7 +135,12 @@ class InputDevice : public Object {
   virtual auto IsRemoteApp() -> bool;
 
   /// Return a human-readable name for a button/key.
-  virtual auto GetButtonName(int index) -> std::string;
+  ///
+  /// Returns a language-string rather than baked text so the name stays
+  /// live across locale switches: the generic fallback ('Button 5') is a
+  /// resource form, while device-supplied glyph names ('A', 'Space') are
+  /// literal value forms shown as-is in every locale.
+  virtual auto GetButtonName(int index) -> std::shared_ptr<const LangStr>;
 
   /// Return a human-readable name for an axis.
   virtual auto GetAxisName(int index) -> std::string;

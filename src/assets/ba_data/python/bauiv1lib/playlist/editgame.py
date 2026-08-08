@@ -263,7 +263,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             shadow=1.0,
             scale=0.55,
             maxwidth=256 * 0.7 * 0.8,
-            text=get_map_display_string(self._map),
+            text=get_map_display_string(self._map, langstr=True),
             h_align='center',
             color=(0.6, 1.0, 0.6, 1.0),
             v_align='center',

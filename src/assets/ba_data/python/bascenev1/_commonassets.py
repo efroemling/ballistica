@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bacommonassets.260806b`` (bascenev1).
+"""Asset-package wrapper for ``a-0.bacommonassets.260807a`` (bascenev1).
 
 Cross-cutting assets used everywhere -- by the engine, by every game built on
 it, and by the master server's own web pages. Content here must be free of any
@@ -9,13 +9,13 @@ single game's concepts, which is what distinguishes it from BaClassicAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bacommonassets.260806b
+# ba_meta require asset-package a-0.bacommonassets.260807a
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.bacommonassets.260806b'
+__asset_package__ = 'a-0.bacommonassets.260807a'
 
 from typing import TYPE_CHECKING
 
@@ -457,6 +457,17 @@ if TYPE_CHECKING:
                 English: "({note})"
             """
 
+        def quoted(self, *, text: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Pure-formatting template wrapping a short literal value (a key
+                or button name) in the language's own quotation marks;
+                substitution-only.
+
+                English: ""{text}""
+            """
+
         def spaced_pair(
             self, *, first: str | LangStr, second: str | LangStr
         ) -> LangStr:
@@ -669,6 +680,17 @@ if TYPE_CHECKING:
         #:
         #:     English: "Korean"
         kor: LangStr
+
+        def language_set(self, *, language: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Confirmation notice shown after the display language is
+                switched. The placeholder is filled with the name of the new
+                language, already written in that language.
+
+                English: "Display language set to {language}."
+            """
 
         #: ::
         #:
@@ -1186,8 +1208,8 @@ if TYPE_CHECKING:
         status: StringsStatusGroup
         values: StringsValuesGroup
 
-    #: The ``strings`` group - 137 strings (``actions``, ``compose``,
-    #: ``locales``, ``status``, ``values``, and 132 more). Full list in source.
+    #: The ``strings`` group - 139 strings (``actions``, ``compose``,
+    #: ``locales``, ``status``, ``values``, and 134 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
@@ -1244,6 +1266,7 @@ _TREE = {
             'para_pair': ('first', 'second'),
             'paren_suffix': ('main', 'note'),
             'parenthesized': ('note',),
+            'quoted': ('text',),
             'spaced_pair': ('first', 'second'),
             'star_prefix': ('text',),
         },
@@ -1270,6 +1293,7 @@ _TREE = {
             'jpn': (),
             'kazk': (),
             'kor': (),
+            'language_set': ('language',),
             'mlay': (),
             'pers': (),
             'pirate': (),

@@ -416,19 +416,18 @@ class AdvancedSettingsWindow(bui.MainWindow):
             button_size=(300, 60),
             choices_display=(
                 [
-                    bui.Lstr(
-                        value=(
-                            _commonassets.strings.values.auto.evaluate()
-                            + ' ('
-                            + getattr(
-                                locale_strs,
-                                bui.app.locale.default_locale.resolved.value,
-                            ).evaluate()
-                            + ')'
-                        )
+                    _commonassets.strings.compose.paren_suffix(
+                        main=_commonassets.strings.values.auto,
+                        note=getattr(
+                            locale_strs,
+                            bui.app.locale.default_locale.resolved.value,
+                        ),
                     )
                 ]
-                + [bui.Lstr(value=langs_full[l]) for l in available_languages]
+                + [
+                    bui.langstr_value(langs_full[l])
+                    for l in available_languages
+                ]
             ),
             current_choice=cur_lang,
         )

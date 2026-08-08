@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <memory>
 #include <string>
 
 #include "ballistica/base/assets/builtin_strings.h"
@@ -163,10 +164,9 @@ auto InputDevice::GetDeviceNamePretty() -> std::string {
   return translated_name + " " + GetPersistentIdentifier();
 }
 
-auto InputDevice::GetButtonName(int id) -> std::string {
+auto InputDevice::GetButtonName(int id) -> std::shared_ptr<const LangStr> {
   // By default just say 'button 1' or whatnot.
-  // FIXME: should return a LangStr rather than locale-baked text.
-  return BuiltinStrings::Input::Button(int64_t{id})->Evaluate();
+  return BuiltinStrings::Input::Button(int64_t{id});
 }
 
 auto InputDevice::GetAxisName(int id) -> std::string {

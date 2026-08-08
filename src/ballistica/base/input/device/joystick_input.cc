@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <memory>
 #include <string>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
@@ -123,7 +124,19 @@ void JoystickInput::SetButtonName(int button, const std::string& name) {
   button_names_[button] = name;
 }
 
-auto JoystickInput::GetButtonName(int index) -> std::string {
+auto JoystickInput::GetButtonName(int index) -> std::shared_ptr<const LangStr> {
+  // Device-supplied glyph names ('A', 'L1', a special-char glyph) name a
+  // physical button, so they ship as literal value forms; anything we
+  // have no name for falls back to the base class's translatable
+  // 'Button N' resource form.
+  auto text = DeviceButtonNameText_(index);
+  if (!text.empty()) {
+    return LangStr::MakeLiteral(text);
+  }
+  return InputDevice::GetButtonName(index);
+}
+
+auto JoystickInput::DeviceButtonNameText_(int index) -> std::string {
   // First check any explicit ones we were passed.
   auto i = button_names_.find(index);
   if (i != button_names_.end()) {
@@ -236,7 +249,7 @@ auto JoystickInput::GetButtonName(int index) -> std::string {
         break;
     }
   }
-  return InputDevice::GetButtonName(index);
+  return "";
 }
 
 JoystickInput::~JoystickInput() {

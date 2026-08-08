@@ -11,7 +11,9 @@ def bacurl() -> None:
     Reads ``ballistica_api_key`` from ``pconfig/localconfig.json`` and
     passes it as a Bearer token in the Authorization header. All
     arguments are forwarded to curl. The ``-s`` (silent) flag is added
-    automatically.
+    automatically. HTTP errors exit non-zero (--fail-with-body) so piped
+    JSON parsing fails loudly instead of KeyError-ing on error payloads;
+    the error body still prints.
 
     Examples::
 
@@ -43,6 +45,7 @@ def bacurl() -> None:
     cmd = [
         'curl',
         '-s',
+        '--fail-with-body',
         '-H',
         f'Authorization: Bearer {api_key}',
         *args,

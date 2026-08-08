@@ -91,6 +91,7 @@ class ColorPicker(PopupWindow):
                 )
                 row.append(btn)
         other_button = bui.buttonwidget(
+            id=f'{self._idprefix}|other',
             parent=self.root_widget,
             position=(105 - 60, 13),
             color=(0.7, 0.7, 0.7),
@@ -264,6 +265,7 @@ class ColorPickerExact(PopupWindow):
             y -= 42
 
         btn = bui.buttonwidget(
+            id=f'{self._idprefix}|done',
             parent=self.root_widget,
             position=(width * 0.5 - 40, 10),
             size=(80, 30),

@@ -177,6 +177,7 @@ class PlayOptionsWindow(PopupWindow):
         )
 
         self._cancel_button = bui.buttonwidget(
+            id=f'{self._idprefix}|close',
             parent=self.root_widget,
             position=(25, self._height - 53),
             size=(50, 50),
@@ -214,26 +215,16 @@ class PlayOptionsWindow(PopupWindow):
                         self._have_at_least_one_owned = True
 
                     try:
-                        # The settings-display twin and the unlock
-                        # composite below are both still legacy, so keep
-                        # an Lstr-typed local for the composite's sub and
-                        # let `desc` hold either flavor for display.
                         descbase = bui.getclass(
                             entry['type'], subclassof=bs.GameActivity
-                        ).get_settings_display_string(entry)
-                        desc: bui.Lstr | bui.LangStr = descbase
+                        ).get_settings_display_string(entry, langstr=True)
+                        desc: bui.LangStr = descbase
                         if not owned:
-                            desc = bui.Lstr(
-                                value='${DESC}\n${UNLOCK}',
-                                subs=[
-                                    ('${DESC}', descbase),
-                                    (
-                                        '${UNLOCK}',
-                                        bui.Lstr(
-                                            resource='unlockThisInTheStoreText'
-                                        ),
-                                    ),
-                                ],
+                            desc = _commonassets.strings.compose.line_pair(
+                                first=descbase,
+                                second=(
+                                    classicassets.strings.play_options
+                                ).unlock_in_store,
                             )
                         desc_color = (0, 1, 0) if owned else (1, 0, 0)
                     except Exception:
@@ -320,6 +311,7 @@ class PlayOptionsWindow(PopupWindow):
         self._custom_colors_names_button: bui.Widget | None
         if self._sessiontype is bs.DualTeamSession:
             self._custom_colors_names_button = bui.buttonwidget(
+                id=f'{self._idprefix}|teamnamescolors',
                 parent=self.root_widget,
                 position=(100, 195 + y_offs),
                 size=(290, 35),
@@ -408,6 +400,7 @@ class PlayOptionsWindow(PopupWindow):
                 )
 
         self._ok_button = bui.buttonwidget(
+            id=f'{self._idprefix}|ok',
             parent=self.root_widget,
             position=(70, 44),
             size=(200, 45),

@@ -256,6 +256,9 @@
     <ClInclude Include="..\..\src\ballistica\base\dynamics\collision_cache.h">
       <Filter>ballistica\base\dynamics</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\geom_transform.h">
+      <Filter>ballistica\base\dynamics</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\ballistica\base\graphics\component\empty_component.h">
       <Filter>ballistica\base\graphics\component</Filter>
     </ClInclude>

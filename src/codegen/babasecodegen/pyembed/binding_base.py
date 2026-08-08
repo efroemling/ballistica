@@ -73,7 +73,6 @@ values = [
     enums.InputType,  # kInputTypeClass
     enums.Permission,  # kPermissionClass
     enums.SpecialChar,  # kSpecialCharClass
-    _language.Lstr.from_json,  # kLstrFromJsonCall
     _hooks.hash_strings,  # kHashStringsCall
     _hooks.have_account_v2_credentials,  # kHaveAccountV2CredentialsCall
     _hooks.implicit_sign_in,  # kImplicitSignInCall

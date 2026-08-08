@@ -69,6 +69,10 @@ class Dynamics : public Object {
   void AddTrimesh(dGeomID g);
   void RemoveTrimesh(dGeomID g);
 
+  /// Let us know a trimesh geom has been repositioned so we can rebuild
+  /// anything keyed off of where it was.
+  void MarkTrimeshMoved(dGeomID g);
+
   auto collision_count() const { return collision_count_; }
   auto process_real_time() const { return real_time_; }
   auto last_impact_sound_time() const { return last_impact_sound_time_; }

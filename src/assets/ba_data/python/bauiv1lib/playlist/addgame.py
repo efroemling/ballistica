@@ -333,6 +333,6 @@ class PlaylistAddGameWindow(bui.MainWindow):
         bui.textwidget(
             edit=self._selected_description_text,
             text=gametype.get_description_display_string(
-                self._editcontroller.get_session_type()
+                self._editcontroller.get_session_type(), langstr=True
             ),
         )

@@ -760,7 +760,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         from bascenev1._gameutils import animate
         from bascenev1._nodeactor import NodeActor
 
-        sb_name = self.get_instance_scoreboard_display_string()
+        sb_name = self.get_instance_scoreboard_display_string(langstr=True)
 
         # The description can be either a string or a sequence with args
         # to swap in post-translation.
@@ -848,7 +848,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         from bascenev1._gameutils import animate
         from bascenev1lib.actor.zoomtext import ZoomText
 
-        name = self.get_instance_display_string()
+        name = self.get_instance_display_string(langstr=True)
         ZoomText(
             name,
             maxwidth=800,
