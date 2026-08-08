@@ -181,6 +181,9 @@ class RigidBody : public Object {
   void AddBlendOffset(float x, float y, float z);
   auto blend_offset() const -> const Vector3f& { return blend_offset_; }
 
+  void SetPositionAndRotation(float x, float y, float z, float rx_deg,
+                              float ry_deg, float rz_deg);
+
   void ApplyToRenderComponent(base::RenderComponent* c);
 
  private:

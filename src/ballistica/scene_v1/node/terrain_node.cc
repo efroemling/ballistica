@@ -151,6 +151,8 @@ void TerrainNode::set_collision_mesh(SceneCollisionMesh* val) {
         RigidBody::kCollideAll ^ RigidBody::kCollideBackground,
         collision_mesh_.get(), flags);
     body_->set_can_cause_impact_damage(true);
+    body_->SetPositionAndRotation(position_x_, position_y_, position_z_,
+                                  rotate_x_, rotate_y_, rotate_z_);
 
     // also ship it to the BG-Dynamics thread..
     if (!bumper_ && affect_bg_dynamics_) {
@@ -203,6 +205,10 @@ void TerrainNode::SetPosition(const std::vector<float>& vals) {
   position_x_ = position_[0];
   position_y_ = position_[1];
   position_z_ = position_[2];
+  if (body_.exists()) {
+    body_->SetPositionAndRotation(position_x_, position_y_, position_z_,
+                                  rotate_x_, rotate_y_, rotate_z_);
+  }
 }
 
 void TerrainNode::SetRotate(const std::vector<float>& vals) {
@@ -214,6 +220,10 @@ void TerrainNode::SetRotate(const std::vector<float>& vals) {
   rotate_x_ = rotate_[0];
   rotate_y_ = rotate_[1];
   rotate_z_ = rotate_[2];
+  if (body_.exists()) {
+    body_->SetPositionAndRotation(position_x_, position_y_, position_z_,
+                                  rotate_x_, rotate_y_, rotate_z_);
+  }
 }
 
 auto TerrainNode::GetReflection() const -> std::string {

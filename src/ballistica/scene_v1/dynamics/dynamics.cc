@@ -192,6 +192,16 @@ void Dynamics::AddTrimesh(dGeomID g) {
   collision_cache_->SetGeoms(trimeshes_);
 }
 
+void Dynamics::RefreshTrimesh(dGeomID g) {
+  assert(dGeomGetClass(g) == dTriMeshClass);
+
+  g->recomputeAABB();
+  g->gflags &= (~(GEOM_DIRTY | GEOM_AABB_BAD));  // NOLINT
+
+  // Update our collision cache.
+  collision_cache_->SetGeoms(trimeshes_);
+}
+
 void Dynamics::RemoveTrimesh(dGeomID g) {
   assert(dGeomGetClass(g) == dTriMeshClass);
   for (auto i = trimeshes_.begin(); i != trimeshes_.end(); i++) {
