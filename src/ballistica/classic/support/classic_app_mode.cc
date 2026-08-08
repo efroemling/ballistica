@@ -1004,29 +1004,15 @@ void ClassicAppMode::UpdateKickVote_() {
     }
   } else {
     int votes_required;
-    switch (total_client_count) {
-      case 1:
-      case 2:
-        votes_required = 2;  // Shouldn't actually be possible.
-        break;
-      case 3:
-        votes_required = g_core->HeadlessMode() ? 2 : 3;
-        break;
-      case 4:
-        votes_required = 3;
-        break;
-      case 5:
-        votes_required = g_core->HeadlessMode() ? 3 : 4;
-        break;
-      case 6:
-        votes_required = 4;
-        break;
-      case 7:
-        votes_required = g_core->HeadlessMode() ? 4 : 5;
-        break;
-      default:
-        votes_required = total_client_count - 3;
-        break;
+    if (total_client_count <= 2) {
+      votes_required = 2;  // Shouldn't actually be possible.
+    } else if (total_client_count <= 7) {
+      votes_required = (total_client_count + 3) / 2;
+      if (g_core->HeadlessMode() && total_client_count % 2 == 1) {
+        votes_required--;
+      }
+    } else {
+      votes_required = total_client_count - 3;
     }
     int votes_needed = votes_required - yes_votes;
     if (votes_needed <= 0) {
