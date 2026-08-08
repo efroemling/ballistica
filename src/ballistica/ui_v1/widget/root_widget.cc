@@ -11,6 +11,7 @@
 
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/base/base.h"
@@ -2781,14 +2782,14 @@ void RootWidget::UpdateChests_() {
 
   // Make sure we've got the latest translated strings for open times.
   if (translations_dirty_) {
-    time_suffix_hours_ =
-        g_base->assets->CompileResourceString(R"({"r":"timeSuffixHoursText"})");
-    time_suffix_minutes_ = g_base->assets->CompileResourceString(
-        R"({"r":"timeSuffixMinutesText"})");
-    time_suffix_seconds_ = g_base->assets->CompileResourceString(
-        R"({"r":"timeSuffixSecondsText"})");
-    open_me_text_ =
-        g_base->assets->CompileResourceString(R"({"r":"openMeText"})");
+    // Unit templates come from the duration formatter components
+    // (LangStr-era translated content; the builtin package embeds
+    // them), keeping this display off the legacy language corpus.
+    auto units = g_base->assets->GetDurationUnitTemplates();
+    time_suffix_hours_ = units.hours;
+    time_suffix_minutes_ = units.minutes;
+    time_suffix_seconds_ = units.seconds;
+    open_me_text_ = base::BuiltinStrings::Ui::OpenMe()->Evaluate();
     translations_dirty_ = false;
   }
 
@@ -3021,7 +3022,7 @@ auto RootWidget::GetTimeStr_(seconds_t diff, bool animating) -> std::string {
     std::string s = time_suffix_hours_;
     char buffer[100];
     snprintf(buffer, sizeof(buffer), "%d", h);
-    Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+    Utils::StringReplaceOne(&s, "{amount}", buffer);
     if (!output.empty()) {
       output += " ";
     }
@@ -3034,7 +3035,7 @@ auto RootWidget::GetTimeStr_(seconds_t diff, bool animating) -> std::string {
     std::string s = time_suffix_minutes_;
     char buffer[100];
     snprintf(buffer, sizeof(buffer), "%d", m);
-    Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+    Utils::StringReplaceOne(&s, "{amount}", buffer);
     if (!output.empty()) {
       output += " ";
     }
@@ -3051,7 +3052,7 @@ auto RootWidget::GetTimeStr_(seconds_t diff, bool animating) -> std::string {
         std::string s = time_suffix_seconds_;
         char buffer[100];
         snprintf(buffer, sizeof(buffer), "%.2f", sec);
-        Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+        Utils::StringReplaceOne(&s, "{amount}", buffer);
         if (!output.empty()) {
           output += " ";
         }
@@ -3064,7 +3065,7 @@ auto RootWidget::GetTimeStr_(seconds_t diff, bool animating) -> std::string {
         std::string s = time_suffix_seconds_;
         char buffer[100];
         snprintf(buffer, sizeof(buffer), "%d", sec);
-        Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+        Utils::StringReplaceOne(&s, "{amount}", buffer);
         if (!output.empty()) {
           output += " ";
         }

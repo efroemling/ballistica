@@ -79,7 +79,7 @@ def get_player_profile_colors(
         try:
             assert profilename is not None
             color = profiles[profilename]['color']
-        except (KeyError, AssertionError):
+        except KeyError, AssertionError:
             # Key off name if possible.
             if profilename is None:
                 # First 6 are bright-ish.
@@ -91,7 +91,7 @@ def get_player_profile_colors(
         try:
             assert profilename is not None
             highlight = profiles[profilename]['highlight']
-        except (KeyError, AssertionError):
+        except KeyError, AssertionError:
             # Key off name if possible.
             if profilename is None:
                 # Last 2 are grey and white; ignore those or we

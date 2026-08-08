@@ -5,13 +5,13 @@
 Where v1 carries pre-localized raw ``str`` text (optionally a JSON-encoded
 legacy ``babase.Lstr`` via ``*_is_lstr`` flags) and expects the *server* to
 localize, v2 text is always a language-agnostic
-:class:`~bacommon.langstr.Lstr`. The server ships one response to every
+:class:`~bacommon.langstr.LangStrSpec`. The server ships one response to every
 client regardless of language; the client resolves the referenced
 asset-packages in its own locale and decodes the strings at render time.
 
 See ``docs/initiatives/docui-v2-lstrings.md`` (ballistica-internal). This is
 the milestone-1 slice: a minimal but real subset of the v1 element set, with
-text typed as ``Lstr`` (the name-based form -- subs are flat for now).
+text typed as ``LangStrSpec`` (the name-based form -- subs are flat for now).
 Non-text fields mirror v1's names/keys so client render code can stay close
 to ``v1prep``.
 """
@@ -22,8 +22,10 @@ from typing import Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
-from bacommon.langstr import Lstr
-from bacommon.assetref import TextureRef, MeshRef
+import bacommon.clienteffect as clfx
+import bacommon.displayitem as ditm
+from bacommon.langstr import LangStrSpec
+from bacommon.assetspec import TextureSpec, MeshSpec
 from bacommon.docui._docui import (
     DocUIRequest,
     DocUIRequestTypeID,
@@ -161,6 +163,26 @@ class Local(Action):
     #: Plays a swish if closing the window, else a click.
     default_sound: Annotated[bool, IOAttrs('ds', store_default=False)] = True
 
+    #: Client-effects to run immediately when the button is pressed.
+    #: Note that effect payloads are not yet v2-native — text in them is
+    #: raw/legacy-lstr, pending clienteffect gaining a resolve-context
+    #: concept (see the SoundSpec followup in docs/followups.md).
+    #:
+    #: :meta private:
+    immediate_client_effects: Annotated[
+        list[clfx.Effect], IOAttrs('fx', store_default=False)
+    ] = field(default_factory=list)
+
+    #: Local action to run immediately when the button is pressed. Will
+    #: be handled by
+    #: :meth:`bauiv1lib.docui.DocUIController.local_action()`.
+    immediate_local_action: Annotated[
+        str | None, IOAttrs('a', store_default=False)
+    ] = None
+    immediate_local_action_args: Annotated[
+        dict | None, IOAttrs('aa', store_default=False)
+    ] = None
+
     @override
     @classmethod
     def get_type_id(cls) -> ActionTypeID:
@@ -189,6 +211,7 @@ class DecorationTypeID(Enum):
     UNKNOWN = 'u'
     TEXT = 't'
     IMAGE = 'i'
+    DISPLAY_ITEM = 'd'
 
 
 class Decoration(IOMultiType[DecorationTypeID]):
@@ -210,6 +233,8 @@ class Decoration(IOMultiType[DecorationTypeID]):
             return Text
         if type_id is t.IMAGE:
             return Image
+        if type_id is t.DISPLAY_ITEM:
+            return DisplayItem
         assert_never(type_id)
 
     @override
@@ -237,13 +262,17 @@ class UnknownDecoration(Decoration):
 @ioprepped
 @dataclass
 class Text(Decoration):
-    """Text decoration. ``text`` is a language-agnostic :class:`Lstr`."""
+    """Text decoration.
 
-    text: Annotated[Lstr, IOAttrs('t')]
+    ``text`` is a language-agnostic :class:`~bacommon.langstr.LangStrSpec`.
+    """
+
+    text: Annotated[LangStrSpec, IOAttrs('t')]
     position: Annotated[tuple[float, float], IOAttrs('p')]
 
     #: Effectively max-width and max-height.
     size: Annotated[tuple[float, float], IOAttrs('i')]
+
     scale: Annotated[float, IOAttrs('s', store_default=False)] = 1.0
     h_align: Annotated[HAlign, IOAttrs('ha', store_default=False)] = (
         HAlign.CENTER
@@ -275,11 +304,12 @@ class Image(Decoration):
     """Image decoration. Textures/meshes are language-independent refs.
 
     Unlike text, image assets need no per-locale decode; each ref
-    (:class:`TextureRef` / :class:`MeshRef`) is resolved by the client and
+    (:class:`~bacommon.assetspec.TextureSpec` /
+    :class:`~bacommon.assetspec.MeshSpec`) is resolved by the client and
     rendered directly.
     """
 
-    texture: Annotated[TextureRef, IOAttrs('t')]
+    texture: Annotated[TextureSpec, IOAttrs('t')]
     position: Annotated[tuple[float, float], IOAttrs('p')]
     size: Annotated[tuple[float, float], IOAttrs('s')]
     color: Annotated[
@@ -293,7 +323,7 @@ class Image(Decoration):
         VAlign.CENTER
     )
     tint_texture: Annotated[
-        TextureRef | None, IOAttrs('tt', store_default=False)
+        TextureSpec | None, IOAttrs('tt', store_default=False)
     ] = None
     tint_color: Annotated[
         tuple[float, float, float] | None, IOAttrs('tc1', store_default=False)
@@ -302,13 +332,13 @@ class Image(Decoration):
         tuple[float, float, float] | None, IOAttrs('tc2', store_default=False)
     ] = None
     mask_texture: Annotated[
-        TextureRef | None, IOAttrs('mt', store_default=False)
+        TextureSpec | None, IOAttrs('mt', store_default=False)
     ] = None
     mesh_opaque: Annotated[
-        MeshRef | None, IOAttrs('mo', store_default=False)
+        MeshSpec | None, IOAttrs('mo', store_default=False)
     ] = None
     mesh_transparent: Annotated[
-        MeshRef | None, IOAttrs('mn', store_default=False)
+        MeshSpec | None, IOAttrs('mn', store_default=False)
     ] = None
     highlight: Annotated[bool, IOAttrs('h', store_default=False)] = True
     depth_range: Annotated[tuple[float, float] | None, IOAttrs('z')] = None
@@ -317,6 +347,50 @@ class Image(Decoration):
     @classmethod
     def get_type_id(cls) -> DecorationTypeID:
         return DecorationTypeID.IMAGE
+
+
+class DisplayItemStyle(Enum):
+    """Styles a display-item can be drawn in (mirrors v1)."""
+
+    #: Fully conveys what the item is. Draws in a 4x3 box and works
+    #: best with large-ish displays.
+    FULL = 'f'
+
+    #: Fully conveys the item, condensed into a 2x1 box for small sizes.
+    COMPACT = 'c'
+
+    #: Graphics-only representation in a 1x1 box, for use alongside a
+    #: textual description.
+    ICON = 'i'
+
+
+@ioprepped
+@dataclass
+class DisplayItem(Decoration):
+    """DisplayItem decoration.
+
+    The wrapped :class:`~bacommon.displayitem.Wrapper` already
+    localizes its own text client-side, so it carries over from v1
+    unchanged.
+    """
+
+    wrapper: Annotated[ditm.Wrapper, IOAttrs('w')]
+    position: Annotated[tuple[float, float], IOAttrs('p')]
+    size: Annotated[tuple[float, float], IOAttrs('s')]
+    style: Annotated[DisplayItemStyle, IOAttrs('t', store_default=False)] = (
+        DisplayItemStyle.FULL
+    )
+    text_color: Annotated[
+        tuple[float, float, float] | None, IOAttrs('c', store_default=False)
+    ] = None
+    highlight: Annotated[bool, IOAttrs('h', store_default=False)] = True
+    depth_range: Annotated[tuple[float, float] | None, IOAttrs('z')] = None
+    debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> DecorationTypeID:
+        return DecorationTypeID.DISPLAY_ITEM
 
 
 class ButtonStyle(Enum):
@@ -336,12 +410,16 @@ class ButtonStyle(Enum):
 @ioprepped
 @dataclass
 class Button:
-    """A button in our doc-ui. ``label`` is a language-agnostic :class:`Lstr`.
+    """A button in our doc-ui.
 
+    ``label`` is a language-agnostic :class:`~bacommon.langstr.LangStrSpec`.
     Size, padding, and all decorations scale consistently with ``scale``.
     """
 
-    label: Annotated[Lstr | None, IOAttrs('l', store_default=False)] = None
+    label: Annotated[LangStrSpec | None, IOAttrs('l', store_default=False)] = (
+        None
+    )
+
     action: Annotated[Action | None, IOAttrs('a', store_default=False)] = None
     size: Annotated[
         tuple[float, float] | None, IOAttrs('sz', store_default=False)
@@ -357,8 +435,11 @@ class Button:
     label_scale: Annotated[float | None, IOAttrs('ls', store_default=False)] = (
         None
     )
+    label_flatness: Annotated[
+        float | None, IOAttrs('lf', store_default=False)
+    ] = None
     texture: Annotated[
-        TextureRef | None, IOAttrs('tex', store_default=False)
+        TextureSpec | None, IOAttrs('tex', store_default=False)
     ] = None
     scale: Annotated[float, IOAttrs('sc', store_default=False)] = 1.0
     padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 0.0
@@ -373,6 +454,18 @@ class Button:
     )
     default: Annotated[bool, IOAttrs('df', store_default=False)] = False
     selected: Annotated[bool, IOAttrs('sel', store_default=False)] = False
+
+    icon: Annotated[TextureSpec | None, IOAttrs('icn', store_default=False)] = (
+        None
+    )
+    icon_scale: Annotated[float | None, IOAttrs('is', store_default=False)] = (
+        None
+    )
+    icon_color: Annotated[
+        tuple[float, float, float, float] | None,
+        IOAttrs('ic', store_default=False),
+    ] = None
+
     depth_range: Annotated[
         tuple[float, float] | None, IOAttrs('z', store_default=None)
     ] = None
@@ -435,19 +528,51 @@ class UnknownRow(Row):
 @ioprepped
 @dataclass
 class ButtonRow(Row):
-    """A row consisting of buttons. ``title``/``subtitle`` are :class:`Lstr`."""
+    """A row consisting of buttons.
+
+    ``title``/``subtitle`` are :class:`~bacommon.langstr.LangStrSpec`.
+    """
 
     buttons: Annotated[list[Button], IOAttrs('b')]
 
-    title: Annotated[Lstr | None, IOAttrs('t', store_default=False)] = None
+    header_height: Annotated[float, IOAttrs('h', store_default=False)] = 0.0
+    header_scale: Annotated[float, IOAttrs('hs', store_default=False)] = 1.0
+    header_decorations_left: Annotated[
+        list[Decoration] | None, IOAttrs('hdl', store_default=False)
+    ] = None
+    header_decorations_center: Annotated[
+        list[Decoration] | None, IOAttrs('hdc', store_default=False)
+    ] = None
+    header_decorations_right: Annotated[
+        list[Decoration] | None, IOAttrs('hdr', store_default=False)
+    ] = None
+
+    title: Annotated[LangStrSpec | None, IOAttrs('t', store_default=False)] = (
+        None
+    )
     title_color: Annotated[
         tuple[float, float, float, float] | None,
         IOAttrs('tc', store_default=False),
     ] = None
-    subtitle: Annotated[Lstr | None, IOAttrs('s', store_default=False)] = None
+    title_flatness: Annotated[
+        float | None, IOAttrs('tf', store_default=False)
+    ] = None
+    title_shadow: Annotated[
+        float | None, IOAttrs('ts', store_default=False)
+    ] = None
+
+    subtitle: Annotated[
+        LangStrSpec | None, IOAttrs('s', store_default=False)
+    ] = None
     subtitle_color: Annotated[
         tuple[float, float, float, float] | None,
         IOAttrs('sc', store_default=False),
+    ] = None
+    subtitle_flatness: Annotated[
+        float | None, IOAttrs('sf', store_default=False)
+    ] = None
+    subtitle_shadow: Annotated[
+        float | None, IOAttrs('ss', store_default=False)
     ] = None
 
     #: Spacing between all buttons in the row.
@@ -457,6 +582,12 @@ class ButtonRow(Row):
     padding_right: Annotated[float, IOAttrs('pr', store_default=False)] = 10.0
     padding_top: Annotated[float, IOAttrs('pt', store_default=False)] = 10.0
     padding_bottom: Annotated[float, IOAttrs('pb', store_default=False)] = 10.0
+
+    #: Extra space above the row's horizontally-scrollable area.
+    spacing_top: Annotated[float, IOAttrs('st', store_default=False)] = 0.0
+
+    #: Extra space below the row's horizontally-scrollable area.
+    spacing_bottom: Annotated[float, IOAttrs('sb', store_default=False)] = 0.0
 
     center_content: Annotated[bool, IOAttrs('c', store_default=False)] = False
     center_title: Annotated[bool, IOAttrs('ct', store_default=False)] = False
@@ -478,9 +609,12 @@ class ButtonRow(Row):
 @ioprepped
 @dataclass
 class Page:
-    """Doc-UI page version 2. ``title`` is a language-agnostic :class:`Lstr`."""
+    """Doc-UI page version 2.
 
-    title: Annotated[Lstr, IOAttrs('t')]
+    ``title`` is a language-agnostic :class:`~bacommon.langstr.LangStrSpec`.
+    """
+
+    title: Annotated[LangStrSpec, IOAttrs('t')]
     rows: Annotated[list[Row], IOAttrs('r')]
 
     #: Center content vertically when it's smaller than the available height.
@@ -524,6 +658,55 @@ class Response(DocUIResponse):
     status: Annotated[ResponseStatus, IOAttrs('s', store_default=False)] = (
         ResponseStatus.SUCCESS
     )
+
+    #: The engine build this response was built for, as a sanity check:
+    #: responses can be tailored per-build (client-effect forms etc.),
+    #: so a consumer seeing a mismatch with its own build should treat
+    #: the response as stale (e.g. toss cached data) rather than use it.
+    for_build: Annotated[int | None, IOAttrs('fb', store_default=False)] = None
+
+    #: Asset-package-versions the response's integer-indexed
+    #: language-strings resolve against (position = package index).
+    #: Present only on wire responses finalized to the indexed form by
+    #: the server; its presence declares the page + contained client
+    #: effects fully indexed (consumers may flag resource-form leaks),
+    #: and it doubles as the client's resolve/pre-warm manifest.
+    #: Locally-authored responses never carry it (indexing is a wire
+    #: compression; local pages stay in the authored resource form).
+    packages: Annotated[list[str], IOAttrs('pk', store_default=False)] = field(
+        default_factory=list
+    )
+
+    #: Effects to run on the client when this response is initially
+    #: received (not re-run on automatic page refreshes). Note that
+    #: effect payloads are not yet v2-native — text in them is
+    #: raw/legacy-lstr, pending clienteffect gaining a resolve-context
+    #: concept (see the SoundSpec followup in docs/followups.md).
+    #:
+    #: :meta private:
+    client_effects: Annotated[
+        list[clfx.Effect], IOAttrs('fx', store_default=False)
+    ] = field(default_factory=list)
+
+    #: Local action to run after this response is initially received
+    #: (not re-run on automatic page refreshes). Will be handled by
+    #: :meth:`bauiv1lib.docui.DocUIController.local_action()`.
+    local_action: Annotated[str | None, IOAttrs('a', store_default=False)] = (
+        None
+    )
+    local_action_args: Annotated[
+        dict | None, IOAttrs('aa', store_default=False)
+    ] = None
+
+    #: New overall action to have the client schedule after this
+    #: response is received. Useful for redirecting to other pages or
+    #: closing the doc-ui window.
+    timed_action: Annotated[
+        Action | None, IOAttrs('ta', store_default=False)
+    ] = None
+    timed_action_delay: Annotated[
+        float, IOAttrs('tad', store_default=False)
+    ] = 0.0
 
     #: If provided, error on builds older than this.
     minimum_engine_build: Annotated[

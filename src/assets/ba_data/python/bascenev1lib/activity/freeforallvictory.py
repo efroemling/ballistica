@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 
@@ -21,7 +21,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
         # Keep prev activity alive while we fade in.
         self.transition_time = 0.5
-        self._cymbal_sound = stdassets.audio.cymbal
+        self._cymbal_sound = classicassets.audio.cymbal.get()
 
     @override
     def on_begin(self) -> None:
@@ -110,9 +110,8 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         session = self.session
         assert isinstance(session, bs.FreeForAllSession)
         title = Text(
-            bs.Lstr(
-                resource='firstToSeriesText',
-                subs=[('${COUNT}', str(session.get_ffa_series_length()))],
+            classicassets.strings.multi_team.first_to_series(
+                count=session.get_ffa_series_length()
             ),
             scale=1.05 * scale,
             position=(
@@ -181,7 +180,7 @@ class FreeForAllVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 ),
             )
             txt = Text(
-                bs.Lstr(value=player.getname(full=True)),
+                player.getname(full=True),
                 maxwidth=130.0,
                 scale=0.75 * scale,
                 position=(

@@ -72,7 +72,7 @@ class Image(bs.Actor):
                     else bs.gettexture(mask_tex_name)
                 )
             else:
-                mask_texture = builtinassets.textures.character_icon_mask
+                mask_texture = builtinassets.textures.character_icon_mask.get()
             texture = texture['texture']
         else:
             tint_color = (1, 1, 1)

@@ -467,6 +467,21 @@ class CloudSubsystem(babase.AppSubsystem):
         self, msg: bacommon.cloud.TestMessage
     ) -> bacommon.cloud.TestResponse: ...
 
+    @overload
+    async def send_message_async(
+        self, msg: bacommon.cloud.LoginProxyRequestMessage
+    ) -> bacommon.cloud.LoginProxyRequestResponse: ...
+
+    @overload
+    async def send_message_async(
+        self, msg: bacommon.cloud.LoginProxyStateQueryMessage
+    ) -> bacommon.cloud.LoginProxyStateQueryResponse: ...
+
+    @overload
+    async def send_message_async(
+        self, msg: bacommon.cloud.LoginProxyCompleteMessage
+    ) -> None: ...
+
     async def send_message_async(self, msg: Message) -> Response | None:
         """Asynchronously send a message to the cloud.
 

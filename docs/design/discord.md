@@ -1,5 +1,7 @@
 # Ballistica Discord Integration
 
+**Description:** Design for Discord Social SDK integration — Discord sign-in as a V2 login type plus provisional accounts so every player gets Discord voice/chat features.
+
 Design notes for integrating the [Discord Social SDK](https://discord.com/developers/social-sdk) into Ballistica. Phase 1 (sign-in) is in progress; phase 2 (provisional accounts) is planned.
 
 ## Goals

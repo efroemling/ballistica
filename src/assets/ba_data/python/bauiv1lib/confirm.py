@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, builtinassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -16,7 +16,7 @@ class ConfirmWindow:
 
     def __init__(
         self,
-        text: str | bui.Lstr | None = None,
+        text: str | bui.Lstr | bui.LangStr | None = None,
         action: Callable[[], Any] | None = None,
         width: float = 360.0,
         height: float = 100.0,
@@ -25,8 +25,8 @@ class ConfirmWindow:
         cancel_is_selected: bool = False,
         color: tuple[float, float, float] = (1, 1, 1),
         text_scale: float = 1.0,
-        ok_text: str | bui.Lstr | None = None,
-        cancel_text: str | bui.Lstr | None = None,
+        ok_text: str | bui.Lstr | bui.LangStr | None = None,
+        cancel_text: str | bui.Lstr | bui.LangStr | None = None,
         origin_widget: bui.Widget | None = None,
         permanent_ok_fade: bool = False,
     ):
@@ -37,11 +37,11 @@ class ConfirmWindow:
         self._id_prefix = ui.new_id_prefix('confirm')
 
         if text is None:
-            text = bui.Lstr(resource='areYouSureText')
+            text = _commonassets.strings.status.are_you_sure
         if ok_text is None:
-            ok_text = bui.Lstr(resource='okText')
+            ok_text = _commonassets.strings.actions.ok
         if cancel_text is None:
-            cancel_text = bui.Lstr(resource='cancelText')
+            cancel_text = _commonassets.strings.actions.cancel
         height += 40
         width = max(width, 360)
         self._action = action
@@ -181,17 +181,16 @@ class QuitWindow:
             builtinassets.audio.swish.get().play()
 
         # Generally Macs say Quit and other stuff says Exit
-        quit_resource = (
-            'quitGameText'
+        strs = classicassets.strings.ui
+        confirmstr = (
+            strs.quit_app_confirm
             if platform is type(platform).MACOS
-            else 'exitGameText'
+            else strs.exit_app_confirm
         )
+        quit_text = confirmstr(app_name=strs.app_name)
 
         self._root_widget = ui.quit_window = ConfirmWindow(
-            bui.Lstr(
-                resource=quit_resource,
-                subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
-            ),
+            quit_text,
             lambda: (
                 bui.quit(confirm=False, quit_type=self._quit_type)
                 if self._quit_type is not None

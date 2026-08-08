@@ -426,6 +426,12 @@ class AssetPackageResolveError(Enum):
     #: must update. Clients predating the build-number field also land
     #: here.
     CLIENT_TOO_OLD = 'tooold'
+    #: The package's own source content failed to build — a problem the
+    #: package author can fix (e.g. a malformed sound or texture file).
+    #: The human-readable ``error`` names the offending source file(s);
+    #: clients should surface it verbatim. Old clients see this as
+    #: ``INTERNAL`` via ``enum_fallback``.
+    CONTENT = 'content'
 
 
 class AssetPackageBuildPhase(Enum):
@@ -526,6 +532,20 @@ class ResolveAssetPackageMessage(Message):
     #: defaults to 0 so older clients (and un-migrated basn) read as
     #: build 0 -- always below the floor.
     build_number: Annotated[int, IOAttrs('bn', soft_default=0)] = 0
+
+    #: End-to-end asset-pipeline test seed. Normally empty. A non-empty
+    #: value asks the master to rebuild this package's entire build graph
+    #: from scratch (workspace compile, every leaf build, and the resolve
+    #: meta-build) rather than serving any of it from cache, so a client
+    #: launch can be measured against a genuinely cold pipeline. Seeded
+    #: output is byte-identical to unseeded output, so this disturbs no
+    #: live cache entry and costs only compute; the master accordingly
+    #: gates it to a single operator account and refuses it (with
+    #: ``ACCESS_DENIED``) for anyone else rather than quietly ignoring
+    #: it. Set on the client via the ``BA_ASSET_TEST_SEED`` env var.
+    #: ``soft_default`` keeps older clients / basn nodes (which don't
+    #: send it) reading as unseeded.
+    testseed: Annotated[str, IOAttrs('ts', soft_default='')] = ''
 
     @override
     @classmethod
@@ -648,6 +668,15 @@ class ChestActionResponse(Response):
     # Printable error if something goes wrong.
     error: Annotated[str | None, IOAttrs('e')] = None
 
+    # If True, ``error`` is display-final text already translated to
+    # the client's held locale server-side (the lifetime-rule
+    # convention; see 'Server-sent strings' in efrohome
+    # asset-packages.md). Clients seeing this must render the text via
+    # the literal path -- never legacy serverResponses translation or
+    # Lstr-json interpretation. Absent/False means legacy behavior:
+    # English text the client may translate via its local corpus.
+    error_is_final: Annotated[bool, IOAttrs('ef', store_default=False)] = False
+
     # Printable warning. Shown in orange with an error sound. Does not
     # mean the action failed; only that there's something to tell the
     # users such as 'It looks like you are faking ad views; stop it or
@@ -710,6 +739,23 @@ class AuthRequestMessage(Message):
         return [AuthRequestResponse]
 
 
+class JoinRejectReason(Enum):
+    """Wire-stable join-rejection reason codes; APPEND ONLY.
+
+    A client renders a recognized reason as its own localized builtin
+    string and any unrecognized value as a generic rejection, so
+    reasons added later degrade gracefully on older clients. Values
+    must stay in sync with the ``BA_REJECT_REASON_*`` defines in the
+    engine's ``networking.h``.
+    """
+
+    UNKNOWN = 0
+    PASSWORD_INCORRECT = 1
+    ACCOUNT_REJECTED = 2
+    AUTH_ERROR = 3
+    MUST_SIGN_IN = 4
+
+
 @ioprepped
 @dataclass
 class AuthRequestResponse(Response):
@@ -717,6 +763,13 @@ class AuthRequestResponse(Response):
 
     error: Annotated[str | None, IOAttrs('e')]
     token: Annotated[str | None, IOAttrs('t')]
+
+    #: Optional :class:`JoinRejectReason` value accompanying a
+    #: rejection. Kept as a plain int on the wire so clients tolerate
+    #: reasons added after they shipped (rendering them as a generic
+    #: rejection). ``None`` (e.g. free-form host-supplied rejection
+    #: text) means no code applies; show ``error`` text instead.
+    reason: Annotated[int | None, IOAttrs('r', soft_default=None)]
 
 
 @ioprepped

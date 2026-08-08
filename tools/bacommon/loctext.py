@@ -42,6 +42,16 @@ if TYPE_CHECKING:
 #: A ``{name}`` substitution placeholder (lowercase snake_case arg name).
 _SUB_RE = re.compile(r'\{([a-z][a-z0-9_]*)\}')
 
+#: Scans a template for the three brace constructs, longest-first so
+#: ``{{``/``}}`` win over a token: an escaped literal ``{{`` or ``}}``,
+#: or a ``{name}`` substitution token (captured in group 1). Everything
+#: else -- including a lone brace or a non-token like ``{Weird}`` --
+#: falls through untouched. ``{{`` -> literal ``{`` and ``}}`` ->
+#: literal ``}`` is the only way to render a brace that would otherwise
+#: read as a token; it is also what lets arbitrary text be wrapped as a
+#: literal value (see ``babase.LangStr.from_text``).
+_TOKEN_RE = re.compile(r'\{\{|\}\}|\{([a-z][a-z0-9_]*)\}')
+
 
 class PluralCategory(Enum):
     """A CLDR plural category."""
@@ -323,10 +333,42 @@ class StringSelector:
     forms: Annotated[dict[str, str], IOAttrs('f')]
 
 
+def substitution_names(value: str | StringSelector) -> set[str]:
+    """Return the substitution-argument names a value consumes.
+
+    For a plain string these are its ``{name}`` tokens; for a
+    :class:`StringSelector` its pivot ``arg`` plus any ``{name}``
+    tokens in its forms. This is the single source consumers use to
+    derive a string's parameter set from its value (e.g. rebuilding
+    positional-substitution order client-side) -- the producer-side
+    round-trip validation guarantees every parameter's token survives
+    into every stored output, so the derivation is total.
+    """
+    if isinstance(value, StringSelector):
+        names = {value.arg}
+        for form in value.forms.values():
+            names.update(_scan_token_names(form))
+        return names
+    return _scan_token_names(value)
+
+
+def _scan_token_names(text: str) -> set[str]:
+    """Return the ``{name}`` token names in text, skipping escapes."""
+    return {
+        m.group(1) for m in _TOKEN_RE.finditer(text) if m.group(1) is not None
+    }
+
+
 def evaluate(
-    value: 'str | StringSelector', locale: Locale, **args: object
+    value: 'str | StringSelector', locale: Locale, /, **args: object
 ) -> str:
     """Resolve a localized ``value`` to a final string.
+
+    ``value`` and ``locale`` are positional-only so they cannot collide
+    with a substitution *named* ``value`` or ``locale`` -- without that,
+    an authored string using ``{value}`` is unrenderable through this
+    function, which is a trap that surfaces only once someone writes
+    such a string.
 
     ``value`` is a plain ``str`` (``{name}`` substitutions only) or a
     :class:`StringSelector` (plural/select choice, then substitution).
@@ -350,12 +392,17 @@ def _substitute(
         text = text.replace('#', str(pound))
 
     def _repl(match: 're.Match[str]') -> str:
+        whole = match.group(0)
+        if whole == '{{':
+            return '{'
+        if whole == '}}':
+            return '}'
         name = match.group(1)
         if name not in args:
             raise LocTextError(f'Missing argument {name!r}.')
         return str(args[name])
 
-    return _SUB_RE.sub(_repl, text)
+    return _TOKEN_RE.sub(_repl, text)
 
 
 def _eval_selector(

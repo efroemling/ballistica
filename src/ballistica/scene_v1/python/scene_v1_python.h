@@ -3,13 +3,19 @@
 #ifndef BALLISTICA_SCENE_V1_PYTHON_SCENE_V1_PYTHON_H_
 #define BALLISTICA_SCENE_V1_PYTHON_SCENE_V1_PYTHON_H_
 
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/base.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/python/python_object_set.h"
+
+namespace ballistica::base {
+class LangStr;
+}
 
 namespace ballistica::scene_v1 {
 
@@ -18,6 +24,16 @@ class SceneV1Python {
  public:
   SceneV1Python();
   void Reset();
+
+  /// Convert a Python value destined for a lang-str-flagged string
+  /// slot (str | legacy Lstr | babase.LangStr; the D28 acceptance
+  /// surface) into its tagged wire form, plus the parsed native value
+  /// for the LangStr leg (null otherwise). ``host_session`` (nullable)
+  /// supplies the package universe for indexed serialization; without
+  /// it (or when indexing fails) LangStrs serialize with
+  /// self-describing resource refs. Throws on unsupported types.
+  static auto BuildLangStrWireValue(PyObject* obj, HostSession* host_session)
+      -> std::pair<std::string, std::shared_ptr<const base::LangStr>>;
 
   static void SetNodeAttr(Node* node, const char* attr_name,
                           PyObject* value_obj);

@@ -544,7 +544,6 @@ class MessageProtocol:
         protocol_module_level_import_code: str | None = None,
     ) -> str:
         """Used by create_receiver_module(); do not call directly."""
-        # pylint: disable=too-many-positional-arguments
         import textwrap
 
         desc = 'asynchronous' if is_async else 'synchronous'

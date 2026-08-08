@@ -44,8 +44,6 @@ class PlusSoftInterface {
   virtual void PushAdViewComplete(const std::string& purpose,
                                   bool actually_showed) = 0;
   virtual void PushPublicPartyState() = 0;
-  virtual void PushSetFriendListCall(
-      const std::vector<std::string>& friends) = 0;
   virtual void DispatchRemoteAchievementList(
       const std::set<std::string>& achs) = 0;
   virtual void SetProductPrice(const std::string& product,

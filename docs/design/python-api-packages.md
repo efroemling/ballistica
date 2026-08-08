@@ -1,5 +1,7 @@
 # Python API Packages
 
+**Description:** Feature-set Python packages (babase, bauiv1, ...) are curated API surfaces that re-export shared names; API-walking tools must honor __all__, not __module__.
+
 The Python packages exposed by feature-sets — `babase`, `bauiv1`,
 `bascenev1`, `baclassic`, `baplus`, `bauiv1lib`, `bascenev1lib`,
 `batemplatefs`, and so on — are curated **user-facing API
@@ -34,6 +36,27 @@ This pattern is common in Python — `numpy` re-exports things from
 `numpy.random.mtrand` under `numpy.random`, for example — but we
 lean on it more aggressively because feature-sets are designed to
 be drop-in API targets for plugin authors.
+
+## Consuming the packages: facade discipline
+
+The flip side of the kitchen-sink principle is a rule for code
+*inside* the repo: consumers go through their layer's facade, never
+past it. UI code (`bauiv1lib/`) gets its engine/app API exclusively
+through `bauiv1`; gameplay code (`bascenev1lib/`) through
+`bascenev1`. Never reach past these facades into `babase` or
+`babase._*` directly — the facades are deliberately curated to be
+the complete API surface for their layer, and preflight enforces
+this with a real error (e.g. `import of private module babase._login
+not allowed from this featureset package (bauiv1lib)`).
+
+When an API you need appears to be missing from the facade, the fix
+is to *extend the facade*, not bypass it: first add the name to
+that package's `__init__.py` re-exports (both the `from babase
+import (...)` block and the `__all__` list), then consume it
+through the facade (`bui.X` / `bs.X`). For truly internal
+(`babase._*`) symbols the right answer is usually not to consume
+them from UI/gameplay code at all — consider whether the work
+belongs behind the facade instead.
 
 ## `__all__` is the contract
 

@@ -6,7 +6,7 @@ from typing import override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import _commonassets, classicassets
 
 
 class KioskWindow(bui.MainWindow):
@@ -56,11 +56,11 @@ class KioskWindow(bui.MainWindow):
             t_delay_base = 1.0
             t_delay_scale = 1.0
 
-        mesh_opaque = stdassets.meshes.level_select_button_opaque.get()
+        mesh_opaque = classicassets.meshes.level_select_button_opaque.get()
         mesh_transparent = (
-            stdassets.meshes.level_select_button_transparent.get()
+            classicassets.meshes.level_select_button_transparent.get()
         )
-        mask_tex = stdassets.textures.map_preview_mask.get()
+        mask_tex = classicassets.textures.map_preview_mask.get()
 
         y_extra = 130.0 + (0.0 if self._show_multiplayer else -130.0)
         b_width = 250.0
@@ -81,7 +81,7 @@ class KioskWindow(bui.MainWindow):
                 size=(0, 0),
                 position=(self._width * 0.5, self._height + y_extra - 44),
                 transition_delay=tdelay,
-                text=bui.Lstr(resource=f'{self._r}.singlePlayerExamplesText'),
+                text=classicassets.strings.kiosk.single_player_examples,
                 flatness=1.0,
                 scale=1.2,
                 h_align='center',
@@ -96,10 +96,7 @@ class KioskWindow(bui.MainWindow):
                 position=(self._width * 0.5, self._height + y_extra - 34),
                 transition_delay=tdelay,
                 text=(
-                    bui.Lstr(
-                        resource='demoText',
-                        fallback_resource='mainMenu.demoMenuText',
-                    )
+                    classicassets.strings.ui.demo
                     if variant is vart.DEMO
                     else 'ARCADE'
                 ),
@@ -128,7 +125,7 @@ class KioskWindow(bui.MainWindow):
             size=(0, 0),
             position=(h, label_height),
             maxwidth=b_width * 0.7,
-            text=bui.Lstr(resource=f'{self._r}.easyText'),
+            text=classicassets.strings.ui.easy,
             scale=1.3,
             h_align='center',
             v_align='center',
@@ -139,7 +136,7 @@ class KioskWindow(bui.MainWindow):
             size=(img_width, 0.5 * img_width),
             transition_delay=tdelay,
             position=(h - img_width * 0.5, img_v),
-            texture=stdassets.textures.doom_shroom_preview.get(),
+            texture=classicassets.textures.doom_shroom_preview.get(),
             mesh_opaque=mesh_opaque,
             mesh_transparent=mesh_transparent,
             mask_texture=mask_tex,
@@ -163,7 +160,7 @@ class KioskWindow(bui.MainWindow):
             size=(0, 0),
             position=(h, label_height),
             maxwidth=b_width * 0.7,
-            text=bui.Lstr(resource=f'{self._r}.mediumText'),
+            text=_commonassets.strings.values.medium,
             scale=1.3,
             h_align='center',
             v_align='center',
@@ -174,7 +171,7 @@ class KioskWindow(bui.MainWindow):
             size=(img_width, 0.5 * img_width),
             transition_delay=tdelay,
             position=(h - img_width * 0.5, img_v),
-            texture=stdassets.textures.football_stadium_preview.get(),
+            texture=classicassets.textures.football_stadium_preview.get(),
             mesh_opaque=mesh_opaque,
             mesh_transparent=mesh_transparent,
             mask_texture=mask_tex,
@@ -209,7 +206,7 @@ class KioskWindow(bui.MainWindow):
             transition_delay=tdelay,
             size=(img_width, 0.5 * img_width),
             position=(h - img_width * 0.5, img_v),
-            texture=stdassets.textures.courtyard_preview.get(),
+            texture=classicassets.textures.courtyard_preview.get(),
             mesh_opaque=mesh_opaque,
             mesh_transparent=mesh_transparent,
             mask_texture=mask_tex,
@@ -227,7 +224,7 @@ class KioskWindow(bui.MainWindow):
                 size=(0, 0),
                 position=(self._width * 0.5, self._height + y_extra - 44),
                 transition_delay=tdelay,
-                text=bui.Lstr(resource=f'{self._r}.versusExamplesText'),
+                text=classicassets.strings.kiosk.versus_examples,
                 flatness=1.0,
                 scale=1.2,
                 h_align='center',
@@ -253,7 +250,7 @@ class KioskWindow(bui.MainWindow):
                 size=(0, 0),
                 position=(h, label_height),
                 maxwidth=b_width * 0.7,
-                text=bui.Lstr(translate=('gameNames', 'Capture the Flag')),
+                text=classicassets.strings.game_names.capture_the_flag,
                 scale=1.3,
                 h_align='center',
                 v_align='center',
@@ -264,7 +261,7 @@ class KioskWindow(bui.MainWindow):
                 size=(img_width, 0.5 * img_width),
                 transition_delay=tdelay,
                 position=(h - img_width * 0.5, img_v),
-                texture=stdassets.textures.bridgit_preview.get(),
+                texture=classicassets.textures.bridgit_preview.get(),
                 mesh_opaque=mesh_opaque,
                 mesh_transparent=mesh_transparent,
                 mask_texture=mask_tex,
@@ -289,7 +286,7 @@ class KioskWindow(bui.MainWindow):
                 size=(0, 0),
                 position=(h, label_height),
                 maxwidth=b_width * 0.7,
-                text=bui.Lstr(translate=('gameNames', 'Hockey')),
+                text=classicassets.strings.game_names.hockey,
                 scale=1.3,
                 h_align='center',
                 v_align='center',
@@ -300,7 +297,7 @@ class KioskWindow(bui.MainWindow):
                 size=(img_width, 0.5 * img_width),
                 transition_delay=tdelay,
                 position=(h - img_width * 0.5, img_v),
-                texture=stdassets.textures.hockey_stadium_preview.get(),
+                texture=classicassets.textures.hockey_stadium_preview.get(),
                 mesh_opaque=mesh_opaque,
                 mesh_transparent=mesh_transparent,
                 mask_texture=mask_tex,
@@ -324,7 +321,7 @@ class KioskWindow(bui.MainWindow):
                 size=(0, 0),
                 position=(h, label_height),
                 maxwidth=b_width * 0.7,
-                text=bui.Lstr(resource=f'{self._r}.epicModeText'),
+                text=classicassets.strings.ui.epic_mode,
                 scale=1.3,
                 h_align='center',
                 v_align='center',
@@ -335,7 +332,7 @@ class KioskWindow(bui.MainWindow):
                 transition_delay=tdelay,
                 size=(img_width, 0.5 * img_width),
                 position=(h - img_width * 0.5, img_v),
-                texture=stdassets.textures.tip_top_preview.get(),
+                texture=classicassets.textures.tip_top_preview.get(),
                 mesh_opaque=mesh_opaque,
                 mesh_transparent=mesh_transparent,
                 mask_texture=mask_tex,
@@ -354,7 +351,7 @@ class KioskWindow(bui.MainWindow):
                 scale=0.5,
                 position=(self._width * 0.5 - 60.0, b_v - 70.0),
                 transition_delay=tdelay,
-                label=bui.Lstr(resource=f'{self._r}.fullMenuText'),
+                label=classicassets.strings.kiosk.full_menu,
                 on_activate_call=self._do_full_menu,
             )
         else:

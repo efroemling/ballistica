@@ -14,10 +14,10 @@ from typing import TYPE_CHECKING, override, assert_never, final
 from efro.dataclassio import dataclass_from_dict
 import babase
 import bauiv1
-from bauiv1 import builtinassets
-from bauiv1 import stdassets as uistdassets
+from bauiv1 import _commonassets, builtinassets
+from bauiv1 import classicassets as uiclassicassets
 import bascenev1
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 import _baclassic
 from baclassic._music import MusicSubsystem
@@ -398,7 +398,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             and activity.allow_pausing
             and not bascenev1.have_connected_clients()
         ):
-            from babase import Lstr
             from bascenev1 import NodeActor
 
             # FIXME: Shouldn't be touching scene stuff here; should just
@@ -406,7 +405,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             with activity.context:
                 globs = activity.globalsnode
                 if not globs.paused:
-                    stdassets.audio.ref_whistle.play()
+                    classicassets.audio.ref_whistle.get().play()
                     globs.paused = True
 
                 # FIXME: This should not be an attr on Actor.
@@ -414,7 +413,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                     bascenev1.newnode(
                         'text',
                         attrs={
-                            'text': Lstr(resource='pausedByHostText'),
+                            'text': classicassets.strings.game.paused_by_host,
                             'client_only': True,
                             'flatness': 1.0,
                             'h_align': 'center',
@@ -436,7 +435,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             with activity.context:
                 globs = activity.globalsnode
                 if globs.paused:
-                    stdassets.audio.ref_whistle.play()
+                    classicassets.audio.ref_whistle.get().play()
                     globs.paused = False
 
                     # FIXME: This should not be an actor attr.
@@ -475,8 +474,8 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                     break
                 if not level.complete:
                     CoopLevelLockedWindow(
-                        campaign.getlevel(levelname).displayname,
-                        campaign.getlevel(level.name).displayname,
+                        campaign.getlevel(levelname).displayname_langstr,
+                        campaign.getlevel(level.name).displayname_langstr,
                     )
                     return False
 
@@ -891,7 +890,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # selected_profile: str | None = None,
     ) -> None:
         """Pop up a browser window from within a game."""
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         # from bauiv1lib.profile.browser import ProfileBrowserWindow
         from bauiv1lib.inventory import InventoryUIController
@@ -906,7 +905,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
         babase.app.ui_v1.set_main_window(
             InventoryUIController(player_profiles_only=True).create_window(
-                dui1.Request('/'),
+                dui2.Request('/'),
                 uiopenstateid='classicinventory',
                 transition=transition,
                 origin_widget=origin_widget,
@@ -920,12 +919,10 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     def preload_map_preview_media(self) -> None:
         """Preload media needed for map preview UIs."""
         try:
-            _ = uistdassets.meshes.level_select_button_opaque.get()
-            _ = uistdassets.meshes.level_select_button_transparent.get()
+            _ = uiclassicassets.meshes.level_select_button_opaque.get()
+            _ = uiclassicassets.meshes.level_select_button_transparent.get()
             for maptype in list(self.maps.values()):
-                map_tex_name = maptype.get_preview_texture_name()
-                if map_tex_name is not None:
-                    bauiv1.gettexture(map_tex_name)
+                _ = maptype.get_preview_texture()
         except Exception:
             logging.exception('Error preloading map preview media.')
 
@@ -1056,12 +1053,16 @@ class ClassicAppSubsystem(babase.AppSubsystem):
     @staticmethod
     def basic_client_ui_button_label_str(
         label: bcdlg.ButtonLabel,
-    ) -> babase.Lstr:
-        """Given a client-ui label, return an Lstr.
+    ) -> babase.LangStr:
+        """Given a client-ui label, return a LangStr.
 
         :meta private:
         """
+        # pylint: disable=too-many-return-statements
         import bacommon.clouddialog.basic as bcdlg
+
+        strs = uiclassicassets.strings.ui
+        acts = _commonassets.strings.actions
 
         cls = bcdlg.ButtonLabel
         if label is cls.UNKNOWN:
@@ -1070,29 +1071,25 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             logging.error(
                 'Got BasicCloudDialog.ButtonLabel.UNKNOWN; should not happen.'
             )
-            return babase.Lstr(value='<error>')
+            return builtinassets.strings.ui.error
 
-        rsrc: str | None = None
         if label is cls.OK:
-            rsrc = 'okText'
-        elif label is cls.APPLY:
-            rsrc = 'applyText'
-        elif label is cls.CANCEL:
-            rsrc = 'cancelText'
-        elif label is cls.ACCEPT:
-            rsrc = 'gatherWindow.partyInviteAcceptText'
-        elif label is cls.DECLINE:
-            rsrc = 'gatherWindow.partyInviteDeclineText'
-        elif label is cls.IGNORE:
-            rsrc = 'gatherWindow.partyInviteIgnoreText'
-        elif label is cls.CLAIM:
-            rsrc = 'claimText'
-        elif label is cls.DISCARD:
-            rsrc = 'discardText'
-        else:
-            assert_never(label)
-
-        return babase.Lstr(resource=rsrc)
+            return acts.ok
+        if label is cls.APPLY:
+            return acts.apply
+        if label is cls.CANCEL:
+            return acts.cancel
+        if label is cls.ACCEPT:
+            return acts.accept
+        if label is cls.DECLINE:
+            return acts.decline
+        if label is cls.IGNORE:
+            return acts.ignore
+        if label is cls.CLAIM:
+            return strs.claim
+        if label is cls.DISCARD:
+            return acts.discard
+        assert_never(label)
 
     def required_purchases_for_game(self, game: str) -> list[str]:
         """Return which purchase (if any) is required for a game."""

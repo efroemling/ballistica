@@ -9,7 +9,7 @@ from bacommon.analytics import ClassicAnalyticsEvent
 import bascenev1 as bs
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1lib.popup import PopupWindow
 
@@ -65,11 +65,11 @@ class PlayOptionsWindow(PopupWindow):
         self._row_height = 45.0
 
         # Grab our maps to display.
-        mesh_opaque = stdassets.meshes.level_select_button_opaque.get()
+        mesh_opaque = classicassets.meshes.level_select_button_opaque.get()
         mesh_transparent = (
-            stdassets.meshes.level_select_button_transparent.get()
+            classicassets.meshes.level_select_button_transparent.get()
         )
-        mask_tex = stdassets.textures.map_preview_mask.get()
+        mask_tex = classicassets.textures.map_preview_mask.get()
 
         # Poke into this playlist and see if we can display some of its
         # maps.
@@ -120,9 +120,9 @@ class PlayOptionsWindow(PopupWindow):
                 except bui.NotFoundError:
                     maptype = None
                 if maptype is not None:
-                    tex_name = maptype.get_preview_texture_name()
-                    if tex_name is not None:
-                        map_textures.append(tex_name)
+                    map_tex = maptype.get_preview_texture()
+                    if map_tex is not None:
+                        map_textures.append(map_tex)
                         map_texture_entries.append(entry)
             rows = (max(0, len(map_textures) - 1) // max_columns) + 1
             columns = min(max_columns, len(map_textures))
@@ -159,7 +159,7 @@ class PlayOptionsWindow(PopupWindow):
             position=scale_origin, size=(self._width, self._height), scale=scale
         )
 
-        playlist_name: str | bui.Lstr = (
+        playlist_name: str | bui.Lstr | bui.LangStr = (
             self._pvars.default_list_name
             if playlist == '__default__'
             else playlist
@@ -198,7 +198,7 @@ class PlayOptionsWindow(PopupWindow):
             for col in range(columns):
                 tex_index = row * columns + col
                 if tex_index < len(map_textures):
-                    tex_name = map_textures[tex_index]
+                    map_tex = map_textures[tex_index]
                     h = h_offs_img + scl * 250 * col
                     v = v_offs_img - self._row_height * row
                     entry = map_texture_entries[tex_index]
@@ -214,14 +214,19 @@ class PlayOptionsWindow(PopupWindow):
                         self._have_at_least_one_owned = True
 
                     try:
-                        desc = bui.getclass(
+                        # The settings-display twin and the unlock
+                        # composite below are both still legacy, so keep
+                        # an Lstr-typed local for the composite's sub and
+                        # let `desc` hold either flavor for display.
+                        descbase = bui.getclass(
                             entry['type'], subclassof=bs.GameActivity
                         ).get_settings_display_string(entry)
+                        desc: bui.Lstr | bui.LangStr = descbase
                         if not owned:
                             desc = bui.Lstr(
                                 value='${DESC}\n${UNLOCK}',
                                 subs=[
-                                    ('${DESC}', desc),
+                                    ('${DESC}', descbase),
                                     (
                                         '${UNLOCK}',
                                         bui.Lstr(
@@ -232,7 +237,7 @@ class PlayOptionsWindow(PopupWindow):
                             )
                         desc_color = (0, 1, 0) if owned else (1, 0, 0)
                     except Exception:
-                        desc = bui.Lstr(value='(invalid)')
+                        desc = _commonassets.strings.status.invalid
                         desc_color = (1, 0, 0)
 
                     btn = bui.buttonwidget(
@@ -240,9 +245,9 @@ class PlayOptionsWindow(PopupWindow):
                         size=(scl * 240.0, scl * 120.0),
                         position=(h, v),
                         texture=(
-                            bui.gettexture(tex_name)
+                            map_tex
                             if owned
-                            else stdassets.textures.empty.get()
+                            else classicassets.textures.empty.get()
                         ),
                         mesh_opaque=mesh_opaque if owned else None,
                         on_activate_call=bui.CallStrict(
@@ -271,7 +276,7 @@ class PlayOptionsWindow(PopupWindow):
                             position=(h - 10.0 * scl, v - 4.0 * scl),
                             draw_controller=btn,
                             color=(1, 1, 1),
-                            texture=bui.gettexture(tex_name),
+                            texture=map_tex,
                             mesh_opaque=mesh_opaque,
                             opacity=0.25,
                             mesh_transparent=mesh_transparent,
@@ -283,7 +288,7 @@ class PlayOptionsWindow(PopupWindow):
                             size=(scl * 100, scl * 100),
                             draw_controller=btn,
                             position=(h + scl * 70, v + scl * 10),
-                            texture=stdassets.textures.lock.get(),
+                            texture=classicassets.textures.lock.get(),
                         )
 
         y_offs = 50 if show_shuffle_check_box else 0
@@ -297,13 +302,10 @@ class PlayOptionsWindow(PopupWindow):
                 'FFA' if self._sessiontype is bs.FreeForAllSession else 'Teams'
             )
             + ' Series Length',
-            displayname=bui.Lstr(
-                resource=self._r
-                + (
-                    '.pointsToWinText'
-                    if self._sessiontype is bs.FreeForAllSession
-                    else '.seriesLengthText'
-                )
+            displayname=(
+                classicassets.strings.play_options.points_to_win
+                if self._sessiontype is bs.FreeForAllSession
+                else classicassets.strings.play_options.series_length
             ),
             minval=1.0,
             maxval=100.0 if self._sessiontype is bs.FreeForAllSession else 99.0,
@@ -326,7 +328,7 @@ class PlayOptionsWindow(PopupWindow):
                 ),
                 autoselect=True,
                 textcolor=(0.8, 0.8, 0.8),
-                label=bui.Lstr(resource='teamNamesColorText'),
+                label=classicassets.strings.play_options.team_names_colors,
             )
             bui.widget(
                 edit=self._custom_colors_names_button,
@@ -351,7 +353,7 @@ class PlayOptionsWindow(PopupWindow):
                 scale=1.0,
                 size=(250, 30),
                 autoselect=True,
-                text=bui.Lstr(resource=f'{self._r}.shuffleGameOrderText'),
+                text=classicassets.strings.play_options.shuffle_game_order,
                 maxwidth=300,
                 textcolor=(0.8, 0.8, 0.8),
                 value=self._do_randomize_val,
@@ -372,7 +374,7 @@ class PlayOptionsWindow(PopupWindow):
             scale=1.0,
             size=(250, 30),
             autoselect=True,
-            text=bui.Lstr(resource=f'{self._r}.showTutorialText'),
+            text=classicassets.strings.play_options.show_tutorial,
             maxwidth=300,
             textcolor=(0.8, 0.8, 0.8),
             value=show_tutorial,
@@ -413,12 +415,10 @@ class PlayOptionsWindow(PopupWindow):
             text_res_scale=1.5,
             on_activate_call=self._on_ok_press,
             autoselect=True,
-            label=bui.Lstr(
-                resource=(
-                    'okText'
-                    if self._playlist_select_context is not None
-                    else 'playText'
-                )
+            label=(
+                _commonassets.strings.actions.ok
+                if self._playlist_select_context is not None
+                else classicassets.strings.ui.play
             ),
         )
         bui.widget(edit=self._ok_button, allow_preserve_selection=False)
@@ -493,7 +493,7 @@ class PlayOptionsWindow(PopupWindow):
         if not self._have_at_least_one_owned:
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                bui.Lstr(resource='playlistNoValidGamesErrorText'),
+                classicassets.strings.play_options.no_valid_games,
                 color=(1, 0, 0),
             )
             return

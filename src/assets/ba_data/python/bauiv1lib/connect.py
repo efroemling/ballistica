@@ -5,6 +5,7 @@
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
+from bauiv1 import _commonassets
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -36,7 +37,7 @@ class ConnectWindow(bui.Window):
             scale=1.2,
             h_align='center',
             v_align='center',
-            text=bui.Lstr(resource='internal.connectingToPartyText'),
+            text=_commonassets.strings.status.connecting,
             maxwidth=self._width * 0.9,
         )
 
@@ -67,7 +68,7 @@ class ConnectWindow(bui.Window):
             autoselect=True,
             position=(50, 30),
             size=(150, 50),
-            label=bui.Lstr(resource='cancelText'),
+            label=_commonassets.strings.actions.cancel,
             on_activate_call=self._cancel,
         )
         bui.containerwidget(edit=self._root_widget, cancel_button=cancel_button)

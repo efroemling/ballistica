@@ -168,7 +168,7 @@ else:
         """
 
         # Optimize performance a bit; we shouldn't need to be super dynamic.
-        __slots__ = ['_call', '_args', '_keywds']
+        __slots__ = ['_call', '_args', '_keywds', '__wrapped__']
 
         _did_invalid_call_warning = False
 
@@ -179,6 +179,11 @@ else:
             # non-partial versions if you want to access those.
             if hasattr(call, '__func__'):
                 self._call = WeakMethod(call)
+                # Stdlib __wrapped__ convention, for diagnostics (see
+                # CallStrict). The plain function, not the bound method
+                # -- strong-refing the method would keep its target
+                # alive and defeat the weak ref.
+                self.__wrapped__ = call.__func__
             else:
                 if not self._did_invalid_call_warning:
                     logging.warning(
@@ -190,6 +195,7 @@ else:
                     )
                     type(self)._did_invalid_call_warning = True
                 self._call = call
+                self.__wrapped__ = call
             self._args = args
             self._keywds = keywds
 
@@ -235,7 +241,7 @@ else:
         """
 
         # Optimize performance a bit; we shouldn't need to be super dynamic.
-        __slots__ = ['_call', '_args', '_keywds']
+        __slots__ = ['_call', '_args', '_keywds', '__wrapped__']
 
         def __init__(self, call: Any, /, *args: Any, **keywds: Any):
             # Note: keeping _call, _args, _keywds private in this case
@@ -245,6 +251,10 @@ else:
             self._call = call
             self._args = args
             self._keywds = keywds
+
+            # Stdlib __wrapped__ convention, for diagnostics (see
+            # CallStrict).
+            self.__wrapped__ = call
 
         def __call__(self, *args_extra: Any, **keywds_extra: Any) -> Any:
             # Fast path: no extra args or kwargs.
@@ -287,7 +297,7 @@ else:
         """
 
         # Optimize performance a bit; we shouldn't need to be super dynamic.
-        __slots__ = ['_call', '_args', '_keywds']
+        __slots__ = ['_call', '_args', '_keywds', '__wrapped__']
 
         _did_invalid_call_warning = False
 
@@ -298,6 +308,11 @@ else:
             # non-partial versions if you want to access those.
             if hasattr(call, '__func__'):
                 self._call = WeakMethod(call)
+                # Stdlib __wrapped__ convention, for diagnostics (see
+                # CallStrict). The plain function, not the bound method
+                # -- strong-refing the method would keep its target
+                # alive and defeat the weak ref.
+                self.__wrapped__ = call.__func__
             else:
                 if not self._did_invalid_call_warning:
                     logging.warning(
@@ -308,7 +323,8 @@ else:
                         stack_info=True,
                     )
                     type(self)._did_invalid_call_warning = True
-                    self._call = call
+                self._call = call
+                self.__wrapped__ = call
             self._args = args
             self._keywds = keywds
 
@@ -352,7 +368,7 @@ else:
         """
 
         # Optimize performance a bit; we shouldn't need to be super dynamic.
-        __slots__ = ['_call', '_args', '_keywds']
+        __slots__ = ['_call', '_args', '_keywds', '__wrapped__']
 
         def __init__(self, call: Any, /, *args: Any, **keywds: Any):
             # Note: keeping _call, _args, _keywds private in this case
@@ -362,6 +378,10 @@ else:
             self._call = call
             self._args = args
             self._keywds = keywds
+
+            # Stdlib __wrapped__ convention, for diagnostics (see
+            # CallStrict).
+            self.__wrapped__ = call
 
         def __call__(self, *args_extra: Any, **keywds_extra: Any) -> Any:
             # Fast path: no extra args or kwargs.
@@ -392,7 +412,7 @@ class CallStrict[**P, T]:
     recommended if you do not need extra args at call time.
     """
 
-    __slots__ = ('call', 'args', 'kwargs')
+    __slots__ = ('call', 'args', 'kwargs', '__wrapped__')
 
     def __init__(
         self, call: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
@@ -403,6 +423,12 @@ class CallStrict[**P, T]:
         self.call = call
         self.args = args
         self.kwargs = kwargs
+
+        # Expose the wrapped callable via the stdlib convention
+        # (functools.wraps / inspect.unwrap) so diagnostics such as
+        # efro.threadpool's slow-task warnings can name the real
+        # target instead of this wrapper class.
+        self.__wrapped__ = call
 
     def __call__(self) -> T:
         return self.call(*self.args, **self.kwargs)
@@ -422,7 +448,7 @@ class WeakCallStrict[**P, T]:
     recommended if you do not need extra args at call time.
     """
 
-    __slots__ = ('call', 'args', 'kwargs')
+    __slots__ = ('call', 'args', 'kwargs', '__wrapped__')
 
     _did_invalid_call_warning = False
 
@@ -434,6 +460,11 @@ class WeakCallStrict[**P, T]:
         # whatnot that would break this.
         if hasattr(call, '__func__'):
             self.call: Any = WeakMethod(call)  # type: ignore
+            # Stdlib __wrapped__ convention, for diagnostics (see
+            # CallStrict). The plain function, not the bound method --
+            # strong-refing the method would keep its target alive and
+            # defeat the weak ref.
+            self.__wrapped__: Callable[..., Any] = getattr(call, '__func__')
         else:
             if not self._did_invalid_call_warning:
                 logging.warning(
@@ -445,6 +476,7 @@ class WeakCallStrict[**P, T]:
                 )
                 type(self)._did_invalid_call_warning = True
             self.call = call
+            self.__wrapped__ = call
         self.args = args
         self.kwargs = kwargs
 

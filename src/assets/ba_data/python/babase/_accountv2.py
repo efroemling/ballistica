@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
     import bacommon.cloud
 
+    from babase import LangStr
     from babase._login import LoginAdapter, LoginInfo
 
 
@@ -218,8 +219,17 @@ class AccountV2Subsystem:
 
     def auth_request(
         self, global_app_instance_id: str
-    ) -> None | tuple[bool, str]:
-        """Start/process an auth request."""
+    ) -> None | tuple[bool, str, int | None]:
+        """Start/process an auth request.
+
+        Returns ``None`` while in flight, or ``(success, value,
+        reason)`` where ``value`` is a token on success or error text
+        on failure, and ``reason`` is an optional
+        :class:`~bacommon.cloud.JoinRejectReason` int value
+        accompanying a failure (the native layer renders a recognized
+        reason as its own localized builtin string, falling back to
+        the error text otherwise).
+        """
         import bacommon.cloud
 
         assert _babase.in_logic_thread()
@@ -241,7 +251,11 @@ class AccountV2Subsystem:
         # If we find no attempt in progress, kick one off (or fail fast).
         if auth_request is None:
             if self.primary is None:
-                return (False, 'You must sign in to do this.')
+                return (
+                    False,
+                    'You must sign in to do this.',
+                    bacommon.cloud.JoinRejectReason.MUST_SIGN_IN.value,
+                )
         if (
             auth_request is None
             and plus.cloud.connected
@@ -249,7 +263,12 @@ class AccountV2Subsystem:
         ):
             netlog.debug('Sending v2 auth request...')
             auth_request = self._auth_requests[global_app_instance_id] = (
-                _AuthRequest(expire_time=now + 10.0, error=None, token=None)
+                _AuthRequest(
+                    expire_time=now + 10.0,
+                    error=None,
+                    token=None,
+                    reason=None,
+                )
             )
             with self.primary:
                 plus.cloud.send_message_cb(
@@ -264,10 +283,10 @@ class AccountV2Subsystem:
             return None
         if auth_request.error is not None:
             assert auth_request.token is None
-            return (False, auth_request.error)
+            return (False, auth_request.error, auth_request.reason)
         if auth_request.token is not None:
             assert auth_request.error is None
-            return (True, auth_request.token)
+            return (True, auth_request.token, None)
         # No error or token; its still in flight.
         return None
 
@@ -276,6 +295,8 @@ class AccountV2Subsystem:
         auth_request: _AuthRequest,
         response: bacommon.cloud.AuthRequestResponse | Exception,
     ) -> None:
+        import bacommon.cloud
+
         assert _babase.in_logic_thread()
 
         assert auth_request.error is None
@@ -283,6 +304,9 @@ class AccountV2Subsystem:
 
         if isinstance(response, Exception):
             auth_request.error = 'An error has occurred.'
+            auth_request.reason = (
+                bacommon.cloud.JoinRejectReason.AUTH_ERROR.value
+            )
         else:
             netlog.debug(
                 'Got V2 auth response with error %s and token %s.',
@@ -291,6 +315,7 @@ class AccountV2Subsystem:
             )
             auth_request.error = response.error
             auth_request.token = response.token
+            auth_request.reason = response.reason
 
             # Make sure this sticks around for long enough to complete
             # the connection.
@@ -317,7 +342,7 @@ class AccountV2Subsystem:
 
         :meta private:
         """
-        from babase._language import Lstr
+        from babase import builtinassets
 
         assert _babase.in_logic_thread()
 
@@ -346,14 +371,14 @@ class AccountV2Subsystem:
                 self.primary is not None
                 and not self.login_adapters[login_type].is_back_end_active()
             ):
-                service_str: Lstr | None
+                service_str: LangStr | None
                 if login_type is LoginType.GPGS:
-                    service_str = Lstr(resource='googlePlayText')
+                    service_str = builtinassets.strings.ui.google_play
                 elif login_type is LoginType.GAME_CENTER:
                     # Note: Apparently Game Center is just called 'Game
                     # Center' in all languages. Can revisit if not true.
                     # https://developer.apple.com/forums/thread/725779
-                    service_str = Lstr(value='Game Center')
+                    service_str = builtinassets.strings.ui.game_center
                 elif login_type is LoginType.EMAIL:
                     # Not possible; just here for exhaustive coverage.
                     service_str = None
@@ -367,12 +392,8 @@ class AccountV2Subsystem:
                         2.0,
                         partial(
                             _babase.screenmessage,
-                            Lstr(
-                                resource='notUsingAccountText',
-                                subs=[
-                                    ('${ACCOUNT}', state.display_name),
-                                    ('${SERVICE}', service_str),
-                                ],
+                            builtinassets.strings.account.not_using_account(
+                                service=service_str
                             ),
                             (1, 0.5, 0),
                         ),
@@ -509,7 +530,7 @@ class AccountV2Subsystem:
         result: LoginAdapter.SignInResult | Exception,
     ) -> None:
         """A sign-in has completed that the user asked for explicitly."""
-        from babase._language import Lstr
+        from babase import builtinassets
 
         del adapter  # Unused.
 
@@ -529,7 +550,7 @@ class AccountV2Subsystem:
 
             # For now just show 'error'. Should do better than this.
             _babase.screenmessage(
-                Lstr(resource='internal.signInErrorText'),
+                builtinassets.strings.account.sign_in_error,
                 color=(1, 0, 0),
             )
             _babase.getsimplesound('error').play()
@@ -678,3 +699,4 @@ class _AuthRequest:
     expire_time: float
     error: str | None
     token: str | None
+    reason: int | None

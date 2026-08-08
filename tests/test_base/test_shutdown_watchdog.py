@@ -36,13 +36,14 @@ Three tests cover the observed real-world failure modes on BASN:
   stack. Shutdown then completes without the faulthandler or C++
   suicide firing.
 
-Each test launches a siloed headless server via ``test_game_run`` with
-an ``--exec`` snippet that deliberately wedges the relevant phase and
-then asserts on markers in the combined output.
+Each test boots an isolated headless binary via
+``apprun.run_headless_capture`` with an ``--exec`` snippet that
+deliberately wedges the relevant phase and then asserts on markers in
+the combined output.
 """
 
 import os
-import subprocess
+import tempfile
 
 import pytest
 
@@ -50,17 +51,11 @@ from batools import apprun
 
 FAST_MODE = os.environ.get('BA_TEST_FAST_MODE') == '1'
 
-# Project root (two levels up from this file's dir).
-_PROJROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-
-# test_game_run hard-timeout. Needs to be comfortably past 3s boot +
-# 3s arm-delay + 17s (15s dump + 2s suicide runway).
-_TEST_GAME_RUN_TIMEOUT_SECONDS = 30
-
-# Subprocess timeout wrapping test_game_run. Larger than
-# _TEST_GAME_RUN_TIMEOUT_SECONDS so a binary-build on the first run
-# doesn't falsely trip the outer timeout.
-_SUBPROCESS_TIMEOUT_SECONDS = 120
+# Run timeout. Needs to be comfortably past 3s boot + 3s arm-delay +
+# 17s (15s dump + 2s suicide runway). The binary build happens inside
+# acquire_binary before this clock matters, so no build headroom is
+# needed here.
+_RUN_TIMEOUT_SECONDS = 45
 
 
 # --- Exec snippets ------------------------------------------------------
@@ -123,34 +118,28 @@ _babase.apptimer(3.0, _trigger)
 
 
 def _run_shutdown_scenario(instance: str, exec_code: str) -> str:
-    """Run a siloed headless server that wedges shutdown; return output."""
-    # Prime the binary cache; later test_game_run invocations are noop
-    # on this step.
-    apprun.acquire_binary(purpose=f'shutdown-watchdog {instance}')
+    """Run an isolated headless binary that wedges shutdown.
 
-    # Skip the UDP listener: these tests don't exercise inbound
-    # networking, and binding the default game port fatals when
-    # multiple smoke jobs run in parallel on the same CI host.
-    env = {**os.environ, 'BA_NO_UDP_LISTENER': '1'}
-
-    proc = subprocess.run(
-        [
-            'tools/pcommand',
-            'test_game_run',
-            '--instance',
-            instance,
-            '--timeout',
-            str(_TEST_GAME_RUN_TIMEOUT_SECONDS),
-            '--exec',
-            exec_code,
-        ],
-        cwd=_PROJROOT,
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        timeout=_SUBPROCESS_TIMEOUT_SECONDS,
-        check=False,
-    )
+    Uses ``run_headless_capture`` (which defaults to no UDP listener —
+    these tests don't exercise inbound networking, and binding the
+    default game port fatals when multiple smoke jobs run in parallel
+    on the same CI host) with a throwaway config dir per scenario.
+    Returns the combined output.
+    """
+    with tempfile.TemporaryDirectory(
+        prefix=f'shutdown_watchdog_{instance}_'
+    ) as tmpdir:
+        config_dir = os.path.join(tmpdir, 'ba_root')
+        os.makedirs(config_dir)
+        proc = apprun.run_headless_capture(
+            purpose=f'shutdown-watchdog {instance}',
+            config_dir=config_dir,
+            exec_code=exec_code,
+            # Markers like 'app exiting (main thread)' are ba.lifecycle
+            # INFO lines, filtered at the default WARNING level.
+            env={'BA_LOG_LEVELS': 'ba.lifecycle=INFO'},
+            timeout=_RUN_TIMEOUT_SECONDS,
+        )
     return proc.stdout.decode(errors='replace')
 
 

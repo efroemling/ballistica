@@ -493,6 +493,15 @@ class App:
         adds ``--expected-snapshotid`` from the dir's
         ``.bacloudstate.json`` so the server can reject a mid-air
         collision (the workspace having changed since our last get).
+
+        That guard is the ONLY thing standing between a routine put and
+        data loss, because ``workspace.json`` is co-owned: the client
+        authors parts of it while the server maintains others
+        (translation up-to-date stamps, wrap params, term-dep and
+        conventions caches). A put always overwrites the server's copy
+        with the local one -- normally harmless because the guard
+        proves the local one is current. ``--force`` removes that proof
+        while keeping the overwrite, which is why it warns loudly.
         """
         if (
             len(args) < 2
@@ -524,7 +533,25 @@ class App:
         if args[1] == 'put':
             force = '--force' in args
             args = [a for a in args if a != '--force']
-            if not force:
+            if force:
+                # Loud and unmissable: forcing is not "push harder", it
+                # is "discard whatever the cloud has". Most costly is
+                # the stale workspace.json going over server-maintained
+                # state (translation stamps etc.), which restales the
+                # package silently -- no error, just a token bill next
+                # time someone runs updates. Warn every single time.
+                print(
+                    f'{Clr.RED}{Clr.BLD}WARNING: --force skips the'
+                    f' changed-since-last-get check.{Clr.RST}\n'
+                    f'{Clr.RED}Your local copy wins outright; nothing is'
+                    f' merged. A stale local workspace.json will overwrite'
+                    f' server-maintained state in it (translation'
+                    f' up-to-date stamps, wrap params, caches), which can'
+                    f' silently restale every string in the package.'
+                    f'{Clr.RST}',
+                    file=sys.stderr,
+                )
+            else:
                 snapshotid = self._read_ws_state_snapshotid(self._ws_state_dir)
                 if snapshotid is not None:
                     args = args + ['--expected-snapshotid', snapshotid]

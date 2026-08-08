@@ -143,8 +143,14 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
     if (transparent) {
       c.SetTransparent(true);
     }
-    c.SetColor(color_[0], color_[1], color_[2], opacity_);
-    c.SetTexture(g_base->assets->BuiltinTexture(texture));
+    auto* tex = g_base->assets->BuiltinTexture(texture);
+    // For a premultiplied texture drawn transparent with a faded straight
+    // color, premultiply rgb by alpha ourselves (see
+    // docs/design/premultiplied-alpha.md). Opaque draws ignore alpha, so
+    // only do this when transparent.
+    float cmul = (transparent && tex->premultiplied()) ? opacity_ : 1.0f;
+    c.SetColor(color_[0] * cmul, color_[1] * cmul, color_[2] * cmul, opacity_);
+    c.SetTexture(tex);
     {
       auto xf = c.ScopedTransform();
       c.Translate(position_[0], position_[1], position_[2]);
@@ -163,13 +169,18 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
       if (additive_) {
         c.SetPremultiplied(true);
       }
+      auto* tex = g_base->assets->BuiltinTexture(texture);
       if (additive_) {
         c.SetColor(color_[0] * opacity_, color_[1] * opacity_,
                    color_[2] * opacity_, 0.0f);
       } else {
-        c.SetColor(color_[0], color_[1], color_[2], opacity_);
+        // Premultiplied texture + straight faded color; premultiply rgb by
+        // alpha ourselves (see docs/design/premultiplied-alpha.md).
+        float cmul = tex->premultiplied() ? opacity_ : 1.0f;
+        c.SetColor(color_[0] * cmul, color_[1] * cmul, color_[2] * cmul,
+                   opacity_);
       }
-      c.SetTexture(g_base->assets->BuiltinTexture(texture));
+      c.SetTexture(tex);
       {
         auto xf = c.ScopedTransform();
         c.Translate(position_[0], position_[1], position_[2]);

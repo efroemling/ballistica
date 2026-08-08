@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <string>
+#include <utility>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
@@ -12,6 +13,7 @@
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_timer.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/generic/utils.h"
 
@@ -44,6 +46,11 @@ void ButtonWidget::SetText(const std::string& text_in) {
 
   // Also cache our current text width; don't want to calc this with each draw
   // (especially now that we may have to ask the OS to do it).
+  text_width_dirty_ = true;
+}
+
+void ButtonWidget::SetLangStr(std::shared_ptr<const base::LangStr> val) {
+  text_->SetLangStr(std::move(val));
   text_width_dirty_ = true;
 }
 
@@ -178,6 +185,19 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     float cy = height_ * 0.5f;
     c.Translate(cx, cy, 0.0f);
     c.Scale(transition_scale, transition_scale, 1.0f);
+    c.Translate(-cx, -cy, 0.0f);
+    c.Submit();
+  }
+
+  bool apply_rotate_transform = (rotate_ != 0.0f);
+  if (apply_rotate_transform) {
+    base::EmptyComponent c(pass);
+    c.SetTransparent(draw_transparent);
+    c.PushTransform();
+    float cx = width_ * 0.5f;
+    float cy = height_ * 0.5f;
+    c.Translate(cx, cy, 0.0f);
+    c.Rotate(rotate_, 0, 0, 1);
     c.Translate(-cx, -cy, 0.0f);
     c.Submit();
   }
@@ -564,13 +584,17 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                 base::BuiltinTextureID::kTexturesBombButton));
           }
         } else if (icon_.exists()) {
-          c.SetColor(icon_color_red_
+          // Premultiply rgb by alpha for a premultiplied icon texture so a
+          // faded icon (icon_color_alpha_ < 1) composites 'over' correctly
+          // (see docs/design/premultiplied-alpha.md).
+          float imul = icon_->premultiplied() ? icon_color_alpha_ : 1.0f;
+          c.SetColor(icon_color_red_ * imul
                          * (icon_tint_ * (1.7f * mult * (color_red_))
                             + (1.0f - icon_tint_) * mult),
-                     icon_color_green_
+                     icon_color_green_ * imul
                          * (icon_tint_ * (1.7f * mult * (color_green_))
                             + (1.0f - icon_tint_) * mult),
-                     icon_color_blue_
+                     icon_color_blue_ * imul
                          * (icon_tint_ * (1.7f * mult * (color_blue_))
                             + (1.0f - icon_tint_) * mult),
                      icon_color_alpha_);
@@ -636,6 +660,13 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.Submit();
   }
 
+  if (apply_rotate_transform) {
+    base::EmptyComponent c(pass);
+    c.SetTransparent(draw_transparent);
+    c.PopTransform();
+    c.Submit();
+  }
+
   // Pop scale-in transform we pushed at the top.
   if (apply_scale_transform) {
     base::EmptyComponent c(pass);
@@ -643,6 +674,24 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.PopTransform();
     c.Submit();
   }
+}
+
+auto ButtonWidget::RotatePointToLocal(float x, float y) const
+    -> std::pair<float, float> {
+  if (rotate_ == 0.0f) {
+    return {x, y};
+  }
+  constexpr float kDegToRad = 3.14159265358979323846f / 180.0f;
+  float theta = rotate_ * kDegToRad;
+  float cx = width_ * 0.5f;
+  float cy = height_ * 0.5f;
+  float dx = x - cx;
+  float dy = y - cy;
+  float ct = cosf(theta);
+  float st = sinf(theta);
+  float nx = cx + dx * ct + dy * st;
+  float ny = cy - dx * st + dy * ct;
+  return {nx, ny};
 }
 
 auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
@@ -671,8 +720,7 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
 
   switch (m.type) {
     case base::WidgetMessage::Type::kMouseMove: {
-      float x = m.fval1;
-      float y = m.fval2;
+      auto [x, y] = RotatePointToLocal(m.fval1, m.fval2);
       bool claimed = (m.fval3 > 0.0f);
       [[maybe_unused]] auto old_hover{hover_};
 
@@ -692,8 +740,7 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       return claimed;
     }
     case base::WidgetMessage::Type::kMouseDown: {
-      float x = m.fval1;
-      float y = m.fval2;
+      auto [x, y] = RotatePointToLocal(m.fval1, m.fval2);
       if (enabled_ && (x >= (-left_overlap)) && (x < (width_ + right_overlap))
           && (y >= (-bottom_overlap)) && (y < (height_ + top_overlap))) {
         hover_ = true;
@@ -717,8 +764,7 @@ auto ButtonWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     }
     case base::WidgetMessage::Type::kMouseUp:
     case base::WidgetMessage::Type::kMouseCancel: {
-      float x = m.fval1;
-      float y = m.fval2;
+      auto [x, y] = RotatePointToLocal(m.fval1, m.fval2);
       bool claimed = (m.fval3 > 0.0f);
 
       if (pressed_) {

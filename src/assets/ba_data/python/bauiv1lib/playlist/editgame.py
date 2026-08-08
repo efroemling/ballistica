@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -62,7 +62,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
 
         valid_maps = gametype.get_supported_maps(sessiontype)
         if not valid_maps:
-            bui.screenmessage(bui.Lstr(resource='noValidMapsErrorText'))
+            bui.screenmessage(classicassets.strings.playlist.no_valid_maps)
             raise RuntimeError('No valid maps found.')
 
         self._config = config
@@ -117,10 +117,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
         y_extra2 = 21
         yoffs = -30 if uiscale is bui.UIScale.SMALL else 0
 
-        map_tex_name = get_map_class(self._map).get_preview_texture_name()
-        if map_tex_name is None:
+        map_tex = get_map_class(self._map).get_preview_texture()
+        if map_tex is None:
             raise RuntimeError(f'No map preview tex found for {self._map}.')
-        map_tex = bui.gettexture(map_tex_name)
 
         top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
         super().__init__(
@@ -148,7 +147,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             label=(
                 bui.charstr(bui.SpecialChar.BACK)
                 if is_add
-                else bui.Lstr(resource='cancelText')
+                else _commonassets.strings.actions.cancel
             ),
             button_type='backSmall' if is_add else None,
             autoselect=True,
@@ -165,9 +164,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
             scale=0.75,
             text_scale=1.3,
             label=(
-                bui.Lstr(resource=f'{self._r}.addGameText')
+                classicassets.strings.playlist.add_game_title
                 if is_add
-                else bui.Lstr(resource='applyText')
+                else _commonassets.strings.actions.apply
             ),
         )
 
@@ -178,7 +177,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(-8, height - 70 + y_extra2 + yoffs),
             size=(width, 25),
-            text=gametype.get_display_string(),
+            text=gametype.get_display_string(langstr=True),
             color=bui.app.ui_v1.title_color,
             maxwidth=235,
             scale=1.1,
@@ -230,21 +229,21 @@ class PlaylistEditGameWindow(bui.MainWindow):
             position=(h + 49, v - 63),
             size=(100, 30),
             maxwidth=110,
-            text=bui.Lstr(resource='mapText'),
+            text=classicassets.strings.ui.map,
             h_align='left',
             color=(0.8, 0.8, 0.8, 1.0),
             v_align='center',
         )
 
-        mesh_trans = stdassets.meshes.level_select_button_transparent.get()
+        mesh_trans = classicassets.meshes.level_select_button_transparent.get()
         bui.imagewidget(
             parent=self._subcontainer,
             size=(256 * 0.7, 125 * 0.7),
             position=(h + 261 - 128 + 128.0 * 0.56, v - 90),
             texture=map_tex,
-            mesh_opaque=stdassets.meshes.level_select_button_opaque.get(),
+            mesh_opaque=classicassets.meshes.level_select_button_opaque.get(),
             mesh_transparent=mesh_trans,
-            mask_texture=stdassets.textures.map_preview_mask.get(),
+            mask_texture=classicassets.textures.map_preview_mask.get(),
         )
         map_button = btn = bui.buttonwidget(
             parent=self._subcontainer,
@@ -252,7 +251,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             position=(h + 448, v - 72),
             on_activate_call=bui.CallStrict(self._select_map),
             scale=0.7,
-            label=bui.Lstr(resource='mapSelectText'),
+            label=_commonassets.strings.actions.select_ellipsis,
         )
         widget_column.append([btn])
 
@@ -459,9 +458,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     position=(h + 509 - 95, v),
                     size=(0, 28),
                     text=(
-                        bui.Lstr(resource='onText')
+                        _commonassets.strings.values.on
                         if value
-                        else bui.Lstr(resource='offText')
+                        else _commonassets.strings.values.off
                     ),
                     editable=False,
                     color=(0.6, 1.0, 0.6, 1.0),
@@ -608,9 +607,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
         bui.textwidget(
             edit=widget,
             text=(
-                bui.Lstr(resource='onText')
+                _commonassets.strings.values.on
                 if value
-                else bui.Lstr(resource='offText')
+                else _commonassets.strings.values.off
             ),
         )
         self._settings[setting_name] = value

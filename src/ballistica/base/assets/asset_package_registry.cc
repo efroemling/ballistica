@@ -2,6 +2,7 @@
 
 #include "ballistica/base/assets/asset_package_registry.h"
 
+#include <algorithm>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -11,6 +12,7 @@
 #include <vector>
 
 #include "ballistica/core/core.h"
+#include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/macros.h"
 
@@ -71,6 +73,27 @@ auto AssetPackageRegistry::Snapshot_() const
   return packages_;
 }
 
+auto AssetPackageRegistry::BucketLogicalPathsSorted(
+    const std::string& apverid, const std::string& bucket_id) const
+    -> std::vector<std::string> {
+  auto snapshot = Snapshot_();
+  auto pkg_it = snapshot->find(apverid);
+  if (pkg_it == snapshot->end()) {
+    return {};
+  }
+  auto bucket_it = pkg_it->second.find(bucket_id);
+  if (bucket_it == pkg_it->second.end()) {
+    return {};
+  }
+  std::vector<std::string> paths;
+  paths.reserve(bucket_it->second.size());
+  for (auto&& entry : bucket_it->second) {
+    paths.push_back(entry.first);
+  }
+  std::sort(paths.begin(), paths.end());
+  return paths;
+}
+
 auto AssetPackageRegistry::LookupAssetHash(const std::string& apverid,
                                            const std::string& bucket_id,
                                            const std::string& logical_path,
@@ -96,6 +119,50 @@ auto AssetPackageRegistry::LookupAssetHash(const std::string& apverid,
     return "";
   }
   return part_it->second;
+}
+
+auto AssetPackageRegistry::LookupAssetHashByRole(
+    const std::string& apverid, const std::string& bucket_id,
+    const std::string& logical_path, const std::string& role,
+    const std::vector<std::string>& format_prefs) const -> std::string {
+  auto snapshot = Snapshot_();
+  auto pkg_it = snapshot->find(apverid);
+  if (pkg_it == snapshot->end()) {
+    return "";
+  }
+  auto bucket_it = pkg_it->second.find(bucket_id);
+  if (bucket_it == pkg_it->second.end()) {
+    return "";
+  }
+  auto entry_it = bucket_it->second.find(logical_path);
+  if (entry_it == bucket_it->second.end()) {
+    return "";
+  }
+  // Parts are named ``<role>.<format>`` (decision #35); take the first
+  // format present in preference order (empty if none is, e.g. a null
+  // asset's empty part map).
+  for (auto&& format : format_prefs) {
+    auto part_it = entry_it->second.find(role + "." + format);
+    if (part_it != entry_it->second.end()) {
+      return part_it->second;
+    }
+  }
+  return "";
+}
+
+auto AssetPackageRegistry::DebugDescribePackage(
+    const std::string& apverid) const -> std::string {
+  auto snapshot = Snapshot_();
+  auto pkg_it = snapshot->find(apverid);
+  if (pkg_it == snapshot->end()) {
+    return "package not registered";
+  }
+  std::string out = "registered buckets:";
+  for (auto&& bucket : pkg_it->second) {
+    out +=
+        " " + bucket.first + "(" + std::to_string(bucket.second.size()) + ")";
+  }
+  return out;
 }
 
 auto AssetPackageRegistry::LookupBucketIdWithPrefix_(const std::string& apverid,
@@ -185,6 +252,37 @@ auto AssetPackageRegistry::CasBlobPath(const std::string& hash) const
   // the writable root.)
   return g_core->GetDataDirectory() + BA_DIRSLASH + "ba_data" + BA_DIRSLASH
          + "assets" + BA_DIRSLASH + shard;
+}
+
+void AssetPackageRegistry::SetConstructComplete() {
+  construct_complete_.store(true, std::memory_order_release);
+}
+
+void AssetPackageRegistry::CheckPreConstructAccess(
+    const std::string& apverid, const std::string& logical_path) const {
+  // Steady state after hand-off: a single relaxed-ish atomic load and
+  // out. Everything below runs only during bring-up.
+  if (construct_complete_.load(std::memory_order_acquire)) {
+    return;
+  }
+  if (apverid == kBuiltinAssetsApverid) {
+    return;
+  }
+  auto msg = std::string("Asset '") + apverid + ":" + logical_path
+             + "' accessed before construct-mode finished resolving"
+               " asset-packages; only "
+             + kBuiltinAssetsApverid
+             + " is guaranteed available this early. Hold the wrapper"
+               " reference and load it on first use instead.";
+  if (g_buildconfig.debug_build()) {
+    FatalError(msg);
+  } else {
+    // Log-once: a violation on a hot path would otherwise flood.
+    if (!did_log_pre_construct_access_.exchange(true,
+                                                std::memory_order_acq_rel)) {
+      g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kError, msg);
+    }
+  }
 }
 
 }  // namespace ballistica::base

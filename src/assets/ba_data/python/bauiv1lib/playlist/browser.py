@@ -10,7 +10,7 @@ from typing import override, TYPE_CHECKING
 import bascenev1 as bs
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from bauiv1lib.play import PlaylistSelectContext
@@ -228,15 +228,10 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 {
                     'type': 'ADD_PLAYLIST',
                     'playlistType': 'Free-for-All',
-                    'playlistName': bui.Lstr(
-                        resource='singleGamePlaylistNameText'
-                    )
-                    .evaluate()
-                    .replace(
-                        '${GAME}',
-                        bui.Lstr(
-                            translate=('gameNames', 'Death Match')
-                        ).evaluate(),
+                    'playlistName': (
+                        classicassets.strings.playlist.single_game_name(
+                            game=classicassets.strings.game_names.death_match
+                        ).evaluate()
                     ),
                     'playlist': [
                         {
@@ -266,15 +261,12 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 {
                     'type': 'ADD_PLAYLIST',
                     'playlistType': 'Team Tournament',
-                    'playlistName': bui.Lstr(
-                        resource='singleGamePlaylistNameText'
-                    )
-                    .evaluate()
-                    .replace(
-                        '${GAME}',
-                        bui.Lstr(
-                            translate=('gameNames', 'Capture the Flag')
-                        ).evaluate(),
+                    'playlistName': (
+                        classicassets.strings.playlist.single_game_name(
+                            game=(
+                                classicassets.strings.game_names
+                            ).capture_the_flag
+                        ).evaluate()
                     ),
                     'playlist': [
                         {
@@ -320,8 +312,8 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 {
                     'type': 'ADD_PLAYLIST',
                     'playlistType': 'Team Tournament',
-                    'playlistName': bui.Lstr(
-                        translate=('playlistNames', 'Just Sports')
+                    'playlistName': (
+                        classicassets.strings.playlist.just_sports
                     ).evaluate(),
                     'playlist': [
                         {
@@ -349,8 +341,8 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 {
                     'type': 'ADD_PLAYLIST',
                     'playlistType': 'Free-for-All',
-                    'playlistName': bui.Lstr(
-                        translate=('playlistNames', 'Just Epic')
+                    'playlistName': (
+                        classicassets.strings.playlist.just_epic
                     ).evaluate(),
                     'playlist': [
                         {
@@ -463,7 +455,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
         assert bui.app.classic is not None
         bui.textwidget(
             parent=self._subcontainer,
-            text=bui.Lstr(resource='playlistsText'),
+            text=classicassets.strings.playlist.playlists,
             position=(40 + xoffs, self._sub_height + yoffs - 26),
             size=(0, 0),
             scale=1.0,
@@ -476,11 +468,11 @@ class PlaylistBrowserWindow(bui.MainWindow):
         index = 0
         appconfig = bui.app.config
 
-        mesh_opaque = stdassets.meshes.level_select_button_opaque.get()
+        mesh_opaque = classicassets.meshes.level_select_button_opaque.get()
         mesh_transparent = (
-            stdassets.meshes.level_select_button_transparent.get()
+            classicassets.meshes.level_select_button_transparent.get()
         )
-        mask_tex = stdassets.textures.map_preview_mask.get()
+        mask_tex = classicassets.textures.map_preview_mask.get()
 
         # h_offs = 225 if count == 1 else 115 if count == 2 else 0
         h_offs = 2
@@ -558,7 +550,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     if x == 0:
                         bui.widget(edit=btn, left_widget=self._back_button)
 
-                print_name: str | bui.Lstr | None
+                print_name: str | bui.Lstr | bui.LangStr | None
                 if name == '__default__':
                     print_name = self._pvars.default_list_name
                 else:
@@ -617,9 +609,9 @@ class PlaylistBrowserWindow(bui.MainWindow):
                         except bui.NotFoundError:
                             maptype = None
                         if maptype is not None:
-                            tex_name = maptype.get_preview_texture_name()
-                            if tex_name is not None:
-                                map_textures.append(tex_name)
+                            map_tex = maptype.get_preview_texture()
+                            if map_tex is not None:
+                                map_textures.append(map_tex)
                                 map_texture_entries.append(entry)
                         if len(map_textures) >= 6:
                             break
@@ -667,7 +659,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                                     )
                                 )
 
-                                tex_name = map_textures[tex_index]
+                                map_tex = map_textures[tex_index]
                                 h = pos[0] + h_offs_img + scl * 250 * col
                                 v = pos[1] + v_offs_img - scl * 130 * row
                                 map_images.append(
@@ -675,7 +667,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                                         parent=self._subcontainer,
                                         size=(scl * 250.0, scl * 125.0),
                                         position=(h, v),
-                                        texture=bui.gettexture(tex_name),
+                                        texture=map_tex,
                                         opacity=1.0 if owned else 0.25,
                                         draw_controller=btn,
                                         mesh_opaque=mesh_opaque,
@@ -688,7 +680,9 @@ class PlaylistBrowserWindow(bui.MainWindow):
                                         parent=self._subcontainer,
                                         size=(scl * 100.0, scl * 100.0),
                                         position=(h + scl * 75, v + scl * 10),
-                                        texture=stdassets.textures.lock.get(),
+                                        texture=(
+                                            classicassets.textures
+                                        ).lock.get(),
                                         draw_controller=btn,
                                     )
                         if v is not None:
@@ -725,7 +719,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
             size=(100, 30),
             position=(34 + h_offs_bottom, 50 + extra_bottom_buffer),
             text_scale=0.6,
-            label=bui.Lstr(resource='customizeText'),
+            label=_commonassets.strings.actions.customize,
             on_activate_call=self._on_customize_press,
             color=(0.54, 0.52, 0.67),
             textcolor=(0.7, 0.65, 0.7),

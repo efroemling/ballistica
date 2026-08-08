@@ -17,15 +17,84 @@ if TYPE_CHECKING:
 # Types which we can pass through as-is.
 SIMPLE_TYPES = {int, bool, str, float, type(None)}
 
-# Attr name for dict of extra attributes included on dataclass
-# instances. Note that this is only added if extra attributes are
-# present.
-EXTRA_ATTRS_ATTR = '_DCIOEXATTRS'
+# Single instance attr holding ALL per-instance dataclassio metadata
+# (lossy flag, preserved extra attrs, and anything added later). It is
+# consolidated into one attr on purpose: slotting an @ioprepped
+# dataclass then requires reserving exactly ONE name regardless of how
+# many metadata kinds exist now or in the future. Only ever added
+# lazily -- an instance with no metadata carries nothing. Slotted
+# @ioprepped classes must reserve this in __slots__ (splat IO_SLOTS);
+# the prep pass enforces it.
+DCIO_META_ATTR = '_dcio'
 
-# Attr name for a bool attr for flagging data as lossy, which means it
-# may have been modified in some way during load and should generally
-# not be written back out.
-LOSSY_ATTR = '_DCIOLOSSY'
+# Keys within the metadata dict.
+_DCIO_LOSSY = 'lossy'  # bool: data modified on load; disallow writing out.
+_DCIO_EXTRA = 'extra'  # dict: unrecognized attrs preserved from input.
+
+# Slot names a slotted @ioprepped dataclass must reserve. Splat into a
+# class' __slots__ so future metadata additions never require touching
+# consumers: ``__slots__ = ('field1', 'field2', *IO_SLOTS)``.
+IO_SLOTS = (DCIO_META_ATTR,)
+
+
+def _io_meta_create(obj: Any) -> dict:
+    """Return an instance's metadata dict, creating it if absent."""
+    meta = getattr(obj, DCIO_META_ATTR, None)
+    if meta is None:
+        meta = {}
+        setattr(obj, DCIO_META_ATTR, meta)
+    return meta
+
+
+def io_meta(obj: Any) -> dict | None:
+    """Return an instance's dataclassio metadata dict, or ``None``.
+
+    The metadata dict is added lazily, so a plainly-decoded instance
+    with no lossy flag or preserved extra-attrs has none.
+    """
+    return getattr(obj, DCIO_META_ATTR, None)
+
+
+def io_is_lossy(obj: Any) -> bool:
+    """Whether an instance is flagged as lossy.
+
+    Lossy means the value may have been modified during load; the
+    outputter refuses to serialize such an instance as a safety net
+    against unintentional round-trips.
+    """
+    meta = getattr(obj, DCIO_META_ATTR, None)
+    return bool(meta and meta.get(_DCIO_LOSSY))
+
+
+def io_mark_lossy(obj: Any) -> None:
+    """Flag an instance as lossy (see :func:`io_is_lossy`)."""
+    _io_meta_create(obj)[_DCIO_LOSSY] = True
+
+
+def io_clear_lossy(obj: Any) -> None:
+    """Clear an instance's lossy flag.
+
+    For the rare case of a deliberate one-way output of data that was
+    loaded lossily (e.g. a read-only human dump); use with care.
+    """
+    meta = getattr(obj, DCIO_META_ATTR, None)
+    if meta is not None:
+        meta.pop(_DCIO_LOSSY, None)
+
+
+def io_extra_attrs(obj: Any) -> dict | None:
+    """Return unrecognized attrs preserved on an instance, or ``None``.
+
+    Populated when tolerant decoding encounters keys not matching any
+    field, so older code can round-trip newer data nondestructively.
+    """
+    meta = getattr(obj, DCIO_META_ATTR, None)
+    return meta.get(_DCIO_EXTRA) if meta is not None else None
+
+
+def io_set_extra_attrs(obj: Any, extra: dict) -> None:
+    """Store preserved unrecognized attrs on an instance."""
+    _io_meta_create(obj)[_DCIO_EXTRA] = extra
 
 
 class Codec(Enum):
@@ -176,6 +245,34 @@ class IOMultiType[EnumT: Enum]:
         themself (dataclassio will error if they do).
         """
         return '_t'
+
+    @classmethod
+    def get_default_type_id(cls) -> EnumT | None:
+        """Return a type-id to be assumed when none is present.
+
+        By default, dataclassio errors when deserializing multitype
+        data that contains no type-id value. Overriding this to return
+        a type-id changes that behavior: data with no type-id present
+        will be deserialized as the returned type, and instances of
+        that type will be serialized *without* a type-id value. This
+        both saves a bit of space and allows 'upgrading' an existing
+        regular dataclass to a multitype - simply designate the
+        original dataclass type as the default and old serialized data
+        will remain loadable (and data for the default type will remain
+        loadable by old code).
+
+        Be aware of the following, however:
+
+        - Once serialized data exists anywhere without type-id values,
+          the default type-id must never be changed or removed; doing
+          so would cause that existing data to be silently
+          reinterpreted as some other type (or to error).
+        - A missing type-id normally acts as a sanity check when
+          deserializing; defining a default effectively disables that
+          check, meaning malformed data may deserialize successfully
+          as the default type instead of erroring.
+        """
+        return None
 
     # NOTE: Currently (Jan 2025) mypy complains if overrides annotate
     # return type of 'Self | None'. Substituting their own explicit type
@@ -501,6 +598,50 @@ def _raise_type_error(
     )
 
 
+def _select_union_member_type(
+    childanntypes: list[Any], value: Any
+) -> Any | None:
+    """Select the member of a type-disjoint union matching a value.
+
+    Multi-member unions (beyond the simple Optional form) are required
+    at prep time to be 'type-disjoint': each member must map to a
+    distinct wire type, so a value can be matched to its member with no
+    tagging. This does that matching. It works both for wire data
+    (where object-shaped members appear as dicts) and for in-memory
+    values (where they appear as dataclass instances). None members
+    are expected to be filtered out by the caller (along with None
+    values). Returns the matching member annotation type, or None if
+    nothing matches.
+    """
+    valtype = type(value)
+    float_member: Any = None
+    object_member: Any = None
+    for childtype in childanntypes:
+        childorigin = _get_origin(childtype)
+        if childorigin is valtype:
+            return childtype
+        if childorigin is float:
+            float_member = childtype
+        elif isinstance(childorigin, type) and (
+            dataclasses.is_dataclass(childorigin)
+            or issubclass(childorigin, IOMultiType)
+        ):
+            object_member = childtype
+
+    # No exact match. Int values can land on a float member (the float
+    # handling there applies the usual coercion rules), and dict values
+    # (wire form) or dataclass instances (in-memory form, including
+    # subclasses such as IOMultiType members) land on the object-shaped
+    # member.
+    if valtype is int and float_member is not None:
+        return float_member
+    if object_member is not None and (
+        isinstance(value, dict) or dataclasses.is_dataclass(valtype)
+    ):
+        return object_member
+    return None
+
+
 def _is_valid_for_codec(obj: Any, codec: Codec) -> bool:
     """Return whether a value consists solely of json-supported types.
 
@@ -583,6 +724,11 @@ def _get_multitype_type(
     storename = cls.get_type_id_storage_name()
     id_val = val.get(storename)
     if id_val is None:
+        # A missing type-id is allowed if the multitype designates a
+        # default type; otherwise it's an error.
+        default_type_id = cls.get_default_type_id()
+        if default_type_id is not None:
+            return cls.get_type_cached(default_type_id)
         raise ValueError(
             f"Expected a '{storename}'" f" value for object at '{fieldpath}'."
         )

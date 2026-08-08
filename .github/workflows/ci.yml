@@ -16,7 +16,7 @@ jobs:
   check_linux:
     runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
         with:
@@ -28,13 +28,13 @@ jobs:
         # in ballistica-internal also refuses non-prod pins, but
         # re-check here so a stray dev/test pin in the public
         # tree fails CI loudly rather than shipping.
-        run: tools/pcommand assetpins check
+        run: tools/pcommand assetpins assert-prod-only
 
   # Compile a server binary and run some tests.
   build_and_test_linux:
     runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
         with:
@@ -50,7 +50,7 @@ jobs:
   spinoff_test_linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
         # Not using the `using-cmake: true`
@@ -70,7 +70,7 @@ jobs:
   feature_set_copy_test_linux:
     runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
         with:
@@ -92,7 +92,7 @@ jobs:
   build_and_test_windows:
     runs-on: windows-2025
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -103,7 +103,7 @@ jobs:
       # action as the Linux composite, with --system installs to
       # avoid the venv layer.
       - name: Set up uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           enable-cache: true
       - name: Create tools/pcommand

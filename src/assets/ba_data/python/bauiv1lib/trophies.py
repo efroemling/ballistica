@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib import popup
 import bauiv1 as bui
+from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
@@ -61,7 +62,7 @@ class TrophiesWindow(popup.PopupWindow):
             h_align='center',
             v_align='center',
             scale=0.6,
-            text=bui.Lstr(resource='trophiesText'),
+            text=classicassets.strings.ui.trophies,
             maxwidth=200,
             # color=(1, 1, 1, 0.4),
             color=bui.app.ui_v1.title_color,
@@ -86,10 +87,6 @@ class TrophiesWindow(popup.PopupWindow):
         trophy_types = [['0a'], ['0b'], ['1'], ['2'], ['3'], ['4']]
         sub_height = 40 + len(trophy_types) * incr
 
-        eq_text = bui.Lstr(
-            resource='coopSelectWindow.powerRankingPointsEqualsText'
-        ).evaluate()
-
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
             size=(sub_width, sub_height),
@@ -98,12 +95,8 @@ class TrophiesWindow(popup.PopupWindow):
 
         total_pts = 0
 
-        multi_txt = bui.Lstr(
-            resource='coopSelectWindow.powerRankingPointsMultText'
-        ).evaluate()
-
         total_pts += self._create_trophy_type_widgets(
-            eq_text, incr, multi_txt, sub_height, sub_width, trophy_types
+            incr, sub_height, sub_width, trophy_types
         )
 
         bui.textwidget(
@@ -117,9 +110,12 @@ class TrophiesWindow(popup.PopupWindow):
             color=(0.7, 0.8, 1.0),
             flatness=1.0,
             shadow=0.0,
-            text=bui.Lstr(resource='coopSelectWindow.totalText').evaluate()
-            + ' '
-            + eq_text.replace('${NUMBER}', str(total_pts)),
+            text=_commonassets.strings.compose.spaced_pair(
+                first=_commonassets.strings.values.total,
+                second=(
+                    classicassets.strings.league
+                ).power_ranking_points_equals(number=str(total_pts)),
+            ),
             size=(0, 0),
             h_align='right',
             v_align='center',
@@ -127,14 +123,11 @@ class TrophiesWindow(popup.PopupWindow):
 
     def _create_trophy_type_widgets(
         self,
-        eq_text: str,
         incr: int,
-        multi_txt: str,
         sub_height: int,
         sub_width: int,
         trophy_types: list[list[str]],
     ) -> int:
-        # pylint: disable=too-many-positional-arguments
         from bascenev1 import get_trophy_string
 
         total_pts = 0
@@ -168,7 +161,9 @@ class TrophiesWindow(popup.PopupWindow):
                 v_align='center',
             )
 
-            txt = multi_txt.replace('${NUMBER}', str(t_mult))
+            txt = (classicassets.strings.league).power_ranking_points_mult(
+                number=str(t_mult)
+            )
             bui.textwidget(
                 parent=self._subcontainer,
                 position=(sub_width * 0.57, sub_height - 20 - incr * i),
@@ -196,7 +191,9 @@ class TrophiesWindow(popup.PopupWindow):
                 flatness=1.0,
                 shadow=0.0,
                 scale=0.5,
-                text=eq_text.replace('${NUMBER}', str(this_pts)),
+                text=(classicassets.strings.league).power_ranking_points_equals(
+                    number=str(this_pts)
+                ),
                 size=(0, 0),
                 h_align='center',
                 v_align='center',

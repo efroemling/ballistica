@@ -193,8 +193,6 @@ class RPCWSEndpoint:
         bytes_awaitable: asyncio.Task[bytes],
         message_id: int,
     ) -> bytes:
-        # pylint: disable=too-many-positional-arguments
-
         # Build the wire frame: type(1b) + message_id(2b) + payload.
         frame = (
             _TYPE_MESSAGE.to_bytes(1, _BYTE_ORDER)

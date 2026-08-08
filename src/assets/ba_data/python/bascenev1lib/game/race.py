@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, override
 from dataclasses import dataclass
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 from bascenev1 import builtinassets
 
 from bascenev1lib.actor.bomb import Bomb
@@ -154,13 +154,13 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
         self._race_started = False
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        self._score_sound = stdassets.audio.score
-        self._swipsound = stdassets.audio.swip
+        self._score_sound = classicassets.audio.score.get()
+        self._swipsound = classicassets.audio.swip.get()
         self._last_team_time: float | None = None
         self._front_race_region: int | None = None
-        self._nub_tex = builtinassets.textures.nub
-        self._beep_1_sound = stdassets.audio.race_beep1
-        self._beep_2_sound = stdassets.audio.race_beep2
+        self._nub_tex = builtinassets.textures.nub.get()
+        self._beep_1_sound = classicassets.audio.race_beep1.get()
+        self._beep_2_sound = classicassets.audio.race_beep2.get()
         self.race_region_material: bs.Material | None = None
         self._regions: list[RaceRegion] = []
         self._team_finish_pts: int | None = None
@@ -275,13 +275,8 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
                     assert player.actor
                     player.actor.handlemessage(bs.DieMessage())
                     bs.broadcastmessage(
-                        bs.Lstr(
-                            translate=(
-                                'statements',
-                                'Killing ${NAME} for'
-                                ' skipping part of the track!',
-                            ),
-                            subs=[('${NAME}', player.getname(full=True))],
+                        classicassets.strings.game.killing_track_skipper(
+                            name=player.getname(full=True)
                         ),
                         color=(1, 0, 0),
                     )
@@ -365,12 +360,9 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
                             player.actor.node.connectattr(
                                 'torso_position', mathnode, 'input2'
                             )
-                            tstr = bs.Lstr(
-                                resource='lapNumberText',
-                                subs=[
-                                    ('${CURRENT}', str(player.lap + 1)),
-                                    ('${TOTAL}', str(self._laps)),
-                                ],
+                            tstr = classicassets.strings.game.lap_number(
+                                current=str(player.lap + 1),
+                                total=str(self._laps),
                             )
                             txtnode = bs.newnode(
                                 'text',
@@ -413,22 +405,16 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             and self._entire_team_must_finish
         ):
             bs.broadcastmessage(
-                bs.Lstr(
-                    translate=(
-                        'statements',
-                        '${TEAM} is disqualified because ${PLAYER} left',
-                    ),
-                    subs=[
-                        ('${TEAM}', player.team.name),
-                        ('${PLAYER}', player.getname(full=True)),
-                    ],
+                classicassets.strings.game.disqualified_player_left(
+                    team=player.team.name,
+                    player=player.getname(full=True),
                 ),
                 color=(1, 1, 0),
             )
             player.team.finished = True
             player.team.time = None
             player.team.lap = 0
-            stdassets.audio.boo.play()
+            classicassets.audio.boo.get().play()
             for otherplayer in player.team.players:
                 otherplayer.lap = 0
                 otherplayer.finished = True
@@ -528,7 +514,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             lnub = bs.newnode(
                 'image',
                 attrs={
-                    'texture': builtinassets.textures.nub,
+                    'texture': builtinassets.textures.nub.get(),
                     'opacity': 1.0,
                     'absolute_scale': True,
                     'position': (-75 + i * 50, light_y),

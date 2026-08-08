@@ -191,7 +191,7 @@ codegen-clean:
 # Inspect / update asset-package pins. Convenience aliases for the
 # pcommand subcommands; richer invocations (specific
 # VERSION/TARGET combos, track switching, etc.) should go through
-# ``tools/pcommand assetpins update <VERSION> <TARGET>`` directly
+# ``tools/pcommand assetpins update <TARGET> <VERSION>`` directly
 # (since make targets can't take CLI-style args). `assetpins` is
 # the only build-flow entry that talks to the cloud and the only
 # one that mutates checked-in source as part of normal use — see
@@ -202,22 +202,23 @@ assetpins:
 # Move every pin to the newest version on its current track.
 # Dev pins re-resolve; prod/test pins move to the newest of
 # their type if upstream has published one. Convenience for
-# `tools/pcommand assetpins update latest all`. For finer
+# `tools/pcommand assetpins update all latest`. For finer
 # control (single package, single file, track switching, exact
 # version), invoke the underlying pcommand directly.
 assetpins-latest:
 	@$(PCOMMAND) assetpins update all latest
 
-# Show how to wrangle asset pins.
+# Show full assetpins usage (the pcommand's docstring).
 assetpins-help:
-	@$(PCOMMAND) assetpins help
+	@$(PCOMMAND) help assetpins
 
 # (No dedicated assetpins-check make target — non-prod pins are
 # flagged prominently in ``make assetpins`` output, and the
 # check fires automatically as part of ``blessing check``,
 # pubsync push, and other gates that already enforce
 # "shippable build" invariants. Callers that want the bare
-# check can run ``tools/pcommand assetpins check`` directly.)
+# check can run ``tools/pcommand assetpins assert-prod-only``
+# directly.)
 
 # Clean asset-bundle outputs (manifests + CAS blobs).
 assets-resolve-clean:
@@ -285,9 +286,39 @@ venv: .venv/.efro_venv_complete
 # (further down) handles the actual regeneration based on
 # requirements.txt's mtime — calling ``make`` again here pulls
 # that rule in once requirements_upgrade has finished writing.
+# Two distinct ways the lockfile moves, and they mean different things:
+#
+# - Editing pconfig/requirements.txt (adding or bumping a direct dep)
+#   makes the requirements_lock.txt rule fire on the next make of
+#   anything -- it is a file target, reached via
+#   env -> tools/pcommand -> .venv/.efro_venv_complete. That re-resolve
+#   is *minimal*: the edit is honored in full, along with whatever it
+#   transitively requires, and every other pin stays put. So adding one
+#   package can't quietly reformat the repo by dragging a new black in
+#   with it.
+#
+# - `make upgrade` (via this target) passes --upgrade, which discards
+#   existing pins and re-resolves the whole graph to the newest versions
+#   the constraints permit -- transitive deps included. Direct deps are
+#   exact-pinned in requirements.txt so they move only via
+#   requirements_upgrade below; --upgrade is the only thing that keeps
+#   *transitives* from rotting. They rot invisibly: they have no entry
+#   in requirements.txt, and only one of our repos has Dependabot
+#   watching (which is how four CVEs sat frozen until 2026-07-29).
+#
+# Same split as bundle install/update, cargo build/update, and
+# pip-compile with and without --upgrade. Keep them distinct: collapsing
+# them means either transitives freeze forever, or every trivial
+# requirements.txt edit becomes an unplanned full upgrade.
 venv-upgrade: env
 	$(PCOMMAND) requirements_upgrade pconfig/requirements.txt
-	@$(MAKE) pconfig/requirements_lock.txt
+# --always-make because the lock rule is a *file* target: when
+# requirements_upgrade finds no direct dep to bump (the common case)
+# requirements.txt is untouched, make would call the lock up to date,
+# and the sweep would silently do nothing -- which is the exact
+# failure this target exists to prevent.
+	@$(MAKE) --always-make pconfig/requirements_lock.txt \
+      UV_COMPILE_UPGRADE=--upgrade
 
 venv-clean:
 	rm -rf .venv
@@ -881,6 +912,7 @@ update-check: env-pre-update
 upgrade: env
 	@$(MAKE) venv-upgrade
 	@$(MAKE) python-site-packages
+	@$(MAKE) assetpins-latest
 	@$(PCOMMANDBATCH) echo GRN Upgrade-Project: SUCCESS!
 
 # Tell make which of these targets don't represent files.
@@ -1235,7 +1267,7 @@ windows-debug-build: env \
    build/prefab/lib/windows/Debug_$(WINPREVSP)/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Debug_$(WINPREVSP)/BallisticaKitGenericPlus.pdb
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform $(WINPREPLT)
-	@$(PCOMMAND) wsl_build_check_win_drive
+	@$(PCOMMAND) wsl_build_check $(WIN_MSBUILD_EXE_B)
 	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=$(WINPREVSP) \
  $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug \
@@ -1246,7 +1278,7 @@ windows-debug-rebuild: env \
    build/prefab/lib/windows/Debug_$(WINPREVSP)/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Debug_$(WINPREVSP)/BallisticaKitGenericPlus.pdb
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform $(WINPREPLT)
-	@$(PCOMMAND) wsl_build_check_win_drive
+	@$(PCOMMAND) wsl_build_check $(WIN_MSBUILD_EXE_B)
 	WINDOWS_CONFIGURATION=Debug WINDOWS_PLATFORM=$(WINPREVSP) \
  $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Debug \
@@ -1257,7 +1289,7 @@ windows-release-build: env \
    build/prefab/lib/windows/Release_$(WINPREVSP)/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Release_$(WINPREVSP)/BallisticaKitGenericPlus.pdb
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform $(WINPREPLT)
-	@$(PCOMMAND) wsl_build_check_win_drive
+	@$(PCOMMAND) wsl_build_check $(WIN_MSBUILD_EXE_B)
 	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=$(WINPREVSP) \
  $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release \
@@ -1268,7 +1300,7 @@ windows-release-rebuild: env \
    build/prefab/lib/windows/Release_$(WINPREVSP)/BallisticaKitGenericPlus.lib \
    build/prefab/lib/windows/Release_$(WINPREVSP)/BallisticaKitGenericPlus.pdb
 	@$(WSLW) $(PCOMMAND) ensure_prefab_platform $(WINPREPLT)
-	@$(PCOMMAND) wsl_build_check_win_drive
+	@$(PCOMMAND) wsl_build_check $(WIN_MSBUILD_EXE_B)
 	WINDOWS_CONFIGURATION=Release WINDOWS_PLATFORM=$(WINPREVSP) \
  $(MAKE) windows-staging
 	WINDOWS_PROJECT=Generic WINDOWS_CONFIGURATION=Release \
@@ -1650,7 +1682,11 @@ pconfig/requirements_lock.txt: pconfig/requirements.txt
 # .venv exists at compile time (libcst, e.g., declares
 # environment-marker-conditional deps that change with the
 # resolver's view of the target Python).
+# ``UV_COMPILE_UPGRADE`` is empty for a normal (minimal) re-resolve and
+# ``--upgrade`` when invoked from venv-upgrade; see the comment on that
+# target for why the two cases are kept apart.
 	@uv pip compile --universal --generate-hashes --quiet \
+ $(UV_COMPILE_UPGRADE) \
  --python $(VENV_PYTHON) \
  pconfig/requirements.txt -o pconfig/requirements_lock.txt
 
@@ -1766,7 +1802,7 @@ ballisticakit-cmake/.clang-format: .clang-format
 	@$(PCOMMANDBATCH) echo BLU Created compile commands db at $@
 
 _windows-wsl-build: env
-	@$(PCOMMAND) wsl_build_check_win_drive
+	@$(PCOMMAND) wsl_build_check $(WIN_MSBUILD_EXE_B)
 	$(WIN_MSBUILD_EXE_B) \
    $(shell $(PCOMMAND) wsl_path_to_win --escape \
    ballisticakit-windows/$(WINPRJ)/BallisticaKit$(WINPRJ).vcxproj) \
@@ -1777,7 +1813,7 @@ _windows-wsl-build: env
 	@$(PCOMMAND) echo BLU BLD Built build/windows/BallisticaKit$(WINPRJ).exe.
 
 _windows-wsl-rebuild: env
-	@$(PCOMMAND) wsl_build_check_win_drive
+	@$(PCOMMAND) wsl_build_check $(WIN_MSBUILD_EXE_B)
 	$(WIN_MSBUILD_EXE_B) \
    $(shell $(PCOMMAND) wsl_path_to_win --escape \
     ballisticakit-windows/$(WINPRJ)/BallisticaKit$(WINPRJ).vcxproj) \

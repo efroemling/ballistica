@@ -9,9 +9,11 @@
 #include <unistd.h>
 
 #include <cerrno>
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -154,10 +156,50 @@ void Automation::DispatchLine(const std::string& line) {
   // Run on the logic thread (which holds the GIL during ticks). The
   // decoded source is captured by value into the lambda since the
   // buffer it came from belongs to the reader thread.
+  if (!WaitForLogicEventLoop()) {
+    // Only reachable on shutdown or if bring-up never finishes. Say so
+    // rather than swallowing the command silently.
+    if (!shutdown_) {
+      g_core->logging->Log(
+          LogName::kBa, LogLevel::kError,
+          "Automation: logic event loop never came up; dropping command.");
+    }
+    return;
+  }
   g_base->logic->event_loop()->PushCall([decoded]() {
     PythonCommand cmd(decoded, "<automation>");
     cmd.Exec(/*print_errors=*/true, nullptr, nullptr);
   });
+}
+
+auto Automation::WaitForLogicEventLoop() -> bool {
+  // Our reader thread is spawned from the BaseFeatureSet constructor,
+  // which runs before g_base is even assigned and well before
+  // Logic::OnMainThreadStartApp() creates the logic event loop. A
+  // command can therefore land here with nothing to dispatch to — most
+  // easily when a sender blocked on open() while the app was starting
+  // and gets unblocked the moment we open the FIFO. Pushing anyway
+  // walks a null EventLoop* and hard-asserts in EventLoop::thread_id.
+  //
+  // We wait rather than drop so an early command still runs once the
+  // app is up; ordering is preserved for free since this is the only
+  // thread feeding the channel.
+  if (g_base != nullptr && g_base->logic != nullptr
+      && g_base->logic->event_loop() != nullptr) {
+    return true;
+  }
+  auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
+  while (!shutdown_) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    if (g_base != nullptr && g_base->logic != nullptr
+        && g_base->logic->event_loop() != nullptr) {
+      return true;
+    }
+    if (std::chrono::steady_clock::now() >= deadline) {
+      break;
+    }
+  }
+  return false;
 }
 
 // Helper: emit a standardized [automation] log line. Used both here

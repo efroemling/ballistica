@@ -8,6 +8,7 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/classic_soft.h"
@@ -397,6 +398,18 @@ void JoystickInput::SetStandardExtendedButtons() {
   remote_enter_button_ = 13;
 }
 
+auto JoystickInput::DoApplyFeedback(const FeedbackEvent& event) -> int {
+  // Whether this particular device is one the adapter can actually drive
+  // is the adapter's call, not ours -- it is the only thing that knows how
+  // its controllers are addressed. Devices it doesn't recognize (the
+  // remote app, test inputs) simply come back inert.
+  return g_base->app_adapter->ApplyJoystickFeedback(this, event);
+}
+
+void JoystickInput::DoStopFeedback() {
+  g_base->app_adapter->StopJoystickFeedback(this);
+}
+
 void JoystickInput::ResetHeldStates() {
   // So we push events through even if there's a dialog in the way.
   resetting_ = true;
@@ -624,8 +637,7 @@ void JoystickInput::HandleSDLEvent(const BAEvent* e) {
     // On our Oculus build, select presses reset the orientation.
     if (e->jbutton.button == vr_reorient_button_ && g_core->vr_mode()) {
       g_base->ScreenMessage(
-          g_base->assets->GetResourceString("vrOrientationResetText"),
-          {0, 1, 0});
+          BuiltinStrings::Input::VrOrientationReset()->Evaluate(), {0, 1, 0});
       g_core->reset_vr_orientation = true;
       return;
     }

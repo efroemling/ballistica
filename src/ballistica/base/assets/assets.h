@@ -12,6 +12,7 @@
 
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/base.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::base {
@@ -147,18 +148,38 @@ class Assets {
     std::unordered_map<std::string,
                        std::unordered_map<std::string, std::string> >
         translations;
-    /// Curated 'internal' slice keyed by bare name, for the C++
-    /// ``GetResourceString`` consumers (everything under ``internal`` by
-    /// bare name, plus a few cherry-picked top-level keys).
-    std::unordered_map<std::string, std::string> internal;
   };
 
   /// (Re)build the native language table from the registered
   /// ``language`` buckets of ``apverids`` (merged in order), swap it in
   /// atomically, and notify subsystems of the language change. English
   /// is the bundled fallback flavor, so this currently always loads
-  /// English (Step A of the strings migration).
-  void ReloadLanguage(const std::vector<std::string>& apverids);
+  /// English (Step A of the strings migration). ``plural_locale`` is
+  /// the client's *resolved* locale wire value (e.g. ``eng``), stamped
+  /// onto the language-string tables to drive CLDR plural selection.
+  void ReloadLanguage(const std::vector<std::string>& apverids,
+                      const std::string& plural_locale);
+
+  /// The current native language-string tables (per-apverid values for
+  /// the client's locale; see LangStrTables). Immutable snapshot; any
+  /// thread may call and read. Null until the first ReloadLanguage.
+  auto LangStrTablesSnapshot() -> std::shared_ptr<const LangStrTables>;
+
+  /// Abbreviated per-locale duration unit templates for the composed
+  /// h/m/s displays (timedisplay node, root-widget countdowns), each
+  /// carrying an ``{amount}`` placeholder for the count. Sourced from
+  /// the ``duration/`` formatter components any resolved package
+  /// embeds; the builtin package guarantees a hit by construction (its
+  /// ``strings/time/duration_value`` string keeps the group embedded,
+  /// and its blobs bundle in lockstep with the code). Missing
+  /// components are therefore a bug: the getter warns loudly and
+  /// serves hardcoded English units rather than garbling timers.
+  struct DurationUnitTemplates {
+    std::string hours;
+    std::string minutes;
+    std::string seconds;
+  };
+  auto GetDurationUnitTemplates() -> DurationUnitTemplates;
 
   /// Resolve a resource by full dot-path key, trying ``fallback_resource``
   /// (if non-null) on a miss. Nullopt if neither resolves. Backs both the
@@ -174,9 +195,6 @@ class Assets {
   auto GetTranslation(const std::string& category, const std::string& value)
       -> std::string;
 
-  /// Look up a curated 'internal' string by bare key (C++ consumers).
-  /// Empty string if absent.
-  auto GetResourceString(const std::string& key) -> std::string;
   auto CharStr(SpecialChar id) -> std::string;
   auto CompileResourceString(const std::string& s, bool* valid = nullptr)
       -> std::string;
@@ -215,20 +233,22 @@ class Assets {
   /// path. See the implementation.
   auto PreferredTextureProfile() const -> std::string;
 
-  /// Resolve one *part* of a texture qualified-ref (``<apverid>:<name>``)
-  /// to its CAS blob path. Textures are single-part today — part ``"t"``
-  /// is the texture-data component (the placeholder ``"j"`` sidecar was
-  /// dropped; see decision #16 follow-up). The part argument is kept
-  /// general so multi-file logical assets (e.g. fonts: atlas + metrics)
-  /// can pull individual component files. Returns ``""`` if the name isn't
-  /// a CAS ref, the part is absent, or in headless mode. A transitional
-  /// seam until the full AssetLayout resolve (decision #16, shape b) lands.
-  auto FindCasTexturePartPath(const std::string& name, const std::string& part)
+  /// Resolve one part role of a texture qualified-ref
+  /// (``<apverid>:<logical-path>``) to its CAS blob path. Textures are
+  /// single-part today — role ``"t"`` is the texture-data component (the
+  /// placeholder ``"j"`` sidecar was dropped; see decision #16
+  /// follow-up); the current format preference is ``{ktx2}`` (decision
+  /// #35). The role argument is kept general so multi-file logical
+  /// assets (e.g. fonts: atlas + metrics) can pull individual component
+  /// files. Returns ``""`` if the name isn't a CAS ref, the role is
+  /// absent, or in headless mode. A transitional seam until the full
+  /// AssetLayout resolve (decision #16, shape b) lands.
+  auto FindCasTexturePartPath(const std::string& name, const std::string& role)
       -> std::string;
 
   /// Cube-map analog of :meth:`FindCasTexturePartPath` (decision #24):
   /// resolve a cube-map qualified-ref to its single ``faceCount=6``
-  /// KTX2 CAS blob (part ``"t"`` in the package's resolved
+  /// KTX2 CAS blob (part ``t.ktx2`` in the package's resolved
   /// ``textures/...`` bucket — cube maps share the 2D textures bucket,
   /// distinguished by call-site, not a separate bucket head). Returns
   /// ``""`` if the name isn't a CAS ref, the asset/part is absent, or in
@@ -237,23 +257,53 @@ class Assets {
 
   /// Audio analog of :meth:`FindCasTexturePartPath` (decision #25):
   /// resolve a sound qualified-ref to its single ogg-vorbis CAS blob
-  /// (part ``"a"`` in the package's resolved ``audio/...`` bucket).
+  /// (part ``a.ogg`` in the package's resolved ``audio/...`` bucket).
   /// Returns ``""`` if the name isn't a CAS ref, the asset/part is
   /// absent, or in headless mode.
   auto FindCasSoundPath(const std::string& name) -> std::string;
 
   /// Display-mesh analog of :meth:`FindCasSoundPath` (decision #26):
   /// resolve a mesh qualified-ref to its single bob CAS blob (part
-  /// ``"m"`` in the package's resolved ``meshes/...`` bucket).
+  /// ``m.bob`` in the package's resolved ``meshes/...`` bucket).
   /// Returns ``""`` if the name isn't a CAS ref, the asset/part is
   /// absent, or in headless mode.
   auto FindCasMeshPath(const std::string& name) -> std::string;
 
-  /// Collision-mesh CAS resolve (decision #26): part ``"c"`` in the
+  /// Collision-mesh CAS resolve (decision #26): part ``c.cob`` in the
   /// package's ``constant`` bucket. Unlike the other kinds this works
   /// in headless mode too — collision geometry is the one asset kind
   /// headless builds genuinely load.
   auto FindCasCollisionMeshPath(const std::string& name) -> std::string;
+
+  /// One mip level of raw RGBA8 pixel data (see
+  /// :meth:`LoadBundledFallbackTextureRGBA`).
+  struct BundledTextureMip {
+    int width{};
+    int height{};
+    std::vector<uint8_t> rgba;
+  };
+
+  /// Decoded pixel data from a bundled texture (see
+  /// :meth:`LoadBundledFallbackTextureRGBA`). Mips are ordered largest
+  /// first — the full chain present in the flavor blob.
+  struct BundledTextureRGBAData {
+    bool premultiplied{};
+    std::vector<BundledTextureMip> mips;
+  };
+
+  /// Decode a texture qualified-ref (``<apverid>:<asset_name>``) from
+  /// its *bundled fallback flavor* into raw RGBA8 pixels — for handing
+  /// image data to OS facilities (hardware cursors, etc.) rather than
+  /// the renderer. Reads the bundled ``manifest.json`` chain directly
+  /// instead of consulting the runtime package registry: the registry
+  /// holds only the single flavor a package *resolved* to (which on
+  /// warm desktop starts is desktop_v1 BC7 — not CPU-decodable), while
+  /// the bundled fallback flavor is uncompressed RGBA8 KTX2 and
+  /// guaranteed present on disk from process start. Static and callable
+  /// from any thread once core is bootstrapped (touches only immutable
+  /// bundled files). Returns nullopt (logging a warning) on any miss.
+  static auto LoadBundledFallbackTextureRGBA(const std::string& name)
+      -> std::optional<BundledTextureRGBAData>;
 
  private:
   /// Resolve a qualified-ref name (``<apverid>:<asset_name>``) into a
@@ -264,6 +314,19 @@ class Assets {
   /// caller to avoid a redundant find.
   auto FindAssetFileCas_(FileType type, const std::string& name,
                          size_t colon_pos) -> std::string;
+
+  /// Gate a qualified-ref access on construct-mode completion (see
+  /// :meth:`AssetPackageRegistry::CheckPreConstructAccess`). Called from
+  /// each ``Get*`` entry point *after* legacy-name routing, so it sees
+  /// the same name the load will use. Bare names are ignored -- they
+  /// aren't asset-package refs.
+  ///
+  /// Deliberately here at the entry points rather than down in
+  /// ``FindAssetFileCas_``: that would be a single chokepoint, but it
+  /// runs on the asset-server thread at load time, long after the
+  /// offending caller's stack is gone. A violation you cannot attribute
+  /// is a lot less useful than one that names its call site.
+  static void CheckAssetPackageAccess_(const std::string& name);
 
   static void MarkAssetForLoad(Asset* c);
   void LoadSystemData(SystemDataID id, const char* name);
@@ -332,6 +395,7 @@ class Assets {
   // snapshot (lock-free reads on the text hot path; swapped under the
   // mutex on a language change), mirroring AssetPackageRegistry.
   auto LanguageDataSnapshot_() -> std::shared_ptr<const LanguageData>;
+  std::shared_ptr<const LangStrTables> lang_str_tables_;
   std::mutex language_mutex_;
   std::shared_ptr<const LanguageData> language_data_;
   std::mutex special_char_mutex_;

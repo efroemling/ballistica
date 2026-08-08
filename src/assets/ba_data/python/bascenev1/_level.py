@@ -11,7 +11,55 @@ import babase
 if TYPE_CHECKING:
     from typing import Any
 
+    import bauiv1
+
     import bascenev1
+
+
+def _get_level_display_name(key: str, game: babase.LangStr) -> babase.LangStr:
+    """Return a displayable name for a campaign level.
+
+    ``key`` is the level's displayname, or its name when it declares
+    none. A bare ``${GAME}`` is simply the game's own name; the
+    difficulty-prefixed forms are parameterized entries. Anything else
+    -- a mod's campaign level -- shows its own text, with any
+    ``${GAME}`` token substituted in flat.
+    """
+    # Safe up-call: bascenev1 is fully imported by the time this runs;
+    # the cycle pylint sees is structural only.
+    # pylint: disable-next=cyclic-import
+    from bascenev1 import classicassets
+
+    if key == '${GAME}':
+        return game
+
+    s = classicassets.strings.coop_levels
+    if key == 'Pro ${GAME}':
+        return s.pro_variant(game=game)
+    if key == 'Uber ${GAME}':
+        return s.uber_variant(game=game)
+
+    entry = {
+        'Infinite Onslaught': s.infinite_onslaught,
+        'Infinite Runaround': s.infinite_runaround,
+        'Onslaught Training': s.onslaught_training,
+        'Pro Football': s.pro_football,
+        'Pro Onslaught': s.pro_onslaught,
+        'Pro Runaround': s.pro_runaround,
+        'Rookie Football': s.rookie_football,
+        'Rookie Onslaught': s.rookie_onslaught,
+        'The Last Stand': s.the_last_stand,
+        'Uber Football': s.uber_football,
+        'Uber Onslaught': s.uber_onslaught,
+        'Uber Runaround': s.uber_runaround,
+    }.get(key)
+    if entry is not None:
+        return entry
+
+    # A mod's level; show its own text.
+    if '${GAME}' in key:
+        key = key.replace('${GAME}', game.evaluate())
+    return babase.LangStr.from_text(key)
 
 
 class Level:
@@ -22,13 +70,21 @@ class Level:
         name: str,
         gametype: type[bascenev1.GameActivity],
         settings: dict,
-        preview_texture_name: str,
+        preview_texture_name: str | None = None,
         *,
         displayname: str | None = None,
+        preview_texture: bauiv1.TextureVerifiedSpec | None = None,
     ):
+        if preview_texture is None and preview_texture_name is None:
+            raise TypeError(
+                'A preview_texture is required (the deprecated'
+                ' preview_texture_name is also still accepted).'
+            )
         self._name = name
         self._gametype = gametype
         self._settings = settings
+        self._preview_texture_ref = preview_texture
+        self._preview_texture: bauiv1.Texture | None = None
         self._preview_texture_name = preview_texture_name
         self._displayname = displayname
         self._campaign: weakref.ref[bascenev1.Campaign] | None = None
@@ -55,13 +111,57 @@ class Level:
         return settings
 
     @property
-    def preview_texture_name(self) -> str:
-        """The preview texture name for this level."""
+    def preview_texture(self) -> bauiv1.Texture:
+        """The preview texture for this level.
+
+        Level previews are drawn by ui code, so this is a loaded
+        :class:`~bauiv1.Texture`.
+
+        Levels are built during app-loading, which is *before*
+        construct-mode has resolved asset-packages, so the constructor
+        takes the wrapper reference
+        (``someassets.textures.my_level_preview``, no ``.get()``) and the
+        texture is loaded here on first access -- by which time the ui
+        that wants to draw it exists and the package is registered.
+        """
+        tex = self._preview_texture
+        if tex is None:
+            if self._preview_texture_ref is not None:
+                tex = self._preview_texture_ref.get()
+            else:
+                # Constructed the deprecated way; look the name up
+                # instead. Goes away when api 9 support ends.
+                assert self._preview_texture_name is not None
+
+                # Deferred: the ui feature-set is not a dependency of
+                # ours, and only this legacy fallback needs it.
+                import bauiv1
+
+                tex = bauiv1.gettexture(self._preview_texture_name)
+            self._preview_texture = tex
+        return tex
+
+    @property
+    def preview_texture_name(self) -> str | None:
+        """The preview texture name for this level.
+
+        .. deprecated:: 1.8.0
+           Use :attr:`preview_texture`, and pass ``preview_texture`` to
+           the constructor rather than ``preview_texture_name``. This
+           returns ``None`` for a level constructed the new way, so
+           built-in levels now report ``None`` here. Removed when api 9
+           support ends.
+        """
         return self._preview_texture_name
 
     @property
     def displayname(self) -> bascenev1.Lstr:
-        """The localized name for this level."""
+        """The localized name for this level.
+
+        .. deprecated:: 1.8.0
+           Use :attr:`displayname_langstr`. This property's type changes
+           to :class:`~babase.LangStr` when api 9 support ends.
+        """
         return babase.Lstr(
             translate=(
                 'coopLevelNames',
@@ -74,6 +174,24 @@ class Level:
             subs=[
                 ('${GAME}', self._gametype.get_display_string(self._settings))
             ],
+        )
+
+    @property
+    def displayname_langstr(self) -> babase.LangStr:
+        """The localized name for this level.
+
+        This is the :class:`~babase.LangStr` flavor of
+        :attr:`displayname`. It exists only for the transition; once api
+        9 support ends, :attr:`displayname` returns this and this
+        property goes away with the removal of api 10.
+        """
+        return _get_level_display_name(
+            (
+                self._displayname
+                if self._displayname is not None
+                else self._name
+            ),
+            self._gametype.get_display_string(self._settings, langstr=True),
         )
 
     @property

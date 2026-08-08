@@ -10,7 +10,7 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -163,10 +163,10 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
     def __init__(self, settings: dict):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
-        self._alarmsound = stdassets.audio.alarm
-        self._ticking_sound = stdassets.audio.ticking
-        self._score_sound = stdassets.audio.score
-        self._swipsound = stdassets.audio.swip
+        self._alarmsound = classicassets.audio.alarm.get()
+        self._ticking_sound = classicassets.audio.ticking.get()
+        self._score_sound = classicassets.audio.score.get()
+        self._swipsound = classicassets.audio.swip.get()
         self._last_score_time = 0
         self._all_bases_material = bs.Material()
         self._last_home_flag_notice_print_time = 0.0
@@ -330,9 +330,7 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
                 # And show team name which scored (but actually we could
                 # show here player who returned enemy flag).
                 self.show_zoom_message(
-                    bs.Lstr(
-                        resource='nameScoresText', subs=[('${NAME}', team.name)]
-                    ),
+                    classicassets.strings.game.name_scores(name=team.name),
                     color=team.color,
                 )
                 self._score(team)
@@ -354,7 +352,7 @@ class CaptureTheFlagGame(bs.TeamGameActivity[Player, Team]):
                 if curtime - self._last_home_flag_notice_print_time > 5.0:
                     self._last_home_flag_notice_print_time = curtime
                     bpos = team.base_pos
-                    tval = bs.Lstr(resource='ownFlagAtYourBaseWarning')
+                    tval = classicassets.strings.game.own_flag_at_base_warning
                     tnode = bs.newnode(
                         'text',
                         attrs={

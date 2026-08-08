@@ -6,6 +6,7 @@
 #include "ballistica/base/base.h"
 #if BA_SDL_BUILD
 
+#include <set>
 #include <string>
 #include <vector>
 
@@ -16,6 +17,7 @@
 // real SDL types directly (converting to engine-native BA types at its
 // boundary — see HandleSDLEvent_).
 struct SDL_Window;
+struct SDL_Cursor;
 union SDL_Event;
 
 namespace ballistica::base {
@@ -44,11 +46,17 @@ class AppAdapterSDL : public AppAdapter {
   auto SupportsMaxFPS() -> bool const override;
 
   auto HasDirectKeyboardInput() -> bool override;
+  auto HasHardwareCursor() -> bool override;
+  void SetHardwareCursorVisible(bool visible) override;
   void ApplyGraphicsSettings(const GraphicsSettings* settings) override;
 
   auto GetGraphicsSettings() -> GraphicsSettings* override;
 
   auto GetKeyName(int keycode) -> std::string override;
+
+  auto ApplyJoystickFeedback(JoystickInput* device, const FeedbackEvent& event)
+      -> int override;
+  void StopJoystickFeedback(JoystickInput* device) override;
 
  protected:
   void DoPushMainThreadRunnable(Runnable* runnable) override;
@@ -73,6 +81,9 @@ class AppAdapterSDL : public AppAdapter {
   void OnSDLJoystickRemoved_(int index);
   // Given an SDL joystick ID, returns our Ballistica input for it.
   auto GetSDLJoystickInput_(int sdl_joystick_id) const -> JoystickInput*;
+  auto GetSDLJoystickHandle_(int sdl_joystick_id) const -> SDL_Joystick*;
+  void RumbleSDLJoystick_(int sdl_joystick_id, uint16_t low_magnitude,
+                          uint16_t high_magnitude, uint32_t duration_millisecs);
   // The same but using sdl events.
   auto GetSDLJoystickInput_(const SDL_Event* e) const -> JoystickInput*;
   void AddSDLInputDevice_(JoystickInput* input, SDL_Joystick* handle,
@@ -80,6 +91,10 @@ class AppAdapterSDL : public AppAdapter {
   void RemoveSDLInputDevice_(int index);
   void SleepUntilNextEventCycle_(microsecs_t cycle_start_time);
   void LogEventProcessingTime_(microsecs_t duration, int count);
+  // Build our custom color cursor from the engine's bundled cursor
+  // texture (hardware-cursor mode). Returns nullptr on failure (the
+  // pixel loader logs the reason).
+  auto CreateHardwareCursor_() -> SDL_Cursor*;
 
   int max_fps_{60};
   bool done_{};
@@ -106,9 +121,17 @@ class AppAdapterSDL : public AppAdapter {
   // SDL instance-id). We open these in OnSDLJoystickAdded_ and close them
   // in RemoveSDLInputDevice_.
   std::vector<SDL_Joystick*> sdl_joystick_handles_;
+
+  /// Instance-ids we were told about but failed to open, so the removal
+  /// that follows can be recognized as the expected other half of a
+  /// transient rather than reported as lost bookkeeping. Bounded, since
+  /// entries are only consumed if a matching removal actually arrives.
+  std::set<int> sdl_failed_open_joystick_ids_;
   Vector2f window_size_{1.0f, 1.0f};
   SDL_Window* sdl_window_{};
   void* sdl_gl_context_{};
+  SDL_Cursor* hw_cursor_{};
+  bool hw_cursor_create_attempted_{};
   seconds_t last_windowevent_close_time_{};
 };
 

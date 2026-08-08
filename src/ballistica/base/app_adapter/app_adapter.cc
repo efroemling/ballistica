@@ -98,6 +98,13 @@ auto AppAdapter::HasHardwareCursor() -> bool { return false; }
 
 void AppAdapter::SetHardwareCursorVisible(bool visible) {}
 
+auto AppAdapter::ApplyJoystickFeedback(JoystickInput* device,
+                                       const FeedbackEvent& event) -> int {
+  return 0;
+}
+
+void AppAdapter::StopJoystickFeedback(JoystickInput* device) {}
+
 auto AppAdapter::CanSoftQuit() -> bool { return false; }
 auto AppAdapter::CanBackQuit() -> bool { return false; }
 void AppAdapter::DoBackQuit() { FatalError("Fixme unimplemented."); }

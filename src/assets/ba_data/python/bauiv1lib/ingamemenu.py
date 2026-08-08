@@ -1,11 +1,12 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Implements the in-gmae menu window."""
+"""Implements the in-game menu window."""
 
 from typing import TYPE_CHECKING, override
 import logging
 
 import bauiv1 as bui
+from bauiv1 import classicassets
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -98,7 +99,7 @@ class InGameMenuWindow(bui.MainWindow):
                 scale=scale,
                 size=(self._button_width, self._button_height),
                 autoselect=self._use_autoselect,
-                label=bui.Lstr(resource='replayEndText'),
+                label=classicassets.strings.in_game_menu.end_replay,
                 on_activate_call=self._confirm_end_replay,
             )
         elif bs.get_foreground_host_session() is not None:
@@ -109,13 +110,10 @@ class InGameMenuWindow(bui.MainWindow):
                 scale=scale,
                 size=(self._button_width, self._button_height),
                 autoselect=self._use_autoselect,
-                label=bui.Lstr(
-                    resource=self._r
-                    + (
-                        '.endTestText'
-                        if self._is_benchmark()
-                        else '.endGameText'
-                    )
+                label=(
+                    classicassets.strings.in_game_menu.end_test
+                    if self._is_benchmark()
+                    else classicassets.strings.in_game_menu.end_game
                 ),
                 on_activate_call=(
                     self._confirm_end_test
@@ -133,7 +131,7 @@ class InGameMenuWindow(bui.MainWindow):
                 scale=scale,
                 size=(self._button_width, self._button_height),
                 autoselect=self._use_autoselect,
-                label=bui.Lstr(resource=f'{self._r}.leavePartyText'),
+                label=classicassets.strings.in_game_menu.leave_party,
                 on_activate_call=self._confirm_leave_party,
             )
 
@@ -159,9 +157,8 @@ class InGameMenuWindow(bui.MainWindow):
                 v_offs = -100
             self._replay_speed_text = bui.textwidget(
                 parent=self._root_widget,
-                text=bui.Lstr(
-                    resource='watchWindow.playbackSpeedText',
-                    subs=[('${SPEED}', str(1.23))],
+                text=classicassets.strings.watch.playback_speed(
+                    speed=str(1.23)
                 ),
                 position=(h, v + v_offs + 15 * t_scale),
                 h_align='center',
@@ -317,7 +314,9 @@ class InGameMenuWindow(bui.MainWindow):
                     if (
                         not isinstance(cme_any, dict)
                         or 'label' not in cme
-                        or not isinstance(cme['label'], (str, bui.Lstr))
+                        or not isinstance(
+                            cme['label'], (str, bui.Lstr, bui.LangStr)
+                        )
                         or 'call' not in cme
                         or not callable(cme['call'])
                     ):
@@ -377,7 +376,7 @@ class InGameMenuWindow(bui.MainWindow):
                 color=(1, 1, 1, 0.5),
                 scale=0.7,
                 h_align='center',
-                text=bui.Lstr(value=player_name),
+                text=player_name,
             )
         else:
             player_name = ''
@@ -389,7 +388,7 @@ class InGameMenuWindow(bui.MainWindow):
             position=(h - self._button_width / 2, v),
             size=(self._button_width, self._button_height),
             scale=scale,
-            label=bui.Lstr(resource=f'{self._r}.resumeText'),
+            label=classicassets.strings.in_game_menu.resume,
             autoselect=self._use_autoselect,
             on_activate_call=self._resume,
         )
@@ -439,17 +438,17 @@ class InGameMenuWindow(bui.MainWindow):
                 autoselect=self._use_autoselect,
             )
 
+            txt: str | bui.LangStr
             if (
                 player_name != ''
                 and player_name[0] != '<'
                 and player_name[-1] != '>'
             ):
-                txt = bui.Lstr(
-                    resource=f'{self._r}.justPlayerText',
-                    subs=[('${NAME}', player_name)],
+                txt = classicassets.strings.in_game_menu.just_player(
+                    name=player_name
                 )
             else:
-                txt = bui.Lstr(value=player_name)
+                txt = player_name
             bui.textwidget(
                 parent=self._root_widget,
                 position=(
@@ -459,7 +458,7 @@ class InGameMenuWindow(bui.MainWindow):
                     * (0.64 if player_name != '' else 0.5),
                 ),
                 size=(0, 0),
-                text=bui.Lstr(resource=f'{self._r}.leaveGameText'),
+                text=classicassets.strings.in_game_menu.leave_game,
                 scale=(0.83 if player_name != '' else 1.0),
                 color=(0.75, 1.0, 0.7),
                 h_align='center',
@@ -490,9 +489,8 @@ class InGameMenuWindow(bui.MainWindow):
         actual_speed = pow(2.0, bs.get_replay_speed_exponent())
         bui.textwidget(
             edit=self._replay_speed_text,
-            text=bui.Lstr(
-                resource='watchWindow.playbackSpeedText',
-                subs=[('${SPEED}', str(actual_speed))],
+            text=classicassets.strings.watch.playback_speed(
+                speed=str(actual_speed)
             ),
         )
 
@@ -527,7 +525,7 @@ class InGameMenuWindow(bui.MainWindow):
         # accident in a fit of button mashing and this will help reduce
         # damage.
         ConfirmWindow(
-            bui.Lstr(resource=f'{self._r}.exitToMenuText'),
+            classicassets.strings.in_game_menu.exit_to_menu_confirm,
             self._end_game,
             cancel_is_selected=True,
             origin_widget=self._end_button,
@@ -541,7 +539,7 @@ class InGameMenuWindow(bui.MainWindow):
         # accident in a fit of button mashing and this will help reduce
         # damage.
         ConfirmWindow(
-            bui.Lstr(resource=f'{self._r}.exitToMenuText'),
+            classicassets.strings.in_game_menu.exit_to_menu_confirm,
             self._end_game,
             cancel_is_selected=True,
             origin_widget=self._end_button,
@@ -555,7 +553,7 @@ class InGameMenuWindow(bui.MainWindow):
         # accident in a fit of button mashing and this will help reduce
         # damage.
         ConfirmWindow(
-            bui.Lstr(resource=f'{self._r}.exitToMenuText'),
+            classicassets.strings.in_game_menu.exit_to_menu_confirm,
             self._end_game,
             cancel_is_selected=True,
             origin_widget=self._end_button,
@@ -569,7 +567,7 @@ class InGameMenuWindow(bui.MainWindow):
         # accident in a fit of button mashing and this will help reduce
         # damage.
         ConfirmWindow(
-            bui.Lstr(resource=f'{self._r}.leavePartyConfirmText'),
+            classicassets.strings.in_game_menu.leave_party_confirm,
             self._leave_party,
             cancel_is_selected=True,
             origin_widget=self._end_button,

@@ -3,10 +3,11 @@
 """Provides UI for selecting maps in playlists."""
 
 import math
+import logging
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -82,7 +83,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             scale=0.9,
             text_scale=1.0,
             autoselect=True,
-            label=bui.Lstr(resource='cancelText'),
+            label=_commonassets.strings.actions.cancel,
             on_activate_call=self.main_window_back,
         )
 
@@ -93,9 +94,8 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             size=(0, 0),
             maxwidth=260,
             scale=1.1,
-            text=bui.Lstr(
-                resource='mapSelectTitleText',
-                subs=[('${GAME}', self._gametype.get_display_string())],
+            text=classicassets.strings.playlist.map_select_title(
+                game=self._gametype.get_display_string(langstr=True)
             ),
             color=bui.app.ui_v1.title_color,
             h_align='center',
@@ -165,9 +165,9 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         if self._subcontainer is not None:
             self._subcontainer.delete()
 
-        mesh_opaque = stdassets.meshes.level_select_button_opaque.get()
+        mesh_opaque = classicassets.meshes.level_select_button_opaque.get()
         mesh_transparent = (
-            stdassets.meshes.level_select_button_transparent.get()
+            classicassets.meshes.level_select_button_transparent.get()
         )
 
         self._maps = []
@@ -180,15 +180,17 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             # Disallow ones we don't own.
             if mapname in unowned_maps:
                 continue
-            map_tex_name = get_map_class(mapname).get_preview_texture_name()
-            if map_tex_name is not None:
-                try:
-                    map_tex = bui.gettexture(map_tex_name)
-                    self._maps.append((mapname, map_tex))
-                except Exception:
-                    print(f'Invalid map preview texture: "{map_tex_name}".')
-            else:
+            try:
+                map_tex = get_map_class(mapname).get_preview_texture()
+            except Exception:
+                logging.exception(
+                    'Error loading map preview texture for map %s.', mapname
+                )
+                continue
+            if map_tex is None:
                 print('Error: no map preview texture for map:', mapname)
+                continue
+            self._maps.append((mapname, map_tex))
 
         count = len(self._maps)
         columns = 2
@@ -207,7 +209,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             background=False,
         )
         index = 0
-        mask_texture = stdassets.textures.map_preview_mask.get()
+        mask_texture = classicassets.textures.map_preview_mask.get()
         h_offs = 130 if len(self._maps) == 1 else 0
         for y in range(rows):
             for x in range(columns):
@@ -275,7 +277,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             parent=self._subcontainer,
             size=(self._sub_width * 0.8, 60),
             position=(self._sub_width * 0.1, 30),
-            label=bui.Lstr(resource='mapSelectGetMoreMapsText'),
+            label=classicassets.strings.playlist.get_more_maps,
             on_activate_call=self._on_store_press,
             color=(0.6, 0.53, 0.63),
             textcolor=(0.75, 0.7, 0.8),
@@ -288,7 +290,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             )
 
     def _on_store_press(self) -> None:
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.connectivity import wait_for_connectivity
@@ -317,7 +319,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
                 win_type=DocUIWindow,
                 win_create_call=bui.CallStrict(
                     StoreUIController().create_window,
-                    dui1.Request('/'),
+                    dui2.Request('/'),
                     origin_widget=self._get_more_maps_button,
                     uiopenstateid='classicstore',
                 ),

@@ -12,6 +12,7 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/input/device/keyboard_input.h"
@@ -568,19 +569,20 @@ auto UI::RequestMainUIControl(InputDevice* input_device) -> bool {
           - (time - last_main_ui_input_device_use_time_) / 1000;
       std::string time_out_str;
       if (timeout > 0 && timeout < (kUIOwnerTimeoutSeconds - 3)) {
-        time_out_str = " " + g_base->assets->GetResourceString("timeOutText");
-        Utils::StringReplaceOne(&time_out_str, "${TIME}",
-                                std::to_string(timeout));
+        time_out_str = " "
+                       + BuiltinStrings::Ui::MenuControlTimeOut(
+                             static_cast<int64_t>(timeout))
+                             ->Evaluate();
       } else {
         time_out_str =
-            " " + g_base->assets->GetResourceString("willTimeOutText");
+            " " + BuiltinStrings::Ui::MenuControlWillTimeOut()->Evaluate();
       }
 
       std::string name{input->GetDeviceNamePretty()};
 
-      std::string b = g_base->assets->GetResourceString("hasMenuControlText");
-      Utils::StringReplaceOne(&b, "${NAME}", name);
-      g_base->ScreenMessage(b + time_out_str, {0.45f, 0.4f, 0.5f});
+      g_base->ScreenMessage(
+          BuiltinStrings::Ui::HasMenuControl(name)->Evaluate() + time_out_str,
+          {0.45f, 0.4f, 0.5f});
     }
   }
   return ret_val;
@@ -751,12 +753,17 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
 
   SimpleComponent c(frame_def->overlay_front_pass());
   c.SetTransparent(true);
-  c.SetTexture(
-      g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircleShadow));
+  auto* button_tex =
+      g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircleShadow);
+  c.SetTexture(button_tex);
+  // Premultiply rgb by alpha for the premultiplied texture so the faded
+  // (alpha 0.8) button composites 'over' correctly (see
+  // docs/design/premultiplied-alpha.md).
+  float cmul = button_tex->premultiplied() ? 0.8f : 1.0f;
   if (dev_console_button_pressed_) {
-    c.SetColor(1.0f, 1.0f, 1.0f, 0.8f);
+    c.SetColor(cmul, cmul, cmul, 0.8f);
   } else {
-    c.SetColor(0.5f, 0.5f, 0.5f, 0.8f);
+    c.SetColor(0.5f * cmul, 0.5f * cmul, 0.5f * cmul, 0.8f);
   }
   {
     auto xf = c.ScopedTransform();

@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/support/camera.h"
 #include "ballistica/base/input/input.h"
@@ -453,9 +454,15 @@ void TouchInput::Draw(FrameDef* frame_def) {
         } else {
           val = 0.35f;
         }
-        c.SetColor(0.5f, 0.3f, 0.8f, val);
-        c.SetTexture(
-            g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircle));
+        auto* tex =
+            g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircle);
+
+        // Straight modulate color on a premultiplied texture; premultiply
+        // rgb ourselves or the faded circle draws full-bright (see
+        // docs/design/premultiplied-alpha.md).
+        float cmul = tex->premultiplied() ? val : 1.0f;
+        c.SetColor(0.5f * cmul, 0.3f * cmul, 0.8f * cmul, val);
+        c.SetTexture(tex);
       }
 
       float x_offs =
@@ -541,13 +548,27 @@ void TouchInput::Draw(FrameDef* frame_def) {
   if (do_draw) {
     float base_fade;
 
+    // Straight modulate colors on a premultiplied texture need their rgb
+    // premultiplied by alpha at the call site or the faded (un-held)
+    // buttons draw full-bright (see docs/design/premultiplied-alpha.md).
+    // Swipe mode draws untextured (straight blend), so no premultiply
+    // there.
+    bool premult_tex{};
+
     if (action_control_type_ == ActionControlType::kSwipe) {
       base_fade = 0.25f;
     } else {
       base_fade = 0.8f;
-      c.SetTexture(g_base->assets->BuiltinTexture(
-          BuiltinTextureID::kTexturesActionButtons));
+      auto* tex = g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesActionButtons);
+      premult_tex = tex->premultiplied();
+      c.SetTexture(tex);
     }
+
+    // Alpha (and its premultiply factor) for buttons in their un-held
+    // state; held buttons draw at full alpha so need no premultiply.
+    float fade_a = base_fade * button_fade_;
+    float fade_cmul = premult_tex ? fade_a : 1.0f;
 
     float x_offs;
     float y_offs;
@@ -629,7 +650,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
         if (was_held) {
           c.SetColor(1.5f, 2.0f * pop, 2.0f * pop, 1.0f);
         } else {
-          c.SetColor(0.65f * s_extra, 0.0f, 0.0f, base_fade * button_fade_);
+          c.SetColor(0.65f * s_extra * fade_cmul, 0.0f, 0.0f, fade_a);
         }
 
         {
@@ -658,8 +679,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           c.SetColor(1.3f + 2.0f * pop, 1.3f + 2.0f * pop, 0.0f + 2.0f * pop,
                      1.0f);
         } else {
-          c.SetColor(0.9f * s_extra, 0.9f * s_extra, 0.2f * s_extra,
-                     base_fade * button_fade_);
+          c.SetColor(0.9f * s_extra * fade_cmul, 0.9f * s_extra * fade_cmul,
+                     0.2f * s_extra * fade_cmul, fade_a);
         }
         {
           auto xf = c.ScopedTransform();
@@ -686,7 +707,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
         if (was_held) {
           c.SetColor(1.8f * pop, 1.2f + 0.9f * pop, 2.0f * pop, 1.0f);
         } else {
-          c.SetColor(0.0f, 0.8f * s_extra, 0.0f, base_fade * button_fade_);
+          c.SetColor(0.0f, 0.8f * s_extra * fade_cmul, 0.0f, fade_a);
         }
         {
           auto xf = c.ScopedTransform();
@@ -715,8 +736,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           c.SetColor(0.5f + 1.4f * pop, 0.8f + 2.4f * pop, 2.0f + 0.4f * pop,
                      1.0f);
         } else {
-          c.SetColor(0.3f * s_extra, 0.65f * s_extra, 1.0f * s_extra,
-                     base_fade * button_fade_);
+          c.SetColor(0.3f * s_extra * fade_cmul, 0.65f * s_extra * fade_cmul,
+                     1.0f * s_extra * fade_cmul, fade_a);
         }
         {
           auto xf = c.ScopedTransform();
@@ -735,9 +756,12 @@ void TouchInput::Draw(FrameDef* frame_def) {
 
       // Center point.
       if (buttons_touch_ && action_control_type_ == ActionControlType::kSwipe) {
-        c.SetTexture(
-            g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircle));
-        c.SetColor(1.0f, 1.0f, 0.0f, 0.8f);
+        auto* tex =
+            g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircle);
+        c.SetTexture(tex);
+        float a{0.8f};
+        float cmul = tex->premultiplied() ? a : 1.0f;
+        c.SetColor(1.0f * cmul, 1.0f * cmul, 0.0f, a);
         {
           auto xf = c.ScopedTransform();
 
@@ -782,10 +806,14 @@ void TouchInput::Draw(FrameDef* frame_def) {
     SimpleComponent c2(draw_in_world ? frame_def->overlay_3d_pass()
                                      : frame_def->GetOverlayFlatPass());
     c2.SetTransparent(true);
+    auto* tex =
+        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesArrow);
+    float a{0.45f};
+    float cmul = tex->premultiplied() ? a : 1.0f;
     if (buttons_touch_) {
-      c2.SetColor(1.0f, 0.3f, 0.2f, 0.45f);
+      c2.SetColor(1.0f * cmul, 0.3f * cmul, 0.2f * cmul, a);
     } else {
-      c2.SetColor(1.0f, 1.0f, 0.0f, 0.45f);
+      c2.SetColor(1.0f * cmul, 1.0f * cmul, 0.0f, a);
     }
 
     bool zero_len;
@@ -804,8 +832,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
       dist = 0.05f;
     }
 
-    c2.SetTexture(
-        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesArrow));
+    c2.SetTexture(tex);
     Matrix44f orient =
         Matrix44fOrient(d_pad_draw_dir_, Vector3f(0.0f, 1.0f, 0.0f));
     {
@@ -972,7 +999,7 @@ auto TouchInput::HandleTouchDown(void* touch, float x, float y) -> bool {
         // controllers active.. (only if we got a player though).
         if (AttachedToPlayer() && g_base->input->HaveControllerWithPlayer()) {
           g_base->ScreenMessage(
-              g_base->assets->GetResourceString("touchScreenJoinWarningText"),
+              BuiltinStrings::Input::TouchScreenJoinWarning()->Evaluate(),
               {1.0f, 1.0f, 0.0f});
         }
       }

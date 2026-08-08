@@ -202,16 +202,6 @@ MESSAGES: list[Message] = [
         doc='Show the "not signed in" screen message.',
     ),
     Message(
-        name='RejectingInviteAlreadyInPartyMessage',
-        direction=Dir.JAVA_TO_NATIVE,
-        doc='Show the "already in party; rejecting invite" message.',
-    ),
-    Message(
-        name='ConnectionFailedMessage',
-        direction=Dir.JAVA_TO_NATIVE,
-        doc='Show the generic connection-failed message.',
-    ),
-    Message(
         name='TemporarilyUnavailableMessage',
         direction=Dir.JAVA_TO_NATIVE,
         doc='Show the "temporarily unavailable" message.',
@@ -261,12 +251,6 @@ MESSAGES: list[Message] = [
         direction=Dir.JAVA_TO_NATIVE,
         fields=[Field('achievements', STR_LIST)],
         doc='Unlocked-achievement IDs reported by the Java side.',
-    ),
-    Message(
-        name='InvitationsSentMessage',
-        direction=Dir.JAVA_TO_NATIVE,
-        fields=[Field('count', STR)],
-        doc='Show "invitation(s) sent". Count "1" picks the singular form.',
     ),
     Message(
         name='SubmitAnalyticsCountsResponse',
@@ -331,12 +315,6 @@ MESSAGES: list[Message] = [
             Field('result', STR),
         ],
         doc='Java responds to a login-adapter sign-in token request.',
-    ),
-    Message(
-        name='FriendAccountList',
-        direction=Dir.JAVA_TO_NATIVE,
-        fields=[Field('accounts', STR_LIST)],
-        doc='List of friend account ids (or names) from the Java side.',
     ),
     Message(
         name='ImplicitSignIn',

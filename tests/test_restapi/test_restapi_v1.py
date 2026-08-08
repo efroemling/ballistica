@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from restapi_test_fixtures import make_pool
+from restapi_test_fixtures import make_pool, raise_if_transient, retry_transient
 
 from bacommon.restapi.v1 import Endpoint
 
@@ -55,7 +55,27 @@ def _upload_workspace_file(
     buffered PUT path removed, all uploads now go through the
     streaming pipeline. The dedup short-circuit collapses repeated
     identical content to a single round-trip.
+
+    Retries the whole init/PUT/finalize sequence on transient gateway
+    errors (502/503/504 from a stalled prod instance). Re-running from
+    ``upload-init`` is always safe: if a previous attempt's finalize
+    actually completed server-side, the re-init dedups against the
+    now-existing content and returns ``'exists'``.
     """
+    retry_transient(
+        lambda: _upload_workspace_file_once(
+            server_url, authed, file_url, content
+        )
+    )
+
+
+def _upload_workspace_file_once(
+    server_url: str,
+    authed: AuthedClient,
+    file_url: str,
+    content: bytes,
+) -> None:
+    """Single attempt of the init/PUT/finalize upload sequence."""
     sha256_hex = hashlib.sha256(content).hexdigest()
 
     init_r = authed.post(
@@ -67,6 +87,7 @@ def _upload_workspace_file(
         },
         timeout=30,
     )
+    raise_if_transient(init_r)
     assert init_r.status == 200, f'init failed: {init_r.data!r}'
     init = json.loads(init_r.data)
 
@@ -82,12 +103,14 @@ def _upload_workspace_file(
         headers=init['upload_headers'],
         timeout=180,
     )
+    raise_if_transient(gcs_r)
     assert gcs_r.status == 200, f'GCS PUT failed: {gcs_r.status}'
     fin_r = authed.post(
         f'{server_url}{file_url}',
         json={'op': 'upload-finalize', 'session_id': init['session_id']},
         timeout=60,
     )
+    raise_if_transient(fin_r)
     assert fin_r.status == 204, f'finalize failed: {fin_r.data!r}'
 
 
@@ -470,7 +493,12 @@ def test_file_upload_and_download(
     content = os.urandom(24 * 1024 * 1024)
     _upload_workspace_file(server_url, authed, file_path, content)
 
-    get_r = authed.get(f'{server_url}{file_path}', timeout=180)
+    def _download() -> urllib3.BaseHTTPResponse:
+        r = authed.get(f'{server_url}{file_path}', timeout=180)
+        raise_if_transient(r)
+        return r
+
+    get_r = retry_transient(_download)
     assert get_r.status == 200
     assert get_r.data == content
 

@@ -15,8 +15,12 @@ token) we reconnect — refreshing the token via ``POST
 the token is expired (4001). Reconnects use exponential backoff up
 to a configurable wall-clock budget (default 60s, override via
 ``BACLOUD_RECONNECT_BUDGET_SECONDS``); past the budget we surface
-``CleanError``. Token-bad / call-id-mismatch / no-token closes
-(4002/4003/4004) are fatal — no retry.
+``CleanError``. The budget bounds reconnect *churn*, not total
+stream lifetime: it restarts whenever a healthy connection (one
+that delivered at least one frame) drops, so long-lived streams
+keep full reconnect protection, while repeated fruitless reconnect
+attempts stay bounded. Token-bad / call-id-mismatch / no-token
+closes (4002/4003/4004) are fatal — no retry.
 
 v0 reconnect doesn't ask basn to replay the cursor: a reconnecting
 client may miss frames that landed during the disconnect window. In
@@ -197,6 +201,15 @@ async def _consume_with_reconnect(
         except _FatalAuth as exc:
             raise CleanError(f'Stream WS auth failed: {exc}') from exc
         except _Reconnectable as exc:
+            if exc.made_progress:
+                # The connection that dropped was healthy (frames
+                # flowed). The budget bounds reconnect *churn*, not
+                # total stream lifetime — a stream outliving it would
+                # otherwise get zero reconnect attempts on its first
+                # drop — so start it fresh. Failed reconnect attempts
+                # (no frames) do NOT reset it, keeping thrash bounded.
+                deadline = time.monotonic() + _reconnect_budget_seconds()
+                backoff = _RECONNECT_BACKOFF_MIN
             if time.monotonic() >= deadline:
                 raise CleanError(
                     f'Stream WS reconnect budget exhausted: {exc}'
@@ -237,6 +250,7 @@ async def _consume_once(
     headers.append(('User-Agent', f'bacloud/{BACLOUD_VERSION}'))
 
     drop_task: asyncio.Task[None] | None = None
+    got_frame = False
 
     try:
         async with websockets.connect(  # type: ignore[attr-defined]
@@ -250,6 +264,7 @@ async def _consume_once(
                 if isinstance(raw, bytes):
                     raw = raw.decode('utf-8')
                 frame = dataclass_from_json(StreamFrame, raw)
+                got_frame = True
                 if isinstance(frame, StreamOutput):
                     print(frame.text, end='', flush=True)
                 elif isinstance(frame, StreamFinal):
@@ -258,7 +273,9 @@ async def _consume_once(
             # reconnectable; basn's subscription is still
             # alive server-side (or has cleanly ended without
             # us seeing the terminal frame).
-            raise _Reconnectable('WS closed without terminal frame')
+            raise _Reconnectable(
+                'WS closed without terminal frame', made_progress=got_frame
+            )
     except InvalidStatus as exc:
         # Handshake-time HTTP error — basn rejected the upgrade
         # before we got an app-level close code. Treat as fatal:
@@ -270,12 +287,17 @@ async def _consume_once(
         if exc.code in (4002, 4003, 4004):  # token bad / mismatch / missing
             raise _FatalAuth(f'code={exc.code} reason={exc.reason!r}') from exc
         raise _Reconnectable(
-            f'closed: code={exc.code} reason={exc.reason!r}'
+            f'closed: code={exc.code} reason={exc.reason!r}',
+            made_progress=got_frame,
         ) from exc
     except WebSocketException as exc:
-        raise _Reconnectable(f'protocol error: {exc}') from exc
+        raise _Reconnectable(
+            f'protocol error: {exc}', made_progress=got_frame
+        ) from exc
     except OSError as exc:
-        raise _Reconnectable(f'connect failed: {exc}') from exc
+        raise _Reconnectable(
+            f'connect failed: {exc}', made_progress=got_frame
+        ) from exc
     finally:
         if drop_task is not None:
             drop_task.cancel()
@@ -358,7 +380,16 @@ def _http_post(req: urllib.request.Request) -> bytes:
 
 
 class _Reconnectable(Exception):
-    """Internal: WS dropped on a recoverable signal; retry with backoff."""
+    """Internal: WS dropped on a recoverable signal; retry with backoff.
+
+    ``made_progress`` is True if at least one stream frame arrived on
+    the connection that dropped — i.e. the drop ended a *healthy*
+    connection rather than a failed reconnect attempt.
+    """
+
+    def __init__(self, msg: str, *, made_progress: bool = False) -> None:
+        super().__init__(msg)
+        self.made_progress = made_progress
 
 
 class _NeedsTokenRefresh(Exception):

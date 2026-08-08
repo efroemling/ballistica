@@ -294,10 +294,19 @@ void UIV1FeatureSet::OnLanguageChange() {
   // notifications go out anytime the ui-delegate switches.
   auto asset_language_state = g_base->assets->language_state();
   if (asset_language_state != language_state_) {
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kDebug,
+                         "ui-v1 OnLanguageChange: firing (state "
+                             + std::to_string(language_state_) + " -> "
+                             + std::to_string(asset_language_state) + ").");
     language_state_ = asset_language_state;
     if (auto* r = root_widget()) {
       r->OnLanguageChange();
     }
+  } else {
+    g_core->logging->Log(LogName::kBaAssets, LogLevel::kDebug,
+                         "ui-v1 OnLanguageChange: skipping (state "
+                             + std::to_string(language_state_)
+                             + " unchanged).");
   }
 }
 

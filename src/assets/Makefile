@@ -115,12 +115,9 @@ ASSET_TARGETS_WIN_SERVER_X64 =
 ASSET_TARGETS_IOS =
 ASSET_TARGETS_ANDROID =
 
-# (The legacy Maya master -> src .obj export flow lived here until
-# 2026-06-12; mesh sources now live in the asset-package workspaces
-# (decision #26), so the maya dependency scan + export rules are
-# retired. Future Maya exports should target workspace checkouts.
-# Audio/texture/mesh compiles followed in the same sweep once those
-# kinds finished migrating to asset-packages.)
+# (Mesh/audio/texture master -> src export and compile rules lived here
+# until 2026-06-12; those asset kinds now live in the asset-package
+# workspaces (decision #26), so the rules are retired.)
 
 # FontData.
 ifeq ($(MAKE_FONTS),1)
@@ -207,11 +204,11 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_apputils.py \
   $(BUILD_DIR)/ba_data/python/babase/_asset_packages.py \
   $(BUILD_DIR)/ba_data/python/babase/_assetsubsystem.py \
-  $(BUILD_DIR)/ba_data/python/babase/_assetwrap.py \
   $(BUILD_DIR)/ba_data/python/babase/_asyncio.py \
   $(BUILD_DIR)/ba_data/python/babase/_automation.py \
   $(BUILD_DIR)/ba_data/python/babase/_baeventloop.py \
   $(BUILD_DIR)/ba_data/python/babase/_cloud.py \
+  $(BUILD_DIR)/ba_data/python/babase/_commonassets.py \
   $(BUILD_DIR)/ba_data/python/babase/_constructmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsole.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsoletabs.py \
@@ -236,10 +233,12 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_text.py \
   $(BUILD_DIR)/ba_data/python/babase/_ui.py \
   $(BUILD_DIR)/ba_data/python/babase/_workspace.py \
+  $(BUILD_DIR)/ba_data/python/babase/builtinassets.py \
   $(BUILD_DIR)/ba_data/python/babase/modutils.py \
   $(BUILD_DIR)/ba_data/python/baclassic/__init__.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_accountv1.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_achievement.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_achievementstrings.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_analytics.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_appmode.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_appsubsystem.py \
@@ -267,9 +266,10 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activity.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activitytypes.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_actor.py \
-  $(BUILD_DIR)/ba_data/python/bascenev1/_assetwrap.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_assetref.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_campaign.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_collision.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_commonassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_coopgame.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_coopsession.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_debug.py \
@@ -292,6 +292,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_playlist.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_powerup.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_profile.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_replay.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_score.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_session.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_settings.py \
@@ -299,7 +300,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_team.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_teamgame.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/builtinassets.py \
-  $(BUILD_DIR)/ba_data/python/bascenev1/stdassets.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/classicassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/coopjoin.py \
@@ -379,17 +380,16 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_assetref.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/_assetwrap.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_automation.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_commonassets.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_docuiv2testassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_window.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/bamvpstrings.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/bamvpstrings2.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/builtinassets.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/classicassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/stdassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/settings.py \
@@ -413,13 +413,15 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/credits.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/discord.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_bgrunner.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_controller.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_v2transcode.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_resolve.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_types.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/_window.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/_calls.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/_calls2.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/v1prep/_types.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_calls.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_calls2.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_types.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitest.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__init__.py \
@@ -445,6 +447,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/mainmenu.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/party.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/partyqueue.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/passwordprompt.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/play.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/playlist/addgame.py \
@@ -520,10 +523,9 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/analytics.py \
   $(BUILD_DIR)/ba_data/python/bacommon/app.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetcas.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/assetref/__init__.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/assetref/_codegen.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/assetref/_core.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/assetref/_wrapper.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/assetspec/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/assetspec/_core.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/assetspec/_wrapper.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bacloud.py \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
   $(BUILD_DIR)/ba_data/python/bacommon/classic/__init__.py \
@@ -545,8 +547,8 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/v2.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_blob.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/langstr/_codegen.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_core.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/langstr/_format.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_wrapper.py \
   $(BUILD_DIR)/ba_data/python/bacommon/locale.py \
   $(BUILD_DIR)/ba_data/python/bacommon/loctext.py \
@@ -566,6 +568,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/restapi/v1/workspaces.py \
   $(BUILD_DIR)/ba_data/python/bacommon/securedata.py \
   $(BUILD_DIR)/ba_data/python/bacommon/servermanager.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/strbrief.py \
   $(BUILD_DIR)/ba_data/python/bacommon/text.py \
   $(BUILD_DIR)/ba_data/python/bacommon/transfer.py \
   $(BUILD_DIR)/ba_data/python/bacommon/workspace/__init__.py \
@@ -1671,6 +1674,8 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__init__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/__main__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/core.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/certifi/tests/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/certifi/tests/test_certify.py \
   $(BUILD_DIR)/ba_data/python-site-packages/typing_extensions.py \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/__init__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/urllib3/_base_connection.py \
@@ -1711,9 +1716,7 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/__init__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/__main__.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/__init__.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/async_timeout.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/client.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/compatibility.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/connection.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/messages.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/asyncio/router.py \
@@ -1729,7 +1732,6 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/extensions/permessage_deflate.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/frames.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/headers.py \
-  $(BUILD_DIR)/ba_data/python-site-packages/websockets/http.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/http11.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/imports.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/legacy/__init__.py \
@@ -1752,6 +1754,13 @@ SCRIPT_TARGETS_PY_PRIVATE_COMMON = \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/sync/router.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/sync/server.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/sync/utils.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/trio/__init__.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/trio/client.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/trio/connection.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/trio/messages.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/trio/router.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/trio/server.py \
+  $(BUILD_DIR)/ba_data/python-site-packages/websockets/trio/utils.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/typing.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/uri.py \
   $(BUILD_DIR)/ba_data/python-site-packages/websockets/utils.py \

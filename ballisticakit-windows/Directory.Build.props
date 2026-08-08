@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Auto-imported by MSBuild into every project under this directory
+  (all BallisticaKit projects including the *Plus libs).
+
+  Holds cross-cutting build-config axes expressed as MSBuild
+  properties so they can be flipped per-invocation without
+  per-project edits.
+-->
+<Project>
+</Project>

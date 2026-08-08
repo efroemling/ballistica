@@ -140,7 +140,7 @@ class PlaylistEditController:
         """Return the index of the selected playlist."""
         return self._selected_index
 
-    def get_default_list_name(self) -> bui.Lstr:
+    def get_default_list_name(self) -> bui.LangStr:
         """(internal)"""
         return self._pvars.default_list_name
 

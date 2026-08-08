@@ -249,6 +249,14 @@ def _writefuncs(
                     'import bascenev1  # pylint: disable=cyclic-import\n'
                     'return bascenev1.Player()'
                 )
+            elif returns == 'babase.LangStr':
+                # LangStr's constructor requires an arg, so the generic
+                # 'return babase.LangStr()' below won't type-check; build
+                # a valid empty literal instead.
+                returnstr = (
+                    'import babase  # pylint: disable=cyclic-import\n'
+                    "return babase.LangStr.from_text('')"
+                )
             elif returns.startswith('babase.') and ' | None' not in returns:
                 # We cant import babase at module level so let's
                 # do it within funcs as needed.
@@ -307,6 +315,8 @@ def _writefuncs(
                 returnstr = "return [{'foo': 'bar'}]"
             elif returns == 'list[dict[str, str]]':
                 returnstr = "return [{'foo': 'bar'}]"
+            elif returns == 'list[int]':
+                returnstr = 'return [0]'
             elif returns in {
                 'session.Session',
                 'team.Team',
@@ -464,7 +474,7 @@ def _special_class_cases(classname: str) -> str:
             '    name_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
             '    tint_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
             '    tint2_color: Sequence[float] = (0.0, 0.0, 0.0)\n'
-            "    text: babase.Lstr | str = ''\n"
+            "    text: babase.Lstr | babase.LangStr | str = ''\n"
             '    texture: bascenev1.Texture | None = None\n'
             '    tint_texture: bascenev1.Texture | None = None\n'
             '    times: Sequence[int] = (1,2,3,4,5)\n'
@@ -493,6 +503,7 @@ def _special_class_cases(classname: str) -> str:
             '    hold_body: int = 0\n'
             '    behavior_version: int = 0\n'
             '    pickup_before_hitbox: bool = False\n'
+            '    pickup_release_time_ms: float = 0\n'
             '    host_only: bool = False\n'
             '    premultiplied: bool = False\n'
             '    source_player: bascenev1.Player | None = None\n'
@@ -793,7 +804,7 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
         # Special cases such as attributes we add.
         out += _special_class_cases(classname)
 
-        # Print its methods.
+        # Print its methods (and getset-descriptor properties).
         funcnames = []
         for entry in (e for e in dir(cls) if not e.startswith('__')):
             if isinstance(getattr(cls, entry), types.MethodDescriptorType):
@@ -801,6 +812,25 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
             elif isinstance(getattr(cls, entry), types.BuiltinMethodType):
                 # We get this for classmethods
                 funcnames.append(entry)
+            elif isinstance(getattr(cls, entry), types.GetSetDescriptorType):
+                # A native property. By convention its docstring's first
+                # line is '<name>: <type>' followed by a blank line and
+                # the prose docs; emit a typed read-only property.
+                gsdoc = getattr(cls, entry).__doc__
+                assert gsdoc is not None, f'getset {entry} needs a docstring'
+                gslines = gsdoc.splitlines()
+                prefix = f'{entry}: '
+                assert gslines and gslines[0].startswith(prefix), (
+                    f"getset {entry} docstring must start with"
+                    f" '{entry}: <type>'"
+                )
+                gstype = gslines[0].removeprefix(prefix)
+                gsbody = '\n'.join(gslines[1:]).strip()
+                out += '\n    @property\n'
+                out += f'    def {entry}(self) -> {gstype}:\n'
+                out += _formatdoc(_filterdoc(gsbody), indent=8, form='str')
+                out += '        raise NotImplementedError()\n'
+                has_attrs = True
             else:
                 entrytype = type(getattr(cls, entry))
                 raise RuntimeError(
@@ -882,13 +912,18 @@ class Generator:
         if self.mname == '_babase':
             tc_import_lines_extra += (
                 '    import bacommon.app\n'
+                '    import bacommon.langstr\n'
                 '    from babase import App\n'
                 '    import babase\n'  # hold
             )
         elif self.mname == '_bascenev1':
             tc_import_lines_extra += '    import babase\n    import bascenev1\n'
         elif self.mname == '_bauiv1':
-            tc_import_lines_extra += '    import babase\n    import bauiv1\n'
+            tc_import_lines_extra += (
+                '    import babase\n'
+                '    import bacommon.langstr\n'
+                '    import bauiv1\n'
+            )
         app_declare_lines = 'app: App\n\n' if self.mname == '_babase' else ''
         enum_import_lines = (
             ''

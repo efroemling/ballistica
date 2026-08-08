@@ -51,22 +51,44 @@ class HostConfig:
 def socks_proxy_ssh_args() -> list[str]:
     """Return ssh ``-oProxyCommand`` args for a SOCKS5 proxy, if one is set.
 
-    When ``ALL_PROXY`` is a ``socks5://`` url -- e.g. under a network
-    sandbox that only permits outbound traffic through its proxy -- this
-    returns ``['-oProxyCommand=...']`` so ssh can reach allowed hosts via
-    it. To use these with rsync, fold them into ``--rsh`` with
-    :func:`shlex.join` (``'--rsh=' + shlex.join(['ssh', *args])``) so the
-    multi-word proxy command survives rsync's shell re-parse. Returns an
-    empty list when no socks5 proxy is set, so it is safe to splice into a
-    command unconditionally.
+    Under a network sandbox that only permits outbound traffic through its
+    proxy -- e.g. Claude Code's -- this returns ``['-oProxyCommand=...']`` so
+    ssh can reach allowed hosts via it. To use these with rsync, fold them
+    into ``--rsh`` with :func:`shlex.join` (``'--rsh=' + shlex.join(['ssh',
+    *args])``) so the multi-word proxy command survives rsync's shell
+    re-parse. Returns an empty list when no socks5 proxy is set, so it is
+    safe to splice into a command unconditionally.
+
+    We need a SOCKS5 endpoint for ssh's ``ProxyCommand``. Historically
+    ``ALL_PROXY`` carried the ``socks5://`` url, but some sandboxes now set
+    ``ALL_PROXY`` to an ``http://`` url for the *same* endpoint and advertise
+    the socks5 form only via other vars (``ftp_proxy`` / ``grpc_proxy``). So
+    rather than trust ``ALL_PROXY``'s scheme, scan the common proxy vars and
+    use the first genuine ``socks5[h]://`` url we find.
     """
     import os
     import shutil
 
     from efro.error import CleanError
 
-    proxy = os.environ.get('ALL_PROXY', '')
-    if not proxy.startswith(('socks5://', 'socks5h://')):
+    proxy = ''
+    for var in (
+        'SOCKS5_PROXY',
+        'socks5_proxy',
+        'SOCKS_PROXY',
+        'socks_proxy',
+        'ALL_PROXY',
+        'all_proxy',
+        'FTP_PROXY',
+        'ftp_proxy',
+        'GRPC_PROXY',
+        'grpc_proxy',
+    ):
+        val = os.environ.get(var, '')
+        if val.startswith(('socks5://', 'socks5h://')):
+            proxy = val
+            break
+    if not proxy:
         return []
 
     netloc = proxy.split('://', 1)[1].rstrip('/')

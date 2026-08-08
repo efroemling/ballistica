@@ -38,6 +38,108 @@ _builtin_apverids: list[str] = []
 _resolved_apverids: list[str] = []
 
 
+# Set once construct-mode has resolved every required asset-package (see
+# :func:`mark_construct_complete`). Until then, only the construct package
+# itself is legitimately loadable.
+_g_construct_complete = False
+
+# The construct/builtin package's apverid, cached on first check.
+_g_construct_apverid: str | None = None
+
+
+def mark_construct_complete() -> None:
+    """Note that construct-mode has finished resolving asset-packages.
+
+    Called from construct-mode's hand-off to the real app-mode -- the one
+    point at which every package the meta-scan requires is guaranteed
+    resolved and registered. Opens the gate enforced by
+    :func:`check_asset_package_load`.
+
+    Also opens the native gate
+    (``AssetPackageRegistry::CheckPreConstructAccess``), which covers the
+    load paths that never touch Python: direct C++ ``Assets::Get*``
+    calls, and scene_v1 wire traffic / replays arriving as legacy bare
+    names. Both open here so they cannot disagree about when bring-up
+    ended.
+    """
+    global _g_construct_complete  # pylint: disable=global-statement
+    _g_construct_complete = True
+    _babase.mark_construct_assets_complete()
+
+    # Logged because this is otherwise an invisible state change on a
+    # load-ordering invariant -- and because it is the only reliable
+    # marker that bring-up ended: the caller's own hand-off log is
+    # skipped on the no-deferred-intent path (headless), which made a
+    # test keyed on that line silently vacuous.
+    _lifecyclelog.debug('Construct-mode asset gate opened.')
+
+
+def construct_assets_complete() -> bool:
+    """Whether construct-mode has finished resolving asset-packages.
+
+    For callers that need to *avoid* doing something too early rather
+    than be scolded for it -- notably the dev console's AppModes tab,
+    which would otherwise exec app-mode modules (wrapper modules
+    included) while their packages are still unresolved.
+    """
+    return _g_construct_complete
+
+
+def check_asset_package_load(apverid: str, path: str) -> None:
+    """Flag an asset load from a package that is not up yet.
+
+    Before construct-mode hands off, the only package guaranteed
+    registered is the construct/builtin one; loading from any other is a
+    bug even when it happens to work. It works whenever the package is
+    *bundled* into this particular build (bundled packages register
+    during native bootstrapping, via
+    ``load_bundled_asset_packages()``), so the same code silently
+    succeeds or fails depending on the build's bundle profile -- and
+    headless never notices at all, since texture loads there
+    short-circuit before the package registry is consulted. Hence this
+    check keys on the construct package rather than on what is merely
+    registered.
+
+    Raises on debug builds so the offending call site fails loudly in
+    dev and CI; logs an error elsewhere. The underlying failure is worse
+    either way -- a dead ``on_app_loading`` hook, or an asset that goes
+    permanently ``kFailed`` and draws blank forever.
+
+    Hold the wrapper's *reference* and load it later (on first access,
+    once the ui that wants it exists) rather than loading at
+    construction time; see :class:`bascenev1.Level`.
+    """
+    if _g_construct_complete:
+        return
+
+    global _g_construct_apverid  # pylint: disable=global-statement
+    if _g_construct_apverid is None:
+        # Deferred: this module is imported while babase itself is still
+        # coming up, well before the wrapper is importable.
+        # pylint: disable-next=cyclic-import
+        from babase import builtinassets
+
+        _g_construct_apverid = builtinassets.__asset_package__
+
+    if apverid == _g_construct_apverid:
+        return
+
+    msg = (
+        f"Asset '{apverid}:{path}' loaded before construct-mode finished"
+        f' resolving asset-packages; only {_g_construct_apverid} is'
+        f' available this early. Hold the wrapper reference and load it'
+        f' on first use instead.'
+    )
+    # Keyed on debug-build, matching the native gate
+    # (``AssetPackageRegistry::CheckPreConstructAccess``) so the two
+    # cannot disagree about how loud to be. Note the *check* itself runs
+    # everywhere -- release builds log this error rather than skipping
+    # it; only the raise-vs-log severity varies.
+    if _babase.app.env.debug_build:
+        raise RuntimeError(msg)
+    _lifecyclelog.error(msg)
+
+
 def builtin_asset_package_apverids() -> list[str]:
     """Apverids of the bundled/builtin packages (registered at startup).
 

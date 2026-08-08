@@ -1,5 +1,7 @@
 # Build Blessing
 
+**Description:** How build blessing proves a build's Python scripts are unmodified, and the spinoff-invariance rule a stray BallisticaKit literal in a hashed .py silently breaks.
+
 "Blessing" is the engine's code-integrity mechanism: a way to prove
 that a shipped build's Python game scripts are the unmodified,
 official ones. A build is *blessed* when the hash of its game scripts

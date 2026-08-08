@@ -250,6 +250,38 @@ class Platform {
   // BA_ENABLE_OS_FONT_RENDERING is set)
   virtual void GetTextBoundsAndWidth(const std::string& text, Rect* r,
                                      float* width);
+
+  /// Return utf-8 byte offsets within a (valid utf-8) string where a new
+  /// line may begin, as determined by the OS text stack (Unicode UAX #14
+  /// line-breaking incl. dictionary-based word segmentation for scripts
+  /// such as Thai where the OS supports it). Offsets are strictly between
+  /// 0 and text.size(), in increasing order, and always fall on utf-8
+  /// sequence boundaries. Mandatory breaks (after newlines) are included
+  /// as regular opportunities; callers wanting to honor them specially
+  /// should pre-split on newlines. The base implementation is a naive
+  /// space/newline breaker for platforms without OS support (headless
+  /// etc.). Logic thread only.
+  virtual auto GetTextLineBreakOffsets(const std::string& text)
+      -> std::vector<int>;
+
+  /// Split (valid utf-8) text into newline-separated lines subject to
+  /// simple constraints, breaking only at opportunities reported by
+  /// GetTextLineBreakOffsets() and treating all characters as equal
+  /// width. Uses the fewest lines keeping every line within
+  /// max_chars_per_line (when > 0) while staying between min_lines and
+  /// max_lines (0 means unlimited), and balances line lengths within
+  /// that count. Constraints are best-effort: lines can exceed
+  /// max_chars_per_line when unavoidable and fewer lines than min_lines
+  /// come back when there are not enough break opportunities. Newlines
+  /// in the input are treated as regular break opportunities, and
+  /// whitespace at line edges is stripped (so splitting the result on
+  /// newlines recovers the individual lines). Intended as a stopgap
+  /// for plugging flat translated strings into places expecting
+  /// preformatted line counts until proper font-aware wrapping exists.
+  /// Logic thread only.
+  auto SplitTextIntoLines(const std::string& text, int min_lines = 1,
+                          int max_lines = 0, int max_chars_per_line = 0)
+      -> std::string;
   virtual void FreeTextTexture(void* tex);
   virtual auto CreateTextTexture(int width, int height,
                                  const std::vector<std::string>& strings,

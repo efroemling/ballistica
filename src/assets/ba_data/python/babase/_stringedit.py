@@ -51,6 +51,7 @@ class StringEditAdapter:
         initial_text: str,
         max_length: int | None,
         screen_space_center: tuple[float, float] | None,
+        is_password: bool = False,
     ) -> None:
         if not _babase.in_logic_thread():
             raise RuntimeError('This must be called from the logic thread.')
@@ -63,6 +64,8 @@ class StringEditAdapter:
         self.initial_text = initial_text
         self.max_length = max_length
         self.screen_space_center = screen_space_center
+        # Whether the platform editor should mask input (password entry).
+        self.is_password = is_password
 
         # Attempt to register ourself as the active edit.
         subsys = _babase.app.stringedit

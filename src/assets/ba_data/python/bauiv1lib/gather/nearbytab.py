@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, override
 
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
+from bauiv1 import classicassets
 import bascenev1 as bs
 
 from bauiv1lib.gather import GatherTab
@@ -111,7 +112,9 @@ class NetScanner:
                 on_select_call=bui.CallStrict(self._on_select, host),
                 on_activate_call=bui.CallStrict(self._on_activate, host),
                 click_activate=True,
-                text=host['display_string'],
+                # Show the host's party name when they're advertising
+                # one (v2 scan responses); otherwise their player name.
+                text=host['party_name'] or host['display_string'],
                 h_align='left',
                 v_align='center',
                 corner_scale=t_scale,
@@ -176,9 +179,7 @@ class NearbyGatherTab(GatherTab):
             maxwidth=c_width * 0.9,
             h_align='center',
             v_align='center',
-            text=bui.Lstr(
-                resource='gatherWindow.' 'localNetworkDescriptionText'
-            ),
+            text=classicassets.strings.gather.local_network_description,
         )
         v -= 15
         v -= sub_scroll_height + 23

@@ -5,7 +5,11 @@
 #include "ballistica/base/app_adapter/app_adapter_sdl.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <cstdio>
+#include <cstring>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -13,10 +17,10 @@
 #include <mach-o/dyld.h>
 
 #include <climits>
-#include <cstdint>
 #include <cstdlib>
 #endif
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/base.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
@@ -36,6 +40,22 @@
 #include "ballistica/shared/foundation/input_types.h"
 
 namespace ballistica::base {
+
+// Hand the OS a hardware cursor built from the engine's bundled cursor
+// texture instead of drawing the engine's software cursor each frame
+// (saves the software cursor's frame or so of latency). Deliberately
+// kept as a toggle even with the hardware path established: flipping
+// this off is the easy way to exercise the engine's software-cursor
+// path (Graphics::DrawCursor) on a desktop build - that path stays
+// load-bearing for platforms with no hardware cursor (e.g. Android
+// with a pointer).
+static const bool kUseHardwareCursor{true};
+
+// The hardware cursor's logical size in points -- matches the Mac
+// build's cursor so all paths present identically. The cursor-texture
+// mip of this size becomes the base cursor surface; larger mips become
+// high-DPI alternates.
+static const int kHardwareCursorLogicalSize{64};
 
 #if BA_PLATFORM_MACOS && BA_OPENGL_IS_ES
 // Point SDL at the ANGLE dylibs we bundle next to the binary. SDL loads its
@@ -112,6 +132,16 @@ void AppAdapterSDL::OnMainThreadStartApp() {
   // We wrangle our own signal handling; don't bring SDL into it.
   SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
 
+  // Let SDL serve scale-matched versions of our hardware cursor on
+  // HiDPI displays (Windows gates this behind a hint; macOS/Wayland
+  // do it unconditionally). Our cursor surface carries higher-res
+  // alternate images for this - see CreateHardwareCursor_.
+  // The hint only exists in SDL 3.4.0+; on older SDLs (e.g. the
+  // flatpak runtime's) the cursor simply shows at standard res.
+#ifdef SDL_HINT_MOUSE_DPI_SCALE_CURSORS
+  SDL_SetHint(SDL_HINT_MOUSE_DPI_SCALE_CURSORS, "1");
+#endif
+
   // We provide our own main() (SDL_MAIN_HANDLED; see min_sdl.h), so tell SDL
   // that startup happened properly before we init.
   SDL_SetMainReady();
@@ -150,8 +180,99 @@ void AppAdapterSDL::OnMainThreadStartApp() {
     }
   }
 
-  // This adapter draws a software cursor; hide the actual OS one.
+  // Start with the OS cursor hidden: in software-cursor mode we draw our
+  // own, and in hardware-cursor mode the engine pushes visibility updates
+  // (SetHardwareCursorVisible) once drawing is up.
   SDL_HideCursor();
+}
+
+auto AppAdapterSDL::HasHardwareCursor() -> bool { return kUseHardwareCursor; }
+
+void AppAdapterSDL::SetHardwareCursorVisible(bool visible) {
+  assert(g_core->InMainThread());
+  if (visible) {
+    // Build our custom color cursor on first use. If that fails (the
+    // pixel loader logs the reason) we live with the OS default cursor.
+    if (!hw_cursor_create_attempted_) {
+      hw_cursor_create_attempted_ = true;
+      hw_cursor_ = CreateHardwareCursor_();
+    }
+    if (hw_cursor_ != nullptr) {
+      SDL_SetCursor(hw_cursor_);
+    }
+    SDL_ShowCursor();
+  } else {
+    SDL_HideCursor();
+  }
+}
+
+// Build an SDL surface (owning its pixels) from one RGBA8 mip level.
+// SDL surfaces want straight (non-premultiplied) alpha; the cursor
+// texture ships premultiplied (asset-packages decision #23), so
+// un-premultiply if needed.
+static auto CreateCursorSurface_(const Assets::BundledTextureMip& mip,
+                                 bool premultiplied) -> SDL_Surface* {
+  SDL_Surface* surface =
+      SDL_CreateSurface(mip.width, mip.height, SDL_PIXELFORMAT_RGBA32);
+  if (surface == nullptr) {
+    return nullptr;
+  }
+  auto* dst = static_cast<uint8_t*>(surface->pixels);
+  for (int y = 0; y < mip.height; ++y) {
+    uint8_t* row = dst + y * surface->pitch;
+    memcpy(row, mip.rgba.data() + static_cast<size_t>(y) * mip.width * 4,
+           static_cast<size_t>(mip.width) * 4);
+    if (premultiplied) {
+      for (int x = 0; x < mip.width; ++x) {
+        uint8_t* px = row + x * 4;
+        int a = px[3];
+        if (a != 0 && a != 255) {
+          for (int c = 0; c < 3; ++c) {
+            px[c] =
+                static_cast<uint8_t>(std::min(255, (px[c] * 255 + a / 2) / a));
+          }
+        }
+      }
+    }
+  }
+  return surface;
+}
+
+auto AppAdapterSDL::CreateHardwareCursor_() -> SDL_Cursor* {
+  auto img = Assets::LoadBundledFallbackTextureRGBA(
+      std::string(kBuiltinAssetsApverid) + ":textures/cursor");
+  if (!img.has_value() || img->mips.empty()) {
+    return nullptr;
+  }
+
+  // The mip matching our logical cursor size becomes the base surface
+  // (which defines the cursor's on-screen size in points); any larger
+  // mips get attached as high-DPI alternates for SDL to serve per
+  // display scale.
+  size_t base{};
+  while (base + 1 < img->mips.size()
+         && img->mips[base].width > kHardwareCursorLogicalSize) {
+    ++base;
+  }
+  SDL_Surface* surface =
+      CreateCursorSurface_(img->mips[base], img->premultiplied);
+  if (surface == nullptr) {
+    return nullptr;
+  }
+  for (size_t i = 0; i < base; ++i) {
+    if (SDL_Surface* alt =
+            CreateCursorSurface_(img->mips[i], img->premultiplied)) {
+      SDL_AddSurfaceAlternateImage(surface, alt);
+      // AddSurfaceAlternateImage holds its own reference.
+      SDL_DestroySurface(alt);
+    }
+  }
+  // Match the Mac build's cursor: hotspot at (6, 6) in its 64px space.
+  SDL_Cursor* cursor = SDL_CreateColorCursor(
+      surface, 6 * img->mips[base].width / 64, 6 * img->mips[base].height / 64);
+  // The cursor keeps its own copy of the pixels.
+  SDL_DestroySurface(surface);
+  return cursor;
 }
 
 /// Our particular flavor of graphics settings.
@@ -738,14 +859,31 @@ void AppAdapterSDL::OnSDLJoystickAdded_(int instance_id) {
   // enumeration is the instance-id directly.
   SDL_Joystick* handle = SDL_OpenJoystick(instance_id);
   if (handle == nullptr) {
+    // Routine on macOS with PlayStation controllers: the OS surfaces the
+    // pad over more than one path and SDL's HIDAPI backend claims it,
+    // tearing down the handle we are mid-way through opening. SDL then
+    // sends the matching removed-event and re-announces the device, which
+    // succeeds. So this is debug-level noise, not a failure -- a genuinely
+    // unusable controller shows up as one that simply never works, which
+    // is far more legible to a user than a scary line in a log they were
+    // not reading.
+    //
+    // Remember the id so the removal that follows can be told apart from
+    // real bookkeeping loss (see RemoveSDLInputDevice_).
+    if (sdl_failed_open_joystick_ids_.size() < 64) {
+      sdl_failed_open_joystick_ids_.insert(instance_id);
+    }
     auto* err = SDL_GetError();
-    g_core->logging->Log(
-        LogName::kBaInput, LogLevel::kError,
-        std::string("Error in SDL_OpenJoystick for instance-id "
-                    + std::to_string(instance_id) + ": ")
-            + (err ? err : "Unknown SDL error."));
+    g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug,
+                         std::string("SDL_OpenJoystick failed for instance-id "
+                                     + std::to_string(instance_id) + ": ")
+                             + (err ? err : "Unknown SDL error.")
+                             + " Expecting a matching removed-event.");
     return;
   }
+
+  // It opened, so any earlier failure for this id is resolved.
+  sdl_failed_open_joystick_ids_.erase(instance_id);
 
   std::string name{"Unknown Controller"};
   if (auto* n = SDL_GetJoystickName(handle)) {
@@ -804,8 +942,22 @@ void AppAdapterSDL::RemoveSDLInputDevice_(int index) {
   assert(index >= 0);
   JoystickInput* j = GetSDLJoystickInput_(index);
 
-  // Note: am running into this with a PS5 controller on macOS Sequoia beta.
   if (!j) {
+    // Expected half of a transient: we were told this device arrived,
+    // failed to open it, and are now being told it went away. Nothing was
+    // ever registered, so there is nothing to clean up. Routine on macOS
+    // with PlayStation controllers (see OnSDLJoystickAdded_).
+    if (sdl_failed_open_joystick_ids_.erase(index) > 0) {
+      g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug,
+                           "Ignoring removed-event for instance-id "
+                               + std::to_string(index)
+                               + "; its open had failed.");
+      return;
+    }
+
+    // Anything else means we lost track of a device we did register --
+    // keep this loud. It used to be indistinguishable from the benign
+    // case above, which is exactly what made it useless.
     g_core->logging->Log(
         LogName::kBaInput, LogLevel::kError,
         "GetSDLJoystickInput_() returned nullptr on RemoveSDLInputDevice_();"
@@ -860,6 +1012,132 @@ auto AppAdapterSDL::GetSDLJoystickInput_(const SDL_Event* e) const
       return nullptr;
   }
   return GetSDLJoystickInput_(joy_id);
+}
+
+auto AppAdapterSDL::GetSDLJoystickHandle_(int sdl_joystick_id) const
+    -> SDL_Joystick* {
+  assert(g_core->InMainThread());
+  if (sdl_joystick_id < 0
+      || sdl_joystick_id
+             >= static_cast_check_fit<int>(sdl_joystick_handles_.size())) {
+    return nullptr;
+  }
+  return sdl_joystick_handles_[sdl_joystick_id];
+}
+
+void AppAdapterSDL::RumbleSDLJoystick_(int sdl_joystick_id,
+                                       uint16_t low_magnitude,
+                                       uint16_t high_magnitude,
+                                       uint32_t duration_millisecs) {
+  assert(g_base->InLogicThread());
+
+  // Handles are main-thread-only, so hop. Capture the instance-id rather
+  // than anything resolved now: the controller can be unplugged between
+  // this push and the call running, in which case the lookup simply
+  // fails.
+  PushMainThreadCall([this, sdl_joystick_id, low_magnitude, high_magnitude,
+                      duration_millisecs] {
+    auto* handle = GetSDLJoystickHandle_(sdl_joystick_id);
+    if (handle == nullptr) {
+      return;
+    }
+    SDL_RumbleJoystick(handle, low_magnitude, high_magnitude,
+                       duration_millisecs);
+  });
+}
+
+// How SDL renders each event type: what it drives the two motors at
+// (0-1 each) and for how long.
+//
+// These are absolute magnitudes -- read a row and you know what that
+// event produces, with no arithmetic. The low-frequency motor carries a
+// heavier weight (a deep growl); the high-frequency one is lighter and
+// faster (a sharp buzz), so leaning on one or the other is what gives an
+// event its character rather than just its volume.
+//
+// Two things to keep in mind when tuning:
+//
+// - Anything below the ERM dead zone (~0.15-0.25) contributes NOTHING.
+//   A motor value under that is not a subtle hint, it is silence.
+// - The heavy motor has far more inertia and barely spins up inside a
+//   short event, so short events skew crisp on real hardware whatever is
+//   asked for here. These values work with that rather than against it.
+//
+// The durations here are ours alone and are deliberately NOT tied to the
+// type's hold_millisecs. A hold window slightly longer than the render
+// may well feel best, and other platforms cannot control render length
+// at all. The only rule is not to run PAST the window, since that lets a
+// lower-priority event interrupt something still buzzing -- checked
+// below.
+struct SDLTypeRender_ {
+  float low;
+  float high;
+  int duration_millisecs;
+};
+
+/// Indexed by FeedbackEvent::Type; see the static_assert below.
+static constexpr SDLTypeRender_ kSDLTypeRender[] = {
+    // join
+    {0.5f, 0.5f, 100},
+    // collect
+    {0.0f, 1.0f, 60},
+    // grab
+    {0.0f, 1.0f, 100},
+    // impact-dealt
+    {0.4f, 0.6f, 80},
+    // impact-received
+    {0.6f, 0.4f, 80},
+    // death
+    {1.0f, 1.0f, 200},
+};
+
+static_assert(std::size(kSDLTypeRender)
+                  == static_cast<size_t>(FeedbackEvent::Type::kLast),
+              "Every FeedbackEvent::Type needs an SDL render mapping, in"
+              " enum order.");
+
+auto AppAdapterSDL::ApplyJoystickFeedback(JoystickInput* device,
+                                          const FeedbackEvent& event) -> int {
+  // Grab our addressing off the device now, in the logic thread; the
+  // rumble itself happens on the main thread, by which point the device
+  // may be gone.
+  auto sdl_joystick_id = device->sdl_joystick_id();
+  if (!device->IsSDLController() || sdl_joystick_id < 0) {
+    return 0;
+  }
+
+  auto index = static_cast<size_t>(event.type);
+  assert(index < std::size(kSDLTypeRender));
+  const auto& render = kSDLTypeRender[index];
+
+  // Straight linear map onto SDL's documented 0-0xFFFF range, on purpose.
+  //
+  // It is tempting to bend this -- ERM motors have a real dead zone at the
+  // bottom, so low values go unfelt on some hardware. Resisted for now
+  // because we would be layering a guessed curve on top of whatever SDL's
+  // per-platform backends, the driver, and the controller firmware already
+  // do, none of which is documented: SDL specifies these parameters purely
+  // as a magnitude range and promises nothing about perceptibility. Two
+  // stacked corrections are far harder to reason about than one missing
+  // one, and a linear pass-through is the only baseline a real calibration
+  // pass can measure against.
+  //
+  // Note SDL also defines 0 as "stop any rumbling", which is why a zero
+  // motor value must reach hardware as 0 rather than as some
+  // minimum-perceptible floor.
+  auto low = static_cast<uint16_t>(render.low * 65535.0f);
+  auto high = static_cast<uint16_t>(render.high * 65535.0f);
+  RumbleSDLJoystick_(sdl_joystick_id, low, high,
+                     static_cast<uint32_t>(render.duration_millisecs));
+  return render.duration_millisecs;
+}
+
+void AppAdapterSDL::StopJoystickFeedback(JoystickInput* device) {
+  auto sdl_joystick_id = device->sdl_joystick_id();
+  if (!device->IsSDLController() || sdl_joystick_id < 0) {
+    return;
+  }
+  RumbleSDLJoystick_(sdl_joystick_id, 0, 0, 0);
 }
 
 auto AppAdapterSDL::GetSDLJoystickInput_(int sdl_joystick_id) const

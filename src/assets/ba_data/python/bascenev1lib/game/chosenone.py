@@ -9,7 +9,7 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 from bascenev1lib.actor.flag import Flag
 from bascenev1lib.actor.playerspaz import PlayerSpaz
@@ -93,18 +93,18 @@ class ChosenOneGame(bs.TeamGameActivity[Player, Team]):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._chosen_one_player: Player | None = None
-        self._swipsound = stdassets.audio.swip
+        self._swipsound = classicassets.audio.swip.get()
         self._countdownsounds: dict[int, bs.Sound] = {
-            10: stdassets.audio.announce_ten,
-            9: stdassets.audio.announce_nine,
-            8: stdassets.audio.announce_eight,
-            7: stdassets.audio.announce_seven,
-            6: stdassets.audio.announce_six,
-            5: stdassets.audio.announce_five,
-            4: stdassets.audio.announce_four,
-            3: stdassets.audio.announce_three,
-            2: stdassets.audio.announce_two,
-            1: stdassets.audio.announce_one,
+            10: classicassets.audio.announce_ten.get(),
+            9: classicassets.audio.announce_nine.get(),
+            8: classicassets.audio.announce_eight.get(),
+            7: classicassets.audio.announce_seven.get(),
+            6: classicassets.audio.announce_six.get(),
+            5: classicassets.audio.announce_five.get(),
+            4: classicassets.audio.announce_four.get(),
+            3: classicassets.audio.announce_three.get(),
+            2: classicassets.audio.announce_two.get(),
+            1: classicassets.audio.announce_one.get(),
         }
         self._flag_spawn_pos: Sequence[float] | None = None
         self._reset_region_material: bs.Material | None = None

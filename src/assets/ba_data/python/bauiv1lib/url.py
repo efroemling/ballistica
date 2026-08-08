@@ -3,6 +3,7 @@
 """UI functionality related to URLs."""
 
 import bauiv1 as bui
+from bauiv1 import _commonassets
 
 
 class ShowURLWindow(bui.Window):
@@ -36,7 +37,7 @@ class ShowURLWindow(bui.Window):
             color=app.ui_v1.title_color,
             h_align='center',
             v_align='center',
-            text=bui.Lstr(resource='directBrowserToURLText'),
+            text=_commonassets.strings.status.direct_browser_to_url,
             maxwidth=self._width * 0.95,
         )
         bui.textwidget(
@@ -74,7 +75,7 @@ class ShowURLWindow(bui.Window):
                 ),
                 size=(button_width, 65),
                 autoselect=True,
-                label=bui.Lstr(resource='copyText'),
+                label=_commonassets.strings.actions.copy,
                 on_activate_call=self._copy,
             )
             xoffs = 150
@@ -84,7 +85,7 @@ class ShowURLWindow(bui.Window):
             position=(self._width * 0.5 - button_width * 0.5 + xoffs, 20),
             size=(button_width, 65),
             autoselect=True,
-            label=bui.Lstr(resource='doneText'),
+            label=_commonassets.strings.actions.done,
             on_activate_call=self._done,
         )
         # we have no 'cancel' button but still want to be able to
@@ -98,7 +99,9 @@ class ShowURLWindow(bui.Window):
 
     def _copy(self) -> None:
         bui.clipboard_set_text(self._address)
-        bui.screenmessage(bui.Lstr(resource='copyConfirmText'), color=(0, 1, 0))
+        bui.screenmessage(
+            _commonassets.strings.status.copied_to_clipboard, color=(0, 1, 0)
+        )
 
     def _done(self) -> None:
         bui.containerwidget(edit=self._root_widget, transition='out_left')

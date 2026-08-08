@@ -1214,7 +1214,6 @@ class SpinoffContext:
         dst_path_full: str,
         key: str,
     ) -> None:
-        # pylint: disable=too-many-positional-arguments
 
         # Ick; dst changed.  Now the only way we allow
         # the delete is if we can re-filter its src
@@ -1532,7 +1531,6 @@ class SpinoffContext:
         dst_path_full: str,
         display_diff_cmd: str,
     ) -> None:
-        # pylint: disable=too-many-positional-arguments
 
         if os.path.isfile(src_path_full) and os.path.isfile(dst_path_full):
             # We want to show how this update would change the dst file,

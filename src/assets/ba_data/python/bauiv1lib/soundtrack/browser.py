@@ -7,8 +7,8 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import _commonassets, builtinassets
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -85,7 +85,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             ),
             size=(0, 0),
             maxwidth=300,
-            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            text=classicassets.strings.soundtrack.title,
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -98,7 +98,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         h = 43 + x_inset
         b_color = (0.6, 0.53, 0.63)
         b_textcolor = (0.75, 0.7, 0.8)
-        lock_tex = stdassets.textures.lock.get()
+        lock_tex = classicassets.textures.lock.get()
         self._lock_images: list[bui.Widget] = []
 
         scl = 1.2
@@ -114,7 +114,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             autoselect=True,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=bui.Lstr(resource=f'{self._r}.newText'),
+            label=classicassets.strings.soundtrack.new_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -144,7 +144,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             autoselect=True,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=bui.Lstr(resource=f'{self._r}.editText'),
+            label=classicassets.strings.soundtrack.edit_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -173,7 +173,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             color=b_color,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=bui.Lstr(resource=f'{self._r}.duplicateText'),
+            label=classicassets.strings.soundtrack.duplicate_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -202,7 +202,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             autoselect=True,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=bui.Lstr(resource=f'{self._r}.deleteText'),
+            label=classicassets.strings.soundtrack.delete_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -289,7 +289,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         if self._selected_soundtrack in soundtracks:
             del soundtracks[self._selected_soundtrack]
         cfg.commit()
-        stdassets.audio.shield_down.get().play()
+        classicassets.audio.shield_down.get().play()
         assert self._selected_soundtrack_index is not None
         assert self._soundtracks is not None
         self._selected_soundtrack_index = min(
@@ -306,14 +306,13 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         if self._selected_soundtrack == '__default__':
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                bui.Lstr(resource=f'{self._r}.cantDeleteDefaultText'),
+                classicassets.strings.soundtrack.cant_delete_default,
                 color=(1, 0, 0),
             )
         else:
             ConfirmWindow(
-                bui.Lstr(
-                    resource=f'{self._r}.deleteConfirmText',
-                    subs=[('${NAME}', self._selected_soundtrack)],
+                classicassets.strings.soundtrack.delete_confirm(
+                    name=self._selected_soundtrack
                 ),
                 self._do_delete_soundtrack,
                 width=450,
@@ -335,9 +334,10 @@ class SoundtrackBrowserWindow(bui.MainWindow):
 
         # Find a valid dup name that doesn't exist.
         test_index = 1
-        copy_text = bui.Lstr(resource='copyOfText').evaluate()
-        # Get just 'Copy' or whatnot.
-        copy_word = copy_text.replace('${NAME}', '').strip()
+        # Flattening is correct here: these feed *stored* soundtrack
+        # names, not displayed strings.
+        copy_name = _commonassets.strings.compose.copy_name
+        copy_word = copy_name(name='').evaluate().strip()
         base_name = self._get_soundtrack_display_name(
             self._selected_soundtrack
         ).evaluate()
@@ -351,7 +351,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             if copy_word in base_name:
                 test_name = base_name
             else:
-                test_name = copy_text.replace('${NAME}', base_name)
+                test_name = copy_name(name=base_name).evaluate()
             if test_index > 1:
                 test_name += ' ' + str(test_index)
             if test_name not in cfg['Soundtracks']:
@@ -399,7 +399,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         if self._selected_soundtrack == '__default__':
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                bui.Lstr(resource=f'{self._r}.cantEditDefaultText'),
+                classicassets.strings.soundtrack.cant_edit_default,
                 color=(1, 0, 0),
             )
             return
@@ -410,10 +410,10 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             )
         )
 
-    def _get_soundtrack_display_name(self, soundtrack: str) -> bui.Lstr:
+    def _get_soundtrack_display_name(self, soundtrack: str) -> bui.LangStr:
         if soundtrack == '__default__':
-            return bui.Lstr(resource=f'{self._r}.defaultSoundtrackNameText')
-        return bui.Lstr(value=soundtrack)
+            return classicassets.strings.soundtrack.default_soundtrack_name
+        return bui.LangStr.from_text(soundtrack)
 
     def _refresh(self, select_soundtrack: str | None = None) -> None:
         from efro.util import asserttype

@@ -1,5 +1,7 @@
 # Premultiplied-alpha rendering
 
+**Description:** The premultiplied-alpha convention: callers premultiply straight modulate colors by alpha when drawing premult textures, else faded content stays full-bright.
+
 Migrated asset-package textures (KTX2) store their RGB **premultiplied by
 alpha** and carry the `KHR_DF_FLAG_ALPHA_PREMULTIPLIED` flag in their DFD
 (asset-packages "decision #23"). OS-rendered text is premultiplied too. This
@@ -50,8 +52,20 @@ fast-path (`kSimpleComponentInlineColor`), which a centralized premultiply in
 `WriteConfig` would not — so the premultiply belongs at the caller, not buried
 in the renderer.
 
-Callers that follow this: `text_node`, `text_widget`, `screen_messages`,
-`image_widget`, the dev-console caret glow.
+Callers that follow this: `text_node`, `image_node`, `text_widget`,
+`screen_messages` (both text passes, plus — missed until a 2026-08 fix for
+a fade-end pop — the bottom-message shadow nine-patch and top-message
+icons; a "follower" here can still be only partial, so when hunting a
+fade bug check every `SetColor` in the file, not just this list),
+`image_widget`, `button_widget` (background + icon),
+`spinner_widget`, `scroll_widget` / `h_scroll_widget` (troughs, page
+buttons, outlines), `container_widget`, `touch_input` (on-screen joystick +
+action buttons), `locator_node`, `scorch_node`, `spaz_node` (name text,
+billboards, radial meters), the dev-console (`DrawRect`/`DrawText` helpers,
+drop shadow, output lines, caret glow), and the on-screen dev-console toggle
+button in `ui.cc`. `ObjectComponent` does the same premultiply centrally in
+its `WriteConfig` (transparent, non-`SetPremultiplied` case), so its callers
+(e.g. `terrain_node`, mesh fades) get it for free.
 
 ## `SetPremultiplied(true)` means "I manage premult myself"
 

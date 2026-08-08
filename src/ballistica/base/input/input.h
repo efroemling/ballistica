@@ -68,6 +68,13 @@ class Input {
   auto GetInputDevicesWithName(const std::string& name)
       -> std::vector<InputDevice*>;
 
+  /// Return all currently-registered input devices. Includes hidden ones
+  /// (devices the user has flagged as totally-ignored, etc). Intended for
+  /// callers that need to search devices by some property the input
+  /// system itself knows nothing about -- for instance finding whichever
+  /// local device is currently driving a particular networked player.
+  auto GetInputDevices() -> std::vector<InputDevice*>;
+
   /// Release all held buttons/keys/etc. For use when directing input to a
   /// new target (from in-game to UI, etc.) so that old targets don't get
   /// stuck moving/etc. Should come up with a more elegant way to handle

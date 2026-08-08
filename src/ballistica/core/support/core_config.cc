@@ -111,6 +111,15 @@ void CoreConfig::ApplyEnvVars() {
       debug_timing = true;
     }
   }
+  // Env-var equivalent of the --exec arg. Some platform entry points
+  // (iOS/tvOS via ForEnvVars) never see an argv, and external test
+  // drivers can often deliver env vars where args are impossible
+  // (e.g. simctl's SIMCTL_CHILD_ forwarding for test_game_run's ios
+  // leg). Applied before args, so an explicit --exec wins when both
+  // are present.
+  if (auto* envval = getenv("BA_EXEC")) {
+    exec_command = envval;
+  }
 }
 
 void CoreConfig::ApplyArgs(int argc, char** argv) {

@@ -21,7 +21,7 @@ namespace ballistica::base {
 class AssetNameCompat {
  public:
   /// Register the full asset-package version id in effect for a
-  /// package key ('builtinassets' / 'stdassets'). Called at
+  /// package key ('builtinassets' / 'classicassets'). Called at
   /// classic-app-mode activation with values sourced from the Python
   /// wrapper modules' __asset_package__ attrs, so a modder-swapped
   /// package keeps working as long as it carries the same logical

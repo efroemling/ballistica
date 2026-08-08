@@ -17,12 +17,13 @@ from efro.util import check_utc
 from efro.dataclassio._base import (
     Codec,
     parse_annotated,
-    EXTRA_ATTRS_ATTR,
-    LOSSY_ATTR,
+    io_mark_lossy,
+    io_set_extra_attrs,
     _is_valid_for_codec,
     _get_origin,
     SIMPLE_TYPES,
     _raise_type_error,
+    _select_union_member_type,
     IOExtendedData,
     _get_multitype_type,
     IOMultiType,
@@ -86,21 +87,29 @@ class _Inputter:
             storename = self._cls.get_type_id_storage_name()
             type_id_val = values.get(storename)
             if type_id_val is None:
-                raise ValueError(
-                    f'\'{storename}\' type id value'
-                    f' not found in \'{self._cls.__name__}\' input data.'
-                )
-            type_id_enum = self._cls.get_type_id_type()
-            try:
-                enum_val = type_id_enum(type_id_val)
-            except ValueError as exc:
+                # A missing type-id is allowed if the multitype
+                # designates a default type; otherwise it's an error.
+                default_type_id = self._cls.get_default_type_id()
+                if default_type_id is None:
+                    raise ValueError(
+                        f'\'{storename}\' type id value'
+                        f' not found in \'{self._cls.__name__}\' input data.'
+                    )
+                enum_val = default_type_id
+            else:
+                type_id_enum = self._cls.get_type_id_type()
+                try:
+                    enum_val = type_id_enum(type_id_val)
+                except ValueError as exc:
 
-                fallback_obj = self._get_fallback_object(exc, 'unrecognized')
-                if fallback_obj is not None:
-                    return fallback_obj
+                    fallback_obj = self._get_fallback_object(
+                        exc, 'unrecognized'
+                    )
+                    if fallback_obj is not None:
+                        return fallback_obj
 
-                # Otherwise the error stands as-is.
-                raise
+                    # Otherwise the error stands as-is.
+                    raise
 
             try:
                 outcls = self._cls.get_type_cached(enum_val)
@@ -128,7 +137,7 @@ class _Inputter:
         # Is that worth worrying about? Though perfect is the enemy of
         # good I suppose.
         if self._lossy:
-            setattr(out, LOSSY_ATTR, True)
+            io_mark_lossy(out)
 
         return out
 
@@ -147,7 +156,7 @@ class _Inputter:
                 # Ok; they provided a fallback. Flag it as lossy
                 # to prevent it from being written back out by
                 # default, and return it.
-                setattr(fallback, LOSSY_ATTR, True)
+                io_mark_lossy(fallback)
                 return fallback
         else:
             # If we're *not* in lossy mode, inform the user if
@@ -170,7 +179,6 @@ class _Inputter:
         ioattrs: IOAttrs | None,
     ) -> Any:
         """Convert an assigned value to what a dataclass field expects."""
-        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
 
@@ -188,14 +196,33 @@ class _Inputter:
             return value
 
         if origin is typing.Union or origin is types.UnionType:
-            # Currently, the only unions we support are None/Value
-            # (translated from Optional), which we verified on prep. So
-            # let's treat this as a simple optional case.
+            childanntypes = typing.get_args(anntype)
             if value is None:
+                if type(None) not in childanntypes:
+                    _raise_type_error(
+                        fieldpath,
+                        type(value),
+                        tuple(_get_origin(c) for c in childanntypes),
+                    )
                 return None
             childanntypes_l = [
-                c for c in typing.get_args(anntype) if c is not type(None)
+                c for c in childanntypes if c is not type(None)
             ]  # noqa (pycodestyle complains about *is* with type)
+            if len(childanntypes_l) > 1:
+                # A multi-member 'type-disjoint' union; find the member
+                # matching the value's wire type (prep verified that
+                # this is decidable).
+                member = _select_union_member_type(childanntypes_l, value)
+                if member is None:
+                    _raise_type_error(
+                        fieldpath,
+                        type(value),
+                        tuple(_get_origin(c) for c in childanntypes_l),
+                    )
+                return self._value_from_input(
+                    cls, fieldpath, member, value, ioattrs
+                )
+            # Simple Optional case.
             assert len(childanntypes_l) == 1
             return self._value_from_input(
                 cls, fieldpath, childanntypes_l[0], value, ioattrs
@@ -476,7 +503,7 @@ class _Inputter:
                 f' at {fieldpath}: {exc}'
             ) from exc
         if extra_attrs:
-            setattr(out, EXTRA_ATTRS_ATTR, extra_attrs)
+            io_set_extra_attrs(out, extra_attrs)
         if is_ext:
             assert isinstance(out, IOExtendedData)
             out.did_input()
@@ -510,7 +537,6 @@ class _Inputter:
         value: Any,
         ioattrs: IOAttrs | None,
     ) -> Any:
-        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-branches
 
         if not isinstance(value, dict):
@@ -676,7 +702,7 @@ class _Inputter:
             mttype = _get_multitype_type(anntype, fieldpath, value)
         # NOTE: We may want to tighten this up; ValueError might be
         # covering more than the missing enum case we intend here.
-        except (ValueError, TypeNotPresentError):
+        except ValueError, TypeNotPresentError:
             if self._lossy:
                 out = anntype.get_unknown_type_fallback()
                 if out is not None:
@@ -696,7 +722,6 @@ class _Inputter:
         value: Any,
         ioattrs: IOAttrs | None,
     ) -> Any:
-        # pylint: disable=too-many-positional-arguments
         out: list = []
 
         # Because we are json-centric, we expect a list for all sequences.

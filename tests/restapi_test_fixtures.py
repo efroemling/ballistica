@@ -3,6 +3,7 @@
 """Shared pytest fixtures for REST live-server tests."""
 
 import os
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -13,7 +14,53 @@ from efrotools.project import getlocalconfig
 from efro.error import CleanError
 
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Callable, TypeVar
+
+    T = TypeVar('T')
+
+#: Gateway statuses that indicate a transient server-side blip (a
+#: stalled or restarting Cloud Run instance) rather than anything
+#: about the request itself. Live tests hitting real fleets see
+#: these occasionally; idempotent operations should retry them via
+#: :func:`retry_transient` instead of failing the nightly run.
+TRANSIENT_STATUSES = (502, 503, 504)
+
+
+class TransientServerError(Exception):
+    """A live-server call hit a transient gateway error (502/503/504)."""
+
+
+def raise_if_transient(resp: urllib3.BaseHTTPResponse) -> None:
+    """Raise :class:`TransientServerError` if ``resp`` is a 502/503/504.
+
+    Call this before asserting on a response's status in any live-test
+    operation that is safe to re-run, then wrap the whole operation in
+    :func:`retry_transient`.
+    """
+    if resp.status in TRANSIENT_STATUSES:
+        raise TransientServerError(
+            f'Transient server error {resp.status}: {resp.data!r}'
+        )
+
+
+def retry_transient(
+    fn: Callable[[], T], *, attempts: int = 3, base_delay: float = 5.0
+) -> T:
+    """Run ``fn``, retrying on :class:`TransientServerError`.
+
+    Only pass operations that are safe to re-run from the top
+    (idempotent or dedup-short-circuited). Waits ``base_delay``
+    seconds after the first failure, doubling each retry, and lets
+    the final attempt's error propagate.
+    """
+    for attempt in range(attempts):
+        try:
+            return fn()
+        except TransientServerError:
+            if attempt + 1 >= attempts:
+                raise
+            time.sleep(base_delay * 2**attempt)
+    raise RuntimeError('Unreachable.')
 
 
 # Fleet selection precedence:

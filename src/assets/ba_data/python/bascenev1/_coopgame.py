@@ -45,7 +45,7 @@ class CoopGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import stdassets
+        from bascenev1 import classicassets
 
         super().__init__(settings)
 
@@ -54,7 +54,7 @@ class CoopGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
 
         self._life_warning_beep: bascenev1.Actor | None = None
         self._life_warning_beep_timer: bascenev1.Timer | None = None
-        self._warn_beeps_sound = stdassets.audio.warn_beeps
+        self._warn_beeps_sound = classicassets.audio.warn_beeps.get()
 
     @override
     def on_begin(self) -> None:
@@ -109,6 +109,7 @@ class CoopGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
 
     def _show_remaining_achievements(self) -> None:
         # pylint: disable=cyclic-import
+        from bascenev1 import classicassets
         from bascenev1lib.actor.text import Text
 
         assert babase.app.classic is not None
@@ -124,7 +125,7 @@ class CoopGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         vrmode = babase.app.env.vr
         if achievements:
             Text(
-                babase.Lstr(resource='achievementsRemainingText'),
+                classicassets.strings.coop.achievements_remaining,
                 host_only=True,
                 position=(ts_h_offs - 10 + 40, v_offs - 10),
                 transition=Text.Transition.FADE_IN,

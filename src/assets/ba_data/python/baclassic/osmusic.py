@@ -78,20 +78,24 @@ class OSMusicPlayer(MusicPlayer):
     def _on_play_folder_cb(
         self, result: str | list[str], error: str | None = None
     ) -> None:
+        # Safe up-call: the featureset is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import classicassets
+
         if error is not None:
-            rstr = babase.Lstr(
-                resource='internal.errorPlayingMusicText'
-            ).evaluate()
-            if isinstance(result, str):
-                err_str = (
-                    rstr.replace('${MUSIC}', os.path.basename(result))
-                    + '; '
-                    + str(error)
-                )
-            else:
-                err_str = (
-                    rstr.replace('${MUSIC}', '<multiple>') + '; ' + str(error)
-                )
+            music = (
+                os.path.basename(result)
+                if isinstance(result, str)
+                else '<multiple>'
+            )
+            err_str = (
+                classicassets.strings.soundtrack.error_playing_music(
+                    music=music
+                ).evaluate()
+                + '; '
+                + str(error)
+            )
             babase.screenmessage(err_str, color=(1, 0, 0))
             return
 
@@ -128,6 +132,11 @@ class _PickFolderSongThread(threading.Thread):
 
     @override
     def run(self) -> None:
+        # Safe up-call: the featureset is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import classicassets
+
         do_log_error = True
         try:
             babase.set_thread_name('BA_PickFolderSongThread')
@@ -145,9 +154,9 @@ class _PickFolderSongThread(threading.Thread):
             if not all_files:
                 do_log_error = False
                 raise RuntimeError(
-                    babase.Lstr(
-                        resource='internal.noMusicFilesInFolderText'
-                    ).evaluate()
+                    (
+                        classicassets.strings.soundtrack
+                    ).no_music_files_in_folder.evaluate()
                 )
             babase.pushcall(
                 babase.CallStrict(self._callback, all_files, None),

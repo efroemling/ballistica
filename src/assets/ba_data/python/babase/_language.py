@@ -3,23 +3,354 @@
 """Language related functionality."""
 
 import json
+import asyncio
+import datetime
 from functools import partial
 from typing import TYPE_CHECKING, overload, override
 
 import _babase
 from babase._appsubsystem import AppSubsystem
-from babase._logging import applog
+from babase._logging import applog, assetmanagerlog
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any, Callable, Sequence
 
     import babase
+    import bacommon.langstr
+    from bacommon.locale import Locale
 
 
 #: Process-lifetime cache for :func:`get_legacy_langdata` (the constant
-#: ``legacylangdata.json`` blob is flavor-invariant, so it is stable for
+#: ``legacylangdata`` blob is flavor-invariant, so it is stable for
 #: the life of the process once read).
 _g_legacy_langdata: dict[str, Any] | None = None
+
+
+def _native_from_spec(spec: bacommon.langstr.LangStrSpec) -> babase.LangStr:
+    """Parse an authoring-spec into the native verified-local form.
+
+    Private on purpose (D28): there is no *public* spec -> verified
+    conversion — verification comes from context. The callers here are
+    the wrapper runtime below, whose asset-package pins are
+    construct-mode-resolved before any wrapper is usable.
+    """
+    from efro.dataclassio import dataclass_to_json
+
+    return _babase.LangStr(dataclass_to_json(spec))
+
+
+def langstr_value(value: str) -> babase.LangStr:
+    """Return a :class:`~babase.LangStr` displaying ``value`` verbatim.
+
+    For text that is already display-final -- notably server-sent flat
+    text pre-translated to our locale under the lifetime rule (see
+    'Server-sent strings' in efrohome's asset-packages design doc).
+    The result renders exactly as given in every locale, with no
+    resource lookup, legacy translation, or legacy Lstr-json
+    interpretation applied anywhere along the display path.
+
+    (Safe to build publicly, unlike resource-bearing specs: a value
+    form carries no package refs, so the D28 verified-context rule has
+    nothing to verify.)
+    """
+    import bacommon.langstr as _bclangstr
+
+    return _native_from_spec(_bclangstr.LangStrSpecValue(value))
+
+
+def translate_server_text(
+    text: str, subs: Sequence[tuple[str, str]] | None = None
+) -> babase.LangStr:
+    """Translate legacy-server-sent English text for display.
+
+    The class-free replacement for
+    ``Lstr(translate=('serverResponses', text))`` (D38): V1-era servers
+    send English display text which we translate by exact lookup in the
+    legacy ``serverResponses`` corpus (missing translations pass the
+    text through unchanged, per the legacy convention). ``subs`` are
+    ``('${TOKEN}', value)`` replacement pairs applied after
+    translation. The result is a verbatim value-form
+    :class:`~babase.LangStr`, so no further interpretation is applied
+    anywhere along the display path.
+
+    Exists only to serve V1-sourced flows; new server flows should send
+    display-final or LangStr forms per the lifetime rule instead (see
+    'Server-sent strings' in efrohome's asset-packages design doc).
+    """
+    out = _babase.translate('serverResponses', text)
+    if subs:
+        for key, val in subs:
+            out = out.replace(key, val)
+    return langstr_value(out)
+
+
+async def resolve_langstrs(
+    specs: Sequence[bacommon.langstr.LangStrSpec],
+    *,
+    locale: Locale | None = None,
+    background: bool = False,
+    timeout: float | None = None,
+    allow_apverid: Callable[[str], bool] | None = None,
+) -> bacommon.langstr.LanguageStringNameDecodeContext | None:
+    """Resolve the asset-packages a set of language-string specs reference.
+
+    Gathers every asset-package-version the ``specs`` reference, resolves
+    them via ``app.assets.resolve`` (downloading through the connected node
+    if needed), reads their per-locale string values, and returns a
+    ``LanguageStringNameDecodeContext`` covering them all -- the single
+    audited path from authoring specs to displayable strings (decode each
+    spec via ``ctx.decode(spec)``).
+
+    ``background=True`` marks a decorative/prefetch resolve that queues
+    behind interactive ones. ``timeout`` (seconds) bounds the whole
+    resolve-and-gather; ``None`` means no limit. ``allow_apverid``, if
+    given, is an allowlist predicate applied to every referenced apverid
+    *before* any resolve -- if any apverid fails it, this resolves and
+    downloads nothing and returns ``None`` (the load-bearing gate for
+    untrusted-peer content).
+
+    Returns ``None`` only when gated out by ``allow_apverid``. Raises on
+    resolve/decode failure (including ``TimeoutError``); callers apply
+    their own fail-soft-or-surface policy. Must be awaited on the logic
+    thread; the blocking per-locale string reads hop to the loop's
+    executor.
+    """
+    from bacommon.langstr import (
+        collect_apverids,
+        LanguageStringNameDecodeContext,
+    )
+
+    assert _babase.in_logic_thread()
+
+    if locale is None:
+        locale = _babase.app.locale.current_locale
+
+    apverids: set[str] = set()
+    for spec in specs:
+        collect_apverids(spec, apverids)
+
+    if allow_apverid is not None:
+        for apverid in apverids:
+            if not allow_apverid(apverid):
+                assetmanagerlog.warning(
+                    'resolve_langstrs: rejecting disallowed apverid %r;'
+                    ' resolving nothing.',
+                    apverid,
+                )
+                return None
+
+    ordered = sorted(apverids)
+    assetmanagerlog.debug(
+        'resolve_langstrs: resolving %d package(s) (background=%s): %s.',
+        len(ordered),
+        background,
+        ordered,
+    )
+
+    # timeout=None => no limit.
+    async with asyncio.timeout(timeout):
+        await _babase.app.assets.resolve(
+            ordered, language=locale, background=background
+        )
+        loop = asyncio.get_running_loop()
+        langdata = {
+            apverid: await loop.run_in_executor(
+                None,
+                partial(
+                    _babase.app.assets.get_package_language_data,
+                    apverid,
+                    locale,
+                ),
+            )
+            for apverid in ordered
+        }
+
+    assetmanagerlog.debug(
+        'resolve_langstrs: resolved + gathered strings for %d package(s).',
+        len(ordered),
+    )
+    # Kinds + components let the context render display-formatted
+    # params ({size|data_size}) instead of passing raw values through;
+    # nearly every package has neither, so pass only non-empty entries.
+    return LanguageStringNameDecodeContext(
+        {apverid: data[0] for apverid, data in langdata.items()},
+        locale,
+        param_kinds={
+            apverid: data[1] for apverid, data in langdata.items() if data[1]
+        },
+        components={
+            apverid: data[2] for apverid, data in langdata.items() if data[2]
+        },
+    )
+
+
+class _NativeLstrMaker:
+    """Callable leaf: builds a native LangStr from keyword subs."""
+
+    __slots__ = ('_apverid', '_name', '_display_kinds')
+
+    def __init__(
+        self,
+        apverid: str,
+        name: str,
+        display_kinds: dict[str, str] | None = None,
+    ) -> None:
+        self._apverid = apverid
+        self._name = name
+        self._display_kinds = display_kinds
+
+    def _format_display_sub(
+        self, key: str, val: str | int | babase.LangStr
+    ) -> str | int | babase.LangStr:
+        """Preformat one display-formatted sub value for the current locale.
+
+        The native language table substitutes plain text; it has no
+        formatter hook, so a display-formatted param (a byte count
+        rendered as "1.2 GB") gets its final text here, at LangStr
+        construction. The known trade against true display-time
+        rendering: an already-built LangStr keeps the construction
+        locale's rendering until rebuilt (the language-change cascade
+        rebuilds visible UI, so this matches how other dynamic values
+        behave). Fail-soft: any render problem falls back to the raw
+        value, so UI shows an unformatted number rather than an error.
+        """
+        from bacommon.langstr import render_display_param
+
+        assert self._display_kinds is not None
+        if isinstance(val, _babase.LangStr):
+            return val
+        try:
+            locale = _babase.app.locale.current_locale
+            return render_display_param(
+                self._display_kinds[key],
+                val,
+                locale,
+                _babase.app.assets.get_package_components_cached(
+                    self._apverid, locale
+                ),
+            )
+        except Exception:
+            applog.warning(
+                'Error display-formatting sub %r of %s:%s; passing raw'
+                ' value through.',
+                key,
+                self._apverid,
+                self._name,
+                exc_info=True,
+            )
+            return val
+
+    def __call__(
+        self,
+        now: datetime.datetime | None = None,
+        **subs: (
+            str | int | babase.LangStr | datetime.datetime | datetime.timedelta
+        ),
+    ) -> babase.LangStr:
+        from bacommon.langstr import LangStrSpecResource, time_sub_millis
+
+        # Time-typed values (duration params take a timedelta or an
+        # aware datetime; the ms-int wire form is an implementation
+        # detail) convert first, sharing one ``now`` so a batch of
+        # renders can't drift. ``now`` can never shadow a real param:
+        # the brief grammar reserves the name for exactly this use.
+        converted: dict[str, str | int | babase.LangStr] = {}
+        for key, val in subs.items():
+            if isinstance(val, (datetime.datetime, datetime.timedelta)):
+                if now is None and isinstance(val, datetime.datetime):
+                    from efro.util import utc_now
+
+                    now = utc_now()
+                converted[key] = time_sub_millis(val, now)
+            else:
+                converted[key] = val
+
+        kinds = self._display_kinds
+        if kinds:
+            converted = {
+                key: (
+                    self._format_display_sub(key, val) if key in kinds else val
+                )
+                for key, val in converted.items()
+            }
+        return _native_from_spec(
+            LangStrSpecResource(
+                self._apverid,
+                self._name,
+                {
+                    key: (val.spec if isinstance(val, _babase.LangStr) else val)
+                    for key, val in converted.items()
+                },
+            )
+        )
+
+
+class LangStrDir:
+    """Runtime accessor tree for client-destined asset-package wrappers.
+
+    The verified-local counterpart of
+    :class:`bacommon.langstr.LangStrDir`: generated client wrapper
+    modules instantiate this over the same tree data, and string leaves
+    yield native :class:`babase.LangStr` values (per the D28 semantic
+    split — the construct-mode resolve that gates wrapper use
+    guarantees these strings are locally displayable).
+    """
+
+    __slots__ = ('_apverid', '_tree', '_prefix', '_display_kinds')
+
+    def __init__(
+        self,
+        apverid: str,
+        tree: bacommon.langstr.WrapperTree,
+        prefix: str = '',
+        display_kinds: dict[str, dict[str, str]] | None = None,
+    ) -> None:
+        self._apverid = apverid
+        self._tree = tree
+        self._prefix = prefix
+        #: ``{leaf-path: {param: display-kind expression}}`` baked into
+        #: the generated module for display-formatted params
+        #: (``{size|data_size}``); absent on formatter-free packages
+        #: and on modules generated before this existed.
+        self._display_kinds = display_kinds
+
+    def __getattr__(
+        self, name: str
+    ) -> babase.LangStr | _NativeLstrMaker | LangStrDir:
+        try:
+            child = self._tree[name]
+        except KeyError:
+            raise AttributeError(name) from None
+        full = f'{self._prefix}/{name}' if self._prefix else name
+        if isinstance(child, dict):
+            return LangStrDir(
+                self._apverid, child, full, display_kinds=self._display_kinds
+            )
+        # A leaf access is the point a string actually gets read out of a
+        # package, so gate it the same way loadable assets are. Strings
+        # need their own check: they resolve through the native language
+        # table (see Assets::ReloadLanguage) rather than FindAssetFile,
+        # so the native asset-load gate never sees them.
+        # pylint: disable-next=cyclic-import
+        from babase._asset_packages import check_asset_package_load
+
+        check_asset_package_load(self._apverid, full)
+        # A leaf: its param-keyword tuple. Empty -> a no-arg string,
+        # read as a property yielding the native LangStr directly;
+        # otherwise a maker.
+        if not child:
+            from bacommon.langstr import LangStrSpecResource
+
+            return _native_from_spec(LangStrSpecResource(self._apverid, full))
+        return _NativeLstrMaker(
+            self._apverid,
+            full,
+            display_kinds=(
+                None
+                if self._display_kinds is None
+                else self._display_kinds.get(full)
+            ),
+        )
 
 
 def get_legacy_langdata() -> dict[str, Any]:
@@ -27,8 +358,8 @@ def get_legacy_langdata() -> dict[str, Any]:
 
     This is the legacy ``langdata.json`` payload (translated language
     names + translation contributors), now sourced from the builtin
-    asset-package's flavor-invariant ``constant`` bucket
-    (``legacylangdata.json``) rather than a bundled data file.
+    asset-package's flavor-invariant ``constant`` bucket (logical path
+    ``legacylangdata``) rather than a bundled data file.
 
     Returns ``{}`` when the blob is unavailable (headless / no bundled
     asset-package manifest / not yet resolved) or on any read error, so
@@ -48,7 +379,7 @@ def get_legacy_langdata() -> dict[str, Any]:
     result: dict[str, Any] = {}
     for apverid in loaded_asset_package_apverids():
         path = _babase.get_asset_package_constant_blob_path(
-            apverid, 'legacylangdata.json'
+            apverid, 'legacylangdata'
         )
         if path is None:
             continue
@@ -200,7 +531,8 @@ class LanguageSubsystem(AppSubsystem):
         # migration Step A); switching to other locales lands in Step B.
         from babase._asset_packages import loaded_asset_package_apverids
 
-        _babase.reload_language(loaded_asset_package_apverids())
+        plural_locale = _babase.app.locale.current_locale.resolved.locale.value
+        _babase.reload_language(loaded_asset_package_apverids(), plural_locale)
 
         if switched and print_change:
             _babase.screenmessage(

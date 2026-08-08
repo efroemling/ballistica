@@ -45,8 +45,11 @@ from babase import (
     increment_analytics_count,
     InputType,
     is_point_in_box,
+    LangStr,
+    langstr_value,
     lock_all_input,
     Lstr,
+    translate_server_text,
     NodeNotFoundError,
     normalized_color,
     NotFoundError,
@@ -79,7 +82,6 @@ from _bascenev1 import (
     chatmessage,
     client_info_query_response,
     CollisionMesh,
-    connect_to_party,
     Data,
     disconnect_client,
     disconnect_from_host,
@@ -90,6 +92,7 @@ from _bascenev1 import (
     get_connection_to_host_info,
     get_connection_to_host_info_2,
     get_foreground_host_activity,
+    get_replay_asset_packages,
     get_foreground_host_session,
     get_game_port,
     get_game_roster,
@@ -119,7 +122,6 @@ from _bascenev1 import (
     Material,
     Mesh,
     new_host_session,
-    new_replay_session,
     newactivity,
     newnode,
     Node,
@@ -139,6 +141,8 @@ from _bascenev1 import (
     set_authenticate_clients,
     set_chat_muted_player_names,
     set_debug_speed_exponent,
+    set_host_password,
+    set_hosting_asset_packages,
     set_enable_default_kick_voting,
     set_internal_music,
     set_map_bounds,
@@ -160,6 +164,12 @@ from _bascenev1 import (
 )
 from bascenev1._activity import Activity
 from bascenev1._activitytypes import JoinActivity, ScoreScreenActivity
+from bascenev1._assetref import (
+    TextureVerifiedSpec,
+    MeshVerifiedSpec,
+    SoundVerifiedSpec,
+    CollisionMeshVerifiedSpec,
+)
 from bascenev1._actor import Actor
 from bascenev1._campaign import init_campaigns, Campaign
 from bascenev1._collision import Collision, getcollision
@@ -214,15 +224,32 @@ from bascenev1._multiteamsession import (
     DEFAULT_TEAM_NAMES,
 )
 from bascenev1._music import MusicType, setmusic
-from bascenev1._net import HostInfo
+from bascenev1._net import (
+    connect_to_party,
+    fetch_host_requirements,
+    HostInfo,
+    HostProbeOutcome,
+    HostRequirements,
+)
 from bascenev1._nodeactor import NodeActor
 from bascenev1._powerup import get_default_powerup_distribution
+from bascenev1._replay import (
+    new_replay_session,
+    prepare_replay,
+    launch_replay,
+)
 from bascenev1._profile import (
     get_player_colors,
     get_player_profile_icon,
     get_player_profile_colors,
 )
-from bascenev1._player import PlayerInfo, Player, EmptyPlayer, StandLocation
+from bascenev1._player import (
+    PlayerInfo,
+    Player,
+    EmptyPlayer,
+    StandLocation,
+    FeedbackEvent,
+)
 from bascenev1._playlist import (
     get_default_free_for_all_playlist,
     get_default_teams_playlist,
@@ -253,6 +280,10 @@ __all__ = [
     'ActivityData',
     'ActivityNotFoundError',
     'Actor',
+    'TextureVerifiedSpec',
+    'SoundVerifiedSpec',
+    'MeshVerifiedSpec',
+    'CollisionMeshVerifiedSpec',
     'animate',
     'animate_array',
     'add_clean_frame_callback',
@@ -329,6 +360,7 @@ __all__ = [
     'get_default_powerup_distribution',
     'get_filtered_map_name',
     'get_foreground_host_activity',
+    'get_replay_asset_packages',
     'get_foreground_host_session',
     'get_game_port',
     'get_game_roster',
@@ -359,7 +391,10 @@ __all__ = [
     'have_connected_clients',
     'have_touchscreen_input',
     'HitMessage',
+    'fetch_host_requirements',
     'HostInfo',
+    'HostProbeOutcome',
+    'HostRequirements',
     'host_scan_cycle',
     'ImpactDamageMessage',
     'increment_analytics_count',
@@ -375,10 +410,13 @@ __all__ = [
     'JoinInfo',
     'Level',
     'Lobby',
+    'LangStr',
+    'langstr_value',
     'lock_all_input',
     'ls_input_devices',
     'ls_objects',
     'Lstr',
+    'translate_server_text',
     'Map',
     'Material',
     'Mesh',
@@ -386,6 +424,8 @@ __all__ = [
     'MusicType',
     'new_host_session',
     'new_replay_session',
+    'prepare_replay',
+    'launch_replay',
     'newactivity',
     'newnode',
     'Node',
@@ -435,8 +475,9 @@ __all__ = [
     'set_authenticate_clients',
     'set_chat_muted_player_names',
     'set_debug_speed_exponent',
-    'set_debug_speed_exponent',
     'set_enable_default_kick_voting',
+    'set_host_password',
+    'set_hosting_asset_packages',
     'set_internal_music',
     'set_map_bounds',
     'set_master_server_source',
@@ -457,6 +498,7 @@ __all__ = [
     'show_damage_count',
     'Sound',
     'StandLocation',
+    'FeedbackEvent',
     'StandMessage',
     'Stats',
     'storagename',

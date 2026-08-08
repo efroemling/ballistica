@@ -1212,6 +1212,17 @@ class Spaz(bs.Actor):
             if node.getdelegate(PowerupBox):
                 return None
 
+            # Prevent punches against other Spaz characters shortly
+            # before or after grabbing.
+            punch_time_diff = self.last_punch_time_ms - self.last_pickup_time_ms
+            release_time_diff = (
+                int(bs.time() * 1000) - self.node.pickup_release_time_ms
+            )
+            if node.getdelegate(Spaz) and (
+                0 <= punch_time_diff <= 70 or release_time_diff <= 360
+            ):
+                return None
+
             # Only allow one hit per node per punch.
             if node and (node not in self._punched_nodes):
                 punch_momentum_angular = (

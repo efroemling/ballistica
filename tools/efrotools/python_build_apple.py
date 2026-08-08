@@ -74,6 +74,7 @@ LIBFFI_VER = '3.4.7-2'
 XZ_VER = '5.6.4-2'
 BZIP2_VER = '1.0.8-2'
 MPDECIMAL_VER = '4.0.0-2'
+ZSTD_VER = '1.5.7-1'
 
 # Deployment targets.
 MACOS_MIN = '11.0'
@@ -277,6 +278,7 @@ def _check_beeware_versions(cache_dir: str) -> None:
         ('XZ_VERSION', XZ_VER, 'XZ_VER'),
         ('BZIP2_VERSION', BZIP2_VER, 'BZIP2_VER'),
         ('MPDECIMAL_VERSION', MPDECIMAL_VER, 'MPDECIMAL_VER'),
+        ('ZSTD_VERSION', ZSTD_VER, 'ZSTD_VER'),
     ]
     mismatches: list[str] = []
     for var, our_val, our_name in checks:
@@ -641,6 +643,66 @@ def _build_macos_bzip2_source(deps_dir: str, arch: str, cache_dir: str) -> None:
     )
 
 
+def _build_macos_zstd_source(deps_dir: str, arch: str, cache_dir: str) -> None:
+    """Build zstd (libzstd) from source into deps_dir for macOS/arch.
+
+    Backs Python 3.14's _zstd module (stdlib compression.zstd), which
+    the client asset pipeline needs at runtime to decode
+    zstd-compressed CAS blobs. Mirrors python_build_android._build_zstd;
+    BeeWare has no macOS (desktop) dep tarballs, so we build from the
+    upstream source release matching the BeeWare version pin.
+    """
+    ver = _macos_src_ver(ZSTD_VER)
+    url = (
+        f'https://github.com/facebook/zstd/releases/'
+        f'download/v{ver}/zstd-{ver}.tar.gz'
+    )
+    tarball = _fetch(url, cache_dir)
+    src_parent = os.path.join(deps_dir, '_src_zstd')
+    srcdir = _extract(tarball, src_parent)
+    env = _clean_macos_dep_env(arch)
+    cc = env['CC']
+    ar = env['AR']
+    cflags = env['CFLAGS']
+    # zstd uses a plain Makefile with no configure. Build just the
+    # static lib; Python's _zstd module is our only consumer. CC in
+    # _clean_macos_dep_env already carries -target; fold the sysroot
+    # CFLAGS in explicitly since zstd's Makefile overrides CFLAGS.
+    subprocess.run(
+        [
+            'make',
+            f'-j{_cpus()}',
+            '-C',
+            'lib',
+            'libzstd.a',
+            f'CC={cc}',
+            f'AR={ar}',
+            f'CFLAGS={cflags} -O2',
+        ],
+        cwd=srcdir,
+        env=env,
+        check=True,
+    )
+    # Manual install (the Makefile's install target also wants shared
+    # libs and pkg-config bits; we just need the static lib and the
+    # public headers _zstdmodule.c includes).
+    os.makedirs(os.path.join(deps_dir, 'include'), exist_ok=True)
+    os.makedirs(os.path.join(deps_dir, 'lib'), exist_ok=True)
+    for hdr in ['zstd.h', 'zdict.h', 'zstd_errors.h']:
+        shutil.copy2(
+            os.path.join(srcdir, 'lib', hdr),
+            os.path.join(deps_dir, 'include'),
+        )
+    shutil.copy2(
+        os.path.join(srcdir, 'lib', 'libzstd.a'),
+        os.path.join(deps_dir, 'lib'),
+    )
+    subprocess.run(
+        [env['RANLIB'], os.path.join(deps_dir, 'lib', 'libzstd.a')],
+        check=True,
+    )
+
+
 def _build_macos_deps_from_source(
     deps_dir: str, arch: str, cache_dir: str
 ) -> tuple[str, str, str]:
@@ -654,6 +716,7 @@ def _build_macos_deps_from_source(
     _build_macos_openssl_source(deps_dir, arch, cache_dir)
     _build_macos_xz_source(deps_dir, arch, cache_dir)
     _build_macos_bzip2_source(deps_dir, arch, cache_dir)
+    _build_macos_zstd_source(deps_dir, arch, cache_dir)
     # mpdecimal: Python 3.13 bundles a copy of mpdecimal (HACL*-accelerated)
     # and CPython's configure will use it automatically when
     # --with-system-libmpdec is absent.  No need to build it from source for
@@ -897,6 +960,28 @@ def _check_no_shared_modules(installdir: str, slice_name: str) -> None:
     print(f'  Static-module check passed for {slice_name}.')
 
 
+def _check_zstd_in_libpython(src_lib: str, slice_name: str) -> None:
+    """Fail if the _zstd module didn't make it into libpython.
+
+    _zstd is enabled via pybuild.patch_modules_setup, but it only
+    actually builds if Python's configure detected libzstd (via the
+    LIBZSTD_* flags we pass). If detection quietly fails, configure
+    just marks the module missing and the breakage only shows up as a
+    runtime ModuleNotFoundError in the app; catch it at build time
+    instead. (Mirrors python_build_android._check_zstd_in_libpython.)
+    """
+    if PY_VER == '3.13':
+        return
+    # Host ar can list archives for any target arch.
+    listing = subprocess.check_output(['ar', 't', src_lib]).decode()
+    if '_zstdmodule.o' not in listing:
+        raise RuntimeError(
+            f'Apple/{slice_name}: _zstdmodule.o not found in libpython;'
+            f' configure likely failed to detect libzstd.'
+        )
+    print(f'  _zstd static-inclusion check passed for {slice_name}.')
+
+
 # ---------------------------------------------------------------------------
 # Main build function
 # ---------------------------------------------------------------------------
@@ -1020,6 +1105,7 @@ def build(rootdir: str, slice_name: str) -> None:
             ('BZip2', BZIP2_VER),
             ('mpdecimal', MPDECIMAL_VER),
             ('libFFI', LIBFFI_VER),
+            ('zstd', ZSTD_VER),
         ]
 
         dep_sdk = _SDK_DEP_TAG[sdk]
@@ -1110,6 +1196,15 @@ def build(rootdir: str, slice_name: str) -> None:
     env['BZIP2_CFLAGS'] = extra_cflags
     env['BZIP2_LIBS'] = extra_libs + ' -lbz2'
 
+    # zstd: configure looks for libzstd via PKG_CHECK_MODULES([LIBZSTD]);
+    # pass the flags directly so it finds our static dep build (BeeWare
+    # prebuilt tarball on embedded slices, source-built on macOS)
+    # without pkg-config. Backs the _zstd module (stdlib
+    # compression.zstd), which the client asset pipeline needs at
+    # runtime to decode zstd-compressed CAS blobs.
+    env['LIBZSTD_CFLAGS'] = extra_cflags
+    env['LIBZSTD_LIBS'] = extra_libs + ' -lzstd'
+
     # mpdecimal: non-macOS slices use BeeWare's prebuilt mpdecimal.
     # macOS uses Python's bundled copy (no --with-system-libmpdec in configure).
     if not is_macos:
@@ -1193,6 +1288,10 @@ def build(rootdir: str, slice_name: str) -> None:
             f'Expected exactly one libpython .a, found: {matches}'
         )
     src_lib = matches[0]
+
+    # Verify _zstd actually got compiled in (3.14+).
+    print('Checking for static _zstd module...')
+    _check_zstd_in_libpython(src_lib, slice_name)
 
     # ------------------------------------------------------------------
     # 9d. Collect all dep .a files and merge into one fat archive.

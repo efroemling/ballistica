@@ -9,6 +9,7 @@ import bauiv1 as bui
 from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from typing import Any, Callable
     from enum import Enum
 
@@ -31,7 +32,7 @@ class TabRow[T: Enum]:
     def __init__(
         self,
         parent: bui.Widget,
-        tabdefs: list[tuple[T, bui.Lstr]],
+        tabdefs: Sequence[tuple[T, bui.Lstr | bui.LangStr]],
         pos: tuple[float, float],
         size: tuple[float, float],
         *,

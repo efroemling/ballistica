@@ -91,12 +91,17 @@ class _MacMusicAppThread(threading.Thread):
         # Let's mention to the user we're launching Music.app in case
         # it causes any funny business (this used to background the app
         # sometimes, though I think that is fixed now)
+        # Safe up-call: the featureset is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import classicassets
+
         def do_print() -> None:
             babase.apptimer(
                 0.5,
                 babase.CallStrict(
                     babase.screenmessage,
-                    babase.Lstr(resource='usingItunesText'),
+                    classicassets.strings.soundtrack.using_music_app,
                     (0, 1, 0),
                 ),
             )

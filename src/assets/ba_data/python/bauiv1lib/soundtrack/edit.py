@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, cast, override
 import bascenev1 as bs
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -27,8 +27,8 @@ class SoundtrackEditWindow(bui.MainWindow):
 
         appconfig = bui.app.config
         self._r = 'editSoundtrackWindow'
-        self._folder_tex = stdassets.textures.folder.get()
-        self._file_tex = stdassets.textures.file.get()
+        self._folder_tex = classicassets.textures.folder.get()
+        self._file_tex = classicassets.textures.file.get()
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         self._width = 1200 if uiscale is bui.UIScale.SMALL else 648
@@ -80,7 +80,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             position=(x_inset + 10, yoffs - 60),
             size=(160, 60),
             autoselect=True,
-            label=bui.Lstr(resource='cancelText'),
+            label=_commonassets.strings.actions.cancel,
             scale=0.8,
         )
         save_button = bui.buttonwidget(
@@ -93,7 +93,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             ),
             autoselect=True,
             size=(160, 60),
-            label=bui.Lstr(resource='saveText'),
+            label=_commonassets.strings.actions.save,
             scale=0.8,
         )
         bui.widget(edit=save_button, left_widget=cancel_button)
@@ -102,13 +102,10 @@ class SoundtrackEditWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(0, yoffs - 50),
             size=(self._width, 25),
-            text=bui.Lstr(
-                resource=self._r
-                + (
-                    '.editSoundtrackText'
-                    if existing_soundtrack is not None
-                    else '.newSoundtrackText'
-                )
+            text=(
+                classicassets.strings.soundtrack.edit_soundtrack
+                if existing_soundtrack is not None
+                else classicassets.strings.soundtrack.new_soundtrack
             ),
             color=bui.app.ui_v1.title_color,
             h_align='center',
@@ -149,7 +146,7 @@ class SoundtrackEditWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            text=bui.Lstr(resource=f'{self._r}.nameText'),
+            text=_commonassets.strings.values.name,
             maxwidth=80,
             scale=0.8,
             position=(105 + x_inset, v + 19),
@@ -183,7 +180,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             v_align='center',
             max_chars=32,
             autoselect=True,
-            description=bui.Lstr(resource=f'{self._r}.nameText'),
+            description=_commonassets.strings.values.name,
             editable=True,
             padding=4,
             on_return_press_call=self._do_it_with_sound,
@@ -361,7 +358,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             btn = bui.buttonwidget(
                 parent=row,
                 size=(50, 32),
-                label=bui.Lstr(resource=f'{self._r}.testText'),
+                label=classicassets.strings.soundtrack.test,
                 text_scale=0.6,
                 on_activate_call=bui.CallStrict(
                     self._test, bs.MusicType(song_type)
@@ -450,7 +447,7 @@ class SoundtrackEditWindow(bui.MainWindow):
         if bui.app.config.resolve('Music Volume') < 0.01:
             builtinassets.audio.error.get().play()
             bui.screenmessage(
-                bui.Lstr(resource=f'{self._r}.musicVolumeZeroWarning'),
+                classicassets.strings.soundtrack.music_volume_zero_warning,
                 color=(1, 0.5, 0),
             )
         music.set_music_play_mode(bui.app.classic.MusicPlayMode.TEST)
@@ -460,13 +457,15 @@ class SoundtrackEditWindow(bui.MainWindow):
             testsoundtrack=self._soundtrack,
         )
 
-    def _get_entry_button_display_name(self, entry: Any) -> str | bui.Lstr:
+    def _get_entry_button_display_name(
+        self, entry: Any
+    ) -> str | bui.Lstr | bui.LangStr:
         assert bui.app.classic is not None
         music = bui.app.classic.music
         etype = music.get_soundtrack_entry_type(entry)
-        ename: str | bui.Lstr
+        ename: str | bui.Lstr | bui.LangStr
         if etype == 'default':
-            ename = bui.Lstr(resource=f'{self._r}.defaultGameMusicText')
+            ename = classicassets.strings.soundtrack.default_game_music
         elif etype in ('musicFile', 'musicFolder'):
             ename = os.path.basename(music.get_soundtrack_entry_name(entry))
         else:
@@ -510,7 +509,7 @@ class SoundtrackEditWindow(bui.MainWindow):
         new_name = cast(str, bui.textwidget(query=self._text_field))
         if new_name != self._soundtrack_name and new_name in cfg['Soundtracks']:
             bui.screenmessage(
-                bui.Lstr(resource=f'{self._r}.cantSaveAlreadyExistsText')
+                classicassets.strings.soundtrack.cant_save_already_exists
             )
             builtinassets.audio.error.get().play()
             return
@@ -519,12 +518,12 @@ class SoundtrackEditWindow(bui.MainWindow):
             return
         if (
             new_name
-            == bui.Lstr(
-                resource=f'{self._r}.defaultSoundtrackNameText'
-            ).evaluate()
+            == (
+                classicassets.strings.soundtrack
+            ).default_soundtrack_name.evaluate()
         ):
             bui.screenmessage(
-                bui.Lstr(resource=f'{self._r}.cantOverwriteDefaultText')
+                classicassets.strings.soundtrack.cant_overwrite_default
             )
             builtinassets.audio.error.get().play()
             return

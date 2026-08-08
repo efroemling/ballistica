@@ -5,6 +5,7 @@
 from typing import override, TYPE_CHECKING, Any, cast
 
 import bascenev1 as bs
+from bascenev1 import _commonassets, classicassets
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 
@@ -43,9 +44,9 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         )
         assert bs.app.classic is not None
         if bs.app.ui_v1.uiscale is bs.UIScale.LARGE:
-            sval = bs.Lstr(resource='pressAnyKeyButtonPlayAgainText')
+            sval = classicassets.strings.game.press_any_key_button_play_again
         else:
-            sval = bs.Lstr(resource='pressAnyButtonPlayAgainText')
+            sval = classicassets.strings.game.press_any_button_play_again
         self._show_up_next = False
         self._custom_continue_message = sval
         super().on_begin()
@@ -102,22 +103,10 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         session = self.session
         if self._is_ffa:
             assert isinstance(session, bs.FreeForAllSession)
-            txt = bs.Lstr(
-                value='${A}:',
-                subs=[
-                    (
-                        '${A}',
-                        bs.Lstr(
-                            resource='firstToFinalText',
-                            subs=[
-                                (
-                                    '${COUNT}',
-                                    str(session.get_ffa_series_length()),
-                                )
-                            ],
-                        ),
-                    )
-                ],
+            txt = _commonassets.strings.compose.heading_suffix(
+                main=classicassets.strings.multi_team.first_to_final(
+                    count=str(session.get_ffa_series_length())
+                )
             )
         else:
             assert isinstance(session, bs.MultiTeamSession)
@@ -128,42 +117,16 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             #  they're not using this language. Should try to come up
             #  with a wording that works everywhere.
             if always_use_first_to:
-                txt = bs.Lstr(
-                    value='${A}:',
-                    subs=[
-                        (
-                            '${A}',
-                            bs.Lstr(
-                                resource='firstToFinalText',
-                                subs=[
-                                    (
-                                        '${COUNT}',
-                                        str(
-                                            session.get_series_length() / 2 + 1
-                                        ),
-                                    )
-                                ],
-                            ),
-                        )
-                    ],
+                txt = _commonassets.strings.compose.heading_suffix(
+                    main=classicassets.strings.multi_team.first_to_final(
+                        count=str(session.get_series_length() / 2 + 1)
+                    )
                 )
             else:
-                txt = bs.Lstr(
-                    value='${A}:',
-                    subs=[
-                        (
-                            '${A}',
-                            bs.Lstr(
-                                resource='bestOfFinalText',
-                                subs=[
-                                    (
-                                        '${COUNT}',
-                                        str(session.get_series_length()),
-                                    )
-                                ],
-                            ),
-                        )
-                    ],
+                txt = _commonassets.strings.compose.heading_suffix(
+                    main=classicassets.strings.multi_team.best_of_final(
+                        count=str(session.get_series_length())
+                    )
                 )
 
         Text(
@@ -187,12 +150,8 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
         if not self._is_ffa:
             Text(
-                bs.Lstr(
-                    resource='gamesToText',
-                    subs=[
-                        ('${WINCOUNT}', str(win_score)),
-                        ('${LOSECOUNT}', str(lose_score)),
-                    ],
+                classicassets.strings.multi_team.games_to(
+                    wincount=str(win_score), losecount=str(lose_score)
                 ),
                 color=(0.5, 0.5, 0.5, 1.0),
                 maxwidth=160,
@@ -222,7 +181,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                     break
             if mvp is not None:
                 Text(
-                    bs.Lstr(resource='mostValuablePlayerText'),
+                    classicassets.strings.multi_team.most_valuable_player,
                     color=(0.5, 0.5, 0.5, 1.0),
                     v_align=Text.VAlign.CENTER,
                     maxwidth=300,
@@ -242,7 +201,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 ).autoretain()
                 assert mvp_name is not None
                 Text(
-                    bs.Lstr(value=mvp_name),
+                    mvp_name,
                     position=(280, ts_height / 2 - 55 + 15 - 5),
                     h_align=Text.HAlign.LEFT,
                     v_align=Text.VAlign.CENTER,
@@ -263,7 +222,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 most_kills = entry[2].kill_count
         if mvp is not None:
             Text(
-                bs.Lstr(resource='mostViolentPlayerText'),
+                classicassets.strings.multi_team.most_violent_player,
                 color=(0.5, 0.5, 0.5, 1.0),
                 v_align=Text.VAlign.CENTER,
                 maxwidth=300,
@@ -273,17 +232,10 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 transition_delay=tval,
             ).autoretain()
             Text(
-                bs.Lstr(
-                    value='(${A})',
-                    subs=[
-                        (
-                            '${A}',
-                            bs.Lstr(
-                                resource='killsTallyText',
-                                subs=[('${COUNT}', str(most_kills))],
-                            ),
-                        )
-                    ],
+                _commonassets.strings.compose.parenthesized(
+                    note=classicassets.strings.multi_team.kills_tally(
+                        count=str(most_kills)
+                    )
                 ),
                 position=(260, ts_height / 2 - 150 - 15 + v_extra),
                 color=(0.3, 0.3, 0.3, 1.0),
@@ -303,7 +255,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             assert mvp_name is not None
             Text(
-                bs.Lstr(value=mvp_name),
+                mvp_name,
                 position=(270, ts_height / 2 - 150 - 30 - 36 + v_extra + 15),
                 h_align=Text.HAlign.LEFT,
                 v_align=Text.VAlign.CENTER,
@@ -324,7 +276,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 most_killed = entry[2].killed_count
         if mkp is not None:
             Text(
-                bs.Lstr(resource='mostDestroyedPlayerText'),
+                classicassets.strings.multi_team.most_destroyed_player,
                 color=(0.5, 0.5, 0.5, 1.0),
                 v_align=Text.VAlign.CENTER,
                 maxwidth=300,
@@ -334,17 +286,10 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 transition_delay=tval,
             ).autoretain()
             Text(
-                bs.Lstr(
-                    value='(${A})',
-                    subs=[
-                        (
-                            '${A}',
-                            bs.Lstr(
-                                resource='deathsTallyText',
-                                subs=[('${COUNT}', str(most_killed))],
-                            ),
-                        )
-                    ],
+                _commonassets.strings.compose.parenthesized(
+                    note=classicassets.strings.multi_team.deaths_tally(
+                        count=str(most_killed)
+                    )
                 ),
                 position=(260, ts_height / 2 - 300 - 15 + v_extra),
                 h_align=Text.HAlign.LEFT,
@@ -363,7 +308,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             assert mkp_name is not None
             Text(
-                bs.Lstr(value=mkp_name),
+                mkp_name,
                 position=(270, ts_height / 2 - 300 - 30 - 36 + v_extra + 15),
                 h_align=Text.HAlign.LEFT,
                 v_align=Text.VAlign.CENTER,
@@ -377,7 +322,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         # Now show individual scores.
         tdelay = tval
         Text(
-            bs.Lstr(resource='finalScoresText'),
+            classicassets.strings.game.final_scores,
             color=(0.5, 0.5, 0.5, 1.0),
             position=(ts_h_offs, ts_height / 2),
             transition=Text.Transition.IN_RIGHT,
@@ -412,7 +357,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 transition_delay=tdelay,
             ).autoretain()
             Text(
-                bs.Lstr(value=name),
+                name,
                 position=(ts_h_offs - 50, ts_height / 2 + v_offs + 15),
                 h_align=Text.HAlign.LEFT,
                 v_align=Text.VAlign.CENTER,
@@ -478,7 +423,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 bs.animate(i.node, 'opacity', {0.0: 0.0, 0.25: 1.0})
 
             ZoomText(
-                bs.Lstr(value=player_name),
+                player_name,
                 position=(0, 97 + offs_v + (0 if icon is not None else 60)),
                 color=team.color,
                 scale=1.15,
@@ -488,15 +433,12 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
         s_extra = 1.0 if self._is_ffa else 1.0
 
-        # Some languages say "FOO WINS" differently for teams vs players.
-        if isinstance(self.session, bs.FreeForAllSession):
-            wins_resource = 'seriesWinLine1PlayerText'
-        else:
-            wins_resource = 'seriesWinLine1TeamText'
-        wins_text = bs.Lstr(resource=wins_resource)
+        # The legacy system had separate player-vs-team wordings
+        # here purely because translation coverage differed
+        # between them; the opening phrase itself is identical, so
+        # the ported entry is shared.
+        wins_text = classicassets.strings.multi_team.wins_the_series_intro
 
-        # Temp - if these come up as the english default, fall-back to the
-        # unified old form which is more likely to be translated.
         ZoomText(
             wins_text,
             position=(0, -10 + offs_v),
@@ -506,7 +448,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             maxwidth=250,
         ).autoretain()
         ZoomText(
-            bs.Lstr(resource='seriesWinLine2Text'),
+            classicassets.strings.multi_team.series,
             position=(0, -110 + offs_v),
             scale=1.0 * s_extra,
             color=team.color,

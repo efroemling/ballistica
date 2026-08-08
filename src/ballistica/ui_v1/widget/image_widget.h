@@ -68,6 +68,7 @@ class ImageWidget : public Widget {
   void set_transition_type(TransitionType val) { transition_type_ = val; }
   void set_tilt_scale(float s) { tilt_scale_ = s; }
   void set_radial_amount(float val) { radial_amount_ = val; }
+  void set_rotate(float val) { rotate_ = val; }
 
  private:
   TransitionType transition_type_{TransitionType::kInLeft};
@@ -101,6 +102,7 @@ class ImageWidget : public Widget {
   float opacity_{1.0f};
   float draw_controller_mult_{1.0f};
   float flatness_{0.0f};
+  float rotate_{0.0f};
 };
 
 }  // namespace ballistica::ui_v1

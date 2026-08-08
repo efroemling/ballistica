@@ -71,6 +71,11 @@ def is_browser_likely_available() -> bool:
 
 def get_remote_app_name() -> babase.Lstr:
     """:meta private:"""
+    # Deferred: its one remaining consumer (tipstext) feeds this
+    # into a legacy translate=tips composite, which ports in the
+    # D35 phase. Callers that can use a LangStr should reference
+    # builtinassets.strings.ui.remote_app_name directly instead
+    # (controlsguide already does).
     from babase import _language
 
     return _language.Lstr(resource='remote_app.app_name')

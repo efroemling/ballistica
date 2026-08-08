@@ -5,6 +5,7 @@
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Sequence
@@ -217,50 +218,48 @@ class CreditsWindow(bui.MainWindow):
         # (or add mesh splitting under the hood)
         credits_text = (
             '  '
-            + bui.Lstr(resource=f'{self._r}.codingGraphicsAudioText')
-            .evaluate()
-            .replace('${NAME}', 'Eric Froemling')
+            + classicassets.strings.credits.coding_graphics_audio(
+                name='Eric Froemling'
+            ).evaluate()
             + '\n'
             '\n'
             '  '
-            + bui.Lstr(resource=f'{self._r}.additionalAudioArtIdeasText')
-            .evaluate()
-            .replace('${NAME}', 'Raphael Suter')
+            + classicassets.strings.credits.additional_audio_art_ideas(
+                name='Raphael Suter'
+            ).evaluate()
             + '\n'
             '\n'
             '  '
-            + bui.Lstr(resource=f'{self._r}.soundAndMusicText').evaluate()
+            + classicassets.strings.credits.sound_and_music.evaluate()
             + '\n'
             '\n' + sound_and_music + '\n'
             '\n'
             '     '
-            + bui.Lstr(resource=f'{self._r}.publicDomainMusicViaText')
-            .evaluate()
-            .replace('${NAME}', 'Musopen.com')
+            + classicassets.strings.credits.public_domain_music_via(
+                name='Musopen.com'
+            ).evaluate()
             + '\n'
             '        '
-            + bui.Lstr(resource=f'{self._r}.thanksEspeciallyToText')
-            .evaluate()
-            .replace('${NAME}', 'the US Army, Navy, and Marine Bands')
+            + classicassets.strings.credits.thanks_especially_to(
+                name='the US Army, Navy, and Marine Bands'
+            ).evaluate()
             + '\n'
             '\n'
             '     '
-            + bui.Lstr(resource=f'{self._r}.additionalMusicFromText')
-            .evaluate()
-            .replace('${NAME}', 'The YouTube Audio Library')
+            + classicassets.strings.credits.additional_music_from(
+                name='The YouTube Audio Library'
+            ).evaluate()
             + '\n'
             '\n'
             '     '
-            + bui.Lstr(resource=f'{self._r}.soundsText')
-            .evaluate()
-            .replace('${SOURCE}', 'Freesound.org')
+            + classicassets.strings.credits.sounds_source(
+                source='Freesound.org'
+            ).evaluate()
             + '\n'
             '\n' + freesound_names + '\n'
             '\n'
             '  '
-            + bui.Lstr(
-                resource=f'{self._r}.languageTranslationsText'
-            ).evaluate()
+            + classicassets.strings.credits.language_translations.evaluate()
             + '\n'
             '\n'
             + '\n'.join(translation_names.splitlines()[:146])
@@ -281,27 +280,25 @@ class CreditsWindow(bui.MainWindow):
             '  Holiday theme vector art designed by Freepik\n'
             '\n'
             '  '
-            + bui.Lstr(resource=f'{self._r}.specialThanksText').evaluate()
+            + classicassets.strings.credits.special_thanks.evaluate()
             + '\n'
             '\n'
             '     Todd, Laura, and Robert Froemling\n'
             '     '
-            + bui.Lstr(resource=f'{self._r}.allMyFamilyText')
-            .evaluate()
-            .replace('\n', '\n     ')
+            + classicassets.strings.credits.all_my_family.evaluate().replace(
+                '\n', '\n     '
+            )
             + '\n'
             '     '
-            + bui.Lstr(
-                resource=f'{self._r}.whoeverInventedCoffeeText'
+            + classicassets.strings.credits.whoever_invented_coffee.evaluate()
+            + '\n'
+            '\n'
+            '  ' + classicassets.strings.credits.legal.evaluate() + '\n'
+            '\n'
+            '     '
+            + classicassets.strings.credits.software_based_on(
+                name='the Khronos Group'
             ).evaluate()
-            + '\n'
-            '\n'
-            '  ' + bui.Lstr(resource=f'{self._r}.legalText').evaluate() + '\n'
-            '\n'
-            '     '
-            + bui.Lstr(resource=f'{self._r}.softwareBasedOnText')
-            .evaluate()
-            .replace('${NAME}', 'the Khronos Group')
             + '\n'
             '\n'
             '                                       '
@@ -345,9 +342,8 @@ class CreditsWindow(bui.MainWindow):
             ),
             size=(0, 0),
             scale=0.8 if uiscale is bui.UIScale.SMALL else 1.0,
-            text=bui.Lstr(
-                resource=f'{self._r}.titleText',
-                subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
+            text=classicassets.strings.credits.title(
+                app_name=classicassets.strings.ui.app_name
             ),
             h_align='center',
             v_align='center',
@@ -368,7 +364,7 @@ class CreditsWindow(bui.MainWindow):
                 position=(0, self._sub_height - 20 + voffs),
                 h_align='left',
                 v_align='top',
-                text=bui.Lstr(value=line),
+                text=line,
             )
             voffs -= line_height
 

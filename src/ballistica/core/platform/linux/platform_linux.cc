@@ -119,6 +119,11 @@ void PlatformLinux::GetTextBoundsAndWidth(const std::string& text, Rect* r,
   PangoGetTextBoundsAndWidth_(text, r, width);
 }
 
+auto PlatformLinux::GetTextLineBreakOffsets(const std::string& text)
+    -> std::vector<int> {
+  return PangoGetTextLineBreakOffsets_(text);
+}
+
 auto PlatformLinux::CreateTextTexture(int width, int height,
                                       const std::vector<std::string>& strings,
                                       const std::vector<float>& positions,

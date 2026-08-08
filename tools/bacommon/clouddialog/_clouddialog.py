@@ -144,3 +144,12 @@ class ActionResponse(Response):
     error_message: Annotated[str | None, IOAttrs('em')]
 
     effects: Annotated[list[clfx.Effect], IOAttrs('fx')]
+
+    # If True, ``error_message`` is display-final text already
+    # translated to the client's held locale server-side (the
+    # lifetime-rule convention; see 'Server-sent strings' in efrohome
+    # asset-packages.md). Clients seeing this must render it via the
+    # literal path -- never legacy serverResponses translation.
+    error_message_is_final: Annotated[
+        bool, IOAttrs('ef', store_default=False)
+    ] = False

@@ -1238,8 +1238,9 @@ static constexpr wchar_t kFontFamily[] = L"Segoe UI";
 static constexpr DWRITE_FONT_WEIGHT kFontWeight = DWRITE_FONT_WEIGHT_SEMI_BOLD;
 
 // File-scope factory singletons, initialized once via call_once.
-// D2D1_FACTORY_TYPE_MULTI_THREADED is required because CreateTextTexture runs
-// on the Assets thread while GetTextBoundsAndWidth runs on the Logic thread.
+// D2D1_FACTORY_TYPE_MULTI_THREADED is required because CreateTextTexture may
+// run on any thread (asset preloads are not thread-pinned; see
+// Asset::DoPreload()) while GetTextBoundsAndWidth runs on the Logic thread.
 static ID2D1Factory1* g_d2d_factory = nullptr;
 static IDWriteFactory* g_dwrite_factory = nullptr;
 // WARP D3D11 device — software rasterizer, no GPU required.
@@ -1248,6 +1249,16 @@ static ID3D11DeviceContext* g_d3d11_context = nullptr;
 // ID2D1Device derived from the D3D11 device; source of per-call DeviceContexts.
 static ID2D1Device* g_d2d_device = nullptr;
 static std::once_flag g_font_factories_init_flag;
+// Serializes CreateTextTexture bodies. Preloads of different assets can run
+// concurrently on different threads, and while the multithreaded D2D factory
+// internally locks its own work, our direct readback calls on the shared
+// g_d3d11_context (CopyResource/Map/Unmap) don't take that lock and the
+// immediate context is not thread-safe — including against D2D's *internal*
+// use of it at EndDraw. Text-texture creation is rare and ms-scale, so a
+// single coarse lock is the simplest correct answer. GetTextBoundsAndWidth
+// deliberately does NOT take it: it only touches the shared DWrite factory
+// (thread-safe) and per-call layouts.
+static std::mutex g_text_texture_mutex;
 
 static void InitFontFactories_() {
   // Direct2D factory (v1 for ID2D1DeviceContext / color emoji support).
@@ -1327,6 +1338,10 @@ auto PlatformWindows::CreateTextTexture(int width, int height,
   if (!g_d2d_device || !g_dwrite_factory || !g_d3d11_device) {
     return nullptr;
   }
+
+  // Serialize the whole rasterize+readback sequence (see
+  // g_text_texture_mutex comment).
+  std::scoped_lock lock(g_text_texture_mutex);
 
   // 1. Create a D3D11 BGRA texture as the render surface.
   D3D11_TEXTURE2D_DESC rt_desc{};
@@ -1611,6 +1626,157 @@ void PlatformWindows::GetTextBoundsAndWidth(const std::string& text, Rect* r,
         overhang.bottom);
     fflush(stdout);
   }
+}
+
+// Minimal combined source/sink for
+// IDWriteTextAnalyzer::AnalyzeLineBreakpoints. Stack-allocated and used
+// synchronously within a single call, so ref-counting is a no-op.
+class LineBreakAnalysis_ final : public IDWriteTextAnalysisSource,
+                                 public IDWriteTextAnalysisSink {
+ public:
+  LineBreakAnalysis_(const wchar_t* text, UINT32 length)
+      : text_(text), length_(length), breakpoints_(length) {}
+
+  // IUnknown.
+  HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override {
+    if (ppv == nullptr) {
+      return E_POINTER;
+    }
+    if (riid == __uuidof(IDWriteTextAnalysisSource)) {
+      *ppv = static_cast<IDWriteTextAnalysisSource*>(this);
+    } else if (riid == __uuidof(IDWriteTextAnalysisSink)) {
+      *ppv = static_cast<IDWriteTextAnalysisSink*>(this);
+    } else if (riid == IID_IUnknown) {
+      *ppv = static_cast<IDWriteTextAnalysisSource*>(this);
+    } else {
+      *ppv = nullptr;
+      return E_NOINTERFACE;
+    }
+    return S_OK;
+  }
+  ULONG STDMETHODCALLTYPE AddRef() override { return 1; }
+  ULONG STDMETHODCALLTYPE Release() override { return 1; }
+
+  // IDWriteTextAnalysisSource.
+  HRESULT STDMETHODCALLTYPE GetTextAtPosition(UINT32 position,
+                                              const WCHAR** text,
+                                              UINT32* length) override {
+    if (position >= length_) {
+      *text = nullptr;
+      *length = 0;
+    } else {
+      *text = text_ + position;
+      *length = length_ - position;
+    }
+    return S_OK;
+  }
+  HRESULT STDMETHODCALLTYPE GetTextBeforePosition(UINT32 position,
+                                                  const WCHAR** text,
+                                                  UINT32* length) override {
+    if (position == 0 || position > length_) {
+      *text = nullptr;
+      *length = 0;
+    } else {
+      *text = text_;
+      *length = position;
+    }
+    return S_OK;
+  }
+  DWRITE_READING_DIRECTION STDMETHODCALLTYPE
+  GetParagraphReadingDirection() override {
+    return DWRITE_READING_DIRECTION_LEFT_TO_RIGHT;
+  }
+  HRESULT STDMETHODCALLTYPE GetLocaleName(UINT32 position, UINT32* text_length,
+                                          const WCHAR** locale_name) override {
+    *text_length = (position < length_) ? length_ - position : 0;
+    *locale_name = L"";
+    return S_OK;
+  }
+  HRESULT STDMETHODCALLTYPE GetNumberSubstitution(
+      UINT32 position, UINT32* text_length,
+      IDWriteNumberSubstitution** number_substitution) override {
+    *text_length = (position < length_) ? length_ - position : 0;
+    *number_substitution = nullptr;
+    return S_OK;
+  }
+
+  // IDWriteTextAnalysisSink.
+  HRESULT STDMETHODCALLTYPE
+  SetLineBreakpoints(UINT32 position, UINT32 length,
+                     const DWRITE_LINE_BREAKPOINT* line_breakpoints) override {
+    if (position + length > breakpoints_.size()) {
+      return E_INVALIDARG;
+    }
+    for (UINT32 i = 0; i < length; ++i) {
+      breakpoints_[position + i] = line_breakpoints[i];
+    }
+    return S_OK;
+  }
+  HRESULT STDMETHODCALLTYPE
+  SetScriptAnalysis(UINT32, UINT32, const DWRITE_SCRIPT_ANALYSIS*) override {
+    return S_OK;
+  }
+  HRESULT STDMETHODCALLTYPE SetBidiLevel(UINT32, UINT32, UINT8,
+                                         UINT8) override {
+    return S_OK;
+  }
+  HRESULT STDMETHODCALLTYPE
+  SetNumberSubstitution(UINT32, UINT32, IDWriteNumberSubstitution*) override {
+    return S_OK;
+  }
+
+  auto breakpoints() const -> const std::vector<DWRITE_LINE_BREAKPOINT>& {
+    return breakpoints_;
+  }
+
+ private:
+  const wchar_t* text_;
+  UINT32 length_;
+  std::vector<DWRITE_LINE_BREAKPOINT> breakpoints_;
+};
+
+auto PlatformWindows::GetTextLineBreakOffsets(const std::string& text)
+    -> std::vector<int> {
+  std::call_once(g_font_factories_init_flag, InitFontFactories_);
+  if (!g_dwrite_factory) {
+    return Platform::GetTextLineBreakOffsets(text);
+  }
+  std::wstring wtext = UTF8Decode(text);
+  if (wtext.empty()) {
+    return {};
+  }
+
+  IDWriteTextAnalyzer* analyzer = nullptr;
+  HRESULT hr = g_dwrite_factory->CreateTextAnalyzer(&analyzer);
+  if (FAILED(hr) || !analyzer) {
+    return Platform::GetTextLineBreakOffsets(text);
+  }
+
+  auto length16 = static_cast<UINT32>(wtext.size());
+  LineBreakAnalysis_ analysis(wtext.c_str(), length16);
+  hr = analyzer->AnalyzeLineBreakpoints(&analysis, 0, length16, &analysis);
+  analyzer->Release();
+  if (FAILED(hr)) {
+    return Platform::GetTextLineBreakOffsets(text);
+  }
+
+  // A new line may begin after any code unit whose break-condition-after
+  // allows it; convert those utf-16 positions to utf-8 byte offsets.
+  std::vector<int> offsets;
+  auto offset_map = Utils::UTF16ToUTF8OffsetMap(text);
+  const auto& breakpoints = analysis.breakpoints();
+  for (UINT32 i = 0; i + 1 < length16; ++i) {
+    auto condition =
+        static_cast<DWRITE_BREAK_CONDITION>(breakpoints[i].breakConditionAfter);
+    if (condition == DWRITE_BREAK_CONDITION_CAN_BREAK
+        || condition == DWRITE_BREAK_CONDITION_MUST_BREAK) {
+      int offset = offset_map[i + 1];
+      if (offset > 0 && offset < static_cast<int>(text.size())) {
+        offsets.push_back(offset);
+      }
+    }
+  }
+  return offsets;
 }
 
 #endif  // BA_ENABLE_OS_FONT_RENDERING

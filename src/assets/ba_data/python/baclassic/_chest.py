@@ -6,15 +6,15 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from bacommon.classic import ClassicChestAppearance
-from bascenev1 import stdassets
+from bascenev1 import classicassets
 
 if TYPE_CHECKING:
     pass
 
 
 def _tex(name: str) -> str:
-    """Qualified stdassets ref for a chest texture name."""
-    return f'{stdassets.__asset_package__}:textures/{name}'
+    """Qualified classicassets ref for a chest texture name."""
+    return f'{classicassets.__asset_package__}:textures/{name}'
 
 
 @dataclass

@@ -177,16 +177,27 @@ class Asset : public Object {
   auto valid() const -> bool { return valid_; }
 
  protected:
-  // Preload the component's data. This may be called from any thread so
-  // must be safe regardless (ie: just load data into the component; don't
-  // make GL calls, etc).
+  // Preload the component's data. CONTRACT: this may run on *any* thread
+  // (the assets thread on the pipeline path, but also inline on whatever
+  // thread calls Load()/Preload() on-demand -- graphics, audio, logic,
+  // bg-dynamics), and preloads of *different* assets may run concurrently
+  // on different threads (per-asset claims serialize only this asset).
+  // This is deliberate: it covers today's on-demand path and reserves the
+  // option of parallel preload workers later. So implementations -- and
+  // anything they call transitively, platform code especially -- must not
+  // assume a particular thread or exclusive execution; code that touches
+  // genuinely non-thread-safe shared state must wrangle its own mutex.
+  // Don't interact with per-thread APIs here (no GL calls etc); that
+  // belongs in DoLoad().
   virtual void DoPreload() = 0;
 
   // This is always called by the main thread that uses the component to
   // finish loading. ie: whatever thread is running opengl will call this
   // for textures, audio thread for sounds, etc. As much heavy lifting as
   // possible should be done in DoPreload, but interaction with the
-  // corresponding api (gl, al, etc) is done here.
+  // corresponding api (gl, al, etc) is done here. (Unlike DoPreload, this
+  // *is* thread-pinned by design; that's what the per-type pending-load
+  // queues exist for.)
   virtual void DoLoad() = 0;
 
   // Unload the component. This is always called by the main component

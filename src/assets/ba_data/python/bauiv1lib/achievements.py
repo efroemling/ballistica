@@ -6,7 +6,7 @@ from typing import override
 
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 import bauiv1 as bui
-from bauiv1 import stdassets
+from bauiv1 import _commonassets, classicassets
 
 
 class AchievementsWindow(bui.MainWindow):
@@ -155,13 +155,11 @@ class AchievementsWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 scale=0.6,
-                text=bui.Lstr(
-                    value='${A}: ${C}/${T}',
-                    subs=[
-                        ('${A}', bui.Lstr(resource='achievementsText')),
-                        ('${C}', str(num_complete)),
-                        ('${T}', str(len(achievements))),
-                    ],
+                text=_commonassets.strings.compose.spaced_pair(
+                    first=_commonassets.strings.compose.heading_suffix(
+                        main=classicassets.strings.ui.achievements
+                    ),
+                    second=f'{num_complete}/{len(achievements)}',
                 ),
                 maxwidth=86,
                 color=bui.app.ui_v1.title_color,
@@ -177,12 +175,9 @@ class AchievementsWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 scale=0.6,
-                text=bui.Lstr(
-                    resource='accountSettingsWindow.achievementProgressText',
-                    subs=[
-                        ('${COUNT}', str(num_complete)),
-                        ('${TOTAL}', str(len(achievements))),
-                    ],
+                text=classicassets.strings.account.achievement_progress(
+                    complete=str(num_complete),
+                    total=str(len(achievements)),
                 ),
                 maxwidth=180,
                 color=bui.app.ui_v1.title_color,
@@ -199,9 +194,6 @@ class AchievementsWindow(bui.MainWindow):
         # For fullscreen scrollable, account for toolbar.
         if uiscale is bui.UIScale.SMALL:
             sub_height += 30
-
-        eq_rsrc = 'coopSelectWindow.powerRankingPointsEqualsText'
-        pts_rsrc = 'coopSelectWindow.powerRankingPointsText'
 
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
@@ -254,7 +246,7 @@ class AchievementsWindow(bui.MainWindow):
                     ),
                     size=(28, 28),
                     color=(2, 1.4, 0),
-                    texture=stdassets.textures.achievement_outline.get(),
+                    texture=classicassets.textures.achievement_outline.get(),
                 )
             bui.textwidget(
                 parent=self._subcontainer,
@@ -264,7 +256,7 @@ class AchievementsWindow(bui.MainWindow):
                 flatness=1.0,
                 shadow=0.0,
                 color=(1, 1, 1) if complete else (1, 1, 1, 0.2),
-                text=ach.display_name,
+                text=ach.display_name_langstr,
                 size=(0, 0),
                 h_align='left',
                 v_align='center',
@@ -279,9 +271,9 @@ class AchievementsWindow(bui.MainWindow):
                 shadow=0.0,
                 color=(0.83, 0.8, 0.85) if complete else (0.8, 0.8, 0.8, 0.2),
                 text=(
-                    ach.description_full_complete
+                    ach.description_full_complete_langstr
                     if complete
-                    else ach.description_full
+                    else ach.description_full_langstr
                 ),
                 size=(0, 0),
                 h_align='left',
@@ -316,8 +308,8 @@ class AchievementsWindow(bui.MainWindow):
                 flatness=1.0,
                 shadow=0.0,
                 scale=0.6,
-                text=bui.Lstr(
-                    resource=pts_rsrc, subs=[('${NUMBER}', str(pts))]
+                text=classicassets.strings.coop.power_ranking_points(
+                    number=str(pts)
                 ),
                 size=(0, 0),
                 h_align='center',
@@ -337,18 +329,11 @@ class AchievementsWindow(bui.MainWindow):
             color=(0.7, 0.8, 1.0),
             flatness=1.0,
             shadow=0.0,
-            text=bui.Lstr(
-                value='${A} ${B}',
-                subs=[
-                    ('${A}', bui.Lstr(resource='coopSelectWindow.totalText')),
-                    (
-                        '${B}',
-                        bui.Lstr(
-                            resource=eq_rsrc,
-                            subs=[('${NUMBER}', str(total_pts))],
-                        ),
-                    ),
-                ],
+            text=_commonassets.strings.compose.spaced_pair(
+                first=_commonassets.strings.values.total,
+                second=(
+                    classicassets.strings.league
+                ).power_ranking_points_equals(number=str(total_pts)),
             ),
             size=(0, 0),
             h_align='right',

@@ -7,6 +7,7 @@
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/classic/python/methods/python_methods_classic.h"
 #include "ballistica/classic/support/classic_app_mode.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
 #include "ballistica/shared/python/python_macros.h"
 #include "ballistica/shared/python/python_module_builder.h"
@@ -121,7 +122,25 @@ auto ClassicPython::GetControllerValue(base::InputDevice* device,
     throw Exception("Non-int returned from get_device_value call.",
                     PyExcType::kType);
   }
-  return static_cast<int>(PyLong_AsLong(ret_val.get()));
+  // Via the helper rather than PyLong_AsLong: this value comes back from
+  // Python (controller-mapping config), and Python ints are arbitrary
+  // precision, so a large one would otherwise set OverflowError, return
+  // -1, and leave the stray error for something unrelated to hit.
+  //
+  // Caught rather than propagated, though. This runs inside app-config
+  // application, and a config file is a thing users hand-edit -- letting
+  // one nonsense mapping abort the whole apply would leave every setting
+  // after it silently unapplied. -1 is what callers already use for
+  // 'not mapped', so falling back to it keeps a bad entry local to the
+  // control it describes.
+  try {
+    return Python::GetInt(ret_val.get());
+  } catch (const std::exception& exc) {
+    BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                "Ignoring out-of-range controller mapping for '" + value_name
+                    + "' on " + device->GetDeviceName() + ": " + exc.what());
+    return -1;
+  }
 }
 
 auto ClassicPython::GetControllerFloatValue(base::InputDevice* device,
@@ -139,7 +158,24 @@ auto ClassicPython::GetControllerFloatValue(base::InputDevice* device,
   BA_PRECONDITION(ret_val.exists());
   if (!PyFloat_Check(ret_val.get())) {
     if (PyLong_Check(ret_val.get())) {
-      return static_cast<float>(PyLong_AsLong(ret_val.get()));
+      // GetFloat rather than PyLong_AsLong: we want a float anyway, so
+      // going through the float path means a large int converts (or
+      // fails cleanly) instead of overflowing a C long and leaving a
+      // stray Python error behind.
+      //
+      // Caught for the same reason as GetControllerValue above: this
+      // runs during app-config application, so a single unconvertible
+      // entry must not abort every setting after it. -1 is the
+      // 'unusable' value callers already test for.
+      try {
+        return Python::GetFloat(ret_val.get());
+      } catch (const std::exception& exc) {
+        BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                    "Ignoring unusable controller mapping for '" + value_name
+                        + "' on " + device->GetDeviceName() + ": "
+                        + exc.what());
+        return -1.0f;
+      }
     } else {
       throw Exception(
           "Non float/int returned from GetControllerFloatValue call.",

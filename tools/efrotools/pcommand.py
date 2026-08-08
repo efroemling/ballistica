@@ -194,13 +194,16 @@ def _run_pcommand(sysargv: list[str]) -> None:
             elif sysargv[2] not in _g_funcs:
                 raise CleanError('Invalid help command.')
             else:
-                docs = _trim_docstring(
-                    getattr(_g_funcs[sysargv[2]], '__doc__', '<no docs>')
+                docs = _format_docstring_for_terminal(
+                    _trim_docstring(
+                        getattr(_g_funcs[sysargv[2]], '__doc__', '<no docs>')
+                    ),
+                    clrtp,
                 )
                 clientprint(
                     f'\n{clrtp.MAG}{clrtp.BLD}'
                     f'pcommand {sysargv[2]}:{clrtp.RST}\n'
-                    f'{clrtp.MAG}{docs}{clrtp.RST}\n'
+                    f'{docs}\n'
                 )
         elif sysargv[1] in _g_funcs:
             _g_funcs[sysargv[1]]()
@@ -223,7 +226,8 @@ def _run_pcommand(sysargv: list[str]) -> None:
         clientprint('Available commands:')
         for func, obj in sorted(_g_funcs.items()):
             doc = getattr(obj, '__doc__', '').splitlines()[0].strip()
-            clientprint(f'{clrtp.MAG}{func}{clrtp.BLU} - {doc}{clrtp.RST}')
+            docfmt = _format_inline_rst(doc, clrtp, base=clrtp.BLU)
+            clientprint(f'{clrtp.MAG}{func}{clrtp.BLU} - {clrtp.RST}{docfmt}')
 
     if error:
         raise CleanError()
@@ -332,3 +336,264 @@ def _trim_docstring(docstring: str) -> str:
 
     # Return a single string.
     return '\n'.join(trimmed)
+
+
+# The narrow slice of inline reST markup our docstrings use. Shared by
+# the styling pass (_format_inline_rst) and the re-flow pass (which
+# must treat each span as unbreakable when wrapping).
+_RST_ROLE_PAT = r':[a-zA-Z][\w:.+-]*:`([^`]+)`'
+_RST_LITERAL_PAT = r'``([^`]+?)``'
+_RST_STRONG_PAT = r'\*\*(\S(?:[^*]*\S)?)\*\*'
+
+# List-item markers we re-flow with a hanging indent.
+_RST_LIST_ITEM_PAT = r'(?:-|\d+[.)])\s+'
+
+
+def _format_docstring_for_terminal(docs: str, clrtp: type[ClrBase]) -> str:
+    """Render our RST-flavored docstring markup as terminal styling.
+
+    Our docstrings are Sphinx reST, so ``pcommand help`` output can use
+    that markup instead of showing it raw — the same way HTML
+    renditions do. Handles only the narrow slice of reST our docstrings
+    actually use: inline literals, Sphinx roles, strong emphasis,
+    literal blocks, and paragraph/list re-flowing to the terminal
+    width. Anything unrecognized passes through untouched, and any
+    error falls back to plain single-color output — help must never
+    break over a formatting edge case.
+    """
+    try:
+        return _do_format_docstring_for_terminal(docs, clrtp)
+    except Exception:
+        return f'{clrtp.MAG}{docs}{clrtp.RST}'
+
+
+def _help_output_width() -> int:
+    """Target wrap width for re-flowed help text."""
+    import shutil
+
+    # In batch mode output lands on a *client* terminal whose size we
+    # don't know; use the classic default. Cap width for readability on
+    # very wide terminals (as HTML renditions do via CSS), and floor it
+    # so pathological tiny terminals don't produce degenerate wrapping.
+    if _g_batch_server_mode:
+        return 80
+    return max(40, min(shutil.get_terminal_size((80, 24)).columns, 100))
+
+
+def _do_format_docstring_for_terminal(docs: str, clrtp: type[ClrBase]) -> str:
+    # pylint: disable=too-many-branches
+    import re
+
+    width = _help_output_width()
+    base = clrtp.MAG
+    lines = docs.splitlines()
+    out: list[str] = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        line = lines[i]
+        stripped = line.strip()
+        if not stripped:
+            out.append('')
+            i += 1
+            continue
+        indent = len(line) - len(line.lstrip())
+        pad = ' ' * indent
+        if stripped == '::' or stripped.startswith('.. code-block::'):
+            # Standalone literal-block intro / code-block directive:
+            # the marker line itself vanishes; an indented literal
+            # block follows. Dropping the marker doubles up blank
+            # lines around it, so collapse those too.
+            i += 1
+            if out and not out[-1]:
+                while i < n and not lines[i].strip():
+                    i += 1
+            i = _emit_literal_block(lines, i, indent, out, clrtp)
+            continue
+
+        # List item: gather its (deeper-indented) continuation lines
+        # and re-flow with a hanging indent. A trailing '::' hands off
+        # to a literal block like a paragraph does.
+        marker_match = re.match(_RST_LIST_ITEM_PAT, stripped)
+        if marker_match is not None:
+            marker = marker_match.group(0)
+            item_lines = [stripped[len(marker) :]]
+            ends_in_block = stripped.endswith('::')
+            i += 1
+            while i < n and not ends_in_block:
+                nxt = lines[i]
+                nstripped = nxt.strip()
+                if not nstripped:
+                    break
+                if len(nxt) - len(nxt.lstrip()) <= indent:
+                    break
+                item_lines.append(nstripped)
+                ends_in_block = nstripped.endswith('::')
+                i += 1
+            text = ' '.join(item_lines)
+            if ends_in_block:
+                text = text[:-1]
+            out += _reflow_rst_text(
+                text,
+                clrtp,
+                base,
+                width=width,
+                initial_indent=pad + marker,
+                subsequent_indent=pad + ' ' * len(marker),
+            )
+            if ends_in_block:
+                i = _hand_off_literal_block(lines, i, indent, out, clrtp)
+            continue
+
+        # Plain paragraph: gather same-indent lines (stopping at
+        # blanks, list items, directives, or indent changes) and
+        # re-flow. A trailing '::' ends the paragraph and hands off to
+        # a literal block, rendering as a single ':' per reST.
+        para_lines = [stripped]
+        ends_in_block = stripped.endswith('::')
+        i += 1
+        while i < n and not ends_in_block:
+            nxt = lines[i]
+            nstripped = nxt.strip()
+            if not nstripped:
+                break
+            if len(nxt) - len(nxt.lstrip()) != indent:
+                break
+            if re.match(
+                _RST_LIST_ITEM_PAT, nstripped
+            ) is not None or nstripped.startswith('.. '):
+                break
+            para_lines.append(nstripped)
+            ends_in_block = nstripped.endswith('::')
+            i += 1
+        text = ' '.join(para_lines)
+        if ends_in_block:
+            text = text[:-1]
+        out += _reflow_rst_text(
+            text,
+            clrtp,
+            base,
+            width=width,
+            initial_indent=pad,
+            subsequent_indent=pad,
+        )
+        if ends_in_block:
+            i = _hand_off_literal_block(lines, i, indent, out, clrtp)
+    return '\n'.join(out)
+
+
+def _hand_off_literal_block(
+    lines: list[str],
+    i: int,
+    indent: int,
+    out: list[str],
+    clrtp: type[ClrBase],
+) -> int:
+    """Emit the separating blank + literal block after a '::' intro."""
+    if i < len(lines) and not lines[i].strip():
+        out.append('')
+        while i < len(lines) and not lines[i].strip():
+            i += 1
+    return _emit_literal_block(lines, i, indent, out, clrtp)
+
+
+def _reflow_rst_text(
+    text: str,
+    clrtp: type[ClrBase],
+    base: str,
+    *,
+    width: int,
+    initial_indent: str,
+    subsequent_indent: str,
+) -> list[str]:
+    """Wrap one paragraph/list-item's joined text to ``width``.
+
+    Inline markup spans are protected so wrapping can never split one
+    (the styling pass needs each span intact on a single line); their
+    markup characters do count toward width, erring toward slightly
+    early wraps. Styling is applied per wrapped line.
+    """
+    import re
+    import textwrap
+
+    # Swap spaces inside markup spans for a sentinel so textwrap treats
+    # each span as one unbreakable word; restored after wrapping.
+    for pat in (_RST_ROLE_PAT, _RST_LITERAL_PAT, _RST_STRONG_PAT):
+        text = re.sub(pat, lambda m: m.group(0).replace(' ', '\x01'), text)
+    wrapped = textwrap.fill(
+        text,
+        width=width,
+        initial_indent=initial_indent,
+        subsequent_indent=subsequent_indent,
+        break_long_words=False,
+        break_on_hyphens=False,
+    ).replace('\x01', ' ')
+    return [
+        _format_inline_rst(wline, clrtp, base=base)
+        for wline in wrapped.splitlines()
+    ]
+
+
+def _emit_literal_block(
+    lines: list[str],
+    i: int,
+    indent: int,
+    out: list[str],
+    clrtp: type[ClrBase],
+) -> int:
+    """Emit a literal block (lines indented past ``indent``) verbatim.
+
+    Returns the index of the first line past the block.
+    """
+    while i < len(lines):
+        line = lines[i]
+        if line.strip() and (len(line) - len(line.lstrip())) <= indent:
+            break
+        out.append(f'{clrtp.CYN}{line}{clrtp.RST}' if line.strip() else '')
+        i += 1
+    return i
+
+
+def _format_inline_rst(text: str, clrtp: type[ClrBase], base: str) -> str:
+    """Apply inline reST styling to one line, on ``base`` color."""
+    import re
+
+    if not text:
+        return ''
+
+    # Substitutions are tokenized out so later passes can't re-match
+    # inside already-rendered text (or inside color escape codes).
+    tokens: list[str] = []
+
+    def _tok(rendered: str) -> str:
+        tokens.append(rendered)
+        return f'\x00{len(tokens) - 1}\x00'
+
+    def _role(m: re.Match[str]) -> str:
+        # Sphinx roles (e.g. :class:`~efro.terminal.Clr`): drop the
+        # role syntax; the Sphinx '~' convention shows just the tail
+        # name.
+        target = m.group(1)
+        if target.startswith('~'):
+            target = target[1:].rsplit('.', 1)[-1]
+        return _tok(f'{clrtp.RST}{clrtp.SCYN}{target}{clrtp.RST}{base}')
+
+    text = re.sub(r':[a-zA-Z][\w:.+-]*:`([^`]+)`', _role, text)
+
+    # Inline literals (``foo``).
+    text = re.sub(
+        r'``([^`]+?)``',
+        lambda m: _tok(f'{clrtp.RST}{clrtp.SCYN}{m.group(1)}{clrtp.RST}{base}'),
+        text,
+    )
+
+    # Strong emphasis (**foo**). (Single-star emphasis is left alone;
+    # too collision-prone with shell globs and the payoff is small.)
+    text = re.sub(
+        r'\*\*(\S(?:[^*]*\S)?)\*\*',
+        lambda m: _tok(f'{clrtp.BLD}{m.group(1)}{clrtp.RST}{base}'),
+        text,
+    )
+
+    text = re.sub(r'\x00(\d+)\x00', lambda m: tokens[int(m.group(1))], text)
+    return f'{base}{text}{clrtp.RST}'

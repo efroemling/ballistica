@@ -55,8 +55,8 @@ logger = logging.getLogger('ba.env')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22919
-TARGET_BALLISTICA_VERSION = '1.8.0a32'
+TARGET_BALLISTICA_BUILD = 22966
+TARGET_BALLISTICA_VERSION = '1.8.0a74'
 
 
 @dataclass
@@ -318,16 +318,20 @@ def configure(
 
 def _cache_ninja_rampage(cache_dir: str) -> None:
     assert os.path.isdir(cache_dir)
+
+    # Base rate is one kill per 4000 files, but occasionally go on
+    # bigger rampages so we exercise multi-file-loss cases too, not just
+    # single stragglers: 60% of runs at base rate, 30% at 5x, 10% at
+    # 10x. Can recalibrate as our average cache file count goes up.
+    kill_probability = (
+        0.0001 * random.choices((1, 5, 10), weights=(60, 30, 10))[0]
+    )
+
+    kill_count = 0
     for basename, _dirnames, filenames in os.walk(cache_dir):
         for fname in filenames:
-            # Let's kill one out of every 1000 files; should be a
-            # reasonable amount of chaos I think. Can recalibrate this
-            # as our average cache file count goes up.
-            if random.random() < 0.001:
+            if random.random() < kill_probability:
                 fullpath = os.path.join(basename, fname)
-                logging.getLogger('ba.cache').debug(
-                    "Cache-ninja assassinated '%s'.", fullpath
-                )
                 # The whole point of this feature is that downstream
                 # code must handle missing cache files; the kill itself
                 # is not load-bearing. Swallow OSError so a read-only
@@ -336,7 +340,17 @@ def _cache_ninja_rampage(cache_dir: str) -> None:
                 try:
                     os.unlink(fullpath)
                 except OSError:
-                    pass
+                    continue
+                kill_count += 1
+                logging.getLogger('ba.cache').debug(
+                    "Cache-ninja assassinated '%s'.", fullpath
+                )
+    if kill_count:
+        logging.getLogger('ba.app').info(
+            'Cache ninja assassinated %d %s! See ba.cache log for details.',
+            kill_count,
+            'file' if kill_count == 1 else 'files',
+        )
 
 
 def _read_app_config(config_file_path: str) -> dict:
@@ -520,6 +534,11 @@ def _setup_certs(contains_python_dist: bool) -> None:
     # overriding this in particular embedded cases if we can verify that
     # system certs are working. We also allow forcing this via an env
     # var if the user desires.
+    #
+    # Note: when this is in effect, our shared SSL context
+    # (babase._env._bootstrap_networking) trusts ONLY these bundled certs
+    # and skips the OS cert store entirely; BA_USE_SYSTEM_CERTS=1 there
+    # opts back into the OS store for corporate/AV TLS-inspection cases.
     if (
         contains_python_dist
         or os.environ.get('BA_USE_BUNDLED_ROOT_CERTS') == '1'

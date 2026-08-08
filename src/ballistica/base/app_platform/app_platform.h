@@ -138,7 +138,8 @@ class AppPlatform {
   /// Pop up a text edit dialog.
   virtual void DoInvokeStringEditor(const std::string& title,
                                     const std::string& value,
-                                    std::optional<int> max_chars);
+                                    std::optional<int> max_chars,
+                                    bool is_password);
 
   /// Open the provided URL in a browser. This will always be called in the
   /// main thread.

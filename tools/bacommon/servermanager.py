@@ -25,6 +25,10 @@ class ServerConfig:
     # address.
     party_is_public: bool = True
 
+    # If set, clients must provide this password before joining your
+    # party.
+    password: str | None = None
+
     # If True, the master-server will provide your server with verified
     # account info for all connecting clients. Generally this should
     # always be enabled unless you are hosting on a LAN with no internet

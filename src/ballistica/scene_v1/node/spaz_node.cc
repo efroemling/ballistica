@@ -507,6 +507,7 @@ class SpazNodeType : public NodeType {
   BA_BOOL_ATTR(demo_mode, demo_mode, set_demo_mode);
   BA_INT_ATTR(behavior_version, behavior_version, set_behavior_version);
   BA_BOOL_ATTR_READONLY(pickup_before_hitbox, get_pickup_before_hitbox);
+  BA_FLOAT_ATTR_READONLY(pickup_release_time_ms, get_pickup_release_time_ms);
 #undef BA_NODE_TYPE_CLASS
 
   SpazNodeType()
@@ -591,7 +592,8 @@ class SpazNodeType : public NodeType {
         move_up_down(this),
         demo_mode(this),
         behavior_version(this),
-        pickup_before_hitbox(this) {}
+        pickup_before_hitbox(this),
+        pickup_release_time_ms(this) {}
 };
 
 static NodeType* node_type{};
@@ -1026,12 +1028,6 @@ void SpazNode::SetPunchPressed(bool val) {
     if (holding_something_) {
       Throw(false);
     } else {
-      // Do not punch before grab hitbox comes out, if it's coming
-      if (behavior_version_ >= 2
-          && (pickup_ >= kPickupCooldown - kPickupHitboxDelay)) {
-        return;
-      }
-
       if (!holding_something_ && (!knockout_) && (!frozen_)) {
         punch_ = kPunchDuration;
 
@@ -1627,9 +1623,13 @@ void SpazNode::HandleMessage(const char* data_in) {
     }
     case NodeMessageType::kKnockout: {
       float amt = Utils::ExtractFloat16NBO(&data);
+      // Clamped conversion, not a plain cast: `amt` is decoded straight
+      // off the wire, so a hostile or buggy host can hand us NaN or a
+      // huge value here -- and casting either to an int is undefined
+      // behavior.
       knockout_ = static_cast_check_fit<uint8_t>(
           std::min(40, std::max(static_cast<int>(knockout_),
-                                static_cast<int>(amt * 0.07f))));
+                                clamped_float_to_int<int>(amt * 0.07f))));
       trying_to_fly_ = false;
       break;
     }
@@ -1752,9 +1752,16 @@ void SpazNode::HandleMessage(const char* data_in) {
 
       // Update knockout if we're applying this.
       if (!calc_force_only) {
-        knockout_ = static_cast_check_fit<uint8_t>(
-            std::min(40, std::max(static_cast<int>(knockout_),
-                                  static_cast<int>(dmg * 0.02f) - 20)));
+        // Newer behavior - versions have less punishing stun
+        if (behavior_version_ >= 2) {
+          knockout_ = static_cast_check_fit<uint8_t>(
+              std::min(26, std::max(static_cast<int>(knockout_),
+                                    static_cast<int>(dmg * 0.02f) - 24)));
+        } else {
+          knockout_ = static_cast_check_fit<uint8_t>(
+              std::min(40, std::max(static_cast<int>(knockout_),
+                                    static_cast<int>(dmg * 0.02f) - 20)));
+        }
         trying_to_fly_ = false;
       }
       break;
@@ -4524,11 +4531,17 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
 }
 
 static void DrawRadialMeter(base::MeshIndexedSimpleFull* m,
-                            base::SimpleComponent* c, float amt, bool flash) {
+                            base::SimpleComponent* c, float amt, bool flash,
+                            bool premult_tex) {
+  // For a premultiplied texture drawn with a faded straight color,
+  // premultiply rgb by alpha ourselves (see
+  // docs/design/premultiplied-alpha.md).
+  float a = flash ? 0.7f : 0.6f;
+  float cmul = premult_tex ? a : 1.0f;
   if (flash) {
-    c->SetColor(1, 1, 0.4f, 0.7f);
+    c->SetColor(cmul, cmul, 0.4f * cmul, a);
   } else {
-    c->SetColor(1, 1, 1, 0.6f);
+    c->SetColor(cmul, cmul, cmul, a);
   }
   base::Graphics::DrawRadialMeter(m, amt);
   c->DrawMesh(m);
@@ -4855,17 +4868,20 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       c.SetTransparent(true);
       bool flash = (scenetime - mini_billboard_1_start_time_ < 200
                     && render_frame_count % 6 < 3);
+      bool premult_tex{};
       if (!flash) {
-        c.SetTexture(mini_billboard_1_texture_.exists()
-                         ? mini_billboard_1_texture_->texture_data()
-                         : nullptr);
+        auto* tex = mini_billboard_1_texture_.exists()
+                        ? mini_billboard_1_texture_->texture_data()
+                        : nullptr;
+        c.SetTexture(tex);
+        premult_tex = tex != nullptr && tex->premultiplied();
       }
       {
         auto xf = c.ScopedTransform();
         c.Translate(torso_pos[0] - 0.2f, torso_pos[1] + 1.2f,
                     torso_pos[2] - 0.2f);
         c.Scale(0.08f, 0.08f, 0.08f);
-        DrawRadialMeter(&billboard_1_mesh_, &c, amt, flash);
+        DrawRadialMeter(&billboard_1_mesh_, &c, amt, flash, premult_tex);
       }
       c.Submit();
     }
@@ -4881,16 +4897,19 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       c.SetTransparent(true);
       bool flash = (scenetime - mini_billboard_2_start_time_ < 200
                     && render_frame_count % 6 < 3);
+      bool premult_tex{};
       if (!flash) {
-        c.SetTexture(mini_billboard_2_texture_.exists()
-                         ? mini_billboard_2_texture_->texture_data()
-                         : nullptr);
+        auto* tex = mini_billboard_2_texture_.exists()
+                        ? mini_billboard_2_texture_->texture_data()
+                        : nullptr;
+        c.SetTexture(tex);
+        premult_tex = tex != nullptr && tex->premultiplied();
       }
       {
         auto xf = c.ScopedTransform();
         c.Translate(torso_pos[0], torso_pos[1] + 1.2f, torso_pos[2] - 0.2f);
         c.Scale(0.09f, 0.09f, 0.09f);
-        DrawRadialMeter(&billboard_2_mesh_, &c, amt, flash);
+        DrawRadialMeter(&billboard_2_mesh_, &c, amt, flash, premult_tex);
       }
       c.Submit();
     }
@@ -4906,17 +4925,20 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       c.SetTransparent(true);
       bool flash = (scenetime - mini_billboard_3_start_time_ < 200
                     && render_frame_count % 6 < 3);
+      bool premult_tex{};
       if (!flash) {
-        c.SetTexture(mini_billboard_3_texture_.exists()
-                         ? mini_billboard_3_texture_->texture_data()
-                         : nullptr);
+        auto* tex = mini_billboard_3_texture_.exists()
+                        ? mini_billboard_3_texture_->texture_data()
+                        : nullptr;
+        c.SetTexture(tex);
+        premult_tex = tex != nullptr && tex->premultiplied();
       }
       {
         auto xf = c.ScopedTransform();
         c.Translate(torso_pos[0] + 0.2f, torso_pos[1] + 1.2f,
                     torso_pos[2] - 0.2f);
         c.Scale(0.08f, 0.08f, 0.08f);
-        DrawRadialMeter(&billboard_3_mesh_, &c, amt, flash);
+        DrawRadialMeter(&billboard_3_mesh_, &c, amt, flash, premult_tex);
       }
       c.Submit();
     }
@@ -4995,9 +5017,19 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         g = 0.45f + 0.2f * g;
         b = 0.45f + 0.2f * b;
       }
-      c.SetColor(r, g, b, dead_ ? 0.7f : 1.0f);
-
       int elem_count = name_text_group_.GetElementCount();
+
+      // Dead players' names draw faded; OS-rendered text is premultiplied
+      // so premultiply rgb by alpha ourselves (see
+      // docs/design/premultiplied-alpha.md). Live names are opaque (no-op).
+      float name_a = dead_ ? 0.7f : 1.0f;
+      float name_cmul =
+          (elem_count > 0
+           && name_text_group_.GetElementTexture(0)->premultiplied())
+              ? name_a
+              : 1.0f;
+      c.SetColor(r * name_cmul, g * name_cmul, b * name_cmul, name_a);
+
       float s_extra =
           (g_core->vr_mode() || g_base->ui->uiscale() == UIScale::kSmall)
               ? 1.2f
@@ -5037,10 +5069,14 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     const dReal* pos = dBodyGetPosition(body_torso_->body());
     base::SimpleComponent c(frame_def->overlay_3d_pass());
     c.SetTransparent(true);
-    c.SetColor(1, 1, 1, o);
-    c.SetTexture(billboard_texture_.exists()
-                     ? billboard_texture_->texture_data()
-                     : nullptr);
+    auto* bb_tex = billboard_texture_.exists()
+                       ? billboard_texture_->texture_data()
+                       : nullptr;
+    // Premultiplied texture + straight faded color; premultiply rgb by alpha
+    // ourselves (see docs/design/premultiplied-alpha.md).
+    float bb_cmul = (bb_tex != nullptr && bb_tex->premultiplied()) ? o : 1.0f;
+    c.SetColor(bb_cmul, bb_cmul, bb_cmul, o);
+    c.SetTexture(bb_tex);
     {
       auto xf = c.ScopedTransform();
       c.Translate(pos[0], pos[1] + 1.6f, pos[2] - 0.2f);
@@ -6053,6 +6089,7 @@ void SpazNode::DropHeldObject() {
     }
     assert(!pickup_joint_.IsAlive());
 
+    pickup_release_time_ms_ = scene()->time();
     holding_something_ = false;
     hold_body_ = 0;
 

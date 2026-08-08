@@ -2,10 +2,21 @@ cmake_minimum_required(VERSION 3.18)
 project(BallisticaKit)
 
 option(HEADLESS "build headless server" OFF)
-option(TEST_BUILD "include testing features" OFF)
 option(DISCORD "enable Discord Social SDK integration" OFF)
-option(REQUIRE_OS_FONT_RENDERING "fail if pangocairo is not found" OFF)
+option(REQUIRE_OS_FONT_RENDERING "fail if pangocairo is not found" ON)
 option(STATIC_BUILD "build with static libs" OFF)
+
+# Which app variant to build. Variant describes the distribution
+# audience for a build (who it is distributed to and how the master
+# server should classify it); it is orthogonal to build type and
+# headless-ness. See the AppVariant enum in tools/bacommon/app.py for
+# the full story.
+set(VARIANT generic CACHE STRING "app variant to build")
+set(BA_VALID_VARIANTS generic test_build server server_basn)
+if(NOT VARIANT IN_LIST BA_VALID_VARIANTS)
+  message(FATAL_ERROR
+    "Invalid VARIANT '${VARIANT}'; expected one of: ${BA_VALID_VARIANTS}.")
+endif()
 # Requiring minimum of C++23 currently.
 set(CMAKE_CXX_STANDARD 23)
 set(PROJECT_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
@@ -151,8 +162,11 @@ else()
     )
   endif()
 
-  # Optional: Pango+Cairo for OS font rendering on Linux/macOS cmake builds.
-  # Pass -DREQUIRE_OS_FONT_RENDERING=ON to make this a hard requirement.
+  # Pango+Cairo for OS font rendering (unicode text rendering + line
+  # breaks) on Linux/macOS cmake builds. Required by default so a
+  # missing pangocairo fails the configure loudly instead of silently
+  # producing a build with the internal fallback text handling; pass
+  # -DREQUIRE_OS_FONT_RENDERING=OFF to allow building without it.
   if(REQUIRE_OS_FONT_RENDERING)
     pkg_check_modules(PANGOCAIRO REQUIRED IMPORTED_TARGET pangocairo)
   else()
@@ -165,9 +179,12 @@ else()
 
 endif()
 
-if(TEST_BUILD)
-  target_compile_definitions(common_deps INTERFACE BA_VARIANT_TEST_BUILD=1)
-endif()
+# Define the selected variant for the engine
+# (BA_VARIANT_TEST_BUILD=1 etc.); buildconfig_cmake.h maps it to its
+# runtime string.
+string(TOUPPER ${VARIANT} BA_VARIANT_UPPER)
+target_compile_definitions(common_deps
+  INTERFACE BA_VARIANT_${BA_VARIANT_UPPER}=1)
 
 # Opt-in automation control channel (FIFO + in-process Python dispatch).
 # Unstable, unsupported public API — gated off by default; users opt in
@@ -197,6 +214,15 @@ target_compile_definitions(common_deps INTERFACE
 # Go with -O3 for non-debug builds.
 target_compile_options(common_deps INTERFACE
   $<$<NOT:$<CONFIG:Debug>>:-O3>
+)
+
+# GCC on ARM emits informational -Wpsabi notes about the GCC 10.1
+# C++17 calling-convention fix (e.g. for std::pair<float, float>
+# returns). They only matter when mixing objects from pre-10.1 and
+# post-10.1 compilers in one binary, which we never do, so silence
+# them.
+target_compile_options(common_deps INTERFACE
+  $<$<CXX_COMPILER_ID:GNU>:-Wno-psabi>
 )
 
 set(ODE_SRC_ROOT ${BA_SRC_ROOT}/external/open_dynamics_engine-ef)
@@ -329,6 +355,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/assets/assets.h
   ${BA_SRC_ROOT}/ballistica/base/assets/assets_server.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/assets_server.h
+  ${BA_SRC_ROOT}/ballistica/base/assets/builtin_strings.cc
+  ${BA_SRC_ROOT}/ballistica/base/assets/builtin_strings.h
   ${BA_SRC_ROOT}/ballistica/base/assets/collision_mesh_asset.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/collision_mesh_asset.h
   ${BA_SRC_ROOT}/ballistica/base/assets/data_asset.cc
@@ -493,6 +521,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/ktx2.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/pvr.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/pvr.h
+  ${BA_SRC_ROOT}/ballistica/base/input/device/feedback_event.h
   ${BA_SRC_ROOT}/ballistica/base/input/device/input_device.cc
   ${BA_SRC_ROOT}/ballistica/base/input/device/input_device.h
   ${BA_SRC_ROOT}/ballistica/base/input/device/input_device_delegate.cc
@@ -523,6 +552,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/python/base_python.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_app_timer.cc
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_app_timer.h
+  ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_asset_ref.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_context_call.cc
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_context_call.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_context_ref.cc
@@ -533,6 +563,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_env.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_feature_set_data.cc
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_feature_set_data.h
+  ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_lang_str.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_lang_str.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_simple_sound.cc
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_simple_sound.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_vec3.cc
@@ -557,6 +589,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/support/context.cc
   ${BA_SRC_ROOT}/ballistica/base/support/context.h
   ${BA_SRC_ROOT}/ballistica/base/support/display_timer.h
+  ${BA_SRC_ROOT}/ballistica/base/support/lang_str.cc
+  ${BA_SRC_ROOT}/ballistica/base/support/lang_str.h
   ${BA_SRC_ROOT}/ballistica/base/support/plus_soft.h
   ${BA_SRC_ROOT}/ballistica/base/support/repeater.cc
   ${BA_SRC_ROOT}/ballistica/base/support/repeater.h
@@ -730,15 +764,12 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_material.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_node.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_node.h
-  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_collision_mesh.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_collision_mesh.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_data_asset.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_data_asset.h
-  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_mesh.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_mesh.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_sound.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_sound.h
-  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_texture.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_texture.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_timer.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_timer.h
@@ -863,11 +894,9 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/template_fs/python/template_fs_python.h
   ${BA_SRC_ROOT}/ballistica/template_fs/template_fs.cc
   ${BA_SRC_ROOT}/ballistica/template_fs/template_fs.h
-  ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_mesh.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_mesh.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_sound.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_sound.h
-  ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_texture.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_texture.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_widget.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_widget.h

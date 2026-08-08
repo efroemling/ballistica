@@ -4,16 +4,16 @@
 
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import stdassets
+from bauiv1 import _commonassets, classicassets
 
 
 class CoopLevelLockedWindow(bui.Window):
     """Window showing that a level is locked."""
 
-    def __init__(self, name: bui.Lstr, dep_name: bui.Lstr):
+    def __init__(self, name: bui.LangStr, dep_name: bui.LangStr):
         width = 550.0
         height = 250.0
-        lock_tex = stdassets.textures.lock.get()
+        lock_tex = classicassets.textures.lock.get()
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         super().__init__(
@@ -33,9 +33,7 @@ class CoopLevelLockedWindow(bui.Window):
             size=(0, 0),
             h_align='left',
             v_align='center',
-            text=bui.Lstr(
-                resource='levelIsLockedText', subs=[('${LEVEL}', name)]
-            ),
+            text=classicassets.strings.coop.level_is_locked(level=name),
             maxwidth=400,
             color=(1, 0.8, 0.3, 1),
             scale=1.1,
@@ -46,9 +44,8 @@ class CoopLevelLockedWindow(bui.Window):
             size=(0, 0),
             h_align='left',
             v_align='center',
-            text=bui.Lstr(
-                resource='levelMustBeCompletedFirstText',
-                subs=[('${LEVEL}', dep_name)],
+            text=(classicassets.strings.coop).level_must_be_completed_first(
+                level=dep_name
             ),
             maxwidth=400,
             color=bui.app.ui_v1.infotextcolor,
@@ -65,7 +62,7 @@ class CoopLevelLockedWindow(bui.Window):
             parent=self._root_widget,
             position=((width - 140) / 2, 30),
             size=(140, 50),
-            label=bui.Lstr(resource='okText'),
+            label=_commonassets.strings.actions.ok,
             on_activate_call=self._ok,
         )
         bui.containerwidget(
