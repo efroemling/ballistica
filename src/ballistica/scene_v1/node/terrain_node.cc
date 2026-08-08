@@ -43,6 +43,7 @@ class TerrainNodeType : public NodeType {
   BA_MATERIAL_ARRAY_ATTR(materials, materials, set_materials);
   BA_BOOL_ATTR(vr_only, vr_only, set_vr_only);
   BA_FLOAT_ARRAY_ATTR(position, position, SetPosition);
+  BA_FLOAT_ARRAY_ATTR(rotate, rotate, SetRotate);
 #undef BA_NODE_TYPE_CLASS
 
   TerrainNodeType()
@@ -63,7 +64,8 @@ class TerrainNodeType : public NodeType {
         collision_mesh(this),
         materials(this),
         vr_only(this),
-        position(this) {}
+        position(this),
+        rotate(this) {}
 };
 static NodeType* node_type{};
 
@@ -97,6 +99,10 @@ TerrainNode::TerrainNode(Scene* scene)
       position_x_(0.0f),
       position_y_(0.0f),
       position_z_(0.0f),
+      rotate_(3, 0.0f),
+      rotate_x_(0.0f),
+      rotate_y_(0.0f),
+      rotate_z_(0.0f),
       vr_only_(false) {
   scene->increment_bg_cover_count();
 }
@@ -199,6 +205,17 @@ void TerrainNode::SetPosition(const std::vector<float>& vals) {
   position_z_ = position_[2];
 }
 
+void TerrainNode::SetRotate(const std::vector<float>& vals) {
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of size 3 for rotate",
+                    PyExcType::kValue);
+  }
+  rotate_ = vals;
+  rotate_x_ = rotate_[0];
+  rotate_y_ = rotate_[1];
+  rotate_z_ = rotate_[2];
+}
+
 auto TerrainNode::GetReflection() const -> std::string {
   return base::Graphics::StringFromReflectionType(reflection_);
 }
@@ -282,9 +299,22 @@ void TerrainNode::Draw(base::FrameDef* frame_def) {
   if (!visible_in_reflections_) {
     draw_flags |= base::kMeshDrawFlagNoReflection;
   }
-  if (position_x_ != 0.0f || position_y_ != 0.0f || position_z_ != 0.0f) {
+  bool has_position = (position_x_ != 0.0f || position_y_ != 0.0f
+                       || position_z_ != 0.0f);
+  bool has_rotation = (rotate_x_ != 0.0f || rotate_y_ != 0.0f
+                       || rotate_z_ != 0.0f);
+  if (has_position || has_rotation) {
     auto st = c.ScopedTransform();
-    c.Translate(position_x_, position_y_, position_z_);
+    if (has_position) {
+      c.Translate(position_x_, position_y_, position_z_);
+    }
+    if (has_rotation) {
+      for (int i = 0; i < 3; ++i) {
+        if (rotate_[i] != 0.0f) {
+          c.Rotate(rotate_[i], i == 0, i == 1, i == 2);
+        }
+      }
+    }
     c.DrawMeshAsset(mesh_->mesh_data(), draw_flags);
   } else {
     c.DrawMeshAsset(mesh_->mesh_data(), draw_flags);
