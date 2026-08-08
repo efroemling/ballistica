@@ -8,6 +8,7 @@ on:
 jobs:
   mirror:
     runs-on: ubuntu-latest
+    if: github.repository == 'efroemling/ballistica'
     steps:
       - name: Checkout with full history
         uses: actions/checkout@v7
