@@ -42,6 +42,8 @@ class TerrainNodeType : public NodeType {
   BA_COLLISION_MESH_ATTR(collision_mesh, collision_mesh, set_collision_mesh);
   BA_MATERIAL_ARRAY_ATTR(materials, materials, set_materials);
   BA_BOOL_ATTR(vr_only, vr_only, set_vr_only);
+  BA_FLOAT_ARRAY_ATTR(position, position, SetPosition);
+  BA_FLOAT_ARRAY_ATTR(rotate, rotate, SetRotate);
 #undef BA_NODE_TYPE_CLASS
 
   TerrainNodeType()
@@ -61,7 +63,9 @@ class TerrainNodeType : public NodeType {
         color_texture(this),
         collision_mesh(this),
         materials(this),
-        vr_only(this) {}
+        vr_only(this),
+        position(this),
+        rotate(this) {}
 };
 static NodeType* node_type{};
 
@@ -91,6 +95,14 @@ TerrainNode::TerrainNode(Scene* scene)
       color_r_(1.0f),
       color_g_(1.0f),
       color_b_(1.0f),
+      position_(3, 0.0f),
+      position_x_(0.0f),
+      position_y_(0.0f),
+      position_z_(0.0f),
+      rotate_(3, 0.0f),
+      rotate_x_(0.0f),
+      rotate_y_(0.0f),
+      rotate_z_(0.0f),
       vr_only_(false) {
   scene->increment_bg_cover_count();
 }
@@ -139,6 +151,8 @@ void TerrainNode::set_collision_mesh(SceneCollisionMesh* val) {
         RigidBody::kCollideAll ^ RigidBody::kCollideBackground,
         collision_mesh_.get(), flags);
     body_->set_can_cause_impact_damage(true);
+    body_->SetPositionAndRotation(position_x_, position_y_, position_z_,
+                                  rotate_x_, rotate_y_, rotate_z_);
 
     // also ship it to the BG-Dynamics thread..
     if (!bumper_ && affect_bg_dynamics_) {
@@ -179,6 +193,36 @@ void TerrainNode::SetColor(const std::vector<float>& vals) {
     color_r_ = color_[0];
     color_g_ = color_[1];
     color_b_ = color_[2];
+  }
+}
+
+void TerrainNode::SetPosition(const std::vector<float>& vals) {
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of size 3 for position",
+                    PyExcType::kValue);
+  }
+  position_ = vals;
+  position_x_ = position_[0];
+  position_y_ = position_[1];
+  position_z_ = position_[2];
+  if (body_.exists()) {
+    body_->SetPositionAndRotation(position_x_, position_y_, position_z_,
+                                  rotate_x_, rotate_y_, rotate_z_);
+  }
+}
+
+void TerrainNode::SetRotate(const std::vector<float>& vals) {
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of size 3 for rotate",
+                    PyExcType::kValue);
+  }
+  rotate_ = vals;
+  rotate_x_ = rotate_[0];
+  rotate_y_ = rotate_[1];
+  rotate_z_ = rotate_[2];
+  if (body_.exists()) {
+    body_->SetPositionAndRotation(position_x_, position_y_, position_z_,
+                                  rotate_x_, rotate_y_, rotate_z_);
   }
 }
 
@@ -265,7 +309,26 @@ void TerrainNode::Draw(base::FrameDef* frame_def) {
   if (!visible_in_reflections_) {
     draw_flags |= base::kMeshDrawFlagNoReflection;
   }
-  c.DrawMeshAsset(mesh_->mesh_data(), draw_flags);
+  bool has_position = (position_x_ != 0.0f || position_y_ != 0.0f
+                       || position_z_ != 0.0f);
+  bool has_rotation = (rotate_x_ != 0.0f || rotate_y_ != 0.0f
+                       || rotate_z_ != 0.0f);
+  if (has_position || has_rotation) {
+    auto st = c.ScopedTransform();
+    if (has_position) {
+      c.Translate(position_x_, position_y_, position_z_);
+    }
+    if (has_rotation) {
+      for (int i = 0; i < 3; ++i) {
+        if (rotate_[i] != 0.0f) {
+          c.Rotate(rotate_[i], i == 0, i == 1, i == 2);
+        }
+      }
+    }
+    c.DrawMeshAsset(mesh_->mesh_data(), draw_flags);
+  } else {
+    c.DrawMeshAsset(mesh_->mesh_data(), draw_flags);
+  }
   c.Submit();
 }
 

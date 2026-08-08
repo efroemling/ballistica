@@ -59,6 +59,10 @@ class TerrainNode : public Node {
   void set_materials(const std::vector<Material*>& vals);
   auto vr_only() const -> bool { return vr_only_; }
   void set_vr_only(bool val) { vr_only_ = val; }
+  auto position() const -> std::vector<float> { return position_; }
+  void SetPosition(const std::vector<float>& vals);
+  auto rotate() const -> std::vector<float> { return rotate_; }
+  void SetRotate(const std::vector<float>& vals);
 
  private:
   void AddToBGDynamics();
@@ -84,6 +88,10 @@ class TerrainNode : public Node {
   float reflection_scale_r_, reflection_scale_g_, reflection_scale_b_;
   std::vector<float> color_;
   float color_r_, color_g_, color_b_;
+  std::vector<float> position_;
+  float position_x_, position_y_, position_z_;
+  std::vector<float> rotate_;
+  float rotate_x_, rotate_y_, rotate_z_;
 };
 
 }  // namespace ballistica::scene_v1

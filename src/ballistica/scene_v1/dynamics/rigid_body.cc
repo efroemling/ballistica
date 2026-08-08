@@ -2,6 +2,8 @@
 
 #include "ballistica/scene_v1/dynamics/rigid_body.h"
 
+#include <cmath>
+
 #include "ballistica/base/graphics/component/render_component.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
@@ -192,6 +194,46 @@ void RigidBody::ApplyToRenderComponent(base::RenderComponent* c) {
   matrix[14] = pos[2];
   matrix[15] = 1;
   c->MultMatrix(matrix);
+}
+
+void RigidBody::SetPositionAndRotation(float x, float y, float z,
+                                       float rx_deg, float ry_deg,
+                                       float rz_deg) {
+  auto axis_angle_to_quat = [](float ax, float ay, float az, float angle_deg,
+                               dQuaternion out) {
+    float angle_rad = angle_deg * (3.14159265358979323846f / 180.0f);
+    float half = angle_rad * 0.5f;
+    float s = sinf(half);
+    out[0] = cosf(half);
+    out[1] = ax * s;
+    out[2] = ay * s;
+    out[3] = az * s;
+  };
+  auto quat_mult = [](const dQuaternion a, const dQuaternion b,
+                      dQuaternion out) {
+    out[0] = a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3];
+    out[1] = a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2];
+    out[2] = a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1];
+    out[3] = a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + a[3] * b[0];
+  };
+
+  dQuaternion qx, qy, qz, qxy, qtotal;
+  axis_angle_to_quat(1.0f, 0.0f, 0.0f, rx_deg, qx);
+  axis_angle_to_quat(0.0f, 1.0f, 0.0f, ry_deg, qy);
+  axis_angle_to_quat(0.0f, 0.0f, 1.0f, rz_deg, qz);
+  quat_mult(qx, qy, qxy);
+  quat_mult(qxy, qz, qtotal);
+
+  if (type_ == Type::kBody && body_) {
+    dBodySetPosition(body_, x, y, z);
+    dBodySetQuaternion(body_, qtotal);
+  } else {
+    dGeomSetPosition(geoms_[0], x, y, z);
+    dGeomSetQuaternion(geoms_[0], qtotal);
+    if (shape_ == Shape::kTrimesh) {
+      dynamics_->RefreshTrimesh(geoms_[0]);
+    }
+  }
 }
 
 void RigidBody::Check() {

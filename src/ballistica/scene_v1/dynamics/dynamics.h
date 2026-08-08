@@ -68,6 +68,7 @@ class Dynamics : public Object {
   // to keep track of these ourself.
   void AddTrimesh(dGeomID g);
   void RemoveTrimesh(dGeomID g);
+  void RefreshTrimesh(dGeomID g);
 
   auto collision_count() const { return collision_count_; }
   auto process_real_time() const { return real_time_; }
