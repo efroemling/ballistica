@@ -1,19 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.260807c`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.260808a`` (bascenev1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.baclassicassets.260807c
+# ba_meta require asset-package a-0.baclassicassets.260808a
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.baclassicassets.260807c'
+__asset_package__ = 'a-0.baclassicassets.260808a'
 
 from typing import TYPE_CHECKING
 
@@ -5493,6 +5493,321 @@ if TYPE_CHECKING:
         #:     English: "The Last Stand"
         the_last_stand: LangStr
 
+    class StringsGameSettingsGroup:
+        """
+        ::
+
+            Names of game settings and their preset choices, shown in the
+            playlist editor. Short label-style noun phrases, not prose; several
+            double as the value shown for a setting, so each must read correctly
+            standing alone.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Name of a game setting permitting scores below zero.
+        #:
+        #:     English: "Allow Negative Scores"
+        allow_negative_scores: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting that evens out the total lives given to
+        #:     each team.
+        #:
+        #:     English: "Balance Total Lives"
+        balance_total_lives: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting for how often bombs appear.
+        #:
+        #:     English: "Bomb Spawning"
+        bomb_spawning: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting granting the boxing-gloves power-up to the
+        #:     chosen one.
+        #:
+        #:     English: "Chosen One Gets Gloves"
+        chosen_one_gets_gloves: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting granting an energy shield to the chosen
+        #:     one.
+        #:
+        #:     English: "Chosen One Gets Shield"
+        chosen_one_gets_shield: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting for how long a player must stay the chosen
+        #:     one to win.
+        #:
+        #:     English: "Chosen One Time"
+        chosen_one_time: LangStr
+
+        #: ::
+        #:
+        #:     Menu option for a duration of eight seconds, shown as one of the
+        #:     values a game setting can take in the playlist editor.
+        #:
+        #:     English: "8 Seconds"
+        eight_seconds: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting that allows the impact-bomb power-up to
+        #:     appear.
+        #:
+        #:     English: "Enable Impact Bombs"
+        enable_impact_bombs: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting that allows the triple-bomb power-up to
+        #:     appear.
+        #:
+        #:     English: "Enable Triple Bombs"
+        enable_triple_bombs: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting requiring every team member to finish, not
+        #:     just one.
+        #:
+        #:     English: "Entire Team Must Finish"
+        entire_team_must_finish: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting that plays the match in dramatic slow
+        #:     motion.
+        #:
+        #:     English: "Epic Mode"
+        epic_mode: LangStr
+
+        #: ::
+        #:
+        #:     Menu option for a duration of five minutes, shown as one of the
+        #:     values a game setting can take in the playlist editor.
+        #:
+        #:     English: "5 Minutes"
+        five_minutes: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting for how long a dropped flag waits before
+        #:     returning to its base.
+        #:
+        #:     English: "Flag Idle Return Time"
+        flag_idle_return_time: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting for how long touching a flag takes to send
+        #:     it back to its base.
+        #:
+        #:     English: "Flag Touch Return Time"
+        flag_touch_return_time: LangStr
+
+        #: ::
+        #:
+        #:     Menu option for a duration of four seconds, shown as one of the
+        #:     values a game setting can take in the playlist editor.
+        #:
+        #:     English: "4 Seconds"
+        four_seconds: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting for how long something must be held to
+        #:     count.
+        #:
+        #:     English: "Hold Time"
+        hold_time: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting for how many kills each player needs for
+        #:     the team to win.
+        #:
+        #:     English: "Kills to Win Per Player"
+        kills_to_win_per_player: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting for how many laps a race runs.
+        #:
+        #:     English: "Laps"
+        laps: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting for how many lives each player starts
+        #:     with.
+        #:
+        #:     English: "Lives Per Player"
+        lives_per_player: LangStr
+
+        #: ::
+        #:
+        #:     Menu option for a longer than normal duration, shown as one of
+        #:     the values a game setting can take in the playlist editor.
+        #:
+        #:     English: "Long"
+        long: LangStr
+
+        #: ::
+        #:
+        #:     Menu option for a much longer than normal duration, shown as one
+        #:     of the values a game setting can take in the playlist editor.
+        #:
+        #:     English: "Longer"
+        longer: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting for how often land-mines appear.
+        #:
+        #:     English: "Mine Spawning"
+        mine_spawning: LangStr
+
+        #: ::
+        #:
+        #:     Menu option for that land-mines never appear, shown as one of the
+        #:     values a game setting can take in the playlist editor.
+        #:
+        #:     English: "No Mines"
+        no_mines: LangStr
+
+        #: ::
+        #:
+        #:     The choice "None", meaning the option is switched off.
+        #:
+        #:     English: "None"
+        none: LangStr
+
+        #: ::
+        #:
+        #:     Menu option for the normal duration, shown as one of the values a
+        #:     game setting can take in the playlist editor.
+        #:
+        #:     English: "Normal"
+        normal: LangStr
+
+        #: ::
+        #:
+        #:     Menu option for a duration of one minute, shown as one of the
+        #:     values a game setting can take in the playlist editor.
+        #:
+        #:     English: "1 Minute"
+        one_minute: LangStr
+
+        #: ::
+        #:
+        #:     Menu option for a duration of one second, shown as one of the
+        #:     values a game setting can take in the playlist editor.
+        #:
+        #:     English: "1 Second"
+        one_second: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting for a harder variant of the game.
+        #:
+        #:     English: "Pro Mode"
+        pro_mode: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting for how long players wait before returning
+        #:     after dying.
+        #:
+        #:     English: "Respawn Times"
+        respawn_times: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting for the score needed to win.
+        #:
+        #:     English: "Score to Win"
+        score_to_win: LangStr
+
+        #: ::
+        #:
+        #:     Menu option for a shorter than normal duration, shown as one of
+        #:     the values a game setting can take in the playlist editor.
+        #:
+        #:     English: "Short"
+        short: LangStr
+
+        #: ::
+        #:
+        #:     Menu option for a much shorter than normal duration, shown as one
+        #:     of the values a game setting can take in the playlist editor.
+        #:
+        #:     English: "Shorter"
+        shorter: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting where players take turns alone rather than
+        #:     as a team.
+        #:
+        #:     English: "Solo Mode"
+        solo_mode: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting for how many targets appear.
+        #:
+        #:     English: "Target Count"
+        target_count: LangStr
+
+        #: ::
+        #:
+        #:     Menu option for a duration of ten minutes, shown as one of the
+        #:     values a game setting can take in the playlist editor.
+        #:
+        #:     English: "10 Minutes"
+        ten_minutes: LangStr
+
+        #: ::
+        #:
+        #:     Name of a game setting capping how long a match runs.
+        #:
+        #:     English: "Time Limit"
+        time_limit: LangStr
+
+        #: ::
+        #:
+        #:     Menu option for a duration of twenty minutes, shown as one of the
+        #:     values a game setting can take in the playlist editor.
+        #:
+        #:     English: "20 Minutes"
+        twenty_minutes: LangStr
+
+        #: ::
+        #:
+        #:     Menu option for a duration of two minutes, shown as one of the
+        #:     values a game setting can take in the playlist editor.
+        #:
+        #:     English: "2 Minutes"
+        two_minutes: LangStr
+
+        #: ::
+        #:
+        #:     Menu option for a duration of two seconds, shown as one of the
+        #:     values a game setting can take in the playlist editor.
+        #:
+        #:     English: "2 Seconds"
+        two_seconds: LangStr
+
     class StringsGatherGroup:
         """
         ::
@@ -9914,6 +10229,429 @@ if TYPE_CHECKING:
         #:     English: "Red"
         red: LangStr
 
+    class StringsTipsGroup:
+        """
+        ::
+
+            Gameplay tips shown between rounds and in the lobby. Advice
+            delivered deadpan -- several are jokes first and hints second, and
+            the humour is the point. Keep each one wry rather than translating
+            it literally.
+
+            See source for the full asset list.
+        """
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "You can "aim" your punches by spinning left or right.
+        #:     This is useful for knocking bad guys off edges or scoring in
+        #:     hockey."
+        aim_punches: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "If you've got lots of players coming and going, turn on
+        #:     'auto-kick-idle-players' under settings in case anyone forgets to
+        #:     leave the game."
+        auto_kick_idle: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "No, you can't get up on the ledge. You have to throw
+        #:     bombs."
+        cant_reach_ledge: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Despite their looks, all characters' abilities are
+        #:     identical, so just pick whichever one you most closely resemble."
+        characters_identical: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Try 'cooking off' bombs for a second or two before
+        #:     throwing them."
+        cook_off_bombs: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Create player profiles for yourself and your friends
+        #:     with your preferred names and appearances instead of using random
+        #:     ones."
+        create_profiles: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "In Capture-the-Flag, your own flag must be at your base
+        #:     to score. If the other team is about to score, stealing their
+        #:     flag can be a good way to stop them."
+        ctf_own_flag: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Curse boxes turn you into a ticking time bomb. The only
+        #:     cure is to quickly grab a health-pack."
+        curse_boxes: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "If you pick up a curse, your only hope for survival is
+        #:     to find a health powerup in the next few seconds."
+        curse_health_powerup: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Tired of the soundtrack? Replace it with your own! See
+        #:     Settings->Audio->Soundtrack"
+        custom_soundtrack: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Don't run all the time. Really. You will fall off
+        #:     cliffs."
+        dont_always_run: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Don't spin for too long; you'll become dizzy and fall."
+        dont_overspin: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "This level never ends, but a high score here will earn
+        #:     you eternal respect throughout the world."
+        endless_high_score: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Punches do more damage the faster your fists are
+        #:     moving, so try running, jumping, and spinning like crazy."
+        fast_fists: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Always remember to floss."
+        floss: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "You can judge when a bomb is going to explode based on
+        #:     the color of sparks from its fuse: yellow..orange..red..BOOM."
+        fuse_colors: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "In hockey, you'll maintain more speed if you turn
+        #:     gradually."
+        hockey_turn_gradually: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Hold any button to run. (Trigger buttons work well if
+        #:     you have them)"
+        hold_to_run: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Ice bombs are not very powerful, but they freeze
+        #:     whoever they hit, leaving them vulnerable to shattering."
+        ice_bombs: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Players can join and leave in the middle of most games,
+        #:     and you can also plug and unplug controllers on the fly."
+        join_leave_anytime: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Jumping just before throwing a bomb will make it go
+        #:     higher."
+        jump_before_throw: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Jump just as you're throwing to get bombs up to the
+        #:     highest levels."
+        jump_throw_high: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "If you stay in one place, you're toast. Run and dodge
+        #:     to survive."
+        keep_moving: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Land-mines are a good way to stop speedy enemies."
+        land_mines_speedy: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Practice using your momentum to throw bombs more
+        #:     accurately."
+        momentum_accuracy: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "If you kill an enemy in one hit, you get double
+        #:     points."
+        one_hit_double_points: LangStr
+
+        def pickup_flag(self, *, pickup: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Gameplay tip shown between rounds, in the game's dry deadpan
+                voice.
+
+                English: "Use the pick-up button to grab the flag < {pickup} >."
+            """
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "It's easier to win with a friend or two helping."
+        play_with_friends: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "If someone picks you up, punch them and they'll let go.
+        #:     This works in real life too."
+        punch_to_escape: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "If your framerate is choppy, try turning down
+        #:     resolution or visuals in the game's graphics settings."
+        reduce_visuals_framerate: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "If your device gets too warm or you'd like to conserve
+        #:     battery power, turn down "Visuals" or "Resolution" in
+        #:     Settings->Graphics."
+        reduce_visuals_heat: LangStr
+
+        def remote_app(self, *, remote_app_name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Gameplay tip shown between rounds, in the game's dry deadpan
+                voice.
+
+                English: "Short on controllers? Install the '{remote_app_name}'
+                app on your mobile devices to use them as controllers."
+            """
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Hold down any button to run. You'll get places faster
+        #:     but won't turn very well, so watch out for cliffs."
+        run_watch_cliffs: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Your punches do much more damage if you are running or
+        #:     spinning."
+        running_spinning_damage: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Don't get too cocky with that energy shield; you can
+        #:     still get yourself thrown off a cliff."
+        shield_overconfidence: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "A perfectly timed running-jumping-spin-punch can kill
+        #:     in a single hit and earn you lifelong respect from your friends."
+        spin_punch_respect: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "If you get a sticky bomb stuck to you, jump around and
+        #:     spin in circles. You might shake the bomb off, or if nothing
+        #:     else, your last moments will be entertaining."
+        sticky_bomb_dance: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "The head is the most vulnerable area, so a sticky-bomb
+        #:     to the noggin usually means game-over."
+        sticky_to_head: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Many things can be picked up and thrown, including
+        #:     other players. Tossing your enemies off cliffs can be an
+        #:     effective and emotionally fulfilling strategy."
+        throw_players: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Throw strength depends on the direction you hold. To
+        #:     toss something gently in front of you, don't hold any direction."
+        throw_strength_direction: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Take out a group of enemies by setting off a bomb near
+        #:     a TNT box."
+        tnt_box: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Try tricking enemies into killing each other or running
+        #:     off cliffs."
+        trick_enemies: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "You take damage when you whack your head on things, so
+        #:     try not to whack your head on things."
+        whack_head: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Whip back and forth to get more distance on your
+        #:     throws."
+        whip_for_distance: LangStr
+
+        #: ::
+        #:
+        #:     Gameplay tip shown between rounds, in the game's dry deadpan
+        #:     voice.
+        #:
+        #:     English: "Run back and forth before throwing a bomb to 'whiplash'
+        #:     it and throw it farther."
+        whiplash_throw: LangStr
+
     class StringsTournamentEntryGroup:
         """
         ::
@@ -10673,6 +11411,7 @@ if TYPE_CHECKING:
         game: StringsGameGroup
         game_descriptions: StringsGameDescriptionsGroup
         game_names: StringsGameNamesGroup
+        game_settings: StringsGameSettingsGroup
         gather: StringsGatherGroup
         get_remote: StringsGetRemoteGroup
         get_tokens: StringsGetTokensGroup
@@ -10705,6 +11444,7 @@ if TYPE_CHECKING:
         soundtrack: StringsSoundtrackGroup
         store: StringsStoreGroup
         teams: StringsTeamsGroup
+        tips: StringsTipsGroup
         tournament_entry: StringsTournamentEntryGroup
         tournament_scores: StringsTournamentScoresGroup
         tutorial: StringsTutorialGroup
@@ -11045,8 +11785,8 @@ if TYPE_CHECKING:
     #: ``action_hero_lower_leg``, and 385 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1075 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``characters``, ``chest``, and 1070 more). Full list in
+    #: The ``strings`` group - 1159 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``characters``, ``chest``, and 1154 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -12460,6 +13200,47 @@ _TREE = {
             'target_practice': (),
             'the_last_stand': (),
         },
+        'game_settings': {
+            'allow_negative_scores': (),
+            'balance_total_lives': (),
+            'bomb_spawning': (),
+            'chosen_one_gets_gloves': (),
+            'chosen_one_gets_shield': (),
+            'chosen_one_time': (),
+            'eight_seconds': (),
+            'enable_impact_bombs': (),
+            'enable_triple_bombs': (),
+            'entire_team_must_finish': (),
+            'epic_mode': (),
+            'five_minutes': (),
+            'flag_idle_return_time': (),
+            'flag_touch_return_time': (),
+            'four_seconds': (),
+            'hold_time': (),
+            'kills_to_win_per_player': (),
+            'laps': (),
+            'lives_per_player': (),
+            'long': (),
+            'longer': (),
+            'mine_spawning': (),
+            'no_mines': (),
+            'none': (),
+            'normal': (),
+            'one_minute': (),
+            'one_second': (),
+            'pro_mode': (),
+            'respawn_times': (),
+            'score_to_win': (),
+            'short': (),
+            'shorter': (),
+            'solo_mode': (),
+            'target_count': (),
+            'ten_minutes': (),
+            'time_limit': (),
+            'twenty_minutes': (),
+            'two_minutes': (),
+            'two_seconds': (),
+        },
         'gather': {
             'about': (),
             'about_description': ('party', 'button'),
@@ -13034,6 +13815,53 @@ _TREE = {
             'unlock_in_store': (),
         },
         'teams': {'bad_guys': (), 'blue': (), 'good_guys': (), 'red': ()},
+        'tips': {
+            'aim_punches': (),
+            'auto_kick_idle': (),
+            'cant_reach_ledge': (),
+            'characters_identical': (),
+            'cook_off_bombs': (),
+            'create_profiles': (),
+            'ctf_own_flag': (),
+            'curse_boxes': (),
+            'curse_health_powerup': (),
+            'custom_soundtrack': (),
+            'dont_always_run': (),
+            'dont_overspin': (),
+            'endless_high_score': (),
+            'fast_fists': (),
+            'floss': (),
+            'fuse_colors': (),
+            'hockey_turn_gradually': (),
+            'hold_to_run': (),
+            'ice_bombs': (),
+            'join_leave_anytime': (),
+            'jump_before_throw': (),
+            'jump_throw_high': (),
+            'keep_moving': (),
+            'land_mines_speedy': (),
+            'momentum_accuracy': (),
+            'one_hit_double_points': (),
+            'pickup_flag': ('pickup',),
+            'play_with_friends': (),
+            'punch_to_escape': (),
+            'reduce_visuals_framerate': (),
+            'reduce_visuals_heat': (),
+            'remote_app': ('remote_app_name',),
+            'run_watch_cliffs': (),
+            'running_spinning_damage': (),
+            'shield_overconfidence': (),
+            'spin_punch_respect': (),
+            'sticky_bomb_dance': (),
+            'sticky_to_head': (),
+            'throw_players': (),
+            'throw_strength_direction': (),
+            'tnt_box': (),
+            'trick_enemies': (),
+            'whack_head': (),
+            'whip_for_distance': (),
+            'whiplash_throw': (),
+        },
         'tournament_entry': {
             'entering': (),
             'tickets_count': ('count',),

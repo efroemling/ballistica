@@ -64,18 +64,10 @@ class TipsText(bs.Actor):
 
     def change_phrase(self) -> None:
         """Switch the visible tip phrase."""
-        from babase import get_remote_app_name
-
-        next_tip = bs.Lstr(
-            translate=(
-                'tips',
-                (
-                    bs.app.classic.get_next_tip()
-                    if bs.app.classic is not None
-                    else ''
-                ),
-            ),
-            subs=[('${REMOTE_APP_NAME}', get_remote_app_name())],
+        next_tip: bs.LangStr = (
+            bs.app.classic.get_next_tip()
+            if bs.app.classic is not None
+            else bs.LangStr.from_text('')
         )
         spc = self._message_spacing
         assert self.node

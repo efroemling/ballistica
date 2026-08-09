@@ -12,6 +12,7 @@ import random
 import logging
 from typing import TYPE_CHECKING, override
 
+import babase
 import bascenev1 as bs
 from bascenev1 import classicassets
 
@@ -396,7 +397,6 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
     """Co-op variant of football."""
 
     name = 'Football'
-    tips = ['Use the pick-up button to grab the flag < ${PICKUP} >']
     scoreconfig = bs.ScoreConfig(
         scoretype=bs.ScoreType.MILLISECONDS, version='B'
     )
@@ -432,6 +432,15 @@ class FootballCoopGame(bs.CoopGameActivity[Player, Team]):
         settings['map'] = 'Football Stadium'
         super().__init__(settings)
         self._preset = settings.get('preset', 'rookie')
+
+        # Set here rather than as a class attribute: string accessors
+        # are gated until construct-mode hands off, and class bodies
+        # run at import.
+        self.tips = [
+            classicassets.strings.tips.pickup_flag(
+                pickup=babase.charstr(babase.SpecialChar.TOP_BUTTON)
+            )
+        ]
 
         # Load some media we need.
         self._cheer_sound = classicassets.audio.cheer.get()

@@ -108,11 +108,6 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
 
     name = 'Runaround'
     description = 'Prevent enemies from reaching the exit.'
-    tips = [
-        'Jump just as you\'re throwing to get bombs up to the highest levels.',
-        'No, you can\'t get up on the ledge. You have to throw bombs.',
-        'Whip back and forth to get more distance on your throws..',
-    ]
     default_music = bs.MusicType.MARCHING
 
     # How fast our various bot types walk.
@@ -137,6 +132,16 @@ class RunaroundGame(bs.CoopGameActivity[Player, Team]):
         super().__init__(settings)
         shared = SharedObjects.get()
         self._preset = Preset(settings.get('preset', 'pro'))
+
+        # Set here rather than as a class attribute: string accessors
+        # are gated until construct-mode hands off, and class bodies
+        # run at import.
+        _tips = classicassets.strings.tips
+        self.tips = [
+            _tips.jump_throw_high,
+            _tips.cant_reach_ledge,
+            _tips.whip_for_distance,
+        ]
 
         self._player_death_sound = classicassets.audio.player_death.get()
         self._new_wave_sound = classicassets.audio.score_hit01.get()

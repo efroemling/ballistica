@@ -204,7 +204,14 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
     # pylint: disable=too-many-public-methods
 
     # Tips to be presented to the user at the start of the game.
-    tips: list[str | bascenev1.GameTip] = []
+    #: Tips shown at the start of a game. Plain strings go
+    #: through the legacy translate path; prefer authored
+    #: :class:`~babase.LangStr` values, which re-render on a
+    #: language change. Note this is a *class* attribute
+    #: evaluated at import, so a LangStr belongs in __init__
+    #: (``self.tips = [...]``) rather than here -- string
+    #: accessors are gated until construct-mode hands off.
+    tips: list[str | babase.LangStr | bascenev1.GameTip] = []
 
     # Default getname() will return this if not None.
     name: str | None = None
@@ -926,15 +933,25 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                 icon = tip.icon
                 sound = tip.sound
                 tip = tip.text
-                assert isinstance(tip, str)
 
-            # Do a few substitutions.
-            tip_lstr = babase.Lstr(
-                translate=('tips', tip),
-                subs=[
-                    ('${PICKUP}', babase.charstr(babase.SpecialChar.TOP_BUTTON))
-                ],
-            )
+            tip_lstr: babase.Lstr | babase.LangStr
+            if isinstance(tip, babase.LangStr):
+                # Authored tip; already carries any substitutions it
+                # needs (see e.g. football's pickup_flag).
+                tip_lstr = tip
+            else:
+                # A plain string -- a mod's tip, or first-party text not
+                # yet ported. Legacy translate path, including the
+                # ${PICKUP} sub those strings may still contain.
+                tip_lstr = babase.Lstr(
+                    translate=('tips', tip),
+                    subs=[
+                        (
+                            '${PICKUP}',
+                            babase.charstr(babase.SpecialChar.TOP_BUTTON),
+                        )
+                    ],
+                )
             base_position = (75, 50)
             tip_scale = 0.8
             tip_title_scale = 1.2

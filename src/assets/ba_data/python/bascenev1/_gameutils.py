@@ -37,7 +37,7 @@ TROPHY_CHARS = {
 class GameTip:
     """Defines a tip presentable to the user at the start of a game."""
 
-    text: str
+    text: str | babase.LangStr
     icon: bascenev1.Texture | None = None
     sound: bascenev1.Sound | None = None
 
