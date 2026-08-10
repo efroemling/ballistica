@@ -150,21 +150,24 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
     name = 'Onslaught'
     description = 'Defeat all enemies.'
 
-    tips: list[str | bs.GameTip] = [
-        'Hold any button to run.'
-        '  (Trigger buttons work well if you have them)',
-        'Try tricking enemies into killing eachother or running off cliffs.',
-        'Try \'Cooking off\' bombs for a second or two before throwing them.',
-        'It\'s easier to win with a friend or two helping.',
-        'If you stay in one place, you\'re toast. Run and dodge to survive..',
-        'Practice using your momentum to throw bombs more accurately.',
-        'Your punches do much more damage if you are running or spinning.',
-    ]
-
     # Show messages when players die since it matters here.
     announce_player_deaths = True
 
     def __init__(self, settings: dict):
+        # Set here rather than as a class attribute: string accessors
+        # are gated until construct-mode hands off, and class bodies
+        # run at import.
+        _tips = classicassets.strings.tips
+        self.tips = [
+            _tips.hold_to_run,
+            _tips.trick_enemies,
+            _tips.cook_off_bombs,
+            _tips.play_with_friends,
+            _tips.keep_moving,
+            _tips.momentum_accuracy,
+            _tips.running_spinning_damage,
+        ]
+
         self._preset = Preset(settings.get('preset', 'training'))
         if self._preset in {
             Preset.TRAINING,
@@ -237,7 +240,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 customdata['_showed_onslaught_landmine_tip'] = True
                 self.tips = [
                     bs.GameTip(
-                        'Land-mines are a good way to stop speedy enemies.',
+                        classicassets.strings.tips.land_mines_speedy,
                         icon=classicassets.textures.powerup_land_mines.get(),
                         sound=builtinassets.audio.ding.get(),
                     )
@@ -250,8 +253,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 customdata['_showed_onslaught_tnt_tip'] = True
                 self.tips = [
                     bs.GameTip(
-                        'Take out a group of enemies by\n'
-                        'setting off a bomb near a TNT box.',
+                        classicassets.strings.tips.tnt_box,
                         icon=classicassets.textures.tnt.get(),
                         sound=builtinassets.audio.ding.get(),
                     )
@@ -264,8 +266,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 customdata['_showed_onslaught_curse_tip'] = True
                 self.tips = [
                     bs.GameTip(
-                        'Curse boxes turn you into a ticking time bomb.\n'
-                        'The only cure is to quickly grab a health-pack.',
+                        classicassets.strings.tips.curse_boxes,
                         icon=classicassets.textures.powerup_curse.get(),
                         sound=builtinassets.audio.ding.get(),
                     )

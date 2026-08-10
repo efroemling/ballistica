@@ -144,7 +144,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self.lobby_account_profile_device_id: int | None = None
 
         # Misc.
-        self.tips: list[str] = []
+        self.tips: list[babase.LangStr] = []
         self.stress_test_update_timer: babase.AppTimer | None = None
         self.stress_test_update_timer_2: babase.AppTimer | None = None
         self.value_test_defaults: dict = {}
@@ -696,7 +696,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         """Return a campaign by name."""
         return self.campaigns[name]
 
-    def get_next_tip(self) -> str:
+    def get_next_tip(self) -> babase.LangStr:
         """Returns the next tip to be displayed."""
         if not self.tips:
             for tip in get_all_tips():

@@ -62,19 +62,25 @@ class ConventionsMode(Enum):
     STRICT = 'strict'
 
 
-class PackageVisibility(Enum):
+class PackageResolveAccess(Enum):
     """Who may resolve a package's *prod* versions.
 
     Orthogonal to the version track: a track says how released a
     version is, this says who may have it. ``PRIVATE`` applies the same
     owner-or-dev-team check that dev/test versions always get, so
-    visibility only ever *adds* restriction to prod -- it can never make
-    a dev/test version public.
+    resolve access only ever *adds* restriction to prod -- it can never
+    make a dev/test version public.
 
     ``PUBLIC`` is the default and what every package had before this
-    existed. Exists for server-side packages (content the master
-    evaluates itself and never ships as language-strings), not as a
-    general publishing control.
+    existed. Exists for packages nothing fetches at runtime -- content
+    the master evaluates itself, or build-time sources embedded into
+    other packages -- not as a general publishing control.
+
+    Gates the *resolve*, not the content. A private package's entries
+    can still reach clients verbatim -- formatter components are
+    embedded by value into each consuming package's language blobs at
+    build time -- so this says "nothing fetches this package at
+    runtime", never "these strings are secret".
     """
 
     PUBLIC = 'public'
@@ -87,7 +93,7 @@ class PackageSourceSharing(Enum):
     Governs *source* availability only -- who may copy the exporting
     workspace's snapshot as the starting point for a workspace of their
     own. It says nothing about who can *use* the published assets;
-    that's the track plus :class:`PackageVisibility`.
+    that's the track plus :class:`PackageResolveAccess`.
 
     Package-wide (not per-version): sharing intent belongs to the
     package, and a per-version value meant every republish silently
@@ -163,21 +169,21 @@ class AssetsV1GlobalVals:
     ] = ConventionsMode.RELAXED
 
     #: Who may resolve this package's *prod* versions (see
-    #: :class:`PackageVisibility`). Set by hand in ``workspace.json`` --
-    #: deliberately not exposed in the UI, same as ``conventions``,
+    #: :class:`PackageResolveAccess`). Set by hand in ``workspace.json``
+    #: -- deliberately not exposed in the UI, same as ``conventions``,
     #: since its use is limited to server-side packages. Unknown stored
     #: values fall back to public: failing closed here would break asset
     #: resolves for every client, and private packages are private from
     #: birth and reached by their owner (who short-circuits before this
     #: is ever consulted).
-    visibility: Annotated[
-        PackageVisibility,
+    resolve_access: Annotated[
+        PackageResolveAccess,
         IOAttrs(
-            'visibility',
+            'resolve_access',
             store_default=False,
-            enum_fallback=PackageVisibility.PUBLIC,
+            enum_fallback=PackageResolveAccess.PUBLIC,
         ),
-    ] = PackageVisibility.PUBLIC
+    ] = PackageResolveAccess.PUBLIC
 
     #: Who may start a workspace of their own from this package's source
     #: (see :class:`PackageSourceSharing`). Package-wide policy, resolved

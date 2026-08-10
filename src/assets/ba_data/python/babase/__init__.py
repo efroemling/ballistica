@@ -145,7 +145,6 @@ from babase._appmodeselector import AppModeSelector
 from babase._appconfig import AppConfig
 from babase._apputils import (
     AppHealthSubsystem,
-    get_remote_app_name,
     handle_leftover_v1_cloud_log_file,
     is_browser_likely_available,
     utc_now_cloud,
@@ -324,7 +323,6 @@ __all__ = [
     'get_ip_address_type',
     'get_legacy_langdata',
     'get_max_graphics_quality',
-    'get_remote_app_name',
     'get_replays_dir',
     'get_string_height',
     'get_string_width',

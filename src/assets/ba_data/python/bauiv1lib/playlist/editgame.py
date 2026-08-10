@@ -548,8 +548,16 @@ class PlaylistEditGameWindow(bui.MainWindow):
     def main_window_should_preserve_selection(self) -> bool:
         return False
 
-    def _get_localized_setting_name(self, name: str) -> bui.Lstr:
-        return bui.Lstr(translate=('settingNames', name))
+    def _get_localized_setting_name(self, name: str) -> bui.LangStr:
+        """Authored display name for a game setting or preset value.
+
+        Explicit table rather than a built lookup, per the standing
+        convention: a removed accessor must be a type error, not a
+        silent miss. Anything absent -- a mod's setting, or a value we
+        never authored -- shows its own name untranslated, which is the
+        honest result for text we have no translation for.
+        """
+        return _setting_name_table().get(name, bui.LangStr.from_text(name))
 
     def _select_map(self) -> None:
         # pylint: disable=cyclic-import
@@ -645,3 +653,55 @@ class PlaylistEditGameWindow(bui.MainWindow):
         else:
             raise TypeError('invalid vartype: ' + str(setting_type))
         self._settings[setting_name] = val
+
+
+def _setting_name_table() -> dict[str, bui.LangStr]:
+    """Game-setting name/value -> its authored display string.
+
+    Keys are the legacy ``settingNames`` translate keys, which are also
+    the English text. Several entries are *values* rather than setting
+    names (durations, Short/Normal/Long), so they must each read
+    correctly standing alone.
+    """
+    s = classicassets.strings.game_settings
+    return {
+        '1 Second': s.one_second,
+        '2 Seconds': s.two_seconds,
+        '4 Seconds': s.four_seconds,
+        '8 Seconds': s.eight_seconds,
+        '1 Minute': s.one_minute,
+        '2 Minutes': s.two_minutes,
+        '5 Minutes': s.five_minutes,
+        '10 Minutes': s.ten_minutes,
+        '20 Minutes': s.twenty_minutes,
+        'Shorter': s.shorter,
+        'Short': s.short,
+        'Normal': s.normal,
+        'Long': s.long,
+        'Longer': s.longer,
+        'None': s.none,
+        'No Mines': s.no_mines,
+        'Epic Mode': s.epic_mode,
+        'Pro Mode': s.pro_mode,
+        'Solo Mode': s.solo_mode,
+        'Enable Triple Bombs': s.enable_triple_bombs,
+        'Enable Impact Bombs': s.enable_impact_bombs,
+        'Allow Negative Scores': s.allow_negative_scores,
+        'Balance Total Lives': s.balance_total_lives,
+        'Entire Team Must Finish': s.entire_team_must_finish,
+        'Chosen One Gets Gloves': s.chosen_one_gets_gloves,
+        'Chosen One Gets Shield': s.chosen_one_gets_shield,
+        'Chosen One Time': s.chosen_one_time,
+        'Bomb Spawning': s.bomb_spawning,
+        'Mine Spawning': s.mine_spawning,
+        'Flag Idle Return Time': s.flag_idle_return_time,
+        'Flag Touch Return Time': s.flag_touch_return_time,
+        'Hold Time': s.hold_time,
+        'Kills to Win Per Player': s.kills_to_win_per_player,
+        'Laps': s.laps,
+        'Lives Per Player': s.lives_per_player,
+        'Respawn Times': s.respawn_times,
+        'Score to Win': s.score_to_win,
+        'Target Count': s.target_count,
+        'Time Limit': s.time_limit,
+    }

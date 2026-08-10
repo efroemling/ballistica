@@ -60,10 +60,6 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
 
     name = 'The Last Stand'
     description = 'Final glorious epic slow motion battle to the death.'
-    tips = [
-        'This level never ends, but a high score here\n'
-        'will earn you eternal respect throughout the world.'
-    ]
 
     # Show messages when players die since it matters here.
     announce_player_deaths = True
@@ -76,6 +72,12 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
     def __init__(self, settings: dict):
         settings['map'] = 'Rampage'
         super().__init__(settings)
+
+        # Set here rather than as a class attribute: string accessors
+        # are gated until construct-mode hands off, and class bodies
+        # run at import.
+        self.tips = [classicassets.strings.tips.endless_high_score]
+
         self._new_wave_sound = classicassets.audio.score_hit01.get()
         self._winsound = classicassets.audio.score.get()
         self._cashregistersound = builtinassets.audio.cash_register.get()
