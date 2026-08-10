@@ -1007,10 +1007,8 @@ void ClassicAppMode::UpdateKickVote_() {
     if (total_client_count <= 2) {
       votes_required = 2;  // Shouldn't actually be possible.
     } else if (total_client_count <= 7) {
-      votes_required = (total_client_count + 3) / 2;
-      if (g_core->HeadlessMode() && total_client_count % 2 == 1) {
-        votes_required--;
-      }
+      votes_required = (
+        total_client_count + (g_core->HeadlessMode() ? 0 : 1)) / 2 + 1;
     } else {
       votes_required = total_client_count - 3;
     }
