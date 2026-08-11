@@ -206,11 +206,17 @@ class LogHandler(logging.Handler):
         assert current_thread() is self._thread
         self._callbacks.append(call)
 
-        # Run all of our cached entries through the new callback if desired.
+        # Run all of our cached entries through the new callback if
+        # desired. Snapshot the cache under its lock but run the
+        # callback outside it - callbacks are arbitrary code and may
+        # themselves query the cache (get_cached), which would
+        # deadlock under the (non-reentrant) lock. Emits happen on
+        # this same thread, so the snapshot cannot miss entries.
         if feed_existing_logs and self._cache_size_limit > 0:
             with self._cache_lock:
-                for _id, entry in self._cache:
-                    self._run_callback_on_entry(call, entry)
+                entries = [entry for _id, entry in self._cache]
+            for entry in entries:
+                self._run_callback_on_entry(call, entry)
 
     def set_aux_handler(self, handler: logging.Handler | None) -> None:
         """Set an auxiliary handler that receives all log records.

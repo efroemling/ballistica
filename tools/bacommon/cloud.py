@@ -21,6 +21,7 @@ from bacommon import securedata
 from bacommon.transfer import DirectoryManifest
 from bacommon.locale import Locale
 from bacommon.login import LoginType
+from bacommon.logreporting import LogReportSpec
 from bacommon.docui import DocUIRequest, DocUIResponse
 import bacommon.displayitem as ditm
 import bacommon.clienteffect as clfx
@@ -74,43 +75,15 @@ class CloudValsTransient:
     exact client it sees at request time (its build number, etc.).
     """
 
-    #: Minimum log level that triggers shipping our log history to the
-    #: cloud. ``None`` (the default) disables log reporting entirely,
-    #: so a client only reports when the server explicitly asks it to
-    #: -- which is what keeps this off for the whole fleet by default
-    #: and lets us enable it for, say, one build number.
-    log_report_min_level: Annotated[
-        LogLevel | None, IOAttrs('lrml', store_default=False)
-    ] = None
-
-    #: How long to wait after a triggering log before shipping.
-    #:
-    #: Nonzero by default on purpose: bad things arrive in bursts (a
-    #: message then its traceback then the fallout), and shipping the
-    #: instant the first line lands would capture that first line and
-    #: leave the rest for a report that may be a cooldown away, or may
-    #: never come. Waiting a beat means a burst is reported as a burst.
-    log_report_arm_time: Annotated[
-        datetime.timedelta,
-        IOAttrs('lrat', store_default=False, time_format='float'),
-    ] = datetime.timedelta(seconds=2)
-
-    #: How long after a shipment before another may be sent. ``None``
-    #: means report at most once per run. A triggering log during the
-    #: cooldown is remembered and ships as soon as it expires, so a
-    #: failure during the quiet window is delayed rather than lost.
-    log_report_rearm_time: Annotated[
-        datetime.timedelta | None,
-        IOAttrs('lrrt', store_default=False, time_format='float'),
-    ] = datetime.timedelta(minutes=10)
-
-    #: Max number of log entries to include in a report, counted from
-    #: the most recent backwards. ``None`` (the default) means no
-    #: limit -- ship whatever the cache holds. Worth setting if reports
-    #: from a wide rollout start adding up; a client's cache can hold
-    #: on the order of a megabyte of text.
-    log_report_max_entries: Annotated[
-        int | None, IOAttrs('lrme', store_default=False)
+    #: When set, the triggered log-report the client should perform
+    #: this run: what trips it and how much surrounding context
+    #: ships (see :class:`~bacommon.logreporting.LogReportSpec`).
+    #: ``None`` (the default) leaves log reporting off entirely, so a
+    #: client only ever reports when the server explicitly asks it
+    #: to - which is what keeps this off for the whole fleet by
+    #: default and lets us enable it for, say, one build number.
+    log_report: Annotated[
+        LogReportSpec | None, IOAttrs('lr', store_default=False)
     ] = None
 
 
@@ -790,15 +763,17 @@ class FulfillDocUIResponse(Response):
 @ioprepped
 @dataclass
 class ClientLogReportMessage(Message):
-    """A slice of a client's log history, shipped after a bad log.
+    """A slice of a client's log history from a triggered report.
 
-    Sent at most once per :attr:`CloudValsTransient.log_report_rearm_time`
-    window, and only when the server has enabled reporting for this
-    client via :attr:`CloudValsTransient.log_report_min_level`.
-
-    Fire-and-forget: there is no response. A dropped report is not
-    worth a retry (the next triggering log ships a superset of the
-    same history anyway).
+    Sent only when the server has enabled reporting for this client
+    via :attr:`CloudValsTransient.log_report`. A single triggered
+    window is shipped as one or more of these - the pre-trigger
+    context first, then further slices as post-trigger entries
+    accumulate. The sender advances past a slice only once its send
+    round trip completes, re-sending the same range otherwise, so a
+    receiver may see overlapping ranges and should dedupe by app
+    instance and entry index
+    (:func:`bacommon.logreporting.trim_archive_overlap`).
 
     Unlike the fatal-error reports that arrive at basn's ``/fatalerror``
     over unauthenticated plaintext, this rides the client's authenticated
@@ -817,10 +792,39 @@ class ClientLogReportMessage(Message):
     #: authenticated but that is no reason to accept a zip bomb.
     archive_zstd: Annotated[bytes, IOAttrs('a')]
 
-    #: The level of the log entry that triggered this report. The
-    #: entry itself is in the archive; this saves the receiver
-    #: scanning for it just to bucket the report.
+    #: The level of the log entry that tripped this report's window.
+    #: The entry itself is in (one of) the archives; this saves the
+    #: receiver scanning for it just to bucket the report.
     trigger_level: Annotated[LogLevel, IOAttrs('tl')]
+
+    #: The trigger phrase that tripped this report's window, or None
+    #: when the level trigger did.
+    trigger_phrase: Annotated[str | None, IOAttrs('tp', soft_default=None)]
+
+    #: Entries the report's window covered that were evicted from the
+    #: client's log cache before this slice could gather them (the
+    #: gap sits immediately before this archive's first entry).
+    #: Nonzero when a long pre-roll outruns the cache or shipping
+    #: falls behind a chatty logger; the receiver surfaces it as an
+    #: explicit placeholder so a gap never reads as a quiet moment.
+    entries_lost: Annotated[int, IOAttrs('el', soft_default=0)]
+
+    #: What the client's own UTC clock read as this report was built.
+    #:
+    #: Entry times come from the device wall clock, so a device whose
+    #: clock is wrong yields entries that cannot be lined up against
+    #: server logs -- and Cloud Logging refuses anything more than a
+    #: day in the future outright. Comparing this against the
+    #: receiver's clock measures the skew, letting the whole archive be
+    #: shifted onto the receiver's timeline. Shifting keeps every
+    #: interval and ordering within the dump intact, which clamping
+    #: individual times would not.
+    #:
+    #: None from clients built before this field existed; those reports
+    #: are submitted with their times exactly as sent.
+    client_time: Annotated[
+        datetime.datetime | None, IOAttrs('ct', soft_default=None)
+    ]
 
 
 @ioprepped

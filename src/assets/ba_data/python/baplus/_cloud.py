@@ -492,11 +492,6 @@ class CloudSubsystem(babase.AppSubsystem):
 
     @overload
     def send_message(
-        self, msg: bacommon.cloud.ClientLogReportMessage
-    ) -> None: ...
-
-    @overload
-    def send_message(
         self, msg: bacommon.cloud.WorkspaceFetchMessage
     ) -> bacommon.cloud.WorkspaceFetchResponse: ...
 
@@ -537,6 +532,11 @@ class CloudSubsystem(babase.AppSubsystem):
     def send_message_future(
         self, msg: bacommon.cloud.TestMessage
     ) -> concurrent.futures.Future[bacommon.cloud.TestResponse]: ...
+
+    @overload
+    def send_message_future(
+        self, msg: bacommon.cloud.ClientLogReportMessage
+    ) -> concurrent.futures.Future[None]: ...
 
     @overload
     def send_message_future(

@@ -70,9 +70,10 @@ def _registry() -> dict[type['Message'], set[SendForm]]:
         # message count drop to one.)
         bacommon.cloud.TestMessage: {cb, syn, asy, fut},
         bacommon.cloud.AnalyticsEventMessage: {cb},
-        # Shipped from the log-reporter's own bg thread, which is
-        # free to block, and whose result we do not act on.
-        bacommon.cloud.ClientLogReportMessage: {syn},
+        # Shipped from the log-reporter's own bg thread. The future
+        # form so the reporter can bound its wait during its final
+        # at-shutdown flush; normal sends just block on the future.
+        bacommon.cloud.ClientLogReportMessage: {fut},
         bacommon.cloud.SecureDataCheckerRequest: {cb},
         bacommon.cloud.WorkspaceFetchMessage: {syn},
         bacommon.cloud.MerchAvailabilityMessage: {syn},
