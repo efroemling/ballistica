@@ -1,8 +1,10 @@
 name: Deploy Documentation
+
 on:
   push:
     branches:
       - main
+
 jobs:
   check_pages:
     runs-on: ubuntu-latest
@@ -55,14 +57,17 @@ jobs:
     # Add a dependency to the build job
     needs: [check_pages, build]
     if: needs.check_pages.outputs.pages_enabled == 'true'
+
     # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
     permissions:
       pages: write # to deploy to Pages
       id-token: write # to verify the deployment originates from an appropriate source
+
     # Deploy to the github-pages environment
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     # Specify runner + deployment step
     runs-on: ubuntu-latest
     steps:
