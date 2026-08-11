@@ -2,6 +2,7 @@
 
 #include "ballistica/shared/foundation/fatal_error_report.h"
 
+#include <atomic>
 #include <chrono>
 #include <cstdlib>
 #include <string>
@@ -64,6 +65,7 @@ const char* kReportPath = "/fatalerror";
 /// like that one it is stripped entirely from shipped builds, so a
 /// shipped client can never be redirected by its environment.
 auto ReportHost() -> const char* {
+  // Fixed in shipped builds; dev builds may override via env.
   return kReportHost;
 }
 
@@ -73,10 +75,17 @@ auto ReportHost() -> const char* {
 const size_t kMaxMessageLen = 8000;
 const size_t kMaxTraceLen = 16000;
 
-// Short by design: the caller spin-waits on our result before aborting,
-// so a slow network should not hold a dying app open for long.
-const int kConnectionTimeoutSeconds = 3;
-const int kTransferTimeoutSeconds = 4;
+// Note these deliberately sum to more than the spin-wait in
+// ReportFatalError. That wait -- not these -- is the user-facing cap on
+// how long a dying app is held open; keeping it the binding constraint
+// means user-visible delay stays fixed however these are tuned. The
+// extra budget is not wasted: platforms that show a blocking fatal
+// dialog give the send far more wall-clock than the wait does, so the
+// full allowance gets used there. Where the wait wins instead, the
+// in-flight report is simply lost at abort -- the same outcome as a
+// timeout, so nothing rides on which fires first.
+const int kConnectionTimeoutSeconds = 5;
+const int kTransferTimeoutSeconds = 5;
 
 auto Clamped(const std::string& value, size_t maxlen) -> std::string {
   if (value.size() <= maxlen) {
@@ -143,7 +152,8 @@ auto BuildPayload(const std::string& message, const std::string& stack_trace)
 }  // namespace
 
 void SendFatalErrorReport(const std::string& message,
-                          const std::string& stack_trace, int* result) {
+                          const std::string& stack_trace,
+                          std::atomic<int>* result) {
   std::thread thread([message, stack_trace, result] {
     // Belt-and-braces: httplib is built with exceptions disabled above,
     // but string/json assembly can still throw (bad_alloc), and this

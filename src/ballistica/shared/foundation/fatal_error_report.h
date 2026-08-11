@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_SHARED_FOUNDATION_FATAL_ERROR_REPORT_H_
 #define BALLISTICA_SHARED_FOUNDATION_FATAL_ERROR_REPORT_H_
 
+#include <atomic>
 #include <string>
 
 namespace ballistica {
@@ -23,9 +24,11 @@ namespace ballistica {
 ///
 /// Spawns a detached thread and returns immediately. `result` (if
 /// non-null) is set to 1 on success or -1 on failure, so the caller can
-/// spin-wait on it briefly before aborting.
+/// spin-wait on it briefly before aborting. It is atomic since the spawned
+/// thread writes it while the caller polls it.
 void SendFatalErrorReport(const std::string& message,
-                          const std::string& stack_trace, int* result);
+                          const std::string& stack_trace,
+                          std::atomic<int>* result);
 
 }  // namespace ballistica
 

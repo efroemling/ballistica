@@ -102,6 +102,7 @@
  "ba_data/python/bacommon/loggercontrol.py",
  "ba_data/python/bacommon/logging.py",
  "ba_data/python/bacommon/login.py",
+ "ba_data/python/bacommon/logreporting.py",
  "ba_data/python/bacommon/meshzstddict.py",
  "ba_data/python/bacommon/metascan.py",
  "ba_data/python/bacommon/msg/__init__.py",

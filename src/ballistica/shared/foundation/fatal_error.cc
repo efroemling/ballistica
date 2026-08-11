@@ -2,6 +2,7 @@
 
 #include "ballistica/shared/foundation/fatal_error.h"
 
+#include <atomic>
 #include <cstdio>
 #include <string>
 
@@ -93,7 +94,7 @@ void FatalErrorHandling::ReportFatalError(const std::string& message,
   // blocking right now. We want to stay in this function and call
   // abort() from here so our stack trace makes it into platform logs,
   // so we fire the report off and spin-wait on `result` below.
-  int result{};
+  std::atomic<int> result{};
 
   std::string logmsg =
       std::string("FATAL ERROR:") + (!message.empty() ? " " : "") + message;

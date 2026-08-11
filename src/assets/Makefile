@@ -556,6 +556,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/loggercontrol.py \
   $(BUILD_DIR)/ba_data/python/bacommon/logging.py \
   $(BUILD_DIR)/ba_data/python/bacommon/login.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/logreporting.py \
   $(BUILD_DIR)/ba_data/python/bacommon/meshzstddict.py \
   $(BUILD_DIR)/ba_data/python/bacommon/metascan.py \
   $(BUILD_DIR)/ba_data/python/bacommon/msg/__init__.py \
