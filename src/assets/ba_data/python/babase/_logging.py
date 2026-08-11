@@ -101,6 +101,11 @@ loginadapterlog = logging.getLogger(ClientLoggerName.LOGIN_ADAPTER.value)
 #: Logger for user-interface activity.
 uilog = logging.getLogger(ClientLoggerName.UI.value)
 
+#: Logger for shipping log history to the cloud. Note that the log
+#: reporter ignores its own entries when deciding whether to report,
+#: so a failure logged here cannot trigger another report.
+logreportlog = logging.getLogger(ClientLoggerName.LOG_REPORTING.value)
+
 
 def description_for_logger(logger: str) -> str | None:
     """Return a short description for a given logger.

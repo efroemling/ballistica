@@ -812,13 +812,9 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   /// IsAppBootstrapped returns true. This call is thread safe.
   auto IsAppStarted() const -> bool override;
 
-  void PlusDirectSendV1CloudLogs(const std::string& prefix,
-                                 const std::string& suffix, bool instant,
-                                 int* result) override;
   auto CreateFeatureSetData(FeatureSetNativeComponent* featureset)
       -> PyObject* override;
   auto FeatureSetFromData(PyObject* obj) -> FeatureSetNativeComponent* override;
-  void DoV1CloudLog(const std::string& msg) override;
   void PushDevConsolePrintCall(
       std::vector<core::DevConsolePrintEntry> entries) override;
   auto GetPyExceptionType(PyExcType exctype) -> PyObject* override;
@@ -988,7 +984,6 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   bool called_run_app_to_completion_{};
   bool base_import_completed_{};
   bool base_native_import_completed_{};
-  bool basn_log_behavior_{};
   bool server_wrapper_managed_{};
   bool config_and_state_writes_suppressed_{};
   bool have_local_app_instance_uuid_{};

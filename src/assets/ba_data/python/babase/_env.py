@@ -13,7 +13,6 @@ import threading
 from typing import TYPE_CHECKING, override
 
 import urllib3
-from efro.logging import LogLevel
 
 if TYPE_CHECKING:
     from typing import Any
@@ -630,6 +629,18 @@ def _feed_logs_to_babase(log_handler: LogHandler) -> None:
     """Route log/print output to internal ballistica console/etc."""
     import _babase
 
+    from babase._logreporting import create_log_reporter
+
+    # Watches for warning-or-worse entries and ships a slice of our log
+    # history to the cloud. Inert unless the server enables it for this
+    # client, and it spins up no thread until something triggers it.
+    #
+    # It registers its own app-shutdown task once reporting is enabled
+    # (the only path by which it can have a thread to stop); we cannot
+    # do that here since no App exists yet at native-module-import
+    # time.
+    log_reporter = create_log_reporter(log_handler)
+
     def _on_log(entry: LogEntry) -> None:
         # Forward this along to the engine to display in the in-app
         # console, in the Android log, etc.
@@ -640,15 +651,10 @@ def _feed_logs_to_babase(log_handler: LogHandler) -> None:
             message=entry.message,
         )
 
-        # We also want to feed some logs to the old v1-cloud-log system.
-        # Let's go with anything warning or higher as well as the
-        # stdout/stderr log messages that babase.app.log_handler creates
-        # for us. We should retire or upgrade this system at some point.
-        if entry.level.value >= LogLevel.WARNING.value or entry.name in (
-            'stdout',
-            'stderr',
-        ):
-            _babase.v1_cloud_log(entry.message)
+        # Let the log-reporter decide whether this warrants shipping
+        # our log history to the cloud. Cheap and non-blocking; all the
+        # real work happens on its own thread.
+        log_reporter.handle_log_entry(entry)
 
     # Add our callback and also feed it all entries already in the
     # cache. This will feed the engine any logs that happened between

@@ -51,8 +51,8 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22969;
-const char* kEngineVersion = "1.8.0a77";
+const int kEngineBuildNumber = 22970;
+const char* kEngineVersion = "1.8.0a78";
 const int kEngineApiVersion = 9;
 
 #if BA_MONOLITHIC_BUILD
@@ -69,9 +69,21 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
 
     // Even at the absolute start of execution we should be able to
     // reasonably log errors. Set env var BA_CRASH_TEST=1 to test this.
+    //
+    // BA_CRASH_TEST_TOKEN, if set, is appended to the message. That lets
+    // an end-to-end test tag one specific crash with a random value and
+    // then go looking for exactly that value on the server side. Note
+    // this fires before core is imported, so it is also our best
+    // exercise of the g_core == nullptr path in the fatal reporter.
     if (const char* crashenv = getenv("BA_CRASH_TEST")) {
       if (!strcmp(crashenv, "1")) {
-        FatalError("Fatal-Error-Test");
+        std::string msg{"Fatal-Error-Test"};
+        if (const char* token = getenv("BA_CRASH_TEST_TOKEN")) {
+          if (token[0] != '\0') {
+            msg += std::string(" token=") + token;
+          }
+        }
+        FatalError(msg);
       }
     }
 

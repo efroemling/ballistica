@@ -837,6 +837,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/foundation/exception.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/fatal_error.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/fatal_error.h
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/fatal_error_report.cc
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/fatal_error_report.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/feature_set_native_component.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/feature_set_native_component.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/inline.cc

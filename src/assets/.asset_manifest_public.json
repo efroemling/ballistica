@@ -32,6 +32,7 @@
  "ba_data/python/babase/_locale.py",
  "ba_data/python/babase/_logging.py",
  "ba_data/python/babase/_login.py",
+ "ba_data/python/babase/_logreporting.py",
  "ba_data/python/babase/_math.py",
  "ba_data/python/babase/_meta.py",
  "ba_data/python/babase/_net.py",

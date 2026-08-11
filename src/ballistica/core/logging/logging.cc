@@ -12,8 +12,6 @@
 
 namespace ballistica::core {
 
-int g_early_v1_cloud_log_writes{10};
-
 void Logging::EmitLog(std::string_view name, LogLevel level, double timestamp,
                       std::string_view msg) {
   // Dev-console printing is only possible once base is up. Callers from
@@ -69,37 +67,6 @@ void Logging::EmitLog(std::string_view name, LogLevel level, double timestamp,
   // Ship to platform-specific display mechanisms (android log, etc).
   if (g_core) {
     g_core->platform->EmitPlatformLog(name, level, msg);
-  }
-}
-
-void Logging::V1CloudLog(const std::string& msg) {
-  // Route through platform-specific loggers if present.
-
-  assert(g_core);
-
-  if (g_core) {
-    // (ship to things like Crashlytics crash-logging)
-    g_core->platform->LowLevelDebugLog(msg);
-
-    // Add to our complete v1-cloud-log.
-    std::scoped_lock lock(v1_cloud_log_mutex_);
-    if (!v1_cloud_log_full_) {
-      v1_cloud_log_ += (msg + "\n");
-      if (v1_cloud_log_.size() > 25000) {
-        // Allow some reasonable overflow for last statement.
-        if (v1_cloud_log_.size() > 250000) {
-          // FIXME: This could potentially chop up utf-8 chars.
-          v1_cloud_log_.resize(250000);
-        }
-        v1_cloud_log_ += "\n<max log size reached>\n";
-        v1_cloud_log_full_ = true;
-      }
-    }
-  }
-
-  // If the base feature-set is up, ship it off there for further handling.
-  if (g_base_soft) {
-    g_base_soft->DoV1CloudLog(msg);
   }
 }
 

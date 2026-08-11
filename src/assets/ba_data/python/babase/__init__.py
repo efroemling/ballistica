@@ -61,7 +61,6 @@ from _babase import (
     get_string_width,
     get_suppress_config_and_state_writes,
     get_ui_scale,
-    get_v1_cloud_log_file_path,
     get_virtual_safe_area_size,
     get_virtual_screen_size,
     getsimplesound,
@@ -145,10 +144,10 @@ from babase._appmodeselector import AppModeSelector
 from babase._appconfig import AppConfig
 from babase._apputils import (
     AppHealthSubsystem,
-    handle_leftover_v1_cloud_log_file,
     is_browser_likely_available,
     utc_now_cloud,
 )
+from babase._logreporting import get_log_reporter
 from babase._cloud import CloudSubscription
 from babase._devconsole import (
     DevConsoleButtonDef,
@@ -331,10 +330,9 @@ __all__ = [
     'get_ui_scale',
     'get_virtual_safe_area_size',
     'get_virtual_screen_size',
-    'get_v1_cloud_log_file_path',
     'getclass',
     'getsimplesound',
-    'handle_leftover_v1_cloud_log_file',
+    'get_log_reporter',
     'has_user_run_commands',
     'have_permission',
     'in_logic_thread',

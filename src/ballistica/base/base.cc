@@ -59,7 +59,6 @@ BaseFeatureSet::BaseFeatureSet()
       assets_server{new AssetsServer()},
       audio{new Audio()},
       audio_server{new AudioServer()},
-      basn_log_behavior_{g_core->platform->GetEnv("BASNLOG") == "1"},
       bg_dynamics{g_core->HeadlessMode() ? nullptr : new BGDynamics},
       bg_dynamics_server{g_core->HeadlessMode() ? nullptr
                                                 : new BGDynamicsServer},
@@ -644,14 +643,6 @@ void BaseFeatureSet::SetGlobalAppInstanceUUID(std::string value,
   global_app_instance_uuid_expire_time_ = expire_time;
 }
 
-void BaseFeatureSet::PlusDirectSendV1CloudLogs(const std::string& prefix,
-                                               const std::string& suffix,
-                                               bool instant, int* result) {
-  if (plus_soft_ != nullptr) {
-    plus_soft_->DirectSendV1CloudLogs(prefix, suffix, instant, result);
-  }
-}
-
 auto BaseFeatureSet::CreateFeatureSetData(FeatureSetNativeComponent* featureset)
     -> PyObject* {
   return PythonClassFeatureSetData::Create(featureset);
@@ -721,70 +712,6 @@ void BaseFeatureSet::ScreenMessage(const std::string& s, const Vector3f& color,
   logic->event_loop()->PushCall([this, s, color, literal] {
     graphics->screenmessages->AddScreenMessage(s, literal, color);
   });
-}
-
-void BaseFeatureSet::DoV1CloudLog(const std::string& msg) {
-  // We may attempt to import stuff and that should *never* happen before
-  // base is fully imported.
-  if (!IsBaseCompletelyImported()) {
-    static bool warned = false;
-    if (!warned) {
-      warned = true;
-      printf(
-          "WARNING: V1CloudLog called before babase fully imported; "
-          "ignoring.\n");
-    }
-    return;
-  }
-
-  // Even though this part lives here in 'base', this is considered 'classic'
-  // functionality, so silently no-op if classic isn't present.
-  if (!HaveClassic()) {
-    return;
-  }
-
-  // Let the Python layer handle this if possible. PushCall functionality
-  // requires the app to be running, and the call itself requires plus.
-  if (app_started_ && HavePlus()) {
-    python->objs().PushCall(BasePython::ObjID::kHandleV1CloudLogCall);
-    return;
-  }
-
-  // Ok; Python path not available. We might be able to do a direct send.
-
-  // Hack: Currently disabling direct sends for basn to avoid shipping early
-  // logs not containing errors or warnings. Need to clean this system up;
-  // this shouldn't be necessary.
-  if (basn_log_behavior_) {
-    return;
-  }
-
-  // Need plus for direct sends.
-  if (!HavePlus()) {
-    static bool did_warn = false;
-    if (!did_warn) {
-      did_warn = true;
-      printf("WARNING: V1CloudLog direct-sends not available; ignoring.\n");
-    }
-    return;
-  }
-
-  // Only attempt direct sends a few times.
-  if (core::g_early_v1_cloud_log_writes <= 0) {
-    return;
-  }
-
-  // Ok; going ahead with the direct send.
-  core::g_early_v1_cloud_log_writes -= 1;
-  std::string logprefix = "EARLY-LOG:";
-  std::string logsuffix;
-
-  // If we're an early enough error, our global log isn't even available,
-  // so include this whole message as a suffix instead.
-  if (g_core == nullptr) {
-    logsuffix = msg;
-  }
-  Plus()->DirectSendV1CloudLogs(logprefix, logsuffix, false, nullptr);
 }
 
 void BaseFeatureSet::PushDevConsolePrintCall(

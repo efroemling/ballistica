@@ -224,6 +224,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_locale.py \
   $(BUILD_DIR)/ba_data/python/babase/_logging.py \
   $(BUILD_DIR)/ba_data/python/babase/_login.py \
+  $(BUILD_DIR)/ba_data/python/babase/_logreporting.py \
   $(BUILD_DIR)/ba_data/python/babase/_math.py \
   $(BUILD_DIR)/ba_data/python/babase/_meta.py \
   $(BUILD_DIR)/ba_data/python/babase/_net.py \

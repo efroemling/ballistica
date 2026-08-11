@@ -3,9 +3,10 @@
 """V2 account ui bits."""
 
 import time
+import asyncio
 import logging
 
-from efro.error import CommunicationError
+from efro.util import strip_exception_tracebacks
 import bacommon.cloud
 import bauiv1 as bui
 from bauiv1 import _commonassets, classicassets
@@ -133,11 +134,8 @@ class V2ProxySignInWindow(bui.Window):
         ):
             return
 
-        plus.cloud.send_message_cb(
-            bacommon.cloud.LoginProxyRequestMessage(),
-            on_response=bui.WeakCallPartial(self._on_proxy_request_response),
-        )
         self._message_in_flight = True
+        bui.app.create_async_task(self._run_sign_in(), name='v2proxy sign-in')
 
     def _get_server_address(self) -> str:
         plus = bui.app.plus
@@ -177,26 +175,32 @@ class V2ProxySignInWindow(bui.Window):
             shadow=0.0,
         )
 
-    def _on_proxy_request_response(
-        self, response: bacommon.cloud.LoginProxyRequestResponse | Exception
-    ) -> None:
+    async def _run_sign_in(self) -> None:
+        """Drive the full sign-in flow: request, show UI, poll status."""
         plus = bui.app.plus
         assert plus is not None
 
-        if not self._message_in_flight:
-            logging.warning(
-                'v2proxy got _on_proxy_request_response'
-                ' without _message_in_flight set; unexpected.'
+        try:
+            response = await plus.cloud.send_message_async(
+                bacommon.cloud.LoginProxyRequestMessage()
             )
-        self._message_in_flight = False
-
-        # Something went wrong. Show an error message and schedule retry.
-        if isinstance(response, Exception):
-            self._set_error_state(f'response exc ({type(response).__name__})')
+        except Exception as exc:
+            # Something went wrong; show an error message.
+            self._message_in_flight = False
             self._complete = True
+            if self._root_widget:
+                self._set_error_state(f'response exc ({type(exc).__name__})')
+            # We're done with the exception, so strip its tracebacks
+            # to avoid reference cycles.
+            strip_exception_tracebacks(exc)
             return
 
+        self._message_in_flight = False
         self._complete = True
+
+        # Stop here if our window died while we were waiting.
+        if not self._root_widget:
+            return
 
         # Clear out stuff we use to show progress/errors.
         self._loading_spinner.delete()
@@ -217,13 +221,10 @@ class V2ProxySignInWindow(bui.Window):
             self._state_text.delete()
             self._show_standard_sign_in_ui(response)
 
-        # In either case, start querying for results now.
+        # In either case, poll for results now.
         self._proxyid = response.proxyid
         self._proxykey = response.proxykey
-        bui.apptimer(
-            STATUS_CHECK_INTERVAL_SECONDS,
-            bui.WeakCallStrict(self._ask_for_status),
-        )
+        await self._poll_sign_in_status()
 
     def _show_overlay_sign_in_ui(
         self, response: bacommon.cloud.LoginProxyRequestResponse
@@ -299,46 +300,53 @@ class V2ProxySignInWindow(bui.Window):
             texture=bui.get_qrcode_texture(address),
         )
 
-    def _ask_for_status(self) -> None:
+    async def _poll_sign_in_status(self) -> None:
+        """Poll the login-proxy until it succeeds, fails, or we die."""
+        plus = bui.app.plus
+        assert plus is not None
         assert self._proxyid is not None
         assert self._proxykey is not None
-        assert bui.app.plus is not None
-        bui.app.plus.cloud.send_message_cb(
-            bacommon.cloud.LoginProxyStateQueryMessage(
-                proxyid=self._proxyid, proxykey=self._proxykey
-            ),
-            on_response=bui.WeakCallPartial(self._got_status),
-        )
 
-    def _got_status(
-        self, response: bacommon.cloud.LoginProxyStateQueryResponse | Exception
-    ) -> None:
-        if (
-            isinstance(response, bacommon.cloud.LoginProxyStateQueryResponse)
-            and response.state is response.State.FAIL
-        ):
-            logging.info('LoginProxy failed.')
-            builtinassets.audio.error.get().play()
-            bui.screenmessage(
-                _commonassets.strings.values.error, color=(1, 0, 0)
-            )
-            self._done()
-            return
+        while True:
+            await asyncio.sleep(STATUS_CHECK_INTERVAL_SECONDS)
 
-        # If we got a token, set ourself as signed in. Hooray!
-        if (
-            isinstance(response, bacommon.cloud.LoginProxyStateQueryResponse)
-            and response.state is response.State.SUCCESS
-        ):
-            plus = bui.app.plus
-            assert plus is not None
-            assert response.credentials is not None
-            plus.accounts.set_primary_credentials(response.credentials)
+            # Stop if our window has died or is on its way out.
+            if not self._root_widget or self._root_widget.transitioning_out:
+                return
 
-            # As a courtesy, tell the server we're done with this proxy
-            # so it can clean up (not a huge deal if this fails)
-            assert self._proxyid is not None
             try:
+                response = await plus.cloud.send_message_async(
+                    bacommon.cloud.LoginProxyStateQueryMessage(
+                        proxyid=self._proxyid, proxykey=self._proxykey
+                    )
+                )
+            except Exception as exc:
+                # Errors here are generally transient; keep polling.
+                # We're done with the exception, so strip its
+                # tracebacks to avoid reference cycles.
+                strip_exception_tracebacks(exc)
+                continue
+
+            if not self._root_widget:
+                return
+
+            if response.state is response.State.FAIL:
+                logging.info('LoginProxy failed.')
+                builtinassets.audio.error.get().play()
+                bui.screenmessage(
+                    _commonassets.strings.values.error, color=(1, 0, 0)
+                )
+                self._done()
+                return
+
+            # If we got a token, set ourself as signed in. Hooray!
+            if response.state is response.State.SUCCESS:
+                assert response.credentials is not None
+                plus.accounts.set_primary_credentials(response.credentials)
+
+                # As a courtesy, tell the server we're done with this
+                # proxy so it can clean up. Fire-and-forget; not a huge
+                # deal if it fails.
                 plus.cloud.send_message_cb(
                     bacommon.cloud.LoginProxyCompleteMessage(
                         proxyid=self._proxyid
@@ -347,26 +355,10 @@ class V2ProxySignInWindow(bui.Window):
                         self._proxy_complete_response
                     ),
                 )
-            except CommunicationError:
-                pass
-            except Exception:
-                logging.warning(
-                    'Unexpected error sending login-proxy-complete message',
-                    exc_info=True,
-                )
+                self._done()
+                return
 
-            self._done()
-            return
-
-        # If we're still waiting, ask again soon.
-        if (
-            isinstance(response, Exception)
-            or response.state is response.State.WAITING
-        ):
-            bui.apptimer(
-                STATUS_CHECK_INTERVAL_SECONDS,
-                bui.WeakCallStrict(self._ask_for_status),
-            )
+            # Otherwise (State.WAITING) just poll again.
 
     def _proxy_complete_response(self, response: None | Exception) -> None:
         del response  # Not used.

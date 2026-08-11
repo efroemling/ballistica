@@ -33,7 +33,6 @@ values = [
     _hooks.purchase_already_in_progress_error,  # kPurchaseAlreadyInProgressErrorCall
     _hooks.orientation_reset_cb_message,  # kVROrientationResetCBMessageCall
     _hooks.orientation_reset_message,  # kVROrientationResetMessageCall
-    _apputils.handle_v1_cloud_log,  # kHandleV1CloudLogCall
     _hooks.language_test_toggle,  # kLanguageTestToggleCall
     _hooks.award_in_control_achievement,  # kAwardInControlAchievementCall
     _hooks.award_dual_wielding_achievement,  # kAwardDualWieldingAchievementCall

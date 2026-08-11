@@ -706,6 +706,8 @@
     <ClInclude Include="..\..\src\ballistica\shared\foundation\exception.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\fatal_error.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\foundation\fatal_error.h" />
+    <ClCompile Include="..\..\src\ballistica\shared\foundation\fatal_error_report.cc" />
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\fatal_error_report.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\feature_set_native_component.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\foundation\feature_set_native_component.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\inline.cc" />

@@ -43,6 +43,7 @@ class ClientLoggerName(Enum):
     DISCORD = 'ba.discord'
     UI = 'ba.ui'
     WORKSPACE = 'ba.workspace'
+    LOG_REPORTING = 'ba.logreport'
 
     @property
     def description(self) -> str:
@@ -99,6 +100,8 @@ class ClientLoggerName(Enum):
             return 'anything user-interface related'
         if self is cls.WORKSPACE:
             return 'cloud workspace syncing'
+        if self is cls.LOG_REPORTING:
+            return 'shipping log history to the cloud'
         assert_never(self)
 
 

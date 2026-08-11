@@ -22,7 +22,7 @@ from bascenev1 import classicassets
 import _baclassic
 from baclassic._music import MusicSubsystem
 from baclassic._accountv1 import AccountV1Subsystem
-from baclassic._net import MasterServerResponseType, MasterServerV1CallThread
+from baclassic._net import MasterServerResponseType, master_server_v1_request
 from baclassic._achievement import AchievementSubsystem
 from baclassic._tips import get_all_tips
 from baclassic._store import StoreSubsystem
@@ -184,8 +184,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self.v2_auth_datas: dict[str, ClassicAppSubsystem.V2AuthData] = {}
 
         # Logging/debugging.
-        self.log_have_new = False
-        self.log_upload_timer_started = False
         self.printed_live_object_warning = False
 
         # We include this extra hash with shared input-mapping names so
@@ -367,7 +365,6 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
         # If there's a leftover log file, attempt to upload it to the
         # master-server and/or get rid of it.
-        babase.handle_leftover_v1_cloud_log_file()
 
         self.accounts.on_app_loading()
 
@@ -643,9 +640,9 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
         :meta private:
         """
-        MasterServerV1CallThread(
+        master_server_v1_request(
             request, 'get', data, callback, MasterServerResponseType.JSON
-        ).start()
+        )
 
     def master_server_v1_post(
         self,
@@ -657,9 +654,9 @@ class ClassicAppSubsystem(babase.AppSubsystem):
 
         :meta private:
         """
-        MasterServerV1CallThread(
+        master_server_v1_request(
             request, 'post', data, callback, MasterServerResponseType.JSON
-        ).start()
+        )
 
     def set_tournament_prize_image(
         self, entry: dict[str, Any], index: int, image: bauiv1.Widget
