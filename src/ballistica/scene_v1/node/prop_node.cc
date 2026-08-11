@@ -3,6 +3,7 @@
 #include "ballistica/scene_v1/node/prop_node.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <string>
 #include <vector>
@@ -32,21 +33,20 @@ static void _doCalcERPCFM(float stiffness, float damping, float* erp,
   }
 }
 
-static void _eulerDegreesToQuaternion(float x_deg, float y_deg, float z_deg,
-                                      dQuaternion out) {
-  dQuaternion qx, qy, qz, tmp;
+static auto EulerDegreesToQuaternion(float x_deg, float y_deg, float z_deg)
+    -> std::array<dReal, 4> {
+  dQuaternion qx, qy, qz, tmp, out;
   dQFromAxisAndAngle(qx, 1, 0, 0, x_deg * (kPi / 180.0f));
   dQFromAxisAndAngle(qy, 0, 1, 0, y_deg * (kPi / 180.0f));
   dQFromAxisAndAngle(qz, 0, 0, 1, z_deg * (kPi / 180.0f));
   dQMultiply0(tmp, qz, qy);
   dQMultiply0(out, tmp, qx);
+  return {out[0], out[1], out[2], out[3]};
 }
 
-static void _quaternionToEulerDegrees(const dReal* q, float* x_deg,
-                                      float* y_deg, float* z_deg) {
+static auto QuaternionToEulerDegrees(const dReal* q) -> std::vector<float> {
   float w = q[0], x = q[1], y = q[2], z = q[3];
-  float r20 = 2.0f * (x * z - w * y);
-  r20 = std::max(-1.0f, std::min(1.0f, r20));
+  float r20 = std::clamp(2.0f * (x * z - w * y), -1.0f, 1.0f);
   float y_rad = std::asin(-r20);
   float r21 = 2.0f * (y * z + w * x);
   float r22 = 1.0f - 2.0f * (x * x + y * y);
@@ -54,9 +54,8 @@ static void _quaternionToEulerDegrees(const dReal* q, float* x_deg,
   float r10 = 2.0f * (x * y + w * z);
   float r00 = 1.0f - 2.0f * (y * y + z * z);
   float z_rad = std::atan2(r10, r00);
-  *x_deg = x_rad * (180.0f / kPi);
-  *y_deg = y_rad * (180.0f / kPi);
-  *z_deg = z_rad * (180.0f / kPi);
+  return {x_rad * (180.0f / kPi), y_rad * (180.0f / kPi),
+         z_rad * (180.0f / kPi)};
 }
 
 static NodeType* node_type{};
@@ -341,26 +340,26 @@ void PropNode::SetBody(const std::string& val) {
   // if the rotate attr was explicitly set before the body existed, honor
   // that. Otherwise fall back to our default initial-orientation behavior
   // (pucks upright, everything else gets a random start rotation).
+  dQuaternion iq;
   if (rotate_set_) {
-    dQuaternion iq;
-    _eulerDegreesToQuaternion(rotate_[0], rotate_[1], rotate_[2], iq);
-    dBodySetQuaternion(body_->body(), iq);
-    if (body_type_ == BodyType::PUCK) {
-      body_->SetDimensions(0.7f, 0.58f, 0, 0.7f, 0.48f, 0, 0.14f * density_);
-    }
+    auto q = EulerDegreesToQuaternion(rotate_[0], rotate_[1], rotate_[2]);
+    iq[0] = q[0];
+    iq[1] = q[1];
+    iq[2] = q[2];
+    iq[3] = q[3];
   } else if (body_type_ == BodyType::PUCK) {
-    dQuaternion iq;
     dQFromAxisAndAngle(iq, 1, 0, 0, -90 * (kPi / 180.0f));
-    dBodySetQuaternion(body_->body(), iq);
-    body_->SetDimensions(0.7f, 0.58f, 0, 0.7f, 0.48f, 0, 0.14f * density_);
   } else {
-    dQuaternion iq;
     int64_t gti = scene()->stepnum();
     dQFromAxisAndAngle(
         iq, 0.05f, 1, 0,
         Utils::precalc_rand_1((stream_id() + gti) % kPrecalcRandsCount) * 360.0f
             * (kPi / 180.0f));
-    dBodySetQuaternion(body_->body(), iq);
+  }
+  dBodySetQuaternion(body_->body(), iq);
+
+  if (body_type_ == BodyType::PUCK) {
+    body_->SetDimensions(0.7f, 0.58f, 0, 0.7f, 0.48f, 0, 0.14f * density_);
   }
 }
 
@@ -473,10 +472,7 @@ void PropNode::SetPosition(const std::vector<float>& vals) {
 
 auto PropNode::GetRotate() const -> std::vector<float> {
   if (body_.exists()) {
-    const dReal* q = dBodyGetQuaternion(body_->body());
-    std::vector<float> r(3);
-    _quaternionToEulerDegrees(q, &r[0], &r[1], &r[2]);
-    return r;
+    return QuaternionToEulerDegrees(dBodyGetQuaternion(body_->body()));
   }
   return rotate_;
 }
@@ -491,9 +487,8 @@ void PropNode::SetRotate(const std::vector<float>& vals) {
   rotate_set_ = true;
 
   if (body_.exists()) {
-    dQuaternion q;
-    _eulerDegreesToQuaternion(vals[0], vals[1], vals[2], q);
-    dBodySetQuaternion(body_->body(), q);
+    auto q = EulerDegreesToQuaternion(vals[0], vals[1], vals[2]);
+    dBodySetQuaternion(body_->body(), q.data());
   }
 }
 
