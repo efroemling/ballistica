@@ -8,11 +8,13 @@
   it in mod code.
 """
 
+import datetime
 from enum import Enum
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated, override
 
 from efro.message import Message, Response
+from efro.logging import LogLevel
 from efro.dataclassio import ioprepped, IOAttrs
 from bacommon.analytics import AnalyticsEvent
 from bacommon import securedata
@@ -36,8 +38,16 @@ class WebLocation(Enum):
 
 @ioprepped
 @dataclass
-class CloudVals:
+class CloudValsPersistent:
     """Engine config values provided by the master server.
+
+    These are stored to the client config and restored at the next
+    launch, so they apply from the start of a run even before
+    connectivity comes up. That also means they can be restored into
+    a newer build than the one the server computed them for, so
+    values here must be safe to apply blindly across app updates;
+    anything tailored to a specific client build belongs in
+    :class:`CloudValsTransient` instead.
 
     Used to convey things such as debug logging.
     """
@@ -50,6 +60,58 @@ class CloudVals:
 
     #: Max number of objects of a given type to emit debug logs for.
     gc_debug_type_limit: Annotated[int, IOAttrs('gdl', store_default=False)] = 2
+
+
+@ioprepped
+@dataclass
+class CloudValsTransient:
+    """Engine config values applying only to the current app run.
+
+    Unlike :class:`CloudValsPersistent`, these are never stored to
+    the client config; they take effect once fetched (shortly after
+    connectivity comes up) and evaporate when the run ends. That
+    makes them the right home for values the server tailors to the
+    exact client it sees at request time (its build number, etc.).
+    """
+
+    #: Minimum log level that triggers shipping our log history to the
+    #: cloud. ``None`` (the default) disables log reporting entirely,
+    #: so a client only reports when the server explicitly asks it to
+    #: -- which is what keeps this off for the whole fleet by default
+    #: and lets us enable it for, say, one build number.
+    log_report_min_level: Annotated[
+        LogLevel | None, IOAttrs('lrml', store_default=False)
+    ] = None
+
+    #: How long to wait after a triggering log before shipping.
+    #:
+    #: Nonzero by default on purpose: bad things arrive in bursts (a
+    #: message then its traceback then the fallout), and shipping the
+    #: instant the first line lands would capture that first line and
+    #: leave the rest for a report that may be a cooldown away, or may
+    #: never come. Waiting a beat means a burst is reported as a burst.
+    log_report_arm_time: Annotated[
+        datetime.timedelta,
+        IOAttrs('lrat', store_default=False, time_format='float'),
+    ] = datetime.timedelta(seconds=2)
+
+    #: How long after a shipment before another may be sent. ``None``
+    #: means report at most once per run. A triggering log during the
+    #: cooldown is remembered and ships as soon as it expires, so a
+    #: failure during the quiet window is delayed rather than lost.
+    log_report_rearm_time: Annotated[
+        datetime.timedelta | None,
+        IOAttrs('lrrt', store_default=False, time_format='float'),
+    ] = datetime.timedelta(minutes=10)
+
+    #: Max number of log entries to include in a report, counted from
+    #: the most recent backwards. ``None`` (the default) means no
+    #: limit -- ship whatever the cache holds. Worth setting if reports
+    #: from a wide rollout start adding up; a client's cache can hold
+    #: on the order of a megabyte of text.
+    log_report_max_entries: Annotated[
+        int | None, IOAttrs('lrme', store_default=False)
+    ] = None
 
 
 @ioprepped
@@ -619,7 +681,14 @@ class CloudValsRequest(Message):
 class CloudValsResponse(Response):
     """Here's them cloud vals ya asked for, boss."""
 
-    vals: Annotated[CloudVals, IOAttrs('v')]
+    persistent: Annotated[CloudValsPersistent, IOAttrs('v')]
+
+    transient: Annotated[
+        CloudValsTransient,
+        IOAttrs(
+            't', store_default=False, soft_default_factory=CloudValsTransient
+        ),
+    ]
 
 
 @ioprepped
@@ -716,6 +785,42 @@ class FulfillDocUIResponse(Response):
     """Here's that doc-ui you asked for, boss."""
 
     response: Annotated[DocUIResponse, IOAttrs('r')]
+
+
+@ioprepped
+@dataclass
+class ClientLogReportMessage(Message):
+    """A slice of a client's log history, shipped after a bad log.
+
+    Sent at most once per :attr:`CloudValsTransient.log_report_rearm_time`
+    window, and only when the server has enabled reporting for this
+    client via :attr:`CloudValsTransient.log_report_min_level`.
+
+    Fire-and-forget: there is no response. A dropped report is not
+    worth a retry (the next triggering log ships a superset of the
+    same history anyway).
+
+    Unlike the fatal-error reports that arrive at basn's ``/fatalerror``
+    over unauthenticated plaintext, this rides the client's authenticated
+    transport -- so the receiving side knows the account and session and
+    does not have to treat the contents as forgeable.
+    """
+
+    #: A zstd-compressed JSON :class:`~efro.logging.LogArchive`.
+    #:
+    #: Compressed because log text is extremely compressible (~10x is
+    #: typical) and the archive can approach the client's whole log
+    #: cache. That matters here: the message path applies no
+    #: compression of its own, and bytes ride as base64, so an
+    #: uncompressed archive would be the largest thing a client ever
+    #: sends. Decompress with an explicit size cap -- the client is
+    #: authenticated but that is no reason to accept a zip bomb.
+    archive_zstd: Annotated[bytes, IOAttrs('a')]
+
+    #: The level of the log entry that triggered this report. The
+    #: entry itself is in the archive; this saves the receiver
+    #: scanning for it just to bucket the report.
+    trigger_level: Annotated[LogLevel, IOAttrs('tl')]
 
 
 @ioprepped

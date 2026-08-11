@@ -301,6 +301,7 @@ nitpick_ignore_regex = [
     ('py:class', r'bacommon\.classic\..*'),
     ('py:class', r'bacommon\.clienteffect\..*'),
     ('py:class', r'bacommon\.cloud\..*'),
+    ('py:class', r'bacommon\.clouddialog\..*'),
     # 'cdlg' is an alias for bacommon.clouddialog (a skipped namespace).
     ('py:class', r'cdlg\..*'),
     # Truncated generic type strings that Sphinx 9.x emits as cross-reference

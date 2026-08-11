@@ -34,7 +34,6 @@ class PlusSoftInterface {
   virtual auto IsUnmodifiedBlessedBuild() -> bool = 0;
 
   virtual auto HasBlessingHash() -> bool = 0;
-  virtual auto PutLog(bool fatal) -> bool = 0;
   virtual void AAT() = 0;
   virtual void AATE() = 0;
   virtual auto GAHU() -> std::optional<std::string> = 0;
@@ -56,9 +55,6 @@ class PlusSoftInterface {
                                            const std::string& order_id,
                                            bool user_initiated) = 0;
   virtual auto GetAccountID() -> std::string = 0;
-  virtual void DirectSendV1CloudLogs(const std::string& prefix,
-                                     const std::string& suffix, bool instant,
-                                     int* result) = 0;
   virtual void ClientInfoQuery(const std::string& val1, const std::string& val2,
                                const std::string& val3, int build_number) = 0;
   virtual auto CalcV1PeerHash(const std::string& peer_hash_input)

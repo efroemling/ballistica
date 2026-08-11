@@ -981,96 +981,6 @@ static PyMethodDef PySetPlatformMiscReadValsDef = {
     ":meta private:",
 };
 
-// --------------------- get_v1_cloud_log_file_path ----------------------------
-
-static auto PyGetLogFilePath(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  std::string config_dir = g_core->GetConfigDirectory();
-  std::string logpath = config_dir + BA_DIRSLASH + "log.json";
-  return PyUnicode_FromString(logpath.c_str());
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyGetLogFilePathDef = {
-    "get_v1_cloud_log_file_path",  // name
-    PyGetLogFilePath,              // method
-    METH_VARARGS,                  // flags
-
-    "get_v1_cloud_log_file_path() -> str\n"
-    "\n"
-    "Return the path to the app log file.\n"
-    "\n"
-    ":meta private:",
-};
-
-// ----------------------------- is_log_full -----------------------------------
-static auto PyIsLogFull(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  if (g_core->logging->v1_cloud_log_full()) {
-    Py_RETURN_TRUE;
-  }
-  Py_RETURN_FALSE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyIsLogFullDef = {
-    "is_log_full",  // name
-    PyIsLogFull,    // method
-    METH_VARARGS,   // flags
-
-    "is_log_full() -> bool\n"
-    "\n"
-    ":meta private:",
-};
-
-// -------------------------- get_v1_cloud_log ---------------------------------
-
-static auto PyGetV1CloudLog(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  std::string log_fin;
-  {
-    std::scoped_lock lock(g_core->logging->v1_cloud_log_mutex());
-    log_fin = g_core->logging->v1_cloud_log();
-  }
-  // we want to use something with error handling here since the last
-  // bit of this string could be truncated utf8 chars..
-  return PyUnicode_FromString(
-      Utils::GetValidUTF8(log_fin.c_str(), "_glg1").c_str());
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyGetV1CloudLogDef = {
-    "get_v1_cloud_log",            // name
-    (PyCFunction)PyGetV1CloudLog,  // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "get_v1_cloud_log() -> str\n"
-    "\n"
-    ":meta private:",
-};
-
-// ---------------------------- mark_log_sent ----------------------------------
-
-static auto PyMarkLogSent(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  // This way we won't try to send it at shutdown time and whatnot
-  g_core->logging->set_did_put_v1_cloud_log(true);
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyMarkLogSentDef = {
-    "mark_log_sent",               // name
-    (PyCFunction)PyMarkLogSent,    // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "mark_log_sent() -> None\n"
-    "\n"
-    ":meta private:",
-};
-
 // --------------------- increment_analytics_count -----------------------------
 
 auto PyIncrementAnalyticsCount(PyObject* self, PyObject* args, PyObject* keywds)
@@ -2397,10 +2307,6 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyIncrementAnalyticsCountRawDef,
       PyIncrementAnalyticsCountRaw2Def,
       PyIncrementAnalyticsCountDef,
-      PyMarkLogSentDef,
-      PyGetV1CloudLogDef,
-      PyIsLogFullDef,
-      PyGetLogFilePathDef,
       PySetPlatformMiscReadValsDef,
       PyResolveAppConfigValueDef,
       PyGetAppConfigDefaultValueDef,

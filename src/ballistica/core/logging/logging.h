@@ -12,7 +12,6 @@ namespace ballistica::core {
 
 // Slightly hacky, but don't want to store this with any of our normal
 // global classes because it might be needed before they are allocated.
-extern int g_early_v1_cloud_log_writes;
 
 class Logging {
  public:
@@ -115,16 +114,6 @@ class Logging {
   void EmitLog(std::string_view name, LogLevel level, double timestamp,
                std::string_view msg);
 
-  /// Write a message to the v1 cloud log. This is considered legacy and
-  /// will be phased out eventually.
-  void V1CloudLog(const std::string& msg);
-
-  auto v1_cloud_log_mutex() -> std::mutex& { return v1_cloud_log_mutex_; }
-  auto v1_cloud_log() const { return v1_cloud_log_; }
-  auto did_put_v1_cloud_log() const { return did_put_v1_cloud_log_; }
-  void set_did_put_v1_cloud_log(bool val) { did_put_v1_cloud_log_ = val; }
-  auto v1_cloud_log_full() const { return v1_cloud_log_full_; }
-
  private:
   /// Write a message to the log. Intended for logging use in C++ code. This
   /// is safe to call by any thread at any time as long as core has been
@@ -141,10 +130,6 @@ class Logging {
   void Log_(LogName name, LogLevel level, const char* msg);
 
   LogLevel log_levels_[static_cast<int>(LogName::kLast)]{};
-  bool did_put_v1_cloud_log_{};
-  bool v1_cloud_log_full_{};
-  std::mutex v1_cloud_log_mutex_;
-  std::string v1_cloud_log_;
 };
 
 }  // namespace ballistica::core

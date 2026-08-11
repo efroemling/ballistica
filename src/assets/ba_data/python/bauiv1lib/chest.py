@@ -7,7 +7,7 @@ import math
 import random
 from typing import override, TYPE_CHECKING
 
-from efro.util import strict_partial
+from efro.util import strict_partial, strip_exception_tracebacks
 import bacommon.classic
 import bacommon.displayitem as ditm
 import bauiv1 as bui
@@ -203,11 +203,10 @@ class ChestWindow(bui.MainWindow):
         # values only if there is a chest present in them.
         assert not self._action_in_flight
         self._action_in_flight = True
-        with plus.accounts.primary:
-            plus.cloud.send_message_cb(
-                bacommon.classic.ChestInfoMessage(chest_id=str(self._index)),
-                on_response=bui.WeakCallPartial(self._on_chest_info_response),
-            )
+        bui.app.create_async_task(
+            self._fetch_chest_info(plus.accounts.primary),
+            name='chest info fetch',
+        )
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
@@ -246,19 +245,36 @@ class ChestWindow(bui.MainWindow):
         )
         bui.textwidget(edit=self._time_string_text, text=tstr)
 
-    def _on_chest_info_response(
-        self, response: bacommon.classic.ChestInfoResponse | Exception
-    ) -> None:
-        assert self._action_in_flight  # Should be us.
-        self._action_in_flight = False
-
-        if isinstance(response, Exception):
-            self._error(
-                _commonassets.strings.status.unable_to_complete,
-                minor=True,
-            )
+    async def _fetch_chest_info(self, account: bui.AccountV2Handle) -> None:
+        """Fetch info about our chest slot and show it in the UI."""
+        plus = bui.app.plus
+        assert plus is not None
+        try:
+            with account:
+                response = await plus.cloud.send_message_async(
+                    bacommon.classic.ChestInfoMessage(chest_id=str(self._index))
+                )
+        except Exception as exc:
+            # Communication/local error.
+            self._action_in_flight = False
+            if self._root_widget:
+                self._error(
+                    _commonassets.strings.status.unable_to_complete,
+                    minor=True,
+                )
+            # We're done with the exception, so strip its tracebacks
+            # to avoid reference cycles.
+            strip_exception_tracebacks(exc)
             return
 
+        self._action_in_flight = False
+        if not self._root_widget:
+            return
+        self._on_chest_info_response(response)
+
+    def _on_chest_info_response(
+        self, response: bacommon.classic.ChestInfoResponse
+    ) -> None:
         if response.chest is None:
             self._show_about_chest_slots()
             return
@@ -266,24 +282,44 @@ class ChestWindow(bui.MainWindow):
         assert response.user_tokens is not None
         self._show_chest_actions(response.user_tokens, response.chest)
 
-    def _on_chest_action_response(
-        self, response: bacommon.cloud.ChestActionResponse | Exception
+    async def _run_chest_action(
+        self,
+        account: bui.AccountV2Handle,
+        msg: bacommon.cloud.ChestActionMessage,
     ) -> None:
-        assert self._action_in_flight  # Should be us.
+        """Run a chest action on the server and show the results."""
+        plus = bui.app.plus
+        assert plus is not None
+        try:
+            with account:
+                response = await plus.cloud.send_message_async(msg)
+        except Exception as exc:
+            # Communication/local error.
+            self._action_in_flight = False
+            self._chest_action_ui_pause = None
+            if self._root_widget:
+                self._error(
+                    _commonassets.strings.status.unable_to_complete,
+                    minor=True,
+                )
+            # We're done with the exception, so strip its tracebacks
+            # to avoid reference cycles.
+            strip_exception_tracebacks(exc)
+            return
+
         self._action_in_flight = False
 
         # Allow the root ui to resume its normal automatic value display
         # as soon as any animations we kick off here complete.
         self._chest_action_ui_pause = None
 
-        # Communication/local error:
-        if isinstance(response, Exception):
-            self._error(
-                _commonassets.strings.status.unable_to_complete,
-                minor=True,
-            )
+        if not self._root_widget:
             return
+        self._on_chest_action_response(response)
 
+    def _on_chest_action_response(
+        self, response: bacommon.cloud.ChestActionResponse
+    ) -> None:
         # Server-side error:
         if response.error is not None:
             # Final-form errors arrive pre-translated to our locale
@@ -868,15 +904,17 @@ class ChestWindow(bui.MainWindow):
         # the results and don't want live values to jump the gun.
         self._chest_action_ui_pause = bui.RootUIUpdatePause()
 
-        with plus.accounts.primary:
-            plus.cloud.send_message_cb(
+        bui.app.create_async_task(
+            self._run_chest_action(
+                plus.accounts.primary,
                 bacommon.cloud.ChestActionMessage(
                     chest_id=str(self._index),
                     action=bacommon.cloud.ChestActionMessage.Action.UNLOCK,
                     token_payment=token_payment,
                 ),
-                on_response=bui.WeakCallPartial(self._on_chest_action_response),
-            )
+            ),
+            name='chest unlock action',
+        )
 
         # Convey that something is in progress.
         if self._open_now_button:
@@ -948,15 +986,17 @@ class ChestWindow(bui.MainWindow):
         # the results and don't want live values to jump the gun.
         self._chest_action_ui_pause = bui.RootUIUpdatePause()
 
-        with plus.accounts.primary:
-            plus.cloud.send_message_cb(
+        bui.app.create_async_task(
+            self._run_chest_action(
+                plus.accounts.primary,
                 bacommon.cloud.ChestActionMessage(
                     chest_id=str(self._index),
                     action=bacommon.cloud.ChestActionMessage.Action.AD,
                     token_payment=0,
                 ),
-                on_response=bui.WeakCallPartial(self._on_chest_action_response),
-            )
+            ),
+            name='chest ad action',
+        )
 
     def _reset(self) -> None:
         """Clear all non-permanent widgets and clear infotext."""

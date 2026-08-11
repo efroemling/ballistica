@@ -8,7 +8,11 @@ from functools import partial
 from dataclasses import dataclass
 from typing import override, assert_never, TYPE_CHECKING
 
-from efro.util import strict_partial, pairs_from_flat
+from efro.util import (
+    strict_partial,
+    pairs_from_flat,
+    strip_exception_tracebacks,
+)
 from efro.error import CommunicationError
 import bacommon.clouddialog as cdlg
 import bacommon.clouddialog.basic as bcdlg
@@ -489,13 +493,9 @@ class InboxWindow(bui.MainWindow):
             self._error(classicassets.strings.ui.not_signed_in_status)
             return
 
-        with plus.accounts.primary:
-            plus.cloud.send_message_cb(
-                bacommon.classic.InboxRequestMessage(),
-                on_response=bui.WeakCallPartial(
-                    self._on_inbox_request_response
-                ),
-            )
+        bui.app.create_async_task(
+            self._fetch_inbox(plus.accounts.primary), name='inbox fetch'
+        )
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:
@@ -699,8 +699,28 @@ class InboxWindow(bui.MainWindow):
                 label = _commonassets.strings.actions.done
             bui.buttonwidget(edit=button, label=label)
 
+    async def _fetch_inbox(self, account: bui.AccountV2Handle) -> None:
+        """Fetch our inbox contents and populate our UI."""
+        plus = bui.app.plus
+        assert plus is not None
+        try:
+            with account:
+                response = await plus.cloud.send_message_async(
+                    bacommon.classic.InboxRequestMessage()
+                )
+        except Exception as exc:
+            if self._root_widget and not self._root_widget.transitioning_out:
+                self._error(
+                    _commonassets.strings.status.unavailable_no_connection
+                )
+            # We're done with the exception, so strip its tracebacks
+            # to avoid reference cycles.
+            strip_exception_tracebacks(exc)
+            return
+        self._on_inbox_request_response(response)
+
     def _on_inbox_request_response(
-        self, response: bacommon.classic.InboxRequestResponse | Exception
+        self, response: bacommon.classic.InboxRequestResponse
     ) -> None:
         # pylint: disable=too-many-statements
         # pylint: disable=too-many-locals
@@ -710,23 +730,9 @@ class InboxWindow(bui.MainWindow):
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        errmsg: str | bui.Lstr | bui.LangStr
-        if isinstance(response, Exception):
-            errmsg = _commonassets.strings.status.unavailable_no_connection
-            is_error = True
-        else:
-            is_error = response.error is not None
-            errmsg = (
-                ''
-                if response.error is None
-                else bui.Lstr(translate=('serverResponses', response.error))
-            )
-
-        if is_error:
-            self._error(errmsg)
+        if response.error is not None:
+            self._error(bui.Lstr(translate=('serverResponses', response.error)))
             return
-
-        assert isinstance(response, bacommon.classic.InboxRequestResponse)
 
         # If we got no messages, don't touch anything. This keeps
         # keyboard control working in the empty case.

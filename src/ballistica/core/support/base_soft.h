@@ -48,14 +48,10 @@ class BaseSoftInterface {
   virtual auto InGraphicsContext() const -> bool = 0;
   virtual auto InBGDynamicsThread() const -> bool = 0;
   virtual auto InNetworkWriteThread() const -> bool = 0;
-  virtual void PlusDirectSendV1CloudLogs(const std::string& prefix,
-                                         const std::string& suffix,
-                                         bool instant, int* result) = 0;
   virtual auto CreateFeatureSetData(FeatureSetNativeComponent* featureset)
       -> PyObject* = 0;
   virtual auto FeatureSetFromData(PyObject* obj)
       -> FeatureSetNativeComponent* = 0;
-  virtual void DoV1CloudLog(const std::string& msg) = 0;
   /// Print one log entry's worth of dev-console lines in a SINGLE
   /// cross-thread call. The batching is load-bearing: the dev-console
   /// mirror runs one logic-thread PushCall per call, so a per-line call

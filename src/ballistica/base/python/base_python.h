@@ -70,7 +70,6 @@ class BasePython {
     kPurchaseAlreadyInProgressErrorCall,
     kVROrientationResetCBMessageCall,
     kVROrientationResetMessageCall,
-    kHandleV1CloudLogCall,
     kLanguageTestToggleCall,
     kAwardInControlAchievementCall,
     kAwardDualWieldingAchievementCall,

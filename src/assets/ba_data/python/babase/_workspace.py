@@ -96,8 +96,6 @@ class WorkspaceSubsystem:
 
             manifest = DirectoryManifest.create_from_disk(wspath)
 
-            # FIXME: Should implement a way to pass account credentials
-            # in from the logic thread.
             state = bacommon.cloud.WorkspaceFetchState(manifest=manifest)
 
             while True:

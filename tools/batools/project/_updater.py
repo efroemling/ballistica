@@ -113,6 +113,7 @@ class ProjectUpdater:
             self._update_visual_studio_projects()
             self._update_xcode_projects()
             self._update_app_module()
+            self._update_cloud_module()
 
     @property
     def source_files(self) -> list[str]:
@@ -407,6 +408,8 @@ class ProjectUpdater:
                 self._generate_codegen_makefile(existing_data)
             elif path == 'src/assets/ba_data/python/babase/_app.py':
                 self._generate_app_module(path, existing_data)
+            elif path == 'src/assets/ba_data/python/baplus/_cloud.py':
+                self._generate_cloud_module(path, existing_data)
             elif path.startswith('src/codegen/.codegen_manifest_'):
                 # These are always generated as a side-effect of the
                 # codegen Makefile.
@@ -422,6 +425,12 @@ class ProjectUpdater:
 
     def _update_app_module(self) -> None:
         self.enqueue_update('src/assets/ba_data/python/babase/_app.py')
+
+    def _update_cloud_module(self) -> None:
+        # baplus's typed cloud-message send overloads (the file only
+        # exists when the plus feature-set is present).
+        if 'plus' in self.feature_sets:
+            self.enqueue_update('src/assets/ba_data/python/baplus/_cloud.py')
 
     def _update_xcode_projects(self) -> None:
         # from batools.xcode import update_xcode_project
@@ -736,6 +745,13 @@ class ProjectUpdater:
 
         self._generated_files[path] = generate_app_module(
             self.projroot, self.feature_sets, existing_data
+        )
+
+    def _generate_cloud_module(self, path: str, existing_data: str) -> None:
+        from batools.cloudmsgs import generate_cloud_module
+
+        self._generated_files[path] = generate_cloud_module(
+            self.projroot, existing_data
         )
 
     def _update_codegen_makefile(self) -> None:

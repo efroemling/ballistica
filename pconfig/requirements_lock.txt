@@ -812,9 +812,9 @@ pbxproj==4.3.3 \
     --hash=sha256:13fc8d4d66d38627040eb66fdaee425df551321417b2943dd1bb1106a48ea521 \
     --hash=sha256:76deb4e622d0abb99d01fbeff9e5a33126cdd04cb3e82864ebf7589a5e144eec
     # via -r pconfig/requirements.txt
-platformdirs==4.11.1 \
-    --hash=sha256:2efd27d363e8dd2e661639ffb398865a5e0a46442a11d266bf375a0e0c10e386 \
-    --hash=sha256:bb1af68078f25e2f3e111e2d43b8d536df41b73c8a684b40bb018223b66fae27
+platformdirs==4.11.2 \
+    --hash=sha256:3a2ae5fca3520a01ab1be8b45613537f52ddf5b5f6f53d88233892dfbf0cd82d \
+    --hash=sha256:7f89089b6ea71bda7962953edcf784b2e2d9d285b40ad88be2bb75c6e9d82ab4
     # via
     #   black
     #   pylint
