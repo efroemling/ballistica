@@ -6,27 +6,10 @@ on:
       - main
 
 jobs:
-  check_pages:
-    runs-on: ubuntu-latest
-    outputs:
-      pages_enabled: ${{ steps.check.outputs.enabled }}
-    steps:
-      - name: Check if GitHub Pages is enabled
-        id: check
-        run: |
-          status=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/pages")
-          if [ "$status" = "200" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "Pages not Enabled. Skipping Workflow." >> "$GITHUB_STEP_SUMMARY"
-          fi
-
   setup_bombsquad_cache:
-    needs: check_pages
-    if: needs.check_pages.outputs.pages_enabled == 'true'
+    # Docs deploys only make sense in the upstream repo (forks generally
+    # don't have GitHub Pages set up, and their runs would just fail).
+    if: github.repository == 'efroemling/ballistica'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -38,8 +21,7 @@ jobs:
           make assets-windows
 
   build:
-    needs: [check_pages, setup_bombsquad_cache]
-    if: needs.check_pages.outputs.pages_enabled == 'true'
+    needs: setup_bombsquad_cache
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -55,8 +37,7 @@ jobs:
 
   deploy:
     # Add a dependency to the build job
-    needs: [check_pages, build]
-    if: needs.check_pages.outputs.pages_enabled == 'true'
+    needs: build
 
     # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
     permissions:
