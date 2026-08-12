@@ -444,8 +444,7 @@ void GlobalsNode::SetGravity(const std::vector<float>& vals) {
     throw Exception("Expected float array of size 3 for gravity",
                     PyExcType::kValue);
   }
-  dWorldSetGravity(scene()->dynamics()->ode_world(), vals[0], vals[1],
-                   vals[2]);
+  dWorldSetGravity(scene()->dynamics()->ode_world(), vals[0], vals[1], vals[2]);
 }
 
 void GlobalsNode::SetAllowKickIdlePlayers(bool val) {

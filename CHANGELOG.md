@@ -1,4 +1,4 @@
-### 1.8.0 (build 22973, api 9, 2026-08-12)
+### 1.8.0 (build 22974, api 9, 2026-08-12)
 - Fully implemented asset packages (more on this soon)
 - Upgraded to Python 3.14. This gives us a few nice useful bits such as zstd
   compression to help speed up online stuff and also means we can get rid of all
@@ -22,6 +22,11 @@
   placed and oriented instead of being stuck wherever its mesh was authored.
   Rendering, collision, and bg-dynamics (debris/smoke/shadows) all follow.
   Note that this bumps the scene-v1 protocol to 41 (thanks vishal332008!)
+- Prop nodes now have a `rotate` attr — a `(w, x, y, z)` quaternion that can
+  be read (live body orientation) or written, including before the body
+  exists to set a custom starting orientation. Globals nodes gain a
+  `gravity` attr for per-scene gravity control (moon maps, wind, zero-g).
+  This bumps the scene-v1 protocol to 42 (thanks vishal332008!)
 - Renamed the `BaStdAssets` asset package to `BaClassicAssets`; its client
   wrapper modules are now `bauiv1.classicassets` / `bascenev1.classicassets`
   (previously `stdassets`).
