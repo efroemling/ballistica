@@ -24,6 +24,13 @@ namespace ballistica::scene_v1 {
 
 static const millisecs_t kReplayStateDumpIntervalMillisecs = 500;
 
+// Snapshots stop accumulating once the seek spool reaches this size
+// (existing ones remain seekable; later regions fall back to
+// fast-forward/rewind seeks). Mostly a runaway guard; it also keeps
+// spool offsets comfortably within plain long-based fseek range on
+// all platforms (long is 32 bits on Windows).
+static const int64_t kReplaySpoolMaxBytes = 1000000000;  // 1 GB.
+
 // Cap on header listing size, purely a corruption/hostile-file guard
 // (real universes are a handful of packages).
 static const uint32_t kReplayHeaderMaxPackages = 4096;
@@ -133,6 +140,145 @@ ClientSessionReplay::~ClientSessionReplay() {
     fclose(file_);
     file_ = nullptr;
   }
+  CloseAndRemoveSpool_();
+}
+
+void ClientSessionReplay::CloseAndRemoveSpool_() {
+  if (spool_file_) {
+    fclose(spool_file_);
+    spool_file_ = nullptr;
+  }
+  if (!spool_path_.empty()) {
+    g_core->platform->Remove(spool_path_.c_str());
+    spool_path_.clear();
+  }
+}
+
+auto ClientSessionReplay::WriteSnapshotToSpool_(
+    const std::vector<uint8_t>& message,
+    const std::vector<std::vector<uint8_t>>& correction_messages) -> int64_t {
+  assert(!spool_failed_);
+
+  // Lazily create the spool the first time a snapshot lands. It goes in
+  // the app cache dir; note that on Android that is the no-backup cache
+  // dir, which (unlike the OS cache dir) can't be cleared out from
+  // under a running app - see DoGetCacheDirectoryMonolithicDefault.
+  if (spool_file_ == nullptr) {
+    spool_path_ =
+        g_core->GetCacheDirectory() + BA_DIRSLASH + "replay_seek_states";
+    spool_file_ = g_core->platform->FOpen(spool_path_.c_str(), "w+b");
+    if (spool_file_ == nullptr) {
+      spool_failed_ = true;
+      g_core->logging->Log(
+          LogName::kBaNetworking, LogLevel::kWarning,
+          "ClientSessionReplay: unable to open seek spool file '" + spool_path_
+              + "'; seeks will rewind/fast-forward instead.");
+      spool_path_.clear();
+      return -1;
+    }
+    spool_size_ = 0;
+    if (!BA_PLATFORM_WINDOWS) {
+      // Unlink immediately (POSIX); the open stream keeps working and
+      // the OS reclaims the space when it closes *however* the app
+      // exits - even on a crash or a shutdown path that skips our
+      // destructor. Windows can't remove an open file, so there we
+      // keep the path around for destructor cleanup and rely on the
+      // fixed name (truncated by the next session's open) to keep any
+      // hard-kill leftovers bounded to a single file.
+      g_core->platform->Remove(spool_path_.c_str());
+      spool_path_.clear();
+    }
+  }
+
+  // Record is: u32 message len + bytes, u32 correction count, then a
+  // u32 len + bytes per correction message.
+  int64_t record_size = static_cast<int64_t>(8 + message.size())
+                        + static_cast<int64_t>(correction_messages.size()) * 4;
+  for (auto&& correction : correction_messages) {
+    record_size += static_cast<int64_t>(correction.size());
+  }
+  int64_t record_position = spool_size_;
+  if (record_position + record_size > kReplaySpoolMaxBytes) {
+    spool_failed_ = true;  // Existing snapshots stay seekable.
+    g_core->logging->Log(
+        LogName::kBaNetworking, LogLevel::kWarning,
+        "ClientSessionReplay: seek spool reached its size limit;"
+        " snapshots beyond this point are disabled.");
+    return -1;
+  }
+
+  // We interleave reads and writes on this stream, so seek explicitly
+  // before each (also required by ANSI C between read & write ops).
+  bool ok = fseek(spool_file_,
+                  static_cast_check_fit<long>(record_position),  // NOLINT
+                  SEEK_SET)
+            == 0;
+  uint32_t len32 = static_cast<uint32_t>(message.size());
+  ok = ok && fwrite(&len32, sizeof(len32), 1, spool_file_) == 1;
+  ok = ok
+       && (message.empty()
+           || fwrite(message.data(), message.size(), 1, spool_file_) == 1);
+  uint32_t count32 = static_cast<uint32_t>(correction_messages.size());
+  ok = ok && fwrite(&count32, sizeof(count32), 1, spool_file_) == 1;
+  for (auto&& correction : correction_messages) {
+    if (!ok) {
+      break;
+    }
+    len32 = static_cast<uint32_t>(correction.size());
+    ok = fwrite(&len32, sizeof(len32), 1, spool_file_) == 1
+         && (correction.empty()
+             || fwrite(correction.data(), correction.size(), 1, spool_file_)
+                    == 1);
+  }
+  if (!ok) {
+    // Stop writing but keep the file open; snapshots already recorded
+    // remain readable.
+    spool_failed_ = true;
+    g_core->logging->Log(
+        LogName::kBaNetworking, LogLevel::kWarning,
+        "ClientSessionReplay: error writing seek spool; snapshots"
+        " beyond this point are disabled.");
+    return -1;
+  }
+  spool_size_ = record_position + record_size;
+  return record_position;
+}
+
+auto ClientSessionReplay::ReadSnapshotFromSpool_(
+    int64_t spool_position, std::vector<uint8_t>* message,
+    std::vector<std::vector<uint8_t>>* correction_messages) -> bool {
+  if (spool_file_ == nullptr
+      || fseek(spool_file_,
+               static_cast_check_fit<long>(spool_position),  // NOLINT
+               SEEK_SET)
+             != 0) {
+    return false;
+  }
+  uint32_t len32;
+  if (fread(&len32, sizeof(len32), 1, spool_file_) != 1) {
+    return false;
+  }
+  message->resize(len32);
+  if (len32 > 0 && fread(message->data(), len32, 1, spool_file_) != 1) {
+    return false;
+  }
+  uint32_t count32;
+  if (fread(&count32, sizeof(count32), 1, spool_file_) != 1) {
+    return false;
+  }
+  correction_messages->clear();
+  correction_messages->reserve(count32);
+  for (uint32_t i = 0; i < count32; ++i) {
+    if (fread(&len32, sizeof(len32), 1, spool_file_) != 1) {
+      return false;
+    }
+    std::vector<uint8_t> correction(len32);
+    if (len32 > 0 && fread(correction.data(), len32, 1, spool_file_) != 1) {
+      return false;
+    }
+    correction_messages->push_back(std::move(correction));
+  }
+  return true;
 }
 
 void ClientSessionReplay::OnCommandBufferUnderrun() { ResetTargetBaseTime(); }
@@ -199,19 +345,25 @@ void ClientSessionReplay::FetchMessages() {
   while (commands().empty()) {
     // Before we read next message, let's save our current state
     // if we didn't that for too long.
-    if (base_time() >= (states_.empty() ? 0 : states_.back().base_time_)
-                           + kReplayStateDumpIntervalMillisecs) {
+    if (!spool_failed_
+        && base_time() >= (states_.empty() ? 0 : states_.back().base_time_)
+                              + kReplayStateDumpIntervalMillisecs) {
       SessionStream out(nullptr, false);
       DumpFullState(&out);
+      std::vector<std::vector<uint8_t>> correction_messages;
+      GetCorrectionMessages(false, &correction_messages);
 
-      current_state_.base_time_ = base_time();
-      current_state_.correction_messages_.clear();
-      GetCorrectionMessages(false, &current_state_.correction_messages_);
-
-      fflush(file_);
-      current_state_.file_position_ = ftell(file_);
-      current_state_.message_ = out.GetOutMessage();
-      states_.push_back(current_state_);
+      // The snapshot payload goes to our disk spool; we keep only a
+      // small index entry in memory (long replays accumulate thousands
+      // of these and the payloads are large).
+      int64_t spool_position =
+          WriteSnapshotToSpool_(out.GetOutMessage(), correction_messages);
+      if (spool_position >= 0) {
+        current_state_.base_time_ = base_time();
+        current_state_.spool_position_ = spool_position;
+        current_state_.file_position_ = ftell(file_);
+        states_.push_back(current_state_);
+      }
     }
 
     std::vector<uint8_t> buffer;
@@ -293,7 +445,12 @@ void ClientSessionReplay::Error(const std::string& description) {
     fclose(file_);
     file_ = nullptr;
   }
-  ClientSession::Error(description);
+  // Add replay context so field reports distinguish replay playback
+  // from live net sessions (they share most of the parse path and
+  // otherwise produce identical errors).
+  ClientSession::Error("replay playback (protocol "
+                       + std::to_string(stream_protocol()) + ", base-time "
+                       + std::to_string(base_time()) + "ms): " + description);
 }
 
 void ClientSessionReplay::OnReset(bool rewind) {
@@ -396,13 +553,31 @@ void ClientSessionReplay::SeekTo(millisecs_t to_base_time) {
 }
 
 void ClientSessionReplay::RestoreFromCurrentState() {
+  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [this] {
+    return "ClientSessionReplay: restoring state at base-time "
+           + std::to_string(current_state_.base_time_) + "ms (file-pos "
+           + std::to_string(current_state_.file_position_) + ", spool-pos "
+           + std::to_string(current_state_.spool_position_) + ").";
+  });
+  std::vector<uint8_t> message;
+  std::vector<std::vector<uint8_t>> correction_messages;
+  if (!ReadSnapshotFromSpool_(current_state_.spool_position_, &message,
+                              &correction_messages)) {
+    // Shouldn't be possible (this is our own just-written file), but
+    // don't kill the session over it; rewind to the start instead.
+    g_core->logging->Log(
+        LogName::kBaNetworking, LogLevel::kWarning,
+        "ClientSessionReplay: error reading seek spool; rewinding.");
+    Reset(true);
+    return;
+  }
   // FIXME: calling reset here causes background music to start over
   Reset(true);
   fseek(file_, current_state_.file_position_, SEEK_SET);
 
   SetBaseTime(current_state_.base_time_);
-  HandleSessionMessage(current_state_.message_);
-  for (const auto& msg : current_state_.correction_messages_) {
+  HandleSessionMessage(message);
+  for (const auto& msg : correction_messages) {
     HandleSessionMessage(msg);
   }
 }

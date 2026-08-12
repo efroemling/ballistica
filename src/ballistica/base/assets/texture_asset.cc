@@ -35,6 +35,27 @@ static constexpr bool kForceUncompressedDDS = false;
 
 TextureAsset::TextureAsset() = default;
 
+/// Derive the loader container hint from a resolved asset path. CAS
+/// blobs resolve to bare content-hash file names with no extension
+/// (all texture flavors are KTX2 containers), while every legacy
+/// on-disk path — including the headless ``.nop`` dummy — carries an
+/// extension for the loader's path-suffix sniff. Keying on the
+/// *resolved* path shape (rather than whether the *requested* name
+/// was a qualified ``<apverid>:<name>`` ref) matters because bare
+/// legacy names can still resolve to CAS blobs: a missing texture
+/// falls back to the builtin package's ``textures/white``, and that
+/// fallback must load rather than fail the asset (which is fatal if
+/// the render path later touches it).
+static auto DeriveContainerHint(const std::string& path) -> std::string {
+  auto slash_pos = path.find_last_of("/\\");
+  auto dot_pos =
+      path.find('.', slash_pos == std::string::npos ? 0 : slash_pos + 1);
+  if (dot_pos == std::string::npos) {
+    return ".ktx2";
+  }
+  return {};
+}
+
 TextureAsset::TextureAsset(const std::string& file_in, TextureType type_in,
                            TextureMinQuality min_quality_in)
     : file_name_(file_in), type_(type_in), min_quality_(min_quality_in) {
@@ -42,19 +63,7 @@ TextureAsset::TextureAsset(const std::string& file_in, TextureType type_in,
       type_ == TextureType::kCubeMap ? Assets::FileType::kCubeMapTexture
                                      : Assets::FileType::kTexture,
       file_in);
-  // CAS-form ref (``<apverid>:<asset_name>``) resolves to a CAS blob
-  // whose on-disk name is just a hash — no extension. Set an
-  // explicit container hint so the loader can dispatch without
-  // sniffing the path. Hardcoded to ``.ktx2`` (FALLBACK_V1 produces
-  // KTX2 per initiative decision #12); Phase 3 construct-mode
-  // replaces this with per-profile dispatch. Headless mode resolves
-  // to a ``.nop`` dummy path which has its own loader branch, so
-  // we leave the container empty in that case and let the matcher's
-  // path-suffix fallback pick the right branch.
-  if (file_in.find(':') != std::string::npos
-      && !file_name_full_.ends_with(".nop")) {
-    container_ = ".ktx2";
-  }
+  container_ = DeriveContainerHint(file_name_full_);
   valid_ = true;
 }
 
@@ -116,10 +125,8 @@ auto TextureAsset::ReResolveSource() -> bool {
     return false;
   }
   file_name_full_ = new_full;
-  // Re-derive the container hint exactly as the constructor does: CAS blobs
-  // are extensionless KTX2; the headless ``.nop`` dummy keeps it empty so the
-  // matcher's path-suffix fallback picks the right branch.
-  container_ = file_name_full_.ends_with(".nop") ? "" : ".ktx2";
+  // Re-derive the container hint exactly as the constructor does.
+  container_ = DeriveContainerHint(file_name_full_);
   return true;
 }
 

@@ -1485,6 +1485,17 @@ void ClientSession::GetCorrectionMessages(
 }
 
 void ClientSession::DumpFullState(SessionStream* out) {
+  // Declare our asset-package table first so everything below can be
+  // written as indexed refs (mirroring HostSession::DumpFullState).
+  // This matters for replay seeks: the restore path resets the session
+  // (clearing the table) and then resumes reading the on-disk stream
+  // *past* its start-of-stream declarations, so the snapshot itself
+  // must re-establish the table or every indexed ref after a seek
+  // fails against an empty table.
+  if (!asset_package_table().empty()) {
+    out->DeclareAssetPackages(asset_package_table());
+  }
+
   // Add all scenes.
   for (auto&& i : scenes()) {
     if (Scene* sg = i.get()) {

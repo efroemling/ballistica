@@ -43,10 +43,13 @@ class ClientSessionReplay : public ClientSession,
   void SeekTo(millisecs_t to_base_time);
 
  private:
+  // Index entry for a state snapshot we can seek back to. The snapshot
+  // payload itself (full scene dump + correction messages) lives in a
+  // disk spool file, not in memory - long replays accumulate thousands
+  // of these and the payloads are large (see FetchMessages).
   struct IntermediateState {
-    // Message containing full scene state at the moment.
-    std::vector<uint8_t> message_;
-    std::vector<std::vector<uint8_t>> correction_messages_;
+    // Offset of this snapshot's record in the spool file.
+    int64_t spool_position_;
 
     // A position in replay file where we should continue from.
     int64_t file_position_;
@@ -55,10 +58,25 @@ class ClientSessionReplay : public ClientSession,
   };
 
   void RestoreFromCurrentState();
+  // Append a snapshot record to the spool, returning its offset or -1
+  // on failure (in which case spooling is disabled for the session).
+  auto WriteSnapshotToSpool_(
+      const std::vector<uint8_t>& message,
+      const std::vector<std::vector<uint8_t>>& correction_messages) -> int64_t;
+  // Read a snapshot record back from the spool.
+  auto ReadSnapshotFromSpool_(
+      int64_t spool_position, std::vector<uint8_t>* message,
+      std::vector<std::vector<uint8_t>>* correction_messages) -> bool;
+  void CloseAndRemoveSpool_();
 
   // List of passed states which we can rewind to.
   std::vector<IntermediateState> states_;
   IntermediateState current_state_;
+
+  FILE* spool_file_{};
+  std::string spool_path_;
+  int64_t spool_size_{};
+  bool spool_failed_{};
 
   bool is_fast_forwarding_{};
   millisecs_t fast_forward_base_time_{};

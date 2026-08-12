@@ -137,10 +137,21 @@ auto PlatformApple::GetDeviceUUIDInputs() -> std::list<std::string> {
 
 auto PlatformApple::DoGetConfigDirectoryMonolithicDefault()
     -> std::optional<std::string> {
-#if BA_PLATFORM_IOS_TVOS
-  // FIXME - this doesn't seem right.
-  printf("FIXME: get proper default-config-dir\n");
-  return std::string(getenv("HOME")) + "/Library";
+#if BA_PLATFORM_TVOS
+  // tvOS gives us no persistent writable location (only Caches and tmp
+  // are writable), so config state lives under our cache dir and may be
+  // purged by the OS while we're not running. That's acceptable for
+  // now: GameCenter auto-sign-in restores the account on a fresh
+  // launch and important state lives server-side. If it proves a
+  // problem in practice we can look at mirroring critical bits to
+  // NSUserDefaults/iCloud KVS (or storing more via our own cloud).
+  return std::string(BallisticaKit::FromCpp::getCacheDirectoryPath())
+         + "/config";
+#elif BA_PLATFORM_IOS
+  // Sandboxed per-app, but use a subdir to match our macOS layout.
+  return std::string(
+             BallisticaKit::FromCpp::getApplicationSupportDirectoryPath())
+         + "/BallisticaKit";
 #elif BA_PLATFORM_MACOS && BA_XCODE_BUILD
   return std::string(BallisticaKit::CocoaFromCpp::getApplicationSupportPath())
          + "/BallisticaKit";
