@@ -1,4 +1,4 @@
-### 1.8.0 (build 22972, api 9, 2026-08-11)
+### 1.8.0 (build 22973, api 9, 2026-08-12)
 - Fully implemented asset packages (more on this soon)
 - Upgraded to Python 3.14. This gives us a few nice useful bits such as zstd
   compression to help speed up online stuff and also means we can get rid of all
