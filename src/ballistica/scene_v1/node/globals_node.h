@@ -28,6 +28,8 @@ class GlobalsNode : public Node {
   void SetDebrisKillHeight(float val);
   auto GetCameraMode() const -> std::string;
   void SetCameraMode(const std::string& val);
+  auto GetGravity() const -> std::vector<float>;
+  void SetGravity(const std::vector<float>& vals);
   void SetHappyThoughtsMode(bool val);
   auto happy_thoughts_mode() const -> bool { return happy_thoughts_mode_; }
   auto shadow_scale() const -> const std::vector<float>& {

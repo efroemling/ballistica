@@ -3,6 +3,8 @@
 #include "ballistica/scene_v1/node/prop_node.h"
 
 #include <algorithm>
+#include <array>
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -29,6 +31,31 @@ static void _doCalcERPCFM(float stiffness, float damping, float* erp,
              / ((kGameStepSeconds * stiffness) + damping);
     (*cfm) = 1.0f / ((kGameStepSeconds * stiffness) + damping);
   }
+}
+
+static auto EulerDegreesToQuaternion(float x_deg, float y_deg, float z_deg)
+    -> std::array<dReal, 4> {
+  dQuaternion qx, qy, qz, tmp, out;
+  dQFromAxisAndAngle(qx, 1, 0, 0, x_deg * (kPi / 180.0f));
+  dQFromAxisAndAngle(qy, 0, 1, 0, y_deg * (kPi / 180.0f));
+  dQFromAxisAndAngle(qz, 0, 0, 1, z_deg * (kPi / 180.0f));
+  dQMultiply0(tmp, qz, qy);
+  dQMultiply0(out, tmp, qx);
+  return {out[0], out[1], out[2], out[3]};
+}
+
+static auto QuaternionToEulerDegrees(const dReal* q) -> std::vector<float> {
+  float w = q[0], x = q[1], y = q[2], z = q[3];
+  float r20 = std::clamp(2.0f * (x * z - w * y), -1.0f, 1.0f);
+  float y_rad = std::asin(-r20);
+  float r21 = 2.0f * (y * z + w * x);
+  float r22 = 1.0f - 2.0f * (x * x + y * y);
+  float x_rad = std::atan2(r21, r22);
+  float r10 = 2.0f * (x * y + w * z);
+  float r00 = 1.0f - 2.0f * (y * y + z * z);
+  float z_rad = std::atan2(r10, r00);
+  return {x_rad * (180.0f / kPi), y_rad * (180.0f / kPi),
+         z_rad * (180.0f / kPi)};
 }
 
 static NodeType* node_type{};
@@ -310,21 +337,29 @@ void PropNode::SetBody(const std::string& val) {
   dBodySetLinearVel(body_->body(), velocity_[0], velocity_[1], velocity_[2]);
 
   // initial orientation:
-  // put pucks upright and make them big
-  if (body_type_ == BodyType::PUCK) {
-    dQuaternion iq;
+  // if the rotate attr was explicitly set before the body existed, honor
+  // that. Otherwise fall back to our default initial-orientation behavior
+  // (pucks upright, everything else gets a random start rotation).
+  dQuaternion iq;
+  if (rotate_set_) {
+    auto q = EulerDegreesToQuaternion(rotate_[0], rotate_[1], rotate_[2]);
+    iq[0] = q[0];
+    iq[1] = q[1];
+    iq[2] = q[2];
+    iq[3] = q[3];
+  } else if (body_type_ == BodyType::PUCK) {
     dQFromAxisAndAngle(iq, 1, 0, 0, -90 * (kPi / 180.0f));
-    dBodySetQuaternion(body_->body(), iq);
-    body_->SetDimensions(0.7f, 0.58f, 0, 0.7f, 0.48f, 0, 0.14f * density_);
   } else {
-    // give other types random start rotations..
-    dQuaternion iq;
     int64_t gti = scene()->stepnum();
     dQFromAxisAndAngle(
         iq, 0.05f, 1, 0,
         Utils::precalc_rand_1((stream_id() + gti) % kPrecalcRandsCount) * 360.0f
             * (kPi / 180.0f));
-    dBodySetQuaternion(body_->body(), iq);
+  }
+  dBodySetQuaternion(body_->body(), iq);
+
+  if (body_type_ == BodyType::PUCK) {
+    body_->SetDimensions(0.7f, 0.58f, 0, 0.7f, 0.48f, 0, 0.14f * density_);
   }
 }
 
@@ -432,6 +467,28 @@ void PropNode::SetPosition(const std::vector<float>& vals) {
     // otherwise just store it in our internal vector
     // in case someone asks for it
     position_ = vals;
+  }
+}
+
+auto PropNode::GetRotate() const -> std::vector<float> {
+  if (body_.exists()) {
+    return QuaternionToEulerDegrees(dBodyGetQuaternion(body_->body()));
+  }
+  return rotate_;
+}
+
+void PropNode::SetRotate(const std::vector<float>& vals) {
+  if (vals.size() != 3) {
+    throw Exception(
+        "Expected float array of size 3 (x, y, z degrees) for rotate",
+        PyExcType::kValue);
+  }
+  rotate_ = vals;
+  rotate_set_ = true;
+
+  if (body_.exists()) {
+    auto q = EulerDegreesToQuaternion(vals[0], vals[1], vals[2]);
+    dBodySetQuaternion(body_->body(), q.data());
   }
 }
 

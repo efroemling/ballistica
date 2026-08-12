@@ -59,6 +59,8 @@ class PropNode : public Node {
   void SetVelocity(const std::vector<float>& vals);
   auto GetPosition() const -> std::vector<float>;
   void SetPosition(const std::vector<float>& vals);
+  auto GetRotate() const -> std::vector<float>;
+  void SetRotate(const std::vector<float>& vals);
   auto extra_acceleration() const -> std::vector<float> {
     return extra_acceleration_;
   }
@@ -101,6 +103,8 @@ class PropNode : public Node {
   float max_speed_{20.0f};
   std::vector<float> velocity_{0.0f, 0.0f, 0.0f};
   std::vector<float> position_{0.0f, 0.0f, 0.0f};
+  std::vector<float> rotate_{0.0f, 0.0f, 0.0f};
+  bool rotate_set_{};
   std::vector<float> extra_acceleration_{0.0, 0.0, 0.0};
   float extra_mesh_scale_{1.0f};  // For use by subclasses.
   bool sticky_{};
@@ -145,6 +149,7 @@ class PropNodeType : public NodeType {
   BA_MATERIAL_ARRAY_ATTR(materials, GetMaterials, SetMaterials);
   BA_FLOAT_ARRAY_ATTR(velocity, GetVelocity, SetVelocity);
   BA_FLOAT_ARRAY_ATTR(position, GetPosition, SetPosition);
+  BA_FLOAT_ARRAY_ATTR(rotate, GetRotate, SetRotate);
   BA_FLOAT_ATTR(density, density, SetDensity);
   BA_FLOAT_ATTR(damping, damping, set_damping);
   BA_FLOAT_ATTR(body_scale, body_scale, SetBodyScale);
@@ -174,6 +179,7 @@ class PropNodeType : public NodeType {
         materials(this),
         velocity(this),
         position(this),
+        rotate(this),
         density(this),
         damping(this),
         max_speed(this),

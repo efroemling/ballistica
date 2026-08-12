@@ -14,6 +14,7 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/host_activity.h"
@@ -37,6 +38,7 @@ class GlobalsNodeType : public NodeType {
   BA_BOOL_ATTR(floor_reflection, floor_reflection, SetFloorReflection);
   BA_FLOAT_ATTR(debris_kill_height, debris_kill_height, SetDebrisKillHeight);
   BA_STRING_ATTR(camera_mode, GetCameraMode, SetCameraMode);
+  BA_FLOAT_ARRAY_ATTR(gravity, GetGravity, SetGravity);
   BA_BOOL_ATTR(happy_thoughts_mode, happy_thoughts_mode, SetHappyThoughtsMode);
   BA_FLOAT_ARRAY_ATTR(shadow_scale, shadow_scale, SetShadowScale);
   BA_FLOAT_ARRAY_ATTR(area_of_interest_bounds, area_of_interest_bounds,
@@ -73,6 +75,7 @@ class GlobalsNodeType : public NodeType {
         floor_reflection(this),
         debris_kill_height(this),
         camera_mode(this),
+        gravity(this),
         happy_thoughts_mode(this),
         shadow_scale(this),
         area_of_interest_bounds(this),
@@ -424,6 +427,22 @@ void GlobalsNode::SetCameraMode(const std::string& val) {
                     + R"('; expected "rotate" or "follow")");
   }
   if (IsCurrentGlobals()) g_base->graphics->camera()->SetMode(camera_mode_);
+}
+
+auto GlobalsNode::GetGravity() const -> std::vector<float> {
+  dVector3 grav;
+  dWorldGetGravity(scene()->dynamics()->ode_world(), grav);
+  return {static_cast<float>(grav[0]), static_cast<float>(grav[1]),
+          static_cast<float>(grav[2])};
+}
+
+void GlobalsNode::SetGravity(const std::vector<float>& vals) {
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of size 3 for gravity",
+                    PyExcType::kValue);
+  }
+  dWorldSetGravity(scene()->dynamics()->ode_world(), vals[0], vals[1],
+                   vals[2]);
 }
 
 void GlobalsNode::SetAllowKickIdlePlayers(bool val) {
