@@ -38,7 +38,6 @@ class GlobalsNodeType : public NodeType {
   BA_BOOL_ATTR(floor_reflection, floor_reflection, SetFloorReflection);
   BA_FLOAT_ATTR(debris_kill_height, debris_kill_height, SetDebrisKillHeight);
   BA_STRING_ATTR(camera_mode, GetCameraMode, SetCameraMode);
-  BA_FLOAT_ARRAY_ATTR(gravity, GetGravity, SetGravity);
   BA_BOOL_ATTR(happy_thoughts_mode, happy_thoughts_mode, SetHappyThoughtsMode);
   BA_FLOAT_ARRAY_ATTR(shadow_scale, shadow_scale, SetShadowScale);
   BA_FLOAT_ARRAY_ATTR(area_of_interest_bounds, area_of_interest_bounds,
@@ -64,6 +63,10 @@ class GlobalsNodeType : public NodeType {
   BA_BOOL_ATTR(music_continuous, music_continuous, set_music_continuous);
   BA_STRING_ATTR(music, music, set_music);
   BA_INT_ATTR(music_count, music_count, SetMusicCount);
+  // Note: attrs are addressed over the wire by their position in this
+  // table, so new ones must be appended at the end (and need a protocol
+  // version bump); see the protocol-changes list in scene_v1.h.
+  BA_FLOAT_ARRAY_ATTR(gravity, GetGravity, SetGravity);
 #undef BA_NODE_TYPE_CLASS
 
   GlobalsNodeType()
@@ -75,7 +78,6 @@ class GlobalsNodeType : public NodeType {
         floor_reflection(this),
         debris_kill_height(this),
         camera_mode(this),
-        gravity(this),
         happy_thoughts_mode(this),
         shadow_scale(this),
         area_of_interest_bounds(this),
@@ -96,7 +98,8 @@ class GlobalsNodeType : public NodeType {
         vr_near_clip(this),
         music_continuous(this),
         music(this),
-        music_count(this) {}
+        music_count(this),
+        gravity(this) {}
 };
 
 static NodeType* node_type{};

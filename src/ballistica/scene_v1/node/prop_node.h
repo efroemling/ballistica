@@ -103,7 +103,9 @@ class PropNode : public Node {
   float max_speed_{20.0f};
   std::vector<float> velocity_{0.0f, 0.0f, 0.0f};
   std::vector<float> position_{0.0f, 0.0f, 0.0f};
-  std::vector<float> rotate_{0.0f, 0.0f, 0.0f};
+  // Quaternion (w, x, y, z); stored here until a body exists to apply
+  // it to (see SetRotate/SetBody).
+  std::vector<float> rotate_{1.0f, 0.0f, 0.0f, 0.0f};
   bool rotate_set_{};
   std::vector<float> extra_acceleration_{0.0, 0.0, 0.0};
   float extra_mesh_scale_{1.0f};  // For use by subclasses.
@@ -149,7 +151,6 @@ class PropNodeType : public NodeType {
   BA_MATERIAL_ARRAY_ATTR(materials, GetMaterials, SetMaterials);
   BA_FLOAT_ARRAY_ATTR(velocity, GetVelocity, SetVelocity);
   BA_FLOAT_ARRAY_ATTR(position, GetPosition, SetPosition);
-  BA_FLOAT_ARRAY_ATTR(rotate, GetRotate, SetRotate);
   BA_FLOAT_ATTR(density, density, SetDensity);
   BA_FLOAT_ATTR(damping, damping, set_damping);
   BA_FLOAT_ATTR(body_scale, body_scale, SetBodyScale);
@@ -158,6 +159,10 @@ class PropNodeType : public NodeType {
                       SetExtraAcceleration);
   BA_FLOAT_ATTR(gravity_scale, gravity_scale, set_gravity_scale);
   BA_STRING_ATTR(body, GetBody, SetBody);
+  // Note: attrs are addressed over the wire by their position in this
+  // table, so new ones must be appended at the end (and need a protocol
+  // version bump); see the protocol-changes list in scene_v1.h.
+  BA_FLOAT_ARRAY_ATTR(rotate, GetRotate, SetRotate);
 #undef BA_NODE_TYPE_CLASS
 
   explicit PropNodeType(const char* sub_type_name = nullptr,
@@ -179,14 +184,14 @@ class PropNodeType : public NodeType {
         materials(this),
         velocity(this),
         position(this),
-        rotate(this),
         density(this),
         damping(this),
         max_speed(this),
         body_scale(this),
         body(this),
         extra_acceleration(this),
-        gravity_scale(this) {}
+        gravity_scale(this),
+        rotate(this) {}
 };
 
 }  // namespace ballistica::scene_v1

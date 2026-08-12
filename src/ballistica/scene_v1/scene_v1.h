@@ -34,7 +34,7 @@ namespace ballistica::scene_v1 {
 // anything emitting or ingesting scene streams.
 
 // Oldest protocol version we can act as a host for.
-const int kProtocolVersionHostMin = 41;
+const int kProtocolVersionHostMin = 42;
 
 // Oldest protocol version we can act as a client to. This can generally be
 // left as-is as long as only new nodes/attrs/commands are added and old
@@ -42,7 +42,7 @@ const int kProtocolVersionHostMin = 41;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 41;
+const int kProtocolVersionMax = 42;
 
 // The protocol version we actually host is now read as a setting; see
 // kSceneV1HostProtocol in ballistica/base/support/app_config.h.
@@ -129,6 +129,14 @@ const int kProtocolVersionMax = 41;
 //     client receiving a set-attr for a trailing index it doesn't have
 //     would fail its GetAttribute precondition, so we raise the hosting
 //     floor along with the max.
+//
+// 42: New prop-node 'rotate' quaternion attr (w, x, y, z; readable and
+//     writable, applied at body creation if set beforehand) and
+//     globals-node 'gravity' float-array attr (per-scene ode world
+//     gravity). From public PR #959 / issue #948. Both appended at the
+//     end of their type's attr tables per the standing rule (see 40/41
+//     above), and the hosting floor rises with the max as usual so
+//     pre-42 clients never see indices they lack.
 
 // Sim step size in milliseconds.
 const int kGameStepMilliseconds = 8;
