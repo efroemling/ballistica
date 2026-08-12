@@ -956,7 +956,7 @@ void ClassicAppMode::UpdateKickVote_() {
     return;
   }
   millisecs_t current_time{g_core->AppTimeMillisecs()};
-  int total_client_count = (g_core->HeadlessMode() ? 0 : 1);
+  int total_client_count = 0;
   int yes_votes = 0;
   int no_votes = 0;
 
@@ -1003,12 +1003,19 @@ void ClassicAppMode::UpdateKickVote_() {
           std::max(client->next_kick_vote_allow_time(), current_time + delay));
     }
   } else {
+    // On gui builds the host is a player too, so they count as a
+    // participant even though only clients get to vote.
+    int participant_count =
+        total_client_count + (g_core->HeadlessMode() ? 0 : 1);
     int votes_required;
     if (total_client_count <= 2) {
       votes_required = 2;  // Shouldn't actually be possible.
     } else if (total_client_count <= 7) {
-      votes_required = total_client_count / 2 + 1;
+      // Small parties: a majority of everyone present.
+      votes_required = participant_count / 2 + 1;
     } else {
+      // Large parties: all-but-3 of the clients must agree; kicks
+      // should approach unanimity as crowds grow.
       votes_required = total_client_count - 3;
     }
     int votes_needed = votes_required - yes_votes;
