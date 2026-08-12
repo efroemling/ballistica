@@ -12,6 +12,7 @@
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/exception.h"
 #include "ballistica/shared/generic/json_facade.h"
@@ -324,16 +325,33 @@ auto Utils::Sphrand(float radius) -> Vector3f {
 }
 
 auto Utils::FileToString(const std::string& file_name) -> std::string {
-  std::ifstream file_stream{file_name};
-  if (file_stream.fail()) {
+  // Open through the platform layer: on Windows a bare narrow
+  // std::ifstream/fopen resolves paths via the legacy ANSI code page,
+  // so UTF-8 paths containing non-ASCII characters (e.g. a user-profile
+  // dir) fail to open. Platform::FOpen widens to the wide-char APIs
+  // there. (Field case: language-blob reads under C:\Users\<non-ascii>
+  // permanently failing construct-mode bring-up.)
+  FILE* file = (g_core != nullptr && g_core->platform != nullptr)
+                   ? g_core->platform->FOpen(file_name.c_str(), "rb")
+                   : fopen(file_name.c_str(), "rb");  // Pre-core fallback.
+  if (file == nullptr) {
     throw Exception("Error opening file for reading: '" + file_name + "'");
   }
-  std::ostringstream str_stream{};
-  file_stream >> str_stream.rdbuf();
-  if (file_stream.fail() && !file_stream.eof()) {
-    throw Exception("Error reading file: '" + file_name + "'");
+  std::string out;
+  char buffer[16384];
+  while (true) {
+    size_t amt = fread(buffer, 1, sizeof(buffer), file);
+    out.append(buffer, amt);
+    if (amt < sizeof(buffer)) {
+      bool had_error = ferror(file) != 0;
+      fclose(file);
+      if (had_error) {
+        throw Exception("Error reading file: '" + file_name + "'");
+      }
+      break;
+    }
   }
-  return str_stream.str();
+  return out;
 }
 
 auto Utils::BaseName(const std::string& val) -> std::string {

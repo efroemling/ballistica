@@ -113,6 +113,18 @@ that should disappear with the feature-set, wrap it in
 `__SPINOFF_REQUIRE_FOO_BEGIN__` … `_END__`. Don't relocate the
 host file just to satisfy the strip.
 
+**Keep the stripped result format-stable (C++).** The stripped file
+must still be a fixed point of the destination's `clang-format`, or
+`pubsync pull` flags a bogus manual-merge: a function whose body is
+mostly one strip section can collapse to a single line under the
+public side's formatter, which then reads back as a public-side
+edit. When a strip section would leave behind a one-statement
+function body, keep a comment line *inside the function but outside
+the markers* so the stripped form stays multi-line. Precedent:
+`ReportHost()` in
+`src/ballistica/shared/foundation/fatal_error_report.cc`
+(hit 2026-08-11).
+
 ## Structuring code that crosses boundaries
 
 The spinoff system's most subtle rule: **a file's location is its

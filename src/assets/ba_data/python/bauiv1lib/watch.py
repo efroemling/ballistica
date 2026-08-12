@@ -39,6 +39,7 @@ class WatchWindow(bui.MainWindow):
         self._scrollwidget: bui.Widget | None = None
         self._columnwidget: bui.Widget | None = None
         self._my_replay_selected: str | None = None
+        self._replay_play_in_flight = False
         self._my_replays_rename_window: bui.Widget | None = None
         self._my_replay_rename_text: bui.Widget | None = None
         self._r = 'watchWindow'
@@ -394,6 +395,13 @@ class WatchWindow(bui.MainWindow):
             self._start_replay_playback()
 
     def _start_replay_playback(self) -> None:
+        # A double press (or a second confirm) would otherwise spawn two
+        # concurrent launch tasks: two launch_replay calls and a second
+        # transition-out on our root widget (seen in the field as
+        # 'ContainerWidget was set to transition out twice' reports).
+        if self._replay_play_in_flight:
+            return
+        self._replay_play_in_flight = True
         bui.app.create_async_task(self._prepare_and_play_replay())
 
     async def _prepare_and_play_replay(self) -> None:
@@ -406,6 +414,9 @@ class WatchWindow(bui.MainWindow):
         # stranding them on a torn-down UI (mirrors how connect_to_party
         # preps with the gather UI still present).
         if not await bs.prepare_replay(path):
+            # Prep failed/cancelled; we're staying here, so allow
+            # another play attempt.
+            self._replay_play_in_flight = False
             return
 
         # Content is ready; now do the fade-out -> launch -> fade-in and
@@ -431,7 +442,11 @@ class WatchWindow(bui.MainWindow):
                 bs.new_host_session(mainmenu.MainMenuSession)
 
         bui.fade_screen(False, endcall=bui.CallStrict(bui.pushcall, do_it))
-        bui.containerwidget(edit=self._root_widget, transition='out_left')
+        # The user may have navigated away during the async prep above,
+        # in which case our window is already gone or on its way out;
+        # transitioning it out again logs a warning.
+        if self._root_widget and not self._root_widget.transitioning_out:
+            bui.containerwidget(edit=self._root_widget, transition='out_left')
 
     def _on_my_replay_rename_press(self) -> None:
         if self._my_replay_selected is None:

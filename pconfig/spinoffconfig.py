@@ -274,6 +274,7 @@ ctx.filter_file_extensions = {
     '.hlsl',
     '.gradle',
     '.xml',
+    '.manifest',
     '.java',
     '.kt',
     '.pro',
