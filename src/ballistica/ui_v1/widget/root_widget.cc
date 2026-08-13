@@ -66,6 +66,7 @@ static const float kGetTokensButtonColorB{0.55f};
 constexpr std::array<const char*, 4> chest_ids{"0", "1", "2", "3"};
 
 int RootWidget::update_pause_count_;
+seconds_t RootWidget::update_pause_start_time_;
 
 // Flip this to true when we're ready to use levels.
 static const bool kShowLevels{};
@@ -3081,6 +3082,9 @@ auto RootWidget::GetTimeStr_(seconds_t diff, bool animating) -> std::string {
 
 void RootWidget::PauseUpdates() {
   assert(g_base->InLogicThread());
+  if (update_pause_count_ == 0) {
+    update_pause_start_time_ = g_core->AppTimeSeconds();
+  }
   update_pause_count_ += 1;
 }
 
@@ -3090,6 +3094,23 @@ void RootWidget::ResumeUpdates() {
   if (update_pause_count_ < 0) {
     BA_LOG_ONCE(LogName::kBaApp, LogLevel::kError,
                 "RootWidget update-pause-count < 0; should not happen.");
+  }
+  if (update_pause_count_ == 0) {
+    // Warn if the just-completed paused stretch ran long. These pauses
+    // are meant to cover brief animations/round-trips; long ones
+    // generally mean a pause holder got stuck (see the per-holder
+    // warning in bauiv1.RootUIUpdatePause for who). Warning level so
+    // this surfaces in triggered client log reports.
+    seconds_t held = g_core->AppTimeSeconds() - update_pause_start_time_;
+    seconds_t warn_threshold{10.0};
+    if (held >= warn_threshold) {
+      char buffer[128];
+      snprintf(buffer, sizeof(buffer),
+               "Root-ui updates were paused for %.1f seconds before"
+               " resuming; expected to be brief.",
+               held);
+      g_core->logging->Log(LogName::kBaApp, LogLevel::kWarning, buffer);
+    }
   }
 }
 

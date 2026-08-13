@@ -250,6 +250,7 @@ class RootWidget : public ContainerWidget {
   bool trophy_meter_open_{};
 
   static int update_pause_count_;
+  static seconds_t update_pause_start_time_;
 };
 
 }  // namespace ballistica::ui_v1

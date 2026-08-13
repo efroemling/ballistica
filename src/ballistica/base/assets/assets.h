@@ -305,6 +305,21 @@ class Assets {
   static auto LoadBundledFallbackTextureRGBA(const std::string& name)
       -> std::optional<BundledTextureRGBAData>;
 
+  /// Raise a Python ValueError if `name` is a qualified asset-package
+  /// path (``<apverid>:<asset_name>``). Called by the *public* Python
+  /// asset-load bindings (gettexture() and friends), which accept only
+  /// legacy bare names: asset-package assets must load through their
+  /// generated wrapper modules (which route through the private
+  /// ap*get bindings; see FailOnNonAssetPackagePath). `call_name` is
+  /// the Python-visible callable name, used in the error message.
+  static void FailOnAssetPackagePath(const char* name, const char* call_name);
+
+  /// Inverse of FailOnAssetPackagePath, for the private ap*get Python
+  /// bindings: raise a Python ValueError if `name` is *not* a
+  /// qualified asset-package path.
+  static void FailOnNonAssetPackagePath(const char* name,
+                                        const char* call_name);
+
  private:
   /// Resolve a qualified-ref name (``<apverid>:<asset_name>``) into a
   /// CAS blob path via :class:`AssetPackageRegistry`. Called from the

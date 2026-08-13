@@ -281,8 +281,8 @@ nitpick_ignore = [
     # bacommon.assetspec texture/mesh refs — same story: bare cross-module
     # class refs to fully-qualify eventually; AssetGroupTree is a PEP 695
     # ``type`` alias autodoc renders in signatures but can't cross-ref.
-    ('py:class', 'TextureVerifiedSpec'),
-    ('py:class', 'MeshVerifiedSpec'),
+    ('py:class', 'TextureHandle'),
+    ('py:class', 'MeshHandle'),
     ('py:class', 'AssetGroup'),
     ('py:class', 'bacommon.assetspec._wrapper.AssetGroupTree'),
     # Same story: FeedbackEvent is a PEP 695 ``type`` alias (a Literal of

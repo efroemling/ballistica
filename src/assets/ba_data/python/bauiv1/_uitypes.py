@@ -2,6 +2,9 @@
 #
 """Misc UI related types."""
 
+import os
+import time
+import inspect
 import warnings
 from typing import TYPE_CHECKING, override
 
@@ -72,13 +75,49 @@ class TextWidgetStringEditAdapter(babase.StringEditAdapter):
 
 
 class RootUIUpdatePause:
-    """Pauses updates to the root-ui while in existence."""
+    """Pauses updates to the root-ui while in existence.
+
+    Instances are expected to be short-lived (covering an animation or
+    a server round-trip). Long holds get logged as warnings naming the
+    creation site; a common cause is an instance caught in a reference
+    cycle, where its release waits on the next explicit gc pass instead
+    of happening immediately (see :class:`~babase.GarbageCollectionSubsystem`).
+    """
+
+    #: Holds at or beyond this many seconds log a warning at release.
+    LONG_HOLD_WARN_THRESHOLD = 10.0
 
     def __init__(self) -> None:
+        # Note where we were created, for long-hold warnings. We pull
+        # simple strings out of the calling frame and immediately drop
+        # it; storing the frame itself would create exactly the sort of
+        # reference cycle that makes these holds go long.
+        frame = inspect.currentframe()
+        caller = frame.f_back if frame is not None else None
+        if caller is not None:
+            self._created_at = (
+                f'{caller.f_code.co_qualname}'
+                f' ({os.path.basename(caller.f_code.co_filename)}'
+                f':{caller.f_lineno})'
+            )
+        else:
+            self._created_at = '<unknown>'
+        del caller
+        del frame
+        self._created_time = time.monotonic()
         _bauiv1.root_ui_pause_updates()
 
     def __del__(self) -> None:
         _bauiv1.root_ui_resume_updates()
+        held = time.monotonic() - self._created_time
+        if held >= self.LONG_HOLD_WARN_THRESHOLD:
+            babase.uilog.warning(
+                'RootUIUpdatePause created by %s was held %.1f seconds;'
+                ' expected to be brief. A hold ending only when gc runs'
+                ' implies the instance was stuck in a reference cycle.',
+                self._created_at,
+                held,
+            )
 
 
 class UIOpenState:

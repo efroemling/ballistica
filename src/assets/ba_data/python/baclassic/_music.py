@@ -390,7 +390,7 @@ class MusicSubsystem:
             #     },
             # )
             bascenev1.set_internal_music(
-                babase.getsimplesound(entry.assetname),
+                babase.apsimplesoundget(entry.assetname),
                 volume=entry.volume * 5.0,
                 loop=entry.loop,
             )

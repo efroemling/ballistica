@@ -410,8 +410,11 @@ class MessageSender:
         # Some error occurred. Raise a local Exception for it.
         if isinstance(raw_response, ErrorSysResponse):
             # Errors that happened locally can attach their exceptions
-            # here for extra logging goodness.
+            # here for extra logging goodness. We chain the exception
+            # into what we raise below and detach it from the response
+            # to avoid a reference cycle (see clear_local_exception()).
             local_exception = raw_response.get_local_exception()
+            raw_response.clear_local_exception()
 
             if (
                 raw_response.error_type

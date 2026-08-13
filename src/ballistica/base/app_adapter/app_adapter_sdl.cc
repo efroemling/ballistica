@@ -127,7 +127,7 @@ void AppAdapterSDL::OnMainThreadStartApp() {
   // baenv-config time; the regular app-config path isn't available this
   // early (and wouldn't be in time for SDL init anyway).
   if (g_buildconfig.platform_windows()) {
-    if (!g_core->app_config_enable_xinput()) {
+    if (g_core->app_config_disable_xinput()) {
       SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
     }
   }

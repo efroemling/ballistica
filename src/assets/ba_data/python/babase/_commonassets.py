@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bacommonassets.260807a`` (babase).
+"""Asset-package wrapper for ``a-0.bacommonassets.260812`` (babase).
 
 Cross-cutting assets used everywhere -- by the engine, by every game built on
 it, and by the master server's own web pages. Content here must be free of any
@@ -9,13 +9,13 @@ single game's concepts, which is what distinguishes it from BaClassicAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bacommonassets.260807a
+# ba_meta require asset-package a-0.bacommonassets.260812
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.bacommonassets.260807a'
+__asset_package__ = 'a-0.bacommonassets.260812'
 
 from typing import TYPE_CHECKING
 
@@ -432,7 +432,9 @@ if TYPE_CHECKING:
                 Pure-formatting template stacking two blocks separated by a
                 blank line (paragraph gap); substitution-only.
 
-                English: "{first} {second}"
+                English: "{first}
+
+                {second}"
             """
 
         def paren_suffix(

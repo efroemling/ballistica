@@ -102,6 +102,10 @@ from _bascenev1 import (
     get_replay_speed_exponent,
     get_main_ui_input_device,
     getactivity,
+    apcollisionmeshget,
+    apmeshget,
+    apsoundget,
+    aptextureget,
     getcollisionmesh,
     getdata,
     getinputdevice,
@@ -163,10 +167,10 @@ from _bascenev1 import (
 from bascenev1._activity import Activity
 from bascenev1._activitytypes import JoinActivity, ScoreScreenActivity
 from bascenev1._assetref import (
-    TextureVerifiedSpec,
-    MeshVerifiedSpec,
-    SoundVerifiedSpec,
-    CollisionMeshVerifiedSpec,
+    TextureHandle,
+    MeshHandle,
+    SoundHandle,
+    CollisionMeshHandle,
 )
 from bascenev1._actor import Actor
 from bascenev1._campaign import init_campaigns, Campaign
@@ -278,10 +282,10 @@ __all__ = [
     'ActivityData',
     'ActivityNotFoundError',
     'Actor',
-    'TextureVerifiedSpec',
-    'SoundVerifiedSpec',
-    'MeshVerifiedSpec',
-    'CollisionMeshVerifiedSpec',
+    'TextureHandle',
+    'SoundHandle',
+    'MeshHandle',
+    'CollisionMeshHandle',
     'animate',
     'animate_array',
     'add_clean_frame_callback',
@@ -376,6 +380,10 @@ __all__ = [
     'get_trophy_string',
     'get_main_ui_input_device',
     'getactivity',
+    'apcollisionmeshget',
+    'apmeshget',
+    'apsoundget',
+    'aptextureget',
     'getcollision',
     'getcollisionmesh',
     'getdata',

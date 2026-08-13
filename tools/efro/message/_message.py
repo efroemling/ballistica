@@ -113,6 +113,19 @@ class ErrorSysResponse(SysResponse):
         assert isinstance(value, Exception | None)
         return value
 
+    def clear_local_exception(self) -> None:
+        """Drop any attached local exception.
+
+        The messaging system calls this once it has consumed the
+        attached exception. An attached exception's traceback
+        generally references the frame that created us, and that
+        frame's reference to us in turn completes a reference cycle
+        (frame -> response -> exception -> traceback -> frame), so
+        holding on to the exception longer than needed would leave
+        cleanup to the cyclic garbage collector.
+        """
+        setattr(self, '_sr_local_exception', None)
+
     class ErrorType(Enum):
         """Type of error that occurred while sending a message."""
 

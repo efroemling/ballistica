@@ -41,6 +41,7 @@ static auto PyGetSound(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
+  base::Assets::FailOnAssetPackagePath(name, "getsound");
   {
     base::Assets::AssetListLock lock;
     Object::Ref<base::SoundAsset> sound = g_base->assets->GetSound(name);
@@ -60,6 +61,44 @@ static PyMethodDef PyGetSoundDef = {
     "Load a sound for use in the ui.",
 };
 
+// ------------------------------ apsoundget -----------------------------------
+
+static auto PyApSoundGet(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* name;
+  static const char* kwlist[] = {"name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &name)) {
+    return nullptr;
+  }
+  base::Assets::FailOnNonAssetPackagePath(name, "apsoundget");
+  {
+    base::Assets::AssetListLock lock;
+    Object::Ref<base::SoundAsset> sound = g_base->assets->GetSound(name);
+    return PythonClassUISound::Create(sound.get());
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyApSoundGetDef = {
+    "apsoundget",                  // name
+    (PyCFunction)PyApSoundGet,     // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "apsoundget(name: str) -> bauiv1.Sound\n"
+    "\n"
+    "Load a ui sound from an asset-package (internal).\n"
+    "\n"
+    "Do not call this directly; asset-package assets should be accessed\n"
+    "through their package's generated Python wrapper module, which routes\n"
+    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "asset name.\n"
+    "\n"
+    ":meta private:",
+};
+
 // ----------------------------- gettexture ------------------------------------
 
 static auto PyGetTexture(PyObject* self, PyObject* args, PyObject* keywds)
@@ -71,6 +110,7 @@ static auto PyGetTexture(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
+  base::Assets::FailOnAssetPackagePath(name, "gettexture");
   {
     base::Assets::AssetListLock lock;
     return PythonClassUITexture::Create(g_base->assets->GetTexture(name));
@@ -87,6 +127,43 @@ static PyMethodDef PyGetTextureDef = {
     "gettexture(name: str) -> bauiv1.Texture\n"
     "\n"
     "Load a texture for use in the ui.",
+};
+
+// ----------------------------- aptextureget ----------------------------------
+
+static auto PyApTextureGet(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* name;
+  static const char* kwlist[] = {"name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &name)) {
+    return nullptr;
+  }
+  base::Assets::FailOnNonAssetPackagePath(name, "aptextureget");
+  {
+    base::Assets::AssetListLock lock;
+    return PythonClassUITexture::Create(g_base->assets->GetTexture(name));
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyApTextureGetDef = {
+    "aptextureget",                // name
+    (PyCFunction)PyApTextureGet,   // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "aptextureget(name: str) -> bauiv1.Texture\n"
+    "\n"
+    "Load a ui texture from an asset-package (internal).\n"
+    "\n"
+    "Do not call this directly; asset-package assets should be accessed\n"
+    "through their package's generated Python wrapper module, which routes\n"
+    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "asset name.\n"
+    "\n"
+    ":meta private:",
 };
 
 // -------------------------- get_qrcode_texture -------------------------------
@@ -130,6 +207,7 @@ static auto PyGetMesh(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
+  base::Assets::FailOnAssetPackagePath(name, "getmesh");
   {
     base::Assets::AssetListLock lock;
     return PythonClassUIMesh::Create(g_base->assets->GetMesh(name));
@@ -146,6 +224,43 @@ static PyMethodDef PyGetMeshDef = {
     "getmesh(name: str) -> bauiv1.Mesh\n"
     "\n"
     "Load a mesh for use solely in the local user interface.",
+};
+
+// ------------------------------ apmeshget ------------------------------------
+
+static auto PyApMeshGet(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* name;
+  static const char* kwlist[] = {"name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &name)) {
+    return nullptr;
+  }
+  base::Assets::FailOnNonAssetPackagePath(name, "apmeshget");
+  {
+    base::Assets::AssetListLock lock;
+    return PythonClassUIMesh::Create(g_base->assets->GetMesh(name));
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyApMeshGetDef = {
+    "apmeshget",                   // name
+    (PyCFunction)PyApMeshGet,      // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "apmeshget(name: str) -> bauiv1.Mesh\n"
+    "\n"
+    "Load a ui mesh from an asset-package (internal).\n"
+    "\n"
+    "Do not call this directly; asset-package assets should be accessed\n"
+    "through their package's generated Python wrapper module, which routes\n"
+    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "asset name.\n"
+    "\n"
+    ":meta private:",
 };
 
 // ----------------------------- buttonwidget ----------------------------------
@@ -3166,6 +3281,9 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyGetTextureDef,
       PyGetQRCodeTextureDef,
       PyGetMeshDef,
+      PyApSoundGetDef,
+      PyApTextureGetDef,
+      PyApMeshGetDef,
       PyIsAvailableDef,
       PyOnUIScaleChangeDef,
       PyRootUIPauseUpdatesDef,

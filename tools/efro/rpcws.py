@@ -8,7 +8,7 @@ import logging
 from typing import TYPE_CHECKING, Protocol
 
 from efro.error import CommunicationError
-from efro.util import gather_strip
+from efro.util import gather_strip, strip_exception_tracebacks
 
 if TYPE_CHECKING:
     from typing import Awaitable, Callable, Literal
@@ -123,21 +123,30 @@ class RPCWSEndpoint:
                 'RPCWSEndpoint.run cancelled; want to try and avoid this.'
             )
             raise
-        except CommunicationError:
+        except CommunicationError as exc:
             if self.debug_print:
                 self.debug_print_call(f'{self._label}: connection ended.')
-        except Exception:
+            # We're done with the exception here, so strip its
+            # tracebacks to avoid reference cycles.
+            strip_exception_tracebacks(exc)
+        except Exception as exc:
             logger.exception(
                 'Unexpected error in rpcws %s read loop (age=%.1f).',
                 self._label,
                 time.monotonic() - self._create_time,
             )
+            # We're done with the exception here, so strip its
+            # tracebacks to avoid reference cycles.
+            strip_exception_tracebacks(exc)
         finally:
             try:
                 self.close()
                 await self.wait_closed()
-            except Exception:
+            except Exception as exc:
                 logger.exception('Error closing %s.', self._label)
+                # We're done with the exception here, so strip its
+                # tracebacks to avoid reference cycles.
+                strip_exception_tracebacks(exc)
 
             if self.debug_print:
                 self.debug_print_call(f'{self._label}: finished.')
@@ -204,7 +213,7 @@ class RPCWSEndpoint:
             await self._transport.send(frame)
         except Exception as exc:
             bytes_awaitable.cancel()
-            del self._in_flight_messages[message_id]
+            self._in_flight_messages.pop(message_id, None)
             if close_on_error:
                 self.close()
             raise CommunicationError() from exc
@@ -218,6 +227,7 @@ class RPCWSEndpoint:
         try:
             return await asyncio.wait_for(bytes_awaitable, timeout=timeout)
         except asyncio.CancelledError as exc:
+            self._in_flight_messages.pop(message_id, None)
             current_task = asyncio.current_task()
             if current_task is not None and current_task.cancelling() > 0:
                 raise
@@ -234,7 +244,7 @@ class RPCWSEndpoint:
                     f'{self._label}: message {message_id} timed out.'
                 )
             bytes_awaitable.cancel()
-            del self._in_flight_messages[message_id]
+            self._in_flight_messages.pop(message_id, None)
             if close_on_error:
                 self.close()
             raise CommunicationError() from exc
@@ -345,7 +355,11 @@ class RPCWSEndpoint:
                         f'{self._label}: received response {message_id}'
                         f' of size {len(payload)} at {self._tm()}.'
                     )
-                msgobj = self._in_flight_messages.get(message_id)
+                # The message is no longer in flight, so remove its
+                # entry; leaving completed entries around would grow
+                # the dict unboundedly and collide with live entries
+                # once message ids wrap at 65536.
+                msgobj = self._in_flight_messages.pop(message_id, None)
                 if msgobj is None:
                     if self.debug_print:
                         self.debug_print_call(
@@ -368,8 +382,11 @@ class RPCWSEndpoint:
             return
         try:
             response = await handler(message)
-        except Exception:
+        except Exception as exc:
             logger.exception('Error handling raw rpcws message')
+            # We're done with the exception here, so strip its
+            # tracebacks to avoid reference cycles.
+            strip_exception_tracebacks(exc)
             return
 
         # Send back the response.

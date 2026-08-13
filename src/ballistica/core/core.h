@@ -113,15 +113,15 @@ class CoreFeatureSet {
   /// log calls until this condition is met to ensure predictable behavior.
   auto have_ba_env_vals() const { return have_ba_env_vals_; }
 
-  /// The 'Enable XInput' app-config value, snapshotted at baenv-config
+  /// The 'Disable XInput' app-config value, snapshotted at baenv-config
   /// time. Windows only; ignored elsewhere. This lives here instead of
   /// with the rest of the app-config values in base because it must be
   /// known before we init SDL, which happens before base's app-config
   /// machinery is usable. Takes effect at launch only; changes to the
   /// stored value are picked up on the next run.
-  auto app_config_enable_xinput() const {
+  auto app_config_disable_xinput() const {
     assert(have_ba_env_vals_);
-    return app_config_enable_xinput_;
+    return app_config_disable_xinput_;
   }
 
   /// Return the directory where the app expects to find its bundled Python
@@ -247,7 +247,7 @@ class CoreFeatureSet {
   bool tried_importing_base_{};
   bool started_suicide_{};
   bool have_ba_env_vals_{};
-  bool app_config_enable_xinput_{true};
+  bool app_config_disable_xinput_{};
   bool vr_mode_{};
   bool using_custom_app_python_dir_{};
   bool engine_done_{};

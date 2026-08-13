@@ -1,5 +1,18 @@
-### 1.8.0 (build 22974, api 9, 2026-08-12)
+### 1.8.0 (build 22975, api 9, 2026-08-12)
 - Fully implemented asset packages (more on this soon)
+- Renamed the asset-package wrapper leaf types from `TextureVerifiedSpec`,
+  `SoundVerifiedSpec`, etc. to `TextureHandle`, `SoundHandle`, `MeshHandle`,
+  and `CollisionMeshHandle` (in both `bauiv1` and `bascenev1`). Regenerate
+  any asset-package wrapper modules you maintain to pick up the new names;
+  old wrappers keep *running* fine (they only reference these types in
+  type-checking annotations) but will want regenerating for type-checkers.
+- Asset-load calls such as `bascenev1.gettexture()`, `bauiv1.getsound()`, etc.
+  now raise a `ValueError` if passed a qualified asset-package path
+  (`'<apverid>:<path>'`). Asset-package assets should always be accessed
+  through the package's generated Python wrapper module rather than by raw
+  path string; wrapper modules stay valid across engine/pipeline changes
+  (regenerate the wrapper if it is outdated) while raw paths are an internal
+  detail that may change without notice.
 - Upgraded to Python 3.14. This gives us a few nice useful bits such as zstd
   compression to help speed up online stuff and also means we can get rid of all
   the annoying `from __future__ import annotations` lines. Woohoo!
@@ -35,6 +48,11 @@
   were ignored if executed during a grab. This patches the punch grab infinite
   exploit without impacting other game techiques like "bomb jumps"
   (Thanks TheMikirog!)
+- Added an `allow_punch_grab` server config option (default false) which
+  disables the above punch-grab protection, for servers whose players
+  prefer the classic behavior. Modders can do the same by setting
+  `babase.app.classic.allow_punch_grab` to True; spazzes spawned while it
+  is set omit the protection.
 - The boot-time asset gate now offers an interactive browser sign-in when
   required assets need an authenticated account and no sign-in is coming on
   its own. Previously, an app bundling mods that pin restricted asset-package

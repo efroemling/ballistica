@@ -171,7 +171,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             custom_texture = self._get_custom_logo_tex_name()
             if custom_texture != self._custom_logo_tex_name:
                 self._custom_logo_tex_name = custom_texture
-                self._logo_node.texture = bs.gettexture(
+                self._logo_node.texture = bs.aptextureget(
                     custom_texture
                     if custom_texture is not None
                     else _tex('logo')
@@ -516,7 +516,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         if custom_texture is None:
             custom_texture = self._get_custom_logo_tex_name()
         self._custom_logo_tex_name = custom_texture
-        ltex = bs.gettexture(
+        ltex = bs.aptextureget(
             custom_texture if custom_texture is not None else _tex('logo')
         )
         mopaque = (

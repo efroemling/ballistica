@@ -924,6 +924,32 @@ void Assets::CheckAssetPackageAccess_(const std::string& name) {
       name.substr(0, colon_pos), name.substr(colon_pos + 1));
 }
 
+void Assets::FailOnAssetPackagePath(const char* name, const char* call_name) {
+  if (strchr(name, ':') == nullptr) {
+    return;  // A bare legacy name; fine here.
+  }
+  throw Exception(
+      std::string(call_name) + "() does not accept asset-package paths ('"
+          + name
+          + "'); load asset-package assets through the package's generated"
+            " Python wrapper module instead. If this call came from a"
+            " generated wrapper module, regenerate the wrapper module against"
+            " a current engine version to fix it.",
+      PyExcType::kValue);
+}
+
+void Assets::FailOnNonAssetPackagePath(const char* name,
+                                       const char* call_name) {
+  if (strchr(name, ':') != nullptr) {
+    return;  // A qualified asset-package path; fine here.
+  }
+  throw Exception(std::string(call_name)
+                      + "() requires a qualified '<apverid>:<path>'"
+                        " asset-package path; got '"
+                      + name + "'.",
+      PyExcType::kValue);
+}
+
 void Assets::MarkAssetForLoad(Asset* c) {
   assert(g_base->InLogicThread());
 

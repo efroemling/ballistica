@@ -431,6 +431,8 @@ class ServerController:
         classic.teams_series_length = self._config.teams_series_length
         classic.ffa_series_length = self._config.ffa_series_length
 
+        classic.allow_punch_grab = self._config.allow_punch_grab
+
         bascenev1.set_enable_default_kick_voting(
             self._config.enable_default_kick_voting
         )

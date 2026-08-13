@@ -9,6 +9,7 @@
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_config.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
@@ -324,7 +325,16 @@ void UIV1FeatureSet::DeleteWidget(Widget* widget) {
   if (widget) {
     ContainerWidget* parent = widget->parent_widget();
     if (parent) {
+      // Widget death can trigger user code (on-delete callbacks), which
+      // gets scheduled on the current ui-operation. Establish one for
+      // the duration: this func is invoked via bare event-loop pushcalls
+      // (transition-out completions) where none is otherwise active, and
+      // without one those callbacks get dropped with an error. Harmlessly
+      // defers to any operation already in progress.
+      base::UI::OperationContext operation_context;
       parent->DeleteWidget(widget);
+      // Run anything we triggered.
+      operation_context.Finish();
     }
   }
 }

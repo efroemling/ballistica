@@ -48,6 +48,7 @@ static auto PyGetSimpleSound(PyObject* self, PyObject* args, PyObject* keywds)
   }
   BA_PRECONDITION(g_base->InLogicThread());
   BA_PRECONDITION(g_base->assets->asset_loads_allowed());
+  Assets::FailOnAssetPackagePath(name, "getsimplesound");
   {
     Assets::AssetListLock lock;
     Object::Ref<SoundAsset> sound = g_base->assets->GetSound(name);
@@ -63,6 +64,46 @@ static PyMethodDef PyGetSimpleSoundDef = {
     METH_VARARGS | METH_KEYWORDS,   // flags
 
     "getsimplesound(name: str) -> SimpleSound\n"
+    "\n"
+    ":meta private:",
+};
+
+// -------------------------- apsimplesoundget --------------------------------
+
+static auto PyApSimpleSoundGet(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* name;
+  static const char* kwlist[] = {"name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &name)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+  BA_PRECONDITION(g_base->assets->asset_loads_allowed());
+  Assets::FailOnNonAssetPackagePath(name, "apsimplesoundget");
+  {
+    Assets::AssetListLock lock;
+    Object::Ref<SoundAsset> sound = g_base->assets->GetSound(name);
+    return PythonClassSimpleSound::Create(sound.get());
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyApSimpleSoundGetDef = {
+    "apsimplesoundget",               // name
+    (PyCFunction)PyApSimpleSoundGet,  // method
+    METH_VARARGS | METH_KEYWORDS,     // flags
+
+    "apsimplesoundget(name: str) -> SimpleSound\n"
+    "\n"
+    "Load a simple sound from an asset-package (internal).\n"
+    "\n"
+    "Do not call this directly; asset-package assets should be accessed\n"
+    "through their package's generated Python wrapper module, which routes\n"
+    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "asset name.\n"
     "\n"
     ":meta private:",
 };
@@ -2334,6 +2375,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyLockAllInputDef,
       PySetUpSigIntDef,
       PyGetSimpleSoundDef,
+      PyApSimpleSoundGetDef,
       PyHasTouchScreenDef,
       PyNativeStackTraceDef,
       PySupportsOpenDirExternallyDef,

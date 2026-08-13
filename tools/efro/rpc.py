@@ -278,8 +278,11 @@ class RPCEndpoint:
         try:
             self.close()
             await self.wait_closed()
-        except Exception:
+        except Exception as exc:
             logger.exception('Error closing %s.', self._label)
+            # We're done with the exception here, so strip its
+            # tracebacks to avoid reference cycles.
+            strip_exception_tracebacks(exc)
 
         if self.debug_print:
             self.debug_print_call(f'{self._label}: finished.')
@@ -406,6 +409,7 @@ class RPCEndpoint:
         try:
             return await asyncio.wait_for(bytes_awaitable, timeout=timeout)
         except asyncio.CancelledError as exc:
+            self._in_flight_messages.pop(message_id, None)
             # If the current task itself was cancelled (vs an inner task
             # being cancelled by endpoint close()), preserve the
             # CancelledError rather than swallowing it as a
@@ -436,7 +440,7 @@ class RPCEndpoint:
                 bytes_awaitable.cancel()
 
                 # Remove the record of this message.
-                del self._in_flight_messages[message_id]
+                self._in_flight_messages.pop(message_id, None)
 
                 if close_on_error:
                     self.close()
@@ -695,7 +699,11 @@ class RPCEndpoint:
             )
         rsp = await self._reader.readexactly(rsplen)
         self._total_bytes_read += rsplen
-        msgobj = self._in_flight_messages.get(msgid)
+        # The message is no longer in flight, so remove its entry;
+        # leaving completed entries around would grow the dict
+        # unboundedly and collide with live entries once message ids
+        # wrap at 65536.
+        msgobj = self._in_flight_messages.pop(msgid, None)
         if msgobj is None:
             # It's possible for us to get a response to a message
             # that has timed out. In this case we will have no local

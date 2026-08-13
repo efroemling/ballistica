@@ -8,7 +8,7 @@ plus per-bucket manifest blobs in the CAS store
 the resolved ``logical_path → CAS hash`` mappings into the C++
 :class:`AssetPackageRegistry` via
 :func:`_babase.register_asset_package_bucket`, so subsequent
-``gettexture(``'apverid:asset'``)``-style lookups can resolve
+``aptextureget(``'apverid:asset'``)``-style lookups can resolve
 GIL-free in C++.
 """
 

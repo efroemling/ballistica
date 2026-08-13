@@ -571,13 +571,13 @@ class Achievement:
 
     def get_icon_ui_texture(self, complete: bool) -> bauiv1.Texture:
         """Return the icon texture to display for this achievement"""
-        return bauiv1.gettexture(
+        return bauiv1.aptextureget(
             self._icon_name if complete else _tex('achievement_empty')
         )
 
     def get_icon_texture(self, complete: bool) -> bascenev1.Texture:
         """Return the icon texture to display for this achievement"""
-        return bascenev1.gettexture(
+        return bascenev1.aptextureget(
             self._icon_name if complete else _tex('achievement_empty')
         )
 
@@ -1031,10 +1031,10 @@ class Achievement:
                     # Provide magical extended dict version of texture
                     # that Image actor supports.
                     texture={
-                        'texture': bascenev1.gettexture(
+                        'texture': bascenev1.aptextureget(
                             chestdisplayinfo.texclosed
                         ),
-                        'tint_texture': bascenev1.gettexture(
+                        'tint_texture': bascenev1.aptextureget(
                             chestdisplayinfo.texclosedtint
                         ),
                         'tint_color': chestdisplayinfo.tint,
@@ -1152,10 +1152,10 @@ class Achievement:
                             # Provide magical extended dict version of texture
                             # that Image actor supports.
                             texture={
-                                'texture': bascenev1.gettexture(
+                                'texture': bascenev1.aptextureget(
                                     chestdisplayinfo.texclosed
                                 ),
-                                'tint_texture': bascenev1.gettexture(
+                                'tint_texture': bascenev1.aptextureget(
                                     chestdisplayinfo.texclosedtint
                                 ),
                                 'tint_color': chestdisplayinfo.tint,

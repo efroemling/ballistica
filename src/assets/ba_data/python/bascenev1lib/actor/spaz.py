@@ -92,6 +92,8 @@ class Spaz(bs.Actor):
 
         protocol_version = classic.scene_v1_protocol_version()
 
+        self._allow_punch_grab = classic.allow_punch_grab
+
         # We need to behave slightly different in the tutorial.
         self._demo_mode = demo_mode
 
@@ -1214,14 +1216,17 @@ class Spaz(bs.Actor):
 
             # Prevent punches against other Spaz characters shortly
             # before or after grabbing.
-            punch_time_diff = self.last_punch_time_ms - self.last_pickup_time_ms
-            release_time_diff = (
-                int(bs.time() * 1000) - self.node.pickup_release_time_ms
-            )
-            if node.getdelegate(Spaz) and (
-                0 <= punch_time_diff <= 70 or release_time_diff <= 360
-            ):
-                return None
+            if not self._allow_punch_grab:
+                punch_time_diff = (
+                    self.last_punch_time_ms - self.last_pickup_time_ms
+                )
+                release_time_diff = (
+                    int(bs.time() * 1000) - self.node.pickup_release_time_ms
+                )
+                if node.getdelegate(Spaz) and (
+                    0 <= punch_time_diff <= 70 or release_time_diff <= 360
+                ):
+                    return None
 
             # Only allow one hit per node per punch.
             if node and (node not in self._punched_nodes):

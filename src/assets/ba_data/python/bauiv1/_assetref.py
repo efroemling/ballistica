@@ -4,12 +4,12 @@
 
 This is the bauiv1 (client) flavor of :mod:`bacommon.assetspec` and the
 middle tier of the D28 asset ladder: ``TextureSpec`` (authoring claim)
--> ``TextureVerifiedSpec`` (this module; a *verified-local* reference — its
+-> ``TextureHandle`` (this module; a *verified-local* reference — its
 wrapper's pin was construct-mode-resolved before use) ->
 ``bauiv1.Texture`` (the loaded engine asset). A generated reference
 wrapper exposes per-kind roots (``textures``, ``meshes``, ...) whose
 leaves here are thin subclasses of the spec types adding a single
-:meth:`TextureVerifiedSpec.get` method returning the live ``bauiv1.Texture``
+:meth:`TextureHandle.get` method returning the live ``bauiv1.Texture``
 (etc.) while remaining ordinary specs on the wire.
 
 The subclasses add no data fields -- only the ``get()`` accessor -- so
@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 # slotted, but a subclass that omits ``__slots__`` silently reintroduces a
 # ``__dict__``, and the ref is the object actually allocated (and mostly
 # thrown away) on every wrapper access, so it's the one that matters.
-class TextureVerifiedSpec(_TextureSpec):
+class TextureHandle(_TextureSpec):
     """A texture reference that can also load the live engine texture."""
 
     __slots__ = ()
@@ -52,10 +52,10 @@ class TextureVerifiedSpec(_TextureSpec):
     def get(self) -> 'bauiv1.Texture':
         """Resolve and return the live engine texture for this reference."""
         check_asset_package_load(self.apverid, self.name)
-        return _bauiv1.gettexture(f'{self.apverid}:{self.name}')
+        return _bauiv1.aptextureget(f'{self.apverid}:{self.name}')
 
 
-class MeshVerifiedSpec(_MeshSpec):
+class MeshHandle(_MeshSpec):
     """A mesh reference that can also load the live engine mesh."""
 
     __slots__ = ()
@@ -63,10 +63,10 @@ class MeshVerifiedSpec(_MeshSpec):
     def get(self) -> 'bauiv1.Mesh':
         """Resolve and return the live engine mesh for this reference."""
         check_asset_package_load(self.apverid, self.name)
-        return _bauiv1.getmesh(f'{self.apverid}:{self.name}')
+        return _bauiv1.apmeshget(f'{self.apverid}:{self.name}')
 
 
-class SoundVerifiedSpec(_SoundSpec):
+class SoundHandle(_SoundSpec):
     """A sound reference that can also load the live engine sound."""
 
     __slots__ = ()
@@ -74,7 +74,7 @@ class SoundVerifiedSpec(_SoundSpec):
     def get(self) -> 'bauiv1.Sound':
         """Resolve and return the live engine sound for this reference."""
         check_asset_package_load(self.apverid, self.name)
-        return _bauiv1.getsound(f'{self.apverid}:{self.name}')
+        return _bauiv1.apsoundget(f'{self.apverid}:{self.name}')
 
 
 #: A node in a wrapper's kind-code tree: each key is one path segment; a
@@ -103,10 +103,7 @@ class AssetGroup:
 
     def __getattr__(
         self, name: str
-    ) -> (
-        'AssetGroup | TextureVerifiedSpec | MeshVerifiedSpec'
-        ' | SoundVerifiedSpec'
-    ):
+    ) -> 'AssetGroup | TextureHandle | MeshHandle' ' | SoundHandle':
         try:
             child = self._node[name]
         except KeyError:
@@ -119,12 +116,12 @@ class AssetGroup:
 
 def _make(
     apverid: str, path: str, kind: str
-) -> TextureVerifiedSpec | MeshVerifiedSpec | SoundVerifiedSpec:
+) -> TextureHandle | MeshHandle | SoundHandle:
     """Build a single leaf reference by its single-char kind code."""
     if kind == 't':
-        return TextureVerifiedSpec(apverid, path)
+        return TextureHandle(apverid, path)
     if kind == 'm':
-        return MeshVerifiedSpec(apverid, path)
+        return MeshHandle(apverid, path)
     if kind == 's':
-        return SoundVerifiedSpec(apverid, path)
+        return SoundHandle(apverid, path)
     raise ValueError(f'Invalid asset-ref kind {kind!r} for {apverid}:{path}.')

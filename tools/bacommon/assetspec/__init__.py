@@ -7,7 +7,7 @@ logical name -- carrying no asset data and no guarantee the package is
 locally present (or still exists). Per the D28 semantic split (see
 ``strings-asset-migration.md`` in ballistica-internal), assets ladder
 through three tiers: ``TextureSpec`` (this claim form; wire/model
-currency) -> client ``bauiv1.TextureVerifiedSpec`` (a verified-local subclass
+currency) -> client ``bauiv1.TextureHandle`` (a verified-local subclass
 adding ``.get()``; its wrapper pin resolved before use) ->
 ``bauiv1.Texture`` (the loaded engine asset). Servers hold only specs;
 consuming clients verify/resolve before display. Each kind gets a

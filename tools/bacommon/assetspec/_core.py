@@ -96,7 +96,7 @@ class CollisionMeshSpec:
     Collision meshes are a scene-only kind (physics; they ride the
     flavor-invariant ``constant`` bucket -- asset-packages decision
     #26), so nothing server-side emits one. The type exists so the
-    scene wrapper's verified-spec leaves stay kind-distinct like every
+    scene wrapper's handle leaves stay kind-distinct like every
     other kind.
     """
 

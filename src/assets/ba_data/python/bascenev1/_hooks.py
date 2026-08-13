@@ -26,8 +26,8 @@ def launch_main_menu_session() -> None:
 def get_player_icon(sessionplayer: bascenev1.SessionPlayer) -> dict[str, Any]:
     info = sessionplayer.get_icon_info()
     return {
-        'texture': _bascenev1.gettexture(info['texture']),
-        'tint_texture': _bascenev1.gettexture(info['tint_texture']),
+        'texture': _bascenev1.aptextureget(info['texture']),
+        'tint_texture': _bascenev1.aptextureget(info['tint_texture']),
         'tint_color': info['tint_color'],
         'tint2_color': info['tint2_color'],
     }

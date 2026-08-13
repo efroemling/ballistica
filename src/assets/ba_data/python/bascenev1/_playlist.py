@@ -40,7 +40,6 @@ def filter_playlist(
 
     goodlist: list[dict] = []
     unowned_maps: Sequence[str]
-    available_maps: list[str] = list(babase.app.classic.maps.keys())
     if (remove_unowned or mark_unowned) and babase.app.classic is not None:
         unowned_maps = babase.app.classic.store.get_unowned_maps()
         unowned_game_types = babase.app.classic.store.get_unowned_game_types()
@@ -183,7 +182,10 @@ def filter_playlist(
 
             gameclass = babase.getclass(entry['type'], GameActivity)
 
-            if entry['settings']['map'] not in available_maps:
+            # Check the map registry *after* the game-class import
+            # above; importing a mod's game module may have just
+            # registered its maps.
+            if entry['settings']['map'] not in babase.app.classic.maps:
                 raise babase.MapNotFoundError()
 
             if remove_unowned and gameclass in unowned_game_types:

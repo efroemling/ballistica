@@ -53,6 +53,12 @@ class ServerConfig:
     # Whether the default kick-voting system is enabled.
     enable_default_kick_voting: bool = True
 
+    # If True, disables the punch-grab protection added in 1.8.0,
+    # restoring the classic behavior where punches landed shortly
+    # before or after grabs deal damage to other players (the
+    # 'punch-grab' technique).
+    allow_punch_grab: bool = False
+
     # To be included in the public server list, your server MUST be
     # accessible via an ipv4 address. By default, the master server will
     # try to use the address your server contacts it from, but this may

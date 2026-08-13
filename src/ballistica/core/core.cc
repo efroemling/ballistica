@@ -169,8 +169,8 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   // XInput toggle, which has to be known by the time we init SDL. Keep
   // defaults here synced with the matching entries in
   // base/support/app_config.cc.
-  app_config_enable_xinput_ =
-      InitialAppConfigBoolValue_(appcfg, "Enable XInput", true);
+  app_config_disable_xinput_ =
+      InitialAppConfigBoolValue_(appcfg, "Disable XInput", false);
 
   logging->ApplyBaEnvConfig();
 

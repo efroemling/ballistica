@@ -96,8 +96,8 @@ def set_tournament_prize_chest_image(
         edit=image,
         opacity=1.0,
         color=chestdisplayinfo.color,
-        texture=bauiv1.gettexture(chestdisplayinfo.texclosed),
-        tint_texture=bauiv1.gettexture(chestdisplayinfo.texclosedtint),
+        texture=bauiv1.aptextureget(chestdisplayinfo.texclosed),
+        tint_texture=bauiv1.aptextureget(chestdisplayinfo.texclosedtint),
         tint_color=chestdisplayinfo.tint,
         tint2_color=chestdisplayinfo.tint2,
     )
@@ -135,8 +135,8 @@ def create_in_game_tournament_prize_image(
         # Provide magical extended dict version of texture that Image
         # actor supports.
         texture={
-            'texture': bascenev1.gettexture(chestdisplayinfo.texclosed),
-            'tint_texture': bascenev1.gettexture(
+            'texture': bascenev1.aptextureget(chestdisplayinfo.texclosed),
+            'tint_texture': bascenev1.aptextureget(
                 chestdisplayinfo.texclosedtint
             ),
             'tint_color': chestdisplayinfo.tint,

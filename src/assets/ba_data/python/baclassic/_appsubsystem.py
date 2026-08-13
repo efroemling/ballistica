@@ -201,6 +201,10 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         self.ffa_series_length = 24  # Deprecated, left for old mods.
         self.coop_session_args: dict = {}
 
+        # If True, spazzes spawned from this point on omit the
+        # punch-grab protection added in 1.8.0.
+        self.allow_punch_grab = False
+
         # UI.
         self.first_main_menu = True  # FIXME: Move to mainmenu class.
         self.did_menu_intro = False  # FIXME: Move to mainmenu class.

@@ -316,7 +316,13 @@ auto PythonClassWidget::Activate(PythonClassWidget* self) -> PyObject* {
   if (!w) {
     throw Exception(PyExcType::kWidgetNotFound);
   }
+  // Activation triggers user code (on-activate callbacks) via the current
+  // ui-operation; establish one in case we're being called from a timer or
+  // other non-ui-operation context (see GlobalSelect below).
+  base::UI::OperationContext operation_context;
   w->Activate();
+  // Run anything we triggered.
+  operation_context.Finish();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -450,7 +456,16 @@ auto PythonClassWidget::GlobalSelect(PythonClassWidget* self) -> PyObject* {
   if (!w) {
     throw Exception(PyExcType::kWidgetNotFound);
   }
+  // Selection can trigger user code (on-select callbacks), which gets
+  // scheduled on the current ui-operation. Establish one for the duration
+  // of this call: global-select is commonly invoked from timers/async
+  // contexts (docui timed refreshes, selection restores) where none is
+  // otherwise active, and without one the scheduled callbacks get dropped
+  // with an error. Harmlessly defers to any operation already in progress.
+  base::UI::OperationContext operation_context;
   w->GlobalSelect();
+  // Run anything we triggered.
+  operation_context.Finish();
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }

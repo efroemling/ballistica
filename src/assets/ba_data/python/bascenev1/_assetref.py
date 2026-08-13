@@ -4,7 +4,7 @@
 
 This is the bascenev1 (scene) flavor of :mod:`bacommon.assetspec` and
 the middle tier of the D28 asset ladder: ``TextureSpec`` (authoring
-claim) -> ``TextureVerifiedSpec`` (this module; a *verified-local*
+claim) -> ``TextureHandle`` (this module; a *verified-local*
 reference -- its wrapper's pin was construct-mode-resolved before use)
 -> ``bascenev1.Texture`` (the loaded engine asset). A generated wrapper
 exposes per-kind roots (``textures``, ``meshes``, ...) whose leaves here
@@ -50,7 +50,7 @@ if TYPE_CHECKING:
 # slotted, but a subclass that omits ``__slots__`` silently reintroduces a
 # ``__dict__``, and the ref is the object actually allocated (and mostly
 # thrown away) on every wrapper access, so it's the one that matters.
-class TextureVerifiedSpec(_TextureSpec):
+class TextureHandle(_TextureSpec):
     """A texture reference that can also load the live scene texture."""
 
     __slots__ = ()
@@ -61,12 +61,12 @@ class TextureVerifiedSpec(_TextureSpec):
         Loads into the current scene context (see module docs).
         """
         check_asset_package_load(self.apverid, self.name)
-        return _bascenev1.gettexture(f'{self.apverid}:{self.name}')
+        return _bascenev1.aptextureget(f'{self.apverid}:{self.name}')
 
-    def ui(self) -> 'bauiv1.TextureVerifiedSpec':
+    def ui(self) -> 'bauiv1.TextureHandle':
         """This same verified reference, in ui form.
 
-        Both featuresets' verified specs assert the same thing -- the
+        Both featuresets' handles assert the same thing -- the
         package was construct-mode-resolved -- so converting between
         them preserves that guarantee; only what :meth:`get` loads
         differs (a ui texture vs a scene-bound one). Use at a ui boundary
@@ -82,10 +82,10 @@ class TextureVerifiedSpec(_TextureSpec):
         # pylint: disable-next=cyclic-import
         import bauiv1
 
-        return bauiv1.TextureVerifiedSpec(self.apverid, self.name)
+        return bauiv1.TextureHandle(self.apverid, self.name)
 
 
-class MeshVerifiedSpec(_MeshSpec):
+class MeshHandle(_MeshSpec):
     """A mesh reference that can also load the live scene mesh."""
 
     __slots__ = ()
@@ -93,12 +93,12 @@ class MeshVerifiedSpec(_MeshSpec):
     def get(self) -> 'bascenev1.Mesh':
         """Resolve and return the live scene mesh for this reference."""
         check_asset_package_load(self.apverid, self.name)
-        return _bascenev1.getmesh(f'{self.apverid}:{self.name}')
+        return _bascenev1.apmeshget(f'{self.apverid}:{self.name}')
 
-    def ui(self) -> 'bauiv1.MeshVerifiedSpec':
+    def ui(self) -> 'bauiv1.MeshHandle':
         """This same verified reference, in ui form.
 
-        Both featuresets' verified specs assert the same thing -- the
+        Both featuresets' handles assert the same thing -- the
         package was construct-mode-resolved -- so converting between
         them preserves that guarantee; only what :meth:`get` loads
         differs (a ui mesh vs a scene-bound one). Use at a ui boundary
@@ -114,10 +114,10 @@ class MeshVerifiedSpec(_MeshSpec):
         # pylint: disable-next=cyclic-import
         import bauiv1
 
-        return bauiv1.MeshVerifiedSpec(self.apverid, self.name)
+        return bauiv1.MeshHandle(self.apverid, self.name)
 
 
-class SoundVerifiedSpec(_SoundSpec):
+class SoundHandle(_SoundSpec):
     """A sound reference that can also load the live scene sound."""
 
     __slots__ = ()
@@ -125,12 +125,12 @@ class SoundVerifiedSpec(_SoundSpec):
     def get(self) -> 'bascenev1.Sound':
         """Resolve and return the live scene sound for this reference."""
         check_asset_package_load(self.apverid, self.name)
-        return _bascenev1.getsound(f'{self.apverid}:{self.name}')
+        return _bascenev1.apsoundget(f'{self.apverid}:{self.name}')
 
-    def ui(self) -> 'bauiv1.SoundVerifiedSpec':
+    def ui(self) -> 'bauiv1.SoundHandle':
         """This same verified reference, in ui form.
 
-        Both featuresets' verified specs assert the same thing -- the
+        Both featuresets' handles assert the same thing -- the
         package was construct-mode-resolved -- so converting between
         them preserves that guarantee; only what :meth:`get` loads
         differs (a ui sound vs a scene-bound one). Use at a ui boundary
@@ -146,10 +146,10 @@ class SoundVerifiedSpec(_SoundSpec):
         # pylint: disable-next=cyclic-import
         import bauiv1
 
-        return bauiv1.SoundVerifiedSpec(self.apverid, self.name)
+        return bauiv1.SoundHandle(self.apverid, self.name)
 
 
-class CollisionMeshVerifiedSpec(_CollisionMeshSpec):
+class CollisionMeshHandle(_CollisionMeshSpec):
     """A collision-mesh reference that can also load the live one."""
 
     __slots__ = ()
@@ -157,7 +157,7 @@ class CollisionMeshVerifiedSpec(_CollisionMeshSpec):
     def get(self) -> 'bascenev1.CollisionMesh':
         """Resolve and return the live collision-mesh for this reference."""
         check_asset_package_load(self.apverid, self.name)
-        return _bascenev1.getcollisionmesh(f'{self.apverid}:{self.name}')
+        return _bascenev1.apcollisionmeshget(f'{self.apverid}:{self.name}')
 
 
 #: A node in a wrapper's kind-code tree: each key is one path segment; a
@@ -187,8 +187,8 @@ class AssetGroup:
     def __getattr__(
         self, name: str
     ) -> (
-        'AssetGroup | TextureVerifiedSpec | MeshVerifiedSpec'
-        ' | SoundVerifiedSpec | CollisionMeshVerifiedSpec'
+        'AssetGroup | TextureHandle | MeshHandle'
+        ' | SoundHandle | CollisionMeshHandle'
     ):
         try:
             child = self._node[name]
@@ -202,17 +202,14 @@ class AssetGroup:
 
 def _make(
     apverid: str, path: str, kind: str
-) -> (
-    'TextureVerifiedSpec | MeshVerifiedSpec | SoundVerifiedSpec'
-    ' | CollisionMeshVerifiedSpec'
-):
+) -> 'TextureHandle | MeshHandle | SoundHandle' ' | CollisionMeshHandle':
     """Build a single leaf reference by its single-char kind code."""
     if kind == 't':
-        return TextureVerifiedSpec(apverid, path)
+        return TextureHandle(apverid, path)
     if kind == 'm':
-        return MeshVerifiedSpec(apverid, path)
+        return MeshHandle(apverid, path)
     if kind == 's':
-        return SoundVerifiedSpec(apverid, path)
+        return SoundHandle(apverid, path)
     if kind == 'c':
-        return CollisionMeshVerifiedSpec(apverid, path)
+        return CollisionMeshHandle(apverid, path)
     raise ValueError(f'Invalid asset-ref kind {kind!r} for {apverid}:{path}.')

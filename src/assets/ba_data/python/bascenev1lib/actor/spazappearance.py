@@ -177,54 +177,48 @@ def get_appearances(
     ]
 
 
-#: An appearance's texture field. Prefer a verified spec off an
+#: An appearance's texture field. Prefer a handle off an
 #: asset-package wrapper (``classicassets.textures.zoe_icon``); the bare
 #: ``str`` form is the legacy asset name, kept so existing mods keep
 #: working, and goes away when api 9 support ends.
-type TexVal = str | bs.TextureVerifiedSpec
+type TexVal = str | bs.TextureHandle
 
 #: An appearance's mesh field; see :obj:`TexVal`.
-type MeshVal = str | bs.MeshVerifiedSpec
+type MeshVal = str | bs.MeshHandle
 
 #: An entry in one of an appearance's sound lists; see :obj:`TexVal`.
-type SoundVal = str | bs.SoundVerifiedSpec
+type SoundVal = str | bs.SoundHandle
 
 
 def scene_texture(val: TexVal) -> bs.Texture:
     """Load an appearance texture field as a scene texture."""
     return (
-        val.get()
-        if isinstance(val, bs.TextureVerifiedSpec)
-        else bs.gettexture(val)
+        val.get() if isinstance(val, bs.TextureHandle) else bs.gettexture(val)
     )
 
 
 def scene_mesh(val: MeshVal) -> bs.Mesh:
     """Load an appearance mesh field as a scene mesh."""
-    return (
-        val.get() if isinstance(val, bs.MeshVerifiedSpec) else bs.getmesh(val)
-    )
+    return val.get() if isinstance(val, bs.MeshHandle) else bs.getmesh(val)
 
 
 def scene_sound(val: SoundVal) -> bs.Sound:
     """Load an appearance sound entry as a scene sound."""
-    return (
-        val.get() if isinstance(val, bs.SoundVerifiedSpec) else bs.getsound(val)
-    )
+    return val.get() if isinstance(val, bs.SoundHandle) else bs.getsound(val)
 
 
 def ui_texture(val: TexVal) -> bauiv1.Texture:
     """Load an appearance texture field as a ui texture.
 
-    Converts a scene verified spec to its ui form (see
-    :meth:`bascenev1.TextureVerifiedSpec.ui`) -- appearances hold
+    Converts a scene handle to its ui form (see
+    :meth:`bascenev1.TextureHandle.ui`) -- appearances hold
     scene-form refs since they are otherwise scene data.
     """
     import bauiv1
 
     return (
         val.ui().get()
-        if isinstance(val, bs.TextureVerifiedSpec)
+        if isinstance(val, bs.TextureHandle)
         else bauiv1.gettexture(val)
     )
 
@@ -235,7 +229,7 @@ def ui_sound(val: SoundVal) -> bauiv1.Sound:
 
     return (
         val.ui().get()
-        if isinstance(val, bs.SoundVerifiedSpec)
+        if isinstance(val, bs.SoundHandle)
         else bauiv1.getsound(val)
     )
 
@@ -243,7 +237,7 @@ def ui_sound(val: SoundVal) -> bauiv1.Sound:
 def texture_spec(val: TexVal) -> TextureSpec:
     """An appearance texture field as a plain spec (for the wire/doc-ui).
 
-    A verified spec *is* a :class:`~bacommon.assetspec.TextureSpec`, so
+    A handle *is* a :class:`~bacommon.assetspec.TextureSpec`, so
     this is a passthrough for the modern form, and a legacy *qualified*
     (``<apverid>:<name>``) string parses back into one.
 
@@ -255,7 +249,7 @@ def texture_spec(val: TexVal) -> TextureSpec:
     yielding a malformed spec that would fail its package resolve and
     render blank on the far end.
     """
-    if isinstance(val, bs.TextureVerifiedSpec):
+    if isinstance(val, bs.TextureHandle):
         return val
     qualified = babase.resolve_legacy_asset_name(val, 'textures')
     apverid, sep, name = qualified.partition(':')

@@ -76,8 +76,8 @@ def show_display_item(
             position=(pos[0] - c_size * 0.5, pos[1] - c_size * 0.5),
             color=c_info.color,
             size=(c_size, c_size),
-            texture=bauiv1.gettexture(c_info.texclosed),
-            tint_texture=bauiv1.gettexture(c_info.texclosedtint),
+            texture=bauiv1.aptextureget(c_info.texclosed),
+            tint_texture=bauiv1.aptextureget(c_info.texclosedtint),
             tint_color=c_info.tint,
             tint2_color=c_info.tint2,
         )
@@ -110,7 +110,7 @@ def show_display_item(
                 pos[1] + img_y_offs - imgsize * 0.5,
             ),
             size=(imgsize, imgsize),
-            texture=bauiv1.gettexture(img),
+            texture=bauiv1.aptextureget(img),
         )
     if show_text:
         subs = itemwrapper.description_subs

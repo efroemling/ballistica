@@ -265,7 +265,7 @@ void AppConfig::SetupEntries_() {
   // which snapshots it straight out of the raw config dict. We register it
   // here anyway so it shows up in builtin-keys, resolve(), etc. Keep this
   // default synced with the one there.
-  bool_entries_[BoolID::kEnableXInput] = BoolEntry("Enable XInput", true);
+  bool_entries_[BoolID::kDisableXInput] = BoolEntry("Disable XInput", false);
 
   // Now add everything to our name map and make sure all is kosher.
   CompleteMap_(float_entries_);
