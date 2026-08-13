@@ -383,8 +383,8 @@ class ChestWindow(bui.MainWindow):
             position=(self._width * 0.5 - imgsize * 0.5, self._chest_yoffs),
             color=self._chestdisplayinfo.color,
             size=(imgsize, imgsize),
-            texture=bui.gettexture(self._chestdisplayinfo.texclosed),
-            tint_texture=bui.gettexture(self._chestdisplayinfo.texclosedtint),
+            texture=bui.aptextureget(self._chestdisplayinfo.texclosed),
+            tint_texture=bui.aptextureget(self._chestdisplayinfo.texclosedtint),
             tint_color=self._chestdisplayinfo.tint,
             tint2_color=self._chestdisplayinfo.tint2,
         )
@@ -780,7 +780,7 @@ class ChestWindow(bui.MainWindow):
                     parent=self._root_widget,
                     size=(iconsize, iconsize),
                     position=(x, y - iconsize * 0.5),
-                    texture=bui.gettexture(img),
+                    texture=bui.aptextureget(img),
                     opacity=0.4,
                 )
             )
@@ -1062,8 +1062,8 @@ class ChestWindow(bui.MainWindow):
         img = bui.imagewidget(
             parent=self._root_widget,
             color=self._chestdisplayinfo.color,
-            texture=bui.gettexture(self._chestdisplayinfo.texclosed),
-            tint_texture=bui.gettexture(self._chestdisplayinfo.texclosedtint),
+            texture=bui.aptextureget(self._chestdisplayinfo.texclosed),
+            tint_texture=bui.aptextureget(self._chestdisplayinfo.texclosedtint),
             tint_color=self._chestdisplayinfo.tint,
             tint2_color=self._chestdisplayinfo.tint2,
         )
@@ -1208,8 +1208,8 @@ class ChestWindow(bui.MainWindow):
         img = bui.imagewidget(
             parent=self._root_widget,
             color=self._chestdisplayinfo.color,
-            texture=bui.gettexture(self._chestdisplayinfo.texopen),
-            tint_texture=bui.gettexture(self._chestdisplayinfo.texopentint),
+            texture=bui.aptextureget(self._chestdisplayinfo.texopen),
+            tint_texture=bui.aptextureget(self._chestdisplayinfo.texopentint),
             tint_color=self._chestdisplayinfo.tint,
             tint2_color=self._chestdisplayinfo.tint2,
         )

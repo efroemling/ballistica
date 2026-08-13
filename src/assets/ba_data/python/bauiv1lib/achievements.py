@@ -293,8 +293,8 @@ class AchievementsWindow(bui.MainWindow):
                 ),
                 size=(chestsize, chestsize),
                 color=chestdisplayinfo.color,
-                texture=bui.gettexture(chestdisplayinfo.texclosed),
-                tint_texture=bui.gettexture(chestdisplayinfo.texclosedtint),
+                texture=bui.aptextureget(chestdisplayinfo.texclosed),
+                tint_texture=bui.aptextureget(chestdisplayinfo.texclosedtint),
                 tint_color=chestdisplayinfo.tint,
                 tint2_color=chestdisplayinfo.tint2,
             )

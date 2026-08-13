@@ -701,9 +701,9 @@ def instantiate_page_prep(
         for decoration in rowprep.decorations:
             kwds: dict = {'parent': subcontainer}
             for texarg, texname in decoration.textures.items():
-                kwds[texarg] = bui.gettexture(texname)
+                kwds[texarg] = bui.aptextureget(texname)
             for mesharg, meshname in decoration.meshes.items():
-                kwds[mesharg] = bui.getmesh(meshname)
+                kwds[mesharg] = bui.apmeshget(meshname)
             decoration.call(**kwds)
         outrow: tuple[bui.Widget, list[bui.Widget]] = (hscroll, [])
         assert rowprep.hsubcall is not None
@@ -719,7 +719,7 @@ def instantiate_page_prep(
                 ),
             }
             for texarg, texname in buttonprep.textures.items():
-                kwds[texarg] = bui.gettexture(texname)
+                kwds[texarg] = bui.aptextureget(texname)
             btn = buttonprep.buttoncall(**kwds)
             assert buttonprep.buttoneditcall is not None
             buttonprep.buttoneditcall(edit=btn)
@@ -728,9 +728,9 @@ def instantiate_page_prep(
                 if decoration.highlight:
                     kwds['draw_controller'] = btn
                 for texarg, texname in decoration.textures.items():
-                    kwds[texarg] = bui.gettexture(texname)
+                    kwds[texarg] = bui.aptextureget(texname)
                 for mesharg, meshname in decoration.meshes.items():
-                    kwds[mesharg] = bui.getmesh(meshname)
+                    kwds[mesharg] = bui.apmeshget(meshname)
                 decoration.call(**kwds)
 
             # Make sure row is scrolled so leftmost button is

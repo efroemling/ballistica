@@ -429,7 +429,7 @@ class GetTokensWindow(bui.MainWindow):
         # they'll be in place by the time we show them.
         for bdef in self._buttondefs:
             for bimg in bdef.imgdefs:
-                bui.gettexture(bimg.tex)
+                bui.aptextureget(bimg.tex)
 
         self._state = self.State.LOADING
 
@@ -677,7 +677,7 @@ class GetTokensWindow(bui.MainWindow):
                     draw_controller=btn,
                     draw_controller_mult=imgdef.draw_controller_mult,
                     color=imgdef.color,
-                    texture=bui.gettexture(imgdef.tex),
+                    texture=bui.aptextureget(imgdef.tex),
                     transition_delay=tdelay,
                     opacity=imgdef.opacity,
                 )

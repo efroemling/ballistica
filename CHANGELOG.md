@@ -1,4 +1,4 @@
-### 1.8.0 (build 22975, api 9, 2026-08-12)
+### 1.8.0 (build 22977, api 9, 2026-08-13)
 - Fully implemented asset packages (more on this soon)
 - Renamed the asset-package wrapper leaf types from `TextureVerifiedSpec`,
   `SoundVerifiedSpec`, etc. to `TextureHandle`, `SoundHandle`, `MeshHandle`,
