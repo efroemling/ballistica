@@ -81,11 +81,24 @@ class ConnectionToClient : public Connection {
     return protocol_version_;
   }
 
+  /// Protocol version the client claimed in its CLIENT_REQUEST packet, or
+  /// -1 if we never saw one. Note this is client-supplied and completely
+  /// unverified (we don't gate connects on it), so treat it as a
+  /// diagnostic hint only -- it is useful mainly for telling stock
+  /// clients apart from hand-rolled ones when a join goes wrong.
+  auto client_claimed_protocol_version() const {
+    return client_claimed_protocol_version_;
+  }
+  void set_client_claimed_protocol_version(int val) {
+    client_claimed_protocol_version_ = val;
+  }
+
  private:
   auto GetClientInputDevice(int remote_id) -> ClientInputDevice*;
   void Error(const std::string& error_msg) override;
 
   int protocol_version_;
+  int client_claimed_protocol_version_{-1};
   std::string our_handshake_player_spec_str_;
   std::string our_handshake_salt_;
   std::string peer_public_account_id_;

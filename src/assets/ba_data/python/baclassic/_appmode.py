@@ -77,6 +77,40 @@ class ClassicAppMode(AppMode):
         _baclassic.classic_app_mode_handle_app_intent_default()
 
     @override
+    def on_control_permission_request(
+        self,
+        request: babase.ControlPermissionRequest,
+        on_result: Callable[[babase.ControlPermission], None],
+    ) -> None:
+        from baclassic import _controlpermission
+
+        # Standing policy first: a dedicated server, or a requester we
+        # already have a live grant for, needs no prompt.
+        if _controlpermission.handle_request(request, on_result):
+            return
+
+        # pylint: disable=cyclic-import
+        from bauiv1lib.controlpermission import ControlPermissionWindow
+
+        key = request.requester_key
+
+        def _on_answer(allowed: bool, remember: bool) -> None:
+            # 'Always' only means anything for a requester we can
+            # recognize again; the window doesn't offer it otherwise.
+            if allowed and remember and key is not None:
+                _controlpermission.remember_grant(key)
+            on_result(
+                babase.ControlPermission.ALLOW
+                if allowed
+                else babase.ControlPermission.DENY
+            )
+
+        ControlPermissionWindow(
+            on_result=_on_answer,
+            allow_remember=key is not None,
+        )
+
+    @override
     def on_activate(self) -> None:
         # Register the asset-package versions backing our asset
         # wrapper modules so legacy bare asset names arriving from old

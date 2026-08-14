@@ -43,6 +43,15 @@ class PlusAppSubsystem(AppSubsystem):
         _baplus.on_app_loading()
         self.accounts.on_app_loading()
 
+    @override
+    def on_app_mode_activated(self) -> None:
+        """:meta private:"""
+        from baplus._consolesession import console_session_manager
+
+        # A console session may be holding a permission question that
+        # no earlier app-mode was able to ask; this mode might be.
+        console_session_manager.notify_app_mode_activated()
+
     @staticmethod
     def add_v1_account_transaction(
         transaction: dict, callback: Callable | None = None

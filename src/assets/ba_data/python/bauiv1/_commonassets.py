@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bacommonassets.260812`` (bauiv1).
+"""Asset-package wrapper for ``a-0.bacommonassets.260814`` (bauiv1).
 
 Cross-cutting assets used everywhere -- by the engine, by every game built on
 it, and by the master server's own web pages. Content here must be free of any
@@ -9,13 +9,13 @@ single game's concepts, which is what distinguishes it from BaClassicAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bacommonassets.260812
+# ba_meta require asset-package a-0.bacommonassets.260814
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.bacommonassets.260812'
+__asset_package__ = 'a-0.bacommonassets.260814'
 
 from typing import TYPE_CHECKING
 
@@ -42,6 +42,21 @@ if TYPE_CHECKING:
         #:
         #:     English: "Accept"
         accept: LangStr
+
+        #: ::
+        #:
+        #:     Button label granting a request for permission.
+        #:
+        #:     English: "Allow"
+        allow: LangStr
+
+        #: ::
+        #:
+        #:     Button label granting a request for permission and remembering
+        #:     it, so the same requester is not asked about again for a while.
+        #:
+        #:     English: "Always Allow"
+        always_allow: LangStr
 
         #: ::
         #:
@@ -117,6 +132,13 @@ if TYPE_CHECKING:
         #:
         #:     English: "Delete"
         delete: LangStr
+
+        #: ::
+        #:
+        #:     Button label refusing a request for permission.
+        #:
+        #:     English: "Deny"
+        deny: LangStr
 
         #: ::
         #:
@@ -491,6 +513,58 @@ if TYPE_CHECKING:
 
                 English: "*{text}"
             """
+
+    class StringsControlGroup:
+        """
+        ::
+
+            Wording for outside parties asking to control this app -- running
+            code on it and reading its log. Generic on purpose: the cloud
+            console is the only such party today, but the question a user is
+            answering is the same whatever asks it.
+
+            See source for the full asset list.
+        """
+
+        def control_allowed_until(self, *, date: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Label for when a remembered permission runs out; the placeholder
+                is a date.
+
+                English: "Allowed until {date}"
+            """
+
+        #: ::
+        #:
+        #:     Explanation of what allowing control lets the other party do.
+        #:     Names the actor explicitly ("That person") rather than using a
+        #:     pronoun -- translators see one string at a time, so a bare "They"
+        #:     has no antecedent and gets resolved wrong (German read it as the
+        #:     formal "you", inverting the meaning).
+        #:
+        #:     English: "That person will be able to run code on this device and
+        #:     read this app's log."
+        control_means: LangStr
+
+        def requesting_control(self, *, name: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Prompt asking whether a named person may take control of this
+                app; the placeholder is their account name.
+
+                English: "{name} is trying to control this app."
+            """
+
+        #: ::
+        #:
+        #:     Prompt asking whether an unidentified party may take control of
+        #:     this app. Used when we could not establish who is asking.
+        #:
+        #:     English: "Someone is trying to control this app."
+        requesting_control_anonymous: LangStr
 
     class StringsLocalesGroup:
         """
@@ -1206,18 +1280,21 @@ if TYPE_CHECKING:
 
         actions: StringsActionsGroup
         compose: StringsComposeGroup
+        control: StringsControlGroup
         locales: StringsLocalesGroup
         status: StringsStatusGroup
         values: StringsValuesGroup
 
-    #: The ``strings`` group - 139 strings (``actions``, ``compose``,
-    #: ``locales``, ``status``, ``values``, and 134 more). Full list in source.
+    #: The ``strings`` group - 146 strings (``actions``, ``compose``,
+    #: ``control``, ``locales``, ``status``, and 141 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
     'strings': {
         'actions': {
             'accept': (),
+            'allow': (),
+            'always_allow': (),
             'apply': (),
             'back': (),
             'cancel': (),
@@ -1228,6 +1305,7 @@ _TREE = {
             'customize': (),
             'decline': (),
             'delete': (),
+            'deny': (),
             'discard': (),
             'done': (),
             'duplicate': (),
@@ -1271,6 +1349,12 @@ _TREE = {
             'quoted': ('text',),
             'spaced_pair': ('first', 'second'),
             'star_prefix': ('text',),
+        },
+        'control': {
+            'control_allowed_until': ('date',),
+            'control_means': (),
+            'requesting_control': ('name',),
+            'requesting_control_anonymous': (),
         },
         'locales': {
             'arabc': (),

@@ -944,6 +944,8 @@ class App:
                 # Hmm; what should we do in this case?...
                 balog.exception('Error activating app-mode %s.', mode)
 
+            self._on_app_mode_activated()
+
             # Let the world know when we first have an app-mode; certain
             # app stuff such as input processing can proceed at that
             # point.
@@ -956,6 +958,18 @@ class App:
             balog.exception(
                 'Error handling intent %s in app-mode %s.', intent, mode
             )
+
+    def _on_app_mode_activated(self) -> None:
+        """Tell subsystems an app-mode just became active."""
+        assert self._subsystem_registration_ended
+        for subsystem in self._subsystems:
+            try:
+                subsystem.on_app_mode_activated()
+            except Exception:
+                balog.exception(
+                    'Error in on_app_mode_activated() for subsystem %s.',
+                    subsystem,
+                )
 
     def _enter_construct_mode(self, intent: AppIntent) -> None:
         """Enter construct-mode directly as the boot-time bring-up gate.
@@ -995,6 +1009,8 @@ class App:
             mode.on_activate()
         except Exception:
             balog.exception('Error activating construct-mode %s.', mode)
+
+        self._on_app_mode_activated()
 
         # First app-mode is now set; start the consoles / enable input.
         # (Under the server manager, the stdin reader itself holds off on

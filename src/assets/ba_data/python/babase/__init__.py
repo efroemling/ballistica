@@ -139,7 +139,11 @@ from babase._asset_packages import (
     check_asset_package_load,
     loaded_asset_package_apverids,
 )
-from babase._appmode import AppMode
+from babase._appmode import (
+    AppMode,
+    ControlPermission,
+    ControlPermissionRequest,
+)
 from babase._appsubsystem import AppSubsystem
 from babase._appmodeselector import AppModeSelector
 from babase._appconfig import AppConfig
@@ -261,6 +265,8 @@ __all__ = [
     'AppIntentDefault',
     'AppIntentExec',
     'AppMode',
+    'ControlPermission',
+    'ControlPermissionRequest',
     'AppState',
     'applog',
     'appname',

@@ -1,4 +1,11 @@
-### 1.8.0 (build 22977, api 9, 2026-08-13)
+### 1.8.0 (build 22980, api 9, 2026-08-13)
+- The cloud console now streams output straight from the app through a nearby
+  server node instead of being polled for it from the master server. Output
+  appears as it happens and commands run sooner, which should be an especially
+  noticeable difference the further you are from the US, where the old polling
+  round trips cost the most. The app also now asks your permission before
+  letting a console control it, and tells the console when it is quitting
+  instead of leaving it waiting.
 - Fully implemented asset packages (more on this soon)
 - Renamed the asset-package wrapper leaf types from `TextureVerifiedSpec`,
   `SoundVerifiedSpec`, etc. to `TextureHandle`, `SoundHandle`, `MeshHandle`,

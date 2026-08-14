@@ -36,6 +36,13 @@ static const int64_t kReplaySpoolMaxBytes = 1000000000;  // 1 GB.
 static const uint32_t kReplayHeaderMaxPackages = 4096;
 static const uint32_t kReplayHeaderMaxApveridLen = 1024;
 
+// Same idea for an individual message payload. Real session-stream
+// messages run a few KB at most (anything larger gets split by the
+// stream itself), so this is roughly 100x headroom; without it the
+// raw uint32 length from the file goes straight into a resize() and a
+// corrupt or hostile .brp can demand a ~4GB allocation.
+static const uint32_t kReplayMaxMessageSize = 32 * 1024 * 1024;  // 32 MB.
+
 // Read the header asset-package listing from an open file positioned
 // just past the file-id + version fields. For pre-39 streams this reads
 // nothing and yields an empty list. Returns false on a truncated/bogus
@@ -396,7 +403,13 @@ void ClientSessionReplay::FetchMessages() {
           file_ = nullptr;
           return;
         }
-        assert(len16 >= 254);
+        // A 254 marker means the real length didn't fit in the byte;
+        // anything smaller here means we're reading misaligned or
+        // corrupt data rather than a length.
+        if (len16 < 254) {
+          Error("invalid 16 bit message length " + std::to_string(len16));
+          return;
+        }
         len32 = len16;
       } else {
         // Pull 32 bit len.
@@ -408,12 +421,20 @@ void ClientSessionReplay::FetchMessages() {
           file_ = nullptr;
           return;
         }
-        assert(len32 > 65535);
+        // Likewise, a 255 marker means the length didn't fit in 16
+        // bits.
+        if (len32 <= 65535) {
+          Error("invalid 32 bit message length " + std::to_string(len32));
+          return;
+        }
       }
     }
 
     // Read and decompress the actual message.
-    BA_PRECONDITION(len32 > 0);
+    if (len32 == 0 || len32 > kReplayMaxMessageSize) {
+      Error("invalid message length " + std::to_string(len32));
+      return;
+    }
     buffer.resize(len32);
     if (fread(&(buffer[0]), len32, 1, file_) != 1) {
       add_end_of_file_command();

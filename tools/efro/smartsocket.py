@@ -30,7 +30,7 @@ import asyncio
 import logging
 from typing import TYPE_CHECKING, Annotated, Protocol, assert_never, override
 from enum import Enum
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 
 from efro.dataclassio import (
     ioprepped,
@@ -58,24 +58,68 @@ class SmartSocketSlot(Enum):
 
 @ioprepped
 @dataclass
-class SmartSocketPolicy:
-    """Creation-time policy for a session.
+class SmartSocketEndpointPolicy:
+    """The parts of a session's policy that apply to *one* endpoint.
+
+    This is what the relay echoes in its hello reply, and it holds
+    only what an endpoint can act on -- notably its own linger, which
+    is its reconnect budget. Endpoints can't select a per-slot value
+    themselves (a client doesn't know which slot it holds; its token
+    is opaque to it), so the relay resolves before sending.
+    """
+
+    #: How long the relay will hold this endpoint's slot while it is
+    #: away -- so, how long reconnecting is still worth trying.
+    linger_seconds: Annotated[float, IOAttrs('lg', soft_default=120.0)] = 120.0
+
+    #: App-level ping cadence for endpoints that can't observe
+    #: WS-protocol pongs (browsers). The loss-detection window is
+    #: 1.5x this: no inbound frames for that long means the leg is
+    #: silently dead and the endpoint should close and resume.
+    ping_interval_seconds: Annotated[
+        float, IOAttrs('pi', soft_default=30.0)
+    ] = 30.0
+
+    #: The session's absolute lifetime cap, for endpoints that want to
+    #: show or anticipate it. Reaching it is a clean policy end
+    #: (MAX_DURATION), enforced by the relay.
+    max_duration_seconds: Annotated[
+        float, IOAttrs('mx', soft_default=7200.0)
+    ] = 7200.0
+
+
+@ioprepped
+@dataclass
+class SmartSocketChannelPolicy:
+    """Creation-time policy for a whole session, as its issuer sets it.
 
     Rides inside both slots' capability tokens (a session is created
     lazily at first validated attach, so the token is the policy's
-    vehicle). The relay echoes it in its hello reply so client
-    behavior (reconnect budgets etc.) is server-authoritative -- but
-    see :meth:`resolved_for`: what a client receives is the policy
-    *as it applies to that slot*, since a client cannot know which
-    slot it holds (its token is opaque to it).
+    vehicle). Deliberately *not* the type endpoints receive -- see
+    :meth:`for_slot`, which narrows it to one slot's point of view.
+    Keeping the two distinct means a resolved policy can never be
+    mistaken for a channel policy, which matters because their
+    ``linger`` fields would otherwise read identically and mean
+    different things.
     """
 
-    #: How long the session holds state for a silently-lost peer
-    #: before dying with PEER_LOST. This is one knob deliberately:
-    #: it is also the resend-buffer window and the owner-task
-    #: lifetime extension, and there is no point holding one longer
-    #: than another. An explicit clean close bypasses it entirely.
-    linger_seconds: Annotated[float, IOAttrs('lg', soft_default=120.0)] = 120.0
+    #: Linger per slot, i.e. how long the session holds state for
+    #: that peer while it is silently gone before dying with
+    #: PEER_LOST. Per-slot because the two ends can have opposite
+    #: cost profiles: where one is a device that may vanish into a
+    #: pocket, minutes are right and nearly free (only the other
+    #: end's small messages queue while it's away), while for a
+    #: viewer of a chatty stream the same window would instead fill
+    #: the resend buffer and kill the session. Linger is one knob
+    #: deliberately -- it is also that direction's resend-buffer
+    #: window and the owner-task lifetime extension, and there is no
+    #: point holding one longer than another.
+    peer_a_linger_seconds: Annotated[
+        float, IOAttrs('la', soft_default=120.0)
+    ] = 120.0
+    peer_b_linger_seconds: Annotated[
+        float, IOAttrs('lb', soft_default=120.0)
+    ] = 120.0
 
     #: Absolute session lifetime cap; reaching it is a clean policy
     #: end (MAX_DURATION), not a failure.
@@ -83,46 +127,23 @@ class SmartSocketPolicy:
         float, IOAttrs('mx', soft_default=7200.0)
     ] = 7200.0
 
-    #: App-level ping cadence for endpoints that can't observe
-    #: WS-protocol pongs (browsers). The loss-detection window is
-    #: 1.5x this: no inbound frames for that long means the leg is
-    #: silently dead and the client should close and resume.
+    #: App-level ping cadence handed to both endpoints.
     ping_interval_seconds: Annotated[
         float, IOAttrs('pi', soft_default=30.0)
     ] = 30.0
 
-    #: Optional peer_b-specific linger, since the two ends can have
-    #: opposite cost profiles. Where peer_b is a device that may
-    #: vanish into a pocket, minutes are right and nearly free (only
-    #: the other end's small commands queue while it's away); where
-    #: peer_a is a viewer of a chatty stream, the same window would
-    #: instead fill the resend buffer and kill the session. None
-    #: means 'use linger_seconds', which is also what a relay too old
-    #: to know this field does.
-    peer_b_linger_seconds: Annotated[
-        float | None, IOAttrs('lgb', soft_default=None)
-    ] = None
-
     def linger_for(self, slot: SmartSocketSlot) -> float:
         """Return the linger window applying to ``slot``."""
-        if slot is SmartSocketSlot.PEER_B and (
-            self.peer_b_linger_seconds is not None
-        ):
-            return self.peer_b_linger_seconds
-        return self.linger_seconds
+        if slot is SmartSocketSlot.PEER_A:
+            return self.peer_a_linger_seconds
+        return self.peer_b_linger_seconds
 
-    def resolved_for(self, slot: SmartSocketSlot) -> 'SmartSocketPolicy':
-        """Return this policy flattened for one slot's point of view.
-
-        Clients read a single ``linger_seconds`` (their reconnect
-        budget), and can't select a per-slot value themselves since
-        they don't know their own slot. So the relay resolves before
-        echoing, and endpoints stay simple.
-        """
-        return replace(
-            self,
+    def for_slot(self, slot: SmartSocketSlot) -> SmartSocketEndpointPolicy:
+        """Narrow this to what one slot's endpoint should be told."""
+        return SmartSocketEndpointPolicy(
             linger_seconds=self.linger_for(slot),
-            peer_b_linger_seconds=None,
+            ping_interval_seconds=self.ping_interval_seconds,
+            max_duration_seconds=self.max_duration_seconds,
         )
 
 
@@ -190,7 +211,7 @@ class HelloFrame(SmartSocketFrame):
 
     last_recv: Annotated[int, IOAttrs('r')] = 0
     policy: Annotated[
-        SmartSocketPolicy | None, IOAttrs('p', store_default=False)
+        SmartSocketEndpointPolicy | None, IOAttrs('p', store_default=False)
     ] = None
 
     @override
@@ -436,7 +457,7 @@ class SmartSocketEndpoint:
         #: Called with each inbound payload, in order, exactly once.
         self.on_message = on_message
 
-        self.policy: SmartSocketPolicy | None = None
+        self.policy: SmartSocketEndpointPolicy | None = None
         self.connected = False
         self.done = False
         self.close_code = 0
@@ -470,6 +491,14 @@ class SmartSocketEndpoint:
         and :func:`action_for_close_code` says what it means.
         """
         try:
+            # Seed the budget before the first attach, not just on a
+            # hello. Otherwise a first connection that dies before the
+            # relay's hello (a refused dial, a TLS hiccup, an attach
+            # timeout) finds the deadline still at its 0.0 initial
+            # value, reads that as 'budget exhausted', and gives up
+            # without ever retrying -- so a session could never
+            # survive a bad first attach, only a bad later one.
+            self._reset_reconnect_budget()
             while not self._stopping:
                 action = await self._run_one_connection()
                 if action is SmartSocketAction.DONE:

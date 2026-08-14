@@ -118,7 +118,11 @@ void ReplayWriter::WriteReplayMessages_() {
         uint8_t len8;
         if (len32 < 254) {
           len8 = static_cast_check_fit<uint8_t>(len32);
-        } else if (len32 < 65535) {
+        } else if (len32 <= 65535) {
+          // Note the <= : the 16-bit-length write below is gated on
+          // 'len32 <= 65535', so a message of exactly 65535 bytes used
+          // to write a 255 marker followed by only 2 length bytes,
+          // leaving the reader misaligned for the rest of the file.
           len8 = 254;
         } else {
           len8 = 255;

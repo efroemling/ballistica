@@ -148,6 +148,10 @@ class DocUIWindow(bui.MainWindow):
             border_opacity=0.4,
             center_small_content_horizontally=True,
             claims_left_right=True,
+            # Selection-preserving needs an id on every selectable
+            # widget; without one, landing here on window save warns and
+            # loses the user's place on return.
+            id=f'{self.main_window_id_prefix}|scroll',
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
 

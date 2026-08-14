@@ -1273,6 +1273,13 @@ class LocaleResolved(Enum):
                     'ec',  # Ecuador
                     'pa',  # Panama
                     'bo',  # Bolivia
+                    'py',  # Paraguay
+                    'gt',  # Guatemala
+                    'hn',  # Honduras
+                    'sv',  # El Salvador
+                    'ni',  # Nicaragua
+                    'cu',  # Cuba
+                    'us',  # United States (es-US is latin-american)
                 ]
             ):
                 return cls.SPANISH_LATIN_AMERICA

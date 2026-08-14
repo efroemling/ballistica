@@ -246,6 +246,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_benchmark.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_chest.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_clienteffect.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_controlpermission.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_displayitem.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_hooks.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_input.py \
@@ -262,6 +263,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baplus/_ads.py \
   $(BUILD_DIR)/ba_data/python/baplus/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/baplus/_cloud.py \
+  $(BUILD_DIR)/ba_data/python/baplus/_consolesession.py \
   $(BUILD_DIR)/ba_data/python/baplus/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activity.py \
@@ -406,6 +408,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/confirm.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/connect.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/connectivity.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/controlpermission.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/browser.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/coop/gamebutton.py \
@@ -541,6 +544,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/clouddialog/_clouddialog.py \
   $(BUILD_DIR)/ba_data/python/bacommon/clouddialog/basic.py \
   $(BUILD_DIR)/ba_data/python/bacommon/cloudfilecodec.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/consolechannel.py \
   $(BUILD_DIR)/ba_data/python/bacommon/displayitem.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/_docui.py \

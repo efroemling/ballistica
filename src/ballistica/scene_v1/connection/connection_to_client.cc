@@ -236,13 +236,27 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
       auto doing_v2_auth{appmode->require_client_authentication()};
       if (doing_v2_auth) {
         if (!v2_auth_token.has_value()) {
-          // Because v2 auth requires protocol 36, no client should get to
-          // this point without knowing they need to provide us a token.
-          // Make noise if that does happen.
+          // A stock client never lands here: it learns from our handshake
+          // that we require auth and won't send a handshake-response at
+          // all until it has a token in hand. But nothing stops an
+          // arbitrary sender from firing a client-request and a
+          // hand-made handshake-response at us (we don't gate connects
+          // on the claimed protocol version), so this is reachable by
+          // anything probing the port -- bots and scanners included.
+          // Log what little we know about them; every value here is
+          // client-supplied and unverified.
+          auto claimed_protocol{client_claimed_protocol_version()};
           g_core->logging->Log(
               LogName::kBaNetworking, LogLevel::kWarning,
-              "Rejecting a join attempt that lacks a V2 auth token; "
-              "this should not happen.");
+              "Rejecting a join attempt that lacks a V2 auth token"
+              " (likely a bot; a stock client never gets this far without"
+              " one). client-id="
+                  + std::to_string(id()) + ", claimed-protocol="
+                  + (claimed_protocol == -1 ? "unknown"
+                                            : std::to_string(claimed_protocol))
+                  + ", our-protocol=" + std::to_string(protocol_version())
+                  + ", untrusted-spec='" + peer_spec().GetSpecString()
+                  + "', untrusted-device-id='" + public_device_id_ + "'.");
           Error("");
           return;
         } else {

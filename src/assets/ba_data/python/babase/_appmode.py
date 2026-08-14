@@ -2,10 +2,55 @@
 #
 """Provides AppMode functionality."""
 
+from enum import Enum
 from typing import TYPE_CHECKING
+from dataclasses import dataclass
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from babase import AppIntent, DevConsoleButtonDef
+
+
+class ControlPermission(Enum):
+    """An app-mode's answer to a request to control the app."""
+
+    #: The user (or policy) allows it.
+    ALLOW = 'allow'
+
+    #: The user (or policy) refuses it. This is sticky -- the
+    #: requester is turned away for a while without asking again,
+    #: so a repeated request can't wear someone down.
+    DENY = 'deny'
+
+    #: No answer is possible *right now* -- this mode has no way to
+    #: ask. Distinct from DENY on purpose, because a request
+    #: arriving during bring-up should be held and put to the user
+    #: once a mode that can ask becomes active, not refused.
+    CANNOT_ASK = 'cannot_ask'
+
+
+@dataclass
+class ControlPermissionRequest:
+    """Someone asking for permission to control this app."""
+
+    #: Display name of whoever is asking -- an account tag, vouched
+    #: for by the master server, so it can be shown as fact rather
+    #: than as a claim. ``None`` when it couldn't be established.
+    #:
+    #: Classic deliberately does not show this: today's only caller
+    #: (the cloud console) can reach a device only by owning it, so
+    #: the tag is always the viewer's own and naming it says nothing.
+    #: Kept because that is a property of the current caller, not of
+    #: this request -- anything reachable by someone else would need
+    #: it back.
+    requester_name: str | None = None
+
+    #: Opaque stable id for the requester, the same across their
+    #: sessions. A remembered grant hangs off this. ``None`` means
+    #: this requester can't be recognized again, so any allowance
+    #: must apply to this request alone.
+    requester_key: str | None = None
 
 
 class AppMode:
@@ -24,6 +69,29 @@ class AppMode:
     def handle_intent(self, intent: AppIntent) -> None:
         """Handle an intent."""
         raise NotImplementedError('AppMode subclasses must override this.')
+
+    def on_control_permission_request(
+        self,
+        request: ControlPermissionRequest,
+        on_result: Callable[[ControlPermission], None],
+    ) -> None:
+        """Ask the user whether something may control the app.
+
+        'Control' is deliberately broad: running commands, reading
+        this app's log, and whatever that grows into. Answer via
+        ``on_result``, which may be called later (from a dialog) or
+        immediately (from policy).
+
+        The default answers ``CANNOT_ASK``, which is the honest
+        answer for a mode with no way to prompt -- the request is
+        then held and re-put once a mode that can ask activates.
+        An app-mode with a UI should override this; one running
+        without a user present (a dedicated server) should answer
+        ``ALLOW``, since nobody is there to ask and the operator
+        already owns the account.
+        """
+        del request  # Unused.
+        on_result(ControlPermission.CANNOT_ASK)
 
     def on_activate(self) -> None:
         """Called when the mode is becoming the active one fro the app."""

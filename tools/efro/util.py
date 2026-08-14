@@ -13,10 +13,11 @@ import weakref
 import threading
 import functools
 import datetime
-from typing import TYPE_CHECKING, cast, overload
+from typing import TYPE_CHECKING, Protocol, cast, overload
 
 if TYPE_CHECKING:
     import asyncio
+    import logging
     from typing import Any, Callable, Literal, Sequence
 
 
@@ -1109,6 +1110,70 @@ async def gather_strip(*coros: Any) -> list[Any]:
         if isinstance(r, BaseException):
             strip_exception_tracebacks(r)
     return results
+
+
+class WebSocketProtocolLike(Protocol):
+    """The bit of a ``websockets`` protocol object we need to reach.
+
+    ``logger`` is typed exactly as ``websockets`` types it
+    (``LoggerLike``); a mutable protocol attribute is invariant, so a
+    near-miss here would fail to match rather than merely widen.
+    """
+
+    logger: logging.Logger | logging.LoggerAdapter[Any]
+
+
+class WebSocketConnectionLike(Protocol):
+    """The bit of a ``websockets`` connection we need to reach.
+
+    Structural so that :mod:`efro.util` stays free of a hard
+    dependency on ``websockets``, which not every consumer installs.
+    """
+
+    logger: logging.Logger | logging.LoggerAdapter[Any]
+
+    @property
+    def protocol(self) -> WebSocketProtocolLike:
+        """The connection's protocol object.
+
+        Read-only here so implementations may supply any compatible
+        protocol type; we only ever assign to its ``logger``.
+        """
+
+
+def break_websocket_logger_cycle(
+    connection: WebSocketConnectionLike,
+) -> None:
+    """Undo the self-reference ``websockets`` puts in a connection.
+
+    On construction, ``websockets`` replaces a connection's logger
+    with a :class:`logging.LoggerAdapter` carrying
+    ``{'websocket': <the connection>}`` so log records can report it.
+    That back-reference makes every connection a reference cycle
+    (connection -> adapter -> extra -> connection), which keeps the
+    whole connection graph -- TLS objects, compression contexts,
+    stream buffers, pending futures and, under asyncio debug mode,
+    their source tracebacks -- alive until a cyclic collection rather
+    than freeing it when the last real reference goes away. On a
+    process that opens connections repeatedly, that accumulates.
+
+    Call this right after connecting, on any connection whose logs
+    don't need the ``websocket`` field. Doing it at connect time
+    rather than at close covers every teardown path, including ones
+    that abandon the socket rather than closing it.
+
+    Tolerant by design: a ``websockets`` version that stops wrapping
+    the logger leaves this a no-op instead of an error.
+    """
+    import logging
+
+    adapter = getattr(connection, 'logger', None)
+    if isinstance(adapter, logging.LoggerAdapter):
+        underlying = adapter.logger
+        connection.logger = underlying
+        protocol = getattr(connection, 'protocol', None)
+        if protocol is not None:
+            protocol.logger = underlying
 
 
 def strip_exception_tracebacks(exc: BaseException) -> None:

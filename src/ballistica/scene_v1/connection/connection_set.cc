@@ -729,6 +729,13 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
             connections_to_clients_[client_id] = connection_to_client;
           }
 
+          // Stash the protocol version they claimed. We don't gate
+          // connects on it (negotiation happens in the handshake
+          // exchange), but it is the only clue we get about what is on
+          // the other end before then, so keep it for diagnostics.
+          connection_to_client->set_client_claimed_protocol_version(
+              protocol_id);
+
           // If we got to this point, regardless of whether we already had a
           // connection or not, tell them they're accepted.
           std::vector<uint8_t> msg_out(3);

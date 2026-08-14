@@ -30,7 +30,8 @@ from efro.smartsocket import (
     SmartSocketClosed,
     SmartSocketEndpoint,
     SmartSocketFrame,
-    SmartSocketPolicy,
+    SmartSocketChannelPolicy,
+    SmartSocketEndpointPolicy,
     SmartSocketSlot,
     SS_CLOSE_CHANNEL_ENDED,
     SS_CLOSE_MAX_DURATION,
@@ -44,7 +45,7 @@ if TYPE_CHECKING:
 
 #: Compressed windows so a whole recovery scenario runs in well
 #: under a second. Real defaults are 30s ping / 120s linger.
-_FAST_POLICY = SmartSocketPolicy(
+_FAST_POLICY = SmartSocketEndpointPolicy(
     linger_seconds=1.0,
     max_duration_seconds=30.0,
     ping_interval_seconds=0.1,
@@ -56,7 +57,7 @@ _FAST_POLICY = SmartSocketPolicy(
 #: linger comparable to the backoff schedule gives up almost at once.
 #: Real policy keeps linger far larger than backoff; this mirrors
 #: that relationship while staying fast.
-_PATIENT_POLICY = SmartSocketPolicy(
+_PATIENT_POLICY = SmartSocketEndpointPolicy(
     linger_seconds=10.0,
     max_duration_seconds=30.0,
     ping_interval_seconds=0.1,
@@ -71,7 +72,7 @@ class _FakeRelay:
     than simulated.
     """
 
-    def __init__(self, policy: SmartSocketPolicy | None = None) -> None:
+    def __init__(self, policy: SmartSocketEndpointPolicy | None = None) -> None:
         self.policy = policy if policy is not None else _FAST_POLICY
         #: Highest contiguous seq we've accepted from the endpoint.
         self.recv = 0
@@ -266,26 +267,36 @@ def test_close_code_actions_by_table_and_range() -> None:
     assert act(0) is SmartSocketAction.RESUME
 
 
-def test_per_slot_linger_resolution() -> None:
-    """peer_b can outlast peer_a, and clients see only their own."""
-    policy = SmartSocketPolicy(linger_seconds=30.0, peer_b_linger_seconds=300.0)
+def test_per_slot_linger_and_narrowing() -> None:
+    """Each slot gets its own window, and endpoints see only theirs."""
+    policy = SmartSocketChannelPolicy(
+        peer_a_linger_seconds=30.0,
+        peer_b_linger_seconds=300.0,
+        ping_interval_seconds=15.0,
+        max_duration_seconds=1800.0,
+    )
     assert policy.linger_for(SmartSocketSlot.PEER_A) == 30.0
     assert policy.linger_for(SmartSocketSlot.PEER_B) == 300.0
 
-    # What a client receives is flattened to its own slot, since it
-    # cannot know which slot it holds.
+    # What an endpoint receives is narrowed to its own slot -- it
+    # can't select a per-slot value itself, since it doesn't know
+    # which slot it holds.
     for slot, expected in (
         (SmartSocketSlot.PEER_A, 30.0),
         (SmartSocketSlot.PEER_B, 300.0),
     ):
-        resolved = policy.resolved_for(slot)
-        assert resolved.linger_seconds == expected
-        assert resolved.peer_b_linger_seconds is None
+        narrowed = policy.for_slot(slot)
+        assert isinstance(narrowed, SmartSocketEndpointPolicy)
+        assert narrowed.linger_seconds == expected
+        # Shared values ride along unchanged.
+        assert narrowed.ping_interval_seconds == 15.0
+        assert narrowed.max_duration_seconds == 1800.0
 
-    # Absent an override, both slots share the base.
-    plain = SmartSocketPolicy(linger_seconds=45.0)
-    assert plain.linger_for(SmartSocketSlot.PEER_A) == 45.0
-    assert plain.linger_for(SmartSocketSlot.PEER_B) == 45.0
+    # And the narrowed form is a distinct type, so it can't be handed
+    # back somewhere a channel policy belongs.
+    assert not isinstance(
+        policy.for_slot(SmartSocketSlot.PEER_A), SmartSocketChannelPolicy
+    )
 
 
 # ---------------------------------------------------------------- #
