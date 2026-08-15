@@ -246,8 +246,24 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
           // Log what little we know about them; every value here is
           // client-supplied and unverified.
           auto claimed_protocol{client_claimed_protocol_version()};
+
+          // A peer claiming a protocol below ours could never have
+          // talked to us anyway: we don't gate connects on the claimed
+          // version (a real client self-rejects once it sees ours in
+          // our handshake), so the only way one reaches this point is
+          // by ignoring that -- i.e. it is definitely not a stock
+          // client. That case is settled, so log it quietly rather
+          // than spending a warning (and a cloud log report) on
+          // routine port-probing. A peer claiming a version we could
+          // actually have spoken is the interesting one: it looked
+          // like a current client and still produced no token, which
+          // is worth surfacing. Claiming *higher* than ours is fine
+          // and viable -- such a client adopts our version.
+          auto never_viable{claimed_protocol != -1
+                            && claimed_protocol < protocol_version()};
           g_core->logging->Log(
-              LogName::kBaNetworking, LogLevel::kWarning,
+              LogName::kBaNetworking,
+              never_viable ? LogLevel::kDebug : LogLevel::kWarning,
               "Rejecting a join attempt that lacks a V2 auth token"
               " (likely a bot; a stock client never gets this far without"
               " one). client-id="

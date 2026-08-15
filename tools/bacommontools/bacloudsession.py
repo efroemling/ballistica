@@ -60,6 +60,7 @@ from bacommon.bacloud import (
     ResponseData,
     SessionHandleResponse,
     StandardResponseData,
+    StreamOutputResponse,
 )
 
 if TYPE_CHECKING:
@@ -194,15 +195,25 @@ class BacloudSession:
         except SmartSocketClosed as exc:
             raise CleanError(self._death_message('closed')) from exc
 
-        response = self._inbox.get()
-        if response is None:
-            raise CleanError(self._death_message('closed mid-command'))
-        if not isinstance(response, StandardResponseData):
-            raise CleanError(
-                'Server sent a response type this client does not'
-                ' understand; please update it.'
-            )
-        return response
+        while True:
+            response = self._inbox.get()
+            if response is None:
+                raise CleanError(self._death_message('closed mid-command'))
+
+            if isinstance(response, StreamOutputResponse):
+                # A streamed command talking while it works. Print it
+                # and keep waiting: the command's actual answer is
+                # still coming, on this same channel, and telling the
+                # two apart is what the response hierarchy is for.
+                print(response.text, end='', flush=True)
+                continue
+
+            if not isinstance(response, StandardResponseData):
+                raise CleanError(
+                    'Server sent a response type this client does not'
+                    ' understand; please update it.'
+                )
+            return response
 
     def _death_message(self, what: str) -> str:
         """Explain a dead session, naming it.

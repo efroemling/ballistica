@@ -64,6 +64,13 @@ CONNECT_RETRY_MAX_SECONDS = 8.0
 
 VERBOSE = os.environ.get('BACLOUD_VERBOSE') == '1'
 
+# Force the request-per-connection transport, skipping the session.
+# Both paths are real and supported -- anything talking to a node too
+# old to host a session takes this one -- so this exists to exercise
+# or compare that path deliberately rather than only by accident of
+# what a node happens to support.
+NO_SESSION = os.environ.get('BACLOUD_NO_SESSION') == '1'
+
 
 def _download_workers() -> int:
     """Concurrency for the parallel download thread pool.
@@ -729,6 +736,15 @@ class App:
         nothing -- every command is authenticated upstream regardless.
         """
         from bacommontools.bacloudsession import BacloudSession
+
+        if NO_SESSION:
+            if VERBOSE:
+                print(
+                    f'{Clr.BLU}bacloud: BACLOUD_NO_SESSION set;'
+                    f' using request-per-connection.{Clr.RST}',
+                    file=sys.stderr,
+                )
+            return
 
         assert self._server is not None
         bearer = self._api_key or self._state.login_token

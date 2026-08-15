@@ -176,7 +176,18 @@ if TYPE_CHECKING:
 #               shipped: prod and push-public land together, so there
 #               is no released version in between for anything to be
 #               compatible with.
-BACLOUD_VERSION = 26
+# 27 (2026-08-15): A streamed command's output now rides the session
+#               itself as StreamOutputResponse messages, instead of
+#               the client opening a second WebSocket per stream and
+#               following it there. A v26 client cannot decode the new
+#               response type, and rather than keep its shape alive as
+#               a second path, ``MIN_VERSION`` moves with this and old
+#               clients get the standard "please update" rejection --
+#               so prod and push-public land together, as with 26.
+#               The separate per-stream WebSocket (``streamws.py``)
+#               remains only for clients with no session at all, e.g.
+#               against a node too old to host one.
+BACLOUD_VERSION = 27
 
 
 def asset_file_cache_path(filehash: str) -> str:
@@ -248,6 +259,7 @@ class ResponseTypeID(Enum):
 
     STANDARD = 's'
     SESSION_HANDLE = 'sh'
+    STREAM_OUTPUT = 'so'
 
 
 class ResponseData(IOMultiType[ResponseTypeID]):
@@ -283,6 +295,9 @@ class ResponseData(IOMultiType[ResponseTypeID]):
             return out
         if type_id is ResponseTypeID.SESSION_HANDLE:
             out = SessionHandleResponse
+            return out
+        if type_id is ResponseTypeID.STREAM_OUTPUT:
+            out = StreamOutputResponse
             return out
         raise ValueError(f'Unrecognized type-id {type_id}.')
 
@@ -975,6 +990,30 @@ class StandardResponseData(ResponseData):
     @classmethod
     def get_type_id(cls) -> ResponseTypeID:
         return ResponseTypeID.STANDARD
+
+
+@ioprepped
+@dataclass
+class StreamOutputResponse(ResponseData):
+    """Live output from a streamed command, as it happens.
+
+    Unsolicited, and the reason streaming needs no machinery of its
+    own over a session: the server pushes these until the command's
+    real answer arrives, and a reader tells them apart from that
+    answer by type. The older shape -- a kickoff envelope, then the
+    client following the stream on a second connection of its own --
+    remains for clients not on a session.
+
+    Print ``text`` verbatim with no separator; the producer decides
+    its own line breaks, exactly as with the frames this replaces.
+    """
+
+    text: Annotated[str, IOAttrs('t')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ResponseTypeID:
+        return ResponseTypeID.STREAM_OUTPUT
 
 
 @ioprepped
