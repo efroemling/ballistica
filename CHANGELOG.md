@@ -1,4 +1,4 @@
-### 1.8.0 (build 22982, api 9, 2026-08-15)
+### 1.8.0 (build 22983, api 9, 2026-08-15)
 - The cloud console now streams output straight from the app through a nearby
   server node instead of being polled for it from the master server. Output
   appears as it happens and commands run sooner, which should be an especially

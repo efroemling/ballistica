@@ -9,7 +9,6 @@ import os
 import sys
 import zlib
 import time
-import random
 import signal
 import datetime
 from pathlib import Path
@@ -24,7 +23,6 @@ import urllib3.exceptions
 from efro.terminal import Clr
 from efro.error import (
     CleanError,
-    Urllib3HttpError,
     raise_for_urllib3_status,
     is_urllib3_communication_error,
 )
@@ -36,40 +34,22 @@ from efro.dataclassio import (
     ioprepped,
 )
 from bacommon.bacloud import (
-    ResponseData,
     StandardRequestData,
-    StandardResponseData,
     StreamFinal,
     StreamOutput,
     BACLOUD_VERSION,
 )
 
 if TYPE_CHECKING:
+    from bacommon.bacloud import ResponseData, StandardResponseData
+
     from bacommontools.bacloudsession import BacloudSession
 
 TOOL_NAME = 'bacloud'
 
 TIMEOUT_SECONDS = 60 * 5
 
-# Connection-establishment failures (provably pre-send) are retried a
-# few times with exponential backoff + full jitter to ride out
-# transient blips — Cloud Run cold starts and deploy/traffic-ramp
-# windows where the request dies before reaching an app instance and
-# thus leaves no server-side log. Full jitter (sleep in [0, backoff])
-# deliberately de-syncs herds of concurrent CI jobs that would
-# otherwise fail and retry in lockstep.
-CONNECT_RETRIES = 5
-CONNECT_RETRY_BASE_SECONDS = 0.5
-CONNECT_RETRY_MAX_SECONDS = 8.0
-
 VERBOSE = os.environ.get('BACLOUD_VERBOSE') == '1'
-
-# Force the request-per-connection transport, skipping the session.
-# Both paths are real and supported -- anything talking to a node too
-# old to host a session takes this one -- so this exists to exercise
-# or compare that path deliberately rather than only by accident of
-# what a node happens to support.
-NO_SESSION = os.environ.get('BACLOUD_NO_SESSION') == '1'
 
 
 def _download_workers() -> int:
@@ -292,43 +272,6 @@ def get_tz_offset_seconds() -> float:
     return utc_offset
 
 
-def _is_retryable_connection_error(exc: BaseException) -> bool:
-    """Return whether ``exc`` is a pre-send connection failure.
-
-    Only failures where the request provably never reached the
-    application are retryable: connection-refused, DNS-resolution
-    failures, connect-timeouts, and load-balancer 5xx codes
-    (502/503/504) returned by Cloud Run's front end before a request is
-    handed to an app instance (cold-start / no-instance / bad-gateway
-    during a deploy window). These are idempotency-neutral, so retrying
-    is safe even for mutating commands (publish, etc.).
-
-    Post-send failures are deliberately NOT retried, since the request
-    may already have taken effect: a ``ReadTimeout`` (bytes were sent,
-    the app just didn't answer in time) and an app-level HTTP 500.
-    """
-    # urllib3's ConnectTimeoutError covers connect-timeouts AND the
-    # connection-establishment failures that subclass it
-    # (NewConnectionError = connection-refused, NameResolutionError =
-    # DNS). ReadTimeoutError is a *sibling*, not a subclass, so
-    # post-send read timeouts are correctly excluded here. (We pass
-    # retries=False everywhere so the raw error surfaces directly;
-    # unwrap a MaxRetryError to its reason defensively in case one ever
-    # arrives wrapped.)
-    if isinstance(exc, urllib3.exceptions.MaxRetryError):
-        if exc.reason is None:
-            return False
-        exc = exc.reason
-    if isinstance(exc, urllib3.exceptions.ConnectTimeoutError):
-        return True
-    # 502/503/504 from the LB front-end surface via
-    # raise_for_urllib3_status as a Urllib3HttpError; they're returned
-    # before a request reaches an app instance, so retrying is safe.
-    if isinstance(exc, Urllib3HttpError) and exc.code in (502, 503, 504):
-        return True
-    return False
-
-
 class _TransientDownloadError(Exception):
     """A CAS blob download failed in a retryable way.
 
@@ -341,8 +284,8 @@ class _TransientDownloadError(Exception):
 def _is_retryable_download_error(exc: BaseException) -> bool:
     """Whether a CAS blob-download failure is worth retrying.
 
-    Unlike the mutating-server path
-    (:func:`_is_retryable_connection_error`), a blob download is
+    Unlike a command, which the session delivers exactly once or
+    not at all, a blob download is
     content-idempotent: the signed URL targets one specific content hash
     and the streamed result is size- AND sha256-verified before use. So
     *any* transient fetch failure is safe to retry here -- crucially
@@ -381,6 +324,14 @@ _IDEMPOTENT_COMMAND_PREFIXES: tuple[tuple[str, ...], ...] = (
     ('assetpackage', '_listing'),
     ('assetpackage', 'wrapper'),
     ('account', 'info'),
+    # Read-only server-side: a listing returns what exists, and a get
+    # reads a snapshot and streams it down (the only writes are to the
+    # caller's own disk). Both were missing here, so an upstream
+    # timeout on either surfaced as a hard error instead of being
+    # retried -- which is what made them the two commands that
+    # intermittently failed the live suite under load.
+    ('workspace', 'list'),
+    ('workspace', 'get'),
 )
 
 
@@ -416,6 +367,13 @@ def _install_termination_handler() -> None:
         # Not the main thread, or a platform without it. The default
         # disposition still exits; we just don't get to say goodbye.
         pass
+
+
+def _session_failure_detail() -> str:
+    """A line of 'why' for a failed session, when we have one."""
+    if not VERBOSE:
+        return 'Re-run with BACLOUD_VERBOSE=1 for details.\n'
+    return ''
 
 
 def run_bacloud_main() -> None:
@@ -725,30 +683,29 @@ class App:
         return host
 
     def _open_session(self) -> None:
-        """Move the rest of this run onto a live session, if we can.
+        """Open the session this run will use, or fail saying why.
 
-        Best-effort by design: a node too old to know the endpoint, or
-        one that won't host us, is a reason to stay on the
-        request-per-connection path rather than to fail the run.
-
-        No credential is required. Signing in is a real command like
-        any other, and gating the channel on auth would protect
-        nothing -- every command is authenticated upstream regardless.
+        Required, not best-effort. A working WebSocket is already a
+        prerequisite for the game itself, so bacloud treats one as a
+        prerequisite too rather than carrying a second transport for
+        environments where the first does not work -- an environment
+        that cannot open a WebSocket cannot run the thing these tools
+        exist to build for.
         """
         from bacommontools.bacloudsession import BacloudSession
 
-        if NO_SESSION:
-            if VERBOSE:
-                print(
-                    f'{Clr.BLU}bacloud: BACLOUD_NO_SESSION set;'
-                    f' using request-per-connection.{Clr.RST}',
-                    file=sys.stderr,
-                )
-            return
-
         assert self._server is not None
         bearer = self._api_key or self._state.login_token
-        self._session = BacloudSession.open(self._server, bearer)
+        session = BacloudSession.open(self._server, bearer)
+        if session is None:
+            raise CleanError(
+                f'Unable to open a connection to {self._server}.\n'
+                f'{_session_failure_detail()}'
+                f'bacloud needs a working WebSocket connection, the same'
+                f' as the game itself. Check for a proxy or firewall'
+                f' blocking WebSocket traffic.'
+            )
+        self._session = session
 
     def _end_session(self) -> None:
         """Tell the far end we're going, if we have one."""
@@ -775,109 +732,13 @@ class App:
         )
 
         session = self._session
-        if session is not None and session.alive:
-            response = session.request(request)
-        else:
-            response = self._servercmd_http(request)
-
-        return self._process_response_inline(response)
-
-    def _servercmd_http(
-        self, request: StandardRequestData
-    ) -> StandardResponseData:
-        """Send one request as its own HTTPS round trip.
-
-        The path every request took before sessions existed, and still
-        the one that carries the session's own mint -- plus whatever
-        follows it when a session isn't available.
-        """
-
-        response_content: str | None = None
-
-        assert self._server is not None
-        url = f'https://{self._server}/bacloudcmd'
-        headers = {'User-Agent': f'bacloud/{BACLOUD_VERSION}'}
-        # Single auth path: API key takes precedence; otherwise the
-        # login_token from interactive sign-in. Either way, it
-        # rides as a standard Authorization Bearer header.
-        bearer = self._api_key or self._state.login_token
-        if bearer is not None:
-            headers['Authorization'] = f'Bearer {bearer}'
-
-        rdata = {
-            'v': str(BACLOUD_VERSION),
-            'r': dataclass_to_json(request),
-        }
-
-        attempt = 0
-        while True:
-            try:
-                # Form-encoded POST (encode_multipart=False) matching the
-                # old requests ``data=dict`` behavior. retries=False so
-                # our own connection-retry loop below owns retry policy
-                # and sees the raw urllib3 error for classification.
-                response_raw = _g_pool.request(
-                    'POST',
-                    url,
-                    fields=rdata,
-                    encode_multipart=False,
-                    headers=headers,
-                    retries=False,
-                )
-                raise_for_urllib3_status(response_raw)
-                response_content = response_raw.data.decode()
-                break
-
-            except Exception as exc:
-                # Ride out transient connection-establishment blips
-                # (cold starts, deploy/traffic-ramp windows). These are
-                # provably pre-send, so retrying is safe even for
-                # mutating commands; post-send failures fall straight
-                # through and surface immediately.
-                if attempt < CONNECT_RETRIES and (
-                    _is_retryable_connection_error(exc)
-                ):
-                    delay = random.uniform(
-                        0.0,
-                        min(
-                            CONNECT_RETRY_MAX_SECONDS,
-                            CONNECT_RETRY_BASE_SECONDS * 2**attempt,
-                        ),
-                    )
-                    attempt += 1
-                    print(
-                        f'{Clr.YLW}Unable to reach bacloud server'
-                        f' ({type(exc).__name__}); retrying in'
-                        f' {delay:.1f}s ({attempt}/{CONNECT_RETRIES})...'
-                        f'{Clr.RST}',
-                        file=sys.stderr,
-                        flush=True,
-                    )
-                    time.sleep(delay)
-                    continue
-
-                if VERBOSE:
-                    import traceback
-
-                    traceback.print_exc()
-                raise CleanError(
-                    f'Unable to talk to bacloud server:'
-                    f' {type(exc).__name__}: {exc}.'
-                    f' Set env-var BACLOUD_VERBOSE=1 for the full'
-                    f' traceback.'
-                ) from exc
-
-        assert response_content is not None
-        # Decode via the root: the type-id on the wire picks the
-        # class, so a future non-command response is a new member
-        # rather than a reinterpretation of this one.
-        decoded = dataclass_from_json(ResponseData, response_content)
-        if not isinstance(decoded, StandardResponseData):
+        if session is None or not session.alive:
             raise CleanError(
-                'Server sent a response type this client does not'
-                ' understand; please update it.'
+                'Connection to the bacloud server was lost.'
+                ' Please re-run the command.'
             )
-        return decoded
+
+        return self._process_response_inline(session.request(request))
 
     def _process_response_inline(
         self, response: StandardResponseData
@@ -1361,23 +1222,6 @@ class App:
                 print(prompt, end='', flush=True)
             self._end_command_args['input'] = input()
 
-    def _consume_via_stream_ws(
-        self, response: StandardResponseData
-    ) -> StandardResponseData:
-        """Drain a streamcall over WebSocket.
-
-        Thin wrapper over :func:`bacommontools.streamws.consume_via_ws`
-        that injects this app's bearer token. Raises
-        :class:`CleanError` on any WS failure (no HTTP-polling
-        fallback).
-        """
-        # pylint: disable=cyclic-import
-        from bacommontools.streamws import consume_via_ws
-
-        assert self._server is not None
-        bearer = self._api_key or self._state.login_token
-        return consume_via_ws(response, bearer=bearer, host=self._server)
-
     def _servercmd_chained(
         self, call: tuple[str, dict, bool], retry_window: float
     ) -> StandardResponseData:
@@ -1456,15 +1300,6 @@ class App:
             response = self._servercmd_chained(nextcall, retry_window)
             nextcall = None
             retry_window = 0.0
-
-            # Phase 2: if the kickoff response carries ``stream_ws``,
-            # drain the stream over WebSocket (basn-hosted). WS
-            # failures raise CleanError; there is no HTTP-polling
-            # fallback. The kickoff response's HTTP ``end_command``
-            # path remains in use only for kickoffs that *don't* get
-            # a ``stream_ws`` injected (older basn or direct-bamaster).
-            if response.stream_ws is not None:
-                response = self._consume_via_stream_ws(response)
 
             # Stream-mode responses: print incremental output frames in
             # order. If a StreamFinal is encountered, treat its inner
