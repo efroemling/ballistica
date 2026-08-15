@@ -331,6 +331,7 @@ SS_CLOSE_CHANNEL_ENDED = 4107
 SS_CLOSE_BAD_FRAME = 4201
 SS_CLOSE_ROLE_VIOLATION = 4202
 SS_CLOSE_SEQ_VIOLATION = 4203
+SS_CLOSE_BAD_PAYLOAD = 4204  # not of the endpoint's declared type
 
 
 # ---------------------------------------------------------------- #
@@ -424,7 +425,7 @@ class SmartSocketTransport(Protocol):
         """Close the connection with a code."""
 
 
-class SmartSocketEndpoint:
+class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
     """One endpoint of a SmartSocket session.
 
     Owns the state that survives connections -- seq spaces, the
@@ -436,25 +437,45 @@ class SmartSocketEndpoint:
     each attach. That is the whole extension point: it can dial a
     WebSocket, refresh a token first (see ``refresh``), or hand back
     a fake in tests.
+
+    **Typed to one channel kind.** A kind declares a root pair of
+    :class:`~efro.dataclassio.IOMultiType` hierarchies, one per
+    direction, and an endpoint is generic over that pair: it accepts
+    only ``SendT`` and hands back only ``RecvT``. Encoding and
+    decoding happen here rather than at call sites, so the payload
+    types are the contract instead of a convention two ends have to
+    remember separately.
+
+    The roots are also passed as ordinary arguments, because Python
+    erases generics at runtime and the inbound decode needs the real
+    class. A payload that doesn't decode as ``RecvT`` kills the
+    session (``SS_CLOSE_BAD_PAYLOAD``) rather than being skipped
+    -- 'gapless or dead' leaves no third option for a message we
+    cannot deliver.
     """
 
     def __init__(
         self,
         connect: Callable[[], Awaitable[SmartSocketTransport]],
         *,
-        on_message: Callable[[str], Awaitable[None]] | None = None,
+        send_type: type[SendT],
+        recv_type: type[RecvT],
+        on_message: Callable[[RecvT], Awaitable[None]] | None = None,
         refresh: Callable[[], Awaitable[None]] | None = None,
         in_flight_cap_bytes: int = 1024 * 1024,
         attach_timeout_seconds: float = 10.0,
         logger: logging.Logger | None = None,
     ) -> None:
         self._connect = connect
+        self._send_type = send_type
+        self._recv_type = recv_type
         self._refresh = refresh
         self._logger = logger or logging.getLogger(__name__)
         self._in_flight_cap = in_flight_cap_bytes
         self._attach_timeout = attach_timeout_seconds
 
-        #: Called with each inbound payload, in order, exactly once.
+        #: Called with each inbound payload, decoded, in order,
+        #: exactly once.
         self.on_message = on_message
 
         self.policy: SmartSocketEndpointPolicy | None = None
@@ -524,8 +545,8 @@ class SmartSocketEndpoint:
             # drain it now.
             self._space.set()
 
-    async def send(self, payload: str) -> None:
-        """Queue a payload for the peer.
+    async def send(self, message: SendT) -> None:
+        """Queue a message for the peer.
 
         Buffered until the relay accepts it, so this survives a
         reconnect rather than being dropped. Blocks while the
@@ -533,7 +554,20 @@ class SmartSocketEndpoint:
         mechanism that provides reliability, so a caller that must
         not block should shed load above this layer (and say so, if
         its contract has a way to).
+
+        Raises :class:`TypeError` for anything outside this
+        endpoint's declared send hierarchy. Static typing catches
+        that for typed callers; the check is here for the untyped
+        ones, and catches it at the sender rather than as a session
+        death on the far end.
         """
+        if not isinstance(message, self._send_type):
+            raise TypeError(
+                f'Expected a {self._send_type.__name__} payload;'
+                f' got a {type(message).__name__}.'
+            )
+        payload = dataclass_to_json(message)
+
         while (
             not self.done
             and self._unacked_bytes + len(payload) > self._in_flight_cap
@@ -637,7 +671,8 @@ class SmartSocketEndpoint:
                 tasks.append(asyncio.create_task(self._liveness_loop()))
                 tasks.append(asyncio.create_task(self._ack_loop()))
             elif isinstance(frame, MsgFrame):
-                await self._on_msg(frame)
+                if not await self._on_msg(frame):
+                    return
             elif isinstance(frame, AckFrame):
                 self._trim(frame.recv)
             elif isinstance(frame, PingFrame):
@@ -672,15 +707,30 @@ class SmartSocketEndpoint:
         self._reconnect_delay = 0.5
         self.connected = True
 
-    async def _on_msg(self, frame: MsgFrame) -> None:
-        """Dedupe, ack, deliver."""
+    async def _on_msg(self, frame: MsgFrame) -> bool:
+        """Dedupe, ack, decode, deliver. False means the leg is done."""
         if frame.seq <= self._last_recv:
             self._pending_acks += 1  # Resume overlap; ack and drop.
-            return
+            return True
         self._last_recv = frame.seq
         self._pending_acks += 1
-        if self.on_message is not None:
-            await self.on_message(frame.payload)
+        if self.on_message is None:
+            return True
+
+        try:
+            message = dataclass_from_json(self._recv_type, frame.payload)
+        except Exception:  # pylint: disable=broad-except
+            # Undeliverable, and we may not skip it: a gapless channel
+            # that quietly drops one message is worse than a dead one,
+            # because the far end has no way to know.
+            self._logger.exception(
+                'smartsocket: undecodable %s payload', self._recv_type.__name__
+            )
+            await self._fail(SS_CLOSE_BAD_PAYLOAD, 'undecodable payload')
+            return False
+
+        await self.on_message(message)
+        return True
 
     def _trim(self, acked: int) -> None:
         for seq in [s for s in self._unacked if s <= acked]:

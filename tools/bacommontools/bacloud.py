@@ -10,9 +10,11 @@ import sys
 import zlib
 import time
 import random
+import signal
 import datetime
 from pathlib import Path
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import urllib3
 import urllib3.util
@@ -34,12 +36,16 @@ from efro.dataclassio import (
     ioprepped,
 )
 from bacommon.bacloud import (
-    RequestData,
     ResponseData,
+    StandardRequestData,
+    StandardResponseData,
     StreamFinal,
     StreamOutput,
     BACLOUD_VERSION,
 )
+
+if TYPE_CHECKING:
+    from bacommontools.bacloudsession import BacloudSession
 
 TOOL_NAME = 'bacloud'
 
@@ -357,7 +363,7 @@ _BACLOUD_STATE_FILENAME = '.bacloudstate.json'
 # argv prefixes for CLI commands that are safe to retry even when a
 # failure is *post-send* (the request may have reached the server).
 # These are read-only or content-idempotent — re-running can't
-# double-apply a mutation. The client stamps RequestData.idempotent
+# double-apply a mutation. The client stamps StandardRequestData.idempotent
 # from this list; basn reads it to decide whether a post-send upstream
 # timeout becomes a retryable 503 or a terminal error. Everything not
 # listed defaults to non-idempotent (fail-closed) — notably publish,
@@ -381,6 +387,28 @@ def _command_is_idempotent(args: list[str]) -> bool:
         tuple(args[: len(prefix)]) == prefix
         for prefix in _IDEMPOTENT_COMMAND_PREFIXES
     )
+
+
+def _install_termination_handler() -> None:
+    """Make SIGTERM unwind the way Ctrl-C does.
+
+    Default SIGTERM kills the process outright, which is exactly the
+    'client fell down a hole' case a live session should never
+    present. Routing it through the same KeyboardInterrupt unwinding
+    means one teardown path instead of two, and the user still sees
+    nothing printed.
+    """
+
+    def _on_term(signum: int, frame: object) -> None:
+        del signum, frame  # Unused.
+        raise KeyboardInterrupt
+
+    try:
+        signal.signal(signal.SIGTERM, _on_term)
+    except ValueError, OSError:
+        # Not the main thread, or a platform without it. The default
+        # disposition still exits; we just don't get to say goodbye.
+        pass
 
 
 def run_bacloud_main() -> None:
@@ -414,6 +442,7 @@ class App:
         self._return_code = 0
         self._api_key: str | None = None
         self._server: str | None = None
+        self._session: BacloudSession | None = None
         self._idempotent = False
         # Workspace get/put optimistic-concurrency (v24+): the local dir
         # whose .bacloudstate.json to (re)write, and the snapshot id the
@@ -473,12 +502,22 @@ class App:
         cwd = os.getcwd()
         args = self._prep_workspace_command(list(sys.argv[1:]), cwd)
 
-        # Simply pass all args to the server and let it do the thing.
-        self.run_interactive_command(cwd=cwd, args=args)
+        # A CLI gets interrupted constantly, and a client that just
+        # vanishes leaves the node holding a session (and its task)
+        # until linger expires. Make every exit path -- Ctrl-C,
+        # SIGTERM, a clean finish -- run through the same teardown.
+        _install_termination_handler()
+        try:
+            self._open_session()
 
-        # On a completed get/put the server hands back the workspace's
-        # current snapshot id; stash it for the next put's check.
-        self._finish_workspace_command()
+            # Simply pass all args to the server and let it do the thing.
+            self.run_interactive_command(cwd=cwd, args=args)
+
+            # On a completed get/put the server hands back the workspace's
+            # current snapshot id; stash it for the next put's check.
+            self._finish_workspace_command()
+        finally:
+            self._end_session()
 
         if self._api_key is None:
             self._save_state()
@@ -678,8 +717,64 @@ class App:
             )
         return host
 
-    def _servercmd(self, cmd: str, payload: dict, stream: bool) -> ResponseData:
+    def _open_session(self) -> None:
+        """Move the rest of this run onto a live session, if we can.
+
+        Best-effort by design: a node too old to know the endpoint, or
+        one that won't host us, is a reason to stay on the
+        request-per-connection path rather than to fail the run.
+
+        No credential is required. Signing in is a real command like
+        any other, and gating the channel on auth would protect
+        nothing -- every command is authenticated upstream regardless.
+        """
+        from bacommontools.bacloudsession import BacloudSession
+
+        assert self._server is not None
+        bearer = self._api_key or self._state.login_token
+        self._session = BacloudSession.open(self._server, bearer)
+
+    def _end_session(self) -> None:
+        """Tell the far end we're going, if we have one."""
+        session = self._session
+        if session is None:
+            return
+        # Clear first: nothing after this point should try to use it,
+        # including anything that runs while we're saying goodbye.
+        self._session = None
+        session.end()
+
+    def _servercmd(
+        self, cmd: str, payload: dict, stream: bool
+    ) -> StandardResponseData:
         """Issue a command to the server and get a response."""
+        request = StandardRequestData(
+            command=cmd,
+            payload=payload,
+            tzoffset=get_tz_offset_seconds(),
+            isatty=sys.stdout.isatty(),
+            stream=stream,
+            idempotent=self._idempotent,
+            build_number=_caller_build_number(),
+        )
+
+        session = self._session
+        if session is not None and session.alive:
+            response = session.request(request)
+        else:
+            response = self._servercmd_http(request)
+
+        return self._process_response_inline(response)
+
+    def _servercmd_http(
+        self, request: StandardRequestData
+    ) -> StandardResponseData:
+        """Send one request as its own HTTPS round trip.
+
+        The path every request took before sessions existed, and still
+        the one that carries the session's own mint -- plus whatever
+        follows it when a session isn't available.
+        """
 
         response_content: str | None = None
 
@@ -695,17 +790,7 @@ class App:
 
         rdata = {
             'v': str(BACLOUD_VERSION),
-            'r': dataclass_to_json(
-                RequestData(
-                    command=cmd,
-                    payload=payload,
-                    tzoffset=get_tz_offset_seconds(),
-                    isatty=sys.stdout.isatty(),
-                    stream=stream,
-                    idempotent=self._idempotent,
-                    build_number=_caller_build_number(),
-                )
-            ),
+            'r': dataclass_to_json(request),
         }
 
         attempt = 0
@@ -767,8 +852,25 @@ class App:
                 ) from exc
 
         assert response_content is not None
-        response = dataclass_from_json(ResponseData, response_content)
+        # Decode via the root: the type-id on the wire picks the
+        # class, so a future non-command response is a new member
+        # rather than a reinterpretation of this one.
+        decoded = dataclass_from_json(ResponseData, response_content)
+        if not isinstance(decoded, StandardResponseData):
+            raise CleanError(
+                'Server sent a response type this client does not'
+                ' understand; please update it.'
+            )
+        return decoded
 
+    def _process_response_inline(
+        self, response: StandardResponseData
+    ) -> StandardResponseData:
+        """Apply the handling every response gets, whatever carried it.
+
+        Transport-agnostic on purpose: a command must behave the same
+        whether it rode a session or its own connection.
+        """
         # Handle a few things inline (so this functionality is available
         # even to recursive commands, etc.)
         if response.message is not None:
@@ -790,121 +892,9 @@ class App:
 
         return response
 
-    def _download_file(
-        self, filename: str, call: str, args: dict
-    ) -> int | None:
-        import hashlib
-
-        # Fast out - for repeat batch downloads, most of the time these
-        # will already exist and we can ignore them.
-        if os.path.isfile(filename):
-            return None
-
-        # Update: We now assume all dirs have been created before this
-        # runs. Creating them as we go here could cause race conditions
-        # with multithreaded downloads.
-        dirname = os.path.dirname(filename)
-        assert os.path.isdir(dirname)
-
-        tmp = f'{filename}.tmp'
-        chunk_size = 1024 * 1024
-
-        # CAS blob downloads are content-idempotent -- the signed URL
-        # targets one specific content hash and the streamed bytes are
-        # size- and sha256-verified below -- so any transient fetch
-        # failure is safe to retry. Retry the whole attempt (re-fetching a
-        # fresh signed URL each time, in case the prior one expired) with
-        # the same backoff + full-jitter the server path uses.
-        attempt = 0
-        while True:
-            try:
-                response = self._servercmd(call, args, stream=False)
-
-                # We expect a single sentinel entry in downloads_signed
-                # keyed at 'default'. The server-side per-file handler
-                # doesn't know the client's destination path, so it hands
-                # back one signed URL + hash under that sentinel and we
-                # stream it into ``filename`` here.
-                assert response.downloads_signed is not None
-                assert len(response.downloads_signed) == 1
-                entry = response.downloads_signed[0]
-                assert entry.path == 'default'
-
-                hasher = hashlib.sha256()
-                total = 0
-                with _g_pool.request(
-                    'GET',
-                    entry.download_url,
-                    preload_content=False,
-                    retries=False,
-                ) as resp:
-                    # Transient (5xx) blob-store errors are retryable; any
-                    # other non-2xx (e.g. 403/404) is a real problem.
-                    if resp.status >= 500:
-                        raise _TransientDownloadError(
-                            f'GCS download of {filename} got transient'
-                            f' status={resp.status}.'
-                        )
-                    if not 200 <= resp.status < 300:
-                        raise CleanError(
-                            f'GCS download of {filename} failed:'
-                            f' status={resp.status}'
-                            f' body={_err_body(resp)!r}'
-                        )
-                    with open(tmp, 'wb') as outfile:
-                        for chunk in resp.stream(chunk_size):
-                            if not chunk:
-                                continue
-                            outfile.write(chunk)
-                            hasher.update(chunk)
-                            total += len(chunk)
-
-                # A short read or hash mismatch means a truncated/corrupt
-                # stream -- retryable (re-download).
-                if total != entry.size:
-                    raise _TransientDownloadError(
-                        f'GCS download of {filename} returned {total} bytes;'
-                        f' expected {entry.size} (truncated stream).'
-                    )
-                digest = hasher.hexdigest()
-                if digest != entry.sha256:
-                    raise _TransientDownloadError(
-                        f'GCS download of {filename} sha256 mismatch: got'
-                        f' {digest}, expected {entry.sha256}.'
-                    )
-                os.rename(tmp, filename)
-                return total
-
-            except Exception as exc:
-                # Drop any partial tmp before retrying or giving up.
-                try:
-                    os.unlink(tmp)
-                except OSError:
-                    pass
-                if attempt < CONNECT_RETRIES and _is_retryable_download_error(
-                    exc
-                ):
-                    delay = random.uniform(
-                        0.0,
-                        min(
-                            CONNECT_RETRY_MAX_SECONDS,
-                            CONNECT_RETRY_BASE_SECONDS * 2**attempt,
-                        ),
-                    )
-                    attempt += 1
-                    print(
-                        f'{Clr.YLW}Download of'
-                        f' {os.path.basename(filename)} failed'
-                        f' ({type(exc).__name__}); retrying in {delay:.1f}s'
-                        f' ({attempt}/{CONNECT_RETRIES})...{Clr.RST}',
-                        file=sys.stderr,
-                        flush=True,
-                    )
-                    time.sleep(delay)
-                    continue
-                raise
-
-    def _handle_cas_delivery(self, cas: ResponseData.CasDelivery) -> None:
+    def _handle_cas_delivery(
+        self, cas: StandardResponseData.CasDelivery
+    ) -> None:
         """Download a CAS-delivery assemble's data blobs from a basn node.
 
         The build/mod-time analogue of the game client's Tier-2 download:
@@ -1016,110 +1006,6 @@ class App:
                 outfile.write(data)
             os.rename(fnametmp, fname)
 
-    def _handle_downloads(self, downloads: ResponseData.Downloads) -> None:
-        from efro.util import data_size_str
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-
-        starttime = time.monotonic()
-
-        # Minor optimization: avoid repeat mkdir calls for the same path
-        # (we may have lots of stuff in a single dir).
-        prepped_dirs = set[str]()
-
-        def _prep_entry(entry: ResponseData.Downloads.Entry) -> None:
-            fullpath = (
-                entry.path
-                if downloads.basepath is None
-                else os.path.join(downloads.basepath, entry.path)
-            )
-            dirname = os.path.dirname(fullpath)
-            if dirname not in prepped_dirs:
-                os.makedirs(dirname, exist_ok=True)
-                prepped_dirs.add(dirname)
-
-        def _download_entry(entry: ResponseData.Downloads.Entry) -> int | None:
-            allargs = downloads.baseargs | entry.args
-            fullpath = (
-                entry.path
-                if downloads.basepath is None
-                else os.path.join(downloads.basepath, entry.path)
-            )
-            return self._download_file(fullpath, downloads.cmd, allargs)
-
-        # Run a single thread pre-pass to create all needed dirs.
-        # Creating dirs while downloading can introduce race conditions.
-        for entry in downloads.entries:
-            _prep_entry(entry)
-
-        total = len(downloads.entries)
-        num_dls = 0
-        total_bytes = 0
-        completed = 0
-
-        # Live progress only helps an interactive terminal; in CI / piped
-        # contexts it would just add log noise, so there we keep the
-        # single end-of-run summary. Progress rides stderr so it never
-        # pollutes stdout (which some callers parse as the result).
-        show_progress = sys.stderr.isatty()
-        last_draw = 0.0
-
-        def _draw_progress() -> None:
-            nonlocal last_draw
-            now = time.monotonic()
-            # Throttle redraws. No forced final frame is needed — the
-            # line is cleared below and replaced by the summary.
-            if now - last_draw < 0.25:
-                return
-            last_draw = now
-            # \r returns to col 0; \x1b[K clears to end-of-line so a
-            # shorter line never leaves stale characters behind.
-            print(
-                f'\r{Clr.BLU}Downloading {completed}/{total} files'
-                f' ({data_size_str(total_bytes)})\u2026{Clr.RST}\x1b[K',
-                end='',
-                file=sys.stderr,
-                flush=True,
-            )
-
-        # Run several downloads simultaneously to maximize throughput.
-        # Each entry costs a master round-trip (to mint its signed URL)
-        # plus a usually-small GCS transfer, so the work is latency-bound
-        # per blob -- more concurrency mostly just hides that latency.
-        # Env-overridable for tuning; the default is kept modest so a herd
-        # of build hosts (CI, cloudshell, devs) each downloading at once
-        # doesn't hammer the master's request pool. Drain via as_completed
-        # (not map) so progress surfaces incrementally, not as one barrier.
-        workers = max(
-            1, int(os.environ.get('BA_BACLOUD_DOWNLOAD_WORKERS', '16'))
-        )
-        with ThreadPoolExecutor(max_workers=workers) as executor:
-            futures = [
-                executor.submit(_download_entry, entry)
-                for entry in downloads.entries
-            ]
-            for future in as_completed(futures):
-                # .result() re-raises any download error (matching the
-                # old list(map(...)) fail-fast behavior).
-                result = future.result()
-                completed += 1
-                if result is not None:
-                    num_dls += 1
-                    total_bytes += result
-                if show_progress:
-                    _draw_progress()
-
-        if show_progress:
-            # Clear the in-progress line so the summary lands cleanly.
-            print('\r\x1b[K', end='', file=sys.stderr, flush=True)
-
-        duration = time.monotonic() - starttime
-        if num_dls:
-            print(
-                f'{Clr.BLU}Downloaded {num_dls} files'
-                f' ({data_size_str(total_bytes)}'
-                f' total) in {duration:.2f}s.{Clr.RST}'
-            )
-
     def _handle_dir_prune_empty(self, prunedir: str) -> None:
         """Handle pruning empty directories."""
         # Walk the tree bottom-up so we can properly kill recursive
@@ -1135,7 +1021,7 @@ class App:
                 os.rmdir(basename)
 
     def _handle_uploads_signed(
-        self, uploads_signed: list[ResponseData.SignedUploadEntry]
+        self, uploads_signed: list[StandardResponseData.SignedUploadEntry]
     ) -> None:
         """Handle direct-to-GCS streaming uploads via signed URLs.
 
@@ -1180,7 +1066,7 @@ class App:
         self._end_command_args['uploads_signed'] = sessions
 
     def _handle_uploads_oneshot(
-        self, uploads_oneshot: list[ResponseData.OneshotUploadEntry]
+        self, uploads_oneshot: list[StandardResponseData.OneshotUploadEntry]
     ) -> None:
         """Handle small-file uploads via the basn one-shot relay.
 
@@ -1241,7 +1127,7 @@ class App:
         self._end_command_args['uploads_oneshot'] = results
 
     def _handle_upload_plan(  # pylint: disable=too-many-locals
-        self, plan: ResponseData.UploadPlan
+        self, plan: StandardResponseData.UploadPlan
     ) -> tuple[str, dict, bool]:
         """Execute an upload plan end-to-end.
 
@@ -1348,7 +1234,7 @@ class App:
         return (plan.finalize_command, dataclass_to_dict(commit), False)
 
     def _handle_downloads_signed(
-        self, downloads_signed: list[ResponseData.SignedDownloadEntry]
+        self, downloads_signed: list[StandardResponseData.SignedDownloadEntry]
     ) -> None:
         """Handle direct-from-GCS streaming downloads via signed URLs.
 
@@ -1371,7 +1257,7 @@ class App:
         # when running several fetches concurrently.
         chunk_size = 1024 * 1024
 
-        def _fetch(entry: ResponseData.SignedDownloadEntry) -> None:
+        def _fetch(entry: StandardResponseData.SignedDownloadEntry) -> None:
             # Clear out any existing dir where we want the file to go
             # (mirrors the _handle_downloads_inline contract — file
             # deletes should have run before this, so anything still
@@ -1437,9 +1323,9 @@ class App:
 
         if not downloads_signed:
             return
-        # Cap parallelism at 4 to match _handle_downloads — this is
-        # enough to saturate a typical client uplink without piling
-        # pressure on GCS or running the client out of fds.
+        # Cap parallelism at 4: enough to saturate a typical client
+        # uplink without piling pressure on GCS or running the client
+        # out of fds.
         with ThreadPoolExecutor(max_workers=4) as executor:
             list(executor.map(_fetch, downloads_signed))
 
@@ -1459,7 +1345,9 @@ class App:
                 print(prompt, end='', flush=True)
             self._end_command_args['input'] = input()
 
-    def _consume_via_stream_ws(self, response: ResponseData) -> ResponseData:
+    def _consume_via_stream_ws(
+        self, response: StandardResponseData
+    ) -> StandardResponseData:
         """Drain a streamcall over WebSocket.
 
         Thin wrapper over :func:`bacommontools.streamws.consume_via_ws`
@@ -1476,7 +1364,7 @@ class App:
 
     def _servercmd_chained(
         self, call: tuple[str, dict, bool], retry_window: float
-    ) -> ResponseData:
+    ) -> StandardResponseData:
         """Run a chained server command, retrying transient failures.
 
         ``retry_window`` comes from the previous response's
@@ -1501,7 +1389,7 @@ class App:
                 )
                 time.sleep(min(3.0, remaining))
 
-    def _apply_response_file_ops(self, response: ResponseData) -> None:
+    def _apply_response_file_ops(self, response: StandardResponseData) -> None:
         """Apply a response's file deletes + downloads.
 
         The non-chaining side-effect ops, factored out of the response
@@ -1521,8 +1409,6 @@ class App:
         # needs to fully handle things like replacing dirs with files.
         if response.deletes:
             self._handle_deletes(response.deletes)
-        if response.downloads:
-            self._handle_downloads(response.downloads)
         if response.cas_delivery is not None:
             self._handle_cas_delivery(response.cas_delivery)
         if response.downloads_inline:
@@ -1573,7 +1459,7 @@ class App:
             # (they are just a polling envelope) and we let the outer
             # ``end_command`` drive the next poll.
             if response.stream_frames is not None:
-                terminal: ResponseData | None = None
+                terminal: StandardResponseData | None = None
                 for frame in response.stream_frames:
                     if isinstance(frame, StreamOutput):
                         print(frame.text, end='', flush=True)

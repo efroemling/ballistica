@@ -90,7 +90,7 @@ def open_url_with_webbrowser_module(url: str) -> None:
         webbrowser.open(url)
     except Exception:
         logging.exception("Error displaying url '%s'.", url)
-        _babase.getsimplesound('error').play()
+        builtinassets.audio.error.get().play()
         _babase.screenmessage(builtinassets.strings.ui.error, color=(1, 0, 0))
 
 
@@ -98,7 +98,7 @@ def temporarily_unavailable_message() -> None:
     from babase import builtinassets
 
     if _babase.app.env.gui:
-        _babase.getsimplesound('error').play()
+        builtinassets.audio.error.get().play()
         _babase.screenmessage(
             builtinassets.strings.store.unavailable_temporarily,
             color=(1, 0, 0),
@@ -109,7 +109,7 @@ def in_progress_message() -> None:
     from babase import builtinassets
 
     if _babase.app.env.gui:
-        _babase.getsimplesound('error').play()
+        builtinassets.audio.error.get().play()
         _babase.screenmessage(
             builtinassets.strings.store.transaction_in_progress,
             color=(1, 0, 0),
@@ -120,7 +120,7 @@ def error_message() -> None:
     from babase import builtinassets
 
     if _babase.app.env.gui:
-        _babase.getsimplesound('error').play()
+        builtinassets.audio.error.get().play()
         _babase.screenmessage(builtinassets.strings.ui.error, color=(1, 0, 0))
 
 
@@ -128,7 +128,7 @@ def success_message() -> None:
     from babase import builtinassets
 
     if _babase.app.env.gui:
-        _babase.getsimplesound('dingSmall').play()
+        builtinassets.audio.ding.get().play()
         _babase.screenmessage(builtinassets.strings.ui.success, color=(0, 1, 0))
 
 
@@ -136,7 +136,7 @@ def purchase_not_valid_error() -> None:
     from babase import builtinassets
 
     if _babase.app.env.gui:
-        _babase.getsimplesound('error').play()
+        builtinassets.audio.error.get().play()
         _babase.screenmessage(
             builtinassets.strings.store.purchase_not_valid(
                 email='support@froemling.net'
@@ -149,7 +149,7 @@ def purchase_already_in_progress_error() -> None:
     from babase import builtinassets
 
     if _babase.app.env.gui:
-        _babase.getsimplesound('error').play()
+        builtinassets.audio.error.get().play()
         _babase.screenmessage(
             builtinassets.strings.store.purchase_already_in_progress,
             color=(1, 0, 0),
@@ -215,11 +215,6 @@ def award_dual_wielding_achievement() -> None:
         logging.warning(
             'award_dual_wielding_achievement is no-op without classic'
         )
-
-
-def play_gong_sound() -> None:
-    if _babase.app.env.gui:
-        _babase.getsimplesound('gong').play()
 
 
 def launch_coop_game(name: str) -> None:
@@ -296,7 +291,7 @@ def ui_remote_press() -> None:
         builtinassets.strings.input.controller_menus_only,
         color=(1, 0, 0),
     )
-    _babase.getsimplesound('error').play()
+    builtinassets.audio.error.get().play()
 
 
 def remove_in_game_ads_message() -> None:
@@ -407,10 +402,10 @@ def show_client_too_old_error() -> None:
     ):
         return
 
-    if _babase.app.env.gui:
-        _babase.getsimplesound('error').play()
-
     from babase import builtinassets
+
+    if _babase.app.env.gui:
+        builtinassets.audio.error.get().play()
 
     _babase.screenmessage(
         builtinassets.strings.net.server_unsupported,
@@ -438,7 +433,7 @@ def unsupported_controller_message(name: str) -> None:
     # Ick; this can get called early in the bootstrapping process
     # before we're allowed to load assets. Guard against that.
     if _babase.asset_loads_allowed():
-        _babase.getsimplesound('error').play()
+        builtinassets.audio.error.get().play()
     _babase.screenmessage(
         builtinassets.strings.input.unsupported_controller(name=name),
         color=(1, 0, 0),
@@ -451,7 +446,7 @@ def copy_dev_console_history() -> None:
     from babase import builtinassets
 
     if not _babase.clipboard_is_supported():
-        _babase.getsimplesound('error').play()
+        builtinassets.audio.error.get().play()
         _babase.screenmessage(
             builtinassets.strings.ui.clipboard_not_supported,
             color=(1, 0, 0),
@@ -461,7 +456,7 @@ def copy_dev_console_history() -> None:
     # This requires us to be running with a log-handler set up.
     envconfig = baenv.get_env_config()
     if envconfig.log_handler is None:
-        _babase.getsimplesound('error').play()
+        builtinassets.audio.error.get().play()
         _babase.screenmessage(
             'Not available; standard engine logging is not enabled.',
             color=(1, 0, 0),
@@ -481,7 +476,7 @@ def copy_dev_console_history() -> None:
     _babase.screenmessage(
         builtinassets.strings.ui.copied_to_clipboard, color=(0, 1, 0)
     )
-    _babase.getsimplesound('gunCocking').play()
+    builtinassets.audio.gun_cocking.get().play()
 
 
 def start_native_repl() -> bool:

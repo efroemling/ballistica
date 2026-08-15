@@ -113,6 +113,8 @@ class AccountV2Subsystem:
 
         :meta private:
         """
+        from babase import builtinassets
+
         assert _babase.in_logic_thread()
 
         # Blow away any outstanding auth-requests.
@@ -159,7 +161,7 @@ class AccountV2Subsystem:
                     f' will be activated at next app launch.',
                     color=(1, 1, 0),
                 )
-                _babase.getsimplesound('error').play()
+                builtinassets.audio.error.get().play()
             return
 
         # Ok; no workspace to worry about; carry on.
@@ -553,7 +555,7 @@ class AccountV2Subsystem:
                 builtinassets.strings.account.sign_in_error,
                 color=(1, 0, 0),
             )
-            _babase.getsimplesound('error').play()
+            builtinassets.audio.error.get().play()
 
             # Also I suppose we should sign them out in this case since
             # it could be misleading to be still signed in with the old

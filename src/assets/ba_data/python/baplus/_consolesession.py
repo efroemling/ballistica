@@ -37,11 +37,13 @@ import baenv
 
 from efro.util import break_websocket_logger_cycle
 from efro.smartsocket import SmartSocketClosed, SmartSocketEndpoint
-from efro.dataclassio import dataclass_from_json, dataclass_to_json
 from bacommon.consolechannel import (
     ConsolePermission,
     PermissionEvent,
     ConsoleCommand,
+    # Runtime import, not TYPE_CHECKING: the endpoint takes the root
+    # types as real arguments, since generics are erased at runtime.
+    ConsoleEvent,
     ExecAckEvent,
     ExecCommand,
     GapEvent,
@@ -51,8 +53,6 @@ from bacommon.consolechannel import (
 
 if TYPE_CHECKING:
     from typing import Any, Callable
-
-    from bacommon.consolechannel import ConsoleEvent
 
 logger = logging.getLogger('ba.consolesession')
 
@@ -88,7 +88,11 @@ class _Session:
 
     def __init__(self, session_id: str) -> None:
         self.session_id = session_id
-        self.endpoint: SmartSocketEndpoint | None = None
+        #: Our end of the channel. Typed to the console's root pair:
+        #: we push events up and take commands down.
+        self.endpoint: (
+            SmartSocketEndpoint[ConsoleEvent, ConsoleCommand] | None
+        ) = None
         self.task: asyncio.Task | None = None
 
         #: Where we are in our own log. Survives channel changes, so
@@ -201,7 +205,9 @@ class ConsoleSessionManager:
 
         endpoint = SmartSocketEndpoint(
             lambda: _connect(ws_url, token),
-            on_message=lambda payload: self._on_command(session, payload),
+            send_type=ConsoleEvent,
+            recv_type=ConsoleCommand,
+            on_message=lambda command: self._on_command(session, command),
         )
         session.announced_permission = None
         session.instance_uuid = app_instance_uuid
@@ -469,19 +475,20 @@ class ConsoleSessionManager:
         if endpoint is None:
             return
         try:
-            await endpoint.send(dataclass_to_json(event))
+            await endpoint.send(event)
         except SmartSocketClosed:
             pass  # The run loop observes this and winds up.
 
-    async def _on_command(self, session: _Session, payload: str) -> None:
-        """Handle one command from the console."""
-        from baplus._cloud import cloud_console_exec
+    async def _on_command(
+        self, session: _Session, command: ConsoleCommand
+    ) -> None:
+        """Handle one command from the console.
 
-        try:
-            command = dataclass_from_json(ConsoleCommand, payload)
-        except Exception:  # pylint: disable=broad-except
-            logger.exception('undecodable console command')
-            return
+        Arrives decoded: the endpoint owns the console root pair, so
+        anything that isn't a ConsoleCommand has already killed the
+        session rather than reaching us.
+        """
+        from baplus._cloud import cloud_console_exec
 
         if not isinstance(command, ExecCommand):
             logger.warning(

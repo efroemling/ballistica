@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260806d`` (bascenev1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260815`` (bascenev1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,13 +9,13 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260806d
+# ba_meta require asset-package a-0.babuiltinassets.260815
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260806d'
+__asset_package__ = 'a-0.babuiltinassets.260815'
 
 from typing import TYPE_CHECKING
 
@@ -1385,6 +1385,15 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Gentle non-urgent screen-message notice, shown once shortly after
+        #:     connectivity comes up, telling the player that a newer version of
+        #:     the app is available to download.
+        #:
+        #:     English: "A newer version of this app is available."
+        update_available: LangStr
+
+        #: ::
+        #:
         #:     Generic title for progress dialogs applying updates: asset
         #:     downloads/builds at boot, locale switches, pre-game package
         #:     fetches.
@@ -1557,8 +1566,8 @@ if TYPE_CHECKING:
     #: ``arrow_back``, and 67 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 122 strings (``account``, ``assets``, ``audio``,
-    #: ``input``, ``net``, and 117 more). Full list in source.
+    #: The ``strings`` group - 123 strings (``account``, ``assets``, ``audio``,
+    #: ``input``, ``net``, and 118 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 82 assets (``action_buttons``, ``arrow``,
@@ -1800,6 +1809,7 @@ _TREE = {
             'storage_permission_needed': (),
             'success': (),
             'unknown_error': (),
+            'update_available': (),
             'updating': (),
         },
         'workspace': {

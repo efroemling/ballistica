@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260806d`` (babase).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260815`` (babase).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,21 +9,55 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260806d
+# ba_meta require asset-package a-0.babuiltinassets.260815
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260806d'
+__asset_package__ = 'a-0.babuiltinassets.260815'
 
 from typing import TYPE_CHECKING
+
+from babase._assetref import AssetGroup
 
 from babase._language import LangStrDir
 
 if TYPE_CHECKING:
     import datetime
+    from babase._assetref import SimpleSoundHandle
     from babase import LangStr
+
+    class AudioGroup:
+        """
+        ::
+
+            Sounds needed during engine bootstrap and early UI (clicks, errors,
+            and other always-available effects).
+
+            See source for the full asset list.
+        """
+
+        blank: SimpleSoundHandle
+        blip: SimpleSoundHandle
+        cash_register: SimpleSoundHandle
+        click01: SimpleSoundHandle
+        cork_pop: SimpleSoundHandle
+        deek: SimpleSoundHandle
+        ding: SimpleSoundHandle
+        error: SimpleSoundHandle
+        gun_cocking: SimpleSoundHandle
+        powerdown01: SimpleSoundHandle
+        punch01: SimpleSoundHandle
+        score_increase: SimpleSoundHandle
+        sparkle01: SimpleSoundHandle
+        sparkle02: SimpleSoundHandle
+        sparkle03: SimpleSoundHandle
+        swish: SimpleSoundHandle
+        swish2: SimpleSoundHandle
+        swish3: SimpleSoundHandle
+        tap: SimpleSoundHandle
+        ticking_crazy: SimpleSoundHandle
 
     class StringsAccountGroup:
         """
@@ -1269,6 +1303,15 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Gentle non-urgent screen-message notice, shown once shortly after
+        #:     connectivity comes up, telling the player that a newer version of
+        #:     the app is available to download.
+        #:
+        #:     English: "A newer version of this app is available."
+        update_available: LangStr
+
+        #: ::
+        #:
         #:     Generic title for progress dialogs applying updates: asset
         #:     downloads/builds at boot, locale switches, pre-game package
         #:     fetches.
@@ -1339,11 +1382,37 @@ if TYPE_CHECKING:
         ui: StringsUiGroup
         workspace: StringsWorkspaceGroup
 
-    #: The ``strings`` group - 122 strings (``account``, ``assets``, ``audio``,
-    #: ``input``, ``net``, and 117 more). Full list in source.
+    #: The ``audio`` group - 20 assets (``blank``, ``blip``, ``cash_register``,
+    #: ``click01``, ``cork_pop``, and 15 more). Full list in source.
+    audio: AudioGroup
+
+    #: The ``strings`` group - 123 strings (``account``, ``assets``, ``audio``,
+    #: ``input``, ``net``, and 118 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
+    'audio': {
+        'blank': 's',
+        'blip': 's',
+        'cash_register': 's',
+        'click01': 's',
+        'cork_pop': 's',
+        'deek': 's',
+        'ding': 's',
+        'error': 's',
+        'gun_cocking': 's',
+        'powerdown01': 's',
+        'punch01': 's',
+        'score_increase': 's',
+        'sparkle01': 's',
+        'sparkle02': 's',
+        'sparkle03': 's',
+        'swish': 's',
+        'swish2': 's',
+        'swish3': 's',
+        'tap': 's',
+        'ticking_crazy': 's',
+    },
     'strings': {
         'account': {
             'must_sign_in': (),
@@ -1481,6 +1550,7 @@ _TREE = {
             'storage_permission_needed': (),
             'success': (),
             'unknown_error': (),
+            'update_available': (),
             'updating': (),
         },
         'workspace': {
@@ -1488,12 +1558,13 @@ _TREE = {
             'sync_error': ('workspace',),
             'sync_reuse': ('workspace',),
         },
-    }
+    },
 }
 _DISPLAY_KINDS = {'strings/time/duration_value': {'t': 'millis'}}
 
 
 if not TYPE_CHECKING:
+    audio = AssetGroup(__asset_package__, _TREE['audio'], 'audio')
     strings = LangStrDir(
         __asset_package__,
         _TREE['strings'],

@@ -46,7 +46,12 @@ class ThreadPoolExecutorEx(ThreadPoolExecutor):
         *,
         allow_submit_no_wait: bool = True,
         queue_wait_warn_seconds: float = 10.0,
-        run_duration_warn_seconds: float = 5.0,
+        # 10s rather than 5s: legitimate pool work includes things like
+        # DNS lookups, which can reasonably take several seconds on a
+        # slow or flaky network without indicating any misuse. Warning
+        # at 5s mostly reported slow networks rather than long/blocking
+        # work, which is what this is meant to catch.
+        run_duration_warn_seconds: float = 10.0,
         log_throttle_seconds: float = 10.0,
     ) -> None:
         super().__init__(

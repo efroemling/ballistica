@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.260806d"
+// Generated from: "a-0.babuiltinassets.260815"
 
 #include <memory>
 
@@ -852,6 +852,13 @@ class BuiltinStrings {
     ///
     /// English: "Unknown error"
     static auto UnknownError() -> std::shared_ptr<const LangStr>;
+
+    /// Gentle non-urgent screen-message notice, shown once shortly after
+    /// connectivity comes up, telling the player that a newer version of the
+    /// app is available to download.
+    ///
+    /// English: "A newer version of this app is available."
+    static auto UpdateAvailable() -> std::shared_ptr<const LangStr>;
 
     /// Generic title for progress dialogs applying updates: asset
     /// downloads/builds at boot, locale switches, pre-game package fetches.

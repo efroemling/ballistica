@@ -49,7 +49,7 @@ from efro.error import CleanError
 from efro.dataclassio import dataclass_from_json
 from bacommon.bacloud import (
     BACLOUD_VERSION,
-    ResponseData,
+    StandardResponseData,
     StreamFinal,
     StreamFrame,
     StreamOutput,
@@ -70,11 +70,11 @@ _BROKEN_RECONNECT_HOST = '127.0.0.1:1'
 
 
 def consume_via_ws(
-    response: ResponseData, *, bearer: str | None, host: str
-) -> ResponseData:
+    response: StandardResponseData, *, bearer: str | None, host: str
+) -> StandardResponseData:
     """Drain a stream over WebSocket and return a terminal-only response.
 
-    The returned ``ResponseData`` carries the terminal ``StreamFinal``
+    The returned ``StandardResponseData`` carries the terminal ``StreamFinal``
     in ``stream_frames`` so bacloud's existing ``stream_frames`` loop
     falls through to the usual terminal handling
     (message/error/end_command).
@@ -91,7 +91,7 @@ def consume_via_ws(
     terminal = asyncio.run(
         _consume_with_reconnect(response.stream_ws, bearer, host)
     )
-    return ResponseData(stream_frames=[terminal])
+    return StandardResponseData(stream_frames=[terminal])
 
 
 def _reconnect_budget_seconds() -> float:

@@ -42,11 +42,15 @@ class WrapperType(Enum):
     BASCENEV1 = 'bascenev1'
     BAUIV1 = 'bauiv1'
 
-    #: Strings-only wrapper for the babase layer (no classic asset
-    #: loader APIs exist there); string leaves emit the same native
-    #: ``babase.LangStr`` accessors as the featureset forms. Exists so
-    #: pre-featureset machinery (e.g. construct-mode's bring-up UI) can
-    #: consume package strings.
+    #: Strings-and-sounds wrapper for the babase layer. String leaves
+    #: emit the same native ``babase.LangStr`` accessors as the
+    #: featureset forms; sound leaves emit ``SimpleSoundHandle``, whose
+    #: ``.get()`` loads a ``babase.SimpleSound`` -- the one classic
+    #: asset loader API babase has (there is no babase texture or mesh
+    #: equivalent, so those kinds are skipped). Exists so
+    #: pre-featureset machinery (e.g. construct-mode's bring-up UI, and
+    #: the app/plugin/account paths that play ui feedback sounds before
+    #: any feature-set is up) can consume package strings and sounds.
     BABASE = 'babase'
 
 

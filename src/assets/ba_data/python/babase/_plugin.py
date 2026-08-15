@@ -91,7 +91,7 @@ class PluginSubsystem(AppSubsystem):
             _babase.screenmessage(
                 builtinassets.strings.plugins.detected, color=(0, 1, 0)
             )
-            _babase.getsimplesound('ding').play()
+            builtinassets.audio.ding.get().play()
 
         # Ok, now go through all plugins registered in the app-config
         # that weren't covered by the meta stuff above, either creating
@@ -140,7 +140,7 @@ class PluginSubsystem(AppSubsystem):
         # later reappear. This makes it much smoother to switch between
         # users or workspaces.
         if disappeared_plugs:
-            _babase.getsimplesound('shieldDown').play()
+            builtinassets.audio.powerdown01.get().play()
             _babase.screenmessage(
                 builtinassets.strings.plugins.removed(
                     count=len(disappeared_plugs)
@@ -161,12 +161,23 @@ class PluginSubsystem(AppSubsystem):
         if config_changed:
             _babase.app.config.commit()
 
-    @override
-    def on_app_running(self) -> None:
-        """:meta private:"""
-        # Load up our plugins and go ahead and call their on_app_running
-        # calls.
-        self._load_plugins()
+    def load_and_notify(self) -> None:
+        """Load enabled plugins and give them their on_app_running call.
+
+        Driven by :meth:`~babase.App.on_construct_complete()` -- *not*
+        by the usual :meth:`on_app_running` subsystem callback -- so that
+        no plugin-authored code (module top-level, ``__init__``, or
+        callback) runs until construct-mode has resolved every required
+        asset-package. See that method for why this lands where it does.
+
+        :meta private:
+        """
+        # Load plugins from any specs that are enabled & able to.
+        for _class_path, plug_spec in sorted(self.plugin_specs.items()):
+            plugin = plug_spec.attempt_load_if_enabled()
+            if plugin is not None:
+                self.active_plugins.append(plugin)
+
         for plugin in self.active_plugins:
             try:
                 plugin.on_app_running()
@@ -208,14 +219,6 @@ class PluginSubsystem(AppSubsystem):
                 plugin.on_app_shutdown_complete()
             except Exception:
                 balog.exception('Error in plugin on_app_shutdown_complete().')
-
-    def _load_plugins(self) -> None:
-
-        # Load plugins from any specs that are enabled & able to.
-        for _class_path, plug_spec in sorted(self.plugin_specs.items()):
-            plugin = plug_spec.attempt_load_if_enabled()
-            if plugin is not None:
-                self.active_plugins.append(plugin)
 
 
 class PluginSpec:
@@ -279,7 +282,7 @@ class PluginSpec:
         try:
             cls = getclass(self.class_path, Plugin, True)
         except Exception as exc:
-            _babase.getsimplesound('error').play()
+            builtinassets.audio.error.get().play()
             _babase.screenmessage(
                 builtinassets.strings.plugins.class_load_error(
                     plugin=self.class_path, error=str(exc)
@@ -296,7 +299,7 @@ class PluginSpec:
         except Exception as exc:
             from babase import _error
 
-            _babase.getsimplesound('error').play()
+            builtinassets.audio.error.get().play()
             _babase.screenmessage(
                 builtinassets.strings.plugins.init_error(
                     plugin=self.class_path, error=str(exc)
@@ -319,7 +322,21 @@ class Plugin:
     """
 
     def on_app_running(self) -> None:
-        """Called when the app reaches the running state."""
+        """Called when the app reaches the running state.
+
+        Specifically, this fires once boot-time asset-package bring-up
+        has completed but before the launch intent is dispatched to an
+        app-mode. That means every asset-package the meta-scan found a
+        ``# ba_meta require asset-package`` line for (including your
+        own) is resolved and safe to load by this point, while it is
+        still early enough to influence what the app does next --
+        setting :attr:`~babase.App.mode_selector`, registering app
+        subsystems, or driving an intent of your own via
+        :meth:`~babase.App.set_intent()`.
+
+        Note that a plugin's module is not even imported until this
+        point, so plugin code never runs before assets are ready.
+        """
 
     def on_app_suspend(self) -> None:
         """Called when the app enters the suspended state."""

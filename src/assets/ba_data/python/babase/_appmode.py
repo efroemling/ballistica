@@ -156,7 +156,7 @@ class AppMode:
         # Ick; we can be called early in the bootstrapping process
         # before we're allowed to load assets. Guard against that.
         if babase.asset_loads_allowed():
-            babase.getsimplesound('click01').play()
+            builtinassets.audio.click01.get().play()
 
     def on_purchase_process_end(
         self, item_id: str, user_initiated: bool, applied: bool
@@ -192,7 +192,7 @@ class AppMode:
             color=(0, 1, 0),
         )
         if babase.asset_loads_allowed():
-            babase.getsimplesound('cashRegister').play()
+            builtinassets.audio.cash_register.get().play()
 
     def get_dev_console_ui_tab_buttons(self) -> list[DevConsoleButtonDef]:
         """Define buttons to show up in the UI dev console.

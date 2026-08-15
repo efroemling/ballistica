@@ -8,6 +8,14 @@
   it in mod code.
 """
 
+# This module is the canonical bacloud wire contract -- every repo
+# imports its types by name -- and roughly a seventh of it is the
+# version history that has to live beside the versions it explains.
+# Splitting it would churn public import paths across five repos to
+# move a comment block, so this is the sanctioned large primary
+# module rather than something to spill into a sibling.
+# pylint: disable=too-many-lines
+
 from enum import Enum
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated, assert_never, override
@@ -49,10 +57,10 @@ if TYPE_CHECKING:
 #               path). Old clients don't understand the new field
 #               and would silently skip uploads.
 # 19 (2026-05): StreamCall protocol introduced. Adds a ``stream``
-#               flag to ``RequestData``, bumps ``end_command`` from a
+#               flag to ``StandardRequestData``, bumps ``end_command`` from a
 #               2-tuple to a 3-tuple (the new bool indicates the next
 #               request should be made in stream mode), adds a
-#               ``stream_frames`` field to ``ResponseData`` carrying
+#               ``stream_frames`` field to ``StandardResponseData`` carrying
 #               ``StreamFrame`` instances, and introduces the
 #               ``StreamFrame`` / ``StreamOutput`` / ``StreamFinal``
 #               IOMultiTypes themselves. ``MIN_VERSION`` is bumped to
@@ -61,7 +69,7 @@ if TYPE_CHECKING:
 #               new tuple shape.
 # 20 (2026-05): StreamCall Phase 2 wire-protocol additions for the
 #               basn-WebSocket fan-out path. Adds ``stream_ws`` to
-#               ``ResponseData`` (carrying a basn URL + signed
+#               ``StandardResponseData`` (carrying a basn URL + signed
 #               capability token + expiry) so kickoff responses can
 #               redirect a client at a basn node's WebSocket
 #               endpoint instead of the existing ``_streamcall_poll``
@@ -89,12 +97,12 @@ if TYPE_CHECKING:
 #               intermediary now sees a Bearer header it can
 #               recognize for redaction, masking, etc., instead
 #               of a custom body field that looks like opaque
-#               payload. ``RequestData.token`` is deprecated —
+#               payload. ``StandardRequestData.token`` is deprecated —
 #               kept on the wire as a soft-default'd ``null`` so
 #               v21 basn nodes parse v22 requests OK during the
 #               rollout window — and will be removed in v23
 #               after rollout completes. Server-side response
-#               still ships ``ResponseData.login`` for
+#               still ships ``StandardResponseData.login`` for
 #               sign-in/sign-out — only the *outbound* direction
 #               changes. ``MIN_VERSION`` is bumped to match (v21
 #               clients send body-token but no Authorization
@@ -118,13 +126,13 @@ if TYPE_CHECKING:
 #               construct its own URL when ``basn_url`` is
 #               ``None``, and gets call_ids out of URLs (which
 #               leak into proxy/CDN logs) along the way.
-#               (3) ``RequestData.token`` removed entirely;
+#               (3) ``StandardRequestData.token`` removed entirely;
 #               unified Bearer auth from v22 means it's been
 #               dead code for a wire-version cycle. Drops a
 #               soft-default field that no client populates and
 #               no server reads. ``MIN_VERSION`` matched.
 # 24 (2026-06): Workspace get/put optimistic-concurrency (mid-air-
-#               collision guard). ``ResponseData.workspace_snapshotid``
+#               collision guard). ``StandardResponseData.workspace_snapshotid``
 #               carries the workspace's current snapshot id back on a
 #               get/put; the client stashes it in a ``.bacloudstate.json``
 #               (a dotfile, so the sync auto-ignores it) and sends it as
@@ -134,7 +142,8 @@ if TYPE_CHECKING:
 #               clients/servers just skip the check -- ``MIN_VERSION``
 #               unchanged.
 # 25 (2026-06): One-shot small-file uploads via the basn relay.
-#               ``ResponseData.uploads_oneshot`` tells the client to POST
+#               ``StandardResponseData.uploads_oneshot`` tells the
+#               client to POST
 #               small file bodies to the basn node (which relays them to
 #               the master one-shot cloud-file endpoint) instead of the
 #               signed-URL-to-GCS path; the client sends the resulting
@@ -142,7 +151,32 @@ if TYPE_CHECKING:
 #               only emits this to v25+ clients and falls back to
 #               ``uploads_signed`` otherwise, so the field is optional --
 #               ``MIN_VERSION`` unchanged.
-BACLOUD_VERSION = 25
+# 26 (2026-08): Removed the legacy ``downloads`` mechanism (one master
+#               round trip per file, via a per-entry ``_assemble_file_
+#               download`` command) along with its ``StandardResponseData.
+#               Downloads`` type. It survived only as the
+#               non-CAS-delivery fallback for asset-package blobs, and
+#               an escape hatch reachable solely by a manual flag is one
+#               nobody exercises -- so it would have rotted before it
+#               was ever needed, while costing a mechanism to carry onto
+#               the upcoming SmartSocket transport. CAS delivery is now
+#               the only asset-blob path. ``MIN_VERSION`` tracks
+#               ``BACLOUD_VERSION``, so older clients get the standard
+#               "please update" rejection.
+#
+#               Also in 26: bacloud's conversation moves onto a single
+#               SmartSocket session to the node it already talks to.
+#               The channel is created by the WS handshake itself
+#               (``/bacloudsession``, no mint round trip), credentials
+#               ride the upgrade's ``Authorization`` header on every
+#               attach, and the node hands back a resume token in-band
+#               as a :class:`SessionHandleResponse` -- the response
+#               hierarchy's first non-answer member. Folded into 26
+#               rather than given its own number because 26 has not
+#               shipped: prod and push-public land together, so there
+#               is no released version in between for anything to be
+#               compatible with.
+BACLOUD_VERSION = 26
 
 
 def asset_file_cache_path(filehash: str) -> str:
@@ -163,9 +197,99 @@ def asset_file_cache_path(filehash: str) -> str:
     return f'{filehash[:2]}/{filehash[2:]}'
 
 
+class RequestTypeID(Enum):
+    """Type IDs for things a bacloud client can send."""
+
+    STANDARD = 's'
+
+
+class RequestData(IOMultiType[RequestTypeID]):
+    """Root of what a bacloud client sends.
+
+    One member today (:class:`StandardRequestData`, the command
+    envelope every request has always used). It exists as a hierarchy
+    so the session transport has a declared send type, and so a future
+    message that is not a command is an addition here rather than
+    another optional field bolted onto the command envelope.
+    """
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> RequestTypeID:
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_default_type_id(cls) -> RequestTypeID:
+        """Assume a command when no type-id is present.
+
+        This is what makes promoting a plain dataclass to a multitype
+        wire-compatible in both directions: the default serializes
+        WITHOUT its type-id, so today's traffic is byte-identical to
+        before, and keyless data from either side of a rollout still
+        loads. Per the dataclassio wire invariants, once keyless data
+        exists this designation may never change -- which is fine
+        here, since 'a command' is what the envelope has always been.
+        """
+        return RequestTypeID.STANDARD
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: RequestTypeID) -> type[RequestData]:
+        out: type[RequestData]
+        if type_id is RequestTypeID.STANDARD:
+            out = StandardRequestData
+            return out
+        raise ValueError(f'Unrecognized type-id {type_id}.')
+
+
+class ResponseTypeID(Enum):
+    """Type IDs for things a bacloud server can send back."""
+
+    STANDARD = 's'
+    SESSION_HANDLE = 'sh'
+
+
+class ResponseData(IOMultiType[ResponseTypeID]):
+    """Root of what a bacloud server sends back.
+
+    Counterpart to :class:`RequestData`; see its note. This is the
+    side more likely to grow -- unsolicited notifications and live
+    stream output are responses that are not answers to a command --
+    and a discriminated union is what lets a reader tell them apart
+    without correlation ids.
+    """
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ResponseTypeID:
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_default_type_id(cls) -> ResponseTypeID:
+        """Assume a standard response when no type-id is present.
+
+        See the note on :meth:`RequestData.get_default_type_id`.
+        """
+        return ResponseTypeID.STANDARD
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: ResponseTypeID) -> type[ResponseData]:
+        out: type[ResponseData]
+        if type_id is ResponseTypeID.STANDARD:
+            out = StandardResponseData
+            return out
+        if type_id is ResponseTypeID.SESSION_HANDLE:
+            out = SessionHandleResponse
+            return out
+        raise ValueError(f'Unrecognized type-id {type_id}.')
+
+
 @ioprepped
 @dataclass
-class RequestData:
+class StandardRequestData(RequestData):
     """Request sent to bacloud server.
 
     Auth: bacloud always passes its current credential (API key or
@@ -205,8 +329,13 @@ class RequestData:
     #: floor -- and gating stays a simple ``build_number < X``.
     build_number: Annotated[int, IOAttrs('b', soft_default=0)] = 0
 
+    @override
+    @classmethod
+    def get_type_id(cls) -> RequestTypeID:
+        return RequestTypeID.STANDARD
 
-# Types used by the UploadPlan protocol. See ResponseData.UploadPlan.
+
+# Types used by the UploadPlan protocol. See StandardResponseData.UploadPlan.
 
 
 @ioprepped
@@ -327,7 +456,7 @@ class StreamFrame(IOMultiType[StreamFrameTypeID]):
     Producers emit a sequence of :class:`StreamOutput` frames as the
     underlying call generates output, then exactly one
     :class:`StreamFinal` frame carrying the terminal
-    :class:`ResponseData`. Consumers (bacloud directly in Phase 1, or
+    :class:`StandardResponseData`. Consumers (bacloud directly in Phase 1, or
     eventually via a basn WebSocket fan-out in Phase 2) iterate
     frames in order and stop on the StreamFinal.
     """
@@ -368,26 +497,26 @@ class StreamOutput(StreamFrame):
         return StreamFrameTypeID.OUTPUT
 
 
-# Forward-prepped: ``response`` references :class:`ResponseData`,
+# Forward-prepped: ``response`` references :class:`StandardResponseData`,
 # which is defined further down. We declare it here so the class
-# exists before ``ResponseData`` can reference :class:`StreamFrame`
+# exists before ``StandardResponseData`` can reference :class:`StreamFrame`
 # for its ``stream_frames`` field, then explicitly :func:`ioprep`
 # this class at the bottom of the module once both are defined.
 @will_ioprep
 @dataclass
 class StreamFinal(StreamFrame):
-    """Terminal frame carrying the call's :class:`ResponseData`.
+    """Terminal frame carrying the call's :class:`StandardResponseData`.
 
     The inner ``response`` is processed by the consumer as if it had
     been the response to the originating non-streamed request — it
     can carry messages, ``end_command`` chains, errors, and so on.
     """
 
-    # Lambda needed because :class:`ResponseData` isn't defined yet at
+    # Lambda needed because :class:`StandardResponseData` isn't defined yet at
     # this point; resolved at instance-construction time.
-    response: Annotated['ResponseData', IOAttrs('r')] = field(
+    response: Annotated['StandardResponseData', IOAttrs('r')] = field(
         default_factory=(
-            lambda: ResponseData()  # pylint: disable=unnecessary-lambda
+            lambda: StandardResponseData()  # pylint: disable=unnecessary-lambda
         )
     )
 
@@ -451,7 +580,7 @@ class StreamWS:
 
 @ioprepped
 @dataclass
-class ResponseData:
+class StandardResponseData(ResponseData):
     """Response sent from the bacloud server to the client."""
 
     @ioprepped
@@ -569,40 +698,6 @@ class ResponseData:
 
         #: Optional description shown to the user during the upload.
         description: Annotated[str, IOAttrs('de', store_default=False)] = ''
-
-    @ioprepped
-    @dataclass
-    class Downloads:
-        """Info about downloads included in a response."""
-
-        @ioprepped
-        @dataclass
-        class Entry:
-            """Individual download."""
-
-            path: Annotated[str, IOAttrs('p')]
-
-            #: Args include with this particular request (combined with
-            #: baseargs).
-            args: Annotated[dict[str, str], IOAttrs('a')]
-
-            # TODO: could add a hash here if we want the client to
-            # verify hashes.
-
-        #: If present, will be prepended to all entry paths via os.path.join.
-        basepath: Annotated[str | None, IOAttrs('p')]
-
-        #: Server command that should be called for each download. The
-        #: server command is expected to respond with a downloads_inline
-        #: containing a single 'default' entry. In the future this may
-        #: be expanded to a more streaming-friendly process.
-        cmd: Annotated[str, IOAttrs('c')]
-
-        #: Args that should be included with all download requests.
-        baseargs: Annotated[dict[str, str], IOAttrs('a')]
-
-        #: Everything that should be downloaded.
-        entries: Annotated[list[Entry], IOAttrs('e')]
 
     @ioprepped
     @dataclass
@@ -771,12 +866,6 @@ class ResponseData:
         list[str] | None, IOAttrs('dlt', store_default=False)
     ] = None
 
-    #: If present, describes files the client should individually
-    #: request from the server if not already present on the client.
-    downloads: Annotated[
-        Downloads | None, IOAttrs('dl', store_default=False)
-    ] = None
-
     #: If present, pathnames mapped to gzipped data to be written to the
     #: client. This should only be used for relatively small files as
     #: they are all included inline as part of the response — Cloud
@@ -853,7 +942,7 @@ class ResponseData:
     #: If present, this command is run with these args at the end of
     #: response processing. Tuple is ``(command_name, args, stream)``;
     #: when ``stream`` is True the client should set ``stream=True``
-    #: on the resulting :class:`RequestData`.
+    #: on the resulting :class:`StandardRequestData`.
     end_command: Annotated[
         tuple[str, dict, bool] | None, IOAttrs('ec', store_default=False)
     ] = None
@@ -862,7 +951,7 @@ class ResponseData:
     #: stream call this poll iteration covered. The client prints any
     #: :class:`StreamOutput` frames in order and, on encountering a
     #: :class:`StreamFinal`, treats its inner ``response`` as the
-    #: terminal :class:`ResponseData` to process. Polling responses
+    #: terminal :class:`StandardResponseData` to process. Polling responses
     #: drive the loop via their own ``end_command`` (typically
     #: another self-call with an updated cursor); set ``end_command``
     #: to None on the response that contains the terminal frame.
@@ -882,8 +971,65 @@ class ResponseData:
         StreamWS | None, IOAttrs('sw', store_default=False)
     ] = None
 
+    @override
+    @classmethod
+    def get_type_id(cls) -> ResponseTypeID:
+        return ResponseTypeID.STANDARD
 
-# Now that :class:`ResponseData` exists in the module namespace,
-# finish prep of :class:`StreamFinal` (which references ResponseData
+
+@ioprepped
+@dataclass
+class SessionHandleResponse(ResponseData):
+    """Unsolicited: the resume token for a session just created.
+
+    A bacloud session's channel is created by the handshake itself --
+    the client dials with no token at all -- so the node has to hand
+    back the credential for *re*-attaching to that channel. It arrives
+    as the session's first message rather than as a field on some
+    answer, because it is not an answer to anything: this is exactly
+    the case the response hierarchy exists for, and a reader tells it
+    apart from a command result by type rather than by correlation.
+
+    The client stores it and presents it as ``X-WS-Token`` on any
+    reconnect. It needs no refreshing: it is minted to outlive the
+    session's own duration cap, and a channel that has ended is
+    tombstoned and refuses every token ever minted for it.
+    """
+
+    #: Signed capability token, base64url-encoded. Opaque to the
+    #: client, which only ever echoes it back on a reconnect.
+    token: Annotated[str, IOAttrs('t')]
+
+    #: Id of the channel this session runs on. Observability only --
+    #: the token is the authority -- but load-bearing for support: it
+    #: is the single string that ties a client-side failure to the
+    #: node-side log lines for the same session, and without it a
+    #: bacloud run cannot name the session it was using.
+    channel_id: Annotated[str, IOAttrs('c')]
+
+    #: Where to reconnect, naming the node that holds this session.
+    #:
+    #: Load-bearing, and not the same host the client dialed. In prod
+    #: bacloud dials a regional endpoint that routes each connection
+    #: to *some* node; session state lives in one node's process, so
+    #: re-dialing that endpoint would usually land somewhere with no
+    #: session to resume. (Streamcall can be node-agnostic because its
+    #: state is bamaster's; this is not.) The node fills in its own
+    #: address here and the client uses it for reconnects only.
+    ws_url: Annotated[str, IOAttrs('u')]
+
+    #: Unix-seconds expiry, for diagnostics. A client that finds
+    #: itself past this has been away longer than the session could
+    #: possibly have survived, so it should start a fresh one.
+    expiry_unix_seconds: Annotated[int, IOAttrs('e')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ResponseTypeID:
+        return ResponseTypeID.SESSION_HANDLE
+
+
+# Now that :class:`StandardResponseData` exists in the module namespace,
+# finish prep of :class:`StreamFinal` (which references StandardResponseData
 # via its ``response`` field).
 ioprep(StreamFinal)

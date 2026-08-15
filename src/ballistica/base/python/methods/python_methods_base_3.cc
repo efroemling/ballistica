@@ -37,6 +37,13 @@ namespace ballistica::base {
 
 // ---------------------------- getsimplesound --------------------------------
 
+// Legacy bare-name sound load. No first-party caller remains: the
+// public ``babase.getsimplesound()`` is now an inert Python shim
+// (``babase/_assetref.py``) that warns and returns a silent sound, and
+// everything else loads through asset-package wrappers
+// (``apsimplesoundget`` below). This native twin stays only so a mod
+// reaching into the private ``_babase`` module keeps the old behavior
+// until api 9 support ends, at which point both it and the shim go.
 static auto PyGetSimpleSound(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;

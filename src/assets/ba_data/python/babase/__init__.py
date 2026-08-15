@@ -64,7 +64,6 @@ from _babase import (
     get_virtual_safe_area_size,
     get_virtual_screen_size,
     apsimplesoundget,
-    getsimplesound,
     has_user_run_commands,
     have_permission,
     in_logic_thread,
@@ -139,6 +138,7 @@ from babase._asset_packages import (
     check_asset_package_load,
     loaded_asset_package_apverids,
 )
+from babase._assetref import SimpleSoundHandle, getsimplesound
 from babase._appmode import (
     AppMode,
     ControlPermission,
@@ -213,6 +213,7 @@ from babase._logging import (
     lifecyclelog,
     netlog,
     uilog,
+    userlog,
 )
 from babase._login import LoginAdapter, LoginInfo, discord_sign_in
 from babase._generated.enums import (
@@ -431,6 +432,7 @@ __all__ = [
     'shutdown_suppress_count',
     'SimpleDialog',
     'SimpleSound',
+    'SimpleSoundHandle',
     'suppress_config_and_state_writes',
     'SpecialChar',
     'storagename',
@@ -442,6 +444,7 @@ __all__ = [
     'TeamNotFoundError',
     'timestring',
     'uilog',
+    'userlog',
     'UIScale',
     'unlock_all_input',
     'update_internal_logger_levels',

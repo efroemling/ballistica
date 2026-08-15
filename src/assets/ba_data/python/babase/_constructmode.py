@@ -723,18 +723,25 @@ class ConstructAppMode(AppMode):
         _babase.app.create_async_task(self._run(), name='construct-mode retry')
 
     def _hand_off(self) -> None:
-        """Release the deferred launch intent to the normal app-mode."""
+        """Open the asset gate, then let the app finish coming up.
+
+        The ordering here is the whole point of the gate: assets, then
+        plugins, then the intent. Opening the asset gate before plugins
+        load is what lets them touch whatever they like; running them
+        before the intent goes out is what lets them still steer it (a
+        mode-selector swap, an intent of their own). The plugin and
+        intent halves live in :meth:`~babase.App.on_construct_complete`;
+        we just hand it the intent we've been holding.
+        """
         from babase._asset_packages import mark_construct_complete
 
         # Every required package is resolved and registered by now; open
-        # the too-early-load gate. Do this before the no-intent early-out
-        # below -- that path is just as resolved as this one.
+        # the too-early-load gate. Do this first -- the no-intent path is
+        # just as resolved as any other.
         mark_construct_complete()
 
         intent = self._deferred_intent
-        if intent is None:
-            # Nothing to release (e.g. a plugin already drove an intent).
-            return
         self._deferred_intent = None
+
         logger.debug('Construct-mode handing off to real app-mode.')
-        _babase.app.set_intent(intent)
+        _babase.app.on_construct_complete(intent)

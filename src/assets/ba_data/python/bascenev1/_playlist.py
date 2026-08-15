@@ -15,6 +15,31 @@ if TYPE_CHECKING:
 
 PlaylistType = list[dict[str, Any]]
 
+#: Playlist problems already warned about this run, as (kind, playlist
+#: name, detail) tuples. Playlists get rescanned repeatedly (menus,
+#: session setup, etc.), and a playlist referencing a since-removed map
+#: or mod is a steady state rather than an event, so warning per scan
+#: buries the log in duplicates -- one field app instance emitted the
+#: same two warnings 284 times. The problems are worth telling the user
+#: about exactly once; a rescan finding the same thing again is not
+#: news. Bounded by the number of distinct broken entries, so no
+#: pruning needed.
+_g_warned_playlist_problems: set[tuple[str, str, str]] = set()
+
+
+def _warn_playlist_problem_once(
+    kind: str, playlistname: str, detail: str, message: str, *args: Any
+) -> None:
+    """Log a playlist problem the first time it is seen this run."""
+    key = (kind, playlistname, detail)
+    if key in _g_warned_playlist_problems:
+        return
+    _g_warned_playlist_problems.add(key)
+    # ba.user: the cause and the fix both live on this user's machine
+    # (a removed map, an uninstalled mod), so this is for them to see
+    # and act on, not something to report to us.
+    babase.userlog.warning(message, *args)
+
 
 def filter_playlist(
     playlist: PlaylistType,
@@ -206,14 +231,23 @@ def filter_playlist(
             goodlist.append(entry)
 
         except babase.MapNotFoundError:
-            logging.warning(
+            mapname = entry['settings']['map']
+            _warn_playlist_problem_once(
+                'map',
+                name,
+                str(mapname),
                 'Map \'%s\' not found while scanning playlist \'%s\'.',
-                entry['settings']['map'],
+                mapname,
                 name,
             )
         except ImportError as exc:
-            logging.warning(
-                'Import failed while scanning playlist \'%s\': %s', name, exc
+            _warn_playlist_problem_once(
+                'import',
+                name,
+                str(exc),
+                'Import failed while scanning playlist \'%s\': %s',
+                name,
+                exc,
             )
         except Exception:
             logging.exception('Error in filter_playlist.')

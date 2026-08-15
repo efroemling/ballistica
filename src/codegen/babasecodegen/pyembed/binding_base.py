@@ -37,7 +37,6 @@ values = [
     _hooks.award_in_control_achievement,  # kAwardInControlAchievementCall
     _hooks.award_dual_wielding_achievement,  # kAwardDualWieldingAchievementCall
     _apputils.print_corrupt_file_error,  # kPrintCorruptFileErrorCall
-    _hooks.play_gong_sound,  # kPlayGongSoundCall
     _hooks.launch_coop_game,  # kLaunchCoopGameCall
     _hooks.purchases_restored_message,  # kPurchasesRestoredMessageCall
     _hooks.unavailable_message,  # kUnavailableMessageCall

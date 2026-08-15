@@ -67,10 +67,10 @@ def mark_construct_complete() -> None:
     _babase.mark_construct_assets_complete()
 
     # Logged because this is otherwise an invisible state change on a
-    # load-ordering invariant -- and because it is the only reliable
-    # marker that bring-up ended: the caller's own hand-off log is
-    # skipped on the no-deferred-intent path (headless), which made a
-    # test keyed on that line silently vacuous.
+    # load-ordering invariant -- and because it is the marker to key any
+    # 'did bring-up finish?' check on: it sits on ba.lifecycle alongside
+    # the rest of the boot trace, where construct-mode's own hand-off
+    # log is over on ba.assetmanager.
     _lifecyclelog.debug('Construct-mode asset gate opened.')
 
 

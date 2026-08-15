@@ -36,7 +36,31 @@ work on builds newer than what they were built against; not older - even if the
 api-version has not changed. In general it is best to always be running newest
 available builds.
 
+### Backwards-compatible changes already in effect
+These need no action to keep a mod working; they are listed because they
+change behavior a mod may be relying on or can now take advantage of.
+- Plugins are now loaded *after* the engine finishes acquiring its
+  asset-packages rather than before. In practice this means a plugin's module
+  is not even imported until every asset-package the engine found a
+  `# ba_meta require asset-package` line for -- including any your own plugin
+  declares -- is resolved and ready, so `on_app_running()` can load assets
+  freely. It is still early enough to steer what the app does next: setting
+  `babase.app.mode_selector`, calling `babase.app.register_subsystem()`, or
+  driving your own intent via `babase.app.set_intent()` all still work from
+  `on_app_running()`, because the launch intent is not dispatched until every
+  plugin has had its turn. The one thing that no longer works is running
+  plugin code *during* engine bring-up.
+
 ### Upcoming changes when api 9 support ends (and how to prepare for them)
+- `babase.getsimplesound()` is now inert and will be removed. It took a legacy
+  bare sound name (`'error'`, `'shieldDown'`, ...), which only ever resolved
+  while that sound's asset-package happened to be registered — so the same
+  call could work or silently fail depending on when it ran. It now returns a
+  silent sound and warns. Load the sound from its asset-package wrapper
+  instead: `babase.builtinassets.audio.error.get().play()`. Sounds outside the
+  builtin package (most of the classic ones) come from that package's own
+  wrapper via `bascenev1`/`bauiv1`, and cannot be loaded before the app
+  finishes bringing assets up.
 - `ba*.Lstr` is going away. Migrate all uses of it to the new `ba*.LangStr`
   class.
 - Engine calls that return an `Lstr` are growing a `langstr` keyword argument.

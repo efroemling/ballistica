@@ -19,6 +19,17 @@ balog = logging.getLogger(ClientLoggerName.BA.value)
 #: Logger for general app operation; ``INFO`` is visible by default.
 applog = logging.getLogger(ClientLoggerName.APP.value)
 
+#: Logger for issues specific to this user — a playlist referencing a
+#: map they removed, a mod of theirs that won't import, and so on.
+#:
+#: These are worth surfacing to whoever is running the app (they can
+#: act on them), but they say nothing about the health of the engine,
+#: so entries here never trigger a cloud log report no matter what
+#: level they are logged at. Use it for problems whose cause and fix
+#: both live on the user's machine; anything that might indicate an
+#: engine bug belongs on a regular logger.
+userlog = logging.getLogger(ClientLoggerName.USER.value)
+
 #: Logger for asset loading — textures, sounds, models, etc.
 assetslog = logging.getLogger(ClientLoggerName.ASSETS.value)
 

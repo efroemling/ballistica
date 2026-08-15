@@ -23,6 +23,7 @@ class ClientLoggerName(Enum):
     BA = 'ba'
     ENV = 'ba.env'
     APP = 'ba.app'
+    USER = 'ba.user'
     ASSETS = 'ba.assets'
     ASSET_MANAGER = 'ba.assetmanager'
     AUDIO = 'ba.audio'
@@ -57,6 +58,8 @@ class ClientLoggerName(Enum):
             return 'engine environment bootstrapping'
         if self is cls.APP:
             return 'general app operation - INFO is visible by default'
+        if self is cls.USER:
+            return 'For issues specific to this user.'
         if self is cls.ASSETS:
             return 'textures, sounds, models, etc.'
         if self is cls.ASSET_MANAGER:

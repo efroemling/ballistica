@@ -634,6 +634,10 @@ auto BuiltinStrings::Ui::UnknownError() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/ui/unknown_error");
 }
 
+auto BuiltinStrings::Ui::UpdateAvailable() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/ui/update_available");
+}
+
 auto BuiltinStrings::Ui::Updating() -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/ui/updating");
 }

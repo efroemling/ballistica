@@ -11,7 +11,7 @@ import _babase
 from efro.util import utc_now
 from efro.error import CommunicationError
 from bacommon.logreporting import LogReportWindow
-from babase._logging import logreportlog
+from babase._logging import logreportlog, userlog
 from babase._apputils import should_submit_debug_info
 
 if TYPE_CHECKING:
@@ -217,6 +217,19 @@ class LogReporter:
         # send that logs a warning would arm the next report, which
         # would fail and log again -- a slow self-sustaining loop.
         if entry.name == logreportlog.name:
+            return
+
+        # User-specific issues (a playlist naming a map they deleted,
+        # a mod of theirs that won't import) are worth telling *them*
+        # about at whatever level fits, but they say nothing about
+        # engine health, so they never arm a report. Entries still
+        # reach the log cache, so they remain as context in windows
+        # tripped by something else. Hard-coded for now; if this needs
+        # to grow, the natural home is an exclusion list on
+        # LogReportSpec so it can be tuned from the cloud.
+        if entry.name == userlog.name or entry.name.startswith(
+            f'{userlog.name}.'
+        ):
             return
 
         with self._cond:

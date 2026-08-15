@@ -74,7 +74,6 @@ class BasePython {
     kAwardInControlAchievementCall,
     kAwardDualWieldingAchievementCall,
     kPrintCorruptFileErrorCall,
-    kPlayGongSoundCall,
     kLaunchCoopGameCall,
     kPurchasesRestoredMessageCall,
     kDismissWiiRemotesWindowCall,

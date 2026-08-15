@@ -49,7 +49,7 @@ def _request_storage_permission() -> bool:
     from babase._generated.enums import Permission
 
     if not _babase.have_permission(Permission.STORAGE):
-        _babase.getsimplesound('error').play()
+        builtinassets.audio.error.get().play()
         _babase.screenmessage(
             builtinassets.strings.ui.storage_permission_needed,
             color=(1, 0, 0),

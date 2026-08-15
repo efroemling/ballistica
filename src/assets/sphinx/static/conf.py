@@ -143,6 +143,11 @@ nitpick_ignore = [
     ('py:class', 'bacommon.displayitem.Wrapper'),
     ('py:class', 'bacommon.displayitem.Item'),
     ('py:class', 'bacommon.displayitem.ItemTypeID'),
+    # Rendered unqualified in bacloud client signatures; their module
+    # (bacommon.bacloud) is a skipped namespace, so the qualified
+    # regex below never sees these forms.
+    ('py:class', 'StandardRequestData'),
+    ('py:class', 'StandardResponseData'),
     #
     # Stuff that seems like we could fix (presumably issues due to not
     # importing things at runtime (only if TYPE_CHECKING), etc.)
@@ -187,6 +192,8 @@ nitpick_ignore = [
     ('py:class', 'PlayerT'),
     ('py:class', 'TeamT'),
     ('py:class', 'P'),
+    ('py:class', 'SendT'),
+    ('py:class', 'RecvT'),
     ('py:class', 'P.args'),
     ('py:class', 'P.kwargs'),
     ('py:obj', 'typing.P'),

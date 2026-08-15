@@ -62,6 +62,8 @@ class AccountV1Subsystem:
 
         (internal)
         """
+        from babase import builtinassets
+
         # Safe up-call: the featureset is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
@@ -71,7 +73,7 @@ class AccountV1Subsystem:
             classicassets.strings.economy.received_tickets(count=count),
             color=(0, 1, 0),
         )
-        babase.getsimplesound('cashRegister').play()
+        builtinassets.audio.cash_register.get().play()
 
     def cache_league_rank_data(self, data: Any) -> None:
         """(internal)"""
@@ -282,7 +284,7 @@ class AccountV1Subsystem:
             # Ick; this can get called early in the bootstrapping process
             # before we're allowed to load assets. Guard against that.
             if babase.asset_loads_allowed():
-                babase.getsimplesound('click01').play()
+                builtinassets.audio.click01.get().play()
 
     def on_account_state_changed(self) -> None:
         """(internal)"""
@@ -331,7 +333,7 @@ class AccountV1Subsystem:
             babase.screenmessage(
                 builtinassets.strings.ui.error, color=(1, 0, 0)
             )
-            babase.getsimplesound('error').play()
+            builtinassets.audio.error.get().play()
             return
 
         # If we're not signed in, queue up the code to run the next time we
@@ -349,7 +351,7 @@ class AccountV1Subsystem:
                         classicassets.strings.account.sign_in_for_codes,
                         color=(1, 0, 0),
                     )
-                    babase.getsimplesound('error').play()
+                    builtinassets.audio.error.get().play()
 
             self.pending_promo_codes.append(code)
             babase.apptimer(6.0, check_pending_codes)

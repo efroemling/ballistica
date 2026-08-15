@@ -17,9 +17,17 @@ the poll-mode intermediary later.
 """
 
 import asyncio
-from typing import TYPE_CHECKING
+from enum import Enum
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Annotated, override
 
-from efro.dataclassio import dataclass_from_json, dataclass_to_json
+from efro.dataclassio import (
+    dataclass_from_json,
+    dataclass_to_json,
+    ioprepped,
+    IOAttrs,
+    IOMultiType,
+)
 from efro.smartsocket import (
     AckFrame,
     HelloFrame,
@@ -33,6 +41,7 @@ from efro.smartsocket import (
     SmartSocketChannelPolicy,
     SmartSocketEndpointPolicy,
     SmartSocketSlot,
+    SS_CLOSE_BAD_PAYLOAD,
     SS_CLOSE_CHANNEL_ENDED,
     SS_CLOSE_MAX_DURATION,
     SS_CLOSE_TOKEN_EXPIRED,
@@ -42,6 +51,41 @@ from efro.smartsocket import (
 if TYPE_CHECKING:
     from collections.abc import Callable, Coroutine
     from typing import Any
+
+
+class _PayloadTypeID(Enum):
+    """Type ids for the test payload hierarchy."""
+
+    TEXT = 't'
+
+
+class _Payload(IOMultiType[_PayloadTypeID]):
+    """Root of the test channel's payload hierarchy."""
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> _PayloadTypeID:
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: _PayloadTypeID) -> type[_Payload]:
+        assert type_id is _PayloadTypeID.TEXT
+        return _Text
+
+
+@ioprepped
+@dataclass
+class _Text(_Payload):
+    """A payload carrying one string, so tests stay readable."""
+
+    text: Annotated[str, IOAttrs('t')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> _PayloadTypeID:
+        return _PayloadTypeID.TEXT
+
 
 #: Compressed windows so a whole recovery scenario runs in well
 #: under a second. Real defaults are 30s ping / 120s linger.
@@ -129,11 +173,25 @@ class _FakeRelay:
         elif isinstance(frame, PingFrame):
             transport.deliver(PongFrame())
 
-    def push(self, payload: str, seq: int | None = None) -> None:
+    def push(self, text: str, seq: int | None = None) -> None:
         """Send a payload down to the endpoint."""
+        self.push_raw(dataclass_to_json(_Text(text=text)), seq=seq)
+
+    def push_raw(self, payload: str, seq: int | None = None) -> None:
+        """Send an already-encoded payload, valid or not."""
         transport = self.live
         transport.push_seq = seq if seq is not None else transport.push_seq + 1
         transport.deliver(MsgFrame(seq=transport.push_seq, payload=payload))
+
+    @property
+    def accepted_text(self) -> list[str]:
+        """What we accepted, decoded -- what assertions read."""
+        out: list[str] = []
+        for payload in self.accepted:
+            message = dataclass_from_json(_Payload, payload)
+            assert isinstance(message, _Text)
+            out.append(message.text)
+        return out
 
 
 class _FakeTransport:
@@ -211,15 +269,29 @@ class _BatchTransport:
         self.pending.clear()
 
 
-def _endpoint(relay: _FakeRelay, received: list[str]) -> SmartSocketEndpoint:
+def _endpoint(
+    relay: _FakeRelay, received: list[str]
+) -> SmartSocketEndpoint[_Payload, _Payload]:
     """An endpoint wired to append inbound payloads to a list."""
 
-    async def _on_message(payload: str) -> None:
-        received.append(payload)
+    async def _on_message(message: _Payload) -> None:
+        assert isinstance(message, _Text)
+        received.append(message.text)
 
     return SmartSocketEndpoint(
-        relay.connect, on_message=_on_message, attach_timeout_seconds=0.5
+        relay.connect,
+        send_type=_Payload,
+        recv_type=_Payload,
+        on_message=_on_message,
+        attach_timeout_seconds=0.5,
     )
+
+
+async def _send(
+    endpoint: SmartSocketEndpoint[_Payload, _Payload], text: str
+) -> None:
+    """Send one text payload; keeps the transport tests terse."""
+    await endpoint.send(_Text(text=text))
 
 
 def _run(coro: 'Coroutine[Any, Any, None]') -> None:
@@ -317,13 +389,13 @@ async def _send_and_receive_in_order() -> None:
 
     await _wait_for(lambda: endpoint.connected)
     for i in range(5):
-        await endpoint.send(f'up-{i}')
+        await _send(endpoint, f'up-{i}')
     for i in range(5):
         relay.push(f'down-{i}')
 
     await _wait_for(lambda: len(received) == 5)
     await _wait_for(lambda: len(relay.accepted) == 5)
-    assert relay.accepted == [f'up-{i}' for i in range(5)]
+    assert relay.accepted_text == [f'up-{i}' for i in range(5)]
     assert received == [f'down-{i}' for i in range(5)]
 
     await endpoint.end()
@@ -366,19 +438,19 @@ async def _reconnect_resumes_gaplessly() -> None:
     runner = asyncio.ensure_future(endpoint.run())
     await _wait_for(lambda: endpoint.connected)
 
-    await endpoint.send('before')
-    await _wait_for(lambda: relay.accepted == ['before'])
+    await _send(endpoint, 'before')
+    await _wait_for(lambda: relay.accepted_text == ['before'])
 
     # Kill the connection out from under it.
     relay.live.drop()
     await _wait_for(lambda: relay.connects == 2, timeout=10.0)
     await _wait_for(lambda: endpoint.connected, timeout=10.0)
 
-    await endpoint.send('after')
+    await _send(endpoint, 'after')
     await _wait_for(lambda: len(relay.accepted) == 2, timeout=10.0)
     # The relay's own gap assertion would have fired on a skipped
     # seq; this catches the other failure, a replay.
-    assert relay.accepted == ['before', 'after']
+    assert relay.accepted_text == ['before', 'after']
 
     await endpoint.end()
     await asyncio.wait_for(runner, timeout=5.0)
@@ -398,9 +470,11 @@ async def _unacked_payloads_survive_a_drop() -> None:
     # Sever first, then send: the payload can only reach the relay by
     # riding the un-acked buffer through a reattach.
     relay.live.drop()
-    await endpoint.send('into-the-void')
+    await _send(endpoint, 'into-the-void')
 
-    await _wait_for(lambda: relay.accepted == ['into-the-void'], timeout=10.0)
+    await _wait_for(
+        lambda: relay.accepted_text == ['into-the-void'], timeout=10.0
+    )
 
     await endpoint.end()
     await asyncio.wait_for(runner, timeout=5.0)
@@ -451,8 +525,10 @@ async def _silent_loss_is_detected_and_recovered() -> None:
     relay.silent = False
     await _wait_for(lambda: endpoint.connected, timeout=10.0)
 
-    await endpoint.send('post-recovery')
-    await _wait_for(lambda: relay.accepted == ['post-recovery'], timeout=10.0)
+    await _send(endpoint, 'post-recovery')
+    await _wait_for(
+        lambda: relay.accepted_text == ['post-recovery'], timeout=10.0
+    )
 
     await endpoint.end()
     await asyncio.wait_for(runner, timeout=5.0)
@@ -514,7 +590,11 @@ async def _expired_token_triggers_refresh_then_resumes() -> None:
         refreshes.append(1)
 
     endpoint = SmartSocketEndpoint(
-        relay.connect, refresh=_refresh, attach_timeout_seconds=0.5
+        relay.connect,
+        send_type=_Payload,
+        recv_type=_Payload,
+        refresh=_refresh,
+        attach_timeout_seconds=0.5,
     )
     runner = asyncio.ensure_future(endpoint.run())
     await _wait_for(lambda: endpoint.connected)
@@ -544,22 +624,104 @@ async def _send_blocks_when_in_flight_buffer_is_full() -> None:
     # waits -- it does not silently drop, which would break
     # gapless-or-dead from the inside.
     relay = _FakeRelay()
+
+    # Size the cap off a real encoded payload rather than a literal
+    # byte count: the endpoint buffers what goes on the wire, so a
+    # hard-coded number quietly changes meaning whenever the payload
+    # type does. Room for one of these, not two.
+    cap = len(dataclass_to_json(_Text(text='x' * 60))) + 10
     endpoint = SmartSocketEndpoint(
-        relay.connect, in_flight_cap_bytes=64, attach_timeout_seconds=0.5
+        relay.connect,
+        send_type=_Payload,
+        recv_type=_Payload,
+        in_flight_cap_bytes=cap,
+        attach_timeout_seconds=0.5,
     )
     runner = asyncio.ensure_future(endpoint.run())
     await _wait_for(lambda: endpoint.connected)
 
     relay.silent = True  # No acks from here on.
-    await endpoint.send('x' * 60)
+    await _send(endpoint, 'x' * 60)
 
-    blocked = asyncio.ensure_future(endpoint.send('y' * 60))
+    blocked = asyncio.ensure_future(_send(endpoint, 'y' * 60))
     await asyncio.sleep(0.2)
     assert not blocked.done(), 'send should have blocked on a full buffer'
 
     blocked.cancel()
     runner.cancel()
     await asyncio.gather(runner, blocked, return_exceptions=True)
+
+
+# ---------------------------------------------------------------- #
+# Payload typing.
+# ---------------------------------------------------------------- #
+
+
+def test_send_rejects_a_foreign_payload_type() -> None:
+    """The declared send hierarchy is enforced at the sender."""
+    _run(_send_rejects_a_foreign_payload_type())
+
+
+async def _send_rejects_a_foreign_payload_type() -> None:
+    relay = _FakeRelay()
+    received: list[str] = []
+    endpoint = _endpoint(relay, received)
+    runner = asyncio.ensure_future(endpoint.run())
+    await _wait_for(lambda: endpoint.connected)
+
+    # Static typing catches this for typed callers; untyped ones get
+    # told at the point of the mistake rather than by a dead session
+    # on the far end.
+    class _Foreign:
+        pass
+
+    try:
+        await endpoint.send(_Foreign())  # type: ignore[arg-type]
+        raise AssertionError('expected a TypeError')
+    except TypeError:
+        pass
+
+    # And the session is untouched -- a caller error is not a
+    # protocol error.
+    assert not endpoint.done
+    await _send(endpoint, 'still-fine')
+    await _wait_for(lambda: relay.accepted_text == ['still-fine'])
+
+    runner.cancel()
+    await asyncio.gather(runner, return_exceptions=True)
+
+
+def test_undecodable_inbound_payload_kills_the_session() -> None:
+    """A message we cannot deliver ends the session; it is never skipped."""
+    _run(_undecodable_inbound_payload_kills_the_session())
+
+
+async def _undecodable_inbound_payload_kills_the_session() -> None:
+    # 'Gapless or dead' leaves no third option: silently dropping an
+    # undeliverable message would hand the far end a false belief
+    # that we received it.
+    relay = _FakeRelay()
+    received: list[str] = []
+    endpoint = _endpoint(relay, received)
+    runner = asyncio.ensure_future(endpoint.run())
+    await _wait_for(lambda: endpoint.connected)
+
+    relay.push('good')
+    await _wait_for(lambda: received == ['good'])
+
+    # Not decodable as our declared root.
+    relay.push_raw('{"nope":1}')
+
+    await asyncio.wait_for(runner, timeout=10.0)
+    assert endpoint.done
+    assert endpoint.close_code == SS_CLOSE_BAD_PAYLOAD
+    # Retrying reproduces it, so this is a death rather than a resume.
+    assert action_for_close_code(endpoint.close_code) is (
+        SmartSocketAction.DEAD
+    )
+    # The good one still arrived, and the bad one never masqueraded
+    # as delivered.
+    assert received == ['good']
 
 
 # ---------------------------------------------------------------- #
@@ -578,14 +740,15 @@ async def _endpoint_works_over_a_discontinuous_transport() -> None:
     # intermediary open to us later.
     received: list[str] = []
 
-    async def _on_message(payload: str) -> None:
-        received.append(payload)
+    async def _on_message(message: _Payload) -> None:
+        assert isinstance(message, _Text)
+        received.append(message.text)
 
     batch = _BatchTransport(
         [
             HelloFrame(last_recv=0, policy=_FAST_POLICY),
-            MsgFrame(seq=1, payload='a'),
-            MsgFrame(seq=2, payload='b'),
+            MsgFrame(seq=1, payload=dataclass_to_json(_Text(text='a'))),
+            MsgFrame(seq=2, payload=dataclass_to_json(_Text(text='b'))),
         ]
     )
     served = False
@@ -598,7 +761,11 @@ async def _endpoint_works_over_a_discontinuous_transport() -> None:
         return batch
 
     endpoint = SmartSocketEndpoint(
-        _connect, on_message=_on_message, attach_timeout_seconds=0.5
+        _connect,
+        send_type=_Payload,
+        recv_type=_Payload,
+        on_message=_on_message,
+        attach_timeout_seconds=0.5,
     )
     await asyncio.wait_for(endpoint.run(), timeout=10.0)
 

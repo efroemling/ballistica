@@ -86,6 +86,16 @@ class CloudValsTransient:
         LogReportSpec | None, IOAttrs('lr', store_default=False)
     ] = None
 
+    #: Whether a newer version of the app is available to this client.
+    #: Drives a one-off gentle screen-message shortly after
+    #: connectivity comes up; deliberately transient since whether an
+    #: update exists is a fact about the exact build the server sees,
+    #: not something worth remembering into the next launch (which may
+    #: be the updated build).
+    update_available: Annotated[bool, IOAttrs('ua', store_default=False)] = (
+        False
+    )
+
 
 @ioprepped
 @dataclass

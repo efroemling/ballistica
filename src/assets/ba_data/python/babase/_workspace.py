@@ -58,12 +58,16 @@ class WorkspaceSubsystem:
         ).start()
 
     def _errmsg(self, msg: str | babase.LangStr) -> None:
+        from babase import builtinassets
+
         _babase.screenmessage(msg, color=(1, 0, 0))
-        _babase.getsimplesound('error').play()
+        builtinassets.audio.error.get().play()
 
     def _successmsg(self, msg: str | babase.LangStr) -> None:
+        from babase import builtinassets
+
         _babase.screenmessage(msg, color=(0, 1, 0))
-        _babase.getsimplesound('gunCocking').play()
+        builtinassets.audio.gun_cocking.get().play()
 
     def _set_active_workspace_bg(
         self,

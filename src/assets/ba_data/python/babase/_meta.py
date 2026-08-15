@@ -220,7 +220,7 @@ class MetadataSubsystem:
             do_play_error_sound = True
 
         if do_play_error_sound:
-            _babase.getsimplesound('error').play()
+            builtinassets.audio.error.get().play()
 
         # Let the game know we're done.
         assert self._scan_complete_cb is not None

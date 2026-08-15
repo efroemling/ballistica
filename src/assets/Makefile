@@ -203,6 +203,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/babase/_apputils.py \
   $(BUILD_DIR)/ba_data/python/babase/_asset_packages.py \
+  $(BUILD_DIR)/ba_data/python/babase/_assetref.py \
   $(BUILD_DIR)/ba_data/python/babase/_assetsubsystem.py \
   $(BUILD_DIR)/ba_data/python/babase/_asyncio.py \
   $(BUILD_DIR)/ba_data/python/babase/_automation.py \
@@ -581,6 +582,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/workspace/assetsv1.py \
   $(BUILD_DIR)/ba_data/python/bacommontools/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommontools/bacloud.py \
+  $(BUILD_DIR)/ba_data/python/bacommontools/bacloudsession.py \
   $(BUILD_DIR)/ba_data/python/bacommontools/meshcompile.py \
   $(BUILD_DIR)/ba_data/python/bacommontools/pcommands.py \
   $(BUILD_DIR)/ba_data/python/bacommontools/streamws.py \

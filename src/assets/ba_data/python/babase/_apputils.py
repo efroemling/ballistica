@@ -77,6 +77,7 @@ def should_submit_debug_info() -> bool:
 
 def print_corrupt_file_error() -> None:
     """Print an error if a corrupt file is found."""
+    from babase import builtinassets
 
     if _babase.app.env.gui:
         _babase.apptimer(
@@ -88,7 +89,7 @@ def print_corrupt_file_error() -> None:
                 color=(1, 0, 0),
             ),
         )
-        _babase.apptimer(2.0, _babase.getsimplesound('error').play)
+        _babase.apptimer(2.0, builtinassets.audio.error.get().play)
 
 
 _tb_held_files: list[TextIO] = []

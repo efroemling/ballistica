@@ -440,15 +440,17 @@ class App:
 
         Facilitates the subsystem receiving state callbacks, etc.
 
-        Note that subsystems can only be registered before the app
-        completes its transition to the :attr:`~AppState.RUNNING` state.
+        Note that subsystems can only be registered up until the app
+        dispatches its launch intent -- which is to say, any time before
+        or during a plugin's :meth:`~babase.Plugin.on_app_running()`
+        call, but not after.
 
         Returns the passed object for convenience in assigning it to an
         attr/etc.
         """
 
-        # We only allow registering new subsystems if we've not yet
-        # reached the 'running' state. This ensures that all subsystems
+        # Registration closes once plugins have been brought up (see
+        # App._run_plugin_phase). This ensures that all subsystems
         # receive a consistent set of callbacks starting with
         # on_app_running().
 
@@ -775,7 +777,7 @@ class App:
                 _babase.screenmessage(
                     builtinassets.strings.ui.error, color=(1, 0, 0)
                 )
-                _babase.getsimplesound('error').play()
+                builtinassets.audio.error.get().play()
             except ImportError:
                 pass
 
@@ -816,10 +818,10 @@ class App:
         _babase.set_ui_scale(scale.name.lower())
 
         # Inform all subsystems that something screen-related has
-        # changed. We assume subsystems won't be added at this point so
-        # we can use the list directly.
-        assert self._subsystem_registration_ended
-        for subsystem in self._subsystems:
+        # changed. Operate on a copy of the list here because this can
+        # be called while subsystems are still being added (a ui-scale
+        # change during construct-mode bring-up, for instance).
+        for subsystem in self._subsystems.copy():
             try:
                 subsystem.on_ui_scale_change()
             except Exception:
@@ -926,10 +928,11 @@ class App:
                         'Error deactivating app-mode %s.', self._mode
                     )
 
-            # Reset all subsystems. We assume subsystems won't be added
-            # at this point so we can use the list directly.
-            assert self._subsystem_registration_ended
-            for subsystem in self._subsystems:
+            # Reset all subsystems. Operate on a copy; registration is
+            # normally closed by now, but an intent dispatched while
+            # construct-mode is still sitting on a failed bring-up can
+            # get here with it open.
+            for subsystem in self._subsystems.copy():
                 try:
                     subsystem.reset()
                 except Exception:
@@ -961,8 +964,9 @@ class App:
 
     def _on_app_mode_activated(self) -> None:
         """Tell subsystems an app-mode just became active."""
-        assert self._subsystem_registration_ended
-        for subsystem in self._subsystems:
+        # Operate on a copy here; construct-mode activates before
+        # subsystem registration is closed off.
+        for subsystem in self._subsystems.copy():
             try:
                 subsystem.on_app_mode_activated()
             except Exception:
@@ -977,28 +981,35 @@ class App:
         Construct-mode is not an intent handler and is never returned by
         the mode-selector, so we activate it here by hand — mirroring the
         mode-swap half of :meth:`_apply_intent`, minus intent handling. It
-        readies the required asset-packages and then releases ``intent`` to
-        the normal app-mode (via :meth:`set_intent`) once bring-up
-        completes.
+        readies the required asset-packages and then hands ``intent`` back
+        to us via :meth:`on_construct_complete` once bring-up completes.
         """
         # pylint: disable=cyclic-import
         from babase._constructmode import ConstructAppMode
 
         assert _babase.in_logic_thread()
 
-        # If a mode is somehow already active (e.g. a plugin drove an
-        # intent alongside an exec command), don't disrupt it; just
-        # dispatch normally and skip the construct-mode gate.
+        # If a mode is somehow already active, don't disrupt it; just
+        # dispatch normally and skip the construct-mode gate. Plugins
+        # still need bringing up in that case (nothing else will do it),
+        # even though they won't get the asset guarantees this gate
+        # normally gives them -- hence the warning.
         if self._mode is not None:
+            lifecyclelog.warning(
+                'App-mode %s already active at construct-mode entry;'
+                ' skipping the asset bring-up gate.',
+                self._mode,
+            )
+            self._run_plugin_phase()
             self.set_intent(intent)
             return
 
         mode = ConstructAppMode(deferred_intent=intent)
 
         # Reset all subsystems, matching what _apply_intent does when a
-        # mode becomes active. (Subsystem registration is closed by now.)
-        assert self._subsystem_registration_ended
-        for subsystem in self._subsystems:
+        # mode becomes active. Operate on a copy; registration is still
+        # open at this point (plugins have not loaded yet).
+        for subsystem in self._subsystems.copy():
             try:
                 subsystem.reset()
             except Exception:
@@ -1026,7 +1037,7 @@ class App:
 
         del intent
         _babase.screenmessage(builtinassets.strings.ui.error, color=(1, 0, 0))
-        _babase.getsimplesound('error').play()
+        builtinassets.audio.error.get().play()
 
     def _on_initing(self) -> None:
         """Called when the app enters the initing state.
@@ -1130,19 +1141,17 @@ class App:
         # Let our native layer know.
         _babase.on_app_running()
 
-        # Set a default app-mode-selector if none has been set yet
-        # by a plugin or whatnot.
+        # Set a default app-mode-selector. Plugins wanting their own get
+        # to replace this in their on_app_running call, which still lands
+        # before any intent is dispatched (see on_construct_complete).
         if self._mode_selector is None:
             self._mode_selector = DefaultAppModeSelector()
 
         # Inform all app subsystems in the same order they were
         # registered. Operate on a copy here because subsystems can
-        # still be added at this point.
-        #
-        # NOTE: Do we need to allow registering still at this point? If
-        # something gets registered here, it won't have its
-        # on_app_running callback called. Hmm; I suppose that's the only
-        # way that plugins can register subsystems though.
+        # still be added at this point; any that are get their
+        # on_app_running call in on_construct_complete, which is also
+        # where registration gets cut off.
         for subsystem in self._subsystems.copy():
             try:
                 subsystem.on_app_running()
@@ -1151,12 +1160,9 @@ class App:
                     'Error in on_app_running() for subsystem %s.', subsystem
                 )
 
-        # Cut off new subsystem additions at this point.
-        self._subsystem_registration_ended = True
-
         # Determine the launch intent: an explicit 'exec' command if one
-        # was provided, else our default thing — but only if a plugin
-        # hasn't already driven an intent.
+        # was provided, else our default thing — but only if nothing
+        # has already driven an intent.
         exec_cmd = _babase.exec_arg()
         initial_intent: AppIntent | None
         if exec_cmd is not None:
@@ -1168,12 +1174,93 @@ class App:
 
         # Bring required assets up in construct-mode first; it releases
         # this intent to the app-mode that actually handles it once
-        # bring-up completes. (If a plugin already drove an intent,
+        # bring-up completes. (If something already drove an intent,
         # initial_intent is None and we leave that flow untouched.)
         if initial_intent is not None:
             self._enter_construct_mode(initial_intent)
 
         lifecyclelog.info('on-running end')
+
+    def on_construct_complete(self, intent: AppIntent | None) -> None:
+        """Called by construct-mode once required assets are in place.
+
+        Loads plugins, closes off subsystem registration, and finally
+        releases *intent* (the launch intent construct-mode has been
+        holding) to the app-mode that handles it.
+
+        Plugins load *here* -- rather than in the usual on_app_running
+        subsystem pass -- because this is the only spot where both of
+        the things they need are true at once:
+
+        * Every asset-package the meta-scan found a ``# ba_meta require
+          asset-package`` line for is resolved and registered, so a
+          plugin can load whatever it likes without tripping the
+          too-early-load gate (see
+          :func:`babase._asset_packages.check_asset_package_load`).
+          That covers packages declared by plugins themselves, since the
+          user scripts dir is scanned regardless of which plugins wind
+          up enabled.
+        * No app-mode has been activated and no intent has been
+          dispatched yet, so a plugin still gets to influence what
+          happens next: replacing :attr:`mode_selector`, registering app
+          subsystems, or driving its own intent via :meth:`set_intent`.
+
+        A happy side effect of deferring the *load* and not merely the
+        callback: a plugin's module is not imported until now either, so
+        no plugin-authored code at all -- module top-level included --
+        runs before assets are ready.
+
+        :meta private:
+        """
+        assert _babase.in_logic_thread()
+
+        self._run_plugin_phase()
+
+        if intent is None:
+            # Nothing to release; something drove an intent before
+            # construct-mode even got going.
+            return
+
+        # If a plugin just drove its own intent, that one wins -- ours
+        # would only stomp it. (_pending_intent stays None throughout
+        # bring-up, since construct-mode holds our intent rather than
+        # setting it, so a non-None value here can only be plugin-made.)
+        if self._pending_intent is not None:
+            lifecyclelog.info('Deferring to plugin-driven launch intent.')
+            return
+
+        self.set_intent(intent)
+
+    def _run_plugin_phase(self) -> None:
+        """Load plugins, then close off subsystem registration.
+
+        Idempotent; only the first call does anything.
+        """
+        assert _babase.in_logic_thread()
+
+        if self._subsystem_registration_ended:
+            return
+
+        # Registration only ever appends, so anything past this index
+        # once plugins are done is a subsystem some plugin added. Those
+        # missed the on_app_running pass in _on_running, so give them
+        # theirs below.
+        preexisting_count = len(self._subsystems)
+
+        self.plugins.load_and_notify()
+
+        for subsystem in self._subsystems[preexisting_count:]:
+            try:
+                subsystem.on_app_running()
+            except Exception:
+                balog.exception(
+                    'Error in on_app_running() for subsystem %s.', subsystem
+                )
+
+        # Cut off new subsystem additions at this point. From here on
+        # out everything sees a fixed set whose members have all had a
+        # consistent run of callbacks starting with on_app_running().
+        self._subsystem_registration_ended = True
 
     def _apply_app_config(self) -> None:
         assert _babase.in_logic_thread()
