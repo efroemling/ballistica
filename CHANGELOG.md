@@ -76,6 +76,8 @@
   `babase` asset-package wrapper type for this pre-featureset layer.)
 - Add `in_world` attribute to image node, as in text node (Thanks Dliwk!).
 - Game Controller Haptics!
+- Fixed the private party join screen not indicating that sign-in is required
+  when the user is signed out.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.
