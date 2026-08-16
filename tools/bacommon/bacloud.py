@@ -186,8 +186,29 @@ if TYPE_CHECKING:
 #               so prod and push-public land together, as with 26.
 #               The separate per-stream WebSocket (``streamws.py``)
 #               remains only for clients with no session at all, e.g.
-#               against a node too old to host one.
-BACLOUD_VERSION = 27
+#               against a node too old to host one. (It was then
+#               deleted outright, along with the HTTP
+#               request-per-connection fallback, later the same day.)
+# 28 (2026-08-15): The stream-kickoff signal becomes explicit and the
+#               client-side stream-polling machinery is deleted. A
+#               streamed command's kickoff response now carries
+#               ``stream_call_id`` -- consumed by the basn session
+#               adapter, which follows the stream server-side and
+#               relays output down the session -- replacing the old
+#               shape: an ``end_command`` chain pointing at the
+#               ``_streamcall_poll`` command, detected by basn via
+#               response-sniffing. Deleted with it: the
+#               ``_streamcall_poll`` handler, the ``stream_frames``
+#               response field, the ``stream`` request flag, the
+#               third (stream) element of ``end_command`` tuples, and
+#               the long-dead ``stream_ws``/``StreamWS``
+#               WebSocket-pickup field.
+#               ``StreamFrame``/``StreamOutput``/``StreamFinal``
+#               remain: they ride the internal bamaster->basn poll
+#               hop and basn's streamcall WS fan-out. ``MIN_VERSION``
+#               tracks ``BACLOUD_VERSION`` as usual; prod and
+#               push-public land together.
+BACLOUD_VERSION = 28
 
 
 def asset_file_cache_path(filehash: str) -> str:
@@ -316,14 +337,6 @@ class StandardRequestData(RequestData):
     payload: Annotated[dict, IOAttrs('p')]
     tzoffset: Annotated[float, IOAttrs('z')]
     isatty: Annotated[bool, IOAttrs('y')]
-
-    #: Whether this request is being made in stream mode. Set when the
-    #: previous response's ``end_command`` 3-tuple flagged the next
-    #: call as streamed. Has a soft-default of ``False`` (so older
-    #: stored payloads without the field deserialize) but no Python
-    #: default — every call site must pass it explicitly so the
-    #: stream-mode intent is always visible at construction.
-    stream: Annotated[bool, IOAttrs('s', soft_default=False)]
 
     #: Whether the originating CLI command is safe to retry even when a
     #: failure is *post-send* (the request may have reached the server).
@@ -471,9 +484,10 @@ class StreamFrame(IOMultiType[StreamFrameTypeID]):
     Producers emit a sequence of :class:`StreamOutput` frames as the
     underlying call generates output, then exactly one
     :class:`StreamFinal` frame carrying the terminal
-    :class:`StandardResponseData`. Consumers (bacloud directly in Phase 1, or
-    eventually via a basn WebSocket fan-out in Phase 2) iterate
-    frames in order and stop on the StreamFinal.
+    :class:`StandardResponseData`. These ride the internal
+    bamaster→basn poll hop and basn's streamcall WS fan-out;
+    the bacloud client itself never sees them (its stream output
+    arrives as :class:`StreamOutputResponse` session messages).
     """
 
     @override
@@ -513,10 +527,8 @@ class StreamOutput(StreamFrame):
 
 
 # Forward-prepped: ``response`` references :class:`StandardResponseData`,
-# which is defined further down. We declare it here so the class
-# exists before ``StandardResponseData`` can reference :class:`StreamFrame`
-# for its ``stream_frames`` field, then explicitly :func:`ioprep`
-# this class at the bottom of the module once both are defined.
+# which is defined further down, so we explicitly :func:`ioprep` this
+# class at the bottom of the module once both are defined.
 @will_ioprep
 @dataclass
 class StreamFinal(StreamFrame):
@@ -539,58 +551,6 @@ class StreamFinal(StreamFrame):
     @classmethod
     def get_type_id(cls) -> StreamFrameTypeID:
         return StreamFrameTypeID.FINAL
-
-
-@ioprepped
-@dataclass
-class StreamWS:
-    """Direct-WebSocket pickup info for a streamed bacloud call.
-
-    When a kickoff response carries a ``stream_ws`` field, the
-    bacloud client should open a WebSocket carrying ``ws_token``
-    on the handshake instead of falling into the ``_streamcall_poll``
-    polling loop. Old clients that don't know about this field fall
-    back to the polling path via ``end_command``; both are
-    populated on responses for compatibility.
-
-    The token is a signed capability Archive — any basn holding a
-    current :class:`bacommon.securedata.Reader` validates it
-    locally with no bamaster hop. The token expires after a short
-    window (~5 min); for mid-stream drops past expiry, the client
-    refreshes via a small RPC rather than re-kicking off the
-    whole stream.
-    """
-
-    #: ID of the streamcall this token authorizes attaching to.
-    #: Used by the client to construct its own WS URL when
-    #: :attr:`basn_url` is ``None``, and by basn at handshake time
-    #: to confirm the URL path matches the token's claim.
-    call_id: Annotated[str, IOAttrs('c')]
-
-    #: Signed capability Archive — carries the call_id, originator
-    #: accountid, and expiry. Verifiable by any basn holding a
-    #: current :class:`bacommon.securedata.Reader` (which clients
-    #: also receive via the v2-transport handshake). bacloud
-    #: passes it on the WS handshake header without needing to
-    #: inspect the contents.
-    ws_token: Annotated[securedata.Archive, IOAttrs('t')]
-
-    #: Unix-seconds expiry of ``ws_token``. Surfaced so the client
-    #: knows when to refresh on a mid-stream reconnect.
-    expiry_unix_seconds: Annotated[int, IOAttrs('e')]
-
-    #: Optional explicit WSS URL. When ``None`` (the default for
-    #: node-agnostic streams — i.e. all current bacloud streams),
-    #: the client opens its WS to whatever hostname it sent the
-    #: kickoff request to (``regional.ballistica.net`` in prod; a
-    #: fleet-resolved basn hostname for non-prod ``BA_FLEET``
-    #: values; or a ``BACLOUD_SERVER`` override), at the path
-    #: implied by :attr:`call_id`. The server fills in a specific
-    #: URL only when the stream's data genuinely lives on one basn
-    #: (Phase 3 game-server-logs case); not used today.
-    basn_url: Annotated[
-        str | None, IOAttrs('u', soft_default=None, store_default=False)
-    ] = None
 
 
 @ioprepped
@@ -955,35 +915,21 @@ class StandardResponseData(ResponseData):
     ] = '\n'
 
     #: If present, this command is run with these args at the end of
-    #: response processing. Tuple is ``(command_name, args, stream)``;
-    #: when ``stream`` is True the client should set ``stream=True``
-    #: on the resulting :class:`StandardRequestData`.
+    #: response processing. Tuple is ``(command_name, args)``.
     end_command: Annotated[
-        tuple[str, dict, bool] | None, IOAttrs('ec', store_default=False)
+        tuple[str, dict] | None, IOAttrs('ec', store_default=False)
     ] = None
 
-    #: If present, the structured frames emitted by the in-progress
-    #: stream call this poll iteration covered. The client prints any
-    #: :class:`StreamOutput` frames in order and, on encountering a
-    #: :class:`StreamFinal`, treats its inner ``response`` as the
-    #: terminal :class:`StandardResponseData` to process. Polling responses
-    #: drive the loop via their own ``end_command`` (typically
-    #: another self-call with an updated cursor); set ``end_command``
-    #: to None on the response that contains the terminal frame.
-    stream_frames: Annotated[
-        list[StreamFrame] | None, IOAttrs('sf', store_default=False)
-    ] = None
-
-    #: If present, the client should switch to WebSocket fan-out
-    #: mode (open a connection to ``stream_ws.basn_url``, pass
-    #: ``stream_ws.ws_token`` on the handshake) instead of following
-    #: ``end_command`` for ``_streamcall_poll``. ``end_command`` is
-    #: typically populated alongside as a polling fallback for
-    #: older clients / fleets without basn — clients that understand
-    #: ``stream_ws`` should prefer it. See :class:`StreamWS` for
-    #: details on token handling and reconnect.
-    stream_ws: Annotated[
-        StreamWS | None, IOAttrs('sw', store_default=False)
+    #: If present, this response kicked off a streamcall whose output
+    #: should be followed before the response is treated as final.
+    #: Consumed by the basn bacloud-session adapter: it subscribes to
+    #: the call server-side, relays output down the session as
+    #: :class:`StreamOutputResponse` messages, and answers with the
+    #: stream's terminal response — the client never sees this field.
+    #: Authorization is implicit: the id only ever rides a response
+    #: to the (already-authenticated) request that created the call.
+    stream_call_id: Annotated[
+        str | None, IOAttrs('sci', store_default=False)
     ] = None
 
     @override
@@ -1000,9 +946,9 @@ class StreamOutputResponse(ResponseData):
     Unsolicited, and the reason streaming needs no machinery of its
     own over a session: the server pushes these until the command's
     real answer arrives, and a reader tells them apart from that
-    answer by type. The older shape -- a kickoff envelope, then the
-    client following the stream on a second connection of its own --
-    remains for clients not on a session.
+    answer by type. Node-side, the basn session adapter follows the
+    kickoff response's ``stream_call_id`` and produces these; the
+    client plays no part in stream transport at all.
 
     Print ``text`` verbatim with no separator; the producer decides
     its own line breaks, exactly as with the frames this replaces.

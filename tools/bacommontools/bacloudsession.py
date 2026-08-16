@@ -7,11 +7,16 @@ conversation bacloud used to have. There is no mint step and no HTTPS
 request at all: the client dials ``/bacloudsession`` on the node it
 already resolved, and the handshake itself creates the channel. Every
 command after that rides the session -- including each
-``end_command`` continuation and each stream poll.
+``end_command`` continuation and every streamed command's output.
 
-The session buys three things: no TLS handshake per request, one
+What the session buys, measured rather than assumed (2026-08-15):
+streamed output pushed as produced instead of on a 0.25-5s poll
+cadence, one connection instead of two for a streamed command, one
 recovery implementation instead of several (reconnects are invisible
 here; deaths are not), and a far end that finds out when we quit.
+Notably *not* per-command latency -- that measured the same as the
+request-per-connection path it replaced, because urllib3 pooling had
+already amortized the TLS handshake across a run.
 
 **Sequential by contract.** Send a request, read until its response,
 repeat. No correlation ids and no multiplexing: bulk transfers were
@@ -79,9 +84,10 @@ _WS_SUBPROTOCOL = 'basmartsocket'
 #: put it in, and the node captures it once for the session's life.
 _VERSION_HEADER = 'X-Bacloud-Version'
 
-#: How long to wait for the first attach. Past this we give up on the
-#: session and the caller falls back to HTTP -- a bacloud run must
-#: never be *blocked* by the transport being unavailable.
+#: How long to wait for the first attach. Past this the run fails
+#: with an error naming WebSockets: one is a prerequisite for the
+#: game itself, so bacloud does not carry a second transport for
+#: environments that cannot open one.
 _OPEN_TIMEOUT_SECONDS = 15.0
 
 #: Bound on saying goodbye. Telling the far end we're going is worth a
@@ -93,8 +99,10 @@ class BacloudSession:
     """A live conversation with the bacloud server.
 
     Constructed via :meth:`open`, which returns ``None`` rather than
-    raising when a session can't be had -- an unavailable transport
-    is a reason to use the other one, not a reason to fail the run.
+    raising when a session can't be had -- not because that is
+    survivable (it is not; the caller turns it into a hard error) but
+    so the message the user sees is written where the surrounding
+    context is, rather than here.
     """
 
     def __init__(self, ws_url: str, bearer: str | None) -> None:
@@ -148,8 +156,7 @@ class BacloudSession:
 
                 why = session._closed_error or 'attach timed out'
                 print(
-                    f'bacloud: session unavailable ({why});'
-                    f' using request-per-connection.',
+                    f'bacloud: session unavailable ({why}).',
                     file=sys.stderr,
                 )
             session.end()

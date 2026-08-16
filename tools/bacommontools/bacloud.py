@@ -35,8 +35,6 @@ from efro.dataclassio import (
 )
 from bacommon.bacloud import (
     StandardRequestData,
-    StreamFinal,
-    StreamOutput,
     BACLOUD_VERSION,
 )
 
@@ -717,16 +715,13 @@ class App:
         self._session = None
         session.end()
 
-    def _servercmd(
-        self, cmd: str, payload: dict, stream: bool
-    ) -> StandardResponseData:
+    def _servercmd(self, cmd: str, payload: dict) -> StandardResponseData:
         """Issue a command to the server and get a response."""
         request = StandardRequestData(
             command=cmd,
             payload=payload,
             tzoffset=get_tz_offset_seconds(),
             isatty=sys.stdout.isatty(),
-            stream=stream,
             idempotent=self._idempotent,
             build_number=_caller_build_number(),
         )
@@ -1005,7 +1000,7 @@ class App:
 
     def _handle_upload_plan(  # pylint: disable=too-many-locals
         self, plan: StandardResponseData.UploadPlan
-    ) -> tuple[str, dict, bool]:
+    ) -> tuple[str, dict]:
         """Execute an upload plan end-to-end.
 
         Walks ``plan.source_dir``, computes sha256+size for every
@@ -1052,7 +1047,7 @@ class App:
             plan.finalize_command, '_upload_plan_prepare'
         )
         prepare_resp_raw = self._servercmd(
-            prepare_cmd, dataclass_to_dict(prepare_req), stream=False
+            prepare_cmd, dataclass_to_dict(prepare_req)
         )
         if prepare_resp_raw.raw_result is None:
             raise CleanError('Prepare response missing raw_result.')
@@ -1096,7 +1091,7 @@ class App:
             )
             finalize_req = UploadPlanFinalizeRequest(sessions=sessions)
             finalize_resp_raw = self._servercmd(
-                finalize_cmd, dataclass_to_dict(finalize_req), stream=False
+                finalize_cmd, dataclass_to_dict(finalize_req)
             )
             if finalize_resp_raw.raw_result is None:
                 raise CleanError('Finalize response missing raw_result.')
@@ -1108,7 +1103,7 @@ class App:
 
         # Phase 5: hand off to the plan's finalize command.
         commit = UploadPlanCommit(files=resolved, state=plan.finalize_state)
-        return (plan.finalize_command, dataclass_to_dict(commit), False)
+        return (plan.finalize_command, dataclass_to_dict(commit))
 
     def _handle_downloads_signed(
         self, downloads_signed: list[StandardResponseData.SignedDownloadEntry]
@@ -1223,7 +1218,7 @@ class App:
             self._end_command_args['input'] = input()
 
     def _servercmd_chained(
-        self, call: tuple[str, dict, bool], retry_window: float
+        self, call: tuple[str, dict], retry_window: float
     ) -> StandardResponseData:
         """Run a chained server command, retrying transient failures.
 
@@ -1284,12 +1279,10 @@ class App:
 
     def run_interactive_command(self, cwd: str, args: list[str]) -> None:
         """Run a single user command to completion."""
-        # pylint: disable=too-many-branches
         assert self._project_root is not None
-        nextcall: tuple[str, dict, bool] | None = (
+        nextcall: tuple[str, dict] | None = (
             '_interactive',
             {'c': cwd, 'p': str(self._project_root), 'a': args},
-            False,
         )
 
         # Now talk to the server in a loop until there's nothing left to
@@ -1300,58 +1293,6 @@ class App:
             response = self._servercmd_chained(nextcall, retry_window)
             nextcall = None
             retry_window = 0.0
-
-            # Stream-mode responses: print incremental output frames in
-            # order. If a StreamFinal is encountered, treat its inner
-            # response as the response to process for this iteration —
-            # it carries the call's terminal message / end_command /
-            # error / etc. If no StreamFinal lands in this poll
-            # iteration, the outer response's other fields are unused
-            # (they are just a polling envelope) and we let the outer
-            # ``end_command`` drive the next poll.
-            if response.stream_frames is not None:
-                terminal: StandardResponseData | None = None
-                for frame in response.stream_frames:
-                    if isinstance(frame, StreamOutput):
-                        print(frame.text, end='', flush=True)
-                    elif isinstance(frame, StreamFinal):
-                        terminal = frame.response
-                        # Any frames after the terminal would be a
-                        # protocol violation; stop here defensively.
-                        break
-                if terminal is None:
-                    # Not done yet — proceed with the polling envelope's
-                    # end_command (delay_seconds was already applied
-                    # inside _servercmd). Skip the rest of the outer
-                    # response's fields (they are unused in polling
-                    # envelopes).
-                    if response.end_command is not None:
-                        nextcall = response.end_command
-                        retry_window = response.retry_window_seconds
-                        for key, val in self._end_command_args.items():
-                            nextcall[1][key] = val
-                    continue
-                # Terminal frame: replace response with the inner one
-                # and apply the inline handling that _servercmd would
-                # have done if the inner had been the direct response
-                # (message / message_stderr / error). Then fall through
-                # to the regular field processing for the rest.
-                response = terminal
-                if response.message is not None:
-                    print(
-                        response.message,
-                        end=response.message_end,
-                        flush=True,
-                    )
-                if response.message_stderr is not None:
-                    print(
-                        response.message_stderr,
-                        end=response.message_stderr_end,
-                        flush=True,
-                        file=sys.stderr,
-                    )
-                if response.error is not None:
-                    raise CleanError(response.error)
 
             if response.login is not None:
                 self._state.login_token = response.login
