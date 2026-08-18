@@ -1,11 +1,4 @@
-### 1.8.0 (build 22984, api 9, 2026-08-15)
-- The cloud console now streams output straight from the app through a nearby
-  server node instead of being polled for it from the master server. Output
-  appears as it happens and commands run sooner, which should be an especially
-  noticeable difference the further you are from the US, where the old polling
-  round trips cost the most. The app also now asks your permission before
-  letting a console control it, and tells the console when it is quitting
-  instead of leaving it waiting.
+### 1.8.0 (build 22985, api 9, 2026-08-17)
 - Fully implemented asset packages (more on this soon)
 - Renamed the asset-package wrapper leaf types from `TextureVerifiedSpec`,
   `SoundVerifiedSpec`, etc. to `TextureHandle`, `SoundHandle`, `MeshHandle`,
@@ -76,6 +69,17 @@
   `babase` asset-package wrapper type for this pre-featureset layer.)
 - Add `in_world` attribute to image node, as in text node (Thanks Dliwk!).
 - Game Controller Haptics!
+- The game now restricts the view area to reasonable aspect-ratios and draws
+  black outside of them. This gives us a clean goal of everything drawing
+  reasonably within the supported range; it should no longer be possible to see
+  broken drawing by sizing a window extremely wide or tall.
+- The cloud console now streams output straight from the app through a nearby
+  server node instead of being polled for it from the master server. Output
+  appears as it happens and commands run sooner, which should be an especially
+  noticeable difference the further you are from the US, where the old polling
+  round trips cost the most. The app also now asks your permission before
+  letting a console control it, and tells the console when it is quitting
+  instead of leaving it waiting.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

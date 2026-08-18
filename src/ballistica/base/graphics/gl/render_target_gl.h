@@ -22,7 +22,7 @@ class RendererGL::RenderTargetGL : public RenderTarget {
   }
 
   void DrawBegin(bool must_clear_color, float clear_r, float clear_g,
-                 float clear_b, float clear_a) override {
+                 float clear_b, float clear_a, bool clear_depth) override {
     assert(g_base->app_adapter->InGraphicsContext());
     BA_DEBUG_CHECK_GL_ERROR;
 
@@ -40,8 +40,26 @@ class RendererGL::RenderTargetGL : public RenderTarget {
     }
     renderer_->SetViewport_(x, y, physical_width_, physical_height_);
 #else
-    renderer_->SetViewport_(0, 0, static_cast<GLsizei>(physical_width_),
-                            static_cast<GLsizei>(physical_height_));
+    if (content_rect_is_full()) {
+      renderer_->SetViewport_(0, 0, static_cast<GLsizei>(physical_width_),
+                              static_cast<GLsizei>(physical_height_));
+    } else {
+      // Game content occupies only a sub-rect of us (tv-border mode
+      // and/or aspect-ratio limiting). The black borders outside it must
+      // be painted every frame (buffer contents start out undefined), so
+      // override any clear-skipping our caller requested: clear the whole
+      // buffer to black (glClear ignores the viewport) and confine
+      // further drawing to the content region. (This affects color only;
+      // the caller's clear_depth wishes still apply unchanged.)
+      must_clear_color = true;
+      clear_r = clear_g = clear_b = 0.0f;
+      clear_a = 1.0f;
+      Rect crect = content_rect();
+      renderer_->SetViewport_(static_cast<GLint>(crect.l),
+                              static_cast<GLint>(crect.b),
+                              static_cast<GLsizei>(crect.width()),
+                              static_cast<GLsizei>(crect.height()));
+    }
 #endif
 
     {
@@ -55,7 +73,7 @@ class RendererGL::RenderTargetGL : public RenderTarget {
         renderer_->InvalidateFramebuffer(true, false, false);
       }
 
-      if (depth_) {
+      if (depth_ && clear_depth) {
         // FIXME make sure depth writing is turned on at this point.
         //  this needs to be on for glClear to work on depth.
         if (!renderer_->depth_writing_enabled_) {

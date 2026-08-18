@@ -204,8 +204,19 @@ public final class BallisticaJniBridge {
   // _deferredNativeCommands.add(...)" pattern, but centralized in
   // the bus instead of repeated at every call site.
   private static volatile boolean sReady = false;
-  private static final java.util.List<Runnable> sDeferred =
+  private static final java.util.LinkedList<Runnable> sDeferred =
       new java.util.LinkedList<>();
+
+  // If native never comes up, don't let the deferred queue grow
+  // without bound (log traffic can be arbitrarily chatty); drop
+  // oldest past this point.
+  private static final int DEFER_QUEUE_MAX = 512;
+  private static int sDeferredDropped = 0;
+
+  /** Has the native layer come up and drained the deferred queue? */
+  public static boolean isReady() {
+    return sReady;
+  }
 
   /** Called once from BallisticaContext.onNativeInitComplete(). */
   public static synchronized void markReady() {
@@ -214,12 +225,22 @@ public final class BallisticaJniBridge {
       r.run();
     }
     sDeferred.clear();
+    if (sDeferredDropped > 0) {
+      android.util.Log.w("BallisticaKit",
+          "BallisticaJniBridge dropped " + sDeferredDropped +
+              " deferred messages before native init.");
+      sDeferredDropped = 0;
+    }
   }
 
   private static synchronized void deferOrCall(Runnable r) {
     if (sReady) {
       r.run();
     } else {
+      if (sDeferred.size() >= DEFER_QUEUE_MAX) {
+        sDeferred.removeFirst();
+        sDeferredDropped++;
+      }
       sDeferred.add(r);
     }
   }

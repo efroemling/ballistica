@@ -117,6 +117,17 @@ void Graphics::ApplyAppConfig() {
       g_base->app_config->Resolve(AppConfig::BoolID::kDisableCameraShake);
   set_camera_shake_disabled(disable_camera_shake);
 
+  // TV-border toggles affect our active render rect and thus our virtual
+  // res; recalc all that if it changed (and we know our res).
+  bool tv_border =
+      g_base->app_config->Resolve(AppConfig::BoolID::kEnableTVBorder);
+  if (tv_border != tv_border_) {
+    tv_border_ = tv_border;
+    if (got_screen_resolution_) {
+      UpdateScreen_();
+    }
+  }
+
   // Note: the 'Disable Camera Gyro' setting is handled by the input
   // subsystem, which owns the device-motion -> tilt signal.
 
@@ -547,17 +558,17 @@ void Graphics::InitInternalComponents(FrameDef* frame_def) {
 
   screen_mesh_ = Object::New<ImageMesh>();
 
-  // Let's draw a bit bigger than screen to account for tv-border-mode.
   float w = pass->virtual_width();
   float h = pass->virtual_height();
   if (g_core->vr_mode()) {
+    // Draw a bit bigger than the virtual screen to cover the vr border.
     screen_mesh_->SetPositionAndSize(
         -(0.5f * kVRBorder) * w, (-0.5f * kVRBorder) * h, kScreenMeshZDepth,
         (1.0f + kVRBorder) * w, (1.0f + kVRBorder) * h);
   } else {
-    screen_mesh_->SetPositionAndSize(
-        -(0.5f * kTVBorder) * w, (-0.5f * kTVBorder) * h, kScreenMeshZDepth,
-        (1.0f + kTVBorder) * w, (1.0f + kTVBorder) * h);
+    // The virtual screen covers everything visible (anything outside the
+    // active render rect is black borders drawn by the renderer).
+    screen_mesh_->SetPositionAndSize(0.0f, 0.0f, kScreenMeshZDepth, w, h);
   }
   progress_bar_top_mesh_ = Object::New<ImageMesh>();
   progress_bar_bottom_mesh_ = Object::New<ImageMesh>();
@@ -589,9 +600,6 @@ auto Graphics::GetGraphicsSettingsSnapshot() -> Snapshot<GraphicsSettings>* {
     new_settings->index = next_settings_index_++;
     settings_snapshot_ = Object::New<Snapshot<GraphicsSettings>>(new_settings);
     graphics_settings_dirty_ = false;
-
-    // We keep a cached copy of this value since we use it a lot.
-    tv_border_ = settings_snapshot_->get()->tv_border;
 
     // This can affect placeholder settings; keep those up to date.
     UpdatePlaceholderSettings();
@@ -821,6 +829,11 @@ void Graphics::BuildAndPushFrameDef() {
     // gone, run it.
     RunCleanFrameCommands();
   }
+
+  // All possible text-editing reporters have drawn by this point (or none
+  // did, e.g. progress-bar-only frames); reconcile against last frame and
+  // inform the app-adapter of any text-editing begin/end/moves.
+  g_base->ui->ProcessTextEditReports(frame_def);
 
   frame_def->Complete();
 
@@ -1539,6 +1552,41 @@ void Graphics::CalcVirtualRes_(float* x, float* y) {
   }
 }
 
+auto Graphics::CalcActiveRenderRect(float res_x, float res_y, bool tv_border)
+    -> Rect {
+  Rect rect{0.0f, 0.0f, res_x, res_y};
+
+  // In tv-border mode, inset all edges by a uniform thickness
+  // proportional to window height.
+  if (tv_border) {
+    float border = kTVBorder * res_y;
+    // Keep borders sane on degenerate window sizes.
+    border = std::min(border, 0.25f * std::min(res_x, res_y));
+    rect.l += border;
+    rect.r -= border;
+    rect.b += border;
+    rect.t -= border;
+  }
+
+  // Now clamp aspect ratio, keeping the largest centered sub-rect that
+  // satisfies our bounds. (Border first, then clamp: uniform borders
+  // change the inner region's aspect, so clamping must consider the
+  // post-border region.)
+  if (rect.width() > 0.0f && rect.height() > 0.0f) {
+    float aspect = rect.width() / rect.height();
+    if (aspect < kMinAspectRatio) {
+      float trim = (rect.height() - rect.width() / kMinAspectRatio) * 0.5f;
+      rect.b += trim;
+      rect.t -= trim;
+    } else if (aspect > kMaxAspectRatio) {
+      float trim = (rect.width() - rect.height() * kMaxAspectRatio) * 0.5f;
+      rect.l += trim;
+      rect.r -= trim;
+    }
+  }
+  return rect;
+}
+
 void Graphics::SetScreenResolution(float x, float y) {
   assert(g_base->InLogicThread());
 
@@ -1567,11 +1615,25 @@ void Graphics::UpdateScreen_() {
   // Calc virtual res. In vr mode our virtual res is independent of our
   // screen size (since it gets drawn to an overlay).
   if (g_core->vr_mode()) {
+    active_render_rect_ = Rect{0.0f, 0.0f, res_x_, res_y_};
     res_x_virtual_ = kBaseVirtualResX;
     res_y_virtual_ = kBaseVirtualResY;
   } else {
-    res_x_virtual_ = res_x_;
-    res_y_virtual_ = res_y_;
+    // Game content occupies our active render rect (the window minus
+    // tv-borders and aspect-ratio limiting); virtual res derives from
+    // that rect, not the raw window.
+    active_render_rect_ = CalcActiveRenderRect(res_x_, res_y_, tv_border_);
+    if (active_render_rect_.width() <= 0.0f
+        || active_render_rect_.height() <= 0.0f) {
+      BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
+                  "Active render rect is degenerate ("
+                      + std::to_string(active_render_rect_.width()) + "x"
+                      + std::to_string(active_render_rect_.height())
+                      + " for window " + std::to_string(res_x_) + "x"
+                      + std::to_string(res_y_) + ").");
+    }
+    res_x_virtual_ = active_render_rect_.width();
+    res_y_virtual_ = active_render_rect_.height();
     CalcVirtualRes_(&res_x_virtual_, &res_y_virtual_);
   }
 

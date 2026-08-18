@@ -1,5 +1,5 @@
 # Released under the MIT License. See LICENSE for details.
-"""In-game automation helpers for the opt-in FIFO control channel.
+"""In-game automation helpers for the opt-in control channel.
 
 .. warning::
 
@@ -9,20 +9,24 @@
 
 The automation channel is an optional dev tool that lets external
 tools (scripts, test harnesses, Claude Code, etc.) drive a running
-game in-process by writing Python lines to ``<silo>/cmd.fifo``,
-which a reader thread dispatches on the logic thread.
+game in-process by feeding it Python lines. The classic local entry
+point is a FIFO at ``<silo>/cmd.fifo``, read by a dedicated thread
+that dispatches each line on the logic thread; the same helpers also
+work through any other route that execs Python in-process (e.g. the
+cloud console).
 
-Two-stage opt-in:
+Gating:
 
 * **Compile time** — the whole subsystem is gated on the
   ``BA_ENABLE_AUTOMATION`` build define (CMake:
   ``-DENABLE_AUTOMATION=ON``). When off, no FIFO is created, no
   native hooks are compiled in, and the helpers below emit a
   ``[automation] <tag> fail not_compiled_in`` line if called.
-* **Runtime** — even in builds that compiled it in, the subsystem
-  stays dormant unless ``BA_AUTOMATION_FIFO`` is set to a path at
-  startup (``tools/pcommand test_game_run`` sets this
-  automatically).
+* **Runtime** — in builds that compiled it in, the subsystem is live
+  when ``BA_AUTOMATION_FIFO`` is set to a path at startup
+  (``tools/pcommand test_game_run`` sets this automatically).
+  Developer builds enable the subsystem even without the env var,
+  though the FIFO entry point itself always requires one.
 
 This module holds the UI-agnostic helpers. Anything that reaches
 into the live widget tree (press/scroll by id or label, widget

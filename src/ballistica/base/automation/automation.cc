@@ -4,9 +4,14 @@
 
 #if BA_ENABLE_AUTOMATION
 
+// The FIFO command entry point is POSIX-only (and is interim anyway —
+// slated for removal once automation rides the transport channel);
+// on Windows only the hook-serving mode of this subsystem exists.
+#if !BA_PLATFORM_WINDOWS
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#endif
 
 #include <cerrno>
 #include <chrono>
@@ -38,6 +43,19 @@ namespace ballistica::base {
 
 Automation::Automation(std::string fifo_path)
     : fifo_path_{std::move(fifo_path)} {
+  // An empty path means no local FIFO entry point — we exist purely
+  // to make the automation_* native hooks live for in-process Python
+  // (e.g. cloud-console exec). Nothing to set up in that case.
+  if (fifo_path_.empty()) {
+    return;
+  }
+
+#if BA_PLATFORM_WINDOWS
+  g_core->logging->Log(
+      LogName::kBa, LogLevel::kError,
+      "Automation: the FIFO entry point is not supported on Windows;"
+      " ignoring BA_AUTOMATION_FIFO.");
+#else
   // Create the FIFO if it doesn't exist; tolerate it pre-existing
   // (common case when the launching script created it, or a prior
   // run left it behind — FIFOs don't carry persistent data).
@@ -71,19 +89,24 @@ Automation::Automation(std::string fifo_path)
                        "Automation: listening for commands at " + fifo_path_);
 
   reader_thread_ = std::thread(&Automation::RunReader, this);
+#endif  // BA_PLATFORM_WINDOWS
 }
 
 Automation::~Automation() {
   shutdown_ = true;
+#if !BA_PLATFORM_WINDOWS
   if (fifo_fd_ >= 0) {
     // Closing the fd unblocks the reader thread's blocking read().
     close(fifo_fd_);
     fifo_fd_ = -1;
   }
+#endif
   if (reader_thread_.joinable()) {
     reader_thread_.join();
   }
 }
+
+#if !BA_PLATFORM_WINDOWS
 
 void Automation::RunReader() {
   std::string buffer;
@@ -202,6 +225,8 @@ auto Automation::WaitForLogicEventLoop() -> bool {
   return false;
 }
 
+#endif  // !BA_PLATFORM_WINDOWS
+
 // Helper: emit a standardized [automation] log line. Used both here
 // and from Python-side helpers so external watchers can grep for one
 // consistent format regardless of whether a result originated in C++
@@ -224,19 +249,22 @@ void Automation::CaptureScreenshot(const std::string& path,
     return;
   }
 
-  // glReadPixels needs the GL context, which on Ballistica lives on
-  // the main thread (SDL drives the render loop there). Pushing onto
-  // the main-thread runnable queue runs us between frame draws when
-  // the back buffer is in a coherent post-draw state.
-  g_base->app_adapter->PushMainThreadCall([path, tag]() {
+  // glReadPixels needs the GL context. Where that lives varies by
+  // platform — the main thread on SDL builds, a dedicated render
+  // thread on Android — so go through the app-adapter's
+  // graphics-context primitive rather than assuming main thread
+  // (that assumption crash-asserted on Android). Calls run between
+  // frame draws when the back buffer is in a coherent post-draw
+  // state.
+  g_base->app_adapter->PushGraphicsContextCall([path, tag]() {
 #if BA_ENABLE_OPENGL
-    // Query current viewport dimensions — these are the framebuffer
-    // pixel dimensions, which on retina displays is 2x the logical
-    // window size.
-    GLint viewport[4]{};
-    glGetIntegerv(GL_VIEWPORT, viewport);
-    int w = viewport[2];
-    int h = viewport[3];
+    // Capture the full window framebuffer (on retina displays this is
+    // 2x the logical window size). Note that we can't just query
+    // GL_VIEWPORT here: the last-set viewport can be an inset sub-rect
+    // of the window when tv-border mode or aspect-ratio limiting is on,
+    // and we want the whole window including any black borders.
+    int w = static_cast<int>(g_base->graphics_server->screen_pixel_width());
+    int h = static_cast<int>(g_base->graphics_server->screen_pixel_height());
     if (w <= 0 || h <= 0) {
       EmitAutomationLog(tag, "fail", "bad_viewport");
       return;

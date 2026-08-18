@@ -112,6 +112,10 @@ void AppAdapter::DoSoftQuit() { FatalError("Fixme unimplemented."); }
 void AppAdapter::TerminateApp() { FatalError("Fixme unimplemented."); }
 auto AppAdapter::HasDirectKeyboardInput() -> bool { return false; }
 
+void AppAdapter::OnUITextEditingBegin(const Rect& rect_normalized) {}
+void AppAdapter::OnUITextEditingUpdate(const Rect& rect_normalized) {}
+void AppAdapter::OnUITextEditingEnd() {}
+
 void AppAdapter::ApplyGraphicsSettings(const GraphicsSettings* settings) {}
 
 auto AppAdapter::GetGraphicsSettings() -> GraphicsSettings* {

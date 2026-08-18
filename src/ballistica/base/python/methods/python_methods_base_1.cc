@@ -156,7 +156,7 @@ static auto PyAutomationCaptureScreenshot(PyObject* self, PyObject* args,
   if (g_base->automation == nullptr) {
     throw Exception(
         "Automation subsystem not active "
-        "(BA_AUTOMATION_FIFO env var not set at startup).",
+        "(set BA_AUTOMATION_FIFO at startup to enable).",
         PyExcType::kRuntime);
   }
   g_base->automation->CaptureScreenshot(path, tag);
@@ -179,7 +179,8 @@ static PyMethodDef PyAutomationCaptureScreenshotDef = {
     "the graphics thread, and a single ``[automation] <tag> ok|fail\n"
     "<payload>`` line gets logged to ``ba.app`` when complete. Path\n"
     "should be absolute. Raises RuntimeError if automation isn't\n"
-    "active in this run (i.e. ``BA_AUTOMATION_FIFO`` wasn't set).\n",
+    "active in this run (see ``babase._automation`` for activation\n"
+    "rules).\n",
 };
 
 // ----------------- automation_press_at_virtual ------------------------------
@@ -198,7 +199,7 @@ static auto PyAutomationPressAtVirtual(PyObject* self, PyObject* args,
   if (g_base->automation == nullptr) {
     throw Exception(
         "Automation subsystem not active "
-        "(BA_AUTOMATION_FIFO env var not set at startup).",
+        "(set BA_AUTOMATION_FIFO at startup to enable).",
         PyExcType::kRuntime);
   }
   // Synthesized input makes no sense headless (no UI to target).
@@ -250,7 +251,7 @@ static auto PyAutomationScrollAtVirtual(PyObject* self, PyObject* args,
   if (g_base->automation == nullptr) {
     throw Exception(
         "Automation subsystem not active "
-        "(BA_AUTOMATION_FIFO env var not set at startup).",
+        "(set BA_AUTOMATION_FIFO at startup to enable).",
         PyExcType::kRuntime);
   }
   if (g_core->HeadlessMode()) {

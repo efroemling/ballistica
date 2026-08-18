@@ -1,5 +1,5 @@
 # Released under the MIT License. See LICENSE for details.
-"""In-game UI automation helpers for the opt-in FIFO control channel.
+"""In-game UI automation helpers for the opt-in control channel.
 
 .. warning::
 
@@ -14,11 +14,14 @@ because they reach into ``bauiv1``, which isn't present in base-only
 spinoffs.
 
 Gating is the same as the babase side (compile-time
-``BA_ENABLE_AUTOMATION``; runtime ``BA_AUTOMATION_FIFO``); emission
+``BA_ENABLE_AUTOMATION``; runtime activation rules are described in
+:mod:`babase._automation`); emission
 format is identical (``[automation] <tag> <status> <payload>`` via
 ``ba.app``). The :func:`inspect` helper here bridges back to
 :func:`babase._automation.screenshot`.
 """
+
+import json
 
 import babase
 import _bauiv1
@@ -413,10 +416,19 @@ def _label_text(widget: object) -> str:
     if raw is None:
         return ''
     if raw.startswith('{') and raw.endswith('}'):
+        # Only treat it as Lstr-JSON if it actually parses as a JSON
+        # object; plain display text can legitimately be brace-wrapped
+        # (a profile named '{test}'), and passing that to the legacy
+        # evaluator logs a C++-side 'invalid json' ERROR.
         try:
-            return _evaluate_lstr_json(raw)
-        except Exception:  # pylint: disable=broad-except
-            return raw
+            is_lstr_json = isinstance(json.loads(raw), dict)
+        except ValueError:
+            is_lstr_json = False
+        if is_lstr_json:
+            try:
+                return _evaluate_lstr_json(raw)
+            except Exception:  # pylint: disable=broad-except
+                return raw
     return raw
 
 

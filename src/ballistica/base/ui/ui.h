@@ -13,6 +13,7 @@
 #include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/ui/widget_message.h"
 #include "ballistica/core/support/base_soft.h"
+#include "ballistica/shared/math/rect.h"
 #include "ballistica/shared/math/vector4f.h"
 
 namespace ballistica::base {
@@ -147,6 +148,32 @@ class UI {
   /// directly instead of popping up string edit dialogs.
   auto UIHasDirectKeyboardInput() const -> bool;
 
+  /// Sources for ReportTextEditing(). When multiple sources report in a
+  /// single frame, the highest value wins (the dev console sits above
+  /// bauiv1 and intercepts text input first, so it takes precedence).
+  enum class TextEditSource : uint8_t { kWidget, kDevConsole };
+
+  /// Should be called each frame during drawing by anything actively
+  /// accepting direct inline text editing (i.e. drawing a flashing
+  /// carat). The rect is the on-screen area of the text being edited, in
+  /// virtual coords. Text-editing begin/end is derived from these
+  /// reports appearing/disappearing across frames (see
+  /// ProcessTextEditReports).
+  void ReportTextEditing(const Rect& rect_virtual, TextEditSource source);
+
+  /// Called at the end of each frame build; diffs this frame's
+  /// text-editing reports against the previous frame's and informs the
+  /// app-adapter of begin/end/rect-change (so OS IME machinery/etc. can
+  /// be kept in sync).
+  void ProcessTextEditReports(FrameDef* frame_def);
+
+  /// Whether a text-edit session is currently active (something is
+  /// accepting direct inline text editing; see ReportTextEditing).
+  auto text_editing_active() const -> bool {
+    assert(g_base->InLogicThread());
+    return text_edit_active_;
+  }
+
   /// Return whether currently selected widgets should flash. This will be
   /// false in some situations such as when only touch screen control is
   /// present.
@@ -216,6 +243,13 @@ class UI {
       dev_console_startup_messages_;
   millisecs_t last_main_ui_input_device_use_time_{};
   millisecs_t last_widget_input_reject_err_sound_time_{};
+  Rect text_edit_rect_{};
+  Rect text_edit_rect_norm_prev_{};
+  seconds_t text_edit_flap_window_start_{};
+  int text_edit_flap_count_{};
+  TextEditSource text_edit_source_{};
+  bool text_edit_reported_{};
+  bool text_edit_active_{};
   UIScale uiscale_{UIScale::kLarge};
   int squad_size_label_{};
   bool touch_mode_{};

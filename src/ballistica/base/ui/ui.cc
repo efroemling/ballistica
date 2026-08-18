@@ -4,6 +4,7 @@
 
 #include <Python.h>
 
+#include <cmath>
 #include <exception>
 #include <memory>
 #include <string>
@@ -12,9 +13,11 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
@@ -23,6 +26,7 @@
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/simple_dialog.h"
 #include "ballistica/base/ui/ui_delegate.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
@@ -37,6 +41,11 @@ static const int kUIOwnerTimeoutSeconds = 15;
 /// self-animating progress bar) for iterating on the dialog's looks without a
 /// live asset resolve. Must stay false in committed code.
 static const bool kSimpleDialogDemo = false;
+
+/// Flip to true to draw a translucent red rect over the active
+/// text-editing area (as reported to the app-adapter for OS IME
+/// positioning/etc.) for debugging. Must stay false in committed code.
+static const bool kDebugDrawTextEditRects = false;
 
 /// We use this to gather up runnables triggered by UI elements in response
 /// to stuff happening (mouse clicks, elements being added or removed,
@@ -416,6 +425,129 @@ auto UI::UIHasDirectKeyboardInput() const -> bool {
   return false;
 }
 
+void UI::ReportTextEditing(const Rect& rect_virtual, TextEditSource source) {
+  assert(g_base->InLogicThread());
+  // Highest-priority source of the frame wins (the dev console sits
+  // above bauiv1 and intercepts text input first).
+  if (text_edit_reported_ && source <= text_edit_source_) {
+    return;
+  }
+  text_edit_reported_ = true;
+  text_edit_source_ = source;
+  text_edit_rect_ = rect_virtual;
+}
+
+void UI::ProcessTextEditReports(FrameDef* frame_def) {
+  assert(g_base->InLogicThread());
+  bool active = text_edit_reported_;
+  auto source = text_edit_source_;
+  Rect rect = text_edit_rect_;
+  text_edit_reported_ = false;  // Reset for next frame.
+
+  if (active && kDebugDrawTextEditRects) {
+    // Draw a translucent red rect over the reported area - by
+    // construction exactly what the app-adapter is being told about
+    // (modulo the coord conversion below).
+    SimpleComponent c(frame_def->overlay_front_pass());
+    c.SetTransparent(true);
+    c.SetPremultiplied(true);
+    c.SetColor(0.4f, 0.0f, 0.0f, 0.4f);
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(0.5f * (rect.l + rect.r), 0.5f * (rect.b + rect.t));
+      c.Scale(rect.width(), rect.height());
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
+    }
+    c.Submit();
+  }
+
+  // Convert to normalized (0-1) window coords, y-up. Note that game
+  // content occupies only our active render rect within the window
+  // (there can be black borders in tv-mode / at extreme window aspect
+  // ratios), so the mapping goes virtual -> active-rect -> window.
+  Rect norm{};
+  if (active) {
+    auto* graphics = g_base->graphics;
+    float vw = graphics->screen_virtual_width();
+    float vh = graphics->screen_virtual_height();
+    float pw = graphics->screen_pixel_width();
+    float ph = graphics->screen_pixel_height();
+    const Rect& arect = graphics->active_render_rect();
+    if (vw > 0.0f && vh > 0.0f && pw > 0.0f && ph > 0.0f) {
+      norm.l = (arect.l + rect.l / vw * arect.width()) / pw;
+      norm.r = (arect.l + rect.r / vw * arect.width()) / pw;
+      norm.b = (arect.b + rect.b / vh * arect.height()) / ph;
+      norm.t = (arect.b + rect.t / vh * arect.height()) / ph;
+      // Sanity-check the conversion: a degenerate or wildly-offscreen
+      // rect here means the virtual->window coord math has drifted
+      // (active-render-rect handling, hidpi, etc). Partial offscreen is
+      // legit (scrolled fields), so allow generous slack.
+      if (norm.width() <= 0.0f || norm.height() <= 0.0f || norm.l < -1.0f
+          || norm.r > 2.0f || norm.b < -1.0f || norm.t > 2.0f) {
+        BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                    "Text-edit rect conversion looks off (normalized ("
+                        + std::to_string(norm.l) + "," + std::to_string(norm.b)
+                        + "," + std::to_string(norm.r) + ","
+                        + std::to_string(norm.t) + ") from virtual ("
+                        + std::to_string(rect.l) + "," + std::to_string(rect.b)
+                        + "," + std::to_string(rect.r) + ","
+                        + std::to_string(rect.t) + ")).");
+      }
+    } else {
+      active = false;
+    }
+  }
+
+  // Sanity-check for session flapping: begin/end churning rapidly
+  // suggests reporters fighting (two widgets alternating, a widget
+  // flickering its carat state, etc). Rapid legit focus cycling can
+  // technically trip this, so the threshold is generous.
+  if (active != text_edit_active_) {
+    auto now = g_core->AppTimeSeconds();
+    if (now - text_edit_flap_window_start_ > 5.0) {
+      text_edit_flap_window_start_ = now;
+      text_edit_flap_count_ = 0;
+    }
+    text_edit_flap_count_++;
+    if (text_edit_flap_count_ >= 20) {
+      BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                  "Text-edit sessions are flapping (20+ begin/end"
+                  " transitions within 5 seconds); reporters may be"
+                  " fighting.");
+    }
+  }
+
+  if (active && !text_edit_active_) {
+    g_core->logging->Log(
+        LogName::kBaInput, LogLevel::kDebug,
+        "Text editing began (source="
+            + std::string(source == TextEditSource::kDevConsole ? "dev-console"
+                                                                : "widget")
+            + " vrect=(" + std::to_string(rect.l) + "," + std::to_string(rect.b)
+            + "," + std::to_string(rect.r) + "," + std::to_string(rect.t)
+            + ")).");
+    g_base->app_adapter->OnUITextEditingBegin(norm);
+  } else if (!active && text_edit_active_) {
+    g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug,
+                         "Text editing ended.");
+    g_base->app_adapter->OnUITextEditingEnd();
+  } else if (active) {
+    // Still active; resend if the rect moved meaningfully.
+    float eps{0.001f};
+    if (std::abs(norm.l - text_edit_rect_norm_prev_.l) > eps
+        || std::abs(norm.b - text_edit_rect_norm_prev_.b) > eps
+        || std::abs(norm.r - text_edit_rect_norm_prev_.r) > eps
+        || std::abs(norm.t - text_edit_rect_norm_prev_.t) > eps) {
+      g_base->app_adapter->OnUITextEditingUpdate(norm);
+    } else {
+      norm = text_edit_rect_norm_prev_;  // Keep exact stored value.
+    }
+  }
+  text_edit_active_ = active;
+  text_edit_rect_norm_prev_ = norm;
+}
+
 void UI::HandleMouseMotion(float x, float y) {
   SendWidgetMessage(
       WidgetMessage(WidgetMessage::Type::kMouseMove, nullptr, x, y));
@@ -490,6 +622,28 @@ auto UI::SendWidgetMessage(const WidgetMessage& m) -> bool {
     result = ui_delegate->SendWidgetMessage(m);
   } else {
     result = false;
+  }
+
+  // Input diagnostics: trace text-input and key widget messages and
+  // whether anything claimed them. Together with the raw SDL event logs
+  // in AppAdapterSDL::HandleSDLEvent_, this pins down which layer
+  // dropped (or reordered) an input event. Ordering matters here: key
+  // and text deliveries must both arrive one event-loop hop deep (see
+  // Repeater::PostInit_ and Input::PushTextInputEvent) or things like
+  // SDL's synthesized backspace+text accent-replacement pair misapply.
+  if (g_core->logging->LogLevelEnabled(LogName::kBaInput, LogLevel::kDebug)) {
+    if (m.type == WidgetMessage::Type::kTextInput) {
+      g_core->logging->Log(
+          LogName::kBaInput, LogLevel::kDebug,
+          std::string("SendWidgetMessage kTextInput '")
+              + (m.sval != nullptr ? *m.sval : std::string("<null>"))
+              + "' claimed=" + (result ? "true" : "false") + ".");
+    } else if (m.type == WidgetMessage::Type::kKey) {
+      g_core->logging->Log(
+          LogName::kBaInput, LogLevel::kDebug,
+          "SendWidgetMessage kKey sym=" + std::to_string(m.keysym.sym)
+              + " claimed=" + (result ? "true" : "false") + ".");
+    }
   }
 
   // Run anything we triggered.

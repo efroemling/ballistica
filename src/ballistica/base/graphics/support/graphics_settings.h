@@ -4,6 +4,7 @@
 #define BALLISTICA_BASE_GRAPHICS_SUPPORT_GRAPHICS_SETTINGS_H_
 
 #include "ballistica/base/base.h"
+#include "ballistica/shared/math/rect.h"
 #include "ballistica/shared/math/vector2f.h"
 
 namespace ballistica::base {
@@ -22,10 +23,13 @@ struct GraphicsSettings {
   // Some standard settings used by most renderers.
   Vector2f resolution;
   Vector2f resolution_virtual;
+  // Sub-rect of the window that game content occupies (pixels,
+  // bottom-left origin); anything outside it is kept cleared to black.
+  // See Graphics::CalcActiveRenderRect.
+  Rect active_render_rect;
   float pixel_scale;
   GraphicsQualityRequest graphics_quality;
   TextureQualityRequest texture_quality;
-  bool tv_border;
 };
 
 }  // namespace ballistica::base

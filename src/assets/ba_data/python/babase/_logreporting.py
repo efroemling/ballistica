@@ -8,7 +8,7 @@ import threading
 from typing import TYPE_CHECKING
 
 import _babase
-from efro.util import utc_now
+from efro.util import utc_now, strip_exception_tracebacks
 from efro.error import CommunicationError
 from bacommon.logreporting import LogReportWindow
 from babase._logging import logreportlog, userlog
@@ -497,11 +497,16 @@ class LogReporter:
             # vanish silently.
             fut.result(timeout=wait_seconds)
             return archive
-        except CommunicationError, TimeoutError:
+        except (CommunicationError, TimeoutError) as exc:
             # Routine transport trouble; the slice stays owed and a
-            # later attempt re-sends it.
+            # later attempt re-sends it. Strip tracebacks since we're
+            # the terminal consumer: the send future's exception
+            # otherwise retains frames whose locals reach back to it
+            # (and to the whole transport-session graph at shutdown),
+            # leaving cycles only cyclic gc can break.
+            strip_exception_tracebacks(exc)
             return None
-        except Exception:
+        except Exception as exc:
             # Note this goes to our own logger, which handle_log_entry
             # ignores -- so a failure here cannot trip another report.
             logreportlog.exception('Error shipping log report.')
@@ -509,6 +514,7 @@ class LogReporter:
             # Non-transport errors are likely deterministic for this
             # slice, so retrying would loop forever; skip past it if
             # we managed to gather one.
+            strip_exception_tracebacks(exc)
             return archive
 
     def _compress(self, archive: LogArchive) -> bytes:

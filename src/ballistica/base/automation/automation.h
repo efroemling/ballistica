@@ -8,12 +8,22 @@
 // entire mechanism is gated on BA_ENABLE_AUTOMATION (CMake
 // -DENABLE_AUTOMATION=ON) so it is absent from default builds — no
 // FIFO is created, no reader thread is spawned, no external code
-// path can re-enable it. In builds that compiled it in it is
-// additionally dormant unless the BA_AUTOMATION_FIFO environment
-// variable is set to a path; see base.cc for that gate.
+// path can re-enable it.
+//
+// In builds that compile it in, the subsystem itself (which is what
+// makes the automation_* native hooks live) is stood up on developer
+// builds so any in-process Python — including remotely delivered
+// code such as cloud-console exec — can drive the UI. On all other
+// build flavors (including distributed test builds and server
+// bundles) it exists only with the explicit local opt-in of the
+// BA_AUTOMATION_FIFO environment variable. The FIFO itself is an
+// optional local command entry point either way; see base.cc for
+// the construction gate.
 //
 // Unstable, unsupported API — no backward-compatibility guarantees.
-// POSIX-only (named FIFOs). Intentionally siloed from the rest of
+// The FIFO entry point is POSIX-only and interim (it goes away once
+// automation rides the transport channel); on Windows only the
+// hook-serving mode exists. Intentionally siloed from the rest of
 // the engine: it owns its own directory, instantiation site, and
 // Python-side helper module (babase/_automation.py). If the design
 // needs to change, look here first.
@@ -28,15 +38,20 @@
 
 namespace ballistica::base {
 
-/// Reads newline-delimited Python commands from a named FIFO and
-/// dispatches each onto the logic-thread event loop for execution.
-/// The reader thread blocks on read(); destruction closes the fd to
-/// unblock and join.
+/// Hosts the automation capabilities (screenshot capture etc.; the
+/// automation_* native hooks check for this object's presence) and
+/// optionally reads newline-delimited Python commands from a named
+/// FIFO, dispatching each onto the logic-thread event loop for
+/// execution. The reader thread blocks on read(); destruction closes
+/// the fd to unblock and join.
 class Automation {
  public:
-  /// Open the FIFO (creating it as a 0600 mkfifo if it doesn't exist)
-  /// and launch the reader thread. On any setup failure logs an error
-  /// and leaves the subsystem inert; never throws.
+  /// With a non-empty ``fifo_path``, open the FIFO (creating it as a
+  /// 0600 mkfifo if it doesn't exist) and launch the reader thread;
+  /// on any FIFO setup failure logs an error and leaves the command
+  /// entry point inert (capabilities stay live); never throws. With
+  /// an empty path, no FIFO or reader thread exists — the subsystem
+  /// serves only the native hooks.
   explicit Automation(std::string fifo_path);
   ~Automation();
 

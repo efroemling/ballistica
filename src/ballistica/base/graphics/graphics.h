@@ -14,12 +14,28 @@
 #include "ballistica/base/graphics/support/graphics_settings.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/generic/snapshot.h"
+#include "ballistica/shared/math/rect.h"
 #include "ballistica/shared/math/vector2f.h"
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
 
-const float kTVBorder = 0.075f;
+// Thickness of each edge's black border in tv-border mode, as a fraction
+// of window height (uniform thickness on all four edges). Note that this
+// intentionally differs from broadcast safe-area conventions (which are
+// per-dimension percentages); a uniform frame looks more deliberate, and
+// this value still covers typical (2.5-5% per edge) overscan vertically
+// and horizontally on common aspect ratios.
+const float kTVBorder = 0.035f;
+
+// Bounds our active render rect's aspect ratio is clamped to; window
+// regions beyond these get black bars so extreme window shapes can't
+// break our UI. Max matches the widest broadly-available phone aspect
+// (mainstream tops out at 20:9; 21:9 covers legacy Sony Xperias).
+// Foldable cover displays (~22-23:9) intentionally get thin bars.
+const float kMinAspectRatio = 4.0f / 3.0f;
+const float kMaxAspectRatio = 21.0f / 9.0f;
+
 const float kVRBorder = 0.085f;
 
 // Light/shadow res is divided by this to get pure light res.
@@ -252,24 +268,34 @@ class Graphics {
   }
 
   auto PixelToVirtualX(float x) const -> float {
-    if (tv_border_) {
-      // In this case, 0 to 1 in physical coords maps to -0.05f to 1.05f in
-      // virtual.
-      return (-0.5f * kTVBorder) * res_x_virtual_
-             + (1.0f + kTVBorder) * res_x_virtual_ * (x / res_x_);
-    }
-    return x * (res_x_virtual_ / res_x_);
+    // Map based on our position within the active render rect (the
+    // sub-rect of the window that game content occupies). Positions in
+    // border regions map outside the 0..virtual-res range.
+    return res_x_virtual_
+           * ((x - active_render_rect_.l) / active_render_rect_.width());
   }
 
   auto PixelToVirtualY(float y) const -> float {
-    if (tv_border_) {
-      // In this case, 0 to 1 in physical coords maps to -0.05f to 1.05f in
-      // virtual.
-      return (-0.5f * kTVBorder) * res_y_virtual_
-             + (1.0f + kTVBorder) * res_y_virtual_ * (y / res_y_);
-    }
-    return y * (res_y_virtual_ / res_y_);
+    return res_y_virtual_
+           * ((y - active_render_rect_.b) / active_render_rect_.height());
   }
+
+  /// The sub-rect of the physical window that game content occupies, in
+  /// pixels (bottom-left origin, y-up). Everything outside it is kept
+  /// cleared to black. Matches the full window unless tv-border mode
+  /// and/or aspect-ratio limiting is in effect.
+  auto active_render_rect() const -> const Rect& {
+    assert(g_base->InLogicThread());
+    return active_render_rect_;
+  }
+
+  /// Calc the active render rect for a given window size and tv-border
+  /// setting: the window inset by the tv border (if enabled) and then
+  /// clamped to our min/max aspect ratios. Border is applied before the
+  /// aspect clamp since uniform-thickness borders change the inner
+  /// region's aspect.
+  static auto CalcActiveRenderRect(float res_x, float res_y, bool tv_border)
+      -> Rect;
 
   void set_internal_components_inited(bool val) {
     internal_components_inited_ = val;
@@ -448,6 +474,7 @@ class Graphics {
   float res_y_{256.0f};
   float res_x_virtual_{256.0f};
   float res_y_virtual_{256.0f};
+  Rect active_render_rect_{0.0f, 0.0f, 256.0f, 256.0f};
   float overlay_node_z_depth_{};
   float progress_bar_progress_{};
   float shadow_lower_bottom_{-4.0f};

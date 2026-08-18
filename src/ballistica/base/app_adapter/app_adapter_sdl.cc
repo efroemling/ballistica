@@ -5,6 +5,7 @@
 #include "ballistica/base/app_adapter/app_adapter_sdl.h"
 
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -669,6 +670,22 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
     }
 
     case SDL_EVENT_KEY_DOWN: {
+      if (g_core->logging->LogLevelEnabled(LogName::kBaInput,
+                                           LogLevel::kDebug)) {
+        g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug,
+                             "SDL key-down event: scancode "
+                                 + std::to_string(event.key.scancode)
+                                 + (event.key.repeat ? " (repeat)." : "."));
+      }
+      // Sanity-check: if the UI reports an active text-edit session,
+      // SDL text input should be active too; typing would otherwise
+      // silently produce no text.
+      if (ui_text_editing_active_ && sdl_window_
+          && !SDL_TextInputActive(sdl_window_)) {
+        BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                    "Key event with a UI text-edit session active but SDL"
+                    " text input inactive; typing will produce no text.");
+      }
       if (!event.key.repeat) {
         g_base->input->PushKeyPressEvent(SDLKeyEventToBA_(event.key));
       }
@@ -676,7 +693,29 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
     }
 
     case SDL_EVENT_KEY_UP: {
+      if (g_core->logging->LogLevelEnabled(LogName::kBaInput,
+                                           LogLevel::kDebug)) {
+        g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug,
+                             "SDL key-up event: scancode "
+                                 + std::to_string(event.key.scancode) + ".");
+      }
       g_base->input->PushKeyReleaseEvent(SDLKeyEventToBA_(event.key));
+      break;
+    }
+
+    case SDL_EVENT_WINDOW_FOCUS_GAINED:
+    case SDL_EVENT_WINDOW_FOCUS_LOST: {
+      // Not currently acted on, but handy when debugging input issues
+      // (things like the macOS press-and-hold accent popup can shift
+      // keyboard focus in ways that affect what SDL delivers).
+      if (g_core->logging->LogLevelEnabled(LogName::kBaInput,
+                                           LogLevel::kDebug)) {
+        g_core->logging->Log(
+            LogName::kBaInput, LogLevel::kDebug,
+            std::string("SDL window keyboard-focus ")
+                + (event.type == SDL_EVENT_WINDOW_FOCUS_GAINED ? "gained."
+                                                               : "lost."));
+      }
       break;
     }
 
@@ -714,6 +753,23 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
       break;
 
     case SDL_EVENT_TEXT_INPUT: {
+      if (g_core->logging->LogLevelEnabled(LogName::kBaInput,
+                                           LogLevel::kDebug)) {
+        g_core->logging->Log(
+            LogName::kBaInput, LogLevel::kDebug,
+            std::string("SDL text-input event: '") + event.text.text + "'.");
+      }
+      // Sanity-check: text events should only flow while the UI has an
+      // active text-edit session (we start/stop SDL text input from
+      // that). Receiving them well outside one means text input is
+      // stuck on (the pre-session-scoping bug class). The grace period
+      // covers events already queued when a session ends.
+      if (!ui_text_editing_active_
+          && g_core->AppTimeSeconds() - last_ui_text_edit_end_time_ > 2.0) {
+        BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                    "Received SDL text-input event with no active UI"
+                    " text-edit session; SDL text input may be stuck on.");
+      }
       g_base->input->PushTextInputEvent(event.text.text);
       break;
     }
@@ -1177,6 +1233,26 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
       height = static_cast<int>(kBaseVirtualResY * 0.8f);
     }
 
+    // Debug env-var to force a specific initial window size ('WxH' form;
+    // see test_game_run --window-size). Handy for exercising things like
+    // aspect-ratio limiting.
+    if (auto sizeenv = g_core->platform->GetEnv("BA_WINDOW_SIZE")) {
+      int w{}, h{};
+      auto xpos = sizeenv->find('x');
+      if (xpos != std::string::npos) {
+        w = strtol(sizeenv->substr(0, xpos).c_str(), nullptr, 10);
+        h = strtol(sizeenv->substr(xpos + 1).c_str(), nullptr, 10);
+      }
+      if (w > 0 && h > 0) {
+        width = w;
+        height = h;
+      } else {
+        g_core->logging->Log(
+            LogName::kBaGraphics, LogLevel::kError,
+            "Invalid BA_WINDOW_SIZE value '" + *sizeenv + "'; expected WxH.");
+      }
+    }
+
     // SDL3 notes: windows are shown by default (no SDL_WINDOW_SHOWN), high-dpi
     // is requested via SDL_WINDOW_HIGH_PIXEL_DENSITY (was ALLOW_HIGHDPI), and
     // SDL_WindowFlags is now 64-bit. Bare SDL_WINDOW_FULLSCREEN with no
@@ -1245,13 +1321,12 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
 
     SDL_SetWindowTitle(sdl_window_, "BallisticaKit");
 
-    // Unlike SDL2, SDL3 delivers no SDL_EVENT_TEXT_INPUT events until text
-    // input is explicitly started, so turn it on permanently to match our
-    // old SDL2 behavior. This is fine for desktop, but if we ever use SDL
-    // in mobile-type situations (where starting text input can summon an
-    // on-screen keyboard) we should revise this to start/stop based on
-    // text-widget focus instead.
-    SDL_StartTextInput(sdl_window_);
+    // Note: we deliberately do NOT start SDL text input here. It gets
+    // started/stopped based on when the app is actually editing text
+    // (see OnUITextEditingBegin/End below), which keeps OS IME behavior
+    // sane: no macOS press-and-hold accent popups during gameplay,
+    // composition/candidate UI positioned at the field being edited,
+    // and normal key-repeat outside of editing.
 
     UpdateScreenSizes_();
 
@@ -1375,6 +1450,72 @@ auto AppAdapterSDL::SupportsMaxFPS() -> bool const { return true; }
 auto AppAdapterSDL::HasDirectKeyboardInput() -> bool {
   // We always provide direct keyboard events.
   return true;
+}
+
+static auto TextEditRectToSDL_(const Rect& rect_normalized,
+                               const Vector2f& window_size) -> SDL_Rect {
+  // Incoming rects are normalized (0-1) window coords with a bottom-left
+  // origin (y-up); SDL wants window points, top-left origin (y-down).
+  // Note that the normalized values already account for the game's
+  // active render rect (black borders in tv-mode/etc.), so this is a
+  // plain scale+flip.
+  SDL_Rect r;
+  r.x = static_cast<int>(std::lround(rect_normalized.l * window_size.x));
+  r.y =
+      static_cast<int>(std::lround((1.0f - rect_normalized.t) * window_size.y));
+  r.w = static_cast<int>(std::lround(rect_normalized.width() * window_size.x));
+  r.h = static_cast<int>(std::lround(rect_normalized.height() * window_size.y));
+  return r;
+}
+
+void AppAdapterSDL::OnUITextEditingBegin(const Rect& rect_normalized) {
+  assert(g_base->InLogicThread());
+  PushMainThreadCall([this, rect_normalized] {
+    ui_text_editing_active_ = true;
+    if (!sdl_window_) {
+      return;
+    }
+    SDL_Rect r = TextEditRectToSDL_(rect_normalized, window_size_);
+    if (!SDL_SetTextInputArea(sdl_window_, &r, 0)) {
+      BA_LOG_ONCE(
+          LogName::kBaInput, LogLevel::kWarning,
+          std::string("SDL_SetTextInputArea failed: ") + SDL_GetError());
+    }
+    if (!SDL_StartTextInput(sdl_window_)) {
+      BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                  std::string("SDL_StartTextInput failed: ") + SDL_GetError());
+    }
+  });
+}
+
+void AppAdapterSDL::OnUITextEditingUpdate(const Rect& rect_normalized) {
+  assert(g_base->InLogicThread());
+  PushMainThreadCall([this, rect_normalized] {
+    if (!sdl_window_ || !SDL_TextInputActive(sdl_window_)) {
+      return;
+    }
+    SDL_Rect r = TextEditRectToSDL_(rect_normalized, window_size_);
+    if (!SDL_SetTextInputArea(sdl_window_, &r, 0)) {
+      BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                  std::string("SDL_SetTextInputArea (update) failed: ")
+                      + SDL_GetError());
+    }
+  });
+}
+
+void AppAdapterSDL::OnUITextEditingEnd() {
+  assert(g_base->InLogicThread());
+  PushMainThreadCall([this] {
+    ui_text_editing_active_ = false;
+    last_ui_text_edit_end_time_ = g_core->AppTimeSeconds();
+    if (!sdl_window_) {
+      return;
+    }
+    if (!SDL_StopTextInput(sdl_window_)) {
+      BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                  std::string("SDL_StopTextInput failed: ") + SDL_GetError());
+    }
+  });
 }
 
 auto AppAdapterSDL::DoClipboardIsSupported() -> bool { return true; }

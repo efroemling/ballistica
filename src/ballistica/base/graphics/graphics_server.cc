@@ -55,20 +55,24 @@ void GraphicsServer::ApplySettings(const GraphicsSettings* settings) {
          && settings->resolution_virtual.y >= 0.0f);
 
   // Pull a few things out ourself such as screen resolution.
-  tv_border_ = settings->tv_border;
   if (renderer_) {
     renderer_->set_pixel_scale(settings->pixel_scale);
   }
-  // Note: need to look at both physical and virtual res here; its possible
-  // for physical to stay the same but for virtual to change (ui-scale
-  // changes can do this).
+  // Note: need to look at physical/virtual res plus the active render
+  // rect here; each can change independently of the others (ui-scale
+  // changes can move virtual res alone; a tv-border toggle can move the
+  // rect alone).
+  const Rect& arect = settings->active_render_rect;
   if (res_x_ != settings->resolution.x || res_y_ != settings->resolution.y
       || res_x_virtual_ != settings->resolution_virtual.x
-      || res_y_virtual_ != settings->resolution_virtual.y) {
+      || res_y_virtual_ != settings->resolution_virtual.y
+      || active_render_rect_.l != arect.l || active_render_rect_.r != arect.r
+      || active_render_rect_.b != arect.b || active_render_rect_.t != arect.t) {
     res_x_ = settings->resolution.x;
     res_y_ = settings->resolution.y;
     res_x_virtual_ = settings->resolution_virtual.x;
     res_y_virtual_ = settings->resolution_virtual.y;
+    active_render_rect_ = arect;
     if (renderer_) {
       renderer_->OnScreenSizeChange();
     }

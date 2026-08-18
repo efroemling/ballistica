@@ -196,6 +196,12 @@ class LangStrSpecValue(LangStrSpec):
     package entry. The value is locale-independent; ``subs`` are
     substituted into ``{name}`` tokens exactly like a plain resource
     value (nested language-strings allowed).
+
+    Note that ``value`` is a *template*, not raw display text: a
+    ``{name}`` token with no matching sub is a fail-visible error at
+    display time. Text not authored against this contract (user input,
+    error messages, anything that could contain a brace) must go
+    through :meth:`literal` instead.
     """
 
     value: Annotated[str, IOAttrs('v')]
@@ -203,6 +209,19 @@ class LangStrSpecValue(LangStrSpec):
         dict[str, str | int | LangStrSpec],
         IOAttrs('s', store_default=False),
     ] = field(default_factory=dict)
+
+    @classmethod
+    def literal(cls, text: str) -> LangStrSpecValue:
+        """Return a spec displaying ``text`` verbatim in every locale.
+
+        Escapes brace characters (``{`` -> ``{{``, ``}`` -> ``}}``) so
+        the substitution engine renders them literally rather than
+        treating ``{...}`` runs as substitution tokens. Use this for
+        any dynamic text not authored as a template -- otherwise text
+        that happens to contain braces displays as a
+        ``LANGSTR_ERROR:...`` sentinel.
+        """
+        return cls(text.replace('{', '{{').replace('}', '}}'))
 
     @override
     @classmethod
