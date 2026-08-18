@@ -14,6 +14,7 @@
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/generic/snapshot.h"
 #include "ballistica/shared/math/matrix44f.h"
+#include "ballistica/shared/math/rect.h"
 
 namespace ballistica::base {
 
@@ -228,9 +229,13 @@ class GraphicsServer {
     return res_y_virtual_;
   }
 
-  auto tv_border() const {
+  /// The sub-rect of the screen that game content occupies (pixels,
+  /// bottom-left origin). Everything outside it is kept cleared to
+  /// black. Matches the full screen unless tv-border mode and/or
+  /// aspect-ratio limiting is in effect.
+  auto screen_active_rect() const -> const Rect& {
     assert(InGraphicsContext_());
-    return tv_border_;
+    return active_render_rect_;
   }
 
   auto SupportsTextureCompressionType(TextureCompressionType t) const -> bool {
@@ -337,7 +342,6 @@ class GraphicsServer {
   bool renderer_loaded_{};
   bool model_view_projection_matrix_dirty_{true};
   bool model_world_matrix_dirty_{true};
-  bool tv_border_{};
   bool renderer_context_lost_{};
   bool texture_compression_types_set_{};
   bool cam_orient_matrix_dirty_{true};
@@ -347,6 +351,7 @@ class GraphicsServer {
   float res_y_{};
   float res_x_virtual_{};
   float res_y_virtual_{};
+  Rect active_render_rect_{};
   Matrix44f model_view_matrix_{kMatrix44fIdentity};
   Matrix44f view_world_matrix_{kMatrix44fIdentity};
   Matrix44f projection_matrix_{kMatrix44fIdentity};

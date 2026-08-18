@@ -792,7 +792,7 @@ void RendererGL::CheckFunkyDepthIssue_() {
   SetDepthTesting(true);
   SetBlend(false);
   SetDoubleSided_(false);
-  test_rt1->DrawBegin(true, 1.0f, 1.0f, 1.0f, 1.0f);
+  test_rt1->DrawBegin(true, 1.0f, 1.0f, 1.0f, 1.0f, true);
   ProgramSimpleGL* p = simple_color_prog_;
   p->Bind();
   p->SetColor(1, 0, 1);
@@ -809,7 +809,7 @@ void RendererGL::CheckFunkyDepthIssue_() {
   SetDepthTesting(false);
   SetBlend(false);
   SetDoubleSided_(false);
-  test_rt2->DrawBegin(false, 1.0f, 1.0f, 1.0f, 1.0f);
+  test_rt2->DrawBegin(false, 1.0f, 1.0f, 1.0f, 1.0f, true);
   p = simple_tex_dtest_prog_;
   p->Bind();
   g_base->graphics_server->ModelViewReset();
@@ -2276,13 +2276,23 @@ void RendererGL::BlitBuffer(RenderTarget* src_in, RenderTarget* dst_in,
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dst->GetFramebufferID());
     BA_DEBUG_CHECK_GL_ERROR;
 
-    glBlitFramebuffer(0, 0, static_cast<GLint>(src->physical_width()),
-                      static_cast<GLint>(src->physical_height()), 0, 0,
-                      static_cast<GLint>(dst->physical_width()),
-                      static_cast<GLint>(dst->physical_height()),
-                      depth ? (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-                            : GL_COLOR_BUFFER_BIT,
-                      linear_interpolation ? GL_LINEAR : GL_NEAREST);
+    // Content lands in the dst's content region; if that's an inset
+    // sub-rect (tv-border mode / aspect-ratio limiting on the screen
+    // target), paint the borders black first.
+    Rect dst_rect = dst->content_rect();
+    if (!dst->content_rect_is_full()) {
+      glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+      glClear(GL_COLOR_BUFFER_BIT);
+      BA_DEBUG_CHECK_GL_ERROR;
+    }
+    glBlitFramebuffer(
+        0, 0, static_cast<GLint>(src->physical_width()),
+        static_cast<GLint>(src->physical_height()),
+        static_cast<GLint>(dst_rect.l), static_cast<GLint>(dst_rect.b),
+        static_cast<GLint>(dst_rect.r), static_cast<GLint>(dst_rect.t),
+        depth ? (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+              : GL_COLOR_BUFFER_BIT,
+        linear_interpolation ? GL_LINEAR : GL_NEAREST);
     BA_DEBUG_CHECK_GL_ERROR;
     if (invalidate_source) {
       InvalidateFramebuffer(true, depth, true);
@@ -2294,7 +2304,10 @@ void RendererGL::BlitBuffer(RenderTarget* src_in, RenderTarget* dst_in,
   if (do_shader_blit) {
     SetDepthWriting(false);
     SetDepthTesting(false);
-    dst_in->DrawBegin(false);
+    // A color-only blit; skip any depth clear (which would silently
+    // no-op anyway with depth-writing off).
+    dst_in->DrawBegin(false, {0.0f, 0.0f, 0.0f, 1.0f},
+                      /*clear_depth=*/false);
     g_base->graphics_server->ModelViewReset();
     g_base->graphics_server->SetOrthoProjection(-1, 1, -1, 1, -1, 1);
 

@@ -284,6 +284,9 @@ def _endpoint(
         recv_type=_Payload,
         on_message=_on_message,
         attach_timeout_seconds=0.5,
+        # Tests compress every window so the recovery matrix runs in
+        # seconds; the production floor would defeat that.
+        loss_detection_floor_seconds=0.0,
     )
 
 

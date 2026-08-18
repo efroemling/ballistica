@@ -318,7 +318,8 @@ class DocUIController:
         status_code = dui2.ResponseStatus.UNKNOWN_ERROR
 
         if custom_message is not None:
-            error_msg = LangStrSpecValue(custom_message)
+            # Literal form: arbitrary error text can contain braces.
+            error_msg = LangStrSpecValue.literal(custom_message)
         elif error_type is self.ErrorType.GENERIC:
             error_msg = uistat.error_occurred.spec
         elif error_type is self.ErrorType.NEED_UPDATE:

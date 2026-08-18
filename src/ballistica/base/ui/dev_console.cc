@@ -1578,6 +1578,17 @@ void DevConsole::Draw(FrameDef* frame_def) {
   }
 
   if (python_terminal_visible_) {
+    // Report our input line as the app's live text-editing target
+    // (drives OS IME positioning/etc). We outrank any bauiv1 widget
+    // that might also be editing, since text input comes to us first.
+    // Skip while transitioning out (state kInactive still draws briefly).
+    if (state_ != State_::kInactive) {
+      g_base->ui->ReportTextEditing(
+          Rect{0.0f, bottom + 15.0f * bs, pass->virtual_width(),
+               bottom + 30.0f * bs},
+          UI::TextEditSource::kDevConsole);
+    }
+
     if (input_text_dirty_) {
       input_text_group_.SetText(input_string_);
       input_text_dirty_ = false;

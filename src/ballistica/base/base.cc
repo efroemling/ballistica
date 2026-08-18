@@ -94,12 +94,16 @@ BaseFeatureSet::BaseFeatureSet()
   auto* envval = getenv("BA_SERVER_WRAPPER_MANAGED");
   server_wrapper_managed_ = (envval && strcmp(envval, "1") == 0);
 #if BA_ENABLE_AUTOMATION
-  // Opt-in automation FIFO. Inert unless BA_AUTOMATION_FIFO env
-  // var points at a path; tools/pcommand test_game_run sets it
-  // automatically per-silo. See base/automation/automation.h.
-  if (getenv("BA_AUTOMATION_FIFO") != nullptr
-      && getenv("BA_AUTOMATION_FIFO")[0] != '\0') {
-    automation = new Automation(getenv("BA_AUTOMATION_FIFO"));
+  {
+    // Automation subsystem; see base/automation/automation.h. With
+    // BA_AUTOMATION_FIFO pointing at a path (tools/pcommand
+    // test_game_run sets it automatically per-silo), stand it up
+    // with that local FIFO command entry point — an explicit local
+    // opt-in, honored on any build that compiled automation in.
+    const char* fifo_path = getenv("BA_AUTOMATION_FIFO");
+    if (fifo_path != nullptr && fifo_path[0] != '\0') {
+      automation = new Automation(fifo_path);
+    }
   }
 #endif
 }

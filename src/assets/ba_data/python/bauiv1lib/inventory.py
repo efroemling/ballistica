@@ -303,8 +303,11 @@ class InventoryUIController(DocUIController):
                             tint2_color=highlight,
                         ),
                         dui2.Text(
-                            # Raw profile name (+icon glyph); verbatim.
-                            LangStrSpecValue(tval),
+                            # Raw profile name (+icon glyph); the
+                            # literal form brace-escapes so a name
+                            # like '{test}' displays verbatim instead
+                            # of erroring as a substitution token.
+                            LangStrSpecValue.literal(tval),
                             position=(0, -75),
                             size=(130, 40),
                             flatness=1.0,

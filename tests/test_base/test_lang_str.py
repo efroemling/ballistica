@@ -70,6 +70,15 @@ for text in ['ModGame', '100% {x} done', '{v}', '{{already}}', 'C#', 'no{']:
 ft_json = babase.LangStr.from_text('a {b} c').to_json()
 assert pyctx.decode(dataclass_from_json(LangStrSpec, ft_json)) == 'a {b} c'
 
+# LangStrSpecValue.literal is the same convention built spec-side (for
+# authoring surfaces without a native LangStr handy); both evaluators
+# must render its output verbatim.
+for text in ['ModGame', '100% {x} done', '{v}', '{{already}}', 'C#', 'no{']:
+    lit = LangStrSpecValue.literal(text)
+    assert pyctx.decode(lit) == text, f'literal py: {text!r}'
+    got = babase.LangStr(dataclass_to_json(lit)).evaluate()
+    assert got == text, f'literal native: {got!r} != {text!r}'
+
 # Missing-substitution is fail-visible on both sides.
 missing = LangStrSpecValue('Hi {name}.')
 assert pyctx.decode(missing).startswith('LANGSTR_ERROR:')

@@ -782,6 +782,8 @@ void Input::PushTextInputEvent(const std::string& text) {
     if (keys_held_.contains(BAK_LCTRL) || keys_held_.contains(BAK_RCTRL)
         || keys_held_.contains(BAK_LALT) || keys_held_.contains(BAK_RALT)
         || keys_held_.contains(BAK_LGUI) || keys_held_.contains(BAK_RGUI)) {
+      g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug,
+                           "Dropping text-input event (mod keys held).");
       return;
     }
 
@@ -812,13 +814,33 @@ void Input::PushTextInputEvent(const std::string& text) {
       }
     }
 
-    if (g_base && g_base->ui->dev_console() != nullptr
-        && g_base->ui->dev_console()->HandleTextEditing(text)) {
-      return;
-    }
-
-    g_base->ui->SendWidgetMessage(WidgetMessage(
-        WidgetMessage::Type::kTextInput, nullptr, 0, 0, 0, 0, text.c_str()));
+    // Defer actual delivery (dev-console AND widget) by one event-loop
+    // cycle to match the deferral key events get - a key's initial
+    // delivery runs deferred via Repeater both for widgets and for the
+    // dev-console's own key actions (see Repeater::PostInit_). Without
+    // this, a text event hops *ahead* of a key event sent just before
+    // it, which breaks things like the synthesized backspace+text pair
+    // SDL emits for macOS press-and-hold accent replacement: the
+    // replacement text would land before the backspace meant to remove
+    // the original char, and the backspace would then eat the
+    // replacement instead.
+    g_base->logic->event_loop()->PushCall([text] {
+      if (g_base->ui->dev_console() != nullptr
+          && g_base->ui->dev_console()->HandleTextEditing(text)) {
+        return;
+      }
+      bool claimed = g_base->ui->SendWidgetMessage(WidgetMessage(
+          WidgetMessage::Type::kTextInput, nullptr, 0, 0, 0, 0, text.c_str()));
+      // Sanity-check: an active text-edit session means some widget is
+      // being inline-edited, so text should get claimed; unclaimed here
+      // means typed text is silently vanishing (routing drift between
+      // the session's widget and message dispatch).
+      if (!claimed && g_base->ui->text_editing_active()) {
+        BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                    "Text input went unclaimed while a text-edit session"
+                    " is active; typed text may be getting lost.");
+      }
+    });
   });
 }
 

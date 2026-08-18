@@ -223,6 +223,23 @@ class AppAdapter {
   /// keyboard even if there is a physical keyboard attached).
   virtual auto HasDirectKeyboardInput() -> bool;
 
+  /// Called in the logic thread when direct inline text editing begins
+  /// somewhere in the UI. The rect is the on-screen area of the text
+  /// being edited, in normalized (0-1) window coords with a bottom-left
+  /// origin (y-up); adapters flip/scale to their own window conventions.
+  /// Adapters can use these calls to keep OS IME machinery informed of
+  /// when and where editing is occurring. Default implementations are
+  /// no-ops.
+  virtual void OnUITextEditingBegin(const Rect& rect_normalized);
+
+  /// Called in the logic thread when the on-screen area of actively
+  /// edited text changes (fields moving due to window animations,
+  /// scrolling, etc.).
+  virtual void OnUITextEditingUpdate(const Rect& rect_normalized);
+
+  /// Called in the logic thread when direct inline text editing ends.
+  virtual void OnUITextEditingEnd();
+
   /// Called in the graphics context to apply new settings coming in from
   /// the logic subsystem. This will be called initially to jump-start the
   /// graphics system as well as before frame draws to update any new

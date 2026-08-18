@@ -53,9 +53,11 @@ def langstr_value(value: str) -> babase.LangStr:
     form carries no package refs, so the D28 verified-context rule has
     nothing to verify.)
     """
-    import bacommon.langstr as _bclangstr
-
-    return _native_from_spec(_bclangstr.LangStrSpecValue(value))
+    # The value form is a template ({name} tokens substitute, and a
+    # missing arg is a fail-visible display error); the native literal
+    # constructor brace-escapes so our verbatim contract holds even
+    # for text containing braces.
+    return _babase.LangStr.from_text(value)
 
 
 def translate_server_text(

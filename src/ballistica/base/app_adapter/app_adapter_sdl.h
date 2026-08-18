@@ -46,6 +46,9 @@ class AppAdapterSDL : public AppAdapter {
   auto SupportsMaxFPS() -> bool const override;
 
   auto HasDirectKeyboardInput() -> bool override;
+  void OnUITextEditingBegin(const Rect& rect_normalized) override;
+  void OnUITextEditingUpdate(const Rect& rect_normalized) override;
+  void OnUITextEditingEnd() override;
   auto HasHardwareCursor() -> bool override;
   void SetHardwareCursorVisible(bool visible) override;
   void ApplyGraphicsSettings(const GraphicsSettings* settings) override;
@@ -133,6 +136,10 @@ class AppAdapterSDL : public AppAdapter {
   SDL_Cursor* hw_cursor_{};
   bool hw_cursor_create_attempted_{};
   seconds_t last_windowevent_close_time_{};
+  // Main-thread mirror of the UI's text-edit-session state, for
+  // sanity-checking SDL's text-input state against it.
+  bool ui_text_editing_active_{};
+  seconds_t last_ui_text_edit_end_time_{};
 };
 
 }  // namespace ballistica::base

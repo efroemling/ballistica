@@ -186,14 +186,10 @@ string(TOUPPER ${VARIANT} BA_VARIANT_UPPER)
 target_compile_definitions(common_deps
   INTERFACE BA_VARIANT_${BA_VARIANT_UPPER}=1)
 
-# Opt-in automation control channel (FIFO + in-process Python dispatch).
-# Unstable, unsupported public API — gated off by default; users opt in
-# via -DENABLE_AUTOMATION=ON. POSIX-only; fail fast on Windows rather
-# than silently producing a build that won't work.
-if(ENABLE_AUTOMATION AND WIN32)
-  message(FATAL_ERROR
-    "ENABLE_AUTOMATION is POSIX-only and not supported on Windows.")
-endif()
+# Opt-in automation control channel (in-process Python dispatch; on
+# POSIX platforms also a local FIFO command entry point). Unstable,
+# unsupported public API — gated off by default; users opt in via
+# -DENABLE_AUTOMATION=ON.
 if(ENABLE_AUTOMATION)
   target_compile_definitions(common_deps INTERFACE BA_ENABLE_AUTOMATION=1)
 endif()

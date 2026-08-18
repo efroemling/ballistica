@@ -499,6 +499,19 @@ void TextWidget::DoDrawCarat_(base::RenderPass* pass,
                               base::TextMesh::VAlign align_v, float x_offset,
                               float y_offset, float max_width_scale,
                               float max_height_scale) {
+  // If we're actively being inline-edited, report ourself as the app's
+  // live text-editing target (drives OS IME positioning/etc). Note this
+  // excludes the decorative always_show_carat_ case - only a genuinely
+  // focused widget receives text input.
+  if (editable() && IsHierarchySelected() && !ShouldUseStringEditor_()) {
+    float l{0.0f}, b{0.0f}, r{width_}, t{height_};
+    WidgetPointToScreen(&l, &b);
+    WidgetPointToScreen(&r, &t);
+    g_base->ui->ReportTextEditing(
+        Rect{std::min(l, r), std::min(b, t), std::max(l, r), std::max(b, t)},
+        base::UI::TextEditSource::kWidget);
+  }
+
   millisecs_t current_time{pass->frame_def()->display_time_millisecs()};
   if (IsHierarchySelected() || always_show_carat_) {
     bool show_cursor = true;

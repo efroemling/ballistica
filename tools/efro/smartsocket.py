@@ -386,6 +386,15 @@ def action_for_close_code(code: int) -> SmartSocketAction:
 # ---------------------------------------------------------------- #
 
 
+#: Default minimum silent-loss detection window, regardless of how
+#: fast a channel's policy pings. Pings faster than ~10s exist for
+#: freshness reporting, not because loss needs detecting that fast;
+#: without this floor a 3s ping cadence would cycle the connection
+#: over any 5s hiccup. Overridable per endpoint (tests compress
+#: every window to run the recovery matrix in seconds).
+LOSS_DETECTION_FLOOR_SECONDS = 15.0
+
+
 class SmartSocketClosed(Exception):
     """Raised by a transport when its connection has closed.
 
@@ -464,6 +473,7 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         refresh: Callable[[], Awaitable[None]] | None = None,
         in_flight_cap_bytes: int = 1024 * 1024,
         attach_timeout_seconds: float = 10.0,
+        loss_detection_floor_seconds: float = (LOSS_DETECTION_FLOOR_SECONDS),
         logger: logging.Logger | None = None,
     ) -> None:
         self._connect = connect
@@ -473,6 +483,7 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         self._logger = logger or logging.getLogger(__name__)
         self._in_flight_cap = in_flight_cap_bytes
         self._attach_timeout = attach_timeout_seconds
+        self._loss_detection_floor = loss_detection_floor_seconds
 
         #: Called with each inbound payload, decoded, in order,
         #: exactly once.
@@ -746,11 +757,19 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         No inbound frames within the window IS the signal. Closes and
         errors only get us here sooner; recovery must never depend on
         receiving one, or it works in tests and hangs on real wifi.
+
+        The detection window is decoupled from the ping cadence via a
+        floor: channels may ping fast purely as a *freshness* signal
+        (streamcall's end-to-end last-contact reporting pings every
+        few seconds), and deriving the window as a bare multiple of
+        that would declare silent loss on any brief hiccup and churn
+        the connection for nothing.
         """
         interval = self.policy.ping_interval_seconds if self.policy else 30.0
+        window = max(1.5 * interval, self._loss_detection_floor)
         while True:
             await asyncio.sleep(interval)
-            if time.monotonic() - self._last_inbound > 1.5 * interval:
+            if time.monotonic() - self._last_inbound > window:
                 # Black-holed: the connection looks fine and is not.
                 # Tell the relay we're detaching (so it lingers rather
                 # than waiting out a ping timeout) and reattach.
