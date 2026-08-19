@@ -382,7 +382,12 @@ def run_bacloud_main() -> None:
     try:
         raise SystemExit(App().run())
     except CleanError as clean_exc:
-        clean_exc.pretty_print()
+        # Errors go to stderr, same as every other diagnostic here.
+        # stdout is the command's *result* (callers parse it -- e.g.
+        # assetpins reads a resolved apverid from it), and wrapper
+        # tooling needs to be able to capture the reason a run failed
+        # without also swallowing its live progress output.
+        clean_exc.pretty_print(file=sys.stderr)
         raise SystemExit(2)
     except SystemExit:
         # Never handle this here.

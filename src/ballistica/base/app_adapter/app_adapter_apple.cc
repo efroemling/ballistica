@@ -441,7 +441,7 @@ auto AppAdapterApple::GetKeyRepeatInterval() -> float {
 #if BA_PLATFORM_MACOS
   return BallisticaKit::CocoaFromCpp::getKeyRepeatInterval();
 #else
-  return AppAdapter::GetKeyRepeatDelay();
+  return AppAdapter::GetKeyRepeatInterval();
 #endif
 }
 

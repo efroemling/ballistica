@@ -790,6 +790,7 @@ def _assemble_one_package(apverid: str, pkg: BundlePackage) -> dict[str, Any]:
 
     from efro.error import CleanError
     from batools.version import get_current_version
+    from batools.assetpins import describe_apverid_fetch_failure
 
     tmpdir = os.path.join(pcommand.PROJROOT, 'build/tmp')
     os.makedirs(tmpdir, exist_ok=True)
@@ -804,8 +805,13 @@ def _assemble_one_package(apverid: str, pkg: BundlePackage) -> dict[str, Any]:
     _version, build_number = get_current_version(str(pcommand.PROJROOT))
     env = dict(os.environ)
     env['BA_BUILD_NUMBER'] = str(build_number)
+    # Capture stderr (where bacloud reports why it failed, quoting the
+    # master server verbatim) so a failure can be explained precisely,
+    # while leaving stdout inherited so a slow build's progress lines
+    # still stream out live.
+    errtext = ''
     try:
-        subprocess.run(
+        proc = subprocess.run(
             [
                 f'{pcommand.PROJROOT}/tools/bacloud',
                 'assetpackage',
@@ -820,18 +826,32 @@ def _assemble_one_package(apverid: str, pkg: BundlePackage) -> dict[str, Any]:
                 '--bundle-path',
                 tmppath,
             ],
-            check=True,
+            check=False,
             env=env,
+            stderr=subprocess.PIPE,
+            text=True,
         )
+        errtext = proc.stderr or ''
+        if proc.returncode != 0:
+            raise subprocess.CalledProcessError(proc.returncode, 'bacloud')
+        # Succeeded, but bacloud may still have had something to say
+        # (retry notices, verbose diagnostics); don't eat it.
+        if errtext:
+            sys.stderr.write(errtext)
         with open(tmppath, encoding='utf-8') as infile:
             manifest: dict[str, Any] = json.load(infile)
         return manifest
     except Exception as exc:
         raise CleanError(
-            f'Failed to assemble package {apverid!r}'
-            f' (texture-profile {pkg.texture_profile!r}). If the'
-            f' apverid no longer exists on master (dev snapshots get'
-            f' pruned quickly), run `make assetpins-latest`.'
+            describe_apverid_fetch_failure(
+                apverid,
+                action=(
+                    f'assemble package {apverid!r} (texture-profile'
+                    f' {pkg.texture_profile!r})'
+                ),
+                exc=exc,
+                output=errtext,
+            )
         ) from exc
     finally:
         if os.path.exists(tmppath):

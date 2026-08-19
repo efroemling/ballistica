@@ -206,15 +206,23 @@ def _fetch_listing(
         assert isinstance(assets, list)
         return assets
     except Exception as exc:
-        detail = ''
+        # Structural cycle only: assetpins is the sole caller of this
+        # module, so it is always fully imported by the time we run.
+        # pylint: disable=cyclic-import
+        from batools.assetpins import describe_apverid_fetch_failure
+
+        output = ''
         if isinstance(exc, subprocess.CalledProcessError):
-            msg = (exc.stderr or exc.stdout or '').strip()
-            if msg:
-                detail = f'\n{msg}'
+            # Failures land on stderr; fold stdout in too, since which
+            # stream carries the useful text varies by failure mode.
+            output = (exc.stderr or '') + (exc.stdout or '')
         raise CleanError(
-            f'Failed to fetch asset listing for {apverid!r}. If the'
-            f' apverid no longer exists on master (dev snapshots get'
-            f' pruned quickly), run `make assetpins-latest`.{detail}'
+            describe_apverid_fetch_failure(
+                apverid,
+                action=f'fetch an asset listing for {apverid!r}',
+                exc=exc,
+                output=output,
+            )
         ) from exc
     finally:
         if os.path.exists(tmppath):

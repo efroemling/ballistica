@@ -146,6 +146,54 @@ def is_unresolved_dev(apverid: str) -> bool:
     return len(parts) == 3 and parts[2] == 'dev'
 
 
+def describe_apverid_fetch_failure(
+    apverid: str, *, action: str, exc: BaseException, output: str
+) -> str:
+    """Explain a failed ``bacloud`` fetch for ``apverid``.
+
+    ``action`` is the phrase for what was attempted, including the
+    apverid (e.g. ``"assemble package 'a-0.foo.260101a'"``); ``output``
+    is whatever the child wrote to stderr (empty if it was not
+    captured). Names the actual cause where we can pin it down, and
+    quotes the child's own words rather than guessing where we cannot.
+    """
+    detail = output.strip()
+
+    # bacloud surfaces the master server's message verbatim, so a
+    # version that is gone is identifiable from it. Matched loosely on
+    # purpose: if the wording ever drifts we fall through to quoting the
+    # child below rather than asserting something wrong.
+    if detail and apverid in detail and 'not found' in detail.lower():
+        try:
+            pin_type: PinType | None = classify_apverid(apverid)
+        except CleanError:
+            pin_type = None
+        if pin_type is PinType.DEV:
+            fix = (
+                'Dev snapshots get pruned quickly; run `make'
+                ' assetpins-latest` to pin to a current one.'
+            )
+        else:
+            fix = (
+                'Published versions are not normally removed, so this'
+                ' most likely means your checkout predates a pin change;'
+                ' update it (git pull) and try again.'
+            )
+        return (
+            f'Asset-package version {apverid!r} does not exist on the'
+            f' master server. {fix}'
+        )
+
+    msg = f'Failed to {action}.'
+    if isinstance(exc, subprocess.CalledProcessError):
+        msg += f' bacloud exited with code {exc.returncode}.'
+    else:
+        msg += f' {type(exc).__name__}: {exc}'
+    if detail:
+        msg += f'\n{detail}'
+    return msg
+
+
 @dataclass
 class Pin:
     """One discovered asset-package pin."""
@@ -1051,12 +1099,11 @@ def _bacloud_failure_detail(
 ) -> str:
     """Build a diagnostic suffix from a failed bacloud subprocess.
 
-    bacloud prints its ``CleanError`` message to stdout (not stderr),
-    so a transient transport/HTTP failure typically leaves stderr
-    empty — which historically produced bare, misleading errors that
-    read like a missing/format-broken pin. Folding both streams plus
-    the exit code in keeps transient transport blips distinguishable
-    from a genuine "no such version" / format error.
+    bacloud reports failures on stderr and results on stdout, but which
+    stream carries the useful text varies by failure mode (a transport
+    blip mid-command can leave either one empty). Folding both plus the
+    exit code in keeps transient transport blips distinguishable from a
+    genuine "no such version" / format error.
     """
     bits = [f'exit code {result.returncode}']
     out = result.stdout.strip()

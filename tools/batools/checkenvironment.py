@@ -48,9 +48,9 @@ from efro.terminal import Clr
 #:   the tools the bamaster workspace runner actually invokes.
 #: - **Runtime imports referenced by the bundled python tree**
 #:   (``cryptography``, ``urllib3``, ``requests`` + its stubs,
-#:   ``certifi``): without these in the venv mypy can't resolve
-#:   the relevant ``import`` statements in the env's own python
-#:   tree, and ``verify_check_environment`` reports failures.
+#:   ``certifi``, ``websockets``): without these in the venv mypy
+#:   can't resolve the relevant ``import`` statements in the env's
+#:   own python tree, and ``verify_check_environment`` reports failures.
 #:   Keep this list in sync as the bundled tree's runtime
 #:   imports evolve — the daily ``verify_check_environment``
 #:   upkeep run will catch additions.
@@ -63,6 +63,7 @@ _CHECKENV_TOP_LEVEL_PACKAGES: set[str] = {
     'requests',
     'types-requests',
     'urllib3',
+    'websockets',
 }
 
 
