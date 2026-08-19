@@ -39,6 +39,7 @@ class NodeType {
 
   /// Return an unbound attribute by index.
   auto GetAttribute(int index) const -> NodeAttributeUnbound* {
+    assert(late_index_attrs_.empty());  // FinalizeAttrIndices() must run.
     BA_PRECONDITION(
         index >= 0
         && index < static_cast_check_fit<int>(attributes_by_index_.size()));
@@ -66,8 +67,16 @@ class NodeType {
   void set_id(int val) { id_ = val; }
   auto attributes_by_index() const
       -> const std::vector<NodeAttributeUnbound*>& {
+    assert(late_index_attrs_.empty());  // FinalizeAttrIndices() must run.
     return attributes_by_index_;
   }
+
+  /// Assign wire indices to any late-registered attrs (see
+  /// kNodeAttributeFlagLateIndex). Must be called exactly once, after
+  /// the node type object (including any subclass) is fully
+  /// constructed; until then, late attrs have no index and index-based
+  /// lookups assert.
+  void FinalizeAttrIndices();
 
  private:
   NodeCreateFunc* create_call_;
@@ -75,6 +84,7 @@ class NodeType {
   std::string name_;
   std::unordered_map<std::string, NodeAttributeUnbound*> attributes_by_name_;
   std::vector<NodeAttributeUnbound*> attributes_by_index_;
+  std::vector<NodeAttributeUnbound*> late_index_attrs_;
   friend class NodeAttributeUnbound;
 };
 

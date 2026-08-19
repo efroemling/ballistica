@@ -38,6 +38,7 @@ from efro.smartsocket import (
     SmartSocketClosed,
     SmartSocketEndpoint,
     SmartSocketFrame,
+    SmartSocketPayloadTooLarge,
     SmartSocketChannelPolicy,
     SmartSocketEndpointPolicy,
     SmartSocketSlot,
@@ -653,6 +654,47 @@ async def _send_blocks_when_in_flight_buffer_is_full() -> None:
     blocked.cancel()
     runner.cancel()
     await asyncio.gather(runner, blocked, return_exceptions=True)
+
+
+def test_send_rejects_a_payload_bigger_than_the_buffer() -> None:
+    """An unsendable message fails loudly instead of blocking forever."""
+    _run(_send_rejects_a_payload_bigger_than_the_buffer())
+
+
+async def _send_rejects_a_payload_bigger_than_the_buffer() -> None:
+    # A message larger than the whole in-flight buffer could never
+    # fit, so the buffer-full wait would never end. It must raise
+    # rather than hang -- and leave the session alive, since it is a
+    # usage error, not a transport failure.
+    relay = _FakeRelay()
+
+    cap = len(dataclass_to_json(_Text(text='x' * 60))) + 10
+    endpoint = SmartSocketEndpoint(
+        relay.connect,
+        send_type=_Payload,
+        recv_type=_Payload,
+        in_flight_cap_bytes=cap,
+        attach_timeout_seconds=0.5,
+    )
+    runner = asyncio.ensure_future(endpoint.run())
+    await _wait_for(lambda: endpoint.connected)
+
+    raised = False
+    try:
+        # Comfortably over the cap.
+        await _send(endpoint, 'x' * (cap * 2))
+    except SmartSocketPayloadTooLarge as exc:
+        raised = True
+        assert exc.cap == cap
+        assert exc.size > cap
+    assert raised, 'an over-cap payload should raise, not block'
+
+    # The session is unharmed: a normal message still goes through.
+    assert not endpoint.done
+    await _send(endpoint, 'ok')
+
+    runner.cancel()
+    await asyncio.gather(runner, return_exceptions=True)
 
 
 # ---------------------------------------------------------------- #

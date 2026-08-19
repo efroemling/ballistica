@@ -23,6 +23,7 @@
 #include "ballistica/scene_v1/connection/connection_to_client.h"
 #include "ballistica/scene_v1/dynamics/collision.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
+#include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/python/class/python_class_activity_data.h"
 #include "ballistica/scene_v1/python/class/python_class_session_data.h"
@@ -1755,6 +1756,44 @@ static PyMethodDef PyProtocolVersionDef = {
     ":meta private:\n",
 };
 
+// ------------------------- get_node_attr_tables ------------------------------
+
+static auto PyGetNodeAttrTables(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  // Return every node type's attr table as {type_name: [(attr_name,
+  // attr_type_name), ...]} in wire-index order. Attrs are addressed
+  // over the wire by these indices, so this mapping is part of the
+  // scene_v1 protocol; a golden test in tests/test_scene_v1 pins it.
+  const auto& types_by_id = g_scene_v1->node_types_by_id();
+  PythonRef out{PyDict_New(), PythonRef::kSteal};
+  for (int id = 0; id < static_cast<int>(types_by_id.size()); ++id) {
+    NodeType* node_type = types_by_id.at(id);
+    const auto& attrs = node_type->attributes_by_index();
+    PythonRef attr_list{PyList_New(attrs.size()), PythonRef::kSteal};
+    for (size_t i = 0; i < attrs.size(); ++i) {
+      PyList_SetItem(attr_list.get(), static_cast<Py_ssize_t>(i),
+                     Py_BuildValue("(ss)", attrs[i]->name().c_str(),
+                                   attrs[i]->GetTypeName().c_str()));
+    }
+    PyDict_SetItemString(out.get(), node_type->name().c_str(), attr_list.get());
+  }
+  return out.HandOver();
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetNodeAttrTablesDef = {
+    "get_node_attr_tables",            // name
+    (PyCFunction)PyGetNodeAttrTables,  // method
+    METH_NOARGS,                       // flags
+
+    "get_node_attr_tables() -> dict[str, list[tuple[str, str]]]\n"
+    "\n"
+    "Return every node type's attr table in wire-index order.\n"
+    "\n"
+    ":meta private:\n",
+};
+
 // ----------------------------- reload_hooks ---------------------------------
 
 static auto PyReloadHooks(PyObject* self) -> PyObject* {
@@ -1819,6 +1858,7 @@ auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
       PyBaseTimerDef,
       PyLsInputDevicesDef,
       PyProtocolVersionDef,
+      PyGetNodeAttrTablesDef,
       PyReloadHooksDef,
   };
 }

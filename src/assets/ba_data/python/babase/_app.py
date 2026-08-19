@@ -1445,6 +1445,13 @@ class App:
                     'Error in on_app_suspend() for subsystem %s.', subsystem
                 )
 
+        # Write any pending config changes to disk; we could get
+        # killed at any point while suspended.
+        try:
+            self.config.commit_if_dirty()
+        except Exception:
+            balog.exception('Error committing config at app-suspend.')
+
     def _on_unsuspend(self) -> None:
         """Called when unsuspending."""
         assert _babase.in_logic_thread()
@@ -1504,6 +1511,14 @@ class App:
                     'Error in on_app_shutdown_complete() for subsystem %s.',
                     subsystem,
                 )
+
+        # Write any pending config changes to disk. This runs after
+        # subsystem/app-mode teardown so any config changes made there
+        # get included; it's our last chance.
+        try:
+            self.config.commit_if_dirty()
+        except Exception:
+            balog.exception('Error committing config at app-shutdown.')
 
     async def _wait_for_shutdown_suppressions(self) -> None:
 

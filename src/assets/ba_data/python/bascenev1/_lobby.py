@@ -485,12 +485,6 @@ class Chooser:
         else:
             self._profiles = app.config.get('Player Profiles', {})
 
-        # These may have come over the wire from an older
-        # (non-unicode/non-json) version.
-        # Make sure they conform to our standards
-        # (unicode strings, no tuples, etc)
-        self._profiles = app.classic.json_prep(self._profiles)
-
         # Filter out any characters we're unaware of. These profiles can
         # arrive over the wire from clients, so a malformed 'character'
         # value (e.g. an unhashable list) must not be allowed to reach

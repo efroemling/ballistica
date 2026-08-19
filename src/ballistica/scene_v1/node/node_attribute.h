@@ -123,7 +123,11 @@ class NodeAttributeUnbound {
   }
   auto name() const -> const std::string& { return name_; }
   auto node_type() const -> NodeType* { return node_type_; }
-  auto index() const -> int { return index_; }
+  auto index() const -> int {
+    // Late-index attrs have no index until FinalizeAttrIndices() runs.
+    assert(index_ >= 0);
+    return index_;
+  }
   void DisconnectIncoming(Node* node);
 
  protected:
@@ -136,6 +140,7 @@ class NodeAttributeUnbound {
   std::string name_;
   uint32_t flags_;
   int index_;
+  friend class NodeType;
 };
 
 // Simple node-attribute pair; used as a convenience measure.
@@ -607,6 +612,32 @@ class NodeAttributeUnboundCollisionMeshArray : public NodeAttributeUnbound {
    public:                                                                \
     explicit Attr_##NAME(NodeType* node_type)                             \
         : NodeAttributeUnboundFloatArray(node_type, #NAME, 0) {}          \
+    auto GetAsFloats(Node* node) -> std::vector<float> override {         \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      return tnode->GETTER();                                             \
+    }                                                                     \
+    void Set(Node* node, const std::vector<float>& vals) override {       \
+      BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
+      assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \
+      tnode->SETTER(vals);                                                \
+    }                                                                     \
+  };                                                                      \
+  Attr_##NAME NAME;
+
+// Like BA_FLOAT_ARRAY_ATTR but with deferred wire-index assignment
+// (kNodeAttributeFlagLateIndex): the attr takes its index after ALL
+// normally-registered attrs, including those of node-type subclasses.
+// Use this (or add the analogous _LATE variant for other attr kinds)
+// when appending an attr to a node type that has subclasses, so the
+// subclasses' attrs keep their existing wire indices; see the
+// protocol-changes list in scene_v1.h (42/43).
+#define BA_FLOAT_ARRAY_ATTR_LATE(NAME, GETTER, SETTER)                    \
+  class Attr_##NAME : public NodeAttributeUnboundFloatArray {             \
+   public:                                                                \
+    explicit Attr_##NAME(NodeType* node_type)                             \
+        : NodeAttributeUnboundFloatArray(node_type, #NAME,                \
+                                         kNodeAttributeFlagLateIndex) {}  \
     auto GetAsFloats(Node* node) -> std::vector<float> override {         \
       BA_NODE_TYPE_CLASS* tnode = static_cast<BA_NODE_TYPE_CLASS*>(node); \
       assert(dynamic_cast<BA_NODE_TYPE_CLASS*>(node) == tnode);           \

@@ -161,8 +161,11 @@ class PropNodeType : public NodeType {
   BA_STRING_ATTR(body, GetBody, SetBody);
   // Note: attrs are addressed over the wire by their position in this
   // table, so new ones must be appended at the end (and need a protocol
-  // version bump); see the protocol-changes list in scene_v1.h.
-  BA_FLOAT_ARRAY_ATTR(rotate, GetRotate, SetRotate);
+  // version bump) -- and because this type has subclasses (bomb) whose
+  // own attrs register after ours, appended attrs must use a _LATE
+  // macro so subclass attrs keep their indices; see the
+  // protocol-changes list in scene_v1.h (42/43).
+  BA_FLOAT_ARRAY_ATTR_LATE(rotate, GetRotate, SetRotate);
 #undef BA_NODE_TYPE_CLASS
 
   explicit PropNodeType(const char* sub_type_name = nullptr,

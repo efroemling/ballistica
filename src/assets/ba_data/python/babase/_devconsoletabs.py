@@ -465,8 +465,42 @@ class DevConsoleTabLogging(DevConsoleTab):
 
     @override
     def refresh(self) -> None:
+        from babase._cloudloggercontrol import cloud_logger_control_enabled
 
         assert self._table is not None
+
+        bwidth = 140.0
+        bheight = 30.0
+        bvpad = 10.0
+
+        cloudcontrol = cloud_logger_control_enabled()
+
+        if cloudcontrol:
+            # Cloud control on: no manual controls; just explain the
+            # situation and offer the way out. Anchor the toggle where
+            # it sits in the manual layout (the table's single 800-wide
+            # column lands at x ±460 regardless of tab width).
+            self.text(
+                'Log levels are currently set automatically by the'
+                ' developer to help fix bugs.',
+                pos=(0.0, self.height * 0.5 + 10.0),
+                scale=0.6,
+            )
+            self.text(
+                'Turn off Cloud Control to set them manually.',
+                pos=(0.0, self.height * 0.5 - 14.0),
+                scale=0.5,
+                style='faded',
+            )
+            self.button(
+                'Cloud Control ON',
+                pos=(460.0 - bwidth, self.height - bheight - bvpad),
+                size=(bwidth, bheight),
+                label_scale=0.6,
+                style='bright',
+                call=partial(self._set_cloud_control, False),
+            )
+            return
 
         # Update table entries with the latest set of loggers (this can
         # change over time). Sort with 'root' first, followed by all our
@@ -485,9 +519,6 @@ class DevConsoleTabLogging(DevConsoleTab):
         # Draw our control buttons in the corners.
         tl = self._table.top_left
         tr = self._table.top_right
-        bwidth = 140.0
-        bheight = 30.0
-        bvpad = 10.0
         self.button(
             'Reset',
             pos=(tl[0], tl[1] - bheight - bvpad),
@@ -503,8 +534,16 @@ class DevConsoleTabLogging(DevConsoleTab):
             pos=(tr[0] - bwidth, tl[1] - bheight - bvpad),
             size=(bwidth, bheight),
             label_scale=0.6,
-            disabled=True,
+            call=partial(self._set_cloud_control, True),
         )
+
+    def _set_cloud_control(self, enabled: bool) -> None:
+        from babase._cloudloggercontrol import (
+            set_cloud_logger_control_enabled,
+        )
+
+        set_cloud_logger_control_enabled(enabled)
+        self.request_refresh()
 
     def _get_reset_logger_control_config(self) -> LoggerControlConfig:
         from bacommon.logging import get_base_logger_control_config_client

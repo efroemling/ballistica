@@ -588,7 +588,16 @@ async def _connect(ws_url: str, token: str) -> _WsTransport:
     # bundled-root-cert policy.
     sock = await websockets.connect(
         ws_url,
-        ssl=babase.app.net.sslcontext,
+        # ssl only for a wss:// url. The relay url mirrors the transport
+        # session's scheme, so on an insecure-mode node (a client in a
+        # Force-Insecure-Countries region, whose whole session runs over
+        # ws://) it comes through as ws:// — and passing an ssl context
+        # to a ws:// uri raises. Matches the main transport
+        # (v2transport ssl=None-when-insecure) and the automation
+        # channel (baplus._automationsession).
+        ssl=(
+            babase.app.net.sslcontext if ws_url.startswith('wss://') else None
+        ),
         subprotocols=[
             websockets.Subprotocol('basmartsocket'),
             websockets.Subprotocol(f'token.{token}'),

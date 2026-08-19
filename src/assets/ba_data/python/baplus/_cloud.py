@@ -267,10 +267,20 @@ class CloudSubsystem(babase.AppSubsystem):
         # If the persistent vals differ from what we already had,
         # store them.
         if response.persistent != self.vals_persistent:
+            loggercontrolchanged = (
+                response.persistent.logger_control
+                != self.vals_persistent.logger_control
+            )
             cfg = babase.app.config
             cfg['CloudVals'] = dataclass_to_dict(response.persistent)
             cfg.commit()
             self.vals_persistent = response.persistent
+
+            # If the cloud logger config changed, put it into effect
+            # now rather than waiting for the next launch (no-op if
+            # the user has cloud logger control switched off).
+            if loggercontrolchanged:
+                babase.handle_cloud_logger_config_changed()
 
         if self.vals_transient.update_available:
             self._update_available_notice_pending = True

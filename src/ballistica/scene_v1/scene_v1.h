@@ -34,7 +34,7 @@ namespace ballistica::scene_v1 {
 // anything emitting or ingesting scene streams.
 
 // Oldest protocol version we can act as a host for.
-const int kProtocolVersionHostMin = 42;
+const int kProtocolVersionHostMin = 43;
 
 // Oldest protocol version we can act as a client to. This can generally be
 // left as-is as long as only new nodes/attrs/commands are added and old
@@ -42,7 +42,7 @@ const int kProtocolVersionHostMin = 42;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 42;
+const int kProtocolVersionMax = 43;
 
 // The protocol version we actually host is now read as a setting; see
 // kSceneV1HostProtocol in ballistica/base/support/app_config.h.
@@ -137,6 +137,34 @@ const int kProtocolVersionMax = 42;
 //     end of their type's attr tables per the standing rule (see 40/41
 //     above), and the hosting floor rises with the max as usual so
 //     pre-42 clients never see indices they lack.
+//
+//     RETROACTIVE NOTE: this bump shipped BROKEN in dev/alpha builds
+//     2026-08-12..2026-08-18. The append rule has a wrinkle 42 missed:
+//     attr wire indices are assigned in C++ construction order, and
+//     base-class attrs construct before subclass attrs -- so appending
+//     'rotate' to the prop base table INSERTED it mid-table for the
+//     derived bomb type, shifting bomb's 'fuse_length' from 22 to 23
+//     and breaking every pre-42 stream containing a fused bomb (old
+//     servers and replays connect an animcurve into index 22, which
+//     resolved to the float-array 'rotate' -> instant session error).
+//     Fixed in 43.
+//
+// 43: Repair of 42's bomb-table breakage; no new features. Prop-node
+//     'rotate' is now registered with kNodeAttributeFlagLateIndex, so
+//     it takes its index AFTER any subclass attrs: prop keeps rotate=22
+//     (same as 42 intended) and bomb returns to its historical
+//     fuse_length=22 with rotate=23. Builds speaking broken-42 tables
+//     are fenced off by the version bump (disposable dev/alpha builds
+//     only; 42 never reached a stable release).
+//
+//     STANDING RULE, amended: appending an attr to a node type's table
+//     keeps existing indices stable ONLY for types nothing derives
+//     from. When adding an attr to a type with subclasses (currently
+//     just prop -> bomb), register it with the late-index flag (see
+//     BA_*_ATTR_LATE macros / kNodeAttributeFlagLateIndex) so subclass
+//     attrs keep their positions. tests/test_scene_v1's golden
+//     attr-table test pins every index; a diff there means a protocol
+//     bump (or a mistake).
 
 // Sim step size in milliseconds.
 const int kGameStepMilliseconds = 8;
@@ -465,6 +493,15 @@ enum NodeAttributeFlag {
   // set is part of the protocol contract -- re-flagging an attr after
   // a protocol ships requires a protocol bump.
   kNodeAttributeFlagLangStr = 2u,
+  // Defer this attr's wire-index assignment until the node type is
+  // fully constructed (NodeType::FinalizeAttrIndices). Required when
+  // appending an attr to a node type that has subclasses: base-class
+  // attrs construct before subclass attrs, so a plain append to a base
+  // table would land mid-table in derived types and shift their attrs'
+  // wire indices (the protocol-42 bomb 'fuse_length' breakage; see the
+  // protocol-changes list above). Late attrs take indices after ALL
+  // normally-registered attrs, in declaration order.
+  kNodeAttributeFlagLateIndex = 4u,
 };
 
 // First protocol whose lang-str-flagged string slots carry tagged

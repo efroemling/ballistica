@@ -410,6 +410,29 @@ class SmartSocketClosed(Exception):
         self.reason = reason
 
 
+class SmartSocketPayloadTooLarge(Exception):
+    """A single message exceeds what one send can carry.
+
+    A message must fit within the endpoint's in-flight buffer (it sits
+    there un-acked until the relay accepts it), so one larger than the
+    whole buffer could never be sent -- without this guard,
+    :meth:`SmartSocketEndpoint.send` would wait for space that can
+    never appear and block forever. This is a usage error, not a
+    transport failure: the session stays alive, and a caller with a
+    payload this big must split it above this layer (the small
+    per-message caps are load-bearing for the relay's resend buffer
+    and linger math, so they don't grow to fit one message).
+    """
+
+    def __init__(self, size: int, cap: int) -> None:
+        super().__init__(
+            f'payload of {size} bytes exceeds the in-flight cap of'
+            f' {cap} bytes; split it into smaller messages.'
+        )
+        self.size = size
+        self.cap = cap
+
+
 class SmartSocketTransport(Protocol):
     """One connection attempt's worth of plumbing.
 
@@ -571,6 +594,11 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         that for typed callers; the check is here for the untyped
         ones, and catches it at the sender rather than as a session
         death on the far end.
+
+        Raises :class:`SmartSocketPayloadTooLarge` for a message
+        bigger than the whole in-flight buffer -- it could never be
+        sent, so we say so instead of blocking forever waiting for
+        space that can't appear.
         """
         if not isinstance(message, self._send_type):
             raise TypeError(
@@ -578,6 +606,12 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
                 f' got a {type(message).__name__}.'
             )
         payload = dataclass_to_json(message)
+
+        # A message that alone exceeds the cap can never fit the
+        # un-acked buffer, so the wait below would never end. Fail
+        # loudly rather than hang.
+        if len(payload) > self._in_flight_cap:
+            raise SmartSocketPayloadTooLarge(len(payload), self._in_flight_cap)
 
         while (
             not self.done

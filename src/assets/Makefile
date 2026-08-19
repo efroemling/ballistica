@@ -209,6 +209,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_automation.py \
   $(BUILD_DIR)/ba_data/python/babase/_baeventloop.py \
   $(BUILD_DIR)/ba_data/python/babase/_cloud.py \
+  $(BUILD_DIR)/ba_data/python/babase/_cloudloggercontrol.py \
   $(BUILD_DIR)/ba_data/python/babase/_commonassets.py \
   $(BUILD_DIR)/ba_data/python/babase/_constructmode.py \
   $(BUILD_DIR)/ba_data/python/babase/_devconsole.py \
@@ -263,6 +264,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baplus/__init__.py \
   $(BUILD_DIR)/ba_data/python/baplus/_ads.py \
   $(BUILD_DIR)/ba_data/python/baplus/_appsubsystem.py \
+  $(BUILD_DIR)/ba_data/python/baplus/_automationsession.py \
   $(BUILD_DIR)/ba_data/python/baplus/_cloud.py \
   $(BUILD_DIR)/ba_data/python/baplus/_consolesession.py \
   $(BUILD_DIR)/ba_data/python/baplus/_hooks.py \
@@ -531,6 +533,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/assetspec/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetspec/_core.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetspec/_wrapper.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/automationchannel.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bacloud.py \
   $(BUILD_DIR)/ba_data/python/bacommon/build.py \
   $(BUILD_DIR)/ba_data/python/bacommon/classic/__init__.py \

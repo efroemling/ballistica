@@ -3471,6 +3471,106 @@ void RendererGL::UpdateGLDebugSettingsIfNeeded_() {
   }
 }
 
+// Longest side of a screenshot readback.
+//
+// DO NOT raise or remove the downscale (below) without re-testing on an
+// ANGLE/Metal build: a glReadPixels larger than this reads back TORN
+// there, regardless of sync/timing. (Witnessed on macOS desktop; iOS
+// shares the ANGLE-Metal backend so is presumed affected but unverified.
+// Which other ANGLE backends — e.g. Windows/D3D — share it is untested,
+// so the downscale is applied on all platforms.) The frame's content is
+// complete (a small read of it is clean, a large one is not; verified
+// that glFinish, fences, post-swap reads and delays do not help — only
+// keeping the read small does), so the finished frame is
+// downscale-blitted to at most this before reading. The exact tear
+// threshold is somewhere in (1024, 1965) and untested, so 1024 is a
+// deliberately safe margin. Doubling as a capture size/bandwidth cap is
+// a bonus — a downsized capture is the right default for automation
+// anyway (see efrohome automation-over-transport.md, 2026-08-18).
+static const int kScreenshotMaxReadDim = 1024;
+
+void RendererGL::GetScreenshotReadTarget(GLuint* framebuffer, int* width,
+                                         int* height, bool* content_only) {
+  assert(g_base->app_adapter->InGraphicsContext());
+
+  // Pick the source that holds the finished frame.
+  GLuint src_fb;
+  int src_w;
+  int src_h;
+  if (has_backing_render_target()) {
+    // The backing target holds the complete composited frame (world +
+    // all overlay/UI passes) in a stable, texture-backed FBO. Prefer it
+    // over the window framebuffer, which on ANGLE's Metal backend is a
+    // CAMetalLayer drawable that reads back torn. The backing is sized to
+    // the content region only (no borders), so its image maps to virtual
+    // coords by a uniform scale.
+    auto* backing = static_cast<RenderTargetGL*>(backing_render_target());
+    src_fb = backing->GetFramebufferID();
+    src_w = static_cast<int>(backing->physical_width());
+    src_h = static_cast<int>(backing->physical_height());
+    *content_only = true;
+  } else {
+    // No backing buffer — fall back to the window's default framebuffer.
+    // Capture-capable builds keep pixel-scale just under 1.0 so a backing
+    // always exists (see GraphicsServer::ApplySettings), so this is a
+    // last resort. We read the full window pixel dims rather than
+    // GL_VIEWPORT (which can be an inset sub-rect under tv-border /
+    // aspect-ratio limiting — we want the whole window, borders and all).
+    src_fb = static_cast<GLuint>(screen_framebuffer_);
+    src_w = static_cast<int>(g_base->graphics_server->screen_pixel_width());
+    src_h = static_cast<int>(g_base->graphics_server->screen_pixel_height());
+    *content_only = false;
+  }
+
+  // Small enough to read directly.
+  if (src_w <= kScreenshotMaxReadDim && src_h <= kScreenshotMaxReadDim) {
+    *framebuffer = src_fb;
+    *width = src_w;
+    *height = src_h;
+    return;
+  }
+
+  // Too large to read back cleanly; GPU-downscale-blit into a small
+  // texture and read that instead. Preserves aspect (so the virtual-coord
+  // mapping stays a uniform scale) and the frame's content.
+  float scale = static_cast<float>(kScreenshotMaxReadDim)
+                / static_cast<float>(std::max(src_w, src_h));
+  int dst_w = std::max(1, static_cast<int>(static_cast<float>(src_w) * scale));
+  int dst_h = std::max(1, static_cast<int>(static_cast<float>(src_h) * scale));
+
+  if (!screenshot_blit_target_.exists()
+      || static_cast<int>(screenshot_blit_target_->physical_width()) != dst_w
+      || static_cast<int>(screenshot_blit_target_->physical_height())
+             != dst_h) {
+    screenshot_blit_target_ = NewFramebufferRenderTarget(dst_w, dst_h,
+                                                         true,  // linear interp
+                                                         false,  // depth
+                                                         true,   // tex
+                                                         false,  // depth tex
+                                                         false,  // high quality
+                                                         false,  // msaa
+                                                         false   // alpha
+    );  // NOLINT(whitespace/parens)
+  }
+  auto* dst = static_cast<RenderTargetGL*>(screenshot_blit_target_.get());
+  GLuint dst_fb = dst->GetFramebufferID();
+
+  GLint prev_read = 0;
+  GLint prev_draw = 0;
+  glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prev_read);
+  glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prev_draw);
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, src_fb);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dst_fb);
+  glBlitFramebuffer(0, 0, src_w, src_h, 0, 0, dst_w, dst_h, GL_COLOR_BUFFER_BIT,
+                    GL_LINEAR);
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, static_cast<GLuint>(prev_read));
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, static_cast<GLuint>(prev_draw));
+
+  *framebuffer = dst_fb;
+  *width = dst_w;
+  *height = dst_h;
+}
+
 void RendererGL::RenderFrameDefEnd() {
   UpdateGLDebugSettingsIfNeeded_();
   // Need to set some states to keep cardboard happy.

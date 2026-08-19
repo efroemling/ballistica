@@ -1,5 +1,17 @@
-### 1.8.0 (build 22985, api 9, 2026-08-17)
+### 1.8.0 (build 22986, api 9, 2026-08-18)
 - Fully implemented asset packages (more on this soon)
+- App-config committing (dirty-tracking, debounced disk writes, and
+  suspend/shutdown flushes) now lives fully in `babase` instead of routing
+  through the `plus` feature-set; the engine can now persist its config with
+  plus absent. Additionally, if a non-json-friendly value winds up stored in
+  the app config (generally a mod bug), config writes now drop exactly the
+  offending entries (with an error naming their paths) instead of failing
+  forever — so one bad mod value no longer breaks config persistence for
+  everything else.
+- Removed `baclassic.ClassicAppSubsystem.json_prep()`. It was a Python-2-era
+  sanitizer (unicode wrangling, tuple conversion) that no longer served a
+  purpose; `json.dumps` handles tuples natively, the app-config salvage path
+  now prunes bad entries instead, and nothing lossily coerces data anymore.
 - Renamed the asset-package wrapper leaf types from `TextureVerifiedSpec`,
   `SoundVerifiedSpec`, etc. to `TextureHandle`, `SoundHandle`, `MeshHandle`,
   and `CollisionMeshHandle` (in both `bauiv1` and `bascenev1`). Regenerate
@@ -40,6 +52,13 @@
   exists to set a custom starting orientation. Globals nodes gain a
   `gravity` attr for per-scene gravity control (moon maps, wind, zero-g).
   This bumps the scene-v1 protocol to 42 (thanks vishal332008!)
+- Fixed a wire-protocol regression from the prop `rotate` addition: bomb
+  nodes inherit prop's attrs, so the append shifted bomb's `fuse_length`
+  wire index and joining any pre-42 server got you kicked the moment a
+  fused bomb appeared (replays of older games were equally broken). Bomb's
+  table is restored to its historical layout (with `rotate` now after
+  `fuse_length`), and a golden test now pins every node type's attr indices
+  so table shifts get caught in CI. This bumps the scene-v1 protocol to 43.
 - Renamed the `BaStdAssets` asset package to `BaClassicAssets`; its client
   wrapper modules are now `bauiv1.classicassets` / `bascenev1.classicassets`
   (previously `stdassets`).

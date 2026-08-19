@@ -7,6 +7,7 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/automation/automation.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/renderer/renderer.h"
 #include "ballistica/base/logic/logic.h"
@@ -56,7 +57,33 @@ void GraphicsServer::ApplySettings(const GraphicsSettings* settings) {
 
   // Pull a few things out ourself such as screen resolution.
   if (renderer_) {
-    renderer_->set_pixel_scale(settings->pixel_scale);
+    float pixel_scale = settings->pixel_scale;
+#if BA_ENABLE_AUTOMATION
+    // DO NOT REMOVE without re-testing screenshot capture at pixel-scale
+    // 1.0 on an ANGLE/Metal build — it looks like a harmless dev-only
+    // tweak but it is load-bearing there. (The tear was witnessed only
+    // on macOS desktop; iOS shares the ANGLE-Metal backend so is
+    // presumed affected but is unverified. Applied on all platforms
+    // regardless — it's dev-only and cheap, and which ANGLE backends
+    // share the bug is untested.)
+    //
+    // Automation screenshot capture reads the offscreen 'backing'
+    // buffer, which the engine only maintains for pixel-scales below 1.0
+    // (at 1.0 it draws straight to the window). The window's default
+    // framebuffer can't be read back cleanly on ANGLE's Metal backend —
+    // it's the CAMetalLayer swapchain drawable, whose frame isn't
+    // realized until present, so a readback tears (verified: glFinish,
+    // fences, post-swap reads, and delays all fail to fix it). Capping
+    // the scale a hair under 1.0 on a capture-capable build guarantees a
+    // stable backing texture always exists to read instead. 0.999 is
+    // visually indistinguishable from 1.0 and only affects developer
+    // builds (the subsystem is compiled out otherwise). Full story:
+    // efrohome automation-over-transport.md, 2026-08-18 tearing entry.
+    if (g_base->automation != nullptr && pixel_scale >= 1.0f) {
+      pixel_scale = 0.999f;
+    }
+#endif
+    renderer_->set_pixel_scale(pixel_scale);
   }
   // Note: need to look at physical/virtual res plus the active render
   // rect here; each can change independently of the others (ui-scale
@@ -143,6 +170,15 @@ auto GraphicsServer::TryRender() -> bool {
       DrawRenderFrameDef(frame_def);
       FinishRenderFrameDef(frame_def);
       success = true;
+
+#if BA_ENABLE_AUTOMATION
+      // Service any pending automation screenshot captures now that the
+      // frame is fully drawn (and, when there's a backing buffer,
+      // composited into it). See Automation::RunPendingCaptures.
+      if (g_base->automation != nullptr) {
+        g_base->automation->RunPendingCaptures();
+      }
+#endif
     }
 
     // Send this frame_def back to the logic thread for deletion or

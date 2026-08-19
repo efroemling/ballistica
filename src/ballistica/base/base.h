@@ -936,13 +936,14 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
   Utils* const utils;
   Discord* const discord;
 #if BA_ENABLE_AUTOMATION
-  // Opt-in FIFO automation channel. Null unless BA_AUTOMATION_FIFO
-  // is set at startup. The whole subsystem is compiled out of
-  // default builds (gated on BA_ENABLE_AUTOMATION, which CMake
-  // sets only when -DENABLE_AUTOMATION=ON). Set in the constructor
-  // body rather than the init list so the #if doesn't sit between
-  // the last initializer and the opening brace (clang-format would
-  // otherwise join those).
+  // Opt-in automation capability (screenshot capture etc. for the
+  // automation channel / cloud console). Null except on developer
+  // builds. The whole subsystem is compiled out of default builds
+  // (gated on BA_ENABLE_AUTOMATION, which CMake sets only when
+  // -DENABLE_AUTOMATION=ON). Set in the constructor body rather than
+  // the init list so the #if doesn't sit between the last
+  // initializer and the opening brace (clang-format would otherwise
+  // join those).
   Automation* automation{};
 #endif
 

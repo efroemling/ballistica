@@ -55,8 +55,8 @@ logger = logging.getLogger('ba.env')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22985
-TARGET_BALLISTICA_VERSION = '1.8.0a90'
+TARGET_BALLISTICA_BUILD = 22986
+TARGET_BALLISTICA_VERSION = '1.8.0a91'
 
 
 @dataclass
@@ -452,6 +452,17 @@ def _set_log_levels(app_config: dict) -> None:
             _apply_env_log_levels(env_log_levels)
             return
 
+        # When the user leaves cloud logger control enabled (the
+        # default), the server-provided logger config drives levels
+        # and their own stored 'Log Levels' are ignored entirely. The
+        # runtime side of this (the dev-console toggle, mid-run
+        # re-applies) lives in babase._cloudloggercontrol; keep the
+        # config keys here in sync with it.
+        cloud_control = app_config.get('Cloud Logger Control', True)
+        if not isinstance(cloud_control, bool) or cloud_control:
+            _apply_cloud_log_levels(app_config)
+            return
+
         config = app_config.get('Log Levels', None)
 
         if config is None:
@@ -483,6 +494,40 @@ def _set_log_levels(app_config: dict) -> None:
 
     except Exception:
         logger.exception('Error setting log levels.')
+
+
+def _apply_cloud_log_levels(app_config: dict) -> None:
+    """Apply the cloud-provided logger config stored in the app config.
+
+    Persistent cloud-vals get stashed to the app config by the cloud
+    subsystem (see baplus._cloud), so the previous fetch's logger
+    config is available here at the very start of a run, long before
+    connectivity. We read its raw stored form directly since the full
+    bacommon.cloud wire types are heavier than this early boot spot
+    wants; the 'CloudVals' config key and the 'lc' wire key must stay
+    in sync with bacommon.cloud.CloudValsPersistent.logger_control.
+
+    When no cloud logger config is present, base defaults apply -
+    that's what the server 'wants' when it hasn't asked for anything.
+    """
+    from efro.dataclassio import dataclass_from_dict
+    from bacommon.logging import get_base_logger_control_config_client
+    from bacommon.loggercontrol import LoggerControlConfig
+
+    baseconfig = get_base_logger_control_config_client()
+
+    diff: LoggerControlConfig | None = None
+    cloudvals = app_config.get('CloudVals')
+    if isinstance(cloudvals, dict):
+        loggercontrol = cloudvals.get('lc')
+        if isinstance(loggercontrol, dict):
+            diff = dataclass_from_dict(LoggerControlConfig, loggercontrol)
+
+    if diff is None:
+        baseconfig.apply()
+        return
+
+    baseconfig.apply_diff(diff).apply()
 
 
 def _apply_env_log_levels(env_val: str) -> None:

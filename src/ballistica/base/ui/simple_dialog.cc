@@ -287,11 +287,13 @@ void SimpleDialog::Draw(FrameDef* frame_def) {
       c.Submit();
     }
 
-    // Fill (left-anchored; width scaled by progress).
+    // Fill (left-anchored; width scaled by progress). Inset from the track
+    // horizontally by the same amount as vertically.
     {
-      float fill_width = bar_width * progress;
       float fill_height = bar_h * 0.7f;
-      float fill_left = cx - bar_width * 0.5f;
+      float fill_inset = (bar_h - fill_height) * 0.5f;
+      float fill_width = (bar_width - 2.0f * fill_inset) * progress;
+      float fill_left = cx - bar_width * 0.5f + fill_inset;
       float fill_cx = fill_left + fill_width * 0.5f;
       SimpleComponent c(frame_def->overlay_front_pass());
       c.SetTransparent(true);

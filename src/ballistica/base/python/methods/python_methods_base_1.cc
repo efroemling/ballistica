@@ -156,7 +156,7 @@ static auto PyAutomationCaptureScreenshot(PyObject* self, PyObject* args,
   if (g_base->automation == nullptr) {
     throw Exception(
         "Automation subsystem not active "
-        "(set BA_AUTOMATION_FIFO at startup to enable).",
+        "(requires a developer build).",
         PyExcType::kRuntime);
   }
   g_base->automation->CaptureScreenshot(path, tag);
@@ -172,8 +172,13 @@ static PyMethodDef PyAutomationCaptureScreenshotDef = {
     "automation_capture_screenshot(path: str, tag: str = 'screenshot')"
     " -> None\n"
     "\n"
-    "Save the next-rendered framebuffer to a PNG file. Requires a\n"
-    "build with ``BA_ENABLE_AUTOMATION`` set.\n"
+    "Save the next-rendered framebuffer to an image file. Requires a\n"
+    "build with ``BA_ENABLE_AUTOMATION`` set. The path's extension\n"
+    "picks the format: ``.jpg``/``.jpeg`` gets lossy JPEG — prefer\n"
+    "that; game frames are photographic content and JPEG is a\n"
+    "fraction of PNG's size. Any other extension gets lossless PNG,\n"
+    "which should only be used where pixel-perfect data is actually\n"
+    "needed (exact-color checks etc.).\n"
     "\n"
     "Fire-and-forget; the actual glReadPixels + encode + write run on\n"
     "the graphics thread, and a single ``[automation] <tag> ok|fail\n"
@@ -199,7 +204,7 @@ static auto PyAutomationPressAtVirtual(PyObject* self, PyObject* args,
   if (g_base->automation == nullptr) {
     throw Exception(
         "Automation subsystem not active "
-        "(set BA_AUTOMATION_FIFO at startup to enable).",
+        "(requires a developer build).",
         PyExcType::kRuntime);
   }
   // Synthesized input makes no sense headless (no UI to target).
@@ -228,9 +233,9 @@ static PyMethodDef PyAutomationPressAtVirtualDef = {
     "builds (no UI to target).\n"
     "\n"
     "The coordinate system is the same Widget::GetCenter uses (virtual\n"
-    "screen pixels, origin at top-left). Use a Widget's\n"
-    "``get_screen_space_center()`` plus the screen virtual size to\n"
-    "compute the absolute coords for a given widget.\n",
+    "screen pixels, origin bottom-left with y growing upward). Use a\n"
+    "Widget's ``get_screen_space_center()`` plus the screen virtual\n"
+    "size to compute the absolute coords for a given widget.\n",
 };
 
 // --------------- automation_scroll_at_virtual -------------------------------
@@ -251,7 +256,7 @@ static auto PyAutomationScrollAtVirtual(PyObject* self, PyObject* args,
   if (g_base->automation == nullptr) {
     throw Exception(
         "Automation subsystem not active "
-        "(set BA_AUTOMATION_FIFO at startup to enable).",
+        "(requires a developer build).",
         PyExcType::kRuntime);
   }
   if (g_core->HeadlessMode()) {
@@ -495,6 +500,36 @@ static PyMethodDef PyUserRanCommandsDef = {
     METH_VARARGS | METH_KEYWORDS,    // flags
 
     "user_ran_commands() -> None\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- is_user_modified --------------------------------
+
+static auto PyIsUserModified(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  // The cheap user-side taint signals: has anything user-driven had a
+  // chance to alter engine behavior this run? Same trio the
+  // fatal-error reporter sends (fatal_error_report.cc); these flags
+  // only ever go one way within a run, so a False is a "clean so far".
+  assert(g_core);
+  if (g_core->user_ran_commands || g_core->workspaces_in_use
+      || g_core->using_custom_app_python_dir()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyIsUserModifiedDef = {
+    "is_user_modified",             // name
+    (PyCFunction)PyIsUserModified,  // method
+    METH_NOARGS,                    // flags
+
+    "is_user_modified() -> bool\n"
+    "\n"
+    "Whether user actions could have modified engine behavior this\n"
+    "run (commands run, workspaces in use, or custom app scripts).\n"
     "\n"
     ":meta private:",
 };
@@ -2004,6 +2039,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyMusicPlayerStopDef,
       PyAppInstanceUUIDDef,
       PyUserRanCommandsDef,
+      PyIsUserModifiedDef,
       PyReloadMediaDef,
       PyReloadChangedMediaDef,
       PyMacMusicAppInitDef,

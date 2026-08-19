@@ -7,26 +7,25 @@
    notice. No backward-compatibility guarantees across versions.
    Use at your own risk.
 
-The automation channel is an optional dev tool that lets external
-tools (scripts, test harnesses, Claude Code, etc.) drive a running
-game in-process by feeding it Python lines. The classic local entry
-point is a FIFO at ``<silo>/cmd.fifo``, read by a dedicated thread
-that dispatches each line on the logic thread; the same helpers also
-work through any other route that execs Python in-process (e.g. the
-cloud console).
+Automation is an optional dev tool that lets external tools (scripts,
+test harnesses, Claude Code, etc.) drive a running game in-process.
+These helpers run wherever driver-supplied Python is exec'd: over the
+automation channel to the game's basn node (see
+:mod:`baplus._automationsession` and ``tools/pcommand
+automation_drive``), or through the cloud console.
 
 Gating:
 
 * **Compile time** — the whole subsystem is gated on the
   ``BA_ENABLE_AUTOMATION`` build define (CMake:
-  ``-DENABLE_AUTOMATION=ON``). When off, no FIFO is created, no
-  native hooks are compiled in, and the helpers below emit a
-  ``[automation] <tag> fail not_compiled_in`` line if called.
-* **Runtime** — in builds that compiled it in, the subsystem is live
-  when ``BA_AUTOMATION_FIFO`` is set to a path at startup
-  (``tools/pcommand test_game_run`` sets this automatically).
-  Developer builds enable the subsystem even without the env var,
-  though the FIFO entry point itself always requires one.
+  ``-DENABLE_AUTOMATION=ON``). When off, no native hooks are compiled
+  in, and the helpers below emit a ``[automation] <tag> fail
+  not_compiled_in`` line if called.
+* **Runtime** — in builds that compiled it in, the native
+  capabilities are stood up on developer builds. Offering the game
+  up for *remote* driving additionally requires the channel's own
+  runtime opt-in (``BA_AUTOMATION_CHANNEL``; ``tools/pcommand
+  test_game_run --automation-channel`` sets it).
 
 This module holds the UI-agnostic helpers. Anything that reaches
 into the live widget tree (press/scroll by id or label, widget
@@ -73,12 +72,26 @@ def _emit(tag: str, status: str, payload: str = '') -> None:
         automationlog.info('[automation] %s %s', tag, status)
 
 
+def available() -> bool:
+    """Whether automation was compiled into this build.
+
+    The native hooks are simply absent otherwise, so this is a
+    legitimate question to ask in any build -- unlike a build-flavor
+    attribute, which may not exist to be read at all.
+
+    Exists for callers outside babase (the automation channel lives
+    in baplus, which may not reach the private ``_babase`` module) so
+    they need not reimplement the check.
+    """
+    return hasattr(_babase, 'automation_capture_screenshot')
+
+
 def ping(tag: str = 'ping') -> None:
     """Round-trip sanity check: emits ``[automation] <tag> ok pong``.
 
     Useful as a "is the channel alive?" probe at the start of a test
     script; if you see the matching line in the log within a tick of
-    sending it, the FIFO + reader thread + dispatcher are all healthy.
+    sending it, the automation dispatch path is all healthy.
     """
     _emit(tag, 'ok', 'pong')
 
@@ -95,28 +108,30 @@ def shutdown(tag: str = 'shutdown') -> None:
 
 
 def screenshot(path: str, tag: str = 'screenshot') -> None:
-    """Save the next-rendered framebuffer as a PNG.
+    """Save the next-rendered framebuffer as an image file.
 
-    Fire-and-forget — the actual capture happens on the graphics
-    thread between frames; a ``[automation] <tag> ok|fail <details>``
+    Fire-and-forget — the actual capture happens in the graphics
+    context between frames; a ``[automation] <tag> ok|fail <details>``
     line lands in the log (``ba.app``) when it completes.
+
+    The path's extension picks the format — **prefer ``.jpg``**: it
+    gets lossy JPEG, which for photographic game frames is a fraction
+    of PNG's size (what makes captures cheap to store and move over
+    the wire). Any other extension gets lossless PNG, which should
+    only be used where pixel-perfect data is actually needed
+    (exact-color assertions, render-output comparisons, etc.).
+
+    This writes on the *device*. A remote driver that wants the bytes
+    should use ``automation_drive --screenshot`` instead, which
+    captures to a temp file and ships the image back.
 
     Path resolution:
 
-    * **Absolute path** (``/tmp/x.png``, ``/Users/.../shot.png``) —
-      used as-is. Note: writing outside the project tree will trigger
-      sandbox permission prompts.
-    * **Relative path or bare filename** (``home.png``,
-      ``menus/main.png``) — resolved under the per-instance silo's
-      screenshots dir (``<silo>/screenshots/``). That dir is sandbox-
-      writable and gets cleaned up automatically when the silo is
-      removed via ``rm -rf build/test_run/<n>``.
-      Subdirs are created as needed.
-
-    Default-case usage is therefore prompt-free:
-
-    >>> auto.screenshot('main_menu.png')
-    # Writes to build/test_run/<instance>/screenshots/main_menu.png
+    * **Absolute path** (``/tmp/x.jpg``, ``/Users/.../shot.jpg``) —
+      used as-is.
+    * **Relative path or bare filename** (``home.jpg``,
+      ``menus/main.jpg``) — resolved under ``screenshots/`` beneath
+      the process cwd; subdirs are created as needed.
 
     Native-resolution capture: on retina displays the image will be
     at physical pixel dimensions (e.g. 2880x1800), not logical
@@ -138,25 +153,21 @@ def screenshot(path: str, tag: str = 'screenshot') -> None:
         os.makedirs(screenshots_dir, exist_ok=True)
         abs_path = os.path.join(screenshots_dir, path)
         # Ensure subdirs in the relative path exist too
-        # (e.g. screenshot('menus/main.png')).
+        # (e.g. screenshot('menus/main.jpg')).
         os.makedirs(os.path.dirname(abs_path), exist_ok=True)
     _badev.automation_capture_screenshot(path=abs_path, tag=tag)
 
 
 def _automation_screenshots_dir() -> str:
-    """Resolve the per-silo screenshots dir from BA_AUTOMATION_FIFO.
+    """Dir a relative screenshot path resolves under.
 
-    The game is launched with ``BA_AUTOMATION_FIFO=<silo>/cmd.fifo``;
-    derive the silo dir from that and append ``screenshots/``. If the
-    env var isn't set (shouldn't happen — automation can't be active
-    without it) we fall back to the cwd.
+    ``screenshots/`` beneath the process cwd. This is only for code
+    that execs ``screenshot('foo.jpg')`` on the device directly; a
+    remote driver's ``--screenshot`` captures to a temp file and
+    ships the bytes back instead (see ``baplus._automationsession``).
     """
     import os
 
-    fifo_path = os.environ.get('BA_AUTOMATION_FIFO')
-    if fifo_path:
-        silo_dir = os.path.dirname(fifo_path)
-        return os.path.join(silo_dir, 'screenshots')
     return os.path.join(os.getcwd(), 'screenshots')
 
 

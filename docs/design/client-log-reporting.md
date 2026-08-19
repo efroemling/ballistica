@@ -22,6 +22,57 @@ reports land in Cloud Logging tagged `baSrc=client`.
   pre-connectivity next run; build-blind-safe values only) vs transient
   (per-run; server can tailor per build).
 
+## Cloud logger control (per-logger levels)
+
+- `CloudValsPersistent.logger_control` carries a
+  `bacommon.loggercontrol.LoggerControlConfig` — a diff over the
+  client's base logger config, same shape as the user's own
+  `'Log Levels'` app-config value. Persistent (not transient) so it
+  applies from the very start of the next run: `baenv._set_log_levels`
+  reads the stored `CloudVals` blob pre-engine; fresh vals arriving
+  mid-run also re-apply immediately.
+- Set per fleet via "Client Logger Control (JSON)" on `/fleetsettings`
+  (wire form, e.g. `{"l": {"ba.connectivity": 10}}`); sourced from
+  bamaster `FleetGlobals.client_logger_control`.
+- The user chooses via the `'Cloud Logger Control'` app-config bool
+  (default True; toggle in the dev-console Logging tab). ON: cloud
+  config (or base defaults) drives levels and the manual per-logger UI
+  is replaced by an explainer. OFF: their own `'Log Levels'` diff, as
+  before. `BA_LOG_LEVELS` env var still overrides everything.
+- Client-side logic: `babase._cloudloggercontrol` (+ the baenv
+  launch path). `cloud_controlled_logging()` is True only when the
+  toggle has been ON continuously since launch with no env override —
+  toggling OFF even momentarily latches it False for the run.
+- That bool rides on every `ClientLogReportMessage` (`cc`) and lands
+  as `levels=cloud|user` in the report summary line plus a
+  `baCloudControlledLogging` label on every emitted line, so report
+  queries can filter for clients showing exactly the levels the
+  server configured.
+
+## Integrity signals (blessed / modified)
+
+Successors to the v1 system where clients sent their master-hash
+(camouflaged as `newsShow`) + `userRanCommands`/`userModded` and the
+legacy server derived `blessed` from a per-build Blessing record.
+Now split into two orthogonal client-computed values on every
+`ClientLogReportMessage`, sampled at each slice send:
+
+- `blessed` (`bl`, tri-state): pure build integrity — non-debug build
+  with an embedded blessing hash whose computed script hash checks
+  out (`_baplus.get_blessing_state()`). `None` = the background hash
+  calc (game_hash.py, kicked at pyembed init) hadn't finished, or a
+  pre-field client. Debug builds are always unblessed.
+- `modified` (`md`): user-side taint — commands run, workspaces in
+  use, or custom app-scripts dir (`_babase.is_user_modified()`; same
+  trio the fatal-error reporter sends). Inherently latching within a
+  run, so False = clean-so-far. Note automation-channel execs latch
+  it (by design — they run arbitrary code).
+
+Server side: `build=blessed|unblessed|unknown, modded=yes|no|unknown`
+in summary lines; `baBlessed`/`baModified` labels on every emitted
+line (omitted when unknown). Gold-standard field-data filter:
+`baBlessed=1, baModified=0, baCloudControlledLogging=1`.
+
 ## Mechanics
 
 - Pre-roll ships immediately on trigger (no arm delay); follow-up slices
@@ -41,23 +92,19 @@ reports land in Cloud Logging tagged `baSrc=client`.
 
 ## Reading reports
 
-- `tools/pcommand cloud_log_query --message '<text>'` on prod
-  (`baSrc=client`), or the dev-log search on dev. Summary line:
+- `tools/pcommand cloud_log_query --src client` on prod, or the
+  dev-log search on dev. Summary line:
   `client log report from b<build> <tag>: N entries at index I`.
-- **Attribution trap:** `--message 'client log | b22972'` matches
-  loosely — Cloud Logging tokenizes the text (the `|` is not literal),
-  so other builds' entries flood in and per-build attribution silently
-  lies. Correct recipe: dump via `--filter 'labels.baSrc="client"'`,
-  then post-filter strictly on the parsed `b<build>` token. Stack line
-  numbers in reports are a reliable build-fingerprint cross-check.
+- Query mechanics — including the `--message` tokenization trap that
+  silently breaks per-build attribution and the strict post-filter
+  recipe for it — live in the `cloud-logs` Claude skill.
 
 ## Driving an investigation
 
 Set a phrase trigger + windows on the fleet, have the target clients
-run; pair with raising logger verbosity (transient per-logger levels
-are the designed-but-not-built next step — pressure is growing: one
-obfuscated mod produces hundreds of pushcall warnings/day across
-players).
+run; pair with raising logger verbosity via the fleet's cloud logger
+control config (above) — and filter the resulting reports on
+`levels=cloud` so user-tweaked clients don't muddy the picture.
 
 ## Alerting interaction (checked 2026-08-15)
 

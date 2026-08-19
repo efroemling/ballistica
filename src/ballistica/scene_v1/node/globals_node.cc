@@ -65,7 +65,9 @@ class GlobalsNodeType : public NodeType {
   BA_INT_ATTR(music_count, music_count, SetMusicCount);
   // Note: attrs are addressed over the wire by their position in this
   // table, so new ones must be appended at the end (and need a protocol
-  // version bump); see the protocol-changes list in scene_v1.h.
+  // version bump); see the protocol-changes list in scene_v1.h. A plain
+  // append is only safe because nothing subclasses this type; a type
+  // with subclasses needs the _LATE macros (see 42/43 in that list).
   BA_FLOAT_ARRAY_ATTR(gravity, GetGravity, SetGravity);
 #undef BA_NODE_TYPE_CLASS
 

@@ -21,6 +21,7 @@ from bacommon import securedata
 from bacommon.transfer import DirectoryManifest
 from bacommon.locale import Locale
 from bacommon.login import LoginType
+from bacommon.loggercontrol import LoggerControlConfig
 from bacommon.logreporting import LogReportSpec
 from bacommon.docui import DocUIRequest, DocUIResponse
 import bacommon.displayitem as ditm
@@ -61,6 +62,20 @@ class CloudValsPersistent:
 
     #: Max number of objects of a given type to emit debug logs for.
     gc_debug_type_limit: Annotated[int, IOAttrs('gdl', store_default=False)] = 2
+
+    #: When present, a logger-level config the server wants applied on
+    #: this client - a diff over the client's base logger config, the
+    #: same shape the user's own ``'Log Levels'`` app-config value
+    #: uses (so it only needs to name loggers it changes). Honored
+    #: only while the user leaves the ``'Cloud Logger Control'``
+    #: app-config toggle enabled (its default; see the client's
+    #: ``babase._cloudloggercontrol`` module). Applied at the
+    #: start of the next run by ``baenv._set_log_levels()``, which
+    #: reads this field's raw stored form - keep the wire keys here
+    #: in sync with that code.
+    logger_control: Annotated[
+        LoggerControlConfig | None, IOAttrs('lc', store_default=False)
+    ] = None
 
 
 @ioprepped
@@ -835,6 +850,34 @@ class ClientLogReportMessage(Message):
     client_time: Annotated[
         datetime.datetime | None, IOAttrs('ct', soft_default=None)
     ]
+
+    #: Whether the client's log levels have been under cloud control
+    #: for this entire app run - the ``'Cloud Logger Control'`` toggle
+    #: was enabled at launch and has never been switched off, and no
+    #: local override (the ``BA_LOG_LEVELS`` env var) was in effect.
+    #: Toggling the control off even momentarily clears this for the
+    #: rest of the run. Lets report consumers filter for clients whose
+    #: levels are exactly what the server configured, rather than
+    #: whatever a user or dev happened to dial in. False from clients
+    #: predating the field.
+    cloud_controlled_logging: Annotated[bool, IOAttrs('cc', soft_default=False)]
+
+    #: Build-integrity state of the sender: True is a non-debug build
+    #: with an embedded blessing hash whose computed script hash
+    #: checked out at send time; False is no or failed blessing
+    #: (debug builds included); None means the background hash
+    #: computation hadn't finished when this slice shipped (or the
+    #: client predates the field). Pure build integrity; user-side
+    #: taint rides separately in :attr:`modified`.
+    blessed: Annotated[bool | None, IOAttrs('bl', soft_default=None)]
+
+    #: Whether anything user-driven could have modified engine
+    #: behavior this run as of this slice's send - the user ran
+    #: commands, workspaces are in use, or a custom app-scripts dir
+    #: is active (the same trio the fatal-error reporter sends).
+    #: Those flags only ever latch on within a run, so False means
+    #: clean-so-far. None from clients predating the field.
+    modified: Annotated[bool | None, IOAttrs('md', soft_default=None)]
 
 
 @ioprepped

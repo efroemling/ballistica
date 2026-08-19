@@ -103,6 +103,7 @@ SceneV1FeatureSet::SceneV1FeatureSet()
 
   int next_type_id{};
   for (auto* t : init_node_types) {
+    t->FinalizeAttrIndices();
     node_types_[t->name()] = t;
     node_types_by_id_[next_type_id] = t;
     t->set_id(next_type_id++);

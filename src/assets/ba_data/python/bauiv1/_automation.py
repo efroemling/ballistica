@@ -311,7 +311,7 @@ def inspect(tag: str = 'inspect') -> None:
     Shorthand for "I'm about to do something and want to see what's
     on screen right now." Fires in order:
 
-    1. A screenshot to ``<silo>/screenshots/<tag>.png``.
+    1. A screenshot (JPEG) to ``<silo>/screenshots/<tag>.jpg``.
     2. A widget-tree dump tagged ``<tag>_widgets``.
 
     Typical usage before writing an automation sequence:
@@ -322,9 +322,11 @@ def inspect(tag: str = 'inspect') -> None:
 
     The screenshot filename uses the tag so calling ``inspect`` with
     different tags through a session produces a labeled history
-    (``inspect.png``, ``after_signin.png``, etc.).
+    (``inspect.jpg``, ``after_signin.jpg``, etc.). JPEG is plenty for
+    eyeballing UI state; use :func:`babase._automation.screenshot`
+    with a ``.png`` path directly when pixel-perfect data is needed.
     """
-    screenshot(f'{tag}.png', tag=tag)
+    screenshot(f'{tag}.jpg', tag=tag)
     dump_widgets(tag=f'{tag}_widgets')
 
 

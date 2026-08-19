@@ -25,6 +25,10 @@ class BombNodeType : public PropNodeType {
  public:
 #define BA_NODE_TYPE_CLASS BombNode
   BA_NODE_CREATE_CALL(CreateBomb);
+  // Wire index 22, directly after the prop base attrs, since 2017;
+  // pre-42 streams (old servers, replays) bake that in. Attrs appended
+  // to the PropNodeType base must use a _LATE macro so they land after
+  // this instead of shifting it; see scene_v1.h protocol notes 42/43.
   BA_FLOAT_ATTR(fuse_length, fuse_length, set_fuse_length);
 #undef BA_NODE_TYPE_CLASS
 

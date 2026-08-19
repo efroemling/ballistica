@@ -152,6 +152,7 @@ from babase._apputils import (
     is_browser_likely_available,
     utc_now_cloud,
 )
+from babase._cloudloggercontrol import handle_cloud_logger_config_changed
 from babase._logreporting import get_log_reporter
 from babase._cloud import CloudSubscription
 from babase._devconsole import (
@@ -342,6 +343,7 @@ __all__ = [
     'apsimplesoundget',
     'getsimplesound',
     'get_log_reporter',
+    'handle_cloud_logger_config_changed',
     'has_user_run_commands',
     'have_permission',
     'in_logic_thread',

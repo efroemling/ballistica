@@ -468,15 +468,26 @@ class LogReporter:
 
             import bacommon.cloud
 
+            from babase._cloudloggercontrol import cloud_controlled_logging
+
             # Our own clock goes along so the receiver can spot a
             # wrong one and shift our entry times onto its timeline
             # rather than filing them wherever our clock claims.
+            # Whether our levels have been cloud-controlled all run
+            # rides too, so report consumers can filter for clients
+            # showing exactly the levels the server configured - as
+            # do build-integrity (blessed) and user-taint (modified)
+            # states so obviously-tinkered-with clients can be
+            # filtered out the way the old v1 reporting allowed.
             report = bacommon.cloud.ClientLogReportMessage(
                 archive_zstd=payload,
                 trigger_level=trigger_level,
                 trigger_phrase=trigger_phrase,
                 entries_lost=entries_lost,
                 client_time=utc_now(),
+                cloud_controlled_logging=cloud_controlled_logging(),
+                blessed=plus.blessed_state(),
+                modified=_babase.is_user_modified(),
             )
 
             # Send under the account when we have one so the report is
