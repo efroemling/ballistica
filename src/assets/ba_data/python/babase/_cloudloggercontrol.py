@@ -158,4 +158,10 @@ def _current_cloud_logger_config() -> LoggerControlConfig | None:
     plus = _babase.app.plus
     if plus is None:
         return None
-    return plus.cloud.vals_persistent.logger_control
+    # Note: assigning through a typed local here; in spinoffs built
+    # without the plus feature-set, plus is a dummy-module and this
+    # expression is untyped.
+    config: LoggerControlConfig | None = (
+        plus.cloud.vals_persistent.logger_control
+    )
+    return config

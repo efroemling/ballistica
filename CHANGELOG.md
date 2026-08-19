@@ -1,4 +1,4 @@
-### 1.8.0 (build 22987, api 9, 2026-08-18)
+### 1.8.0 (build 22988, api 9, 2026-08-19)
 - Fully implemented asset packages (more on this soon)
 - App-config committing (dirty-tracking, debounced disk writes, and
   suspend/shutdown flushes) now lives fully in `babase` instead of routing
