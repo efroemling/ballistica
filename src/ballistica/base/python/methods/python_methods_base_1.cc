@@ -1873,6 +1873,32 @@ static PyMethodDef PyDevConsoleInputAdapterFinishDef = {
     ":meta private:\n",
 };
 
+// -------------------------- dev_console_exec ---------------------------------
+
+static auto PyDevConsoleExec(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* console = g_base->ui->dev_console();
+  BA_PRECONDITION(console);
+  console->Exec();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDevConsoleExecDef = {
+    "dev_console_exec",             // name
+    (PyCFunction)PyDevConsoleExec,  // method
+    METH_NOARGS,                    // flags
+
+    "dev_console_exec() -> None\n"
+    "\n"
+    ":meta private:\n"
+    "\n"
+    "Run the dev console's current input, exactly as its Exec button\n"
+    "and the return key do. Used by the platform string editor to make\n"
+    "a submit-style commit run the line instead of just filling it in.\n",
+};
+
 // -------------------------- audio_shutdown_begin -----------------------------
 
 static auto PyAudioShutdownBegin(PyObject* self) -> PyObject* {
@@ -2067,6 +2093,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyGetDevConsoleInputTextDef,
       PySetDevConsoleInputTextDef,
       PyDevConsoleInputAdapterFinishDef,
+      PyDevConsoleExecDef,
       PyAudioShutdownBeginDef,
       PyAudioShutdownIsCompleteDef,
       PyGraphicsShutdownBeginDef,

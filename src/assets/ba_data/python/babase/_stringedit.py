@@ -36,6 +36,14 @@ class StringEditKind(Enum):
     #: chrome around the field.
     CHAT = 'chat'
 
+    #: Source code or a command line. Edit UIs should turn off
+    #: autocorrection, autocapitalization and smart punctuation, all of
+    #: which corrupt code (smart quotes alone are a syntax error), and
+    #: should treat their action key as 'run': a commit from it carries
+    #: through to the target's return-press behavior, while a commit
+    #: from tapping away just fills the value in.
+    CODE = 'code'
+
 
 class StringEditSubsystem:
     """Full string-edit state for the app.
