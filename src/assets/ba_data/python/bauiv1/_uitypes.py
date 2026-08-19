@@ -50,6 +50,8 @@ class TextWidgetStringEditAdapter(babase.StringEditAdapter):
         assert isinstance(max_length, int)
         is_password: Any = _bauiv1.textwidget(query_password=text_widget)
         assert isinstance(is_password, bool)
+        kind_val: Any = _bauiv1.textwidget(query_string_edit_kind=text_widget)
+        assert isinstance(kind_val, str)
 
         screen_space_center = text_widget.get_screen_space_center()
 
@@ -59,6 +61,7 @@ class TextWidgetStringEditAdapter(babase.StringEditAdapter):
             max_length,
             screen_space_center,
             is_password=is_password,
+            kind=babase.StringEditKind(kind_val),
         )
 
     @override
@@ -72,6 +75,11 @@ class TextWidgetStringEditAdapter(babase.StringEditAdapter):
     def _do_cancel(self) -> None:
         if self.widget:
             _bauiv1.textwidget(edit=self.widget, adapter_finished=True)
+
+    @override
+    def _do_submit(self) -> None:
+        if self.widget:
+            _bauiv1.textwidget(edit=self.widget, invoke_return_press=True)
 
 
 class RootUIUpdatePause:

@@ -178,6 +178,7 @@ class PartyWindow(bui.Window):
             autoselect=True,
             v_align='center',
             corner_scale=0.7,
+            string_edit_kind=bui.StringEditKind.CHAT.value,
         )
 
         bui.widget(

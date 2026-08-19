@@ -194,6 +194,15 @@ void UI::StepDisplayTime() {
   if (dev_console_) {
     dev_console_->StepDisplayTime();
   }
+
+  // Refresh the snapshot other threads read (see
+  // BackPressWouldNavigateSnapshot). Cheap enough to just recompute
+  // rather than tracking every UI state change that could affect it.
+  auto would_navigate{false};
+  if (auto* ui_delegate = delegate()) {
+    would_navigate = ui_delegate->BackPressWouldNavigate();
+  }
+  back_press_would_navigate_.store(would_navigate, std::memory_order_relaxed);
 }
 
 void UI::OnAppStart() {

@@ -98,6 +98,21 @@ _SCREENSHOT_TIMEOUT_SECONDS = 10.0
 #: worth stalling the app's exit.
 _SHUTDOWN_CLOSE_TIMEOUT = 2.0
 
+#: How long the recreate loop waits for the transport before looking
+#: again. The transport tells us when it reconnects, so this is only
+#: the self-heal path for a notification that never arrives; it must
+#: never be the *only* way we wake up, and nothing may depend on it
+#: being short.
+_TRANSPORT_RECHECK_SECONDS = 30.0
+
+#: A channel that died sooner than this means something is wrong
+#: (an unreachable node) rather than a drive having finished.
+_CHANNEL_SHORT_LIFE_SECONDS = 2.0
+
+#: Backoff bounds for re-offering after a channel dies immediately.
+_RECREATE_BACKOFF_MIN_SECONDS = 2.0
+_RECREATE_BACKOFF_MAX_SECONDS = 60.0
+
 
 def _make_key() -> str:
     """Mint (or read) this run's automation key."""
@@ -125,6 +140,12 @@ class AutomationSessionManager:
         #: Set at app shutdown so the recreate loop stops offering
         #: fresh channels while the runtime is going away.
         self._shutting_down = False
+        #: Wakes the recreate loop when the transport reconnects.
+        #: A wakeup *only*: what gates the loop is asking the
+        #: transport where it is, so a set() we miss costs a
+        #: re-check delay rather than a device that never becomes
+        #: drivable again.
+        self._transport_connected = asyncio.Event()
         #: Supplied by the caller, which has the private-api access
         #: to read it (baplus may not reach ``_babase``).
         self._app_instance_id = ''
@@ -161,15 +182,23 @@ class AutomationSessionManager:
 
         self._app_instance_id = app_instance_id
         ws_url = _ws_url_for(node_base_url)
+
+        # Before the early-out below, not after: a task that parked
+        # because the transport was down is still very much running,
+        # and this is the wakeup that un-parks it.
+        self._transport_connected.set()
+
         if ws_url == self._node_url and self._task is not None:
-            # Same node, still running; nothing to do.
+            # Same node, still running; nothing to do. (Also the
+            # ordinary path back from a transport outage: the task
+            # notices the node it holds is reachable again.)
             return
 
         self._stop()
         self._node_url = ws_url
         if self._key is None:
             self._key = _make_key()
-        self._task = asyncio.create_task(self._run(ws_url))
+        self._task = asyncio.create_task(self._run())
 
     def _stop(self) -> None:
         """Tear down any live channel."""
@@ -213,7 +242,7 @@ class AutomationSessionManager:
             except BaseException:  # pylint: disable=broad-except
                 pass  # Cancelled (or already failing) -- we're leaving.
 
-    async def _run(self, ws_url: str) -> None:
+    async def _run(self) -> None:
         """Offer a channel, and a fresh one each time one ends.
 
         A SmartSocket channel is one device + one driver over its
@@ -224,8 +253,30 @@ class AutomationSessionManager:
         new one under a new id + locator. A single driver's own wifi
         blip is invisible to this loop -- the endpoint resumes the
         same channel internally and only returns here on a real end.
+
+        Offering is gated on the transport being connected. Not the
+        live channel -- an endpoint mid-resume keeps its full
+        reconnect budget, since a brief drop is exactly what it is
+        built to ride out and killing it would cost a driver its
+        session. What stops is the *recreating*: with the device
+        asleep or the network gone, its node is unreachable by
+        definition, and re-offering into that produces a fresh
+        locator and a fresh round of failures every couple of
+        seconds, forever, for nobody.
         """
+        backoff = _RECREATE_BACKOFF_MIN_SECONDS
         while not self._shutting_down:
+            ws_url = await self._await_transport()
+            if ws_url is None:
+                return  # Shutting down.
+            # Adopt whatever node the transport is on now. Normally
+            # ``on_transport_connected`` restarts us on a node change
+            # and this is simply the url we already had; taking it
+            # from the transport each time means a notification we
+            # somehow miss costs a recheck interval instead of
+            # leaving us dialing a node nobody is on any more.
+            self._node_url = ws_url
+
             started = time.monotonic()
             channel_dead = await self._run_one_channel(ws_url)
             if not channel_dead or self._shutting_down:
@@ -237,10 +288,51 @@ class AutomationSessionManager:
             # racing to read the fresh locator right after ending the
             # old one must not find a gap. Back off only when a
             # channel dies almost immediately, which means something
-            # is wrong (an unreachable node) rather than a drive
-            # having finished.
-            if time.monotonic() - started < 2.0:
-                await asyncio.sleep(2.0)
+            # is wrong (a node that answers but won't hold a channel)
+            # rather than a drive having finished.
+            if time.monotonic() - started < _CHANNEL_SHORT_LIFE_SECONDS:
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2.0, _RECREATE_BACKOFF_MAX_SECONDS)
+            else:
+                backoff = _RECREATE_BACKOFF_MIN_SECONDS
+
+    async def _await_transport(self) -> str | None:
+        """Wait until we have a node to offer a channel on.
+
+        Returns its attach url, or ``None`` if we're shutting down.
+
+        Level-triggered on purpose: we ask the transport where it is
+        rather than trusting a remembered flag, and the wait always
+        times out. Both halves are about recovery -- a gate that can
+        only be re-opened by an event arriving is a gate that strands
+        the device for the rest of the run if one ever doesn't, and
+        that failure would look exactly like automation being broken.
+        """
+        while not self._shutting_down:
+            # Clear *before* looking, so a connect landing between
+            # the two leaves the event set and the wait returns at
+            # once. Clearing after would be the classic missed-wakeup
+            # race, costing a full recheck interval.
+            self._transport_connected.clear()
+            ws_url = self._connected_node_ws_url()
+            if ws_url is not None:
+                return ws_url
+            try:
+                await asyncio.wait_for(
+                    self._transport_connected.wait(),
+                    timeout=_TRANSPORT_RECHECK_SECONDS,
+                )
+            except TimeoutError:
+                pass
+        return None
+
+    def _connected_node_ws_url(self) -> str | None:
+        """Our transport's current node as an attach url, if any."""
+        plus = babase.app.plus
+        if plus is None:
+            return None
+        base_url = plus.cloud.get_connected_node_base_url()
+        return None if base_url is None else _ws_url_for(base_url)
 
     async def _run_one_channel(self, ws_url: str) -> bool:
         """Hold one channel until it dies. True if it died on its own.

@@ -79,6 +79,11 @@ bool UIV1FeatureSet::IsMainUIVisible() {
           || (overlay_root && overlay_root->HasChildren()));
 }
 
+bool UIV1FeatureSet::BackPressWouldNavigate() {
+  auto* root = root_widget();
+  return root != nullptr && root->BackPressWouldNavigate();
+}
+
 bool UIV1FeatureSet::IsPartyIconVisible() {
   // Currently this is always visible.
   return true;

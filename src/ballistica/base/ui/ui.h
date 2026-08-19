@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_UI_UI_H_
 #define BALLISTICA_BASE_UI_UI_H_
 
+#include <atomic>
 #include <list>
 #include <map>
 #include <memory>
@@ -60,6 +61,19 @@ class UI {
   /// menu screens to get into a game or a menu brought up within a game
   /// allowing exiting or tweaking settings.
   auto IsMainUIVisible() const -> bool;
+
+  /// Thread-safe snapshot of whether a back/menu press would navigate
+  /// within the game rather than doing nothing at the top level,
+  /// refreshed each display step. Exists for platforms that must decide
+  /// synchronously, off the logic thread, whether to swallow the OS's
+  /// own back/menu handling (tvOS's menu button, which exits the app if
+  /// nothing in the responder chain consumes it, with no programmatic
+  /// way to exit later). Being a snapshot, it can lag by a frame; a
+  /// wrong answer costs one press, so don't build anything on it that
+  /// needs to be exact.
+  auto BackPressWouldNavigateSnapshot() const -> bool {
+    return back_press_would_navigate_.load(std::memory_order_relaxed);
+  }
 
   /// Request invocation a main ui on the behalf of the provided device (or
   /// nullptr if none). Must be called from the logic thread. May have no
@@ -248,6 +262,7 @@ class UI {
   seconds_t text_edit_flap_window_start_{};
   int text_edit_flap_count_{};
   TextEditSource text_edit_source_{};
+  std::atomic<bool> back_press_would_navigate_{};
   bool text_edit_reported_{};
   bool text_edit_active_{};
   UIScale uiscale_{UIScale::kLarge};

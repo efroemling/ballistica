@@ -419,7 +419,15 @@ void AppAdapterApple::StopJoystickFeedback(JoystickInput* device) {
   });
 }
 
-auto AppAdapterApple::HasDirectKeyboardInput() -> bool { return true; };
+auto AppAdapterApple::HasDirectKeyboardInput() -> bool {
+  // Mac feeds the engine real key and text events (see CocoaGLView), so
+  // widgets can be edited inline there. iOS/tvOS deliver no text events
+  // at all; editing goes through the platform string-editor dialog
+  // instead (see AppPlatformApple::HaveStringEditor). Claiming direct
+  // input there would leave widgets in an inline-edit state that no
+  // typing can ever reach.
+  return g_buildconfig.platform_macos();
+};
 
 auto AppAdapterApple::GetKeyRepeatDelay() -> float {
 #if BA_PLATFORM_MACOS

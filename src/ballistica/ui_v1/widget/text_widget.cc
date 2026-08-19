@@ -56,6 +56,14 @@ void TextWidget::SetOnReturnPressCall(PyObject* call_tuple) {
   on_return_press_call_ = Object::New<base::PythonContextCall>(call_tuple);
 }
 
+void TextWidget::InvokeReturnPress() {
+  if (auto* call = on_return_press_call_.get()) {
+    // Schedule to run right after any current UI traversal, same as
+    // an inline-editing enter press.
+    call->ScheduleInUIOperation();
+  }
+}
+
 void TextWidget::SetOnActivateCall(PyObject* call_tuple) {
   on_activate_call_ = Object::New<base::PythonContextCall>(call_tuple);
 }

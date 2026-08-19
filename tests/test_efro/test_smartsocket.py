@@ -17,6 +17,7 @@ the poll-mode intermediary later.
 """
 
 import asyncio
+import logging
 from enum import Enum
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Annotated, override
@@ -271,7 +272,9 @@ class _BatchTransport:
 
 
 def _endpoint(
-    relay: _FakeRelay, received: list[str]
+    relay: _FakeRelay,
+    received: list[str],
+    logger: logging.Logger | None = None,
 ) -> SmartSocketEndpoint[_Payload, _Payload]:
     """An endpoint wired to append inbound payloads to a list."""
 
@@ -281,6 +284,7 @@ def _endpoint(
 
     return SmartSocketEndpoint(
         relay.connect,
+        logger=logger,
         send_type=_Payload,
         recv_type=_Payload,
         on_message=_on_message,
@@ -558,6 +562,73 @@ async def _refused_reconnects_back_off_then_recover() -> None:
 
     await endpoint.end()
     await asyncio.wait_for(runner, timeout=5.0)
+
+
+def test_a_connect_outage_is_said_once_not_narrated() -> None:
+    """An outage costs one line plus a summary, not one line each.
+
+    The retry loop is *supposed* to fail repeatedly while the network
+    is gone, so a log that tells us so a dozen times has told us
+    nothing twelve times -- and on a device it does that at a cost
+    (these were full tracebacks, whose formatting showed up in
+    log-handler timings). Nothing here is cosmetic: a transient
+    failure that logs at exception level is indistinguishable from a
+    bug when reading a real log.
+    """
+    _run(_a_connect_outage_is_said_once_not_narrated())
+
+
+async def _a_connect_outage_is_said_once_not_narrated() -> None:
+    records: list[logging.LogRecord] = []
+
+    class _Capture(logging.Handler):
+        @override
+        def emit(self, record: logging.LogRecord) -> None:
+            records.append(record)
+
+    logger = logging.getLogger('test_smartsocket_outage')
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
+    logger.addHandler(_Capture())
+
+    relay = _FakeRelay(_PATIENT_POLICY)
+    endpoint = _endpoint(relay, [], logger=logger)
+    runner = asyncio.ensure_future(endpoint.run())
+    try:
+        await _wait_for(lambda: endpoint.connected)
+
+        relay.refuse_count = 3
+        relay.live.drop()
+        await _wait_for(lambda: relay.connects == 2, timeout=20.0)
+        await _wait_for(lambda: endpoint.connected, timeout=20.0)
+    finally:
+        await endpoint.end()
+        await asyncio.wait_for(runner, timeout=5.0)
+        logger.handlers.clear()
+
+    # Identical failures collapse: the first is said, the rest are
+    # debug-only.
+    said = [r for r in records if r.levelno > logging.DEBUG]
+    assert len(said) == 2, [r.getMessage() for r in said]
+    first, summary = said
+
+    assert first.levelno == logging.INFO
+    assert 'connect failed' in first.getMessage()
+    assert 'ConnectionError: refused' in first.getMessage()
+    # No traceback: an errno-bearing failure describes itself, and the
+    # stack is just our own dial.
+    assert first.exc_info is None
+
+    # The count survives, in the line that says the outage is over.
+    assert summary.levelno == logging.INFO
+    assert 'connected after 3 failed attempt(s)' in summary.getMessage()
+
+    repeats = [
+        r
+        for r in records
+        if r.levelno == logging.DEBUG and 'failed again' in r.getMessage()
+    ]
+    assert len(repeats) == 2
 
 
 def test_dead_close_codes_stop_the_session() -> None:

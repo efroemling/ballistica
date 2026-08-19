@@ -33,6 +33,13 @@ class RootWidget : public ContainerWidget {
   }
   void SquadPress();
 
+  /// Whether a back/menu press would navigate somewhere rather than
+  /// land at the top level with nothing to do. Mirrors how our kCancel
+  /// handling routes: a popup on the overlay stack or an enabled global
+  /// back button means there is somewhere to go, and outside the main
+  /// menu a press brings up the in-game menu.
+  auto BackPressWouldNavigate() const -> bool;
+
   /// Called when UIScale or screen dimensions change.
   void OnUIScaleChange();
   void OnUIOpenStateChange();

@@ -113,8 +113,12 @@ class AppPlatform {
   void InvokeStringEditor(PyObject* string_edit_adapter);
 
   /// Should be called by platform StringEditor to apply a value.
+  /// Submit means the commit came from an enter-equivalent gesture
+  /// (keyboard action key, send button) and should also trigger the
+  /// edit target's return-press action, matching desktop inline
+  /// editing; a non-submit apply just stores the value.
   /// Must be called in the logic thread.
-  void StringEditorApply(const std::string& val);
+  void StringEditorApply(const std::string& val, bool submit);
 
   /// Should be called by platform StringEditor to signify a cancel.
   /// Must be called in the logic thread.
@@ -135,11 +139,13 @@ class AppPlatform {
   virtual void OpenFileExternally(const std::string& path);
 
  protected:
-  /// Pop up a text edit dialog.
+  /// Pop up a text edit dialog. `kind` is a babase.StringEditKind value
+  /// ('default', 'chat', ...) hinting at presentation (keyboard action
+  /// labels, chrome visibility, etc).
   virtual void DoInvokeStringEditor(const std::string& title,
                                     const std::string& value,
                                     std::optional<int> max_chars,
-                                    bool is_password);
+                                    bool is_password, const std::string& kind);
 
   /// Open the provided URL in a browser. This will always be called in the
   /// main thread.

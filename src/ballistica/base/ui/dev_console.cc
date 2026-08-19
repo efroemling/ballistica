@@ -1653,8 +1653,15 @@ void DevConsole::Draw(FrameDef* frame_def) {
       }
     }
 
-    // Carat.
-    if (!carat_mesh_.exists() || carat_dirty_) {
+    // Carat. Skip it entirely on setups where terminal input goes
+    // through the platform string-editor dialog (same condition as our
+    // tap handling) - the dialog draws its own blinking cursor and two
+    // of those flashing at once looks broken. With direct keyboard
+    // input (or no string editor) typing really does land here, so the
+    // carat stays.
+    bool show_carat = g_base->ui->UIHasDirectKeyboardInput()
+                      || !g_base->platform->HaveStringEditor();
+    if (show_carat && (!carat_mesh_.exists() || carat_dirty_)) {
       // Note: we explicitly update here if carat is dirty because
       // that updates last_carat_change_time_ which affects whether
       // we draw or not. GetCaratX_() only updates it *if* we draw.
@@ -1662,7 +1669,7 @@ void DevConsole::Draw(FrameDef* frame_def) {
     }
     millisecs_t app_time = pass->frame_def()->app_time_millisecs();
     millisecs_t since_change = app_time - last_carat_x_change_time_;
-    if (since_change < 300 || since_change % 1000 < 500) {
+    if (show_carat && (since_change < 300 || since_change % 1000 < 500)) {
       SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetTexture(

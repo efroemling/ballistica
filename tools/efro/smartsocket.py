@@ -529,6 +529,13 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         self._last_inbound = 0.0
         self._reconnect_deadline = 0.0
         self._reconnect_delay = 0.5
+        #: Failed dials since the last successful one, and what they
+        #: looked like. An outage is logged once and then summarized,
+        #: not narrated attempt by attempt; see
+        #: :meth:`_note_connect_failure`.
+        self._connect_failures = 0
+        self._connect_failure_signature: str | None = None
+        self._connect_failures_start = 0.0
         self._stopping = False
         #: Set when *we* close a connection in order to recover.
         #: Our own close code must never be run through the inbound
@@ -656,9 +663,10 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         except SmartSocketClosed as exc:
             self._note_close(exc.code, exc.reason)
             return self._action_for(exc.code)
-        except Exception:  # pylint: disable=broad-except
-            self._logger.exception('smartsocket connect')
+        except Exception as exc:  # pylint: disable=broad-except
+            self._note_connect_failure(exc)
             return SmartSocketAction.RESUME
+        self._note_connect_success()
 
         tasks: list[asyncio.Task] = []
         try:
@@ -680,6 +688,60 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
             self.connected = False
             self._transport = None
         return self._action_for(self.close_code)
+
+    def _note_connect_failure(self, exc: BaseException) -> None:
+        """Log one failed dial -- once per outage, not once per try.
+
+        A dial failing because the network went away is the expected
+        case for a session built to survive exactly that: we retry on
+        a backoff until the reconnect budget runs out, so a sleeping
+        phone or a dropped wifi produces a dozen identical failures
+        by design. Logging each at exception level buries whatever
+        else is in the log under a stack of tracebacks that all say
+        the same thing, and formatting them is expensive enough to
+        show up in log-handler timings on a mobile device.
+
+        So: the first failure of an outage is said once, repeats of
+        it go to debug, and the count arrives with the summary on
+        recovery or give-up. A failure the retry loop can't be
+        expected to fix keeps its traceback -- that one may be a bug
+        in the transport we were handed rather than the network.
+        """
+        signature = f'{type(exc).__name__}: {exc}'
+        if not self._connect_failures:
+            self._connect_failures_start = time.monotonic()
+        self._connect_failures += 1
+
+        if signature == self._connect_failure_signature:
+            self._logger.debug(
+                'smartsocket connect failed again: %s', signature
+            )
+            return
+        self._connect_failure_signature = signature
+
+        # An errno-bearing failure (DNS, refused, unreachable, reset)
+        # or a timeout describes itself completely; its traceback is
+        # just our own dial call stack and adds nothing.
+        if isinstance(exc, OSError | TimeoutError):
+            self._logger.info('smartsocket connect failed: %s', signature)
+        else:
+            self._logger.error(
+                'smartsocket connect failed: %s', signature, exc_info=exc
+            )
+
+    def _note_connect_success(self) -> None:
+        """Close out an outage the dial just ended."""
+        if not self._connect_failures:
+            return
+        self._logger.info(
+            'smartsocket connected after %d failed attempt(s) over %.1fs;'
+            ' last failure: %s',
+            self._connect_failures,
+            time.monotonic() - self._connect_failures_start,
+            self._connect_failure_signature,
+        )
+        self._connect_failures = 0
+        self._connect_failure_signature = None
 
     def _action_for(self, code: int) -> SmartSocketAction:
         """Interpret a close, accounting for who caused it.
@@ -834,6 +896,17 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         if time.monotonic() > self._reconnect_deadline:
             # Past the point where the relay would have given up on
             # us anyway; call it rather than retry into a tombstone.
+            if self._connect_failures:
+                # The one line worth a warning in an outage: the
+                # quiet retrying above is expected and recoverable,
+                # while this is the session actually ending.
+                self._logger.warning(
+                    'smartsocket giving up after %d failed connect'
+                    ' attempt(s) over %.1fs; last failure: %s',
+                    self._connect_failures,
+                    time.monotonic() - self._connect_failures_start,
+                    self._connect_failure_signature,
+                )
             self._note_close(0, 'reconnect budget exhausted')
             return False
         delay = self._reconnect_delay * (1.0 + 0.3 * _jitter())

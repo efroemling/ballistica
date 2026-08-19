@@ -119,8 +119,18 @@ MESSAGES: list[Message] = [
     Message(
         name='StringEditorApply',
         direction=Dir.JAVA_TO_NATIVE,
-        fields=[Field('value', STR)],
-        doc='User accepted edits in the in-game string editor dialog.',
+        fields=[
+            Field('value', STR),
+            Field('submit', BOOL),
+        ],
+        doc=(
+            'User accepted edits in the in-game string editor dialog. '
+            'Submit means the commit came from an enter-equivalent '
+            'gesture (keyboard action key, send button) and should '
+            'also trigger the target\'s return-press action, matching '
+            'desktop inline editing; non-submit applies (tap-outside) '
+            'just store the value.'
+        ),
     ),
     Message(
         name='AwardAdTickets',
@@ -394,6 +404,24 @@ MESSAGES: list[Message] = [
         name='CrashlyticsNonFatalError',
         direction=Dir.NATIVE_TO_JAVA,
         doc='Report a non-fatal error to Crashlytics (if hooked up).',
+    ),
+    Message(
+        name='InvokeStringEditor',
+        direction=Dir.NATIVE_TO_JAVA,
+        fields=[
+            Field('title', STR),
+            Field('value', STR),
+            Field('max_chars', INT),
+            Field('is_password', BOOL),
+            Field('kind', STR),
+        ],
+        doc=(
+            'Pop up the OS string-edit dialog. A max_chars of -1 means '
+            'unlimited. Kind is a babase.StringEditKind value and drives '
+            'presentation (keyboard action, title/button visibility). '
+            'The Java side replies with StringEditorApply or '
+            'StringEditorCancel.'
+        ),
     ),
     Message(
         name='V1LoginDidChange',

@@ -2359,6 +2359,9 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* transition_type_obj{Py_None};
   PyObject* password_obj{Py_None};
   PyObject* query_password_obj{Py_None};
+  PyObject* string_edit_kind_obj{Py_None};
+  PyObject* query_string_edit_kind_obj{Py_None};
+  PyObject* invoke_return_press_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -2406,9 +2409,12 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "transition_type",
                                  "password",
                                  "query_password",
+                                 "string_edit_kind",
+                                 "query_string_edit_kind",
+                                 "invoke_return_press",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &text_obj, &v_align_obj, &h_align_obj,
           &editable_obj, &padding_obj, &on_return_press_call_obj,
@@ -2422,7 +2428,9 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &extra_touch_border_scale_obj, &res_scale_obj, &query_max_chars_obj,
           &query_description_obj, &adapter_finished_obj, &glow_type_obj,
           &allow_clear_button_obj, &literal_obj, &depth_range_obj,
-          &transition_type_obj, &password_obj, &query_password_obj))
+          &transition_type_obj, &password_obj, &query_password_obj,
+          &string_edit_kind_obj, &query_string_edit_kind_obj,
+          &invoke_return_press_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2470,6 +2478,15 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
       Py_RETURN_TRUE;
     }
     Py_RETURN_FALSE;
+  }
+  if (query_string_edit_kind_obj != Py_None) {
+    widget = dynamic_cast<TextWidget*>(
+        UIV1Python::GetPyWidget(query_string_edit_kind_obj));
+    if (!widget.exists()) {
+      throw Exception("Invalid or nonexistent widget.",
+                      PyExcType::kWidgetNotFound);
+    }
+    return PyUnicode_FromString(widget->string_edit_kind().c_str());
   }
 
   // Ok it's not a query; it's a create or edit.
@@ -2573,6 +2590,13 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   // text.
   if (literal_obj != Py_None) {
     widget->SetLiteral(Python::GetBool(literal_obj));
+  }
+  if (string_edit_kind_obj != Py_None) {
+    widget->set_string_edit_kind(Python::GetString(string_edit_kind_obj));
+  }
+  if (invoke_return_press_obj != Py_None
+      && Python::GetBool(invoke_return_press_obj)) {
+    widget->InvokeReturnPress();
   }
   if (password_obj != Py_None) {
     widget->set_password(Python::GetBool(password_obj));
@@ -2774,6 +2798,9 @@ static PyMethodDef PyTextWidgetDef = {
     "  transition_type: Literal['in_left', 'scale'] | None = None,\n"
     "  password: bool | None = None,\n"
     "  query_password: bauiv1.Widget | None = None,\n"
+    "  string_edit_kind: str | None = None,\n"
+    "  query_string_edit_kind: bauiv1.Widget | None = None,\n"
+    "  invoke_return_press: bool | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a text widget.\n"

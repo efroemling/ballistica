@@ -2211,6 +2211,29 @@ void RootWidget::SquadPress() {
   }
 }
 
+auto RootWidget::BackPressWouldNavigate() const -> bool {
+  assert(g_base->InLogicThread());
+
+  // A popup/dialog is up; back closes it.
+  if (overlay_stack_widget_ != nullptr
+      && overlay_stack_widget_->HasChildren()) {
+    return true;
+  }
+
+  // Somewhere to go back to within the main window stack.
+  if (back_button_ != nullptr && back_button_->widget->enabled()) {
+    return true;
+  }
+
+  // Outside the main menu (in a game), back brings up the in-game menu.
+  if (!g_base->app_mode()->IsInMainMenu()) {
+    return true;
+  }
+
+  // Top-level main menu with nothing above it.
+  return false;
+}
+
 void RootWidget::BackPress() {
   assert(g_base->InLogicThread());
   screen_stack_widget_->HandleMessage(

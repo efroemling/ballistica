@@ -1,4 +1,4 @@
-### 1.8.0 (build 22986, api 9, 2026-08-18)
+### 1.8.0 (build 22987, api 9, 2026-08-18)
 - Fully implemented asset packages (more on this soon)
 - App-config committing (dirty-tracking, debounced disk writes, and
   suspend/shutdown flushes) now lives fully in `babase` instead of routing
@@ -99,6 +99,9 @@
   round trips cost the most. The app also now asks your permission before
   letting a console control it, and tells the console when it is quitting
   instead of leaving it waiting.
+- Android text editing has been streamlined - you can send chat messages
+  directly from the keyboard instead of having to hit 'Done' and then 'Send',
+  etc.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

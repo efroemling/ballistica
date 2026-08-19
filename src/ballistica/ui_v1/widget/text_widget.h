@@ -87,6 +87,19 @@ class TextWidget : public Widget {
   void set_always_highlight(bool val) { always_highlight_ = val; }
   void set_description(const std::string& d) { description_ = d; }
   auto description() const -> std::string { return description_; }
+
+  /// Run our return-press call (if any), as if enter were pressed
+  /// during inline editing. Used by string-edit adapters to honor
+  /// submit-style applies from platform edit UIs.
+  void InvokeReturnPress();
+
+  /// Semantic kind hint for string-edit UIs (a babase.StringEditKind
+  /// value). Stored as a plain string; validated Python-side when a
+  /// StringEditAdapter picks it up.
+  void set_string_edit_kind(const std::string& kind) {
+    string_edit_kind_ = kind;
+  }
+  auto string_edit_kind() const -> std::string { return string_edit_kind_; }
   void set_transition_delay(float val) { transition_delay_ = val; }
   void set_transition_type(TransitionType val) { transition_type_ = val; }
   void set_flatness(float flatness) { flatness_ = flatness; }
@@ -184,6 +197,7 @@ class TextWidget : public Widget {
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t last_carat_change_time_millisecs_{};
   std::string description_{"Text"};
+  std::string string_edit_kind_{"default"};
   Object::Ref<base::TextGroup> text_group_;
 
   // We keep these at the bottom so they're torn down first.
