@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.260815"
+// Generated from: "a-0.babuiltinassets.260819"
 
 #include <memory>
 
@@ -381,6 +381,15 @@ class BuiltinStrings {
     /// English: "Connection rejected."
     static auto ConnectionRejected() -> std::shared_ptr<const LangStr>;
 
+    /// Warning shown when the device clock differs substantially from real-
+    /// world time; the placeholder is how many hours off it is.
+    ///
+    /// English: "Your device's time is incorrect by {hours} hours. This is
+    /// likely to cause problems. Please check your time and time-zone
+    /// settings."
+    static auto DeviceTimeIncorrect(LangStr::Sub hours)
+        -> std::shared_ptr<const LangStr>;
+
     /// Screen-message when connecting fails because the host runs a NEWER game
     /// version (so updating locally will fix it).
     ///
@@ -442,6 +451,13 @@ class BuiltinStrings {
     /// English: "{name} left the party."
     static auto PlayerLeftParty(LangStr::Sub name)
         -> std::shared_ptr<const LangStr>;
+
+    /// Screen-message shown when the client cannot establish its secure
+    /// connection to the cloud.
+    ///
+    /// English: "Unable to establish secure cloud connection; network
+    /// functionality may fail."
+    static auto SecureConnectionFailed() -> std::shared_ptr<const LangStr>;
 
     /// Screen-message when connecting to game servers is refused because this
     /// app version is too old for them.
@@ -682,11 +698,22 @@ class BuiltinStrings {
     /// English: "Purchases restored."
     static auto PurchasesRestored() -> std::shared_ptr<const LangStr>;
 
+    /// Status shown while a purchase is being processed.
+    ///
+    /// English: "Purchasing..."
+    static auto Purchasing() -> std::shared_ptr<const LangStr>;
+
     /// Limited-time offer to remove ads via a token pack.
     ///
     /// English: "LIMITED TIME OFFER: PURCHASE ANY TOKEN PACK TO REMOVE IN-GAME
     /// ADS."
     static auto RemoveAdsTokenOffer() -> std::shared_ptr<const LangStr>;
+
+    /// Status shown while a free (zero-price) item is being requested; the
+    /// counterpart of the purchasing message.
+    ///
+    /// English: "Requesting..."
+    static auto Requesting() -> std::shared_ptr<const LangStr>;
 
     /// Notice that a transaction is already underway.
     ///

@@ -29,6 +29,7 @@
 #include "ballistica/scene_v1/python/class/python_class_input_device.h"
 #include "ballistica/scene_v1/python/class/python_class_material.h"
 #include "ballistica/scene_v1/python/class/python_class_node.h"
+#include "ballistica/scene_v1/python/class/python_class_quat.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_collision_mesh.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_data_asset.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_mesh.h"
@@ -77,6 +78,7 @@ extern "C" auto PyInit__bascenev1() -> PyObject* {
 void SceneV1Python::AddPythonClasses(PyObject* module) {
   PythonModuleBuilder::AddClass<PythonClassInputDevice>(module);
   PythonModuleBuilder::AddClass<PythonClassNode>(module);
+  PythonModuleBuilder::AddClass<PythonClassQuat>(module);
   PythonModuleBuilder::AddClass<PythonClassSessionPlayer>(module);
   PythonModuleBuilder::AddClass<PythonClassSessionData>(module);
   PythonModuleBuilder::AddClass<PythonClassActivityData>(module);

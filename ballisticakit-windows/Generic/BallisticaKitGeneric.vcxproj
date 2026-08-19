@@ -634,6 +634,8 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_material.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_node.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_node.h" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_quat.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_quat.h" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_collision_mesh.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_data_asset.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_data_asset.h" />

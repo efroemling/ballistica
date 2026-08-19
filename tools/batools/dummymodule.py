@@ -352,6 +352,7 @@ def _writefuncs(
                 'SimpleSound',
                 'team.Team',
                 'Vec3',
+                'Quat',
                 'Widget',
                 'Node',
                 'ContextRef',
@@ -456,6 +457,46 @@ def _special_class_cases(classname: str) -> str:
             '    def __setitem__(self, index: int, val: float) -> None:\n'
             '        pass\n'
         )
+    if classname in ['Quat']:
+        out += (
+            '\n'
+            '    # pylint: disable=function-redefined\n'
+            '\n'
+            '    @overload\n'
+            '    def __init__(self) -> None:\n'
+            '        pass\n'
+            '\n'
+            '    @overload\n'
+            '    def __init__(self, values: Sequence[float]):\n'
+            '        pass\n'
+            '\n'
+            '    @overload\n'
+            '    def __init__(self, w: float, x: float, y: float, z: float):\n'
+            '        pass\n'
+            '\n'
+            '    def __init__(self, *args: Any, **kwds: Any):\n'
+            '        pass\n'
+            '\n'
+            '    def __mul__(self, other: Quat) -> Quat:\n'
+            '        return self\n'
+            '\n'
+            '    # (for index access)\n'
+            '    @override\n'
+            '    def __getitem__(self, typeargs: Any) -> Any:\n'
+            '        return 0.0\n'
+            '\n'
+            '    @override\n'
+            '    def __len__(self) -> int:\n'
+            '        return 4\n'
+            '\n'
+            '    # (for iterator access)\n'
+            '    @override\n'
+            '    def __iter__(self) -> Any:\n'
+            '        return self\n'
+            '\n'
+            '    def __next__(self) -> float:\n'
+            '        return 0.0\n'
+        )
     if classname in ['Node']:
         out += (
             '\n'
@@ -500,7 +541,7 @@ def _special_class_cases(classname: str) -> str:
             '    punch_materials: Sequence[bascenev1.Material] = ()\n'
             '    pickup_materials: Sequence[bascenev1.Material] = ()\n'
             '    extras_material: Sequence[bascenev1.Material] = ()\n'
-            '    rotate: float = 0.0\n'
+            '    rotate: float | Sequence[float] = 0.0\n'
             '    hold_node: bascenev1.Node | None = None\n'
             '    hold_body: int = 0\n'
             '    behavior_version: int = 0\n'
@@ -742,8 +783,9 @@ def _writeclasses(module: ModuleType, classnames: Sequence[str]) -> str:
             raise RuntimeError('unexpected')
         out += '\n\n'
 
-        # Special case:
-        if classname == 'Vec3':
+        # Special case: classes implementing the sequence protocol
+        # natively so they can be passed anywhere a float sequence is.
+        if classname in {'Vec3', 'Quat'}:
             out += f'class {classname}(Sequence[float]):\n'
         else:
             out += f'class {classname}:\n'
@@ -888,20 +930,18 @@ class Generator:
                 )
         funcnames.sort()
         classnames.sort()
+        # Note that Sequence must be imported for real (not just under
+        # TYPE_CHECKING) in modules housing classes that subclass it.
         typing_imports = (
             'TYPE_CHECKING, overload, override, Sequence'
-            if self.mname == '_babase'
-            else (
-                'TYPE_CHECKING, overload, override'
-                if self.mname == '_bascenev1'
-                else 'TYPE_CHECKING, override'
-            )
+            if self.mname in ('_babase', '_bascenev1')
+            else 'TYPE_CHECKING, override'
         )
         typing_imports_tc = (
             'Any, Callable'
             if self.mname == '_babase'
             else (
-                'Any, Callable, Literal, Sequence'
+                'Any, Callable, Literal'
                 if self.mname == '_bascenev1'
                 else (
                     'Any, Callable, Literal, Sequence'

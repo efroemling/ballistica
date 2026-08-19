@@ -267,6 +267,12 @@ auto BuiltinStrings::Net::ConnectionRejected()
   return MakeResource_("strings/net/connection_rejected");
 }
 
+auto BuiltinStrings::Net::DeviceTimeIncorrect(LangStr::Sub hours)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/device_time_incorrect",
+                       {{"hours", std::move(hours)}});
+}
+
 auto BuiltinStrings::Net::IncompatibleNewerVersionHost()
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/incompatible_newer_version_host");
@@ -312,6 +318,11 @@ auto BuiltinStrings::Net::PlayerLeftParty(LangStr::Sub name)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/net/player_left_party",
                        {{"name", std::move(name)}});
+}
+
+auto BuiltinStrings::Net::SecureConnectionFailed()
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/net/secure_connection_failed");
 }
 
 auto BuiltinStrings::Net::ServerUnsupported()
@@ -503,9 +514,17 @@ auto BuiltinStrings::Store::PurchasesRestored()
   return MakeResource_("strings/store/purchases_restored");
 }
 
+auto BuiltinStrings::Store::Purchasing() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/store/purchasing");
+}
+
 auto BuiltinStrings::Store::RemoveAdsTokenOffer()
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/store/remove_ads_token_offer");
+}
+
+auto BuiltinStrings::Store::Requesting() -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/store/requesting");
 }
 
 auto BuiltinStrings::Store::TransactionInProgress()

@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260815`` (babase).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260819`` (babase).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,13 +9,13 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260815
+# ba_meta require asset-package a-0.babuiltinassets.260819
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.babuiltinassets.260815'
+__asset_package__ = 'a-0.babuiltinassets.260819'
 
 from typing import TYPE_CHECKING
 
@@ -569,6 +569,18 @@ if TYPE_CHECKING:
         #:     English: "Connection rejected."
         connection_rejected: LangStr
 
+        def device_time_incorrect(self, *, hours: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Warning shown when the device clock differs substantially from
+                real-world time; the placeholder is how many hours off it is.
+
+                English: "Your device's time is incorrect by {hours} hours. This
+                is likely to cause problems. Please check your time and
+                time-zone settings."
+            """
+
         #: ::
         #:
         #:     Screen-message when connecting fails because the host runs a
@@ -658,6 +670,15 @@ if TYPE_CHECKING:
 
                 English: "{name} left the party."
             """
+
+        #: ::
+        #:
+        #:     Screen-message shown when the client cannot establish its secure
+        #:     connection to the cloud.
+        #:
+        #:     English: "Unable to establish secure cloud connection; network
+        #:     functionality may fail."
+        secure_connection_failed: LangStr
 
         #: ::
         #:
@@ -1042,11 +1063,26 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Status shown while a purchase is being processed.
+        #:
+        #:     English: "Purchasing..."
+        purchasing: LangStr
+
+        #: ::
+        #:
         #:     Limited-time offer to remove ads via a token pack.
         #:
         #:     English: "LIMITED TIME OFFER: PURCHASE ANY TOKEN PACK TO REMOVE
         #:     IN-GAME ADS."
         remove_ads_token_offer: LangStr
+
+        #: ::
+        #:
+        #:     Status shown while a free (zero-price) item is being requested;
+        #:     the counterpart of the purchasing message.
+        #:
+        #:     English: "Requesting..."
+        requesting: LangStr
 
         #: ::
         #:
@@ -1386,8 +1422,8 @@ if TYPE_CHECKING:
     #: ``click01``, ``cork_pop``, and 15 more). Full list in source.
     audio: AudioGroup
 
-    #: The ``strings`` group - 123 strings (``account``, ``assets``, ``audio``,
-    #: ``input``, ``net``, and 118 more). Full list in source.
+    #: The ``strings`` group - 127 strings (``account``, ``assets``, ``audio``,
+    #: ``input``, ``net``, and 122 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
@@ -1468,6 +1504,7 @@ _TREE = {
             'connection_failed_party_full': (),
             'connection_failed_version_mismatch': (),
             'connection_rejected': (),
+            'device_time_incorrect': ('hours',),
             'incompatible_newer_version_host': (),
             'incompatible_version_host': (),
             'incompatible_version_player': ('name',),
@@ -1477,6 +1514,7 @@ _TREE = {
             'left_party': ('name',),
             'player_joined_party': ('name',),
             'player_left_party': ('name',),
+            'secure_connection_failed': (),
             'server_unsupported': (),
             'unavailable_no_connection': (),
         },
@@ -1519,7 +1557,9 @@ _TREE = {
             'purchase_already_in_progress': (),
             'purchase_not_valid': ('email',),
             'purchases_restored': (),
+            'purchasing': (),
             'remove_ads_token_offer': (),
+            'requesting': (),
             'transaction_in_progress': (),
             'unavailable': (),
             'unavailable_temporarily': (),

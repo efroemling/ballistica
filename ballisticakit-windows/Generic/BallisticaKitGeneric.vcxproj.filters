@@ -1330,6 +1330,12 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_node.h">
       <Filter>ballistica\scene_v1\python\class</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_quat.cc">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_quat.h">
+      <Filter>ballistica\scene_v1\python\class</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_collision_mesh.h">
       <Filter>ballistica\scene_v1\python\class</Filter>
     </ClInclude>

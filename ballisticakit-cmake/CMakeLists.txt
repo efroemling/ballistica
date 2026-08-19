@@ -761,6 +761,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_material.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_node.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_node.h
+  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_quat.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_quat.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_collision_mesh.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_data_asset.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_data_asset.h
