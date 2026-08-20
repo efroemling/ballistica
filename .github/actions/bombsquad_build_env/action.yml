@@ -1,3 +1,5 @@
+# Cache apt archives step is keyed on this file so any changes to it invalidate the cache.
+
 name: "Setup BombSquad Environment"
 description: "Common setup steps for BombSquad builds"
 
@@ -9,11 +11,19 @@ inputs:
     required: false
     type: boolean
     default: false
+  save-asset-cache:
+    description: |
+      "Set to true on exactly ONE job per workflow to have that job save"
+      "the shared bombsquad asset cache. Every other job restores only."
+      "Saving is additionally limited to the default branch; see the"
+      "asset cache steps below for why."
+    required: false
+    type: boolean
+    default: false
 
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v6
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
@@ -28,16 +38,26 @@ runs:
       with:
         enable-cache: true
         cache-dependency-glob: "pconfig/requirements.txt"
-    - name: Cache Bombsquad assets
-      id: cache-assets
-      uses: actions/cache@v5
+    # Restore-only. We deliberately do NOT key on hashFiles('.efrocachemap'):
+    # that file is regenerated on every single commit, so such a key can
+    # never hit and actions/cache would re-save the (~440MB) entry on every
+    # job of every run, which alone was consuming half of the repo's 10GB
+    # cache budget and evicting everything else.
+    #
+    # A stale restore is always correct here: .cache/efrocache is a
+    # content-addressed store (see get_local_cache_dir /
+    # get_existing_file_hash in tools/efrotools/efrocache.py), so the
+    # 'Update assets' step below re-fetches only the files whose hashes
+    # actually changed.
+    - name: Restore Bombsquad assets cache
+      uses: actions/cache/restore@v5
       env:
         cache-name: cache-bombsquad-assets
       with:
         path: |
           build/assets
           .cache/efrocache/
-        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('.efrocachemap') }}
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.run_id }}
         restore-keys: |
           ${{ runner.os }}-${{ env.cache-name }}-
     - name: Setup project environment
@@ -64,19 +84,51 @@ runs:
         done
         echo "::error::Asset assembly failed after 3 attempts." >&2
         exit 1
+    # Exactly one job (opted in via save-asset-cache) refreshes the shared
+    # cache, and only on the default branch. Caches written from a PR ref
+    # are scoped to that PR and can never be read by anything else, so
+    # saving there would just burn budget. Comparing against
+    # default_branch rather than a hardcoded 'main' keeps this working in
+    # forks too.
+    - name: Save Bombsquad assets cache
+      if: ${{ inputs.save-asset-cache == 'true'
+        && github.ref_name == github.event.repository.default_branch }}
+      uses: actions/cache/save@v5
+      env:
+        cache-name: cache-bombsquad-assets
+      with:
+        path: |
+          build/assets
+          .cache/efrocache/
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.run_id }}
+
     # Following steps only run for inputs.using-cmake == 'true'
-    - name: Install build packgages
+    - name: Cache apt archives
+      if: ${{ inputs.using-cmake == 'true' }}
+      uses: actions/cache@v5
+      with:
+        path: .cache/apt-archives
+        key: ${{ runner.os }}-${{ runner.arch }}-apt-${{ hashFiles('.github/actions/bombsquad_build_env/action.yml') }}
+    - name: Install build packages
       if: ${{ inputs.using-cmake == 'true' }}
       shell: bash
       run: |
-        sudo apt-get update -qq
+        # apt drops privileges to _apt to download, so it needs to own the
+        # archive dir; we take it back afterwards so the cache save (which
+        # runs as the runner user) can read it.
+        mkdir -p .cache/apt-archives/partial
+        sudo chown -R _apt:root .cache/apt-archives
+        sudo apt-get update -qq -o Acquire::Languages=none
         sudo apt-get install -y --no-install-recommends \
+          -o Dir::Cache::archives="$PWD/.cache/apt-archives" \
           libglut-dev \
           libopenal-dev \
           libvorbis-dev \
           libpango1.0-dev \
           ninja-build \
           libsdl3-dev
+
+        sudo chown -R "$(id -u):$(id -g)" .cache/apt-archives
     - name: Setup env variables
       if: ${{ inputs.using-cmake == 'true' }}
       shell: bash
@@ -86,6 +138,6 @@ runs:
         echo CMAKE_EXTRA_ARGS="-DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache" >> $GITHUB_ENV
     - name: Setup sccache
       if: ${{ inputs.using-cmake == 'true' }}
-      uses: mozilla-actions/sccache-action@v0.0.10
+      uses: mozilla-actions/sccache-action@v0.0.11
       with:
         disable_annotations: true
