@@ -6,6 +6,9 @@
 #include <direct.h>
 #include <fcntl.h>
 #include <io.h>
+#include <netlistmgr.h>
+#include <objbase.h>
+#include <ocidl.h>
 #include <rpc.h>
 #include <shellapi.h>
 #include <shlobj_core.h>
@@ -23,21 +26,23 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstring>
 #include <functional>
+#include <iterator>
 #include <list>
 #include <mutex>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
 #pragma comment(lib, "Rpcrt4.lib")
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "iphlpapi.lib")
-#if BA_DEBUG_BUILD
-#pragma comment(lib, "python313_d.lib")
-#else
-#pragma comment(lib, "python313.lib")
-#endif
+#pragma comment(lib, "ole32.lib")
+// Note: no explicit python lib pragma here — pyconfig.h auto-links the
+// correct pythonXY[_d].lib in every translation unit that includes
+// Python.h, and a hardcoded copy here just breaks Python upgrades.
 #pragma comment(lib, "DbgHelp.lib")
 
 // GUI Only Stuff.
@@ -46,8 +51,10 @@
 #pragma comment(lib, "libvorbis.lib")
 #pragma comment(lib, "libvorbisfile.lib")
 #pragma comment(lib, "OpenAL32.lib")
-#pragma comment(lib, "SDL2.lib")
-#pragma comment(lib, "SDL2main.lib")
+// SDL3 ships a single import lib; its 'main' shim is header-only now (see
+// SDL_main.h usage in ballistica.cc / main_rift.cc), so there's no separate
+// SDL2main.lib equivalent to link.
+#pragma comment(lib, "SDL3.lib")
 
 #if BA_ENABLE_OS_FONT_RENDERING
 #include <d2d1_1.h>
@@ -175,7 +182,31 @@ auto PlatformWindows::FormatWinStackTraceForDisplay(WinStackTrace* stack_trace)
     // Docs say to do this only once.
     if (!win_sym_inited_) {
       win_sym_process_ = GetCurrentProcess();
-      SymInitialize(win_sym_process_, NULL, TRUE);
+
+      // Load line-number info along with symbols (not on by default)
+      // and don't pop system error dialogs over bad symbol files.
+      SymSetOptions(SymGetOptions() | SYMOPT_LOAD_LINES
+                    | SYMOPT_FAIL_CRITICAL_ERRORS);
+
+      // Use an explicit symbol search path of exe-dir + cwd. The
+      // default (passing NULL) covers only cwd + _NT_SYMBOL_PATH and
+      // NOT the directory containing the executable - which is exactly
+      // where 'make prefab-windows-symbols' drops fetched PDBs. Without
+      // this, a .pdb sitting next to the exe is only found when the
+      // process happens to be launched from that directory.
+      std::wstring search_path{L"."};
+      wchar_t exe_path[4096];
+      auto exe_path_len =
+          GetModuleFileNameW(nullptr, exe_path, std::size(exe_path));
+      if (exe_path_len > 0 && exe_path_len < std::size(exe_path)) {
+        std::wstring exe_dir{exe_path};
+        auto slashpos = exe_dir.find_last_of(L"\\/");
+        if (slashpos != std::wstring::npos && slashpos > 0) {
+          exe_dir.resize(slashpos);
+          search_path = exe_dir + L";" + search_path;
+        }
+      }
+      SymInitializeW(win_sym_process_, search_path.c_str(), TRUE);
       win_sym_inited_ = true;
     }
 
@@ -192,6 +223,7 @@ auto PlatformWindows::FormatWinStackTraceForDisplay(WinStackTrace* stack_trace)
     std::string build_src_dir = g_core ? g_core->build_src_dir() : "";
 
     char linebuf[kTraceMaxFunctionNameLength + 128];
+    IMAGEHLP_MODULE64 modinfo;
     for (int i = 0; i < stack_trace->number_of_frames(); i++) {
       DWORD64 address = (DWORD64)(stack_trace->stack()[i]);
       std::string symbol_name_s;
@@ -205,6 +237,27 @@ auto PlatformWindows::FormatWinStackTraceForDisplay(WinStackTrace* stack_trace)
         symbol_name_s = "(unknown symbol name)";
       }
       const char* symbol_name = symbol_name_s.c_str();
+
+      // Module-relative form of the frame address (e.g.
+      // "BallisticaKit.exe+0x1a2b3c"). When symbolication fails (no PDB
+      // present, as with public prefab builds) this is the part of the
+      // line that lets the trace be symbolicated after the fact against
+      // an archived PDB; absolute addresses alone are useless across
+      // runs due to ASLR.
+      char modbuf[160];
+      memset(&modinfo, 0, sizeof(modinfo));
+      modinfo.SizeOfStruct = sizeof(modinfo);
+      if (SymGetModuleInfo64(win_sym_process_, address, &modinfo)
+          && modinfo.BaseOfImage != 0) {
+        // Note: ModuleName is TCHAR (wide here) like the rest of our
+        // dbghelp usage; route through UTF8Encode for printing.
+        snprintf(modbuf, sizeof(modbuf), "%s+0x%llx",
+                 UTF8Encode(modinfo.ModuleName).c_str(),
+                 static_cast<uint64_t>(address - modinfo.BaseOfImage));
+      } else {
+        snprintf(modbuf, sizeof(modbuf), "0x%llx",
+                 static_cast<uint64_t>(address));
+      }
 
       if (SymGetLineFromAddr64(win_sym_process_, address, &l_displacement,
                                &line)) {
@@ -225,15 +278,11 @@ auto PlatformWindows::FormatWinStackTraceForDisplay(WinStackTrace* stack_trace)
         }
 
         snprintf(linebuf, sizeof(linebuf),
-                 "%-3d %s in %s: line: %lu: address: 0x%p\n", i, symbol_name,
-                 filename, line.LineNumber,
-                 reinterpret_cast<void*>(symbol->Address));
+                 "%-3d %s in %s: line: %lu: address: %s\n", i, symbol_name,
+                 filename, line.LineNumber, modbuf);
       } else {
-        snprintf(linebuf, sizeof(linebuf),
-                 "SymGetLineFromAddr64 returned error code %lu.\n",
-                 GetLastError());
-        snprintf(linebuf, sizeof(linebuf), "%-3d %s, address 0x%p.\n", i,
-                 symbol_name, reinterpret_cast<void*>(symbol->Address));
+        snprintf(linebuf, sizeof(linebuf), "%-3d %s, address %s.\n", i,
+                 symbol_name, modbuf);
       }
       out += linebuf;
     }
@@ -315,6 +364,16 @@ auto PlatformWindows::UTF8Decode(std::string_view str) -> std::wstring {
   }
 
   return wstr;
+}
+
+auto PlatformWindows::CanShowBlockingFatalErrorDialog() -> bool { return true; }
+
+void PlatformWindows::BlockingFatalErrorDialog(const std::string& message) {
+  // Native Win32 dialog (user32). More robust than SDL for the fatal case
+  // since it works even if SDL never initialized; also keeps SDL out of
+  // the Windows platform layer.
+  ::MessageBoxW(nullptr, UTF8Decode(message).c_str(), L"Fatal Error",
+                MB_OK | MB_ICONERROR | MB_TASKMODAL);
 }
 
 PlatformWindows::PlatformWindows() {
@@ -1179,8 +1238,9 @@ static constexpr wchar_t kFontFamily[] = L"Segoe UI";
 static constexpr DWRITE_FONT_WEIGHT kFontWeight = DWRITE_FONT_WEIGHT_SEMI_BOLD;
 
 // File-scope factory singletons, initialized once via call_once.
-// D2D1_FACTORY_TYPE_MULTI_THREADED is required because CreateTextTexture runs
-// on the Assets thread while GetTextBoundsAndWidth runs on the Logic thread.
+// D2D1_FACTORY_TYPE_MULTI_THREADED is required because CreateTextTexture may
+// run on any thread (asset preloads are not thread-pinned; see
+// Asset::DoPreload()) while GetTextBoundsAndWidth runs on the Logic thread.
 static ID2D1Factory1* g_d2d_factory = nullptr;
 static IDWriteFactory* g_dwrite_factory = nullptr;
 // WARP D3D11 device — software rasterizer, no GPU required.
@@ -1189,6 +1249,16 @@ static ID3D11DeviceContext* g_d3d11_context = nullptr;
 // ID2D1Device derived from the D3D11 device; source of per-call DeviceContexts.
 static ID2D1Device* g_d2d_device = nullptr;
 static std::once_flag g_font_factories_init_flag;
+// Serializes CreateTextTexture bodies. Preloads of different assets can run
+// concurrently on different threads, and while the multithreaded D2D factory
+// internally locks its own work, our direct readback calls on the shared
+// g_d3d11_context (CopyResource/Map/Unmap) don't take that lock and the
+// immediate context is not thread-safe — including against D2D's *internal*
+// use of it at EndDraw. Text-texture creation is rare and ms-scale, so a
+// single coarse lock is the simplest correct answer. GetTextBoundsAndWidth
+// deliberately does NOT take it: it only touches the shared DWrite factory
+// (thread-safe) and per-call layouts.
+static std::mutex g_text_texture_mutex;
 
 static void InitFontFactories_() {
   // Direct2D factory (v1 for ID2D1DeviceContext / color emoji support).
@@ -1268,6 +1338,10 @@ auto PlatformWindows::CreateTextTexture(int width, int height,
   if (!g_d2d_device || !g_dwrite_factory || !g_d3d11_device) {
     return nullptr;
   }
+
+  // Serialize the whole rasterize+readback sequence (see
+  // g_text_texture_mutex comment).
+  std::scoped_lock lock(g_text_texture_mutex);
 
   // 1. Create a D3D11 BGRA texture as the render surface.
   D3D11_TEXTURE2D_DESC rt_desc{};
@@ -1554,7 +1628,280 @@ void PlatformWindows::GetTextBoundsAndWidth(const std::string& text, Rect* r,
   }
 }
 
+// Minimal combined source/sink for
+// IDWriteTextAnalyzer::AnalyzeLineBreakpoints. Stack-allocated and used
+// synchronously within a single call, so ref-counting is a no-op.
+class LineBreakAnalysis_ final : public IDWriteTextAnalysisSource,
+                                 public IDWriteTextAnalysisSink {
+ public:
+  LineBreakAnalysis_(const wchar_t* text, UINT32 length)
+      : text_(text), length_(length), breakpoints_(length) {}
+
+  // IUnknown.
+  HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override {
+    if (ppv == nullptr) {
+      return E_POINTER;
+    }
+    if (riid == __uuidof(IDWriteTextAnalysisSource)) {
+      *ppv = static_cast<IDWriteTextAnalysisSource*>(this);
+    } else if (riid == __uuidof(IDWriteTextAnalysisSink)) {
+      *ppv = static_cast<IDWriteTextAnalysisSink*>(this);
+    } else if (riid == IID_IUnknown) {
+      *ppv = static_cast<IDWriteTextAnalysisSource*>(this);
+    } else {
+      *ppv = nullptr;
+      return E_NOINTERFACE;
+    }
+    return S_OK;
+  }
+  ULONG STDMETHODCALLTYPE AddRef() override { return 1; }
+  ULONG STDMETHODCALLTYPE Release() override { return 1; }
+
+  // IDWriteTextAnalysisSource.
+  HRESULT STDMETHODCALLTYPE GetTextAtPosition(UINT32 position,
+                                              const WCHAR** text,
+                                              UINT32* length) override {
+    if (position >= length_) {
+      *text = nullptr;
+      *length = 0;
+    } else {
+      *text = text_ + position;
+      *length = length_ - position;
+    }
+    return S_OK;
+  }
+  HRESULT STDMETHODCALLTYPE GetTextBeforePosition(UINT32 position,
+                                                  const WCHAR** text,
+                                                  UINT32* length) override {
+    if (position == 0 || position > length_) {
+      *text = nullptr;
+      *length = 0;
+    } else {
+      *text = text_;
+      *length = position;
+    }
+    return S_OK;
+  }
+  DWRITE_READING_DIRECTION STDMETHODCALLTYPE
+  GetParagraphReadingDirection() override {
+    return DWRITE_READING_DIRECTION_LEFT_TO_RIGHT;
+  }
+  HRESULT STDMETHODCALLTYPE GetLocaleName(UINT32 position, UINT32* text_length,
+                                          const WCHAR** locale_name) override {
+    *text_length = (position < length_) ? length_ - position : 0;
+    *locale_name = L"";
+    return S_OK;
+  }
+  HRESULT STDMETHODCALLTYPE GetNumberSubstitution(
+      UINT32 position, UINT32* text_length,
+      IDWriteNumberSubstitution** number_substitution) override {
+    *text_length = (position < length_) ? length_ - position : 0;
+    *number_substitution = nullptr;
+    return S_OK;
+  }
+
+  // IDWriteTextAnalysisSink.
+  HRESULT STDMETHODCALLTYPE
+  SetLineBreakpoints(UINT32 position, UINT32 length,
+                     const DWRITE_LINE_BREAKPOINT* line_breakpoints) override {
+    if (position + length > breakpoints_.size()) {
+      return E_INVALIDARG;
+    }
+    for (UINT32 i = 0; i < length; ++i) {
+      breakpoints_[position + i] = line_breakpoints[i];
+    }
+    return S_OK;
+  }
+  HRESULT STDMETHODCALLTYPE
+  SetScriptAnalysis(UINT32, UINT32, const DWRITE_SCRIPT_ANALYSIS*) override {
+    return S_OK;
+  }
+  HRESULT STDMETHODCALLTYPE SetBidiLevel(UINT32, UINT32, UINT8,
+                                         UINT8) override {
+    return S_OK;
+  }
+  HRESULT STDMETHODCALLTYPE
+  SetNumberSubstitution(UINT32, UINT32, IDWriteNumberSubstitution*) override {
+    return S_OK;
+  }
+
+  auto breakpoints() const -> const std::vector<DWRITE_LINE_BREAKPOINT>& {
+    return breakpoints_;
+  }
+
+ private:
+  const wchar_t* text_;
+  UINT32 length_;
+  std::vector<DWRITE_LINE_BREAKPOINT> breakpoints_;
+};
+
+auto PlatformWindows::GetTextLineBreakOffsets(const std::string& text)
+    -> std::vector<int> {
+  std::call_once(g_font_factories_init_flag, InitFontFactories_);
+  if (!g_dwrite_factory) {
+    return Platform::GetTextLineBreakOffsets(text);
+  }
+  std::wstring wtext = UTF8Decode(text);
+  if (wtext.empty()) {
+    return {};
+  }
+
+  IDWriteTextAnalyzer* analyzer = nullptr;
+  HRESULT hr = g_dwrite_factory->CreateTextAnalyzer(&analyzer);
+  if (FAILED(hr) || !analyzer) {
+    return Platform::GetTextLineBreakOffsets(text);
+  }
+
+  auto length16 = static_cast<UINT32>(wtext.size());
+  LineBreakAnalysis_ analysis(wtext.c_str(), length16);
+  hr = analyzer->AnalyzeLineBreakpoints(&analysis, 0, length16, &analysis);
+  analyzer->Release();
+  if (FAILED(hr)) {
+    return Platform::GetTextLineBreakOffsets(text);
+  }
+
+  // A new line may begin after any code unit whose break-condition-after
+  // allows it; convert those utf-16 positions to utf-8 byte offsets.
+  std::vector<int> offsets;
+  auto offset_map = Utils::UTF16ToUTF8OffsetMap(text);
+  const auto& breakpoints = analysis.breakpoints();
+  for (UINT32 i = 0; i + 1 < length16; ++i) {
+    auto condition =
+        static_cast<DWRITE_BREAK_CONDITION>(breakpoints[i].breakConditionAfter);
+    if (condition == DWRITE_BREAK_CONDITION_CAN_BREAK
+        || condition == DWRITE_BREAK_CONDITION_MUST_BREAK) {
+      int offset = offset_map[i + 1];
+      if (offset > 0 && offset < static_cast<int>(text.size())) {
+        offsets.push_back(offset);
+      }
+    }
+  }
+  return offsets;
+}
+
 #endif  // BA_ENABLE_OS_FONT_RENDERING
+
+// ---------------------------------------------------------------------------
+// Network availability monitoring (Windows Network List Manager)
+// ---------------------------------------------------------------------------
+
+// COM event sink for INetworkListManagerEvents. Forwards
+// connectivity-changed notifications to PlatformWindows::OnNetAvailChanged.
+class NetworkEventSink_ final : public INetworkListManagerEvents {
+ public:
+  NetworkEventSink_() = default;
+
+  // IUnknown.
+  HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override {
+    if (ppv == nullptr) {
+      return E_POINTER;
+    }
+    if (riid == IID_IUnknown || riid == IID_INetworkListManagerEvents) {
+      *ppv = static_cast<INetworkListManagerEvents*>(this);
+      AddRef();
+      return S_OK;
+    }
+    *ppv = nullptr;
+    return E_NOINTERFACE;
+  }
+  ULONG STDMETHODCALLTYPE AddRef() override {
+    return InterlockedIncrement(&ref_count_);
+  }
+  ULONG STDMETHODCALLTYPE Release() override {
+    LONG c = InterlockedDecrement(&ref_count_);
+    if (c == 0) {
+      delete this;
+    }
+    return c;
+  }
+
+  // INetworkListManagerEvents.
+  HRESULT STDMETHODCALLTYPE
+  ConnectivityChanged(NLM_CONNECTIVITY conn) override {
+    bool available =
+        (conn
+         & (NLM_CONNECTIVITY_IPV4_INTERNET | NLM_CONNECTIVITY_IPV6_INTERNET))
+        != 0;
+    PlatformWindows::OnNetAvailChanged(available);
+    return S_OK;
+  }
+
+ private:
+  LONG ref_count_{1};
+};
+
+// Worker thread body: initializes COM as MTA, creates the
+// NetworkListManager, hooks up our event sink, reports the initial
+// connectivity state, then parks forever. Detached and never joined;
+// runs until process exit. References to nlm/cp/sink are intentionally
+// leaked since they live for the process lifetime.
+static void RunWindowsNetworkMonitor_() {
+  HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+  if (FAILED(hr)) {
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kWarning,
+                         "Win NLM: CoInitializeEx failed; "
+                         "defaulting net-availability to true.");
+    PlatformWindows::OnNetAvailChanged(true);
+    return;
+  }
+
+  INetworkListManager* nlm = nullptr;
+  hr =
+      CoCreateInstance(__uuidof(NetworkListManager), nullptr, CLSCTX_ALL,
+                       IID_INetworkListManager, reinterpret_cast<void**>(&nlm));
+  if (FAILED(hr) || nlm == nullptr) {
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kWarning,
+                         "Win NLM: CoCreateInstance failed; "
+                         "defaulting net-availability to true.");
+    PlatformWindows::OnNetAvailChanged(true);
+    return;
+  }
+
+  IConnectionPointContainer* cpc = nullptr;
+  hr = nlm->QueryInterface(IID_IConnectionPointContainer,
+                           reinterpret_cast<void**>(&cpc));
+  if (SUCCEEDED(hr) && cpc != nullptr) {
+    IConnectionPoint* cp = nullptr;
+    hr = cpc->FindConnectionPoint(IID_INetworkListManagerEvents, &cp);
+    if (SUCCEEDED(hr) && cp != nullptr) {
+      auto* sink = new NetworkEventSink_();
+      DWORD cookie = 0;
+      hr = cp->Advise(static_cast<INetworkListManagerEvents*>(sink), &cookie);
+      if (FAILED(hr)) {
+        sink->Release();
+      }
+      // cp/sink intentionally retained for process lifetime.
+    }
+    cpc->Release();
+  }
+
+  // Report initial state.
+  NLM_CONNECTIVITY initial = NLM_CONNECTIVITY_DISCONNECTED;
+  if (SUCCEEDED(nlm->GetConnectivity(&initial))) {
+    bool available =
+        (initial
+         & (NLM_CONNECTIVITY_IPV4_INTERNET | NLM_CONNECTIVITY_IPV6_INTERNET))
+        != 0;
+    PlatformWindows::OnNetAvailChanged(available);
+  }
+
+  // Park forever. With MTA, COM dispatches our connection-point events
+  // on RPC threads automatically; this thread doesn't need to pump
+  // messages.
+  while (true) {
+    Sleep(INFINITE);
+  }
+}
+
+void PlatformWindows::OnNetAvailChanged(bool available) {
+  if (auto* p = dynamic_cast<PlatformWindows*>(g_core->platform)) {
+    p->SetNetworkAvailability(available);
+  }
+}
+
+void PlatformWindows::DoStartNetworkAvailabilityMonitoring() {
+  std::thread(RunWindowsNetworkMonitor_).detach();
+}
 
 }  // namespace ballistica::core
 

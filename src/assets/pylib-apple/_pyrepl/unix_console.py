@@ -29,16 +29,23 @@ import signal
 import struct
 import termios
 import time
+import types
 import platform
 from fcntl import ioctl
 
-from . import curses
+from . import terminfo
 from .console import Console, Event
 from .fancy_termios import tcgetattr, tcsetattr, TermState
 from .trace import trace
 from .unix_eventqueue import EventQueue
 from .utils import wlen
 
+# declare posix optional to allow None assignment on other platforms
+posix: types.ModuleType | None
+try:
+    import posix
+except ImportError:
+    posix = None
 
 TYPE_CHECKING = False
 
@@ -55,7 +62,7 @@ class InvalidTerminal(RuntimeError):
         super().__init__(errno.EIO, message)
 
 
-_error = (termios.error, curses.error, InvalidTerminal)
+_error = (termios.error, InvalidTerminal)
 _error_codes_to_ignore = frozenset([errno.EIO, errno.ENXIO, errno.EPERM])
 
 SIGWINCH_EVENT = "repaint"
@@ -113,7 +120,7 @@ delayprog = re.compile(b"\\$<([0-9]+)((?:/|\\*){0,2})>")
 try:
     poll: type[select.poll] = select.poll
 except AttributeError:
-    # this is exactly the minumum necessary to support what we
+    # this is exactly the minimum necessary to support what we
     # do with poll objects
     class MinimalPoll:
         def __init__(self):
@@ -154,9 +161,7 @@ class UnixConsole(Console):
 
         self.pollob = poll()
         self.pollob.register(self.input_fd, select.POLLIN)
-        self.input_buffer = b""
-        self.input_buffer_pos = 0
-        curses.setupterm(term or None, self.output_fd)
+        self.terminfo = terminfo.TermInfo(term or None)
         self.term = term
         self.is_apple_terminal = (
             platform.system() == "Darwin"
@@ -177,7 +182,7 @@ class UnixConsole(Console):
         def _my_getstr(cap: str, optional: bool) -> bytes | None: ...
 
         def _my_getstr(cap: str, optional: bool = False) -> bytes | None:
-            r = curses.tigetstr(cap)
+            r = self.terminfo.get(cap)
             if not optional and r is None:
                 raise InvalidTerminal(
                     f"terminal doesn't have the required {cap} capability"
@@ -211,7 +216,9 @@ class UnixConsole(Console):
 
         self.__setup_movement()
 
-        self.event_queue = EventQueue(self.input_fd, self.encoding)
+        self.event_queue = EventQueue(
+            self.input_fd, self.encoding, self.terminfo
+        )
         self.cursor_visible = 1
 
         signal.signal(signal.SIGCONT, self._sigcont_handler)
@@ -220,22 +227,8 @@ class UnixConsole(Console):
         self.restore()
         self.prepare()
 
-    def more_in_buffer(self) -> bool:
-        return bool(
-            self.input_buffer
-            and self.input_buffer_pos < len(self.input_buffer)
-        )
-
     def __read(self, n: int) -> bytes:
-        if not self.more_in_buffer():
-            self.input_buffer = os.read(self.input_fd, 10000)
-
-        ret = self.input_buffer[self.input_buffer_pos : self.input_buffer_pos + n]
-        self.input_buffer_pos += len(ret)
-        if self.input_buffer_pos >= len(self.input_buffer):
-            self.input_buffer = b""
-            self.input_buffer_pos = 0
-        return ret
+        return os.read(self.input_fd, n)
 
     def change_encoding(self, encoding: str) -> None:
         """
@@ -258,8 +251,9 @@ class UnixConsole(Console):
         if not self.__gone_tall:
             while len(self.screen) < min(len(screen), self.height):
                 self.__hide_cursor()
-                self.__move(0, len(self.screen) - 1)
-                self.__write("\n")
+                if self.screen:
+                    self.__move(0, len(self.screen) - 1)
+                    self.__write("\n")
                 self.posxy = 0, len(self.screen)
                 self.screen.append("")
         else:
@@ -449,7 +443,6 @@ class UnixConsole(Console):
         """
         return (
             not self.event_queue.empty()
-            or self.more_in_buffer()
             or bool(self.pollob.poll(timeout))
         )
 
@@ -552,6 +545,7 @@ class UnixConsole(Console):
                 e.raw += e.raw
 
             amount = struct.unpack("i", ioctl(self.input_fd, FIONREAD, b"\0\0\0\0"))[0]
+            trace("getpending({a})", a=amount)
             raw = self.__read(amount)
             data = str(raw, self.encoding, "replace")
             e.data += data
@@ -593,11 +587,9 @@ class UnixConsole(Console):
 
     @property
     def input_hook(self):
-        try:
-            import posix
-        except ImportError:
-            return None
-        if posix._is_inputhook_installed():
+        # avoid inline imports here so the repl doesn't get flooded
+        # with import logging from -X importtime=2
+        if posix is not None and posix._is_inputhook_installed():
             return posix._inputhook
 
     def __enable_bracketed_paste(self) -> None:
@@ -629,14 +621,14 @@ class UnixConsole(Console):
         if self._dch1:
             self.dch1 = self._dch1
         elif self._dch:
-            self.dch1 = curses.tparm(self._dch, 1)
+            self.dch1 = terminfo.tparm(self._dch, 1)
         else:
             self.dch1 = None
 
         if self._ich1:
             self.ich1 = self._ich1
         elif self._ich:
-            self.ich1 = curses.tparm(self._ich, 1)
+            self.ich1 = terminfo.tparm(self._ich, 1)
         else:
             self.ich1 = None
 
@@ -661,7 +653,7 @@ class UnixConsole(Console):
 
         # reuse the oldline as much as possible, but stop as soon as we
         # encounter an ESCAPE, because it might be the start of an escape
-        # sequene
+        # sequence
         while (
             x_coord < minlen
             and oldline[x_pos] == newline[x_pos]
@@ -733,7 +725,7 @@ class UnixConsole(Console):
         self.__buffer.append((text, 0))
 
     def __write_code(self, fmt, *args):
-        self.__buffer.append((curses.tparm(fmt, *args), 1))
+        self.__buffer.append((terminfo.tparm(fmt, *args), 1))
 
     def __maybe_write_code(self, fmt, *args):
         if fmt:
@@ -784,7 +776,6 @@ class UnixConsole(Console):
         self.__write_code(self._cup, y - self.__offset, x)
 
     def __sigwinch(self, signum, frame):
-        self.height, self.width = self.getheightwidth()
         self.event_queue.insert(Event("resize", None))
 
     def __hide_cursor(self):
@@ -817,9 +808,9 @@ class UnixConsole(Console):
         will never do anyone any good."""
         # using .get() means that things will blow up
         # only if the bps is actually needed (which I'm
-        # betting is pretty unlkely)
+        # betting is pretty unlikely)
         bps = ratedict.get(self.__svtermstate.ospeed)
-        while 1:
+        while True:
             m = prog.search(fmt)
             if not m:
                 os.write(self.output_fd, fmt)

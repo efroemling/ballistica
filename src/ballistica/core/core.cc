@@ -58,8 +58,9 @@ auto CoreFeatureSet::Import(const CoreConfig* config) -> CoreFeatureSet* {
         // between monolithic and modular.
         std::vector<std::string> argbuffer;
         std::vector<char*> argv = CorePython::FetchPythonArgs(&argbuffer);
-        DoImport_(CoreConfig::ForArgsAndEnvVars(static_cast<int>(argv.size()),
-                                                argv.data()));
+        DoImport_(CoreConfig::ForArgsAndEnvVars(
+            static_cast<int>(argv.size()), argv.data(),
+            Platform::TimeSinceEpochSeconds()));
       } else {
         // Not using Python sys args but we still want to process env vars.
         DoImport_(CoreConfig::ForEnvVars());
@@ -75,7 +76,7 @@ void CoreFeatureSet::DoImport_(const CoreConfig& config) {
   g_core->PostInit_();
 
   // We can't report core import begin since core didn't exist at that point.
-  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "core import end");
 }
 
@@ -163,6 +164,14 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   auto appcfg = envcfg.GetAttr("initial_app_config");
   initial_app_config_ = appcfg.NewRef();
 
+  // Snapshot any app-config values that are needed before the app (and
+  // thus base's AppConfig machinery) exists. Currently that is just the
+  // XInput toggle, which has to be known by the time we init SDL. Keep
+  // defaults here synced with the matching entries in
+  // base/support/app_config.cc.
+  app_config_disable_xinput_ =
+      InitialAppConfigBoolValue_(appcfg, "Disable XInput", false);
+
   logging->ApplyBaEnvConfig();
 
   // Consider app-python-dir to be 'custom' if baenv provided a value for it
@@ -178,6 +187,25 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
   auto fullpath = ba_env_data_dir_ + BA_DIRSLASH + "ba_data";
   if (!platform->FilePathExists(fullpath)) {
     FatalError("ba_data directory not found at '" + fullpath + "'.");
+  }
+}
+
+auto CoreFeatureSet::InitialAppConfigBoolValue_(const PythonRef& cfg,
+                                                const char* name,
+                                                bool default_value) -> bool {
+  auto val = cfg.DictGetItem(name);
+  if (!val.exists()) {
+    return default_value;
+  }
+  try {
+    return val.ValueAsBool();
+  } catch (const std::exception&) {
+    // Note that our logging is not fully set up at this point, so this
+    // lands in the early-log buffer and gets drained once it is.
+    logging->Log(
+        LogName::kBa, LogLevel::kError,
+        std::string("Expected a bool value for config value '") + name + "'.");
+    return default_value;
   }
 }
 

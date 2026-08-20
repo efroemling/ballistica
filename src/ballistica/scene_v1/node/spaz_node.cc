@@ -507,6 +507,7 @@ class SpazNodeType : public NodeType {
   BA_BOOL_ATTR(demo_mode, demo_mode, set_demo_mode);
   BA_INT_ATTR(behavior_version, behavior_version, set_behavior_version);
   BA_BOOL_ATTR_READONLY(pickup_before_hitbox, get_pickup_before_hitbox);
+  BA_FLOAT_ATTR_READONLY(pickup_release_time_ms, get_pickup_release_time_ms);
 #undef BA_NODE_TYPE_CLASS
 
   SpazNodeType()
@@ -591,7 +592,8 @@ class SpazNodeType : public NodeType {
         move_up_down(this),
         demo_mode(this),
         behavior_version(this),
-        pickup_before_hitbox(this) {}
+        pickup_before_hitbox(this),
+        pickup_release_time_ms(this) {}
 };
 
 static NodeType* node_type{};
@@ -1026,12 +1028,6 @@ void SpazNode::SetPunchPressed(bool val) {
     if (holding_something_) {
       Throw(false);
     } else {
-      // Do not punch before grab hitbox comes out, if it's coming
-      if (behavior_version_ >= 2
-          && (pickup_ >= kPickupCooldown - kPickupHitboxDelay)) {
-        return;
-      }
-
       if (!holding_something_ && (!knockout_) && (!frozen_)) {
         punch_ = kPunchDuration;
 
@@ -1627,9 +1623,13 @@ void SpazNode::HandleMessage(const char* data_in) {
     }
     case NodeMessageType::kKnockout: {
       float amt = Utils::ExtractFloat16NBO(&data);
+      // Clamped conversion, not a plain cast: `amt` is decoded straight
+      // off the wire, so a hostile or buggy host can hand us NaN or a
+      // huge value here -- and casting either to an int is undefined
+      // behavior.
       knockout_ = static_cast_check_fit<uint8_t>(
           std::min(40, std::max(static_cast<int>(knockout_),
-                                static_cast<int>(amt * 0.07f))));
+                                clamped_float_to_int<int>(amt * 0.07f))));
       trying_to_fly_ = false;
       break;
     }
@@ -1752,9 +1752,16 @@ void SpazNode::HandleMessage(const char* data_in) {
 
       // Update knockout if we're applying this.
       if (!calc_force_only) {
-        knockout_ = static_cast_check_fit<uint8_t>(
-            std::min(40, std::max(static_cast<int>(knockout_),
-                                  static_cast<int>(dmg * 0.02f) - 20)));
+        // Newer behavior - versions have less punishing stun
+        if (behavior_version_ >= 2) {
+          knockout_ = static_cast_check_fit<uint8_t>(
+              std::min(26, std::max(static_cast<int>(knockout_),
+                                    static_cast<int>(dmg * 0.02f) - 24)));
+        } else {
+          knockout_ = static_cast_check_fit<uint8_t>(
+              std::min(40, std::max(static_cast<int>(knockout_),
+                                    static_cast<int>(dmg * 0.02f) - 20)));
+        }
         trying_to_fly_ = false;
       }
       break;
@@ -1817,16 +1824,16 @@ void SpazNode::DoFlyPress() {
         const dReal* p_torso = dGeomGetPosition(body_torso_->geom());
         s->SetPosition(p_torso[0], p_torso[1], p_torso[2]);
         s->SetGain(0.3f);
-        base::SysSoundID s_id;
+        base::BuiltinSoundID s_id;
         int r = rand() % 100;  // NOLINT
         if (r < 33) {
-          s_id = base::SysSoundID::kSparkle;
+          s_id = base::BuiltinSoundID::kAudioSparkle01;
         } else if (r < 66) {
-          s_id = base::SysSoundID::kSparkle2;
+          s_id = base::BuiltinSoundID::kAudioSparkle02;
         } else {
-          s_id = base::SysSoundID::kSparkle3;
+          s_id = base::BuiltinSoundID::kAudioSparkle03;
         }
-        s->Play(g_base->assets->SysSound(s_id));
+        s->Play(g_base->assets->BuiltinSound(s_id));
         s->End();
       }
     }
@@ -3966,10 +3973,11 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
   if (blink_smooth_ < 0.9f) {
     if (shading) {
       oc->SetLightShadow(base::LightShadowType::kObject);
-      oc->SetTexture(g_base->assets->SysTexture(base::SysTextureID::kEye));
+      oc->SetTexture(g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesEyeColor));
       oc->SetColorizeColor(eye_color_red_, eye_color_green_, eye_color_blue_);
-      oc->SetColorizeTexture(
-          g_base->assets->SysTexture(base::SysTextureID::kEyeTint));
+      oc->SetColorizeTexture(g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesEyeColorTintMask));
       oc->SetReflection(base::ReflectionType::kSharpest);
       oc->SetReflectionScale(3, 3, 3);
       oc->SetAddColor(add_color[0], add_color[1], add_color[2]);
@@ -3993,14 +4001,15 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
           c->Scale(death_scale, death_scale, death_scale);
         }
         if (!frosty_ && !eyeless_) {
-          c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeBall));
+          c->DrawMeshAsset(
+              g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeBall));
           if (shading) {
             oc->SetReflectionScale(2, 2, 2);
           }
           if (death_scale != 1.0f)
             c->Scale(death_scale, death_scale, death_scale);
-          c->DrawMeshAsset(
-              g_base->assets->SysMesh(base::SysMeshID::kEyeBallIris));
+          c->DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesEyeBallIris));
         }
       }
 
@@ -4017,15 +4026,16 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
           if (death_scale != 1.0f) {
             c->Scale(death_scale, death_scale, death_scale);
           }
-          c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeBall));
+          c->DrawMeshAsset(
+              g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeBall));
           if (death_scale != 1.0f) {
             c->Scale(death_scale, death_scale, death_scale);
           }
           if (shading) {
             oc->SetReflectionScale(2, 2, 2);
           }
-          c->DrawMeshAsset(
-              g_base->assets->SysMesh(base::SysMeshID::kEyeBallIris));
+          c->DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesEyeBallIris));
         }
       }
     }
@@ -4034,7 +4044,8 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
 
 void SpazNode::SetupEyeLidShading(base::ObjectComponent* c, float death_fade,
                                   float* add_color) {
-  c->SetTexture(g_base->assets->SysTexture(base::SysTextureID::kEye));
+  c->SetTexture(g_base->assets->BuiltinTexture(
+      base::BuiltinTextureID::kTexturesEyeColor));
   c->SetColorizeTexture(nullptr);
   float r, g, b;
   r = eye_lid_color_red_;
@@ -4081,7 +4092,8 @@ void SpazNode::DrawEyeLids(base::RenderComponent* c, float death_fade,
     }
 
     if (!frosty_ && !eyeless_) {
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeLid));
+      c->DrawMeshAsset(
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeLid));
     }
   }
 
@@ -4106,7 +4118,8 @@ void SpazNode::DrawEyeLids(base::RenderComponent* c, float death_fade,
       c->Scale(death_scale, death_scale, death_scale);
     }
     if (!pirate_ && !frosty_ && !eyeless_) {
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kEyeLid));
+      c->DrawMeshAsset(
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeLid));
     }
   }
   c->FlipCullFace();  // back to normal
@@ -4175,7 +4188,8 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft1));
+      c->DrawMeshAsset(
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft1));
     }
 
     // Hair tuft 1b; just reuse tuft 1 with some extra translating.
@@ -4190,7 +4204,8 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft1b));
+      c->DrawMeshAsset(
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft1b));
     }
   }
 
@@ -4200,7 +4215,8 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       auto xf = c->ScopedTransform();
       hair_front_left_body_->ApplyToRenderComponent(c);
       if (death_scale != 1.0f) c->Scale(death_scale, death_scale, death_scale);
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft2));
+      c->DrawMeshAsset(
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft2));
     }
   }
 
@@ -4212,7 +4228,8 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft3));
+      c->DrawMeshAsset(
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft3));
     }
   }
 
@@ -4224,7 +4241,8 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kHairTuft4));
+      c->DrawMeshAsset(
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft4));
     }
   }
 
@@ -4513,11 +4531,17 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
 }
 
 static void DrawRadialMeter(base::MeshIndexedSimpleFull* m,
-                            base::SimpleComponent* c, float amt, bool flash) {
+                            base::SimpleComponent* c, float amt, bool flash,
+                            bool premult_tex) {
+  // For a premultiplied texture drawn with a faded straight color,
+  // premultiply rgb by alpha ourselves (see
+  // docs/design/premultiplied-alpha.md).
+  float a = flash ? 0.7f : 0.6f;
+  float cmul = premult_tex ? a : 1.0f;
   if (flash) {
-    c->SetColor(1, 1, 0.4f, 0.7f);
+    c->SetColor(cmul, cmul, 0.4f * cmul, a);
   } else {
-    c->SetColor(1, 1, 1, 0.6f);
+    c->SetColor(cmul, cmul, cmul, a);
   }
   base::Graphics::DrawRadialMeter(m, amt);
   c->DrawMesh(m);
@@ -4844,17 +4868,20 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       c.SetTransparent(true);
       bool flash = (scenetime - mini_billboard_1_start_time_ < 200
                     && render_frame_count % 6 < 3);
+      bool premult_tex{};
       if (!flash) {
-        c.SetTexture(mini_billboard_1_texture_.exists()
-                         ? mini_billboard_1_texture_->texture_data()
-                         : nullptr);
+        auto* tex = mini_billboard_1_texture_.exists()
+                        ? mini_billboard_1_texture_->texture_data()
+                        : nullptr;
+        c.SetTexture(tex);
+        premult_tex = tex != nullptr && tex->premultiplied();
       }
       {
         auto xf = c.ScopedTransform();
         c.Translate(torso_pos[0] - 0.2f, torso_pos[1] + 1.2f,
                     torso_pos[2] - 0.2f);
         c.Scale(0.08f, 0.08f, 0.08f);
-        DrawRadialMeter(&billboard_1_mesh_, &c, amt, flash);
+        DrawRadialMeter(&billboard_1_mesh_, &c, amt, flash, premult_tex);
       }
       c.Submit();
     }
@@ -4870,16 +4897,19 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       c.SetTransparent(true);
       bool flash = (scenetime - mini_billboard_2_start_time_ < 200
                     && render_frame_count % 6 < 3);
+      bool premult_tex{};
       if (!flash) {
-        c.SetTexture(mini_billboard_2_texture_.exists()
-                         ? mini_billboard_2_texture_->texture_data()
-                         : nullptr);
+        auto* tex = mini_billboard_2_texture_.exists()
+                        ? mini_billboard_2_texture_->texture_data()
+                        : nullptr;
+        c.SetTexture(tex);
+        premult_tex = tex != nullptr && tex->premultiplied();
       }
       {
         auto xf = c.ScopedTransform();
         c.Translate(torso_pos[0], torso_pos[1] + 1.2f, torso_pos[2] - 0.2f);
         c.Scale(0.09f, 0.09f, 0.09f);
-        DrawRadialMeter(&billboard_2_mesh_, &c, amt, flash);
+        DrawRadialMeter(&billboard_2_mesh_, &c, amt, flash, premult_tex);
       }
       c.Submit();
     }
@@ -4895,17 +4925,20 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       c.SetTransparent(true);
       bool flash = (scenetime - mini_billboard_3_start_time_ < 200
                     && render_frame_count % 6 < 3);
+      bool premult_tex{};
       if (!flash) {
-        c.SetTexture(mini_billboard_3_texture_.exists()
-                         ? mini_billboard_3_texture_->texture_data()
-                         : nullptr);
+        auto* tex = mini_billboard_3_texture_.exists()
+                        ? mini_billboard_3_texture_->texture_data()
+                        : nullptr;
+        c.SetTexture(tex);
+        premult_tex = tex != nullptr && tex->premultiplied();
       }
       {
         auto xf = c.ScopedTransform();
         c.Translate(torso_pos[0] + 0.2f, torso_pos[1] + 1.2f,
                     torso_pos[2] - 0.2f);
         c.Scale(0.08f, 0.08f, 0.08f);
-        DrawRadialMeter(&billboard_3_mesh_, &c, amt, flash);
+        DrawRadialMeter(&billboard_3_mesh_, &c, amt, flash, premult_tex);
       }
       c.Submit();
     }
@@ -4923,7 +4956,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         c.Translate(torso_pos[0] - 0.3f, torso_pos[1] + 1.47f,
                     torso_pos[2] - 0.2f);
         c.Scale(1.5f * 0.2f, 1.5f * 0.2f, 1.5f * 0.2f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
       }
       c.Submit();
     }
@@ -4983,9 +5017,19 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         g = 0.45f + 0.2f * g;
         b = 0.45f + 0.2f * b;
       }
-      c.SetColor(r, g, b, dead_ ? 0.7f : 1.0f);
-
       int elem_count = name_text_group_.GetElementCount();
+
+      // Dead players' names draw faded; OS-rendered text is premultiplied
+      // so premultiply rgb by alpha ourselves (see
+      // docs/design/premultiplied-alpha.md). Live names are opaque (no-op).
+      float name_a = dead_ ? 0.7f : 1.0f;
+      float name_cmul =
+          (elem_count > 0
+           && name_text_group_.GetElementTexture(0)->premultiplied())
+              ? name_a
+              : 1.0f;
+      c.SetColor(r * name_cmul, g * name_cmul, b * name_cmul, name_a);
+
       float s_extra =
           (g_core->vr_mode() || g_base->ui->uiscale() == UIScale::kSmall)
               ? 1.2f
@@ -5025,15 +5069,20 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     const dReal* pos = dBodyGetPosition(body_torso_->body());
     base::SimpleComponent c(frame_def->overlay_3d_pass());
     c.SetTransparent(true);
-    c.SetColor(1, 1, 1, o);
-    c.SetTexture(billboard_texture_.exists()
-                     ? billboard_texture_->texture_data()
-                     : nullptr);
+    auto* bb_tex = billboard_texture_.exists()
+                       ? billboard_texture_->texture_data()
+                       : nullptr;
+    // Premultiplied texture + straight faded color; premultiply rgb by alpha
+    // ourselves (see docs/design/premultiplied-alpha.md).
+    float bb_cmul = (bb_tex != nullptr && bb_tex->premultiplied()) ? o : 1.0f;
+    c.SetColor(bb_cmul, bb_cmul, bb_cmul, o);
+    c.SetTexture(bb_tex);
     {
       auto xf = c.ScopedTransform();
       c.Translate(pos[0], pos[1] + 1.6f, pos[2] - 0.2f);
       c.Scale(2.3f * 0.2f * s, 2.3f * 0.2f * s, 2.3f * 0.2f * s);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
     }
     c.Submit();
 
@@ -5048,7 +5097,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c2.ScopedTransform();
         c2.Translate(pos[0], pos[1] + 1.6f, pos[2] - 0.2f);
         c2.Scale(2.3f * 0.2f * s, 2.3f * 0.2f * s, 2.3f * 0.2f * s);
-        c2.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kCrossOut));
+        c2.DrawMeshAsset(
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesCrossOut));
       }
       c2.Submit();
     }
@@ -5100,7 +5150,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate(0.5f, half_height);
           c.Scale(1.1f, height + 0.1f);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
 
         c.SetColor(0, 0.35f * o, 0, 0.3f * o);
@@ -5109,7 +5160,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate(p_left * 0.5f, half_height);
           c.Scale(p_left, height);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
 
         if (dead_ && scene()->stepnum() % 10 < 5) {
@@ -5122,7 +5174,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate((p_left + p_right) * 0.5f, half_height);
           c.Scale(p_right - p_left, height);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
 
         c.SetColor(
@@ -5133,7 +5186,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
           auto xf = c.ScopedTransform();
           c.Translate((p_right + 1.0f) * 0.5f, half_height);
           c.Scale(1.0f - p_right, height);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
       }
       c.Submit();
@@ -5173,7 +5227,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     c.SetColor(1, 1, 1, 1.0f);
     c.SetReflection(base::ReflectionType::kSoft);
     c.SetReflectionScale(0.4f, 0.4f, 0.4f);
-    c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kWings));
+    c.SetTexture(
+        g_base->assets->BuiltinTexture(base::BuiltinTextureID::kTexturesWings));
 
     // Fade to reddish on death.
     if (dead_ && !frozen_) {
@@ -5194,7 +5249,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(p_wing_l[0], p_wing_l[1], p_wing_l[2]);
         c.Scale(0.05f, 0.05f, 0.05f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
       }
 
       // Draw wing point.
@@ -5202,7 +5258,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(wing_pos_left_.x, wing_pos_left_.y, wing_pos_left_.z);
         c.Scale(0.1f, 0.1f, 0.1f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
       }
 
       // Draw target.
@@ -5212,7 +5269,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(p_wing_r[0], p_wing_r[1], p_wing_r[2]);
         c.Scale(0.05f, 0.05f, 0.05f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
       }
 
       // Draw wing point.
@@ -5220,7 +5278,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(wing_pos_right_.x, wing_pos_right_.y, wing_pos_right_.z);
         c.Scale(0.1f, 0.1f, 0.1f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBox));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBox));
       }
     }
 
@@ -5248,7 +5307,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kWing));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesWing));
     }
 
     Vector3f to_right_wing = wing_pos_right_ - torso_pos2;
@@ -5267,7 +5327,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kWing));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesWing));
     }
     c.Submit();
   }
@@ -5304,7 +5365,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       }
     }
     c.SetLightShadow(base::LightShadowType::kObject);
-    c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kBoxingGlove));
+    c.SetTexture(g_base->assets->BuiltinTexture(
+        base::BuiltinTextureID::kTexturesBoxingGlovesColor));
 
     {
       auto xf = c.ScopedTransform();
@@ -5312,7 +5374,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBoxingGlove));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBoxingGlove));
     }
 
     c.FlipCullFace();
@@ -5323,7 +5386,8 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kBoxingGlove));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBoxingGlove));
       c.FlipCullFace();
     }
     c.Submit();
@@ -6025,6 +6089,7 @@ void SpazNode::DropHeldObject() {
     }
     assert(!pickup_joint_.IsAlive());
 
+    pickup_release_time_ms_ = scene()->time();
     holding_something_ = false;
     hold_body_ = 0;
 
@@ -6243,8 +6308,8 @@ void SpazNode::SetCurseDeathTime(millisecs_t val) {
         s->SetLooping(true);
         const dReal* p_head = dGeomGetPosition(body_head_->geom());
         s->SetPosition(p_head[0], p_head[1], p_head[2]);
-        tick_play_id_ =
-            s->Play(g_base->assets->SysSound(base::SysSoundID::kTickingCrazy));
+        tick_play_id_ = s->Play(g_base->assets->BuiltinSound(
+            base::BuiltinSoundID::kAudioTickingCrazy));
         s->End();
       }
     }

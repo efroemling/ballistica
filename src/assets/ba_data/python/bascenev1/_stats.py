@@ -2,8 +2,6 @@
 #
 """Functionality related to scores and statistics."""
 
-from __future__ import annotations
-
 import random
 import weakref
 import logging
@@ -133,6 +131,11 @@ class PlayerRecord:
         """Submit a kill for this player entry."""
         # FIXME Clean this up.
 
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import classicassets
+
         self._multi_kill_count += 1
         stats = self._stats()
         assert stats
@@ -145,37 +148,36 @@ class PlayerRecord:
             sound = None
         elif self._multi_kill_count == 2:
             score = 20
-            name = babase.Lstr(resource='twoKillText')
+            name = classicassets.strings.game.double_kill
             color = (0.1, 1.0, 0.0, 1)
             scale = 1.0
             delay = 0.0
             sound = stats.orchestrahitsound1
         elif self._multi_kill_count == 3:
             score = 40
-            name = babase.Lstr(resource='threeKillText')
+            name = classicassets.strings.game.triple_kill
             color = (1.0, 0.7, 0.0, 1)
             scale = 1.1
             delay = 0.3
             sound = stats.orchestrahitsound2
         elif self._multi_kill_count == 4:
             score = 60
-            name = babase.Lstr(resource='fourKillText')
+            name = classicassets.strings.game.quad_kill
             color = (1.0, 1.0, 0.0, 1)
             scale = 1.2
             delay = 0.6
             sound = stats.orchestrahitsound3
         elif self._multi_kill_count == 5:
             score = 80
-            name = babase.Lstr(resource='fiveKillText')
+            name = classicassets.strings.game.five_kill
             color = (1.0, 0.5, 0.0, 1)
             scale = 1.3
             delay = 0.9
             sound = stats.orchestrahitsound4
         else:
             score = 100
-            name = babase.Lstr(
-                resource='multiKillText',
-                subs=[('${COUNT}', str(self._multi_kill_count))],
+            name = classicassets.strings.game.multi_kill(
+                count=self._multi_kill_count
             )
             color = (1.0, 0.5, 0.0, 1)
             scale = 1.3
@@ -183,7 +185,7 @@ class PlayerRecord:
             sound = stats.orchestrahitsound4
 
         def _apply(
-            name2: babase.Lstr,
+            name2: babase.LangStr,
             score2: int,
             showpoints2: bool,
             color2: tuple[float, float, float, float],
@@ -213,12 +215,15 @@ class PlayerRecord:
             )
             activity = self.getactivity()
             if activity is not None:
+                popupval: babase.LangStr = (
+                    classicassets.strings.game.points_gained_titled(
+                        points=str(score2), title=name2
+                    )
+                    if showpoints2
+                    else name2
+                )
                 PopupText(
-                    babase.Lstr(
-                        value=(('+' + str(score2) + ' ') if showpoints2 else '')
-                        + '${N}',
-                        subs=[('${N}', name2)],
-                    ),
+                    popupval,
                     color=color2,
                     scale=scale2,
                     position=our_pos,
@@ -280,10 +285,15 @@ class Stats:
         return self._activity()
 
     def _load_activity_media(self) -> None:
-        self.orchestrahitsound1 = _bascenev1.getsound('orchestraHit')
-        self.orchestrahitsound2 = _bascenev1.getsound('orchestraHit2')
-        self.orchestrahitsound3 = _bascenev1.getsound('orchestraHit3')
-        self.orchestrahitsound4 = _bascenev1.getsound('orchestraHit4')
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import classicassets
+
+        self.orchestrahitsound1 = classicassets.audio.orchestra_hit.get()
+        self.orchestrahitsound2 = classicassets.audio.orchestra_hit2.get()
+        self.orchestrahitsound3 = classicassets.audio.orchestra_hit3.get()
+        self.orchestrahitsound4 = classicassets.audio.orchestra_hit4.get()
 
     def reset(self) -> None:
         """Reset the stats instance completely."""
@@ -339,7 +349,7 @@ class Stats:
         victim_player: bascenev1.Player | None = None,
         scale: float = 1.0,
         color: Sequence[float] | None = None,
-        title: str | babase.Lstr | None = None,
+        title: str | babase.Lstr | babase.LangStr | None = None,
         screenmessage: bool = True,
         display: bool = True,
         importance: int = 1,
@@ -353,8 +363,10 @@ class Stats:
         # FIXME: Tidy this up.
         # pylint: disable=cyclic-import
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-locals
         from bascenev1lib.actor.popuptext import PopupText
 
+        from bascenev1 import classicassets
         from bascenev1._gameactivity import GameActivity
 
         del victim_player  # Currently unused.
@@ -380,10 +392,7 @@ class Stats:
                 if isinstance(activity, GameActivity):
                     name_full = player.getname(full=True, icon=False)
                     activity.show_zoom_message(
-                        babase.Lstr(
-                            resource='nameScoresText',
-                            subs=[('${NAME}', name_full)],
-                        ),
+                        classicassets.strings.game.name_scores(name=name_full),
                         color=babase.normalized_color(player.team.color),
                     )
             except Exception:
@@ -405,14 +414,22 @@ class Stats:
                 )
                 activity = self.getactivity()
                 if activity is not None:
-                    if title is not None:
+                    sval: babase.Lstr | babase.LangStr
+                    if isinstance(title, babase.Lstr):
+                        # Legacy Lstr titles can only ride the legacy
+                        # composite; this leg drains away as callers
+                        # move to LangStr titles.
                         sval = babase.Lstr(
                             value='+${A} ${B}',
                             subs=[('${A}', str(points)), ('${B}', title)],
                         )
+                    elif title is not None:
+                        sval = classicassets.strings.game.points_gained_titled(
+                            points=str(points), title=title
+                        )
                     else:
-                        sval = babase.Lstr(
-                            value='+${A}', subs=[('${A}', str(points))]
+                        sval = classicassets.strings.game.points_gained(
+                            points=str(points)
                         )
                     PopupText(
                         sval,
@@ -430,9 +447,7 @@ class Stats:
         try:
             if screenmessage and not kill:
                 _bascenev1.broadcastmessage(
-                    babase.Lstr(
-                        resource='nameScoresText', subs=[('${NAME}', name)]
-                    ),
+                    classicassets.strings.game.name_scores(name=name),
                     top=True,
                     color=player.color,
                     image=player.get_icon(),
@@ -458,6 +473,11 @@ class Stats:
         killer: bascenev1.Player | None = None,
     ) -> None:
         """Should be called when a player is killed."""
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import classicassets
+
         name = player.getname()
         prec = self._player_records[name]
         prec.streak = 0
@@ -468,9 +488,7 @@ class Stats:
             if killed and _bascenev1.getactivity().announce_player_deaths:
                 if killer is player:
                     _bascenev1.broadcastmessage(
-                        babase.Lstr(
-                            resource='nameSuicideText', subs=[('${NAME}', name)]
-                        ),
+                        classicassets.strings.game.name_suicide(name=name),
                         top=True,
                         color=player.color,
                         image=player.get_icon(),
@@ -478,12 +496,8 @@ class Stats:
                 elif killer is not None:
                     if killer.team is player.team:
                         _bascenev1.broadcastmessage(
-                            babase.Lstr(
-                                resource='nameBetrayedText',
-                                subs=[
-                                    ('${NAME}', killer.getname()),
-                                    ('${VICTIM}', name),
-                                ],
+                            classicassets.strings.game.name_betrayed(
+                                name=killer.getname(), victim=name
                             ),
                             top=True,
                             color=killer.color,
@@ -491,12 +505,8 @@ class Stats:
                         )
                     else:
                         _bascenev1.broadcastmessage(
-                            babase.Lstr(
-                                resource='nameKilledText',
-                                subs=[
-                                    ('${NAME}', killer.getname()),
-                                    ('${VICTIM}', name),
-                                ],
+                            classicassets.strings.game.name_killed(
+                                name=killer.getname(), victim=name
                             ),
                             top=True,
                             color=killer.color,
@@ -504,9 +514,7 @@ class Stats:
                         )
                 else:
                     _bascenev1.broadcastmessage(
-                        babase.Lstr(
-                            resource='nameDiedText', subs=[('${NAME}', name)]
-                        ),
+                        classicassets.strings.game.name_died(name=name),
                         top=True,
                         color=player.color,
                         image=player.get_icon(),

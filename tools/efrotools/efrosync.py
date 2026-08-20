@@ -10,9 +10,15 @@ model, this system:
 - Stores hashes and state in a central ``~/.efrosync/`` directory.
 - Supports glob patterns for worktree directories.
 - Syncs when exactly one copy has changed; errors on ambiguity.
+- Only ever updates the *contents* of existing files; it never
+  creates or deletes them. Adding a shared file means manually
+  placing a copy in every repo (after which syncs manage it);
+  removing one means manually deleting it everywhere. This is
+  deliberate: silently materializing or deleting files in repos the
+  user may be actively working in would be far more surprising than
+  the one-time manual setup, so presence mismatches are reported as
+  errors and the placement/removal is left to the user.
 """
-
-from __future__ import annotations
 
 import fcntl
 import hashlib
@@ -355,7 +361,14 @@ def _check_file_presence(
     all_files: list[str],
     errors: list[str],
 ) -> None:
-    """Check that every file exists in all locations."""
+    """Check that every file exists in all locations.
+
+    Presence mismatches are errors by design — the sync system never
+    creates or deletes files on its own (see module docstring). To
+    introduce a new shared file, manually copy it to every repo's
+    synced dir and then run a sync to register it; to retire one,
+    manually delete it everywhere.
+    """
     for rel_file in all_files:
         present_in = [
             loc.label
@@ -545,6 +558,30 @@ def run_efrosync(
     if config is None:
         return
 
+    # Efrosync is inherently a client-side, multi-repo-local
+    # operation: comparing/propagating a file across repos only means
+    # anything when the sibling peer clones actually sit alongside us,
+    # which is exactly when we're standing in the root of one of the
+    # configured synced repos. Anywhere else — a Jenkins cloud-check
+    # workspace (which syncs only one project's files into an isolated
+    # dir), a git worktree, etc. — there are no peers to reconcile
+    # against, so silently no-op rather than comparing against
+    # whatever unrelated clones the config happens to point at. This
+    # keeps the sync check out of per-repo CI deploys (where it was
+    # checking the wrong tree and tripping on unrelated repos'
+    # in-flight changes) and out of worktrees.
+    cwd = os.path.realpath(os.getcwd())
+    repo_roots = {
+        os.path.realpath(os.path.expanduser(r.path))
+        for r in config.repos.values()
+    }
+    if cwd not in repo_roots:
+        print(
+            f'{Clr.YLW}efrosync: not in a synced project root'
+            f' ({cwd}); skipping.{Clr.RST}'
+        )
+        return
+
     # Run formatting in all repos first so synced files are in
     # their final form. This avoids the round-trip where sync
     # propagates unformatted code and then preflight reformats it.
@@ -587,9 +624,16 @@ def run_efrosync(
             print(f'  {Clr.RED}{err}{Clr.RST}')
         raise CleanError(f'efrosync: {len(ctx.errors)} error(s) found.')
 
-    # Apply pass: all validation passed, now write files and
-    # update state.
-    _apply_pending(ctx)
+    # Apply pass: all validation passed, now write files and update
+    # state. Skipped entirely in --check mode: a check only reports
+    # drift (out-of-sync files already became errors above, so
+    # pending_syncs is empty) and must stay read-only — its only
+    # effect here would be state.json bookkeeping (cached hash updates
+    # + stale-key pruning), a perf optimization the next run redoes
+    # anyway. Writing nothing is also what lets --check run without the
+    # lock (see efrosync_main), so concurrent checks don't collide.
+    if not ctx.check:
+        _apply_pending(ctx)
 
     _print_summary(ctx)
 
@@ -719,5 +763,14 @@ def efrosync_main() -> None:
     if dry_run and check:
         raise CleanError('Cannot use --dry-run and --check together.')
 
-    with SyncLock():
+    # --check is read-only (writes no files and no sync state), so it
+    # skips the lock entirely. This lets many checks run at once on one
+    # machine -- e.g. parallel `make check` / `spinoff-update` across
+    # repos during a push -- without colliding on the single global
+    # lock. Mutating runs (real sync, and --dry-run which still writes
+    # sync state) take the exclusive lock as before.
+    if check:
         run_efrosync(dry_run=dry_run, check=check)
+    else:
+        with SyncLock():
+            run_efrosync(dry_run=dry_run, check=check)

@@ -12,7 +12,6 @@
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/scene_v1/scene_v1.h"
 #include "ballistica/scene_v1/support/huffman.h"
-#include "ballistica/shared/generic/json.h"
 #include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::scene_v1 {
@@ -362,13 +361,11 @@ void Connection::SendUnreliableMessage(const std::vector<uint8_t>& data) {
   SendGamePacket(data_out);
 }
 
-void Connection::SendJMessage(cJSON* val) {
-  char* s = cJSON_PrintUnformatted(val);
-  auto s_len = static_cast<size_t>(strlen(s));
-  std::vector<uint8_t> msg(1u + s_len + 1u);
+void Connection::SendJMessage(const std::string& val) {
+  std::vector<uint8_t> msg(1u + val.size() + 1u);
   msg[0] = BA_MESSAGE_JMESSAGE;
-  memcpy(msg.data() + 1u, s, s_len + 1u);
-  free(s);
+  // +1 to include the terminating null char (the receiver relies on it).
+  memcpy(msg.data() + 1u, val.c_str(), val.size() + 1u);
   SendReliableMessage(msg);
 }
 

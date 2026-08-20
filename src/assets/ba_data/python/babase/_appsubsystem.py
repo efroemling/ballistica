@@ -2,8 +2,6 @@
 #
 """Provides the AppSubsystem base class."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -69,6 +67,17 @@ class AppSubsystem:
         """Called when the screen size changes.
 
         Will not be called for the initial screen size.
+        """
+
+    def on_app_mode_activated(self) -> None:
+        """Called just after an app-mode becomes the active one.
+
+        Fires for every activation including the first, and always
+        after the mode's own :meth:`~babase.AppMode.on_activate`, so
+        the mode is fully in place by the time this runs. Useful for
+        work that needs *some* app-mode present but doesn't care
+        which -- e.g. re-putting a question that no earlier mode was
+        able to ask.
         """
 
     def reset(self) -> None:

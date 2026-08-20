@@ -2,14 +2,30 @@
 #
 """Functionality related to teams mode score screen."""
 
-from __future__ import annotations
-
 from typing import override
 
 import bascenev1 as bs
+from bascenev1 import _commonassets, classicassets
 
 from bascenev1lib.actor.text import Text
 from bascenev1lib.actor.image import Image
+
+
+def _score_label_display(label: str) -> str | bs.LangStr:
+    """Return a displayable name for a score-type label.
+
+    Games declare their own score label, so anything outside the
+    built-in set (a mod's custom label) is shown untranslated.
+    """
+    strs = classicassets.strings
+    return {
+        'Score': strs.game.score,
+        'Flags': strs.score_types.flags,
+        'Goals': strs.score_types.goals,
+        'Survived': strs.score_types.survived,
+        'Time': strs.score_types.time,
+        'Time Held': strs.score_types.time_held,
+    }.get(label, label)
 
 
 class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
@@ -17,8 +33,8 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
 
     def __init__(self, settings: dict):
         super().__init__(settings=settings)
-        self._score_display_sound = bs.getsound('scoreHit01')
-        self._score_display_sound_small = bs.getsound('scoreHit02')
+        self._score_display_sound = classicassets.audio.score_hit01.get()
+        self._score_display_sound_small = classicassets.audio.score_hit02.get()
 
         self._show_up_next: bool = True
 
@@ -27,20 +43,11 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
         super().on_begin()
         session = self.session
         if self._show_up_next and isinstance(session, bs.MultiTeamSession):
-            txt = bs.Lstr(
-                value='${A}   ${B}',
-                subs=[
-                    (
-                        '${A}',
-                        bs.Lstr(
-                            resource='upNextText',
-                            subs=[
-                                ('${COUNT}', str(session.get_game_number() + 1))
-                            ],
-                        ),
-                    ),
-                    ('${B}', session.get_next_game_description()),
-                ],
+            txt = _commonassets.strings.compose.gapped_pair(
+                first=classicassets.strings.multi_team.up_next(
+                    count=str(session.get_game_number() + 1)
+                ),
+                second=session.get_next_game_description(langstr=True),
             )
             Text(
                 txt,
@@ -83,11 +90,15 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
                 return val
             return p_rec.accumscore
 
-        def _get_prec_score_str(p_rec: bs.PlayerRecord) -> str | bs.Lstr:
+        def _get_prec_score_str(
+            p_rec: bs.PlayerRecord,
+        ) -> str | bs.LangStr:
             if is_free_for_all and results is not None:
                 assert isinstance(results, bs.GameResults)
                 assert p_rec.team.activityteam is not None
-                val = results.get_sessionteam_score_str(p_rec.team)
+                val = results.get_sessionteam_score_str(
+                    p_rec.team, langstr=True
+                )
                 assert val is not None
                 return val
             return str(p_rec.accumscore)
@@ -133,7 +144,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
         def _txt(
             xoffs: float,
             yoffs: float,
-            text: bs.Lstr,
+            text: str | bs.Lstr | bs.LangStr,
             *,
             h_align: Text.HAlign = Text.HAlign.RIGHT,
             extrascale: float = 1.0,
@@ -156,9 +167,8 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
 
         session = self.session
         assert isinstance(session, bs.MultiTeamSession)
-        tval = bs.Lstr(
-            resource='gameLeadersText',
-            subs=[('${COUNT}', str(session.get_game_number()))],
+        tval = classicassets.strings.multi_team.game_leaders(
+            count=session.get_game_number()
         )
         _txt(
             180,
@@ -168,12 +178,17 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
             extrascale=1.4,
             maxwidth=None,
         )
-        _txt(-15, 4, bs.Lstr(resource='playerText'), h_align=Text.HAlign.LEFT)
-        _txt(180, 4, bs.Lstr(resource='killsText'))
-        _txt(280, 4, bs.Lstr(resource='deathsText'), maxwidth=100)
+        _txt(
+            -15,
+            4,
+            classicassets.strings.multi_team.player,
+            h_align=Text.HAlign.LEFT,
+        )
+        _txt(180, 4, classicassets.strings.multi_team.kills)
+        _txt(280, 4, classicassets.strings.multi_team.deaths, maxwidth=100)
 
         score_label = 'Score' if results is None else results.score_label
-        translated = bs.Lstr(translate=('scoreNames', score_label))
+        translated = _score_label_display(score_label)
 
         _txt(390, 0, translated)
 
@@ -188,7 +203,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
             topkilledcount = min(topkilledcount, prec.accum_killed_count)
 
         def _scoretxt(
-            text: str | bs.Lstr,
+            text: str | bs.Lstr | bs.LangStr,
             x_offs: float,
             highlight: bool,
             delay2: float,
@@ -225,7 +240,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
                 transition_delay=tdelay,
             ).autoretain()
             Text(
-                bs.Lstr(value=playerrec.getname(full=True)),
+                playerrec.getname(full=True),
                 maxwidth=160,
                 scale=0.75 * scale,
                 position=(

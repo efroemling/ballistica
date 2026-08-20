@@ -2,8 +2,6 @@
 #
 """Locale related functionality."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override, assert_never
 
 from functools import cache
@@ -30,6 +28,13 @@ class LocaleSubsystem(AppSubsystem):
     def __init__(self) -> None:
         super().__init__()
         self._current_locale: Locale | None = None
+        self._switch_in_progress = False
+        # Locale an in-flight elective switch is resolving toward.
+        self._inflight_locale: Locale | None = None
+        # Latest-wins request queued behind the in-flight switch:
+        # (locale, store_to_config). Started when the in-flight one
+        # settles.
+        self._pending_switch: tuple[Locale, bool] | None = None
 
         # Calc our default locale based on the locale-tag provided by
         # the native layer.
@@ -119,6 +124,176 @@ class LocaleSubsystem(AppSubsystem):
         if self._current_locale is None:
             raise RuntimeError('Locale is not set.')
         return self._current_locale
+
+    @property
+    def target_locale(self) -> Locale:
+        """The locale the app is at or is switching toward.
+
+        Equal to :attr:`current_locale` when no elective switch is in
+        flight; otherwise the most recently requested locale (an
+        in-flight :meth:`set_locale` target, or the latest request
+        queued behind it). Useful for toggles and selection UIs, which
+        should act relative to where the app is *heading*, not where a
+        still-resolving switch started from.
+        """
+        if self._pending_switch is not None:
+            return self._pending_switch[0]
+        if self._inflight_locale is not None:
+            return self._inflight_locale
+        return self.current_locale
+
+    def set_locale(
+        self, locale: Locale, *, store_to_config: bool = True
+    ) -> None:
+        """Switch the active language to ``locale``.
+
+        Resolves the target locale's asset flavors first (downloading the
+        ``language/<locale>`` blob if it isn't already local, with a
+        cancelable progress dialog) and commits the switch only on
+        success. Runs asynchronously; on-screen text re-translates when
+        the resolve completes.
+
+        ``store_to_config`` writes the choice as an explicit ``'Lang'``
+        override; pass ``False`` for the 'auto' selection (clears the
+        override so the OS-default locale is followed).
+        """
+        assert _babase.in_logic_thread()
+
+        # Normalize to a currently-supported resolved locale.
+        locale = locale.resolved.locale
+        if not self.can_display_locale(locale):
+            applog.error(
+                'Cannot display locale %s on this build; ignoring switch.',
+                locale.name,
+            )
+            return
+        # Only one elective switch runs at a time. A request arriving
+        # while a resolve is in flight (rapid F9s, double-taps in a
+        # menu) is queued latest-wins rather than racing the first or
+        # being dropped -- so every press counts and the app settles on
+        # the most recent request.
+        if self._switch_in_progress:
+            applog.info(
+                'Language switch already in progress; queueing switch to %s.',
+                locale.name,
+            )
+            self._pending_switch = (locale, store_to_config)
+            return
+        self._switch_in_progress = True
+        self._inflight_locale = locale
+        _babase.app.create_async_task(
+            self._do_set_locale(locale, store_to_config)
+        )
+
+    async def _do_set_locale(
+        self, locale: Locale, store_to_config: bool
+    ) -> None:
+        """Resolve + commit a language switch (see :meth:`set_locale`)."""
+        try:
+            await self._do_set_locale_guarded(locale, store_to_config)
+        finally:
+            self._switch_in_progress = False
+            self._inflight_locale = None
+            # Kick off the latest queued request, if any (skipping the
+            # no-op case where we already landed on it).
+            pending = self._pending_switch
+            self._pending_switch = None
+            if pending is not None and pending[0] is not self._current_locale:
+                self.set_locale(pending[0], store_to_config=pending[1])
+
+    async def _do_set_locale_guarded(
+        self, locale: Locale, store_to_config: bool
+    ) -> None:
+        import asyncio
+
+        from babase import builtinassets
+        from babase._simpledialog import SimpleDialog
+        from babase._asset_packages import loaded_asset_package_apverids
+        from babase._assetsubsystem import make_progress_reporter
+
+        task = asyncio.current_task()
+        dialog: SimpleDialog | None = None
+
+        def on_cancel() -> None:
+            if task is not None:
+                task.cancel()
+
+        def ensure_dialog() -> None:
+            # Lazily shown only if a real download begins (an
+            # already-local/warm switch stays instant, no dialog flash).
+            nonlocal dialog
+            if dialog is None and _babase.app.env.gui:
+                dialog = SimpleDialog(
+                    title=builtinassets.strings.ui.updating,
+                    progress=0.0,
+                    button_label=builtinassets.strings.ui.cancel,
+                    on_button=on_cancel,
+                )
+
+        def on_update(
+            message: str | babase.LangStr, progress: float | None
+        ) -> None:
+            if dialog is not None:
+                dialog.update(
+                    message=message,
+                    progress=0.0 if progress is None else progress,
+                )
+
+        try:
+            await _babase.app.assets.resolve(
+                loaded_asset_package_apverids(),
+                allow_downloads=True,
+                language=locale,
+                on_download_starting=ensure_dialog,
+                on_progress=make_progress_reporter(on_update),
+            )
+        except asyncio.CancelledError:
+            # User hit Cancel -- bow out, leave the current locale in place.
+            if dialog is not None:
+                dialog.dismiss()
+            applog.info('Language switch to %s cancelled.', locale.long_value)
+            return
+        except Exception:
+            # Resolve failed -- the registry + native table are unchanged
+            # on failure, so just surface the error and stay put.
+            applog.exception('Error switching to locale %s.', locale.name)
+            if dialog is not None:
+                dialog.update(
+                    title=builtinassets.strings.ui.error,
+                    message=builtinassets.strings.net.unavailable_no_connection,
+                    progress=None,
+                    button_label=builtinassets.strings.ui.ok,
+                    on_button=dialog.dismiss,
+                )
+            else:
+                _babase.screenmessage(
+                    'Error switching language; see log.', color=(1, 0, 0)
+                )
+            return
+
+        # Success: the registry + native string table are now the target
+        # locale (the resolve rebuilt the table and fired the
+        # language-change cascade, so on-screen text has already
+        # re-translated). Commit the locale + config.
+        if dialog is not None:
+            dialog.dismiss()
+        self._current_locale = locale
+
+        # The resolve's bucket-commit rebuilt the native tables, but at
+        # that moment current_locale still held the OLD locale, so they
+        # carry stale plural rules. Rebuild once more now that the
+        # switch is committed (cheap; buckets unchanged).
+        from babase._assetsubsystem import AssetSubsystem
+
+        AssetSubsystem._reload_language()  # pylint: disable=protected-access
+
+        cfg = _babase.app.config
+        if store_to_config:
+            cfg['Lang'] = locale.long_value
+        else:
+            cfg.pop('Lang', None)
+        cfg.commit()
+        applog.info('Switched language to %s.', locale.long_value)
 
     @staticmethod
     @cache

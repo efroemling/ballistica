@@ -2,8 +2,6 @@
 #
 """Provides plus app subsystem."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 from babase import AppSubsystem
@@ -44,6 +42,15 @@ class PlusAppSubsystem(AppSubsystem):
         """:meta private:"""
         _baplus.on_app_loading()
         self.accounts.on_app_loading()
+
+    @override
+    def on_app_mode_activated(self) -> None:
+        """:meta private:"""
+        from baplus._consolesession import console_session_manager
+
+        # A console session may be holding a permission question that
+        # no earlier app-mode was able to ask; this mode might be.
+        console_session_manager.notify_app_mode_activated()
 
     @staticmethod
     def add_v1_account_transaction(
@@ -86,8 +93,10 @@ class PlusAppSubsystem(AppSubsystem):
         return _baplus.get_bootstrap_server_addresses()
 
     @staticmethod
-    def get_bootstrap_server_address() -> str:
-        """Return address we can use to establish regional connection.
+    def get_bootstrap_server_address() -> str | None:
+        """Return the most recent successful bootstrap server address.
+
+        Returns ``None`` if none has been set yet.
 
         :meta private:
         """
@@ -169,9 +178,24 @@ class PlusAppSubsystem(AppSubsystem):
         return _baplus.is_blessed()
 
     @staticmethod
-    def mark_config_dirty() -> None:
-        """:meta private:"""
-        return _baplus.mark_config_dirty()
+    def blessed_state() -> bool | None:
+        """Tri-state build-blessing integrity.
+
+        True means this is a non-debug build with an embedded blessing
+        hash whose computed script hash checks out; False means no or
+        failed blessing (debug builds included); None means the
+        background hash computation hasn't finished yet so we can't
+        say. Pure build integrity - user-side taint is
+        ``_babase.is_user_modified()``'s department.
+
+        :meta private:
+        """
+        state = _baplus.get_blessing_state()
+        if state == 'blessed':
+            return True
+        if state == 'pending':
+            return None
+        return False
 
     @staticmethod
     def power_ranking_query(callback: Callable, season: Any = None) -> None:

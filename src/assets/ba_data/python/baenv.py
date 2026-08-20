@@ -15,8 +15,6 @@ order to integrate it in arbitrary Python environments, but this may
 cause some features to be disabled or behave differently than expected.
 """
 
-from __future__ import annotations
-
 import os
 import sys
 import time
@@ -57,8 +55,8 @@ logger = logging.getLogger('ba.env')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 22812
-TARGET_BALLISTICA_VERSION = '1.7.62'
+TARGET_BALLISTICA_BUILD = 22991
+TARGET_BALLISTICA_VERSION = '1.8.0a96'
 
 
 @dataclass
@@ -176,18 +174,25 @@ def configure(
     setup_logging: bool = True,
     setup_pycache_prefix: bool = False,
     strict_threads_atexit: Callable[[Callable[[], None]], None] | None = None,
+    launch_time: float | None = None,
 ) -> None:
     """Set up the environment for running a Ballistica app.
 
     This includes things such as Python path wrangling and app directory
     creation. This must be called before any actual Ballistica modules
     are imported; the environment is locked in as soon as that happens.
+
+    ``launch_time`` is an optional epoch-seconds value (from
+    :func:`time.time`) captured earlier in startup — typically at C++
+    ``main()`` entry — used as the anchor for relative log timestamps.
+    If not supplied, we fall back to sampling :func:`time.time` here.
     """
 
-    # Measure when we start doing this stuff. We plug this in to show
-    # relative times in our log timestamp displays and also pass this to
-    # the engine to do the same there.
-    launch_time = time.time()
+    # Prefer a caller-supplied launch_time (captured earlier in startup)
+    # over our own sample so that log-timestamp 'relative time' reflects
+    # real process start.
+    if launch_time is None:
+        launch_time = time.time()
 
     envglobals = _EnvGlobals.get()
 
@@ -313,17 +318,39 @@ def configure(
 
 def _cache_ninja_rampage(cache_dir: str) -> None:
     assert os.path.isdir(cache_dir)
+
+    # Base rate is one kill per 4000 files, but occasionally go on
+    # bigger rampages so we exercise multi-file-loss cases too, not just
+    # single stragglers: 60% of runs at base rate, 30% at 5x, 10% at
+    # 10x. Can recalibrate as our average cache file count goes up.
+    kill_probability = (
+        0.0001 * random.choices((1, 5, 10), weights=(60, 30, 10))[0]
+    )
+
+    kill_count = 0
     for basename, _dirnames, filenames in os.walk(cache_dir):
         for fname in filenames:
-            # Let's kill one out of every 1000 files; should be a
-            # reasonable amount of chaos I think. Can recalibrate this
-            # as our average cache file count goes up.
-            if random.random() < 0.001:
+            if random.random() < kill_probability:
                 fullpath = os.path.join(basename, fname)
+                # The whole point of this feature is that downstream
+                # code must handle missing cache files; the kill itself
+                # is not load-bearing. Swallow OSError so a read-only
+                # cache (sandboxed envs, restrictive perms) or a file
+                # that vanished mid-walk doesn't fatal startup.
+                try:
+                    os.unlink(fullpath)
+                except OSError:
+                    continue
+                kill_count += 1
                 logging.getLogger('ba.cache').debug(
-                    "Cache-ninja assasinated '%s'.", fullpath
+                    "Cache-ninja assassinated '%s'.", fullpath
                 )
-                os.unlink(fullpath)
+    if kill_count:
+        logging.getLogger('ba.app').info(
+            'Cache ninja assassinated %d %s! See ba.cache log for details.',
+            kill_count,
+            'file' if kill_count == 1 else 'files',
+        )
 
 
 def _read_app_config(config_file_path: str) -> dict:
@@ -425,6 +452,17 @@ def _set_log_levels(app_config: dict) -> None:
             _apply_env_log_levels(env_log_levels)
             return
 
+        # When the user leaves cloud logger control enabled (the
+        # default), the server-provided logger config drives levels
+        # and their own stored 'Log Levels' are ignored entirely. The
+        # runtime side of this (the dev-console toggle, mid-run
+        # re-applies) lives in babase._cloudloggercontrol; keep the
+        # config keys here in sync with it.
+        cloud_control = app_config.get('Cloud Logger Control', True)
+        if not isinstance(cloud_control, bool) or cloud_control:
+            _apply_cloud_log_levels(app_config)
+            return
+
         config = app_config.get('Log Levels', None)
 
         if config is None:
@@ -456,6 +494,40 @@ def _set_log_levels(app_config: dict) -> None:
 
     except Exception:
         logger.exception('Error setting log levels.')
+
+
+def _apply_cloud_log_levels(app_config: dict) -> None:
+    """Apply the cloud-provided logger config stored in the app config.
+
+    Persistent cloud-vals get stashed to the app config by the cloud
+    subsystem (see baplus._cloud), so the previous fetch's logger
+    config is available here at the very start of a run, long before
+    connectivity. We read its raw stored form directly since the full
+    bacommon.cloud wire types are heavier than this early boot spot
+    wants; the 'CloudVals' config key and the 'lc' wire key must stay
+    in sync with bacommon.cloud.CloudValsPersistent.logger_control.
+
+    When no cloud logger config is present, base defaults apply -
+    that's what the server 'wants' when it hasn't asked for anything.
+    """
+    from efro.dataclassio import dataclass_from_dict
+    from bacommon.logging import get_base_logger_control_config_client
+    from bacommon.loggercontrol import LoggerControlConfig
+
+    baseconfig = get_base_logger_control_config_client()
+
+    diff: LoggerControlConfig | None = None
+    cloudvals = app_config.get('CloudVals')
+    if isinstance(cloudvals, dict):
+        loggercontrol = cloudvals.get('lc')
+        if isinstance(loggercontrol, dict):
+            diff = dataclass_from_dict(LoggerControlConfig, loggercontrol)
+
+    if diff is None:
+        baseconfig.apply()
+        return
+
+    baseconfig.apply_diff(diff).apply()
 
 
 def _apply_env_log_levels(env_val: str) -> None:
@@ -507,6 +579,11 @@ def _setup_certs(contains_python_dist: bool) -> None:
     # overriding this in particular embedded cases if we can verify that
     # system certs are working. We also allow forcing this via an env
     # var if the user desires.
+    #
+    # Note: when this is in effect, our shared SSL context
+    # (babase._env._bootstrap_networking) trusts ONLY these bundled certs
+    # and skips the OS cert store entirely; BA_USE_SYSTEM_CERTS=1 there
+    # opts back into the OS store for corporate/AV TLS-inspection cases.
     if (
         contains_python_dist
         or os.environ.get('BA_USE_BUNDLED_ROOT_CERTS') == '1'

@@ -2,14 +2,14 @@
 #
 """Provides UI for viewing/creating/editing playlists."""
 
-from __future__ import annotations
-
 import copy
 import time
 
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
+from bauiv1 import _commonassets, classicassets
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -113,9 +113,8 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(0, yoffs - (77 if uiscale is bui.UIScale.SMALL else 77)),
             size=(self._width, 25),
-            text=bui.Lstr(
-                resource=f'{self._r}.titleText',
-                subs=[('${TYPE}', self._pvars.window_title_name)],
+            text=classicassets.strings.playlist.customize_title(
+                type=self._pvars.window_title_name
             ),
             color=bui.app.ui_v1.heading_color,
             maxwidth=290,
@@ -131,7 +130,10 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         ymargin = 0.05
 
         def _make_button(
-            i: int, button_id: str, label: bui.Lstr, call: Callable[[], None]
+            i: int,
+            button_id: str,
+            label: bui.Lstr | bui.LangStr,
+            call: Callable[[], None],
         ) -> bui.Widget:
             v = self._scroll_bottom + self._button_height * i
             return bui.buttonwidget(
@@ -157,51 +159,41 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         new_button = _make_button(
             5,
             f'{self.main_window_id_prefix}|new',
-            bui.Lstr(
-                resource='newText', fallback_resource=f'{self._r}.newText'
-            ),
+            _commonassets.strings.values.new,
             self._new_playlist,
         )
         self._edit_button = _make_button(
             4,
             f'{self.main_window_id_prefix}|edit',
-            bui.Lstr(
-                resource='editText',
-                fallback_resource=f'{self._r}.editText',
-            ),
+            _commonassets.strings.actions.edit,
             self._edit_playlist,
         )
 
         duplicate_button = _make_button(
             3,
             f'{self.main_window_id_prefix}|duplicate',
-            bui.Lstr(
-                resource='duplicateText',
-                fallback_resource=f'{self._r}.duplicateText',
-            ),
+            _commonassets.strings.actions.duplicate,
             self._duplicate_playlist,
         )
 
         delete_button = _make_button(
             2,
             f'{self.main_window_id_prefix}|delete',
-            bui.Lstr(
-                resource='deleteText', fallback_resource=f'{self._r}.deleteText'
-            ),
+            _commonassets.strings.actions.delete,
             self._delete_playlist,
         )
 
         self._import_button = _make_button(
             1,
             f'{self.main_window_id_prefix}|import',
-            bui.Lstr(resource='importText'),
+            _commonassets.strings.actions.import_,
             self._import_playlist,
         )
 
         share_button = _make_button(
             0,
             f'{self.main_window_id_prefix}|share',
-            bui.Lstr(resource='shareText'),
+            _commonassets.strings.actions.share,
             self._share_playlist,
         )
 
@@ -437,15 +429,10 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         # Clamp at our max playlist number.
         if len(bui.app.config[self._config_name_full]) > self._max_playlists:
             bui.screenmessage(
-                bui.Lstr(
-                    translate=(
-                        'serverResponses',
-                        'Max number of playlists reached.',
-                    )
-                ),
+                classicassets.strings.playlist.max_reached,
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
 
         # In case they cancel so we can return to this state.
@@ -461,10 +448,8 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         if self._selected_playlist_name is None:
             return
         if self._selected_playlist_name == '__default__':
-            bui.getsound('error').play()
-            bui.screenmessage(
-                bui.Lstr(resource=f'{self._r}.cantEditDefaultText')
-            )
+            builtinassets.audio.error.get().play()
+            bui.screenmessage(classicassets.strings.playlist.cant_edit_default)
             return
         self._save_playlist_selection()
         PlaylistEditController(
@@ -484,7 +469,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             }
         )
         plus.run_v1_account_transactions()
-        bui.getsound('shieldDown').play()
+        classicassets.audio.shield_down.get().play()
 
         # (we don't use len()-1 here because the default list adds one)
         assert self._selected_playlist_index is not None
@@ -504,9 +489,9 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         # Gotta be signed in for this to work.
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(
-                bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
+                classicassets.strings.account.not_signed_in, color=(1, 0, 0)
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
 
         share.SharePlaylistImportWindow(
@@ -525,10 +510,10 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
         if response is None:
             bui.screenmessage(
-                bui.Lstr(resource='internal.unavailableNoConnectionText'),
+                _commonassets.strings.status.unavailable_no_connection,
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
         share.SharePlaylistResultsWindow(name, response)
 
@@ -539,14 +524,14 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         # Gotta be signed in for this to work.
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(
-                bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
+                classicassets.strings.account.not_signed_in, color=(1, 0, 0)
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
         if self._selected_playlist_name == '__default__':
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             bui.screenmessage(
-                bui.Lstr(resource=f'{self._r}.cantShareDefaultText'),
+                classicassets.strings.playlist.cant_share_default,
                 color=(1, 0, 0),
             )
             return
@@ -566,7 +551,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             ),
         )
         plus.run_v1_account_transactions()
-        bui.screenmessage(bui.Lstr(resource='sharingText'))
+        bui.screenmessage(_commonassets.strings.status.sharing)
 
     def _delete_playlist(self) -> None:
         from bauiv1lib.confirm import ConfirmWindow
@@ -574,29 +559,26 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         if self._selected_playlist_name is None:
             return
         if self._selected_playlist_name == '__default__':
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             bui.screenmessage(
-                bui.Lstr(resource=f'{self._r}.cantDeleteDefaultText')
+                classicassets.strings.playlist.cant_delete_default
             )
         else:
             ConfirmWindow(
-                bui.Lstr(
-                    resource=f'{self._r}.deleteConfirmText',
-                    subs=[('${LIST}', self._selected_playlist_name)],
+                classicassets.strings.gather.delete_confirm_list(
+                    list=self._selected_playlist_name
                 ),
                 self._do_delete_playlist,
                 width=450,
                 height=150,
             )
 
-    def _get_playlist_display_name(self, playlist: str | bui.Lstr) -> bui.Lstr:
+    def _get_playlist_display_name(
+        self, playlist: str | bui.Lstr
+    ) -> str | bui.Lstr | bui.LangStr:
         if playlist == '__default__':
             return self._pvars.default_list_name
-        return (
-            playlist
-            if isinstance(playlist, bui.Lstr)
-            else bui.Lstr(value=playlist)
-        )
+        return playlist
 
     def _duplicate_playlist(self) -> None:
         plus = bui.app.plus
@@ -612,33 +594,35 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                 self._selected_playlist_name
             )
             if plst is None:
-                bui.getsound('error').play()
+                builtinassets.audio.error.get().play()
                 return
 
         # Clamp at our max playlist number.
         if len(bui.app.config[self._config_name_full]) > self._max_playlists:
             bui.screenmessage(
-                bui.Lstr(
-                    translate=(
-                        'serverResponses',
-                        'Max number of playlists reached.',
-                    )
-                ),
+                classicassets.strings.playlist.max_reached,
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
 
-        copy_text = bui.Lstr(resource='copyOfText').evaluate()
-
-        # Get just 'Copy' or whatnot.
-        copy_word = copy_text.replace('${NAME}', '').strip()
+        # Flattening is correct here: these feed *stored* playlist
+        # names, not displayed strings.
+        copy_name = _commonassets.strings.compose.copy_name
+        copy_word = copy_name(name='').evaluate().strip()
 
         # Find a valid dup name that doesn't exist.
         test_index = 1
-        base_name = self._get_playlist_display_name(
+        base_name_raw = self._get_playlist_display_name(
             self._selected_playlist_name
-        ).evaluate()
+        )
+        # Flattening is correct here: the result becomes the new
+        # playlist's actual stored name, not a displayed string.
+        base_name = (
+            base_name_raw.evaluate()
+            if isinstance(base_name_raw, (bui.Lstr, bui.LangStr))
+            else base_name_raw
+        )
 
         # If it looks like a copy, strip digits and spaces off the end.
         if copy_word in base_name:
@@ -648,7 +632,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             if copy_word in base_name:
                 test_name = base_name
             else:
-                test_name = copy_text.replace('${NAME}', base_name)
+                test_name = copy_name(name=base_name).evaluate()
             if test_index > 1:
                 test_name += ' ' + str(test_index)
             if test_name not in bui.app.config[self._config_name_full]:
@@ -665,5 +649,5 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         )
         plus.run_v1_account_transactions()
 
-        bui.getsound('gunCocking').play()
+        builtinassets.audio.gun_cocking.get().play()
         self._refresh(select_playlist=test_name)

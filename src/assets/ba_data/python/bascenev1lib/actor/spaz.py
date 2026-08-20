@@ -4,8 +4,6 @@
 
 # pylint: disable=too-many-lines
 
-from __future__ import annotations
-
 import random
 import logging
 from typing import TYPE_CHECKING, override
@@ -93,6 +91,8 @@ class Spaz(bs.Actor):
         assert classic is not None
 
         protocol_version = classic.scene_v1_protocol_version()
+
+        self._allow_punch_grab = classic.allow_punch_grab
 
         # We need to behave slightly different in the tutorial.
         self._demo_mode = demo_mode
@@ -1213,6 +1213,20 @@ class Spaz(bs.Actor):
             # Don't want to physically affect powerups.
             if node.getdelegate(PowerupBox):
                 return None
+
+            # Prevent punches against other Spaz characters shortly
+            # before or after grabbing.
+            if not self._allow_punch_grab:
+                punch_time_diff = (
+                    self.last_punch_time_ms - self.last_pickup_time_ms
+                )
+                release_time_diff = (
+                    int(bs.time() * 1000) - self.node.pickup_release_time_ms
+                )
+                if node.getdelegate(Spaz) and (
+                    0 <= punch_time_diff <= 70 or release_time_diff <= 360
+                ):
+                    return None
 
             # Only allow one hit per node per punch.
             if node and (node not in self._punched_nodes):

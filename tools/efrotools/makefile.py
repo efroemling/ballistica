@@ -2,8 +2,6 @@
 #
 """Tools for parsing/filtering makefiles."""
 
-from __future__ import annotations
-
 import copy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING

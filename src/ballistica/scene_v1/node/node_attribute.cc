@@ -70,8 +70,15 @@ NodeAttributeUnbound::NodeAttributeUnbound(NodeType* node_type,
       flags_(flags) {
   assert(node_type);
   node_type->attributes_by_name_[name_] = this;
-  index_ = static_cast<int>(node_type->attributes_by_index_.size());
-  node_type->attributes_by_index_.push_back(this);
+  if (flags_ & kNodeAttributeFlagLateIndex) {
+    // Wire index gets assigned in NodeType::FinalizeAttrIndices(),
+    // after any subclass attrs have registered; -1 until then.
+    index_ = -1;
+    node_type->late_index_attrs_.push_back(this);
+  } else {
+    index_ = static_cast<int>(node_type->attributes_by_index_.size());
+    node_type->attributes_by_index_.push_back(this);
+  }
 }
 
 void NodeAttributeUnbound::NotReadableError(Node* node) {

@@ -98,12 +98,23 @@ auto AppAdapter::HasHardwareCursor() -> bool { return false; }
 
 void AppAdapter::SetHardwareCursorVisible(bool visible) {}
 
+auto AppAdapter::ApplyJoystickFeedback(JoystickInput* device,
+                                       const FeedbackEvent& event) -> int {
+  return 0;
+}
+
+void AppAdapter::StopJoystickFeedback(JoystickInput* device) {}
+
 auto AppAdapter::CanSoftQuit() -> bool { return false; }
 auto AppAdapter::CanBackQuit() -> bool { return false; }
 void AppAdapter::DoBackQuit() { FatalError("Fixme unimplemented."); }
 void AppAdapter::DoSoftQuit() { FatalError("Fixme unimplemented."); }
 void AppAdapter::TerminateApp() { FatalError("Fixme unimplemented."); }
 auto AppAdapter::HasDirectKeyboardInput() -> bool { return false; }
+
+void AppAdapter::OnUITextEditingBegin(const Rect& rect_normalized) {}
+void AppAdapter::OnUITextEditingUpdate(const Rect& rect_normalized) {}
+void AppAdapter::OnUITextEditingEnd() {}
 
 void AppAdapter::ApplyGraphicsSettings(const GraphicsSettings* settings) {}
 

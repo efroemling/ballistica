@@ -166,6 +166,34 @@ void AppPlatformApple::OpenFileExternally(const std::string& path) {
 #endif
 }
 
+auto AppPlatformApple::HaveStringEditor() -> bool {
+#if BA_PLATFORM_IOS_TVOS && BA_XCODE_BUILD
+  // iOS/tvOS text entry goes through our UIKit editor dialog; those
+  // platforms feed the engine no text events for inline editing.
+  return true;
+#else
+  // Mac edits text widgets inline from real key/text events.
+  return AppPlatform::HaveStringEditor();
+#endif
+}
+
+void AppPlatformApple::DoInvokeStringEditor(const std::string& title,
+                                            const std::string& value,
+                                            std::optional<int> max_chars,
+                                            bool is_password,
+                                            const std::string& kind) {
+#if BA_PLATFORM_IOS_TVOS && BA_XCODE_BUILD
+  // Note that we're on the logic thread here (holding the GIL); the
+  // Swift side hops to main asynchronously to present, which is the
+  // only safe direction (a blocking hop while holding the GIL can
+  // deadlock against the main thread - see UIKitFromCpp.onMain).
+  BallisticaKit::UIKitFromCpp::invokeStringEditor(
+      title, value, max_chars.has_value() ? *max_chars : -1, is_password, kind);
+#else
+  AppPlatform::DoInvokeStringEditor(title, value, max_chars, is_password, kind);
+#endif
+}
+
 }  // namespace ballistica::base
 
 #endif  // BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS

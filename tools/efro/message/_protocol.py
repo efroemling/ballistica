@@ -4,8 +4,6 @@
 Supports static typing for message types and possible return types.
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 import traceback
 import json
@@ -408,8 +406,6 @@ class MessageProtocol:
             f'#\n'
             f'"""Auto-generated {part} module. Do not edit by hand."""\n'
             f'\n'
-            f'from __future__ import annotations\n'
-            f'\n'
             f'from typing import TYPE_CHECKING{ovld}{ovld2}\n'
             f'\n'
             f'{import_lines}'
@@ -548,7 +544,6 @@ class MessageProtocol:
         protocol_module_level_import_code: str | None = None,
     ) -> str:
         """Used by create_receiver_module(); do not call directly."""
-        # pylint: disable=too-many-positional-arguments
         import textwrap
 
         desc = 'asynchronous' if is_async else 'synchronous'

@@ -2,9 +2,9 @@
 #
 """Documentation generation functionality."""
 
-from __future__ import annotations
-
 import os
+import re
+import json
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -150,6 +150,17 @@ def generate_sphinx_docs() -> None:
     build_dir.mkdir(parents=True, exist_ok=True)
     cache_dir.mkdir(parents=True, exist_ok=True)
 
+    # sphinx-apidoc (-f) overwrites the rst for modules that still exist but
+    # never deletes the rst for modules that have since been removed or
+    # renamed. Our cache_dir persists across builds on CI workspaces, so a
+    # leftover rst would keep trying to autodoc-import a now-gone module and
+    # trip sphinx's --fail-on-warning (and orphan itself from every toctree).
+    # Clear the generated rst up front; everything here is regenerated below
+    # (index.rst + the apidoc tocfiles + per-module rst). Doctree/pickle
+    # caches are left in place so incremental builds stay fast.
+    for stale_rst in cache_dir.glob('*.rst'):
+        stale_rst.unlink()
+
     os.environ['BALLISTICA_ROOT'] = os.getcwd()  # used in sphinx conf.py
 
     def _printstatus(msg: str) -> None:
@@ -184,9 +195,44 @@ def generate_sphinx_docs() -> None:
         )
         shutil.copytree(srcdir, dstdir, dirs_exist_ok=True, ignore=ignore)
 
+    # Inject auto-generated forward-declarations for instance
+    # re-exports. Anything in a package's ``__all__`` that's an
+    # instance (not a class/function/module) gets a ``#:`` block +
+    # type annotation prepended to the filtered ``__init__.py`` so
+    # sphinx documents it at the re-export site, not only at the
+    # canonical home. Errors out if any public instance lacks a
+    # ``#:`` block at canonical home; the design rationale is in
+    # ``docs/design/python-api-packages.md``.
+    _printstatus('Injecting re-export docs...')
+    from batools.reexportdocs import (
+        gather_reexport_injections,
+        apply_injections,
+    )
+
+    reexport_injections = gather_reexport_injections(
+        '.', str(ba_data_filtered_dir)
+    )
+    apply_injections(reexport_injections)
+
     # Filter all files. Doing this with multiprocessing gives us a very
     # nice speedup vs multithreading which seems gil-constrained.
     _printstatus('Filtering sources...')
+
+    # ProcessPoolExecutor's init calls os.sysconf('SC_SEM_NSEMS_MAX')
+    # to verify enough POSIX semaphores are available. Some agent
+    # sandboxes deny that syscall; when they do, stub the check out
+    # so the pool can still be constructed. Non-sandboxed runs probe
+    # successfully and are untouched. Same trick lives in
+    # efrotools.code for the parallel pylint path.
+    try:
+        os.sysconf('SC_SEM_NSEMS_MAX')
+    except PermissionError:
+        import concurrent.futures.process as _cfp
+
+        # pylint: disable=protected-access
+        _cfp._check_system_limits = lambda: None
+        # pylint: enable=protected-access
+
     futures: list[Future] = []
     with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
         for root, _dirs, files in os.walk(filtered_data_dir):
@@ -293,6 +339,17 @@ def generate_sphinx_docs() -> None:
     # click a package which feels clean to me.
     module_first_arg = '--module-first'
 
+    # Exclude private submodule rst pages from the runtime tree. Each
+    # ``_foo.py`` / ``_foo/`` under a featureset package is the
+    # canonical home for an implementation that the package re-
+    # exposes via its ``__all__`` (see
+    # ``docs/design/python-api-packages.md``). Documenting them as
+    # standalone pages duplicates every re-exported class/function
+    # and triggers sphinx ``duplicate object description`` warnings.
+    # Skipping the pages lets the re-exports be the sole doc home —
+    # which is exactly the user-facing-surface design philosophy.
+    ba_data_excludes = _collect_private_submodule_paths(ba_data_filtered_dir)
+
     _printstatus('Generating runtimemodules...')
     subprocess.run(
         sphinx_apidoc_cmd
@@ -306,7 +363,8 @@ def generate_sphinx_docs() -> None:
             module_list_max_depth,
             '-f',
             str(ba_data_filtered_dir),
-        ],
+        ]
+        + ba_data_excludes,
         check=True,
         env=environ,
     )
@@ -328,6 +386,14 @@ def generate_sphinx_docs() -> None:
         # Assume anything with 'tools' in the name goes with tools.
         exclude_list = excludes_common if 'tools' in name else excludes_tools
         exclude_list.append(str(Path(tools_filtered_dir, name)))
+
+    # Also exclude private submodules across the tools tree, same
+    # reasoning as the runtime case above. Each public package
+    # re-exports its private implementation modules via ``__all__``;
+    # documenting both produces duplicate-object warnings.
+    tools_private = _collect_private_submodule_paths(tools_filtered_dir)
+    excludes_tools = excludes_tools + tools_private
+    excludes_common = excludes_common + tools_private
 
     _printstatus('Generating toolsmodules...')
     subprocess.run(
@@ -367,7 +433,23 @@ def generate_sphinx_docs() -> None:
         check=True,
     )
 
-    # raise RuntimeError('SO FAR SO GOOD')
+    # Inject ``:imported-members:`` into apidoc-generated rst for
+    # any ``automodule`` whose target module declares ``__all__``.
+    # The flag tells autodoc not to skip members whose ``__module__``
+    # is foreign — which is what we want for our user-facing
+    # packages that deliberately re-export from babase / efro /
+    # etc. (see ``docs/design/python-api-packages.md``). Modules
+    # without ``__all__`` are left alone so their docs only show
+    # their own native members, not every imported helper.
+    _printstatus('Injecting imported-members for __all__-declared modules...')
+    _inject_imported_members(cache_dir, environ)
+
+    # Inject ``:no-undoc-members:`` into apidoc rst for asset-package
+    # wrapper modules so their (huge) per-asset attribute lists stay
+    # hidden — the docs show only the documented group classes +
+    # accessors, each with a viewcode [source] link to the full list.
+    _printstatus('Injecting no-undoc-members for asset-package wrappers...')
+    _inject_wrapper_options(cache_dir, environ)
 
     _printstatus('Running sphinx-build...')
     subprocess.run(
@@ -387,6 +469,196 @@ def generate_sphinx_docs() -> None:
 
     duration = time.monotonic() - starttime
     print(f'Generated sphinx documentation in {duration:.1f}s.')
+
+
+def _inject_imported_members(rst_dir: Path, environ: dict[str, str]) -> None:
+    """Add ``:imported-members:`` to apidoc rst directives selectively.
+
+    Walks every ``.rst`` file produced by sphinx-apidoc, finds every
+    ``.. automodule:: <name>`` directive, imports ``<name>`` in a
+    subprocess (so dummy-modules are available) to check if it
+    declares ``__all__``, and prepends an ``:imported-members:``
+    option line when it does.
+
+    Per ``docs/design/python-api-packages.md``: we want re-exports
+    documented at consumer pages, but only when the consumer
+    explicitly opted in via ``__all__``. Implementation submodules
+    without ``__all__`` show only their own native members.
+    """
+    # Collect all module names referenced from rst files.
+    rst_files = sorted(rst_dir.glob('*.rst'))
+    automodule_re = re.compile(r'^\.\. automodule:: ([A-Za-z0-9_.]+)\s*$', re.M)
+    referenced: set[str] = set()
+    for rst in rst_files:
+        with open(rst, encoding='utf-8') as infile:
+            referenced.update(automodule_re.findall(infile.read()))
+
+    if not referenced:
+        return
+
+    # Spawn a single subprocess to resolve ``__all__`` for every
+    # referenced module. Cheaper than one import per file and
+    # keeps the docs.py process clean of game-runtime imports.
+    has_all = _modules_with_all(sorted(referenced), environ)
+
+    def _add_option(match: re.Match[str]) -> str:
+        modname = match.group(1)
+        if modname not in has_all:
+            return match.group(0)
+        # Append the directive option as a sibling line under the
+        # automodule. Sphinx rst format: option lines are indented
+        # 3 spaces under the directive head.
+        return match.group(0) + '\n   :imported-members:'
+
+    for rst in rst_files:
+        with open(rst, encoding='utf-8') as infile:
+            text = infile.read()
+        new_text = automodule_re.sub(_add_option, text)
+        if new_text != text:
+            with open(rst, 'w', encoding='utf-8') as outfile:
+                outfile.write(new_text)
+
+
+def _modules_with_all(modnames: list[str], environ: dict[str, str]) -> set[str]:
+    """Return the subset of ``modnames`` that declare ``__all__``.
+
+    Runs in a subprocess so the orchestrator's interpreter doesn't
+    have to import all the game modules.
+    """
+    probe = (
+        'import importlib, json, sys\n'
+        'out = []\n'
+        'for name in sys.argv[1:]:\n'
+        '    try:\n'
+        '        m = importlib.import_module(name)\n'
+        '    except Exception:\n'
+        '        continue\n'
+        '    if hasattr(m, "__all__"):\n'
+        '        out.append(name)\n'
+        'print(json.dumps(out))\n'
+    )
+    result = subprocess.run(
+        ['python3', '-c', probe, *modnames],
+        env=environ,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return set(json.loads(result.stdout.strip().splitlines()[-1]))
+
+
+def _inject_wrapper_options(rst_dir: Path, environ: dict[str, str]) -> None:
+    """Add ``:no-undoc-members:`` to apidoc rst for wrapper modules.
+
+    Asset-package wrapper modules expose a documented group class +
+    accessor per top-level group, but their per-asset attributes are
+    undocumented (and there can be thousands). ``:no-undoc-members:``
+    hides those so the page shows just the groups (each with a viewcode
+    ``[source]`` link to the full list). Wrapper modules are detected by
+    their ``__asset_package__`` attribute.
+    """
+    rst_files = sorted(rst_dir.glob('*.rst'))
+    name_re = re.compile(r'^\.\. automodule:: ([A-Za-z0-9_.]+)\s*$', re.M)
+    referenced: set[str] = set()
+    for rst in rst_files:
+        with open(rst, encoding='utf-8') as infile:
+            referenced.update(name_re.findall(infile.read()))
+    if not referenced:
+        return
+
+    wrappers = _wrapper_modules(sorted(referenced), environ)
+    if not wrappers:
+        return
+
+    # Match a whole ``automodule`` directive: its head line plus the
+    # indented option lines that follow. apidoc emits an explicit
+    # ``:undoc-members:`` (and the global default also enables it), so to
+    # turn it off we must *replace* that option with ``:no-undoc-members:``
+    # within the block — appending the negation alongside the original
+    # leaves a contradiction that autodoc resolves in favor of showing
+    # them.
+    block_re = re.compile(
+        r'^\.\. automodule:: ([A-Za-z0-9_.]+)[^\n]*\n(?:[ \t]+:[^\n]*\n)*',
+        re.M,
+    )
+
+    def _fix_block(match: re.Match[str]) -> str:
+        block = match.group(0)
+        if match.group(1) not in wrappers:
+            return block
+        if '   :undoc-members:\n' in block:
+            return block.replace(
+                '   :undoc-members:\n', '   :no-undoc-members:\n'
+            )
+        if '   :no-undoc-members:\n' not in block:
+            head, rest = block.split('\n', 1)
+            return f'{head}\n   :no-undoc-members:\n{rest}'
+        return block
+
+    for rst in rst_files:
+        with open(rst, encoding='utf-8') as infile:
+            text = infile.read()
+        new_text = block_re.sub(_fix_block, text)
+        if new_text != text:
+            with open(rst, 'w', encoding='utf-8') as outfile:
+                outfile.write(new_text)
+
+
+def _wrapper_modules(modnames: list[str], environ: dict[str, str]) -> set[str]:
+    """Return the subset of ``modnames`` that are asset-package wrappers.
+
+    A wrapper module is identified by its ``__asset_package__`` module
+    attribute. Runs in a subprocess (same rationale as
+    :func:`_modules_with_all`).
+    """
+    probe = (
+        'import importlib, json, sys\n'
+        'out = []\n'
+        'for name in sys.argv[1:]:\n'
+        '    try:\n'
+        '        m = importlib.import_module(name)\n'
+        '    except Exception:\n'
+        '        continue\n'
+        '    if hasattr(m, "__asset_package__"):\n'
+        '        out.append(name)\n'
+        'print(json.dumps(out))\n'
+    )
+    result = subprocess.run(
+        ['python3', '-c', probe, *modnames],
+        env=environ,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return set(json.loads(result.stdout.strip().splitlines()[-1]))
+
+
+def _collect_private_submodule_paths(root: Path) -> list[str]:
+    """Walk a tree, return paths of underscore-prefixed submodules.
+
+    Used to feed sphinx-apidoc as exclude positional args so it
+    won't generate rst pages for private implementation modules.
+    The runtime API surface lives in the public package
+    ``__init__.py`` via re-exports; private submodules are
+    implementation detail and shouldn't have their own doc pages.
+
+    Skips ``__init__.py`` / ``__pycache__`` / other dunder names —
+    only ``_<single-underscore>`` items are private by convention.
+    """
+    paths: list[str] = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        # Filter dirnames in-place so os.walk doesn't recurse into
+        # private dirs (those we just collected the dir path for).
+        for d in list(dirnames):
+            if d.startswith('_') and not d.startswith('__'):
+                paths.append(str(Path(dirpath, d)))
+                dirnames.remove(d)
+        for f in filenames:
+            if not f.endswith('.py'):
+                continue
+            if f.startswith('_') and not f.startswith('__'):
+                paths.append(str(Path(dirpath, f)))
+    return paths
 
 
 def _sphinx_pre_filter_file(path: str) -> None:
@@ -434,13 +706,43 @@ def _sphinx_pre_filter_file(path: str) -> None:
     # TYPE_CHECKING' blocks in the context of each module but only after
     # everything had been initially imported. Sounds tricky but could
     # work I think.
-    if bool(False):
+    # Asset-package wrapper modules keep their full typed asset tree in
+    # an ``if TYPE_CHECKING`` block (dead at runtime) with the dynamic
+    # runtime in an ``if not TYPE_CHECKING`` block. For docs we flip
+    # ``TYPE_CHECKING`` True in the *filtered* copy so the typed tree
+    # goes live (and the runtime block goes dead) and Sphinx can
+    # document the groups. This is the targeted form of the global hack
+    # the comment above describes: doing it for *every* module caused
+    # cross-module import cycles, but a wrapper's only TYPE_CHECKING
+    # import is its already-loaded parent feature-set, and the forced
+    # ``from __future__ import annotations`` keeps annotations stringized
+    # so nothing new is evaluated at import — so it's safe here.
+    #
+    # We ALSO un-guard the ``if not TYPE_CHECKING`` runtime block so it
+    # stays live alongside the typed one. Flipping TYPE_CHECKING alone
+    # would kill it, and then the wrapper exposes no runtime ``strings`` /
+    # ``audio`` / ... attributes — which breaks *consumer* modules that
+    # bind one at module scope (e.g. bauiv1lib/settings/advanced.py's
+    # ``_advstrs = classicassets.strings.settings.advanced``); autodoc then
+    # fails to import them entirely. Both blocks can coexist: the typed
+    # block only declares classes plus bare annotations, and the runtime
+    # block only assigns the matching names (lazy Dir objects that do no
+    # I/O at construction), so the assignment simply fills in the value
+    # the annotation describes.
+    if re.search(
+        r'Asset-package wrapper for ``[^`]+`` \((?:bascenev1|bauiv1)\)',
+        source_code,
+    ):
         final_code = final_code.replace(
             '\nif TYPE_CHECKING:\n',
             (
                 '\nTYPE_CHECKING = True  # Docs-generation hack\n'
                 'if TYPE_CHECKING:\n'
             ),
+        )
+        final_code = final_code.replace(
+            '\nif not TYPE_CHECKING:\n',
+            '\nif True:  # Docs-generation hack; keep runtime tree live\n',
         )
     if bool(True):
         final_code = final_code + (
@@ -454,6 +756,33 @@ def _sphinx_pre_filter_file(path: str) -> None:
             'from pathlib import Path\n'
             'from enum import Enum\n'
         )
+
+    # Docs-generation hack: force PEP 563 string annotations in these
+    # filtered copies (the real tree uses PEP 649 deferred evaluation,
+    # the 3.14+ default). Sphinx evaluates annotations when documenting,
+    # and TYPE_CHECKING-only names that can't resolve at runtime come
+    # back as ugly '__annotationlib_name_N__' placeholders under
+    # deferred evaluation; with stringized annotations sphinx just
+    # renders the source text and links what it can resolve (helped by
+    # the hack-imports appended above).
+    import ast as _ast
+
+    _mod = _ast.parse(final_code)
+    _insert_line = 0
+    if (
+        _mod.body
+        and isinstance(_mod.body[0], _ast.Expr)
+        and isinstance(_mod.body[0].value, _ast.Constant)
+        and isinstance(_mod.body[0].value.value, str)
+        and _mod.body[0].end_lineno is not None
+    ):
+        _insert_line = _mod.body[0].end_lineno
+    _lines = final_code.splitlines(keepends=True)
+    _lines.insert(
+        _insert_line,
+        '\nfrom __future__ import annotations  # Docs-generation hack.\n',
+    )
+    final_code = ''.join(_lines)
 
     with open(filenameout, 'w', encoding='utf-8') as f:
         f.write(final_code)

@@ -7,6 +7,7 @@
 #include "ballistica/base/input/device/input_device.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/python/class/python_class_lang_str.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
@@ -444,31 +445,10 @@ auto PythonClassInputDevice::GetButtonName(PythonClassInputDevice* self,
     throw Exception(PyExcType::kInputDeviceNotFound);
   }
 
-  // Ask the input-device for the button name.
-  std::string bname = d->input_device().GetButtonName(id);
-
-  // If this doesn't appear to be lstr json itself, convert it to that.
-  if (bname.length() < 1 || bname.c_str()[0] != '{') {
-    Utils::StringReplaceAll(&bname, "\"", "\\\"");
-    bname = R"({"v":")" + bname + "\"}";
-  }
-  PythonRef args2(Py_BuildValue("(s)", bname.c_str()), PythonRef::kSteal);
-  PythonRef results = g_base->python->objs()
-                          .Get(base::BasePython::ObjID::kLstrFromJsonCall)
-                          .Call(args2);
-  if (!results.exists()) {
-    g_core->logging->Log(
-        LogName::kBa, LogLevel::kError,
-        "Error creating Lstr from raw button name: '" + bname + "'");
-    PythonRef args3(Py_BuildValue("(s)", "?"), PythonRef::kSteal);
-    results = g_base->python->objs()
-                  .Get(base::BasePython::ObjID::kLstrFromJsonCall)
-                  .Call(args3);
-  }
-  if (!results.exists()) {
-    throw Exception("Internal error creating Lstr.");
-  }
-  return results.NewRef();
+  // Ask the input-device for the button name. It hands back a native
+  // language-string, so we mint a babase.LangStr wrapper around it
+  // directly -- no json round-trip through Python.
+  return base::PythonClassLangStr::Create(d->input_device().GetButtonName(id));
 
   BA_PYTHON_CATCH;
 }
@@ -494,7 +474,7 @@ PyMethodDef PythonClassInputDevice::tp_methods[] = {
      "still present.\n"},
     {"get_button_name", (PyCFunction)GetButtonName,
      METH_VARARGS | METH_KEYWORDS,  // NOLINT (signed bitwise ops)
-     "get_button_name(button_id: int) -> babase.Lstr\n"
+     "get_button_name(button_id: int) -> babase.LangStr\n"
      "\n"
      "Given a button ID, return a human-readable name for that key/button.\n"
      "\n"

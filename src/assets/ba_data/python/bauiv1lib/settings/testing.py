@@ -2,12 +2,11 @@
 #
 """Provides UI for test settings."""
 
-from __future__ import annotations
-
 import copy
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -18,7 +17,7 @@ class TestingWindow(bui.MainWindow):
 
     def __init__(
         self,
-        title: bui.Lstr,
+        title: bui.Lstr | bui.LangStr,
         entries: list[dict[str, Any]],
         transition: str | None = 'in_right',
         origin_widget: bui.Widget | None = None,
@@ -115,7 +114,7 @@ class TestingWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
             maxwidth=self._scroll_width * 0.75,
-            text=bui.Lstr(resource='settingsWindowAdvanced.forTestingText'),
+            text=classicassets.strings.settings.testing.for_testing_note,
         )
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
@@ -206,7 +205,7 @@ class TestingWindow(bui.MainWindow):
             autoselect=True,
             size=(200, 50),
             position=(self._sub_width * 0.5 - 100, v),
-            label=bui.Lstr(resource='settingsWindowAdvanced.resetText'),
+            label=_commonassets.strings.actions.reset,
             right_widget=btn,
             on_activate_call=self._on_reset_press,
         )

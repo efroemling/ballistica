@@ -13,9 +13,15 @@ namespace ballistica::base {
 const int kDisplayTimeSampleCount{15};
 
 /// The max amount of time a headless app can sleep if no events are
-/// pending. This should not be *too* high or it might cause delays when
-/// going from no events present to events present.
-const microsecs_t kHeadlessMaxDisplayTimeStep{500000};
+/// pending (a 10/sec idle floor). This should not be *too* high or it
+/// might cause delays when going from no events present to events
+/// present. It also stays under the scene_v1 host-session "excessive
+/// time_advance" guard (>500ms): a single max-length idle step — e.g.
+/// while construct-mode's EmptyAppMode has no events — must not, on its
+/// own, look like a stall when the next real app-mode steps. So a step
+/// that *does* exceed that guard reflects a genuine stall, not a normal
+/// idle sleep.
+const microsecs_t kHeadlessMaxDisplayTimeStep{100000};
 
 /// The min amount of time a headless app can sleep. This provides an upper
 /// limit on stepping overhead in cases where events are densely packed.

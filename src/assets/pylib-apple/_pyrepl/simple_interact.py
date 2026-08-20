@@ -30,13 +30,10 @@ import functools
 import os
 import sys
 import code
+import warnings
+import errno
 
-from .readline import _get_reader, multiline_input
-
-TYPE_CHECKING = False
-
-if TYPE_CHECKING:
-    from typing import Any
+from .readline import _get_reader, multiline_input, append_history_file
 
 
 _error: tuple[type[Exception], ...] | type[Exception]
@@ -128,12 +125,12 @@ def run_multiline_interactive_console(
         command = REPL_COMMANDS[statement]
         if callable(command):
             # Make sure that history does not change because of commands
-            with reader.suspend_history():
+            with reader.suspend_history(), reader.suspend_colorization():
                 command()
             return True
         return False
 
-    while 1:
+    while True:
         try:
             try:
                 sys.stdout.flush()
@@ -153,6 +150,11 @@ def run_multiline_interactive_console(
             input_name = f"<python-input-{input_n}>"
             more = console.push(_strip_final_indent(statement), filename=input_name, _symbol="single")  # type: ignore[call-arg]
             assert not more
+            try:
+                append_history_file()
+            except (FileNotFoundError, PermissionError, OSError) as e:
+                warnings.warn(f"failed to open the history file for writing: {e}")
+
             input_n += 1
         except KeyboardInterrupt:
             r = _get_reader()
@@ -162,7 +164,6 @@ def run_multiline_interactive_console(
             r.pos = len(r.get_unicode())
             r.dirty = True
             r.refresh()
-            r.in_bracketed_paste = False
             console.write("\nKeyboardInterrupt\n")
             console.resetbuffer()
         except MemoryError:

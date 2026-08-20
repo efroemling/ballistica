@@ -2,8 +2,6 @@
 #
 """A nice collection of ready-to-use pcommands for this package."""
 
-from __future__ import annotations
-
 # Note: import as little as possible here at the module level to
 # keep launch times fast for small snippets.
 import sys
@@ -151,43 +149,6 @@ def lazy_increment_build() -> None:
             outfile.write(codehash)
 
 
-def get_master_asset_src_dir() -> None:
-    """Print master-asset-source dir for this repo."""
-    import socket
-    import os
-
-    hostname = socket.gethostname()
-
-    master_assets_dir = '/Users/ericf/Documents/ballisticakit_master_assets'
-    dummy_dir = '/__DUMMY_MASTER_SRC_DISABLED_PATH__'
-
-    # Only apply this on my primary setup.
-    # if os.path.exists(master_assets_dir) and os.path.exists('.git'):
-    if os.path.exists(master_assets_dir) and hostname == 'MacBook-Fro.local':
-        # Ok, for now lets simply use our hard-coded master-src
-        # path if we're on master in and not otherwise.  Should
-        # probably make this configurable.
-        # output = subprocess.check_output(
-        #     ['git', 'status', '--branch', '--porcelain']
-        # ).decode()
-
-        # Also compare repo name to split version of itself to
-        # see if we're outside of core (filtering will cause mismatch if so).
-        # pylint: disable=useless-suppression
-        # pylint: disable=simplifiable-condition
-        # pylint: disable=condition-evals-to-constant
-        # if (
-        #     'origin/main' in output.splitlines()[0]
-        #     and 'ballistica' + 'kit' == 'ballisticakit'
-        # ):
-        # We seem to be in master in core repo; lets do it.
-        print(master_assets_dir)
-        return
-
-    # Still need to supply dummy path for makefile if not..
-    print(dummy_dir)
-
-
 def androidaddr() -> None:
     """Return the source file location for an android program-counter.
 
@@ -225,6 +186,31 @@ def push_ipa() -> None:
     )
 
 
+def push_ipa_to_archive() -> None:
+    """Construct an ios IPA and publish it to a bamaster archive.
+
+    Like push_ipa but uploads into the archive system (signed-URL GCS
+    storage) instead of rsyncing to the staging server. Pass
+    --archive-id to override the default ('ios-test-builds').
+    """
+    from efro.util import extract_arg
+    import efrotools.ios
+
+    args = sys.argv[2:]
+    signing_config = extract_arg(args, '--signing-config')
+    archive_id = extract_arg(args, '--archive-id')
+
+    if len(args) != 1:
+        raise RuntimeError('Expected 1 mode arg (debug or release).')
+    modename = args[0].lower()
+    efrotools.ios.push_ipa_to_archive(
+        pcommand.PROJROOT,
+        modename,
+        signing_config=signing_config,
+        archive_id=('ios-test-builds' if archive_id is None else archive_id),
+    )
+
+
 def printcolors() -> None:
     """Print all colors available in efro.terminals.TerminalColor."""
     from efro.error import CleanError
@@ -252,16 +238,20 @@ def printcolors() -> None:
 
 def python_version_android_base() -> None:
     """Print built Python base version."""
-    from efrotools.pybuild import PY_VER_ANDROID
+    # Source of truth is the new in-tree build script. Legacy
+    # PY_VER_ANDROID in efrotools.pybuild is for the old pipeline
+    # (build_android / patch flow) and is not what active builds
+    # consume.
+    from efrotools.python_build_android import PY_VER
 
-    print(PY_VER_ANDROID, end='')
+    print(PY_VER, end='')
 
 
 def python_version_android() -> None:
     """Print Android embedded Python version."""
-    from efrotools.pybuild import PY_VER_EXACT_ANDROID
+    from efrotools.python_build_android import PY_VER_EXACT
 
-    print(PY_VER_EXACT_ANDROID, end='')
+    print(PY_VER_EXACT, end='')
 
 
 def python_build_android_old() -> None:
@@ -356,6 +346,57 @@ def python_apple_gather() -> None:
     _python_build_apple_mod.gather(str(pcommand.PROJROOT))
 
 
+def angle_apple_test_build() -> None:
+    """Build all Apple ANGLE xcframeworks at the cheap 'test' variant.
+
+    For CI / exercising the gn build pipeline -- optimization doesn't matter.
+    Lazily reuses an existing checkout under build/angle-apple/ (incremental
+    sync), builds mac/iOS/tvOS plus the macOS debug-validation variant, and
+    assembles .xcframeworks into build/angle-apple/artifacts/. Self-contained
+    (depot_tools fetches a hermetic clang/gn/ninja); needs Xcode + system git.
+    Follow with 'make angle-apple-gather' to install into the source tree.
+    """
+    import os
+    from batools import buildangleapple
+
+    os.chdir(pcommand.PROJROOT)
+    buildangleapple.test_build(str(pcommand.PROJROOT))
+
+
+def angle_apple_build() -> None:
+    """Build shipping-tier Apple ANGLE xcframeworks from scratch.
+
+    Always starts clean and builds the optimized 'release' variant
+    (is_official_build -> ThinLTO + stripped binaries + bundled dSYMs) plus the
+    macOS debug-validation xcframeworks, assembling into
+    build/angle-apple/artifacts/. Self-contained under build/angle-apple/; needs
+    Xcode + system git. Follow with 'make angle-apple-gather' to install.
+
+    Pass '--assemble-only' to skip the rebuild and just (re)assemble the
+    xcframeworks from the existing build/angle-apple/checkout/out slices --
+    for re-emitting after an assembly-logic change without a full build.
+    """
+    import os
+    from batools import buildangleapple
+
+    assemble_only = '--assemble-only' in sys.argv
+    os.chdir(pcommand.PROJROOT)
+    buildangleapple.build(str(pcommand.PROJROOT), assemble_only=assemble_only)
+
+
+def angle_apple_gather() -> None:
+    """Install assembled Apple ANGLE xcframeworks into the source tree.
+
+    Copies build/angle-apple/artifacts/ into src/external/angle-apple (normal
+    set + headers) and src/external/angle-apple-debug (macOS debug set).
+    """
+    import os
+    from batools import buildangleapple
+
+    os.chdir(pcommand.PROJROOT)
+    buildangleapple.gather(str(pcommand.PROJROOT))
+
+
 def python_build_android_old_debug() -> None:
     """Build embeddable Android Python lib (old pipeline, debug ver)."""
 
@@ -441,9 +482,9 @@ def upper() -> None:
 
 def efrocache_update() -> None:
     """Build & push files to efrocache for public access."""
-    from efrotools.efrocache import update_cache
+    from efrotools.efrocachepublish import update_cache
 
-    makefile_dirs = ['', 'src/assets', 'src/resources', 'src/meta']
+    makefile_dirs = ['', 'src/assets', 'src/resources', 'src/codegen']
     update_cache(makefile_dirs)
 
 
@@ -463,8 +504,6 @@ def efrocache_get() -> None:
 def warm_start_asset_build() -> None:
     """Prep asset builds to run faster."""
     import os
-    import subprocess
-    from pathlib import Path
 
     from efrotools.project import getprojectconfig
     from efro.error import CleanError
@@ -481,17 +520,10 @@ def warm_start_asset_build() -> None:
 
         os.chdir(pcommand.PROJROOT)
         warm_start_cache(cachetype)
-    else:
-        # For internal builds we don't use efrocache but we do use an
-        # internal build cache. Download an initial cache/etc. if need be.
-        subprocess.run(
-            [
-                str(Path(pcommand.PROJROOT, 'tools/pcommand')),
-                'convert_util',
-                '--init-asset-cache',
-            ],
-            check=True,
-        )
+
+    # In the internal repo there's currently nothing to warm up; the old
+    # convert cache went away when converted asset kinds (textures, audio,
+    # meshes) moved to asset-packages.
 
 
 def gen_docs_sphinx() -> None:
@@ -710,16 +742,43 @@ def _camel_case_split(string: str) -> list[str]:
 
 def efro_gradle() -> None:
     """Calls ./gradlew with some extra magic."""
+    import os
     import subprocess
     from efro.terminal import Clr
     from efrotools.android import filter_gradle_file
 
     args = ['./gradlew'] + sys.argv[2:]
+
+    # Under Claude Code's sandbox, all network egress is forced through
+    # an authenticating proxy that the JVM/Gradle won't use, so any
+    # dependency or Gradle-distribution *download* fails. Force
+    # --offline so the build relies solely on the already-warmed Gradle
+    # caches (populated by normal, unsandboxed builds). No-op outside
+    # the sandbox, where nothing sets these env vars.
+    forced_offline = False
+    in_sandbox = bool(os.environ.get('SANDBOX_RUNTIME')) or os.environ.get(
+        'ALL_PROXY', ''
+    ).startswith(('socks5://', 'socks5h://'))
+    if in_sandbox and '--offline' not in args:
+        args.append('--offline')
+        forced_offline = True
+        print(
+            f'{Clr.YLW}efro_gradle: sandbox detected -- adding --offline'
+            ' (Gradle cannot reach the network through the sandbox'
+            ' proxy); dependencies must already be cached by a prior'
+            f' unsandboxed build.{Clr.RST}',
+            flush=True,
+        )
+
     print(f'{Clr.BLU}Running gradle with args:{Clr.RST} {args}.', flush=True)
     enabled_tags: set[str] = {'true'}
     target_words = [w.lower() for w in _camel_case_split(args[-1])]
     if 'google' in target_words:
-        enabled_tags = {'google', 'crashlytics'}
+        # Augment rather than replace; otherwise we lose the 'true'
+        # tag and the single-arch flavor declarations (arm/arm64/
+        # x86/x86_64, gated by ``// EFRO_IF true``) stay commented
+        # out — breaking ANDROID_MODE!=prod for google builds.
+        enabled_tags |= {'google', 'crashlytics'}
     prev_suffix = 'efro_gradle_prev'
 
     buildfilename = 'BallisticaKit/build.gradle'
@@ -746,6 +805,17 @@ def efro_gradle() -> None:
     )
 
     if errored:
+        if forced_offline:
+            print(
+                f'{Clr.RED}efro_gradle: build failed in sandbox-forced'
+                ' offline mode. If the error above says "No cached'
+                ' version ... available for offline mode" (or shows a'
+                ' failed distribution download), a dependency or the'
+                ' Gradle distribution is not cached -- run this build'
+                " once OUTSIDE Claude's sandbox to warm the cache, then"
+                f' retry.{Clr.RST}',
+                flush=True,
+            )
         sys.exit(1)
 
 
@@ -814,27 +884,14 @@ def cmake_prep_dir() -> None:
 def gen_binding_code() -> None:
     """Generate a binding_foo.inc file."""
     from efro.error import CleanError
-    import batools.metabuild
+    import batools.codegenbuild
 
     if len(sys.argv) != 4:
         raise CleanError('Expected 2 args (srcfile, dstfile)')
     inpath = sys.argv[2]
     outpath = sys.argv[3]
-    batools.metabuild.gen_binding_code(str(pcommand.PROJROOT), inpath, outpath)
-
-
-def gen_flat_data_code() -> None:
-    """Generate a C++ include file from a Python file."""
-    from efro.error import CleanError
-    import batools.metabuild
-
-    if len(sys.argv) != 5:
-        raise CleanError('Expected 3 args (srcfile, dstfile, varname)')
-    inpath = sys.argv[2]
-    outpath = sys.argv[3]
-    varname = sys.argv[4]
-    batools.metabuild.gen_flat_data_code(
-        str(pcommand.PROJROOT), inpath, outpath, varname
+    batools.codegenbuild.gen_binding_code(
+        str(pcommand.PROJROOT), inpath, outpath
     )
 
 
@@ -894,6 +951,28 @@ def gen_dummy_modules() -> None:
         raise CleanError(f'Expected no args; got {len(sys.argv)-2}.')
 
     generate_dummy_modules(projroot=str(pcommand.PROJROOT))
+
+
+def gen_vanilla_completions() -> None:
+    """Generate a JSON completion index for the vanilla API."""
+    from efro.error import CleanError
+    from batools.vanillacompletions import generate_vanilla_completions
+
+    if len(sys.argv) != 2:
+        raise CleanError(f'Expected no args; got {len(sys.argv) - 2}.')
+
+    generate_vanilla_completions(projroot=str(pcommand.PROJROOT))
+
+
+def gen_check_environment() -> None:
+    """Generate a standalone mypy/pylint check environment."""
+    from efro.error import CleanError
+    from batools.checkenvironment import generate_check_environment
+
+    if len(sys.argv) != 2:
+        raise CleanError(f'Expected no args; got {len(sys.argv) - 2}.')
+
+    generate_check_environment(projroot=str(pcommand.PROJROOT))
 
 
 def version() -> None:

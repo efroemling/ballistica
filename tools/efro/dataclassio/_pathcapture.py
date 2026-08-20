@@ -2,8 +2,6 @@
 #
 """Functionality related to capturing nested dataclass paths."""
 
-from __future__ import annotations
-
 import dataclasses
 from typing import TYPE_CHECKING
 

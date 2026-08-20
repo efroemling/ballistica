@@ -1,10 +1,8 @@
-#!/usr/bin/env -S python3.13 -B
+#!/usr/bin/env -S python3.14 -B
 # Released under the MIT License. See LICENSE for details.
 #
 # pylint: disable=too-many-lines
 """BallisticaKit server manager."""
-
-from __future__ import annotations
 
 import os
 import sys

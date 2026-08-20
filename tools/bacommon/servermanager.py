@@ -2,8 +2,6 @@
 #
 """Functionality related to the server manager script."""
 
-from __future__ import annotations
-
 from enum import Enum
 from dataclasses import field, dataclass
 from typing import TYPE_CHECKING, Any
@@ -26,6 +24,10 @@ class ServerConfig:
     # Otherwise it will still be joinable via LAN or connecting by IP
     # address.
     party_is_public: bool = True
+
+    # If set, clients must provide this password before joining your
+    # party.
+    password: str | None = None
 
     # If True, the master-server will provide your server with verified
     # account info for all connecting clients. Generally this should
@@ -50,6 +52,12 @@ class ServerConfig:
 
     # Whether the default kick-voting system is enabled.
     enable_default_kick_voting: bool = True
+
+    # If True, disables the punch-grab protection added in 1.8.0,
+    # restoring the classic behavior where punches landed shortly
+    # before or after grabs deal damage to other players (the
+    # 'punch-grab' technique).
+    allow_punch_grab: bool = False
 
     # To be included in the public server list, your server MUST be
     # accessible via an ipv4 address. By default, the master server will

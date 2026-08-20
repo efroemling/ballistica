@@ -2,14 +2,14 @@
 #
 """UI functionality for creating tab style buttons."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from typing import Any, Callable
     from enum import Enum
 
@@ -32,7 +32,7 @@ class TabRow[T: Enum]:
     def __init__(
         self,
         parent: bui.Widget,
-        tabdefs: list[tuple[T, bui.Lstr]],
+        tabdefs: Sequence[tuple[T, bui.Lstr | bui.LangStr]],
         pos: tuple[float, float],
         size: tuple[float, float],
         *,
@@ -88,6 +88,6 @@ class TabRow[T: Enum]:
     def _tick_and_call(
         self, call: Callable[[Any], None] | None, arg: Any
     ) -> None:
-        bui.getsound('click01').play()
+        builtinassets.audio.click01.get().play()
         if call is not None:
             call(arg)

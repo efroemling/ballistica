@@ -44,6 +44,9 @@ class ContextRefSceneV1 : public base::ContextRef {
 /// GetTyped() to safely retrieve context_ref as that type.
 class SceneV1Context : public base::Context {
  public:
+  /// Human-readable context-type name used in not-set error messages.
+  static auto ContextTypeNameStatic() -> const char* { return "scene-v1"; }
+
   static auto Current() -> SceneV1Context& {
     return Context::CurrentTyped<SceneV1Context>();
   }

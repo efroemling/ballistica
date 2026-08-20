@@ -11,6 +11,7 @@
 
 #include "ballistica/base/app_mode/app_mode.h"
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/base/base.h"
@@ -31,6 +32,12 @@
 #include "ballistica/ui_v1/widget/text_widget.h"
 
 namespace ballistica::ui_v1 {
+
+// Builtin textures now live in the builtin asset-package; this builds
+// the qualified ref for one so name-based lookups find it.
+static auto BuiltinTexRef(const char* path) -> std::string {
+  return std::string(base::kBuiltinAssetsApverid) + ":textures/" + path;
+}
 
 static const float kBotLeftColorR{0.6f};
 static const float kBotLeftColorG{0.6f};
@@ -59,6 +66,7 @@ static const float kGetTokensButtonColorB{0.55f};
 constexpr std::array<const char*, 4> chest_ids{"0", "1", "2", "3"};
 
 int RootWidget::update_pause_count_;
+seconds_t RootWidget::update_pause_start_time_;
 
 // Flip this to true when we're ready to use levels.
 static const bool kShowLevels{};
@@ -267,7 +275,7 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
     bd.height = 36.0f;
     bd.y = -36.0f + 10.0f - y_offs_small;
     bd.y_offs_small = y_offs_small;
-    bd.img = "uiAtlas2";
+    bd.img = BuiltinTexRef("ui_atlas2");
     bd.mesh_transparent = "currencyMeter";
     bd.selectable = true;
 
@@ -498,7 +506,7 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
     bd.width = bd.height = 45.0f;
     bd.y = -36.0f + 11.0f - y_offs_small;
     bd.y_offs_small = y_offs_small;
-    bd.img = "uiAtlas2";
+    bd.img = BuiltinTexRef("ui_atlas2");
     bd.mesh_transparent = "currencyPlusButton";
     bd.color_r = kGetTokensButtonColorR;
     bd.color_g = kGetTokensButtonColorG;
@@ -551,7 +559,7 @@ void RootWidget::Setup() {
     bd.color_g = 0.4f;
     bd.color_b = 0.35f;
     bd.y = -40.0f;
-    bd.img = "nub";
+    bd.img = BuiltinTexRef("nub");
     bd.call = UIV1Python::ObjID::kRootUIBackButtonPressCall;
     bd.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimal)
@@ -587,7 +595,7 @@ void RootWidget::Setup() {
     bd.height = 90.0f;
     bd.x = 256.0f;
     bd.y = -20.0f;
-    bd.img = "uiAtlas2";
+    bd.img = BuiltinTexRef("ui_atlas2");
     bd.mesh_transparent = "toolbarBackingTop2";
     bd.selectable = false;
     bd.color_r = 0.44f;
@@ -611,7 +619,7 @@ void RootWidget::Setup() {
     bd.height = 90.0f;
     bd.x = 0.0f;
     bd.y = -20.0f;
-    bd.img = "uiAtlas2";
+    bd.img = BuiltinTexRef("ui_atlas2");
     bd.mesh_transparent = "toolbarBackingTop2";
     bd.selectable = false;
     bd.color_r = 0.44f;
@@ -682,7 +690,7 @@ void RootWidget::Setup() {
     b.v_align = VAlign_::kTop;
     b.width = b.height = 65.0f;
     b.y = b.height * -0.48f;
-    b.img = "menuButton";
+    b.img = BuiltinTexRef("menu_button");
     b.call = UIV1Python::ObjID::kRootUIMenuButtonPressCall;
     b.color_r = 0.3f;
     b.color_g = 0.5f;
@@ -712,7 +720,7 @@ void RootWidget::Setup() {
     b.v_align = VAlign_::kTop;
     b.width = b.height = 70.0f;
     b.y = b.height * -0.41f;
-    b.img = "usersButton";
+    b.img = BuiltinTexRef("users_button");
     b.call = UIV1Python::ObjID::kRootUISquadButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kInGame)
@@ -767,7 +775,7 @@ void RootWidget::Setup() {
       bd.height = 100.0f;
       bd.x = 0.0f;
       bd.y = 41.0f;
-      bd.img = "uiAtlas2";
+      bd.img = BuiltinTexRef("ui_atlas2");
       bd.mesh_transparent = "toolbarBackingBottom2";
       bd.selectable = false;
       bd.color_r = 0.473f;
@@ -935,7 +943,7 @@ void RootWidget::Setup() {
       imgd.y = 24.0f;
       imgd.width = 32.0f;
       imgd.height = 32.0f;
-      imgd.img = "circle";
+      imgd.img = BuiltinTexRef("circle");
       imgd.depth_min = 0.3f;
       imgd.color_r = 1.0f;
       imgd.color_g = 0.0f;
@@ -1119,7 +1127,7 @@ void RootWidget::Setup() {
     imgd.y = 50.0f;
     imgd.width = 50.0f;
     imgd.height = 50.0f;
-    imgd.img = "white";
+    imgd.img = BuiltinTexRef("white");
     // imgd.depth_min = 0.3f;
 
     imgd.button = store_button_;
@@ -1290,8 +1298,9 @@ void RootWidget::StepLeagueRank_(base::RenderPass* renderpass, seconds_t dt) {
       g_base->audio->PushSourceStopSoundCall(*league_rank_anim_sound_play_id_);
       league_rank_anim_sound_play_id_.reset();
     }
-    g_base->audio->SafePlaySysSound(improving ? base::SysSoundID::kCashRegister
-                                              : base::SysSoundID::kPowerDown);
+    g_base->audio->SafePlayBuiltinSound(
+        improving ? base::BuiltinSoundID::kAudioCashRegister
+                  : base::BuiltinSoundID::kAudioPowerdown01);
     league_rank_text_->widget->SetText(
         "#" + std::to_string(league_rank_vis_value_));
     trophy_meter_mult_ = {1.0f, 1.0f, 1.0f};
@@ -1354,7 +1363,7 @@ void RootWidget::StepTicketsMeter_(base::RenderPass* renderpass, seconds_t dt) {
       // Anim is done; reset stuff and do an update to get things back
       // to their default display.
       tickets_meter_animating_ = false;
-      // g_base->audio->SafePlaySysSound(base::SysSoundID::kCashRegister);
+      // g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioCashRegister);
       // Make note that we need to go back to a live value after this
       // animation. It might not be possible immediately if updates are
       // paused/etc.
@@ -1412,7 +1421,7 @@ void RootWidget::StepTokensMeter_(base::RenderPass* renderpass, seconds_t dt) {
       // Anim is done; reset stuff and do an update to get things back
       // to their default display.
       tokens_meter_animating_ = false;
-      // g_base->audio->SafePlaySysSound(base::SysSoundID::kCashRegister);
+      // g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioCashRegister);
       // Make note that we need to go back to a live value after this
       // animation. It might not be possible immediately if updates are
       // paused/etc.
@@ -2202,6 +2211,29 @@ void RootWidget::SquadPress() {
   }
 }
 
+auto RootWidget::BackPressWouldNavigate() const -> bool {
+  assert(g_base->InLogicThread());
+
+  // A popup/dialog is up; back closes it.
+  if (overlay_stack_widget_ != nullptr
+      && overlay_stack_widget_->HasChildren()) {
+    return true;
+  }
+
+  // Somewhere to go back to within the main window stack.
+  if (back_button_ != nullptr && back_button_->widget->enabled()) {
+    return true;
+  }
+
+  // Outside the main menu (in a game), back brings up the in-game menu.
+  if (!g_base->app_mode()->IsInMainMenu()) {
+    return true;
+  }
+
+  // Top-level main menu with nothing above it.
+  return false;
+}
+
 void RootWidget::BackPress() {
   assert(g_base->InLogicThread());
   screen_stack_widget_->HandleMessage(
@@ -2451,7 +2483,7 @@ void RootWidget::UpdateInboxDisplay_() {
   if (flash) {
     inbox_animating_ = true;
     inbox_anim_flash_time_ = g_base->logic->display_time() + 1.5;
-    g_base->audio->SafePlaySysSound(base::SysSoundID::kDing);
+    g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioDing);
   }
 }
 
@@ -2523,8 +2555,9 @@ void RootWidget::UpdateLeagueRankDisplay_() {
       if (improving) {
         if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
           s->SetPositional(false);
-          league_rank_anim_sound_play_id_ = s->Play(
-              g_base->assets->SysSound(base::SysSoundID::kScoreIncrease));
+          league_rank_anim_sound_play_id_ =
+              s->Play(g_base->assets->BuiltinSound(
+                  base::BuiltinSoundID::kAudioScoreIncrease));
           s->End();
         }
       }
@@ -2773,14 +2806,14 @@ void RootWidget::UpdateChests_() {
 
   // Make sure we've got the latest translated strings for open times.
   if (translations_dirty_) {
-    time_suffix_hours_ =
-        g_base->assets->CompileResourceString(R"({"r":"timeSuffixHoursText"})");
-    time_suffix_minutes_ = g_base->assets->CompileResourceString(
-        R"({"r":"timeSuffixMinutesText"})");
-    time_suffix_seconds_ = g_base->assets->CompileResourceString(
-        R"({"r":"timeSuffixSecondsText"})");
-    open_me_text_ =
-        g_base->assets->CompileResourceString(R"({"r":"openMeText"})");
+    // Unit templates come from the duration formatter components
+    // (LangStr-era translated content; the builtin package embeds
+    // them), keeping this display off the legacy language corpus.
+    auto units = g_base->assets->GetDurationUnitTemplates();
+    time_suffix_hours_ = units.hours;
+    time_suffix_minutes_ = units.minutes;
+    time_suffix_seconds_ = units.seconds;
+    open_me_text_ = base::BuiltinStrings::Ui::OpenMe()->Evaluate();
     translations_dirty_ = false;
   }
 
@@ -2880,7 +2913,7 @@ void RootWidget::UpdateChests_() {
             &chest_color, &chest_tint, &chest_tint2);
       } else {
         chest_tex_closed = "chestIcon";
-        chest_tex_closed_tint = "white";
+        chest_tex_closed_tint = BuiltinTexRef("white");
         chest_color = Vector3f{1.0f, 1.0f, 1.0f};
         chest_tint = Vector3f{1.0f, 1.0f, 1.0f};
         chest_tint2 = Vector3f{1.0f, 1.0f, 1.0f};
@@ -3013,7 +3046,7 @@ auto RootWidget::GetTimeStr_(seconds_t diff, bool animating) -> std::string {
     std::string s = time_suffix_hours_;
     char buffer[100];
     snprintf(buffer, sizeof(buffer), "%d", h);
-    Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+    Utils::StringReplaceOne(&s, "{amount}", buffer);
     if (!output.empty()) {
       output += " ";
     }
@@ -3026,7 +3059,7 @@ auto RootWidget::GetTimeStr_(seconds_t diff, bool animating) -> std::string {
     std::string s = time_suffix_minutes_;
     char buffer[100];
     snprintf(buffer, sizeof(buffer), "%d", m);
-    Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+    Utils::StringReplaceOne(&s, "{amount}", buffer);
     if (!output.empty()) {
       output += " ";
     }
@@ -3043,7 +3076,7 @@ auto RootWidget::GetTimeStr_(seconds_t diff, bool animating) -> std::string {
         std::string s = time_suffix_seconds_;
         char buffer[100];
         snprintf(buffer, sizeof(buffer), "%.2f", sec);
-        Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+        Utils::StringReplaceOne(&s, "{amount}", buffer);
         if (!output.empty()) {
           output += " ";
         }
@@ -3056,7 +3089,7 @@ auto RootWidget::GetTimeStr_(seconds_t diff, bool animating) -> std::string {
         std::string s = time_suffix_seconds_;
         char buffer[100];
         snprintf(buffer, sizeof(buffer), "%d", sec);
-        Utils::StringReplaceOne(&s, "${COUNT}", buffer);
+        Utils::StringReplaceOne(&s, "{amount}", buffer);
         if (!output.empty()) {
           output += " ";
         }
@@ -3072,6 +3105,9 @@ auto RootWidget::GetTimeStr_(seconds_t diff, bool animating) -> std::string {
 
 void RootWidget::PauseUpdates() {
   assert(g_base->InLogicThread());
+  if (update_pause_count_ == 0) {
+    update_pause_start_time_ = g_core->AppTimeSeconds();
+  }
   update_pause_count_ += 1;
 }
 
@@ -3081,6 +3117,23 @@ void RootWidget::ResumeUpdates() {
   if (update_pause_count_ < 0) {
     BA_LOG_ONCE(LogName::kBaApp, LogLevel::kError,
                 "RootWidget update-pause-count < 0; should not happen.");
+  }
+  if (update_pause_count_ == 0) {
+    // Warn if the just-completed paused stretch ran long. These pauses
+    // are meant to cover brief animations/round-trips; long ones
+    // generally mean a pause holder got stuck (see the per-holder
+    // warning in bauiv1.RootUIUpdatePause for who). Warning level so
+    // this surfaces in triggered client log reports.
+    seconds_t held = g_core->AppTimeSeconds() - update_pause_start_time_;
+    seconds_t warn_threshold{10.0};
+    if (held >= warn_threshold) {
+      char buffer[128];
+      snprintf(buffer, sizeof(buffer),
+               "Root-ui updates were paused for %.1f seconds before"
+               " resuming; expected to be brief.",
+               held);
+      g_core->logging->Log(LogName::kBaApp, LogLevel::kWarning, buffer);
+    }
   }
 }
 
@@ -3109,7 +3162,8 @@ void RootWidget::AnimateChestUnlockTime(const std::string& chestid,
     if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
       s->SetPositional(false);
       chest_unlock_time_anim_sound_play_id_ =
-          s->Play(g_base->assets->SysSound(base::SysSoundID::kScoreIncrease));
+          s->Play(g_base->assets->BuiltinSound(
+              base::BuiltinSoundID::kAudioScoreIncrease));
       s->End();
     }
   }
@@ -3130,8 +3184,8 @@ void RootWidget::AnimateTickets(seconds_t duration, int startvalue,
   if (!tickets_anim_sound_play_id_.has_value()) {
     if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
       s->SetPositional(false);
-      tickets_anim_sound_play_id_ =
-          s->Play(g_base->assets->SysSound(base::SysSoundID::kScoreIncrease));
+      tickets_anim_sound_play_id_ = s->Play(g_base->assets->BuiltinSound(
+          base::BuiltinSoundID::kAudioScoreIncrease));
       s->End();
     }
   }
@@ -3152,8 +3206,8 @@ void RootWidget::AnimateTokens(seconds_t duration, int startvalue,
   if (!tokens_anim_sound_play_id_.has_value()) {
     if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
       s->SetPositional(false);
-      tokens_anim_sound_play_id_ =
-          s->Play(g_base->assets->SysSound(base::SysSoundID::kScoreIncrease));
+      tokens_anim_sound_play_id_ = s->Play(g_base->assets->BuiltinSound(
+          base::BuiltinSoundID::kAudioScoreIncrease));
       s->End();
     }
   }

@@ -6,15 +6,19 @@
 
 #include <algorithm>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_platform/app_platform.h"
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/input/device/input_device.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/base/support/plus_soft.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/logging/logging.h"
@@ -22,7 +26,7 @@
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/scene_v1/support/client_session_net.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
-#include "ballistica/shared/generic/json.h"
+#include "ballistica/shared/generic/json_facade.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::scene_v1 {
@@ -32,48 +36,68 @@ const int kPingSendInterval = 2000;
 
 static auto MakeServerResponseJson_(const std::string& passed_str)
     -> std::string {
-  // Root object.
-  cJSON* root = cJSON_CreateObject();
-  if (!root) {
-    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                         "MakeServerResponseJson_: cJSON_CreateObject failed.");
-    return "<Internal Error>";
-  }
-
-  // Create array for "t".
-  cJSON* t_array = cJSON_CreateArray();
-  if (!t_array) {
-    cJSON_Delete(root);
-    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                         "MakeServerResponseJson_: cJSON_CreateArray failed.");
-    return "<Internal Error>";
-  }
-
-  // Add array to root under key "t".
-  cJSON_AddItemToObject(root, "t", t_array);
-
-  // Add elements to array.
-  cJSON_AddItemToArray(t_array, cJSON_CreateString("serverResponses"));
-  cJSON_AddItemToArray(t_array, cJSON_CreateString(passed_str.c_str()));
-
-  // Serialize to compact JSON.
-  char* json_cstr = cJSON_PrintUnformatted(root);
-  if (!json_cstr) {
-    cJSON_Delete(root);
-    g_core->logging->Log(
-        LogName::kBaNetworking, LogLevel::kError,
-        "MakeServerResponseJson_: cJSON_PrintUnformatted failed.");
-    return "<Internal Error>";
-  }
-
-  // Copy into std::string.
-  std::string result(json_cstr);
-
-  // Free cJSON allocations.
-  cJSON_free(json_cstr);
-  cJSON_Delete(root);
+  // A {"t": ["serverResponses", <passed_str>]} object.
+  JsonBuilder builder;
+  builder.root_object().AddArray("t").Add("serverResponses").Add(passed_str);
+  std::string result = builder.Write();
 
   return result;
+}
+
+// Resolve a lang-str tagged wire value (see kLangStrWireTag*) from the
+// message layer to flat display text: the string to show plus whether
+// it is literal (bypasses the legacy resource-string compile at draw).
+//
+// SPECIAL CASE -- do not copy this parse-and-evaluate shape to new
+// ingest points. Evaluating wire-supplied LangStrs against local
+// tables with no resolve step is only valid where something has
+// ALREADY structurally guaranteed the referenced packages are
+// resolved locally -- here, the arrive-ready prep contract: this code
+// only runs on an established connection to a host, and unprepped
+// connects to lang-str-era hosts are refused at the handshake. That
+// guarantee is also why refs outside it may simply fail visibly
+// (LANGSTR_ERROR) instead of being accommodated: they indicate a
+// host-side bug, and untrusted peers must never be able to trigger
+// client-side resolve/download machinery from message-level traffic.
+// A new consumer of wire LangStrs must establish an equivalent
+// verified context of its own (see the D28 trust model + D33 in
+// docs/initiatives/strings-asset-migration.md).
+static auto EvalTaggedScreenMessage_(const std::string& val)
+    -> std::pair<std::string, bool> {
+  switch (val[0]) {
+    case kLangStrWireTagLiteral:
+      return {val.substr(1), true};
+    case kLangStrWireTagLegacyJson:
+      return {val.substr(1), false};
+    default: {
+      auto parsed = base::LangStr::FromJson(std::string_view(val).substr(1));
+      if (!parsed.has_value()) {
+        g_core->logging->Log(
+            LogName::kBaNetworking, LogLevel::kWarning,
+            "Error parsing lang-str screen-message value: " + parsed.error());
+        return {"LANGSTR_ERROR:" + parsed.error(), true};
+      }
+      return {(*parsed)->Evaluate(), true};
+    }
+  }
+}
+
+// Map a BA_REJECT_REASON_* join-rejection code to our own localized
+// message for it. Any unrecognized value (e.g. a reason added by a newer
+// peer/server) renders as a generic rejection.
+static auto RejectReasonMessage_(int reason) -> std::string {
+  switch (reason) {
+    case BA_REJECT_REASON_PASSWORD_INCORRECT:
+      return base::BuiltinStrings::Net::IncorrectPassword()->Evaluate();
+    case BA_REJECT_REASON_ACCOUNT_REJECTED:
+      return base::BuiltinStrings::Net::AccountRejected()->Evaluate();
+    case BA_REJECT_REASON_AUTH_ERROR:
+      return base::BuiltinStrings::Net::AuthError()->Evaluate();
+    case BA_REJECT_REASON_MUST_SIGN_IN:
+      return base::BuiltinStrings::Account::MustSignIn()->Evaluate();
+    default:
+      return base::BuiltinStrings::Net::ConnectionRejected()->Evaluate();
+  }
 }
 
 ConnectionToHost::ConnectionToHost()
@@ -92,17 +116,16 @@ ConnectionToHost::~ConnectionToHost() {
       // '${PEER-NAME}'s party'.
       std::string s;
       if (!party_name_.empty()) {
-        s = g_base->assets->GetResourceString("leftGameText");
-        Utils::StringReplaceOne(&s, "${NAME}", party_name_);
+        s = base::BuiltinStrings::Net::LeftGame(party_name_)->Evaluate();
       } else {
-        s = g_base->assets->GetResourceString("leftPartyText");
-        Utils::StringReplaceOne(&s, "${NAME}", peer_spec().GetDisplayString());
+        s = base::BuiltinStrings::Net::LeftParty(peer_spec().GetDisplayString())
+                ->Evaluate();
       }
       g_base->ScreenMessage(s, {1, 0.5f, 0.0f});
-      g_base->audio->SafePlaySysSound(base::SysSoundID::kCorkPop);
+      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioCorkPop);
     } else {
       g_base->ScreenMessage(
-          g_base->assets->GetResourceString("connectionRejectedText"),
+          base::BuiltinStrings::Net::ConnectionRejected()->Evaluate(),
           {1, 0, 0});
     }
   }
@@ -169,6 +192,23 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
         protocol_version_ = their_protocol_version;
       }
 
+      // Structural backstop for arrive-ready joins: we never proceed
+      // with a lang-str-era host unless the pre-join requirements
+      // exchange ran for this connect (the no-mid-game-downloads design
+      // means an unprepped join could only strand). Normally the
+      // pre-connect probe guarantees this; getting here means some path
+      // skipped it, so fail exactly like a standard connect failure.
+      if (compatible && their_protocol_version >= kProtocolVersionLangStrWire
+          && !prepped_) {
+        g_core->logging->Log(
+            LogName::kBaNetworking, LogLevel::kWarning,
+            "ConnectionToHost: aborting unprepped connect to protocol "
+                + std::to_string(their_protocol_version)
+                + " host (requirements exchange did not run).");
+        Error(base::BuiltinStrings::Net::ConnectionFailed()->Evaluate());
+        return;
+      }
+
       // See if the server uses v2 auth.
       if (!got_v2_auth_usage_) {
         // If server requires v2 auth, it will have a 'v2a' value in its
@@ -176,17 +216,12 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
         // cloud to send our account info to that app-instance and give us a
         // token we can use to identify ourself as that account to them.
         if (their_protocol_version >= 33) {
-          std::vector<char> string_buffer(data.size() - 3 + 1);
-          memcpy(&(string_buffer[0]), &(data[3]), data.size() - 3);
-          string_buffer[string_buffer.size() - 1] = 0;
-          if (cJSON* handshake = cJSON_Parse(string_buffer.data())) {
-            if (cJSON_IsObject(handshake)) {
-              cJSON* v2a = cJSON_GetObjectItem(handshake, "v2a");
-              if (cJSON_IsString(v2a)) {
-                v2_auth_global_app_instance_id_ = v2a->valuestring;
-              }
+          if (auto doc = JsonDoc::Parse(std::string_view(
+                  reinterpret_cast<const char*>(data.data() + 3),
+                  data.size() - 3))) {
+            if (auto v2a = doc->root()["v2a"].as_string()) {
+              v2_auth_global_app_instance_id_ = std::string(*v2a);
             }
-            cJSON_Delete(handshake);
           }
         }
         got_v2_auth_usage_ = true;
@@ -221,16 +256,34 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
             auto valid_format{false};
             if (result.ValueIsSequence()) {
               auto vals{result.ValueAsSequence()};
-              if (vals.size() == 2 && PyBool_Check(*vals[0])
-                  && vals[1].ValueIsString()) {
+              if (vals.size() == 3 && PyBool_Check(*vals[0])
+                  && vals[1].ValueIsString()
+                  && (vals[2].ValueIsNone() || PyLong_Check(*vals[2]))) {
                 // Success!!!
                 auto success{vals[0].ValueAsBool()};
                 auto sval{vals[1].ValueAsString()};
                 valid_format = true;
 
                 if (!success) {
-                  // If auth rejected us, show auth error message and fail.
-                  Error(MakeServerResponseJson_(sval));
+                  // Auth rejected us; show an error message and fail. If a
+                  // reject-reason code came with the rejection, render our
+                  // own localized string for it; otherwise show the passed
+                  // text (which can be free-form host-supplied text)
+                  // translated via the legacy server-responses mechanism.
+                  if (!vals[2].ValueIsNone()) {
+                    auto reason{static_cast<int>(vals[2].ValueAsInt())};
+                    std::string msg = RejectReasonMessage_(reason);
+                    g_core->logging->Log(
+                        LogName::kBaNetworking, LogLevel::kDebug,
+                        "V2 auth rejected us (reason code "
+                            + std::to_string(reason) + "); showing: " + msg);
+                    Error(msg);
+                  } else {
+                    g_core->logging->Log(
+                        LogName::kBaNetworking, LogLevel::kDebug,
+                        "V2 auth rejected us; showing supplied text: " + sval);
+                    Error(MakeServerResponseJson_(sval));
+                  }
                   return;
                 } else {
                   // Auth accepted us! Pass along this token in our
@@ -261,19 +314,20 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
       // For server-protocol 33+ we provide json info dict.
       if (their_protocol_version >= 33) {
         // Construct a json dict with our player-spec-string as one element
-        JsonDict dict;
-        dict.AddString("s", PlayerSpec::GetAccountPlayerSpec().GetSpecString());
+        JsonBuilder builder;
+        JsonObjBuilder dict = builder.root_object();
+        dict.Add("s", PlayerSpec::GetAccountPlayerSpec().GetSpecString());
 
         // Also add our public device id. Servers can use this to combat
         // spammers.
-        dict.AddString("d", g_base->platform->GetPublicDeviceUUID());
+        dict.Add("d", g_base->platform->GetPublicDeviceUUID());
 
         // Add v2 auth token.
         if (v2_auth_token.has_value()) {
-          dict.AddString("v2at", *v2_auth_token);
+          dict.Add("v2at", *v2_auth_token);
         }
 
-        std::string out = dict.PrintUnformatted();
+        std::string out = builder.Write();
 
         std::vector<uint8_t> data2(3 + out.size());
         data2[0] = BA_SCENEPACKET_HANDSHAKE_RESPONSE;
@@ -295,11 +349,11 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
 
       if (!compatible) {
         if (their_protocol_version > protocol_version()) {
-          Error(g_base->assets->GetResourceString(
-              "incompatibleNewerVersionHostText"));
+          Error(base::BuiltinStrings::Net::IncompatibleNewerVersionHost()
+                    ->Evaluate());
         } else {
           Error(
-              g_base->assets->GetResourceString("incompatibleVersionHostText"));
+              base::BuiltinStrings::Net::IncompatibleVersionHost()->Evaluate());
         }
         return;
       }
@@ -308,26 +362,26 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
       // language they understand, go ahead and kick some stuff off.
       if (!can_communicate()) {
         if (their_protocol_version >= 33) {
-          std::vector<char> string_buffer(data.size() - 3 + 1);
-          memcpy(&(string_buffer[0]), &(data[3]), data.size() - 3);
-          string_buffer[string_buffer.size() - 1] = 0;
           // In newer protocols, handshake contains a json dict so we can
           // evolve it going forward.
-          if (cJSON* handshake = cJSON_Parse(string_buffer.data())) {
-            if (cJSON_IsObject(handshake)) {
+          if (auto doc = JsonDoc::Parse(std::string_view(
+                  reinterpret_cast<const char*>(data.data() + 3),
+                  data.size() - 3))) {
+            JsonRef root = doc->root();
+            if (root.is_object()) {
               // We hash this to prove that we're us; keep it around.
               peer_hash_input_ = "";
-              cJSON* pspec = cJSON_GetObjectItem(handshake, "s");
-              if (cJSON_IsString(pspec)) {
-                peer_hash_input_ += pspec->valuestring;
-                set_peer_spec(PlayerSpec(pspec->valuestring));
+              if (auto pspec = root["s"].as_string()) {
+                peer_hash_input_ += *pspec;
+                set_peer_spec(PlayerSpec(std::string(*pspec)));
               }
-              cJSON* salt = cJSON_GetObjectItem(handshake, "l");
-              if (cJSON_IsString(salt)) {
-                peer_hash_input_ += salt->valuestring;
+              if (auto salt = root["l"].as_string()) {
+                peer_hash_input_ += *salt;
+                // Keep the raw salt too; it doubles as the per-connection
+                // nonce for the join-password HMAC (see CLIENT_INFO below).
+                handshake_salt_ = *salt;
               }
             }
-            cJSON_Delete(handshake);
           }
         } else {
           // (KILL THIS WHEN kProtocolVersionClientMin >= 33)
@@ -374,15 +428,25 @@ void ConnectionToHost::HandleGamePacket(const std::vector<uint8_t>& data) {
         // The very first thing we send is our client-info which is a json
         // dict with arbitrary data.
         {
-          JsonDict dict;
-          dict.AddNumber("b", kEngineBuildNumber);
+          JsonBuilder builder;
+          JsonObjBuilder dict = builder.root_object();
+          dict.Add("b", kEngineBuildNumber);
 
           g_base->Plus()->V1SetClientInfo(&dict);
 
           // Pass the hash we generated from their handshake; they can use
           // this for v1 client auth.
-          dict.AddString("ph", peer_hash_);
-          std::string info = dict.PrintUnformatted();
+          dict.Add("ph", peer_hash_);
+
+          // If we were given a join-password, prove we know it without
+          // sending it in the clear: HMAC it with the host's
+          // per-connection handshake salt. The host recomputes the same
+          // and compares (see ConnectionToClient CLIENT_INFO handling).
+          if (!join_password_.empty()) {
+            dict.Add("pw", g_base->python->HmacSha256Hex(join_password_,
+                                                         handshake_salt_));
+          }
+          std::string info = builder.Write();
           std::vector<uint8_t> msg(info.size() + 1);
           msg[0] = BA_MESSAGE_CLIENT_INFO;
           memcpy(&(msg[1]), info.c_str(), info.size());
@@ -482,30 +546,27 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
   switch (buffer[0]) {
     case BA_MESSAGE_HOST_INFO: {
       if (buffer.size() > 1) {
-        std::vector<char> str_buffer(buffer.size());
-        std::copy(buffer.begin() + 1, buffer.end(), str_buffer.begin());
-        str_buffer.back() = 0;  // Ensure null termination
-        if (cJSON* info = cJSON_Parse(str_buffer.data())) {
-          if (cJSON_IsObject(info)) {
-            // Build number.
-            cJSON* b = cJSON_GetObjectItem(info, "b");
-            if (cJSON_IsNumber(b)) {
-              build_number_ = b->valueint;
-            } else {
-              BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
-                          "No buildnumber in hostinfo msg.");
-            }
-            // Party name.
-            cJSON* n = cJSON_GetObjectItem(info, "n");
-            if (cJSON_IsString(n)) {
-              party_name_ = Utils::GetValidUTF8(n->valuestring, "bsmhi");
-            }
+        // Payload is the bytes after the message-type byte (no trailing null).
+        std::string_view info_str(
+            reinterpret_cast<const char*>(buffer.data() + 1),
+            buffer.size() - 1);
+        if (auto doc = JsonDoc::Parse(info_str)) {
+          JsonRef root = doc->root();
+          // Build number.
+          if (auto b = root["b"].as_double()) {
+            build_number_ = static_cast<int>(*b);
+          } else {
+            BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                        "No buildnumber in hostinfo msg.");
           }
-          cJSON_Delete(info);
+          // Party name.
+          if (auto n = root["n"].as_string()) {
+            party_name_ = Utils::GetValidUTF8(std::string(*n).c_str(), "bsmhi");
+          }
         } else {
           BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
                       "Got invalid json in hostinfo message: "
-                          + std::string(str_buffer.data()) + ".");
+                          + std::string(info_str) + ".");
         }
       }
       got_host_info_ = true;
@@ -514,23 +575,19 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
 
     case BA_MESSAGE_PARTY_ROSTER: {
       if (buffer.size() >= 3 && buffer[buffer.size() - 1] == 0) {
-        // Expand this into a json object; if it's valid, replace the game's
-        // current roster with it.
-        cJSON* new_roster =
-            cJSON_Parse(reinterpret_cast<const char*>(buffer.data()) + 1);
-
-        // Watch for invalid data.
-        if (new_roster && !cJSON_IsArray(new_roster)) {
-          cJSON_Delete(new_roster);
-          new_roster = nullptr;
-          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
-                      "Got invalid json in hostinfo message.");
-        }
-
-        if (new_roster) {
+        // Parse the (untrusted) roster json; if it's a valid array, replace
+        // the game's current roster with it. The payload is the bytes between
+        // the message-type byte and the trailing null terminator.
+        auto doc = JsonDoc::Parse(
+            std::string_view(reinterpret_cast<const char*>(buffer.data() + 1),
+                             buffer.size() - 2));
+        if (doc.has_value() && doc->root().is_array()) {
           if (auto* appmode = classic::ClassicAppMode::GetActive()) {
-            appmode->SetGameRoster(new_roster);
+            appmode->SetGameRoster(doc->root());
           }
+        } else {
+          BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                      "Got invalid json in party-roster message.");
         }
       }
       break;
@@ -540,42 +597,58 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
       // High level json screen-messages (nice and easy to expand on but not
       // especially efficient).
       if (buffer.size() >= 3 && buffer[buffer.size() - 1] == 0) {
-        if (cJSON* msg =
-                cJSON_Parse(reinterpret_cast<const char*>(buffer.data() + 1))) {
-          if (cJSON_IsObject(msg)) {
-            cJSON* type = cJSON_GetObjectItem(msg, "t");
-            if (cJSON_IsNumber(type)) {
-              switch (type->valueint) {
-                case BA_JMESSAGE_SCREEN_MESSAGE: {
-                  std::string m;
-                  float r{1.0f};
-                  float g{1.0f};
-                  float b{1.0f};
-                  cJSON* r_obj = cJSON_GetObjectItem(msg, "r");
-                  cJSON* g_obj = cJSON_GetObjectItem(msg, "g");
-                  cJSON* b_obj = cJSON_GetObjectItem(msg, "b");
-                  cJSON* m_obj = cJSON_GetObjectItem(msg, "m");
-                  if (cJSON_IsNumber(r_obj)) {
-                    r = static_cast<float>(r_obj->valuedouble);
-                  }
-                  if (cJSON_IsNumber(g_obj)) {
-                    g = static_cast<float>(g_obj->valuedouble);
-                  }
-                  if (cJSON_IsNumber(b_obj)) {
-                    b = static_cast<float>(b_obj->valuedouble);
-                  }
-                  if (cJSON_IsString(m_obj)) {
-                    m = m_obj->valuestring;
-                    g_base->ScreenMessage(m, {r, g, b});
-                  }
-                  break;
+        // Payload is the bytes between the type byte and the trailing null.
+        if (auto doc = JsonDoc::Parse(std::string_view(
+                reinterpret_cast<const char*>(buffer.data() + 1),
+                buffer.size() - 2))) {
+          JsonRef root = doc->root();
+          if (auto type = root["t"].as_double()) {
+            switch (static_cast<int>(*type)) {
+              case BA_JMESSAGE_SCREEN_MESSAGE: {
+                auto r = static_cast<float>(root["r"].double_or(1.0));
+                auto g = static_cast<float>(root["g"].double_or(1.0));
+                auto b = static_cast<float>(root["b"].double_or(1.0));
+                // Prefer the lang-str tagged form when the sender
+                // included one (we render it in our own locale); the
+                // flat 'm' text covers senders predating it. Hosts new
+                // enough to know we understand the tagged form (build
+                // gate) send ONLY it -- 'm' may be absent entirely.
+                auto m = root["m"].as_string();
+                auto m2 = root["m2"].as_string();
+                if (m2.has_value() && !m2->empty()
+                    && IsLangStrWireTagged(std::string(*m2))) {
+                  auto [text, literal] =
+                      EvalTaggedScreenMessage_(std::string(*m2));
+                  g_core->logging->Log(
+                      LogName::kBaNetworking, LogLevel::kDebug, [&text] {
+                        return "ConnectionToHost: lang-str transient"
+                               " screen-message: "
+                               + text;
+                      });
+                  g_base->ScreenMessage(text, {r, g, b}, literal);
+                } else if (m.has_value()) {
+                  g_base->ScreenMessage(std::string(*m), {r, g, b});
                 }
-                default:
-                  break;
+                break;
               }
+              case BA_JMESSAGE_REJECT_REASON: {
+                // The host rejected our join with a reason code; render our
+                // OWN localized builtin string for it. Any unrecognized
+                // value (e.g. a reason a newer host added) falls through to
+                // a generic rejection message.
+                auto reason = static_cast<int>(root["r"].double_or(0.0));
+                std::string msg = RejectReasonMessage_(reason);
+                g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug,
+                                     "Join rejected by host (reason code "
+                                         + std::to_string(reason)
+                                         + "); showing: " + msg);
+                g_base->ScreenMessage(msg, {1, 0, 0});
+                break;
+              }
+              default:
+                break;
             }
           }
-          cJSON_Delete(msg);
         }
       }
       break;
@@ -586,12 +659,13 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         std::vector<char> str_buffer(buffer.size());
         memcpy(&(str_buffer[0]), &(buffer[1]), buffer.size() - 1);
         str_buffer[str_buffer.size() - 1] = 0;
-        std::string s =
-            g_base->assets->GetResourceString("playerJoinedPartyText");
-        Utils::StringReplaceOne(
-            &s, "${NAME}", PlayerSpec(str_buffer.data()).GetDisplayString());
-        g_base->ScreenMessage(s, {0.5f, 1.0f, 0.5f});
-        g_base->audio->SafePlaySysSound(base::SysSoundID::kGunCock);
+        g_base->ScreenMessage(
+            base::BuiltinStrings::Net::PlayerJoinedParty(
+                PlayerSpec(str_buffer.data()).GetDisplayString())
+                ->Evaluate(),
+            {0.5f, 1.0f, 0.5f});
+        g_base->audio->SafePlayBuiltinSound(
+            base::BuiltinSoundID::kAudioGunCocking);
       }
       break;
     }
@@ -602,12 +676,13 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
         std::vector<char> str_buffer(buffer.size());
         memcpy(&(str_buffer[0]), &(buffer[1]), buffer.size() - 1);
         str_buffer[str_buffer.size() - 1] = 0;
-        std::string s =
-            g_base->assets->GetResourceString("playerLeftPartyText");
-        Utils::StringReplaceOne(
-            &s, "${NAME}", PlayerSpec(&(str_buffer[0])).GetDisplayString());
-        g_base->ScreenMessage(s, {1, 0.5f, 0.0f});
-        g_base->audio->SafePlaySysSound(base::SysSoundID::kCorkPop);
+        g_base->ScreenMessage(
+            base::BuiltinStrings::Net::PlayerLeftParty(
+                PlayerSpec(&(str_buffer[0])).GetDisplayString())
+                ->Evaluate(),
+            {1, 0.5f, 0.0f});
+        g_base->audio->SafePlayBuiltinSound(
+            base::BuiltinSoundID::kAudioCorkPop);
       }
       break;
     }
@@ -758,14 +833,14 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
     // If we've got a name for their party, use it; otherwise call it
     // '${NAME}'s party'.
     if (!party_name_.empty()) {
-      s = g_base->assets->GetResourceString("connectedToGameText");
-      Utils::StringReplaceOne(&s, "${NAME}", party_name_);
+      s = base::BuiltinStrings::Net::ConnectedToGame(party_name_)->Evaluate();
     } else {
-      s = g_base->assets->GetResourceString("connectedToPartyText");
-      Utils::StringReplaceOne(&s, "${NAME}", peer_spec().GetDisplayString());
+      s = base::BuiltinStrings::Net::ConnectedToParty(
+              peer_spec().GetDisplayString())
+              ->Evaluate();
     }
     g_base->ScreenMessage(s, {0.5f, 1, 0.5f});
-    g_base->audio->SafePlaySysSound(base::SysSoundID::kGunCock);
+    g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioGunCocking);
 
     printed_connect_message_ = true;
   }

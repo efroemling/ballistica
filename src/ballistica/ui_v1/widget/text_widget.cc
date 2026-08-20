@@ -5,7 +5,9 @@
 #include <Python.h>
 
 #include <algorithm>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_platform/app_platform.h"
@@ -21,8 +23,10 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python.h"
 #include "ballistica/ui_v1/python/ui_v1_python.h"
@@ -50,6 +54,14 @@ TextWidget::~TextWidget() = default;
 
 void TextWidget::SetOnReturnPressCall(PyObject* call_tuple) {
   on_return_press_call_ = Object::New<base::PythonContextCall>(call_tuple);
+}
+
+void TextWidget::InvokeReturnPress() {
+  if (auto* call = on_return_press_call_.get()) {
+    // Schedule to run right after any current UI traversal, same as
+    // an inline-editing enter press.
+    call->ScheduleInUIOperation();
+  }
 }
 
 void TextWidget::SetOnActivateCall(PyObject* call_tuple) {
@@ -97,6 +109,20 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   millisecs_t current_time = pass->frame_def()->display_time_millisecs();
 
+  // Precompute transition factor (scale-type pre-scales the whole widget).
+  float transition_in_progress =
+      (static_cast<float>(birth_time_millisecs_) + transition_delay_)
+      - static_cast<float>(current_time);
+  float transition_scale = 1.0f;
+  if (transition_in_progress > 0
+      && transition_type_ == TransitionType::kScale) {
+    // Fixed 150ms scale-up at the tail of the transition window
+    // (quadratic ease-out; decelerates as it settles at 1.0).
+    constexpr float kScaleDurationMs = 150.0f;
+    float t = std::max(0.0f, 1.0f - transition_in_progress / kScaleDurationMs);
+    transition_scale = 1.0f - (1.0f - t) * (1.0f - t);
+  }
+
   float l = padding_;
   float r = l + width_ - padding_;
   float b = padding_;
@@ -105,7 +131,7 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // If we're on a button or something, add tilt.
   {
     float tilt_scale = draw_control_parent() ? 0.04f : 0.01f;
-    Vector3f tilt = tilt_scale * g_base->graphics->tilt();
+    Vector3f tilt = tilt_scale * g_base->input->tilt();
     l -= tilt.y;
     r -= tilt.y;
     b += tilt.x;
@@ -132,7 +158,8 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     float offs_x = (r + l) / 2;
     float offs_y = (t + b) / 2;
     c.Translate(offs_x, offs_y, 0);
-    c.Scale(center_scale_, center_scale_, 1.0f);
+    c.Scale(center_scale_ * transition_scale, center_scale_ * transition_scale,
+            1.0f);
     c.Translate(-offs_x, -offs_y, 0);
     c.Submit();
   }
@@ -211,20 +238,28 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.SetTransparent(true);
         c.SetPremultiplied(true);
         c.SetColor(0.25f * m, 0.3f * m, 0, 0.3f * m);
-        c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kGlow));
+        c.SetTexture(g_base->assets->BuiltinTexture(
+            base::BuiltinTextureID::kTexturesGlow));
         {
           auto xf = c.ScopedTransform();
           c.Translate(highlight_center_x_, highlight_center_y_, 0.1f);
           c.Scale(highlight_width_, highlight_height_);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage4x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
       } else {
         assert(glow_type_ == GlowType::kUniform);
         base::SimpleComponent c(pass);
         c.SetTransparent(true);
-        c.SetColor(0.9 * m, 1.0f * m, 0, 0.3f * m);
-        c.SetTexture(
-            g_base->assets->SysTexture(base::SysTextureID::kShadowSharp));
+        auto* tex = g_base->assets->BuiltinTexture(
+            base::BuiltinTextureID::kTexturesShadowSharp);
+        // Premultiply rgb by alpha for premultiplied textures so the
+        // highlight composites 'over' under premult blend instead of adding
+        // full-brightness rgb.
+        float a = 0.3f * m;
+        float cmul = tex->premultiplied() ? a : 1.0f;
+        c.SetColor(0.9f * m * cmul, 1.0f * m * cmul, 0, a);
+        c.SetTexture(tex);
         {
           auto xf = c.ScopedTransform();
           c.Translate(bound_l, bound_b, 0.1f);
@@ -249,13 +284,14 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetColor(1, 1, 1, 1);
-      c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesUiAtlas));
       {
         auto xf = c.ScopedTransform();
         c.Translate(outline_center_x_, outline_center_y_, 0.1f);
         c.Scale(outline_width_, outline_height_);
-        c.DrawMeshAsset(
-            g_base->assets->SysMesh(base::SysMeshID::kTextBoxTransparent));
+        c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+            base::BuiltinMeshID::kMeshesTextBoxTransparent));
       }
       c.Submit();
     }
@@ -271,8 +307,8 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       } else {
         c.SetColor(0.5f, 0.5f, 0.5f, 1);
       }
-      c.SetTexture(
-          g_base->assets->SysTexture(base::SysTextureID::kTextClearButton));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesTextClearButton));
       {
         auto xf = c.ScopedTransform();
         c.Translate(r - 20, b * 0.5f + t * 0.5f, 0.1f);
@@ -281,7 +317,8 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         } else {
           c.Scale(25, 25);
         }
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
       }
       c.Submit();
     }
@@ -334,11 +371,10 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       throw Exception("Invalid VAlign");
   }
 
-  float transition =
-      (static_cast<float>(birth_time_millisecs_) + transition_delay_)
-      - static_cast<float>(current_time);
-  if (transition > 0) {
-    x_offset -= transition * 4.0f / (std::max(0.001f, center_scale_));
+  if (transition_in_progress > 0
+      && transition_type_ == TransitionType::kInLeft) {
+    x_offset -=
+        transition_in_progress * 4.0f / (std::max(0.001f, center_scale_));
   }
 
   // Apply subs/resources to get our actual text if need be.
@@ -431,10 +467,15 @@ void TextWidget::DoDrawText_(base::RenderPass* pass, float x_offset,
     c.SetShadow(-0.004f * text_group_->GetElementUScale(e),
                 -0.004f * text_group_->GetElementVScale(e), 0.0f,
                 shadow_ * color_a_);
+    // Premultiply rgb by the (faded/disabled) alpha for premultiplied textures
+    // so semi-transparent text composites 'over' under premult blend instead
+    // of showing full-brightness rgb. Straight-alpha textures keep raw rgb.
+    float cmul = t2->premultiplied() ? fin_a : 1.0f;
     if (text_group_->GetElementCanColor(e)) {
-      c.SetColor(fin_color_r, fin_color_g, fin_color_b, fin_a);
+      c.SetColor(fin_color_r * cmul, fin_color_g * cmul, fin_color_b * cmul,
+                 fin_a);
     } else {
-      c.SetColor(1, 1, 1, fin_a);
+      c.SetColor(cmul, cmul, cmul, fin_a);
     }
 
     // In VR, draw everything flat because it's generally harder to read.
@@ -466,6 +507,19 @@ void TextWidget::DoDrawCarat_(base::RenderPass* pass,
                               base::TextMesh::VAlign align_v, float x_offset,
                               float y_offset, float max_width_scale,
                               float max_height_scale) {
+  // If we're actively being inline-edited, report ourself as the app's
+  // live text-editing target (drives OS IME positioning/etc). Note this
+  // excludes the decorative always_show_carat_ case - only a genuinely
+  // focused widget receives text input.
+  if (editable() && IsHierarchySelected() && !ShouldUseStringEditor_()) {
+    float l{0.0f}, b{0.0f}, r{width_}, t{height_};
+    WidgetPointToScreen(&l, &b);
+    WidgetPointToScreen(&r, &t);
+    g_base->ui->ReportTextEditing(
+        Rect{std::min(l, r), std::min(b, t), std::max(l, r), std::max(b, t)},
+        base::UI::TextEditSource::kWidget);
+  }
+
   millisecs_t current_time{pass->frame_def()->display_time_millisecs()};
   if (IsHierarchySelected() || always_show_carat_) {
     bool show_cursor = true;
@@ -480,8 +534,10 @@ void TextWidget::DoDrawCarat_(base::RenderPass* pass,
         carat_position_ = str_size;
       }
       float h, v;
-      text_group_->GetCaratPts(text_raw_, align_h, align_v, carat_position_, &h,
-                               &v);
+      // In password mode, carat positions must be computed against the
+      // masked display string (same char count; different glyph widths).
+      text_group_->GetCaratPts(password_ ? text_translated_ : text_raw_,
+                               align_h, align_v, carat_position_, &h, &v);
       base::SimpleComponent c(pass);
       c.SetPremultiplied(true);
       c.SetTransparent(true);
@@ -493,10 +549,12 @@ void TextWidget::DoDrawCarat_(base::RenderPass* pass,
         c.Scale(max_width_height_scale, max_width_height_scale);
         c.Translate(h + 4, v + 17.0f);
         c.Scale(6, 27);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
         c.SetColor(1, 1, 1, 0);
         c.Scale(0.3f, 0.8f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
       }
       c.Submit();
     }
@@ -515,13 +573,29 @@ void TextWidget::SetLiteral(bool val) {
   text_translation_dirty_ = true;
 }
 
+auto TextWidget::GetQueryText() -> std::string {
+  if (lang_str_ != nullptr) {
+    UpdateTranslation_();
+    return text_translated_;
+  }
+  return text_raw_;
+}
+
+void TextWidget::SetLangStr(std::shared_ptr<const base::LangStr> val) {
+  lang_str_ = std::move(val);
+  text_raw_.clear();
+  text_translation_dirty_ = true;
+}
+
 void TextWidget::SetText(const std::string& text_in_raw) {
   std::string text_in = Utils::GetValidUTF8(text_in_raw.c_str(), "twst1");
 
-  // Ignore redundant sets.
-  if (text_in == text_raw_) {
+  // Ignore redundant sets (only when not switching away from a native
+  // language-string).
+  if (lang_str_ == nullptr && text_in == text_raw_) {
     return;
   }
+  lang_str_ = nullptr;
 
   // In some cases we want to make sure this is a valid resource-string
   // since catching the error here is much more useful than if we catch it
@@ -716,17 +790,18 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
     text_group_dirty_ = true;
     bool claimed = false;
     switch (m.keysym.sym) {
-      case SDLK_UP:
-      case SDLK_DOWN:
-      case SDLK_TAB:
+      case BAK_UP:
+      case BAK_DOWN:
+      case BAK_TAB:
         // never claim up/down/tab
         return false;
-      case SDLK_RETURN:
-      case SDLK_KP_ENTER:
+      case BAK_RETURN:
+      case BAK_KP_ENTER:
         if (g_buildconfig.platform_ios_tvos()
             || g_buildconfig.platform_android()) {
           // On mobile, return currently just deselects us.
-          g_base->audio->SafePlaySysSound(base::SysSoundID::kSwish);
+          g_base->audio->SafePlayBuiltinSound(
+              base::BuiltinSoundID::kAudioSwish);
           parent_widget()->SelectWidget(nullptr);
           return true;
         } else {
@@ -737,7 +812,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           }
         }
         break;
-      case SDLK_LEFT:
+      case BAK_LEFT:
         if (editable()) {
           claimed = true;
           if (carat_position_ > 0) {
@@ -745,14 +820,14 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           }
         }
         break;
-      case SDLK_RIGHT:
+      case BAK_RIGHT:
         if (editable()) {
           claimed = true;
           carat_position_++;
         }
         break;
-      case SDLK_BACKSPACE:
-      case SDLK_DELETE:
+      case BAK_BACKSPACE:
+      case BAK_DELETE:
         if (editable()) {
           claimed = true;
           std::vector<uint32_t> unichars =
@@ -862,7 +937,8 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           pressed_activate_ =
               (click_count == 2 || click_activate_) && !editable_;
           if (click_count == 1) {
-            g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
+            g_base->audio->SafePlayBuiltinSound(
+                base::BuiltinSoundID::kAudioTap);
           }
         }
         return true;
@@ -888,7 +964,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
           text_translation_dirty_ = true;
           carat_position_ = 0;
           text_group_dirty_ = true;
-          g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
+          g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
         }
 
         return true;
@@ -962,11 +1038,27 @@ void TextWidget::AddCharsToText_(const std::string& addchars) {
 void TextWidget::UpdateTranslation_() {
   // Apply subs/resources to get our actual text if need be.
   if (text_translation_dirty_) {
-    // We don't run translations on user-editable text or text marked literal.
-    if (editable() || literal_) {
+    if (lang_str_ != nullptr) {
+      // Native language-strings re-evaluate against the current
+      // tables (fail-visible; definition-time wrap applies inside).
+      text_translated_ = lang_str_->Evaluate();
+    } else if (editable() || literal_) {
+      // We don't run translations on user-editable text or text
+      // marked literal.
       text_translated_ = text_raw_;
     } else {
       text_translated_ = g_base->assets->CompileResourceString(text_raw_);
+    }
+    if (password_) {
+      // Password mode masks display only: one bullet per character.
+      // The real text lives on in text_raw_ (queries return it) and
+      // char counts match, so carat indexing stays valid.
+      int len = Utils::UTF8StringLength(text_translated_.c_str());
+      std::string masked;
+      for (int i = 0; i < len; ++i) {
+        masked += "\xE2\x80\xA2";  // U+2022 BULLET.
+      }
+      text_translated_ = masked;
     }
     text_translation_dirty_ = false;
     text_group_dirty_ = true;

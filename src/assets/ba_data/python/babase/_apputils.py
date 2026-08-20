@@ -2,10 +2,7 @@
 #
 """Utility functionality related to the overall operation of the app."""
 
-from __future__ import annotations
-
 import os
-import json
 import time
 import asyncio
 import threading
@@ -71,13 +68,6 @@ def is_browser_likely_available() -> bool:
     return True
 
 
-def get_remote_app_name() -> babase.Lstr:
-    """:meta private:"""
-    from babase import _language
-
-    return _language.Lstr(resource='remote_app.app_name')
-
-
 def should_submit_debug_info() -> bool:
     """:meta private:"""
     val = _babase.app.config.get('Submit Debug Info', True)
@@ -85,151 +75,9 @@ def should_submit_debug_info() -> bool:
     return val
 
 
-def handle_v1_cloud_log() -> None:
-    """Called when new messages have been added to v1-cloud-log.
-
-    When this happens, we can upload our log to the server after a short
-    bit if desired.
-    """
-
-    app = _babase.app
-    classic = app.classic
-    plus = app.plus
-
-    if classic is None or plus is None:
-        if _babase.do_once():
-            balog.warning(
-                'handle_v1_cloud_log should not be getting called'
-                ' without classic and plus present.'
-            )
-        return
-
-    classic.log_have_new = True
-    if not classic.log_upload_timer_started:
-
-        def _put_log() -> None:
-            assert plus is not None
-            assert classic is not None
-            try:
-                sessionname = str(classic.get_foreground_host_session())
-            except Exception:
-                sessionname = 'unavailable'
-            try:
-                activityname = str(classic.get_foreground_host_activity())
-            except Exception:
-                activityname = 'unavailable'
-
-            info = {
-                'log': _babase.get_v1_cloud_log(),
-                'version': app.env.engine_version,
-                'build': app.env.engine_build_number,
-                'userAgentString': classic.legacy_user_agent_string,
-                'session': sessionname,
-                'activity': activityname,
-                'fatal': 0,
-                'userRanCommands': _babase.has_user_run_commands(),
-                'time': _babase.apptime(),
-                'userModded': _babase.workspaces_in_use(),
-                'newsShow': plus.get_classic_news_show(),
-            }
-
-            def response(data: Any) -> None:
-                assert classic is not None
-                # A non-None response means success; lets take note that
-                # we don't need to report further log info this run
-                if data is not None:
-                    classic.log_have_new = False
-                    _babase.mark_log_sent()
-
-            classic.master_server_v1_post('bsLog', info, response)
-
-            # TEST
-            # assert _babase.app.plus is not None
-            # if _babase.app.plus.cloud.connected:
-            #     print('WILLQUIT')
-            #     _babase.quit()
-
-        classic.log_upload_timer_started = True
-
-        # Delay our log upload slightly in case other pertinent info
-        # gets printed between now and then.
-        with _babase.ContextRef.empty():
-            _babase.apptimer(3.0, _put_log)
-
-        # After a while, allow another log-put.
-        def _reset() -> None:
-            assert classic is not None
-            classic.log_upload_timer_started = False
-            if classic.log_have_new:
-                handle_v1_cloud_log()
-
-        if not _babase.is_log_full():
-            with _babase.ContextRef.empty():
-                _babase.apptimer(600.0, _reset)
-
-
-def handle_leftover_v1_cloud_log_file() -> None:
-    """Handle an un-uploaded v1-cloud-log from a previous run.
-
-    :meta private:
-    """
-    _babase.app.create_async_task(_handle_leftover_v1_cloud_log_file())
-
-
-async def _handle_leftover_v1_cloud_log_file() -> None:
-    # Only applies with classic present.
-    if _babase.app.classic is None or _babase.app.plus is None:
-        return
-
-    if not os.path.exists(_babase.get_v1_cloud_log_file_path()):
-        return
-
-    # Sit and spin until either we've got connectivity or the app is
-    # shutting down.
-    while not _babase.app.plus.cloud.connected:
-        await asyncio.sleep(1.234)
-        appstate = _babase.app.state
-        appstate_t = type(appstate)
-        if (
-            appstate is appstate_t.SHUTTING_DOWN
-            or appstate is appstate_t.SHUTDOWN_COMPLETE
-        ):
-            return
-
-    # Ok; it appears we are connected. Let's make one attempt at
-    # uploading this.
-    try:
-        with open(
-            _babase.get_v1_cloud_log_file_path(), encoding='utf-8'
-        ) as infile:
-            info = json.loads(infile.read())
-        infile.close()
-        do_send = should_submit_debug_info()
-        if do_send:
-
-            def response(data: Any) -> None:
-                # Non-None response means we were successful; lets
-                # kill it.
-                if data is not None:
-                    try:
-                        os.remove(_babase.get_v1_cloud_log_file_path())
-                    except FileNotFoundError:
-                        # Saw this in the wild. The file just existed
-                        # a moment ago but I suppose something could have
-                        # killed it since. ¯\_(ツ)_/¯
-                        pass
-
-            _babase.app.classic.master_server_v1_post('bsLog', info, response)
-        else:
-            # If they don't want logs uploaded, just kill it.
-            os.remove(_babase.get_v1_cloud_log_file_path())
-
-    except Exception:
-        balog.exception('Error handling leftover log file.')
-
-
 def print_corrupt_file_error() -> None:
     """Print an error if a corrupt file is found."""
+    from babase import builtinassets
 
     if _babase.app.env.gui:
         _babase.apptimer(
@@ -241,7 +89,7 @@ def print_corrupt_file_error() -> None:
                 color=(1, 0, 0),
             ),
         )
-        _babase.apptimer(2.0, _babase.getsimplesound('error').play)
+        _babase.apptimer(2.0, builtinassets.audio.error.get().play)
 
 
 _tb_held_files: list[TextIO] = []

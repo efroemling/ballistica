@@ -48,7 +48,9 @@ namespace ballistica {
 #error BA_VARIANT is not defined
 #endif
 
-// Do we enable Discord support
+// Do we enable Discord Social SDK support. Off by default; opt in at
+// build-configure time via the DISCORD CMake option, which defines this
+// to 1 via target_compile_definitions.
 #ifndef BA_ENABLE_DISCORD
 #define BA_ENABLE_DISCORD 0
 #endif
@@ -106,6 +108,14 @@ namespace ballistica {
 #define BA_VARIANT_TEST_BUILD 0
 #endif
 
+#ifndef BA_VARIANT_SERVER
+#define BA_VARIANT_SERVER 0
+#endif
+
+#ifndef BA_VARIANT_SERVER_BASN
+#define BA_VARIANT_SERVER_BASN 0
+#endif
+
 #ifndef BA_VARIANT_AMAZON_APPSTORE
 #define BA_VARIANT_AMAZON_APPSTORE 0
 #endif
@@ -147,11 +157,12 @@ namespace ballistica {
 #endif
 
 // Make sure exactly one of those is defined as 1
-#if (BA_VARIANT_GENERIC + BA_VARIANT_TEST_BUILD + BA_VARIANT_AMAZON_APPSTORE \
-     + BA_VARIANT_GOOGLE_PLAY + BA_VARIANT_APPLE_APP_STORE                   \
-     + BA_VARIANT_WINDOWS_STORE + BA_VARIANT_STEAM + BA_VARIANT_META         \
-     + BA_VARIANT_EPIC_GAMES_STORE + BA_VARIANT_ARCADE + BA_VARIANT_DEMO     \
-     + BA_VARIANT_CARDBOARD)                                                 \
+#if (BA_VARIANT_GENERIC + BA_VARIANT_TEST_BUILD + BA_VARIANT_SERVER      \
+     + BA_VARIANT_SERVER_BASN + BA_VARIANT_AMAZON_APPSTORE               \
+     + BA_VARIANT_GOOGLE_PLAY + BA_VARIANT_APPLE_APP_STORE               \
+     + BA_VARIANT_WINDOWS_STORE + BA_VARIANT_STEAM + BA_VARIANT_META     \
+     + BA_VARIANT_EPIC_GAMES_STORE + BA_VARIANT_ARCADE + BA_VARIANT_DEMO \
+     + BA_VARIANT_CARDBOARD)                                             \
     != 1
 #error Zero or multiple BA_VARIANT_* defines found.
 #endif
@@ -182,6 +193,14 @@ namespace ballistica {
 // (basic SDL types we define ourselves; no actual SDL dependency)
 #ifndef BA_MINSDL_BUILD
 #define BA_MINSDL_BUILD 0
+#endif
+
+// Is the opt-in automation control channel compiled in? See
+// ``src/ballistica/base/automation/`` and ``babase._automation``.
+// Unstable/unsupported dev tool; off by default. Enable in CMake via
+// -DENABLE_AUTOMATION=ON (POSIX-only).
+#ifndef BA_ENABLE_AUTOMATION
+#define BA_ENABLE_AUTOMATION 0
 #endif
 
 // Is this a debug build?
@@ -222,6 +241,14 @@ namespace ballistica {
 
 #ifndef BA_ENABLE_OS_FONT_RENDERING
 #define BA_ENABLE_OS_FONT_RENDERING 0
+#endif
+
+// Are we rendering GL through ANGLE (GL ES -> Metal/D3D/Vulkan) rather than a
+// platform-native GL? Already implied by the SDL/Windows ANGLE paths; this
+// explicit flag is what the Xcode iOS build flips to swap its system-GLES
+// (OpenGLES.framework/EAGL) usage for the vendored ANGLE xcframework + EGL.
+#ifndef BA_USE_ANGLE
+#define BA_USE_ANGLE 0
 #endif
 
 // Does this build support vr mode? (does not mean vr mode is always on)
@@ -311,10 +338,19 @@ class BuildConfig {
   bool platform_android() const { return EXPBOOL_(BA_PLATFORM_ANDROID); }
   bool platform_linux() const { return EXPBOOL_(BA_PLATFORM_LINUX); }
 
+  /// Convenience: true when running on a mobile platform (iOS / tvOS /
+  /// Android). Useful for gating features that need platform-specific
+  /// plumbing (URL schemes, permissions, etc.) we haven't done yet.
+  bool platform_mobile() const {
+    return EXPBOOL_(BA_PLATFORM_IOS || BA_PLATFORM_TVOS || BA_PLATFORM_ANDROID);
+  }
+
   const char* variant() const { return BA_VARIANT; }
 
   bool variant_generic() const { return EXPBOOL_(BA_VARIANT_GENERIC); }
   bool variant_test_build() const { return EXPBOOL_(BA_VARIANT_TEST_BUILD); }
+  bool variant_server() const { return EXPBOOL_(BA_VARIANT_SERVER); }
+  bool variant_server_basn() const { return EXPBOOL_(BA_VARIANT_SERVER_BASN); }
   bool variant_amazon_appstore() const {
     return EXPBOOL_(BA_VARIANT_AMAZON_APPSTORE);
   }

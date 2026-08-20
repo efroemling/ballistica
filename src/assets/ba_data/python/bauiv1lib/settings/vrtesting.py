@@ -2,11 +2,10 @@
 #
 """Provides UI for testing vr settings."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
+from bauiv1 import classicassets
 from bauiv1lib.settings.testing import TestingWindow
 
 if TYPE_CHECKING:
@@ -91,7 +90,7 @@ class VRTestingWindow(TestingWindow):
         ]
 
         super().__init__(
-            bui.Lstr(resource='settingsWindowAdvanced.vrTestingText'),
+            classicassets.strings.settings.vr_testing.title,
             entries,
             transition,
         )

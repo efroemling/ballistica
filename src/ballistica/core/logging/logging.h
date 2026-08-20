@@ -12,12 +12,24 @@ namespace ballistica::core {
 
 // Slightly hacky, but don't want to store this with any of our normal
 // global classes because it might be needed before they are allocated.
-extern int g_early_v1_cloud_log_writes;
 
 class Logging {
  public:
   Logging() = default;
 
+  /// Log a message to the engine's log system.
+  ///
+  /// IMPORTANT: This direct-string overload should only be used when the
+  /// message is a fixed string literal or already-built std::string that
+  /// requires no runtime construction at the call site. If the message
+  /// involves *any* runtime construction (concatenation, std::to_string,
+  /// formatting, etc.), use the lambda overload below instead — this
+  /// overload always evaluates its argument before the level check, so
+  /// the construction work happens even when the log level is disabled.
+  ///
+  /// This is especially important for DEBUG-level calls, which are
+  /// usually disabled in shipped builds; eager construction there pays a
+  /// real cost for nothing.
   void Log(LogName name, LogLevel level, const std::string& msg) {
     // Checking log-level here is more efficient than letting it happen in
     // Python land.
@@ -26,6 +38,8 @@ class Logging {
     }
   }
 
+  /// C-string convenience overload. Same rules as the std::string version
+  /// above: use the lambda overload for any runtime construction.
   void Log(LogName name, LogLevel level, const char* msg) {
     // Checking log-level here is more efficient than letting it happen in
     // Python land.
@@ -34,6 +48,8 @@ class Logging {
     }
   }
 
+  /// C-string convenience overload. Same rules as the std::string version
+  /// above: use the lambda overload for any runtime construction.
   void Log(LogName name, LogLevel level, char* msg) {
     // Checking log-level here is more efficient than letting it happen in
     // Python land.
@@ -42,10 +58,25 @@ class Logging {
     }
   }
 
-  /// Log call variant taking a call returning a string instead of a string
-  /// directly. This is recommended for log strings requiring significant
-  /// effort to construct, as said construction will be skipped if the log
-  /// level is not currently enabled.
+  /// Lambda overload: takes a callable returning std::string instead of a
+  /// string directly. The callable is invoked only when the log level is
+  /// enabled, so any construction work inside it is skipped otherwise.
+  ///
+  /// USE THIS for *any* dynamically-constructed log message — concatenation,
+  /// std::to_string, std::format, building a value from members, etc. —
+  /// not just for messages that feel "expensive" to build. Even a single
+  /// `"foo: " + std::to_string(x)` allocates and copies; routing it through
+  /// a lambda costs nothing extra at the call site and saves the work
+  /// whenever the level is off.
+  ///
+  /// DEBUG-level calls especially should default to this form: DEBUG is
+  /// usually off, so any string-building done at a direct-overload call
+  /// site is wasted work in the common case.
+  ///
+  /// Example:
+  ///   g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug,
+  ///                        [&] { return "Got " + std::to_string(n)
+  ///                                     + " bytes from " + addr; });
   template <typename C>
   void Log(LogName name, LogLevel level, C getmsgcall) {
     // Make sure provided lambdas return std::string; otherwise it would be
@@ -83,16 +114,6 @@ class Logging {
   void EmitLog(std::string_view name, LogLevel level, double timestamp,
                std::string_view msg);
 
-  /// Write a message to the v1 cloud log. This is considered legacy and
-  /// will be phased out eventually.
-  void V1CloudLog(const std::string& msg);
-
-  auto v1_cloud_log_mutex() -> std::mutex& { return v1_cloud_log_mutex_; }
-  auto v1_cloud_log() const { return v1_cloud_log_; }
-  auto did_put_v1_cloud_log() const { return did_put_v1_cloud_log_; }
-  void set_did_put_v1_cloud_log(bool val) { did_put_v1_cloud_log_ = val; }
-  auto v1_cloud_log_full() const { return v1_cloud_log_full_; }
-
  private:
   /// Write a message to the log. Intended for logging use in C++ code. This
   /// is safe to call by any thread at any time as long as core has been
@@ -109,10 +130,6 @@ class Logging {
   void Log_(LogName name, LogLevel level, const char* msg);
 
   LogLevel log_levels_[static_cast<int>(LogName::kLast)]{};
-  bool did_put_v1_cloud_log_{};
-  bool v1_cloud_log_full_{};
-  std::mutex v1_cloud_log_mutex_;
-  std::string v1_cloud_log_;
 };
 
 }  // namespace ballistica::core

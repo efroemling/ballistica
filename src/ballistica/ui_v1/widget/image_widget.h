@@ -14,6 +14,7 @@ namespace ballistica::ui_v1 {
 
 class ImageWidget : public Widget {
  public:
+  enum class TransitionType : uint8_t { kInLeft, kScale };
   ImageWidget();
   ~ImageWidget() override;
   void Draw(base::RenderPass* pass, bool transparent) override;
@@ -64,10 +65,13 @@ class ImageWidget : public Widget {
   }
   auto GetWidgetTypeName() -> std::string override { return "image"; }
   void set_transition_delay(float val) { transition_delay_ = val; }
+  void set_transition_type(TransitionType val) { transition_type_ = val; }
   void set_tilt_scale(float s) { tilt_scale_ = s; }
   void set_radial_amount(float val) { radial_amount_ = val; }
+  void set_rotate(float val) { rotate_ = val; }
 
  private:
+  TransitionType transition_type_{TransitionType::kInLeft};
   float tilt_scale_{1.0f};
   float transition_delay_{};
   millisecs_t birth_time_millisecs_{};
@@ -98,6 +102,7 @@ class ImageWidget : public Widget {
   float opacity_{1.0f};
   float draw_controller_mult_{1.0f};
   float flatness_{0.0f};
+  float rotate_{0.0f};
 };
 
 }  // namespace ballistica::ui_v1

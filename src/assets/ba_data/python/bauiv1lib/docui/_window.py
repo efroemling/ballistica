@@ -2,11 +2,10 @@
 #
 """UIs provided by the cloud (similar-ish to html in concept)."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override, assert_never
 
 import bauiv1 as bui
+from bauiv1 import _commonassets
 
 from bacommon.docui import DocUIRequestTypeID, DocUIResponseTypeID
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
@@ -15,9 +14,8 @@ if TYPE_CHECKING:
     from typing import Callable
 
     from bacommon.docui import DocUIRequest, DocUIResponse
-    import bacommon.docui.v1
     from bauiv1lib.docui._controller import DocUIController
-    from bauiv1lib.docui import v1prep
+    from bauiv1lib.docui import prep
 
 
 class DocUIWindow(bui.MainWindow):
@@ -150,6 +148,10 @@ class DocUIWindow(bui.MainWindow):
             border_opacity=0.4,
             center_small_content_horizontally=True,
             claims_left_right=True,
+            # Selection-preserving needs an id on every selectable
+            # widget; without one, landing here on window save warns and
+            # loses the user's place on return.
+            id=f'{self.main_window_id_prefix}|scroll',
         )
         bui.widget(edit=self._scrollwidget, autoselect=True)
 
@@ -309,13 +311,17 @@ class DocUIWindow(bui.MainWindow):
     def _default_state_id(cls, request: DocUIRequest) -> str:
         """Calc a default state id for a request."""
         requesttypeid = request.get_type_id()
-        if requesttypeid is DocUIRequestTypeID.V1:
-            import bacommon.docui.v1 as dui1
+        if requesttypeid is DocUIRequestTypeID.V2:
+            import bacommon.docui.v2 as dui2
 
             # One state per path seems like a reasonable default.
-            assert isinstance(request, dui1.Request)
+            assert isinstance(request, dui2.Request)
             return request.path
-        if requesttypeid is DocUIRequestTypeID.UNKNOWN:
+        if (
+            requesttypeid is DocUIRequestTypeID.V1
+            or requesttypeid is DocUIRequestTypeID.UNKNOWN
+        ):
+            # The client no longer works in v1; treat like unknown.
             return 'unknown'
         assert_never(requesttypeid)
 
@@ -390,31 +396,33 @@ class DocUIWindow(bui.MainWindow):
 
         # Grab any custom shared-state-id included in this response.
         responsetypeid = response.get_type_id()
-        if responsetypeid is DocUIResponseTypeID.V1:
-            import bacommon.docui.v1 as dui1
+        if responsetypeid is DocUIResponseTypeID.V2:
+            import bacommon.docui.v2 as dui2
 
-            assert isinstance(response, dui1.Response)
+            assert isinstance(response, dui2.Response)
             self._last_response_shared_state_id = response.shared_state_id
-        elif responsetypeid is DocUIResponseTypeID.UNKNOWN:
+        elif (
+            responsetypeid is DocUIResponseTypeID.V1
+            or responsetypeid is DocUIResponseTypeID.UNKNOWN
+        ):
+            # The client no longer works in v1; treat like unknown.
             self._last_response_shared_state_id = None
         else:
             assert_never(responsetypeid)
 
-    def instantiate_ui(self, pageprep: v1prep.PagePrep) -> None:
+    def instantiate_ui(self, pageprep: prep.PagePrep) -> None:
         """Replace any current ui with provided prepped one.
 
         :meta private:
         """
-        from bauiv1lib.docui.v1prep._calls import (
-            doc_ui_v1_instantiate_page_prep,
-        )
+        from bauiv1lib.docui.prep._calls import instantiate_page_prep
 
         assert bui.in_logic_thread()
 
-        # Set title.
+        # Set title (a native language-string handle).
         bui.textwidget(
             edit=self._title,
-            literal=not pageprep.title_is_lstr,
+            literal=True,
             text=pageprep.title,
         )
 
@@ -431,7 +439,7 @@ class DocUIWindow(bui.MainWindow):
                 simple_culling_v=pageprep.simple_culling_v,
                 center_small_content=(pageprep.center_vertically),
             )
-            self._subcontainer = doc_ui_v1_instantiate_page_prep(
+            self._subcontainer = instantiate_page_prep(
                 pageprep,
                 rootwidget=self._root_widget,
                 scrollwidget=self._scrollwidget,
@@ -457,9 +465,7 @@ class DocUIWindow(bui.MainWindow):
                 parent=self._scrollwidget,
                 h_align='center',
                 v_align='center',
-                text=bui.Lstr(
-                    translate=('serverResponses', 'There is nothing here.')
-                ),
+                text=_commonassets.strings.status.nothing_here,
                 scale=0.75,
                 color=(1, 1, 1, 0.5),
                 size=(0, 0),

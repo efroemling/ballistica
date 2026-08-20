@@ -2,8 +2,6 @@
 #
 """Functionality for editing config values and applying them to the game."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
@@ -29,7 +27,7 @@ class ConfigCheckBox:
         position: tuple[float, float],
         size: tuple[float, float],
         *,
-        displayname: str | bui.Lstr | None = None,
+        displayname: str | bui.Lstr | bui.LangStr | None = None,
         scale: float | None = None,
         maxwidth: float | None = None,
         autoselect: bool = True,
@@ -94,7 +92,7 @@ class ConfigNumberEdit:
         increment: float = 1.0,
         callback: Callable[[float], Any] | None = None,
         xoffset: float = 0.0,
-        displayname: str | bui.Lstr | None = None,
+        displayname: str | bui.Lstr | bui.LangStr | None = None,
         changesound: bool = True,
         textscale: float = 1.0,
         as_percent: bool = False,

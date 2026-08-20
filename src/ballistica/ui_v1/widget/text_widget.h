@@ -3,11 +3,16 @@
 #ifndef BALLISTICA_UI_V1_WIDGET_TEXT_WIDGET_H_
 #define BALLISTICA_UI_V1_WIDGET_TEXT_WIDGET_H_
 
+#include <memory>
 #include <string>
 
 #include "ballistica/base/graphics/mesh/text_mesh.h"
 #include "ballistica/shared/python/python_ref.h"
 #include "ballistica/ui_v1/widget/widget.h"
+
+namespace ballistica::base {
+class LangStr;
+}
 
 namespace ballistica::ui_v1 {
 
@@ -24,6 +29,7 @@ class TextWidget : public Widget {
   enum class HAlign : uint8_t { kLeft, kCenter, kRight };
   enum class VAlign : uint8_t { kTop, kCenter, kBottom };
   enum class GlowType : uint8_t { kGradient, kUniform };
+  enum class TransitionType : uint8_t { kInLeft, kScale };
   auto HandleMessage(const base::WidgetMessage& m) -> bool override;
   auto IsSelectable() -> bool override {
     return (enabled_ && (editable_ || selectable_));
@@ -35,6 +41,12 @@ class TextWidget : public Widget {
   void set_rotate(float val) { rotate_ = val; }
   void SetLiteral(bool val);
   void SetText(const std::string& text_in);
+
+  /// Set a native language-string as our text. The widget retains the
+  /// value and re-evaluates it on language changes (the native mirror
+  /// of the legacy Lstr resource-string behavior). Cleared by any
+  /// subsequent SetText().
+  void SetLangStr(std::shared_ptr<const base::LangStr> val);
   void set_color(float r, float g, float b, float a) {
     color_r_ = r;
     color_g_ = g;
@@ -42,6 +54,11 @@ class TextWidget : public Widget {
     color_a_ = a;
   }
   auto text_raw() const -> const std::string& { return text_raw_; }
+
+  /// The text as consumers should *read* it: for native
+  /// language-string content this is the evaluated display text
+  /// (raw is empty in that case); otherwise the raw text.
+  auto GetQueryText() -> std::string;
   void SetEditable(bool e);
   void set_selectable(bool s) { selectable_ = s; }
   void SetEnabled(bool val);
@@ -55,12 +72,36 @@ class TextWidget : public Widget {
   void SetOnActivateCall(PyObject* call_tuple);
   void set_center_scale(float val) { center_scale_ = val; }
   auto editable() const -> bool { return editable_; }
+  auto password() const -> bool { return password_; }
+
+  /// Set password mode: display masks each character as a bullet.
+  /// Only presentation is affected; the real text stays queryable.
+  void set_password(bool val) {
+    if (val != password_) {
+      password_ = val;
+      text_translation_dirty_ = true;
+    }
+  }
   void Activate() override;
   auto GetWidgetTypeName() -> std::string override { return "text"; }
   void set_always_highlight(bool val) { always_highlight_ = val; }
   void set_description(const std::string& d) { description_ = d; }
   auto description() const -> std::string { return description_; }
+
+  /// Run our return-press call (if any), as if enter were pressed
+  /// during inline editing. Used by string-edit adapters to honor
+  /// submit-style applies from platform edit UIs.
+  void InvokeReturnPress();
+
+  /// Semantic kind hint for string-edit UIs (a babase.StringEditKind
+  /// value). Stored as a plain string; validated Python-side when a
+  /// StringEditAdapter picks it up.
+  void set_string_edit_kind(const std::string& kind) {
+    string_edit_kind_ = kind;
+  }
+  auto string_edit_kind() const -> std::string { return string_edit_kind_; }
   void set_transition_delay(float val) { transition_delay_ = val; }
+  void set_transition_type(TransitionType val) { transition_type_ = val; }
   void set_flatness(float flatness) { flatness_ = flatness; }
   void set_shadow(float shadow) { shadow_ = shadow; }
   void set_res_scale(float res_scale);
@@ -99,6 +140,7 @@ class TextWidget : public Widget {
   HAlign alignment_h_{HAlign::kLeft};
   VAlign alignment_v_{VAlign::kTop};
   GlowType glow_type_{GlowType::kGradient};
+  TransitionType transition_type_{TransitionType::kInLeft};
   bool enabled_{true};
   bool big_{};
   bool force_internal_editing_{};
@@ -113,6 +155,7 @@ class TextWidget : public Widget {
   bool pressed_activate_{};
   bool always_highlight_{};
   bool editable_{};
+  bool password_{};
   bool selectable_{};
   bool clear_pressed_{};
   bool clear_mouse_over_{};
@@ -149,10 +192,12 @@ class TextWidget : public Widget {
   float center_scale_{1.0f};
   std::string text_raw_;
   std::string text_translated_;
+  std::shared_ptr<const base::LangStr> lang_str_;
   millisecs_t birth_time_millisecs_{};
   millisecs_t last_activate_time_millisecs_{};
   millisecs_t last_carat_change_time_millisecs_{};
   std::string description_{"Text"};
+  std::string string_edit_kind_{"default"};
   Object::Ref<base::TextGroup> text_group_;
 
   // We keep these at the bottom so they're torn down first.

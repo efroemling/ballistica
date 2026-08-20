@@ -10,6 +10,7 @@
 #include "ballistica/base/graphics/renderer/render_pass.h"
 #include "ballistica/base/graphics/support/area_of_interest.h"
 #include "ballistica/base/graphics/support/frame_def.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/core/core.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
@@ -576,7 +577,7 @@ void Camera::UpdatePosition() {
     to_cam.Normalize();
     Vector3f cam_space_lr = Vector3f::Cross(to_cam, Vector3f(0, 1, 0));
     Vector3f cam_space_ud = Vector3f::Cross(cam_space_lr, to_cam);
-    Vector3f tilt = 0.1f * g_base->graphics->tilt();
+    Vector3f tilt = 0.1f * g_base->input->tilt();
     if (manual_) {
       tilt.x = 0.0f;
       tilt.y = 0.0f;
@@ -1008,14 +1009,11 @@ void Camera::ApplyToFrameDef(FrameDef* frame_def) {
 
   for (RenderPass** p = passes; *p != nullptr; p++) {
     assert(!area_of_interest_points_.empty());
-    (**p).SetCamera(
-        position_ + extra_pos_2_, target_smoothed_ + shake_pos_ + extra_pos_,
-        up_, 4, 1000.0f,
-        -1.0f,  // Auto x fov.
-        final_fov_y
-            * (frame_def->settings()->tv_border ? (1.0f + kTVBorder) : 1.0f),
-        false, 0, 0, 0, 0,  // Not using tangent fovs.
-        area_of_interest_points_);
+    (**p).SetCamera(position_ + extra_pos_2_,
+                    target_smoothed_ + shake_pos_ + extra_pos_, up_, 4, 1000.0f,
+                    -1.0f,                           // Auto x fov.
+                    final_fov_y, false, 0, 0, 0, 0,  // Not using tangent fovs.
+                    area_of_interest_points_);
   }
   smooth_next_frame_ = true;
 }

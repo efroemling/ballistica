@@ -9,8 +9,6 @@
 # pylint: disable=invalid-name, redefined-builtin
 # pylint: disable=missing-module-docstring
 
-from __future__ import annotations
-
 import os
 import types
 import logging
@@ -26,6 +24,51 @@ if TYPE_CHECKING:
     from typing import Any
 
     from sphinx.application import Sphinx
+
+
+def _ballistica_module_prefixes() -> tuple[str, ...]:
+    """Derive prefixes of Ballistica-owned top-level packages.
+
+    Walks ``$BALLISTICA_ROOT`` for top-level python packages under
+    ``src/assets/ba_data/python`` (runtime tree) and ``tools/``
+    (efro / efrotools / bacommon / etc.). Returns prefixes like
+    ``'babase.'``, ``'_babase.'``, ``'efro.'`` — used to suppress
+    harmless ``duplicate object description`` warnings caused by
+    deliberate re-exports across our own packages (see
+    ``docs/design/python-api-packages.md``).
+
+    Generated rather than hard-coded so new featuresets / tools
+    packages are picked up automatically without editing this file.
+    """
+    root = os.environ['BALLISTICA_ROOT']
+    prefixes: set[str] = set()
+    for sub in ('src/assets/ba_data/python', 'tools'):
+        d = os.path.join(root, sub)
+        if not os.path.isdir(d):
+            continue
+        for name in os.listdir(d):
+            if name.startswith('.') or name.startswith('__'):
+                continue
+            full = os.path.join(d, name)
+            if name.endswith('.py'):
+                base = name[:-3]
+            elif os.path.isdir(full) and os.path.isfile(
+                os.path.join(full, '__init__.py')
+            ):
+                base = name
+            else:
+                continue
+            if not base.isidentifier():
+                continue
+            prefixes.add(f'{base}.')
+            # Many of our public packages re-expose a C-extension /
+            # private sibling (e.g. ``babase`` ↔ ``_babase``). Add
+            # the private form too so cross-tree duplicates get
+            # suppressed even when the canonical home reports as
+            # ``_pkg.<name>``.
+            if not base.startswith('_'):
+                prefixes.add(f'_{base}.')
+    return tuple(sorted(prefixes))
 
 
 settings = get_sphinx_settings(projroot=os.environ['BALLISTICA_ROOT'])
@@ -100,6 +143,11 @@ nitpick_ignore = [
     ('py:class', 'bacommon.displayitem.Wrapper'),
     ('py:class', 'bacommon.displayitem.Item'),
     ('py:class', 'bacommon.displayitem.ItemTypeID'),
+    # Rendered unqualified in bacloud client signatures; their module
+    # (bacommon.bacloud) is a skipped namespace, so the qualified
+    # regex below never sees these forms.
+    ('py:class', 'StandardRequestData'),
+    ('py:class', 'StandardResponseData'),
     #
     # Stuff that seems like we could fix (presumably issues due to not
     # importing things at runtime (only if TYPE_CHECKING), etc.)
@@ -131,6 +179,7 @@ nitpick_ignore = [
     # 3rd party stuff we don't gen docs for (could look into intersphinx).
     ('py:class', 'astroid.nodes.node_ng.NodeNG'),
     ('py:class', 'astroid.Manager'),
+    ('py:class', 'PyLinter'),
     #
     # TypeVars have no docs.
     ('py:class', 'T'),
@@ -143,6 +192,8 @@ nitpick_ignore = [
     ('py:class', 'PlayerT'),
     ('py:class', 'TeamT'),
     ('py:class', 'P'),
+    ('py:class', 'SendT'),
+    ('py:class', 'RecvT'),
     ('py:class', 'P.args'),
     ('py:class', 'P.kwargs'),
     ('py:obj', 'typing.P'),
@@ -159,6 +210,7 @@ nitpick_ignore = [
     ('py:class', 'asyncio.streams.StreamWriter'),
     ('py:class', 'concurrent.futures.thread.ThreadPoolExecutor'),
     ('py:class', 'urllib3.response.BaseHTTPResponse'),
+    ('py:class', 'urllib3.poolmanager.PoolManager'),
     ('py:class', 'socket.AddressFamily'),
     ('py:attr', 'socket.AF_INET'),
     ('py:attr', 'socket.AF_INET6'),
@@ -170,8 +222,81 @@ nitpick_ignore = [
     ('py:class', 'bs.Timer'),
     ('py:class', 'bs.Vec3'),
     #
-    # Private module types.
-    ('py:class', 'bascenev1._dependency.DependencyEntry'),
+    # Auto-generated re-export annotations use bare names from the
+    # canonical-home source. Resolving these to fully qualified form
+    # would require walking imports in the autogen worker — not
+    # worth the complexity for a small number of cases. See
+    # ``batools.reexportdocs`` for the generator.
+    ('py:class', 'ClassicChestAppearance'),
+    # ``UNHANDLED``'s class lives in a private submodule we don't
+    # document; the doc entry still shows the canonical comment.
+    ('py:class', 'bascenev1._messages._UnhandledType'),
+    #
+    # Third-party stuff we don't gen docs for.
+    ('py:class', 'pbxproj.PBXGenericObject.PBXGenericObject'),
+    ('py:class', 'pbxproj.pbxextensions.ProjectFiles.ProjectFiles'),
+    ('py:class', 'pbxproj.pbxextensions.ProjectFlags.ProjectFlags'),
+    ('py:class', 'pbxproj.pbxextensions.ProjectGroups.ProjectGroups'),
+    ('py:class', 'filelock._unix.UnixFileLock'),
+    #
+    # Pre-existing bacommon.locale docstring cross-refs use bare
+    # names without qualification. Should be fixed at source
+    # eventually.
+    ('py:class', 'Locale'),
+    ('py:class', 'LocaleResolved'),
+    ('py:func', 'strip_exception_tracebacks'),
+    # Pre-existing docstring cross-refs that were previously masked
+    # by ``imported-members: True`` noise — now visible since we
+    # filter that. Should be fixed at the docstring site eventually
+    # (each is a bare name or unresolved FQN).
+    ('py:attr', 'ScanResults.incorrect_api_modules'),
+    ('py:attr', 'payload'),
+    ('py:attr', 'cert'),
+    ('py:class', 'PowerupBoxFactory.powerup_accept_material'),
+    ('py:attr', 'batools.featureset.FeatureSet.has_python_app_subsystem'),
+    #
+    # efro.threadpool's ``Future[T]`` API surfaces a module-qualified
+    # TypeVar and the private stdlib ``Future`` path; neither resolves
+    # to docs (cf. ``concurrent.futures.thread.ThreadPoolExecutor``
+    # above, ignored for the same reason).
+    ('py:class', 'efro.threadpool.T'),
+    ('py:class', 'concurrent.futures._base.Future'),
+    #
+    # babase._simpledialog uses a private ``_Unset`` sentinel in its
+    # public signatures (``str | Lstr | _Unset``) to distinguish an
+    # unset arg from None; the private class has no doc target.
+    ('py:class', 'babase._simpledialog._Unset'),
+    # ...and the bare form, which is what autodoc emits for the
+    # stringized annotations in that module's own signatures.
+    ('py:class', '_Unset'),
+    #
+    # docui-v2 / langstr (bacommon) cross-module refs. The bare class
+    # refs (Lstr, StringSelector) are docstring cross-refs that should be
+    # fully qualified at the source eventually; EncodedLangStr /
+    # WrapperTree are PEP 695 ``type`` aliases autodoc renders in
+    # signatures but can't cross-ref as classes. See docs/followups.md.
+    ('py:class', 'Lstr'),
+    ('py:class', 'StringSelector'),
+    ('py:class', 'bacommon.langstr._core.EncodedLangStr'),
+    ('py:class', 'bacommon.langstr._wrapper.WrapperTree'),
+    # Feature-set-alias-qualified LangStr refs: lib modules annotate as
+    # ``bs.LangStr`` / ``bui.LangStr`` (their local ``import bascenev1 as
+    # bs`` / ``bauiv1 as bui`` alias), and stringized annotations keep the
+    # alias, which Sphinx can't resolve. Same story as ``cdlg.*`` below.
+    ('py:class', 'bs.LangStr'),
+    ('py:class', 'bui.LangStr'),
+    # bacommon.assetspec texture/mesh refs — same story: bare cross-module
+    # class refs to fully-qualify eventually; AssetGroupTree is a PEP 695
+    # ``type`` alias autodoc renders in signatures but can't cross-ref.
+    ('py:class', 'TextureHandle'),
+    ('py:class', 'MeshHandle'),
+    ('py:class', 'AssetGroup'),
+    ('py:class', 'bacommon.assetspec._wrapper.AssetGroupTree'),
+    # Same story: FeedbackEvent is a PEP 695 ``type`` alias (a Literal of
+    # the haptic event names) that autodoc renders into
+    # ``bascenev1.Player.send_feedback``'s signature under its defining
+    # module rather than the package that re-exports it.
+    ('py:class', 'bascenev1._player.FeedbackEvent'),
 ]
 
 # Regex-based nitpick ignores for whole categories of references.
@@ -179,9 +304,11 @@ nitpick_ignore_regex = [
     # Types from private/skipped namespaces. Sphinx 9.x generates
     # cross-references to these from public API signatures even though
     # the modules themselves are excluded (see skip_prefixes below).
+    ('py:class', r'bacommon\.bacloud\..*'),
     ('py:class', r'bacommon\.classic\..*'),
     ('py:class', r'bacommon\.clienteffect\..*'),
     ('py:class', r'bacommon\.cloud\..*'),
+    ('py:class', r'bacommon\.clouddialog\..*'),
     # 'cdlg' is an alias for bacommon.clouddialog (a skipped namespace).
     ('py:class', r'cdlg\..*'),
     # Truncated generic type strings that Sphinx 9.x emits as cross-reference
@@ -195,6 +322,10 @@ nitpick_ignore_regex = [
     ('py:class', r'dict\[.*'),
     ('py:class', r'list\[.*'),
     ('py:class', r'Literal\[.*'),
+    # Same Sphinx truncation bug, but emitted as a ``py:obj`` ref when
+    # the generic resolves to a qualified name (e.g. a
+    # ``Callable[[], None]`` annotation surfaces ``typing.Callable[[]``).
+    ('py:obj', r'.*Callable\[.*'),
 ]
 
 # Gives us links to common Python types.
@@ -206,6 +337,23 @@ extensions = [
     'sphinx.ext.viewcode',  # Adds 'source' links.
     'sphinx.ext.intersphinx',  # Allows linking to base Python types.
 ]
+
+
+# Default autodoc options applied to every ``automodule`` directive
+# unless an overriding option appears on the directive.
+#
+# Note: ``imported-members`` is NOT set globally. Apidoc-generated
+# rst gets ``:imported-members:`` injected per-module by a post-
+# processing step in ``batools.docs`` — only for modules whose
+# author declared a public surface via ``__all__``. The intent is
+# that consumer packages re-exporting from babase / efro / etc.
+# get full re-export coverage on their docs page, while
+# implementation submodules (no ``__all__``) only show their own
+# native members. See ``docs/design/python-api-packages.md``.
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': True,
+}
 
 # Reduces ugly wrapping in the on-this-page sidebar.
 toc_object_entries_show_parents = 'hide'
@@ -256,9 +404,20 @@ def _wrangle_logging() -> None:
                 assert isinstance(record.args, tuple) and isinstance(
                     record.args[0], str
                 )
+                # These duplicates are *fundamental* given our
+                # design philosophy: per
+                # ``docs/design/python-api-packages.md`` we
+                # deliberately re-export the same Python objects
+                # from multiple user-facing packages so plugin code
+                # can stay within one namespace. Sphinx sees the
+                # same object documented twice and warns. The
+                # "right" fix is rst-level ``:canonical:`` injection
+                # which is significantly more code; for now we
+                # suppress these warnings as long as the object is
+                # canonical-rooted in something Ballistica owns.
                 if any(
                     record.args[0].startswith(p)
-                    for p in ['babase.', '_babase.']
+                    for p in _ballistica_module_prefixes()
                 ):
                     return False  # Ignore.
 
@@ -313,6 +472,20 @@ skip_prefixes = [
     'bacommon.classic.',
     'bacommon.clouddialog.',
     'bacommon.clienteffect.',
+    # Stdlib types injected by the docs-gen hack in
+    # batools.docs (so sphinx can find forward-declared types
+    # used in annotations). With autodoc's ``imported-members:
+    # True`` they otherwise surface as "members" of every
+    # consumer module and trigger duplicate-object warnings.
+    'typing.',
+    'enum.',
+    'concurrent.futures.',
+    'pathlib.',
+    'asyncio.',
+    'dataclasses.',
+    'collections.',
+    'functools.',
+    'threading.',
 ]
 
 # Make sure we don't unintentionally skip 'foo.bar' by adding 'foo.b'
@@ -326,10 +499,8 @@ def skip_private_submodules(
     # pylint: disable=too-many-positional-arguments
     del app, options  # Unused.
 
-    # If this member is an actual module object
     if what == 'module' and isinstance(obj, types.ModuleType):
         fqname = obj.__name__
-    # For everything else (functions, classes, etc.)
     else:
         modname = getattr(obj, '__module__', None)
         fqname = f'{modname}.{name}' if modname else name

@@ -5,7 +5,8 @@
 #include "ballistica/core/platform/apple/platform_apple.h"
 
 #if BA_XCODE_BUILD
-#include <CoreServices/CoreServices.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <os/log.h>
 #include <unistd.h>
 #endif
 
@@ -25,7 +26,9 @@
 #include "ballistica/core/platform/support/platform_pango.h"
 #endif
 
+#include "ballistica/core/platform/support/sdl_message_box.h"
 #include "ballistica/shared/ballistica.h"
+#include "ballistica/shared/generic/utils.h"
 
 #if BA_XCODE_BUILD
 // This needs to be below ballistica headers since it relies on
@@ -50,30 +53,11 @@ auto PlatformApple::GetDeviceV1AccountUUIDPrefix() -> std::string {
 
 auto PlatformApple::DoGetDeviceName() -> std::string {
 #if BA_PLATFORM_MACOS && BA_XCODE_BUILD
-
-#pragma clang diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-  CFStringRef machineName = CSCopyMachineName();
-  if (machineName != nullptr) {
-    char buffer[256];
-    std::string out;
-    if (CFStringGetCString(machineName, buffer, sizeof(buffer),
-                           kCFStringEncodingUTF8)) {
-      out = buffer;
-    }
-    CFRelease(machineName);
-    return out;
-  }
-
-#pragma clang diagnostic pop
-
-  // FIXME - This code currently hangs if there is an apostrophe in the
-  // device name. Should hopefully be fixed in Swift 5.10.
-  // https://github.com/apple/swift/issues/69870
-
-  // Ask swift for a pretty name if possible.
-  // return BallisticaKit::CocoaFromCpp::getDeviceName();
+  // Ask Swift for the (pretty) machine name. This used to hang for names
+  // containing an apostrophe due to a Swift/C++ string-interop bug
+  // (apple/swift#69870), which forced a fallback to the deprecated Carbon
+  // CSCopyMachineName(); that interop bug is fixed in current toolchains.
+  return BallisticaKit::CocoaFromCpp::getDeviceName();
 #elif BA_PLATFORM_IOS_TVOS && BA_XCODE_BUILD
   return BallisticaKit::UIKitFromCpp::getDeviceName();
 #endif
@@ -153,10 +137,21 @@ auto PlatformApple::GetDeviceUUIDInputs() -> std::list<std::string> {
 
 auto PlatformApple::DoGetConfigDirectoryMonolithicDefault()
     -> std::optional<std::string> {
-#if BA_PLATFORM_IOS_TVOS
-  // FIXME - this doesn't seem right.
-  printf("FIXME: get proper default-config-dir\n");
-  return std::string(getenv("HOME")) + "/Library";
+#if BA_PLATFORM_TVOS
+  // tvOS gives us no persistent writable location (only Caches and tmp
+  // are writable), so config state lives under our cache dir and may be
+  // purged by the OS while we're not running. That's acceptable for
+  // now: GameCenter auto-sign-in restores the account on a fresh
+  // launch and important state lives server-side. If it proves a
+  // problem in practice we can look at mirroring critical bits to
+  // NSUserDefaults/iCloud KVS (or storing more via our own cloud).
+  return std::string(BallisticaKit::FromCpp::getCacheDirectoryPath())
+         + "/config";
+#elif BA_PLATFORM_IOS
+  // Sandboxed per-app, but use a subdir to match our macOS layout.
+  return std::string(
+             BallisticaKit::FromCpp::getApplicationSupportDirectoryPath())
+         + "/BallisticaKit";
 #elif BA_PLATFORM_MACOS && BA_XCODE_BUILD
   return std::string(BallisticaKit::CocoaFromCpp::getApplicationSupportPath())
          + "/BallisticaKit";
@@ -208,9 +203,45 @@ void PlatformApple::EmitPlatformLog(std::string_view name, LogLevel level,
                                     std::string_view msg) {
 #if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
 
-  // HMM: do we want to use proper logging APIs here or simple printing?
-  // base::AppleUtils::NSLogStr(msg);
-  Platform::EmitPlatformLog(name, level, msg);
+  // On Apple GUI (Xcode) builds there's no attached terminal, so route
+  // engine logs to Apple's unified logging system (os_log). That makes
+  // them visible in Console.app, Xcode's console, and on the simulator
+  // via `xcrun simctl spawn <device> log stream --predicate
+  // 'subsystem == "net.froemling.ballistica"'`. Also mirror to stderr,
+  // which Xcode's console and `simctl launch --console` can capture.
+  // Engine logs already also go to the in-app dev-console via EmitLog.
+  static os_log_t ba_oslog{os_log_create("net.froemling.ballistica", "engine")};
+  os_log_type_t ostype;
+  switch (level) {
+    case LogLevel::kDebug:
+      ostype = OS_LOG_TYPE_DEBUG;
+      break;
+    case LogLevel::kInfo:
+      ostype = OS_LOG_TYPE_INFO;
+      break;
+    case LogLevel::kWarning:
+      ostype = OS_LOG_TYPE_DEFAULT;
+      break;
+    case LogLevel::kError:
+    case LogLevel::kCritical:
+      ostype = OS_LOG_TYPE_ERROR;
+      break;
+  }
+  // os_log and stderr both want null-terminated strings; string_views
+  // are not guaranteed to be.
+  std::string msgstr{msg};
+  if (name == "stdout" || name == "stderr") {
+    // Raw stdout/stderr passthrough; emit as-is.
+    os_log_with_type(ba_oslog, ostype, "%{public}s", msgstr.c_str());
+    fprintf(stderr, "%s\n", msgstr.c_str());
+  } else {
+    // Prefix with the logger name for context.
+    std::string namestr{name};
+    os_log_with_type(ba_oslog, ostype, "%{public}s: %{public}s",
+                     namestr.c_str(), msgstr.c_str());
+    fprintf(stderr, "%s: %s\n", namestr.c_str(), msgstr.c_str());
+  }
+  fflush(stderr);
 #else
 
   // Fall back to default handler...
@@ -293,6 +324,49 @@ void PlatformApple::GetTextBoundsAndWidth(const std::string& text, Rect* r,
   PangoGetTextBoundsAndWidth_(text, r, width);
 #else
   Platform::GetTextBoundsAndWidth(text, r, width);
+#endif
+}
+
+auto PlatformApple::GetTextLineBreakOffsets(const std::string& text)
+    -> std::vector<int> {
+#if BA_XCODE_BUILD && !BA_HEADLESS_BUILD
+  // CFStringTokenizer's line-break unit gives us CoreFoundation's full
+  // UAX #14 analysis (dictionary-based segmentation included) with no
+  // Swift bridging needed.
+  std::vector<int> offsets;
+  CFStringRef cf_text = CFStringCreateWithBytes(
+      kCFAllocatorDefault, reinterpret_cast<const UInt8*>(text.data()),
+      static_cast<CFIndex>(text.size()), kCFStringEncodingUTF8, false);
+  if (cf_text == nullptr) {
+    // Should only happen on invalid utf-8; fall back gracefully.
+    return Platform::GetTextLineBreakOffsets(text);
+  }
+  CFIndex length16 = CFStringGetLength(cf_text);
+  CFLocaleRef locale = CFLocaleCopyCurrent();
+  CFStringTokenizerRef tokenizer = CFStringTokenizerCreate(
+      kCFAllocatorDefault, cf_text, CFRangeMake(0, length16),
+      kCFStringTokenizerUnitLineBreak, locale);
+  auto offset_map = Utils::UTF16ToUTF8OffsetMap(text);
+  while (CFStringTokenizerAdvanceToNextToken(tokenizer)
+         != kCFStringTokenizerTokenNone) {
+    CFRange range = CFStringTokenizerGetCurrentTokenRange(tokenizer);
+    // Each token is a line-break unit; a new line may begin at each
+    // token start. Skip the string start.
+    if (range.location > 0 && range.location < length16) {
+      int offset = offset_map[range.location];
+      if (offset > 0 && offset < static_cast<int>(text.size())) {
+        offsets.push_back(offset);
+      }
+    }
+  }
+  CFRelease(tokenizer);
+  CFRelease(locale);
+  CFRelease(cf_text);
+  return offsets;
+#elif BA_ENABLE_OS_FONT_RENDERING
+  return PangoGetTextLineBreakOffsets_(text);
+#else
+  return Platform::GetTextLineBreakOffsets(text);
 #endif
 }
 
@@ -439,16 +513,16 @@ auto PlatformApple::MacMusicAppPlayPlaylist(const std::string& playlist)
 
 auto PlatformApple::MacMusicAppGetPlaylists() -> std::list<std::string> {
 #if BA_PLATFORM_MACOS && BA_XCODE_BUILD
-  BallisticaKit::CocoaFromCpp::macMusicAppGetPlaylists();
-  // mac_music_app_playlists_.clear();
-  // mac_music_app_playlists_.push_back("foof");
-  // mac_music_app_playlists_.push_back("barf");
-  //  std::list<std::string> out;
-  //  for (auto&& val : vals) {
-  //    out.push_back(std::string(val));
-  //  }
-  //  return out;
-  return mac_music_app_playlists();
+  // Swift returns the playlist names directly now; the old Swift-5.9 interop
+  // bug that forced a C++-side-channel workaround is fixed in current
+  // toolchains.
+  auto vals = BallisticaKit::CocoaFromCpp::macMusicAppGetPlaylists();
+  std::list<std::string> out;
+  auto count = vals.getCount();
+  for (decltype(count) i = 0; i < count; ++i) {
+    out.push_back(std::string(vals[i]));
+  }
+  return out;
 #else
   return Platform::MacMusicAppGetPlaylists();
 #endif
@@ -497,17 +571,38 @@ auto PlatformApple::GetLocaleTag() -> std::string {
 }
 
 auto PlatformApple::CanShowBlockingFatalErrorDialog() -> bool {
-  if (g_buildconfig.xcode_build() && g_buildconfig.platform_macos()) {
-    return true;
-  }
-  return Platform::CanShowBlockingFatalErrorDialog();
+  // macOS can always show one: native Cocoa under xcode, SDL under cmake.
+  // (iOS/tvOS get none.)
+  return g_buildconfig.platform_macos();
 }
 
 void PlatformApple::BlockingFatalErrorDialog(const std::string& message) {
 #if BA_XCODE_BUILD && BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::blockingFatalErrorDialog(message);
+#elif BA_SDL_BUILD && BA_PLATFORM_MACOS
+  // cmake macOS has no Cocoa bridge; use SDL (see sdl_message_box.h).
+  ShowSDLFatalErrorDialog(message);
+#endif
+}
+
+void PlatformApple::OnNetAvailChanged(bool available) {
+  if (auto* p = dynamic_cast<PlatformApple*>(g_core->platform)) {
+    p->SetNetworkAvailability(available);
+  }
+}
+
+void PlatformApple::DoStartNetworkAvailabilityMonitoring() {
+#if BA_XCODE_BUILD
+  // Asks Swift to start an ``NWPathMonitor`` that fires
+  // ``OnNetAvailChanged`` from its pathUpdateHandler on a
+  // background queue. Idempotent on the Swift side; the monitor
+  // lives until process exit (no deregistration in our API).
+  BallisticaKit::FromCpp::startNetAvailabilityMonitoring();
 #else
-  Platform::BlockingFatalErrorDialog(message);
+  // Non-Xcode (e.g. cmake server) build on macOS: no Swift bridge
+  // available. Fall back to the default behavior of immediately
+  // reporting 'true' so consumers aren't stuck offline.
+  Platform::DoStartNetworkAvailabilityMonitoring();
 #endif
 }
 

@@ -33,6 +33,15 @@ class UIDelegateInterface {
   virtual void DoShowURL(const std::string& url) = 0;
 
   virtual auto IsMainUIVisible() -> bool = 0;
+
+  /// Would a back/menu press right now do something in-game (navigate
+  /// out of a window, close a popup, bring up the in-game menu) rather
+  /// than being a no-op at the top level? Platforms where the OS acts
+  /// on the press itself unless we consume it (tvOS's menu button) must
+  /// decide synchronously whether to swallow it, so they need this
+  /// answered in advance rather than after routing the press.
+  virtual auto BackPressWouldNavigate() -> bool = 0;
+
   virtual auto IsPartyIconVisible() -> bool = 0;
   virtual void ActivatePartyIcon() = 0;
   virtual void Draw(FrameDef* frame_def) = 0;

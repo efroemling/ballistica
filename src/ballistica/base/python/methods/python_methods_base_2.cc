@@ -3,10 +3,15 @@
 #include "ballistica/base/python/methods/python_methods_base_2.h"
 
 #include <string>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_platform/app_platform.h"
+#include "ballistica/base/assets/asset_name_compat.h"
+#include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
@@ -211,7 +216,8 @@ static PyMethodDef PyScreenMessageDef = {
     (PyCFunction)PyScreenMessage,  // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "screenmessage(message: str | babase.Lstr,\n"
+    "screenmessage(message: str | babase.Lstr | babase.LangStr\n"
+    "    | bacommon.langstr.LangStrSpec,\n"
     "  color: Sequence[float] | None = None,\n"
     "  log: bool = False,\n"
     "  literal: bool = False,\n"
@@ -645,6 +651,68 @@ static PyMethodDef PyCanDisplayCharsDef = {
     "See also: :meth:`~babase.supports_unicode_display()`.",
 };
 
+// ------------------------- split_text_into_lines -----------------------------
+
+static auto PySplitTextIntoLines(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  const char* text;
+  int min_lines{1};
+  PyObject* max_lines_obj{Py_None};
+  PyObject* max_chars_per_line_obj{Py_None};
+  static const char* kwlist[] = {"text", "min_lines", "max_lines",
+                                 "max_chars_per_line", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "s|iOO", const_cast<char**>(kwlist), &text, &min_lines,
+          &max_lines_obj, &max_chars_per_line_obj)) {
+    return nullptr;
+  }
+  // The C++ layer uses zero for unlimited.
+  int max_lines = max_lines_obj == Py_None ? 0 : Python::GetInt(max_lines_obj);
+  int max_chars_per_line = max_chars_per_line_obj == Py_None
+                               ? 0
+                               : Python::GetInt(max_chars_per_line_obj);
+  std::string result = g_core->platform->SplitTextIntoLines(
+      text, min_lines, max_lines, max_chars_per_line);
+  return PyUnicode_FromStringAndSize(result.c_str(),
+                                     static_cast<Py_ssize_t>(result.size()));
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySplitTextIntoLinesDef = {
+    "split_text_into_lines",            // name
+    (PyCFunction)PySplitTextIntoLines,  // method
+    METH_VARARGS | METH_KEYWORDS,       // flags
+
+    "split_text_into_lines(text: str, min_lines: int = 1,\n"
+    "  max_lines: int | None = None,\n"
+    "  max_chars_per_line: int | None = None) -> str\n"
+    "\n"
+    "Split text into newline-separated lines under simple constraints.\n"
+    "\n"
+    "Breaks only at valid line-break opportunities (determined by the\n"
+    "OS text stack where available), treating all characters as equal\n"
+    "width. Uses the fewest lines that keep every line within\n"
+    "``max_chars_per_line`` (when provided) while staying between\n"
+    "``min_lines`` and ``max_lines`` (None means unlimited), and\n"
+    "balances line lengths within that count. So a bare\n"
+    "``max_chars_per_line`` gives basic wrapping, ``min_lines`` alone\n"
+    "gives an exact line count, and combinations behave sensibly.\n"
+    "\n"
+    "Constraints are best-effort: lines may exceed\n"
+    "``max_chars_per_line`` when unavoidable (unbreakable words or a\n"
+    "``max_lines`` cap) and fewer lines than ``min_lines`` come back\n"
+    "when there are not enough break opportunities. Newlines in the\n"
+    "input are treated as regular break opportunities and whitespace\n"
+    "at line edges is stripped, so splitting the result on newlines\n"
+    "recovers the individual lines.\n"
+    "\n"
+    "This is a simple stopgap for feeding flat translated strings into\n"
+    "places expecting preformatted line counts; it knows nothing about\n"
+    "actual rendered character widths. Logic thread only.",
+};
+
 // ----------------------------- fade_screen -----------------------------------
 
 static auto PyFadeScreen(PyObject* self, PyObject* args, PyObject* keywds)
@@ -661,8 +729,11 @@ static auto PyFadeScreen(PyObject* self, PyObject* args, PyObject* keywds)
     return nullptr;
   }
   BA_PRECONDITION(g_base->InLogicThread());
+  // Via IntFromDouble: `time` arrives straight from a PyArg "f", so it
+  // can be NaN or infinite, and casting either to an int is undefined
+  // behavior.
   g_base->graphics->FadeScreen(static_cast<bool>(fade),
-                               static_cast<int>(1000.0f * time), endcall);
+                               Python::IntFromDouble(1000.0 * time), endcall);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1092,8 +1163,331 @@ static PyMethodDef PyAtExitDef = {
     "should still be used on modular builds as this function is not available\n"
     "there."};
 
+// ---------------- register_asset_package_bucket ------------------------------
+
+// Parse a Python ``entries`` dict ``{logical_path: {part: hash}}`` into an
+// EntryMap (part-keyed component files per logical asset; initiative
+// decision #16). A null asset is an empty part dict. Returns false with a
+// Python error set on bad shape.
+static auto ParseAssetEntryMap_(PyObject* entries_obj,
+                                AssetPackageRegistry::EntryMap* out) -> bool {
+  if (!PyDict_Check(entries_obj)) {
+    PyErr_SetString(PyExc_TypeError,
+                    "entries must be a dict[str, dict[str, str]].");
+    return false;
+  }
+  PyObject* path_key;
+  PyObject* parts_obj;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(entries_obj, &pos, &path_key, &parts_obj)) {
+    if (!PyUnicode_Check(path_key) || !PyDict_Check(parts_obj)) {
+      PyErr_SetString(PyExc_TypeError,
+                      "entries must map str paths to dict[str, str] parts.");
+      return false;
+    }
+    AssetPackageRegistry::PartMap parts;
+    PyObject* part_key;
+    PyObject* hash_val;
+    Py_ssize_t rpos = 0;
+    while (PyDict_Next(parts_obj, &rpos, &part_key, &hash_val)) {
+      if (!PyUnicode_Check(part_key) || !PyUnicode_Check(hash_val)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "entry part keys/values must be strings.");
+        return false;
+      }
+      parts.emplace(PyUnicode_AsUTF8(part_key), PyUnicode_AsUTF8(hash_val));
+    }
+    out->emplace(PyUnicode_AsUTF8(path_key), std::move(parts));
+  }
+  return true;
+}
+
+static auto PyRegisterAssetPackageBucket(PyObject* self, PyObject* args,
+                                         PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* apverid;
+  const char* bucket_id;
+  PyObject* entries_obj;
+  static const char* kwlist[] = {"apverid", "bucket_id", "entries", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ssO",
+                                   const_cast<char**>(kwlist), &apverid,
+                                   &bucket_id, &entries_obj)) {
+    return nullptr;
+  }
+  AssetPackageRegistry::EntryMap entries;
+  if (!ParseAssetEntryMap_(entries_obj, &entries)) {
+    return nullptr;
+  }
+  g_base->assets->package_registry()->RegisterBucket(apverid, bucket_id,
+                                                     std::move(entries));
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyRegisterAssetPackageBucketDef = {
+    "register_asset_package_bucket",            // name
+    (PyCFunction)PyRegisterAssetPackageBucket,  // method
+    METH_VARARGS | METH_KEYWORDS,               // flags
+
+    "register_asset_package_bucket(apverid: str, bucket_id: str,\n"
+    "                              entries: dict[str, dict[str, str]])"
+    " -> None\n"
+    "\n"
+    "(internal) Register one bucket of an asset-package's manifest into\n"
+    "the C++ runtime registry. Called from the babase startup path after\n"
+    "parsing the bundled top-level ``manifest.json`` and each referenced\n"
+    "bucket-manifest blob from the CAS store. ``entries`` maps logical\n"
+    "asset paths (e.g. ``textures/helloworld``) to a part-keyed\n"
+    "component map ``{part: CAS_hash}`` with ``<role>.<format>`` part\n"
+    "names (e.g. ``t.ktx2`` = texture data); a null asset maps to an\n"
+    "empty dict."};
+
+// ---------------- register_asset_package_buckets -----------------------------
+
+static auto PyRegisterAssetPackageBuckets(PyObject* self, PyObject* args,
+                                          PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* buckets_obj;
+  static const char* kwlist[] = {"buckets", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &buckets_obj)) {
+    return nullptr;
+  }
+  PythonRef seq(PySequence_Fast(buckets_obj, "buckets must be a sequence."),
+                PythonRef::kSteal);
+  if (!seq.exists()) {
+    return nullptr;
+  }
+  Py_ssize_t count = PySequence_Fast_GET_SIZE(seq.get());
+  std::vector<AssetPackageRegistry::BucketSpec> specs;
+  specs.reserve(static_cast<size_t>(count));
+  for (Py_ssize_t i = 0; i < count; ++i) {
+    PyObject* item = PySequence_Fast_GET_ITEM(seq.get(), i);  // (borrowed)
+    const char* apverid;
+    const char* bucket_id;
+    PyObject* entries_obj;
+    if (!PyArg_ParseTuple(item, "ssO", &apverid, &bucket_id, &entries_obj)) {
+      return nullptr;
+    }
+    AssetPackageRegistry::EntryMap entries;
+    if (!ParseAssetEntryMap_(entries_obj, &entries)) {
+      return nullptr;
+    }
+    specs.emplace_back(apverid, bucket_id, std::move(entries));
+  }
+  g_base->assets->package_registry()->RegisterBucketsAtomic(std::move(specs));
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyRegisterAssetPackageBucketsDef = {
+    "register_asset_package_buckets",            // name
+    (PyCFunction)PyRegisterAssetPackageBuckets,  // method
+    METH_VARARGS | METH_KEYWORDS,                // flags
+
+    "register_asset_package_buckets(\n"
+    "    buckets: Sequence[tuple[str, str, dict[str, dict[str, str]]]])"
+    " -> None\n"
+    "\n"
+    "(internal) Register several asset-package buckets into the C++\n"
+    "runtime registry in a single atomic swap. Each tuple is\n"
+    "``(apverid, bucket_id, entries)`` where ``entries`` maps logical\n"
+    "asset paths to a part-keyed component map ``{part: CAS_hash}`` (a\n"
+    "null asset maps to an empty dict). Unlike\n"
+    "``register_asset_package_bucket``\n"
+    "(used by the startup bundle parser), this is the runtime path for\n"
+    "the asset-subsystem to commit a fully-resolved downloaded package:\n"
+    "the whole batch becomes visible to lookups at once, so native never\n"
+    "sees a half-registered package. Safe to call while other threads are\n"
+    "doing asset lookups."};
+
+// ---------------- mark_construct_assets_complete -----------------------------
+
+static auto PyMarkConstructAssetsComplete(PyObject* self, PyObject* args)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  g_base->assets->package_registry()->SetConstructComplete();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyMarkConstructAssetsCompleteDef = {
+    "mark_construct_assets_complete",            // name
+    (PyCFunction)PyMarkConstructAssetsComplete,  // method
+    METH_NOARGS,                                 // flags
+
+    "mark_construct_assets_complete() -> None\n"
+    "\n"
+    "(internal) Note that construct-mode has finished resolving every\n"
+    "asset-package the meta-scan requires. Opens the native gate that\n"
+    "complains about non-builtin asset access before that point (see\n"
+    "``AssetPackageRegistry::CheckPreConstructAccess``). Called from\n"
+    "``babase._asset_packages.mark_construct_complete()`` so the native\n"
+    "and Python gates open together."};
+
+// ---------------- get_asset_package_constant_blob_path -----------------------
+
+static auto PyGetAssetPackageConstantBlobPath(PyObject* self, PyObject* args,
+                                              PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* apverid;
+  const char* logical_path;
+  static const char* kwlist[] = {"apverid", "logical_path", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss",
+                                   const_cast<char**>(kwlist), &apverid,
+                                   &logical_path)) {
+    return nullptr;
+  }
+  auto* registry = g_base->assets->package_registry();
+  auto bucket_id = registry->LookupConstantBucketId(apverid);
+  if (bucket_id.empty()) {
+    Py_RETURN_NONE;
+  }
+  auto hash = registry->LookupAssetHashByRole(apverid, bucket_id, logical_path,
+                                              "j", {"json"});
+  if (hash.empty()) {
+    Py_RETURN_NONE;
+  }
+  return PyUnicode_FromString(registry->CasBlobPath(hash).c_str());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetAssetPackageConstantBlobPathDef = {
+    "get_asset_package_constant_blob_path",          // name
+    (PyCFunction)PyGetAssetPackageConstantBlobPath,  // method
+    METH_VARARGS | METH_KEYWORDS,                    // flags
+
+    "get_asset_package_constant_blob_path(apverid: str,\n"
+    "                                     logical_path: str) -> str | None\n"
+    "\n"
+    "(internal) Resolve a flavor-invariant ``constant``-bucket logical\n"
+    "path in a registered asset-package to its on-disk CAS blob path.\n"
+    "Returns the path, or ``None`` if the package isn't registered, has\n"
+    "no constant bucket, or doesn't carry that logical path. The blob is\n"
+    "the JSON (``j.json``) component. The returned path is where the\n"
+    "blob should live (writable CAS root, else bundle root); a caller\n"
+    "must still handle a genuine ``open()`` failure."};
+
+// ---------------- set_asset_name_compat_versions -----------------------------
+
+static auto PySetAssetNameCompatVersions(PyObject* self, PyObject* args,
+                                         PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* versions_obj;
+  static const char* kwlist[] = {"versions", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O!",
+                                   const_cast<char**>(kwlist), &PyDict_Type,
+                                   &versions_obj)) {
+    return nullptr;
+  }
+  PyObject* key;
+  PyObject* value;
+  Py_ssize_t pos = 0;
+  while (PyDict_Next(versions_obj, &pos, &key, &value)) {
+    if (!PyUnicode_Check(key) || !PyUnicode_Check(value)) {
+      throw Exception("Expected a dict[str, str].", PyExcType::kType);
+    }
+    AssetNameCompat::SetPackageVersion(PyUnicode_AsUTF8(key),
+                                       PyUnicode_AsUTF8(value));
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetAssetNameCompatVersionsDef = {
+    "set_asset_name_compat_versions",           // name
+    (PyCFunction)PySetAssetNameCompatVersions,  // method
+    METH_VARARGS | METH_KEYWORDS,               // flags
+
+    "set_asset_name_compat_versions(versions: dict[str, str]) -> None\n"
+    "\n"
+    "(internal) Register the asset-package version ids backing the\n"
+    "legacy asset-name compat table, keyed by package key\n"
+    "('builtinassets' / 'classicassets'). Until a package key is\n"
+    "registered, legacy names mapping into it pass through unmapped.\n"
+    "Called at classic-app-mode activation with values sourced from\n"
+    "the asset-package wrapper modules."};
+
+// ---------------- resolve_legacy_asset_name ----------------------------------
+
+static auto PyResolveLegacyAssetName(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* name;
+  const char* kind;
+  static const char* kwlist[] = {"name", "kind", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss",
+                                   const_cast<char**>(kwlist), &name, &kind)) {
+    return nullptr;
+  }
+  return PyUnicode_FromString(AssetNameCompat::FromLegacy(name, kind).c_str());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyResolveLegacyAssetNameDef = {
+    "resolve_legacy_asset_name",            // name
+    (PyCFunction)PyResolveLegacyAssetName,  // method
+    METH_VARARGS | METH_KEYWORDS,           // flags
+
+    "resolve_legacy_asset_name(name: str, kind: str) -> str\n"
+    "\n"
+    "(internal) Map a possibly-legacy bare asset name to the qualified\n"
+    "'<apverid>:<logical-path>' ref it now lives at, or return it\n"
+    "unchanged if it has no asset-package home (or that package's\n"
+    "version is not registered yet). Already-qualified names pass\n"
+    "through untouched.\n"
+    "\n"
+    "'kind' is the logical-path head to look under ('textures',\n"
+    "'audio', 'meshes', ...); legacy names were only unique per asset\n"
+    "type, so lookups are kind-scoped.\n"
+    "\n"
+    "This is the read side of the same table the engine's loaders use,\n"
+    "exposed so Python can turn a legacy name into a real asset-package\n"
+    "reference (e.g. to build a spec for the wire) rather than guessing."};
+
+// ---------------- preferred_texture_profile ----------------------------------
+
+static auto PyPreferredTextureProfile(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  return PyUnicode_FromString(
+      g_base->assets->PreferredTextureProfile().c_str());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyPreferredTextureProfileDef = {
+    "preferred_texture_profile",             // name
+    (PyCFunction)PyPreferredTextureProfile,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
+
+    "preferred_texture_profile() -> str\n"
+    "\n"
+    "(internal) Return the texture-profile name the asset-subsystem\n"
+    "should request for asset-package resolves on this build (the\n"
+    "``<profile>`` in a ``textures/<profile>_<quality>`` bucket coord).\n"
+    "Native owns texture-format/preference policy; the Python\n"
+    "asset-subsystem reads this so its fetch dimensions track form\n"
+    "factor + GPU capability without it needing format knowledge.\n"
+    "``'null'`` in headless; otherwise ``'desktop_v1'`` (BC7) on\n"
+    "desktop / ``'mobile_v1'`` (ASTC) on mobile, each falling back to\n"
+    "``'fallback_v1'`` when the compressed format isn't supported."};
+
+// -----------------------------------------------------------------------------
+
 auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
   return {
+      PyRegisterAssetPackageBucketDef,
+      PyRegisterAssetPackageBucketsDef,
+      PyMarkConstructAssetsCompleteDef,
+      PyGetAssetPackageConstantBlobPathDef,
+      PySetAssetNameCompatVersionsDef,
+      PyResolveLegacyAssetNameDef,
+      PyPreferredTextureProfileDef,
       PyOpenURLDef,
       PyOverlayWebBrowserIsSupportedDef,
       PyOverlayWebBrowserOpenURLDef,
@@ -1107,6 +1501,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PySetCameraManualDef,
       PyAddCleanFrameCallbackDef,
       PyCanDisplayCharsDef,
+      PySplitTextIntoLinesDef,
       PyFadeScreenDef,
       PyScreenMessageDef,
       PyGetStringWidthDef,

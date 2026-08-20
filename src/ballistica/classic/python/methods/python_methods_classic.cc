@@ -56,10 +56,10 @@ static auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
 
     if (have_change) {
       appmode->set_buffer_time(appmode->buffer_time()
-                               + static_cast<int>(change));
+                               + Python::IntFromDouble(change));
     }
     if (have_absolute) {
-      appmode->set_buffer_time(static_cast<int>(absolute));
+      appmode->set_buffer_time(Python::IntFromDouble(absolute));
     }
     appmode->set_buffer_time(std::max(0, appmode->buffer_time()));
     return_val = appmode->buffer_time();
@@ -67,10 +67,10 @@ static auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
     auto* appmode = ClassicAppMode::GetSingleton();
     if (have_change) {
       appmode->set_delay_bucket_samples(appmode->delay_bucket_samples()
-                                        + static_cast<int>(change));
+                                        + Python::IntFromDouble(change));
     }
     if (have_absolute) {
-      appmode->set_buffer_time(static_cast<int>(absolute));
+      appmode->set_buffer_time(Python::IntFromDouble(absolute));
     }
     appmode->set_delay_bucket_samples(
         std::max(1, appmode->delay_bucket_samples()));
@@ -79,10 +79,10 @@ static auto PyValueTest(PyObject* self, PyObject* args, PyObject* keywds)
     auto* appmode = ClassicAppMode::GetSingleton();
     if (have_change) {
       appmode->set_dynamics_sync_time(appmode->dynamics_sync_time()
-                                      + static_cast<int>(change));
+                                      + Python::IntFromDouble(change));
     }
     if (have_absolute) {
-      appmode->set_dynamics_sync_time(static_cast<int>(absolute));
+      appmode->set_dynamics_sync_time(Python::IntFromDouble(absolute));
     }
     appmode->set_dynamics_sync_time(std::max(0, appmode->dynamics_sync_time()));
     return_val = appmode->dynamics_sync_time();
@@ -194,16 +194,15 @@ static auto PyClassicAppModeHandleAppIntentExec(PyObject* self, PyObject* args,
   }
   auto* appmode = ClassicAppMode::GetActiveOrThrow();
 
-  // Run the command.
-  if (g_core->core_config().exec_command.has_value()) {
-    bool success = PythonCommand(*g_core->core_config().exec_command,
-                                 BA_BUILD_COMMAND_FILENAME)
-                       .Exec(true, nullptr, nullptr);
-    if (!success) {
-      // TODO(ericf): what should we do in this case?
-      //  Obviously if we add return/success values for intents we should set
-      //  that here.
-    }
+  // Run the command we were passed (the intent carries it; re-reading
+  // core-config here instead used to silently no-op on Android, where
+  // the config capture can lose a startup race).
+  bool success = PythonCommand(command, BA_BUILD_COMMAND_FILENAME)
+                     .Exec(true, nullptr, nullptr);
+  if (!success) {
+    // TODO(ericf): what should we do in this case?
+    //  Obviously if we add return/success values for intents we should set
+    //  that here.
   }
   //  If the stuff we just ran didn't result in a session, create a default
   //  one.

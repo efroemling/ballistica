@@ -7,8 +7,6 @@ and then replace 'TemplateMultiType' with 'MyAwesomeTypeName' or
 whatnot.
 """
 
-from __future__ import annotations
-
 from typing import assert_never, override
 
 from enum import Enum

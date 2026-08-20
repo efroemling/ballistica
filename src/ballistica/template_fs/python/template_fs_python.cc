@@ -35,7 +35,7 @@ void TemplateFsPython::AddPythonClasses(PyObject* module) {
 }
 
 void TemplateFsPython::ImportPythonObjs() {
-#include "ballistica/template_fs/mgen/pyembed/binding_template_fs.inc"
+#include "ballistica/template_fs/generated/pyembed/binding_template_fs.inc"
 }
 
 void TemplateFsPython::HelloWorld() {

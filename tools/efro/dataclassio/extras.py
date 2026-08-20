@@ -2,8 +2,6 @@
 #
 """Extra rarely-needed functionality related to dataclasses."""
 
-from __future__ import annotations
-
 import dataclasses
 from typing import TYPE_CHECKING, override
 

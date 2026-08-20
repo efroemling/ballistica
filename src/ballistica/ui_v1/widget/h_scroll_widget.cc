@@ -7,6 +7,7 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/math/lerp.h"
@@ -860,7 +861,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   CheckLayout();
 
-  Vector3f tilt = 0.02f * g_base->graphics->tilt();
+  Vector3f tilt = 0.02f * g_base->input->tilt();
   float extra_offs_x = tilt.y;
   float extra_offs_y = -tilt.x;
 
@@ -911,15 +912,20 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
-      c.SetColor(1, 1, 1, border_opacity_);
-      c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
+      auto* tex = g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesUiAtlas);
+      // Premultiplied texture + straight faded color; premultiply rgb
+      // ourselves (see docs/design/premultiplied-alpha.md).
+      float cmul = tex->premultiplied() ? border_opacity_ : 1.0f;
+      c.SetColor(cmul, cmul, cmul, border_opacity_);
+      c.SetTexture(tex);
       {
         auto xf = c.ScopedTransform();
         c.Translate(trough_center_x_, trough_center_y_, 0.7f);
         c.Scale(trough_width_, trough_height_, 0.1f);
         c.Rotate(-90, 0, 0, 1);
-        c.DrawMeshAsset(g_base->assets->SysMesh(
-            base::SysMeshID::kScrollBarTroughTransparent));
+        c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+            base::BuiltinMeshID::kMeshesScrollBarTroughTransparent));
       }
       c.Submit();
     }
@@ -944,10 +950,12 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       } else {
         brightness = 1.0f;
       }
-      c.SetColor(brightness, brightness, brightness,
+      auto* tex = g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesPageLeftRight);
+      float cmul = tex->premultiplied() ? page_left_button_presence_ : 1.0f;
+      c.SetColor(brightness * cmul, brightness * cmul, brightness * cmul,
                  page_left_button_presence_);
-      c.SetTexture(
-          g_base->assets->SysTexture(base::SysTextureID::kPageLeftRight));
+      c.SetTexture(tex);
 
       {
         auto xf = c.ScopedTransform();
@@ -956,7 +964,8 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.Scale(scale_ex * kPageButtonSize, scale_ex * kPageButtonSize, 0.1f);
         c.Rotate(180.0f, 0.0f, 0.0f, 1.0f);
         if (draw_transparent) {
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
         c.Submit();
       }
@@ -978,17 +987,20 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       } else {
         brightness = 1.0f;
       }
-      c.SetColor(brightness, brightness, brightness,
+      auto* tex = g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesPageLeftRight);
+      float cmul = tex->premultiplied() ? page_right_button_presence_ : 1.0f;
+      c.SetColor(brightness * cmul, brightness * cmul, brightness * cmul,
                  page_right_button_presence_);
-      c.SetTexture(
-          g_base->assets->SysTexture(base::SysTextureID::kPageLeftRight));
+      c.SetTexture(tex);
       {
         auto xf = c.ScopedTransform();
         c.Translate(width() - kPageButtonInset - kPageButtonSize * 0.5f,
                     height() * 0.5 + kPageButtonYOffs, 0.9f);
         c.Scale(scale_ex * kPageButtonSize, scale_ex * kPageButtonSize, 0.1f);
         if (draw_transparent) {
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         }
         c.Submit();
       }
@@ -1072,10 +1084,10 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           c.Rotate(-90.0f, 0.0f, 0.0f, 1.0f);
 
           if (draw_transparent) {
-            c.DrawMeshAsset(g_base->assets->SysMesh(
+            c.DrawMeshAsset(g_base->assets->BuiltinMesh(
                 sb_thumb_width > 100.0f
-                    ? base::SysMeshID::kScrollBarThumbSimple
-                    : base::SysMeshID::kScrollBarThumbShortSimple));
+                    ? base::BuiltinMeshID::kMeshesScrollBarThumbSimple
+                    : base::BuiltinMeshID::kMeshesScrollBarThumbShortSimple));
           }
           c.FlipCullFace();
           c.Submit();
@@ -1104,14 +1116,17 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     }
     base::SimpleComponent c(pass);
     c.SetTransparent(true);
-    c.SetColor(1.0f, 1.0f, 1.0f, border_opacity_);
-    c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kScrollWidget));
+    auto* tex = g_base->assets->BuiltinTexture(
+        base::BuiltinTextureID::kTexturesScrollWidget);
+    float cmul = tex->premultiplied() ? border_opacity_ : 1.0f;
+    c.SetColor(cmul, cmul, cmul, border_opacity_);
+    c.SetTexture(tex);
     {
       auto xf = c.ScopedTransform();
       c.Translate(outline_center_x_, outline_center_y_, 0.9f);
       c.Scale(outline_width_, outline_height_, 0.1f);
-      c.DrawMeshAsset(
-          g_base->assets->SysMesh(base::SysMeshID::kSoftEdgeOutside));
+      c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+          base::BuiltinMeshID::kMeshesSoftEdgeOutside));
     }
     c.Submit();
   }
@@ -1146,14 +1161,14 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.SetTransparent(true);
     c.SetPremultiplied(true);
     c.SetColor(0.4f * m, 0.5f * m, 0.05f * m, 0.0f);
-    c.SetTexture(
-        g_base->assets->SysTexture(base::SysTextureID::kScrollWidgetGlow));
+    c.SetTexture(g_base->assets->BuiltinTexture(
+        base::BuiltinTextureID::kTexturesScrollWidgetGlow));
     {
       auto xf = c.ScopedTransform();
       c.Translate(glow_center_x_, glow_center_y_, 0.9f);
       c.Scale(glow_width_, glow_height_, 0.1f);
-      c.DrawMeshAsset(
-          g_base->assets->SysMesh(base::SysMeshID::kSoftEdgeOutside));
+      c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+          base::BuiltinMeshID::kMeshesSoftEdgeOutside));
     }
     c.Submit();
   }

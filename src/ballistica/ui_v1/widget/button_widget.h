@@ -3,7 +3,9 @@
 #ifndef BALLISTICA_UI_V1_WIDGET_BUTTON_WIDGET_H_
 #define BALLISTICA_UI_V1_WIDGET_BUTTON_WIDGET_H_
 
+#include <memory>
 #include <string>
+#include <utility>
 
 #include "ballistica/ui_v1/widget/text_widget.h"
 
@@ -65,9 +67,19 @@ class ButtonWidget : public Widget {
   void set_better_bg_fit(bool val) { better_bg_fit_ = val; }
   auto set_style(Style s) { style_ = s; }
   enum class IconType : uint8_t { kNone, kCancel, kStart };
+  enum class TransitionType : uint8_t { kInLeft, kScale };
   void SetTextLiteral(bool val);
   void SetText(const std::string& text);
+  /// Native language-string label (retained + re-evaluated on
+  /// language changes; see TextWidget::SetLangStr).
+  void SetLangStr(std::shared_ptr<const base::LangStr> val);
   auto text() const -> std::string { return text_->text_raw(); }
+
+  /// Label text as it is currently displayed -- the translated form
+  /// when the label is a language-string, the raw string otherwise.
+  /// Mirrors TextWidget::GetQueryText(); this is what `buttonwidget(
+  /// query=...)` returns.
+  auto GetQueryText() -> std::string { return text_->GetQueryText(); }
   auto set_icon_type(IconType i) { icon_type_ = i; }
   auto set_repeat(bool repeat) { repeat_ = repeat; }
   auto set_text_scale(float val) { text_scale_ = val; }
@@ -84,6 +96,7 @@ class ButtonWidget : public Widget {
   void SetMeshTransparent(base::MeshAsset* val);
   void SetMeshOpaque(base::MeshAsset* val);
   auto set_transition_delay(millisecs_t val) { transition_delay_ = val; }
+  void set_transition_type(TransitionType val) { transition_type_ = val; }
   void OnRepeatTimerExpired();
   auto set_extra_touch_border_scale(float scale) {
     extra_touch_border_scale_ = scale;
@@ -96,6 +109,7 @@ class ButtonWidget : public Widget {
   // Disabled buttons can't be clicked or otherwise activated.
   auto set_enabled(bool val) { enabled_ = val; }
   auto enabled() const -> bool { return enabled_; }
+  void set_rotate(float val) { rotate_ = val; }
   auto set_opacity(float val) { opacity_ = val; }
   auto GetDrawBrightness(millisecs_t time) const -> float override;
   auto is_color_set() const -> bool { return color_set_; }
@@ -109,9 +123,11 @@ class ButtonWidget : public Widget {
   bool color_set_ = false;
   void DoActivate(bool is_repeat = false);
   auto GetMult(millisecs_t current_time) const -> float;
+  auto RotatePointToLocal(float x, float y) const -> std::pair<float, float>;
 
   IconType icon_type_{};
   Style style_{};
+  TransitionType transition_type_{TransitionType::kInLeft};
   bool enabled_{true};
   bool selectable_{true};
   bool sound_enabled_{true};
@@ -136,6 +152,7 @@ class ButtonWidget : public Widget {
   float icon_color_blue_{1.0f};
   float icon_color_alpha_{1.0f};
   float icon_scale_{1.0f};
+  float rotate_{0.0f};
   float opacity_{1.0f};
   float flatness_{0.0f};
   float text_flatness_{0.5f};

@@ -2,9 +2,12 @@
 
 #include "ballistica/ui_v1/widget/image_widget.h"
 
+#include <algorithm>
+
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/simple_component.h"
 #include "ballistica/base/graphics/mesh/mesh_indexed_simple_full.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 
 namespace ballistica::ui_v1 {
@@ -25,8 +28,8 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   millisecs_t current_time = pass->frame_def()->display_time_millisecs();
 
-  Vector3f tilt = tilt_scale_ * 0.01f * g_base->graphics->tilt();
-  if (draw_control_parent()) tilt += 0.02f * g_base->graphics->tilt();
+  Vector3f tilt = tilt_scale_ * 0.01f * g_base->input->tilt();
+  if (draw_control_parent()) tilt += 0.02f * g_base->input->tilt();
   float extra_offs_x = -tilt.y;
   float extra_offs_y = tilt.x;
 
@@ -34,8 +37,17 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   float transition =
       (static_cast<float>(birth_time_millisecs_) + transition_delay_)
       - static_cast<float>(current_time);
+  float transition_scale = 1.0f;
   if (transition > 0) {
-    extra_offs_x -= transition * 4.0f;
+    if (transition_type_ == TransitionType::kScale) {
+      // Fixed 150ms scale-up at the tail of the transition window
+      // (quadratic ease-out; decelerates as it settles at 1.0).
+      constexpr float kScaleDurationMs = 150.0f;
+      float t = std::max(0.0f, 1.0f - transition / kScaleDurationMs);
+      transition_scale = 1.0f - (1.0f - t) * (1.0f - t);
+    } else {
+      extra_offs_x -= transition * 4.0f;
+    }
   }
 
   float l = 0;
@@ -73,15 +85,15 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           if (radial_amount_ < 1.0f) {
             draw_radial_transparent = true;
           } else {
-            mesh_transparent_used =
-                g_base->assets->SysMesh(base::SysMeshID::kImage1x1);
+            mesh_transparent_used = g_base->assets->BuiltinMesh(
+                base::BuiltinMeshID::kMeshesImage1x1);
           }
         } else {
           if (radial_amount_ < 1.0f) {
             draw_radial_opaque = true;
           } else {
-            mesh_opaque_used =
-                g_base->assets->SysMesh(base::SysMeshID::kImage1x1);
+            mesh_opaque_used = g_base->assets->BuiltinMesh(
+                base::BuiltinMeshID::kMeshesImage1x1);
           }
         }
       }
@@ -93,6 +105,13 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                * draw_controller->GetDrawBrightness(current_time))
               + (1.0f - draw_controller_mult_) * 1.0f;
       }
+
+      // Premultiply rgb by opacity for premultiplied textures so faded icons
+      // composite 'over' under premult blend instead of staying full-brightness
+      // (premult blend adds rgb directly rather than weighting it by alpha).
+      // Straight-alpha textures keep raw rgb and fade via alpha as before.
+      float omul =
+          (texture_.exists() && texture_->premultiplied()) ? opacity_ : 1.0f;
 
       // Opaque portion may get drawn transparent or opaque depending on our
       // global opacity.
@@ -113,8 +132,8 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         if (should_draw) {
           base::SimpleComponent c(pass);
           c.SetTransparent(should_draw_transparent);
-          c.SetColor(color_red_ * db, color_green_ * db, color_blue_ * db,
-                     opacity_);
+          c.SetColor(color_red_ * db * omul, color_green_ * db * omul,
+                     color_blue_ * db * omul, opacity_);
           c.SetTexture(texture_);
           if (flatness_ != 0.0f) {
             c.SetFlatness(flatness_);
@@ -126,12 +145,16 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             c.SetColorizeColor2(tint2_color_red_, tint2_color_green_,
                                 tint2_color_blue_);
           }
+          if (rotate_ != 0.0f) {
+            c.Rotate(rotate_, 0, 0, 1);
+          }
           c.SetMaskTexture(mask_texture_.get());
           {
             auto xf = c.ScopedTransform();
             c.Translate(image_center_x_ + extra_offs_x,
                         image_center_y_ + extra_offs_y);
-            c.Scale(image_width_, image_height_, 1.0f);
+            c.Scale(image_width_ * transition_scale,
+                    image_height_ * transition_scale, 1.0f);
             if (draw_radial_opaque) {
               if (!radial_mesh_.exists()) {
                 radial_mesh_ =
@@ -153,11 +176,14 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           && draw_transparent) {
         base::SimpleComponent c(pass);
         c.SetTransparent(true);
-        c.SetColor(color_red_ * db, color_green_ * db, color_blue_ * db,
-                   opacity_);
+        c.SetColor(color_red_ * db * omul, color_green_ * db * omul,
+                   color_blue_ * db * omul, opacity_);
         c.SetTexture(texture_);
         if (flatness_ != 0.0f) {
           c.SetFlatness(flatness_);
+        }
+        if (rotate_ != 0.0f) {
+          c.Rotate(rotate_, 0, 0, 1);
         }
         if (tint_texture_.exists()) {
           c.SetColorizeTexture(tint_texture_.get());
@@ -171,7 +197,8 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           auto xf = c.ScopedTransform();
           c.Translate(image_center_x_ + extra_offs_x,
                       image_center_y_ + extra_offs_y);
-          c.Scale(image_width_, image_height_, 1.0f);
+          c.Scale(image_width_ * transition_scale,
+                  image_height_ * transition_scale, 1.0f);
           if (draw_radial_transparent) {
             if (!radial_mesh_.exists()) {
               radial_mesh_ = Object::New<base::MeshIndexedSimpleFull>();

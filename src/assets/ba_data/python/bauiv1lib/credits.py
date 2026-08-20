@@ -2,14 +2,10 @@
 #
 """Provides a window to display game credits."""
 
-from __future__ import annotations
-
-import os
-import json
-import logging
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Sequence
@@ -158,26 +154,17 @@ class CreditsWindow(bui.MainWindow):
                 sval += nline + '\n'
             return sval
 
-        sound_and_music = bui.Lstr(
-            resource=f'{self._r}.songCreditText'
+        # Flat text on purpose: the credits body is assembled as one
+        # big pre-laid-out string below (indenting, name-column
+        # wrapping), so this gets evaluated at the boundary.
+        sound_and_music = classicassets.strings.credits.song_credit(
+            title="'William Tell (Trumpet Entry)'",
+            performer='The Apollo Symphony Orchestra',
+            composer='Gioacchino Rossini',
+            arranger='Chris Worth',
+            publisher='BMI',
+            source='www.AudioSparx.com',
         ).evaluate()
-        sound_and_music = sound_and_music.replace(
-            '${TITLE}', "'William Tell (Trumpet Entry)'"
-        )
-        sound_and_music = sound_and_music.replace(
-            '${PERFORMER}', 'The Apollo Symphony Orchestra'
-        )
-        sound_and_music = sound_and_music.replace(
-            '${PERFORMER}', 'The Apollo Symphony Orchestra'
-        )
-        sound_and_music = sound_and_music.replace(
-            '${COMPOSER}', 'Gioacchino Rossini'
-        )
-        sound_and_music = sound_and_music.replace('${ARRANGER}', 'Chris Worth')
-        sound_and_music = sound_and_music.replace('${PUBLISHER}', 'BMI')
-        sound_and_music = sound_and_music.replace(
-            '${SOURCE}', 'www.AudioSparx.com'
-        )
         spc = '     '
         sound_and_music = spc + sound_and_music.replace('\n', '\n' + spc)
         names = [
@@ -210,22 +197,9 @@ class CreditsWindow(bui.MainWindow):
         names.sort(key=lambda x: x.lower())
         freesound_names = _format_names(names, 90)
 
-        try:
-            with open(
-                os.path.join(
-                    bui.app.env.data_directory,
-                    'ba_data',
-                    'data',
-                    'langdata.json',
-                ),
-                encoding='utf-8',
-            ) as infile:
-                translation_contributors = json.loads(infile.read())[
-                    'translation_contributors'
-                ]
-        except Exception:
-            logging.exception('Error reading translation contributors.')
-            translation_contributors = []
+        translation_contributors = bui.get_legacy_langdata().get(
+            'translation_contributors', []
+        )
 
         translation_names = _format_names(translation_contributors, 60)
 
@@ -235,50 +209,48 @@ class CreditsWindow(bui.MainWindow):
         # (or add mesh splitting under the hood)
         credits_text = (
             '  '
-            + bui.Lstr(resource=f'{self._r}.codingGraphicsAudioText')
-            .evaluate()
-            .replace('${NAME}', 'Eric Froemling')
+            + classicassets.strings.credits.coding_graphics_audio(
+                name='Eric Froemling'
+            ).evaluate()
             + '\n'
             '\n'
             '  '
-            + bui.Lstr(resource=f'{self._r}.additionalAudioArtIdeasText')
-            .evaluate()
-            .replace('${NAME}', 'Raphael Suter')
+            + classicassets.strings.credits.additional_audio_art_ideas(
+                name='Raphael Suter'
+            ).evaluate()
             + '\n'
             '\n'
             '  '
-            + bui.Lstr(resource=f'{self._r}.soundAndMusicText').evaluate()
+            + classicassets.strings.credits.sound_and_music.evaluate()
             + '\n'
             '\n' + sound_and_music + '\n'
             '\n'
             '     '
-            + bui.Lstr(resource=f'{self._r}.publicDomainMusicViaText')
-            .evaluate()
-            .replace('${NAME}', 'Musopen.com')
+            + classicassets.strings.credits.public_domain_music_via(
+                name='Musopen.com'
+            ).evaluate()
             + '\n'
             '        '
-            + bui.Lstr(resource=f'{self._r}.thanksEspeciallyToText')
-            .evaluate()
-            .replace('${NAME}', 'the US Army, Navy, and Marine Bands')
+            + classicassets.strings.credits.thanks_especially_to(
+                name='the US Army, Navy, and Marine Bands'
+            ).evaluate()
             + '\n'
             '\n'
             '     '
-            + bui.Lstr(resource=f'{self._r}.additionalMusicFromText')
-            .evaluate()
-            .replace('${NAME}', 'The YouTube Audio Library')
+            + classicassets.strings.credits.additional_music_from(
+                name='The YouTube Audio Library'
+            ).evaluate()
             + '\n'
             '\n'
             '     '
-            + bui.Lstr(resource=f'{self._r}.soundsText')
-            .evaluate()
-            .replace('${SOURCE}', 'Freesound.org')
+            + classicassets.strings.credits.sounds_source(
+                source='Freesound.org'
+            ).evaluate()
             + '\n'
             '\n' + freesound_names + '\n'
             '\n'
             '  '
-            + bui.Lstr(
-                resource=f'{self._r}.languageTranslationsText'
-            ).evaluate()
+            + classicassets.strings.credits.language_translations.evaluate()
             + '\n'
             '\n'
             + '\n'.join(translation_names.splitlines()[:146])
@@ -299,27 +271,25 @@ class CreditsWindow(bui.MainWindow):
             '  Holiday theme vector art designed by Freepik\n'
             '\n'
             '  '
-            + bui.Lstr(resource=f'{self._r}.specialThanksText').evaluate()
+            + classicassets.strings.credits.special_thanks.evaluate()
             + '\n'
             '\n'
             '     Todd, Laura, and Robert Froemling\n'
             '     '
-            + bui.Lstr(resource=f'{self._r}.allMyFamilyText')
-            .evaluate()
-            .replace('\n', '\n     ')
+            + classicassets.strings.credits.all_my_family.evaluate().replace(
+                '\n', '\n     '
+            )
             + '\n'
             '     '
-            + bui.Lstr(
-                resource=f'{self._r}.whoeverInventedCoffeeText'
+            + classicassets.strings.credits.whoever_invented_coffee.evaluate()
+            + '\n'
+            '\n'
+            '  ' + classicassets.strings.credits.legal.evaluate() + '\n'
+            '\n'
+            '     '
+            + classicassets.strings.credits.software_based_on(
+                name='the Khronos Group'
             ).evaluate()
-            + '\n'
-            '\n'
-            '  ' + bui.Lstr(resource=f'{self._r}.legalText').evaluate() + '\n'
-            '\n'
-            '     '
-            + bui.Lstr(resource=f'{self._r}.softwareBasedOnText')
-            .evaluate()
-            .replace('${NAME}', 'the Khronos Group')
             + '\n'
             '\n'
             '                                       '
@@ -363,9 +333,8 @@ class CreditsWindow(bui.MainWindow):
             ),
             size=(0, 0),
             scale=0.8 if uiscale is bui.UIScale.SMALL else 1.0,
-            text=bui.Lstr(
-                resource=f'{self._r}.titleText',
-                subs=[('${APP_NAME}', bui.Lstr(resource='titleText'))],
+            text=classicassets.strings.credits.title(
+                app_name=classicassets.strings.ui.app_name
             ),
             h_align='center',
             v_align='center',
@@ -386,7 +355,7 @@ class CreditsWindow(bui.MainWindow):
                 position=(0, self._sub_height - 20 + voffs),
                 h_align='left',
                 v_align='top',
-                text=bui.Lstr(value=line),
+                text=line,
             )
             voffs -= line_height
 

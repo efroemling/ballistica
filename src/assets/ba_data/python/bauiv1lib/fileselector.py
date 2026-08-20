@@ -2,8 +2,6 @@
 #
 """UI functionality for selecting files."""
 
-from __future__ import annotations
-
 import os
 import time
 import logging
@@ -11,6 +9,8 @@ from threading import Thread
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Sequence
@@ -74,12 +74,14 @@ class FileSelectorWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
             text=(
-                bui.Lstr(resource=f'{self._r}.titleFolderText')
+                classicassets.strings.file_selector.select_folder
                 if (allow_folders and not valid_file_extensions)
                 else (
-                    bui.Lstr(resource=f'{self._r}.titleFileText')
+                    classicassets.strings.file_selector.select_file
                     if not allow_folders
-                    else bui.Lstr(resource=f'{self._r}.titleFileFolderText')
+                    else (
+                        classicassets.strings.file_selector
+                    ).select_file_or_folder
                 )
             ),
             maxwidth=210,
@@ -91,7 +93,7 @@ class FileSelectorWindow(bui.MainWindow):
             position=(35 + x_inset, self._height - 67),
             autoselect=True,
             size=(self._button_width, 50),
-            label=bui.Lstr(resource='cancelText'),
+            label=_commonassets.strings.actions.cancel,
             on_activate_call=self._cancel,
         )
         bui.widget(edit=self._cancel_button, left_widget=self._cancel_button)
@@ -110,9 +112,9 @@ class FileSelectorWindow(bui.MainWindow):
             on_activate_call=self._on_back_press,
         )
 
-        self._folder_tex = bui.gettexture('folder')
+        self._folder_tex = classicassets.textures.folder.get()
         self._folder_color = (1.1, 0.8, 0.2)
-        self._file_tex = bui.gettexture('file')
+        self._file_tex = classicassets.textures.file.get()
         self._file_color = (1, 1, 1)
         self._use_folder_button: bui.Widget | None = None
         self._folder_center = self._width * 0.5 + 15
@@ -174,11 +176,11 @@ class FileSelectorWindow(bui.MainWindow):
 
     def _on_back_press(self) -> None:
         if len(self._recent_paths) > 1:
-            bui.getsound('swish').play()
+            builtinassets.audio.swish.get().play()
             self._recent_paths.pop()
             self._set_path(self._recent_paths.pop())
         else:
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
 
     def _on_folder_entry_activated(self) -> None:
         if self._callback is not None:
@@ -196,22 +198,22 @@ class FileSelectorWindow(bui.MainWindow):
                     if new_path == '':
                         new_path = '/'
                 else:
-                    bui.getsound('error').play()
+                    builtinassets.audio.error.get().play()
             else:
                 if self._path == '/':
                     test_path = self._path + entry
                 else:
                     test_path = self._path + '/' + entry
                 if os.path.isdir(test_path):
-                    bui.getsound('swish').play()
+                    builtinassets.audio.swish.get().play()
                     new_path = test_path
                 elif os.path.isfile(test_path):
                     if self._is_valid_file_path(test_path):
-                        bui.getsound('swish').play()
+                        builtinassets.audio.swish.get().play()
                         if self._callback is not None:
                             self._callback(test_path)
                     else:
-                        bui.getsound('error').play()
+                        builtinassets.audio.error.get().play()
                 else:
                     print(
                         (
@@ -406,9 +408,7 @@ class FileSelectorWindow(bui.MainWindow):
                         self._height - 67,
                     ),
                     size=(self._button_width, 50),
-                    label=bui.Lstr(
-                        resource=f'{self._r}.useThisFolderButtonText'
-                    ),
+                    label=classicassets.strings.file_selector.use_this_folder,
                     on_activate_call=self._on_folder_entry_activated,
                 )
                 bui.widget(

@@ -2,8 +2,6 @@
 #
 """Provides UI for editing a game config."""
 
-from __future__ import annotations
-
 import copy
 import random
 import logging
@@ -11,6 +9,7 @@ from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -63,7 +62,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
 
         valid_maps = gametype.get_supported_maps(sessiontype)
         if not valid_maps:
-            bui.screenmessage(bui.Lstr(resource='noValidMapsErrorText'))
+            bui.screenmessage(classicassets.strings.playlist.no_valid_maps)
             raise RuntimeError('No valid maps found.')
 
         self._config = config
@@ -118,10 +117,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
         y_extra2 = 21
         yoffs = -30 if uiscale is bui.UIScale.SMALL else 0
 
-        map_tex_name = get_map_class(self._map).get_preview_texture_name()
-        if map_tex_name is None:
+        map_tex = get_map_class(self._map).get_preview_texture()
+        if map_tex is None:
             raise RuntimeError(f'No map preview tex found for {self._map}.')
-        map_tex = bui.gettexture(map_tex_name)
 
         top_extra = 20 if uiscale is bui.UIScale.SMALL else 0
         super().__init__(
@@ -149,7 +147,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             label=(
                 bui.charstr(bui.SpecialChar.BACK)
                 if is_add
-                else bui.Lstr(resource='cancelText')
+                else _commonassets.strings.actions.cancel
             ),
             button_type='backSmall' if is_add else None,
             autoselect=True,
@@ -166,9 +164,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
             scale=0.75,
             text_scale=1.3,
             label=(
-                bui.Lstr(resource=f'{self._r}.addGameText')
+                classicassets.strings.playlist.add_game_title
                 if is_add
-                else bui.Lstr(resource='applyText')
+                else _commonassets.strings.actions.apply
             ),
         )
 
@@ -179,7 +177,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(-8, height - 70 + y_extra2 + yoffs),
             size=(width, 25),
-            text=gametype.get_display_string(),
+            text=gametype.get_display_string(langstr=True),
             color=bui.app.ui_v1.title_color,
             maxwidth=235,
             scale=1.1,
@@ -231,20 +229,21 @@ class PlaylistEditGameWindow(bui.MainWindow):
             position=(h + 49, v - 63),
             size=(100, 30),
             maxwidth=110,
-            text=bui.Lstr(resource='mapText'),
+            text=classicassets.strings.ui.map,
             h_align='left',
             color=(0.8, 0.8, 0.8, 1.0),
             v_align='center',
         )
 
+        mesh_trans = classicassets.meshes.level_select_button_transparent.get()
         bui.imagewidget(
             parent=self._subcontainer,
             size=(256 * 0.7, 125 * 0.7),
             position=(h + 261 - 128 + 128.0 * 0.56, v - 90),
             texture=map_tex,
-            mesh_opaque=bui.getmesh('level_select_button_opaque'),
-            mesh_transparent=bui.getmesh('level_select_button_transparent'),
-            mask_texture=bui.gettexture('mapPreviewMask'),
+            mesh_opaque=classicassets.meshes.level_select_button_opaque.get(),
+            mesh_transparent=mesh_trans,
+            mask_texture=classicassets.textures.map_preview_mask.get(),
         )
         map_button = btn = bui.buttonwidget(
             parent=self._subcontainer,
@@ -252,7 +251,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             position=(h + 448, v - 72),
             on_activate_call=bui.CallStrict(self._select_map),
             scale=0.7,
-            label=bui.Lstr(resource='mapSelectText'),
+            label=_commonassets.strings.actions.select_ellipsis,
         )
         widget_column.append([btn])
 
@@ -264,7 +263,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             shadow=1.0,
             scale=0.55,
             maxwidth=256 * 0.7 * 0.8,
-            text=get_map_display_string(self._map),
+            text=get_map_display_string(self._map, langstr=True),
             h_align='center',
             color=(0.6, 1.0, 0.6, 1.0),
             v_align='center',
@@ -459,9 +458,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
                     position=(h + 509 - 95, v),
                     size=(0, 28),
                     text=(
-                        bui.Lstr(resource='onText')
+                        _commonassets.strings.values.on
                         if value
-                        else bui.Lstr(resource='offText')
+                        else _commonassets.strings.values.off
                     ),
                     editable=False,
                     color=(0.6, 1.0, 0.6, 1.0),
@@ -549,8 +548,16 @@ class PlaylistEditGameWindow(bui.MainWindow):
     def main_window_should_preserve_selection(self) -> bool:
         return False
 
-    def _get_localized_setting_name(self, name: str) -> bui.Lstr:
-        return bui.Lstr(translate=('settingNames', name))
+    def _get_localized_setting_name(self, name: str) -> bui.LangStr:
+        """Authored display name for a game setting or preset value.
+
+        Explicit table rather than a built lookup, per the standing
+        convention: a removed accessor must be a type error, not a
+        silent miss. Anything absent -- a mod's setting, or a value we
+        never authored -- shows its own name untranslated, which is the
+        honest result for text we have no translation for.
+        """
+        return _setting_name_table().get(name, bui.LangStr.from_text(name))
 
     def _select_map(self) -> None:
         # pylint: disable=cyclic-import
@@ -608,9 +615,9 @@ class PlaylistEditGameWindow(bui.MainWindow):
         bui.textwidget(
             edit=widget,
             text=(
-                bui.Lstr(resource='onText')
+                _commonassets.strings.values.on
                 if value
-                else bui.Lstr(resource='offText')
+                else _commonassets.strings.values.off
             ),
         )
         self._settings[setting_name] = value
@@ -646,3 +653,55 @@ class PlaylistEditGameWindow(bui.MainWindow):
         else:
             raise TypeError('invalid vartype: ' + str(setting_type))
         self._settings[setting_name] = val
+
+
+def _setting_name_table() -> dict[str, bui.LangStr]:
+    """Game-setting name/value -> its authored display string.
+
+    Keys are the legacy ``settingNames`` translate keys, which are also
+    the English text. Several entries are *values* rather than setting
+    names (durations, Short/Normal/Long), so they must each read
+    correctly standing alone.
+    """
+    s = classicassets.strings.game_settings
+    return {
+        '1 Second': s.one_second,
+        '2 Seconds': s.two_seconds,
+        '4 Seconds': s.four_seconds,
+        '8 Seconds': s.eight_seconds,
+        '1 Minute': s.one_minute,
+        '2 Minutes': s.two_minutes,
+        '5 Minutes': s.five_minutes,
+        '10 Minutes': s.ten_minutes,
+        '20 Minutes': s.twenty_minutes,
+        'Shorter': s.shorter,
+        'Short': s.short,
+        'Normal': s.normal,
+        'Long': s.long,
+        'Longer': s.longer,
+        'None': s.none,
+        'No Mines': s.no_mines,
+        'Epic Mode': s.epic_mode,
+        'Pro Mode': s.pro_mode,
+        'Solo Mode': s.solo_mode,
+        'Enable Triple Bombs': s.enable_triple_bombs,
+        'Enable Impact Bombs': s.enable_impact_bombs,
+        'Allow Negative Scores': s.allow_negative_scores,
+        'Balance Total Lives': s.balance_total_lives,
+        'Entire Team Must Finish': s.entire_team_must_finish,
+        'Chosen One Gets Gloves': s.chosen_one_gets_gloves,
+        'Chosen One Gets Shield': s.chosen_one_gets_shield,
+        'Chosen One Time': s.chosen_one_time,
+        'Bomb Spawning': s.bomb_spawning,
+        'Mine Spawning': s.mine_spawning,
+        'Flag Idle Return Time': s.flag_idle_return_time,
+        'Flag Touch Return Time': s.flag_touch_return_time,
+        'Hold Time': s.hold_time,
+        'Kills to Win Per Player': s.kills_to_win_per_player,
+        'Laps': s.laps,
+        'Lives Per Player': s.lives_per_player,
+        'Respawn Times': s.respawn_times,
+        'Score to Win': s.score_to_win,
+        'Target Count': s.target_count,
+        'Time Limit': s.time_limit,
+    }

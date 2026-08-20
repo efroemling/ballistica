@@ -83,8 +83,6 @@ auto V1Account::AccountTypeToIconString(V1AccountType type) -> std::string {
       return g_base->assets->CharStr(SpecialChar::kOculusLogo);
     case V1AccountType::kGameCenter:
       return g_base->assets->CharStr(SpecialChar::kGameCenterLogo);
-    case V1AccountType::kGameCircle:
-      return g_base->assets->CharStr(SpecialChar::kGameCircleLogo);
     case V1AccountType::kDevice:
     case V1AccountType::kServer:
       return g_base->assets->CharStr(SpecialChar::kLocalAccount);

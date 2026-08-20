@@ -2,9 +2,8 @@
 #
 """Shared pytest fixtures for REST live-server tests."""
 
-from __future__ import annotations
-
 import os
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -12,14 +11,122 @@ import pytest
 import urllib3
 from efrotools.project import getlocalconfig
 
+from efro.error import CleanError
+
 if TYPE_CHECKING:
-    from typing import Any
+    from typing import Any, Callable, TypeVar
+
+    T = TypeVar('T')
+
+#: Gateway statuses that indicate a transient server-side blip (a
+#: stalled or restarting Cloud Run instance) rather than anything
+#: about the request itself. Live tests hitting real fleets see
+#: these occasionally; idempotent operations should retry them via
+#: :func:`retry_transient` instead of failing the nightly run.
+TRANSIENT_STATUSES = (502, 503, 504)
+
+
+class TransientServerError(Exception):
+    """A live-server call hit a transient gateway error (502/503/504)."""
+
+
+def raise_if_transient(resp: urllib3.BaseHTTPResponse) -> None:
+    """Raise :class:`TransientServerError` if ``resp`` is a 502/503/504.
+
+    Call this before asserting on a response's status in any live-test
+    operation that is safe to re-run, then wrap the whole operation in
+    :func:`retry_transient`.
+    """
+    if resp.status in TRANSIENT_STATUSES:
+        raise TransientServerError(
+            f'Transient server error {resp.status}: {resp.data!r}'
+        )
+
+
+def retry_transient(
+    fn: Callable[[], T], *, attempts: int = 3, base_delay: float = 5.0
+) -> T:
+    """Run ``fn``, retrying on :class:`TransientServerError`.
+
+    Only pass operations that are safe to re-run from the top
+    (idempotent or dedup-short-circuited). Waits ``base_delay``
+    seconds after the first failure, doubling each retry, and lets
+    the final attempt's error propagate.
+    """
+    for attempt in range(attempts):
+        try:
+            return fn()
+        except TransientServerError:
+            if attempt + 1 >= attempts:
+                raise
+            time.sleep(base_delay * 2**attempt)
+    raise RuntimeError('Unreachable.')
+
+
+# Fleet selection precedence:
+#   1. ``BALLISTICA_URL`` — explicit URL override (e.g. a custom
+#      test server). Wins if set; otherwise we derive the URL from
+#      ``BA_FLEET``.
+#   2. ``BA_FLEET`` — ``'prod'`` (default), ``'test'``, or ``'dev'``.
+# Default is intentionally ``prod``: this file lands in the public
+# repo via spinoff, and a random clone running these tests should
+# never accidentally talk to the dev server. Dev/test runs override
+# explicitly.
+_FLEET_URLS = {
+    'prod': 'https://ballistica.net',
+    'test': 'https://test.ballistica.net',
+    'dev': 'https://dev.ballistica.net',
+}
+
+
+def _resolve_fleet() -> str:
+    """Return the selected fleet name; raise on invalid values."""
+    fleet = os.environ.get('BA_FLEET', 'prod').lower()
+    if fleet not in _FLEET_URLS:
+        raise CleanError(
+            f'Invalid BA_FLEET value {fleet!r};'
+            f' expected one of {sorted(_FLEET_URLS)}.'
+        )
+    return fleet
+
+
+def _resolve_server_url() -> str:
+    """Return the resolved base URL of the server under test."""
+    override = os.environ.get('BALLISTICA_URL')
+    if override:
+        return override
+    return _FLEET_URLS[_resolve_fleet()]
+
+
+#: The resolved fleet for the current test run. Test modules import
+#: this for prod-vs-non-prod branching at module scope (replacing
+#: the older ad-hoc URL-string parsing).
+BALLISTICA_FLEET: str = _resolve_fleet()
 
 
 def _read_ballistica_api_key() -> str | None:
     """Return ballistica_api_key from localconfig.json, or None if absent."""
     val = getlocalconfig(Path('.')).get('ballistica_api_key')
     return str(val) if val is not None else None
+
+
+def make_pool() -> urllib3.PoolManager:
+    """PoolManager that honors HTTPS_PROXY (urllib3 doesn't by default)."""
+    proxy = os.environ.get('HTTPS_PROXY') or os.environ.get('https_proxy')
+    if proxy:
+        # urllib3 does not pull credentials out of a proxy URL's
+        # userinfo, so an authenticating proxy (CI runners, the Claude
+        # Code sandbox, etc.) needs them passed explicitly as a
+        # Proxy-Authorization header; otherwise the CONNECT tunnel for
+        # an https target comes back '407 Proxy Authentication Required'.
+        parsed = urllib3.util.parse_url(proxy)
+        proxy_headers = (
+            urllib3.make_headers(proxy_basic_auth=parsed.auth)
+            if parsed.auth
+            else None
+        )
+        return urllib3.ProxyManager(proxy, proxy_headers=proxy_headers)
+    return urllib3.PoolManager()
 
 
 class AuthedClient:
@@ -74,13 +181,13 @@ class AuthedClient:
 @pytest.fixture(scope='session')
 def http() -> urllib3.PoolManager:
     """Unauthenticated urllib3 connection pool."""
-    return urllib3.PoolManager()
+    return make_pool()
 
 
 @pytest.fixture(scope='session')
 def server_url() -> str:
     """Base URL of the server under test."""
-    return os.environ.get('BALLISTICA_URL', 'https://dev.ballistica.net')
+    return _resolve_server_url()
 
 
 @pytest.fixture(scope='session')
@@ -100,4 +207,4 @@ def authed(
     api_key: str,
 ) -> AuthedClient:  # pylint: disable=redefined-outer-name
     """AuthedClient with the Bearer token pre-set."""
-    return AuthedClient(urllib3.PoolManager(), api_key)
+    return AuthedClient(make_pool(), api_key)

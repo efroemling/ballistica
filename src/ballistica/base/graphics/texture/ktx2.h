@@ -1,0 +1,114 @@
+// Released under the MIT License. See LICENSE for details.
+
+#ifndef BALLISTICA_BASE_GRAPHICS_TEXTURE_KTX2_H_
+#define BALLISTICA_BASE_GRAPHICS_TEXTURE_KTX2_H_
+
+#include <cstddef>
+#include <cstdint>
+#include <string>
+
+#include "ballistica/base/base.h"
+
+namespace ballistica::base {
+
+/// KTX 2.0 magic bytes (12 bytes): ``«KTX 20»\r\n\x1A\n`` — identifier
+/// 0xAB / "KTX 20" / 0xBB / CR LF SUB LF.
+constexpr unsigned char kKTX2Magic[12] = {0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32,
+                                          0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A};
+
+/// KTX 2.0 file header — 68 bytes total following the 12-byte magic.
+/// See https://registry.khronos.org/KTX/specs/2.0/ktxspec.v2.html.
+///
+/// Packed so the two trailing ``uint64_t`` fields don't get the
+/// natural 4-byte padding the compiler would otherwise insert after
+/// the 13 ``uint32_t`` fields (which sit at file offset 52, not
+/// 8-aligned). All our targets (x86_64, ARM64) handle unaligned
+/// loads transparently. ``#pragma pack`` is the portable form —
+/// clang/gcc honor it identically to ``__attribute__((packed))``
+/// and MSVC requires it.
+#pragma pack(push, 1)
+struct KTX2Header {
+  uint32_t vk_format;
+  uint32_t type_size;
+  uint32_t pixel_width;
+  uint32_t pixel_height;
+  uint32_t pixel_depth;
+  uint32_t layer_count;
+  uint32_t face_count;
+  uint32_t level_count;
+  uint32_t supercompression_scheme;
+  uint32_t dfd_byte_offset;
+  uint32_t dfd_byte_length;
+  uint32_t kvd_byte_offset;
+  uint32_t kvd_byte_length;
+  uint64_t sgd_byte_offset;
+  uint64_t sgd_byte_length;
+};
+static_assert(sizeof(KTX2Header) == 68,
+              "KTX2Header must be tightly 68 bytes per spec");
+
+/// Per-level entry in the KTX 2.0 level index — 24 bytes each, one
+/// entry per mip level in mip-major order (entry 0 = largest mip).
+struct KTX2LevelIndex {
+  uint64_t byte_offset;
+  uint64_t byte_length;
+  uint64_t uncompressed_byte_length;
+};
+static_assert(sizeof(KTX2LevelIndex) == 24,
+              "KTX2LevelIndex must be tightly 24 bytes per spec");
+#pragma pack(pop)
+
+/// Load a KTX 2.0 file into the engine's mip-buffer representation.
+///
+/// This is the asset-package CAS texture loader. Unlike the legacy
+/// loaders (:func:`LoadDDS` / :func:`LoadKTX`), it takes **no
+/// texture-quality argument** and never skips mips: asset-package
+/// textures load every mip level present in the chosen *flavor*, and the
+/// legacy ``TextureQualityFromAppConfig`` mip-skip knob applies only to
+/// legacy textures (initiative: asset-packages §7 texture-quality
+/// decoupling). ``regular`` vs. ``high`` is a flavor distinction baked
+/// into the bytes, not a load-time dropdown.
+///
+/// ``buffers[i]`` is malloc'd for every level (``*base_level`` is always
+/// 0). ``widths`` / ``heights`` / ``formats`` / ``sizes`` are populated
+/// for every level. ``*base_level`` is written for caller uniformity.
+///
+/// ``*premultiplied`` is set from the DFD's
+/// ``KHR_DF_FLAG_ALPHA_PREMULTIPLIED`` flag (asset-packages decision
+/// #23). It is data-only for now — fed in but not yet consumed by the
+/// renderer/blend path; a future premult-aware renderer reads it.
+///
+/// Throws on parse error, unsupported ``vkFormat``, a cube/array/3D
+/// layout (use :func:`LoadKTX2CubeMap` for cube maps), or non-zero
+/// ``supercompressionScheme`` (BasisU/zstd not implemented for v1 —
+/// see initiative decision #12).
+void LoadKTX2(const std::string& file_name, unsigned char** buffers,
+              int* widths, int* heights, TextureFormat* formats, size_t* sizes,
+              int* base_level, bool* premultiplied);
+
+/// One face's output destination for a cube-map KTX2 load — the same
+/// array set :func:`LoadKTX2` fills for a single 2D image.
+struct KTX2FaceTarget {
+  unsigned char** buffers;
+  int* widths;
+  int* heights;
+  TextureFormat* formats;
+  size_t* sizes;
+  int* base_level;
+  bool* premultiplied;
+};
+
+/// Load a ``faceCount=6`` cube-map KTX 2.0 file (asset-packages decision
+/// #24) into six per-face mip-buffer sets. ``faces`` must point at
+/// exactly six targets, ordered +X, -X, +Y, -Y, +Z, -Z — the KTX2 spec
+/// face order, which also matches the engine's
+/// ``GL_TEXTURE_CUBE_MAP_POSITIVE_X + i`` upload convention. Each face
+/// receives the file's full mip chain (faces within a level are tightly
+/// packed equal-size slices). Same loading rules/throws as
+/// :func:`LoadKTX2`; additionally throws if the file is not a
+/// six-face cube map.
+void LoadKTX2CubeMap(const std::string& file_name, KTX2FaceTarget* faces);
+
+}  // namespace ballistica::base
+
+#endif  // BALLISTICA_BASE_GRAPHICS_TEXTURE_KTX2_H_

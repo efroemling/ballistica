@@ -1,5 +1,3 @@
-#! /usr/bin/env python3
-
 '''SMTP/ESMTP client class.
 
 This should follow RFC 821 (SMTP), RFC 1869 (ESMTP), RFC 2554 (SMTP
@@ -105,7 +103,7 @@ class SMTPSenderRefused(SMTPResponseException):
     """Sender address refused.
 
     In addition to the attributes set by on all SMTPResponseException
-    exceptions, this sets `sender' to the string that the SMTP refused.
+    exceptions, this sets 'sender' to the string that the SMTP refused.
     """
 
     def __init__(self, code, msg, sender):
@@ -253,7 +251,6 @@ class SMTP:
         will be used.
 
         """
-        self._host = host
         self.timeout = timeout
         self.esmtp_features = {}
         self.command_encoding = 'ascii'
@@ -324,7 +321,7 @@ class SMTP:
     def connect(self, host='localhost', port=0, source_address=None):
         """Connect to a host on a given port.
 
-        If the hostname ends with a colon (`:') followed by a number, and
+        If the hostname ends with a colon (':') followed by a number, and
         there is no port specified, that suffix will be stripped off and the
         number interpreted as the port number to use.
 
@@ -344,6 +341,7 @@ class SMTP:
                     port = int(port)
                 except ValueError:
                     raise OSError("nonnumeric port")
+        self._host = host
         if not port:
             port = self.default_port
         sys.audit("smtplib.connect", self, host, port)
@@ -355,7 +353,7 @@ class SMTP:
         return (code, msg)
 
     def send(self, s):
-        """Send `s' to the server."""
+        """Send 's' to the server."""
         if self.debuglevel > 0:
             self._print_debug('send:', repr(s))
         if self.sock:

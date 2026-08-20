@@ -205,19 +205,22 @@ void AppConfig::SetupEntries_() {
       StringEntry("Mac Controller Subsystem", "Classic");
   string_entries_[StringID::kDevConsoleActiveTab] =
       StringEntry("Dev Console Tab", "Python");
+  // Tri-state replacement for the legacy ``Use Insecure Connections``
+  // bool. Values: ``always`` (force ws:// + http://), ``auto`` (use
+  // secure by default, honor server-signed insecure-directive when
+  // present — matches the pre-existing default behavior), ``never``
+  // (force secure, ignore server directive). See
+  // src/assets/ba_data/python/bauiv1lib/settings/advanced.py for UI.
+  string_entries_[StringID::kInsecureConnections] =
+      StringEntry("Insecure Connections", "auto");
 
   int_entries_[IntID::kPort] = IntEntry("Port", kDefaultPort);
   int_entries_[IntID::kMaxFPS] = IntEntry("Max FPS", 60);
 
-  // TEMP - forcing protocol 36 while I test v2 auth.
-  if (g_buildconfig.headless_build() && explicit_bool(false)) {
-    int_entries_[IntID::kSceneV1HostProtocol] =
-        IntEntry("SceneV1 Host Protocol", 36);
-    printf("TEMP DOING PROTOCOL 36 DEFAULT!!!\n");
-  } else {
-    int_entries_[IntID::kSceneV1HostProtocol] =
-        IntEntry("SceneV1 Host Protocol", 33);
-  }
+  // Note: this gets clamped to the valid host range at use time, so
+  // stored values from old configs simply snap forward when mins rise.
+  int_entries_[IntID::kSceneV1HostProtocol] =
+      IntEntry("SceneV1 Host Protocol", 41);
 
   bool_entries_[BoolID::kTouchControlsSwipeHidden] =
       BoolEntry("Touch Controls Swipe Hidden", false);
@@ -254,6 +257,15 @@ void AppConfig::SetupEntries_() {
       BoolEntry("Highlight Potential Token Purchases", true);
   bool_entries_[BoolID::kUseNativePythonREPL] =
       BoolEntry("Use Native Python REPL", false);
+
+  // Windows-only; SDL's XInput path can misbehave with some devices so we
+  // allow turning it off. Note that this value is consumed *before* the app
+  // (and thus this class) exists - it has to be known by the time we init
+  // SDL - so the actual read happens in CoreFeatureSet::ApplyBaEnvConfig()
+  // which snapshots it straight out of the raw config dict. We register it
+  // here anyway so it shows up in builtin-keys, resolve(), etc. Keep this
+  // default synced with the one there.
+  bool_entries_[BoolID::kDisableXInput] = BoolEntry("Disable XInput", false);
 
   // Now add everything to our name map and make sure all is kosher.
   CompleteMap_(float_entries_);

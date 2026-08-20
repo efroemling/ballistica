@@ -31,12 +31,13 @@
 #include "ballistica/base/graphics/gl/program/program_sprite_gl.h"
 #include "ballistica/base/graphics/gl/render_target_gl.h"
 #include "ballistica/base/graphics/gl/texture_data_gl.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/math/rect.h"
 
 // On SDL builds, SDL.h provides SDL_GL_GetProcAddress for loading GL extension
 // function pointers at runtime (used by TrySetupGLDebugOutput_).
 #if BA_SDL_BUILD
-#include "SDL.h"
+#include <SDL3/SDL.h>
 #endif
 
 // On Android, EGL provides eglGetProcAddress for extension function loading.
@@ -295,10 +296,17 @@ void RendererGL::CheckGLCapabilities_() {
     basestr = "OpenGL";
   }
 
-  g_core->logging->Log(LogName::kBaGraphics, LogLevel::kInfo,
-                       std::string("Using ") + basestr + " (vendor: " + vendor
-                           + ", renderer: " + renderer
-                           + ", version: " + version_str + ").");
+  // Pull our device-tier flag: computed Java-side on Android (from GLES
+  // version + RAM, before the renderer came up) and always false on
+  // desktop/iOS. Drives framebuffer color depth, render resolution, and
+  // graphics quality. See docs/initiatives/low-end-device-tiering.md.
+  low_end_device_ = g_core->platform->low_end_device();
+
+  g_core->logging->Log(
+      LogName::kBaGraphics, LogLevel::kInfo,
+      std::string("Using ") + basestr + " (vendor: " + vendor
+          + ", renderer: " + renderer + ", version: " + version_str
+          + ", low-end-device: " + (low_end_device_ ? "yes" : "no") + ").");
 
   // Build a vector of extensions. Newer GLs give us extensions as lists
   // already, but on older ones we may need to break a single string apart
@@ -329,22 +337,23 @@ void RendererGL::CheckGLCapabilities_() {
                   std::istream_iterator<std::string>()};
   }
 
-  // On Android, look at the GL version and try to get gl3 funcs to
-  // determine if we're running ES3 or not.
 #if BA_PLATFORM_ANDROID
 
   BA_DEBUG_CHECK_GL_ERROR;
 
-  // Flag certain devices as 'speedy' - we use this to enable high/higher
-  // quality and whatnot (even in cases where ES3 isnt available).
-
-  // Let just consider ES 3.2 stuff speedy.
-  assert(gl_version_major() == 3);
-  is_speedy_android_device_ = gl_version_minor() >= 2;
-
   is_adreno_ = (strstr(renderer, "Adreno") != nullptr);
 
+  // Currently just the inverse of the device tier, but kept as its own var
+  // in case we want to diverge later.
+  is_speedy_android_device_ = !low_end_device_;
+
 #endif  // BA_PLATFORM_ANDROID
+
+  // Record actual GL_KHR_debug support; TrySetupGLDebugOutput_ must not
+  // trust proc addresses alone (eglGetProcAddress can return non-null
+  // for unsupported functions), and touching the KHR debug enums
+  // without the extension yields GL_INVALID_ENUM.
+  gl_supports_khr_debug_ = CheckGLExtension(extensions, "debug");
 
   std::list<TextureCompressionType> c_types;
   assert(g_base->graphics);
@@ -384,9 +393,60 @@ void RendererGL::CheckGLCapabilities_() {
     c_types.push_back(TextureCompressionType::kASTC);
   }
 
+  // BC7 (BPTC) — the desktop_v1 asset-package profile. Core in GL 4.2+
+  // and present on essentially all desktop GPUs (incl. Mac GL 4.1 via
+  // the ARB extension); exposed as a ``texture_compression_bptc``
+  // extension string on both the ARB and EXT spellings.
+  if (CheckGLExtension(extensions, "texture_compression_bptc")) {
+    c_types.push_back(TextureCompressionType::kBPTC);
+  }
+
   g_base->graphics_server->SetTextureCompressionTypes(c_types);
 
+  // Log the detected compressed-texture families — handy when
+  // diagnosing which asset-package texture profile a platform can use
+  // (S3TC→legacy DXT, BPTC→desktop_v1 BC7, ASTC→mobile_v1; none of the
+  // AP-profile ones → fallback_v1). E.g. macOS GL 4.1 exposes only
+  // S3TC, so it lands on fallback_v1.
+  {
+    std::string detected;
+    const char* names[] = {"S3TC", "PVR", "ETC1", "ETC2", "ASTC", "BPTC"};
+    for (auto t : c_types) {
+      auto idx = static_cast<size_t>(t);
+      detected += std::string(" ") + (idx < 6 ? names[idx] : "?");
+    }
+    g_core->logging->Log(
+        LogName::kBaGraphics, LogLevel::kInfo,
+        "Supported compressed-texture families:"
+            + (detected.empty() ? std::string(" (none)") : detected) + ".");
+  }
+
   // Store the tex-compression type we support.
+  BA_DEBUG_CHECK_GL_ERROR;
+
+  // Sanity-check max texture size. ES 3 only guarantees 2048, but in
+  // practice all ES3-class hardware supports at least 4096, and our
+  // asset-package native (desktop/mobile) profiles assume a 4096 ceiling
+  // (only the universal 'fallback' profile stays <=2048). So we never
+  // expect to see less than 4096 in the wild; log an error if we do so we
+  // get a signal that such hardware exists.
+  //
+  // TODO(ericf): wire these caps limitations into actual behavior. We should
+  // store max-texture-size as a graphics-server caps value (sibling to
+  // the texture-compression-types bitmask above) and have
+  // Assets::PreferredTextureProfile() consult it so that a sub-4096
+  // device disqualifies the native (desktop/mobile) profiles and falls
+  // back to 'fallback' textures instead of trying to load textures it
+  // can't support. For now this is purely informational. We should also
+  // add a fatal-error when attempting to upload any texture larger than
+  // this reported max (the actual invariant we never expect to violate).
+  int max_texture_size = GLGetInt(GL_MAX_TEXTURE_SIZE);
+  if (max_texture_size < 4096) {
+    g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
+                         "GL_MAX_TEXTURE_SIZE is "
+                             + std::to_string(max_texture_size)
+                             + "; expected at least 4096.");
+  }
   BA_DEBUG_CHECK_GL_ERROR;
 
   // Anisotropic sampling is still an extension as of both GL 3 and ES 3, so
@@ -500,21 +560,12 @@ void RendererGL::UpdateMSAAEnabled_() {
       enable_msaa_ = false;
     }
   } else if (g_buildconfig.platform_android()) {
-    // lets allow full 1080p msaa with newer stuff..
-    int max_msaa_res = is_tegra_k1_ ? 1200 : 800;
-
-    // To start, see if it looks like we support msaa on paper.
-    enable_msaa_ =
-        ((screen_render_target()->physical_height()
-          <= static_cast<float>(max_msaa_res))
-         && (msaa_max_samples_rgb8_ > 0) && (msaa_max_samples_rgb565_ > 0));
-
-    // Ok, lets be careful here; msaa blitting/etc seems to be particular in
-    // terms of supported formats/etc so let's only enable it on
-    // explicitly-tested hardware for now.
-    if (!is_tegra_4_ && !is_tegra_k1_ && !is_recent_adreno_) {
-      enable_msaa_ = false;
-    }
+    // No auto-MSAA on Android for now. It was already de-facto off (the
+    // device flags it keyed on were never set), and the old path pulled
+    // depth out of the MSAA buffer in ways that seem fragile. Keep it off
+    // until that can be made safe. See
+    // docs/initiatives/low-end-device-tiering.md.
+    enable_msaa_ = false;
   } else {
     enable_msaa_ = false;
   }
@@ -544,6 +595,27 @@ auto RendererGL::GetGLTextureFormat(TextureFormat f) -> GLenum {
       break;
     case TextureFormat::kETC2_RGBA:
       return GL_COMPRESSED_RGBA8_ETC2_EAC;
+      break;
+    case TextureFormat::kBC7:
+      return GL_COMPRESSED_RGBA_BPTC_UNORM;
+      break;
+    case TextureFormat::kASTC_4x4:
+      return GL_COMPRESSED_RGBA_ASTC_4x4_KHR;
+      break;
+    case TextureFormat::kASTC_6x6:
+      return GL_COMPRESSED_RGBA_ASTC_6x6_KHR;
+      break;
+    case TextureFormat::kASTC_8x8:
+      return GL_COMPRESSED_RGBA_ASTC_8x8_KHR;
+      break;
+    case TextureFormat::kASTC_5x5:
+      return GL_COMPRESSED_RGBA_ASTC_5x5_KHR;
+      break;
+    case TextureFormat::kASTC_10x10:
+      return GL_COMPRESSED_RGBA_ASTC_10x10_KHR;
+      break;
+    case TextureFormat::kASTC_12x12:
+      return GL_COMPRESSED_RGBA_ASTC_12x12_KHR;
       break;
     default:
       throw Exception("Invalid TextureFormat: "
@@ -720,7 +792,7 @@ void RendererGL::CheckFunkyDepthIssue_() {
   SetDepthTesting(true);
   SetBlend(false);
   SetDoubleSided_(false);
-  test_rt1->DrawBegin(true, 1.0f, 1.0f, 1.0f, 1.0f);
+  test_rt1->DrawBegin(true, 1.0f, 1.0f, 1.0f, 1.0f, true);
   ProgramSimpleGL* p = simple_color_prog_;
   p->Bind();
   p->SetColor(1, 0, 1);
@@ -737,7 +809,7 @@ void RendererGL::CheckFunkyDepthIssue_() {
   SetDepthTesting(false);
   SetBlend(false);
   SetDoubleSided_(false);
-  test_rt2->DrawBegin(false, 1.0f, 1.0f, 1.0f, 1.0f);
+  test_rt2->DrawBegin(false, 1.0f, 1.0f, 1.0f, 1.0f, true);
   p = simple_tex_dtest_prog_;
   p->Bind();
   g_base->graphics_server->ModelViewReset();
@@ -852,10 +924,6 @@ void RendererGL::SyncGLState_() {
 
   glDisable(GL_BLEND);
   blend_ = false;
-
-  // Disable dithering; on desktop GL this is a no-op but on ANGLE (Windows)
-  // dithering can produce visible noise/grain on smooth transparent gradients.
-  glDisable(GL_DITHER);
 
   // Currently we only ever write to an alpha buffer for our vr flat overlay
   // texture, and in that case we need alpha to accumulate; not get
@@ -1151,6 +1219,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetColor(r, g, b, a);
             p->SetColorTexture(buffer->GetTexture());
             p->SetFlatness(flatness);
+            p->SetTexPremultiplied(premult ? 1.0f : 0.0f);
             break;
           }
           case ShadingType::kSimpleTextureModulatedTransparentShadow: {
@@ -1173,6 +1242,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetShadow(shadow_offset_x, shadow_offset_y,
                          std::max(0.0f, shadow_blur), shadow_opacity);
             p->SetMaskUV2Texture(t_mask);
+            p->SetTexPremultiplied(premult ? 1.0f : 0.0f);
             break;
           }
           case ShadingType::kSimpleTexModulatedTransShadowFlatness: {
@@ -1197,6 +1267,7 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
                          std::max(0.0f, shadow_blur), shadow_opacity);
             p->SetMaskUV2Texture(t_mask);
             p->SetFlatness(flatness);
+            p->SetTexPremultiplied(premult ? 1.0f : 0.0f);
             break;
           }
           case ShadingType::kSimpleTextureModulatedTransparentGlow: {
@@ -2205,13 +2276,23 @@ void RendererGL::BlitBuffer(RenderTarget* src_in, RenderTarget* dst_in,
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dst->GetFramebufferID());
     BA_DEBUG_CHECK_GL_ERROR;
 
-    glBlitFramebuffer(0, 0, static_cast<GLint>(src->physical_width()),
-                      static_cast<GLint>(src->physical_height()), 0, 0,
-                      static_cast<GLint>(dst->physical_width()),
-                      static_cast<GLint>(dst->physical_height()),
-                      depth ? (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-                            : GL_COLOR_BUFFER_BIT,
-                      linear_interpolation ? GL_LINEAR : GL_NEAREST);
+    // Content lands in the dst's content region; if that's an inset
+    // sub-rect (tv-border mode / aspect-ratio limiting on the screen
+    // target), paint the borders black first.
+    Rect dst_rect = dst->content_rect();
+    if (!dst->content_rect_is_full()) {
+      glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+      glClear(GL_COLOR_BUFFER_BIT);
+      BA_DEBUG_CHECK_GL_ERROR;
+    }
+    glBlitFramebuffer(
+        0, 0, static_cast<GLint>(src->physical_width()),
+        static_cast<GLint>(src->physical_height()),
+        static_cast<GLint>(dst_rect.l), static_cast<GLint>(dst_rect.b),
+        static_cast<GLint>(dst_rect.r), static_cast<GLint>(dst_rect.t),
+        depth ? (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+              : GL_COLOR_BUFFER_BIT,
+        linear_interpolation ? GL_LINEAR : GL_NEAREST);
     BA_DEBUG_CHECK_GL_ERROR;
     if (invalidate_source) {
       InvalidateFramebuffer(true, depth, true);
@@ -2223,7 +2304,10 @@ void RendererGL::BlitBuffer(RenderTarget* src_in, RenderTarget* dst_in,
   if (do_shader_blit) {
     SetDepthWriting(false);
     SetDepthTesting(false);
-    dst_in->DrawBegin(false);
+    // A color-only blit; skip any depth clear (which would silently
+    // no-op anyway with depth-writing off).
+    dst_in->DrawBegin(false, {0.0f, 0.0f, 0.0f, 1.0f},
+                      /*clear_depth=*/false);
     g_base->graphics_server->ModelViewReset();
     g_base->graphics_server->SetOrthoProjection(-1, 1, -1, 1, -1, 1);
 
@@ -3262,6 +3346,11 @@ void RendererGL::TrySetupGLDebugOutput_() {
   // Apple ES (iOS/tvOS) and Apple desktop (macOS Xcode) lack proc-address APIs
   // and GL_KHR_debug header support, so they are skipped entirely.
 #if BA_OPENGL_IS_ES && BA_SDL_BUILD
+  if (!gl_supports_khr_debug_) {
+    g_core->logging->Log(kGLDebugLogName, LogLevel::kInfo,
+                         "GL debug output not available (no GL_KHR_debug).");
+    return;
+  }
   auto set_callback = reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKKHRPROC>(
       SDL_GL_GetProcAddress("glDebugMessageCallbackKHR"));
   gl_debug_message_control_khr_ =
@@ -3274,6 +3363,11 @@ void RendererGL::TrySetupGLDebugOutput_() {
   }
   set_callback(GLDebugCallbackKHR_, nullptr);
 #elif BA_OPENGL_IS_ES && BA_PLATFORM_ANDROID
+  if (!gl_supports_khr_debug_) {
+    g_core->logging->Log(kGLDebugLogName, LogLevel::kInfo,
+                         "GL debug output not available (no GL_KHR_debug).");
+    return;
+  }
   auto set_callback = reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKKHRPROC>(
       eglGetProcAddress("glDebugMessageCallbackKHR"));
   gl_debug_message_control_khr_ =
@@ -3375,6 +3469,106 @@ void RendererGL::UpdateGLDebugSettingsIfNeeded_() {
   if (current_level != gl_debug_last_level_) {
     ApplyGLDebugSettings_();
   }
+}
+
+// Longest side of a screenshot readback.
+//
+// DO NOT raise or remove the downscale (below) without re-testing on an
+// ANGLE/Metal build: a glReadPixels larger than this reads back TORN
+// there, regardless of sync/timing. (Witnessed on macOS desktop; iOS
+// shares the ANGLE-Metal backend so is presumed affected but unverified.
+// Which other ANGLE backends — e.g. Windows/D3D — share it is untested,
+// so the downscale is applied on all platforms.) The frame's content is
+// complete (a small read of it is clean, a large one is not; verified
+// that glFinish, fences, post-swap reads and delays do not help — only
+// keeping the read small does), so the finished frame is
+// downscale-blitted to at most this before reading. The exact tear
+// threshold is somewhere in (1024, 1965) and untested, so 1024 is a
+// deliberately safe margin. Doubling as a capture size/bandwidth cap is
+// a bonus — a downsized capture is the right default for automation
+// anyway (see efrohome automation-over-transport.md, 2026-08-18).
+static const int kScreenshotMaxReadDim = 1024;
+
+void RendererGL::GetScreenshotReadTarget(GLuint* framebuffer, int* width,
+                                         int* height, bool* content_only) {
+  assert(g_base->app_adapter->InGraphicsContext());
+
+  // Pick the source that holds the finished frame.
+  GLuint src_fb;
+  int src_w;
+  int src_h;
+  if (has_backing_render_target()) {
+    // The backing target holds the complete composited frame (world +
+    // all overlay/UI passes) in a stable, texture-backed FBO. Prefer it
+    // over the window framebuffer, which on ANGLE's Metal backend is a
+    // CAMetalLayer drawable that reads back torn. The backing is sized to
+    // the content region only (no borders), so its image maps to virtual
+    // coords by a uniform scale.
+    auto* backing = static_cast<RenderTargetGL*>(backing_render_target());
+    src_fb = backing->GetFramebufferID();
+    src_w = static_cast<int>(backing->physical_width());
+    src_h = static_cast<int>(backing->physical_height());
+    *content_only = true;
+  } else {
+    // No backing buffer — fall back to the window's default framebuffer.
+    // Capture-capable builds keep pixel-scale just under 1.0 so a backing
+    // always exists (see GraphicsServer::ApplySettings), so this is a
+    // last resort. We read the full window pixel dims rather than
+    // GL_VIEWPORT (which can be an inset sub-rect under tv-border /
+    // aspect-ratio limiting — we want the whole window, borders and all).
+    src_fb = static_cast<GLuint>(screen_framebuffer_);
+    src_w = static_cast<int>(g_base->graphics_server->screen_pixel_width());
+    src_h = static_cast<int>(g_base->graphics_server->screen_pixel_height());
+    *content_only = false;
+  }
+
+  // Small enough to read directly.
+  if (src_w <= kScreenshotMaxReadDim && src_h <= kScreenshotMaxReadDim) {
+    *framebuffer = src_fb;
+    *width = src_w;
+    *height = src_h;
+    return;
+  }
+
+  // Too large to read back cleanly; GPU-downscale-blit into a small
+  // texture and read that instead. Preserves aspect (so the virtual-coord
+  // mapping stays a uniform scale) and the frame's content.
+  float scale = static_cast<float>(kScreenshotMaxReadDim)
+                / static_cast<float>(std::max(src_w, src_h));
+  int dst_w = std::max(1, static_cast<int>(static_cast<float>(src_w) * scale));
+  int dst_h = std::max(1, static_cast<int>(static_cast<float>(src_h) * scale));
+
+  if (!screenshot_blit_target_.exists()
+      || static_cast<int>(screenshot_blit_target_->physical_width()) != dst_w
+      || static_cast<int>(screenshot_blit_target_->physical_height())
+             != dst_h) {
+    screenshot_blit_target_ = NewFramebufferRenderTarget(dst_w, dst_h,
+                                                         true,  // linear interp
+                                                         false,  // depth
+                                                         true,   // tex
+                                                         false,  // depth tex
+                                                         false,  // high quality
+                                                         false,  // msaa
+                                                         false   // alpha
+    );  // NOLINT(whitespace/parens)
+  }
+  auto* dst = static_cast<RenderTargetGL*>(screenshot_blit_target_.get());
+  GLuint dst_fb = dst->GetFramebufferID();
+
+  GLint prev_read = 0;
+  GLint prev_draw = 0;
+  glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &prev_read);
+  glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &prev_draw);
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, src_fb);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dst_fb);
+  glBlitFramebuffer(0, 0, src_w, src_h, 0, 0, dst_w, dst_h, GL_COLOR_BUFFER_BIT,
+                    GL_LINEAR);
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, static_cast<GLuint>(prev_read));
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, static_cast<GLuint>(prev_draw));
+
+  *framebuffer = dst_fb;
+  *width = dst_w;
+  *height = dst_h;
 }
 
 void RendererGL::RenderFrameDefEnd() {

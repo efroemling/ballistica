@@ -59,6 +59,19 @@ class RendererGL : public Renderer {
   static auto GLErrorToString(GLenum err) -> std::string;
   static auto GetGLTextureFormat(TextureFormat f) -> GLenum;
 
+  /// Pick the framebuffer + pixel dims to read back for a full-frame
+  /// screenshot. Prefers the offscreen 'backing' target when one is in
+  /// use (a stable, texture-backed FBO holding the complete composited
+  /// frame — reliable to read), and otherwise falls back to the window
+  /// framebuffer. ``content_only`` is set true when the chosen target
+  /// holds just the game content region (the backing target — its image
+  /// maps to virtual coords by a uniform scale), false when it is the
+  /// whole window including any tv-border / aspect-clamp black bars (the
+  /// fallback). Call from the graphics context after a frame is drawn.
+  /// See Automation::RunPendingCaptures.
+  void GetScreenshotReadTarget(GLuint* framebuffer, int* width, int* height,
+                               bool* content_only);
+
   RendererGL();
   ~RendererGL() override;
   void Unload() override;
@@ -256,10 +269,10 @@ class RendererGL : public Renderer {
   bool blend_{};
   bool blend_premult_{};
   bool first_extension_check_{true};
-  bool is_tegra_4_{};
-  bool is_tegra_k1_{};
-  bool is_recent_adreno_{};
   bool is_adreno_{};
+  // Mirror of Platform::low_end_device() (only ever true on Android); read
+  // once at GL init. See docs/initiatives/low-end-device-tiering.md.
+  bool low_end_device_{};
   bool enable_msaa_{};
   bool draw_at_equal_depth_{};
   bool depth_writing_enabled_{};
@@ -358,6 +371,11 @@ class RendererGL : public Renderer {
   int msaa_max_samples_rgb565_{-1};
   int msaa_max_samples_rgb8_{-1};
   bool gl_debug_output_available_{};
+  // Whether the GL_KHR_debug extension is actually advertised. Proc
+  // addresses alone can't be trusted for this (eglGetProcAddress may
+  // return non-null for unsupported functions), and using the KHR
+  // debug enums without the extension yields GL_INVALID_ENUM.
+  bool gl_supports_khr_debug_{};
 #if BA_OPENGL_IS_ES && (BA_SDL_BUILD || BA_PLATFORM_ANDROID)
   // Not available on Apple ES builds (iOS/tvOS) — gl2ext.h KHR typedefs absent.
   PFNGLDEBUGMESSAGECONTROLKHRPROC gl_debug_message_control_khr_{};

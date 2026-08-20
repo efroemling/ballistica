@@ -182,7 +182,7 @@ class HTMLParser(_markupbase.ParserBase):
         self.cdata_elem = elem.lower()
         self._escapable = escapable
         if self.cdata_elem == 'plaintext':
-            self.interesting = re.compile(r'\Z')
+            self.interesting = re.compile(r'\z')
         elif escapable and not self.convert_charrefs:
             self.interesting = re.compile(r'&|</%s(?=[\t\n\r\f />])' % self.cdata_elem,
                                           re.IGNORECASE|re.ASCII)

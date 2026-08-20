@@ -5,10 +5,23 @@
 #include "ballistica/base/app_adapter/app_adapter_sdl.h"
 
 #include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <cstdio>
+#include <cstring>
+#include <iterator>
 #include <string>
 #include <vector>
 
+#if BA_PLATFORM_MACOS && BA_OPENGL_IS_ES
+#include <mach-o/dyld.h>
+
+#include <climits>
+#include <cstdlib>
+#endif
+
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/base/base.h"
 #include "ballistica/base/graphics/gl/gl_sys.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
@@ -25,8 +38,56 @@
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/buildconfig/buildconfig_common.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/input_types.h"
 
 namespace ballistica::base {
+
+// Hand the OS a hardware cursor built from the engine's bundled cursor
+// texture instead of drawing the engine's software cursor each frame
+// (saves the software cursor's frame or so of latency). Deliberately
+// kept as a toggle even with the hardware path established: flipping
+// this off is the easy way to exercise the engine's software-cursor
+// path (Graphics::DrawCursor) on a desktop build - that path stays
+// load-bearing for platforms with no hardware cursor (e.g. Android
+// with a pointer).
+static const bool kUseHardwareCursor{true};
+
+// The hardware cursor's logical size in points -- matches the Mac
+// build's cursor so all paths present identically. The cursor-texture
+// mip of this size becomes the base cursor surface; larger mips become
+// high-DPI alternates.
+static const int kHardwareCursorLogicalSize{64};
+
+#if BA_PLATFORM_MACOS && BA_OPENGL_IS_ES
+// Point SDL at the ANGLE dylibs we bundle next to the binary. SDL loads its
+// EGL/GLES libraries via a plain-name dlopen which wouldn't find them via
+// @executable_path, so we resolve the real executable dir (dev builds stage
+// the binary as a symlink back to the build dir, where the dylibs live) and
+// hand SDL absolute paths. (We stage bare libX.dylib siblings rather than the
+// vendored .framework bundles because SDL derives the libGLESv2 path from the
+// libEGL dir and expects a plain sibling dylib.)
+static void SetAngleLibPaths_() {
+  char buf[PATH_MAX];
+  uint32_t size = sizeof(buf);
+  if (_NSGetExecutablePath(buf, &size) != 0) {
+    return;
+  }
+  char real[PATH_MAX];
+  if (realpath(buf, real) == nullptr) {
+    return;
+  }
+  std::string dir = real;
+  auto slash = dir.rfind('/');
+  if (slash == std::string::npos) {
+    return;
+  }
+  dir = dir.substr(0, slash + 1);
+  std::string egl = dir + "libEGL.dylib";
+  std::string gles = dir + "libGLESv2.dylib";
+  SDL_SetHint(SDL_HINT_EGL_LIBRARY, egl.c_str());
+  SDL_SetHint(SDL_HINT_OPENGL_LIBRARY, gles.c_str());
+}
+#endif  // BA_PLATFORM_MACOS && BA_OPENGL_IS_ES
 
 /// RAII-friendly way to mark where in the main thread we're allowed to run
 /// graphics code (only applies in strict-graphics-context mode).
@@ -62,9 +123,12 @@ void AppAdapterSDL::OnMainThreadStartApp() {
                          " Remember to turn this off.");
   }
 
-  // We may or may not want xinput on windows.
+  // We may or may not want xinput on windows. Note that this comes from
+  // the snapshot core grabbed out of the raw app-config back at
+  // baenv-config time; the regular app-config path isn't available this
+  // early (and wouldn't be in time for SDL init anyway).
   if (g_buildconfig.platform_windows()) {
-    if (!g_core->platform->GetLowLevelConfigValue("enablexinput", 1)) {
+    if (g_core->app_config_disable_xinput()) {
       SDL_SetHint(SDL_HINT_XINPUT_ENABLED, "0");
     }
   }
@@ -72,8 +136,22 @@ void AppAdapterSDL::OnMainThreadStartApp() {
   // We wrangle our own signal handling; don't bring SDL into it.
   SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
 
-  int result = SDL_Init(sdl_flags);
-  if (result < 0) {
+  // Let SDL serve scale-matched versions of our hardware cursor on
+  // HiDPI displays (Windows gates this behind a hint; macOS/Wayland
+  // do it unconditionally). Our cursor surface carries higher-res
+  // alternate images for this - see CreateHardwareCursor_.
+  // The hint only exists in SDL 3.4.0+; on older SDLs (e.g. the
+  // flatpak runtime's) the cursor simply shows at standard res.
+#ifdef SDL_HINT_MOUSE_DPI_SCALE_CURSORS
+  SDL_SetHint(SDL_HINT_MOUSE_DPI_SCALE_CURSORS, "1");
+#endif
+
+  // We provide our own main() (SDL_MAIN_HANDLED; see min_sdl.h), so tell SDL
+  // that startup happened properly before we init.
+  SDL_SetMainReady();
+
+  // SDL3 functions return bool (true on success) rather than int.
+  if (!SDL_Init(sdl_flags)) {
     FatalError(std::string("SDL_Init failed: ") + SDL_GetError());
   }
 
@@ -86,7 +164,7 @@ void AppAdapterSDL::OnMainThreadStartApp() {
 
   if (g_buildconfig.enable_sdl_joysticks()) {
     // We want events from joysticks.
-    SDL_JoystickEventState(SDL_ENABLE);
+    SDL_SetJoystickEventsEnabled(true);
 
     // Add already-existing SDL joysticks. Any added later will come
     // through as joystick-added events.
@@ -94,15 +172,111 @@ void AppAdapterSDL::OnMainThreadStartApp() {
     // TODO(ericf): Check to see if this is necessary or if we always get
     // connected events even for these initial ones.
     if (explicit_bool(true)) {
-      int joystick_count = SDL_NumJoysticks();
-      for (int i = 0; i < joystick_count; i++) {
-        AppAdapterSDL::OnSDLJoystickAdded_(i);
+      // SDL3 hands back an array of instance-ids (the device-index concept
+      // is gone); we own the array and must free it.
+      int joystick_count{};
+      if (SDL_JoystickID* joysticks = SDL_GetJoysticks(&joystick_count)) {
+        for (int i = 0; i < joystick_count; i++) {
+          AppAdapterSDL::OnSDLJoystickAdded_(static_cast<int>(joysticks[i]));
+        }
+        SDL_free(joysticks);
       }
     }
   }
 
-  // This adapter draws a software cursor; hide the actual OS one.
-  SDL_ShowCursor(SDL_DISABLE);
+  // Start with the OS cursor hidden: in software-cursor mode we draw our
+  // own, and in hardware-cursor mode the engine pushes visibility updates
+  // (SetHardwareCursorVisible) once drawing is up.
+  SDL_HideCursor();
+}
+
+auto AppAdapterSDL::HasHardwareCursor() -> bool { return kUseHardwareCursor; }
+
+void AppAdapterSDL::SetHardwareCursorVisible(bool visible) {
+  assert(g_core->InMainThread());
+  if (visible) {
+    // Build our custom color cursor on first use. If that fails (the
+    // pixel loader logs the reason) we live with the OS default cursor.
+    if (!hw_cursor_create_attempted_) {
+      hw_cursor_create_attempted_ = true;
+      hw_cursor_ = CreateHardwareCursor_();
+    }
+    if (hw_cursor_ != nullptr) {
+      SDL_SetCursor(hw_cursor_);
+    }
+    SDL_ShowCursor();
+  } else {
+    SDL_HideCursor();
+  }
+}
+
+// Build an SDL surface (owning its pixels) from one RGBA8 mip level.
+// SDL surfaces want straight (non-premultiplied) alpha; the cursor
+// texture ships premultiplied (asset-packages decision #23), so
+// un-premultiply if needed.
+static auto CreateCursorSurface_(const Assets::BundledTextureMip& mip,
+                                 bool premultiplied) -> SDL_Surface* {
+  SDL_Surface* surface =
+      SDL_CreateSurface(mip.width, mip.height, SDL_PIXELFORMAT_RGBA32);
+  if (surface == nullptr) {
+    return nullptr;
+  }
+  auto* dst = static_cast<uint8_t*>(surface->pixels);
+  for (int y = 0; y < mip.height; ++y) {
+    uint8_t* row = dst + y * surface->pitch;
+    memcpy(row, mip.rgba.data() + static_cast<size_t>(y) * mip.width * 4,
+           static_cast<size_t>(mip.width) * 4);
+    if (premultiplied) {
+      for (int x = 0; x < mip.width; ++x) {
+        uint8_t* px = row + x * 4;
+        int a = px[3];
+        if (a != 0 && a != 255) {
+          for (int c = 0; c < 3; ++c) {
+            px[c] =
+                static_cast<uint8_t>(std::min(255, (px[c] * 255 + a / 2) / a));
+          }
+        }
+      }
+    }
+  }
+  return surface;
+}
+
+auto AppAdapterSDL::CreateHardwareCursor_() -> SDL_Cursor* {
+  auto img = Assets::LoadBundledFallbackTextureRGBA(
+      std::string(kBuiltinAssetsApverid) + ":textures/cursor");
+  if (!img.has_value() || img->mips.empty()) {
+    return nullptr;
+  }
+
+  // The mip matching our logical cursor size becomes the base surface
+  // (which defines the cursor's on-screen size in points); any larger
+  // mips get attached as high-DPI alternates for SDL to serve per
+  // display scale.
+  size_t base{};
+  while (base + 1 < img->mips.size()
+         && img->mips[base].width > kHardwareCursorLogicalSize) {
+    ++base;
+  }
+  SDL_Surface* surface =
+      CreateCursorSurface_(img->mips[base], img->premultiplied);
+  if (surface == nullptr) {
+    return nullptr;
+  }
+  for (size_t i = 0; i < base; ++i) {
+    if (SDL_Surface* alt =
+            CreateCursorSurface_(img->mips[i], img->premultiplied)) {
+      SDL_AddSurfaceAlternateImage(surface, alt);
+      // AddSurfaceAlternateImage holds its own reference.
+      SDL_DestroySurface(alt);
+    }
+  }
+  // Match the Mac build's cursor: hotspot at (6, 6) in its 64px space.
+  SDL_Cursor* cursor = SDL_CreateColorCursor(
+      surface, 6 * img->mips[base].width / 64, 6 * img->mips[base].height / 64);
+  // The cursor keeps its own copy of the pixels.
+  SDL_DestroySurface(surface);
+  return cursor;
 }
 
 /// Our particular flavor of graphics settings.
@@ -145,8 +319,9 @@ void AppAdapterSDL::ApplyGraphicsSettings(
   if (need_full_reload) {
     ReloadRenderer_(settings);
   } else if (settings->fullscreen != fullscreen_) {
-    SDL_SetWindowFullscreen(
-        sdl_window_, settings->fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+    // SDL3 takes a bool; with no fullscreen display-mode set this gives the
+    // borderless 'desktop' fullscreen we used to request explicitly.
+    SDL_SetWindowFullscreen(sdl_window_, settings->fullscreen);
     fullscreen_ = settings->fullscreen;
   }
 
@@ -181,14 +356,22 @@ void AppAdapterSDL::ApplyGraphicsSettings(
         break;
       }
       case VSync::kAdaptive: {
-        // In this case, let's try setting to 'adaptive' and turn it off if
-        // that is unsupported.
-        auto result = SDL_GL_SetSwapInterval(-1);
-        if (result == 0) {
+        // Try 'adaptive' (late-swap-tearing) first. This needs the
+        // EGL_EXT_swap_control_tear / GLX/WGL equivalent, which not every
+        // backend provides -- notably ANGLE's Metal backend does not. If it's
+        // unsupported, fall back to plain vsync-on rather than off: adaptive's
+        // intent is "vsync, but allow tearing under load", so the faithful
+        // degradation is vsync-on, not vsync-off (which would tear
+        // constantly). (SDL3 returns bool; true == success.)
+        if (SDL_GL_SetSwapInterval(-1)) {
           vsync_actually_enabled_ = true;
         } else {
-          SDL_GL_SetSwapInterval(0);
-          vsync_actually_enabled_ = false;
+          g_core->logging->Log(
+              LogName::kBaGraphics, LogLevel::kDebug,
+              "Adaptive vsync unsupported by this backend; falling back to "
+              "plain vsync-on.");
+          SDL_GL_SetSwapInterval(1);
+          vsync_actually_enabled_ = true;
         }
         break;
       }
@@ -373,6 +556,54 @@ void AppAdapterSDL::DoExitMainThreadEventLoop() {
   done_ = true;
 }
 
+// --- SDL boundary conversions ---------------------------------------------
+// Convert real SDL input types to the engine's native BA types. The BA
+// types were mirrored from SDL (identical values + field meanings), so
+// these are straight field copies; they exist so nothing past this adapter
+// ever sees an SDL type. See docs/initiatives/sdl-type-decoupling.md.
+
+static auto SDLKeyEventToBA_(const SDL_KeyboardEvent& k) -> BAKeysym {
+  // SDL3 removed SDL_Keysym and flattened its fields onto the key event.
+  // Scancode/keycode/mod values still match BA's (mirrored from SDL).
+  BAKeysym out{};
+  out.scancode = k.scancode;
+  out.sym = static_cast<BAKeycode>(k.key);
+  out.mod = k.mod;
+  return out;
+}
+
+static auto SDLJoystickEventToBA_(const SDL_Event& e) -> BAEvent {
+  // Map SDL3 event *types* to BA's explicitly: BA's event-type values mirror
+  // SDL2's, which SDL3 renumbered, so we can no longer just copy e.type. The
+  // joystick field layouts/values we copy below remain compatible.
+  BAEvent out{};
+  switch (e.type) {
+    case SDL_EVENT_JOYSTICK_AXIS_MOTION:
+      out.type = BA_JOYAXISMOTION;
+      out.jaxis.which = static_cast<uint8_t>(e.jaxis.which);
+      out.jaxis.axis = e.jaxis.axis;
+      out.jaxis.value = e.jaxis.value;
+      break;
+    case SDL_EVENT_JOYSTICK_HAT_MOTION:
+      out.type = BA_JOYHATMOTION;
+      out.jhat.which = static_cast<uint8_t>(e.jhat.which);
+      out.jhat.hat = e.jhat.hat;
+      out.jhat.value = e.jhat.value;
+      break;
+    case SDL_EVENT_JOYSTICK_BUTTON_DOWN:
+    case SDL_EVENT_JOYSTICK_BUTTON_UP:
+      out.type = (e.type == SDL_EVENT_JOYSTICK_BUTTON_DOWN) ? BA_JOYBUTTONDOWN
+                                                            : BA_JOYBUTTONUP;
+      out.jbutton.which = static_cast<uint8_t>(e.jbutton.which);
+      out.jbutton.button = e.jbutton.button;
+      out.jbutton.state = e.jbutton.down ? 1 : 0;
+      break;
+    default:
+      break;
+  }
+  return out;
+}
+
 void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
   assert(g_core->InMainThread());
   assert(g_base);
@@ -381,11 +612,11 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
   bool log_long_events{true};
 
   switch (event.type) {
-    case SDL_JOYAXISMOTION:
-    case SDL_JOYBUTTONDOWN:
-    case SDL_JOYBUTTONUP:
-    case SDL_JOYBALLMOTION:
-    case SDL_JOYHATMOTION: {
+    case SDL_EVENT_JOYSTICK_AXIS_MOTION:
+    case SDL_EVENT_JOYSTICK_BUTTON_DOWN:
+    case SDL_EVENT_JOYSTICK_BUTTON_UP:
+    case SDL_EVENT_JOYSTICK_BALL_MOTION:
+    case SDL_EVENT_JOYSTICK_HAT_MOTION: {
       // It seems that joystick connection/disconnection callbacks can fire
       // while there are still events for that joystick in the queue. So
       // take care to ignore events for no-longer-existing joysticks.
@@ -397,7 +628,7 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
       }
       if (JoystickInput* js = GetSDLJoystickInput_(&event)) {
         if (g_base) {
-          g_base->input->PushJoystickEvent(event, js);
+          g_base->input->PushJoystickEvent(SDLJoystickEventToBA_(event), js);
         }
       } else {
         g_core->logging->Log(LogName::kBaInput, LogLevel::kError,
@@ -407,68 +638,109 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
       break;
     }
 
-    case SDL_MOUSEBUTTONDOWN: {
+    case SDL_EVENT_MOUSE_BUTTON_DOWN: {
       const SDL_MouseButtonEvent* e = &event.button;
 
-      // Convert sdl's coords to normalized view coords.
-      float x = static_cast<float>(e->x) / window_size_.x;
-      float y = 1.0f - static_cast<float>(e->y) / window_size_.y;
+      // Convert sdl's coords to normalized view coords. (SDL3 coords are
+      // already floats.)
+      float x = e->x / window_size_.x;
+      float y = 1.0f - e->y / window_size_.y;
       g_base->input->PushMouseDownEvent(e->button, Vector2f(x, y));
       break;
     }
 
-    case SDL_MOUSEBUTTONUP: {
+    case SDL_EVENT_MOUSE_BUTTON_UP: {
       const SDL_MouseButtonEvent* e = &event.button;
 
       // Convert sdl's coords to normalized view coords.
-      float x = static_cast<float>(e->x) / window_size_.x;
-      float y = 1.0f - static_cast<float>(e->y) / window_size_.y;
+      float x = e->x / window_size_.x;
+      float y = 1.0f - e->y / window_size_.y;
       g_base->input->PushMouseUpEvent(e->button, Vector2f(x, y));
       break;
     }
 
-    case SDL_MOUSEMOTION: {
+    case SDL_EVENT_MOUSE_MOTION: {
       const SDL_MouseMotionEvent* e = &event.motion;
 
       // Convert sdl's coords to normalized view coords.
-      float x = static_cast<float>(e->x) / window_size_.x;
-      float y = 1.0f - static_cast<float>(e->y) / window_size_.y;
+      float x = e->x / window_size_.x;
+      float y = 1.0f - e->y / window_size_.y;
       g_base->input->PushMouseMotionEvent(Vector2f(x, y));
       break;
     }
 
-    case SDL_KEYDOWN: {
+    case SDL_EVENT_KEY_DOWN: {
+      if (g_core->logging->LogLevelEnabled(LogName::kBaInput,
+                                           LogLevel::kDebug)) {
+        g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug,
+                             "SDL key-down event: scancode "
+                                 + std::to_string(event.key.scancode)
+                                 + (event.key.repeat ? " (repeat)." : "."));
+      }
+      // Sanity-check: if the UI reports an active text-edit session,
+      // SDL text input should be active too; typing would otherwise
+      // silently produce no text.
+      if (ui_text_editing_active_ && sdl_window_
+          && !SDL_TextInputActive(sdl_window_)) {
+        BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                    "Key event with a UI text-edit session active but SDL"
+                    " text input inactive; typing will produce no text.");
+      }
       if (!event.key.repeat) {
-        g_base->input->PushKeyPressEvent(event.key.keysym);
+        g_base->input->PushKeyPressEvent(SDLKeyEventToBA_(event.key));
       }
       break;
     }
 
-    case SDL_KEYUP: {
-      g_base->input->PushKeyReleaseEvent(event.key.keysym);
+    case SDL_EVENT_KEY_UP: {
+      if (g_core->logging->LogLevelEnabled(LogName::kBaInput,
+                                           LogLevel::kDebug)) {
+        g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug,
+                             "SDL key-up event: scancode "
+                                 + std::to_string(event.key.scancode) + ".");
+      }
+      g_base->input->PushKeyReleaseEvent(SDLKeyEventToBA_(event.key));
       break;
     }
 
-    case SDL_MOUSEWHEEL: {
+    case SDL_EVENT_WINDOW_FOCUS_GAINED:
+    case SDL_EVENT_WINDOW_FOCUS_LOST: {
+      // Not currently acted on, but handy when debugging input issues
+      // (things like the macOS press-and-hold accent popup can shift
+      // keyboard focus in ways that affect what SDL delivers).
+      if (g_core->logging->LogLevelEnabled(LogName::kBaInput,
+                                           LogLevel::kDebug)) {
+        g_core->logging->Log(
+            LogName::kBaInput, LogLevel::kDebug,
+            std::string("SDL window keyboard-focus ")
+                + (event.type == SDL_EVENT_WINDOW_FOCUS_GAINED ? "gained."
+                                                               : "lost."));
+      }
+      break;
+    }
+
+    case SDL_EVENT_MOUSE_WHEEL: {
       // Mouse wheel speeds feel significantly different on Mac vs
       // Windows/Linux due to acceleration and whatnot. Slowing things down
-      // gets them feeling more similar.
+      // gets them feeling more similar. (SDL3 dropped the preciseX/Y fields;
+      // x/y are now floats directly.)
       auto mult = g_buildconfig.platform_macos() ? 0.35f : 1.0f;
       g_base->input->PushMouseScrollEvent(
-          Vector2f(event.wheel.preciseX * mult, event.wheel.preciseY * mult));
+          Vector2f(event.wheel.x * mult, event.wheel.y * mult));
 
       break;
     }
 
-    case SDL_JOYDEVICEADDED:
-      OnSDLJoystickAdded_(event.jdevice.which);
+    case SDL_EVENT_JOYSTICK_ADDED:
+      // SDL3 reports the instance-id here, not a device-index.
+      OnSDLJoystickAdded_(static_cast<int>(event.jdevice.which));
       break;
 
-    case SDL_JOYDEVICEREMOVED:
-      OnSDLJoystickRemoved_(event.jdevice.which);
+    case SDL_EVENT_JOYSTICK_REMOVED:
+      OnSDLJoystickRemoved_(static_cast<int>(event.jdevice.which));
       break;
 
-    case SDL_QUIT:
+    case SDL_EVENT_QUIT:
       if (g_core->AppTimeSeconds() - last_windowevent_close_time_ < 0.1) {
         // If they hit the window close button, skip the confirm.
         g_base->QuitApp(false);
@@ -480,96 +752,110 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
       }
       break;
 
-    case SDL_TEXTINPUT: {
+    case SDL_EVENT_TEXT_INPUT: {
+      if (g_core->logging->LogLevelEnabled(LogName::kBaInput,
+                                           LogLevel::kDebug)) {
+        g_core->logging->Log(
+            LogName::kBaInput, LogLevel::kDebug,
+            std::string("SDL text-input event: '") + event.text.text + "'.");
+      }
+      // Sanity-check: text events should only flow while the UI has an
+      // active text-edit session (we start/stop SDL text input from
+      // that). Receiving them well outside one means text input is
+      // stuck on (the pre-session-scoping bug class). The grace period
+      // covers events already queued when a session ends.
+      if (!ui_text_editing_active_
+          && g_core->AppTimeSeconds() - last_ui_text_edit_end_time_ > 2.0) {
+        BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                    "Received SDL text-input event with no active UI"
+                    " text-edit session; SDL text input may be stuck on.");
+      }
       g_base->input->PushTextInputEvent(event.text.text);
       break;
     }
 
-    case SDL_WINDOWEVENT: {
-      switch (event.window.event) {
-        case SDL_WINDOWEVENT_ENTER:
-          g_base->input->set_cursor_in_window(true);
-          break;
+    // SDL3 replaced the single SDL_WINDOWEVENT (dispatched on
+    // event.window.event) with distinct top-level window event types.
+    case SDL_EVENT_WINDOW_MOUSE_ENTER:
+      g_base->input->set_cursor_in_window(true);
+      break;
 
-        case SDL_WINDOWEVENT_LEAVE:
-          g_base->input->set_cursor_in_window(false);
-          break;
+    case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+      g_base->input->set_cursor_in_window(false);
+      break;
 
-        case SDL_WINDOWEVENT_CLOSE: {
-          // Simply note that this happened. We use this to adjust our
-          // SDL_QUIT behavior (quit is called right after this).
-          last_windowevent_close_time_ = g_core->AppTimeSeconds();
-          break;
-        }
+    case SDL_EVENT_WINDOW_CLOSE_REQUESTED: {
+      // Simply note that this happened. We use this to adjust our
+      // SDL_EVENT_QUIT behavior (quit is called right after this).
+      last_windowevent_close_time_ = g_core->AppTimeSeconds();
+      break;
+    }
 
-        case SDL_WINDOWEVENT_MAXIMIZED: {
-          if (g_buildconfig.platform_macos() && !fullscreen_) {
-            // Special case: on Mac, we wind up here if someone fullscreens
-            // our window via the window widget. This *basically* is the
-            // same thing as setting fullscreen through sdl, so we want to
-            // treat this as if we've changed the setting ourself. We write
-            // it to the config so that UIs can poll for it and pick up the
-            // change. We don't do this on other platforms where a maximized
-            // window is more distinctly different than a fullscreen one.
-            // Though I guess some Linux window managers have a fullscreen
-            // function so theoretically we should there. Le sigh. Maybe SDL
-            // 3 will tidy up this situation.
-            fullscreen_ = true;
-            g_base->logic->event_loop()->PushCall([] {
-              g_base->python->objs()
-                  .Get(BasePython::ObjID::kStoreConfigFullscreenOnCall)
-                  .Call();
-            });
-          }
-          break;
-        }
-
-        case SDL_WINDOWEVENT_RESTORED:
-          if (g_buildconfig.platform_macos() && fullscreen_) {
-            // See note above about Mac fullscreen.
-            fullscreen_ = false;
-            g_base->logic->event_loop()->PushCall([] {
-              g_base->python->objs()
-                  .Get(BasePython::ObjID::kStoreConfigFullscreenOffCall)
-                  .Call();
-            });
-          }
-          break;
-
-        case SDL_WINDOWEVENT_MINIMIZED:
-          break;
-
-        case SDL_WINDOWEVENT_HIDDEN: {
-          // We plug this into the app's overall 'Active' state so it can
-          // pause stuff or throttle down processing or whatever else.
-          if (!hidden_) {
-            g_base->SetAppActive(false);
-          }
-          // Also note that we are *completely* hidden, so we can totally
-          // stop drawing ('Inactive' app state does not imply this in and
-          // of itself).
-          hidden_ = true;
-          break;
-        }
-
-        case SDL_WINDOWEVENT_SHOWN: {
-          if (hidden_) {
-            g_base->SetAppActive(true);
-          }
-          hidden_ = false;
-          break;
-        }
-
-        case SDL_WINDOWEVENT_SIZE_CHANGED: {
-          // Note: this should cover all size changes; there is also
-          // SDL_WINDOWEVENT_RESIZED but according to the docs it only covers
-          // external events such as user window resizes.
-          UpdateScreenSizes_();
-          break;
-        }
-        default:
-          break;
+    case SDL_EVENT_WINDOW_MAXIMIZED: {
+      if (g_buildconfig.platform_macos() && !fullscreen_) {
+        // Special case: on Mac, we wind up here if someone fullscreens
+        // our window via the window widget. This *basically* is the
+        // same thing as setting fullscreen through sdl, so we want to
+        // treat this as if we've changed the setting ourself. We write
+        // it to the config so that UIs can poll for it and pick up the
+        // change. We don't do this on other platforms where a maximized
+        // window is more distinctly different than a fullscreen one.
+        // Though I guess some Linux window managers have a fullscreen
+        // function so theoretically we should there. Le sigh.
+        // TODO(ericf): SDL3 has dedicated SDL_EVENT_WINDOW_ENTER/
+        // LEAVE_FULLSCREEN events now; consider switching to those for a
+        // cleaner signal once this is verified on a real Mac.
+        fullscreen_ = true;
+        g_base->logic->event_loop()->PushCall([] {
+          g_base->python->objs()
+              .Get(BasePython::ObjID::kStoreConfigFullscreenOnCall)
+              .Call();
+        });
       }
+      break;
+    }
+
+    case SDL_EVENT_WINDOW_RESTORED:
+      if (g_buildconfig.platform_macos() && fullscreen_) {
+        // See note above about Mac fullscreen.
+        fullscreen_ = false;
+        g_base->logic->event_loop()->PushCall([] {
+          g_base->python->objs()
+              .Get(BasePython::ObjID::kStoreConfigFullscreenOffCall)
+              .Call();
+        });
+      }
+      break;
+
+    case SDL_EVENT_WINDOW_MINIMIZED:
+      break;
+
+    case SDL_EVENT_WINDOW_HIDDEN: {
+      // We plug this into the app's overall 'Active' state so it can
+      // pause stuff or throttle down processing or whatever else.
+      if (!hidden_) {
+        g_base->SetAppActive(false);
+      }
+      // Also note that we are *completely* hidden, so we can totally
+      // stop drawing ('Inactive' app state does not imply this in and
+      // of itself).
+      hidden_ = true;
+      break;
+    }
+
+    case SDL_EVENT_WINDOW_SHOWN: {
+      if (hidden_) {
+        g_base->SetAppActive(true);
+      }
+      hidden_ = false;
+      break;
+    }
+
+    case SDL_EVENT_WINDOW_RESIZED:
+    case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED: {
+      // Cover both logical-size and pixel-size changes (SDL3 split the old
+      // single SDL_WINDOWEVENT_SIZE_CHANGED into these two).
+      UpdateScreenSizes_();
       break;
     }
 
@@ -618,26 +904,72 @@ void AppAdapterSDL::HandleSDLEvent_(const SDL_Event& event) {
   }
 }
 
-void AppAdapterSDL::OnSDLJoystickAdded_(int device_index) {
+void AppAdapterSDL::OnSDLJoystickAdded_(int instance_id) {
   assert(g_base);
   assert(g_core->InMainThread());
 
-  // Create the joystick here in the main thread and then pass it over to
-  // the logic thread to be added to the action.
+  // We're the SDL boundary, so all SDL_Joystick interaction lives here.
+  // Open the device by its instance-id + resolve its name, then hand a
+  // (SDL-free) JoystickInput that resolved data; we keep + close the
+  // handle ourselves (see RemoveSDLInputDevice_).
+  //
+  // Note: SDL3 deals purely in instance-ids (the SDL2 'device index' concept
+  // is gone), so the value from joystick-added events and initial
+  // enumeration is the instance-id directly.
+  SDL_Joystick* handle = SDL_OpenJoystick(instance_id);
+  if (handle == nullptr) {
+    // Routine on macOS with PlayStation controllers: the OS surfaces the
+    // pad over more than one path and SDL's HIDAPI backend claims it,
+    // tearing down the handle we are mid-way through opening. SDL then
+    // sends the matching removed-event and re-announces the device, which
+    // succeeds. So this is debug-level noise, not a failure -- a genuinely
+    // unusable controller shows up as one that simply never works, which
+    // is far more legible to a user than a scary line in a log they were
+    // not reading.
+    //
+    // Remember the id so the removal that follows can be told apart from
+    // real bookkeeping loss (see RemoveSDLInputDevice_).
+    if (sdl_failed_open_joystick_ids_.size() < 64) {
+      sdl_failed_open_joystick_ids_.insert(instance_id);
+    }
+    auto* err = SDL_GetError();
+    g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug,
+                         std::string("SDL_OpenJoystick failed for instance-id "
+                                     + std::to_string(instance_id) + ": ")
+                             + (err ? err : "Unknown SDL error.")
+                             + " Expecting a matching removed-event.");
+    return;
+  }
+
+  // It opened, so any earlier failure for this id is resolved.
+  sdl_failed_open_joystick_ids_.erase(instance_id);
+
+  std::string name{"Unknown Controller"};
+  if (auto* n = SDL_GetJoystickName(handle)) {
+    name = n;
+  }
+  // Special case: on windows, xinput comes in with unique names ("XInput
+  // Controller #3", etc.); normalize to "XInput Controller" so configuring
+  // is sane.
+  if (name.find("XInput Controller") != std::string::npos && name.size() >= 20
+      && name.size() <= 22) {
+    name = "XInput Controller";
+  }
+
   JoystickInput* j{};
   try {
-    j = Object::NewDeferred<JoystickInput>(device_index);
+    j = Object::NewDeferred<JoystickInput>(instance_id, name);
   } catch (const std::exception& exc) {
     g_core->logging->Log(
         LogName::kBaInput, LogLevel::kError,
-        std::string("Error creating JoystickInput for SDL device-index "
-                    + std::to_string(device_index) + ": ")
+        std::string("Error creating JoystickInput for SDL instance-id "
+                    + std::to_string(instance_id) + ": ")
             + exc.what());
+    SDL_CloseJoystick(handle);
     return;
   }
   assert(j != nullptr);
-  auto instance_id = SDL_JoystickInstanceID(j->sdl_joystick());
-  AddSDLInputDevice_(j, instance_id);
+  AddSDLInputDevice_(j, handle, instance_id);
 }
 
 void AppAdapterSDL::OnSDLJoystickRemoved_(int index) {
@@ -646,17 +978,20 @@ void AppAdapterSDL::OnSDLJoystickRemoved_(int index) {
   RemoveSDLInputDevice_(index);
 }
 
-void AppAdapterSDL::AddSDLInputDevice_(JoystickInput* input, int index) {
+void AppAdapterSDL::AddSDLInputDevice_(JoystickInput* input,
+                                       SDL_Joystick* handle, int index) {
   assert(g_base && g_base->input != nullptr);
   assert(input != nullptr);
   assert(g_core->InMainThread());
   assert(index >= 0);
 
-  // Keep a mapping of SDL input-device indices to our Joysticks.
+  // Keep a mapping of SDL instance-ids to our Joysticks + their handles.
   if (static_cast_check_fit<int>(sdl_joysticks_.size()) <= index) {
     sdl_joysticks_.resize(static_cast<size_t>(index) + 1, nullptr);
+    sdl_joystick_handles_.resize(static_cast<size_t>(index) + 1, nullptr);
   }
   sdl_joysticks_[index] = input;
+  sdl_joystick_handles_[index] = handle;
 
   g_base->input->PushAddInputDeviceCall(input, true);
 }
@@ -666,8 +1001,22 @@ void AppAdapterSDL::RemoveSDLInputDevice_(int index) {
   assert(index >= 0);
   JoystickInput* j = GetSDLJoystickInput_(index);
 
-  // Note: am running into this with a PS5 controller on macOS Sequoia beta.
   if (!j) {
+    // Expected half of a transient: we were told this device arrived,
+    // failed to open it, and are now being told it went away. Nothing was
+    // ever registered, so there is nothing to clean up. Routine on macOS
+    // with PlayStation controllers (see OnSDLJoystickAdded_).
+    if (sdl_failed_open_joystick_ids_.erase(index) > 0) {
+      g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug,
+                           "Ignoring removed-event for instance-id "
+                               + std::to_string(index)
+                               + "; its open had failed.");
+      return;
+    }
+
+    // Anything else means we lost track of a device we did register --
+    // keep this loud. It used to be indistinguishable from the benign
+    // case above, which is exactly what made it useless.
     g_core->logging->Log(
         LogName::kBaInput, LogLevel::kError,
         "GetSDLJoystickInput_() returned nullptr on RemoveSDLInputDevice_();"
@@ -686,6 +1035,15 @@ void AppAdapterSDL::RemoveSDLInputDevice_(int index) {
                              + std::to_string(sdl_joysticks_.size())
                              + "; index is " + std::to_string(index) + ".");
   }
+
+  // Close the SDL_Joystick handle we own for this device (immediately, in
+  // the main thread; nothing reads it at runtime).
+  if (static_cast_check_fit<int>(sdl_joystick_handles_.size()) > index
+      && sdl_joystick_handles_[index] != nullptr) {
+    SDL_CloseJoystick(sdl_joystick_handles_[index]);
+    sdl_joystick_handles_[index] = nullptr;
+  }
+
   g_base->input->PushRemoveInputDeviceCall(j, true);
 }
 
@@ -696,23 +1054,149 @@ auto AppAdapterSDL::GetSDLJoystickInput_(const SDL_Event* e) const
 
   // Attempt to pull the joystick id from the event.
   switch (e->type) {
-    case SDL_JOYAXISMOTION:
+    case SDL_EVENT_JOYSTICK_AXIS_MOTION:
       joy_id = e->jaxis.which;
       break;
-    case SDL_JOYBUTTONDOWN:
-    case SDL_JOYBUTTONUP:
+    case SDL_EVENT_JOYSTICK_BUTTON_DOWN:
+    case SDL_EVENT_JOYSTICK_BUTTON_UP:
       joy_id = e->jbutton.which;
       break;
-    case SDL_JOYBALLMOTION:
+    case SDL_EVENT_JOYSTICK_BALL_MOTION:
       joy_id = e->jball.which;
       break;
-    case SDL_JOYHATMOTION:
+    case SDL_EVENT_JOYSTICK_HAT_MOTION:
       joy_id = e->jhat.which;
       break;
     default:
       return nullptr;
   }
   return GetSDLJoystickInput_(joy_id);
+}
+
+auto AppAdapterSDL::GetSDLJoystickHandle_(int sdl_joystick_id) const
+    -> SDL_Joystick* {
+  assert(g_core->InMainThread());
+  if (sdl_joystick_id < 0
+      || sdl_joystick_id
+             >= static_cast_check_fit<int>(sdl_joystick_handles_.size())) {
+    return nullptr;
+  }
+  return sdl_joystick_handles_[sdl_joystick_id];
+}
+
+void AppAdapterSDL::RumbleSDLJoystick_(int sdl_joystick_id,
+                                       uint16_t low_magnitude,
+                                       uint16_t high_magnitude,
+                                       uint32_t duration_millisecs) {
+  assert(g_base->InLogicThread());
+
+  // Handles are main-thread-only, so hop. Capture the instance-id rather
+  // than anything resolved now: the controller can be unplugged between
+  // this push and the call running, in which case the lookup simply
+  // fails.
+  PushMainThreadCall([this, sdl_joystick_id, low_magnitude, high_magnitude,
+                      duration_millisecs] {
+    auto* handle = GetSDLJoystickHandle_(sdl_joystick_id);
+    if (handle == nullptr) {
+      return;
+    }
+    SDL_RumbleJoystick(handle, low_magnitude, high_magnitude,
+                       duration_millisecs);
+  });
+}
+
+// How SDL renders each event type: what it drives the two motors at
+// (0-1 each) and for how long.
+//
+// These are absolute magnitudes -- read a row and you know what that
+// event produces, with no arithmetic. The low-frequency motor carries a
+// heavier weight (a deep growl); the high-frequency one is lighter and
+// faster (a sharp buzz), so leaning on one or the other is what gives an
+// event its character rather than just its volume.
+//
+// Two things to keep in mind when tuning:
+//
+// - Anything below the ERM dead zone (~0.15-0.25) contributes NOTHING.
+//   A motor value under that is not a subtle hint, it is silence.
+// - The heavy motor has far more inertia and barely spins up inside a
+//   short event, so short events skew crisp on real hardware whatever is
+//   asked for here. These values work with that rather than against it.
+//
+// The durations here are ours alone and are deliberately NOT tied to the
+// type's hold_millisecs. A hold window slightly longer than the render
+// may well feel best, and other platforms cannot control render length
+// at all. The only rule is not to run PAST the window, since that lets a
+// lower-priority event interrupt something still buzzing -- checked
+// below.
+struct SDLTypeRender_ {
+  float low;
+  float high;
+  int duration_millisecs;
+};
+
+/// Indexed by FeedbackEvent::Type; see the static_assert below.
+static constexpr SDLTypeRender_ kSDLTypeRender[] = {
+    // join
+    {0.5f, 0.5f, 100},
+    // collect
+    {0.0f, 1.0f, 60},
+    // grab
+    {0.0f, 1.0f, 100},
+    // impact-dealt
+    {0.4f, 0.6f, 80},
+    // impact-received
+    {0.6f, 0.4f, 80},
+    // death
+    {1.0f, 1.0f, 200},
+};
+
+static_assert(std::size(kSDLTypeRender)
+                  == static_cast<size_t>(FeedbackEvent::Type::kLast),
+              "Every FeedbackEvent::Type needs an SDL render mapping, in"
+              " enum order.");
+
+auto AppAdapterSDL::ApplyJoystickFeedback(JoystickInput* device,
+                                          const FeedbackEvent& event) -> int {
+  // Grab our addressing off the device now, in the logic thread; the
+  // rumble itself happens on the main thread, by which point the device
+  // may be gone.
+  auto sdl_joystick_id = device->sdl_joystick_id();
+  if (!device->IsSDLController() || sdl_joystick_id < 0) {
+    return 0;
+  }
+
+  auto index = static_cast<size_t>(event.type);
+  assert(index < std::size(kSDLTypeRender));
+  const auto& render = kSDLTypeRender[index];
+
+  // Straight linear map onto SDL's documented 0-0xFFFF range, on purpose.
+  //
+  // It is tempting to bend this -- ERM motors have a real dead zone at the
+  // bottom, so low values go unfelt on some hardware. Resisted for now
+  // because we would be layering a guessed curve on top of whatever SDL's
+  // per-platform backends, the driver, and the controller firmware already
+  // do, none of which is documented: SDL specifies these parameters purely
+  // as a magnitude range and promises nothing about perceptibility. Two
+  // stacked corrections are far harder to reason about than one missing
+  // one, and a linear pass-through is the only baseline a real calibration
+  // pass can measure against.
+  //
+  // Note SDL also defines 0 as "stop any rumbling", which is why a zero
+  // motor value must reach hardware as 0 rather than as some
+  // minimum-perceptible floor.
+  auto low = static_cast<uint16_t>(render.low * 65535.0f);
+  auto high = static_cast<uint16_t>(render.high * 65535.0f);
+  RumbleSDLJoystick_(sdl_joystick_id, low, high,
+                     static_cast<uint32_t>(render.duration_millisecs));
+  return render.duration_millisecs;
+}
+
+void AppAdapterSDL::StopJoystickFeedback(JoystickInput* device) {
+  auto sdl_joystick_id = device->sdl_joystick_id();
+  if (!device->IsSDLController() || sdl_joystick_id < 0) {
+    return;
+  }
+  RumbleSDLJoystick_(sdl_joystick_id, 0, 0, 0);
 }
 
 auto AppAdapterSDL::GetSDLJoystickInput_(int sdl_joystick_id) const
@@ -749,32 +1233,60 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
       height = static_cast<int>(kBaseVirtualResY * 0.8f);
     }
 
-    uint32_t flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN
-                     | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_RESIZABLE;
+    // Debug env-var to force a specific initial window size ('WxH' form;
+    // see test_game_run --window-size). Handy for exercising things like
+    // aspect-ratio limiting.
+    if (auto sizeenv = g_core->platform->GetEnv("BA_WINDOW_SIZE")) {
+      int w{}, h{};
+      auto xpos = sizeenv->find('x');
+      if (xpos != std::string::npos) {
+        w = strtol(sizeenv->substr(0, xpos).c_str(), nullptr, 10);
+        h = strtol(sizeenv->substr(xpos + 1).c_str(), nullptr, 10);
+      }
+      if (w > 0 && h > 0) {
+        width = w;
+        height = h;
+      } else {
+        g_core->logging->Log(
+            LogName::kBaGraphics, LogLevel::kError,
+            "Invalid BA_WINDOW_SIZE value '" + *sizeenv + "'; expected WxH.");
+      }
+    }
+
+    // SDL3 notes: windows are shown by default (no SDL_WINDOW_SHOWN), high-dpi
+    // is requested via SDL_WINDOW_HIGH_PIXEL_DENSITY (was ALLOW_HIGHDPI), and
+    // SDL_WindowFlags is now 64-bit. Bare SDL_WINDOW_FULLSCREEN with no
+    // display-mode set gives borderless 'desktop' fullscreen.
+    SDL_WindowFlags flags = SDL_WINDOW_OPENGL | SDL_WINDOW_HIGH_PIXEL_DENSITY
+                            | SDL_WINDOW_RESIZABLE;
     if (settings->fullscreen) {
-      flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+      flags |= SDL_WINDOW_FULLSCREEN;
     }
 
     int context_flags{};
+#if BA_OPENGL_IS_ES
+    // ANGLE: OpenGL ES 3.0 via D3D11 (Windows) or Metal (macOS). SDL creates
+    // and manages the EGL/ANGLE context for us.
+    SDL_SetHint(SDL_HINT_OPENGL_ES_DRIVER, "1");
+#if BA_PLATFORM_MACOS
+    // On Windows the ANGLE DLLs sit beside the .exe and load automatically;
+    // on macOS SDL's dlopen needs to be pointed at our bundled dylibs.
+    SetAngleLibPaths_();
+#endif
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#else   // BA_OPENGL_IS_ES
     if (g_buildconfig.platform_macos()) {
-      // On Mac we ask for a GL 4.1 Core profile. This is supported by all
-      // hardware that we officially support and is also the last version of
-      // GL supported on Apple hardware. So we have a nice fixed target to
-      // work with.
+      // On Mac (desktop-GL fallback, when ANGLE isn't bundled) we ask for a
+      // GL 4.1 Core profile. This is supported by all hardware that we
+      // officially support and is also the last version of GL supported on
+      // Apple hardware. So we have a nice fixed target to work with.
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
       SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                           SDL_GL_CONTEXT_PROFILE_CORE);
       context_flags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
-#if BA_OPENGL_IS_ES
-    } else if (g_buildconfig.platform_windows()) {
-      // Use ANGLE (libEGL.dll) for OpenGL ES via D3D11 on Windows.
-      SDL_SetHint(SDL_HINT_OPENGL_ES_DRIVER, "1");
-      SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
-                          SDL_GL_CONTEXT_PROFILE_ES);
-      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-      SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-#endif
     } else {
       // On other platforms, let's not ask for anything in particular.
       // We'll work with whatever they give us if its 4.x or 3.x or we'll
@@ -788,15 +1300,16 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
       // slightly slower due to extra checks, so what we're doing here might
       // be optimal.
     }
+#endif  // BA_OPENGL_IS_ES
     if (g_buildconfig.debug_build()) {
       // Curious if this has any real effects anywhere.
       context_flags |= SDL_GL_CONTEXT_DEBUG_FLAG;
     }
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, context_flags);
 
-    sdl_window_ =
-        SDL_CreateWindow(nullptr, SDL_WINDOWPOS_UNDEFINED,
-                         SDL_WINDOWPOS_UNDEFINED, width, height, flags);
+    // SDL3 SDL_CreateWindow no longer takes a position (set separately if
+    // needed); we set the real title just below via SDL_SetWindowTitle.
+    sdl_window_ = SDL_CreateWindow("", width, height, flags);
     if (!sdl_window_) {
       FatalError("Unable to create SDL Window of size " + std::to_string(width)
                  + " by " + std::to_string(height));
@@ -807,6 +1320,13 @@ void AppAdapterSDL::ReloadRenderer_(const GraphicsSettings_* settings) {
     }
 
     SDL_SetWindowTitle(sdl_window_, "BallisticaKit");
+
+    // Note: we deliberately do NOT start SDL text input here. It gets
+    // started/stopped based on when the app is actually editing text
+    // (see OnUITextEditingBegin/End below), which keeps OS IME behavior
+    // sane: no macOS press-and-hold accent popups during gameplay,
+    // composition/candidate UI positioned at the field being edited,
+    // and normal key-repeat outside of editing.
 
     UpdateScreenSizes_();
 
@@ -835,9 +1355,9 @@ void AppAdapterSDL::UpdateScreenSizes_() {
   window_size_ = Vector2f(win_size_x, win_size_y);
 
   // Also grab the new size of the drawable; this is our physical (pixel)
-  // dimensions.
+  // dimensions. (SDL3 renamed SDL_GL_GetDrawableSize.)
   int pixels_x, pixels_y;
-  SDL_GL_GetDrawableSize(sdl_window_, &pixels_x, &pixels_y);
+  SDL_GetWindowSizeInPixels(sdl_window_, &pixels_x, &pixels_y);
 
   // Push this over to the logic thread which owns the canonical value
   // for this.
@@ -893,7 +1413,8 @@ void AppAdapterSDL::CursorPositionForDraw(float* x, float* y) {
   float event_y = g_base->input->cursor_pos_y();
 
   // Now ask sdl for it's latest values and wrangle the math ourself.
-  int sdl_x, sdl_y;
+  // (SDL3 SDL_GetMouseState deals in floats.)
+  float sdl_x, sdl_y;
   SDL_GetMouseState(&sdl_x, &sdl_y);
 
   // Convert window coords to normalized.
@@ -929,6 +1450,72 @@ auto AppAdapterSDL::SupportsMaxFPS() -> bool const { return true; }
 auto AppAdapterSDL::HasDirectKeyboardInput() -> bool {
   // We always provide direct keyboard events.
   return true;
+}
+
+static auto TextEditRectToSDL_(const Rect& rect_normalized,
+                               const Vector2f& window_size) -> SDL_Rect {
+  // Incoming rects are normalized (0-1) window coords with a bottom-left
+  // origin (y-up); SDL wants window points, top-left origin (y-down).
+  // Note that the normalized values already account for the game's
+  // active render rect (black borders in tv-mode/etc.), so this is a
+  // plain scale+flip.
+  SDL_Rect r;
+  r.x = static_cast<int>(std::lround(rect_normalized.l * window_size.x));
+  r.y =
+      static_cast<int>(std::lround((1.0f - rect_normalized.t) * window_size.y));
+  r.w = static_cast<int>(std::lround(rect_normalized.width() * window_size.x));
+  r.h = static_cast<int>(std::lround(rect_normalized.height() * window_size.y));
+  return r;
+}
+
+void AppAdapterSDL::OnUITextEditingBegin(const Rect& rect_normalized) {
+  assert(g_base->InLogicThread());
+  PushMainThreadCall([this, rect_normalized] {
+    ui_text_editing_active_ = true;
+    if (!sdl_window_) {
+      return;
+    }
+    SDL_Rect r = TextEditRectToSDL_(rect_normalized, window_size_);
+    if (!SDL_SetTextInputArea(sdl_window_, &r, 0)) {
+      BA_LOG_ONCE(
+          LogName::kBaInput, LogLevel::kWarning,
+          std::string("SDL_SetTextInputArea failed: ") + SDL_GetError());
+    }
+    if (!SDL_StartTextInput(sdl_window_)) {
+      BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                  std::string("SDL_StartTextInput failed: ") + SDL_GetError());
+    }
+  });
+}
+
+void AppAdapterSDL::OnUITextEditingUpdate(const Rect& rect_normalized) {
+  assert(g_base->InLogicThread());
+  PushMainThreadCall([this, rect_normalized] {
+    if (!sdl_window_ || !SDL_TextInputActive(sdl_window_)) {
+      return;
+    }
+    SDL_Rect r = TextEditRectToSDL_(rect_normalized, window_size_);
+    if (!SDL_SetTextInputArea(sdl_window_, &r, 0)) {
+      BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                  std::string("SDL_SetTextInputArea (update) failed: ")
+                      + SDL_GetError());
+    }
+  });
+}
+
+void AppAdapterSDL::OnUITextEditingEnd() {
+  assert(g_base->InLogicThread());
+  PushMainThreadCall([this] {
+    ui_text_editing_active_ = false;
+    last_ui_text_edit_end_time_ = g_core->AppTimeSeconds();
+    if (!sdl_window_) {
+      return;
+    }
+    if (!SDL_StopTextInput(sdl_window_)) {
+      BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                  std::string("SDL_StopTextInput failed: ") + SDL_GetError());
+    }
+  });
 }
 
 auto AppAdapterSDL::DoClipboardIsSupported() -> bool { return true; }

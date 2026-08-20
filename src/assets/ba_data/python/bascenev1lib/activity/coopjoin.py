@@ -2,11 +2,10 @@
 #
 """Functionality related to the co-op join screen."""
 
-from __future__ import annotations
-
 from typing import override
 
 import bascenev1 as bs
+from bascenev1 import classicassets
 
 
 class CoopJoinActivity(bs.JoinActivity):
@@ -31,7 +30,7 @@ class CoopJoinActivity(bs.JoinActivity):
         Text(
             self.session.campaign.getlevel(
                 self.session.campaign_level_name
-            ).displayname,
+            ).displayname_langstr,
             scale=1.3,
             h_attach=Text.HAttach.CENTER,
             h_align=Text.HAlign.CENTER,
@@ -85,7 +84,7 @@ class CoopJoinActivity(bs.JoinActivity):
             vrmode = env.vr
             if have_achievements:
                 Text(
-                    bs.Lstr(resource='achievementsRemainingText'),
+                    classicassets.strings.coop.achievements_remaining,
                     host_only=True,
                     position=(ts_h_offs - 10, vpos),
                     transition=Text.Transition.FADE_IN,
@@ -105,7 +104,7 @@ class CoopJoinActivity(bs.JoinActivity):
                     vpos -= 55
                 if not achievements:
                     Text(
-                        bs.Lstr(resource='noAchievementsRemainingText'),
+                        classicassets.strings.coop.no_achievements_remaining,
                         host_only=True,
                         position=(ts_h_offs + 15, vpos + 10),
                         transition=Text.Transition.FADE_IN,

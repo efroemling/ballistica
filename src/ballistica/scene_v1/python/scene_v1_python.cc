@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <list>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -13,6 +14,8 @@
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_context_ref.h"
+#include "ballistica/base/python/class/python_class_lang_str.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
@@ -26,6 +29,7 @@
 #include "ballistica/scene_v1/python/class/python_class_input_device.h"
 #include "ballistica/scene_v1/python/class/python_class_material.h"
 #include "ballistica/scene_v1/python/class/python_class_node.h"
+#include "ballistica/scene_v1/python/class/python_class_quat.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_collision_mesh.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_data_asset.h"
 #include "ballistica/scene_v1/python/class/python_class_scene_mesh.h"
@@ -38,9 +42,11 @@
 #include "ballistica/scene_v1/python/methods/python_methods_input.h"
 #include "ballistica/scene_v1/python/methods/python_methods_networking.h"
 #include "ballistica/scene_v1/python/methods/python_methods_scene.h"
+#include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/scene_v1/support/session_stream.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
 #include "ballistica/shared/python/python_module_builder.h"
@@ -72,6 +78,7 @@ extern "C" auto PyInit__bascenev1() -> PyObject* {
 void SceneV1Python::AddPythonClasses(PyObject* module) {
   PythonModuleBuilder::AddClass<PythonClassInputDevice>(module);
   PythonModuleBuilder::AddClass<PythonClassNode>(module);
+  PythonModuleBuilder::AddClass<PythonClassQuat>(module);
   PythonModuleBuilder::AddClass<PythonClassSessionPlayer>(module);
   PythonModuleBuilder::AddClass<PythonClassSessionData>(module);
   PythonModuleBuilder::AddClass<PythonClassActivityData>(module);
@@ -86,13 +93,92 @@ void SceneV1Python::AddPythonClasses(PyObject* module) {
 }
 
 void SceneV1Python::ImportPythonObjs() {
-#include "ballistica/scene_v1/mgen/pyembed/binding_scene_v1.inc"
+#include "ballistica/scene_v1/generated/pyembed/binding_scene_v1.inc"
 }
 
 void SceneV1Python::Reset() {
   assert(g_base->InLogicThread());
   ReleaseJoystickInputCapture();
   ReleaseKeyboardInputCapture();
+}
+
+auto SceneV1Python::BuildLangStrWireValue(PyObject* obj,
+                                          HostSession* host_session)
+    -> std::pair<std::string, std::shared_ptr<const base::LangStr>> {
+  assert(Python::HaveGIL());
+  assert(obj != nullptr);
+
+  if (PyUnicode_Check(obj)) {
+    return {std::string(1, kLangStrWireTagLiteral) + PyUnicode_AsUTF8(obj),
+            nullptr};
+  }
+  if (base::PythonClassLangStr::Check(obj)) {
+    auto val = base::PythonClassLangStr::FromPyObj(obj).value();
+
+    // Serialize with indexed refs against the session's package
+    // universe when possible; fall back to self-describing resource
+    // refs (bigger but always parseable), and as a last resort
+    // evaluate to a literal (fail-visible; better than killing the
+    // stream).
+    std::optional<std::string> json;
+    if (host_session != nullptr) {
+      auto indexed = val->ToIndexedJson(host_session->asset_package_universe());
+      if (indexed.has_value()) {
+        json = *indexed;
+      } else {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                    "Can't serialize LangStr with indexed refs ("
+                        + indexed.error() + "); falling back to resource"
+                        + " refs. Is the referenced package in the hosting"
+                        + " universe?");
+      }
+    }
+    if (!json.has_value()) {
+      auto resource = val->ToResourceJson();
+      if (resource.has_value()) {
+        json = *resource;
+      } else {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                    "Can't serialize LangStr for the wire (" + resource.error()
+                        + "); sending evaluated text.");
+        return {std::string(1, kLangStrWireTagLiteral) + val->Evaluate(),
+                nullptr};
+      }
+    }
+    return {std::string(1, kLangStrWireTagLangStr) + *json, val};
+  }
+
+  // Legacy Lstr: pull its json form (translated on each client via the
+  // legacy resource mechanism; the transitional leg while gameplay
+  // scripts still use Lstr).
+  int result = PyObject_IsInstance(
+      obj,
+      g_base->python->objs().Get(base::BasePython::ObjID::kLStrClass).get());
+  if (result == -1) {
+    PyErr_Clear();
+    result = 0;
+  }
+  if (result == 1) {
+    PythonRef as_json_call(PyObject_GetAttrString(obj, "as_json"),
+                           PythonRef::kSteal);
+    if (as_json_call.CallableCheck()) {
+      PythonRef json = as_json_call.Call();
+      if (PyUnicode_Check(json.get())) {
+        return {std::string(1, kLangStrWireTagLegacyJson)
+                    + PyUnicode_AsUTF8(json.get()),
+                nullptr};
+      }
+    }
+    PyErr_Clear();
+    throw Exception("Error getting json from Lstr.", PyExcType::kRuntime);
+  }
+
+  PyErr_Clear();
+  throw Exception(
+      "Can't put value in a lang-str slot (expected str,"
+      " babase.LangStr, or Lstr): "
+          + Python::ObjToString(obj) + ".",
+      PyExcType::kType);
 }
 
 void SceneV1Python::SetNodeAttr(Node* node, const char* attr_name,
@@ -157,6 +243,22 @@ void SceneV1Python::SetNodeAttr(Node* node, const char* attr_name,
       break;
     }
     case NodeAttributeType::kString: {
+      if (attr.is_lang_str()) {
+        // Lang-str-flagged slots carry the tagged wire form (see
+        // kLangStrWireTag*); native LangStrs stay structured all the
+        // way (each client evaluates in its own locale) rather than
+        // baking in the host locale.
+        auto [wire, parsed] = BuildLangStrWireValue(
+            value_obj, node->context_ref().GetHostSession());
+        if (out_stream) {
+          out_stream->SetNodeAttr(attr, wire);
+        }
+
+        // If something was driving this attr, disconnect it.
+        attr.DisconnectIncoming();
+        attr.SetLangStrWire(wire, std::move(parsed));
+        break;
+      }
       std::string val = g_base->python->GetPyLString(value_obj);
       if (out_stream) {
         out_stream->SetNodeAttr(attr, val);
@@ -456,14 +558,24 @@ auto SceneV1Python::GetNodeAttr(Node* node, const char* attr_name)
       }
       break;
     case NodeAttributeType::kString: {
-      if (g_buildconfig.debug_build()) {
-        std::string s = attr.GetAsString();
-        assert(Utils::IsValidUTF8(s));
-        return PyUnicode_FromString(s.c_str());
-      } else {
-        return PyUnicode_FromString(attr.GetAsString().c_str());
+      // Lang-str-flagged slots holding a parsed native language-string
+      // hand back a babase.LangStr.
+      if (attr.is_lang_str()) {
+        if (auto lang_str = attr.GetLangStr()) {
+          return base::PythonClassLangStr::Create(std::move(lang_str));
+        }
       }
-      break;
+      std::string s = attr.GetAsString();
+      // Other tagged legs (literal, legacy-lstr-json) read as their
+      // payload without the tag byte, matching what a legacy set of
+      // the same value would read back.
+      if (attr.is_lang_str() && IsLangStrWireTagged(s)) {
+        s = s.substr(1);
+      }
+      if (g_buildconfig.debug_build()) {
+        assert(Utils::IsValidUTF8(s));
+      }
+      return PyUnicode_FromString(s.c_str());
     }
     case NodeAttributeType::kNode: {
       // Return a new py ref to this node or create a new empty ref.
@@ -894,57 +1006,6 @@ auto SceneV1Python::GetPyPlayer(PyObject* o, bool allow_empty_ref,
       pyexctype);
 }
 
-auto SceneV1Python::ValidatedPackageAssetName(PyObject* package,
-                                              const char* name) -> std::string {
-  assert(g_base->InLogicThread());
-  assert(g_scene_v1->python->objs().Exists(
-      SceneV1Python::ObjID::kAssetPackageClass));
-
-  if (!PyObject_IsInstance(package,
-                           g_scene_v1->python->objs()
-                               .Get(SceneV1Python::ObjID::kAssetPackageClass)
-                               .get())) {
-    throw Exception("Object is not an AssetPackage.", PyExcType::kType);
-  }
-
-  // Ok; they've passed us an asset-package object.
-  // Now validate that its context is current...
-  PythonRef context_obj(PyObject_GetAttrString(package, "context_ref"),
-                        PythonRef::kSteal);
-  if (!context_obj.exists()
-      || !(PyObject_IsInstance(context_obj.get(),
-                               reinterpret_cast<PyObject*>(
-                                   &base::PythonClassContextRef::type_obj)))) {
-    throw Exception("Asset package context_ref not found.",
-                    PyExcType::kNotFound);
-  }
-  auto* pycontext =
-      reinterpret_cast<base::PythonClassContextRef*>(context_obj.get());
-  auto* ctargetref = pycontext->context_ref().Get();
-  if (!ctargetref) {
-    throw Exception("Asset package context_ref does not exist.",
-                    PyExcType::kNotFound);
-  }
-  auto* ctargetref2 = g_base->CurrentContext().Get();
-  if (ctargetref != ctargetref2) {
-    throw Exception("Asset package context_ref is not current.");
-  }
-
-  // Hooray; the asset package's context exists and is current.
-  // Ok; now pull the package id...
-  PythonRef package_id(PyObject_GetAttrString(package, "package_id"),
-                       PythonRef::kSteal);
-  if (!PyUnicode_Check(package_id.get())) {
-    throw Exception("Got non-string AssetPackage ID.", PyExcType::kType);
-  }
-
-  // TODO(ericf): make sure the package is valid for this context,
-  // and return a fully qualified name with the package included.
-
-  printf("would give %s:%s\n", PyUnicode_AsUTF8(package_id.get()), name);
-  return name;
-}
-
 auto SceneV1Python::GetPySceneSound(PyObject* o, bool allow_empty_ref,
                                     bool allow_none) -> SceneSound* {
   assert(Python::HaveGIL());
@@ -1290,21 +1351,24 @@ void SceneV1Python::DoBuildNodeMessage(PyObject* args, int arg_offset,
     obj = PyTuple_GET_ITEM(args, i);
     BA_PRECONDITION(obj);
     switch (*f) {
+      // Note the width-specific getters: these values come straight from
+      // whoever called handlemessage(), so a value too big for the slot
+      // its format char declares is a caller error and should say so.
+      // Narrowing a GetInt64() with static_cast_check_fit() instead would
+      // abort debug builds and, worse, silently truncate in shipped ones
+      // -- and node messages go out over the session stream, so the
+      // mangled value would reach every client.
       case 'I':
-        Utils::EmbedInt32NBO(
-            &ptr, static_cast_check_fit<int32_t>(Python::GetInt64(obj)));
+        Utils::EmbedInt32NBO(&ptr, Python::GetInt32(obj));
         break;
       case 'i':
-        Utils::EmbedInt16NBO(
-            &ptr, static_cast_check_fit<int16_t>(Python::GetInt64(obj)));
+        Utils::EmbedInt16NBO(&ptr, Python::GetInt16(obj));
         break;
       case 'c':  // NOLINT(bugprone-branch-clone)
-        Utils::EmbedInt8(&ptr,
-                         static_cast_check_fit<int8_t>(Python::GetInt64(obj)));
+        Utils::EmbedInt8(&ptr, Python::GetInt8(obj));
         break;
       case 'b':
-        Utils::EmbedInt8(&ptr,
-                         static_cast_check_fit<int8_t>(Python::GetInt64(obj)));
+        Utils::EmbedInt8(&ptr, Python::GetInt8(obj));
         break;
       case 'F':
         Utils::EmbedFloat32(&ptr, Python::GetFloat(obj));
@@ -1374,21 +1438,20 @@ void SceneV1Python::ReleaseKeyboardInputCapture() {
 }
 
 auto SceneV1Python::HandleCapturedJoystickEventCall(
-    const SDL_Event& event, base::InputDevice* input_device) -> bool {
+    const BAEvent& event, base::InputDevice* input_device) -> bool {
   return g_scene_v1->python->HandleCapturedJoystickEvent(event, input_device);
 }
 
-auto SceneV1Python::HandleCapturedKeyPressCall(const SDL_Keysym& keysym)
-    -> bool {
+auto SceneV1Python::HandleCapturedKeyPressCall(const BAKeysym& keysym) -> bool {
   return g_scene_v1->python->HandleCapturedKeyPress(keysym);
 }
 
-auto SceneV1Python::HandleCapturedKeyReleaseCall(const SDL_Keysym& keysym)
+auto SceneV1Python::HandleCapturedKeyReleaseCall(const BAKeysym& keysym)
     -> bool {
   return g_scene_v1->python->HandleCapturedKeyRelease(keysym);
 }
 
-auto SceneV1Python::HandleCapturedKeyPress(const SDL_Keysym& keysym) -> bool {
+auto SceneV1Python::HandleCapturedKeyPress(const BAKeysym& keysym) -> bool {
   assert(g_base->InLogicThread());
   if (!keyboard_capture_call_.exists()) {
     return false;
@@ -1413,7 +1476,7 @@ auto SceneV1Python::HandleCapturedKeyPress(const SDL_Keysym& keysym) -> bool {
   }
   return true;
 }
-auto SceneV1Python::HandleCapturedKeyRelease(const SDL_Keysym& keysym) -> bool {
+auto SceneV1Python::HandleCapturedKeyRelease(const BAKeysym& keysym) -> bool {
   assert(g_base->InLogicThread());
   if (!keyboard_capture_call_.exists()) {
     return false;
@@ -1439,7 +1502,7 @@ auto SceneV1Python::HandleCapturedKeyRelease(const SDL_Keysym& keysym) -> bool {
   return true;
 }
 
-auto SceneV1Python::HandleCapturedJoystickEvent(const SDL_Event& event,
+auto SceneV1Python::HandleCapturedJoystickEvent(const BAEvent& event,
                                                 base::InputDevice* input_device)
     -> bool {
   assert(g_base->InLogicThread());
@@ -1454,7 +1517,7 @@ auto SceneV1Python::HandleCapturedJoystickEvent(const SDL_Event& event,
     // If we got a device we can pass events.
     if (input_device) {
       switch (event.type) {
-        case SDL_JOYBUTTONDOWN: {
+        case BA_JOYBUTTONDOWN: {
           PythonRef args(
               Py_BuildValue("({s:s,s:i,s:O})", "type", "BUTTONDOWN", "button",
                             static_cast<int>(event.jbutton.button)
@@ -1464,7 +1527,7 @@ auto SceneV1Python::HandleCapturedJoystickEvent(const SDL_Event& event,
           joystick_capture_call_.Call(args);
           break;
         }
-        case SDL_JOYBUTTONUP: {
+        case BA_JOYBUTTONUP: {
           PythonRef args(
               Py_BuildValue("({s:s,s:i,s:O})", "type", "BUTTONUP", "button",
                             static_cast<int>(event.jbutton.button)
@@ -1474,7 +1537,7 @@ auto SceneV1Python::HandleCapturedJoystickEvent(const SDL_Event& event,
           joystick_capture_call_.Call(args);
           break;
         }
-        case SDL_JOYHATMOTION: {
+        case BA_JOYHATMOTION: {
           PythonRef args(
               Py_BuildValue(
                   "({s:s,s:i,s:i,s:O})", "type", "HATMOTION", "hat",
@@ -1485,7 +1548,7 @@ auto SceneV1Python::HandleCapturedJoystickEvent(const SDL_Event& event,
           joystick_capture_call_.Call(args);
           break;
         }
-        case SDL_JOYAXISMOTION: {
+        case BA_JOYAXISMOTION: {
           PythonRef args(
               Py_BuildValue(
                   "({s:s,s:i,s:f,s:O})", "type", "AXISMOTION", "axis",

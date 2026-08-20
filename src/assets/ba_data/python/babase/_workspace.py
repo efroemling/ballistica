@@ -2,8 +2,6 @@
 #
 """Workspace related functionality."""
 
-from __future__ import annotations
-
 import os
 import sys
 import logging
@@ -59,13 +57,17 @@ class WorkspaceSubsystem:
             )
         ).start()
 
-    def _errmsg(self, msg: babase.Lstr) -> None:
-        _babase.screenmessage(msg, color=(1, 0, 0))
-        _babase.getsimplesound('error').play()
+    def _errmsg(self, msg: str | babase.LangStr) -> None:
+        from babase import builtinassets
 
-    def _successmsg(self, msg: babase.Lstr) -> None:
+        _babase.screenmessage(msg, color=(1, 0, 0))
+        builtinassets.audio.error.get().play()
+
+    def _successmsg(self, msg: str | babase.LangStr) -> None:
+        from babase import builtinassets
+
         _babase.screenmessage(msg, color=(0, 1, 0))
-        _babase.getsimplesound('gunCocking').play()
+        builtinassets.audio.gun_cocking.get().play()
 
     def _set_active_workspace_bg(
         self,
@@ -74,7 +76,7 @@ class WorkspaceSubsystem:
         workspacename: str,
         on_completed: Callable[[], None],
     ) -> None:
-        from babase._language import Lstr
+        from babase import builtinassets
 
         class _SkipSyncError(RuntimeError):
             pass
@@ -98,8 +100,6 @@ class WorkspaceSubsystem:
 
             manifest = DirectoryManifest.create_from_disk(wspath)
 
-            # FIXME: Should implement a way to pass account credentials
-            # in from the logic thread.
             state = bacommon.cloud.WorkspaceFetchState(manifest=manifest)
 
             while True:
@@ -143,9 +143,8 @@ class WorkspaceSubsystem:
             _babase.pushcall(
                 partial(
                     self._successmsg,
-                    Lstr(
-                        resource='activatedText',
-                        subs=[('${THING}', workspacename)],
+                    builtinassets.strings.workspace.activated(
+                        thing=workspacename
                     ),
                 ),
                 from_other_thread=True,
@@ -155,9 +154,8 @@ class WorkspaceSubsystem:
             _babase.pushcall(
                 partial(
                     self._errmsg,
-                    Lstr(
-                        resource='workspaceSyncReuseText',
-                        subs=[('${WORKSPACE}', workspacename)],
+                    builtinassets.strings.workspace.sync_reuse(
+                        workspace=workspacename
                     ),
                 ),
                 from_other_thread=True,
@@ -169,7 +167,7 @@ class WorkspaceSubsystem:
             set_path = False
             _log.warning("Workspace '%s' sync error: %s", workspacename, exc)
             _babase.pushcall(
-                partial(self._errmsg, Lstr(value=str(exc))),
+                partial(self._errmsg, str(exc)),
                 from_other_thread=True,
             )
         except Exception:
@@ -179,9 +177,8 @@ class WorkspaceSubsystem:
             _babase.pushcall(
                 partial(
                     self._errmsg,
-                    Lstr(
-                        resource='workspaceSyncErrorText',
-                        subs=[('${WORKSPACE}', workspacename)],
+                    builtinassets.strings.workspace.sync_error(
+                        workspace=workspacename
                     ),
                 ),
                 from_other_thread=True,

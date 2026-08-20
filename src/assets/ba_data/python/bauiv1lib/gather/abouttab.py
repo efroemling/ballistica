@@ -2,12 +2,11 @@
 #
 """Defines the about tab in the gather UI."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from bauiv1lib.gather import GatherWindow
@@ -39,56 +38,49 @@ class AboutGatherTab(GatherTab):
         )
 
         show_message = True
-        # Squish message as needed to get things to fit nicely at
-        # various scales.
         uiscale = bui.app.ui_v1.uiscale
-        message_height = (
-            210
-            if uiscale is bui.UIScale.SMALL
-            else 305 if uiscale is bui.UIScale.MEDIUM else 370
-        )
+        # Overall squish on the message blocks to fit things at small
+        # ui-scale.
+        msquish = 0.75 if uiscale is bui.UIScale.SMALL else 1.0
+        msc_scale = 1.1 * msquish
         # Let's not talk about sharing in vr-mode; its tricky to fit more
         # than one head in a VR-headset.
         show_message_extra = not bui.app.env.vr
-        message_extra_height = 60
         show_invite = try_tickets is not None
         invite_height = 80
         show_discord = True
         discord_height = 80
 
-        c_height = 0
-        if show_message:
-            c_height += message_height
+        # Each paragraph is its own string drawn as its own block:
+        # definition-time wrap pins only apply to top-level strings
+        # (nested fragments never wrap themselves), and paragraph gaps
+        # come from the block heights here.
+        message_blocks: list[tuple[bui.LangStr, float]] = [
+            (classicassets.strings.gather.about_intro, 75 * msquish),
+            (classicassets.strings.gather.about_parties_info, 110 * msquish),
+            (
+                classicassets.strings.gather.about_party_button(
+                    party=bui.charstr(bui.SpecialChar.PARTY_ICON),
+                    button=bui.charstr(bui.SpecialChar.TOP_BUTTON),
+                ),
+                145 * msquish,
+            ),
+        ]
         if show_message_extra:
-            c_height += message_extra_height
+            message_blocks.append(
+                (
+                    classicassets.strings.gather.about_local_multiplayer_extra,
+                    105 * msquish,
+                )
+            )
+
+        c_height = 0.0
+        if show_message:
+            c_height += sum(height for _, height in message_blocks)
         if show_invite:
             c_height += invite_height
         if show_discord:
             c_height += discord_height
-
-        party_button_label = bui.charstr(bui.SpecialChar.TOP_BUTTON)
-        message = bui.Lstr(
-            resource='gatherWindow.aboutDescriptionText',
-            subs=[
-                ('${PARTY}', bui.charstr(bui.SpecialChar.PARTY_ICON)),
-                ('${BUTTON}', party_button_label),
-            ],
-        )
-
-        if show_message_extra:
-            message = bui.Lstr(
-                value='${A}\n\n${B}',
-                subs=[
-                    ('${A}', message),
-                    (
-                        '${B}',
-                        bui.Lstr(
-                            resource='gatherWindow.'
-                            'aboutDescriptionLocalMultiplayerExtraText'
-                        ),
-                    ),
-                ],
-            )
 
         scroll_widget = bui.scrollwidget(
             parent=parent_widget,
@@ -97,7 +89,6 @@ class AboutGatherTab(GatherTab):
             highlight=False,
             border_opacity=0,
         )
-        msc_scale = 1.1
 
         container = bui.containerwidget(
             parent=scroll_widget,
@@ -115,21 +106,20 @@ class AboutGatherTab(GatherTab):
 
         y = c_height - 30
         if show_message:
-            bui.textwidget(
-                parent=container,
-                position=(region_width * 0.5, y),
-                color=(0.6, 1.0, 0.6),
-                scale=msc_scale,
-                size=(0, 0),
-                maxwidth=region_width * 0.9,
-                max_height=message_height,
-                h_align='center',
-                v_align='top',
-                text=message,
-            )
-            y -= message_height
-            if show_message_extra:
-                y -= message_extra_height
+            for block_text, block_height in message_blocks:
+                bui.textwidget(
+                    parent=container,
+                    position=(region_width * 0.5, y),
+                    color=(0.6, 1.0, 0.6),
+                    scale=msc_scale,
+                    size=(0, 0),
+                    maxwidth=region_width * 0.9,
+                    max_height=block_height,
+                    h_align='center',
+                    v_align='top',
+                    text=block_text,
+                )
+                y -= block_height
 
         if show_invite:
             bui.textwidget(
@@ -142,9 +132,8 @@ class AboutGatherTab(GatherTab):
                 h_align='right',
                 v_align='center',
                 flatness=1.0,
-                text=bui.Lstr(
-                    resource='gatherWindow.inviteAFriendText',
-                    subs=[('${COUNT}', str(try_tickets))],
+                text=classicassets.strings.gather.invite_a_friend(
+                    count=str(try_tickets)
                 ),
             )
             invite_button = bui.buttonwidget(
@@ -154,10 +143,7 @@ class AboutGatherTab(GatherTab):
                 size=(230, 50),
                 color=(0.54, 0.42, 0.56),
                 textcolor=(0, 1, 0),
-                label=bui.Lstr(
-                    resource='gatherWindow.inviteFriendsText',
-                    fallback_resource='gatherWindow.getFriendInviteCodeText',
-                ),
+                label=classicassets.strings.gather.invite_friends,
                 autoselect=True,
                 on_activate_call=bui.WeakCallStrict(self._invite_to_try_press),
                 up_widget=tab_button,
@@ -178,7 +164,7 @@ class AboutGatherTab(GatherTab):
                 h_align='right',
                 v_align='center',
                 flatness=1.0,
-                text=bui.Lstr(resource='discordFriendsText'),
+                text=classicassets.strings.gather.discord_friends,
             )
             discord_button = bui.buttonwidget(
                 parent=container,
@@ -187,7 +173,7 @@ class AboutGatherTab(GatherTab):
                 size=(230, 50),
                 color=(0.54, 0.42, 0.56),
                 textcolor=(0.6, 0.6, 1),
-                label=bui.Lstr(resource='discordJoinText'),
+                label=classicassets.strings.gather.discord_join,
                 autoselect=True,
                 on_activate_call=bui.WeakCallStrict(
                     self._join_the_discord_press

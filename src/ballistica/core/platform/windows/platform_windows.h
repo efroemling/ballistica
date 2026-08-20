@@ -25,6 +25,8 @@ class PlatformWindows : public Platform {
   static auto UTF8Decode(std::string_view str) -> std::wstring;
 
   auto GetNativeStackTrace() -> NativeStackTrace* override;
+  auto CanShowBlockingFatalErrorDialog() -> bool override;
+  void BlockingFatalErrorDialog(const std::string& message) override;
   auto GetDeviceV1AccountUUIDPrefix() -> std::string override { return "w"; }
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
   auto DoGetConfigDirectoryMonolithicDefault()
@@ -58,9 +60,18 @@ class PlatformWindows : public Platform {
   auto GetLegacyPlatformName() -> std::string override;
   auto GetLegacySubplatformName() -> std::string override;
 
+  /// Bridge entry point: a Windows ``INetworkListManagerEvents``
+  /// sink translates ``ConnectivityChanged`` notifications into
+  /// calls to this static helper, which forwards to the base
+  /// ``Platform::SetNetworkAvailability`` for dedup, dispatch, and
+  /// logging. Runs on whatever COM RPC thread dispatches the event.
+  static void OnNetAvailChanged(bool available);
+
 #if BA_ENABLE_OS_FONT_RENDERING
   void GetTextBoundsAndWidth(const std::string& text, Rect* r,
                              float* width) override;
+  auto GetTextLineBreakOffsets(const std::string& text)
+      -> std::vector<int> override;
   void FreeTextTexture(void* tex) override;
   auto CreateTextTexture(int width, int height,
                          const std::vector<std::string>& strings,
@@ -73,6 +84,9 @@ class PlatformWindows : public Platform {
   bool have_stdin_stdout_ = false;
 
   auto FormatWinStackTraceForDisplay(WinStackTrace* stack_trace) -> std::string;
+
+ protected:
+  void DoStartNetworkAvailabilityMonitoring() override;
 
  private:
   std::mutex win_stack_mutex_;

@@ -19,6 +19,8 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/base.h"
+#include "ballistica/base/discord/discord.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/core/core.h"
@@ -40,6 +42,9 @@ AppPlatform::~AppPlatform() = default;
 void AppPlatform::LoginAdapterGetSignInToken(const std::string& login_type,
                                              int attempt_id) {
   // Default implementation simply calls completion callback immediately.
+  // Platform subclasses (Apple Game Center, Android GPGS) override for
+  // their own adapters. Discord has its own non-adapter flow via
+  // discord_request_sign_in_token.
   g_base->logic->event_loop()->PushCall([login_type, attempt_id] {
     PythonRef args(Py_BuildValue("(sss)", login_type.c_str(),
                                  std::to_string(attempt_id).c_str(), ""),
@@ -69,8 +74,8 @@ auto AppPlatform::GetPublicDeviceUUID() -> std::string {
     // We used to plug version in directly here, but that caused uuids to
     // shuffle too rapidly during periods of rapid development. This
     // keeps it more constant.
-    // __last_rand_uuid_component_shuffle_date__ 2025 12 6
-    auto rand_uuid_component{"TOBEXVU660HWL5XJ7MA1RFNZT06FBKKU"};
+    // __last_rand_uuid_component_shuffle_date__ 2026 6 4
+    auto rand_uuid_component{"H9LO1SDAUKRGJDX0Y4VZAXWV0F4T2Y1A"};
 
     inputs.emplace_back(rand_uuid_component);
     auto gil{Python::ScopedInterpreterLock()};
@@ -241,6 +246,13 @@ void AppPlatform::InvokeStringEditor(PyObject* string_edit_adapter) {
   // We assume there's a single one of these at a time. Hold on to it.
   string_edit_adapter_.Acquire(string_edit_adapter);
 
+  // An OS editor is about to take over input, so whatever press opened
+  // it will never deliver its release to us (and on some platforms we
+  // stop being fed events entirely while it is up). Drop held states now
+  // so nothing stays stuck down behind the editor -- same reason the dev
+  // console does this when it opens.
+  g_base->input->ResetHoldStates();
+
   // Pull values from Python and ship them along to our platform
   // implementation.
   auto desc = string_edit_adapter_.GetAttr("description").ValueAsString();
@@ -248,17 +260,23 @@ void AppPlatform::InvokeStringEditor(PyObject* string_edit_adapter) {
       string_edit_adapter_.GetAttr("initial_text").ValueAsString();
   auto max_length =
       string_edit_adapter_.GetAttr("max_length").ValueAsOptionalInt();
+  auto is_password = string_edit_adapter_.GetAttr("is_password").ValueAsBool();
+  // Kind is a babase.StringEditKind enum; ship its str value.
+  auto kind =
+      string_edit_adapter_.GetAttr("kind").GetAttr("value").ValueAsString();
   // TODO(ericf): pass along screen_space_center if its ever useful.
 
-  g_base->platform->DoInvokeStringEditor(desc, initial_text, max_length);
+  g_base->platform->DoInvokeStringEditor(desc, initial_text, max_length,
+                                         is_password, kind);
 }
 
 /// Should be called by platform StringEditor to apply a value.
-void AppPlatform::StringEditorApply(const std::string& val) {
+void AppPlatform::StringEditorApply(const std::string& val, bool submit) {
   BA_PRECONDITION(HaveStringEditor());
   BA_PRECONDITION(g_base->InLogicThread());
   BA_PRECONDITION(string_edit_adapter_.exists());
-  auto args = PythonRef::Stolen(Py_BuildValue("(s)", val.c_str()));
+  auto args = PythonRef::Stolen(
+      Py_BuildValue("(sO)", val.c_str(), submit ? Py_True : Py_False));
   string_edit_adapter_.GetAttr("apply").Call(args);
   string_edit_adapter_.Release();
 }
@@ -274,7 +292,9 @@ void AppPlatform::StringEditorCancel() {
 
 void AppPlatform::DoInvokeStringEditor(const std::string& title,
                                        const std::string& value,
-                                       std::optional<int> max_chars) {
+                                       std::optional<int> max_chars,
+                                       bool is_password,
+                                       const std::string& kind) {
   g_core->logging->Log(LogName::kBa, LogLevel::kError,
                        "FIXME: DoInvokeStringEditor() unimplemented");
 }

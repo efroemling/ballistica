@@ -4,8 +4,6 @@
 
 # pylint: disable=too-many-lines
 
-from __future__ import annotations
-
 import logging
 import weakref
 from dataclasses import dataclass
@@ -31,16 +29,22 @@ class JoinInfo:
     """Display useful info for joiners."""
 
     def __init__(self, lobby: bascenev1.Lobby):
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _commonassets, classicassets
         from bascenev1._nodeactor import NodeActor
 
         self._state = 0
-        self._press_to_punch: str | bascenev1.Lstr = babase.charstr(
+        self._press_to_punch: str | babase.LangStr = babase.charstr(
             babase.SpecialChar.LEFT_BUTTON
         )
-        self._press_to_bomb: str | bascenev1.Lstr = babase.charstr(
+        self._press_to_bomb: str | babase.LangStr = babase.charstr(
             babase.SpecialChar.RIGHT_BUTTON
         )
-        self._joinmsg = babase.Lstr(resource='pressAnyButtonToJoinText')
+        self._joinmsg: babase.LangStr = (
+            classicassets.strings.lobby.press_any_button_to_join
+        )
         can_switch_teams = len(lobby.sessionteams) > 1
 
         # If we have a keyboard, grab keys for punch and pickup.
@@ -72,42 +76,28 @@ class JoinInfo:
         if variant is vart.DEMO or variant is vart.ARCADE:
             self._messages = [self._joinmsg]
         else:
-            msg1 = babase.Lstr(
-                resource='pressToSelectProfileText',
-                subs=[
-                    (
-                        '${BUTTONS}',
-                        babase.charstr(babase.SpecialChar.UP_ARROW)
-                        + ' '
-                        + babase.charstr(babase.SpecialChar.DOWN_ARROW),
-                    )
-                ],
+            msg1 = classicassets.strings.lobby.press_to_select_profile(
+                buttons=(
+                    babase.charstr(babase.SpecialChar.UP_ARROW)
+                    + ' '
+                    + babase.charstr(babase.SpecialChar.DOWN_ARROW)
+                )
             )
-            msg2 = babase.Lstr(
-                resource='pressToOverrideCharacterText',
-                subs=[('${BUTTONS}', babase.Lstr(resource='bombBoldText'))],
+            msg2 = classicassets.strings.lobby.press_to_override_character(
+                buttons=classicassets.strings.lobby.bomb
             )
-            msg3 = babase.Lstr(
-                value='${A} < ${B} >',
-                subs=[('${A}', msg2), ('${B}', self._press_to_bomb)],
+            msg3 = _commonassets.strings.compose.angle_button_suffix(
+                main=msg2, button=self._press_to_bomb
             )
             self._messages = (
                 (
                     [
-                        babase.Lstr(
-                            resource='pressToSelectTeamText',
-                            subs=[
-                                (
-                                    '${BUTTONS}',
-                                    babase.charstr(
-                                        babase.SpecialChar.LEFT_ARROW
-                                    )
-                                    + ' '
-                                    + babase.charstr(
-                                        babase.SpecialChar.RIGHT_ARROW
-                                    ),
-                                )
-                            ],
+                        classicassets.strings.lobby.press_to_select_team(
+                            buttons=(
+                                babase.charstr(babase.SpecialChar.LEFT_ARROW)
+                                + ' '
+                                + babase.charstr(babase.SpecialChar.RIGHT_ARROW)
+                            )
                         )
                     ]
                     if can_switch_teams
@@ -123,41 +113,30 @@ class JoinInfo:
         )
 
     def _update_for_keyboard(self, keyboard: bascenev1.InputDevice) -> None:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _commonassets, classicassets
+
         classic = babase.app.classic
         assert classic is not None
 
+        compose = _commonassets.strings.compose
         punch_key = keyboard.get_button_name(
             classic.get_input_device_mapped_value(keyboard, 'buttonPunch')
         )
-        self._press_to_punch = babase.Lstr(
-            resource='orText',
-            subs=[
-                (
-                    '${A}',
-                    babase.Lstr(value='\'${K}\'', subs=[('${K}', punch_key)]),
-                ),
-                ('${B}', self._press_to_punch),
-            ],
+        self._press_to_punch = compose.or_join(
+            a=compose.quoted(text=punch_key), b=self._press_to_punch
         )
         bomb_key = keyboard.get_button_name(
             classic.get_input_device_mapped_value(keyboard, 'buttonBomb')
         )
-        self._press_to_bomb = babase.Lstr(
-            resource='orText',
-            subs=[
-                (
-                    '${A}',
-                    babase.Lstr(value='\'${K}\'', subs=[('${K}', bomb_key)]),
-                ),
-                ('${B}', self._press_to_bomb),
-            ],
+        self._press_to_bomb = compose.or_join(
+            a=compose.quoted(text=bomb_key), b=self._press_to_bomb
         )
-        self._joinmsg = babase.Lstr(
-            value='${A} < ${B} >',
-            subs=[
-                ('${A}', babase.Lstr(resource='pressPunchToJoinText')),
-                ('${B}', self._press_to_punch),
-            ],
+        self._joinmsg = _commonassets.strings.compose.angle_button_suffix(
+            main=classicassets.strings.lobby.press_punch_to_join,
+            button=self._press_to_punch,
         )
 
     def _update(self) -> None:
@@ -195,12 +174,17 @@ class Chooser:
         sessionplayer: bascenev1.SessionPlayer,
         lobby: 'Lobby',
     ) -> None:
-        self._deek_sound = _bascenev1.getsound('deek')
-        self._click_sound = _bascenev1.getsound('click01')
-        self._punchsound = _bascenev1.getsound('punch01')
-        self._swish_sound = _bascenev1.getsound('punchSwish')
-        self._errorsound = _bascenev1.getsound('error')
-        self._mask_texture = _bascenev1.gettexture('characterIconMask')
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _commonassets, builtinassets, classicassets
+
+        self._deek_sound = builtinassets.audio.deek.get()
+        self._click_sound = builtinassets.audio.click01.get()
+        self._punchsound = builtinassets.audio.punch01.get()
+        self._swish_sound = classicassets.audio.punch_swish.get()
+        self._errorsound = builtinassets.audio.error.get()
+        self._mask_texture = builtinassets.textures.character_icon_mask.get()
         self._vpos = vpos
         self._lobby = weakref.ref(lobby)
         self._sessionplayer = sessionplayer
@@ -275,7 +259,7 @@ class Chooser:
 
         # Set our initial name to '<choosing player>' in case anyone asks.
         self._sessionplayer.setname(
-            babase.Lstr(resource='choosingPlayerText').evaluate(), real=False
+            classicassets.strings.lobby.choosing_player.evaluate(), real=False
         )
 
         # Init these to our rando but they should get switched to the
@@ -289,6 +273,13 @@ class Chooser:
         self._inited = True
 
         self._set_ready(False)
+
+        # Confirm the join physically. This is the moment someone pressed
+        # a button and got in, so it is exactly the kind of
+        # tied-to-your-own-action event haptics read well for. Fired once
+        # per session join (Session.on_player_request), so unlike the
+        # in-game events it needs no rate limiting.
+        self._sessionplayer.send_feedback(event='join')
 
     def _select_initial_profile(self) -> int:
         app = babase.app
@@ -494,17 +485,16 @@ class Chooser:
         else:
             self._profiles = app.config.get('Player Profiles', {})
 
-        # These may have come over the wire from an older
-        # (non-unicode/non-json) version.
-        # Make sure they conform to our standards
-        # (unicode strings, no tuples, etc)
-        self._profiles = app.classic.json_prep(self._profiles)
-
-        # Filter out any characters we're unaware of.
+        # Filter out any characters we're unaware of. These profiles can
+        # arrive over the wire from clients, so a malformed 'character'
+        # value (e.g. an unhashable list) must not be allowed to reach
+        # the membership check below; that would raise and abort the
+        # join partway through, leaving the session corrupted.
         for profile in list(self._profiles.items()):
+            character = profile[1].get('character', '')
             if (
-                profile[1].get('character', '')
-                not in app.classic.spaz_appearances
+                not isinstance(character, str)
+                or character not in app.classic.spaz_appearances
             ):
                 profile[1]['character'] = 'Spaz'
 
@@ -569,6 +559,11 @@ class Chooser:
         """Does nothing! (hacky way to disable callbacks)"""
 
     def _getname(self, full: bool = False) -> str:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _commonassets, classicassets
+
         name_raw = name = self._profilenames[self._profileindex]
         clamp = False
         if name == '_random':
@@ -588,10 +583,7 @@ class Chooser:
         elif name == '_edit':
             # Explicitly flattening this to a str; it's only relevant on
             # the host so that's ok.
-            name = babase.Lstr(
-                resource='createEditPlayerText',
-                fallback_resource='editProfileWindow.titleNewText',
-            ).evaluate()
+            name = classicassets.strings.lobby.create_edit_player.evaluate()
         else:
             # If we have a regular profile marked as global with an icon,
             # use it (for full only).
@@ -793,6 +785,10 @@ class Chooser:
 
     def handlemessage(self, msg: Any) -> Any:
         """Standard generic message handler."""
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import builtinassets
 
         if isinstance(msg, ChangeMessage):
             self._handle_repeat_message_attack()
@@ -821,7 +817,7 @@ class Chooser:
                 if len(self._profilenames) == 1:
                     # This should be pretty hard to hit now with
                     # automatic local accounts.
-                    _bascenev1.getsound('error').play()
+                    builtinassets.audio.error.get().play()
                 else:
                     # Pick the next player profile and assign our name
                     # and character based on that.
@@ -844,20 +840,22 @@ class Chooser:
                 self._handle_ready_msg(bool(msg.value))
 
     def _update_text(self) -> None:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _commonassets, classicassets
+
         assert self._text_node is not None
+        text: str | babase.LangStr
         if self._ready:
             # Once we're ready, we've saved the name, so lets ask the system
             # for it so we get appended numbers and stuff.
-            text = babase.Lstr(value=self._sessionplayer.getname(full=True))
-            text = babase.Lstr(
-                value='${A} (${B})',
-                subs=[
-                    ('${A}', text),
-                    ('${B}', babase.Lstr(resource='readyText')),
-                ],
+            text = _commonassets.strings.compose.paren_suffix(
+                main=self._sessionplayer.getname(full=True),
+                note=classicassets.strings.lobby.ready,
             )
         else:
-            text = babase.Lstr(value=self._getname(full=True))
+            text = self._getname(full=True)
 
         can_switch_teams = len(self.lobby.sessionteams) > 1
 
@@ -933,30 +931,41 @@ class Chooser:
         return self._sessionplayer
 
     def _update_icon(self) -> None:
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import _commonassets, builtinassets, classicassets
+
         assert babase.app.classic is not None
         if self._profilenames[self._profileindex] == '_edit':
-            tex = _bascenev1.gettexture('black')
-            tint_tex = _bascenev1.gettexture('black')
+            tex = builtinassets.textures.black.get()
+            tint_tex = builtinassets.textures.black.get()
             self.icon.color = (1, 1, 1)
             self.icon.texture = tex
             self.icon.tint_texture = tint_tex
             self.icon.tint_color = (0, 1, 0)
             return
 
+        # Safe up-call: bascenev1lib is fully imported by the time a
+        # lobby exists; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1lib.actor import spazappearance
+
+        texval: spazappearance.TexVal
+        tintval: spazappearance.TexVal
         try:
-            tex_name = babase.app.classic.spaz_appearances[
+            appearance = babase.app.classic.spaz_appearances[
                 self._character_names[self._character_index]
-            ].icon_texture
-            tint_tex_name = babase.app.classic.spaz_appearances[
-                self._character_names[self._character_index]
-            ].icon_mask_texture
+            ]
+            texval = appearance.icon_texture
+            tintval = appearance.icon_mask_texture
         except Exception:
             logging.exception('Error updating char icon list')
-            tex_name = 'neoSpazIcon'
-            tint_tex_name = 'neoSpazIconColorMask'
+            texval = classicassets.textures.neo_spaz_icon
+            tintval = classicassets.textures.neo_spaz_icon_color_mask
 
-        tex = _bascenev1.gettexture(tex_name)
-        tint_tex = _bascenev1.gettexture(tint_tex_name)
+        tex = spazappearance.scene_texture(texval)
+        tint_tex = spazappearance.scene_texture(tintval)
 
         self.icon.color = (1, 1, 1)
         self.icon.texture = tex
@@ -985,7 +994,16 @@ class Chooser:
         self.icon.tint2_color = clr2
 
         # Store the icon info the the player.
-        self._sessionplayer.set_icon_info(tex_name, tint_tex_name, clr, clr2)
+        # set_icon_info is a native call taking qualified engine
+        # names (they ride the wire to other clients).
+        texspec = spazappearance.texture_spec(texval)
+        tintspec = spazappearance.texture_spec(tintval)
+        self._sessionplayer.set_icon_info(
+            f'{texspec.apverid}:{texspec.name}',
+            f'{tintspec.apverid}:{tintspec.name}',
+            clr,
+            clr2,
+        )
 
 
 class Lobby:

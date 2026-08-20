@@ -4,6 +4,7 @@
 #define BALLISTICA_BASE_APP_PLATFORM_APPLE_APP_PLATFORM_APPLE_H_
 #if BA_PLATFORM_MACOS || BA_PLATFORM_IOS_TVOS
 
+#include <optional>
 #include <string>
 
 #include "ballistica/base/app_platform/app_platform.h"
@@ -27,6 +28,12 @@ class AppPlatformApple : public AppPlatform {
   auto SupportsOpenDirExternally() -> bool override;
   void OpenDirExternally(const std::string& path) override;
   void OpenFileExternally(const std::string& path) override;
+  auto HaveStringEditor() -> bool override;
+
+ protected:
+  void DoInvokeStringEditor(const std::string& title, const std::string& value,
+                            std::optional<int> max_chars, bool is_password,
+                            const std::string& kind) override;
 };
 
 }  // namespace ballistica::base

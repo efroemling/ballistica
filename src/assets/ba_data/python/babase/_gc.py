@@ -2,8 +2,6 @@
 #
 """Utility functionality related to the overall operation of the app."""
 
-from __future__ import annotations
-
 import gc
 import os
 import time
@@ -19,9 +17,6 @@ from babase._appsubsystem import AppSubsystem
 from babase._logging import gc_log
 
 if TYPE_CHECKING:
-    import datetime
-    from typing import Any, TextIO, Callable
-
     import babase
 
 
@@ -181,6 +176,31 @@ class GarbageCollectionSubsystem(AppSubsystem):
         self._showed_standard_mode_warning = False
         self._mode: GarbageCollectionSubsystem.Mode | None = None
 
+        # Optional override for the warning-threshold object count;
+        # default is 50. Useful when iterating on cycle hunts (lower
+        # the bar to surface smaller leaks, or raise it to silence
+        # known library-internal cycles temporarily).
+        #
+        # Companion env vars handled in ``_summarize_garbage`` below:
+        # - ``BA_GC_DEBUG_TYPES`` (comma-separated type names) —
+        #   override the cloud-supplied ``gc_debug_types`` list. Each
+        #   listed type produces ref-dump details when collected,
+        #   useful for tracking down what's holding a cycle alive
+        #   without needing to push a cloud config change.
+        # - ``BA_GC_DEBUG_TYPE_LIMIT`` (integer) — max number of
+        #   instances per debug-type to dump. Override of cloud
+        #   value.
+        self._warning_threshold = 50
+        envval = os.environ.get('BA_GC_WARNING_THRESHOLD')
+        if envval:
+            try:
+                self._warning_threshold = int(envval)
+            except ValueError:
+                gc_log.warning(
+                    'Invalid BA_GC_WARNING_THRESHOLD %r; expected integer.',
+                    envval,
+                )
+
     @override
     def on_app_running(self) -> None:
         """:meta private:"""
@@ -323,12 +343,16 @@ class GarbageCollectionSubsystem(AppSubsystem):
 
     def _collect_standard(self, now: float) -> None:
 
-        assert gc.get_debug() == gc.DEBUG_SAVEALL
+        # ``DEBUG_SAVEALL`` is required (the cycle-inspection logic
+        # below relies on freshly-collected objects landing in
+        # ``gc.garbage``), but additional debug flags such as
+        # ``DEBUG_STATS`` are allowed — used by
+        # ``_pre_interpreter_shutdown`` to trace which generation
+        # of the final collect is hanging.
+        assert gc.get_debug() & gc.DEBUG_SAVEALL
 
         # Make more noise (warning instead of info) if there's a
         # substantial number of collections in a single cycle.
-        gc_threshold = 50
-
         starttime = now
         num_affected_objs = gc.collect()
         now2 = self.last_actual_collect_time = time.monotonic()
@@ -336,7 +360,7 @@ class GarbageCollectionSubsystem(AppSubsystem):
         self._total_num_gc_objects += num_affected_objs
 
         if (
-            num_affected_objs >= gc_threshold
+            num_affected_objs >= self._warning_threshold
             and not self._showed_standard_mode_warning
         ):
             loglevel: int = logging.WARNING
@@ -479,78 +503,68 @@ def _inline_extra(tpname: str, type_paths: list[str]) -> str:
 
 def _summarize_garbage(loglevel: int) -> str:
     """Print stuff about gc.garbage to aid in breaking ref cycles."""
-    import io
-    import traceback
-    from efro.debug import printrefs
+    from efro.debug import summarize_garbage
 
-    debug_types: set[str]
-    debug_type_limit: int
     plus = _babase.app.plus
     if plus is None:
-        debug_types = set()
+        debug_types: list[str] = []
         debug_type_limit = 1
     else:
-        debug_types = set(plus.cloud.vals.gc_debug_types)
-        debug_type_limit = plus.cloud.vals.gc_debug_type_limit
+        debug_types = list(plus.cloud.vals_persistent.gc_debug_types)
+        debug_type_limit = plus.cloud.vals_persistent.gc_debug_type_limit
 
-    debug_objs: dict[str, list[Any]] = {}
+    # Optional env-var overrides for local debugging. Fully override
+    # the cloud values when set, so a developer can investigate a
+    # specific type without needing cloud-side config changes. Pair
+    # with ``BA_GC_WARNING_THRESHOLD`` (handled in the subsystem
+    # ``__init__``) when iterating on cycle hunts.
+    types_env = os.environ.get('BA_GC_DEBUG_TYPES')
+    if types_env is not None:
+        debug_types = [
+            entry.strip() for entry in types_env.split(',') if entry.strip()
+        ]
+    limit_env = os.environ.get('BA_GC_DEBUG_TYPE_LIMIT')
+    if limit_env:
+        try:
+            debug_type_limit = int(limit_env)
+        except ValueError:
+            gc_log.warning(
+                'Invalid BA_GC_DEBUG_TYPE_LIMIT %r; expected integer.',
+                limit_env,
+            )
 
-    type_paths: list[str] = []
-    objtypecounts: dict[str, int] = {}
-
-    for obj in gc.garbage:
-        cls = type(obj)
-        if cls.__module__ == 'builtins':
-            tpname = cls.__qualname__
-        else:
-            tpname = f'{cls.__module__}.{cls.__qualname__}'
-        objtypecounts[tpname] = objtypecounts.get(tpname, 0) + 1
-
-        # Store specific objs for anything we're supposed to
-        # be debugging.
-        if tpname in debug_types and bool(True):
-            objs = debug_objs.setdefault(tpname, [])
-            if len(objs) < debug_type_limit:
-                objs.append(obj)
-            del objs
-
-        # Store type-names for types to show inline.
-        if tpname == 'type':
-            type_paths.append(f'{obj.__module__}.{obj.__qualname__}')
+    summary = summarize_garbage(
+        debug_types=debug_types,
+        debug_type_limit=debug_type_limit,
+    )
 
     obj_summary = '\nObjects by type:' + ''.join(
-        f'\n  {tpname}:' f' {tpcount}{_inline_extra(tpname, type_paths)}'
+        f'\n  {tpname}:'
+        f' {tpcount}{_inline_extra(tpname, summary.type_paths)}'
         for tpname, tpcount in sorted(
-            objtypecounts.items(),
+            summary.histogram.items(),
             key=lambda i: (-i[1], i[0]),
         )
     )
 
-    for debug_obj_type, objs in sorted(debug_objs.items()):
-        for i, obj in enumerate(objs):
-            buffer = io.StringIO()
-            printrefs(obj, file=buffer)
-            buffer_indented = '\n'.join(
-                f'  {line}' for line in buffer.getvalue().splitlines()
+    for debug_obj_type, dumps in sorted(summary.ref_dumps.items()):
+        for i, dump in enumerate(dumps):
+            refs_indented = '\n'.join(
+                f'  {line}' for line in dump.refs.splitlines()
             )
             obj_summary += (
                 f'\n'
-                f'Refs for {debug_obj_type} {i+1} of {len(objs)}:\n'
-                f'{buffer_indented}'
+                f'Refs for {debug_obj_type} {i+1} of {len(dumps)}:\n'
+                f'{refs_indented}'
             )
-            if isinstance(obj, BaseException):
-                trace_str = ''.join(
-                    traceback.format_exception(
-                        type(obj), obj, obj.__traceback__
-                    )
-                )
-                trace_str = '\n'.join(
-                    f'  {line}' for line in trace_str.splitlines()
+            if dump.exception_trace is not None:
+                trace_indented = '\n'.join(
+                    f'  {line}' for line in dump.exception_trace.splitlines()
                 )
                 obj_summary += (
                     f'\n'
-                    f'Stack for {debug_obj_type} {i+1} of {len(objs)}:\n'
-                    f'{trace_str}'
+                    f'Stack for {debug_obj_type} {i+1} of {len(dumps)}:\n'
+                    f'{trace_indented}'
                 )
 
     # Include overview if this a warning message.

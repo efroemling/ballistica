@@ -18,10 +18,12 @@
 #include "ballistica/base/graphics/text/text_packer.h"
 #include "ballistica/base/graphics/texture/dds.h"
 #include "ballistica/base/graphics/texture/ktx.h"
+#include "ballistica/base/graphics/texture/ktx2.h"
 #include "ballistica/base/graphics/texture/pvr.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/shared/generic/utils.h"
 #include "external/qr_code_generator/QrCode.hpp"
 
 namespace ballistica::base {
@@ -31,37 +33,37 @@ namespace ballistica::base {
 // whether DXT compression is the source of visual artifacts on ANGLE/Windows.
 static constexpr bool kForceUncompressedDDS = false;
 
-static void Rgba8888UnpremultiplyInPlace_(uint8_t* src, size_t cb) {
-  // Compute the actual number of pixel elements in the buffer.
-  size_t cpel = cb / 4;
-  auto* psrc = src;
-  auto* pdst = src;
-  for (size_t i = 0; i < cpel; i++) {
-    int r = *psrc++;
-    int g = *psrc++;
-    int b = *psrc++;
-    int a = *psrc++;
-    if (a == 0) {
-      *pdst++ = 255;
-      *pdst++ = 255;
-      *pdst++ = 255;
-      *pdst++ = 0;
-    } else {
-      *pdst++ = static_cast_check_fit<uint8_t>(std::min(255, r * 255 / a));
-      *pdst++ = static_cast_check_fit<uint8_t>(std::min(255, g * 255 / a));
-      *pdst++ = static_cast_check_fit<uint8_t>(std::min(255, b * 255 / a));
-      *pdst++ = static_cast_check_fit<uint8_t>(a);
-    }
-  }
-}
-
 TextureAsset::TextureAsset() = default;
+
+/// Derive the loader container hint from a resolved asset path. CAS
+/// blobs resolve to bare content-hash file names with no extension
+/// (all texture flavors are KTX2 containers), while every legacy
+/// on-disk path — including the headless ``.nop`` dummy — carries an
+/// extension for the loader's path-suffix sniff. Keying on the
+/// *resolved* path shape (rather than whether the *requested* name
+/// was a qualified ``<apverid>:<name>`` ref) matters because bare
+/// legacy names can still resolve to CAS blobs: a missing texture
+/// falls back to the builtin package's ``textures/white``, and that
+/// fallback must load rather than fail the asset (which is fatal if
+/// the render path later touches it).
+static auto DeriveContainerHint(const std::string& path) -> std::string {
+  auto slash_pos = path.find_last_of("/\\");
+  auto dot_pos =
+      path.find('.', slash_pos == std::string::npos ? 0 : slash_pos + 1);
+  if (dot_pos == std::string::npos) {
+    return ".ktx2";
+  }
+  return {};
+}
 
 TextureAsset::TextureAsset(const std::string& file_in, TextureType type_in,
                            TextureMinQuality min_quality_in)
     : file_name_(file_in), type_(type_in), min_quality_(min_quality_in) {
-  file_name_full_ =
-      g_base->assets->FindAssetFile(Assets::FileType::kTexture, file_in);
+  file_name_full_ = g_base->assets->FindAssetFile(
+      type_ == TextureType::kCubeMap ? Assets::FileType::kCubeMapTexture
+                                     : Assets::FileType::kTexture,
+      file_in);
+  container_ = DeriveContainerHint(file_name_full_);
   valid_ = true;
 }
 
@@ -104,6 +106,28 @@ auto TextureAsset::GetName() const -> std::string {
 
 auto TextureAsset::GetNameFull() const -> std::string {
   return file_name_full();
+}
+
+auto TextureAsset::ReResolveSource() -> bool {
+  // Only file-backed CAS textures (qualified ``<apverid>:<name>`` refs) can
+  // change their underlying blob when the asset-package registry is
+  // re-resolved. Text-textures and QR codes are generated in-engine, and
+  // legacy bare-filename textures resolve to a fixed on-disk path.
+  if (packer_.exists() || is_qr_code_
+      || file_name_.find(':') == std::string::npos) {
+    return false;
+  }
+  auto new_full = g_base->assets->FindAssetFile(
+      type_ == TextureType::kCubeMap ? Assets::FileType::kCubeMapTexture
+                                     : Assets::FileType::kTexture,
+      file_name_);
+  if (new_full == file_name_full_) {
+    return false;
+  }
+  file_name_full_ = new_full;
+  // Re-derive the container hint exactly as the constructor does.
+  container_ = DeriveContainerHint(file_name_full_);
+  return true;
 }
 
 void TextureAsset::DoPreload() {
@@ -164,8 +188,12 @@ void TextureAsset::DoPreload() {
     // For now just copy it over to our local 32 bit buffer.
     // As an optimization we could convert it to RGBA4444 on the fly or perhaps
     // even just alpha if there's no non-white colors present.
-    // NOTE: This data is also coming in premultiplied (on apple at least) so we
-    // need to take care of that.
+    // All platforms (Apple/Android/Windows) hand us premultiplied-alpha data,
+    // so we keep it premultiplied and flag the texture as such. This matches
+    // the migrated KTX2 builtin fonts, so OS-rendered glyphs (accents, CJK,
+    // emoji, the ellipsis, etc.) blend and fade uniformly with the rest of our
+    // text (decision #23). Premult also avoids color-fringing from transparent
+    // texels under bilinear filtering.
     preload_datas_.resize(1);
     assert(width >= 0 && height >= 0);
     size_t buffer_size =
@@ -173,7 +201,7 @@ void TextureAsset::DoPreload() {
     auto* buffer = static_cast<uint8_t*>(malloc(buffer_size));
     preload_datas_[0].buffers[0] = buffer;
     memcpy(buffer, pixels, buffer_size);
-    Rgba8888UnpremultiplyInPlace_(buffer, buffer_size);
+    preload_datas_[0].premultiplied = true;
     preload_datas_[0].widths[0] = width;
     preload_datas_[0].heights[0] = height;
     preload_datas_[0].formats[0] = TextureFormat::kRGBA_8888;
@@ -226,10 +254,30 @@ void TextureAsset::DoPreload() {
       int file_name_size = static_cast<int>(file_name_full_.size());
       BA_PRECONDITION(file_name_size > 4);
 
-      // Etc1 or dxt3 for non-alpha and dxt5 for alpha (.android_dds files).
-      if (file_name_size > 12
-          && !strcmp(file_name_full_.c_str() + file_name_size - 12,
-                     ".android_dds")) {
+      // Dispatch on explicit ``container_`` when set (CAS-resolved
+      // assets), else fall back to the legacy path-suffix sniff.
+      auto matches = [this, file_name_size](const char* suffix) -> bool {
+        if (!container_.empty()) {
+          return container_ == suffix;
+        }
+        auto slen = static_cast<int>(strlen(suffix));
+        return file_name_size > slen
+               && !strcmp(file_name_full_.c_str() + file_name_size - slen,
+                          suffix);
+      };
+
+      // Uncompressed RGBA8 + mipmaps (KTX 2.0, ``.ktx2`` files).
+      // Used by the asset-package CAS pipeline for FALLBACK_V1.
+      if (matches(".ktx2")) {
+        // Asset-package textures load full mips from the flavor; they do
+        // not consult the legacy texture-quality knob (see LoadKTX2).
+        LoadKTX2(file_name_full_, preload_datas_[0].buffers,
+                 preload_datas_[0].widths, preload_datas_[0].heights,
+                 preload_datas_[0].formats, preload_datas_[0].sizes,
+                 &preload_datas_[0].base_level,
+                 &preload_datas_[0].premultiplied);
+      } else if (matches(".android_dds")) {
+        // Etc1 or dxt3 for non-alpha and dxt5 for alpha (.android_dds).
         LoadDDS(file_name_full_, preload_datas_[0].buffers,
                 preload_datas_[0].widths, preload_datas_[0].heights,
                 preload_datas_[0].formats, preload_datas_[0].sizes,
@@ -252,8 +300,7 @@ void TextureAsset::DoPreload() {
             preload_datas_[0].ConvertToUncompressed(this);
           }
         }
-      } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
-                         ".dds")) {
+      } else if (matches(".dds")) {
         // Dxt1 for non-alpha and dxt5 for alpha (.dds files).
         LoadDDS(file_name_full_, preload_datas_[0].buffers,
                 preload_datas_[0].widths, preload_datas_[0].heights,
@@ -268,8 +315,7 @@ void TextureAsset::DoPreload() {
                         TextureCompressionType::kS3TC)) {
           preload_datas_[0].ConvertToUncompressed(this);
         }
-      } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
-                         ".ktx")) {
+      } else if (matches(".ktx")) {
         // Etc2 or etc1 for non-alpha and etc2 for alpha (.ktx files).
         try {
           LoadKTX(file_name_full_, preload_datas_[0].buffers,
@@ -302,8 +348,7 @@ void TextureAsset::DoPreload() {
           preload_datas_[0].ConvertToUncompressed(this);
         }
 
-      } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
-                         ".pvr")) {
+      } else if (matches(".pvr")) {
         // Pvr for all (.pvr files).
         LoadPVR(file_name_full_, preload_datas_[0].buffers,
                 preload_datas_[0].widths, preload_datas_[0].heights,
@@ -315,8 +360,7 @@ void TextureAsset::DoPreload() {
         assert(
             g_base->graphics->placeholder_client_context()
                 ->SupportsTextureCompressionType(TextureCompressionType::kPVR));
-      } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
-                         ".nop")) {
+      } else if (matches(".nop")) {
         // Dummy path for headless; nothing to do here.
       } else {
         throw Exception("Invalid texture file name: '" + file_name_full_ + "'");
@@ -327,126 +371,147 @@ void TextureAsset::DoPreload() {
       std::string name;
       int file_name_size = static_cast<int>(file_name_full_.size());
       BA_PRECONDITION(file_name_size > 4);
-      for (int d = 0; d < 6; d++) {
-        name = file_name_full_;
-        switch (d) {
-          case 0:
-            name.replace(name.find('#'), 1, "_+x");
-            break;
-          case 1:
-            name.replace(name.find('#'), 1, "_-x");
-            break;
-          case 2:
-            name.replace(name.find('#'), 1, "_+y");
-            break;
-          case 3:
-            name.replace(name.find('#'), 1, "_-y");
-            break;
-          case 4:
-            name.replace(name.find('#'), 1, "_+z");
-            break;
-          case 5:
-            name.replace(name.find('#'), 1, "_-z");
-            break;
-          default:
-            throw Exception();
+      if (!container_.empty() && container_ == ".ktx2") {
+        // Asset-package CAS cube map: one faceCount=6 KTX2 holds all
+        // six faces (decision #24); fill the same six per-face preload
+        // slots the legacy path does.
+        KTX2FaceTarget faces[6];
+        for (int d = 0; d < 6; d++) {
+          faces[d] = KTX2FaceTarget{
+              preload_datas_[d].buffers,       preload_datas_[d].widths,
+              preload_datas_[d].heights,       preload_datas_[d].formats,
+              preload_datas_[d].sizes,         &preload_datas_[d].base_level,
+              &preload_datas_[d].premultiplied};
         }
+        LoadKTX2CubeMap(file_name_full_, faces);
+      } else if (file_name_full_.find('#') == std::string::npos
+                 && !strcmp(file_name_full_.c_str() + file_name_size - 4,
+                            ".nop")) {
+        // CAS headless dummy ('#'-less .nop): nothing to load. (The
+        // legacy headless path keeps its '#' and takes the per-face
+        // loop's .nop branch below.)
+      } else {
+        for (int d = 0; d < 6; d++) {
+          name = file_name_full_;
+          switch (d) {
+            case 0:
+              name.replace(name.find('#'), 1, "_+x");
+              break;
+            case 1:
+              name.replace(name.find('#'), 1, "_-x");
+              break;
+            case 2:
+              name.replace(name.find('#'), 1, "_+y");
+              break;
+            case 3:
+              name.replace(name.find('#'), 1, "_-y");
+              break;
+            case 4:
+              name.replace(name.find('#'), 1, "_+z");
+              break;
+            case 5:
+              name.replace(name.find('#'), 1, "_-z");
+              break;
+            default:
+              throw Exception();
+          }
 
-        // Etc1 or dxt3 for non-alpha and dxt5 for alpha (.android_dds files).
-        if (file_name_size > 12
-            && !strcmp(file_name_full_.c_str() + file_name_size - 12,
-                       ".android_dds")) {
-          try {
+          // Etc1 or dxt3 for non-alpha and dxt5 for alpha (.android_dds files).
+          if (file_name_size > 12
+              && !strcmp(file_name_full_.c_str() + file_name_size - 12,
+                         ".android_dds")) {
+            try {
+              LoadDDS(name, preload_datas_[d].buffers, preload_datas_[d].widths,
+                      preload_datas_[d].heights, preload_datas_[d].formats,
+                      preload_datas_[d].sizes, texture_quality,
+                      static_cast<uint8_t>(min_quality_),
+                      &preload_datas_[d].base_level);
+            } catch (const std::exception& e) {
+              throw Exception("Error loading file '" + file_name_full_
+                              + "': " + e.what());
+            }
+
+            // We should only be loading this if we support etc1 in hardware.
+            assert(g_base->graphics->placeholder_client_context()
+                       ->SupportsTextureCompressionType(
+                           TextureCompressionType::kETC1));
+
+            // Decompress dxt1/dxt5 ones if we don't natively support S3TC.
+            if (!g_base->graphics->placeholder_client_context()
+                     ->SupportsTextureCompressionType(
+                         TextureCompressionType::kS3TC)) {
+              if ((preload_datas_[d].formats[preload_datas_[d].base_level]
+                   == TextureFormat::kDXT5)
+                  || (preload_datas_[d].formats[preload_datas_[d].base_level]
+                      == TextureFormat::kDXT1)) {
+                preload_datas_[d].ConvertToUncompressed(this);
+              }
+            }
+          } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
+                             ".dds")) {
+            // Dxt1 for non-alpha and dxt5 for alpha (.dds files).
             LoadDDS(name, preload_datas_[d].buffers, preload_datas_[d].widths,
                     preload_datas_[d].heights, preload_datas_[d].formats,
                     preload_datas_[d].sizes, texture_quality,
                     static_cast<uint8_t>(min_quality_),
                     &preload_datas_[d].base_level);
-          } catch (const std::exception& e) {
-            throw Exception("Error loading file '" + file_name_full_
-                            + "': " + e.what());
-          }
 
-          // We should only be loading this if we support etc1 in hardware.
-          assert(g_base->graphics->placeholder_client_context()
-                     ->SupportsTextureCompressionType(
-                         TextureCompressionType::kETC1));
-
-          // Decompress dxt1/dxt5 ones if we don't natively support S3TC.
-          if (!g_base->graphics->placeholder_client_context()
-                   ->SupportsTextureCompressionType(
-                       TextureCompressionType::kS3TC)) {
-            if ((preload_datas_[d].formats[preload_datas_[d].base_level]
-                 == TextureFormat::kDXT5)
-                || (preload_datas_[d].formats[preload_datas_[d].base_level]
-                    == TextureFormat::kDXT1)) {
+            // Decompress dxt1/dxt5 if we don't natively support it.
+            if (kForceUncompressedDDS
+                || !g_base->graphics->placeholder_client_context()
+                        ->SupportsTextureCompressionType(
+                            TextureCompressionType::kS3TC)) {
               preload_datas_[d].ConvertToUncompressed(this);
             }
-          }
-        } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
-                           ".dds")) {
-          // Dxt1 for non-alpha and dxt5 for alpha (.dds files).
-          LoadDDS(name, preload_datas_[d].buffers, preload_datas_[d].widths,
-                  preload_datas_[d].heights, preload_datas_[d].formats,
-                  preload_datas_[d].sizes, texture_quality,
-                  static_cast<uint8_t>(min_quality_),
-                  &preload_datas_[d].base_level);
-
-          // Decompress dxt1/dxt5 if we don't natively support it.
-          if (kForceUncompressedDDS
-              || !g_base->graphics->placeholder_client_context()
-                      ->SupportsTextureCompressionType(
-                          TextureCompressionType::kS3TC)) {
-            preload_datas_[d].ConvertToUncompressed(this);
-          }
-        } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
-                           ".ktx")) {
-          // Etc2 or etc1 for non-alpha and etc2 for alpha (.ktx files)
-          LoadKTX(name, preload_datas_[d].buffers, preload_datas_[d].widths,
-                  preload_datas_[d].heights, preload_datas_[d].formats,
-                  preload_datas_[d].sizes, texture_quality,
-                  static_cast<uint8_t>(min_quality_),
-                  &preload_datas_[d].base_level);
-
-          // Decompress etc2 ones if we don't natively support them.
-          if (((preload_datas_[d].formats[preload_datas_[d].base_level]
-                == TextureFormat::kETC2_RGB)
-               || (preload_datas_[d].formats[preload_datas_[d].base_level]
-                   == TextureFormat::kETC2_RGBA))
-              && (!g_base->graphics->placeholder_client_context()
-                       ->SupportsTextureCompressionType(
-                           TextureCompressionType::kETC2))) {
-            preload_datas_[d].ConvertToUncompressed(this);
-          }
-
-          // Decompress etc1 if we don't natively support it.
-          if ((preload_datas_[d].formats[preload_datas_[d].base_level]
-               == TextureFormat::kETC1)
-              && (!g_base->graphics->placeholder_client_context()
-                       ->SupportsTextureCompressionType(
-                           TextureCompressionType::kETC1))) {
-            preload_datas_[d].ConvertToUncompressed(this);
-          }
-
-        } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
-                           ".pvr")) {
-          // Pvr for both non-alpha and alpha (.pvr files).
-          try {
-            LoadPVR(name, preload_datas_[d].buffers, preload_datas_[d].widths,
+          } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
+                             ".ktx")) {
+            // Etc2 or etc1 for non-alpha and etc2 for alpha (.ktx files)
+            LoadKTX(name, preload_datas_[d].buffers, preload_datas_[d].widths,
                     preload_datas_[d].heights, preload_datas_[d].formats,
                     preload_datas_[d].sizes, texture_quality,
                     static_cast<uint8_t>(min_quality_),
                     &preload_datas_[d].base_level);
-          } catch (const std::exception& e) {
-            throw Exception("Error loading file '" + file_name_full_
-                            + "': " + e.what());
+
+            // Decompress etc2 ones if we don't natively support them.
+            if (((preload_datas_[d].formats[preload_datas_[d].base_level]
+                  == TextureFormat::kETC2_RGB)
+                 || (preload_datas_[d].formats[preload_datas_[d].base_level]
+                     == TextureFormat::kETC2_RGBA))
+                && (!g_base->graphics->placeholder_client_context()
+                         ->SupportsTextureCompressionType(
+                             TextureCompressionType::kETC2))) {
+              preload_datas_[d].ConvertToUncompressed(this);
+            }
+
+            // Decompress etc1 if we don't natively support it.
+            if ((preload_datas_[d].formats[preload_datas_[d].base_level]
+                 == TextureFormat::kETC1)
+                && (!g_base->graphics->placeholder_client_context()
+                         ->SupportsTextureCompressionType(
+                             TextureCompressionType::kETC1))) {
+              preload_datas_[d].ConvertToUncompressed(this);
+            }
+
+          } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
+                             ".pvr")) {
+            // Pvr for both non-alpha and alpha (.pvr files).
+            try {
+              LoadPVR(name, preload_datas_[d].buffers, preload_datas_[d].widths,
+                      preload_datas_[d].heights, preload_datas_[d].formats,
+                      preload_datas_[d].sizes, texture_quality,
+                      static_cast<uint8_t>(min_quality_),
+                      &preload_datas_[d].base_level);
+            } catch (const std::exception& e) {
+              throw Exception("Error loading file '" + file_name_full_
+                              + "': " + e.what());
+            }
+          } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
+                             ".nop")) {
+            // Dummy path for headless; nothing to do here.
+          } else {
+            throw Exception("Invalid texture file name: '" + file_name_full_
+                            + "'");
           }
-        } else if (!strcmp(file_name_full_.c_str() + file_name_size - 4,
-                           ".nop")) {
-          // Dummy path for headless; nothing to do here.
-        } else {
-          throw Exception("Invalid texture file name: '" + file_name_full_
-                          + "'");
         }
       }
     } else {
@@ -467,6 +532,11 @@ void TextureAsset::DoLoad() {
   assert(!preload_datas_.empty());
   base_level_ = preload_datas_[0].base_level;
 
+  // Carry the premultiplied-alpha flag onto the persistent asset for
+  // draw-time premult-blend selection (decision #23); the preload data is
+  // about to be cleared. Re-read on every (re)load, like base_level_.
+  premultiplied_ = preload_datas_[0].premultiplied;
+
   // If we're done, kill our preload data.
   preload_datas_.clear();
 }
@@ -477,6 +547,7 @@ void TextureAsset::DoUnload() {
   assert(renderer_data_.exists());
   renderer_data_.Clear();
   base_level_ = 0;
+  premultiplied_ = false;
 }
 
 }  // namespace ballistica::base

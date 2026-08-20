@@ -19,9 +19,32 @@
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/ui_v1/ui_v1.h"
 
+namespace ballistica {
+class JsonRef;
+}
+
 namespace ballistica::classic {
 
 const int kMaxPartyNameCombinedSize{25};
+
+/// One client in the party roster: a connected peer (or the host itself, with
+/// client_id == -1) plus the local players it has joined. This is the native
+/// form of what was historically a cJSON array-of-dicts; the original wire
+/// keys are noted in comments. ClassicAppMode owns the roster as a value,
+/// rebuilds it on the host side, and replaces it wholesale from the network
+/// on the client side.
+struct GameRosterEntry {
+  /// A joined player belonging to a client.
+  struct Player {
+    std::string name;       // wire: "n"
+    std::string name_full;  // wire: "nf"
+    int id{};               // wire: "i"
+  };
+  std::string spec;                       // wire: "spec" (PlayerSpec string)
+  int client_id{};                        // wire: "i" (-1 == the host)
+  std::optional<std::string> account_id;  // wire: "a" (public id; v2-auth only)
+  std::vector<Player> players;            // wire: "p"
+};
 
 /// Defines high level app behavior when we're active.
 class ClassicAppMode : public base::AppMode {
@@ -55,10 +78,18 @@ class ClassicAppMode : public base::AppMode {
                                const SockAddr& addr) override;
   void StepDisplayTime() override;
   void OnAppShutdown() override;
-  auto game_roster() const -> cJSON* { return game_roster_; }
+  // The roster we own (a value; valid for the lifetime of this app-mode).
+  auto game_roster() const -> const std::vector<GameRosterEntry>& {
+    return game_roster_;
+  }
   void UpdateGameRoster();
   void MarkGameRosterDirty() { game_roster_dirty_ = true; }
-  void SetGameRoster(cJSON* r);
+  // Replaces the current roster by decoding `roster` (a JSON array of client
+  // entries, typically just-parsed from untrusted network data). We copy what
+  // we need out of the borrowed view, so the caller keeps ownership of the
+  // underlying JsonDoc and may discard it after this returns. Malformed
+  // elements are skipped.
+  void SetGameRoster(const JsonRef& roster);
   auto GetPartySize() const -> int override;
   auto kick_vote_in_progress() const -> bool { return kick_vote_in_progress_; }
   void StartKickVote(scene_v1::ConnectionToClient* starter,
@@ -93,6 +124,12 @@ class ClassicAppMode : public base::AppMode {
   auto GetForegroundSession() const -> scene_v1::Session* {
     return foreground_session_.get();
   }
+
+  // Whether the foreground session is a replay-playback session. We
+  // don't broadcast replay streams to clients (they never prepped the
+  // replay's package universe), so connection attempts are refused
+  // while one is up.
+  auto InReplay() const -> bool;
 
   // Used to know which globals is in control currently/etc.
   auto GetForegroundScene() const -> scene_v1::Scene* {
@@ -158,14 +195,22 @@ class ClassicAppMode : public base::AppMode {
   void set_require_client_authentication(bool enable) {
     require_client_authentication_ = enable;
   }
-  // void set_client_authentication_version(int version) {
-  //   assert(version == 1 || version == 2);
-  //   client_authentication_version_ = version;
-  // }
-  auto client_authentication_version() const {
-    assert(host_protocol_version_ != -1);
-    return host_protocol_version_ >= 36 ? 2 : 1;
-  }
+
+  /// Set the asset-package-versions this app run hosts with (the launch
+  /// metascan snapshot; see asset-packages.md decision #36). Call once
+  /// from the logic thread at app-mode activation; advertised in V2
+  /// host-query responses (and eventually fed to session package
+  /// universes / the public-party heartbeat).
+  void SetHostingAssetPackages(std::vector<std::string> packages);
+
+  // Set/get the password clients must provide to join us (empty =
+  // none). Set from the logic thread; readable from any thread (the
+  // requirements-query responder runs in the network-reader thread).
+  void SetHostPassword(const std::string& password);
+  auto GetHostPassword() -> std::string;
+
+  /// Thread-safe copy of the hosting asset-package set.
+  auto GetHostingAssetPackages() -> std::vector<std::string>;
   auto IsPlayerBanned(const scene_v1::PlayerSpec& spec) -> bool;
   void BanPlayer(const scene_v1::PlayerSpec& spec, millisecs_t duration);
   void OnAppStart() override;
@@ -186,6 +231,14 @@ class ClassicAppMode : public base::AppMode {
   struct ScanResultsEntry {
     std::string display_string;
     std::string address;
+    // V2-scan extras; defaults apply for hosts seen only via V1 scans.
+    bool has_v2{};
+    std::string party_name;
+    int party_size{};
+    int party_max_size{};
+    bool auth_required{};
+    int build_number{};
+    int protocol_version{};
   };
 
   auto GetScanResults() -> std::vector<ScanResultsEntry>;
@@ -279,6 +332,16 @@ class ClassicAppMode : public base::AppMode {
   std::map<std::string, ScanResultsEntryPriv_> scan_results_;
   std::mutex scan_results_mutex_;
 
+  // The launch-metascan hosting set. Written once from the logic thread;
+  // read by the network-reader thread when answering V2 host-queries.
+  std::vector<std::string> hosting_asset_packages_;
+  std::mutex hosting_asset_packages_mutex_;
+
+  // Join password (empty = none). Written from the logic thread; read
+  // by the network-reader thread when answering requirements queries.
+  std::string host_password_;
+  std::mutex host_password_mutex_;
+
   std::string root_ui_chest_0_appearance_;
   std::string root_ui_chest_1_appearance_;
   std::string root_ui_chest_2_appearance_;
@@ -322,7 +385,7 @@ class ClassicAppMode : public base::AppMode {
   bool root_ui_highlight_potential_token_purchases_{};
 
   ui_v1::UIV1FeatureSet* uiv1_{};
-  cJSON* game_roster_{};
+  std::vector<GameRosterEntry> game_roster_;
   millisecs_t last_game_roster_send_time_{};
   std::unique_ptr<scene_v1::ConnectionSet> connections_;
   Object::WeakRef<scene_v1::ConnectionToClient> kick_vote_starter_;

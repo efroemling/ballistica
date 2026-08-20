@@ -22,10 +22,14 @@ class PlatformLinux : public Platform {
   auto GetDeviceUUIDInputs() -> std::list<std::string> override;
   auto DoGetDeviceDescription() -> std::string override;
   auto GetOSVersionString() -> std::string override;
+  auto CanShowBlockingFatalErrorDialog() -> bool override;
+  void BlockingFatalErrorDialog(const std::string& message) override;
 
 #if BA_ENABLE_OS_FONT_RENDERING
   void GetTextBoundsAndWidth(const std::string& text, Rect* r,
                              float* width) override;
+  auto GetTextLineBreakOffsets(const std::string& text)
+      -> std::vector<int> override;
   void FreeTextTexture(void* tex) override;
   auto CreateTextTexture(int width, int height,
                          const std::vector<std::string>& strings,

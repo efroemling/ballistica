@@ -461,8 +461,8 @@ class Buffer(metaclass=ABCMeta):
 class _CallableGenericAlias(GenericAlias):
     """ Represent `Callable[argtypes, resulttype]`.
 
-    This sets ``__args__`` to a tuple containing the flattened ``argtypes``
-    followed by ``resulttype``.
+    This sets ``__args__`` to a tuple containing the flattened
+    ``argtypes`` followed by ``resulttype``.
 
     Example: ``Callable[[int, str], float]`` sets ``__args__`` to
     ``(int, str, float)``.
@@ -485,9 +485,10 @@ class _CallableGenericAlias(GenericAlias):
     def __repr__(self):
         if len(self.__args__) == 2 and _is_param_expr(self.__args__[0]):
             return super().__repr__()
+        from annotationlib import type_repr
         return (f'collections.abc.Callable'
-                f'[[{", ".join([_type_repr(a) for a in self.__args__[:-1]])}], '
-                f'{_type_repr(self.__args__[-1])}]')
+                f'[[{", ".join([type_repr(a) for a in self.__args__[:-1]])}], '
+                f'{type_repr(self.__args__[-1])}]')
 
     def __reduce__(self):
         args = self.__args__
@@ -523,23 +524,6 @@ def _is_param_expr(obj):
     obj = type(obj)
     names = ('ParamSpec', '_ConcatenateGenericAlias')
     return obj.__module__ == 'typing' and any(obj.__name__ == name for name in names)
-
-def _type_repr(obj):
-    """Return the repr() of an object, special-casing types (internal helper).
-
-    Copied from :mod:`typing` since collections.abc
-    shouldn't depend on that module.
-    (Keep this roughly in sync with the typing version.)
-    """
-    if isinstance(obj, type):
-        if obj.__module__ == 'builtins':
-            return obj.__qualname__
-        return f'{obj.__module__}.{obj.__qualname__}'
-    if obj is Ellipsis:
-        return '...'
-    if isinstance(obj, FunctionType):
-        return obj.__name__
-    return repr(obj)
 
 
 class Callable(metaclass=ABCMeta):
@@ -943,8 +927,9 @@ class MutableMapping(Mapping):
     __marker = object()
 
     def pop(self, key, default=__marker):
-        '''D.pop(k[,d]) -> v, remove specified key and return the corresponding value.
-          If key is not found, d is returned if given, otherwise KeyError is raised.
+        '''D.pop(k[,d]) -> v, remove specified key and return the corresponding
+        value.  If key is not found, d is returned if given, otherwise
+        KeyError is raised.
         '''
         try:
             value = self[key]
@@ -978,9 +963,12 @@ class MutableMapping(Mapping):
 
     def update(self, other=(), /, **kwds):
         ''' D.update([E, ]**F) -> None.  Update D from mapping/iterable E and F.
-            If E present and has a .keys() method, does:     for k in E.keys(): D[k] = E[k]
-            If E present and lacks .keys() method, does:     for (k, v) in E: D[k] = v
-            In either case, this is followed by: for k, v in F.items(): D[k] = v
+            If E present and has a .keys() method, does:
+                for k in E.keys(): D[k] = E[k]
+            If E present and lacks .keys() method, does:
+                for (k, v) in E: D[k] = v
+            In either case, this is followed by:
+                for k, v in F.items(): D[k] = v
         '''
         if isinstance(other, Mapping):
             for key in other:
@@ -1045,8 +1033,8 @@ class Sequence(Reversible, Collection):
             yield self[i]
 
     def index(self, value, start=0, stop=None):
-        '''S.index(value, [start, [stop]]) -> integer -- return first index of value.
-           Raises ValueError if the value is not present.
+        '''S.index(value, [start, [stop]]) -> integer -- return first index of
+           value.  Raises ValueError if the value is not present.
 
            Supporting start and stop arguments is optional, but
            recommended.
@@ -1073,6 +1061,7 @@ class Sequence(Reversible, Collection):
 
 Sequence.register(tuple)
 Sequence.register(str)
+Sequence.register(bytes)
 Sequence.register(range)
 Sequence.register(memoryview)
 
@@ -1153,15 +1142,16 @@ class MutableSequence(Sequence):
             self[i], self[n-i-1] = self[n-i-1], self[i]
 
     def extend(self, values):
-        'S.extend(iterable) -- extend sequence by appending elements from the iterable'
+        """S.extend(iterable) -- extend sequence by appending elements from the
+        iterable"""
         if values is self:
             values = list(values)
         for v in values:
             self.append(v)
 
     def pop(self, index=-1):
-        '''S.pop([index]) -> item -- remove and return item at index (default last).
-           Raise IndexError if list is empty or index is out of range.
+        '''S.pop([index]) -> item -- remove and return item at index (default
+        last).  Raise IndexError if list is empty or index is out of range.
         '''
         v = self[index]
         del self[index]
@@ -1179,4 +1169,4 @@ class MutableSequence(Sequence):
 
 
 MutableSequence.register(list)
-MutableSequence.register(bytearray)  # Multiply inheriting, see ByteString
+MutableSequence.register(bytearray)

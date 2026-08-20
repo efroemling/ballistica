@@ -2,12 +2,12 @@
 #
 """Networking related functionality."""
 
-from __future__ import annotations
-
 import socket
 import threading
 import ipaddress
 from typing import TYPE_CHECKING
+
+import _babase
 
 if TYPE_CHECKING:
     pass
@@ -44,6 +44,36 @@ class NetworkSubsystem:
         self.connectivity_state = ''
         self.transport_state = ''
         self.server_time_offset_hours: float | None = None
+
+        # OS-reported network path availability. Updated by a
+        # callback that may fire on any thread; the GIL makes the
+        # bare bool write/read safe. Defaults to False per the
+        # platform API contract: "assume unavailable until informed
+        # otherwise". The registration below installs the callback;
+        # platforms with no native implementation flip us to True
+        # promptly via the default monitoring-start path.
+        self._available: bool = False
+        _babase.add_network_availability_callback(self._on_availability_changed)
+
+    def _on_availability_changed(self, available: bool) -> None:
+        self._available = available
+
+    @property
+    def available(self) -> bool:
+        """Whether the OS reports a usable network path is available.
+
+        Useful as a 'don't even try' gate for things like connectivity
+        pings and retry loops — when ``False`` (airplane mode, wifi
+        off with no cellular, ethernet unplugged) network attempts
+        will not succeed and should be skipped.
+
+        Note that ``True`` does *not* mean internet actually works —
+        captive portals, ISP outages, and DNS issues will still report
+        ``True``. Callers that need confirmed reachability should
+        continue running their existing probes; this property only
+        confirms *non-functional* states.
+        """
+        return self._available
 
     def pre_interpreter_shutdown(self) -> None:
         """Called just before interpreter shuts down."""

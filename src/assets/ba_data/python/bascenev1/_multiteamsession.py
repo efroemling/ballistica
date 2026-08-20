@@ -2,12 +2,10 @@
 #
 """Functionality related to teams sessions."""
 
-from __future__ import annotations
-
 import copy
 import random
 import logging
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, overload, override
 
 import babase
 
@@ -15,11 +13,15 @@ import _bascenev1
 from bascenev1._session import Session
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from typing import Any, Literal
 
     import bascenev1
 
+#: Default RGB colors for the two teams in a :class:`MultiTeamSession`,
+#: used when a session doesn't specify its own.
 DEFAULT_TEAM_COLORS = ((0.1, 0.25, 1.0), (1.0, 0.25, 0.2))
+
+#: Default display names for the two teams in a :class:`MultiTeamSession`.
 DEFAULT_TEAM_NAMES = ('Blue', 'Red')
 
 
@@ -54,11 +56,7 @@ class MultiTeamSession(Session):
             team_names = None
             team_colors = None
 
-        # print('FIXME: TEAM BASE SESSION WOULD CALC DEPS.')
-        depsets: Sequence[bascenev1.DependencySet] = []
-
         super().__init__(
-            depsets,
             team_names=team_names,
             team_colors=team_colors,
             min_players=1,
@@ -147,13 +145,34 @@ class MultiTeamSession(Session):
         """Return teams series length."""
         return self._series_length
 
-    def get_next_game_description(self) -> babase.Lstr:
-        """Returns a description of the next game on deck."""
+    @overload
+    def get_next_game_description(
+        self, *, langstr: Literal[False] = False
+    ) -> babase.Lstr: ...
+
+    @overload
+    def get_next_game_description(
+        self, *, langstr: Literal[True]
+    ) -> babase.LangStr: ...
+
+    def get_next_game_description(
+        self, *, langstr: bool = False
+    ) -> babase.Lstr | babase.LangStr:
+        """Returns a description of the next game on deck.
+
+        Pass ``langstr=True`` to receive a :class:`~babase.LangStr`. The
+        legacy :class:`~babase.Lstr` form goes away when api 9 support
+        ends.
+        """
         # pylint: disable=cyclic-import
         from bascenev1._gameactivity import GameActivity
 
         gametype: type[GameActivity] = self._next_game_spec['resolved_type']
         assert issubclass(gametype, GameActivity)
+        if langstr:
+            return gametype.get_settings_display_string(
+                self._next_game_spec, langstr=True
+            )
         return gametype.get_settings_display_string(self._next_game_spec)
 
     def get_game_number(self) -> int:
@@ -269,12 +288,16 @@ class MultiTeamSession(Session):
         or whatnot, along with a possible audio
         announcement of the same.
         """
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import classicassets
+
         # pylint: disable=cyclic-import
         from bascenev1._gameutils import cameraflash
-        from bascenev1._freeforallsession import FreeForAllSession
         from bascenev1._messages import CelebrateMessage
 
-        _bascenev1.timer(delay, _bascenev1.getsound('boxingBell').play)
+        _bascenev1.timer(delay, classicassets.audio.boxing_bell.get().play)
 
         if announce_winning_team:
             winning_sessionteam = results.winning_sessionteam
@@ -287,14 +310,10 @@ class MultiTeamSession(Session):
                         player.actor.handlemessage(celebrate_msg)
                 cameraflash()
 
-                # Some languages say "FOO WINS" different for teams vs players.
-                if isinstance(self, FreeForAllSession):
-                    wins_resource = 'winsPlayerText'
-                else:
-                    wins_resource = 'winsTeamText'
-                wins_text = babase.Lstr(
-                    resource=wins_resource,
-                    subs=[('${NAME}', winning_sessionteam.name)],
+                # The legacy player-vs-team split existed only
+                # for translation coverage; the text is identical.
+                wins_text = classicassets.strings.multi_team.wins(
+                    name=winning_sessionteam.name
                 )
                 activity.show_zoom_message(
                     wins_text,

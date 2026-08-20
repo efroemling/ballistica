@@ -2,12 +2,12 @@
 #
 """Defines button for co-op games."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 import copy
 
 import bauiv1 as bui
+from bauiv1 import _commonassets, classicassets
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -29,13 +29,12 @@ class TournamentButton:
         select: bool,
         on_pressed: Callable[[TournamentButton], None],
     ) -> None:
-        # pylint: disable=too-many-positional-arguments
         self._r = 'coopSelectWindow'
         sclx = 300
         scly = 195.0
         self.on_pressed = on_pressed
-        self.lsbt = bui.getmesh('level_select_button_transparent')
-        self.lsbo = bui.getmesh('level_select_button_opaque')
+        self.lsbt = classicassets.meshes.level_select_button_transparent.get()
+        self.lsbo = classicassets.meshes.level_select_button_opaque.get()
         self.allow_ads = False
         self.tournament_id: str | None = None
         self.game: str | None = None
@@ -75,9 +74,9 @@ class TournamentButton:
             size=(image_width, image_width * 0.5),
             mesh_transparent=self.lsbt,
             mesh_opaque=self.lsbo,
-            texture=bui.gettexture('black'),
+            texture=builtinassets.textures.black.get(),
             opacity=0.2,
-            mask_texture=bui.gettexture('mapPreviewMask'),
+            mask_texture=classicassets.textures.map_preview_mask.get(),
         )
 
         self.lock_image = bui.imagewidget(
@@ -85,7 +84,7 @@ class TournamentButton:
             draw_controller=btn,
             position=(x + 21 + sclx * 0.5 - image_width * 0.15, y + scly - 130),
             size=(image_width * 0.3, image_width * 0.3),
-            texture=bui.gettexture('lock'),
+            texture=classicassets.textures.lock.get(),
             opacity=0.0,
         )
 
@@ -115,7 +114,7 @@ class TournamentButton:
                 position=(x + 360, y + scly - 20),
                 size=(0, 0),
                 h_align='center',
-                text=bui.Lstr(resource=f'{self._r}.entryFeeText'),
+                text=classicassets.strings.coop.entry_fee,
                 v_align='center',
                 maxwidth=100,
                 scale=0.9,
@@ -169,7 +168,7 @@ class TournamentButton:
                 draw_controller=btn,
                 position=(x + 360 - 20, y + scly - 140),
                 opacity=0.0,
-                texture=bui.gettexture('tv'),
+                texture=classicassets.textures.tv.get(),
             )
 
         x_offs += 50
@@ -180,7 +179,7 @@ class TournamentButton:
             position=(x + 447 + x_offs, y + scly - 20),
             size=(0, 0),
             h_align='center',
-            text=bui.Lstr(resource=f'{self._r}.prizesText'),
+            text=classicassets.strings.coop.prizes,
             v_align='center',
             maxwidth=130,
             scale=0.9,
@@ -224,7 +223,7 @@ class TournamentButton:
         self.prize_chest_1_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            texture=bui.gettexture('white'),
+            texture=builtinassets.textures.white.get(),
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(self._chestsz, self._chestsz),
             opacity=0.0,
@@ -258,7 +257,7 @@ class TournamentButton:
         self.prize_chest_2_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            texture=bui.gettexture('white'),
+            texture=builtinassets.textures.white.get(),
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(self._chestsz, self._chestsz),
             opacity=0.0,
@@ -292,7 +291,7 @@ class TournamentButton:
         self.prize_chest_3_image = bui.imagewidget(
             parent=parent,
             draw_controller=btn,
-            texture=bui.gettexture('white'),
+            texture=builtinassets.textures.white.get(),
             position=(x + 380 + xo2 + x_offs, y + scly - 93),
             size=(self._chestsz, self._chestsz),
             opacity=0.0,
@@ -304,7 +303,7 @@ class TournamentButton:
             position=(x + 625 + x_offs, y + scly - 20),
             size=(0, 0),
             h_align='center',
-            text=bui.Lstr(resource=f'{self._r}.currentBestText'),
+            text=classicassets.strings.coop.current_best,
             v_align='center',
             maxwidth=180,
             scale=0.9,
@@ -376,7 +375,7 @@ class TournamentButton:
             position=(x + 840 + x_offs, y + scly - 20),
             size=(0, 0),
             h_align='center',
-            text=bui.Lstr(resource=f'{self._r}.timeRemainingText'),
+            text=classicassets.strings.coop.time_remaining,
             v_align='center',
             maxwidth=180,
             scale=0.9,
@@ -429,9 +428,9 @@ class TournamentButton:
             or self.leader is None
             or len(self.leader[2]) != 1
         ):
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.get().play()
         AccountViewerWindow(
             account_id=self.leader[2][0].get('a', None),
             profile_id=self.leader[2][0].get('p', None),
@@ -444,7 +443,7 @@ class TournamentButton:
 
         tournament_id = self.tournament_id
         if tournament_id is None:
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
 
         TournamentScoresWindow(
@@ -477,9 +476,7 @@ class TournamentButton:
         bui.imagewidget(edit=self.lock_image, opacity=0.0 if enabled else 1.0)
         bui.imagewidget(
             edit=self.image,
-            texture=bui.gettexture(
-                campaign.getlevel(levelname).preview_texture_name
-            ),
+            texture=campaign.getlevel(levelname).preview_texture,
             opacity=1.0 if enabled else 0.5,
         )
 
@@ -620,12 +617,14 @@ class TournamentButton:
         classic.set_tournament_prize_image(entry, 2, self.prize_chest_3_image)
 
         leader_name = '-'
-        leader_score: str | bui.Lstr = '-'
+        leader_score: str | bui.LangStr = '-'
         if entry['scores']:
             score = self.leader = copy.deepcopy(entry['scores'][0])
             leader_name = score[1]
             leader_score = (
-                bui.timestring((score[0] * 10) / 1000.0, centi=True)
+                bui.timestring(
+                    (score[0] * 10) / 1000.0, centi=True, langstr=True
+                )
                 if entry['scoreType'] == 'time'
                 else str(score[0])
             )
@@ -633,24 +632,21 @@ class TournamentButton:
             self.leader = None
 
         bui.textwidget(
-            edit=self.current_leader_name_text, text=bui.Lstr(value=leader_name)
+            edit=self.current_leader_name_text,
+            text=bui.LangStr.from_text(leader_name),
         )
         bui.textwidget(edit=self.current_leader_score_text, text=leader_score)
         bui.buttonwidget(
             edit=self.more_scores_button,
-            label=bui.Lstr(resource=f'{self._r}.seeMoreText'),
+            label=_commonassets.strings.actions.more,
         )
-        out_of_time_text: str | bui.Lstr = (
+        out_of_time_text: str | bui.LangStr = (
             '-'
             if 'totalTime' not in entry
-            else bui.Lstr(
-                resource=f'{self._r}.ofTotalTimeText',
-                subs=[
-                    (
-                        '${TOTAL}',
-                        bui.timestring(entry['totalTime'], centi=False),
-                    )
-                ],
+            else classicassets.strings.coop.of_total(
+                total=bui.timestring(
+                    entry['totalTime'], centi=False, langstr=True
+                )
             )
         )
         bui.textwidget(
@@ -660,25 +656,20 @@ class TournamentButton:
         # if self.game is None:
         #     bui.textwidget(edit=self.button_text, text='-')
         #     bui.imagewidget(
-        #         edit=self.image, texture=bui.gettexture('black'), opacity=0.2
+        #         edit=self.image,
+        #         texture=builtinassets.textures.black,
+        #         opacity=0.2,
         #     )
         # else:
         max_players = bui.app.classic.accounts.tournament_info[
             self.tournament_id
         ]['maxPlayers']
 
-        txt = bui.Lstr(
-            value='${A} ${B}',
-            subs=[
-                ('${A}', campaign.getlevel(levelname).displayname),
-                (
-                    '${B}',
-                    bui.Lstr(
-                        resource='playerCountAbbreviatedText',
-                        subs=[('${COUNT}', str(max_players))],
-                    ),
-                ),
-            ],
+        txt = _commonassets.strings.compose.spaced_pair(
+            first=campaign.getlevel(levelname).displayname_langstr,
+            second=classicassets.strings.coop.player_count_abbreviated(
+                count=str(max_players)
+            ),
         )
         bui.textwidget(edit=self.button_text, text=txt)
 
@@ -713,12 +704,12 @@ class TournamentButton:
         )
         assert isinstance(final_fee, int | None)
 
-        final_fee_str: str | bui.Lstr
+        final_fee_str: str | bui.Lstr | bui.LangStr
         if fee_var is None:
             final_fee_str = ''
         else:
             if final_fee == 0:
-                final_fee_str = bui.Lstr(resource='getTicketsWindow.freeText')
+                final_fee_str = classicassets.strings.ui.free
             else:
                 final_fee_str = bui.charstr(
                     bui.SpecialChar.TICKET_BACKING
@@ -744,9 +735,7 @@ class TournamentButton:
                     opacity=1.0 if ads_enabled else 0.25,
                 )
                 or_text = (
-                    bui.Lstr(
-                        resource='orText', subs=[('${A}', ''), ('${B}', '')]
-                    )
+                    _commonassets.strings.compose.or_join(a='', b='')
                     .evaluate()
                     .strip()
                 )

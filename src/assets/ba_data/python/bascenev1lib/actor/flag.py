@@ -2,12 +2,11 @@
 #
 """Implements a flag used for marking bases, capture-the-flag games, etc."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import classicassets
 
 from bascenev1lib.gameutils import SharedObjects
 
@@ -63,8 +62,8 @@ class FlagFactory:
             ),
         )
 
-        self.impact_sound = bs.getsound('metalHit')
-        self.skid_sound = bs.getsound('metalSkid')
+        self.impact_sound = classicassets.audio.metal_hit.get()
+        self.skid_sound = classicassets.audio.metal_skid.get()
         self.flagmaterial.add_actions(
             conditions=(
                 'they_have_material',
@@ -99,7 +98,7 @@ class FlagFactory:
             ),
         )
 
-        self.flag_texture = bs.gettexture('flagColor')
+        self.flag_texture = classicassets.textures.flag_color.get()
 
     @classmethod
     def get(cls) -> FlagFactory:

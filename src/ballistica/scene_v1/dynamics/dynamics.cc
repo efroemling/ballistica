@@ -192,6 +192,15 @@ void Dynamics::AddTrimesh(dGeomID g) {
   collision_cache_->SetGeoms(trimeshes_);
 }
 
+void Dynamics::MarkTrimeshMoved(dGeomID g) {
+  assert(dGeomGetClass(g) == dTriMeshClass);
+
+  // Our collision-cache is built from trimesh bounds, so it has to be
+  // rebuilt when one moves. (The geom's own AABB is recalced lazily by ODE
+  // the next time anyone asks for it, so there's nothing to do there.)
+  collision_cache_->SetGeoms(trimeshes_);
+}
+
 void Dynamics::RemoveTrimesh(dGeomID g) {
   assert(dGeomGetClass(g) == dTriMeshClass);
   for (auto i = trimeshes_.begin(); i != trimeshes_.end(); i++) {

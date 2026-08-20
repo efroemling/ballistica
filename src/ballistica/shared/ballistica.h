@@ -3,8 +3,11 @@
 #ifndef BALLISTICA_SHARED_BALLISTICA_H_
 #define BALLISTICA_SHARED_BALLISTICA_H_
 
+#include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdio>
+#include <limits>
 #include <string>
 #include <type_traits>
 
@@ -21,10 +24,18 @@ typedef struct _ts PyThreadState;
 struct PyMethodDef;
 struct sockaddr_storage;
 
+// Engine-native input types (always available; defined in
+// shared/foundation/input_types.h). Forward-declared here so signatures
+// can pass them by ref/pointer without pulling the full header.
+union BAEvent;
+struct BAKeysym;
+
 #if BA_SDL_BUILD || BA_MINSDL_BUILD
-union SDL_Event;
-struct SDL_Keysym;
-typedef struct _SDL_Joystick SDL_Joystick;
+// Real SDL joystick handle (opaque; only dereferenced under
+// BA_ENABLE_SDL_JOYSTICKS in the SDL build). Tag must match SDL3's own
+// (SDL2 used 'struct _SDL_Joystick') so this and the real SDL header agree
+// when both are visible in the SDL app-adapter.
+typedef struct SDL_Joystick SDL_Joystick;
 #endif
 
 // Predeclare types from other feature sets that we use.
@@ -37,11 +48,9 @@ namespace ballistica {
 
 // Predeclare types we use throughout our FeatureSet so most headers can get
 // away with just including this header.
-struct cJSON;
 class EventLoop;
 class Exception;
 class FeatureSetNativeComponent;
-class JsonDict;
 class Matrix44f;
 class NativeStackTrace;
 class Object;
@@ -189,7 +198,7 @@ enum class SpecialChar : uint8_t {
   kDiceButton2,
   kDiceButton3,
   kDiceButton4,
-  kGameCircleLogo,
+  kDiscordLogo,
   kPartyIcon,
   kTestAccount,
   kTicketBacking,
@@ -296,6 +305,7 @@ enum class LogName : uint8_t {
   kBaInput,
   kBaUI,
   kBaNetworking,
+  kBaDiscord,
   kLast  // Sentinel
 };
 
@@ -370,6 +380,32 @@ template <typename OUT_TYPE, typename IN_TYPE>
 auto static_cast_check_fit(IN_TYPE in) -> OUT_TYPE {
   assert(check_static_cast_fit<OUT_TYPE>(in));
   return static_cast<OUT_TYPE>(in);
+}
+
+/// Convert a floating-point value to an integer type, clamping to the
+/// target's range and mapping non-finite values to zero.
+///
+/// Use this wherever the input may have come from outside the engine
+/// (the network, a file, mod code). A plain static_cast is *undefined
+/// behavior* for NaN, for infinities, and for anything outside the
+/// target's range -- not merely inaccurate -- and floats from those
+/// sources can be any of them. There is no assert here on purpose:
+/// untrusted input arriving out of range is not an engine bug.
+///
+/// For values the engine itself produced, where out-of-range really does
+/// mean a bug, prefer static_cast_check_fit above.
+template <typename OUT_TYPE, typename IN_TYPE>
+auto clamped_float_to_int(IN_TYPE in) -> OUT_TYPE {
+  static_assert(std::is_floating_point_v<IN_TYPE>);
+  static_assert(std::is_integral_v<OUT_TYPE>);
+  if (!std::isfinite(in)) {
+    return 0;
+  }
+  // Compare in the float domain; converting the bounds the other way
+  // would hit the very conversion we are guarding against.
+  auto lo = static_cast<IN_TYPE>(std::numeric_limits<OUT_TYPE>::lowest());
+  auto hi = static_cast<IN_TYPE>(std::numeric_limits<OUT_TYPE>::max());
+  return static_cast<OUT_TYPE>(std::clamp(in, lo, hi));
 }
 
 /// Simply a static_cast, but in debug builds also runs a dynamic cast to
@@ -456,8 +492,17 @@ extern const int kEngineApiVersion;
 const int kDefaultPort = 43210;
 
 // Magic numbers at the start of our file types.
+// Python source of truth for cob compilation is
+// tools/bacommontools/meshcompile.py; keep the cob values in sync
+// with it.
 const int kBobFileID = 45623;
+// Legacy cob format (positions + indices + face normals).
 const int kCobFileID = 13466;
+// Current cob format: drops the face-normals block (it was consumed
+// only by ODE's trimesh-vs-trimesh collider, which we can never hit
+// since our trimeshes are static and only collide against moving
+// bodies).
+const int kCobFileID2 = 13467;
 
 const float kPi = 3.1415926535897932384626433832795028841971693993751f;
 const float kPiDeg = kPi / 180.0f;

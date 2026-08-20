@@ -7,6 +7,7 @@
 #include "ballistica/base/input/device/joystick_input.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/ui/ui.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/math/random.h"
 
 namespace ballistica::base {
@@ -72,7 +73,7 @@ void TestInput::Process(millisecs_t time) {
 
     float r = RandomFloat();
 
-    SDL_Event e;
+    BAEvent e;
     if (r < 0.5f) {
       // Movement change.
       r = RandomFloat();
@@ -88,7 +89,7 @@ void TestInput::Process(millisecs_t time) {
             std::min(32767,
                      static_cast<int>(-50000.0f + 100000.0f * RandomFloat())));
       }
-      e.type = SDL_JOYAXISMOTION;
+      e.type = BA_JOYAXISMOTION;
       e.jaxis.axis = 0;
       e.jaxis.value = static_cast_check_fit<int16_t>(ud_);
       g_base->input->PushJoystickEvent(e, joystick_);
@@ -108,7 +109,7 @@ void TestInput::Process(millisecs_t time) {
           if (jump_pressed_) {
             join_press_count_++;
           }
-          e.type = jump_pressed_ ? SDL_JOYBUTTONDOWN : SDL_JOYBUTTONUP;
+          e.type = jump_pressed_ ? BA_JOYBUTTONDOWN : BA_JOYBUTTONUP;
           e.jbutton.button = 0;
           g_base->input->PushJoystickEvent(e, joystick_);
         }
@@ -126,7 +127,7 @@ void TestInput::Process(millisecs_t time) {
             // cout << "GOT BOMB AS FIRST PRESS " << this << endl;
             join_press_count_++;
           }
-          e.type = bomb_pressed_ ? SDL_JOYBUTTONDOWN : SDL_JOYBUTTONUP;
+          e.type = bomb_pressed_ ? BA_JOYBUTTONDOWN : BA_JOYBUTTONUP;
           e.jbutton.button = 2;
           g_base->input->PushJoystickEvent(e, joystick_);
         }
@@ -142,7 +143,7 @@ void TestInput::Process(millisecs_t time) {
           if (pickup_pressed_) {
             join_press_count_++;
           }
-          e.type = pickup_pressed_ ? SDL_JOYBUTTONDOWN : SDL_JOYBUTTONUP;
+          e.type = pickup_pressed_ ? BA_JOYBUTTONDOWN : BA_JOYBUTTONUP;
           e.jbutton.button = 3;
           g_base->input->PushJoystickEvent(e, joystick_);
         }
@@ -156,7 +157,7 @@ void TestInput::Process(millisecs_t time) {
           if (punch_pressed_) {
             join_press_count_++;
           }
-          e.type = punch_pressed_ ? SDL_JOYBUTTONDOWN : SDL_JOYBUTTONUP;
+          e.type = punch_pressed_ ? BA_JOYBUTTONDOWN : BA_JOYBUTTONUP;
           e.jbutton.button = 1;
           g_base->input->PushJoystickEvent(e, joystick_);
         }

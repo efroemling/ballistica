@@ -2,8 +2,6 @@
 #
 """A system for sanity testing parallel build isolation."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 import os
 

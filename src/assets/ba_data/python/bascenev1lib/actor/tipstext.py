@@ -2,11 +2,10 @@
 #
 """Provides tip related Actor(s)."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import classicassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -33,9 +32,7 @@ class TipsText(bs.Actor):
                 'v_attach': 'bottom',
             },
         )
-        tval = bs.Lstr(
-            value='${A}:', subs=[('${A}', bs.Lstr(resource='tipText'))]
-        )
+        tval = classicassets.strings.game.tip_title
         self.title_node = bs.newnode(
             'text',
             delegate=self,
@@ -67,18 +64,10 @@ class TipsText(bs.Actor):
 
     def change_phrase(self) -> None:
         """Switch the visible tip phrase."""
-        from babase import get_remote_app_name
-
-        next_tip = bs.Lstr(
-            translate=(
-                'tips',
-                (
-                    bs.app.classic.get_next_tip()
-                    if bs.app.classic is not None
-                    else ''
-                ),
-            ),
-            subs=[('${REMOTE_APP_NAME}', get_remote_app_name())],
+        next_tip: bs.LangStr = (
+            bs.app.classic.get_next_tip()
+            if bs.app.classic is not None
+            else bs.LangStr.from_text('')
         )
         spc = self._message_spacing
         assert self.node

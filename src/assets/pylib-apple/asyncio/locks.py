@@ -158,10 +158,10 @@ class Lock(_ContextManagerMixin, mixins._LoopBoundMixin):
 class Event(mixins._LoopBoundMixin):
     """Asynchronous equivalent to threading.Event.
 
-    Class implementing event objects. An event manages a flag that can be set
-    to true with the set() method and reset to false with the clear() method.
-    The wait() method blocks until the flag is true. The flag is initially
-    false.
+    Class implementing event objects.  An event manages a flag that can be
+    set to true with the set() method and reset to false with the clear()
+    method.  The wait() method blocks until the flag is true.  The flag is
+    initially false.
     """
 
     def __init__(self):
@@ -341,9 +341,9 @@ class Condition(_ContextManagerMixin, mixins._LoopBoundMixin):
                 fut.set_result(False)
 
     def notify_all(self):
-        """Wake up all threads waiting on this condition. This method acts
-        like notify(), but wakes up all waiting threads instead of one. If the
-        calling thread has not acquired the lock when this method is called,
+        """Wake up all tasks waiting on this condition. This method acts
+        like notify(), but wakes up all waiting tasks instead of one. If the
+        calling task has not acquired the lock when this method is called,
         a RuntimeError is raised.
         """
         self.notify(len(self._waiters))
@@ -353,9 +353,9 @@ class Semaphore(_ContextManagerMixin, mixins._LoopBoundMixin):
     """A Semaphore implementation.
 
     A semaphore manages an internal counter which is decremented by each
-    acquire() call and incremented by each release() call. The counter
-    can never go below zero; when acquire() finds that it is zero, it blocks,
-    waiting until some other thread calls release().
+    acquire() call and incremented by each release() call.  The counter
+    can never go below zero; when acquire() finds that it is zero, it
+    blocks, waiting until some other thread calls release().
 
     Semaphores also support the context management protocol.
 
@@ -511,8 +511,8 @@ class Barrier(mixins._LoopBoundMixin):
     async def wait(self):
         """Wait for the barrier.
 
-        When the specified number of tasks have started waiting, they are all
-        simultaneously awoken.
+        When the specified number of tasks have started waiting, they are
+        all simultaneously awoken.
         Returns an unique and individual index number from 0 to 'parties-1'.
         """
         async with self._cond:

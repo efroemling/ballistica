@@ -5,33 +5,18 @@
 Manages constructing or downloading it as well as running it.
 """
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Literal
-import platform
-import subprocess
+from typing import TYPE_CHECKING
 import os
+import platform
+import re
+import signal
+import subprocess
+import threading
 
 from efro.terminal import Clr
 
 if TYPE_CHECKING:
     from typing import Mapping
-
-
-#: What kind of asset bundle acquire_binary should assemble alongside
-#: the binary.
-#:
-#: - ``'none'``: just the binary, no scripts or assets. Only usable for
-#:   simple ``-c`` commands that don't import any game modules.
-#: - ``'scripts'``: the binary plus the Python script assets needed to
-#:   import game modules. Does *not* build or stage the media asset
-#:   bundle (audio, textures, meshes, windows DLLs, etc.). Appropriate
-#:   for dummy-module generation, import tests, docs, and similar
-#:   workflows that exercise the Python layer but never actually
-#:   render or play anything.
-#: - ``'full'``: the binary plus the complete asset bundle. Required
-#:   for anything that actually runs the game.
-AssetMode = Literal['none', 'scripts', 'full']
 
 
 def test_runs_disabled() -> bool:
@@ -51,14 +36,6 @@ def test_runs_disabled_reason() -> str:
     return 'App test runs disabled here.'
 
 
-def acquire_binary_for_python_command(purpose: str) -> str:
-    """Run acquire_binary as used for python_command call."""
-    # python_command runs '-c' snippets that typically import game
-    # modules but never play audio / render / etc., so scripts-only is
-    # sufficient.
-    return acquire_binary(assets='scripts', purpose=purpose)
-
-
 def python_command(
     cmd: str,
     purpose: str,
@@ -67,7 +44,7 @@ def python_command(
 ) -> None:
     """Run a cmd with a built bin and PYTHONPATH set to its scripts."""
 
-    binpath = acquire_binary_for_python_command(purpose=purpose)
+    binpath = acquire_binary(purpose=purpose)
     bindir = os.path.dirname(binpath)
 
     # We'll set both the app python dir and its site-python-dir. This
@@ -90,129 +67,49 @@ def python_command(
     subprocess.run(cmdargs, env=env_final, check=True)
 
 
-def acquire_binary(assets: AssetMode, purpose: str) -> str:
+def acquire_binary(purpose: str, *, gui: bool = False) -> str:
     """Return path to a runnable binary, building/downloading as needed.
 
-    The ``assets`` arg selects how much of the asset bundle gets
-    assembled alongside the binary; see :data:`AssetMode` for the
-    distinction between ``'none'``, ``'scripts'``, and ``'full'``.
+    By default this provides a headless-server binary along with the
+    full server asset bundle (Python scripts + fonts + data, but no
+    audio/textures/meshes). That is enough for the binary to fully boot
+    and is the right choice for the vast majority of tool/test
+    workflows (dummy-module generation, import tests, transport tests,
+    etc.).
 
-    Be aware that it is up to the particular environment whether a gui
-    or headless binary will be provided. Commands should be designed to
-    work with either.
+    Pass ``gui=True`` when the caller genuinely needs a GUI binary and
+    the full (including media) asset bundle — e.g. a test that
+    exercises rendering. This only works in environments that have the
+    full asset source tree available; environments like ba-check that
+    strip audio/textures/meshes will fail the asset build in this mode.
 
-    By default, downloaded prefab builds will be used here. This allows
-    people without full compiler setups to still perform app runs for
-    things like dummy-module generation. However, someone who *is* able
-    to compile their own binaries might prefer to use their own binaries
-    here so that changes to their local repo are properly reflected in
-    app runs and whatnot. Set environment variable
-    BA_APP_RUN_ENABLE_BUILDS=1 to enable that.
-
-    When local builds are enabled, we use the same gui build targets as
-    the 'make cmake-build' command. This works well if you are iterating
-    using that build target anyway, minimizing redundant rebuilds. You
-    may, however, prefer to instead assemble headless builds for various
-    reasons including faster build times and fewer dependencies
-    (equivalent to 'make cmake-server-build'). To do so, set environment
-    variable BA_APP_RUN_BUILD_HEADLESS=1.
+    By default the binary is built locally so the caller's working-tree
+    edits are reflected in the run. Set ``BA_APP_RUN_USE_PREFAB=1`` to
+    use a prefab binary instead — useful for environments without a
+    full compiler toolchain (public-repo CI, casual contributors). In
+    repos that publish prefabs via efrocache (spinoff/public) the
+    prefab path is a download; in ballistica-internal it falls back to
+    a remote cmake build via cloudshell.
     """
-    import textwrap
-
-    # In 'scripts' mode, tell the make targets to use a scripts-only
-    # asset build instead of the full one. This is the knob that lets
-    # ba-check-min (and similar stripped-down source layouts) actually
-    # reach a runnable binary without needing audio/textures/meshes.
-    # These get passed as env vars rather than make arguments so they
-    # propagate into sub-makes (including the shell-out inside
-    # prefab-*-server-release-build).
-    make_env_overrides: dict[str, str] = {}
-    if assets == 'scripts':
-        make_env_overrides['CMAKE_ASSETS_TARGET'] = 'assets-cmake-scripts'
-        make_env_overrides['CMAKE_SERVER_ASSETS_TARGET'] = (
-            'assets-cmake-scripts'
-        )
-
     binary_build_command: list[str]
-    if os.environ.get('BA_APP_RUN_ENABLE_BUILDS') == '1':
-        # Going the build-it-ourselves route.
+    if os.environ.get('BA_APP_RUN_USE_PREFAB') == '1':
+        # Going the prefab route.
 
-        env = (
-            dict(os.environ, **make_env_overrides)
-            if make_env_overrides
-            else None
-        )
+        # Prefab build targets on WSL (Linux running on Windows) will
+        # give us Windows builds which won't work right here. Ask it
+        # for Linux builds instead.
+        env = dict(os.environ, BA_WSL_TARGETS_WINDOWS='0')
 
-        if os.environ.get('BA_APP_RUN_BUILD_HEADLESS') == '1':
-            # User has opted for headless builds.
-            if assets == 'full':
-                print(
-                    f'{Clr.SMAG}Building headless binary & assets for'
-                    f' {purpose}...{Clr.RST}',
-                    flush=True,
-                )
-                binary_build_command = ['make', 'cmake-server-build']
-            elif assets == 'scripts':
-                print(
-                    f'{Clr.SMAG}Building headless binary & scripts for'
-                    f' {purpose}...{Clr.RST}',
-                    flush=True,
-                )
-                binary_build_command = ['make', 'cmake-server-build']
-            else:
-                print(
-                    f'{Clr.SMAG}Building headless binary for'
-                    f' {purpose}...{Clr.RST}',
-                    flush=True,
-                )
-                binary_build_command = ['make', 'cmake-server-binary']
-            binary_path = (
-                'build/cmake/server-debug/staged/dist/ballisticakit_headless'
-            )
+        kind = 'gui' if gui else 'headless'
+        if gui:
+            binary_build_command = ['make', 'prefab-gui-release-build']
+            prefab_target = 'gui-release'
         else:
-            # Using default gui builds.
-            if assets == 'full':
-                print(
-                    f'{Clr.SMAG}Building gui binary & assets for'
-                    f' {purpose}...{Clr.RST}',
-                    flush=True,
-                )
-                binary_build_command = ['make', 'cmake-build']
-            elif assets == 'scripts':
-                print(
-                    f'{Clr.SMAG}Building gui binary & scripts for'
-                    f' {purpose}...{Clr.RST}',
-                    flush=True,
-                )
-                binary_build_command = ['make', 'cmake-build']
-            else:
-                print(
-                    f'{Clr.SMAG}Building gui binary for {purpose}...{Clr.RST}',
-                    flush=True,
-                )
-                binary_build_command = ['make', 'cmake-binary']
-            binary_path = 'build/cmake/debug/staged/ballisticakit'
-    else:
-        # Ok; going with a downloaded prefab headless build.
-
-        # By default, prefab build targets on WSL (Linux running on
-        # Windows) will give us Windows builds which won't work right
-        # here. Ask it for Linux builds instead.
-        env = dict(os.environ, BA_WSL_TARGETS_WINDOWS='0', **make_env_overrides)
-
-        # Let the user know how to use their own built binaries instead
-        # if they prefer.
-        note = '\n' + textwrap.fill(
-            f'NOTE: You can set env-var BA_APP_RUN_ENABLE_BUILDS=1'
-            f' to use locally-built binaries for {purpose} instead'
-            f' of prefab ones. This will properly reflect any changes'
-            f' you\'ve made to the C/C++ layer.',
-            80,
-        )
-
+            binary_build_command = ['make', 'prefab-server-release-build']
+            prefab_target = 'server-release'
         binary_path = (
             subprocess.run(
-                ['tools/pcommand', 'prefab_binary_path', 'server-release'],
+                ['tools/pcommand', 'prefab_binary_path', prefab_target],
                 env=env,
                 check=True,
                 capture_output=True,
@@ -221,27 +118,55 @@ def acquire_binary(assets: AssetMode, purpose: str) -> str:
             .strip()
         )
 
-        if assets == 'full':
+        # The prefab make rule is annotated with __EFROCACHE_TARGET__
+        # so repos that publish prefab artifacts (spinoffs, public)
+        # rewrite it to fetch from efrocache; repos without an
+        # .efrocachemap (ballistica-internal) build from source
+        # instead. Word the message based on which path will run.
+        will_fetch = False
+        if os.path.exists('.efrocachemap'):
+            try:
+                import json
+
+                with open('.efrocachemap', encoding='utf-8') as efh:
+                    will_fetch = binary_path in json.load(efh)
+            except OSError, ValueError:
+                pass
+
+        if will_fetch:
             print(
-                f'{Clr.SMAG}Fetching prefab binary & assets for'
-                f' {purpose}...{note}{Clr.RST}',
+                f'{Clr.SMAG}Fetching prefab {kind} binary & assets for'
+                f' {purpose}...{Clr.RST}',
                 flush=True,
             )
-            binary_build_command = ['make', 'prefab-server-release-build']
-        elif assets == 'scripts':
-            print(
-                f'{Clr.SMAG}Fetching prefab binary & scripts for'
-                f' {purpose}...{note}{Clr.RST}',
-                flush=True,
-            )
-            binary_build_command = ['make', 'prefab-server-release-build']
         else:
             print(
-                f'{Clr.SMAG}Fetching prefab binary for {purpose}...'
-                f'{note}{Clr.RST}',
+                f'{Clr.SMAG}Building {kind} binary & assets for'
+                f' {purpose} (via prefab path)...{Clr.RST}',
                 flush=True,
             )
-            binary_build_command = ['make', binary_path]
+    else:
+        # Going the build-it-ourselves route (the default).
+
+        if gui:
+            print(
+                f'{Clr.SMAG}Building gui binary & assets for'
+                f' {purpose}...{Clr.RST}',
+                flush=True,
+            )
+            binary_build_command = ['make', 'cmake-build']
+            binary_path = 'build/cmake/debug/staged/ballisticakit'
+        else:
+            print(
+                f'{Clr.SMAG}Building headless binary & assets for'
+                f' {purpose}...{Clr.RST}',
+                flush=True,
+            )
+            binary_build_command = ['make', 'cmake-server-build']
+            binary_path = (
+                'build/cmake/server-debug/staged/dist/ballisticakit_headless'
+            )
+        env = None
 
     subprocess.run(binary_build_command, env=env, check=True)
     if not os.path.exists(binary_path):
@@ -249,3 +174,113 @@ def acquire_binary(assets: AssetMode, purpose: str) -> str:
             f"Binary not found at expected path '{binary_path}'."
         )
     return binary_path
+
+
+def run_headless_capture(
+    *,
+    purpose: str,
+    config_dir: str | None = None,
+    exec_code: str | None = None,
+    env: Mapping[str, str] | None = None,
+    timeout: float = 30.0,
+    udp_listener: bool = False,
+    stop_pattern: str | re.Pattern[str] | None = None,
+    sigterm_grace: float = 5.0,
+) -> subprocess.CompletedProcess[bytes]:
+    """Boot the headless engine, capture stdout+stderr, and return.
+
+    Designed for capture-style tests that boot the client, observe a
+    bit of behavior in the logs, and quit. Like ``python_command``,
+    this goes through ``acquire_binary``, so build-vs-prefab is
+    controlled by ``BA_APP_RUN_USE_PREFAB=1`` (default: build).
+
+    By default ``BA_NO_UDP_LISTENER=1`` is exported so the binary
+    never opens a UDP socket. That sidesteps Claude Code's sandbox
+    (which blocks ``0.0.0.0`` binds) and avoids port conflicts on
+    shared CI hosts. Pass ``udp_listener=True`` if a test genuinely
+    needs the listener.
+
+    If ``stop_pattern`` (str or compiled regex) is given, output is
+    streamed and the process is sent SIGTERM as soon as a line
+    matches — much faster than waiting for an apptimer to call
+    ``_babase.quit``. Without it, the binary runs until it exits on
+    its own or ``timeout`` elapses.
+
+    Stdout and stderr are merged. Returns a CompletedProcess with
+    bytes ``stdout``; callers decode as needed. Never raises on
+    timeout — callers assert on the captured output instead.
+    """
+    binpath = os.path.abspath(acquire_binary(purpose=purpose))
+    bindir = os.path.dirname(binpath)
+
+    env_final = dict(os.environ)
+    if env is not None:
+        env_final.update(env)
+    if not udp_listener:
+        env_final.setdefault('BA_NO_UDP_LISTENER', '1')
+
+    cmd = [binpath]
+    if config_dir is not None:
+        cmd += ['--config-dir', config_dir]
+    if exec_code is not None:
+        cmd += ['--exec', exec_code]
+
+    pattern: re.Pattern[str] | None
+    if isinstance(stop_pattern, str):
+        pattern = re.compile(stop_pattern)
+    else:
+        pattern = stop_pattern
+
+    captured: list[bytes] = []
+
+    with subprocess.Popen(
+        cmd,
+        cwd=bindir,
+        env=env_final,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    ) as proc:
+        assert proc.stdout is not None
+        stream = proc.stdout
+
+        if pattern is None:
+            try:
+                out_bytes, _ = proc.communicate(timeout=timeout)
+                captured.append(out_bytes)
+            except subprocess.TimeoutExpired:
+                proc.send_signal(signal.SIGTERM)
+                try:
+                    out_bytes, _ = proc.communicate(timeout=sigterm_grace)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    out_bytes, _ = proc.communicate()
+                captured.append(out_bytes)
+        else:
+            matcher = pattern
+
+            def reader() -> None:
+                for raw in iter(stream.readline, b''):
+                    captured.append(raw)
+                    if matcher.search(raw.decode(errors='replace')):
+                        return
+
+            thread = threading.Thread(target=reader, daemon=True)
+            thread.start()
+            thread.join(timeout=timeout)
+            if proc.poll() is None:
+                proc.send_signal(signal.SIGTERM)
+                try:
+                    proc.wait(timeout=sigterm_grace)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    proc.wait()
+            thread.join(timeout=2.0)
+
+        returncode = proc.returncode
+
+    return subprocess.CompletedProcess(
+        args=cmd,
+        returncode=returncode,
+        stdout=b''.join(captured),
+        stderr=None,
+    )

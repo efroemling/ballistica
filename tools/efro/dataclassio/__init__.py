@@ -8,15 +8,19 @@ unrecognized attribute data, allowing older clients to interact with newer
 data formats in a nondestructive manner.
 """
 
-from __future__ import annotations
-
 # from efro.util import set_canonical_module_names
 from efro.dataclassio._base import (
     Codec,
     IOAttrs,
     IOExtendedData,
     IOMultiType,
-    EXTRA_ATTRS_ATTR,
+    IO_SLOTS,
+    io_meta,
+    io_is_lossy,
+    io_mark_lossy,
+    io_clear_lossy,
+    io_extra_attrs,
+    io_set_extra_attrs,
     parse_annotated,
     TypeNotPresentError,
 )
@@ -40,7 +44,13 @@ from efro.dataclassio._api import (
 __all__ = [
     'Codec',
     'DataclassFieldLookup',
-    'EXTRA_ATTRS_ATTR',
+    'IO_SLOTS',
+    'io_meta',
+    'io_is_lossy',
+    'io_mark_lossy',
+    'io_clear_lossy',
+    'io_extra_attrs',
+    'io_set_extra_attrs',
     'IOAttrs',
     'IOExtendedData',
     'IOMultiType',

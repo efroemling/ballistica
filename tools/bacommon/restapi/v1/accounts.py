@@ -3,8 +3,6 @@
 # See CLAUDE.md in this directory for contributor conventions.
 """Account response types for REST API v1."""
 
-from __future__ import annotations
-
 import datetime
 from dataclasses import dataclass
 from typing import Annotated

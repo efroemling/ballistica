@@ -10,6 +10,10 @@
 #include "ballistica/shared/ballistica.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
 
+namespace ballistica {
+class JsonObjBuilder;
+}
+
 namespace ballistica::base {
 
 /// 'Soft' interface to the plus feature-set, managed by base.
@@ -30,7 +34,6 @@ class PlusSoftInterface {
   virtual auto IsUnmodifiedBlessedBuild() -> bool = 0;
 
   virtual auto HasBlessingHash() -> bool = 0;
-  virtual auto PutLog(bool fatal) -> bool = 0;
   virtual void AAT() = 0;
   virtual void AATE() = 0;
   virtual auto GAHU() -> std::optional<std::string> = 0;
@@ -40,8 +43,6 @@ class PlusSoftInterface {
   virtual void PushAdViewComplete(const std::string& purpose,
                                   bool actually_showed) = 0;
   virtual void PushPublicPartyState() = 0;
-  virtual void PushSetFriendListCall(
-      const std::vector<std::string>& friends) = 0;
   virtual void DispatchRemoteAchievementList(
       const std::set<std::string>& achs) = 0;
   virtual void SetProductPrice(const std::string& product,
@@ -54,14 +55,11 @@ class PlusSoftInterface {
                                            const std::string& order_id,
                                            bool user_initiated) = 0;
   virtual auto GetAccountID() -> std::string = 0;
-  virtual void DirectSendV1CloudLogs(const std::string& prefix,
-                                     const std::string& suffix, bool instant,
-                                     int* result) = 0;
   virtual void ClientInfoQuery(const std::string& val1, const std::string& val2,
                                const std::string& val3, int build_number) = 0;
   virtual auto CalcV1PeerHash(const std::string& peer_hash_input)
       -> std::string = 0;
-  virtual void V1SetClientInfo(JsonDict* dict) = 0;
+  virtual void V1SetClientInfo(JsonObjBuilder* dict) = 0;
   virtual void DoPushSubmitAnalyticsCountsCall(const std::string& sval) = 0;
   virtual void SetHaveIncentivizedAd(bool val) = 0;
   virtual auto HaveIncentivizedAd() -> bool = 0;

@@ -4,12 +4,15 @@
 
 #include <Python.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/networking/network_writer.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/scene_v1/connection/connection_to_client_udp.h"
@@ -235,24 +238,38 @@ void ConnectionSet::Shutdown() {
   }
 }
 
+auto ConnectionSet::LangStrWireTagged(
+    const std::shared_ptr<const base::LangStr>& val) -> std::string {
+  assert(val != nullptr);
+  auto resource = val->ToResourceJson();
+  if (resource.has_value()) {
+    return std::string(1, kLangStrWireTagLangStr) + *resource;
+  }
+  BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+              "Can't serialize LangStr for message wire (" + resource.error()
+                  + "); sending evaluated text.");
+  return std::string(1, kLangStrWireTagLiteral) + val->Evaluate();
+}
+
 void ConnectionSet::SendScreenMessageToClients(const std::string& s, float r,
-                                               float g, float b) {
+                                               float g, float b,
+                                               const std::string& tagged) {
   for (auto&& i : connections_to_clients_) {
     if (i.second.exists() && i.second->can_communicate()) {
-      i.second->SendScreenMessage(s, r, g, b);
+      i.second->SendScreenMessage(s, r, g, b, tagged);
     }
   }
 }
 
 void ConnectionSet::SendScreenMessageToSpecificClients(
     const std::string& s, float r, float g, float b,
-    const std::vector<int>& clients) {
+    const std::vector<int>& clients, const std::string& tagged) {
   for (auto&& i : connections_to_clients_) {
     if (i.second.exists() && i.second->can_communicate()) {
       // Only send if this client is in our list.
       for (auto c : clients) {
         if (c == i.second->id()) {
-          i.second->SendScreenMessage(s, r, g, b);
+          i.second->SendScreenMessage(s, r, g, b, tagged);
           break;
         }
       }
@@ -269,8 +286,9 @@ void ConnectionSet::SendScreenMessageToSpecificClients(
 }
 
 void ConnectionSet::SendScreenMessageToAll(const std::string& s, float r,
-                                           float g, float b) {
-  SendScreenMessageToClients(s, r, g, b);
+                                           float g, float b,
+                                           const std::string& tagged) {
+  SendScreenMessageToClients(s, r, g, b, tagged);
   g_base->ScreenMessage(s, {r, g, b});
 }
 
@@ -387,18 +405,24 @@ void ConnectionSet::PushDisconnectedFromHostCall() {
 }
 
 void ConnectionSet::PushHostConnectedUDPCall(const SockAddr& addr,
-                                             bool print_connect_progress) {
-  g_base->logic->event_loop()->PushCall([this, addr, print_connect_progress] {
-    // Attempt to disconnect any clients we have, turn off public-party
-    // advertising, etc.
-    if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
-      appmode->CleanUpBeforeConnectingToHost();
-    }
-    print_udp_connect_progress_ = print_connect_progress;
-    connection_to_host_ = Object::New<ConnectionToHostUDP>(addr);
-    has_connection_to_host_ = true;
-    printed_host_disconnect_ = false;
-  });
+                                             bool print_connect_progress,
+                                             const std::string& password,
+                                             bool prepped) {
+  g_base->logic->event_loop()->PushCall(
+      [this, addr, print_connect_progress, password, prepped] {
+        // Attempt to disconnect any clients we have, turn off public-party
+        // advertising, etc.
+        if (auto* appmode = classic::ClassicAppMode::GetActiveOrWarn()) {
+          appmode->CleanUpBeforeConnectingToHost();
+        }
+        print_udp_connect_progress_ = print_connect_progress;
+        auto connection = Object::New<ConnectionToHostUDP>(addr);
+        connection->set_join_password(password);
+        connection->set_prepped(prepped);
+        connection_to_host_ = connection;
+        has_connection_to_host_ = true;
+        printed_host_disconnect_ = false;
+      });
 }
 
 void ConnectionSet::PushDisconnectFromHostCall() {
@@ -576,8 +600,8 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
             if (!keep_trying) {
               if (!printed_host_disconnect_) {
                 g_base->ScreenMessage(
-                    g_base->assets->GetResourceString(
-                        "connectionFailedVersionMismatchText"),
+                    base::BuiltinStrings::Net::ConnectionFailedVersionMismatch()
+                        ->Evaluate(),
                     {1, 0, 0});
                 printed_host_disconnect_ = true;
               }
@@ -585,24 +609,25 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
           } else if (data[0] == BA_PACKET_CLIENT_DENY_PARTY_FULL) {
             if (!printed_host_disconnect_) {
               if (print_udp_connect_progress_) {
-                g_base->ScreenMessage(g_base->assets->GetResourceString(
-                                          "connectionFailedPartyFullText"),
-                                      {1, 0, 0});
+                g_base->ScreenMessage(
+                    base::BuiltinStrings::Net::ConnectionFailedPartyFull()
+                        ->Evaluate(),
+                    {1, 0, 0});
               }
               printed_host_disconnect_ = true;
             }
           } else if (data[0] == BA_PACKET_CLIENT_DENY_ALREADY_IN_PARTY) {
             if (!printed_host_disconnect_) {
               g_base->ScreenMessage(
-                  g_base->assets->GetResourceString(
-                      "connectionFailedHostAlreadyInPartyText"),
+                  base::BuiltinStrings::Net::ConnectionFailedHostInOtherParty()
+                      ->Evaluate(),
                   {1, 0, 0});
               printed_host_disconnect_ = true;
             }
           } else {
             if (!printed_host_disconnect_) {
               g_base->ScreenMessage(
-                  g_base->assets->GetResourceString("connectionRejectedText"),
+                  base::BuiltinStrings::Net::ConnectionRejected()->Evaluate(),
                   {1, 0, 0});
               printed_host_disconnect_ = true;
             }
@@ -646,6 +671,17 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
 
         } else if (connection_to_host_.exists()) {
           // If we're connected to someone else, we can't have clients.
+          g_base->network_writer->PushSendToCall(
+              {BA_PACKET_CLIENT_DENY_ALREADY_IN_PARTY, request_id}, addr);
+        } else if (appmode->InReplay()) {
+          // We don't broadcast replay streams to clients (they never
+          // prepped the replay's package universe), so refuse joins
+          // while a replay is up. Reuses the already-in-party deny for
+          // now; a dedicated 'watching a replay' message is a
+          // follow-up.
+          g_core->logging->Log(
+              LogName::kBaNetworking, LogLevel::kDebug,
+              "Denying client-request; we're viewing a replay.");
           g_base->network_writer->PushSendToCall(
               {BA_PACKET_CLIENT_DENY_ALREADY_IN_PARTY, request_id}, addr);
         } else {
@@ -692,6 +728,13 @@ void ConnectionSet::HandleIncomingUDPPacket(const std::vector<uint8_t>& data_in,
                 addr, client_instance_uuid, request_id, client_id);
             connections_to_clients_[client_id] = connection_to_client;
           }
+
+          // Stash the protocol version they claimed. We don't gate
+          // connects on it (negotiation happens in the handshake
+          // exchange), but it is the only clue we get about what is on
+          // the other end before then, so keep it for diagnostics.
+          connection_to_client->set_client_claimed_protocol_version(
+              protocol_id);
 
           // If we got to this point, regardless of whether we already had a
           // connection or not, tell them they're accepted.

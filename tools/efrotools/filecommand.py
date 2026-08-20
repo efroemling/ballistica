@@ -2,8 +2,6 @@
 #
 """Operate on large sets of files efficiently."""
 
-from __future__ import annotations
-
 import logging
 from collections import deque
 from typing import TYPE_CHECKING

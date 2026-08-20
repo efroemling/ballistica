@@ -2,8 +2,6 @@
 #
 """Logging functionality."""
 
-from __future__ import annotations
-
 import logging
 from enum import Enum
 from typing import TYPE_CHECKING, assert_never
@@ -25,7 +23,9 @@ class ClientLoggerName(Enum):
     BA = 'ba'
     ENV = 'ba.env'
     APP = 'ba.app'
+    USER = 'ba.user'
     ASSETS = 'ba.assets'
+    ASSET_MANAGER = 'ba.assetmanager'
     AUDIO = 'ba.audio'
     CACHE = 'ba.cache'
     DISPLAYTIME = 'ba.displaytime'
@@ -41,8 +41,10 @@ class ClientLoggerName(Enum):
     ACCOUNT_CLIENT_V2 = 'ba.accountclientv2'
     ACCOUNT = 'ba.account'
     LOGIN_ADAPTER = 'ba.loginadapter'
+    DISCORD = 'ba.discord'
     UI = 'ba.ui'
     WORKSPACE = 'ba.workspace'
+    LOG_REPORTING = 'ba.logreport'
 
     @property
     def description(self) -> str:
@@ -56,8 +58,12 @@ class ClientLoggerName(Enum):
             return 'engine environment bootstrapping'
         if self is cls.APP:
             return 'general app operation - INFO is visible by default'
+        if self is cls.USER:
+            return 'For issues specific to this user.'
         if self is cls.ASSETS:
             return 'textures, sounds, models, etc.'
+        if self is cls.ASSET_MANAGER:
+            return 'downloading/tracking downloadable asset-packages'
         if self is cls.AUDIO:
             return 'sound and music playback'
         if self is cls.CACHE:
@@ -73,7 +79,10 @@ class ClientLoggerName(Enum):
         if self is cls.INPUT:
             return 'keyboards, touchscreens, game-controllers, etc.'
         if self is cls.LIFECYCLE:
-            return 'bootstrapping, pausing, resuming, shutdown, etc.'
+            return (
+                'bootstrapping, pausing, resuming, shutdown, etc.'
+                ' (INFO=app-phase milestones, DEBUG=init sub-steps)'
+            )
         if self is cls.NETWORKING:
             return 'anything network related'
         if self is cls.CONNECTIVITY:
@@ -88,10 +97,14 @@ class ClientLoggerName(Enum):
             return 'account functionality'
         if self is cls.LOGIN_ADAPTER:
             return 'support for particular login types'
+        if self is cls.DISCORD:
+            return 'Discord Social SDK integration'
         if self is cls.UI:
             return 'anything user-interface related'
         if self is cls.WORKSPACE:
             return 'cloud workspace syncing'
+        if self is cls.LOG_REPORTING:
+            return 'shipping log history to the cloud'
         assert_never(self)
 
 

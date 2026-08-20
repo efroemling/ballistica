@@ -5,12 +5,11 @@
 # ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import classicassets
 
 from bascenev1lib.actor.flag import Flag
 from bascenev1lib.actor.playerspaz import PlayerSpaz
@@ -94,18 +93,18 @@ class ChosenOneGame(bs.TeamGameActivity[Player, Team]):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._chosen_one_player: Player | None = None
-        self._swipsound = bs.getsound('swip')
+        self._swipsound = classicassets.audio.swip.get()
         self._countdownsounds: dict[int, bs.Sound] = {
-            10: bs.getsound('announceTen'),
-            9: bs.getsound('announceNine'),
-            8: bs.getsound('announceEight'),
-            7: bs.getsound('announceSeven'),
-            6: bs.getsound('announceSix'),
-            5: bs.getsound('announceFive'),
-            4: bs.getsound('announceFour'),
-            3: bs.getsound('announceThree'),
-            2: bs.getsound('announceTwo'),
-            1: bs.getsound('announceOne'),
+            10: classicassets.audio.announce_ten.get(),
+            9: classicassets.audio.announce_nine.get(),
+            8: classicassets.audio.announce_eight.get(),
+            7: classicassets.audio.announce_seven.get(),
+            6: classicassets.audio.announce_six.get(),
+            5: classicassets.audio.announce_five.get(),
+            4: classicassets.audio.announce_four.get(),
+            3: classicassets.audio.announce_three.get(),
+            2: classicassets.audio.announce_two.get(),
+            1: classicassets.audio.announce_one.get(),
         }
         self._flag_spawn_pos: Sequence[float] | None = None
         self._reset_region_material: bs.Material | None = None

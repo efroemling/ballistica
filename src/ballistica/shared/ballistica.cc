@@ -18,10 +18,12 @@
 #include "ballistica/shared/python/python.h"
 #include "ballistica/shared/python/python_command.h"
 
-// Make sure min_sdl.h stays in here even though this file compiles fine
-// without it. On some platforms it does a bit of magic to redefine main as
-// SDL_main which leads us to a tricky-to-diagnose linker error if it
-// removed from here.
+// Make sure min_sdl.h stays included above; on real-SDL builds it provides
+// SDL.h (and sets SDL_MAIN_HANDLED). Historically including it here was also
+// what redefined main as SDL_main; under SDL3 we instead keep our own plain
+// main() (this is the real Console-subsystem entry point) and call
+// SDL_SetMainReady() before SDL_Init (see app_adapter_sdl), so no SDL entry
+// shim is involved.
 #ifndef BALLISTICA_CORE_PLATFORM_SUPPORT_MIN_SDL_H_
 #error Please include min_sdl.h here.
 #endif
@@ -29,8 +31,13 @@
 // If desired, define main() in the global namespace.
 #if BA_MONOLITHIC_BUILD && BA_DEFINE_MAIN
 auto main(int argc, char** argv) -> int {
+  // Capture an epoch-seconds time as early as possible so logs can show
+  // timings relative to actual process start. Matches Python's
+  // time.time() so the two share an anchor.
+  auto launch_time = ballistica::core::Platform::TimeSinceEpochSeconds();
+
   auto core_config =
-      ballistica::core::CoreConfig::ForArgsAndEnvVars(argc, argv);
+      ballistica::core::CoreConfig::ForArgsAndEnvVars(argc, argv, launch_time);
 
   // Arg-parsing may have yielded an error or printed simple output for
   // things such as '--help', in which case we're done.
@@ -44,8 +51,8 @@ auto main(int argc, char** argv) -> int {
 namespace ballistica {
 
 // These are set automatically via script; don't modify them here.
-const int kEngineBuildNumber = 22812;
-const char* kEngineVersion = "1.7.62";
+const int kEngineBuildNumber = 22991;
+const char* kEngineVersion = "1.8.0a96";
 const int kEngineApiVersion = 9;
 
 #if BA_MONOLITHIC_BUILD
@@ -62,9 +69,21 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
 
     // Even at the absolute start of execution we should be able to
     // reasonably log errors. Set env var BA_CRASH_TEST=1 to test this.
+    //
+    // BA_CRASH_TEST_TOKEN, if set, is appended to the message. That lets
+    // an end-to-end test tag one specific crash with a random value and
+    // then go looking for exactly that value on the server side. Note
+    // this fires before core is imported, so it is also our best
+    // exercise of the g_core == nullptr path in the fatal reporter.
     if (const char* crashenv = getenv("BA_CRASH_TEST")) {
       if (!strcmp(crashenv, "1")) {
-        FatalError("Fatal-Error-Test");
+        std::string msg{"Fatal-Error-Test"};
+        if (const char* token = getenv("BA_CRASH_TEST_TOKEN")) {
+          if (token[0] != '\0') {
+            msg += std::string(" token=") + token;
+          }
+        }
+        FatalError(msg);
       }
     }
 
@@ -72,6 +91,28 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
     // Ballistica functionality implicitly uses core, so we should always
     // import it first thing even if we don't explicitly use it.
     l_core = core::CoreFeatureSet::Import(&core_config);
+
+    // Test hook for the early-log drain path used by
+    // FatalErrorHandling::ReportFatalError. Exercised by
+    // tests/test_base/test_held_logs.py. At this point core import has
+    // flipped python_logging_calls_enabled_ to false-and-deferred (since
+    // expect_log_handler_setup defaulted true for any invocation that
+    // isn't a -c command), so these log calls land in the early-log
+    // buffer. FatalError then runs ReportFatalError, which drains the
+    // buffer to stderr before aborting. If that path breaks, the test
+    // detects the missing [held-log] lines. Keep the message strings
+    // stable — the test asserts on their substrings.
+    if (const char* crashenv = getenv("BA_CRASH_TEST")) {
+      if (!strcmp(crashenv, "held_logs")) {
+        l_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                             "held-log-test: line 1");
+        l_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                             "held-log-test: line 2");
+        l_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+                             "held-log-test: line 3");
+        FatalError("held-log-test: triggered fatal");
+      }
+    }
 
     auto time2 = core::Platform::TimeMonotonicMillisecs();
 
@@ -209,7 +250,12 @@ auto MonolithicMain(const core::CoreConfig& core_config) -> int {
       }
     }
   }
-  return 0;
+
+  // Return whatever exit code the app requested during its (clean)
+  // shutdown; defaults to 0. A headless run that hit a clean-but-failing
+  // condition (e.g. a construct-mode asset bring-up failure) sets a
+  // specific nonzero code here without going through the fatal path.
+  return l_base ? l_base->AppExitCode() : 0;
 }
 
 // A way to do the same as above except in an incremental manner. This can

@@ -2,7 +2,6 @@
 #
 """Text related bits."""
 
-from __future__ import annotations
 from enum import Enum
 
 from typing import TYPE_CHECKING
@@ -14,7 +13,7 @@ if TYPE_CHECKING:
 class SpecialChar(Enum):
     """Custom unicode characters the engine can display.
 
-    Keep this in sync with babase._mgen.enums.SpecialChar.
+    Keep this in sync with babase._generated.enums.SpecialChar.
     """
 
     LEFT_ARROW = '\ue001'
@@ -53,7 +52,7 @@ class SpecialChar(Enum):
     DICE_BUTTON2 = '\ue023'
     DICE_BUTTON3 = '\ue024'
     DICE_BUTTON4 = '\ue025'
-    GAME_CIRCLE_LOGO = '\ue026'
+    DISCORD_LOGO = '\ue026'
     PARTY_ICON = '\ue027'
     TEST_ACCOUNT = '\ue028'
     TICKET_BACKING = '\ue029'

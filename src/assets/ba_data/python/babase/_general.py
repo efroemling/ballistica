@@ -2,16 +2,20 @@
 #
 """Utility snippets applying to generic Python code."""
 
-from __future__ import annotations
-
 import sys
 import types
 import weakref
 import random
 import logging
 import inspect
-import warnings
-from typing import TYPE_CHECKING, TypeVar, Protocol, NewType, override
+from typing import TYPE_CHECKING, Protocol, NewType, override
+
+# ``deprecated`` is available from the stdlib in Python 3.13+, but
+# mypy's type stubs currently point at typing_extensions for
+# compatibility across versions (see mypy #16166). Using
+# typing_extensions avoids a mypy-attr-defined error while still
+# giving us the same runtime semantics.
+from typing_extensions import deprecated
 
 from efro.terminal import Clr
 
@@ -19,19 +23,20 @@ import _babase
 
 if TYPE_CHECKING:
     import functools
-    from typing import Any, Callable
+    from typing import Any, Callable, TypeAlias
 
 
 # Declare distinct types for different time measurements we use so the
 # type-checker can help prevent us from mixing and matching accidentally,
 # even if the *actual* types being used are the same.
 
-# Our monotonic time measurement that starts at 0 when the app launches
-# and pauses while the app is suspended.
+#: Monotonic time measurement that starts at 0 when the app launches
+#: and pauses while the app is suspended.
 AppTime = NewType('AppTime', float)
 
-# Like app-time but incremented at frame draw time and in a smooth
-# consistent manner; useful to keep animations smooth and jitter-free.
+#: Like :data:`AppTime` but incremented at frame draw time and in a
+#: smooth consistent manner; useful to keep animations smooth and
+#: jitter-free.
 DisplayTime = NewType('DisplayTime', float)
 
 
@@ -81,7 +86,7 @@ def getclass[T](
     modulename = '.'.join(splits[:-1])
     classname = splits[-1]
     if modulename in sys.stdlib_module_names and check_sdlib_modulename_clash:
-        raise Exception(f'{modulename} is an inbuilt module.')
+        raise ValueError(f'{modulename} is an inbuilt module.')
     module = importlib.import_module(modulename)
     cls: type = getattr(module, classname)
 
@@ -95,19 +100,26 @@ def get_type_name(cls: type) -> str:
     return f'{cls.__module__}.{cls.__qualname__}'
 
 
-# Note: Something here is wonky with pylint, possibly related to our
-# custom pylint plugin. Disabling all checks seems to fix it.
-# pylint: disable=all
 if TYPE_CHECKING:
     # For type-checking, we point WeakCall and Call at
     # functools.partial. This gives decent type-checking considering the
     # open-ended nature of these calls (args being supplied at create
     # time and/or at call time). Just remember that we're slightly lying
     # to the type-checker here.
-    WeakCallPartial = functools.partial
-    CallPartial = functools.partial
-    WeakCall = functools.partial
-    Call = functools.partial
+    #
+    # Note: These are written as annotated (``: TypeAlias``) assignments
+    # on purpose. Our custom pylint plugin wipes this ``if
+    # TYPE_CHECKING`` block but leaves the assigned names in module
+    # locals, which made pylint's class-redefinition checker choke on the
+    # real class defs below (an internal astroid crash, which previously
+    # forced a blanket ``disable=all``/``enable=all`` wrapper around the
+    # whole block). pylint's redefinition check explicitly skips
+    # *annotated* simple assignments, so the annotation sidesteps the
+    # crash with no suppression needed.
+    WeakCallPartial: TypeAlias = functools.partial
+    CallPartial: TypeAlias = functools.partial
+    WeakCall: TypeAlias = functools.partial
+    Call: TypeAlias = functools.partial
 else:
 
     class WeakCallPartial:
@@ -156,7 +168,7 @@ else:
         """
 
         # Optimize performance a bit; we shouldn't need to be super dynamic.
-        __slots__ = ['_call', '_args', '_keywds']
+        __slots__ = ['_call', '_args', '_keywds', '__wrapped__']
 
         _did_invalid_call_warning = False
 
@@ -167,8 +179,12 @@ else:
             # non-partial versions if you want to access those.
             if hasattr(call, '__func__'):
                 self._call = WeakMethod(call)
+                # Stdlib __wrapped__ convention, for diagnostics (see
+                # CallStrict). The plain function, not the bound method
+                # -- strong-refing the method would keep its target
+                # alive and defeat the weak ref.
+                self.__wrapped__ = call.__func__
             else:
-                app = _babase.app
                 if not self._did_invalid_call_warning:
                     logging.warning(
                         'Warning: callable passed to WeakCall() is not'
@@ -179,6 +195,7 @@ else:
                     )
                     type(self)._did_invalid_call_warning = True
                 self._call = call
+                self.__wrapped__ = call
             self._args = args
             self._keywds = keywds
 
@@ -224,7 +241,7 @@ else:
         """
 
         # Optimize performance a bit; we shouldn't need to be super dynamic.
-        __slots__ = ['_call', '_args', '_keywds']
+        __slots__ = ['_call', '_args', '_keywds', '__wrapped__']
 
         def __init__(self, call: Any, /, *args: Any, **keywds: Any):
             # Note: keeping _call, _args, _keywds private in this case
@@ -234,6 +251,10 @@ else:
             self._call = call
             self._args = args
             self._keywds = keywds
+
+            # Stdlib __wrapped__ convention, for diagnostics (see
+            # CallStrict).
+            self.__wrapped__ = call
 
         def __call__(self, *args_extra: Any, **keywds_extra: Any) -> Any:
             # Fast path: no extra args or kwargs.
@@ -252,36 +273,47 @@ else:
         @override
         def __repr__(self) -> str:
             return (
-                f'<babase.Call object; _call={self.call!r}'
-                f' _args={self.args!r} _keywds={self.keywds!r}>'
+                f'<babase.Call object; _call={self._call!r}'
+                f' _args={self._args!r} _keywds={self._keywds!r}>'
             )
 
+    @deprecated(
+        'WeakCall should be replaced with either WeakCallPartial'
+        ' (if passing extra args at call time) or WeakCallStrict'
+        ' (if not). Once API 9 support ends, WeakCall can again be'
+        ' used, but it will behave like WeakCallStrict instead of'
+        ' WeakCallPartial.'
+    )
     class WeakCall:
-        """Currently alias of :meth:`WeakCallPartial`."""
+        """Transitional alias of :class:`WeakCallPartial`.
+
+        Deprecated — pick :class:`WeakCallPartial` or
+        :class:`WeakCallStrict` explicitly. The ``@deprecated``
+        decorator emits the runtime warning and is picked up by
+        type-checkers/IDEs so call sites are flagged statically. The
+        ``WeakCall`` name will return after API 9 support ends but
+        will then alias :class:`WeakCallStrict`, so migrating away
+        now avoids a silent behavior change later.
+        """
 
         # Optimize performance a bit; we shouldn't need to be super dynamic.
-        __slots__ = ['_call', '_args', '_keywds']
+        __slots__ = ['_call', '_args', '_keywds', '__wrapped__']
 
         _did_invalid_call_warning = False
 
         def __init__(self, call: Any, /, *args: Any, **keywds: Any) -> None:
-            warnings.warn(
-                'WeakCall should be replaced with either WeakCallPartial'
-                ' (if passing extra args at call time) or WeakCallStrict'
-                ' (it not). Once API 9 support ends, WeakCall can again be'
-                ' used, but it will behave like WeakCallStrict instead of'
-                ' WeakCallPartial.',
-                DeprecationWarning,
-                stacklevel=2,
-            )
             # Note: keeping _call, _args, _keywds private in this case
             # since we sub functools.partial for ourself in
             # type-checking so they will be unrecognized anyway. Use
             # non-partial versions if you want to access those.
             if hasattr(call, '__func__'):
                 self._call = WeakMethod(call)
+                # Stdlib __wrapped__ convention, for diagnostics (see
+                # CallStrict). The plain function, not the bound method
+                # -- strong-refing the method would keep its target
+                # alive and defeat the weak ref.
+                self.__wrapped__ = call.__func__
             else:
-                app = _babase.app
                 if not self._did_invalid_call_warning:
                     logging.warning(
                         'Warning: callable passed to WeakCall() is not'
@@ -291,7 +323,8 @@ else:
                         stack_info=True,
                     )
                     type(self)._did_invalid_call_warning = True
-                    self._call = call
+                self._call = call
+                self.__wrapped__ = call
             self._args = args
             self._keywds = keywds
 
@@ -316,22 +349,28 @@ else:
                 f' _args={self._args!r} _keywds={self._keywds!r}>'
             )
 
+    @deprecated(
+        'Call should be replaced with either CallPartial'
+        ' (if passing extra args at call time) or CallStrict'
+        ' (if not). Once API 9 support ends, Call can again be'
+        ' used, but it will behave like CallStrict instead'
+        ' of CallPartial.'
+    )
     class Call:
-        """Currently alias of :meth:`CallPartial`."""
+        """Transitional alias of :class:`CallPartial`.
+
+        Deprecated — pick :class:`CallPartial` or :class:`CallStrict`
+        explicitly. The ``@deprecated`` decorator emits the runtime
+        warning and is picked up by type-checkers/IDEs so call sites
+        are flagged statically. The ``Call`` name will return after
+        API 9 support ends but will then alias :class:`CallStrict`,
+        so migrating away now avoids a silent behavior change later.
+        """
 
         # Optimize performance a bit; we shouldn't need to be super dynamic.
-        __slots__ = ['_call', '_args', '_keywds']
+        __slots__ = ['_call', '_args', '_keywds', '__wrapped__']
 
         def __init__(self, call: Any, /, *args: Any, **keywds: Any):
-            warnings.warn(
-                'Call should be replaced with either CallPartial'
-                ' (if passing extra args at call time) or CallStrict'
-                ' (it not). Once API 9 support ends, Call can again be'
-                ' used, but it will behave like CallStrict instead'
-                ' of CallPartial.',
-                DeprecationWarning,
-                stacklevel=2,
-            )
             # Note: keeping _call, _args, _keywds private in this case
             # since we sub functools.partial for ourself in
             # type-checking so they will be unrecognized anyway. Use
@@ -339,6 +378,10 @@ else:
             self._call = call
             self._args = args
             self._keywds = keywds
+
+            # Stdlib __wrapped__ convention, for diagnostics (see
+            # CallStrict).
+            self.__wrapped__ = call
 
         def __call__(self, *args_extra: Any, **keywds_extra: Any) -> Any:
             # Fast path: no extra args or kwargs.
@@ -357,12 +400,9 @@ else:
         @override
         def __repr__(self) -> str:
             return (
-                f'<babase.Call object; _call={self.call!r}'
-                f' _args={self.args!r} _keywds={self.keywds!r}>'
+                f'<babase.Call object; _call={self._call!r}'
+                f' _args={self._args!r} _keywds={self._keywds!r}>'
             )
-
-
-# pylint: enable=all
 
 
 class CallStrict[**P, T]:
@@ -372,7 +412,7 @@ class CallStrict[**P, T]:
     recommended if you do not need extra args at call time.
     """
 
-    __slots__ = ('call', 'args', 'kwargs')
+    __slots__ = ('call', 'args', 'kwargs', '__wrapped__')
 
     def __init__(
         self, call: Callable[P, T], /, *args: P.args, **kwargs: P.kwargs
@@ -383,6 +423,12 @@ class CallStrict[**P, T]:
         self.call = call
         self.args = args
         self.kwargs = kwargs
+
+        # Expose the wrapped callable via the stdlib convention
+        # (functools.wraps / inspect.unwrap) so diagnostics such as
+        # efro.threadpool's slow-task warnings can name the real
+        # target instead of this wrapper class.
+        self.__wrapped__ = call
 
     def __call__(self) -> T:
         return self.call(*self.args, **self.kwargs)
@@ -402,7 +448,7 @@ class WeakCallStrict[**P, T]:
     recommended if you do not need extra args at call time.
     """
 
-    __slots__ = ('call', 'args', 'kwargs')
+    __slots__ = ('call', 'args', 'kwargs', '__wrapped__')
 
     _did_invalid_call_warning = False
 
@@ -414,8 +460,12 @@ class WeakCallStrict[**P, T]:
         # whatnot that would break this.
         if hasattr(call, '__func__'):
             self.call: Any = WeakMethod(call)  # type: ignore
+            # Stdlib __wrapped__ convention, for diagnostics (see
+            # CallStrict). The plain function, not the bound method --
+            # strong-refing the method would keep its target alive and
+            # defeat the weak ref.
+            self.__wrapped__: Callable[..., Any] = getattr(call, '__func__')
         else:
-            app = _babase.app
             if not self._did_invalid_call_warning:
                 logging.warning(
                     'Warning: callable passed to WeakCallStrict() is not'
@@ -426,6 +476,7 @@ class WeakCallStrict[**P, T]:
                 )
                 type(self)._did_invalid_call_warning = True
             self.call = call
+            self.__wrapped__ = call
         self.args = args
         self.kwargs = kwargs
 

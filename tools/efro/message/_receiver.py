@@ -4,8 +4,6 @@
 Supports static typing for message types and possible return types.
 """
 
-from __future__ import annotations
-
 import types
 import inspect
 import logging

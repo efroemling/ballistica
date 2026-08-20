@@ -2,8 +2,6 @@
 #
 """Dialog window controlled by the master server."""
 
-from __future__ import annotations
-
 import logging
 from dataclasses import dataclass, field
 from typing import Annotated
@@ -11,6 +9,8 @@ from typing import Annotated
 from efro.dataclassio import ioprepped, IOAttrs
 
 import bauiv1 as bui
+from bauiv1 import _commonassets
+from bauiv1 import builtinassets
 
 
 @ioprepped
@@ -32,9 +32,7 @@ class ServerDialogWindow(bui.Window):
 
     def __init__(self, data: ServerDialogData):
         self._data = data
-        txt = bui.Lstr(
-            translate=('serverResponses', data.text), subs=data.subs
-        ).evaluate()
+        txt = bui.translate_server_text(data.text, subs=data.subs).evaluate()
         txt = txt.strip()
         txt_scale = 1.5
         txt_height = (
@@ -57,7 +55,7 @@ class ServerDialogWindow(bui.Window):
         )
         self._starttime = bui.apptime()
 
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.get().play()
         bui.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, 70 + (self._height - 70) * 0.5),
@@ -91,7 +89,7 @@ class ServerDialogWindow(bui.Window):
                 position=(30, 30),
                 size=(160, 60),
                 autoselect=True,
-                label=bui.Lstr(resource='cancelText'),
+                label=_commonassets.strings.actions.cancel,
                 on_activate_call=self._cancel_press,
             )
         )
@@ -104,7 +102,7 @@ class ServerDialogWindow(bui.Window):
                 position=(30, 30),
                 size=(160, 60),
                 autoselect=True,
-                label=bui.Lstr(resource='copyText'),
+                label=_commonassets.strings.actions.copy,
                 on_activate_call=self._copy_press,
             )
         )
@@ -121,7 +119,7 @@ class ServerDialogWindow(bui.Window):
             ),
             size=(160, 60),
             autoselect=True,
-            label=bui.Lstr(resource='okText'),
+            label=_commonassets.strings.actions.ok,
             on_activate_call=self._ok_press,
         )
 
@@ -135,13 +133,15 @@ class ServerDialogWindow(bui.Window):
     def _copy_press(self) -> None:
         assert self._data.copy_text is not None
         bui.clipboard_set_text(self._data.copy_text)
-        bui.screenmessage(bui.Lstr(resource='copyConfirmText'), color=(0, 1, 0))
+        bui.screenmessage(
+            _commonassets.strings.status.copied_to_clipboard, color=(0, 1, 0)
+        )
 
     def _ok_press(self) -> None:
         plus = bui.app.plus
         assert plus is not None
         if bui.apptime() - self._starttime < 1.0:
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
         plus.add_v1_account_transaction(
             {
@@ -156,7 +156,7 @@ class ServerDialogWindow(bui.Window):
         plus = bui.app.plus
         assert plus is not None
         if bui.apptime() - self._starttime < 1.0:
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
         plus.add_v1_account_transaction(
             {

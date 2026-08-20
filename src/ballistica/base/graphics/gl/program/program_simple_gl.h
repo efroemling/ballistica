@@ -57,6 +57,14 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
       flatness_location = glGetUniformLocation(program(), "flatness");
       assert(flatness_location != -1);
     }
+    // texPremultiplied selects premult-vs-straight handling in both the
+    // flatness lerp and the shadow-compositing path, so it exists whenever
+    // either is present.
+    if ((flags & SHD_FLATNESS) || (flags & SHD_SHADOW)) {
+      tex_premultiplied_location_ =
+          glGetUniformLocation(program(), "texPremultiplied");
+      assert(tex_premultiplied_location_ != -1);
+    }
     if (flags & SHD_MASKED) {
       SetTextureUnit("maskTex", kMaskTexUnit);
     }
@@ -133,6 +141,18 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     if (flatness != flatness_) {
       flatness_ = flatness;
       glUniform1f(flatness_location, flatness_);
+    }
+  }
+
+  // 1.0 if the bound color texture is premultiplied-alpha, else 0.0. Selects
+  // the flatness lerp target and the shadow-compositing path so premult and
+  // straight-alpha textures both render correctly (see GetFragmentCode).
+  void SetTexPremultiplied(float premultiplied) {
+    assert((flags_ & SHD_FLATNESS) || (flags_ & SHD_SHADOW));
+    assert(IsBound());
+    if (premultiplied != tex_premultiplied_) {
+      tex_premultiplied_ = premultiplied;
+      glUniform1f(tex_premultiplied_location_, tex_premultiplied_);
     }
   }
 
@@ -265,6 +285,9 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     if (flags & SHD_FLATNESS) {
       s += "uniform " BA_GLSL_MEDIUMP "float flatness;\n";
     }
+    if ((flags & SHD_FLATNESS) || (flags & SHD_SHADOW)) {
+      s += "uniform " BA_GLSL_MEDIUMP "float texPremultiplied;\n";
+    }
     if (flags & SHD_SHADOW) {
       s += BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUVShadow;\n"
            BA_GLSL_FRAG_IN " " BA_GLSL_MEDIUMP "vec2 vUVShadow2;\n"
@@ -317,10 +340,22 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
 
         if (flags & SHD_MODULATE) {
           if (flags & SHD_FLATNESS) {
+            // Flatness lerps the texture rgb toward 'flat white' to flatten
+            // clay-textured glyphs. For straight-alpha textures that target is
+            // vec3(1.0); for premultiplied textures (decision #23) it must be
+            // vec3(rawTexColor.a) instead -- i.e. unpremultiply, push toward
+            // white, re-premultiply, which simplifies to swapping the lerp
+            // target (no divide). Otherwise transparent premult texels get
+            // pushed toward white and premult-blend renders them as a glow.
+            // texPremultiplied (0/1) preserves the exact legacy path for
+            // straight-alpha textures (incl. modder customs).
             s += "   " BA_GLSL_MEDIUMP
                  "vec4 rawTexColor = " BA_GLSL_TEXTURE2D "(colorTex, vUV);\n"
+                 "   " BA_GLSL_MEDIUMP
+                 "vec3 flatTarget = mix(vec3(1.0), vec3(rawTexColor.a),"
+                 " texPremultiplied);\n"
                  "   " BA_GLSL_FRAGCOLOR " = color * "
-                       "vec4(mix(rawTexColor.rgb, vec3(1.0), flatness),"
+                       "vec4(mix(rawTexColor.rgb, flatTarget, flatness),"
                        " rawTexColor.a)";
           } else {
             s += "   " BA_GLSL_FRAGCOLOR " = color * "
@@ -355,17 +390,30 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
             s += " * " BA_GLSL_TEXTURE2D "(maskUV2Tex, vUV2).a";
           }
           s += ";\n";
+          // Composite the glyph over a soft black drop-shadow. Two cases,
+          // selected by texPremultiplied (decision #23):
+          //   * Straight-alpha (legacy): the running fragColor is straight
+          //     color. Premultiply it, lay it over the premultiplied black
+          //     shadow, then un-premultiply back to straight -- straight-alpha
+          //     textures use straight-alpha blending.
+          //   * Premultiplied: fragColor is already premultiplied (the caller
+          //     premultiplies the modulate color by its alpha for premult
+          //     textures), so just composite the shadow into alpha and leave
+          //     the result premultiplied to match the active premult blend (no
+          //     premultiply, no divide).
+          s += "   " BA_GLSL_MEDIUMP "vec4 shadowPremultComposite = vec4("
+               BA_GLSL_FRAGCOLOR ".rgb * " BA_GLSL_FRAGCOLOR ".a, "
+               BA_GLSL_FRAGCOLOR ".a) + (1.0 - " BA_GLSL_FRAGCOLOR
+               ".a) * vec4(0.0, 0.0, 0.0, shadowA);\n";
+          s += "   " BA_GLSL_MEDIUMP
+               "vec4 shadowStraight = vec4(shadowPremultComposite.rgb"
+               " / max(0.001, shadowPremultComposite.a),"
+               " shadowPremultComposite.a);\n";
+          s += "   " BA_GLSL_MEDIUMP "vec4 shadowPremult = vec4("
+               BA_GLSL_FRAGCOLOR ".rgb, " BA_GLSL_FRAGCOLOR
+               ".a + (1.0 - " BA_GLSL_FRAGCOLOR ".a) * shadowA);\n";
           s += "   " BA_GLSL_FRAGCOLOR
-               " = "
-               "vec4(" BA_GLSL_FRAGCOLOR ".rgb * " BA_GLSL_FRAGCOLOR
-               ".a," BA_GLSL_FRAGCOLOR
-               ".a) + "
-               "(1.0 - " BA_GLSL_FRAGCOLOR ".a) * vec4(0, 0, 0, shadowA);\n";
-          s += "   " BA_GLSL_FRAGCOLOR
-                      " = "
-                     "vec4(" BA_GLSL_FRAGCOLOR
-                     ".rgb / max(0.001, " BA_GLSL_FRAGCOLOR ".a), "
-                     BA_GLSL_FRAGCOLOR ".a);\n";
+               " = mix(shadowStraight, shadowPremult, texPremultiplied);\n";
         }
       }
 
@@ -398,12 +446,14 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
       shadow_density_{};
   float glow_amount_{}, glow_blur_{};
   float flatness_{};
+  float tex_premultiplied_{};
   GLint color_location_{};
   GLint colorize_color_location_{};
   GLint colorize2_color_location_{};
   GLint shadow_params_location_{};
   GLint glow_params_location_{};
   GLint flatness_location{};
+  GLint tex_premultiplied_location_{};
   int flags_{};
 };
 

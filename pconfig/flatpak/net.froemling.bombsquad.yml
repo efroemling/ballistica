@@ -1,0 +1,135 @@
+app-id: net.froemling.bombsquad
+runtime: org.freedesktop.Platform
+# Stable runtime. It ships Python 3.13, and bombsquad requires exactly
+# 3.14, so we build our own Python via the module below. Once a stable
+# runtime ships Python 3.14 (26.08+, ~Aug 2026), the Python module can
+# be dropped. (A prior attempt pinned the unstable 'master' runtime for
+# its Python 3.14, but master runtimes aren't installable from flathub
+# and their dev remote is unreliable -- see docs/followups.md.)
+runtime-version: "25.08"
+sdk: org.freedesktop.Sdk
+command: bombsquad.sh
+finish-args:
+  - --share=network
+  - --share=ipc
+  - --socket=x11
+  - --socket=pulseaudio
+  - --device=dri
+  # - --device=input
+  - --persist=.ballisticakit
+
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.llvm20
+
+modules:
+  # The stable runtime's python (3.13) is older than what bombsquad
+  # requires (exactly 3.14; see ballisticakit-cmake/CMakeLists.txt), so
+  # build our own into /app. Headers/bin are cleaned from the final app
+  # but libpython + the stdlib under /app/lib stay (the game embeds
+  # python). No PGO/LTO (--enable-optimizations/--with-lto) -- this is
+  # a nightly debug canary and those add ~20min per build.
+
+  - name: Python
+    sources:
+      - type: archive
+        url: https://www.python.org/ftp/python/3.14.6/Python-3.14.6.tar.xz
+        sha256: 143b1dddefaec3bd2e21e3b839b34a2b7fb9842272883c576420d605e9f30c63
+    config-opts:
+      - --prefix=${FLATPAK_DEST}
+      - --enable-shared
+      - --with-computed-gotos
+      - --enable-ipv6
+      - --with-system-expat
+      - --enable-loadable-sqlite-extensions
+      - --without-ensurepip
+    cleanup:
+      - /bin
+      - /include
+      - /lib/pkgconfig
+      - /share
+
+  # SDL2 is already provided by the runtime
+
+  # - name: SDL2
+  #   buildsystem: cmake
+  #   builddir: true
+  #   cleanup:
+  #     - /bin
+  #     - /include
+  #     - /lib/pkgconfig
+  #     - /lib/cmake
+  #     - /share
+  #     - "*.a"
+  #   sources:
+  #     - type: git
+  #       url: https://github.com/libsdl-org/SDL
+  #       tag: release-2.32.8
+
+  # rsync is required by bombsquad's build system to stage files for the flatpak build
+  # we can remove this in flathub version since we cannot access internet during the build
+
+  - name: rsync
+    buildsystem: autotools
+    config-opts:
+      - --prefix=${FLATPAK_DEST}
+      - --disable-debug
+      - --disable-locale
+    sources:
+      - type: archive
+        url: https://download.samba.org/pub/rsync/src/rsync-3.4.1.tar.gz
+        sha256: 2924bcb3a1ed8b551fc101f740b9f0fe0a202b115027647cf69850d65fd88c52
+    cleanup:
+      - "*"
+
+  - name: bombsquad
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/llvm20/bin
+      prepend-ld-library-path: /usr/lib/sdk/llvm20/lib
+      build-args:
+        - --share=network
+      env:
+        CMAKE_BUILD_TYPE: "Release"
+    build-commands:
+      # FLATPAK_DEST=/app, FLATPAK_ID=net.froemling.bombsquad
+      - mkdir -p ${FLATPAK_DEST}/bin/bombsquad
+      # Install uv into /app/bin (already on build PATH) so subsequent
+      # ``make env`` / ``make cmake-build`` can build the project venv.
+      - curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/app/bin INSTALLER_NO_MODIFY_PATH=1 sh
+      # we need to fix .venv/bin/python3.14 which is a symlink to system python
+      # of the machine the venv was created on, and then update the venv to fix
+      # all the shebangs according to the current build env (python3.14 here is
+      # the one our Python module built into /app/bin, which is on PATH)
+      - rm -f .venv/bin/python3.14
+      - ln -s /app/bin/python3.14 .venv/bin/python3.14
+      - python3.14 -m venv --upgrade .venv
+      # Get rid of tools/pcommand and similar with wrong shebangs
+      - make env-clean
+      - make cmake-build
+      - mv build/cmake/*/ballisticakit build/cmake/*/staged/
+      - cp -r build/cmake/*/staged/* ${FLATPAK_DEST}/bin/bombsquad/
+      - install -Dm755 bombsquad.sh ${FLATPAK_DEST}/bin/bombsquad.sh
+      - install -Dm644 pconfig/flatpak/net.froemling.bombsquad.desktop ${FLATPAK_DEST}/share/applications/${FLATPAK_ID}.desktop
+      - install -Dm644 pconfig/flatpak/net.froemling.bombsquad.metainfo.xml ${FLATPAK_DEST}/share/metainfo/${FLATPAK_ID}.metainfo.xml
+      - install -Dm644 pconfig/flatpak/net.froemling.bombsquad.releases.xml ${FLATPAK_DEST}/share/metainfo/releases/${FLATPAK_ID}.releases.xml
+      - install -Dm644 ${FLATPAK_ID}.png ${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/${FLATPAK_ID}.png
+
+    sources:
+      - type: dir
+        path: ./../../
+
+      # - type: archive
+      #   url: { ARCHIVE_URL }
+      #   sha256: { SHA256_CHECKSUM }
+      #   strip-components: 0
+
+      - type: file
+        dest-filename: net.froemling.bombsquad.png
+        url: https://files.ballistica.net/bombsquad/promo/BombSquadIcon512.png
+        sha256: c950d1b62da2714b1ed1afc42244f7e192be23172c89b6fa3e6eaaca8e45a89a
+
+      - type: script
+        dest-filename: bombsquad.sh
+        commands:
+          - cd /app/bin/bombsquad
+          - exec ./ballisticakit

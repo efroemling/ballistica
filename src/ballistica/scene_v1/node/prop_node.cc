@@ -3,6 +3,7 @@
 #include "ballistica/scene_v1/node/prop_node.h"
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -310,21 +311,28 @@ void PropNode::SetBody(const std::string& val) {
   dBodySetLinearVel(body_->body(), velocity_[0], velocity_[1], velocity_[2]);
 
   // initial orientation:
-  // put pucks upright and make them big
-  if (body_type_ == BodyType::PUCK) {
-    dQuaternion iq;
+  // if the rotate attr was explicitly set before the body existed, honor
+  // that. Otherwise fall back to our default initial-orientation behavior
+  // (pucks upright, everything else gets a random start rotation).
+  dQuaternion iq;
+  if (rotate_set_) {
+    iq[0] = rotate_[0];
+    iq[1] = rotate_[1];
+    iq[2] = rotate_[2];
+    iq[3] = rotate_[3];
+  } else if (body_type_ == BodyType::PUCK) {
     dQFromAxisAndAngle(iq, 1, 0, 0, -90 * (kPi / 180.0f));
-    dBodySetQuaternion(body_->body(), iq);
-    body_->SetDimensions(0.7f, 0.58f, 0, 0.7f, 0.48f, 0, 0.14f * density_);
   } else {
-    // give other types random start rotations..
-    dQuaternion iq;
     int64_t gti = scene()->stepnum();
     dQFromAxisAndAngle(
         iq, 0.05f, 1, 0,
         Utils::precalc_rand_1((stream_id() + gti) % kPrecalcRandsCount) * 360.0f
             * (kPi / 180.0f));
-    dBodySetQuaternion(body_->body(), iq);
+  }
+  dBodySetQuaternion(body_->body(), iq);
+
+  if (body_type_ == BodyType::PUCK) {
+    body_->SetDimensions(0.7f, 0.58f, 0, 0.7f, 0.48f, 0, 0.14f * density_);
   }
 }
 
@@ -432,6 +440,38 @@ void PropNode::SetPosition(const std::vector<float>& vals) {
     // otherwise just store it in our internal vector
     // in case someone asks for it
     position_ = vals;
+  }
+}
+
+auto PropNode::GetRotate() const -> std::vector<float> {
+  // if we've got a body, return its live orientation
+  if (body_.exists()) {
+    const dReal* q = dBodyGetQuaternion(body_->body());
+    return {static_cast<float>(q[0]), static_cast<float>(q[1]),
+            static_cast<float>(q[2]), static_cast<float>(q[3])};
+  }
+  return rotate_;
+}
+
+void PropNode::SetRotate(const std::vector<float>& vals) {
+  if (vals.size() != 4) {
+    throw Exception(
+        "Expected float array of size 4 (w, x, y, z quaternion) for rotate",
+        PyExcType::kValue);
+  }
+  // Store normalized; ode quietly misbehaves on non-unit quaternions.
+  float mag = std::sqrt(vals[0] * vals[0] + vals[1] * vals[1]
+                        + vals[2] * vals[2] + vals[3] * vals[3]);
+  if (mag < 0.000001f) {
+    throw Exception("Zero-length quaternion passed for rotate",
+                    PyExcType::kValue);
+  }
+  rotate_ = {vals[0] / mag, vals[1] / mag, vals[2] / mag, vals[3] / mag};
+  rotate_set_ = true;
+
+  if (body_.exists()) {
+    dQuaternion q{rotate_[0], rotate_[1], rotate_[2], rotate_[3]};
+    dBodySetQuaternion(body_->body(), q);
   }
 }
 

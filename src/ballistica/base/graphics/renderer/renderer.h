@@ -84,6 +84,9 @@ class Renderer {
     assert(camera_msaa_render_target_.exists());
     return camera_msaa_render_target_.get();
   }
+  auto has_backing_render_target() const -> bool {
+    return backing_render_target_.exists();
+  }
   auto backing_render_target() -> RenderTarget* {
     assert(backing_render_target_.exists());
     return backing_render_target_.get();
@@ -175,6 +178,13 @@ class Renderer {
   void VRTransformToHead();
   virtual void VRSyncRenderStates() = 0;
 #endif
+
+  /// A small persistent texture-backed target the screenshot path
+  /// downscale-blits the (large) finished frame into, so it can read a
+  /// small texture. A large glReadPixels reads back torn on ANGLE's
+  /// Metal backend regardless of sync; a small one is reliable.
+  /// Subclass-managed; see RendererGL::GetScreenshotReadTarget.
+  Object::Ref<RenderTarget> screenshot_blit_target_;
 
  private:
   void UpdateLightAndShadowBuffers(FrameDef* frame_def);

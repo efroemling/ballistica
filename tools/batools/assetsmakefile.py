@@ -2,8 +2,6 @@
 #
 """Updates src/assets/Makefile based on source assets present."""
 
-from __future__ import annotations
-
 import json
 import os
 from typing import TYPE_CHECKING
@@ -55,20 +53,21 @@ def _get_targets(
 
 def _get_py_targets(
     projroot: str,
-    meta_manifests: dict[str, str],
+    codegen_manifests: dict[str, str],
     explicit_sources: set[str],
     src: str,
     dst: str,
     py_targets: list[str],
     # pyc_targets: list[str],
     so_targets: list[str],
+    zstddict_targets: list[str],
     all_targets: set[str],
     subset: str,
 ) -> None:
     # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-branches
 
-    py_generated_root = f'{ASSETS_SRC}/ba_data/python/babase/_mgen'
+    py_generated_root = f'{ASSETS_SRC}/ba_data/python/babase/_generated'
 
     def _do_get_targets(
         proot: str, fnames: list[str], is_explicit: bool = False
@@ -95,9 +94,17 @@ def _get_py_targets(
         dstfin = dst + proot[len(src) :]
 
         for fname in fnames:
-            # Ignore non-python files and flycheck/emacs temp files.
+            # Ignore non-python files and flycheck/emacs temp files. The
+            # one allowed non-code exception is our own ``.zstddict`` data
+            # (bundled zstd dictionaries, e.g. in bacommon) -- a distinct
+            # extension we deliberately whitelist so we stay strict about
+            # what gets copied rather than allowing arbitrary data files.
             if (
-                (not fname.endswith('.py') and not fname.endswith('.so'))
+                (
+                    not fname.endswith('.py')
+                    and not fname.endswith('.so')
+                    and not fname.endswith('.zstddict')
+                )
                 or fname.startswith('flycheck_')
                 or fname.startswith('.#')
             ):
@@ -130,6 +137,8 @@ def _get_py_targets(
                 in_subset = 'private-windows-x64'
             elif proot.startswith(f'{ASSETS_SRC}/windows/Win32'):
                 in_subset = 'private-windows-Win32'
+            elif proot.startswith(f'{ASSETS_SRC}/windows/ARM64'):
+                in_subset = 'private-windows-ARM64'
             elif proot.startswith(f'{ASSETS_SRC}/pylib-apple'):
                 in_subset = 'private-apple-mac'
             elif proot.startswith(f'{ASSETS_SRC}/pylib-android'):
@@ -148,6 +157,12 @@ def _get_py_targets(
                 assert targetpath not in all_targets
                 all_targets.add(targetpath)
                 so_targets.append(os.path.join(dstrootvar, fname))
+            elif fname.endswith('.zstddict'):
+                # .zstddict (bundled data such as zstd dictionaries):
+                targetpath = os.path.join(dstfin, fname)
+                assert targetpath not in all_targets
+                all_targets.add(targetpath)
+                zstddict_targets.append(os.path.join(dstrootvar, fname))
             else:
                 # .py:
                 targetpath = os.path.join(dstfin, fname)
@@ -168,8 +183,8 @@ def _get_py_targets(
     for physical_root, _dname, physical_fnames in os.walk(
         os.path.join(projroot, src)
     ):
-        # Skip any generated files; we'll add those from the meta manifest.
-        # (dont want our results to require a meta build beforehand)
+        # Skip any generated files; we'll add those from the codegen manifest.
+        # (dont want our results to require a codegen build beforehand)
         if physical_root == os.path.join(
             projroot, py_generated_root
         ) or physical_root.startswith(
@@ -183,23 +198,23 @@ def _get_py_targets(
 
     # Now create targets for any of our dynamically generated stuff that
     # lives under this dir.
-    meta_targets: list[str] = []
-    for manifest in meta_manifests.values():
-        # Sanity check; make sure meta system is giving actual paths;
+    codegen_targets: list[str] = []
+    for manifest in codegen_manifests.values():
+        # Sanity check; make sure codegen system is giving actual paths;
         # no accidental makefile vars.
         if '$' in manifest:
             raise RuntimeError(
-                'meta-manifest value contains a $; probably a bug.'
+                'codegen-manifest value contains a $; probably a bug.'
             )
-        meta_targets += json.loads(manifest)
+        codegen_targets += json.loads(manifest)
 
-    meta_targets = [
+    codegen_targets = [
         t
-        for t in meta_targets
+        for t in codegen_targets
         if t.startswith(src + '/') and t.startswith(py_generated_root + '/')
     ]
 
-    for target in meta_targets:
+    for target in codegen_targets:
         _do_get_targets(
             proot=os.path.dirname(target), fnames=[os.path.basename(target)]
         )
@@ -216,7 +231,7 @@ def _get_py_targets(
 
 def _get_py_targets_subset(
     projroot: str,
-    meta_manifests: dict[str, str],
+    codegen_manifests: dict[str, str],
     explicit_sources: set[str],
     all_targets: set[str],
     subset: str,
@@ -256,16 +271,18 @@ def _get_py_targets_subset(
     py_targets: list[str] = []
     # pyc_targets: list[str] = []
     so_targets: list[str] = []
+    zstddict_targets: list[str] = []
 
     _get_py_targets(
         projroot,
-        meta_manifests,
+        codegen_manifests,
         explicit_sources,
         src,
         dst,
         py_targets,
         # pyc_targets,
         so_targets,
+        zstddict_targets,
         all_targets,
         subset=subset,
     )
@@ -277,6 +294,7 @@ def _get_py_targets_subset(
     # combined_targets.sort()
     py_targets.sort()
     so_targets.sort()
+    zstddict_targets.sort()
 
     # py_targets = [t[0] for t in combined_targets]
     # pyc_targets = [t[1] for t in combined_targets]
@@ -299,6 +317,12 @@ def _get_py_targets_subset(
         + '\n'
     )
 
+    out += (
+        f'\nSCRIPT_TARGETS_ZSTDDICT{suffix} = \\\n  '
+        + ' \\\n  '.join(zstddict_targets)
+        + '\n'
+    )
+
     # We transform all non-public targets into efrocache-fetches in public.
     efc = '' if subset.startswith('public') else '# __EFROCACHE_TARGET__\n'
 
@@ -317,6 +341,18 @@ def _get_py_targets_subset(
             '# (and make non-writable so I\'m less likely to '
             'accidentally edit them there)\n'
             f'{efc}$(SCRIPT_TARGETS_SO{suffix}) : {copyrule_so}\n'
+            '\t@$(PCOMMANDBATCH) copy_python_file $^ $@\n'
+        )
+
+    if zstddict_targets:
+        # Bundled data files (e.g. zstd dictionaries); plain copy. The
+        # copyrule pattern mirrors the .py one but for the .zstddict ext.
+        copyrule_zstddict = copyrule.replace('.py', '.zstddict')
+        out += (
+            '\n# Rule to copy bundled .zstddict data files to dst.\n'
+            '# (and make non-writable so I\'m less likely to '
+            'accidentally edit them there)\n'
+            f'{efc}$(SCRIPT_TARGETS_ZSTDDICT{suffix}) : {copyrule_zstddict}\n'
             '\t@$(PCOMMANDBATCH) copy_python_file $^ $@\n'
         )
 
@@ -460,7 +496,7 @@ def generate_assets_makefile(
     projroot: str,
     fname: str,
     existing_data: str,
-    meta_manifests: dict[str, str],
+    codegen_manifests: dict[str, str],
     explicit_sources: set[str],
 ) -> dict[str, str]:
     """Main script entry point."""
@@ -485,7 +521,7 @@ def generate_assets_makefile(
     our_lines_public = [
         _get_py_targets_subset(
             projroot,
-            meta_manifests,
+            codegen_manifests,
             explicit_sources,
             all_targets_public,
             subset='public',
@@ -493,7 +529,7 @@ def generate_assets_makefile(
         ),
         _get_py_targets_subset(
             projroot,
-            meta_manifests,
+            codegen_manifests,
             explicit_sources,
             all_targets_public,
             subset='public_tools',
@@ -508,7 +544,7 @@ def generate_assets_makefile(
         our_lines_private = [
             _get_py_targets_subset(
                 projroot,
-                meta_manifests,
+                codegen_manifests,
                 explicit_sources,
                 all_targets_private,
                 subset='private-apple-mac',
@@ -516,7 +552,7 @@ def generate_assets_makefile(
             ),
             _get_py_targets_subset(
                 projroot,
-                meta_manifests,
+                codegen_manifests,
                 explicit_sources,
                 all_targets_private,
                 subset='private-android',
@@ -524,7 +560,7 @@ def generate_assets_makefile(
             ),
             _get_py_targets_subset(
                 projroot,
-                meta_manifests,
+                codegen_manifests,
                 explicit_sources,
                 all_targets_private,
                 subset='private-common',
@@ -532,7 +568,7 @@ def generate_assets_makefile(
             ),
             _get_py_targets_subset(
                 projroot,
-                meta_manifests,
+                codegen_manifests,
                 explicit_sources,
                 all_targets_private,
                 subset='private-windows-Win32',
@@ -540,25 +576,19 @@ def generate_assets_makefile(
             ),
             _get_py_targets_subset(
                 projroot,
-                meta_manifests,
+                codegen_manifests,
                 explicit_sources,
                 all_targets_private,
                 subset='private-windows-x64',
                 suffix='_PRIVATE_WIN_X64',
             ),
-            _get_targets(
+            _get_py_targets_subset(
                 projroot,
-                'COB_TARGETS',
-                '.collisionmesh.obj',
-                '.cob',
+                codegen_manifests,
+                explicit_sources,
                 all_targets_private,
-            ),
-            _get_targets(
-                projroot,
-                'BOB_TARGETS',
-                '.mesh.obj',
-                '.bob',
-                all_targets_private,
+                subset='private-windows-ARM64',
+                suffix='_PRIVATE_WIN_ARM64',
             ),
             _get_targets(
                 projroot,
@@ -582,43 +612,9 @@ def generate_assets_makefile(
                 all_targets_private,
                 limit_to_prefix='ba_data/data',
             ),
-            _get_targets(
-                projroot,
-                'AUDIO_TARGETS',
-                '.wav',
-                '.ogg',
-                all_targets_private,
-            ),
-            _get_targets(
-                projroot,
-                'TEX2D_DDS_TARGETS',
-                '.tex2d.png',
-                '.dds',
-                all_targets_private,
-            ),
-            _get_targets(
-                projroot,
-                'TEX2D_PVR_TARGETS',
-                '.tex2d.png',
-                '.pvr',
-                all_targets_private,
-            ),
-            _get_targets(
-                projroot,
-                'TEX2D_KTX_TARGETS',
-                '.tex2d.png',
-                '.ktx',
-                all_targets_private,
-            ),
-            _get_targets(
-                projroot,
-                'TEX2D_PREVIEW_PNG_TARGETS',
-                '.tex2d.png',
-                '_preview.png',
-                all_targets_private,
-            ),
             _get_extras_targets_win(projroot, all_targets_private, 'Win32'),
             _get_extras_targets_win(projroot, all_targets_private, 'x64'),
+            _get_extras_targets_win(projroot, all_targets_private, 'ARM64'),
         ]
     filtered = (
         lines[: auto_start_public + 1]

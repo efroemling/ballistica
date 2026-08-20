@@ -2,11 +2,10 @@
 #
 """Functionality related to the draw screen."""
 
-from __future__ import annotations
-
 from typing import override
 
 import bascenev1 as bs
+from bascenev1 import classicassets
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 from bascenev1lib.actor.zoomtext import ZoomText
@@ -22,7 +21,7 @@ class DrawScoreScreenActivity(MultiTeamScoreScreenActivity):
         bs.set_analytics_screen('Draw Score Screen')
         super().on_begin()
         ZoomText(
-            bs.Lstr(resource='drawText'),
+            classicassets.strings.game.draw,
             position=(0, 0),
             maxwidth=400,
             shiftposition=(-220, 0),

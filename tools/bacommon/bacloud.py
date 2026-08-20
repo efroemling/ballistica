@@ -8,12 +8,26 @@
   it in mod code.
 """
 
-from __future__ import annotations
+# This module is the canonical bacloud wire contract -- every repo
+# imports its types by name -- and roughly a seventh of it is the
+# version history that has to live beside the versions it explains.
+# Splitting it would churn public import paths across five repos to
+# move a comment block, so this is the sanctioned large primary
+# module rather than something to spill into a sibling.
+# pylint: disable=too-many-lines
 
+from enum import Enum
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, assert_never, override
 
-from efro.dataclassio import ioprepped, IOAttrs
+from efro.dataclassio import (
+    ioprepped,
+    will_ioprep,
+    ioprep,
+    IOAttrs,
+    IOMultiType,
+)
+from bacommon import securedata
 
 if TYPE_CHECKING:
     pass
@@ -42,7 +56,159 @@ if TYPE_CHECKING:
 #               archive commands (and eventually the workspace put
 #               path). Old clients don't understand the new field
 #               and would silently skip uploads.
-BACLOUD_VERSION = 18
+# 19 (2026-05): StreamCall protocol introduced. Adds a ``stream``
+#               flag to ``StandardRequestData``, bumps ``end_command`` from a
+#               2-tuple to a 3-tuple (the new bool indicates the next
+#               request should be made in stream mode), adds a
+#               ``stream_frames`` field to ``StandardResponseData`` carrying
+#               ``StreamFrame`` instances, and introduces the
+#               ``StreamFrame`` / ``StreamOutput`` / ``StreamFinal``
+#               IOMultiTypes themselves. ``MIN_VERSION`` is bumped to
+#               match so older clients are rejected with a clear
+#               upgrade message rather than silently mishandling the
+#               new tuple shape.
+# 20 (2026-05): StreamCall Phase 2 wire-protocol additions for the
+#               basn-WebSocket fan-out path. Adds ``stream_ws`` to
+#               ``StandardResponseData`` (carrying a basn URL + signed
+#               capability token + expiry) so kickoff responses can
+#               redirect a client at a basn node's WebSocket
+#               endpoint instead of the existing ``_streamcall_poll``
+#               loop. Backwards-compatible with v19 in the wire
+#               sense (old clients ignore the unknown field and use
+#               ``end_command`` as before), but bumped so logs make
+#               version-skew obvious during the rollout.
+# 21 (2026-05): WS capability-token wire shape switched from a v1
+#               ad-hoc dotted base64 string (HMAC over the basn
+#               node's comm-token) to a
+#               :class:`bacommon.securedata.Archive`. Embedding
+#               directly skips the base64-of-base64 nesting and
+#               unifies signing on the same Reader/Writer pipeline
+#               every other server-signed artifact uses, which
+#               also lets any basn (not just the issuing one)
+#               verify the token. ``StreamWS.ws_token`` field type
+#               changes accordingly. ``MIN_VERSION`` is bumped to
+#               match so older clients fail loudly rather than
+#               silently mishandling the new field type.
+# 22 (2026-05): Auth unified on ``Authorization: Bearer <value>``
+#               for both API-key and session-login flows. Server
+#               distinguishes by prefix (``bsac-`` = API key;
+#               otherwise session token). Brings bacloud auth in
+#               line with universally-recognized standards: every
+#               intermediary now sees a Bearer header it can
+#               recognize for redaction, masking, etc., instead
+#               of a custom body field that looks like opaque
+#               payload. ``StandardRequestData.token`` is deprecated —
+#               kept on the wire as a soft-default'd ``null`` so
+#               v21 basn nodes parse v22 requests OK during the
+#               rollout window — and will be removed in v23
+#               after rollout completes. Server-side response
+#               still ships ``StandardResponseData.login`` for
+#               sign-in/sign-out — only the *outbound* direction
+#               changes. ``MIN_VERSION`` is bumped to match (v21
+#               clients send body-token but no Authorization
+#               header; the unified server only reads Bearer, so
+#               v21 clients would silently authenticate as
+#               anonymous).
+# 23 (2026-05): Streamcall WS routing decoupled from kickoff
+#               node, plus loose-end cleanup. Three changes:
+#               (1) ``StreamWS.basn_url`` becomes ``str | None``;
+#               ``None`` means the bacloud client opens the WS to
+#               its own kickoff hostname (whatever it sent the
+#               original request to). Server only fills in a
+#               specific URL when the stream genuinely lives on
+#               one basn (Phase 3 game-server-logs case;
+#               unused today). All current streams are
+#               node-agnostic, so server now sets ``None`` and
+#               WS handshakes can land on any basn the LB
+#               routes them to (any basn can verify the token
+#               post-securedata). (2) ``StreamWS.call_id`` added
+#               as an explicit field — needed for the client to
+#               construct its own URL when ``basn_url`` is
+#               ``None``, and gets call_ids out of URLs (which
+#               leak into proxy/CDN logs) along the way.
+#               (3) ``StandardRequestData.token`` removed entirely;
+#               unified Bearer auth from v22 means it's been
+#               dead code for a wire-version cycle. Drops a
+#               soft-default field that no client populates and
+#               no server reads. ``MIN_VERSION`` matched.
+# 24 (2026-06): Workspace get/put optimistic-concurrency (mid-air-
+#               collision guard). ``StandardResponseData.workspace_snapshotid``
+#               carries the workspace's current snapshot id back on a
+#               get/put; the client stashes it in a ``.bacloudstate.json``
+#               (a dotfile, so the sync auto-ignores it) and sends it as
+#               ``WorkspacePutProcessCommand.expected_snapshotid`` on the
+#               next put, which the server rejects if the workspace has
+#               moved since. Both fields are optional/soft-default, so old
+#               clients/servers just skip the check -- ``MIN_VERSION``
+#               unchanged.
+# 25 (2026-06): One-shot small-file uploads via the basn relay.
+#               ``StandardResponseData.uploads_oneshot`` tells the
+#               client to POST
+#               small file bodies to the basn node (which relays them to
+#               the master one-shot cloud-file endpoint) instead of the
+#               signed-URL-to-GCS path; the client sends the resulting
+#               cloud_file_ids back under ``uploads_oneshot``. The server
+#               only emits this to v25+ clients and falls back to
+#               ``uploads_signed`` otherwise, so the field is optional --
+#               ``MIN_VERSION`` unchanged.
+# 26 (2026-08): Removed the legacy ``downloads`` mechanism (one master
+#               round trip per file, via a per-entry ``_assemble_file_
+#               download`` command) along with its ``StandardResponseData.
+#               Downloads`` type. It survived only as the
+#               non-CAS-delivery fallback for asset-package blobs, and
+#               an escape hatch reachable solely by a manual flag is one
+#               nobody exercises -- so it would have rotted before it
+#               was ever needed, while costing a mechanism to carry onto
+#               the upcoming SmartSocket transport. CAS delivery is now
+#               the only asset-blob path. ``MIN_VERSION`` tracks
+#               ``BACLOUD_VERSION``, so older clients get the standard
+#               "please update" rejection.
+#
+#               Also in 26: bacloud's conversation moves onto a single
+#               SmartSocket session to the node it already talks to.
+#               The channel is created by the WS handshake itself
+#               (``/bacloudsession``, no mint round trip), credentials
+#               ride the upgrade's ``Authorization`` header on every
+#               attach, and the node hands back a resume token in-band
+#               as a :class:`SessionHandleResponse` -- the response
+#               hierarchy's first non-answer member. Folded into 26
+#               rather than given its own number because 26 has not
+#               shipped: prod and push-public land together, so there
+#               is no released version in between for anything to be
+#               compatible with.
+# 27 (2026-08-15): A streamed command's output now rides the session
+#               itself as StreamOutputResponse messages, instead of
+#               the client opening a second WebSocket per stream and
+#               following it there. A v26 client cannot decode the new
+#               response type, and rather than keep its shape alive as
+#               a second path, ``MIN_VERSION`` moves with this and old
+#               clients get the standard "please update" rejection --
+#               so prod and push-public land together, as with 26.
+#               The separate per-stream WebSocket (``streamws.py``)
+#               remains only for clients with no session at all, e.g.
+#               against a node too old to host one. (It was then
+#               deleted outright, along with the HTTP
+#               request-per-connection fallback, later the same day.)
+# 28 (2026-08-15): The stream-kickoff signal becomes explicit and the
+#               client-side stream-polling machinery is deleted. A
+#               streamed command's kickoff response now carries
+#               ``stream_call_id`` -- consumed by the basn session
+#               adapter, which follows the stream server-side and
+#               relays output down the session -- replacing the old
+#               shape: an ``end_command`` chain pointing at the
+#               ``_streamcall_poll`` command, detected by basn via
+#               response-sniffing. Deleted with it: the
+#               ``_streamcall_poll`` handler, the ``stream_frames``
+#               response field, the ``stream`` request flag, the
+#               third (stream) element of ``end_command`` tuples, and
+#               the long-dead ``stream_ws``/``StreamWS``
+#               WebSocket-pickup field.
+#               ``StreamFrame``/``StreamOutput``/``StreamFinal``
+#               remain: they ride the internal bamaster->basn poll
+#               hop and basn's streamcall WS fan-out. ``MIN_VERSION``
+#               tracks ``BACLOUD_VERSION`` as usual; prod and
+#               push-public land together.
+BACLOUD_VERSION = 28
 
 
 def asset_file_cache_path(filehash: str) -> str:
@@ -56,27 +222,148 @@ def asset_file_cache_path(filehash: str) -> str:
     assert filehash.islower()
     assert filehash.isalnum()
 
-    # Split into a few levels of directories to keep directory listings
-    # and operations reasonable. This will give 256 top level dirs, each
-    # with 256 subdirs. So if we have 65,536 files in our cache then
-    # dirs will average 1 file each. That seems like a reasonable spread
-    # I think.
-    return f'{filehash[:2]}/{filehash[2:4]}/{filehash[4:]}'
+    # Single level of 256 dirs. Modern filesystems handle huge flat
+    # dirs fine via b-tree/hashed indexing, but a single shard keeps us
+    # under any per-dir entry limits on older/unusual filesystems and
+    # avoids the inode overhead of deeper sharding.
+    return f'{filehash[:2]}/{filehash[2:]}'
+
+
+class RequestTypeID(Enum):
+    """Type IDs for things a bacloud client can send."""
+
+    STANDARD = 's'
+
+
+class RequestData(IOMultiType[RequestTypeID]):
+    """Root of what a bacloud client sends.
+
+    One member today (:class:`StandardRequestData`, the command
+    envelope every request has always used). It exists as a hierarchy
+    so the session transport has a declared send type, and so a future
+    message that is not a command is an addition here rather than
+    another optional field bolted onto the command envelope.
+    """
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> RequestTypeID:
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_default_type_id(cls) -> RequestTypeID:
+        """Assume a command when no type-id is present.
+
+        This is what makes promoting a plain dataclass to a multitype
+        wire-compatible in both directions: the default serializes
+        WITHOUT its type-id, so today's traffic is byte-identical to
+        before, and keyless data from either side of a rollout still
+        loads. Per the dataclassio wire invariants, once keyless data
+        exists this designation may never change -- which is fine
+        here, since 'a command' is what the envelope has always been.
+        """
+        return RequestTypeID.STANDARD
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: RequestTypeID) -> type[RequestData]:
+        out: type[RequestData]
+        if type_id is RequestTypeID.STANDARD:
+            out = StandardRequestData
+            return out
+        raise ValueError(f'Unrecognized type-id {type_id}.')
+
+
+class ResponseTypeID(Enum):
+    """Type IDs for things a bacloud server can send back."""
+
+    STANDARD = 's'
+    SESSION_HANDLE = 'sh'
+    STREAM_OUTPUT = 'so'
+
+
+class ResponseData(IOMultiType[ResponseTypeID]):
+    """Root of what a bacloud server sends back.
+
+    Counterpart to :class:`RequestData`; see its note. This is the
+    side more likely to grow -- unsolicited notifications and live
+    stream output are responses that are not answers to a command --
+    and a discriminated union is what lets a reader tell them apart
+    without correlation ids.
+    """
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ResponseTypeID:
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_default_type_id(cls) -> ResponseTypeID:
+        """Assume a standard response when no type-id is present.
+
+        See the note on :meth:`RequestData.get_default_type_id`.
+        """
+        return ResponseTypeID.STANDARD
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: ResponseTypeID) -> type[ResponseData]:
+        out: type[ResponseData]
+        if type_id is ResponseTypeID.STANDARD:
+            out = StandardResponseData
+            return out
+        if type_id is ResponseTypeID.SESSION_HANDLE:
+            out = SessionHandleResponse
+            return out
+        if type_id is ResponseTypeID.STREAM_OUTPUT:
+            out = StreamOutputResponse
+            return out
+        raise ValueError(f'Unrecognized type-id {type_id}.')
 
 
 @ioprepped
 @dataclass
-class RequestData:
-    """Request sent to bacloud server."""
+class StandardRequestData(RequestData):
+    """Request sent to bacloud server.
+
+    Auth: bacloud always passes its current credential (API key or
+    login_token) as ``Authorization: Bearer <value>``. There is no
+    in-body token field — both flows look identical on the wire.
+    """
 
     command: Annotated[str, IOAttrs('c')]
-    token: Annotated[str | None, IOAttrs('t')]
     payload: Annotated[dict, IOAttrs('p')]
     tzoffset: Annotated[float, IOAttrs('z')]
     isatty: Annotated[bool, IOAttrs('y')]
 
+    #: Whether the originating CLI command is safe to retry even when a
+    #: failure is *post-send* (the request may have reached the server).
+    #: The client sets this for read-only / content-idempotent commands
+    #: (assemble, version listings, etc.). basn's bacloud proxy reads it
+    #: to decide whether a post-send upstream timeout should surface as
+    #: a retryable 503 (idempotent) or a terminal error (mutating).
+    #: Soft-defaults to ``False`` so older clients/payloads without the
+    #: field deserialize as non-idempotent (fail-closed); has a Python
+    #: default so non-CLI constructors needn't pass it.
+    idempotent: Annotated[bool, IOAttrs('i', soft_default=False)] = False
 
-# Types used by the UploadPlan protocol. See ResponseData.UploadPlan.
+    #: Engine build number of the caller. Master gates asset-package
+    #: resolves on it (see ``MIN_SUPPORTED_ASSET_BUILD``): a build too old
+    #: to address current source-named manifests gets a clean
+    #: update-required error. Soft-defaults to ``0`` (not None) so
+    #: requests/payloads lacking it read as build 0 -- always below the
+    #: floor -- and gating stays a simple ``build_number < X``.
+    build_number: Annotated[int, IOAttrs('b', soft_default=0)] = 0
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> RequestTypeID:
+        return RequestTypeID.STANDARD
+
+
+# Types used by the UploadPlan protocol. See StandardResponseData.UploadPlan.
 
 
 @ioprepped
@@ -179,9 +466,96 @@ class UploadPlanCommit:
     state: Annotated[dict, IOAttrs('s')]
 
 
+# ---------------------------------------------------------------- #
+# StreamCall protocol types.
+# ---------------------------------------------------------------- #
+
+
+class StreamFrameTypeID(Enum):
+    """Type IDs for the :class:`StreamFrame` IOMultiType."""
+
+    OUTPUT = 'o'
+    FINAL = 'f'
+
+
+class StreamFrame(IOMultiType[StreamFrameTypeID]):
+    """One frame in a streamed bacloud command's output.
+
+    Producers emit a sequence of :class:`StreamOutput` frames as the
+    underlying call generates output, then exactly one
+    :class:`StreamFinal` frame carrying the terminal
+    :class:`StandardResponseData`. These ride the internal
+    bamaster→basn poll hop and basn's streamcall WS fan-out;
+    the bacloud client itself never sees them (its stream output
+    arrives as :class:`StreamOutputResponse` session messages).
+    """
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> StreamFrameTypeID:
+        raise NotImplementedError()
+
+    @override
+    @classmethod
+    def get_type_id_storage_name(cls) -> str:
+        # Pin to the original default for back-compat with stored data.
+        return '_dciotype'
+
+    @override
+    @classmethod
+    def get_type(cls, type_id: StreamFrameTypeID) -> type[StreamFrame]:
+        # pylint: disable=cyclic-import
+        t = StreamFrameTypeID
+        if type_id is t.OUTPUT:
+            return StreamOutput
+        if type_id is t.FINAL:
+            return StreamFinal
+        assert_never(type_id)
+
+
 @ioprepped
 @dataclass
-class ResponseData:
+class StreamOutput(StreamFrame):
+    """Incremental rendered output to print at the consumer."""
+
+    text: Annotated[str, IOAttrs('t')] = ''
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> StreamFrameTypeID:
+        return StreamFrameTypeID.OUTPUT
+
+
+# Forward-prepped: ``response`` references :class:`StandardResponseData`,
+# which is defined further down, so we explicitly :func:`ioprep` this
+# class at the bottom of the module once both are defined.
+@will_ioprep
+@dataclass
+class StreamFinal(StreamFrame):
+    """Terminal frame carrying the call's :class:`StandardResponseData`.
+
+    The inner ``response`` is processed by the consumer as if it had
+    been the response to the originating non-streamed request — it
+    can carry messages, ``end_command`` chains, errors, and so on.
+    """
+
+    # Lambda needed because :class:`StandardResponseData` isn't defined yet at
+    # this point; resolved at instance-construction time.
+    response: Annotated['StandardResponseData', IOAttrs('r')] = field(
+        default_factory=(
+            lambda: StandardResponseData()  # pylint: disable=unnecessary-lambda
+        )
+    )
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> StreamFrameTypeID:
+        return StreamFrameTypeID.FINAL
+
+
+@ioprepped
+@dataclass
+class StandardResponseData(ResponseData):
     """Response sent from the bacloud server to the client."""
 
     @ioprepped
@@ -204,6 +578,32 @@ class ResponseData:
         #: in the next ``end_command`` args under ``uploads_signed`` to
         #: tell the server which upload to finalize.
         session_id: Annotated[str, IOAttrs('s')]
+
+    @ioprepped
+    @dataclass
+    class OneshotUploadEntry:
+        """Describes one small file to upload via the basn one-shot relay.
+
+        The client POSTs the file body to the basn node it's already
+        talking to (which relays it to the master server's one-shot
+        cloud-file endpoint and has the master verify the
+        content-addressed id), then sends the resulting
+        ``cloud_file_id`` back in the next ``end_command`` args under
+        ``uploads_oneshot`` (a ``dict[path, cloud_file_id]`` keyed by
+        the same local path). Used for small files: the bytes ride one
+        request to the node and the master holds them in memory and
+        verifies them inline, avoiding both the signed-URL round-trip
+        and the server-side blob read-back of the two-step path.
+        """
+
+        #: Local file the client should read and upload.
+        path: Annotated[str, IOAttrs('p')]
+
+        #: The content-addressed cloud_file_id the client declares for
+        #: this file (from the manifest's sha256+size). The basn relay
+        #: passes it through; the master recomputes from the bytes and
+        #: rejects a mismatch.
+        cloud_file_id: Annotated[str, IOAttrs('f')]
 
     @ioprepped
     @dataclass
@@ -276,37 +676,63 @@ class ResponseData:
 
     @ioprepped
     @dataclass
-    class Downloads:
-        """Info about downloads included in a response."""
+    class CasDelivery:
+        """CAS-delivery info for an asset-package assemble.
 
-        @ioprepped
-        @dataclass
-        class Entry:
-            """Individual download."""
+        Returned by an assemble run in CAS-delivery mode instead of
+        per-blob signed-URL downloads. Carries everything a basn
+        assemble-intercept needs to mint a ``/casblob`` capability token
+        and warm the node CAS, and everything a CAS-aware bacloud needs to
+        fetch the blobs from ``/casblob`` -- so neither side has to
+        re-parse the inline flavor-manifests. ``token`` is minted and
+        injected by the intercepting basn node (``None`` from the master).
+        """
 
-            path: Annotated[str, IOAttrs('p')]
+        #: Fully-qualified asset-package version id this bundle is for.
+        apverid: Annotated[str, IOAttrs('a')]
 
-            #: Args include with this particular request (combined with
-            #: baseargs).
-            args: Annotated[dict[str, str], IOAttrs('a')]
+        #: Bucket dimensions, carried for the capability token.
+        texture_profile: Annotated[str, IOAttrs('tp')]
+        texture_tier: Annotated[str, IOAttrs('tq')]
+        language: Annotated[str, IOAttrs('l')]
 
-            # TODO: could add a hash here if we want the client to
-            # verify hashes.
+        #: Every data blob the bundle needs as content-sha256 -> byte
+        #: size, in manifest order (= the order to warm/fetch). Fetched
+        #: from a basn node's ``/casblob`` warm cache.
+        blobs: Annotated[dict[str, int], IOAttrs('b')]
 
-        #: If present, will be prepended to all entry paths via os.path.join.
-        basepath: Annotated[str | None, IOAttrs('p')]
+        #: Capability token for ``GET /casblob/{hash}``; minted and
+        #: injected by the basn node that warms and serves the blobs
+        #: (``None`` as sent from the master).
+        token: Annotated[
+            securedata.Archive | None, IOAttrs('tk', store_default=False)
+        ] = None
 
-        #: Server command that should be called for each download. The
-        #: server command is expected to respond with a downloads_inline
-        #: containing a single 'default' entry. In the future this may
-        #: be expanded to a more streaming-friendly process.
-        cmd: Annotated[str, IOAttrs('c')]
+        #: The flavor-manifest blobs backing ``blobs``
+        #: (content-sha256 -> canonical byte size). Sent by the master
+        #: so the intercepting basn node can mint a fleet-portable
+        #: capability token whose scope any node can verify (see
+        #: ``baserver.assetcap.AssetCapabilityPayload.fm_digests``);
+        #: the node consumes it and strips it from the response, so it
+        #: never reaches the bacloud client. Empty from pre-scope
+        #: masters (and, during rollout, when the basn fleet floor
+        #: predates scope support).
+        flavor_manifest_blobs: Annotated[
+            dict[str, int],
+            IOAttrs('fmb', store_default=False, soft_default_factory=dict),
+        ] = field(default_factory=dict)
 
-        #: Args that should be included with all download requests.
-        baseargs: Annotated[dict[str, str], IOAttrs('a')]
-
-        #: Everything that should be downloaded.
-        entries: Annotated[list[Entry], IOAttrs('e')]
+        #: DEPRECATED / UNUSED -- always empty. Compression is no longer
+        #: carried here: a blob's transfer encoding is negotiated per
+        #: ``/casblob`` request (the node reports it via its
+        #: ``X-Cas-Compression`` response header and the client decodes per
+        #: that). The field is retained (unpopulated, unread) only so the
+        #: producer can stop sending it before any reader drops it -- safe
+        #: to delete in a later cleanup once every component is updated.
+        blob_compression: Annotated[
+            dict[str, str],
+            IOAttrs('bc', store_default=False, soft_default_factory=dict),
+        ] = field(default_factory=dict)
 
     #: If present, client should print this message before any other
     #: response processing (including error handling) occurs.
@@ -340,6 +766,22 @@ class ResponseData:
     #: be useful when waiting for server progress in a loop).
     delay_seconds: Annotated[float, IOAttrs('d', store_default=False)] = 0.0
 
+    #: When > 0, the chained ``end_command`` this response carries is an
+    #: idempotent polling step the client may safely RETRY on failure
+    #: (transport errors and server-reported errors alike), with
+    #: backoff, for up to this many seconds before surfacing the
+    #: failure. Lets long polling loops (e.g. asset-package bundle
+    #: assembles) ride out transient proxy timeouts / server hiccups
+    #: instead of dying mid-flight. Servers must set this only on
+    #: chains where a repeat call is always safe; the cost of the
+    #: blanket any-failure retry policy is just that a genuine error
+    #: on such a chain surfaces after the window elapses rather than
+    #: instantly. Older clients ignore this field (no retry — the
+    #: behavior before it existed).
+    retry_window_seconds: Annotated[
+        float, IOAttrs('rw', store_default=False)
+    ] = 0.0
+
     #: If present, a token that should be stored client-side and passed
     #: with subsequent commands.
     login: Annotated[str | None, IOAttrs('l', store_default=False)] = None
@@ -365,6 +807,19 @@ class ResponseData:
         IOAttrs('usgn', store_default=False),
     ] = None
 
+    #: If present, small files the client should upload via the basn
+    #: one-shot relay (POST the body to the node it's talking to, which
+    #: relays to the master one-shot cloud-file endpoint), then send the
+    #: resulting cloud_file_ids back in the next end_command's args under
+    #: 'uploads_oneshot' (a ``dict[path, cloud_file_id]`` keyed by the
+    #: same local path). The size cutoff vs. ``uploads_signed`` is
+    #: decided server-side. Only emitted to v25+ clients (older clients
+    #: get ``uploads_signed`` instead).
+    uploads_oneshot: Annotated[
+        list[OneshotUploadEntry] | None,
+        IOAttrs('uos', store_default=False),
+    ] = None
+
     #: If present, an upload plan the client should execute. See
     #: :class:`UploadPlan` for details. The client handles the full
     #: upload protocol (manifest, dedup, signed uploads, finalize)
@@ -384,12 +839,6 @@ class ResponseData:
     #: If present, file paths that should be deleted on the client.
     deletes: Annotated[
         list[str] | None, IOAttrs('dlt', store_default=False)
-    ] = None
-
-    #: If present, describes files the client should individually
-    #: request from the server if not already present on the client.
-    downloads: Annotated[
-        Downloads | None, IOAttrs('dl', store_default=False)
     ] = None
 
     #: If present, pathnames mapped to gzipped data to be written to the
@@ -413,9 +862,25 @@ class ResponseData:
         IOAttrs('dsgn', store_default=False),
     ] = None
 
+    #: If present, the assemble ran in CAS-delivery mode: data blobs are
+    #: delivered from a basn node's ``/casblob`` warm cache (see
+    #: :class:`CasDelivery`) instead of per-blob GCS signed URLs.
+    cas_delivery: Annotated[
+        CasDelivery | None, IOAttrs('cas', store_default=False)
+    ] = None
+
     #: If present, all empty dirs under this one should be removed.
     dir_prune_empty: Annotated[
         str | None, IOAttrs('dpe', store_default=False)
+    ] = None
+
+    #: If present, the workspace's current snapshot id after a completed
+    #: workspace ``get``/``put`` (bacloud v24+ optimistic-concurrency).
+    #: The client stashes it in ``<dir>/.bacloudstate.json`` and sends it
+    #: back as the put's ``expected_snapshotid`` to detect mid-air
+    #: collisions (the workspace changing between get and put).
+    workspace_snapshotid: Annotated[
+        str | None, IOAttrs('wss', store_default=False)
     ] = None
 
     #: If present, url to display to the user.
@@ -450,7 +915,106 @@ class ResponseData:
     ] = '\n'
 
     #: If present, this command is run with these args at the end of
-    #: response processing.
+    #: response processing. Tuple is ``(command_name, args)``.
     end_command: Annotated[
         tuple[str, dict] | None, IOAttrs('ec', store_default=False)
     ] = None
+
+    #: If present, this response kicked off a streamcall whose output
+    #: should be followed before the response is treated as final.
+    #: Consumed by the basn bacloud-session adapter: it subscribes to
+    #: the call server-side, relays output down the session as
+    #: :class:`StreamOutputResponse` messages, and answers with the
+    #: stream's terminal response — the client never sees this field.
+    #: Authorization is implicit: the id only ever rides a response
+    #: to the (already-authenticated) request that created the call.
+    stream_call_id: Annotated[
+        str | None, IOAttrs('sci', store_default=False)
+    ] = None
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ResponseTypeID:
+        return ResponseTypeID.STANDARD
+
+
+@ioprepped
+@dataclass
+class StreamOutputResponse(ResponseData):
+    """Live output from a streamed command, as it happens.
+
+    Unsolicited, and the reason streaming needs no machinery of its
+    own over a session: the server pushes these until the command's
+    real answer arrives, and a reader tells them apart from that
+    answer by type. Node-side, the basn session adapter follows the
+    kickoff response's ``stream_call_id`` and produces these; the
+    client plays no part in stream transport at all.
+
+    Print ``text`` verbatim with no separator; the producer decides
+    its own line breaks, exactly as with the frames this replaces.
+    """
+
+    text: Annotated[str, IOAttrs('t')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ResponseTypeID:
+        return ResponseTypeID.STREAM_OUTPUT
+
+
+@ioprepped
+@dataclass
+class SessionHandleResponse(ResponseData):
+    """Unsolicited: the resume token for a session just created.
+
+    A bacloud session's channel is created by the handshake itself --
+    the client dials with no token at all -- so the node has to hand
+    back the credential for *re*-attaching to that channel. It arrives
+    as the session's first message rather than as a field on some
+    answer, because it is not an answer to anything: this is exactly
+    the case the response hierarchy exists for, and a reader tells it
+    apart from a command result by type rather than by correlation.
+
+    The client stores it and presents it as ``X-WS-Token`` on any
+    reconnect. It needs no refreshing: it is minted to outlive the
+    session's own duration cap, and a channel that has ended is
+    tombstoned and refuses every token ever minted for it.
+    """
+
+    #: Signed capability token, base64url-encoded. Opaque to the
+    #: client, which only ever echoes it back on a reconnect.
+    token: Annotated[str, IOAttrs('t')]
+
+    #: Id of the channel this session runs on. Observability only --
+    #: the token is the authority -- but load-bearing for support: it
+    #: is the single string that ties a client-side failure to the
+    #: node-side log lines for the same session, and without it a
+    #: bacloud run cannot name the session it was using.
+    channel_id: Annotated[str, IOAttrs('c')]
+
+    #: Where to reconnect, naming the node that holds this session.
+    #:
+    #: Load-bearing, and not the same host the client dialed. In prod
+    #: bacloud dials a regional endpoint that routes each connection
+    #: to *some* node; session state lives in one node's process, so
+    #: re-dialing that endpoint would usually land somewhere with no
+    #: session to resume. (Streamcall can be node-agnostic because its
+    #: state is bamaster's; this is not.) The node fills in its own
+    #: address here and the client uses it for reconnects only.
+    ws_url: Annotated[str, IOAttrs('u')]
+
+    #: Unix-seconds expiry, for diagnostics. A client that finds
+    #: itself past this has been away longer than the session could
+    #: possibly have survived, so it should start a fresh one.
+    expiry_unix_seconds: Annotated[int, IOAttrs('e')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> ResponseTypeID:
+        return ResponseTypeID.SESSION_HANDLE
+
+
+# Now that :class:`StandardResponseData` exists in the module namespace,
+# finish prep of :class:`StreamFinal` (which references StandardResponseData
+# via its ``response`` field).
+ioprep(StreamFinal)

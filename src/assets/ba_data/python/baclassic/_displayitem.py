@@ -2,17 +2,22 @@
 #
 """Display-item related functionality."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, assert_never
 
 from efro.util import pairs_from_flat
 import bacommon.displayitem as ditm
 import bacommon.classic
 import bauiv1
+from bauiv1 import builtinassets
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     pass
+
+
+def _stex(name: str) -> str:
+    """Qualified classicassets texture ref."""
+    return f'{classicassets.__asset_package__}:textures/{name}'
 
 
 # FIXME - migrate to use the doc-ui rendering for these instead.
@@ -40,15 +45,15 @@ def show_display_item(
     itemtype = itemwrapper.item.get_type_id()
 
     if itemtype is ditm.ItemTypeID.TICKETS:
-        img = 'tickets'
+        img = _stex('tickets')
         img_y_offs = width * 0.11
         text_y_offs = width * -0.15
     elif itemtype is ditm.ItemTypeID.TICKETS_PURPLE:
-        img = 'ticketsPurple'
+        img = _stex('tickets_purple')
         img_y_offs = width * 0.11
         text_y_offs = width * -0.15
     elif itemtype is ditm.ItemTypeID.TOKENS:
-        img = 'coin'
+        img = _stex('coin')
         img_y_offs = width * 0.11
         text_y_offs = width * -0.15
     elif itemtype is ditm.ItemTypeID.CHEST:
@@ -71,8 +76,8 @@ def show_display_item(
             position=(pos[0] - c_size * 0.5, pos[1] - c_size * 0.5),
             color=c_info.color,
             size=(c_size, c_size),
-            texture=bauiv1.gettexture(c_info.texclosed),
-            tint_texture=bauiv1.gettexture(c_info.texclosedtint),
+            texture=bauiv1.aptextureget(c_info.texclosed),
+            tint_texture=bauiv1.aptextureget(c_info.texclosedtint),
             tint_color=c_info.tint,
             tint2_color=c_info.tint2,
         )
@@ -91,7 +96,7 @@ def show_display_item(
                 pos[1] - height * 0.5,
             ),
             size=(width, height),
-            texture=bauiv1.gettexture('white'),
+            texture=builtinassets.textures.white.get(),
             color=(0, 1, 0),
             opacity=0.1,
         )
@@ -105,7 +110,7 @@ def show_display_item(
                 pos[1] + img_y_offs - imgsize * 0.5,
             ),
             size=(imgsize, imgsize),
-            texture=bauiv1.gettexture(img),
+            texture=bauiv1.aptextureget(img),
         )
     if show_text:
         subs = itemwrapper.description_subs

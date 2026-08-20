@@ -3,12 +3,19 @@
 #ifndef BALLISTICA_SCENE_V1_PYTHON_SCENE_V1_PYTHON_H_
 #define BALLISTICA_SCENE_V1_PYTHON_SCENE_V1_PYTHON_H_
 
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/base.h"
 #include "ballistica/scene_v1/scene_v1.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/python/python_object_set.h"
+
+namespace ballistica::base {
+class LangStr;
+}
 
 namespace ballistica::scene_v1 {
 
@@ -17,6 +24,16 @@ class SceneV1Python {
  public:
   SceneV1Python();
   void Reset();
+
+  /// Convert a Python value destined for a lang-str-flagged string
+  /// slot (str | legacy Lstr | babase.LangStr; the D28 acceptance
+  /// surface) into its tagged wire form, plus the parsed native value
+  /// for the LangStr leg (null otherwise). ``host_session`` (nullable)
+  /// supplies the package universe for indexed serialization; without
+  /// it (or when indexing fails) LangStrs serialize with
+  /// self-describing resource refs. Throws on unsupported types.
+  static auto BuildLangStrWireValue(PyObject* obj, HostSession* host_session)
+      -> std::pair<std::string, std::shared_ptr<const base::LangStr>>;
 
   static void SetNodeAttr(Node* node, const char* attr_name,
                           PyObject* value_obj);
@@ -70,12 +87,6 @@ class SceneV1Python {
   /// Pass a chat message along to the python UI layer for handling..
   void HandleLocalChatMessage(const std::string& message);
 
-  /// Given an asset-package python object and a media name, verify
-  /// that the asset-package is valid in the current context_ref and return
-  /// its fully qualified name if so.  Throw an Exception if not.
-  auto ValidatedPackageAssetName(PyObject* package, const char* name)
-      -> std::string;
-
   void ReloadHooks();
 
   /// Specific Python objects we hold in objs_.
@@ -89,7 +100,6 @@ class SceneV1Python {
     kPickUpMessageClass,
     kDropMessageClass,
     kPlayerClass,
-    kAssetPackageClass,
     kActivityClass,
     kSceneV1SessionClass,
     kLaunchMainMenuSessionCall,
@@ -106,16 +116,16 @@ class SceneV1Python {
   const auto& objs() { return objs_; }
 
  private:
-  static auto HandleCapturedJoystickEventCall(const SDL_Event& event,
+  static auto HandleCapturedJoystickEventCall(const BAEvent& event,
                                               base::InputDevice* input_device)
       -> bool;
-  static auto HandleCapturedKeyPressCall(const SDL_Keysym& keysym) -> bool;
-  static auto HandleCapturedKeyReleaseCall(const SDL_Keysym& keysym) -> bool;
-  auto HandleCapturedJoystickEvent(const SDL_Event& event,
+  static auto HandleCapturedKeyPressCall(const BAKeysym& keysym) -> bool;
+  static auto HandleCapturedKeyReleaseCall(const BAKeysym& keysym) -> bool;
+  auto HandleCapturedJoystickEvent(const BAEvent& event,
                                    base::InputDevice* input_device = nullptr)
       -> bool;
-  auto HandleCapturedKeyPress(const SDL_Keysym& keysym) -> bool;
-  auto HandleCapturedKeyRelease(const SDL_Keysym& keysym) -> bool;
+  auto HandleCapturedKeyPress(const BAKeysym& keysym) -> bool;
+  auto HandleCapturedKeyRelease(const BAKeysym& keysym) -> bool;
 
   PythonObjectSet<ObjID> objs_;
   PythonRef joystick_capture_call_;

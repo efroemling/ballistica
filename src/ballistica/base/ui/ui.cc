@@ -2,20 +2,31 @@
 
 #include "ballistica/base/ui/ui.h"
 
+#include <Python.h>
+
+#include <cmath>
 #include <exception>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/base/assets/assets.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/input/device/keyboard_input.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
+#include "ballistica/base/ui/simple_dialog.h"
 #include "ballistica/base/ui/ui_delegate.h"
+#include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
@@ -25,6 +36,16 @@
 namespace ballistica::base {
 
 static const int kUIOwnerTimeoutSeconds = 15;
+
+/// Flip to true to spin up a placeholder SimpleDialog at boot (with a
+/// self-animating progress bar) for iterating on the dialog's looks without a
+/// live asset resolve. Must stay false in committed code.
+static const bool kSimpleDialogDemo = false;
+
+/// Flip to true to draw a translucent red rect over the active
+/// text-editing area (as reported to the app-adapter for OS IME
+/// positioning/etc.) for debugging. Must stay false in committed code.
+static const bool kDebugDrawTextEditRects = false;
 
 /// We use this to gather up runnables triggered by UI elements in response
 /// to stuff happening (mouse clicks, elements being added or removed,
@@ -173,6 +194,15 @@ void UI::StepDisplayTime() {
   if (dev_console_) {
     dev_console_->StepDisplayTime();
   }
+
+  // Refresh the snapshot other threads read (see
+  // BackPressWouldNavigateSnapshot). Cheap enough to just recompute
+  // rather than tracking every UI state change that could affect it.
+  auto would_navigate{false};
+  if (auto* ui_delegate = delegate()) {
+    would_navigate = ui_delegate->BackPressWouldNavigate();
+  }
+  back_press_would_navigate_.store(would_navigate, std::memory_order_relaxed);
 }
 
 void UI::OnAppStart() {
@@ -239,6 +269,12 @@ auto UI::IsPartyIconVisible() -> bool {
 
 void UI::ActivatePartyIcon() {
   assert(g_base->InLogicThread());
+  // A modal SimpleDialog swallows input; don't let the party button (which
+  // calls here directly, bypassing SendWidgetMessage) toggle the party window
+  // out from under it.
+  if (HasModalSimpleDialog()) {
+    return;
+  }
   if (auto* ui_delegate = delegate()) {
     ui_delegate->ActivatePartyIcon();
   }
@@ -308,6 +344,18 @@ auto UI::HandleMouseDown(int button, float x, float y, bool double_click)
     handled = dev_console_->HandleMouseDown(button, x, y);
   }
 
+  // SimpleDialogs (above the main UI, below the dev console). Give the
+  // top-most (highest-id) a first crack.
+  if (!handled) {
+    for (auto it = simple_dialogs_.rbegin(); it != simple_dialogs_.rend();
+         ++it) {
+      if (it->second->HandleMouseDown(button, x, y)) {
+        handled = true;
+        break;
+      }
+    }
+  }
+
   if (!handled) {
     handled = SendWidgetMessage(WidgetMessage(
         WidgetMessage::Type::kMouseDown, nullptr, x, y, double_click ? 2 : 1));
@@ -324,6 +372,19 @@ void UI::HandleMouseUp(int button, float x, float y) {
 
   if (dev_console_) {
     dev_console_->HandleMouseUp(button, x, y);
+  }
+
+  // A release in-bounds on a SimpleDialog's button fires it. Collect ids
+  // first so we don't dispatch into Python (which may mutate the map) while
+  // iterating it.
+  std::vector<int> fired_dialog_ids;
+  for (auto&& entry : simple_dialogs_) {
+    if (entry.second->HandleMouseUp(button, x, y)) {
+      fired_dialog_ids.push_back(entry.first);
+    }
+  }
+  for (int id : fired_dialog_ids) {
+    DispatchSimpleDialogButton_(id, "mouse/touch");
   }
 
   if (dev_console_button_pressed_ && button == 1) {
@@ -344,6 +405,10 @@ void UI::HandleMouseCancel(int button, float x, float y) {
 
   if (dev_console_) {
     dev_console_->HandleMouseUp(button, x, y);
+  }
+
+  for (auto&& entry : simple_dialogs_) {
+    entry.second->HandleMouseCancel(button, x, y);
   }
 
   if (dev_console_button_pressed_ && button == 1) {
@@ -367,6 +432,129 @@ auto UI::UIHasDirectKeyboardInput() const -> bool {
     }
   }
   return false;
+}
+
+void UI::ReportTextEditing(const Rect& rect_virtual, TextEditSource source) {
+  assert(g_base->InLogicThread());
+  // Highest-priority source of the frame wins (the dev console sits
+  // above bauiv1 and intercepts text input first).
+  if (text_edit_reported_ && source <= text_edit_source_) {
+    return;
+  }
+  text_edit_reported_ = true;
+  text_edit_source_ = source;
+  text_edit_rect_ = rect_virtual;
+}
+
+void UI::ProcessTextEditReports(FrameDef* frame_def) {
+  assert(g_base->InLogicThread());
+  bool active = text_edit_reported_;
+  auto source = text_edit_source_;
+  Rect rect = text_edit_rect_;
+  text_edit_reported_ = false;  // Reset for next frame.
+
+  if (active && kDebugDrawTextEditRects) {
+    // Draw a translucent red rect over the reported area - by
+    // construction exactly what the app-adapter is being told about
+    // (modulo the coord conversion below).
+    SimpleComponent c(frame_def->overlay_front_pass());
+    c.SetTransparent(true);
+    c.SetPremultiplied(true);
+    c.SetColor(0.4f, 0.0f, 0.0f, 0.4f);
+    {
+      auto xf = c.ScopedTransform();
+      c.Translate(0.5f * (rect.l + rect.r), 0.5f * (rect.b + rect.t));
+      c.Scale(rect.width(), rect.height());
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
+    }
+    c.Submit();
+  }
+
+  // Convert to normalized (0-1) window coords, y-up. Note that game
+  // content occupies only our active render rect within the window
+  // (there can be black borders in tv-mode / at extreme window aspect
+  // ratios), so the mapping goes virtual -> active-rect -> window.
+  Rect norm{};
+  if (active) {
+    auto* graphics = g_base->graphics;
+    float vw = graphics->screen_virtual_width();
+    float vh = graphics->screen_virtual_height();
+    float pw = graphics->screen_pixel_width();
+    float ph = graphics->screen_pixel_height();
+    const Rect& arect = graphics->active_render_rect();
+    if (vw > 0.0f && vh > 0.0f && pw > 0.0f && ph > 0.0f) {
+      norm.l = (arect.l + rect.l / vw * arect.width()) / pw;
+      norm.r = (arect.l + rect.r / vw * arect.width()) / pw;
+      norm.b = (arect.b + rect.b / vh * arect.height()) / ph;
+      norm.t = (arect.b + rect.t / vh * arect.height()) / ph;
+      // Sanity-check the conversion: a degenerate or wildly-offscreen
+      // rect here means the virtual->window coord math has drifted
+      // (active-render-rect handling, hidpi, etc). Partial offscreen is
+      // legit (scrolled fields), so allow generous slack.
+      if (norm.width() <= 0.0f || norm.height() <= 0.0f || norm.l < -1.0f
+          || norm.r > 2.0f || norm.b < -1.0f || norm.t > 2.0f) {
+        BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                    "Text-edit rect conversion looks off (normalized ("
+                        + std::to_string(norm.l) + "," + std::to_string(norm.b)
+                        + "," + std::to_string(norm.r) + ","
+                        + std::to_string(norm.t) + ") from virtual ("
+                        + std::to_string(rect.l) + "," + std::to_string(rect.b)
+                        + "," + std::to_string(rect.r) + ","
+                        + std::to_string(rect.t) + ")).");
+      }
+    } else {
+      active = false;
+    }
+  }
+
+  // Sanity-check for session flapping: begin/end churning rapidly
+  // suggests reporters fighting (two widgets alternating, a widget
+  // flickering its carat state, etc). Rapid legit focus cycling can
+  // technically trip this, so the threshold is generous.
+  if (active != text_edit_active_) {
+    auto now = g_core->AppTimeSeconds();
+    if (now - text_edit_flap_window_start_ > 5.0) {
+      text_edit_flap_window_start_ = now;
+      text_edit_flap_count_ = 0;
+    }
+    text_edit_flap_count_++;
+    if (text_edit_flap_count_ >= 20) {
+      BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                  "Text-edit sessions are flapping (20+ begin/end"
+                  " transitions within 5 seconds); reporters may be"
+                  " fighting.");
+    }
+  }
+
+  if (active && !text_edit_active_) {
+    g_core->logging->Log(
+        LogName::kBaInput, LogLevel::kDebug,
+        "Text editing began (source="
+            + std::string(source == TextEditSource::kDevConsole ? "dev-console"
+                                                                : "widget")
+            + " vrect=(" + std::to_string(rect.l) + "," + std::to_string(rect.b)
+            + "," + std::to_string(rect.r) + "," + std::to_string(rect.t)
+            + ")).");
+    g_base->app_adapter->OnUITextEditingBegin(norm);
+  } else if (!active && text_edit_active_) {
+    g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug,
+                         "Text editing ended.");
+    g_base->app_adapter->OnUITextEditingEnd();
+  } else if (active) {
+    // Still active; resend if the rect moved meaningfully.
+    float eps{0.001f};
+    if (std::abs(norm.l - text_edit_rect_norm_prev_.l) > eps
+        || std::abs(norm.b - text_edit_rect_norm_prev_.b) > eps
+        || std::abs(norm.r - text_edit_rect_norm_prev_.r) > eps
+        || std::abs(norm.t - text_edit_rect_norm_prev_.t) > eps) {
+      g_base->app_adapter->OnUITextEditingUpdate(norm);
+    } else {
+      norm = text_edit_rect_norm_prev_;  // Keep exact stored value.
+    }
+  }
+  text_edit_active_ = active;
+  text_edit_rect_norm_prev_ = norm;
 }
 
 void UI::HandleMouseMotion(float x, float y) {
@@ -421,6 +609,21 @@ auto UI::ShouldHighlightWidgets() const -> bool {
 }
 
 auto UI::SendWidgetMessage(const WidgetMessage& m) -> bool {
+  // A SimpleDialog is modal while it's up: consume EVERY message here so
+  // nothing leaks to the widget tree / game underneath. Confirm-family
+  // messages (kStart/kActivate -- keyboard return, controller/remote OK
+  // buttons, etc.) fire the dialog's button if it has one; everything else
+  // (cancel, navigation, stray mouse events that missed the dialog) is
+  // swallowed with no effect. This is the funnel for both keyboard/controller
+  // widget messages and the mouse-event fall-through from HandleMouse*.
+  if (!simple_dialogs_.empty()) {
+    if (m.type == WidgetMessage::Type::kStart
+        || m.type == WidgetMessage::Type::kActivate) {
+      HandleSimpleDialogActivate_();
+    }
+    return true;
+  }
+
   OperationContext operation_context;
 
   bool result;
@@ -428,6 +631,28 @@ auto UI::SendWidgetMessage(const WidgetMessage& m) -> bool {
     result = ui_delegate->SendWidgetMessage(m);
   } else {
     result = false;
+  }
+
+  // Input diagnostics: trace text-input and key widget messages and
+  // whether anything claimed them. Together with the raw SDL event logs
+  // in AppAdapterSDL::HandleSDLEvent_, this pins down which layer
+  // dropped (or reordered) an input event. Ordering matters here: key
+  // and text deliveries must both arrive one event-loop hop deep (see
+  // Repeater::PostInit_ and Input::PushTextInputEvent) or things like
+  // SDL's synthesized backspace+text accent-replacement pair misapply.
+  if (g_core->logging->LogLevelEnabled(LogName::kBaInput, LogLevel::kDebug)) {
+    if (m.type == WidgetMessage::Type::kTextInput) {
+      g_core->logging->Log(
+          LogName::kBaInput, LogLevel::kDebug,
+          std::string("SendWidgetMessage kTextInput '")
+              + (m.sval != nullptr ? *m.sval : std::string("<null>"))
+              + "' claimed=" + (result ? "true" : "false") + ".");
+    } else if (m.type == WidgetMessage::Type::kKey) {
+      g_core->logging->Log(
+          LogName::kBaInput, LogLevel::kDebug,
+          "SendWidgetMessage kKey sym=" + std::to_string(m.keysym.sym)
+              + " claimed=" + (result ? "true" : "false") + ".");
+    }
   }
 
   // Run anything we triggered.
@@ -494,7 +719,7 @@ auto UI::RequestMainUIControl(InputDevice* input_device) -> bool {
     // they're not the chosen one.
     if (time - last_widget_input_reject_err_sound_time_ > 5000) {
       last_widget_input_reject_err_sound_time_ = time;
-      g_base->audio->SafePlaySysSound(SysSoundID::kErrorBeep);
+      g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioError);
       print_ui_owner = true;
     }
     ret_val = false;  // Rejected!
@@ -507,19 +732,20 @@ auto UI::RequestMainUIControl(InputDevice* input_device) -> bool {
           - (time - last_main_ui_input_device_use_time_) / 1000;
       std::string time_out_str;
       if (timeout > 0 && timeout < (kUIOwnerTimeoutSeconds - 3)) {
-        time_out_str = " " + g_base->assets->GetResourceString("timeOutText");
-        Utils::StringReplaceOne(&time_out_str, "${TIME}",
-                                std::to_string(timeout));
+        time_out_str = " "
+                       + BuiltinStrings::Ui::MenuControlTimeOut(
+                             static_cast<int64_t>(timeout))
+                             ->Evaluate();
       } else {
         time_out_str =
-            " " + g_base->assets->GetResourceString("willTimeOutText");
+            " " + BuiltinStrings::Ui::MenuControlWillTimeOut()->Evaluate();
       }
 
       std::string name{input->GetDeviceNamePretty()};
 
-      std::string b = g_base->assets->GetResourceString("hasMenuControlText");
-      Utils::StringReplaceOne(&b, "${NAME}", name);
-      g_base->ScreenMessage(b + time_out_str, {0.45f, 0.4f, 0.5f});
+      g_base->ScreenMessage(
+          BuiltinStrings::Ui::HasMenuControl(name)->Evaluate() + time_out_str,
+          {0.45f, 0.4f, 0.5f});
     }
   }
   return ret_val;
@@ -529,6 +755,61 @@ void UI::Draw(FrameDef* frame_def) {
   if (auto* ui_delegate = delegate()) {
     ui_delegate->Draw(frame_def);
   }
+}
+
+void UI::DrawSimpleDialogs(FrameDef* frame_def) {
+  // Drawn in id order, so a newer dialog layers over an older one.
+  for (auto&& entry : simple_dialogs_) {
+    entry.second->Draw(frame_def);
+  }
+}
+
+auto UI::CreateSimpleDialog() -> int {
+  assert(g_base->InLogicThread());
+  int id = next_simple_dialog_id_++;
+  simple_dialogs_[id] = std::make_unique<SimpleDialog>(id);
+  return id;
+}
+
+void UI::SetSimpleDialogState(int id, const std::string& title,
+                              const std::string& message, float progress,
+                              const std::string& button_label) {
+  assert(g_base->InLogicThread());
+  auto it = simple_dialogs_.find(id);
+  if (it != simple_dialogs_.end()) {
+    it->second->SetState(title, message, progress, button_label);
+  }
+}
+
+void UI::DismissSimpleDialog(int id) {
+  assert(g_base->InLogicThread());
+  simple_dialogs_.erase(id);
+}
+
+auto UI::HandleSimpleDialogActivate_() -> bool {
+  // Fire the top-most (highest-id) button-bearing dialog.
+  for (auto it = simple_dialogs_.rbegin(); it != simple_dialogs_.rend(); ++it) {
+    if (it->second->Activate()) {
+      DispatchSimpleDialogButton_(it->first, "key/controller OK");
+      return true;
+    }
+  }
+  return false;
+}
+
+void UI::DispatchSimpleDialogButton_(int id, const char* source) {
+  assert(g_base->InLogicThread());
+  // Click-sound feedback + a DEBUG trace on every activation, regardless of
+  // input device (mouse/touch, keyboard return, controller/remote OK buttons
+  // all funnel through here). The real action is the Python on_button.
+  g_core->logging->Log(LogName::kBa, LogLevel::kDebug,
+                       "SimpleDialog: button activated (dialog "
+                           + std::to_string(id) + ", via " + source + ").");
+  g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioClick01);
+  PythonRef args(Py_BuildValue("(i)", id), PythonRef::kSteal);
+  g_base->python->objs()
+      .Get(BasePython::ObjID::kSimpleDialogButtonPressCall)
+      .Call(args);
 }
 
 void UI::DrawDev(FrameDef* frame_def) {
@@ -635,17 +916,24 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
 
   SimpleComponent c(frame_def->overlay_front_pass());
   c.SetTransparent(true);
-  c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCircleShadow));
+  auto* button_tex =
+      g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircleShadow);
+  c.SetTexture(button_tex);
+  // Premultiply rgb by alpha for the premultiplied texture so the faded
+  // (alpha 0.8) button composites 'over' correctly (see
+  // docs/design/premultiplied-alpha.md).
+  float cmul = button_tex->premultiplied() ? 0.8f : 1.0f;
   if (dev_console_button_pressed_) {
-    c.SetColor(1.0f, 1.0f, 1.0f, 0.8f);
+    c.SetColor(cmul, cmul, cmul, 0.8f);
   } else {
-    c.SetColor(0.5f, 0.5f, 0.5f, 0.8f);
+    c.SetColor(0.5f * cmul, 0.5f * cmul, 0.5f * cmul, 0.8f);
   }
   {
     auto xf = c.ScopedTransform();
     c.Translate(vwidth - bsz * 0.5f, vheight * 0.5f, kDevConsoleZDepth + 0.01f);
     c.Scale(bsz, bsz, 1.0f);
-    c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+    c.DrawMeshAsset(
+        g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
     {
       auto xf = c.ScopedTransform();
       c.Scale(0.017f, 0.017f, 1.0f);
@@ -722,27 +1010,33 @@ void UI::SetUIDelegate(base::UIDelegateInterface* delegate) {
   }
 }
 
-void UI::PushDevConsolePrintCall(std::string_view msg, float scale,
-                                 Vector4f color) {
+void UI::PushDevConsolePrintCall(
+    std::vector<core::DevConsolePrintEntry> entries) {
   // Completely ignore this stuff in headless mode.
   if (g_core->HeadlessMode()) {
     return;
   }
-  // If our event loop AND console are up and running, ship it off to be
-  // printed. Otherwise store it for the console to grab when it's ready.
-  //
-  // IMPORTANT: We're holding a string_view here so we need to copy it into
-  // a string to keep it valid when its called later.
+  // If our event loop AND console are up and running, ship the whole batch
+  // off to be printed in a SINGLE logic-thread call. Doing one PushCall per
+  // log line instead let a logging burst (e.g. a verbose-logging boot)
+  // flood the logic thread's message queue -- see the >1000/>10000
+  // ThreadMessage guards in EventLoop. Otherwise store the lines for the
+  // console to grab once it's ready.
   if (auto* event_loop = g_base->logic->event_loop()) {
     if (dev_console_ != nullptr) {
-      event_loop->PushCall([this, msg_s = std::string(msg), scale, color] {
-        dev_console_->Print(msg_s.c_str(), scale, color);
+      event_loop->PushCall([this, entries = std::move(entries)] {
+        for (auto& entry : entries) {
+          dev_console_->Print(entry.msg.c_str(), entry.scale, entry.color);
+        }
       });
       return;
     }
   }
-  // Didn't send a print; store for later.
-  dev_console_startup_messages_.emplace_back(msg, scale, color);
+  // Console not ready yet; buffer the lines for later.
+  for (auto& entry : entries) {
+    dev_console_startup_messages_.emplace_back(entry.msg, entry.scale,
+                                               entry.color);
+  }
 }
 
 void UI::OnAssetsAvailable() {
@@ -765,6 +1059,24 @@ void UI::OnAssetsAvailable() {
                             std::get<2>(entry));
       }
       dev_console_startup_messages_.clear();
+    }
+
+    // Look-iteration aid: when enabled, spin up a demo SimpleDialog with
+    // placeholder content (self-animating progress bar) so we can tune the
+    // dialog's appearance without a live asset resolve. Off in normal use --
+    // real dialogs are created on demand via CreateSimpleDialog (needs builtin
+    // assets, same as the dev console).
+    if (kSimpleDialogDemo) {
+      int id = CreateSimpleDialog();
+      auto it = simple_dialogs_.find(id);
+      assert(it != simple_dialogs_.end());
+      it->second->SetState("UPDATING ASSETS",
+                           "Downloading assets (37 remaining)…\n"
+                           "Verifying downloaded data…\n"
+                           "Unpacking and installing…\n"
+                           "Finishing up…",
+                           -1.0f, "Retry");
+      it->second->set_demo_animate(true);
     }
   }
 }

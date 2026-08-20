@@ -2,8 +2,6 @@
 #
 """Provides ui for network related testing."""
 
-from __future__ import annotations
-
 import time
 import copy
 import weakref
@@ -15,6 +13,7 @@ from efro.error import CleanError
 from efro.util import strip_exception_tracebacks, strict_partial
 from bauiv1lib.settings.testing import TestingWindow
 import bauiv1 as bui
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -117,7 +116,7 @@ class NetTestingWindow(bui.MainWindow):
             size=(100, 60),
             scale=0.8,
             autoselect=True,
-            label=bui.Lstr(resource='copyText'),
+            label=_commonassets.strings.actions.copy,
             on_activate_call=self._copy,
         )
 
@@ -131,7 +130,7 @@ class NetTestingWindow(bui.MainWindow):
             size=(60, 60),
             scale=0.8,
             autoselect=True,
-            label=bui.Lstr(value='...'),
+            label='...',
             on_activate_call=self._show_val_testing,
         )
 
@@ -139,7 +138,7 @@ class NetTestingWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(self._width * 0.5, yoffs - 55),
             size=(0, 0),
-            text=bui.Lstr(resource='settingsWindowAdvanced.netTestingText'),
+            text=classicassets.strings.settings.net_testing.title,
             color=(0.8, 0.8, 0.8, 1.0),
             h_align='center',
             v_align='center',
@@ -493,7 +492,7 @@ def get_net_val_testing_window() -> TestingWindow:
         {'name': 'showNetInfo', 'label': 'Show Net Info', 'increment': 1},
     ]
     return TestingWindow(
-        title=bui.Lstr(resource='settingsWindowAdvanced.netTestingText'),
+        title=classicassets.strings.settings.net_testing.title,
         entries=entries,
     )
 
@@ -517,7 +516,7 @@ def get_net_val_testing_window() -> TestingWindow:
 #             {'name': 'showNetInfo', 'label': 'Show Net Info', 'increment': 1},
 #         ]
 #         super().__init__(
-#             title=bui.Lstr(resource='settingsWindowAdvanced.netTestingText'),
+#             title=classicassets.strings.settings.net_testing.title,
 #             entries=entries,
 #             transition=transition,
 #         )

@@ -14,6 +14,7 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/host_activity.h"
@@ -62,6 +63,12 @@ class GlobalsNodeType : public NodeType {
   BA_BOOL_ATTR(music_continuous, music_continuous, set_music_continuous);
   BA_STRING_ATTR(music, music, set_music);
   BA_INT_ATTR(music_count, music_count, SetMusicCount);
+  // Note: attrs are addressed over the wire by their position in this
+  // table, so new ones must be appended at the end (and need a protocol
+  // version bump); see the protocol-changes list in scene_v1.h. A plain
+  // append is only safe because nothing subclasses this type; a type
+  // with subclasses needs the _LATE macros (see 42/43 in that list).
+  BA_FLOAT_ARRAY_ATTR(gravity, GetGravity, SetGravity);
 #undef BA_NODE_TYPE_CLASS
 
   GlobalsNodeType()
@@ -93,7 +100,8 @@ class GlobalsNodeType : public NodeType {
         vr_near_clip(this),
         music_continuous(this),
         music(this),
-        music_count(this) {}
+        music_count(this),
+        gravity(this) {}
 };
 
 static NodeType* node_type{};
@@ -424,6 +432,21 @@ void GlobalsNode::SetCameraMode(const std::string& val) {
                     + R"('; expected "rotate" or "follow")");
   }
   if (IsCurrentGlobals()) g_base->graphics->camera()->SetMode(camera_mode_);
+}
+
+auto GlobalsNode::GetGravity() const -> std::vector<float> {
+  dVector3 grav;
+  dWorldGetGravity(scene()->dynamics()->ode_world(), grav);
+  return {static_cast<float>(grav[0]), static_cast<float>(grav[1]),
+          static_cast<float>(grav[2])};
+}
+
+void GlobalsNode::SetGravity(const std::vector<float>& vals) {
+  if (vals.size() != 3) {
+    throw Exception("Expected float array of size 3 for gravity",
+                    PyExcType::kValue);
+  }
+  dWorldSetGravity(scene()->dynamics()->ode_world(), vals[0], vals[1], vals[2]);
 }
 
 void GlobalsNode::SetAllowKickIdlePlayers(bool val) {

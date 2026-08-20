@@ -2,12 +2,11 @@
 #
 """Provides a window for selecting a game type to add to a playlist."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from bauiv1lib.playlist.editcontroller import PlaylistEditController
@@ -93,7 +92,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
             size=(160, 60),
             scale=0.75,
             text_scale=1.2,
-            label=bui.Lstr(resource='selectText'),
+            label=_commonassets.strings.actions.select,
             on_activate_call=self._add,
         )
 
@@ -107,7 +106,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
             position=(self._width * 0.5, yoffs - 28),
             size=(0, 0),
             scale=1.0,
-            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            text=classicassets.strings.playlist.add_game_title,
             h_align='center',
             color=bui.app.ui_v1.title_color,
             maxwidth=250,
@@ -228,7 +227,9 @@ class PlaylistAddGameWindow(bui.MainWindow):
         ]
 
         # Sort in the current language.
-        self._game_types.sort(key=lambda g: g.get_display_string().evaluate())
+        self._game_types.sort(
+            key=lambda g: g.get_display_string(langstr=True).evaluate()
+        )
 
         # Tell ourself to refresh back in the logic thread.
         bui.pushcall(self._refresh, from_other_thread=True)
@@ -251,7 +252,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
                 parent=self._column,
                 position=(0, 0),
                 size=(self._scroll_width * 1.1, 24),
-                text=gametype.get_display_string(),
+                text=gametype.get_display_string(langstr=True),
                 h_align='left',
                 v_align='center',
                 color=(0.8, 0.8, 0.8, 1.0),
@@ -269,7 +270,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
         self._get_more_games_button = bui.buttonwidget(
             parent=self._column,
             autoselect=True,
-            label=bui.Lstr(resource=f'{self._r}.getMoreGamesText'),
+            label=classicassets.strings.playlist.get_more_games,
             color=(0.54, 0.52, 0.67),
             textcolor=(0.7, 0.65, 0.7),
             on_activate_call=self._on_get_more_games_press,
@@ -283,7 +284,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
             )
 
     def _on_get_more_games_press(self) -> None:
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.docui import DocUIWindow
         from bauiv1lib.account.signin import show_sign_in_prompt
@@ -305,7 +306,7 @@ class PlaylistAddGameWindow(bui.MainWindow):
                 win_type=DocUIWindow,
                 win_create_call=bui.CallStrict(
                     StoreUIController().create_window,
-                    dui1.Request('/'),
+                    dui2.Request('/'),
                     origin_widget=self._get_more_games_button,
                     uiopenstateid='classicstore',
                 ),
@@ -326,11 +327,12 @@ class PlaylistAddGameWindow(bui.MainWindow):
     def _set_selected_game_type(self, gametype: type[bs.GameActivity]) -> None:
         self._selected_game_type = gametype
         bui.textwidget(
-            edit=self._selected_title_text, text=gametype.get_display_string()
+            edit=self._selected_title_text,
+            text=gametype.get_display_string(langstr=True),
         )
         bui.textwidget(
             edit=self._selected_description_text,
             text=gametype.get_description_display_string(
-                self._editcontroller.get_session_type()
+                self._editcontroller.get_session_type(), langstr=True
             ),
         )

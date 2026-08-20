@@ -2,11 +2,10 @@
 #
 """Implements respawn icon actor."""
 
-from __future__ import annotations
-
 import weakref
 
 import bascenev1 as bs
+from bascenev1 import builtinassets
 
 
 class RespawnIcon:
@@ -28,7 +27,7 @@ class RespawnIcon:
         # Cache our mask tex on the team for easy access.
         mask_tex = player.team.customdata.get(self._MASKTEXSTORENAME)
         if mask_tex is None:
-            mask_tex = bs.gettexture('characterIconMask')
+            mask_tex = builtinassets.textures.character_icon_mask.get()
             player.team.customdata[self._MASKTEXSTORENAME] = mask_tex
         assert isinstance(mask_tex, bs.Texture)
 
@@ -76,7 +75,7 @@ class RespawnIcon:
                 attrs={
                     'v_attach': 'top',
                     'h_attach': 'right' if on_right else 'left',
-                    'text': bs.Lstr(value=player.getname()),
+                    'text': player.getname(),
                     'maxwidth': 100,
                     'h_align': 'center',
                     'v_align': 'center',
@@ -185,7 +184,7 @@ class RespawnIcon:
         if not self._dec_text:
             self._dec_timer = None
             return
-        old_text: bs.Lstr | str = self._dec_text.node.text
+        old_text: bs.Lstr | bs.LangStr | str = self._dec_text.node.text
         iterate: int
         # Get the following display text using our current one.
         try:

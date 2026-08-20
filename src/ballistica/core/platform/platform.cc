@@ -2,10 +2,16 @@
 
 #include "ballistica/core/platform/platform.h"
 
+#include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <cstdio>
+#include <limits>
 #include <list>
+#include <mutex>
 #include <string>
+#include <thread>
+#include <utility>
 #include <vector>
 
 #include "ballistica/shared/foundation/macros.h"
@@ -33,7 +39,6 @@
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
-#include "ballistica/core/platform/support/min_sdl.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/exception.h"
@@ -237,44 +242,6 @@ auto Platform::DoGetCacheDirectoryMonolithicDefault()
   std::string config_dir;
   // Go with unset here; let baenv handle it in Python-land.
   return {};
-}
-
-// FIXME: should make this unnecessary.
-auto Platform::GetLowLevelConfigValue(const char* key, int default_value)
-    -> int {
-  std::string path =
-      g_core->GetConfigDirectory() + BA_DIRSLASH + ".cvar_" + key;
-  int val = default_value;
-  FILE* f = FOpen(path.c_str(), "r");
-  if (f) {
-    int val2;
-    int result = fscanf(f, "%d", &val2);  // NOLINT
-    if (result == 1) {
-      // I'm guessing scanned val is probably untouched on failure
-      // but why risk it? Let's only copy it in if it looks successful.
-      val = val2;
-    }
-    fclose(f);
-  }
-  return val;
-}
-
-// FIXME: should make this unnecessary.
-void Platform::SetLowLevelConfigValue(const char* key, int value) {
-  std::string path =
-      g_core->GetConfigDirectory() + BA_DIRSLASH + ".cvar_" + key;
-  std::string out = std::to_string(value);
-  FILE* f = FOpen(path.c_str(), "w");
-  if (f) {
-    size_t result = fwrite(out.c_str(), out.size(), 1, f);
-    if (result != 1)
-      g_core->logging->Log(LogName::kBa, LogLevel::kError,
-                           "unable to write low level config file.");
-    fclose(f);
-  } else {
-    g_core->logging->Log(LogName::kBa, LogLevel::kError,
-                         "unable to open low level config file for writing.");
-  }
 }
 
 // auto Platform::GetCacheDirectory() -> std::string {
@@ -564,21 +531,15 @@ auto Platform::HandleFatalError(bool exit_cleanly,
 }
 
 auto Platform::CanShowBlockingFatalErrorDialog() -> bool {
-  if (g_buildconfig.sdl_build()) {
-    return true;
-  } else {
-    return false;
-  }
+  // Base default: no dialog. OS subclasses that can show one override this
+  // (Windows via MessageBoxW, macOS via Cocoa or SDL, Linux via SDL). This
+  // keeps SDL out of cross-platform core; see sdl_message_box.h.
+  return false;
 }
 
 void Platform::BlockingFatalErrorDialog(const std::string& message) {
-#if BA_SDL_BUILD
-  assert(g_core->InMainThread());
-  if (!g_core->HeadlessMode()) {
-    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Fatal Error",
-                             message.c_str(), nullptr);
-  }
-#endif
+  // Base default is a no-op; OS subclasses override to show a real dialog.
+  (void)message;
 }
 
 auto Platform::DoGetDataDirectoryMonolithicDefault() -> std::string {
@@ -692,6 +653,156 @@ auto Platform::GetAndroidExecArg() -> std::string { return ""; }
 void Platform::GetTextBoundsAndWidth(const std::string& text, Rect* r,
                                      float* width) {
   throw Exception();
+}
+
+auto Platform::GetTextLineBreakOffsets(const std::string& text)
+    -> std::vector<int> {
+  // Naive fallback: allow a line to begin wherever a non-space follows a
+  // space or newline. (Real OS implementations give full UAX #14.)
+  std::vector<int> offsets;
+  size_t len = text.size();
+  for (size_t i = 1; i < len; ++i) {
+    char prev = text[i - 1];
+    char cur = text[i];
+    if ((prev == ' ' || prev == '\n') && cur != ' ' && cur != '\n') {
+      offsets.push_back(static_cast<int>(i));
+    }
+  }
+  return offsets;
+}
+
+auto Platform::SplitTextIntoLines(const std::string& text, int min_lines,
+                                  int max_lines, int max_chars_per_line)
+    -> std::string {
+  assert(Utils::IsValidUTF8(text));
+
+  auto is_edge_space = [](char c) {
+    return c == ' ' || c == '\n' || c == '\r' || c == '\t';
+  };
+
+  // Candidate line boundaries: text start, each break opportunity,
+  // text end.
+  std::vector<int> bounds;
+  bounds.push_back(0);
+  for (int off : GetTextLineBreakOffsets(text)) {
+    bounds.push_back(off);
+  }
+  bounds.push_back(static_cast<int>(text.size()));
+  int bound_count = static_cast<int>(bounds.size());
+  int seg_count = bound_count - 1;
+  int min_l = std::min(std::max(min_lines, 1), seg_count);
+  int max_l = max_lines <= 0 ? seg_count
+                             : std::min(std::max(max_lines, min_l), seg_count);
+
+  // Per-boundary cumulative code-point counts plus the whitespace run
+  // directly preceding each boundary, so any candidate line's visible
+  // length (code-points minus trailing whitespace) is O(1). Counting
+  // non-continuation bytes gives code-point counts; the whitespace we
+  // strip is all ASCII so byte counts suffice there.
+  std::vector<int> cum(bound_count);
+  std::vector<int> trail_ws(bound_count);
+  cum[0] = 0;
+  trail_ws[0] = 0;
+  for (int i = 1; i < bound_count; ++i) {
+    int cp = cum[i - 1];
+    for (int b = bounds[i - 1]; b < bounds[i]; ++b) {
+      if ((static_cast<uint8_t>(text[b]) & 0xC0) != 0x80) {
+        ++cp;
+      }
+    }
+    cum[i] = cp;
+    int ws = 0;
+    for (int b = bounds[i] - 1; b >= bounds[i - 1] && is_edge_space(text[b]);
+         --b) {
+      ++ws;
+    }
+    trail_ws[i] = ws;
+  }
+  auto visible_len = [&](int from, int to) {
+    return std::max(cum[to] - cum[from] - trail_ws[to], 0);
+  };
+
+  // Each candidate line costs (overflow, raggedness): squared excess
+  // over max_chars_per_line, and squared length (with line count and
+  // total fixed, minimizing summed squared lengths yields the most
+  // even lines). Costs add and compare lexicographically, so honoring
+  // the char limit always beats prettiness.
+  struct Cost {
+    int64_t over;
+    int64_t ragged;
+    auto operator<(const Cost& other) const -> bool {
+      return over != other.over ? over < other.over : ragged < other.ragged;
+    }
+  };
+  const Cost kHuge{std::numeric_limits<int64_t>::max(),
+                   std::numeric_limits<int64_t>::max()};
+  auto line_cost = [&](int from, int to) {
+    int64_t len = visible_len(from, to);
+    int64_t excess = max_chars_per_line > 0
+                         ? std::max<int64_t>(len - max_chars_per_line, 0)
+                         : 0;
+    return Cost{excess * excess, len * len};
+  };
+
+  // Boundary counts here are small (UI strings), so the simple
+  // O(max_lines * bounds^2) DP over exact line counts is fine.
+  std::vector<std::vector<Cost>> cost(max_l + 1,
+                                      std::vector<Cost>(bound_count, kHuge));
+  std::vector<std::vector<int>> parent(max_l + 1,
+                                       std::vector<int>(bound_count, -1));
+  cost[0][0] = {0, 0};
+  for (int j = 1; j <= max_l; ++j) {
+    for (int i = j; i < bound_count; ++i) {
+      for (int p = j - 1; p < i; ++p) {
+        if (!(cost[j - 1][p] < kHuge)) {
+          continue;
+        }
+        Cost lc = line_cost(p, i);
+        Cost val{cost[j - 1][p].over + lc.over,
+                 cost[j - 1][p].ragged + lc.ragged};
+        if (val < cost[j][i]) {
+          cost[j][i] = val;
+          parent[j][i] = p;
+        }
+      }
+    }
+  }
+
+  // Use the fewest lines achieving the least overflow (zero when the
+  // char limit is satisfiable in range, and trivially zero with no
+  // limit — so with no limit this is simply min_lines).
+  int lines = min_l;
+  for (int j = min_l + 1; j <= max_l; ++j) {
+    if (cost[j][bound_count - 1].over < cost[lines][bound_count - 1].over) {
+      lines = j;
+    }
+  }
+
+  // Walk back from the end to recover the chosen boundaries.
+  std::vector<int> picks(lines + 1);
+  picks[lines] = bound_count - 1;
+  for (int j = lines; j > 0; --j) {
+    picks[j - 1] = parent[j][picks[j]];
+  }
+
+  // Emit newline-separated lines with edge whitespace stripped.
+  std::string out;
+  out.reserve(text.size());
+  for (int j = 0; j < lines; ++j) {
+    int begin = bounds[picks[j]];
+    int end = bounds[picks[j + 1]];
+    while (begin < end && is_edge_space(text[begin])) {
+      ++begin;
+    }
+    while (end > begin && is_edge_space(text[end - 1])) {
+      --end;
+    }
+    if (j > 0) {
+      out += '\n';
+    }
+    out.append(text, begin, end - begin);
+  }
+  return out;
 }
 
 void Platform::FreeTextTexture(void* tex) { throw Exception(); }
@@ -985,6 +1096,108 @@ auto Platform::SetSocketNonBlocking(int sd) -> bool {
   }
   return true;
 #endif
+}
+
+void Platform::AddNetworkAvailabilityCallback(NetworkAvailabilityCallback cb) {
+  bool initial_value;
+  bool need_start;
+  bool stopped;
+  {
+    std::lock_guard lock(network_availability_mutex_);
+    initial_value = network_availability_value_;
+    network_availability_callbacks_.push_back(cb);
+    need_start = !network_availability_monitoring_started_;
+    network_availability_monitoring_started_ = true;
+    stopped = network_availability_dispatch_stopped_;
+  }
+  if (stopped) {
+    // Shutdown has already begun; don't fire synchronously and
+    // don't kick off OS monitoring. The callback stays in the list
+    // (harmless) but will never be invoked.
+    return;
+  }
+  // API contract: consumers assume 'unavailable' until informed
+  // otherwise. So fire a synchronous callback only when we have
+  // non-default state to convey ('true'). This keeps the first
+  // registration silent (no redundant cb(false) before the real
+  // OS report arrives) while still informing late registrations
+  // of the current state if the OS has already said 'true'.
+  if (initial_value) {
+    cb(initial_value);
+  }
+  if (need_start) {
+    // Optional debug override: BA_NETWORK_AVAILABILITY_DEBUG_TOGGLE=1
+    // bypasses real platform monitoring and runs a thread that
+    // starts in the 'unavailable' state and toggles every 5
+    // seconds, so consumers can be exercised without actually
+    // severing the network connection.
+    auto debug_var = GetEnv("BA_NETWORK_AVAILABILITY_DEBUG_TOGGLE");
+    if (debug_var && *debug_var == "1") {
+      // Detached and never joined; runs until process exit. There's
+      // a tiny shutdown-race window where the thread could fire
+      // SetNetworkAvailability while g_core or its members are
+      // mid-destruction. Acceptable here since this is debug-only
+      // (env-var-gated) and the 5s sleep makes the race vanishingly
+      // unlikely. If we ever want to close it, switch to a joinable
+      // member thread with an atomic stop flag + condvar wait.
+      std::thread(&Platform::RunNetworkAvailabilityDebugToggle_, this).detach();
+    } else {
+      DoStartNetworkAvailabilityMonitoring();
+    }
+  }
+}
+
+void Platform::SetNetworkAvailability(bool available) {
+  std::vector<NetworkAvailabilityCallback> snapshot;
+  {
+    std::lock_guard lock(network_availability_mutex_);
+    if (network_availability_dispatch_stopped_) {
+      // Shutdown in progress; silence any further dispatch. Don't
+      // even update the cached value — the API contract is "stay
+      // at last reported state on shutdown."
+      return;
+    }
+    if (available == network_availability_value_) {
+      return;  // dedup; no change.
+    }
+    network_availability_value_ = available;
+    snapshot = network_availability_callbacks_;
+  }
+  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [available] {
+    return std::string("Network availability changed: ")
+           + (available ? "true" : "false");
+  });
+  for (auto& cb : snapshot) {
+    cb(available);
+  }
+}
+
+void Platform::DoStartNetworkAvailabilityMonitoring() {
+  // Default (no real OS monitoring): immediately report 'true' so
+  // platforms without a per-OS implementation aren't stuck in the
+  // initial 'false' state forever. Subclasses override to subscribe
+  // to OS-level monitoring and report actual state via
+  // SetNetworkAvailability.
+  SetNetworkAvailability(true);
+}
+
+void Platform::StopNetworkAvailabilityDispatch() {
+  std::lock_guard lock(network_availability_mutex_);
+  network_availability_dispatch_stopped_ = true;
+}
+
+void Platform::RunNetworkAvailabilityDebugToggle_() {
+  // We wait one period before the first flip to 'true' so
+  // consumers can be observed honoring the gate during the initial
+  // unavailable window before anything has a chance to come up.
+  // Same period is used for all subsequent toggles. Initial 'false'
+  // is the platform-wide default; no explicit seed needed here.
+  bool current = false;
+  while (true) {
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    current = !current;
+    SetNetworkAvailability(current);
+  }
 }
 
 auto Platform::TimeSinceLaunchMillisecs() const -> millisecs_t {

@@ -7,6 +7,7 @@ apis such as :mod:`bauiv1`. UIs can easily be serialized to json data
 and be provided by webservers or other local or remote sources.
 """
 
+from bacommon.langstr import WrapParams
 from bacommon.docui._docui import (
     DocUIRequest,
     DocUIRequestTypeID,
@@ -27,4 +28,5 @@ __all__ = [
     'UnknownDocUIResponse',
     'DocUIWebRequest',
     'DocUIWebResponse',
+    'WrapParams',
 ]

@@ -95,15 +95,9 @@ Graphics::~Graphics() = default;
 
 void Graphics::OnAppStart() { assert(g_base->InLogicThread()); }
 
-void Graphics::OnAppSuspend() {
-  assert(g_base->InLogicThread());
-  SetGyroEnabled(false);
-}
+void Graphics::OnAppSuspend() { assert(g_base->InLogicThread()); }
 
-void Graphics::OnAppUnsuspend() {
-  assert(g_base->InLogicThread());
-  g_base->graphics->SetGyroEnabled(true);
-}
+void Graphics::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
 
 void Graphics::OnAppShutdown() { assert(g_base->InLogicThread()); }
 
@@ -123,9 +117,19 @@ void Graphics::ApplyAppConfig() {
       g_base->app_config->Resolve(AppConfig::BoolID::kDisableCameraShake);
   set_camera_shake_disabled(disable_camera_shake);
 
-  bool disable_camera_gyro =
-      g_base->app_config->Resolve(AppConfig::BoolID::kDisableCameraGyro);
-  set_camera_gyro_explicitly_disabled(disable_camera_gyro);
+  // TV-border toggles affect our active render rect and thus our virtual
+  // res; recalc all that if it changed (and we know our res).
+  bool tv_border =
+      g_base->app_config->Resolve(AppConfig::BoolID::kEnableTVBorder);
+  if (tv_border != tv_border_) {
+    tv_border_ = tv_border;
+    if (got_screen_resolution_) {
+      UpdateScreen_();
+    }
+  }
+
+  // Note: the 'Disable Camera Gyro' setting is handled by the input
+  // subsystem, which owns the device-motion -> tilt signal.
 
   applied_app_config_ = true;
 
@@ -220,7 +224,7 @@ auto Graphics::VSyncFromAppConfig() -> VSyncRequest {
   if (v_sync == "Auto") {
     return VSyncRequest::kAuto;
   } else if (v_sync == "Always") {
-    return VSyncRequest::kAuto;
+    return VSyncRequest::kAlways;
   } else if (v_sync == "Never") {
     return VSyncRequest::kNever;
   }
@@ -250,14 +254,6 @@ auto Graphics::GraphicsQualityFromAppConfig() -> GraphicsQualityRequest {
     graphics_quality_requested = GraphicsQualityRequest::kAuto;
   }
   return graphics_quality_requested;
-}
-
-void Graphics::SetGyroEnabled(bool enable) {
-  // If we're turning back on, suppress gyro updates for a bit.
-  if (enable && !gyro_enabled_) {
-    last_suppress_gyro_time_ = g_core->AppTimeMicrosecs();
-  }
-  gyro_enabled_ = enable;
 }
 
 void Graphics::UpdateProgressBarProgress(float target) {
@@ -562,17 +558,17 @@ void Graphics::InitInternalComponents(FrameDef* frame_def) {
 
   screen_mesh_ = Object::New<ImageMesh>();
 
-  // Let's draw a bit bigger than screen to account for tv-border-mode.
   float w = pass->virtual_width();
   float h = pass->virtual_height();
   if (g_core->vr_mode()) {
+    // Draw a bit bigger than the virtual screen to cover the vr border.
     screen_mesh_->SetPositionAndSize(
         -(0.5f * kVRBorder) * w, (-0.5f * kVRBorder) * h, kScreenMeshZDepth,
         (1.0f + kVRBorder) * w, (1.0f + kVRBorder) * h);
   } else {
-    screen_mesh_->SetPositionAndSize(
-        -(0.5f * kTVBorder) * w, (-0.5f * kTVBorder) * h, kScreenMeshZDepth,
-        (1.0f + kTVBorder) * w, (1.0f + kTVBorder) * h);
+    // The virtual screen covers everything visible (anything outside the
+    // active render rect is black borders drawn by the renderer).
+    screen_mesh_->SetPositionAndSize(0.0f, 0.0f, kScreenMeshZDepth, w, h);
   }
   progress_bar_top_mesh_ = Object::New<ImageMesh>();
   progress_bar_bottom_mesh_ = Object::New<ImageMesh>();
@@ -604,9 +600,6 @@ auto Graphics::GetGraphicsSettingsSnapshot() -> Snapshot<GraphicsSettings>* {
     new_settings->index = next_settings_index_++;
     settings_snapshot_ = Object::New<Snapshot<GraphicsSettings>>(new_settings);
     graphics_settings_dirty_ = false;
-
-    // We keep a cached copy of this value since we use it a lot.
-    tv_border_ = settings_snapshot_->get()->tv_border;
 
     // This can affect placeholder settings; keep those up to date.
     UpdatePlaceholderSettings();
@@ -667,62 +660,6 @@ void Graphics::DrawLoadDot(RenderPass* pass) {
   }
   c.DrawMesh(load_dot_mesh_.get());
   c.Submit();
-}
-
-void Graphics::UpdateGyro(microsecs_t time_microsecs,
-                          microsecs_t elapsed_microsecs) {
-  Vector3f tilt = gyro_vals_;
-
-  millisecs_t elapsed_millisecs = elapsed_microsecs / 1000;
-
-  // Our gyro vals get set from another thread and we don't use a lock,
-  // so perhaps there's a chance we get corrupted float values here?..
-  // Let's watch out for crazy vals just in case.
-  for (float& i : tilt.v) {
-    // Check for NaN and Inf:
-    if (!std::isfinite(i)) {
-      i = 0.0f;
-    }
-
-    // Clamp crazy big values:
-    i = std::min(100.0f, std::max(-100.0f, i));
-  }
-
-  // Our math was calibrated for 60hz (16ms per frame);
-  // adjust for other framerates...
-  float timescale = static_cast<float>(elapsed_millisecs) / 16.0f;
-
-  // If we've recently been told to suppress the gyro, zero these.
-  // (prevents hitches when being restored, etc)
-  if (!gyro_enabled_ || camera_gyro_explicitly_disabled_
-      || (time_microsecs - last_suppress_gyro_time_ < 1000000)) {
-    tilt = Vector3f{0.0, 0.0, 0.0};
-  }
-
-  float tilt_smoothing = 0.0f;
-  tilt_smoothed_ =
-      tilt_smoothing * tilt_smoothed_ + (1.0f - tilt_smoothing) * tilt;
-
-  tilt_vel_ = tilt_smoothed_ * 3.0f;
-  tilt_pos_ += tilt_vel_ * timescale;
-
-  // Technically this will behave slightly differently at different time
-  // scales, but it should be close to correct.. tilt_pos_ *= 0.991f;
-  tilt_pos_ *= std::max(0.0f, 1.0f - 0.01f * timescale);
-
-  // Some gyros seem wonky and either give us crazy big values or consistently
-  // offset ones. Let's keep a running tally of magnitude that slowly drops
-  // over time, and if it reaches a certain value lets just kill gyro input.
-  if (gyro_broken_) {
-    tilt_pos_ *= 0.0f;
-  } else {
-    gyro_mag_test_ += tilt_vel_.Length() * 0.01f * timescale;
-    gyro_mag_test_ = std::max(0.0f, gyro_mag_test_ - 0.02f * timescale);
-    if (gyro_mag_test_ > 100.0f) {
-      g_base->ScreenMessage("Wonky gyro; disabling tilt.", {1, 0, 0});
-      gyro_broken_ = true;
-    }
-  }
 }
 
 void Graphics::ApplyCamera(FrameDef* frame_def) {
@@ -809,10 +746,11 @@ void Graphics::BuildAndPushFrameDef() {
                  next_frame_number_filtered_increment_time_ + 1000000 / 60);
   }
 
-  // This probably should not be here. Though I guess we get the most
-  // up-to-date values possible this way. But it should probably live in
-  // g_input.
-  UpdateGyro(app_time_microsecs, elapsed_microsecs);
+  // The device-motion -> tilt signal lives in the input subsystem, but we
+  // drive its per-frame integration from here so it uses the freshest gyro
+  // sample possible right before we build this frame's draw commands (which
+  // sample input->tilt() for camera/UI parallax).
+  g_base->input->UpdateGyro(app_time_microsecs, elapsed_microsecs);
 
   FrameDef* frame_def = GetEmptyFrameDef();
   frame_def->set_app_time_microsecs(app_time_microsecs);
@@ -846,6 +784,11 @@ void Graphics::BuildAndPushFrameDef() {
 
     RenderPass* overlay_pass = frame_def->overlay_pass();
     DrawMiscOverlays(frame_def);
+
+    // SimpleDialogs (asset-resolve progress, dead-in-the-water errors, etc.):
+    // over all game/UI but under the dev console (which DrawDevUI submits next,
+    // at a depth just above ours).
+    g_base->ui->DrawSimpleDialogs(frame_def);
 
     // Let UI draw dev console and whatever else.
     DrawDevUI(frame_def);
@@ -886,6 +829,11 @@ void Graphics::BuildAndPushFrameDef() {
     // gone, run it.
     RunCleanFrameCommands();
   }
+
+  // All possible text-editing reporters have drawn by this point (or none
+  // did, e.g. progress-bar-only frames); reconcile against last frame and
+  // inform the app-adapter of any text-editing begin/end/moves.
+  g_base->ui->ProcessTextEditReports(frame_def);
 
   frame_def->Complete();
 
@@ -928,7 +876,8 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
         c.Translate(0, 7, -3.3f);
         c.Scale(10, 10, 10);
         c.Rotate(a, 0, 0, 1);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove));
       }
       c.Submit();
     }
@@ -936,7 +885,8 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
     // Beauty.
     if (explicit_bool(false)) {
       ObjectComponent c(frame_def->beauty_pass());
-      c.SetTexture(g_base->assets->SysTexture(SysTextureID::kBoxingGlove));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesBoxingGlovesColor));
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
       {
@@ -944,7 +894,8 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
         c.Translate(0.0f, 3.7f, -3.3f);
         c.Scale(10.0f, 10.0f, 10.0f);
         c.Rotate(a, 0.0f, 0.0f, 1.0f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove));
       }
       c.Submit();
     }
@@ -959,7 +910,8 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
         c.Translate(0.0f, 3.7f, -3.3f);
         c.Scale(10.0f, 10.0f, 10.0f);
         c.Rotate(a, 0.0f, 0.0f, 1.0f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kBoxingGlove));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove));
       }
       c.Submit();
     }
@@ -975,7 +927,8 @@ void Graphics::DrawDebugBuffers(RenderPass* pass) {
         auto xf = c.ScopedTransform();
         c.Translate(70, 400, kDebugImgZDepth);
         c.Scale(csize, csize);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
       }
       c.Submit();
     }
@@ -986,7 +939,8 @@ void Graphics::DrawDebugBuffers(RenderPass* pass) {
         auto xf = c.ScopedTransform();
         c.Translate(70, 250, kDebugImgZDepth);
         c.Scale(csize, csize);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
       }
       c.Submit();
     }
@@ -1168,7 +1122,8 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
       SimpleComponent c(frame_def->overlay_front_pass());
       c.SetTransparent(true);
       float csize = 50.0f;
-      c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCursor));
+      c.SetTexture(
+          g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCursor));
       {
         auto xf = c.ScopedTransform();
 
@@ -1178,7 +1133,8 @@ void Graphics::DrawCursor(FrameDef* frame_def) {
         c.CursorTranslate();
         c.Translate(csize * 0.40f, csize * -0.38f, kCursorZDepth);
         c.Scale(csize, csize);
-        c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+        c.DrawMeshAsset(
+            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
       }
       c.Submit();
     }
@@ -1195,7 +1151,8 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
     shadow_blotch_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
         blotch_verts_.size(), &blotch_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_base->assets->SysTexture(SysTextureID::kLight));
+    c.SetTexture(
+        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesLight));
     c.DrawMesh(shadow_blotch_mesh_.get());
     c.Submit();
   }
@@ -1208,7 +1165,8 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
     shadow_blotch_soft_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
         blotch_soft_verts_.size(), &blotch_soft_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(g_base->assets->SysTexture(SysTextureID::kLightSoft));
+    c.SetTexture(
+        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesLightSoft));
     c.DrawMesh(shadow_blotch_soft_mesh_.get());
     c.Submit();
   }
@@ -1221,7 +1179,8 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
     shadow_blotch_soft_obj_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
         blotch_soft_obj_verts_.size(), &blotch_soft_obj_verts_[0]));
     SpriteComponent c(frame_def->light_pass());
-    c.SetTexture(g_base->assets->SysTexture(SysTextureID::kLightSoft));
+    c.SetTexture(
+        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesLightSoft));
     c.DrawMesh(shadow_blotch_soft_obj_mesh_.get());
     c.Submit();
   }
@@ -1593,6 +1552,41 @@ void Graphics::CalcVirtualRes_(float* x, float* y) {
   }
 }
 
+auto Graphics::CalcActiveRenderRect(float res_x, float res_y, bool tv_border)
+    -> Rect {
+  Rect rect{0.0f, 0.0f, res_x, res_y};
+
+  // In tv-border mode, inset all edges by a uniform thickness
+  // proportional to window height.
+  if (tv_border) {
+    float border = kTVBorder * res_y;
+    // Keep borders sane on degenerate window sizes.
+    border = std::min(border, 0.25f * std::min(res_x, res_y));
+    rect.l += border;
+    rect.r -= border;
+    rect.b += border;
+    rect.t -= border;
+  }
+
+  // Now clamp aspect ratio, keeping the largest centered sub-rect that
+  // satisfies our bounds. (Border first, then clamp: uniform borders
+  // change the inner region's aspect, so clamping must consider the
+  // post-border region.)
+  if (rect.width() > 0.0f && rect.height() > 0.0f) {
+    float aspect = rect.width() / rect.height();
+    if (aspect < kMinAspectRatio) {
+      float trim = (rect.height() - rect.width() / kMinAspectRatio) * 0.5f;
+      rect.b += trim;
+      rect.t -= trim;
+    } else if (aspect > kMaxAspectRatio) {
+      float trim = (rect.width() - rect.height() * kMaxAspectRatio) * 0.5f;
+      rect.l += trim;
+      rect.r -= trim;
+    }
+  }
+  return rect;
+}
+
 void Graphics::SetScreenResolution(float x, float y) {
   assert(g_base->InLogicThread());
 
@@ -1621,11 +1615,25 @@ void Graphics::UpdateScreen_() {
   // Calc virtual res. In vr mode our virtual res is independent of our
   // screen size (since it gets drawn to an overlay).
   if (g_core->vr_mode()) {
+    active_render_rect_ = Rect{0.0f, 0.0f, res_x_, res_y_};
     res_x_virtual_ = kBaseVirtualResX;
     res_y_virtual_ = kBaseVirtualResY;
   } else {
-    res_x_virtual_ = res_x_;
-    res_y_virtual_ = res_y_;
+    // Game content occupies our active render rect (the window minus
+    // tv-borders and aspect-ratio limiting); virtual res derives from
+    // that rect, not the raw window.
+    active_render_rect_ = CalcActiveRenderRect(res_x_, res_y_, tv_border_);
+    if (active_render_rect_.width() <= 0.0f
+        || active_render_rect_.height() <= 0.0f) {
+      BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
+                  "Active render rect is degenerate ("
+                      + std::to_string(active_render_rect_.width()) + "x"
+                      + std::to_string(active_render_rect_.height())
+                      + " for window " + std::to_string(res_x_) + "x"
+                      + std::to_string(res_y_) + ").");
+    }
+    res_x_virtual_ = active_render_rect_.width();
+    res_y_virtual_ = active_render_rect_.height();
     CalcVirtualRes_(&res_x_virtual_, &res_y_virtual_);
   }
 
@@ -1643,20 +1651,20 @@ void Graphics::UpdateScreen_() {
 }
 
 auto Graphics::CubeMapFromReflectionType(ReflectionType reflection_type)
-    -> SysCubeMapTextureID {
+    -> BuiltinCubeMapTextureID {
   switch (reflection_type) {
     case ReflectionType::kChar:
-      return SysCubeMapTextureID::kReflectionChar;
+      return BuiltinCubeMapTextureID::kTexturesReflectionChar;
     case ReflectionType::kPowerup:
-      return SysCubeMapTextureID::kReflectionPowerup;
+      return BuiltinCubeMapTextureID::kTexturesReflectionPowerup;
     case ReflectionType::kSoft:
-      return SysCubeMapTextureID::kReflectionSoft;
+      return BuiltinCubeMapTextureID::kTexturesReflectionSoft;
     case ReflectionType::kSharp:
-      return SysCubeMapTextureID::kReflectionSharp;
+      return BuiltinCubeMapTextureID::kTexturesReflectionSharp;
     case ReflectionType::kSharper:
-      return SysCubeMapTextureID::kReflectionSharper;
+      return BuiltinCubeMapTextureID::kTexturesReflectionSharper;
     case ReflectionType::kSharpest:
-      return SysCubeMapTextureID::kReflectionSharpest;
+      return BuiltinCubeMapTextureID::kTexturesReflectionSharpest;
     default:
       throw Exception();
   }
@@ -1813,7 +1821,8 @@ void Graphics::DrawVirtualSafeAreaBounds(RenderPass* pass) {
       c.Translate(0.5f * pass->virtual_width(), 0.5f * pass->virtual_height(),
                   0.0f);
       c.Scale(width, height, 0.01f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kOverlayGuide));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesOverlayGuide));
     }
     c.Submit();
   }

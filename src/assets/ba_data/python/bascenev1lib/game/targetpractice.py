@@ -5,12 +5,11 @@
 # ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
-from __future__ import annotations
-
 import random
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import classicassets
 
 from bascenev1lib.actor.scoreboard import Scoreboard
 from bascenev1lib.actor.onscreencountdown import OnScreenCountdown
@@ -263,7 +262,7 @@ class Target(bs.Actor):
         bs.animate_array(loc1, 'size', 1, {0: [0.0], 0.2: [self._r1 * 2.0]})
         bs.animate_array(loc2, 'size', 1, {0.05: [0.0], 0.25: [self._r2 * 2.0]})
         bs.animate_array(loc3, 'size', 1, {0.1: [0.0], 0.3: [self._r3 * 2.0]})
-        bs.getsound('laserReverse').play()
+        classicassets.audio.laser_reverse.get().play()
 
     @override
     def exists(self) -> bool:
@@ -319,18 +318,18 @@ class Target(bs.Actor):
                 popupcolor = (1, 1, 0, 1)
                 streak = player.streak
                 points = 10 + min(20, streak * 2)
-                bs.getsound('bellHigh').play()
+                classicassets.audio.bell_high.get().play()
                 if streak > 0:
-                    bs.getsound(
-                        'orchestraHit4'
+                    (
+                        classicassets.audio.orchestra_hit4.get()
                         if streak > 3
                         else (
-                            'orchestraHit3'
+                            classicassets.audio.orchestra_hit3.get()
                             if streak > 2
                             else (
-                                'orchestraHit2'
+                                classicassets.audio.orchestra_hit2.get()
                                 if streak > 1
-                                else 'orchestraHit'
+                                else classicassets.audio.orchestra_hit.get()
                             )
                         )
                     ).play()
@@ -341,7 +340,7 @@ class Target(bs.Actor):
                 popupscale = 1.25
                 popupcolor = (1, 0.5, 0.2, 1)
                 points = 4
-                bs.getsound('bellMed').play()
+                classicassets.audio.bell_med.get().play()
             else:
                 self._nodes[0].color = cdull
                 self._nodes[1].color = cdull
@@ -349,7 +348,7 @@ class Target(bs.Actor):
                 popupscale = 1.0
                 popupcolor = (0.8, 0.3, 0.3, 1)
                 points = 2
-                bs.getsound('bellLow').play()
+                classicassets.audio.bell_low.get().play()
 
             # Award points/etc.. (technically should probably leave this up
             # to the activity).

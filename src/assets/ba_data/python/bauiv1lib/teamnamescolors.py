@@ -2,16 +2,37 @@
 #
 """Provides a window to customize team names and colors."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, cast, override
 
 from bauiv1lib.popup import PopupWindow
 from bauiv1lib.colorpicker import ColorPicker
 import bauiv1 as bui
+from bauiv1 import _commonassets, classicassets
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Sequence
+
+
+def _team_display_name(name: str) -> str | bui.LangStr:
+    """Return a displayable name for a default team name.
+
+    Team names are player-editable, so only the built-in defaults have
+    authored entries; a custom name is shown exactly as the player
+    typed it.
+    """
+    strs = classicassets.strings.teams
+    return {
+        'Good Guys': strs.good_guys,
+        'Bad Guys': strs.bad_guys,
+        'Blue': strs.blue,
+        'Red': strs.red,
+    }.get(name, name)
+
+
+def _flat(val: str | bui.LangStr) -> str:
+    """Flatten to text for use in an editable field."""
+    return val if isinstance(val, str) else val.evaluate()
 
 
 class TeamNamesColorsWindow(PopupWindow):
@@ -45,9 +66,7 @@ class TeamNamesColorsWindow(PopupWindow):
 
         # We need to flatten the translation since it will be an
         # editable string.
-        self._names = [
-            bui.Lstr(translate=('teamNames', n)).evaluate() for n in self._names
-        ]
+        self._names = [_flat(_team_display_name(n)) for n in self._names]
         self._colors = list(
             appconfig.get('Custom Team Colors', DEFAULT_TEAM_COLORS)
         )
@@ -58,7 +77,7 @@ class TeamNamesColorsWindow(PopupWindow):
         resetbtn = bui.buttonwidget(
             parent=self.root_widget,
             id=f'{self._idprefix}|reset',
-            label=bui.Lstr(resource='settingsWindowAdvanced.resetText'),
+            label=_commonassets.strings.actions.reset,
             autoselect=True,
             scale=0.7,
             on_activate_call=self._reset,
@@ -91,7 +110,7 @@ class TeamNamesColorsWindow(PopupWindow):
                     v_align='center',
                     max_chars=self._max_name_length,
                     color=self._colors[i],
-                    description=bui.Lstr(resource='nameText'),
+                    description=_commonassets.strings.values.name,
                     editable=True,
                     padding=4,
                 )
@@ -109,7 +128,7 @@ class TeamNamesColorsWindow(PopupWindow):
         cancelbtn = bui.buttonwidget(
             parent=self.root_widget,
             id=f'{self._idprefix}|cancel',
-            label=bui.Lstr(resource='cancelText'),
+            label=_commonassets.strings.actions.cancel,
             autoselect=True,
             on_activate_call=self._on_cancel_press,
             size=(150, 50),
@@ -118,7 +137,7 @@ class TeamNamesColorsWindow(PopupWindow):
         okbtn = bui.buttonwidget(
             parent=self.root_widget,
             id=f'{self._idprefix}|ok',
-            label=bui.Lstr(resource='okText'),
+            label=_commonassets.strings.actions.ok,
             autoselect=True,
             on_activate_call=self._ok,
             size=(150, 50),
@@ -155,9 +174,7 @@ class TeamNamesColorsWindow(PopupWindow):
 
         for i in range(2):
             self._colors[i] = DEFAULT_TEAM_COLORS[i]
-            name = bui.Lstr(
-                translate=('teamNames', DEFAULT_TEAM_NAMES[i])
-            ).evaluate()
+            name = _flat(_team_display_name(DEFAULT_TEAM_NAMES[i]))
             if len(name) > self._max_name_length:
                 print('GOT DEFAULT TEAM NAME LONGER THAN MAX LENGTH')
             bui.textwidget(edit=self._color_text_fields[i], text=name)
@@ -186,9 +203,10 @@ class TeamNamesColorsWindow(PopupWindow):
             name = cast(str, bui.textwidget(query=self._color_text_fields[i]))
             if not name:
                 bui.screenmessage(
-                    bui.Lstr(resource='nameNotEmptyText'), color=(1, 0, 0)
+                    classicassets.strings.profile.name_not_empty,
+                    color=(1, 0, 0),
                 )
-                bui.getsound('error').play()
+                builtinassets.audio.error.get().play()
                 return
             new_names.append(name)
 
@@ -196,9 +214,9 @@ class TeamNamesColorsWindow(PopupWindow):
             if self._colors[i] != DEFAULT_TEAM_COLORS[i]:
                 is_default = False
             default_team_name = DEFAULT_TEAM_NAMES[i]
-            default_team_name_translated = bui.Lstr(
-                translate=('teamNames', default_team_name)
-            ).evaluate()
+            default_team_name_translated = _flat(
+                _team_display_name(default_team_name)
+            )
             if (
                 new_names[i] != default_team_name
                 and new_names[i] != default_team_name_translated
@@ -223,7 +241,7 @@ class TeamNamesColorsWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.get().play()
         self._transition_out()
 
     def _on_cancel_press(self) -> None:

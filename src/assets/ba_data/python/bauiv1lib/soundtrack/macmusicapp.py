@@ -2,12 +2,11 @@
 #
 """UI functionality related to using the macOS Music app for soundtracks."""
 
-from __future__ import annotations
-
 import copy
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
+from bauiv1 import _commonassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -45,7 +44,7 @@ class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(35, self._height - 65),
             size=(130, 50),
-            label=bui.Lstr(resource='cancelText'),
+            label=_commonassets.strings.actions.cancel,
             on_activate_call=self._back,
             autoselect=True,
         )
@@ -55,7 +54,7 @@ class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(20, self._height - 54),
             size=(self._width, 25),
-            text=bui.Lstr(resource=f'{self._r}.selectAPlaylistText'),
+            text=classicassets.strings.soundtrack.select_a_playlist,
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -76,7 +75,7 @@ class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
         bui.textwidget(
             parent=self._column,
             size=(self._width - 80, 22),
-            text=bui.Lstr(resource=f'{self._r}.fetchingITunesText'),
+            text=classicassets.strings.soundtrack.fetching_itunes,
             color=(0.6, 0.9, 0.6, 1.0),
             scale=0.8,
         )
@@ -126,6 +125,7 @@ class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
                     v_align='center',
                     maxwidth=self._width - 110,
                     selectable=True,
+                    always_highlight=True,
                     on_activate_call=bui.CallStrict(self._sel, playlist),
                     click_activate=True,
                 )

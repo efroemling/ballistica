@@ -2,13 +2,16 @@
 
 #include "ballistica/shared/foundation/fatal_error.h"
 
+#include <atomic>
 #include <cstdio>
 #include <string>
 
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/core/python/core_python.h"
 #include "ballistica/core/support/base_soft.h"
+#include "ballistica/shared/foundation/fatal_error_report.h"
 #include "ballistica/shared/generic/lambda_runnable.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/python/python.h"
@@ -47,6 +50,15 @@ void FatalErrorHandling::ReportFatalError(const std::string& message,
   }
   reported_ = true;
 
+  // If we died before the Python LogHandler came up (e.g. during
+  // baenv.configure itself), any C++ log calls we made are still sitting
+  // in the early-log buffer. Drop them to stderr/platform-log now so
+  // they aren't silently lost along with whatever context they'd
+  // provide.
+  if (g_core && g_core->python) {
+    g_core->python->DrainHeldLogsToStderr();
+  }
+
   // Our main goal here varies based off whether we are an unmodified
   // blessed build. If we are, our main goal is to communicate as much info
   // about the error to the master server, and communicating to the user is
@@ -77,25 +89,33 @@ void FatalErrorHandling::ReportFatalError(const std::string& message,
 
   auto starttime = time(nullptr);
 
-  // Launch a thread and give it a chance to directly send our logs to the
-  // master-server. The standard mechanism probably won't get the job done
-  // since it relies on the logic thread loop and we're likely blocking
-  // that. But generally we want to stay in this function and call abort()
-  // or whatnot from here so that our stack trace makes it into platform
-  // logs.
-  int result{};
+  // Reporting happens on its own detached thread: the normal messaging
+  // path relies on the logic thread loop, which we are most likely
+  // blocking right now. We want to stay in this function and call
+  // abort() from here so our stack trace makes it into platform logs,
+  // so we fire the report off and spin-wait on `result` below.
+  std::atomic<int> result{};
 
   std::string logmsg =
       std::string("FATAL ERROR:") + (!message.empty() ? " " : "") + message;
 
+  // Snapshot before the trace gets appended below. The report carries
+  // the trace as its own field, so sending the appended form too would
+  // just duplicate it (and roughly triple the payload).
+  std::string reportmsg = logmsg;
+
   // Try to include a stack trace if we're being called from outside of a
   // top-level exception handler. Otherwise the trace isn't really useful
   // since we know where those are anyway.
+  //
+  // Kept in its own variable (not just appended to logmsg) so the report
+  // can carry it as a distinct field.
+  std::string tracestr;
   if (!in_top_level_exception_handler) {
     if (g_core && g_core->platform) {
       NativeStackTrace* trace{g_core->platform->GetNativeStackTrace()};
       if (trace) {
-        std::string tracestr = trace->FormatForDisplay();
+        tracestr = trace->FormatForDisplay();
         if (!tracestr.empty()) {
           logmsg +=
               (("\n----------------------- BALLISTICA-NATIVE-STACK-TRACE-BEGIN "
@@ -111,34 +131,20 @@ void FatalErrorHandling::ReportFatalError(const std::string& message,
     }
   }
 
-  // Prevent the early-v1-cloud-log insta-send mechanism from firing since
-  // we do basically the same thing ourself here (avoid sending the same
-  // logs twice).
-  core::g_early_v1_cloud_log_writes = 0;
-
-  // Add this to our V1CloudLog which we'll be attempting to send
-  // momentarily, and also go to platform-specific logging and good ol'
-  // stderr.
+  // Send this to platform-specific logging and good ol' stderr. The
+  // report itself goes out separately below.
 
   if (g_core) {
-    g_core->logging->V1CloudLog(logmsg);
     g_core->logging->EmitLog("root", LogLevel::kCritical,
                              core::Platform::TimeSinceEpochSeconds(), logmsg);
   }
 
   fprintf(stderr, "%s\n", logmsg.c_str());
-  std::string prefix = "FATAL-ERROR-LOG:";
-  std::string suffix;
 
-  // If we have no core state yet, include this message explicitly since it
-  // won't be part of the standard log.
-  if (g_core == nullptr) {
-    suffix = logmsg;
-  }
-
-  if (g_base_soft) {
-    g_base_soft->PlusDirectSendV1CloudLogs(prefix, suffix, true, &result);
-  }
+  // Fire off the report. Note this deliberately sends only the message
+  // and trace -- never log history. Logs are the Python layer's domain
+  // and we cannot know it is safe to touch that state from here.
+  SendFatalErrorReport(reportmsg, tracestr, &result);
 
   // If we're able to show a fatal-error dialog synchronously, do so.
   if (g_core && g_core->platform
@@ -146,7 +152,7 @@ void FatalErrorHandling::ReportFatalError(const std::string& message,
     DoBlockingFatalErrorDialog(message);
   }
 
-  // Wait until the log submit has finished or a bit of time has passed.
+  // Wait until the report has finished or a bit of time has passed.
   while (time(nullptr) - starttime < 10) {
     if (result != 0) {
       break;

@@ -4,8 +4,6 @@
 
 # pylint: disable=too-many-lines
 
-from __future__ import annotations
-
 import logging
 from typing import override
 
@@ -13,6 +11,8 @@ from bacommon.cloud import WebLocation
 from bacommon.login import LoginType
 import bacommon.cloud
 import bauiv1 as bui
+from bauiv1 import builtinassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
 from bauiv1lib.connectivity import wait_for_connectivity
@@ -40,6 +40,7 @@ class AccountSettingsWindow(bui.MainWindow):
         self._show_legacy_unlink_button = False
 
         self._signing_in_adapter: bui.LoginAdapter | None = None
+        self._signing_in_discord: bool = False
         self._close_once_signed_in = close_once_signed_in
         bui.set_analytics_screen('Account Window')
 
@@ -110,6 +111,9 @@ class AccountSettingsWindow(bui.MainWindow):
 
         if LoginType.GAME_CENTER in plus.accounts.login_adapters:
             self._show_sign_in_buttons.append('Game Center')
+
+        if plus.accounts.discord_available:
+            self._show_sign_in_buttons.append('Discord')
 
         # Always want to show our web-based v2 login option.
         self._show_sign_in_buttons.append('V2Proxy')
@@ -197,7 +201,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 yoffs + titleyoffs,
             ),
             size=(0, 0),
-            text=bui.Lstr(resource=f'{self._r}.titleText'),
+            text=classicassets.strings.account.title,
             color=app.ui_v1.title_color,
             scale=titlescale,
             maxwidth=self._width - 340,
@@ -294,12 +298,10 @@ class AccountSettingsWindow(bui.MainWindow):
         if show_signed_in_as and bui.app.plus is not None:
             accounts = bui.app.plus.accounts
             if accounts.primary is not None:
-                # For these login types, we show 'via' IF there is a
-                # login of that type attached to our account AND it is
-                # currently active (We don't want to show 'via Game
-                # Center' if we're signed out of Game Center or
-                # currently running on Steam, even if there is a Game
-                # Center login attached to our account).
+                # GPGS / Game Center: show 'via' only if the adapter is
+                # currently back-end-active (don't show 'via Game Center'
+                # when running on a platform where Game Center is
+                # irrelevant, even if the attachment exists server-side).
                 for ltype, lchar in [
                     (LoginType.GPGS, bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO),
                     (LoginType.GAME_CENTER, bui.SpecialChar.GAME_CENTER_LOGO),
@@ -313,6 +315,16 @@ class AccountSettingsWindow(bui.MainWindow):
                     ):
                         via_lines.append(f'{bui.charstr(lchar)}{linfo.name}')
 
+                # Discord is a global service (not platform-scoped), so
+                # server attachment is the source of truth; no SDK-
+                # connection gating needed.
+                linfo = accounts.primary.logins.get(LoginType.DISCORD)
+                if linfo is not None:
+                    via_lines.append(
+                        f'{bui.charstr(bui.SpecialChar.DISCORD_LOGO)}'
+                        f'{linfo.name}'
+                    )
+
                 # TEMP TESTING
                 if bool(False):
                     icontxt = bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO)
@@ -325,29 +337,36 @@ class AccountSettingsWindow(bui.MainWindow):
         show_sign_in_benefits = not self._v1_signed_in
         sign_in_benefits_space = 80.0
 
-        show_signing_in_text = (
-            v1_state == 'signing_in' or self._signing_in_adapter is not None
+        sign_in_in_progress = (
+            self._signing_in_adapter is not None or self._signing_in_discord
         )
+
+        show_signing_in_text = v1_state == 'signing_in' or sign_in_in_progress
         signing_in_text_space = 80.0
 
         show_google_play_sign_in_button = (
             v1_state == 'signed_out'
-            and self._signing_in_adapter is None
+            and not sign_in_in_progress
             and 'Google Play' in self._show_sign_in_buttons
         )
         show_game_center_sign_in_button = (
             v1_state == 'signed_out'
-            and self._signing_in_adapter is None
+            and not sign_in_in_progress
             and 'Game Center' in self._show_sign_in_buttons
+        )
+        show_discord_sign_in_button = (
+            v1_state == 'signed_out'
+            and not sign_in_in_progress
+            and 'Discord' in self._show_sign_in_buttons
         )
         show_v2_proxy_sign_in_button = (
             v1_state == 'signed_out'
-            and self._signing_in_adapter is None
+            and not sign_in_in_progress
             and 'V2Proxy' in self._show_sign_in_buttons
         )
         show_device_sign_in_button = (
             v1_state == 'signed_out'
-            and self._signing_in_adapter is None
+            and not sign_in_in_progress
             and 'Device' in self._show_sign_in_buttons
         )
         sign_in_button_space = 70.0
@@ -413,10 +432,10 @@ class AccountSettingsWindow(bui.MainWindow):
         )
         sign_out_button_space = 70.0
 
-        # We can show cancel if we're either waiting on an adapter to
-        # provide us with v2 credentials or waiting for those
+        # We can show cancel if we're either waiting on a sign-in flow
+        # to provide us with v2 credentials or waiting for those
         # credentials to be verified.
-        show_cancel_sign_in_button = self._signing_in_adapter is not None or (
+        show_cancel_sign_in_button = sign_in_in_progress or (
             plus.accounts.have_primary_credentials()
             and primary_v2_account is None
         )
@@ -439,6 +458,8 @@ class AccountSettingsWindow(bui.MainWindow):
         if show_google_play_sign_in_button:
             self._sub_height += sign_in_button_space
         if show_game_center_sign_in_button:
+            self._sub_height += sign_in_button_space
+        if show_discord_sign_in_button:
             self._sub_height += sign_in_button_space
         if show_v2_proxy_sign_in_button:
             self._sub_height += sign_in_button_space
@@ -489,10 +510,7 @@ class AccountSettingsWindow(bui.MainWindow):
         self._account_name_text: bui.Widget | None
         if show_signed_in_as:
             v -= signed_in_as_space * 0.2
-            txt = bui.Lstr(
-                resource='accountSettingsWindow.youAreSignedInAsText',
-                fallback_resource='accountSettingsWindow.youAreLoggedInAsText',
-            )
+            txt = classicassets.strings.account.you_are_signed_in_as
             bui.textwidget(
                 parent=self._subcontainer,
                 position=(self._sub_width * 0.5, v),
@@ -543,9 +561,10 @@ class AccountSettingsWindow(bui.MainWindow):
                     parent=self._subcontainer,
                     position=(self._sub_width * 0.5 - swidth * 0.5 - 5, v),
                     size=(0, 0),
-                    text=bui.Lstr(
-                        value='(${VIA}',
-                        subs=[('${VIA}', bui.Lstr(resource='viaText'))],
+                    # Layout fragment: the open-paren pairs with a
+                    # close-paren widget placed separately.
+                    text=bui.langstr_value(
+                        '(' + _commonassets.strings.values.via.evaluate()
                     ),
                     scale=0.5,
                     color=(0.4, 0.6, 0.4, 0.5),
@@ -586,7 +605,7 @@ class AccountSettingsWindow(bui.MainWindow):
                     v + sign_in_benefits_space * 0.4,
                 ),
                 size=(0, 0),
-                text=bui.Lstr(resource=f'{self._r}.signInInfoText'),
+                text=classicassets.strings.account.sign_in_info,
                 max_height=sign_in_benefits_space * 0.9,
                 scale=0.9,
                 color=(0.75, 0.7, 0.8),
@@ -605,7 +624,7 @@ class AccountSettingsWindow(bui.MainWindow):
                     v + signing_in_text_space * 0.5,
                 ),
                 size=(0, 0),
-                text=bui.Lstr(resource='accountSettingsWindow.signingInText'),
+                text=classicassets.strings.account.signing_in,
                 scale=0.9,
                 color=(0, 1, 0),
                 maxwidth=self._sub_width * 0.8,
@@ -622,26 +641,11 @@ class AccountSettingsWindow(bui.MainWindow):
                 position=((self._sub_width - button_width) * 0.5, v - 20),
                 autoselect=True,
                 size=(button_width, 60),
-                label=bui.Lstr(
-                    value='${A} ${B}',
-                    subs=[
-                        (
-                            '${A}',
-                            bui.charstr(bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO),
-                        ),
-                        (
-                            '${B}',
-                            bui.Lstr(
-                                resource=f'{self._r}.signInWithText',
-                                subs=[
-                                    (
-                                        '${SERVICE}',
-                                        bui.Lstr(resource='googlePlayText'),
-                                    )
-                                ],
-                            ),
-                        ),
-                    ],
+                label=_commonassets.strings.compose.icon_label(
+                    icon=bui.charstr(bui.SpecialChar.GOOGLE_PLAY_GAMES_LOGO),
+                    label=classicassets.strings.account.sign_in_with(
+                        service=classicassets.strings.ui.google_play
+                    ),
                 ),
                 on_activate_call=lambda: self._sign_in_press(LoginType.GPGS),
             )
@@ -666,25 +670,44 @@ class AccountSettingsWindow(bui.MainWindow):
                 # Note: Apparently Game Center is just called 'Game Center'
                 # in all languages. Can revisit if not true.
                 # https://developer.apple.com/forums/thread/725779
-                label=bui.Lstr(
-                    value='${A} ${B}',
-                    subs=[
-                        (
-                            '${A}',
-                            bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO),
-                        ),
-                        (
-                            '${B}',
-                            bui.Lstr(
-                                resource=f'{self._r}.signInWithText',
-                                subs=[('${SERVICE}', 'Game Center')],
-                            ),
-                        ),
-                    ],
+                label=_commonassets.strings.compose.icon_label(
+                    icon=bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO),
+                    label=classicassets.strings.account.sign_in_with(
+                        service=classicassets.strings.ui.game_center
+                    ),
                 ),
                 on_activate_call=lambda: self._sign_in_press(
                     LoginType.GAME_CENTER
                 ),
+            )
+            if first_selectable is None:
+                first_selectable = btn
+            bui.widget(
+                edit=btn, right_widget=bui.get_special_widget('squad_button')
+            )
+            bui.widget(edit=btn, left_widget=bbtn)
+            bui.widget(edit=btn, show_buffer_bottom=40, show_buffer_top=100)
+            self._sign_in_text = None
+
+        if show_discord_sign_in_button:
+            button_width = 350
+            v -= sign_in_button_space
+            btn = bui.buttonwidget(
+                parent=self._subcontainer,
+                id=f'{self.main_window_id_prefix}|signindiscord',
+                position=((self._sub_width - button_width) * 0.5, v - 20),
+                autoselect=True,
+                size=(button_width, 60),
+                # "Discord" is a brand name so we pass it as a literal
+                # (same pattern Game Center uses); the surrounding
+                # "Sign in with..." comes from a translated resource.
+                label=_commonassets.strings.compose.icon_label(
+                    icon=bui.charstr(bui.SpecialChar.DISCORD_LOGO),
+                    label=classicassets.strings.account.sign_in_with(
+                        service='Discord'
+                    ),
+                ),
+                on_activate_call=self._discord_sign_in_press,
             )
             if first_selectable is None:
                 first_selectable = btn
@@ -708,12 +731,13 @@ class AccountSettingsWindow(bui.MainWindow):
                 on_activate_call=self._v2_proxy_sign_in_press,
             )
 
-            v2labeltext: bui.Lstr | str = (
-                bui.Lstr(resource=f'{self._r}.signInWithAnEmailAddressText')
+            v2labeltext: bui.LangStr | str = (
+                classicassets.strings.account.sign_in_with_email
                 if show_game_center_sign_in_button
                 or show_google_play_sign_in_button
+                or show_discord_sign_in_button
                 or show_device_sign_in_button
-                else bui.Lstr(resource=f'{self._r}.signInText')
+                else classicassets.strings.account.sign_in
             )
             v2infotext: bui.Lstr | str | None = None
 
@@ -727,15 +751,9 @@ class AccountSettingsWindow(bui.MainWindow):
                     self._sub_width * 0.5,
                     v + (17 if v2infotext is not None else 10),
                 ),
-                text=bui.Lstr(
-                    value='${A} ${B}',
-                    subs=[
-                        ('${A}', bui.charstr(bui.SpecialChar.V2_LOGO)),
-                        (
-                            '${B}',
-                            v2labeltext,
-                        ),
-                    ],
+                text=_commonassets.strings.compose.icon_label(
+                    icon=bui.charstr(bui.SpecialChar.V2_LOGO),
+                    label=v2labeltext,
                 ),
                 maxwidth=button_width * 0.8,
                 color=(0.75, 1.0, 0.7),
@@ -781,7 +799,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 v_align='center',
                 size=(0, 0),
                 position=(self._sub_width * 0.5, v + 60),
-                text=bui.Lstr(resource='deprecatedText'),
+                text=_commonassets.strings.values.deprecated,
                 scale=0.8,
                 maxwidth=300,
                 color=(0.6, 0.55, 0.45),
@@ -794,17 +812,9 @@ class AccountSettingsWindow(bui.MainWindow):
                 v_align='center',
                 size=(0, 0),
                 position=(self._sub_width * 0.5, v + 17),
-                text=bui.Lstr(
-                    value='${A} ${B}',
-                    subs=[
-                        ('${A}', bui.charstr(bui.SpecialChar.LOCAL_ACCOUNT)),
-                        (
-                            '${B}',
-                            bui.Lstr(
-                                resource=f'{self._r}.signInWithDeviceText'
-                            ),
-                        ),
-                    ],
+                text=_commonassets.strings.compose.icon_label(
+                    icon=bui.charstr(bui.SpecialChar.LOCAL_ACCOUNT),
+                    label=classicassets.strings.account.sign_in_with_device,
                 ),
                 maxwidth=button_width * 0.8,
                 color=(0.75, 1.0, 0.7),
@@ -816,7 +826,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 v_align='center',
                 size=(0, 0),
                 position=(self._sub_width * 0.5, v - 4),
-                text=bui.Lstr(resource=f'{self._r}.signInWithDeviceInfoText'),
+                text=classicassets.strings.account.sign_in_with_device_info,
                 flatness=1.0,
                 scale=0.57,
                 maxwidth=button_width * 0.9,
@@ -860,9 +870,9 @@ class AccountSettingsWindow(bui.MainWindow):
                 position=((self._sub_width - button_width) * 0.5, v),
                 autoselect=True,
                 size=(button_width, 60),
-                label=bui.Lstr(resource=f'{self._r}.manageAccountText'),
+                label=classicassets.strings.account.manage_account,
                 color=(0.55, 0.5, 0.6),
-                icon=bui.gettexture('settingsIcon'),
+                icon=classicassets.textures.settings_icon.get(),
                 textcolor=(0.75, 0.7, 0.8),
                 on_activate_call=bui.WeakCallStrict(
                     self._on_manage_account_press
@@ -884,7 +894,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 position=((self._sub_width - button_width) * 0.5, v - 30),
                 autoselect=True,
                 size=(button_width, 60),
-                label=bui.Lstr(resource=f'{self._r}.createAnAccountText'),
+                label=classicassets.strings.account.create_an_account,
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 on_activate_call=bui.WeakCallStrict(
@@ -906,9 +916,11 @@ class AccountSettingsWindow(bui.MainWindow):
                 # Note: Apparently Game Center is just called 'Game Center'
                 # in all languages. Can revisit if not true.
                 # https://developer.apple.com/forums/thread/725779
-                game_center_button_label = bui.Lstr(
-                    value=bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO)
-                    + 'Game Center'
+                game_center_button_label = (
+                    _commonassets.strings.compose.icon_label(
+                        icon=bui.charstr(bui.SpecialChar.GAME_CENTER_LOGO),
+                        label=classicassets.strings.ui.game_center,
+                    )
                 )
             else:
                 raise ValueError(
@@ -966,11 +978,11 @@ class AccountSettingsWindow(bui.MainWindow):
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
-                icon=bui.gettexture('googlePlayLeaderboardsIcon'),
+                icon=classicassets.textures.google_play_leaderboards_icon.get(),
                 icon_color=(0.8, 0.95, 0.7),
                 on_activate_call=self._on_leaderboards_press,
                 size=(button_width, 50),
-                label=bui.Lstr(resource='leaderboardsText'),
+                label=classicassets.strings.ui.leaderboards,
             )
             if first_selectable is None:
                 first_selectable = btn
@@ -1028,7 +1040,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 id=f'{self.main_window_id_prefix}|signout',
                 position=((self._sub_width - button_width) * 0.5, v),
                 size=(button_width, 60),
-                label=bui.Lstr(resource=f'{self._r}.signOutText'),
+                label=classicassets.strings.account.sign_out,
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
@@ -1048,7 +1060,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 id=f'{self.main_window_id_prefix}|cancelsignin',
                 position=((self._sub_width - button_width) * 0.5, v),
                 size=(button_width, 60),
-                label=bui.Lstr(resource='cancelText'),
+                label=_commonassets.strings.actions.cancel,
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
@@ -1068,7 +1080,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 id=f'{self.main_window_id_prefix}|deleteaccount',
                 position=((self._sub_width - button_width) * 0.5, v),
                 size=(button_width, 60),
-                label=bui.Lstr(resource=f'{self._r}.deleteAccountText'),
+                label=classicassets.strings.account.delete_account,
                 color=(0.85, 0.5, 0.6),
                 textcolor=(0.9, 0.7, 0.8),
                 autoselect=True,
@@ -1133,7 +1145,7 @@ class AccountSettingsWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        bui.screenmessage(bui.Lstr(resource='oneMomentText'))
+        bui.screenmessage(_commonassets.strings.status.one_moment)
 
         # We expect to have a v2 account signed in if we get here.
         if plus.accounts.primary is None:
@@ -1157,8 +1169,10 @@ class AccountSettingsWindow(bui.MainWindow):
             logging.warning(
                 'Got error in manage-account-response: %s.', response
             )
-            bui.screenmessage(bui.Lstr(resource='errorText'), color=(1, 0, 0))
-            bui.getsound('error').play()
+            bui.screenmessage(
+                _commonassets.strings.values.error, color=(1, 0, 0)
+            )
+            builtinassets.audio.error.get().play()
             return
 
         bui.open_url(response.url)
@@ -1177,7 +1191,7 @@ class AccountSettingsWindow(bui.MainWindow):
     def _refresh_campaign_progress_text(self) -> None:
         if self._campaign_progress_text is None:
             return
-        p_str: str | bui.Lstr
+        p_str: str | bui.Lstr | bui.LangStr
         try:
             assert bui.app.classic is not None
             campaign = bui.app.classic.getcampaign('Default')
@@ -1186,9 +1200,8 @@ class AccountSettingsWindow(bui.MainWindow):
 
             # Last level cant be completed; hence the -1;
             progress = min(1.0, float(levels_complete) / (len(levels) - 1))
-            p_str = bui.Lstr(
-                resource=f'{self._r}.campaignProgressText',
-                subs=[('${PROGRESS}', str(int(progress * 100.0)) + '%')],
+            p_str = classicassets.strings.account.campaign_progress(
+                progress=str(int(progress * 100.0)) + '%'
             )
         except Exception:
             p_str = '?'
@@ -1208,9 +1221,7 @@ class AccountSettingsWindow(bui.MainWindow):
             tc_str = '-'
         bui.textwidget(
             edit=self._tickets_text,
-            text=bui.Lstr(
-                resource=f'{self._r}.ticketsText', subs=[('${COUNT}', tc_str)]
-            ),
+            text=classicassets.strings.account.tickets(count=tc_str),
         )
 
     def _refresh_account_name_text(self) -> None:
@@ -1235,17 +1246,18 @@ class AccountSettingsWindow(bui.MainWindow):
             1 if a.complete else 0 for a in bui.app.classic.ach.achievements
         )
         total = len(bui.app.classic.ach.achievements)
-        txt_final = bui.Lstr(
-            resource=f'{self._r}.achievementProgressText',
-            subs=[('${COUNT}', str(complete)), ('${TOTAL}', str(total))],
+        txt_final = classicassets.strings.account.achievement_progress(
+            complete=str(complete), total=str(total)
         )
 
         if self._achievements_text is not None:
             bui.textwidget(edit=self._achievements_text, text=txt_final)
 
     def _cancel_sign_in_press(self) -> None:
-        # If we're waiting on an adapter to give us credentials, abort.
+        # If we're waiting on an adapter or Discord flow to give us
+        # credentials, abort.
         self._signing_in_adapter = None
+        self._signing_in_discord = False
 
         plus = bui.app.plus
         assert plus is not None
@@ -1280,7 +1292,7 @@ class AccountSettingsWindow(bui.MainWindow):
         cfg.commit()
         bui.buttonwidget(
             edit=self._sign_out_button,
-            label=bui.Lstr(resource=f'{self._r}.signingOutText'),
+            label=classicassets.strings.account.signing_out,
         )
 
         # Speed UI updates along.
@@ -1352,10 +1364,10 @@ class AccountSettingsWindow(bui.MainWindow):
             # can get more specific as needed later.
             logging.warning('Got error in v2 sign-in result: %s', result)
             bui.screenmessage(
-                bui.Lstr(resource='internal.signInNoConnectionText'),
+                classicassets.strings.account.sign_in_no_connection,
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
         else:
             # Success! Plug in these credentials which will begin
             # verifying them and set our primary account-handle when
@@ -1378,14 +1390,52 @@ class AccountSettingsWindow(bui.MainWindow):
                     1.5,
                     bui.CallStrict(
                         bui.screenmessage,
-                        bui.Lstr(
-                            resource=self._r
-                            + '.googlePlayGamesAccountSwitchText'
-                        ),
+                        (
+                            classicassets.strings.account
+                        ).google_play_games_account_switch,
                     ),
                 )
 
         # Speed any UI updates along.
+        self._needs_refresh = True
+        bui.apptimer(0.1, bui.WeakCallStrict(self._update))
+
+    def _discord_sign_in_press(self) -> None:
+
+        # Any time we initiate a sign in, turn off auto-recreates for
+        # the remainder of our existence — see _sign_in_press.
+        self._recreate_suppress = bui.MainWindowAutoRecreateSuppress()
+
+        wait_for_connectivity(on_connected=self._discord_sign_in)
+
+    def _discord_sign_in(self) -> None:
+        self._signing_in_discord = True
+        bui.discord_sign_in(
+            result_cb=bui.WeakCallPartial(self._on_discord_sign_in_result),
+            description='account settings button',
+        )
+        # Will get 'Signing in...' to show.
+        self._needs_refresh = True
+        bui.apptimer(0.1, bui.WeakCallStrict(self._update))
+
+    def _on_discord_sign_in_result(self, result: str | Exception) -> None:
+        # If the user cancelled mid-flow, discard.
+        if not self._signing_in_discord:
+            return
+        self._signing_in_discord = False
+
+        if isinstance(result, Exception):
+            logging.warning('Got error in discord sign-in result: %s', result)
+            bui.screenmessage(
+                classicassets.strings.account.sign_in_no_connection,
+                color=(1, 0, 0),
+            )
+            builtinassets.audio.error.get().play()
+        else:
+            plus = bui.app.plus
+            assert plus is not None
+            plus.accounts.set_primary_credentials(result)
+
         self._needs_refresh = True
         bui.apptimer(0.1, bui.WeakCallStrict(self._update))
 

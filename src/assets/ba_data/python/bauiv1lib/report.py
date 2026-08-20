@@ -2,9 +2,8 @@
 #
 """UI related to reporting bad behavior/etc."""
 
-from __future__ import annotations
-
 import bauiv1 as bui
+from bauiv1 import classicassets
 
 
 class ReportPlayerWindow(bui.Window):
@@ -55,14 +54,14 @@ class ReportPlayerWindow(bui.Window):
             scale=1.2,
             h_align='center',
             v_align='center',
-            text=bui.Lstr(resource='reportThisPlayerReasonText'),
+            text=classicassets.strings.report.reason,
             maxwidth=self._width * 0.85,
         )
         bui.buttonwidget(
             parent=self._root_widget,
             size=(235, 60),
             position=(20, 30),
-            label=bui.Lstr(resource='reportThisPlayerLanguageText'),
+            label=classicassets.strings.report.inappropriate_language,
             on_activate_call=self._on_language_press,
             autoselect=True,
         )
@@ -70,7 +69,7 @@ class ReportPlayerWindow(bui.Window):
             parent=self._root_widget,
             size=(235, 60),
             position=(self._width - 255, 30),
-            label=bui.Lstr(resource='reportThisPlayerCheatingText'),
+            label=classicassets.strings.report.cheating,
             on_activate_call=self._on_cheating_press,
             autoselect=True,
         )
@@ -88,7 +87,7 @@ class ReportPlayerWindow(bui.Window):
                 'account': self._account_id,
             }
         )
-        body = bui.Lstr(resource='reportPlayerExplanationText').evaluate()
+        body = classicassets.strings.report.explanation.evaluate()
         bui.open_url(
             'mailto:support@froemling.net'
             f'?subject={bui.appnameupper()} Player Report: '
@@ -111,7 +110,7 @@ class ReportPlayerWindow(bui.Window):
                 'account': self._account_id,
             }
         )
-        body = bui.Lstr(resource='reportPlayerExplanationText').evaluate()
+        body = classicassets.strings.report.explanation.evaluate()
         bui.open_url(
             'mailto:support@froemling.net'
             f'?subject={bui.appnameupper()} Player Report: '

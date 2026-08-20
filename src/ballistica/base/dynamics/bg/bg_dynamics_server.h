@@ -98,7 +98,8 @@ class BGDynamicsServer {
   void PushRemoveFuseCall(BGDynamicsFuseData* fuse_data);
   void PushAddShadowCall(BGDynamicsShadowData* shadow_data);
   void PushRemoveShadowCall(BGDynamicsShadowData* shadow_data);
-  void PushAddTerrainCall(Object::Ref<CollisionMeshAsset>* collision_mesh);
+  void PushAddTerrainCall(Object::Ref<CollisionMeshAsset>* collision_mesh,
+                          const Matrix44f& transform);
   void PushRemoveTerrainCall(CollisionMeshAsset* collision_mesh);
   void PushEmitCall(const BGDynamicsEmission& def);
   auto spark_particles() const -> ParticleSet* {

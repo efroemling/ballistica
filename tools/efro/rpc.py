@@ -2,8 +2,6 @@
 #
 """Remote procedure call related functionality."""
 
-from __future__ import annotations
-
 import time
 import asyncio
 import logging
@@ -13,7 +11,7 @@ from dataclasses import dataclass
 from threading import current_thread
 from typing import TYPE_CHECKING, Annotated, assert_never
 
-from efro.util import strip_exception_tracebacks
+from efro.util import strip_exception_tracebacks, gather_strip
 from efro.error import (
     CommunicationError,
     is_asyncio_streams_communication_error,
@@ -256,7 +254,7 @@ class RPCEndpoint:
         self._tasks += core_tasks
 
         # Run our core tasks until they all complete.
-        results = await asyncio.gather(*core_tasks, return_exceptions=True)
+        results = await gather_strip(*core_tasks)
 
         # Core tasks should handle their own errors; the only ones
         # we expect to bubble up are CancelledError.
@@ -269,10 +267,6 @@ class RPCEndpoint:
                     self._label,
                     result,
                 )
-            if isinstance(result, BaseException):
-                # We're done with these exceptions, so strip their
-                # tracebacks to avoid reference cycles.
-                strip_exception_tracebacks(result)
 
         if not all(task.done() for task in core_tasks):
             logger.warning(
@@ -284,8 +278,11 @@ class RPCEndpoint:
         try:
             self.close()
             await self.wait_closed()
-        except Exception:
+        except Exception as exc:
             logger.exception('Error closing %s.', self._label)
+            # We're done with the exception here, so strip its
+            # tracebacks to avoid reference cycles.
+            strip_exception_tracebacks(exc)
 
         if self.debug_print:
             self.debug_print_call(f'{self._label}: finished.')
@@ -397,8 +394,6 @@ class RPCEndpoint:
         bytes_awaitable: asyncio.Task[bytes],
         message_id: int,
     ) -> bytes:
-        # pylint: disable=too-many-positional-arguments
-
         # We need to know their protocol, so if we haven't gotten a
         # handshake from them yet, just wait.
         while self._peer_info is None:
@@ -414,6 +409,7 @@ class RPCEndpoint:
         try:
             return await asyncio.wait_for(bytes_awaitable, timeout=timeout)
         except asyncio.CancelledError as exc:
+            self._in_flight_messages.pop(message_id, None)
             # If the current task itself was cancelled (vs an inner task
             # being cancelled by endpoint close()), preserve the
             # CancelledError rather than swallowing it as a
@@ -444,7 +440,7 @@ class RPCEndpoint:
                 bytes_awaitable.cancel()
 
                 # Remove the record of this message.
-                del self._in_flight_messages[message_id]
+                self._in_flight_messages.pop(message_id, None)
 
                 if close_on_error:
                     self.close()
@@ -526,7 +522,7 @@ class RPCEndpoint:
             )
 
         # Wait for all of our in-flight tasks to wrap up.
-        results = await asyncio.gather(*live_tasks, return_exceptions=True)
+        results = await gather_strip(*live_tasks)
         for result in results:
             # We want to know if any errors happened aside from CancelledError
             # (which are BaseExceptions, not Exception).
@@ -703,7 +699,11 @@ class RPCEndpoint:
             )
         rsp = await self._reader.readexactly(rsplen)
         self._total_bytes_read += rsplen
-        msgobj = self._in_flight_messages.get(msgid)
+        # The message is no longer in flight, so remove its entry;
+        # leaving completed entries around would grow the dict
+        # unboundedly and collide with live entries once message ids
+        # wrap at 65536.
+        msgobj = self._in_flight_messages.pop(msgid, None)
         if msgobj is None:
             # It's possible for us to get a response to a message
             # that has timed out. In this case we will have no local

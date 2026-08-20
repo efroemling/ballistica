@@ -5,11 +5,13 @@
 #include <Python.h>
 
 #include <string>
+#include <utility>
 
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/platform.h"
@@ -34,6 +36,12 @@ void CheckBoxWidget::SetText(const std::string& text) {
   have_text_ = (!text.empty());
 }
 
+void CheckBoxWidget::SetLangStr(std::shared_ptr<const base::LangStr> val) {
+  // A set language-string always counts as text present.
+  have_text_ = (val != nullptr);
+  text_.SetLangStr(std::move(val));
+}
+
 void CheckBoxWidget::SetWidth(float width_in) {
   highlight_dirty_ = box_dirty_ = check_dirty_ = true;
   width_ = width_in;
@@ -55,9 +63,9 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   float b = 0.0f;
   float t = b + height_;
 
-  Vector3f tilt = 0.01f * g_base->graphics->tilt();
+  Vector3f tilt = 0.01f * g_base->input->tilt();
   if (draw_control_parent()) {
-    tilt += 0.02f * g_base->graphics->tilt();
+    tilt += 0.02f * g_base->input->tilt();
   }
   float extra_offs_x = -tilt.y;
   float extra_offs_y = tilt.x;
@@ -92,12 +100,14 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.SetTransparent(true);
     c.SetPremultiplied(true);
     c.SetColor(0.25f * m, 0.3f * m, 0, 0.3f * m);
-    c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kGlow));
+    c.SetTexture(
+        g_base->assets->BuiltinTexture(base::BuiltinTextureID::kTexturesGlow));
     {
       auto xf = c.ScopedTransform();
       c.Translate(highlight_center_x_, highlight_center_y_);
       c.Scale(highlight_width_, highlight_height_);
-      c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage4x1));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
     }
     c.Submit();
   }
@@ -137,15 +147,17 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.SetTransparent(draw_transparent);
       c.SetColor(glow_amt * color_r_, glow_amt * color_g_, glow_amt * color_b_,
                  1);
-      c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          base::BuiltinTextureID::kTexturesUiAtlas));
       {
         auto xf = c.ScopedTransform();
         c.Translate(box_center_x_ + extra_offs_x, box_center_y_ + extra_offs_y,
                     0.1f);
         c.Scale(box_width_, box_height_, 0.4f);
-        c.DrawMeshAsset(g_base->assets->SysMesh(
-            draw_transparent ? base::SysMeshID::kButtonSmallTransparent
-                             : base::SysMeshID::kButtonSmallOpaque));
+        c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+            draw_transparent
+                ? base::BuiltinMeshID::kMeshesButtonSmallTransparent
+                : base::BuiltinMeshID::kMeshesButtonSmallOpaque));
       }
       c.Submit();
     }
@@ -177,9 +189,11 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       base::SimpleComponent c(pass);
       c.SetTransparent(draw_transparent);
       if (is_radio_button_) {
-        c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kNub));
+        c.SetTexture(g_base->assets->BuiltinTexture(
+            base::BuiltinTextureID::kTexturesNub));
       } else {
-        c.SetTexture(g_base->assets->SysTexture(base::SysTextureID::kUIAtlas));
+        c.SetTexture(g_base->assets->BuiltinTexture(
+            base::BuiltinTextureID::kTexturesUiAtlas));
       }
 
       if (mouse_over_ && g_core->platform->IsRunningOnDesktop()) {
@@ -194,13 +208,14 @@ void CheckBoxWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                       check_center_y_ + 2 + 3.0f * extra_offs_y, 0.5f);
           c.Scale(check_width_ * 0.45f, check_height_ * 0.45f, 0.5f);
           c.Translate(-0.17f, -0.17f, 0.5f);
-          c.DrawMeshAsset(g_base->assets->SysMesh(base::SysMeshID::kImage1x1));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
         } else {
           c.Translate(check_center_x_ + 3.0f * extra_offs_x,
                       check_center_y_ + 3.0f * extra_offs_y, 0.5f);
           c.Scale(check_width_, check_height_, 0.5f);
-          c.DrawMeshAsset(
-              g_base->assets->SysMesh(base::SysMeshID::kCheckTransparent));
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesCheckTransparent));
         }
       }
       c.Submit();
@@ -243,7 +258,7 @@ void CheckBoxWidget::SetValue(bool value) {
 }
 
 void CheckBoxWidget::Activate() {
-  g_base->audio->SafePlaySysSound(base::SysSoundID::kSwish3);
+  g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioSwish3);
   checked_ = !checked_;
   check_dirty_ = true;
   last_change_time_ = g_core->AppTimeMillisecs();

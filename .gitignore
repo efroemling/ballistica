@@ -13,7 +13,6 @@ local.properties
 *.vscode
 .sconsign.dblite
 .efrocache
-.mayaSwatches
 .gdb_history
 .dmypy.json
 .cache
@@ -30,6 +29,7 @@ local.properties
 .style.yapf
 .irony
 .claude/worktrees/
+.claude/*.lock
 PUBSYNC_IN_PROGRESS
 _fulltest_buildfile_*
 ballistica_files/
@@ -42,8 +42,8 @@ tools/bacloud
 /venv
 
 # Project/tool files
-config/localconfig.json
-config/.*
+pconfig/localconfig.json
+pconfig/.*
 .dir-locals.el
 .rgignore
 .spinoffdata
@@ -113,11 +113,11 @@ src/assets/src_master
 # XCode
 xcuserdata/
 
-# Meta-generated sources
-/src/ballistica/mgen
-/src/ballistica/*/mgen
-/src/assets/ba_data/python/*/_mgen
-/src/meta/*/mgen
+# Codegen-generated sources (see docs/design/codegen.md for rationale).
+/src/ballistica/generated
+/src/ballistica/*/generated
+/src/assets/ba_data/python/*/_generated
+/src/codegen/*/generated
 
 # Dynamically generated resource files
 /ballisticakit-android/BallisticaKit/src/cardboard/res/drawable-*/vr_icon.png
@@ -134,3 +134,8 @@ BallisticaKit.ico
 /ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/tvOS App Icon & Top Shelf Image.brandassets/Top Shelf Image Wide.imageset/*.png
 /ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/tvOS App Icon & Top Shelf Image.brandassets/Top Shelf Image.imageset/*.png
 /ballisticakit-xcode/BallisticaKit Shared/Assets.xcassets/Cursor macOS.imageset/cursor_*.png
+
+# Claude environment files are never committed in this repo;
+# local checkouts may have them as symlinks to elsewhere.
+/CLAUDE.md
+/.claude/

@@ -188,16 +188,8 @@ void RenderPass::Render(RenderTarget* render_target, bool transparent) {
         } else {
           renderer->SetDepthRange(kBackingDepth1B, kBackingDepth2);
         }
-        if (g_base->graphics_server->tv_border()) {
-          float amt = 0.5f * kTVBorder;
-          float w = virtual_width();
-          float h = virtual_height();
-          g_base->graphics_server->SetOrthoProjection(
-              -amt * w, (1.0f + amt) * w, -amt * h, (1.0f + amt) * h, -1, 1);
-        } else {
-          g_base->graphics_server->SetOrthoProjection(0, virtual_width(), 0,
-                                                      virtual_height(), -1, 1);
-        }
+        g_base->graphics_server->SetOrthoProjection(0, virtual_width(), 0,
+                                                    virtual_height(), -1, 1);
       }
       break;
     }
@@ -422,10 +414,16 @@ void RenderPass::Reset() {
     case Type::kOverlayFlatPass:
     case Type::kVRCoverPass:
     case Type::kOverlayFixedPass:
-    case Type::kBlitPass:
-      physical_width_ = g_base->graphics->screen_pixel_width();
-      physical_height_ = g_base->graphics->screen_pixel_height();
+    case Type::kBlitPass: {
+      // Content passes cover the active render rect (the window minus any
+      // tv-border/aspect-limit black bars), not the raw window; among
+      // other things this is what perspective passes derive their aspect
+      // ratio from.
+      const Rect& rect = g_base->graphics->active_render_rect();
+      physical_width_ = rect.width();
+      physical_height_ = rect.height();
       break;
+    }
     case Type::kLightPass:
       physical_width_ = physical_height_ =
           static_cast<float>(renderer->shadow_res()) / kLightResDiv;

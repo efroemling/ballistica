@@ -38,7 +38,8 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
     entry->max_flatness = 1.0f;
     entry->mesh.SetText(text, alignment_h, alignment_v, true, 0, 65535,
                         TextMeshEntryType::kRegular, nullptr);
-    entry->tex = g_base->assets->SysTexture(SysTextureID::kFontBig);
+    entry->tex =
+        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesFontBig);
     entries_.push_back(std::move(entry));
 
   } else {
@@ -128,46 +129,59 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
       }
       switch (*i) {
         case 0:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall0);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall0);
           break;
         case 1:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall1);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall1);
           break;
         case 2:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall2);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall2);
           break;
         case 3:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall3);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall3);
           break;
         case 4:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall4);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall4);
           break;
         case 5:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall5);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall5);
           break;
         case 6:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall6);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall6);
           break;
         case 7:
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontSmall7);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontSmall7);
           break;
         case static_cast<int>(TextGraphics::FontPage::kOSRendered):
           entry->tex = os_texture_;
           break;
         case static_cast<int>(TextGraphics::FontPage::kExtras1):
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontExtras);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontExtras);
           break;
         case static_cast<int>(TextGraphics::FontPage::kExtras2):
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontExtras2);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontExtras2);
           break;
         case static_cast<int>(TextGraphics::FontPage::kExtras3):
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontExtras3);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontExtras3);
           break;
         case static_cast<int>(TextGraphics::FontPage::kExtras4):
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontExtras4);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontExtras4);
           break;
         case static_cast<int>(TextGraphics::FontPage::kExtras5):
-          entry->tex = g_base->assets->SysTexture(SysTextureID::kFontExtras5);
+          entry->tex = g_base->assets->BuiltinTexture(
+              BuiltinTextureID::kTexturesFontExtras5);
           break;
         default:
           throw Exception();

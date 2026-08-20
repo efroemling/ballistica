@@ -4,10 +4,12 @@
 #define BALLISTICA_BASE_INPUT_DEVICE_JOYSTICK_INPUT_H_
 
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 
 #include "ballistica/base/input/device/input_device.h"
+#include "ballistica/shared/foundation/input_types.h"
 
 namespace ballistica::base {
 
@@ -30,14 +32,40 @@ class JoystickInput : public InputDevice {
 
   ~JoystickInput() override;
 
-  void HandleSDLEvent(const SDL_Event* e) override;
+  void HandleSDLEvent(const BAEvent* e) override;
 
   void ApplyAppConfig() override;
   void Update() override;
   void ResetHeldStates() override;
 
+  auto DoApplyFeedback(const FeedbackEvent& event) -> int override;
+  void DoStopFeedback() override;
+
   auto sdl_joystick_id() const -> int { return sdl_joystick_id_; }
-  auto sdl_joystick() const -> SDL_Joystick* { return sdl_joystick_; }
+
+  /// An opaque handle assigned by whichever app-adapter created this
+  /// device, for platforms that feed us joysticks manually instead of
+  /// through SDL (currently Apple's GameController layer). It means
+  /// nothing to anyone but that adapter, which is the point: it lets the
+  /// adapter get back to its own controller object without the engine
+  /// growing a per-platform notion of controller identity. -1 when the
+  /// device came from somewhere with no such handle.
+  auto platform_controller_id() const -> int { return platform_controller_id_; }
+  void set_platform_controller_id(int val) { platform_controller_id_ = val; }
+
+  /// Whether this controller's haptics are wide-band (voice coils, a
+  /// Taptic Engine) rather than eccentric-rotating-mass flywheels.
+  ///
+  /// Wide-band actuators start and stop in about a millisecond and
+  /// render what they are asked; ERM motors need ~100ms of runway
+  /// before anything is felt at all. That gap is large enough that one
+  /// set of numbers cannot serve both, so backends correct for it.
+  ///
+  /// Defaults to false, which is the safe direction: treating wide-band
+  /// hardware as ERM makes events somewhat too long, while the reverse
+  /// makes them imperceptible.
+  auto has_wide_band_haptics() const { return has_wide_band_haptics_; }
+  void set_has_wide_band_haptics(bool val) { has_wide_band_haptics_ = val; }
 
   auto GetAllowsConfiguring() -> bool override { return can_configure_; }
 
@@ -53,7 +81,7 @@ class JoystickInput : public InputDevice {
   auto GetAxisName(int index) -> std::string override;
 
   auto IsController() -> bool override { return true; }
-  auto IsSDLController() -> bool override { return (sdl_joystick_ != nullptr); }
+  auto IsSDLController() -> bool override { return is_sdl_joystick_; }
 
   auto ShouldBeHiddenFromUser() -> bool override;
 
@@ -75,7 +103,7 @@ class JoystickInput : public InputDevice {
 
   auto HasMeaningfulButtonNames() -> bool override;
 
-  auto GetButtonName(int index) -> std::string override;
+  auto GetButtonName(int index) -> std::shared_ptr<const LangStr> override;
 
   /// Custom controller types can pass in controller-specific button names.
   void SetButtonName(int button, const std::string& name);
@@ -92,15 +120,18 @@ class JoystickInput : public InputDevice {
   void UpdateRunningState();
   auto GetCalibratedValue(float raw, float neutral) const -> int32_t;
 
+  /// Device-specific glyph name for a button, or empty if we have none
+  /// (in which case the caller falls back to the generic 'Button N').
+  auto DeviceButtonNameText_(int index) -> std::string;
+
   JoystickInput* child_joy_stick_{};
   JoystickInput* parent_joy_stick_{};
   millisecs_t last_ui_only_print_time_{};
   millisecs_t creation_time_{};
 
-  // FIXME - should take this out and replace it with a bool
-  //  (we never actually access the sdl joystick directly outside of our
-  //  constructor)
-  SDL_Joystick* sdl_joystick_{};
+  // Whether this is an SDL joystick (the SDL app-adapter owns the actual
+  // SDL_Joystick handle; we just carry its instance-id + name).
+  bool is_sdl_joystick_{};
 
   bool ui_only_{};
   bool unassigned_buttons_run_{true};
@@ -166,6 +197,8 @@ class JoystickInput : public InputDevice {
   int up_button2_{-1};
   int down_button2_{-1};
   int sdl_joystick_id_{};
+  int platform_controller_id_{-1};
+  bool has_wide_band_haptics_{};
   float run_value_{};
   float run_trigger1_min_{};
   float run_trigger1_max_{};

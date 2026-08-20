@@ -2,12 +2,23 @@ cmake_minimum_required(VERSION 3.18)
 project(BallisticaKit)
 
 option(HEADLESS "build headless server" OFF)
-option(TEST_BUILD "include testing features" OFF)
-option(DISCORD "enable Discord" OFF)
-option(REQUIRE_OS_FONT_RENDERING "fail if pangocairo is not found" OFF)
+option(DISCORD "enable Discord Social SDK integration" OFF)
+option(REQUIRE_OS_FONT_RENDERING "fail if pangocairo is not found" ON)
 option(STATIC_BUILD "build with static libs" OFF)
-# Requiring minimum of C++20 currently.
-set(CMAKE_CXX_STANDARD 20)
+
+# Which app variant to build. Variant describes the distribution
+# audience for a build (who it is distributed to and how the master
+# server should classify it); it is orthogonal to build type and
+# headless-ness. See the AppVariant enum in tools/bacommon/app.py for
+# the full story.
+set(VARIANT generic CACHE STRING "app variant to build")
+set(BA_VALID_VARIANTS generic test_build server server_basn)
+if(NOT VARIANT IN_LIST BA_VALID_VARIANTS)
+  message(FATAL_ERROR
+    "Invalid VARIANT '${VARIANT}'; expected one of: ${BA_VALID_VARIANTS}.")
+endif()
+# Requiring minimum of C++23 currently.
+set(CMAKE_CXX_STANDARD 23)
 set(PROJECT_ROOT_DIR "${CMAKE_CURRENT_LIST_DIR}/..")
 
 # ============= STATIC BUILD CONFIGURATION =============
@@ -41,13 +52,13 @@ if(APPLE)
   if(_brew_rc EQUAL 0)
     set(_pcdir "${_OPENAL_SOFT_PREFIX}/lib/pkgconfig")
     set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${_pcdir}")
-  endif()  
-  
+  endif()
+
 endif()  # APPLE
 
 set(Python3_FIND_FRAMEWORK NEVER)
 # TODO: Look into using Development.Module/Development.Embed here.
-find_package(Python3 3.13 EXACT REQUIRED COMPONENTS Development)
+find_package(Python3 3.14 EXACT REQUIRED COMPONENTS Development)
 
   
 if(HEADLESS)
@@ -56,7 +67,7 @@ else()
   find_package(PkgConfig REQUIRED)
   
   pkg_check_modules(OPENAL REQUIRED IMPORTED_TARGET openal)
-  pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2)
+  pkg_check_modules(SDL3 REQUIRED IMPORTED_TARGET sdl3)
   
   if(STATIC_BUILD)
     message(WARNING "Static build enabled - ensure that all dependencies are available as static libraries and that the appropriate -dev packages are installed.")
@@ -70,29 +81,92 @@ else()
   
   # On linux, prefer modern libOpenGL.so over legacy libGL.so.
   set(OpenGL_GL_PREFERENCE GLVND)
-  find_package(OpenGL REQUIRED)
-  
+
+  # GL backend selection. On macOS we build against ANGLE (GL ES -> Metal)
+  # when the vendored xcframework is present, and otherwise fall back to the
+  # (deprecated) system desktop GL. The fallback is deliberate: the public
+  # repo doesn't ship the ANGLE xcframework, so this keeps public macOS cmake
+  # builds working. BALLISTICA_USE_ANGLE forces the choice -- AUTO (default;
+  # ANGLE if present), ON (require it, error if missing), OFF (desktop GL).
+  set(_BA_USE_ANGLE OFF)
+  if(APPLE)
+    set(BALLISTICA_USE_ANGLE "AUTO" CACHE STRING
+      "macOS GL backend: AUTO (ANGLE if present) / ON (require) / OFF (desktop GL)")
+    set(_BA_ANGLE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../src/external/angle-apple")
+    set(_BA_ANGLE_DEBUG_ROOT
+      "${CMAKE_CURRENT_SOURCE_DIR}/../src/external/angle-apple-debug")
+    # macOS ANGLE ships as bare dylibs (id @rpath/libX.dylib, already signed) in
+    # the macos/ subdir. The .xcframeworks alongside are framework-form for the
+    # iOS/tvOS Xcode consumers; this desktop/SDL build uses the bare dylibs (SDL
+    # wants libEGL + libGLESv2 as sibling bare dylibs named libX.dylib anyway).
+    set(_BA_ANGLE_GLES "${_BA_ANGLE_ROOT}/macos/libGLESv2.dylib")
+    if(BALLISTICA_USE_ANGLE STREQUAL "OFF")
+      # Forced desktop GL.
+    elseif(EXISTS "${_BA_ANGLE_GLES}")
+      set(_BA_USE_ANGLE ON)
+    elseif(BALLISTICA_USE_ANGLE STREQUAL "ON")
+      message(FATAL_ERROR
+        "BALLISTICA_USE_ANGLE=ON but no ANGLE dylibs found at "
+        "${_BA_ANGLE_ROOT}/macos. Run 'make angle-apple-build' + "
+        "'make angle-apple-gather' first, or use AUTO/OFF.")
+    endif()
+  endif()
+
+  if(_BA_USE_ANGLE)
+    # A Debug build uses the debug/validation ANGLE variant when it's vendored
+    # (ANGLE asserts + Metal validation + GL trace, to surface GL-usage bugs);
+    # any other config -- or a Debug build without the debug variant present --
+    # uses the normal (optimized) one. Headers always come from the normal
+    # root (the debug root ships no include/ tree).
+    set(_BA_ANGLE_LIB_ROOT "${_BA_ANGLE_ROOT}")
+    set(_BA_ANGLE_VARIANT "release")
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND EXISTS
+       "${_BA_ANGLE_DEBUG_ROOT}/macos/libGLESv2.dylib")
+      set(_BA_ANGLE_LIB_ROOT "${_BA_ANGLE_DEBUG_ROOT}")
+      set(_BA_ANGLE_VARIANT "debug/validation")
+    endif()
+    # Use the bare macos/ dylibs directly: they already have id @rpath/libX.dylib
+    # and are signed, so there's no framework extraction / install_name_tool /
+    # re-sign to do. The ANGLE-DYLIB STAGING step below copies them next to the
+    # binary; SDL is pointed at libEGL.dylib and finds libGLESv2.dylib beside it.
+    set(_BA_ANGLE_GLES "${_BA_ANGLE_LIB_ROOT}/macos/libGLESv2.dylib")
+    set(_BA_ANGLE_EGL "${_BA_ANGLE_LIB_ROOT}/macos/libEGL.dylib")
+    message(STATUS
+      "Ballistica GL backend: ANGLE (GL ES -> Metal) [${_BA_ANGLE_VARIANT}]")
+    target_compile_definitions(common_deps INTERFACE BA_OPENGL_IS_ES=1)
+    target_include_directories(ba_deps INTERFACE "${_BA_ANGLE_ROOT}/include")
+    set(_BA_GL_LIBS "${_BA_ANGLE_GLES}" "${_BA_ANGLE_EGL}")
+  else()
+    if(APPLE)
+      message(STATUS "Ballistica GL backend: system desktop GL")
+    endif()
+    find_package(OpenGL REQUIRED)
+    set(_BA_GL_LIBS OpenGL::GL)
+  endif()
 
   if(STATIC_BUILD)
     target_link_libraries(ba_deps INTERFACE
       openal
-      PkgConfig::SDL2
+      PkgConfig::SDL3
       PkgConfig::OGG
       PkgConfig::VORBISFILE
-      OpenGL::GL
+      ${_BA_GL_LIBS}
     )
   else()
     target_link_libraries(ba_deps INTERFACE
       PkgConfig::OPENAL
-      PkgConfig::SDL2
+      PkgConfig::SDL3
       PkgConfig::OGG
       PkgConfig::VORBISFILE
-      OpenGL::GL
+      ${_BA_GL_LIBS}
     )
   endif()
 
-  # Optional: Pango+Cairo for OS font rendering on Linux/macOS cmake builds.
-  # Pass -DREQUIRE_OS_FONT_RENDERING=ON to make this a hard requirement.
+  # Pango+Cairo for OS font rendering (unicode text rendering + line
+  # breaks) on Linux/macOS cmake builds. Required by default so a
+  # missing pangocairo fails the configure loudly instead of silently
+  # producing a build with the internal fallback text handling; pass
+  # -DREQUIRE_OS_FONT_RENDERING=OFF to allow building without it.
   if(REQUIRE_OS_FONT_RENDERING)
     pkg_check_modules(PANGOCAIRO REQUIRED IMPORTED_TARGET pangocairo)
   else()
@@ -105,8 +179,19 @@ else()
 
 endif()
 
-if(TEST_BUILD)
-  target_compile_definitions(common_deps INTERFACE BA_VARIANT_TEST_BUILD=1)
+# Define the selected variant for the engine
+# (BA_VARIANT_TEST_BUILD=1 etc.); buildconfig_cmake.h maps it to its
+# runtime string.
+string(TOUPPER ${VARIANT} BA_VARIANT_UPPER)
+target_compile_definitions(common_deps
+  INTERFACE BA_VARIANT_${BA_VARIANT_UPPER}=1)
+
+# Opt-in automation control channel (in-process Python dispatch; on
+# POSIX platforms also a local FIFO command entry point). Unstable,
+# unsupported public API — gated off by default; users opt in via
+# -DENABLE_AUTOMATION=ON.
+if(ENABLE_AUTOMATION)
+  target_compile_definitions(common_deps INTERFACE BA_ENABLE_AUTOMATION=1)
 endif()
 
 set(BA_SRC_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../src")
@@ -125,6 +210,15 @@ target_compile_definitions(common_deps INTERFACE
 # Go with -O3 for non-debug builds.
 target_compile_options(common_deps INTERFACE
   $<$<NOT:$<CONFIG:Debug>>:-O3>
+)
+
+# GCC on ARM emits informational -Wpsabi notes about the GCC 10.1
+# C++17 calling-convention fix (e.g. for std::pair<float, float>
+# returns). They only matter when mixing objects from pre-10.1 and
+# post-10.1 compilers in one binary, which we never do, so silence
+# them.
+target_compile_options(common_deps INTERFACE
+  $<$<CXX_COMPILER_ID:GNU>:-Wno-psabi>
 )
 
 set(ODE_SRC_ROOT ${BA_SRC_ROOT}/external/open_dynamics_engine-ef)
@@ -219,7 +313,10 @@ endif()
 target_link_libraries(ode PRIVATE common_deps)
 
 set(BALLISTICA_SOURCES
+  ${BA_SRC_ROOT}/external/monocypher/monocypher.c
+  ${BA_SRC_ROOT}/external/monocypher/monocypher-ed25519.c
   ${BA_SRC_ROOT}/external/qr_code_generator/QrCode.cpp
+  ${BA_SRC_ROOT}/external/yyjson/yyjson.c
   # AUTOGENERATED_PUBLIC_BEGIN (this section is managed by the "update_project" tool)
   ${BA_SRC_ROOT}/ballistica/base/app_adapter/app_adapter.cc
   ${BA_SRC_ROOT}/ballistica/base/app_adapter/app_adapter.h
@@ -246,10 +343,16 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/app_platform/windows/app_platform_windows.h
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.h
+  ${BA_SRC_ROOT}/ballistica/base/assets/asset_name_compat.cc
+  ${BA_SRC_ROOT}/ballistica/base/assets/asset_name_compat.h
+  ${BA_SRC_ROOT}/ballistica/base/assets/asset_package_registry.cc
+  ${BA_SRC_ROOT}/ballistica/base/assets/asset_package_registry.h
   ${BA_SRC_ROOT}/ballistica/base/assets/assets.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/assets.h
   ${BA_SRC_ROOT}/ballistica/base/assets/assets_server.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/assets_server.h
+  ${BA_SRC_ROOT}/ballistica/base/assets/builtin_strings.cc
+  ${BA_SRC_ROOT}/ballistica/base/assets/builtin_strings.h
   ${BA_SRC_ROOT}/ballistica/base/assets/collision_mesh_asset.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/collision_mesh_asset.h
   ${BA_SRC_ROOT}/ballistica/base/assets/data_asset.cc
@@ -276,6 +379,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/audio/audio_streamer.h
   ${BA_SRC_ROOT}/ballistica/base/audio/ogg_stream.cc
   ${BA_SRC_ROOT}/ballistica/base/audio/ogg_stream.h
+  ${BA_SRC_ROOT}/ballistica/base/automation/automation.cc
+  ${BA_SRC_ROOT}/ballistica/base/automation/automation.h
   ${BA_SRC_ROOT}/ballistica/base/base.cc
   ${BA_SRC_ROOT}/ballistica/base/base.h
   ${BA_SRC_ROOT}/ballistica/base/discord/discord.cc
@@ -298,6 +403,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/dynamics/bg/bg_dynamics_volume_light_data.h
   ${BA_SRC_ROOT}/ballistica/base/dynamics/collision_cache.cc
   ${BA_SRC_ROOT}/ballistica/base/dynamics/collision_cache.h
+  ${BA_SRC_ROOT}/ballistica/base/dynamics/geom_transform.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/component/empty_component.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/component/object_component.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/component/object_component.h
@@ -408,8 +514,11 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/dds.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/ktx.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/ktx.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/texture/ktx2.cc
+  ${BA_SRC_ROOT}/ballistica/base/graphics/texture/ktx2.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/pvr.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/texture/pvr.h
+  ${BA_SRC_ROOT}/ballistica/base/input/device/feedback_event.h
   ${BA_SRC_ROOT}/ballistica/base/input/device/input_device.cc
   ${BA_SRC_ROOT}/ballistica/base/input/device/input_device.h
   ${BA_SRC_ROOT}/ballistica/base/input/device/input_device_delegate.cc
@@ -434,10 +543,13 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/networking/network_writer.h
   ${BA_SRC_ROOT}/ballistica/base/networking/networking.cc
   ${BA_SRC_ROOT}/ballistica/base/networking/networking.h
+  ${BA_SRC_ROOT}/ballistica/base/platform/android/android_message_bus.cc
+  ${BA_SRC_ROOT}/ballistica/base/platform/android/android_message_bus.h
   ${BA_SRC_ROOT}/ballistica/base/python/base_python.cc
   ${BA_SRC_ROOT}/ballistica/base/python/base_python.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_app_timer.cc
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_app_timer.h
+  ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_asset_ref.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_context_call.cc
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_context_call.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_context_ref.cc
@@ -448,6 +560,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_env.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_feature_set_data.cc
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_feature_set_data.h
+  ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_lang_str.cc
+  ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_lang_str.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_simple_sound.cc
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_simple_sound.h
   ${BA_SRC_ROOT}/ballistica/base/python/class/python_class_vec3.cc
@@ -472,6 +586,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/support/context.cc
   ${BA_SRC_ROOT}/ballistica/base/support/context.h
   ${BA_SRC_ROOT}/ballistica/base/support/display_timer.h
+  ${BA_SRC_ROOT}/ballistica/base/support/lang_str.cc
+  ${BA_SRC_ROOT}/ballistica/base/support/lang_str.h
   ${BA_SRC_ROOT}/ballistica/base/support/plus_soft.h
   ${BA_SRC_ROOT}/ballistica/base/support/repeater.cc
   ${BA_SRC_ROOT}/ballistica/base/support/repeater.h
@@ -479,6 +595,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/support/stdio_console.h
   ${BA_SRC_ROOT}/ballistica/base/ui/dev_console.cc
   ${BA_SRC_ROOT}/ballistica/base/ui/dev_console.h
+  ${BA_SRC_ROOT}/ballistica/base/ui/simple_dialog.cc
+  ${BA_SRC_ROOT}/ballistica/base/ui/simple_dialog.h
   ${BA_SRC_ROOT}/ballistica/base/ui/ui.cc
   ${BA_SRC_ROOT}/ballistica/base/ui/ui.h
   ${BA_SRC_ROOT}/ballistica/base/ui/ui_delegate.h
@@ -508,10 +626,13 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/core/platform/platform.h
   ${BA_SRC_ROOT}/ballistica/core/platform/support/min_sdl.h
   ${BA_SRC_ROOT}/ballistica/core/platform/support/platform_pango.h
+  ${BA_SRC_ROOT}/ballistica/core/platform/support/sdl_message_box.cc
+  ${BA_SRC_ROOT}/ballistica/core/platform/support/sdl_message_box.h
   ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows.cc
   ${BA_SRC_ROOT}/ballistica/core/platform/windows/platform_windows.h
   ${BA_SRC_ROOT}/ballistica/core/python/core_python.cc
   ${BA_SRC_ROOT}/ballistica/core/python/core_python.h
+  ${BA_SRC_ROOT}/ballistica/core/python/pyembed.h
   ${BA_SRC_ROOT}/ballistica/core/support/base_soft.h
   ${BA_SRC_ROOT}/ballistica/core/support/core_config.cc
   ${BA_SRC_ROOT}/ballistica/core/support/core_config.h
@@ -640,15 +761,14 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_material.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_node.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_node.h
-  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_collision_mesh.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_quat.cc
+  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_quat.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_collision_mesh.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_data_asset.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_data_asset.h
-  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_mesh.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_mesh.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_sound.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_sound.h
-  ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_texture.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_texture.h
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_timer.cc
   ${BA_SRC_ROOT}/ballistica/scene_v1/python/class/python_class_scene_timer.h
@@ -706,6 +826,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_cmake.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_common.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_common.h
+  ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_generic.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_headless.h
   ${BA_SRC_ROOT}/ballistica/shared/buildconfig/buildconfig_windows_testbuild.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/event_loop.cc
@@ -714,9 +835,12 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/foundation/exception.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/fatal_error.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/fatal_error.h
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/fatal_error_report.cc
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/fatal_error_report.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/feature_set_native_component.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/feature_set_native_component.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/inline.cc
+  ${BA_SRC_ROOT}/ballistica/shared/foundation/input_types.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/macros.cc
   ${BA_SRC_ROOT}/ballistica/shared/foundation/macros.h
   ${BA_SRC_ROOT}/ballistica/shared/foundation/object.cc
@@ -726,8 +850,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/generic/base64.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/base64.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/buffer.h
-  ${BA_SRC_ROOT}/ballistica/shared/generic/json.cc
-  ${BA_SRC_ROOT}/ballistica/shared/generic/json.h
+  ${BA_SRC_ROOT}/ballistica/shared/generic/json_facade.cc
+  ${BA_SRC_ROOT}/ballistica/shared/generic/json_facade.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/lambda_runnable.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/native_stack_trace.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/runnable.cc
@@ -735,8 +859,6 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/shared/generic/snapshot.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/timer_list.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/timer_list.h
-  ${BA_SRC_ROOT}/ballistica/shared/generic/utf8.cc
-  ${BA_SRC_ROOT}/ballistica/shared/generic/utf8.h
   ${BA_SRC_ROOT}/ballistica/shared/generic/utils.cc
   ${BA_SRC_ROOT}/ballistica/shared/generic/utils.h
   ${BA_SRC_ROOT}/ballistica/shared/math/lerp.h
@@ -773,11 +895,9 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/template_fs/python/template_fs_python.h
   ${BA_SRC_ROOT}/ballistica/template_fs/template_fs.cc
   ${BA_SRC_ROOT}/ballistica/template_fs/template_fs.h
-  ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_mesh.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_mesh.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_sound.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_sound.h
-  ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_texture.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_ui_texture.h
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_widget.cc
   ${BA_SRC_ROOT}/ballistica/ui_v1/python/class/python_class_widget.h
@@ -819,40 +939,93 @@ set(BALLISTICA_SOURCES
 # BallisticaKit monolithic binary.
 add_executable(ballisticakitbin ${BALLISTICA_SOURCES})
 
-#================== Discord Platform SDK ==================
+# ================== Discord Social SDK ==================
+# Opt-in integration. The SDK is not redistributable, so it must be placed
+# at build/discord_social_sdk/ before configuring with -DDISCORD=ON.
+# Internally, `make discord-social-sdk` fetches it; public builds need to
+# download it manually from https://discord.com/developers/social-sdk.
 if(DISCORD)
-  set(DISCORD_SDK_ROOT "${CMAKE_SOURCE_DIR}/../src/external/discord_social_sdk")
+  set(DISCORD_SDK_ROOT "${CMAKE_SOURCE_DIR}/../build/discord_social_sdk")
   set(DISCORD_SDK_INCLUDE_DIR "${DISCORD_SDK_ROOT}/include")
   set(DISCORD_SDK_LIB_DIR "${DISCORD_SDK_ROOT}/lib/release")
   set(DISCORD_SDK_BIN_DIR "${DISCORD_SDK_ROOT}/bin/release")
 
-  # Include Discord SDK headers.
-  include_directories(${DISCORD_SDK_INCLUDE_DIR})
+  if(NOT EXISTS "${DISCORD_SDK_INCLUDE_DIR}/discordpp.h")
+    message(FATAL_ERROR
+      "Discord SDK not found at ${DISCORD_SDK_ROOT}. "
+      "Internal builds: run 'make discord-social-sdk'. "
+      "Public builds: download the SDK from Discord and unpack it there.")
+  endif()
 
-  # Platform-specific Social SDK library paths
+  # The Discord SDK only ships certain platform/arch combinations.
+  # Determine whether a compatible library exists; if not, warn and
+  # continue without Discord. This lets -DDISCORD=ON mean "enable if
+  # available" so -ex build targets work across all platforms without
+  # per-arch cmake flags.
+  set(_DISCORD_SUPPORTED ON)
+
   if(WIN32)
     set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/discord_partner_sdk.lib")
     set(DISCORD_SHARED_LIB "${DISCORD_SDK_BIN_DIR}/discord_partner_sdk.dll")
   elseif(APPLE)
     set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.dylib")
     set(DISCORD_SHARED_LIB "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.dylib")
-  else()  # Linux
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64")
     set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.so")
     set(DISCORD_SHARED_LIB "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.so")
+  else()
+    # The SDK's Linux .so is x86-64 only; no ARM64 or other arch variant.
+    set(_DISCORD_SUPPORTED OFF)
   endif()
-  
-  # Need to link to this instead.
-  # Copy the Discord shared library to the output directory.
-  add_custom_command(TARGET ballisticakitbin
-    POST_BUILD
+
+  if(NOT _DISCORD_SUPPORTED OR NOT EXISTS "${DISCORD_LIB_PATH}")
+    message(WARNING
+      "Discord SDK requested but no library available for this"
+      " platform/arch (${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR})."
+      " Continuing without Discord.")
+    set(DISCORD OFF)
+  else()
+    target_compile_definitions(ballisticakitbin PRIVATE BA_ENABLE_DISCORD=1)
+    target_include_directories(ballisticakitbin PRIVATE ${DISCORD_SDK_INCLUDE_DIR})
+    target_link_libraries(ballisticakitbin PRIVATE ${DISCORD_LIB_PATH})
+
+    # Copy the shared library next to the binary so it is found at runtime.
+    add_custom_command(TARGET ballisticakitbin POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${DISCORD_SHARED_LIB}" $<TARGET_FILE_DIR:ballisticakitbin>)
+
+    # On macOS, add an rpath entry so the binary finds the dylib sitting
+    # next to it regardless of install location.
+    if(APPLE)
+      set_target_properties(ballisticakitbin PROPERTIES
+        BUILD_RPATH "@executable_path"
+        INSTALL_RPATH "@executable_path")
+    elseif(UNIX)
+      set_target_properties(ballisticakitbin PROPERTIES
+        BUILD_RPATH "$ORIGIN"
+        INSTALL_RPATH "$ORIGIN")
+    endif()
+  endif()
+endif()
+# ========================================================
+
+
+# ============= ANGLE DYLIB STAGING (macOS) =============
+# When building against ANGLE, copy the bare dylibs (see the backend
+# selection above) next to the binary (where @executable_path resolves -- dev
+# builds symlink the staged binary back to this build dir) and ensure the
+# rpath, mirroring the Discord staging above. SDL is pointed at libEGL.dylib
+# explicitly at GL-context-creation time and finds libGLESv2.dylib beside it.
+if(_BA_USE_ANGLE)
+  add_custom_command(TARGET ballisticakitbin POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${DISCORD_SHARED_LIB}"
-    $<TARGET_FILE_DIR:ballisticakitbin>)
-  
-  target_include_directories(ba_deps INTERFACE ${DISCORD_SDK_INCLUDE_DIR})
-  target_link_libraries(ba_deps INTERFACE ${DISCORD_LIB_PATH})
-endif()  # DISCORD
-# ==============================================================
+      "${_BA_ANGLE_GLES}" "${_BA_ANGLE_EGL}"
+      $<TARGET_FILE_DIR:ballisticakitbin>)
+  set_target_properties(ballisticakitbin PROPERTIES
+    BUILD_RPATH "@executable_path"
+    INSTALL_RPATH "@executable_path")
+endif()
+# ======================================================
 
 
 # ============= STATIC BUILD LINKING CONFIGURATION =============

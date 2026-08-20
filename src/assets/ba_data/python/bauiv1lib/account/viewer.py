@@ -2,12 +2,13 @@
 #
 """Provides a popup for displaying info about any account."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 import logging
 
 import bauiv1 as bui
+from bascenev1lib.actor import spazappearance
+from bauiv1 import _commonassets, classicassets
+from bauiv1 import builtinassets
 
 from bauiv1lib.popup import PopupWindow, PopupMenuWindow
 
@@ -15,6 +16,27 @@ if TYPE_CHECKING:
     from typing import Any
 
     from bauiv1lib.popup import PopupMenu
+
+
+def _league_tier_name(name: str) -> bui.LangStr:
+    """Display form for a server-sent league tier name.
+
+    Known tiers map to their authored entries; anything else (a future
+    tier from a newer server) shows verbatim.
+    """
+    lstrs = classicassets.strings.league
+    entry = {
+        'Bronze': lstrs.bronze,
+        'Silver': lstrs.silver,
+        'Gold': lstrs.gold,
+        'Diamond': lstrs.diamond,
+    }.get(name)
+    return bui.langstr_value(name) if entry is None else entry
+
+
+#: Probe marker for checking whether a locale's rank line places the
+#: suffix slot at the end (drives the bracketed points layout).
+_SUFFIX_MARKER = '\x01'
 
 
 class AccountViewerWindow(PopupWindow):
@@ -67,6 +89,7 @@ class AccountViewerWindow(PopupWindow):
         )
 
         self._cancel_button = bui.buttonwidget(
+            id=f'{self._idprefix}|close',
             parent=self.root_widget,
             position=(50, self._height - 30),
             size=(50, 50),
@@ -85,7 +108,7 @@ class AccountViewerWindow(PopupWindow):
             h_align='center',
             v_align='center',
             scale=0.6,
-            text=bui.Lstr(resource='playerInfoText'),
+            text=classicassets.strings.account.player_info,
             maxwidth=200,
             color=bui.app.ui_v1.title_color,
         )
@@ -126,6 +149,7 @@ class AccountViewerWindow(PopupWindow):
             )
         ):
             self._extras_menu_button = bui.buttonwidget(
+                id=f'{self._idprefix}|more',
                 parent=self.root_widget,
                 size=(20, 20),
                 position=(self._width - 60, self._height - 30),
@@ -171,14 +195,16 @@ class AccountViewerWindow(PopupWindow):
     def _on_extras_menu_press(self) -> None:
         choices = ['more', 'report']
         choices_display = [
-            bui.Lstr(resource='coopSelectWindow.seeMoreText'),
-            bui.Lstr(resource='reportThisPlayerText'),
+            _commonassets.strings.actions.more,
+            classicassets.strings.account.report_this_player,
         ]
         is_admin = False
         if is_admin:
             bui.screenmessage('TEMP FORCING ADMIN ON')
             choices.append('ban')
-            choices_display.append(bui.Lstr(resource='banThisPlayerText'))
+            choices_display.append(
+                classicassets.strings.account.ban_this_player
+            )
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -229,7 +255,7 @@ class AccountViewerWindow(PopupWindow):
         if data is None:
             bui.textwidget(
                 edit=self._loading_text,
-                text=bui.Lstr(resource='internal.unavailableNoConnectionText'),
+                text=_commonassets.strings.status.unavailable_no_connection,
             )
             bui.spinnerwidget(edit=self._loading_spinner, visible=False)
         else:
@@ -293,17 +319,18 @@ class AccountViewerWindow(PopupWindow):
                                 )
                                 icon_tex = character.icon_texture
                                 tint_tex = character.icon_mask_texture
-                                mask_texture = bui.gettexture(
-                                    'characterIconMask'
-                                )
+                                btex = builtinassets.textures
+                                mask_texture = btex.character_icon_mask.get()
                                 bui.imagewidget(
                                     parent=self._subcontainer,
                                     position=(sub_width * center - 40, v - 80),
                                     size=(80, 80),
                                     color=(1, 1, 1),
                                     mask_texture=mask_texture,
-                                    texture=bui.gettexture(icon_tex),
-                                    tint_texture=bui.gettexture(tint_tex),
+                                    texture=spazappearance.ui_texture(icon_tex),
+                                    tint_texture=spazappearance.ui_texture(
+                                        tint_tex
+                                    ),
                                     tint_color=tint_color,
                                     tint2_color=tint2_color,
                                 )
@@ -319,7 +346,7 @@ class AccountViewerWindow(PopupWindow):
                         scale=0.9,
                         color=bui.safecolor(tint_color, 0.7),
                         shadow=1.0,
-                        text=bui.Lstr(value=data['profileDisplayString']),
+                        text=data['profileDisplayString'],
                         maxwidth=sub_width * maxwidth_scale * 0.75,
                     )
                     showing_character = True
@@ -330,14 +357,9 @@ class AccountViewerWindow(PopupWindow):
 
                 v = sub_height - 20
                 if len(data['accountDisplayStrings']) <= 1:
-                    account_title = bui.Lstr(
-                        resource='settingsWindow.accountText'
-                    )
+                    account_title = classicassets.strings.account.title
                 else:
-                    account_title = bui.Lstr(
-                        resource='accountSettingsWindow.accountsText',
-                        fallback_resource='settingsWindow.accountText',
-                    )
+                    account_title = classicassets.strings.account.accounts
                 bui.textwidget(
                     parent=self._subcontainer,
                     size=(0, 0),
@@ -379,7 +401,7 @@ class AccountViewerWindow(PopupWindow):
                     v_align='center',
                     scale=title_scale,
                     color=bui.app.ui_v1.infotextcolor,
-                    text=bui.Lstr(resource='rankText'),
+                    text=classicassets.strings.ui.rank,
                     maxwidth=sub_width * maxwidth_scale,
                 )
                 v -= 14
@@ -387,22 +409,22 @@ class AccountViewerWindow(PopupWindow):
                     rank_str = '-'
                     suffix_offset = None
                 else:
-                    str_raw = bui.Lstr(
-                        resource='league.rankInLeagueText'
-                    ).evaluate()
-                    # FIXME: Would be nice to not have to eval this.
-                    rank_str = bui.Lstr(
-                        resource='league.rankInLeagueText',
-                        subs=[
-                            ('${RANK}', str(data['rank'][2])),
-                            (
-                                '${NAME}',
-                                bui.Lstr(
-                                    translate=('leagueNames', data['rank'][0])
-                                ),
-                            ),
-                            ('${SUFFIX}', ''),
-                        ],
+                    # This is inherently layout code (we measure widths
+                    # and hand-place a bracketed suffix), so we evaluate
+                    # to flat text locally.
+                    suffix_at_end = (
+                        classicassets.strings.league.rank_in_league(
+                            rank=str(data['rank'][2]),
+                            name=_league_tier_name(data['rank'][0]),
+                            suffix=_SUFFIX_MARKER,
+                        )
+                        .evaluate()
+                        .endswith(_SUFFIX_MARKER)
+                    )
+                    rank_str = classicassets.strings.league.rank_in_league(
+                        rank=str(data['rank'][2]),
+                        name=_league_tier_name(data['rank'][0]),
+                        suffix='',
                     ).evaluate()
                     rank_str_width = min(
                         sub_width * maxwidth_scale,
@@ -412,10 +434,7 @@ class AccountViewerWindow(PopupWindow):
 
                     # Only tack our suffix on if its at the end and only for
                     # non-diamond leagues.
-                    if (
-                        str_raw.endswith('${SUFFIX}')
-                        and data['rank'][0] != 'Diamond'
-                    ):
+                    if suffix_at_end and data['rank'][0] != 'Diamond':
                         suffix_offset = rank_str_width * 0.5 + 2
                     else:
                         suffix_offset = None
@@ -444,43 +463,29 @@ class AccountViewerWindow(PopupWindow):
                     )
                 v -= 14
 
-                str_raw = bui.Lstr(
-                    resource='league.rankInLeagueText'
-                ).evaluate()
+                suffix_at_end = (
+                    classicassets.strings.league.rank_in_league(
+                        rank='0',
+                        name='',
+                        suffix=_SUFFIX_MARKER,
+                    )
+                    .evaluate()
+                    .endswith(_SUFFIX_MARKER)
+                )
                 old_offs = -50
                 prev_ranks_shown = 0
                 for prev_rank in data['prevRanks']:
-                    rank_str = bui.Lstr(
-                        value='${S}:    ${I}',
-                        subs=[
-                            (
-                                '${S}',
-                                bui.Lstr(
-                                    resource='league.seasonText',
-                                    subs=[('${NUMBER}', str(prev_rank[0]))],
-                                ),
-                            ),
-                            (
-                                '${I}',
-                                bui.Lstr(
-                                    resource='league.rankInLeagueText',
-                                    subs=[
-                                        ('${RANK}', str(prev_rank[3])),
-                                        (
-                                            '${NAME}',
-                                            bui.Lstr(
-                                                translate=(
-                                                    'leagueNames',
-                                                    prev_rank[1],
-                                                )
-                                            ),
-                                        ),
-                                        ('${SUFFIX}', ''),
-                                    ],
-                                ),
-                            ),
-                        ],
+                    # Layout code again: measure/place flat text. The
+                    # ':    ' glue is locale-invariant.
+                    season_str = classicassets.strings.league.season(
+                        number=str(prev_rank[0])
                     ).evaluate()
+                    rank_part = classicassets.strings.league.rank_in_league(
+                        rank=str(prev_rank[3]),
+                        name=_league_tier_name(prev_rank[1]),
+                        suffix='',
+                    ).evaluate()
+                    rank_str = f'{season_str}:    {rank_part}'
                     rank_str_width = min(
                         sub_width * maxwidth_scale,
                         bui.get_string_width(rank_str, suppress_warning=True)
@@ -489,10 +494,7 @@ class AccountViewerWindow(PopupWindow):
 
                     # Only tack our suffix on if its at the end and only for
                     # non-diamond leagues.
-                    if (
-                        str_raw.endswith('${SUFFIX}')
-                        and prev_rank[1] != 'Diamond'
-                    ):
+                    if suffix_at_end and prev_rank[1] != 'Diamond':
                         suffix_offset = rank_str_width + 2
                     else:
                         suffix_offset = None
@@ -535,7 +537,7 @@ class AccountViewerWindow(PopupWindow):
                     v_align='center',
                     scale=title_scale,
                     color=bui.app.ui_v1.infotextcolor,
-                    text=bui.Lstr(resource='achievementsText'),
+                    text=classicassets.strings.ui.achievements,
                     maxwidth=sub_width * maxwidth_scale,
                 )
                 v -= 14
@@ -570,10 +572,7 @@ class AccountViewerWindow(PopupWindow):
                     scale=title_scale,
                     color=bui.app.ui_v1.infotextcolor,
                     flatness=1.0,
-                    text=bui.Lstr(
-                        resource='trophiesThisSeasonText',
-                        fallback_resource='trophiesText',
-                    ),
+                    text=classicassets.strings.account.trophies_this_season,
                     maxwidth=sub_width * maxwidth_scale,
                 )
                 v -= 19
@@ -600,5 +599,5 @@ class AccountViewerWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.get().play()
         self._transition_out()

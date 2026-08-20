@@ -1,8 +1,10 @@
 # Released under the MIT License. See LICENSE for details.
 #
-"""Checks we can run on the overall project state."""
+"""Checks we can run on the overall project state.
 
-from __future__ import annotations
+Python-level and project-wide checks live here; the C++ engine source and
+header checks live alongside in ``_checks_cpp.py``.
+"""
 
 from typing import TYPE_CHECKING
 from pathlib import Path
@@ -22,224 +24,20 @@ if TYPE_CHECKING:
     from batools.project._updater import ProjectUpdater
 
 
-def check_source_files(self: ProjectUpdater) -> None:
-    """Check project source files."""
-    for fsrc in self.source_files:
-        if fsrc.endswith('.cpp') or fsrc.endswith('.cxx'):
-            raise RuntimeError('please use .cc for c++ files; found ' + fsrc)
-
-        # Watch out for in-progress emacs edits.
-        # Could just ignore these but it probably means I intended
-        # to save something and forgot.
-        if '/.#' in fsrc:
-            raise CleanError(f'Found an unsaved emacs file: "{fsrc}".')
-
-        fname = 'src/ballistica' + fsrc
-        _check_source_file(self, fname)
-
-
-def _check_source_file(self: ProjectUpdater, fname: str) -> None:
-    with open(os.path.join(self.projroot, fname), encoding='utf-8') as infile:
-        lines = infile.read().splitlines()
-
-    if self.license_line_checks:
-        _check_c_license(self, fname, lines)
-
-    _source_file_feature_set_namespace_check(self, fname, lines)
-
-
-def _source_file_feature_set_namespace_check(
-    self: ProjectUpdater, fname: str, lines: list[str]
-) -> None:
-    """Make sure C++ code uses correct namespaces based on its location."""
-
-    # Extensions we know we're skipping.
-    if any(fname.endswith(x) for x in ['.c', '.swift']):
-        return
-
-    if not any(fname.endswith(x) for x in ['.cc', '.h', '.mm']):
-        raise CleanError(f"Unrecognized source file type: '{fname}'.")
-
-    splits = fname.split('/')
-    assert len(splits) >= 3  # should be at least src, ballistica, foo
-    toplevelname = splits[2]
-
-    # Make sure FOO in src/ballistica/FOO corresponds to a feature-set.
-    # (or one of our reserved names).
-    reserved_names = {'shared'}
-    feature_set = self.feature_sets.get(toplevelname)
-
-    if toplevelname not in reserved_names and feature_set is None:
-        raise CleanError(
-            f"{toplevelname} in path '{fname}' does not correspond"
-            ' to a feature-set.'
-        )
-
-    # If the feature-set lists these files as to-be-ignored, ignore.
-    if (
-        feature_set is not None
-        and fname in feature_set.cpp_namespace_check_disable_files
-    ):
-        return
-
-    # Ignore ballistica.h/cc for now
-    if len(splits) == 3:
-        return
-
-    # Anything under shared should only use ballistica namespace.
-    if splits[2] == 'shared':
-        for i, line in enumerate(lines):
-            if line.startswith('namespace '):
-                namespace, predecs_only = _get_namespace_info(lines, i)
-                if namespace != 'ballistica' and not predecs_only:
-                    raise CleanError(
-                        f'Invalid line "{line}" at {fname} line {i+1}.\n'
-                        f"Files under 'shared' should use only ballistica"
-                        f' namespace.'
-                    )
-        return
-
-    # Anything else should use only the featureset namespace.
-    for i, line in enumerate(lines):
-        if line.startswith('namespace '):
-            namespace, predecs_only = _get_namespace_info(lines, i)
-            if namespace != f'ballistica::{toplevelname}' and not predecs_only:
-
-                # Special case - allow our 'from_swift' namespace.
-                if line == 'namespace from_swift {' and (
-                    fname.endswith('/from_swift.h')
-                    or fname.endswith('/from_swift.cc')
-                ):
-                    pass
-                else:
-                    raise CleanError(
-                        f'Invalid line "{line}" at {fname} line {i+1}.\n'
-                        f"This file is associated with the '{toplevelname}'"
-                        ' FeatureSet so should be using the'
-                        f" 'ballistica::{toplevelname}' namespace."
-                    )
-
-
-def _get_namespace_info(lines: list[str], index: int) -> tuple[str, bool]:
-    """Given a line no, return name of namespace declared and whether it
-    is only predeclares."""
-    assert lines[index].startswith('namespace ')
-    # Special case: single-line empty declaration.
-    splits = lines[index].split()
-    assert splits[0] == 'namespace'
-    if '{}' in lines[index]:
-        assert splits[2] == '{}'
-        # Not considering this a predeclare statement since it doesn't need to
-        # be there.
-        return splits[1], False
-    assert splits[2] == '{'
-    name = splits[1]
-    # Now scan lines until we find the close or a non-predeclare statement
-    index += 1
-    while True:
-        if lines[index].startswith('}'):
-            return name, True
-        if not (
-            (
-                lines[index].startswith('class ')
-                or lines[index].startswith('struct ')
-            )
-            and lines[index].endswith(';')
-        ):
-            # Found a non-predeclare statement
-            return name, False
-        index += 1
-
-
-def check_headers(self: ProjectUpdater) -> None:
-    """Check all project headers."""
-    for header_file_raw in self.header_files:
-        assert header_file_raw[0] == '/'
-        header_file = f'src/ballistica{header_file_raw}'
-        if header_file.endswith('.h'):
-            _check_header(self, header_file)
-
-
-def _check_header(self: ProjectUpdater, fname: str) -> None:
-    # Make sure its define guard is correct.
-    guard = fname[4:].upper().replace('/', '_').replace('.', '_') + '_'
-    with open(os.path.join(self.projroot, fname), encoding='utf-8') as fhdr:
-        lines = fhdr.read().splitlines()
-
-    if self.license_line_checks:
-        _check_c_license(self, fname, lines)
-
-    _source_file_feature_set_namespace_check(self, fname, lines)
-
-    # Check for header guard lines at top
-    line = f'#ifndef {guard}'
-    lnum = 2
-    if lines[lnum] != line:
-        # Allow auto-correcting if it looks close already
-        # (don't want to blow away an unrelated line)
-        allow_auto = lines[lnum].startswith('#ifndef BALLISTICA_')
-        self.add_line_correction(
-            fname,
-            line_number=lnum,
-            expected=line,
-            can_auto_update=allow_auto,
-        )
-    line = f'#define {guard}'
-    lnum = 3
-    if lines[lnum] != line:
-        # Allow auto-correcting if it looks close already
-        # (don't want to blow away an unrelated line)
-        allow_auto = lines[lnum].startswith('#define BALLISTICA_')
-        self.add_line_correction(
-            fname,
-            line_number=lnum,
-            expected=line,
-            can_auto_update=allow_auto,
-        )
-
-    # Check for header guard at bottom
-    line = f'#endif  // {guard}'
-    lnum = len(lines) - 1
-    if lines[lnum] != line:
-        # Allow auto-correcting if it looks close already
-        # (don't want to blow away an unrelated line)
-        allow_auto = lines[lnum].startswith('#endif  // BALLISTICA_')
-        self.add_line_correction(
-            fname,
-            line_number=lnum,
-            expected=line,
-            can_auto_update=allow_auto,
-        )
-
-
-def _check_c_license(
-    self: ProjectUpdater, fname: str, lines: list[str]
-) -> None:
-    # Look for public license line (public or private repo) or private
-    # license line (private repo only)
-    line_private = '// ' + get_non_public_legal_notice()
-    line_private_prev = '// ' + get_non_public_legal_notice_prev()
-    line_public = get_public_legal_notice('c++')
-    lnum = 0
-
-    if self.public:
-        if lines[lnum] != line_public:
-            # Allow auto-correcting from private to public line
-            allow_auto = lines[lnum] == line_private
-            self.add_line_correction(
-                fname,
-                line_number=lnum,
-                expected=line_public,
-                can_auto_update=allow_auto,
-            )
-    else:
-        if lines[lnum] not in [line_public, line_private]:
-            self.add_line_correction(
-                fname,
-                line_number=lnum,
-                expected=line_private,
-                can_auto_update=(lines[lnum] == line_private_prev),
-            )
+# Cross-featureset private-module imports that are intentionally
+# allowed. Normally a module under featureset ``foo`` can only import
+# ``_private`` modules of its own featureset (``foo._bar``); the
+# check below blocks ``from otherfs._bar import ...`` as a leak of
+# an internal API. A small number of helper modules are designed to
+# be shared across featureset boundaries — list their full dotted
+# module path here. Keep this list short and justify each entry.
+CROSS_FEATURESET_PRIVATE_IMPORT_ALLOWLIST: set[str] = {
+    # The automation control channel's shared plumbing lives in
+    # ``babase._automation`` (``_emit``, ``_badev``, ``screenshot``,
+    # etc.) and is reused by ``bauiv1._automation`` so the two sides
+    # report via the same log format and share one native-hook route.
+    'babase._automation',
+}
 
 
 def check_makefiles(self: ProjectUpdater) -> None:
@@ -297,13 +95,12 @@ def check_python_files(self: ProjectUpdater) -> None:
         'tools',
         'tests',
         'src/assets/ba_data/python',
-        'src/meta',
+        'src/codegen',
     ]
 
     # EXCEPT for the following specifics.
     ignores: dict[str, set[str]] = {
         'tools': {
-            'make_bob',
             'mali_texture_compression_tool',
             'nvidia_texture_tools',
             'powervr_tools',
@@ -314,7 +111,11 @@ def check_python_files(self: ProjectUpdater) -> None:
             if name in ignores.get(dir_of_packages, {}):
                 continue
             fullpath = os.path.join(self.projroot, dir_of_packages, name)
-            if not name.startswith('.') and os.path.isdir(fullpath):
+            if (
+                not name.startswith('.')
+                and name != '__pycache__'
+                and os.path.isdir(fullpath)
+            ):
                 packagedirs.append(fullpath)
 
     for packagedir in packagedirs:
@@ -358,7 +159,23 @@ def _check_python_file(self: ProjectUpdater, fname: str) -> None:
 
     _check_python_file_shebang(self, fname, contents)
     _check_python_file_license(self, fname, lines)
+    _check_python_file_future_imports(self, fname, lines)
     _check_python_file_imports(self, fname, lines)
+
+
+def _check_python_file_future_imports(
+    self: ProjectUpdater, fname: str, lines: list[str]
+) -> None:
+    """Run the shared cross-project future-import ban on one file.
+
+    The actual logic lives in :mod:`efrotools.projectchecks` so all
+    efro projects enforce the same rule; we call the per-file form
+    here since we've already got the file's lines loaded.
+    """
+    from efrotools.projectchecks import check_no_future_imports
+
+    del self  # Unused.
+    check_no_future_imports(fname, lines)
 
 
 def _check_python_file_imports(
@@ -427,14 +244,19 @@ def _check_python_file_imports(
             )
 
         # If they're importing foo._bar, make sure they are part of
-        # featureset foo.
-        for modulename in modulenames[1:]:
-            if modulename.startswith('_') and modulenames[0] != fsmodulename:
-                raise CleanError(
-                    f'{fname}:{i+1}: import of private module {modulepath}'
-                    f' not allowed from this featureset package'
-                    f' ({fsmodulename}).'
-                )
+        # featureset foo (unless this exact dotted path is in the
+        # allowlist of cross-featureset-shared private modules).
+        if modulepath not in CROSS_FEATURESET_PRIVATE_IMPORT_ALLOWLIST:
+            for modulename in modulenames[1:]:
+                if (
+                    modulename.startswith('_')
+                    and modulenames[0] != fsmodulename
+                ):
+                    raise CleanError(
+                        f'{fname}:{i+1}: import of private module'
+                        f' {modulepath} not allowed from this featureset'
+                        f' package ({fsmodulename}).'
+                    )
 
         # Modules under feature-set package foo should never be using
         # the top level feature-set package foo directly; only
@@ -485,7 +307,7 @@ def _check_python_file_license(
         disable_note = (
             'NOTE: You can disable license line'
             ' checks by adding "license_line_checks": false\n'
-            'to the root dict in config/localconfig.json.\n'
+            'to the root dict in pconfig/localconfig.json.\n'
             'see https://ballistica.net/wiki'
             '/Knowledge-Nuggets#'
             'hello-world-creating-a-new-game-type'
@@ -602,7 +424,65 @@ def check_sync_states(self: ProjectUpdater) -> None:
         ).returncode
         != 0
     ):
-        raise CleanError('Sync check failed; you may need to run "sync".')
+        raise CleanError('efrosync check failed; you may need to run a sync.')
+
+
+def check_builtin_asset_ids(self: ProjectUpdater) -> None:
+    """Verify the builtin-asset-id splice references the projectconfig pin.
+
+    The autogen splice in ``base.h`` (``kBuiltinAssetsApverid``) and
+    ``assets.cc`` is regenerated by ``assetpins`` /
+    ``gen_builtin_asset_ids`` from projectconfig's ``"assets"`` pin —
+    *not* by ``make update`` — so a manual projectconfig/package
+    retarget can leave the splice referencing a stale apverid with
+    nothing to catch it (as happened during the babuiltinassets
+    retarget).
+
+    We compare only the embedded apverid string, not the full rendered
+    splice: that's the field that actually drifts, and a string check
+    is robust everywhere, whereas re-rendering would depend on a
+    resolved manifest, its CAS data blobs, and a matching clang-format
+    version — none guaranteed in every check context (e.g. public CI).
+    """
+    if not self.check:
+        return
+
+    # Core-repo only. The pin is manually managed here; spinoffs
+    # inherit the spliced source. The ``'ballistica' + 'kit'`` split
+    # stays literal while the right-hand side is spinoff-substituted,
+    # so this is True only in the core repo.
+    if 'ballistica' + 'kit' != 'ballisticakit':
+        return
+
+    from efrotools.project import getprojectconfig
+
+    apverid = getprojectconfig(Path(self.projroot)).get('assets')
+    if not isinstance(apverid, str) or not apverid:
+        return
+
+    # The splice embeds the pin as ``kBuiltinAssetsApverid =
+    # "<apverid>";``. A quoted-substring check is insensitive to how
+    # clang-format wraps that line.
+    base_h = (Path(self.projroot) / 'src/ballistica/base/base.h').read_text()
+    if f'"{apverid}"' not in base_h:
+        raise CleanError(
+            f'Builtin-asset-id splice in base.h does not reference the'
+            f' projectconfig "assets" pin ({apverid}); it is stale. Run'
+            f' `tools/pcommand gen_builtin_asset_ids` to regenerate it.'
+        )
+
+    # The fully-generated builtin-strings accessor header embeds the
+    # same pin in its ``Generated from: "<apverid>"`` banner line; the
+    # same quoted-substring compare catches a stale regen there.
+    strings_h = (
+        Path(self.projroot) / 'src/ballistica/base/assets/builtin_strings.h'
+    ).read_text()
+    if f'"{apverid}"' not in strings_h:
+        raise CleanError(
+            f'Generated builtin_strings.h does not reference the'
+            f' projectconfig "assets" pin ({apverid}); it is stale. Run'
+            f' `tools/pcommand gen_builtin_asset_ids` to regenerate it.'
+        )
 
 
 def check_misc(self: ProjectUpdater) -> None:
@@ -645,12 +525,13 @@ def check_misc(self: ProjectUpdater) -> None:
         _ = replace_exact(contents, f'libpython{PYVER}d.a', 'DUMMYVAL')
         _ = replace_exact(contents, f'libpython{PYVER}.a', 'DUMMYVAL')
 
-    # Make sure staged wrapper script is invoking current Python version
-    # on modular builds.
+    # Make sure staged wrapper script is invoking the project Python
+    # version on modular builds (the line in staging.py derives it from
+    # PYVER via an f-string; just verify that form is intact).
     contents = readfile(os.path.join(self.projroot, 'tools/batools/staging.py'))
     _ = replace_exact(
         contents,
-        f'exec python{PYVER} ba_data/python/baenv.py "$@"\\n',
+        'exec python{PYVER} ba_data/python/baenv.py "$@"\\n',
         'DUMMYVAL',
     )
 
@@ -678,3 +559,105 @@ def check_misc(self: ProjectUpdater) -> None:
             'DUMMYVAL',
             count=7,
         )
+
+
+def check_asset_name_compat(self: ProjectUpdater) -> None:
+    """Verify asset_name_compat rows against the wrapper modules.
+
+    The compat table (``base/assets/asset_name_compat.cc``) maps frozen
+    legacy asset names to ``(package_key, logical_path)`` asset-package
+    homes. The legacy side never changes, but the asset-package side
+    can silently drift if a logical path is renamed inside a package
+    without the table being updated — so cross-reference every row's
+    path against the package's wrapper module and fail loudly on a
+    stale one.
+
+    Logical paths are reconstructed from the wrapper's ``_TREE`` runtime
+    nested-dict (decision #28: subdir -> nested dict, leaf -> kind code),
+    which is the authoritative set of the package's asset paths.
+    """
+    import re
+
+    if not self.check:
+        return
+
+    # Core-repo only (same rationale as check_builtin_asset_ids).
+    if 'ballistica' + 'kit' != 'ballisticakit':
+        return
+
+    projroot = Path(self.projroot)
+    table = (
+        projroot / 'src/ballistica/base/assets/asset_name_compat.cc'
+    ).read_text()
+    rows = re.findall(r'\{"([^"]+)", "([^"]+)", "([^"]+)"\},', table)
+    if not rows:
+        raise CleanError(
+            'No rows parsed from asset_name_compat.cc; the check regex'
+            ' is likely stale.'
+        )
+
+    wrapper_dir = projroot / 'src/assets/ba_data/python/bascenev1'
+    wrapper_for_key = {
+        'builtinassets': wrapper_dir / 'builtinassets.py',
+        'classicassets': wrapper_dir / 'classicassets.py',
+    }
+    paths_for_key = {
+        key: _wrapper_logical_paths(path)
+        for key, path in wrapper_for_key.items()
+    }
+    for legacy, package_key, logical_path in rows:
+        paths = paths_for_key.get(package_key)
+        if paths is None:
+            raise CleanError(
+                f"asset_name_compat row '{legacy}' references unknown"
+                f" package key '{package_key}'."
+            )
+        if logical_path not in paths:
+            raise CleanError(
+                f"asset_name_compat row '{legacy}' maps to"
+                f" '{package_key}:{logical_path}' but that logical path"
+                f' is not present in'
+                f' {wrapper_for_key[package_key].relative_to(projroot)};'
+                f' the package side of the table is stale.'
+            )
+
+
+def _wrapper_logical_paths(wrapper_path: Path) -> set[str]:
+    """Reconstruct a wrapper's logical asset paths from its ``_TREE``.
+
+    Parses the generated wrapper module, evaluates its ``_TREE``
+    nested-dict literal (subdir -> nested dict, leaf -> kind code), and
+    flattens it into the set of ``a/b/c`` logical paths the package
+    exposes (decision #28).
+    """
+    import ast
+
+    tree = ast.parse(wrapper_path.read_text())
+    data: object = None
+    for node in tree.body:
+        if (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+            and node.targets[0].id == '_TREE'
+        ):
+            data = ast.literal_eval(node.value)
+            break
+    if not isinstance(data, dict):
+        raise CleanError(
+            f'Could not find a _TREE dict literal in {wrapper_path};'
+            ' the asset_name_compat check needs updating.'
+        )
+
+    paths: set[str] = set()
+
+    def _walk(node: dict[str, object], prefix: str) -> None:
+        for name, child in node.items():
+            path = f'{prefix}/{name}' if prefix else name
+            if isinstance(child, dict):
+                _walk(child, path)
+            else:
+                paths.add(path)
+
+    _walk(data, '')
+    return paths

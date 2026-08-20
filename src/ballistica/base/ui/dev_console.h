@@ -10,6 +10,7 @@
 
 #include "ballistica/base/graphics/mesh/image_mesh.h"
 #include "ballistica/base/graphics/text/text_group.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/math/vector4f.h"
 #include "ballistica/shared/python/python_ref.h"
@@ -24,8 +25,8 @@ class DevConsole {
   DevConsole();
   auto IsActive() const -> bool { return (state_ != State_::kInactive); }
   auto HandleTextEditing(const std::string& text) -> bool;
-  auto HandleKeyPress(const SDL_Keysym* keysym) -> bool;
-  auto HandleKeyRelease(const SDL_Keysym* keysym) -> bool;
+  auto HandleKeyPress(const BAKeysym* keysym) -> bool;
+  auto HandleKeyRelease(const BAKeysym* keysym) -> bool;
   auto transition_start() const -> millisecs_t { return transition_start_; }
 
   /// Toggle between mini, fullscreen, and inactive.

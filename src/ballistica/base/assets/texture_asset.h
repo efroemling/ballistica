@@ -26,6 +26,7 @@ class TextureAsset : public Asset {
   auto GetName() const -> std::string override;
   auto GetNameFull() const -> std::string override;
   auto GetAssetType() const -> AssetType override;
+  auto ReResolveSource() -> bool override;
   void DoPreload() override;
   void DoLoad() override;
   void DoUnload() override;
@@ -43,16 +44,32 @@ class TextureAsset : public Asset {
   }
   auto base_level() const -> int { return base_level_; }
 
+  /// Whether this texture's RGB is premultiplied by its alpha (read from
+  /// the KTX2 DFD at load; asset-packages decision #23). Drives per-draw
+  /// premult-blend selection in the graphics components. False for
+  /// straight-alpha textures and for loaders that don't carry the flag
+  /// (only the KTX2 path sets it). Re-read on every (re)load, mirroring
+  /// base_level_.
+  auto premultiplied() const -> bool { return premultiplied_; }
+
  private:
   Object::Ref<TextPacker> packer_;
   bool is_qr_code_{};
   std::string file_name_;
   std::string file_name_full_;
+  /// Explicit container type for the file at ``file_name_full_``,
+  /// when the path's suffix doesn't itself convey it (CAS blobs are
+  /// named by hash with no extension). Empty for legacy filename-on-
+  /// disk assets, in which case the loader dispatches on the path's
+  /// suffix. Values match the suffix-dispatch keys: ``.dds``,
+  /// ``.android_dds``, ``.ktx``, ``.pvr``, ``.nop``.
+  std::string container_;
   std::vector<TextureAssetPreloadData> preload_datas_;
   TextureType type_{TextureType::k2D};
   TextureMinQuality min_quality_{TextureMinQuality::kLow};
   Object::Ref<TextureAssetRendererData> renderer_data_;
   int base_level_{};
+  bool premultiplied_{};
 };
 
 }  // namespace ballistica::base

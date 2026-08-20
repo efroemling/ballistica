@@ -2,12 +2,15 @@
 
 #include "ballistica/base/input/input.h"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <string>
 #include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/camera.h"
@@ -16,10 +19,12 @@
 #include "ballistica/base/input/device/touch_input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
@@ -143,34 +148,30 @@ void Input::AnnounceConnects_() {
 
     // If there's been several connected, just give a number.
     if (newly_connected_controllers_.size() > 1) {
-      std::string s =
-          g_base->assets->GetResourceString("controllersDetectedText");
-      Utils::StringReplaceOne(
-          &s, "${COUNT}", std::to_string(newly_connected_controllers_.size()));
-      g_base->ScreenMessage(s);
+      g_base->ScreenMessage(
+          BuiltinStrings::Input::ControllersDetected(
+              static_cast<int64_t>(newly_connected_controllers_.size()))
+              ->Evaluate());
     } else {
       g_base->ScreenMessage(
-          g_base->assets->GetResourceString("controllerDetectedText"));
+          BuiltinStrings::Input::ControllerDetected()->Evaluate());
     }
 
   } else {
     // If there's been several connected, just give a number.
     if (newly_connected_controllers_.size() > 1) {
-      std::string s =
-          g_base->assets->GetResourceString("controllersConnectedText");
-      Utils::StringReplaceOne(
-          &s, "${COUNT}", std::to_string(newly_connected_controllers_.size()));
-      g_base->ScreenMessage(s);
+      g_base->ScreenMessage(
+          BuiltinStrings::Input::ControllersConnected(
+              static_cast<int64_t>(newly_connected_controllers_.size()))
+              ->Evaluate());
     } else {
       // If its just one, give its name.
-      std::string s =
-          g_base->assets->GetResourceString("controllerConnectedText");
-      Utils::StringReplaceOne(&s, "${CONTROLLER}",
-                              newly_connected_controllers_.front());
-      g_base->ScreenMessage(s);
+      g_base->ScreenMessage(BuiltinStrings::Input::ControllerConnected(
+                                newly_connected_controllers_.front())
+                                ->Evaluate());
     }
     if (g_base->assets->sys_assets_loaded()) {
-      g_base->audio->SafePlaySysSound(SysSoundID::kGunCock);
+      g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioGunCocking);
     }
   }
   newly_connected_controllers_.clear();
@@ -179,21 +180,18 @@ void Input::AnnounceConnects_() {
 void Input::AnnounceDisconnects_() {
   // If there's been several connected, just give a number.
   if (newly_disconnected_controllers_.size() > 1) {
-    std::string s =
-        g_base->assets->GetResourceString("controllersDisconnectedText");
-    Utils::StringReplaceOne(
-        &s, "${COUNT}", std::to_string(newly_disconnected_controllers_.size()));
-    g_base->ScreenMessage(s);
+    g_base->ScreenMessage(
+        BuiltinStrings::Input::ControllersDisconnected(
+            static_cast<int64_t>(newly_disconnected_controllers_.size()))
+            ->Evaluate());
   } else {
     // If its just one, name it.
-    std::string s =
-        g_base->assets->GetResourceString("controllerDisconnectedText");
-    Utils::StringReplaceOne(&s, "${CONTROLLER}",
-                            newly_disconnected_controllers_.front());
-    g_base->ScreenMessage(s);
+    g_base->ScreenMessage(BuiltinStrings::Input::ControllerDisconnected(
+                              newly_disconnected_controllers_.front())
+                              ->Evaluate());
   }
   if (g_base->assets->sys_assets_loaded()) {
-    g_base->audio->SafePlaySysSound(SysSoundID::kCorkPop);
+    g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioCorkPop);
   }
 
   newly_disconnected_controllers_.clear();
@@ -503,6 +501,18 @@ auto Input::GetInputDevicesWithName(const std::string& name)
   return vals;
 }
 
+auto Input::GetInputDevices() -> std::vector<InputDevice*> {
+  assert(g_base->InLogicThread());
+  std::vector<InputDevice*> vals;
+  vals.reserve(input_devices_.size());
+  for (auto& input_device : input_devices_) {
+    if (input_device.exists()) {
+      vals.push_back(input_device.get());
+    }
+  }
+  return vals;
+}
+
 auto Input::GetConfigurableGameControllers() -> std::vector<InputDevice*> {
   assert(g_base->InLogicThread());
   std::vector<InputDevice*> vals;
@@ -533,9 +543,23 @@ void Input::OnAppStart() {
   }
 }
 
-void Input::OnAppSuspend() { assert(g_base->InLogicThread()); }
+void Input::OnAppSuspend() {
+  assert(g_base->InLogicThread());
+  SetGyroEnabled(false);
 
-void Input::OnAppUnsuspend() { assert(g_base->InLogicThread()); }
+  // Never leave a motor running while we're backgrounded; nothing will be
+  // around to end it and it burns the user's battery until they notice.
+  for (auto& input_device : input_devices_) {
+    if (input_device.exists()) {
+      input_device->StopFeedback();
+    }
+  }
+}
+
+void Input::OnAppUnsuspend() {
+  assert(g_base->InLogicThread());
+  SetGyroEnabled(true);
+}
 
 void Input::OnAppShutdown() { assert(g_base->InLogicThread()); }
 
@@ -557,6 +581,10 @@ void Input::ApplyAppConfig() {
 
   // Some config settings can affect this.
   UpdateInputDeviceCounts_();
+
+  // Device-motion tilt toggle ('Disable Camera Gyro' in advanced settings).
+  camera_gyro_explicitly_disabled_ =
+      g_base->app_config->Resolve(AppConfig::BoolID::kDisableCameraGyro);
 }
 
 void Input::OnScreenSizeChange() { assert(g_base->InLogicThread()); }
@@ -751,9 +779,11 @@ void Input::PushTextInputEvent(const std::string& text) {
     // Also ignore if there are any mod keys being held. We process some of
     // our own keyboard shortcuts and don't want text input to come through
     // at the same time.
-    if (keys_held_.contains(SDLK_LCTRL) || keys_held_.contains(SDLK_RCTRL)
-        || keys_held_.contains(SDLK_LALT) || keys_held_.contains(SDLK_RALT)
-        || keys_held_.contains(SDLK_LGUI) || keys_held_.contains(SDLK_RGUI)) {
+    if (keys_held_.contains(BAK_LCTRL) || keys_held_.contains(BAK_RCTRL)
+        || keys_held_.contains(BAK_LALT) || keys_held_.contains(BAK_RALT)
+        || keys_held_.contains(BAK_LGUI) || keys_held_.contains(BAK_RGUI)) {
+      g_core->logging->Log(LogName::kBaInput, LogLevel::kDebug,
+                           "Dropping text-input event (mod keys held).");
       return;
     }
 
@@ -784,25 +814,44 @@ void Input::PushTextInputEvent(const std::string& text) {
       }
     }
 
-    if (g_base && g_base->ui->dev_console() != nullptr
-        && g_base->ui->dev_console()->HandleTextEditing(text)) {
-      return;
-    }
-
-    g_base->ui->SendWidgetMessage(WidgetMessage(
-        WidgetMessage::Type::kTextInput, nullptr, 0, 0, 0, 0, text.c_str()));
+    // Defer actual delivery (dev-console AND widget) by one event-loop
+    // cycle to match the deferral key events get - a key's initial
+    // delivery runs deferred via Repeater both for widgets and for the
+    // dev-console's own key actions (see Repeater::PostInit_). Without
+    // this, a text event hops *ahead* of a key event sent just before
+    // it, which breaks things like the synthesized backspace+text pair
+    // SDL emits for macOS press-and-hold accent replacement: the
+    // replacement text would land before the backspace meant to remove
+    // the original char, and the backspace would then eat the
+    // replacement instead.
+    g_base->logic->event_loop()->PushCall([text] {
+      if (g_base->ui->dev_console() != nullptr
+          && g_base->ui->dev_console()->HandleTextEditing(text)) {
+        return;
+      }
+      bool claimed = g_base->ui->SendWidgetMessage(WidgetMessage(
+          WidgetMessage::Type::kTextInput, nullptr, 0, 0, 0, 0, text.c_str()));
+      // Sanity-check: an active text-edit session means some widget is
+      // being inline-edited, so text should get claimed; unclaimed here
+      // means typed text is silently vanishing (routing drift between
+      // the session's widget and message dispatch).
+      if (!claimed && g_base->ui->text_editing_active()) {
+        BA_LOG_ONCE(LogName::kBaInput, LogLevel::kWarning,
+                    "Text input went unclaimed while a text-edit session"
+                    " is active; typed text may be getting lost.");
+      }
+    });
   });
 }
 
-void Input::PushJoystickEvent(const SDL_Event& event,
-                              InputDevice* input_device) {
+void Input::PushJoystickEvent(const BAEvent& event, InputDevice* input_device) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall([this, event, input_device] {
     HandleJoystickEvent_(event, input_device);
   });
 }
 
-void Input::HandleJoystickEvent_(const SDL_Event& event,
+void Input::HandleJoystickEvent_(const BAEvent& event,
                                  InputDevice* input_device) {
   assert(g_base->InLogicThread());
   assert(input_device);
@@ -840,13 +889,13 @@ void Input::PushKeyReleaseEventSimple(int key) {
       [this, key] { HandleKeyReleaseSimple_(key); });
 }
 
-void Input::PushKeyPressEvent(const SDL_Keysym& keysym) {
+void Input::PushKeyPressEvent(const BAKeysym& keysym) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall(
       [this, keysym] { HandleKeyPress_(keysym); });
 }
 
-void Input::PushKeyReleaseEvent(const SDL_Keysym& keysym) {
+void Input::PushKeyReleaseEvent(const BAKeysym& keysym) {
   assert(g_base->logic->event_loop());
   g_base->logic->event_loop()->PushCall(
       [this, keysym] { HandleKeyRelease_(keysym); });
@@ -883,27 +932,27 @@ void Input::ReleaseJoystickInput() {
   joystick_input_capture_ = nullptr;
 }
 
-void Input::AddFakeKeyMods_(SDL_Keysym* sym) {
+void Input::AddFakeKeyMods_(BAKeysym* sym) {
   // In cases where we are only passed simple keycodes, we fill in modifiers
   // ourself by looking at currently held key states. This is less than
   // ideal because modifier key states can fall out of sync in some cases
   // but is generally 'good enough' for our minimal keyboard needs.
-  if (keys_held_.contains(SDLK_LCTRL) || keys_held_.contains(SDLK_RCTRL)) {
-    sym->mod |= KMOD_CTRL;
+  if (keys_held_.contains(BAK_LCTRL) || keys_held_.contains(BAK_RCTRL)) {
+    sym->mod |= BA_KMOD_CTRL;
   }
-  if (keys_held_.contains(SDLK_LSHIFT) || keys_held_.contains(SDLK_RSHIFT)) {
-    sym->mod |= KMOD_SHIFT;
+  if (keys_held_.contains(BAK_LSHIFT) || keys_held_.contains(BAK_RSHIFT)) {
+    sym->mod |= BA_KMOD_SHIFT;
   }
-  if (keys_held_.contains(SDLK_LALT) || keys_held_.contains(SDLK_RALT)) {
-    sym->mod |= KMOD_ALT;
+  if (keys_held_.contains(BAK_LALT) || keys_held_.contains(BAK_RALT)) {
+    sym->mod |= BA_KMOD_ALT;
   }
-  if (keys_held_.contains(SDLK_LGUI) || keys_held_.contains(SDLK_RGUI)) {
-    sym->mod |= KMOD_GUI;
+  if (keys_held_.contains(BAK_LGUI) || keys_held_.contains(BAK_RGUI)) {
+    sym->mod |= BA_KMOD_GUI;
   }
 }
 
 void Input::HandleKeyPressSimple_(int keycode) {
-  SDL_Keysym keysym{};
+  BAKeysym keysym{};
   keysym.sym = keycode;
   AddFakeKeyMods_(&keysym);
   HandleKeyPress_(keysym);
@@ -911,13 +960,13 @@ void Input::HandleKeyPressSimple_(int keycode) {
 
 void Input::HandleKeyReleaseSimple_(int keycode) {
   // See notes above.
-  SDL_Keysym keysym{};
+  BAKeysym keysym{};
   keysym.sym = keycode;
   AddFakeKeyMods_(&keysym);
   HandleKeyRelease_(keysym);
 }
 
-void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
+void Input::HandleKeyPress_(const BAKeysym& keysym) {
   assert(g_base->InLogicThread());
 
   // Mark as active even if input is locked.
@@ -977,8 +1026,8 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
     // On our SDL builds we support both F11 and Alt+Enter for toggling
     // fullscreen.
     if (g_buildconfig.sdl_build()) {
-      if ((keysym.sym == SDLK_F11
-           || (keysym.sym == SDLK_RETURN && ((keysym.mod & KMOD_ALT))))) {
+      if ((keysym.sym == BAK_F11
+           || (keysym.sym == BAK_RETURN && ((keysym.mod & BA_KMOD_ALT))))) {
         do_toggle = true;
       }
     }
@@ -992,8 +1041,8 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
 
   // Ctrl-V or Cmd-V sends paste commands to the console or any interested
   // text fields.
-  if (keysym.sym == SDLK_v
-      && ((keysym.mod & KMOD_CTRL) || (keysym.mod & KMOD_GUI))) {
+  if (keysym.sym == BAK_v
+      && ((keysym.mod & BA_KMOD_CTRL) || (keysym.mod & BA_KMOD_GUI))) {
     if (auto* console = g_base->ui->dev_console()) {
       if (console->PasteFromClipboard()) {
         return;
@@ -1005,10 +1054,10 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
 
   // Dev Console.
   if (auto* console = g_base->ui->dev_console()) {
-    if (keysym.sym == SDLK_BACKQUOTE || keysym.sym == SDLK_F2) {
+    if (keysym.sym == BAK_BACKQUOTE || keysym.sym == BAK_F2) {
       // Reset input so characters don't continue walking and stuff.
       g_base->input->ResetHoldStates();
-      auto backwards = (keysym.mod & KMOD_SHIFT) != 0;
+      auto backwards = (keysym.mod & BA_KMOD_SHIFT) != 0;
       console->CycleState(backwards);
       return;
     }
@@ -1021,30 +1070,31 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
 
   switch (keysym.sym) {
       // Menu button on android/etc. pops up the menu.
-    case SDLK_MENU: {
-      if (!g_base->ui->IsMainUIVisible()) {
+    case BAK_MENU: {
+      if (!g_base->ui->IsMainUIVisible()
+          && !g_base->ui->HasModalSimpleDialog()) {
         g_base->ui->RequestMainUI(GetFuzzyInputDeviceForMenuButton());
       }
       handled = true;
       break;
     }
 
-    case SDLK_EQUALS:
-    case SDLK_PLUS:
-      if (keysym.mod & KMOD_CTRL) {
+    case BAK_EQUALS:
+    case BAK_PLUS:
+      if (keysym.mod & BA_KMOD_CTRL) {
         g_base->app_mode()->ChangeGameSpeed(1);
         handled = true;
       }
       break;
 
-    case SDLK_MINUS:
-      if (keysym.mod & KMOD_CTRL) {
+    case BAK_MINUS:
+      if (keysym.mod & BA_KMOD_CTRL) {
         g_base->app_mode()->ChangeGameSpeed(-1);
         handled = true;
       }
       break;
 
-    case SDLK_F5: {
+    case BAK_F5: {
       if (g_base->ui->IsPartyIconVisible()) {
         g_base->ui->ActivatePartyIcon();
       }
@@ -1052,39 +1102,42 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
       break;
     }
 
-    case SDLK_F7:
+    case BAK_F7:
       assert(g_base->logic->event_loop());
       g_base->logic->event_loop()->PushCall(
           [] { g_base->graphics->ToggleManualCamera(); });
       handled = true;
       break;
 
-    case SDLK_F8:
+    case BAK_F8:
       assert(g_base->logic->event_loop());
       g_base->logic->event_loop()->PushCall(
           [] { g_base->graphics->ToggleNetworkDebugDisplay(); });
       handled = true;
       break;
 
-    case SDLK_F9:
+    case BAK_F9:
       g_base->python->objs().PushCall(
           BasePython::ObjID::kLanguageTestToggleCall);
       handled = true;
       break;
 
-    case SDLK_F10:
+    case BAK_F10:
       assert(g_base->logic->event_loop());
       g_base->logic->event_loop()->PushCall(
           [] { g_base->graphics->ToggleDebugDraw(); });
       handled = true;
       break;
 
-    case SDLK_ESCAPE:
-      if (!g_base->ui->IsMainUIVisible()) {
+    case BAK_ESCAPE:
+      if (!g_base->ui->IsMainUIVisible()
+          && !g_base->ui->HasModalSimpleDialog()) {
         // There's no main menu up. Ask for one.
         g_base->ui->RequestMainUI(GetFuzzyInputDeviceForEscapeKey());
       } else {
-        // Ok there *is* a main ui up. Send it a cancel message.
+        // Ok there *is* a main ui up (or a modal SimpleDialog). Send a cancel
+        // message -- a modal SimpleDialog swallows it; otherwise the main ui
+        // handles it.
         g_base->ui->SendWidgetMessage(
             WidgetMessage(WidgetMessage::Type::kCancel));
       }
@@ -1103,7 +1156,7 @@ void Input::HandleKeyPress_(const SDL_Keysym& keysym) {
   }
 }
 
-void Input::HandleKeyRelease_(const SDL_Keysym& keysym) {
+void Input::HandleKeyRelease_(const BAKeysym& keysym) {
   assert(g_base->InLogicThread());
 
   // Note: we want to let releases through even if input is locked.
@@ -1138,24 +1191,24 @@ void Input::HandleKeyRelease_(const SDL_Keysym& keysym) {
   }
 }
 
-void Input::UpdateModKeyStates_(const SDL_Keysym* keysym, bool press) {
+void Input::UpdateModKeyStates_(const BAKeysym* keysym, bool press) {
   switch (keysym->sym) {
-    case SDLK_LCTRL:
-    case SDLK_RCTRL: {
+    case BAK_LCTRL:
+    case BAK_RCTRL: {
       if (Camera* c = g_base->graphics->camera()) {
         c->set_ctrl_down(press);
       }
       break;
     }
-    case SDLK_LALT:
-    case SDLK_RALT: {
+    case BAK_LALT:
+    case BAK_RALT: {
       if (Camera* c = g_base->graphics->camera()) {
         c->set_alt_down(press);
       }
       break;
     }
-    case SDLK_LGUI:
-    case SDLK_RGUI: {
+    case BAK_LGUI:
+    case BAK_RGUI: {
       if (Camera* c = g_base->graphics->camera()) {
         c->set_cmd_down(press);
       }
@@ -1197,7 +1250,7 @@ void Input::HandleMouseScroll_(const Vector2f& amount) {
   Camera* camera = g_base->graphics->camera();
   if (camera) {
     if (camera->manual()) {
-      camera->ManualHandleMouseWheel(0.005f * amount.y);
+      camera->ManualHandleMouseWheel(0.5f * amount.y);
     }
   }
 }
@@ -1351,13 +1404,13 @@ void Input::HandleMouseDown_(int button, const Vector2f& position) {
   Camera* camera = g_base->graphics->camera();
   if (!handled && camera) {
     switch (button) {
-      case SDL_BUTTON_LEFT:
+      case BA_BUTTON_LEFT:
         camera->set_mouse_left_down(true);
         break;
-      case SDL_BUTTON_RIGHT:
+      case BA_BUTTON_RIGHT:
         camera->set_mouse_right_down(true);
         break;
-      case SDL_BUTTON_MIDDLE:
+      case BA_BUTTON_MIDDLE:
         camera->set_mouse_middle_down(true);
         break;
       default:
@@ -1376,13 +1429,13 @@ void Input::PushMouseUpEvent(int button, const Vector2f& position) {
 static void ApplyMouseUpCancelToCamera(int button) {
   if (Camera* camera = g_base->graphics->camera()) {
     switch (button) {
-      case SDL_BUTTON_LEFT:
+      case BA_BUTTON_LEFT:
         camera->set_mouse_left_down(false);
         break;
-      case SDL_BUTTON_RIGHT:
+      case BA_BUTTON_RIGHT:
         camera->set_mouse_right_down(false);
         break;
-      case SDL_BUTTON_MIDDLE:
+      case BA_BUTTON_MIDDLE:
         camera->set_mouse_middle_down(false);
         break;
       default:
@@ -1413,6 +1466,37 @@ void Input::HandleMouseUp_(int button, const Vector2f& position) {
   ApplyMouseUpCancelToCamera(button);
 
   g_base->ui->HandleMouseUp(button, cursor_pos_x_, cursor_pos_y_);
+}
+
+void Input::PushMouseClickAtVirtualCoords(int button, float virtual_x,
+                                          float virtual_y) {
+  // Schedule the dispatch on the logic thread (where UI lives).
+  g_base->logic->event_loop()->PushCall([this, button, virtual_x, virtual_y] {
+    assert(g_base->InLogicThread());
+
+    // Set cursor pos and dispatch through the same UI entry point
+    // real mouse events use, so modals / hit-testing / focus
+    // chains all behave normally.
+    cursor_pos_x_ = virtual_x;
+    cursor_pos_y_ = virtual_y;
+    millisecs_t click_time = g_core->AppTimeMillisecs();
+    bool double_click = (click_time - last_click_time_ <= double_click_time_);
+    last_click_time_ = click_time;
+    g_base->ui->HandleMouseDown(button, cursor_pos_x_, cursor_pos_y_,
+                                double_click);
+    g_base->ui->HandleMouseUp(button, cursor_pos_x_, cursor_pos_y_);
+  });
+}
+
+void Input::PushMouseScrollAtVirtualCoords(float virtual_x, float virtual_y,
+                                           float amount_x, float amount_y) {
+  g_base->logic->event_loop()->PushCall(
+      [this, virtual_x, virtual_y, amount_x, amount_y] {
+        assert(g_base->InLogicThread());
+        cursor_pos_x_ = virtual_x;
+        cursor_pos_y_ = virtual_y;
+        HandleMouseScroll_(Vector2f(amount_x, amount_y));
+      });
 }
 
 void Input::HandleMouseCancel_(int button, const Vector2f& position) {
@@ -1459,10 +1543,6 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
     return;
   }
 
-  if (g_buildconfig.platform_ios_tvos()) {
-    printf("FIXME: update touch handling\n");
-  }
-
   float x = g_base->graphics->PixelToVirtualX(
       e.x * g_base->graphics->screen_pixel_width());
   float y = g_base->graphics->PixelToVirtualY(
@@ -1492,7 +1572,7 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
   // which covers most UI stuff.
   if (e.type == TouchEvent::Type::kDown && single_touch_ == nullptr) {
     single_touch_ = e.touch;
-    HandleMouseDown_(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
+    HandleMouseDown_(BA_BUTTON_LEFT, Vector2f(e.x, e.y));
   }
 
   if (e.type == TouchEvent::Type::kMoved && e.touch == single_touch_) {
@@ -1502,17 +1582,98 @@ void Input::HandleTouchEvent_(const TouchEvent& e) {
   if ((e.type == TouchEvent::Type::kUp)
       && (e.touch == single_touch_ || e.overall)) {
     single_touch_ = nullptr;
-    HandleMouseUp_(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
+    HandleMouseUp_(BA_BUTTON_LEFT, Vector2f(e.x, e.y));
   }
 
   if ((e.type == TouchEvent::Type::kCanceled)
       && (e.touch == single_touch_ || e.overall)) {
     single_touch_ = nullptr;
-    HandleMouseCancel_(SDL_BUTTON_LEFT, Vector2f(e.x, e.y));
+    HandleMouseCancel_(BA_BUTTON_LEFT, Vector2f(e.x, e.y));
   }
   // If we've got a touch input device, forward events along to it.
   if (touch_input_) {
     touch_input_->HandleTouchEvent(e.type, e.touch, x, y);
+  }
+}
+
+void Input::PushGyroEvent(const Vector3f& vals) {
+  assert(g_base->logic->event_loop());
+  auto* loop{g_base->logic->event_loop()};
+  if (loop->CheckPushSafety()) {
+    loop->PushCall([vals, this] { HandleGyroEvent_(vals); });
+  }
+}
+
+void Input::HandleGyroEvent_(const Vector3f& vals) {
+  assert(g_base->InLogicThread());
+  // Just stash the latest sample; UpdateGyro() integrates it each frame.
+  gyro_vals_ = vals;
+}
+
+void Input::SetGyroEnabled(bool enable) {
+  assert(g_base->InLogicThread());
+  // If we're turning back on, suppress gyro updates for a bit to avoid a
+  // hitch from a stale accumulated sample.
+  if (enable && !gyro_enabled_) {
+    last_suppress_gyro_time_ = g_core->AppTimeMicrosecs();
+  }
+  gyro_enabled_ = enable;
+}
+
+void Input::UpdateGyro(microsecs_t time_microsecs,
+                       microsecs_t elapsed_microsecs) {
+  assert(g_base->InLogicThread());
+  Vector3f tilt = gyro_vals_;
+
+  millisecs_t elapsed_millisecs = elapsed_microsecs / 1000;
+
+  // Guard against bad sensor data (and historically against torn reads from
+  // a cross-thread write; samples now arrive on the logic thread via
+  // PushGyroEvent, but the sanitize is cheap insurance against wonky gyros).
+  for (float& i : tilt.v) {
+    // Check for NaN and Inf:
+    if (!std::isfinite(i)) {
+      i = 0.0f;
+    }
+
+    // Clamp crazy big values:
+    i = std::min(100.0f, std::max(-100.0f, i));
+  }
+
+  // Our math was calibrated for 60hz (16ms per frame);
+  // adjust for other framerates...
+  float timescale = static_cast<float>(elapsed_millisecs) / 16.0f;
+
+  // If we've recently been told to suppress the gyro, zero these.
+  // (prevents hitches when being restored, etc)
+  if (!gyro_enabled_ || camera_gyro_explicitly_disabled_
+      || (time_microsecs - last_suppress_gyro_time_ < 1000000)) {
+    tilt = Vector3f{0.0, 0.0, 0.0};
+  }
+
+  float tilt_smoothing = 0.0f;
+  tilt_smoothed_ =
+      tilt_smoothing * tilt_smoothed_ + (1.0f - tilt_smoothing) * tilt;
+
+  tilt_vel_ = tilt_smoothed_ * 3.0f;
+  tilt_pos_ += tilt_vel_ * timescale;
+
+  // Technically this will behave slightly differently at different time
+  // scales, but it should be close to correct.. tilt_pos_ *= 0.991f;
+  tilt_pos_ *= std::max(0.0f, 1.0f - 0.01f * timescale);
+
+  // Some gyros seem wonky and either give us crazy big values or consistently
+  // offset ones. Let's keep a running tally of magnitude that slowly drops
+  // over time, and if it reaches a certain value lets just kill gyro input.
+  if (gyro_broken_) {
+    tilt_pos_ *= 0.0f;
+  } else {
+    gyro_mag_test_ += tilt_vel_.Length() * 0.01f * timescale;
+    gyro_mag_test_ = std::max(0.0f, gyro_mag_test_ - 0.02f * timescale);
+    if (gyro_mag_test_ > 100.0f) {
+      g_base->ScreenMessage("Wonky gyro; disabling tilt.", {1, 0, 0});
+      gyro_broken_ = true;
+    }
   }
 }
 
@@ -1530,9 +1691,9 @@ void Input::ResetKeyboardHeldKeys() {
   if (!g_core->HeadlessMode()) {
     // Synthesize key-ups for all our held keys.
     while (!keys_held_.empty()) {
-      SDL_Keysym k;
+      BAKeysym k;
       memset(&k, 0, sizeof(k));
-      k.sym = (SDL_Keycode)(*keys_held_.begin());
+      k.sym = (BAKeycode)(*keys_held_.begin());
       HandleKeyRelease_(k);
     }
   }

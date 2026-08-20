@@ -2,8 +2,6 @@
 #
 """Defines Actor(s)."""
 
-from __future__ import annotations
-
 import random
 from typing import TYPE_CHECKING, override
 
@@ -21,7 +19,7 @@ class PopupText(bs.Actor):
 
     def __init__(
         self,
-        text: str | bs.Lstr,
+        text: str | bs.Lstr | bs.LangStr,
         *,
         position: Sequence[float] = (0.0, 0.0, 0.0),
         color: Sequence[float] = (1.0, 1.0, 1.0, 1.0),

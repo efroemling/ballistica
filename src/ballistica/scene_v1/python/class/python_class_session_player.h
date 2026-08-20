@@ -37,6 +37,8 @@ class PythonClassSessionPlayer : public PythonClass {
   static auto SetName(PythonClassSessionPlayer* self, PyObject* args,
                       PyObject* keywds) -> PyObject*;
   static auto ResetInput(PythonClassSessionPlayer* self) -> PyObject*;
+  static auto SendFeedback(PythonClassSessionPlayer* self, PyObject* args,
+                           PyObject* keywds) -> PyObject*;
   static auto AssignInputCall(PythonClassSessionPlayer* self, PyObject* args,
                               PyObject* keywds) -> PyObject*;
   static auto RemoveFromGame(PythonClassSessionPlayer* self) -> PyObject*;

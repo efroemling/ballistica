@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_BASE_PYTHON_BASE_PYTHON_H_
 #define BALLISTICA_BASE_PYTHON_BASE_PYTHON_H_
 
+#include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -11,6 +13,8 @@
 #include "ballistica/shared/python/python_object_set.h"
 
 namespace ballistica::base {
+
+class LangStr;
 
 /// General Python support class for the base feature-set.
 class BasePython {
@@ -23,6 +27,14 @@ class BasePython {
   void OnAppUnsuspend();
   void OnAppShutdown();
   void OnAppShutdownComplete();
+  /// Arm a Python faulthandler traceback dump that will fire if
+  /// shutdown wedges. Returns the number of seconds the caller should
+  /// use for its suicide timer (which includes dump runway on
+  /// platforms where the dump was armed).
+  auto ShutdownFaultHandlerArm() -> double;
+  /// Cancel the shutdown faulthandler dump. Safe to call even if it
+  /// was never armed or failed to arm.
+  void ShutdownFaultHandlerDisarm();
   void ApplyAppConfig();
   void OnScreenSizeChange();
   void StepDisplayTime();
@@ -42,6 +54,7 @@ class BasePython {
     kCallPartialClass,
     kAppGCCollectCall,
     kConfig,
+    kLoadBundledAssetPackagesCall,
     kAppOnNativeBootstrappingCompleteCall,
     kResetToMainMenuCall,
     kStoreConfigFullscreenOnCall,
@@ -49,8 +62,6 @@ class BasePython {
     kSetConfigFullscreenOnCall,
     kSetConfigFullscreenOffCall,
     kNotSignedInScreenMessageCall,
-    kRejectingInviteAlreadyInPartyMessageCall,
-    kConnectionFailedMessageCall,
     kTemporarilyUnavailableMessageCall,
     kInProgressMessageCall,
     kErrorMessageCall,
@@ -59,12 +70,10 @@ class BasePython {
     kPurchaseAlreadyInProgressErrorCall,
     kVROrientationResetCBMessageCall,
     kVROrientationResetMessageCall,
-    kHandleV1CloudLogCall,
     kLanguageTestToggleCall,
     kAwardInControlAchievementCall,
     kAwardDualWieldingAchievementCall,
     kPrintCorruptFileErrorCall,
-    kPlayGongSoundCall,
     kLaunchCoopGameCall,
     kPurchasesRestoredMessageCall,
     kDismissWiiRemotesWindowCall,
@@ -82,6 +91,8 @@ class BasePython {
     kAppOnNativeUnsuspendCall,
     kAppOnNativeShutdownCall,
     kAppOnNativeShutdownCompleteCall,
+    kAppShutdownFaultHandlerArmCall,
+    kAppShutdownFaultHandlerDisarmCall,
     kQuitCall,
     kShowPostPurchaseMessageCall,
     kContextError,
@@ -98,11 +109,12 @@ class BasePython {
     kInputTypeClass,
     kPermissionClass,
     kSpecialCharClass,
-    kLstrFromJsonCall,
     kHashStringsCall,
     kHaveAccountV2CredentialsCall,
     kImplicitSignInCall,
     kImplicitSignOutCall,
+    kDiscordAuthReceivedCall,
+    kDiscordSignInTokenResponseCall,
     kLoginAdapterGetSignInTokenResponseCall,
     kPreEnv,
     kOpenURLWithWebBrowserModuleCall,
@@ -128,6 +140,7 @@ class BasePython {
     kV2AuthRequestCall,
     kV2AuthDataCall,
     kStartNativeReplCall,
+    kSimpleDialogButtonPressCall,
     kLast  // Sentinel; must be at end.
   };
 
@@ -149,9 +162,6 @@ class BasePython {
   void StorePreEnv(PyObject* obj);
 
   void RunDeepLink(const std::string& url);
-  auto GetResource(const char* key, const char* fallback_resource = nullptr,
-                   const char* fallback_value = nullptr) -> std::string;
-  auto GetTranslation(const char* category, const char* s) -> std::string;
 
   // Fetch raw values from the config dict. The default value is returned if
   // the requested value is not present or not of a compatible type.
@@ -192,7 +202,32 @@ class BasePython {
   void SoftImportPlus();
   void SoftImportClassic();
 
+  /// Build a bacommon.langstr.LangStrSpec dataclass instance from its
+  /// wire JSON (used by babase.LangStr's ``.spec`` projection). Returns
+  /// an empty ref on failure (logged).
+  auto MakeLangStrSpecFromJson(const std::string& json) -> PythonRef;
+
+  /// Compute HMAC-SHA256(key, msg) as a lowercase hex string (via
+  /// stdlib hmac/hashlib). Returns empty string on failure (logged).
+  /// Used for join-password proofs over the scene_v1 wire.
+  auto HmacSha256Hex(const std::string& key, const std::string& msg)
+      -> std::string;
+
  private:
+  /// If o is a bacommon.langstr.LangStrSpec dataclass (the authoring
+  /// form), parse it into a native LangStr and return it; nullopt if o
+  /// is some other type or on parse trouble (which is logged).
+  auto ParseBacommonLangStr(PyObject* o)
+      -> std::optional<std::shared_ptr<const LangStr>>;
+
+  /// If o is a bacommon.langstr.LangStrSpec dataclass (the authoring
+  /// form), evaluate it natively to flat display text (fail-visible)
+  /// and return it; nullopt if o is some other type. Lazily grabs the
+  /// class + serializers on first use, keeping bacommon out of the
+  /// babase bootstrap graph.
+  auto EvalBacommonLangStr_(PyObject* o) -> std::optional<std::string>;
+  auto IsBacommonLangStr_(PyObject* o) -> bool;
+
   template <typename T>
   auto IsPyEnum_(BasePython::ObjID enum_class_id, PyObject* obj) -> bool;
   template <typename T>
@@ -200,6 +235,15 @@ class BasePython {
 
   std::set<std::string> do_once_locations_;
   PythonObjectSet<ObjID> objs_;
+  // Lazily-populated (see IsBacommonLangStr_).
+  PythonRef bacommon_lang_str_class_;
+  PythonRef dataclass_to_json_call_;
+  PythonRef dataclass_from_json_call_;
+  // Lazily-populated (see HmacSha256Hex).
+  PythonRef hmac_new_call_;
+  PythonRef hashlib_sha256_call_;
+  bool hmac_lookup_failed_{};
+  bool bacommon_lang_str_lookup_failed_{};
   float last_screen_res_x_{-1.0f};
   float last_screen_res_y_{-1.0f};
 };

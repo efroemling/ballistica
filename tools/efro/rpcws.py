@@ -2,14 +2,13 @@
 #
 """Remote procedure call functionality over WebSockets."""
 
-from __future__ import annotations
-
 import time
 import asyncio
 import logging
 from typing import TYPE_CHECKING, Protocol
 
 from efro.error import CommunicationError
+from efro.util import gather_strip, strip_exception_tracebacks
 
 if TYPE_CHECKING:
     from typing import Awaitable, Callable, Literal
@@ -85,7 +84,9 @@ class RPCWSEndpoint:
         debug_print: bool = False,
         debug_print_call: Callable[[str], None] | None = None,
     ) -> None:
-        self._handle_raw_message_call = handle_raw_message_call
+        self._handle_raw_message_call: (
+            Callable[[bytes], Awaitable[bytes]] | None
+        ) = handle_raw_message_call
         self._transport = transport
         self._label = label
         self.debug_print = debug_print
@@ -122,21 +123,30 @@ class RPCWSEndpoint:
                 'RPCWSEndpoint.run cancelled; want to try and avoid this.'
             )
             raise
-        except CommunicationError:
+        except CommunicationError as exc:
             if self.debug_print:
                 self.debug_print_call(f'{self._label}: connection ended.')
-        except Exception:
+            # We're done with the exception here, so strip its
+            # tracebacks to avoid reference cycles.
+            strip_exception_tracebacks(exc)
+        except Exception as exc:
             logger.exception(
                 'Unexpected error in rpcws %s read loop (age=%.1f).',
                 self._label,
                 time.monotonic() - self._create_time,
             )
+            # We're done with the exception here, so strip its
+            # tracebacks to avoid reference cycles.
+            strip_exception_tracebacks(exc)
         finally:
             try:
                 self.close()
                 await self.wait_closed()
-            except Exception:
+            except Exception as exc:
                 logger.exception('Error closing %s.', self._label)
+                # We're done with the exception here, so strip its
+                # tracebacks to avoid reference cycles.
+                strip_exception_tracebacks(exc)
 
             if self.debug_print:
                 self.debug_print_call(f'{self._label}: finished.')
@@ -192,8 +202,6 @@ class RPCWSEndpoint:
         bytes_awaitable: asyncio.Task[bytes],
         message_id: int,
     ) -> bytes:
-        # pylint: disable=too-many-positional-arguments
-
         # Build the wire frame: type(1b) + message_id(2b) + payload.
         frame = (
             _TYPE_MESSAGE.to_bytes(1, _BYTE_ORDER)
@@ -205,7 +213,7 @@ class RPCWSEndpoint:
             await self._transport.send(frame)
         except Exception as exc:
             bytes_awaitable.cancel()
-            del self._in_flight_messages[message_id]
+            self._in_flight_messages.pop(message_id, None)
             if close_on_error:
                 self.close()
             raise CommunicationError() from exc
@@ -219,6 +227,7 @@ class RPCWSEndpoint:
         try:
             return await asyncio.wait_for(bytes_awaitable, timeout=timeout)
         except asyncio.CancelledError as exc:
+            self._in_flight_messages.pop(message_id, None)
             current_task = asyncio.current_task()
             if current_task is not None and current_task.cancelling() > 0:
                 raise
@@ -235,7 +244,7 @@ class RPCWSEndpoint:
                     f'{self._label}: message {message_id} timed out.'
                 )
             bytes_awaitable.cancel()
-            del self._in_flight_messages[message_id]
+            self._in_flight_messages.pop(message_id, None)
             if close_on_error:
                 self.close()
             raise CommunicationError() from exc
@@ -263,8 +272,11 @@ class RPCWSEndpoint:
             name=f'{self._label} transport close',
         )
 
-        # We don't need this anymore and it may create a dependency loop.
-        del self._handle_raw_message_call
+        # Drop our reference to the user-supplied handler so we don't
+        # keep a dependency loop alive. Set to None rather than deleting
+        # so dispatched-but-not-yet-run handler tasks can see we're
+        # closed instead of hitting AttributeError.
+        self._handle_raw_message_call = None
 
     def is_closing(self) -> bool:
         """Have we begun the process of closing?"""
@@ -287,7 +299,7 @@ class RPCWSEndpoint:
         self._tasks = []
 
         if live_tasks:
-            results = await asyncio.gather(*live_tasks, return_exceptions=True)
+            results = await gather_strip(*live_tasks)
             for result in results:
                 if isinstance(result, Exception):
                     logger.warning(
@@ -343,7 +355,11 @@ class RPCWSEndpoint:
                         f'{self._label}: received response {message_id}'
                         f' of size {len(payload)} at {self._tm()}.'
                     )
-                msgobj = self._in_flight_messages.get(message_id)
+                # The message is no longer in flight, so remove its
+                # entry; leaving completed entries around would grow
+                # the dict unboundedly and collide with live entries
+                # once message ids wrap at 65536.
+                msgobj = self._in_flight_messages.pop(message_id, None)
                 if msgobj is None:
                     if self.debug_print:
                         self.debug_print_call(
@@ -360,10 +376,17 @@ class RPCWSEndpoint:
     async def _handle_raw_message(
         self, message_id: int, message: bytes
     ) -> None:
+        handler = self._handle_raw_message_call
+        if handler is None:
+            # Endpoint closed between dispatch and this task running.
+            return
         try:
-            response = await self._handle_raw_message_call(message)
-        except Exception:
+            response = await handler(message)
+        except Exception as exc:
             logger.exception('Error handling raw rpcws message')
+            # We're done with the exception here, so strip its
+            # tracebacks to avoid reference cycles.
+            strip_exception_tracebacks(exc)
             return
 
         # Send back the response.

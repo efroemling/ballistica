@@ -2,8 +2,6 @@
 #
 """Provides the built-in on screen keyboard UI."""
 
-from __future__ import annotations
-
 import logging
 from typing import cast
 
@@ -25,6 +23,11 @@ class OnScreenKeyboardWindow(Window):
     """Simple built-in on-screen keyboard."""
 
     def __init__(self, adapter: StringEditAdapter):
+        # Safe up-call: bauiv1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bauiv1 import _commonassets
+
         self._adapter = adapter
         self._width = 700
         self._height = 400
@@ -67,7 +70,7 @@ class OnScreenKeyboardWindow(Window):
             position=(self._width - 200, 44),
             size=(140, 60),
             autoselect=True,
-            label=babase.Lstr(resource='doneText'),
+            label=_commonassets.strings.actions.done,
             on_activate_call=self._done,
         )
         _bauiv1.containerwidget(
@@ -126,6 +129,11 @@ class OnScreenKeyboardWindow(Window):
         self._load_keyboard()
 
     def _load_keyboard(self) -> None:
+        # Safe up-call: bauiv1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bauiv1 import _commonassets, builtinassets, classicassets
+
         self._keyboard = self._get_keyboard()
         # We want to get just chars without column data, etc.
         self._chars = [j for i in self._keyboard.chars for j in i]
@@ -141,7 +149,7 @@ class OnScreenKeyboardWindow(Window):
         key_color = self._key_color
         key_color_dark = self._key_color_dark
 
-        self._click_sound = _bauiv1.getsound('click01')
+        self._click_sound = builtinassets.audio.click01.get()
 
         # kill prev char keys
         for key in self._char_keys:
@@ -243,7 +251,7 @@ class OnScreenKeyboardWindow(Window):
                         autoselect=True,
                         textcolor=key_textcolor,
                         color=key_color_dark,
-                        label=babase.Lstr(resource='spaceKeyText'),
+                        label=classicassets.strings.keyboard.space_key,
                         on_activate_call=babase.CallStrict(
                             self._type_char, ' '
                         ),
@@ -264,9 +272,9 @@ class OnScreenKeyboardWindow(Window):
                             h_align='center',
                             position=(210, v - 70),
                             size=(key_width * 6.1, key_height + 15),
-                            text=babase.Lstr(
-                                resource='keyboardChangeInstructionsText'
-                            ),
+                            text=(
+                                classicassets.strings.keyboard
+                            ).change_instructions,
                             scale=0.75,
                         )
                 btn2 = self._space_button
@@ -385,6 +393,11 @@ class OnScreenKeyboardWindow(Window):
         self._refresh()
 
     def _next_keyboard(self) -> None:
+        # Safe up-call: bauiv1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bauiv1 import _commonassets, builtinassets, classicassets
+
         assert babase.app.meta.scanresults is not None
         kbexports = babase.app.meta.scanresults.exports_by_name(
             'bauiv1.Keyboard'
@@ -393,16 +406,15 @@ class OnScreenKeyboardWindow(Window):
 
         self._load_keyboard()
         if len(kbexports) < 2:
-            _bauiv1.getsound('error').play()
+            builtinassets.audio.error.get().play()
             babase.screenmessage(
-                babase.Lstr(resource='keyboardNoOthersAvailableText'),
+                classicassets.strings.keyboard.no_others_available,
                 color=(1, 0, 0),
             )
         else:
             babase.screenmessage(
-                babase.Lstr(
-                    resource='keyboardSwitchText',
-                    subs=[('${NAME}', self._keyboard.name)],
+                classicassets.strings.keyboard.switched(
+                    name=self._keyboard.name
                 ),
                 color=(0, 1, 0),
             )
@@ -451,8 +463,13 @@ class OnScreenKeyboardWindow(Window):
         self._refresh()
 
     def _cancel(self) -> None:
+        # Safe up-call: bauiv1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bauiv1 import builtinassets
+
         self._adapter.cancel()
-        _bauiv1.getsound('swish').play()
+        builtinassets.audio.swish.get().play()
         _bauiv1.containerwidget(edit=self._root_widget, transition='out_scale')
 
     def _done(self) -> None:

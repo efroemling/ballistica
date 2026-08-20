@@ -9,6 +9,7 @@
 #include "ballistica/base/assets/sound_asset.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
+#include "ballistica/base/python/class/python_class_lang_str.h"
 #include "ballistica/base/support/context.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -40,6 +41,7 @@ static auto PyGetSound(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
+  base::Assets::FailOnAssetPackagePath(name, "getsound");
   {
     base::Assets::AssetListLock lock;
     Object::Ref<base::SoundAsset> sound = g_base->assets->GetSound(name);
@@ -59,6 +61,44 @@ static PyMethodDef PyGetSoundDef = {
     "Load a sound for use in the ui.",
 };
 
+// ------------------------------ apsoundget -----------------------------------
+
+static auto PyApSoundGet(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* name;
+  static const char* kwlist[] = {"name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &name)) {
+    return nullptr;
+  }
+  base::Assets::FailOnNonAssetPackagePath(name, "apsoundget");
+  {
+    base::Assets::AssetListLock lock;
+    Object::Ref<base::SoundAsset> sound = g_base->assets->GetSound(name);
+    return PythonClassUISound::Create(sound.get());
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyApSoundGetDef = {
+    "apsoundget",                  // name
+    (PyCFunction)PyApSoundGet,     // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "apsoundget(name: str) -> bauiv1.Sound\n"
+    "\n"
+    "Load a ui sound from an asset-package (internal).\n"
+    "\n"
+    "Do not call this directly; asset-package assets should be accessed\n"
+    "through their package's generated Python wrapper module, which routes\n"
+    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "asset name.\n"
+    "\n"
+    ":meta private:",
+};
+
 // ----------------------------- gettexture ------------------------------------
 
 static auto PyGetTexture(PyObject* self, PyObject* args, PyObject* keywds)
@@ -70,6 +110,7 @@ static auto PyGetTexture(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
+  base::Assets::FailOnAssetPackagePath(name, "gettexture");
   {
     base::Assets::AssetListLock lock;
     return PythonClassUITexture::Create(g_base->assets->GetTexture(name));
@@ -86,6 +127,43 @@ static PyMethodDef PyGetTextureDef = {
     "gettexture(name: str) -> bauiv1.Texture\n"
     "\n"
     "Load a texture for use in the ui.",
+};
+
+// ----------------------------- aptextureget ----------------------------------
+
+static auto PyApTextureGet(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* name;
+  static const char* kwlist[] = {"name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &name)) {
+    return nullptr;
+  }
+  base::Assets::FailOnNonAssetPackagePath(name, "aptextureget");
+  {
+    base::Assets::AssetListLock lock;
+    return PythonClassUITexture::Create(g_base->assets->GetTexture(name));
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyApTextureGetDef = {
+    "aptextureget",                // name
+    (PyCFunction)PyApTextureGet,   // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "aptextureget(name: str) -> bauiv1.Texture\n"
+    "\n"
+    "Load a ui texture from an asset-package (internal).\n"
+    "\n"
+    "Do not call this directly; asset-package assets should be accessed\n"
+    "through their package's generated Python wrapper module, which routes\n"
+    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "asset name.\n"
+    "\n"
+    ":meta private:",
 };
 
 // -------------------------- get_qrcode_texture -------------------------------
@@ -129,6 +207,7 @@ static auto PyGetMesh(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
+  base::Assets::FailOnAssetPackagePath(name, "getmesh");
   {
     base::Assets::AssetListLock lock;
     return PythonClassUIMesh::Create(g_base->assets->GetMesh(name));
@@ -147,6 +226,43 @@ static PyMethodDef PyGetMeshDef = {
     "Load a mesh for use solely in the local user interface.",
 };
 
+// ------------------------------ apmeshget ------------------------------------
+
+static auto PyApMeshGet(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* name;
+  static const char* kwlist[] = {"name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &name)) {
+    return nullptr;
+  }
+  base::Assets::FailOnNonAssetPackagePath(name, "apmeshget");
+  {
+    base::Assets::AssetListLock lock;
+    return PythonClassUIMesh::Create(g_base->assets->GetMesh(name));
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyApMeshGetDef = {
+    "apmeshget",                   // name
+    (PyCFunction)PyApMeshGet,      // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "apmeshget(name: str) -> bauiv1.Mesh\n"
+    "\n"
+    "Load a ui mesh from an asset-package (internal).\n"
+    "\n"
+    "Do not call this directly; asset-package assets should be accessed\n"
+    "through their package's generated Python wrapper module, which routes\n"
+    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "asset name.\n"
+    "\n"
+    ":meta private:",
+};
+
 // ----------------------------- buttonwidget ----------------------------------
 
 static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
@@ -158,6 +274,7 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* pos_obj{Py_None};
   PyObject* label_obj{Py_None};
   PyObject* edit_obj{Py_None};
+  PyObject* query_obj{Py_None};
   ContainerWidget* parent_widget{};
   PyObject* on_activate_call_obj{Py_None};
   PyObject* color_obj{Py_None};
@@ -196,8 +313,10 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* text_res_scale_obj{Py_None};
   PyObject* text_literal_obj{Py_None};
   PyObject* opacity_obj{Py_None};
+  PyObject* rotate_obj{Py_None};
   PyObject* enabled_obj{Py_None};
   PyObject* better_bg_fit_obj{Py_None};
+  PyObject* transition_type_obj{Py_None};
   static const char* kwlist[] = {"edit",
                                  "parent",
                                  "id",
@@ -238,10 +357,13 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "enabled",
                                  "text_literal",
                                  "opacity",
+                                 "rotate",
                                  "better_bg_fit",
+                                 "transition_type",
+                                 "query",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &on_activate_call_obj, &label_obj, &color_obj,
           &down_widget_obj, &up_widget_obj, &left_widget_obj, &right_widget_obj,
@@ -253,11 +375,21 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &autoselect_obj, &mask_texture_obj, &tint_texture_obj,
           &tint_color_obj, &tint2_color_obj, &text_flatness_obj,
           &text_res_scale_obj, &enabled_obj, &text_literal_obj, &opacity_obj,
-          &better_bg_fit_obj))
+          &rotate_obj, &better_bg_fit_obj, &transition_type_obj, &query_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
     throw Exception("UI functions must be called with no context set.");
+  }
+
+  // Handle the query special case first (mirrors textwidget's `query`).
+  if (query_obj != Py_None) {
+    auto* qb = dynamic_cast<ButtonWidget*>(UIV1Python::GetPyWidget(query_obj));
+    if (qb == nullptr) {
+      throw Exception("Invalid or nonexistent widget.",
+                      PyExcType::kWidgetNotFound);
+    }
+    return PyUnicode_FromString(qb->GetQueryText().c_str());
   }
 
   // Gather up any user code triggered by this stuff and run it at the end
@@ -292,7 +424,12 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     b->SetTextLiteral(Python::GetBool(text_literal_obj));
   }
   if (label_obj != Py_None) {
-    b->SetText(g_base->python->GetPyLString(label_obj));
+    // See the textwidget text param note re native language-strings.
+    if (base::PythonClassLangStr::Check(label_obj)) {
+      b->SetLangStr(base::PythonClassLangStr::FromPyObj(label_obj).value());
+    } else {
+      b->SetText(g_base->python->GetPyLString(label_obj));
+    }
   }
   if (on_activate_call_obj != Py_None) {
     b->SetOnActivateCall(on_activate_call_obj);
@@ -465,14 +602,28 @@ static auto PyButtonWidget(PyObject* self, PyObject* args, PyObject* keywds)
     b->set_transition_delay(static_cast<millisecs_t>(
         1000.0f * Python::GetFloat(transition_delay_obj)));
   }
+  if (transition_type_obj != Py_None) {
+    std::string transition_type = Python::GetString(transition_type_obj);
+    if (transition_type == "in_left") {
+      b->set_transition_type(ButtonWidget::TransitionType::kInLeft);
+    } else if (transition_type == "scale") {
+      b->set_transition_type(ButtonWidget::TransitionType::kScale);
+    } else {
+      throw Exception("Invalid transition_type: '" + transition_type + "'.",
+                      PyExcType::kValue);
+    }
+  }
   if (text_res_scale_obj != Py_None) {
     b->SetTextResScale(Python::GetFloat(text_res_scale_obj));
   }
   if (enabled_obj != Py_None) {
-    b->set_enabled(Python::GetBool(selectable_obj));
+    b->set_enabled(Python::GetBool(enabled_obj));
   }
   if (opacity_obj != Py_None) {
     b->set_opacity(Python::GetFloat(opacity_obj));
+  }
+  if (rotate_obj != Py_None) {
+    b->set_rotate(Python::GetFloat(rotate_obj));
   }
   // If making a new widget add it at the end.
   if (edit_obj == Py_None) {
@@ -499,7 +650,7 @@ static PyMethodDef PyButtonWidgetDef = {
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
     "  on_activate_call: Callable | None = None,\n"
-    "  label: str | bauiv1.Lstr | None = None,\n"
+    "  label: str | bauiv1.Lstr | bauiv1.LangStr | None = None,\n"
     "  color: Sequence[float] | None = None,\n"
     "  down_widget: bauiv1.Widget | None = None,\n"
     "  up_widget: bauiv1.Widget | None = None,\n"
@@ -533,14 +684,23 @@ static PyMethodDef PyButtonWidgetDef = {
     "  enabled: bool | None = None,\n"
     "  text_literal: bool | None = None,\n"
     "  opacity: float | None = None,\n"
+    "  rotate: float | None = None,\n"
     "  better_bg_fit: bool | None = None,\n"
+    "  transition_type: Literal['in_left', 'scale'] | None = None,\n"
+    "  query: bauiv1.Widget | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a button widget.\n"
     "\n"
     "Pass a valid existing bauiv1.Widget as 'edit' to modify it; otherwise\n"
     "a new one is created and returned. Arguments that are not set to None\n"
-    "are applied to the Widget.",
+    "are applied to the Widget.\n"
+    "\n"
+    "Pass a button as 'query' to instead return its current label text as\n"
+    "a str (the translated form when the label is a language-string). This\n"
+    "mirrors textwidget's 'query' and is the only way to read a label that\n"
+    "was set directly on the button rather than via a separate overlaid\n"
+    "text widget.",
 };
 
 // --------------------------- checkboxwidget ----------------------------------
@@ -637,7 +797,13 @@ static auto PyCheckBoxWidget(PyObject* self, PyObject* args, PyObject* keywds)
     widget->set_auto_select(Python::GetBool(autoselect_obj));
   }
   if (text_obj != Py_None) {
-    widget->SetText(g_base->python->GetPyLString(text_obj));
+    // Native language-strings stay structured (retained +
+    // re-evaluated on language changes; see the textwidget analog).
+    if (base::PythonClassLangStr::Check(text_obj)) {
+      widget->SetLangStr(base::PythonClassLangStr::FromPyObj(text_obj).value());
+    } else {
+      widget->SetText(g_base->python->GetPyLString(text_obj));
+    }
   }
   if (value_obj != Py_None) {
     widget->SetValue(Python::GetBool(value_obj));
@@ -703,7 +869,7 @@ static PyMethodDef PyCheckBoxWidgetDef = {
     "  id: str | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
-    "  text: str | bauiv1.Lstr | None = None,\n"
+    "  text: str | bauiv1.Lstr | bauiv1.LangStr | None = None,\n"
     "  value: bool | None = None,\n"
     "  on_value_change_call: Callable[[bool], None] | None = None,\n"
     "  on_select_call: Callable[[], None] | None = None,\n"
@@ -739,6 +905,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* tint_color_obj{Py_None};
   PyObject* tint2_color_obj{Py_None};
   PyObject* opacity_obj{Py_None};
+  PyObject* rotate_obj{Py_None};
   PyObject* mesh_transparent_obj{Py_None};
   PyObject* mesh_opaque_obj{Py_None};
   PyObject* has_alpha_channel_obj{Py_None};
@@ -749,6 +916,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* radial_amount_obj{Py_None};
   PyObject* draw_controller_mult_obj{Py_None};
   PyObject* depth_range_obj{Py_None};
+  PyObject* transition_type_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -757,6 +925,7 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "color",
                                  "texture",
                                  "opacity",
+                                 "rotate",
                                  "mesh_transparent",
                                  "mesh_opaque",
                                  "has_alpha_channel",
@@ -770,15 +939,16 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "radial_amount",
                                  "draw_controller_mult",
                                  "depth_range",
+                                 "transition_type",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &color_obj, &texture_obj,
-          &opacity_obj, &mesh_transparent_obj, &mesh_opaque_obj,
+          &opacity_obj, &rotate_obj, &mesh_transparent_obj, &mesh_opaque_obj,
           &has_alpha_channel_obj, &tint_texture_obj, &tint_color_obj,
           &transition_delay_obj, &draw_controller_obj, &tint2_color_obj,
           &tilt_scale_obj, &mask_texture_obj, &radial_amount_obj,
-          &draw_controller_mult_obj, &depth_range_obj))
+          &draw_controller_mult_obj, &depth_range_obj, &transition_type_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -844,6 +1014,9 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (opacity_obj != Py_None) {
     b->set_opacity(Python::GetFloat(opacity_obj));
   }
+  if (rotate_obj != Py_None) {
+    b->set_rotate(Python::GetFloat(rotate_obj));
+  }
   if (radial_amount_obj != Py_None) {
     b->set_radial_amount(Python::GetFloat(radial_amount_obj));
   }
@@ -854,6 +1027,17 @@ static auto PyImageWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (transition_delay_obj != Py_None) {
     // We accept this as seconds; widget takes milliseconds.
     b->set_transition_delay(1000.0f * Python::GetFloat(transition_delay_obj));
+  }
+  if (transition_type_obj != Py_None) {
+    std::string transition_type = Python::GetString(transition_type_obj);
+    if (transition_type == "in_left") {
+      b->set_transition_type(ImageWidget::TransitionType::kInLeft);
+    } else if (transition_type == "scale") {
+      b->set_transition_type(ImageWidget::TransitionType::kScale);
+    } else {
+      throw Exception("Invalid transition_type: '" + transition_type + "'.",
+                      PyExcType::kValue);
+    }
   }
   if (color_obj != Py_None) {
     std::vector<float> c = Python::GetFloats(color_obj);
@@ -922,6 +1106,7 @@ static PyMethodDef PyImageWidgetDef = {
     "  color: Sequence[float] | None = None,\n"
     "  texture: bauiv1.Texture | None = None,\n"
     "  opacity: float | None = None,\n"
+    "  rotate: float | None = None,\n"
     "  mesh_transparent: bauiv1.Mesh | None = None,\n"
     "  mesh_opaque: bauiv1.Mesh | None = None,\n"
     "  has_alpha_channel: bool = True,\n"
@@ -935,6 +1120,7 @@ static PyMethodDef PyImageWidgetDef = {
     "  radial_amount: float | None = None,\n"
     "  draw_controller_mult: float | None = None,\n"
     "  depth_range: tuple[float, float] | None = None,\n"
+    "  transition_type: Literal['in_left', 'scale'] | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit an image widget.\n"
@@ -944,7 +1130,7 @@ static PyMethodDef PyImageWidgetDef = {
     "are applied to the Widget.",
 };
 
-// ----------------------------- imagewidget -----------------------------------
+// ---------------------------- spinnerwidget ----------------------------------
 
 static auto PySpinnerWidget(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
@@ -1432,8 +1618,14 @@ static auto PyContainerWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
   if (selected_child_obj != Py_None) {
     // Special case: passing 0 implies deselect.
+    //
+    // Tested for truthiness rather than by extracting a C value: Python
+    // ints are arbitrary precision, and PyLong_AsLong on a large one
+    // returns -1 (compares unequal to 0, so we would take the right
+    // branch by luck) while leaving an OverflowError set for something
+    // unrelated to trip over.
     if (PyLong_Check(selected_child_obj)
-        && (PyLong_AsLong(selected_child_obj) == 0)) {
+        && !Python::GetBool(selected_child_obj)) {
       widget->SelectWidget(nullptr);
     } else {
       widget->SelectWidget(UIV1Python::GetPyWidget(selected_child_obj));
@@ -2164,6 +2356,12 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* id_obj{Py_None};
   PyObject* literal_obj{Py_None};
   PyObject* depth_range_obj{Py_None};
+  PyObject* transition_type_obj{Py_None};
+  PyObject* password_obj{Py_None};
+  PyObject* query_password_obj{Py_None};
+  PyObject* string_edit_kind_obj{Py_None};
+  PyObject* query_string_edit_kind_obj{Py_None};
+  PyObject* invoke_return_press_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -2208,9 +2406,15 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "allow_clear_button",
                                  "literal",
                                  "depth_range",
+                                 "transition_type",
+                                 "password",
+                                 "query_password",
+                                 "string_edit_kind",
+                                 "query_string_edit_kind",
+                                 "invoke_return_press",
                                  nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
+          args, keywds, "|OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO",
           const_cast<char**>(kwlist), &edit_obj, &parent_obj, &id_obj,
           &size_obj, &pos_obj, &text_obj, &v_align_obj, &h_align_obj,
           &editable_obj, &padding_obj, &on_return_press_call_obj,
@@ -2223,7 +2427,10 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
           &force_internal_editing_obj, &always_show_carat_obj, &big_obj,
           &extra_touch_border_scale_obj, &res_scale_obj, &query_max_chars_obj,
           &query_description_obj, &adapter_finished_obj, &glow_type_obj,
-          &allow_clear_button_obj, &literal_obj, &depth_range_obj))
+          &allow_clear_button_obj, &literal_obj, &depth_range_obj,
+          &transition_type_obj, &password_obj, &query_password_obj,
+          &string_edit_kind_obj, &query_string_edit_kind_obj,
+          &invoke_return_press_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2240,7 +2447,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
       throw Exception("Invalid or nonexistent widget.",
                       PyExcType::kWidgetNotFound);
     }
-    return PyUnicode_FromString(widget->text_raw().c_str());
+    return PyUnicode_FromString(widget->GetQueryText().c_str());
   }
   if (query_max_chars_obj != Py_None) {
     widget =
@@ -2259,6 +2466,27 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
                       PyExcType::kWidgetNotFound);
     }
     return PyUnicode_FromString(widget->description().c_str());
+  }
+  if (query_password_obj != Py_None) {
+    widget =
+        dynamic_cast<TextWidget*>(UIV1Python::GetPyWidget(query_password_obj));
+    if (!widget.exists()) {
+      throw Exception("Invalid or nonexistent widget.",
+                      PyExcType::kWidgetNotFound);
+    }
+    if (widget->password()) {
+      Py_RETURN_TRUE;
+    }
+    Py_RETURN_FALSE;
+  }
+  if (query_string_edit_kind_obj != Py_None) {
+    widget = dynamic_cast<TextWidget*>(
+        UIV1Python::GetPyWidget(query_string_edit_kind_obj));
+    if (!widget.exists()) {
+      throw Exception("Invalid or nonexistent widget.",
+                      PyExcType::kWidgetNotFound);
+    }
+    return PyUnicode_FromString(widget->string_edit_kind().c_str());
   }
 
   // Ok it's not a query; it's a create or edit.
@@ -2287,8 +2515,7 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
 
   // Set applicable values.
   if (max_chars_obj != Py_None) {
-    widget->set_max_chars(
-        static_cast_check_fit<int>(Python::GetInt64(max_chars_obj)));
+    widget->set_max_chars(Python::GetInt(max_chars_obj));
   }
   if (size_obj != Py_None) {
     Point2D p = Python::GetPoint2D(size_obj);
@@ -2304,6 +2531,17 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   }
   if (autoselect_obj != Py_None) {
     widget->set_auto_select(Python::GetBool(autoselect_obj));
+  }
+  if (transition_type_obj != Py_None) {
+    std::string transition_type = Python::GetString(transition_type_obj);
+    if (transition_type == "in_left") {
+      widget->set_transition_type(TextWidget::TransitionType::kInLeft);
+    } else if (transition_type == "scale") {
+      widget->set_transition_type(TextWidget::TransitionType::kScale);
+    } else {
+      throw Exception("Invalid transition_type: '" + transition_type + "'.",
+                      PyExcType::kValue);
+    }
   }
   if (transition_delay_obj != Py_None) {
     // We accept this as seconds; widget takes milliseconds.
@@ -2353,8 +2591,29 @@ static auto PyTextWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (literal_obj != Py_None) {
     widget->SetLiteral(Python::GetBool(literal_obj));
   }
+  if (string_edit_kind_obj != Py_None) {
+    widget->set_string_edit_kind(Python::GetString(string_edit_kind_obj));
+  }
+  if (invoke_return_press_obj != Py_None
+      && Python::GetBool(invoke_return_press_obj)) {
+    widget->InvokeReturnPress();
+  }
+  if (password_obj != Py_None) {
+    widget->set_password(Python::GetBool(password_obj));
+  }
   if (text_obj != Py_None) {
-    widget->SetText(g_base->python->GetPyLString(text_obj));
+    // Native language-strings are retained by the widget and
+    // re-evaluated on language changes (mirroring legacy Lstr
+    // behavior); everything else flattens through the standard string
+    // slot. Per the D28 semantic split, widgets accept only the
+    // verified-local babase.LangStr form — authoring-spec values must
+    // be verified (resolved) before display, so no implicit
+    // spec-conversion here.
+    if (base::PythonClassLangStr::Check(text_obj)) {
+      widget->SetLangStr(base::PythonClassLangStr::FromPyObj(text_obj).value());
+    } else {
+      widget->SetText(g_base->python->GetPyLString(text_obj));
+    }
   }
   if (h_align_obj != Py_None) {
     std::string halign = Python::GetString(h_align_obj);
@@ -2498,7 +2757,7 @@ static PyMethodDef PyTextWidgetDef = {
     "  id: str | None = None,\n"
     "  size: Sequence[float] | None = None,\n"
     "  position: Sequence[float] | None = None,\n"
-    "  text: str | bauiv1.Lstr | None = None,\n"
+    "  text: str | bauiv1.Lstr | bauiv1.LangStr | None = None,\n"
     "  v_align: str | None = None,\n"
     "  h_align: str | None = None,\n"
     "  editable: bool | None = None,\n"
@@ -2515,7 +2774,7 @@ static PyMethodDef PyTextWidgetDef = {
     "  draw_controller: bauiv1.Widget | None = None,\n"
     "  scale: float | None = None,\n"
     "  corner_scale: float | None = None,\n"
-    "  description: str | bauiv1.Lstr | None = None,\n"
+    "  description: str | bauiv1.Lstr | bauiv1.LangStr | None = None,\n"
     "  transition_delay: float | None = None,\n"
     "  maxwidth: float | None = None,\n"
     "  max_height: float | None = None,\n"
@@ -2536,6 +2795,12 @@ static PyMethodDef PyTextWidgetDef = {
     "  allow_clear_button: bool | None = None,\n"
     "  literal: bool | None = None,\n"
     "  depth_range: tuple[float, float] | None = None,\n"
+    "  transition_type: Literal['in_left', 'scale'] | None = None,\n"
+    "  password: bool | None = None,\n"
+    "  query_password: bauiv1.Widget | None = None,\n"
+    "  string_edit_kind: str | None = None,\n"
+    "  query_string_edit_kind: bauiv1.Widget | None = None,\n"
+    "  invoke_return_press: bool | None = None,\n"
     ") -> bauiv1.Widget\n"
     "\n"
     "Create or edit a text widget.\n"
@@ -3043,6 +3308,9 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyGetTextureDef,
       PyGetQRCodeTextureDef,
       PyGetMeshDef,
+      PyApSoundGetDef,
+      PyApTextureGetDef,
+      PyApMeshGetDef,
       PyIsAvailableDef,
       PyOnUIScaleChangeDef,
       PyRootUIPauseUpdatesDef,

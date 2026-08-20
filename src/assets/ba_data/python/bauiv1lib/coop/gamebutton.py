@@ -2,13 +2,12 @@
 #
 """Defines button for co-op games."""
 
-from __future__ import annotations
-
 import random
 import weakref
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from bauiv1lib.coop.browser import CoopBrowserWindow
@@ -93,13 +92,11 @@ class GameButton:
             size=(image_width, image_width * 0.5),
             mesh_transparent=window.lsbt,
             mesh_opaque=window.lsbo,
-            texture=bui.gettexture(
-                campaign.getlevel(levelname).preview_texture_name
-            ),
-            mask_texture=bui.gettexture('mapPreviewMask'),
+            texture=campaign.getlevel(levelname).preview_texture,
+            mask_texture=classicassets.textures.map_preview_mask.get(),
         )
 
-        translated = campaign.getlevel(levelname).displayname
+        translated = campaign.getlevel(levelname).displayname_langstr
         self._achievements = bui.app.classic.ach.achievements_for_coop_level(
             game
         )
@@ -181,7 +178,7 @@ class GameButton:
             position=(x - 8 + sclx * 0.5, y + scly * 0.5 - 20),
             size=(60, 60),
             opacity=0.0,
-            texture=bui.gettexture('lock'),
+            texture=classicassets.textures.lock.get(),
         )
 
         # give a quasi-random update increment to spread the load..

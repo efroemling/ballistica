@@ -8,8 +8,6 @@
 # ba_meta require api 9
 # (see https://ballistica.net/wiki/meta-tag-system)
 
-from __future__ import annotations
-
 import math
 import random
 import logging
@@ -18,6 +16,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import builtinassets
+from bascenev1 import classicassets
 
 from bascenev1lib.actor.popuptext import PopupText
 from bascenev1lib.actor.bomb import TNTSpawner
@@ -150,21 +150,24 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
     name = 'Onslaught'
     description = 'Defeat all enemies.'
 
-    tips: list[str | bs.GameTip] = [
-        'Hold any button to run.'
-        '  (Trigger buttons work well if you have them)',
-        'Try tricking enemies into killing eachother or running off cliffs.',
-        'Try \'Cooking off\' bombs for a second or two before throwing them.',
-        'It\'s easier to win with a friend or two helping.',
-        'If you stay in one place, you\'re toast. Run and dodge to survive..',
-        'Practice using your momentum to throw bombs more accurately.',
-        'Your punches do much more damage if you are running or spinning.',
-    ]
-
     # Show messages when players die since it matters here.
     announce_player_deaths = True
 
     def __init__(self, settings: dict):
+        # Set here rather than as a class attribute: string accessors
+        # are gated until construct-mode hands off, and class bodies
+        # run at import.
+        _tips = classicassets.strings.tips
+        self.tips = [
+            _tips.hold_to_run,
+            _tips.trick_enemies,
+            _tips.cook_off_bombs,
+            _tips.play_with_friends,
+            _tips.keep_moving,
+            _tips.momentum_accuracy,
+            _tips.running_spinning_damage,
+        ]
+
         self._preset = Preset(settings.get('preset', 'training'))
         if self._preset in {
             Preset.TRAINING,
@@ -180,9 +183,9 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
         super().__init__(settings)
 
-        self._new_wave_sound = bs.getsound('scoreHit01')
-        self._winsound = bs.getsound('score')
-        self._cashregistersound = bs.getsound('cashRegister')
+        self._new_wave_sound = classicassets.audio.score_hit01.get()
+        self._winsound = classicassets.audio.score.get()
+        self._cashregistersound = builtinassets.audio.cash_register.get()
         self._a_player_has_been_hurt = False
         self._player_has_dropped_bomb = False
 
@@ -206,8 +209,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         self._score = 0
         self._time_bonus = 0
         self._spawn_info_text: bs.NodeActor | None = None
-        self._dingsound = bs.getsound('dingSmall')
-        self._dingsoundhigh = bs.getsound('dingSmallHigh')
+        self._dingsound = classicassets.audio.ding_small.get()
+        self._dingsoundhigh = classicassets.audio.ding_small_high.get()
         self._have_tnt = False
         self._excluded_powerups: list[str] | None = None
         self._waves: list[Wave] = []
@@ -237,9 +240,9 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 customdata['_showed_onslaught_landmine_tip'] = True
                 self.tips = [
                     bs.GameTip(
-                        'Land-mines are a good way to stop speedy enemies.',
-                        icon=bs.gettexture('powerupLandMines'),
-                        sound=bs.getsound('ding'),
+                        classicassets.strings.tips.land_mines_speedy,
+                        icon=classicassets.textures.powerup_land_mines.get(),
+                        sound=builtinassets.audio.ding.get(),
                     )
                 ]
 
@@ -250,10 +253,9 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 customdata['_showed_onslaught_tnt_tip'] = True
                 self.tips = [
                     bs.GameTip(
-                        'Take out a group of enemies by\n'
-                        'setting off a bomb near a TNT box.',
-                        icon=bs.gettexture('tnt'),
-                        sound=bs.getsound('ding'),
+                        classicassets.strings.tips.tnt_box,
+                        icon=classicassets.textures.tnt.get(),
+                        sound=builtinassets.audio.ding.get(),
                     )
                 ]
 
@@ -264,10 +266,9 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                 customdata['_showed_onslaught_curse_tip'] = True
                 self.tips = [
                     bs.GameTip(
-                        'Curse boxes turn you into a ticking time bomb.\n'
-                        'The only cure is to quickly grab a health-pack.',
-                        icon=bs.gettexture('powerupCurse'),
-                        sound=bs.getsound('ding'),
+                        classicassets.strings.tips.curse_boxes,
+                        icon=classicassets.textures.powerup_curse.get(),
+                        sound=builtinassets.audio.ding.get(),
                     )
                 ]
 
@@ -287,7 +288,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         bs.setmusic(bs.MusicType.ONSLAUGHT)
 
         self._scoreboard = Scoreboard(
-            label=bs.Lstr(resource='scoreText'), score_split=0.5
+            label=classicassets.strings.game.score, score_split=0.5
         )
 
     @override
@@ -810,7 +811,6 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         max_level: int,
     ) -> list[list[tuple[int, int]]]:
         """Calculate a distribution of bad guys given some params."""
-        # pylint: disable=too-many-positional-arguments
         max_iterations = 10 + max_dudes * 2
 
         groups: list[list[tuple[int, int]]] = []
@@ -1020,7 +1020,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
             fail_message = None
         else:
             score = None
-            fail_message = bs.Lstr(resource='reachWave2Text')
+            fail_message = classicassets.strings.game.reach_wave_2
         self.end(
             {
                 'outcome': outcome,
@@ -1092,7 +1092,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
             if won:
                 self.show_zoom_message(
-                    bs.Lstr(resource='victoryText'), scale=1.0, duration=4.0
+                    classicassets.strings.game.victory, scale=1.0, duration=4.0
                 )
                 self.celebrate(20.0)
                 self._award_completion_achievements()
@@ -1129,7 +1129,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                         int(100 / len(self.initialplayerinfos)),
                         scale=1.4,
                         color=(0.6, 0.6, 1.0, 1.0),
-                        title=bs.Lstr(resource='completionBonusText'),
+                        title=classicassets.strings.game.completion_bonus,
                         screenmessage=False,
                     )
             except Exception:
@@ -1138,12 +1138,9 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
     def _award_time_bonus(self, bonus: int) -> None:
         self._cashregistersound.play()
         PopupText(
-            bs.Lstr(
-                value='+${A} ${B}',
-                subs=[
-                    ('${A}', str(bonus)),
-                    ('${B}', bs.Lstr(resource='timeBonusText')),
-                ],
+            classicassets.strings.game.points_gained_titled(
+                points=str(bonus),
+                title=classicassets.strings.game.time_bonus,
             ),
             color=(1, 1, 0.5, 1),
             scale=1.0,
@@ -1162,7 +1159,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
                     self._flawless_bonus,
                     scale=1.2,
                     color=(0.6, 1.0, 0.6, 1.0),
-                    title=bs.Lstr(resource='flawlessWaveText'),
+                    title=classicassets.strings.game.flawless_wave,
                     screenmessage=False,
                 )
         except Exception:
@@ -1180,6 +1177,10 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         if not any(player.is_alive() for player in self.teams[0].players):
             self._spawn_info_text.node.text = ''
         else:
+            # DEFERRED (LangStr drain): this accumulates one nested
+            # level per dead player, which LangStr has no concatenation
+            # operator for and which would nest arbitrarily deep. Needs
+            # a multi-line list surface rather than a mechanical port.
             text: str | bs.Lstr = ''
             for player in self.players:
                 if not player.is_alive() and (
@@ -1283,13 +1284,7 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
     def _update_wave_ui_and_bonuses(self) -> None:
         self.show_zoom_message(
-            bs.Lstr(
-                value='${A} ${B}',
-                subs=[
-                    ('${A}', bs.Lstr(resource='waveText')),
-                    ('${B}', str(self._wavenum)),
-                ],
-            ),
+            classicassets.strings.game.wave_number(number=str(self._wavenum)),
             scale=1.0,
             duration=1.0,
             trail=True,
@@ -1297,12 +1292,8 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
         # Reset our time bonus.
         tbtcolor = (1, 1, 0, 1)
-        tbttxt = bs.Lstr(
-            value='${A}: ${B}',
-            subs=[
-                ('${A}', bs.Lstr(resource='timeBonusText')),
-                ('${B}', str(self._time_bonus)),
-            ],
+        tbttxt = classicassets.strings.game.time_bonus_amount(
+            amount=str(self._time_bonus)
         )
         self._time_bonus_text = bs.NodeActor(
             bs.newnode(
@@ -1324,21 +1315,13 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
 
         bs.timer(5.0, bs.WeakCallStrict(self._start_time_bonus_timer))
         wtcolor = (1, 1, 1, 1)
-        wttxt = bs.Lstr(
-            value='${A} ${B}',
-            subs=[
-                ('${A}', bs.Lstr(resource='waveText')),
-                (
-                    '${B}',
-                    str(self._wavenum)
-                    + (
-                        ''
-                        if self._preset
-                        in [Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT]
-                        else ('/' + str(len(self._waves)))
-                    ),
-                ),
-            ],
+        wttxt = classicassets.strings.game.wave_number(
+            number=str(self._wavenum)
+            + (
+                ''
+                if self._preset in [Preset.ENDLESS, Preset.ENDLESS_TOURNAMENT]
+                else ('/' + str(len(self._waves)))
+            )
         )
         self._wave_text = bs.NodeActor(
             bs.newnode(
@@ -1502,12 +1485,10 @@ class OnslaughtGame(bs.CoopGameActivity[Player, Team]):
         self._time_bonus = int(self._time_bonus * 0.93)
         if self._time_bonus > 0 and self._time_bonus_text is not None:
             assert self._time_bonus_text.node
-            self._time_bonus_text.node.text = bs.Lstr(
-                value='${A}: ${B}',
-                subs=[
-                    ('${A}', bs.Lstr(resource='timeBonusText')),
-                    ('${B}', str(self._time_bonus)),
-                ],
+            self._time_bonus_text.node.text = (
+                classicassets.strings.game.time_bonus_amount(
+                    amount=str(self._time_bonus)
+                )
             )
         else:
             self._time_bonus_text = None

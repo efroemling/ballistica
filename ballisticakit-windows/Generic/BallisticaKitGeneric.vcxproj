@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -29,27 +29,27 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -98,8 +98,8 @@
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/SDL2;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef;../../src/external/qrencode-3.4.4</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef;../../src/external/qrencode-3.4.4</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -123,8 +123,8 @@
       <MinimalRebuild>false</MinimalRebuild>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/SDL2;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -148,8 +148,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/SDL2;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -174,8 +174,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/SDL2;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>../../src;../../src/external/windows/include/AL;../../src/external/windows/include/python;../../src/external/windows/include;../../src/external/open_dynamics_engine-ef</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -216,10 +216,16 @@
     <ClInclude Include="..\..\src\ballistica\base\app_platform\windows\app_platform_windows.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\asset.cc" />
     <ClInclude Include="..\..\src\ballistica\base\assets\asset.h" />
+    <ClCompile Include="..\..\src\ballistica\base\assets\asset_name_compat.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\assets\asset_name_compat.h" />
+    <ClCompile Include="..\..\src\ballistica\base\assets\asset_package_registry.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\assets\asset_package_registry.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\assets.cc" />
     <ClInclude Include="..\..\src\ballistica\base\assets\assets.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\assets_server.cc" />
     <ClInclude Include="..\..\src\ballistica\base\assets\assets_server.h" />
+    <ClCompile Include="..\..\src\ballistica\base\assets\builtin_strings.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\assets\builtin_strings.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\collision_mesh_asset.cc" />
     <ClInclude Include="..\..\src\ballistica\base\assets\collision_mesh_asset.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\data_asset.cc" />
@@ -246,6 +252,8 @@
     <ClInclude Include="..\..\src\ballistica\base\audio\audio_streamer.h" />
     <ClCompile Include="..\..\src\ballistica\base\audio\ogg_stream.cc" />
     <ClInclude Include="..\..\src\ballistica\base\audio\ogg_stream.h" />
+    <ClCompile Include="..\..\src\ballistica\base\automation\automation.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\automation\automation.h" />
     <ClCompile Include="..\..\src\ballistica\base\base.cc" />
     <ClInclude Include="..\..\src\ballistica\base\base.h" />
     <ClCompile Include="..\..\src\ballistica\base\discord\discord.cc" />
@@ -268,6 +276,7 @@
     <ClInclude Include="..\..\src\ballistica\base\dynamics\bg\bg_dynamics_volume_light_data.h" />
     <ClCompile Include="..\..\src\ballistica\base\dynamics\collision_cache.cc" />
     <ClInclude Include="..\..\src\ballistica\base\dynamics\collision_cache.h" />
+    <ClInclude Include="..\..\src\ballistica\base\dynamics\geom_transform.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\component\empty_component.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\component\object_component.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\component\object_component.h" />
@@ -378,8 +387,11 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\texture\dds.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\texture\ktx.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\texture\ktx.h" />
+    <ClCompile Include="..\..\src\ballistica\base\graphics\texture\ktx2.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\texture\ktx2.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\texture\pvr.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\texture\pvr.h" />
+    <ClInclude Include="..\..\src\ballistica\base\input\device\feedback_event.h" />
     <ClCompile Include="..\..\src\ballistica\base\input\device\input_device.cc" />
     <ClInclude Include="..\..\src\ballistica\base\input\device\input_device.h" />
     <ClCompile Include="..\..\src\ballistica\base\input\device\input_device_delegate.cc" />
@@ -404,10 +416,13 @@
     <ClInclude Include="..\..\src\ballistica\base\networking\network_writer.h" />
     <ClCompile Include="..\..\src\ballistica\base\networking\networking.cc" />
     <ClInclude Include="..\..\src\ballistica\base\networking\networking.h" />
+    <ClCompile Include="..\..\src\ballistica\base\platform\android\android_message_bus.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\platform\android\android_message_bus.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\base_python.cc" />
     <ClInclude Include="..\..\src\ballistica\base\python\base_python.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_app_timer.cc" />
     <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_app_timer.h" />
+    <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_asset_ref.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_context_call.cc" />
     <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_context_call.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_context_ref.cc" />
@@ -418,6 +433,8 @@
     <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_env.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_feature_set_data.cc" />
     <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_feature_set_data.h" />
+    <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_lang_str.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_lang_str.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_simple_sound.cc" />
     <ClInclude Include="..\..\src\ballistica\base\python\class\python_class_simple_sound.h" />
     <ClCompile Include="..\..\src\ballistica\base\python\class\python_class_vec3.cc" />
@@ -442,6 +459,8 @@
     <ClCompile Include="..\..\src\ballistica\base\support\context.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\context.h" />
     <ClInclude Include="..\..\src\ballistica\base\support\display_timer.h" />
+    <ClCompile Include="..\..\src\ballistica\base\support\lang_str.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\support\lang_str.h" />
     <ClInclude Include="..\..\src\ballistica\base\support\plus_soft.h" />
     <ClCompile Include="..\..\src\ballistica\base\support\repeater.cc" />
     <ClInclude Include="..\..\src\ballistica\base\support\repeater.h" />
@@ -449,6 +468,8 @@
     <ClInclude Include="..\..\src\ballistica\base\support\stdio_console.h" />
     <ClCompile Include="..\..\src\ballistica\base\ui\dev_console.cc" />
     <ClInclude Include="..\..\src\ballistica\base\ui\dev_console.h" />
+    <ClCompile Include="..\..\src\ballistica\base\ui\simple_dialog.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\ui\simple_dialog.h" />
     <ClCompile Include="..\..\src\ballistica\base\ui\ui.cc" />
     <ClInclude Include="..\..\src\ballistica\base\ui\ui.h" />
     <ClInclude Include="..\..\src\ballistica\base\ui\ui_delegate.h" />
@@ -478,10 +499,13 @@
     <ClInclude Include="..\..\src\ballistica\core\platform\platform.h" />
     <ClInclude Include="..\..\src\ballistica\core\platform\support\min_sdl.h" />
     <ClInclude Include="..\..\src\ballistica\core\platform\support\platform_pango.h" />
+    <ClCompile Include="..\..\src\ballistica\core\platform\support\sdl_message_box.cc" />
+    <ClInclude Include="..\..\src\ballistica\core\platform\support\sdl_message_box.h" />
     <ClCompile Include="..\..\src\ballistica\core\platform\windows\platform_windows.cc" />
     <ClInclude Include="..\..\src\ballistica\core\platform\windows\platform_windows.h" />
     <ClCompile Include="..\..\src\ballistica\core\python\core_python.cc" />
     <ClInclude Include="..\..\src\ballistica\core\python\core_python.h" />
+    <ClInclude Include="..\..\src\ballistica\core\python\pyembed.h" />
     <ClInclude Include="..\..\src\ballistica\core\support\base_soft.h" />
     <ClCompile Include="..\..\src\ballistica\core\support\core_config.cc" />
     <ClInclude Include="..\..\src\ballistica\core\support\core_config.h" />
@@ -610,15 +634,14 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_material.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_node.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_node.h" />
-    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_collision_mesh.cc" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_quat.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_quat.h" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_collision_mesh.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_data_asset.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_data_asset.h" />
-    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_mesh.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_mesh.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_sound.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_sound.h" />
-    <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_texture.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_texture.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_timer.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\python\class\python_class_scene_timer.h" />
@@ -676,6 +699,7 @@
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_cmake.h" />
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_common.h" />
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_common.h" />
+    <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_generic.h" />
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_headless.h" />
     <ClInclude Include="..\..\src\ballistica\shared\buildconfig\buildconfig_windows_testbuild.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\event_loop.cc" />
@@ -684,9 +708,12 @@
     <ClInclude Include="..\..\src\ballistica\shared\foundation\exception.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\fatal_error.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\foundation\fatal_error.h" />
+    <ClCompile Include="..\..\src\ballistica\shared\foundation\fatal_error_report.cc" />
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\fatal_error_report.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\feature_set_native_component.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\foundation\feature_set_native_component.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\inline.cc" />
+    <ClInclude Include="..\..\src\ballistica\shared\foundation\input_types.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\macros.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\foundation\macros.h" />
     <ClCompile Include="..\..\src\ballistica\shared\foundation\object.cc" />
@@ -696,8 +723,8 @@
     <ClCompile Include="..\..\src\ballistica\shared\generic\base64.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\base64.h" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\buffer.h" />
-    <ClCompile Include="..\..\src\ballistica\shared\generic\json.cc" />
-    <ClInclude Include="..\..\src\ballistica\shared\generic\json.h" />
+    <ClCompile Include="..\..\src\ballistica\shared\generic\json_facade.cc" />
+    <ClInclude Include="..\..\src\ballistica\shared\generic\json_facade.h" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\lambda_runnable.h" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\native_stack_trace.h" />
     <ClCompile Include="..\..\src\ballistica\shared\generic\runnable.cc" />
@@ -705,8 +732,6 @@
     <ClInclude Include="..\..\src\ballistica\shared\generic\snapshot.h" />
     <ClCompile Include="..\..\src\ballistica\shared\generic\timer_list.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\timer_list.h" />
-    <ClCompile Include="..\..\src\ballistica\shared\generic\utf8.cc" />
-    <ClInclude Include="..\..\src\ballistica\shared\generic\utf8.h" />
     <ClCompile Include="..\..\src\ballistica\shared\generic\utils.cc" />
     <ClInclude Include="..\..\src\ballistica\shared\generic\utils.h" />
     <ClInclude Include="..\..\src\ballistica\shared\math\lerp.h" />
@@ -743,11 +768,9 @@
     <ClInclude Include="..\..\src\ballistica\template_fs\python\template_fs_python.h" />
     <ClCompile Include="..\..\src\ballistica\template_fs\template_fs.cc" />
     <ClInclude Include="..\..\src\ballistica\template_fs\template_fs.h" />
-    <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_mesh.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_mesh.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_sound.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_sound.h" />
-    <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_texture.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_ui_texture.h" />
     <ClCompile Include="..\..\src\ballistica\ui_v1\python\class\python_class_widget.cc" />
     <ClInclude Include="..\..\src\ballistica\ui_v1\python\class\python_class_widget.h" />
@@ -859,6 +882,21 @@
     <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_TreeBuilders.cpp" />
     <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_TreeCollider.cpp" />
     <ClCompile Include="..\..\src\external\open_dynamics_engine-ef\ode\OPC_VolumeCollider.cpp" />
+    <ClInclude Include="..\..\src\external\monocypher\monocypher.h" />
+    <ClCompile Include="..\..\src\external\monocypher\monocypher.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <ForcedIncludeFiles />
+    </ClCompile>
+    <ClInclude Include="..\..\src\external\monocypher\monocypher-ed25519.h" />
+    <ClCompile Include="..\..\src\external\monocypher\monocypher-ed25519.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <ForcedIncludeFiles />
+    </ClCompile>
+    <ClInclude Include="..\..\src\external\yyjson\yyjson.h" />
+    <ClCompile Include="..\..\src\external\yyjson\yyjson.c">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <ForcedIncludeFiles />
+    </ClCompile>
     <ClCompile Include="..\..\src\external\qr_code_generator\QrCode.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

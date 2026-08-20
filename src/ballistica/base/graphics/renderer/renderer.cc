@@ -394,7 +394,7 @@ void Renderer::VRDrawOverlayFlatPass(FrameDef* frame_def) {
       SetDepthWriting(true);
       SetDepthTesting(true);
       RenderTarget* r_target = vr_overlay_flat_render_target();
-      r_target->DrawBegin(true, 0, 0, 0, 0);
+      r_target->DrawBegin(true, 0, 0, 0, 0, true);
       frame_def->overlay_flat_pass()->Render(r_target, false);  // opaque stuff
       SetDepthWriting(false);
 
@@ -519,13 +519,13 @@ void Renderer::RenderLightAndShadowPasses(FrameDef* frame_def) {
   PushGroupMarker("Light Pass");
   RenderTarget* r_target = light_render_target();
   r_target->DrawBegin(true, kShadowNeutral, kShadowNeutral, kShadowNeutral,
-                      1.0f);
+                      1.0f, true);
   frame_def->light_pass()->Render(r_target, true);
   PopGroupMarker();
   PushGroupMarker("LightShadow Pass");
   r_target = light_shadow_render_target();
   r_target->DrawBegin(true, kShadowNeutral, kShadowNeutral, kShadowNeutral,
-                      1.0f);
+                      1.0f, true);
   frame_def->light_shadow_pass()->Render(r_target, true);
   PopGroupMarker();
 }
@@ -537,10 +537,12 @@ void Renderer::UpdateCameraRenderTargets(FrameDef* frame_def) {
   if (frame_def->quality() >= GraphicsQuality::kHigh) {
     if (!camera_render_target_.exists()) {
       float pixel_scale_fin = std::min(1.0f, std::max(0.1f, pixel_scale_));
-      int w = static_cast<int>(screen_render_target_->physical_width()
-                               * pixel_scale_fin);
-      int h = static_cast<int>(screen_render_target_->physical_height()
-                               * pixel_scale_fin);
+      // Note: offscreen content buffers represent only the screen's
+      // content region (which excludes any tv-border/aspect-limit black
+      // bars), so size off that.
+      Rect content_rect = screen_render_target_->content_rect();
+      int w = static_cast<int>(content_rect.width() * pixel_scale_fin);
+      int h = static_cast<int>(content_rect.height() * pixel_scale_fin);
 
       // Calc and store the number of blur levels we'll want
       // based on this resolution.
@@ -625,10 +627,11 @@ void Renderer::UpdatePixelScaleAndBackingBuffer(FrameDef* frame_def) {
         || !backing_render_target_.exists()) {
       float pixel_scale_fin =
           std::min(1.0f, std::max(0.1f, pixel_scale_requested_));
-      int w = static_cast<int>(screen_render_target_->physical_width()
-                               * pixel_scale_fin);
-      int h = static_cast<int>(screen_render_target_->physical_height()
-                               * pixel_scale_fin);
+      // As with the camera target, backing represents only the screen's
+      // content region.
+      Rect content_rect = screen_render_target_->content_rect();
+      int w = static_cast<int>(content_rect.width() * pixel_scale_fin);
+      int h = static_cast<int>(content_rect.height() * pixel_scale_fin);
       backing_render_target_ =
           NewFramebufferRenderTarget(w, h,
                                      true,   // linear interp

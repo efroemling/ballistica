@@ -3,6 +3,7 @@
 #ifndef BALLISTICA_BASE_GRAPHICS_GRAPHICS_SERVER_H_
 #define BALLISTICA_BASE_GRAPHICS_GRAPHICS_SERVER_H_
 
+#include <atomic>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -13,6 +14,7 @@
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/generic/snapshot.h"
 #include "ballistica/shared/math/matrix44f.h"
+#include "ballistica/shared/math/rect.h"
 
 namespace ballistica::base {
 
@@ -55,6 +57,7 @@ class GraphicsServer {
   void ApplySettings(const GraphicsSettings* settings);
 
   void PushReloadMediaCall();
+  void PushReloadChangedMediaCall();
   void PushRemoveRenderHoldCall();
   void PushComponentUnloadCall(
       const std::vector<Object::Ref<Asset>*>& components);
@@ -226,15 +229,31 @@ class GraphicsServer {
     return res_y_virtual_;
   }
 
-  auto tv_border() const {
+  /// The sub-rect of the screen that game content occupies (pixels,
+  /// bottom-left origin). Everything outside it is kept cleared to
+  /// black. Matches the full screen unless tv-border mode and/or
+  /// aspect-ratio limiting is in effect.
+  auto screen_active_rect() const -> const Rect& {
     assert(InGraphicsContext_());
-    return tv_border_;
+    return active_render_rect_;
   }
 
   auto SupportsTextureCompressionType(TextureCompressionType t) const -> bool {
     assert(InGraphicsContext_());
     assert(texture_compression_types_set_);
     return ((texture_compression_types_ & (0x01u << static_cast<uint32_t>(t)))
+            != 0u);
+  }
+
+  /// Thread-safe variant of the above, readable from any thread (e.g.
+  /// the logic thread's ``Assets::PreferredTextureProfile``). Mirrors
+  /// the bitmask into an atomic when caps are set; returns false for
+  /// everything until then (so a profile decision made before the
+  /// graphics context comes up safely falls back rather than racing).
+  auto SupportsTextureCompressionTypeThreadsafe(TextureCompressionType t) const
+      -> bool {
+    return ((texture_compression_types_atomic_.load()
+             & (0x01u << static_cast<uint32_t>(t)))
             != 0u);
   }
 
@@ -299,6 +318,7 @@ class GraphicsServer {
   // void UpdateVirtualScreenRes_();
   void UpdateCamOrientMatrix_();
   void ReloadMedia_();
+  void ReloadChangedMedia_();
   void UpdateModelViewProjectionMatrix_() {
     if (model_view_projection_matrix_dirty_) {
       model_view_projection_matrix_ = model_view_matrix_ * projection_matrix_;
@@ -322,7 +342,6 @@ class GraphicsServer {
   bool renderer_loaded_{};
   bool model_view_projection_matrix_dirty_{true};
   bool model_world_matrix_dirty_{true};
-  bool tv_border_{};
   bool renderer_context_lost_{};
   bool texture_compression_types_set_{};
   bool cam_orient_matrix_dirty_{true};
@@ -332,12 +351,16 @@ class GraphicsServer {
   float res_y_{};
   float res_x_virtual_{};
   float res_y_virtual_{};
+  Rect active_render_rect_{};
   Matrix44f model_view_matrix_{kMatrix44fIdentity};
   Matrix44f view_world_matrix_{kMatrix44fIdentity};
   Matrix44f projection_matrix_{kMatrix44fIdentity};
   Matrix44f model_view_projection_matrix_{kMatrix44fIdentity};
   Matrix44f model_world_matrix_{kMatrix44fIdentity};
   uint32_t texture_compression_types_{};
+  // Thread-safe mirror of the above for cross-thread reads (see
+  // SupportsTextureCompressionTypeThreadsafe).
+  std::atomic<uint32_t> texture_compression_types_atomic_{};
   int render_hold_{};
   int projection_matrix_state_{};
   int model_view_projection_matrix_state_{};

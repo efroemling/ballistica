@@ -5,7 +5,7 @@
 import subprocess
 import os
 
-DOCKER_DIR = os.path.abspath('config/docker')
+DOCKER_DIR = os.path.abspath('pconfig/docker')
 SERVICE_NAME = {0: 'bombsquad_gui', 1: 'bombsquad_server'}
 
 
@@ -235,7 +235,7 @@ def docker_build(
         headless_build=headless_build, build_type=build_type
     )
 
-    config_file = 'config/docker/Dockerfile'
+    config_file = 'pconfig/docker/Dockerfile'
 
     print(
         f'Building docker image {image_name} '

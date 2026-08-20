@@ -3,6 +3,7 @@
 #include "ballistica/base/python/methods/python_methods_base_3.h"
 
 #include <list>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -24,6 +25,8 @@
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/shared/python/python.h"
+#include "external/monocypher/monocypher-ed25519.h"
 
 namespace ballistica::base {
 
@@ -34,6 +37,13 @@ namespace ballistica::base {
 
 // ---------------------------- getsimplesound --------------------------------
 
+// Legacy bare-name sound load. No first-party caller remains: the
+// public ``babase.getsimplesound()`` is now an inert Python shim
+// (``babase/_assetref.py``) that warns and returns a silent sound, and
+// everything else loads through asset-package wrappers
+// (``apsimplesoundget`` below). This native twin stays only so a mod
+// reaching into the private ``_babase`` module keeps the old behavior
+// until api 9 support ends, at which point both it and the shim go.
 static auto PyGetSimpleSound(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
@@ -45,6 +55,7 @@ static auto PyGetSimpleSound(PyObject* self, PyObject* args, PyObject* keywds)
   }
   BA_PRECONDITION(g_base->InLogicThread());
   BA_PRECONDITION(g_base->assets->asset_loads_allowed());
+  Assets::FailOnAssetPackagePath(name, "getsimplesound");
   {
     Assets::AssetListLock lock;
     Object::Ref<SoundAsset> sound = g_base->assets->GetSound(name);
@@ -60,6 +71,46 @@ static PyMethodDef PyGetSimpleSoundDef = {
     METH_VARARGS | METH_KEYWORDS,   // flags
 
     "getsimplesound(name: str) -> SimpleSound\n"
+    "\n"
+    ":meta private:",
+};
+
+// -------------------------- apsimplesoundget --------------------------------
+
+static auto PyApSimpleSoundGet(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* name;
+  static const char* kwlist[] = {"name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &name)) {
+    return nullptr;
+  }
+  BA_PRECONDITION(g_base->InLogicThread());
+  BA_PRECONDITION(g_base->assets->asset_loads_allowed());
+  Assets::FailOnNonAssetPackagePath(name, "apsimplesoundget");
+  {
+    Assets::AssetListLock lock;
+    Object::Ref<SoundAsset> sound = g_base->assets->GetSound(name);
+    return PythonClassSimpleSound::Create(sound.get());
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyApSimpleSoundGetDef = {
+    "apsimplesoundget",               // name
+    (PyCFunction)PyApSimpleSoundGet,  // method
+    METH_VARARGS | METH_KEYWORDS,     // flags
+
+    "apsimplesoundget(name: str) -> SimpleSound\n"
+    "\n"
+    "Load a simple sound from an asset-package (internal).\n"
+    "\n"
+    "Do not call this directly; asset-package assets should be accessed\n"
+    "through their package's generated Python wrapper module, which routes\n"
+    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "asset name.\n"
     "\n"
     ":meta private:",
 };
@@ -399,6 +450,61 @@ static PyMethodDef PyRequestPermissionDef = {
     METH_VARARGS | METH_KEYWORDS,      // flags
 
     "request_permission(permission: babase.Permission) -> None\n"
+    "\n"
+    ":meta private:",
+};
+
+// ------------------- add_network_availability_callback -----------------------
+
+static auto PyAddNetworkAvailabilityCallback(PyObject* self, PyObject* args,
+                                             PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  // No logic-thread precondition: registration just stores a
+  // Python callable and forwards it to the platform layer. The
+  // platform-layer callback fires on whatever thread, and the
+  // wrapping lambda acquires the GIL itself. So registration is
+  // safe from any Python-running thread.
+  PyObject* call_obj;
+  static const char* kwlist[] = {"call", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &call_obj)) {
+    return nullptr;
+  }
+  if (!PyCallable_Check(call_obj)) {
+    PyErr_SetString(PyExc_TypeError, "'call' must be callable.");
+    return nullptr;
+  }
+  // Underlying contract has no deregistration; the callable lives
+  // for the app's lifetime, so we just retain a reference and never
+  // release it.
+  Py_INCREF(call_obj);
+  g_core->platform->AddNetworkAvailabilityCallback([call_obj](bool available) {
+    // Callback may fire on any thread; acquire the GIL before
+    // touching Python.
+    Python::ScopedInterpreterLock gil;
+    PyObject* py_args = Py_BuildValue("(O)", available ? Py_True : Py_False);
+    PyObject* result = PyObject_Call(call_obj, py_args, nullptr);
+    Py_DECREF(py_args);
+    if (result == nullptr) {
+      // Don't propagate; print and clear so subsequent
+      // invocations still fire.
+      PyErr_Print();
+      PyErr_Clear();
+    } else {
+      Py_DECREF(result);
+    }
+  });
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAddNetworkAvailabilityCallbackDef = {
+    "add_network_availability_callback",            // name
+    (PyCFunction)PyAddNetworkAvailabilityCallback,  // method
+    METH_VARARGS | METH_KEYWORDS,                   // flags
+
+    "add_network_availability_callback(call: Callable[[bool], None])"
+    " -> None\n"
     "\n"
     ":meta private:",
 };
@@ -896,58 +1002,6 @@ static PyMethodDef PyResolveAppConfigValueDef = {
     ":meta private:",
 };
 
-// --------------------- get_low_level_config_value ----------------------------
-
-static auto PyGetLowLevelConfigValue(PyObject* self, PyObject* args,
-                                     PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* key;
-  int default_value;
-  static const char* kwlist[] = {"key", "default_value", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "si", const_cast<char**>(kwlist), &key, &default_value))
-    return nullptr;
-  return PyLong_FromLong(
-      g_core->platform->GetLowLevelConfigValue(key, default_value));
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyGetLowLevelConfigValueDef = {
-    "get_low_level_config_value",           // name
-    (PyCFunction)PyGetLowLevelConfigValue,  // method
-    METH_VARARGS | METH_KEYWORDS,           // flags
-
-    "get_low_level_config_value(key: str, default_value: int) -> int\n"
-    "\n"
-    ":meta private:",
-};
-
-// --------------------- set_low_level_config_value ----------------------------
-
-static auto PySetLowLevelConfigValue(PyObject* self, PyObject* args,
-                                     PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* key;
-  int value;
-  static const char* kwlist[] = {"key", "value", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "si",
-                                   const_cast<char**>(kwlist), &key, &value))
-    return nullptr;
-  g_core->platform->SetLowLevelConfigValue(key, value);
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PySetLowLevelConfigValueDef = {
-    "set_low_level_config_value",           // name
-    (PyCFunction)PySetLowLevelConfigValue,  // method
-    METH_VARARGS | METH_KEYWORDS,           // flags
-
-    "set_low_level_config_value(key: str, value: int) -> None\n"
-    "\n"
-    ":meta private:",
-};
-
 // --------------------- set_platform_misc_read_vals ---------------------------
 
 static auto PySetPlatformMiscReadVals(PyObject* self, PyObject* args,
@@ -971,96 +1025,6 @@ static PyMethodDef PySetPlatformMiscReadValsDef = {
     METH_VARARGS | METH_KEYWORDS,            // flags
 
     "set_platform_misc_read_vals(mode: str) -> None\n"
-    "\n"
-    ":meta private:",
-};
-
-// --------------------- get_v1_cloud_log_file_path ----------------------------
-
-static auto PyGetLogFilePath(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  std::string config_dir = g_core->GetConfigDirectory();
-  std::string logpath = config_dir + BA_DIRSLASH + "log.json";
-  return PyUnicode_FromString(logpath.c_str());
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyGetLogFilePathDef = {
-    "get_v1_cloud_log_file_path",  // name
-    PyGetLogFilePath,              // method
-    METH_VARARGS,                  // flags
-
-    "get_v1_cloud_log_file_path() -> str\n"
-    "\n"
-    "Return the path to the app log file.\n"
-    "\n"
-    ":meta private:",
-};
-
-// ----------------------------- is_log_full -----------------------------------
-static auto PyIsLogFull(PyObject* self, PyObject* args) -> PyObject* {
-  BA_PYTHON_TRY;
-  if (g_core->logging->v1_cloud_log_full()) {
-    Py_RETURN_TRUE;
-  }
-  Py_RETURN_FALSE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyIsLogFullDef = {
-    "is_log_full",  // name
-    PyIsLogFull,    // method
-    METH_VARARGS,   // flags
-
-    "is_log_full() -> bool\n"
-    "\n"
-    ":meta private:",
-};
-
-// -------------------------- get_v1_cloud_log ---------------------------------
-
-static auto PyGetV1CloudLog(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  std::string log_fin;
-  {
-    std::scoped_lock lock(g_core->logging->v1_cloud_log_mutex());
-    log_fin = g_core->logging->v1_cloud_log();
-  }
-  // we want to use something with error handling here since the last
-  // bit of this string could be truncated utf8 chars..
-  return PyUnicode_FromString(
-      Utils::GetValidUTF8(log_fin.c_str(), "_glg1").c_str());
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyGetV1CloudLogDef = {
-    "get_v1_cloud_log",            // name
-    (PyCFunction)PyGetV1CloudLog,  // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "get_v1_cloud_log() -> str\n"
-    "\n"
-    ":meta private:",
-};
-
-// ---------------------------- mark_log_sent ----------------------------------
-
-static auto PyMarkLogSent(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  // This way we won't try to send it at shutdown time and whatnot
-  g_core->logging->set_did_put_v1_cloud_log(true);
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyMarkLogSentDef = {
-    "mark_log_sent",               // name
-    (PyCFunction)PyMarkLogSent,    // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "mark_log_sent() -> None\n"
     "\n"
     ":meta private:",
 };
@@ -1257,58 +1221,117 @@ static PyMethodDef PyLoginAdapterBackEndActiveChangeDef = {
     ":meta private:",
 };
 
-// ---------------------- set_internal_language_keys ---------------------------
+// ---------------------- reload_language --------------------------------------
 
-static auto PySetInternalLanguageKeys(PyObject* self, PyObject* args)
-    -> PyObject* {
+static auto PyReloadLanguage(PyObject* self, PyObject* args) -> PyObject* {
   BA_PYTHON_TRY;
-  PyObject* list_obj;
-  PyObject* random_names_list_obj;
-  if (!PyArg_ParseTuple(args, "OO", &list_obj, &random_names_list_obj)) {
+  PyObject* apverids_obj;
+  const char* plural_locale;
+  if (!PyArg_ParseTuple(args, "Os", &apverids_obj, &plural_locale)) {
     return nullptr;
   }
-  BA_PRECONDITION(PyList_Check(list_obj));
-  BA_PRECONDITION(PyList_Check(random_names_list_obj));
-  std::unordered_map<std::string, std::string> language;
-  int size = static_cast<int>(PyList_GET_SIZE(list_obj));
-
+  BA_PRECONDITION(PyList_Check(apverids_obj));
+  std::vector<std::string> apverids;
+  int size = static_cast<int>(PyList_GET_SIZE(apverids_obj));
   for (int i = 0; i < size; i++) {
-    PyObject* entry = PyList_GET_ITEM(list_obj, i);
-    if (!PyTuple_Check(entry) || PyTuple_GET_SIZE(entry) != 2
-        || !PyUnicode_Check(PyTuple_GET_ITEM(entry, 0))
-        || !PyUnicode_Check(PyTuple_GET_ITEM(entry, 1))) {
-      throw Exception("Invalid root language data.");
-    }
-    language[PyUnicode_AsUTF8(PyTuple_GET_ITEM(entry, 0))] =
-        PyUnicode_AsUTF8(PyTuple_GET_ITEM(entry, 1));
-  }
-
-  size = static_cast<int>(PyList_GET_SIZE(random_names_list_obj));
-  std::list<std::string> random_names;
-  for (int i = 0; i < size; i++) {
-    PyObject* entry = PyList_GET_ITEM(random_names_list_obj, i);
+    PyObject* entry = PyList_GET_ITEM(apverids_obj, i);
     if (!PyUnicode_Check(entry)) {
-      throw Exception("Got non-string in random name list.", PyExcType::kType);
+      throw Exception("Got non-string in apverids list.", PyExcType::kType);
     }
-    random_names.emplace_back(PyUnicode_AsUTF8(entry));
+    apverids.emplace_back(PyUnicode_AsUTF8(entry));
   }
-
-  Utils::SetRandomNameList(random_names);
   assert(g_base->logic);
-  g_base->assets->SetLanguageKeys(language);
+  g_base->assets->ReloadLanguage(apverids, plural_locale);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PySetInternalLanguageKeysDef = {
-    "set_internal_language_keys",  // name
-    PySetInternalLanguageKeys,     // method
-    METH_VARARGS,                  // flags
+static PyMethodDef PyReloadLanguageDef = {
+    "reload_language",  // name
+    PyReloadLanguage,   // method
+    METH_VARARGS,       // flags
 
-    "set_internal_language_keys(listobj: list[tuple[str, str]],\n"
-    "  random_names_list: list[tuple[str, str]]) -> None\n"
+    "reload_language(apverids: list[str], plural_locale: str) -> None\n"
     "\n"
-    ":meta private:",
+    ":meta private:\n"
+    "\n"
+    "(Re)build the native language string table (and per-package\n"
+    "language-string tables) from the registered ``language`` buckets\n"
+    "of the given asset-packages and notify subsystems of the language\n"
+    "change. ``plural_locale`` is the resolved locale wire value\n"
+    "driving CLDR plural selection.",
+};
+
+// ---------------------- get_resource -----------------------------------------
+
+static auto PyGetResource(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* resource;
+  PyObject* fallback_resource_obj = Py_None;
+  static const char* kwlist[] = {"resource", "fallback_resource", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|O",
+                                   const_cast<char**>(kwlist), &resource,
+                                   &fallback_resource_obj)) {
+    return nullptr;
+  }
+  std::optional<std::string> result;
+  if (fallback_resource_obj != Py_None) {
+    if (!PyUnicode_Check(fallback_resource_obj)) {
+      throw Exception("fallback_resource must be a string or None.",
+                      PyExcType::kType);
+    }
+    std::string fr{PyUnicode_AsUTF8(fallback_resource_obj)};
+    result = g_base->assets->GetResourceOrFallback(resource, &fr);
+  } else {
+    result = g_base->assets->GetResourceOrFallback(resource, nullptr);
+  }
+  if (result.has_value()) {
+    return PyUnicode_FromString(result->c_str());
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetResourceDef = {
+    "get_resource",                // name
+    (PyCFunction)PyGetResource,    // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "get_resource(resource: str,\n"
+    "             fallback_resource: str | None = None) -> str | None\n"
+    "\n"
+    ":meta private:\n"
+    "\n"
+    "Native resource lookup by full dot-path key, trying\n"
+    "``fallback_resource`` on a miss. ``None`` if neither resolves.",
+};
+
+// ---------------------- translate --------------------------------------------
+
+static auto PyTranslate(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* category;
+  const char* value;
+  if (!PyArg_ParseTuple(args, "ss", &category, &value)) {
+    return nullptr;
+  }
+  return PyUnicode_FromString(
+      g_base->assets->GetTranslation(category, value).c_str());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyTranslateDef = {
+    "translate",   // name
+    PyTranslate,   // method
+    METH_VARARGS,  // flags
+
+    "translate(category: str, value: str) -> str\n"
+    "\n"
+    ":meta private:\n"
+    "\n"
+    "Native translate lookup; returns ``value`` itself when there is no\n"
+    "translation (the legacy null-means-use-value convention).",
 };
 
 // -------------------- android_get_external_files_dir -------------------------
@@ -2164,6 +2187,152 @@ static PyMethodDef PyReloadHooksDef = {
     "native layer to see your changes.",
 };
 
+// ---------------------------- verify_ed25519 ---------------------------------
+
+static auto PyVerifyEd25519(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* public_key;
+  Py_ssize_t public_key_len;
+  const char* signature;
+  Py_ssize_t signature_len;
+  const char* message;
+  Py_ssize_t message_len;
+  static const char* kwlist[] = {"public_key", "signature", "message", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "y#y#y#",
+                                   const_cast<char**>(kwlist), &public_key,
+                                   &public_key_len, &signature, &signature_len,
+                                   &message, &message_len)) {
+    return nullptr;
+  }
+  if (public_key_len != 32) {
+    PyErr_SetString(PyExc_ValueError, "public_key must be exactly 32 bytes");
+    return nullptr;
+  }
+  if (signature_len != 64) {
+    PyErr_SetString(PyExc_ValueError, "signature must be exactly 64 bytes");
+    return nullptr;
+  }
+  int result =
+      crypto_ed25519_check(reinterpret_cast<const uint8_t*>(signature),
+                           reinterpret_cast<const uint8_t*>(public_key),
+                           reinterpret_cast<const uint8_t*>(message),
+                           static_cast<size_t>(message_len));
+  if (result == 0) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyVerifyEd25519Def = {
+    "verify_ed25519",              // name
+    (PyCFunction)PyVerifyEd25519,  // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "verify_ed25519(public_key: bytes, signature: bytes,\n"
+    "  message: bytes) -> bool\n"
+    "\n"
+    "Verify an Ed25519 signature (RFC 8032).\n"
+    "\n"
+    "``public_key`` must be exactly 32 bytes and ``signature`` exactly\n"
+    "64 bytes; ``message`` may be any length. Returns ``True`` when\n"
+    "the signature is valid for this key and message, ``False``\n"
+    "otherwise. Backed by Monocypher's SHA-512 variant so signatures\n"
+    "produced by any RFC-8032-compliant signer (e.g. OpenSSL, the\n"
+    "Python ``cryptography`` package) verify correctly.",
+};
+
+// --------------------------- simpledialog_create -----------------------------
+
+static auto PySimpleDialogCreate(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  int id = g_base->ui->CreateSimpleDialog();
+  return PyLong_FromLong(id);
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySimpleDialogCreateDef = {
+    "simpledialog_create",              // name
+    (PyCFunction)PySimpleDialogCreate,  // method
+    METH_NOARGS,                        // flags
+
+    "simpledialog_create() -> int\n"
+    "\n"
+    "Create a SimpleDialog and return its id.\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- simpledialog_update -----------------------------
+
+static auto PySimpleDialogUpdate(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  int dialog_id;
+  const char* title;
+  const char* message;
+  float progress;
+  const char* button_label;
+  static const char* kwlist[] = {"dialog_id", "title",        "message",
+                                 "progress",  "button_label", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "issfs", const_cast<char**>(kwlist), &dialog_id, &title,
+          &message, &progress, &button_label)) {
+    return nullptr;
+  }
+  g_base->ui->SetSimpleDialogState(dialog_id, title, message, progress,
+                                   button_label);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySimpleDialogUpdateDef = {
+    "simpledialog_update",              // name
+    (PyCFunction)PySimpleDialogUpdate,  // method
+    METH_VARARGS | METH_KEYWORDS,       // flags
+
+    "simpledialog_update(dialog_id: int, title: str, message: str,\n"
+    "  progress: float, button_label: str) -> None\n"
+    "\n"
+    "Set a SimpleDialog's full visible state. A negative ``progress``\n"
+    "hides the bar; an empty ``button_label`` hides the button.\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- simpledialog_dismiss ----------------------------
+
+static auto PySimpleDialogDismiss(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  int dialog_id;
+  static const char* kwlist[] = {"dialog_id", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
+                                   const_cast<char**>(kwlist), &dialog_id)) {
+    return nullptr;
+  }
+  g_base->ui->DismissSimpleDialog(dialog_id);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySimpleDialogDismissDef = {
+    "simpledialog_dismiss",              // name
+    (PyCFunction)PySimpleDialogDismiss,  // method
+    METH_VARARGS | METH_KEYWORDS,        // flags
+
+    "simpledialog_dismiss(dialog_id: int) -> None\n"
+    "\n"
+    "Dismiss (remove) a SimpleDialog.\n"
+    "\n"
+    ":meta private:",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
@@ -2173,9 +2342,12 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyClipboardSetTextDef,
       PyClipboardGetTextDef,
       PyDoOnceDef,
+      PyVerifyEd25519Def,
       PyGetAppDef,
       PyAndroidGetExternalFilesDirDef,
-      PySetInternalLanguageKeysDef,
+      PyReloadLanguageDef,
+      PyGetResourceDef,
+      PyTranslateDef,
       PySetAnalyticsScreenDef,
       PyLoginAdapterGetSignInTokenDef,
       PyLoginAdapterBackEndActiveChangeDef,
@@ -2183,13 +2355,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyIncrementAnalyticsCountRawDef,
       PyIncrementAnalyticsCountRaw2Def,
       PyIncrementAnalyticsCountDef,
-      PyMarkLogSentDef,
-      PyGetV1CloudLogDef,
-      PyIsLogFullDef,
-      PyGetLogFilePathDef,
       PySetPlatformMiscReadValsDef,
-      PySetLowLevelConfigValueDef,
-      PyGetLowLevelConfigValueDef,
       PyResolveAppConfigValueDef,
       PyGetAppConfigDefaultValueDef,
       PyAppConfigGetBuiltinKeysDef,
@@ -2211,10 +2377,12 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyInMainMenuDef,
       PyRequestPermissionDef,
       PyHavePermissionDef,
+      PyAddNetworkAvailabilityCallbackDef,
       PyUnlockAllInputDef,
       PyLockAllInputDef,
       PySetUpSigIntDef,
       PyGetSimpleSoundDef,
+      PyApSimpleSoundGetDef,
       PyHasTouchScreenDef,
       PyNativeStackTraceDef,
       PySupportsOpenDirExternallyDef,
@@ -2245,6 +2413,9 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PySuppressConfigAndStateWritesDef,
       PyGetSuppressConfigAndStateWritesDef,
       PyReloadHooksDef,
+      PySimpleDialogCreateDef,
+      PySimpleDialogUpdateDef,
+      PySimpleDialogDismissDef,
   };
 }
 

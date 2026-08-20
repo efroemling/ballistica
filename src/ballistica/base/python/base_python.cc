@@ -2,6 +2,7 @@
 
 #include "ballistica/base/python/base_python.h"
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -12,12 +13,14 @@
 #include "ballistica/base/python/class/python_class_display_timer.h"
 #include "ballistica/base/python/class/python_class_env.h"
 #include "ballistica/base/python/class/python_class_feature_set_data.h"
+#include "ballistica/base/python/class/python_class_lang_str.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 #include "ballistica/base/python/class/python_class_vec3.h"
 #include "ballistica/base/python/methods/python_methods_base_1.h"
 #include "ballistica/base/python/methods/python_methods_base_2.h"
 #include "ballistica/base/python/methods/python_methods_base_3.h"
 #include "ballistica/base/python/methods/python_methods_test.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/core/core.h"
 #include "ballistica/shared/python/python_command.h"  // IWYU pragma: keep.
 #include "ballistica/shared/python/python_module_builder.h"
@@ -54,6 +57,7 @@ void BasePython::AddPythonClasses(PyObject* module) {
   PythonModuleBuilder::AddClass<PythonClassDisplayTimer>(module);
   PythonModuleBuilder::AddClass<PythonClassEnv>(module);
   PythonModuleBuilder::AddClass<PythonClassSimpleSound>(module);
+  PythonModuleBuilder::AddClass<PythonClassLangStr>(module);
   PythonModuleBuilder::AddClass<PythonClassContextCall>(module);
   PyObject* vec3 = PythonModuleBuilder::AddClass<PythonClassVec3>(module);
   // Register our Vec3 as an abc.Sequence
@@ -70,7 +74,7 @@ void BasePython::AddPythonClasses(PyObject* module) {
 void BasePython::ImportPythonObjs() {
   // Import and grab all the Python stuff we use from C++.
   // Note: Binding .inc files expect 'ObjID' and 'objs_' to be defined.
-#include "ballistica/base/mgen/pyembed/binding_base.inc"
+#include "ballistica/base/generated/pyembed/binding_base.inc"
 
   // Grab and store our enum values for things like AppPlatform, AppVariant,
   // etc. from the enum types we just grabbed.
@@ -112,7 +116,7 @@ void BasePython::ImportPythonObjs() {
 void BasePython::ImportPythonAppObjs() {
   // Import and grab all the Python stuff we use from C++.
   // Note: Binding .inc files expect 'ObjID' and 'objs_' to be defined.
-#include "ballistica/base/mgen/pyembed/binding_base_app.inc"
+#include "ballistica/base/generated/pyembed/binding_base_app.inc"
 }
 
 void BasePython::SoftImportPlus() {
@@ -190,6 +194,19 @@ void BasePython::OnAppShutdownComplete() {
   objs().Get(ObjID::kAppOnNativeShutdownCompleteCall).Call();
 }
 
+auto BasePython::ShutdownFaultHandlerArm() -> double {
+  assert(g_base->InLogicThread());
+  return objs()
+      .Get(ObjID::kAppShutdownFaultHandlerArmCall)
+      .Call()
+      .ValueAsDouble();
+}
+
+void BasePython::ShutdownFaultHandlerDisarm() {
+  assert(g_base->InLogicThread());
+  objs().Get(ObjID::kAppShutdownFaultHandlerDisarmCall).Call();
+}
+
 void BasePython::ApplyAppConfig() { assert(g_base->InLogicThread()); }
 
 void BasePython::OnScreenSizeChange() {
@@ -248,8 +265,135 @@ auto BasePython::IsPyLString(PyObject* o) -> bool {
   assert(Python::HaveGIL());
   assert(o != nullptr);
 
-  return (PyUnicode_Check(o)
-          || PyObject_IsInstance(o, objs().Get(ObjID::kLStrClass).get()));
+  return (PyUnicode_Check(o) || PythonClassLangStr::Check(o)
+          || PyObject_IsInstance(o, objs().Get(ObjID::kLStrClass).get())
+          || IsBacommonLangStr_(o));
+}
+
+auto BasePython::IsBacommonLangStr_(PyObject* o) -> bool {
+  assert(Python::HaveGIL());
+  if (!bacommon_lang_str_class_.exists()) {
+    if (bacommon_lang_str_lookup_failed_) {
+      return false;
+    }
+    auto mod = PythonRef::StolenSoft(PyImport_ImportModule("bacommon.langstr"));
+    auto dio = PythonRef::StolenSoft(PyImport_ImportModule("efro.dataclassio"));
+    if (!mod.exists() || !dio.exists()) {
+      PyErr_Clear();
+      bacommon_lang_str_lookup_failed_ = true;
+      return false;
+    }
+    bacommon_lang_str_class_ = mod.GetAttr("LangStrSpec");
+    dataclass_to_json_call_ = dio.GetAttr("dataclass_to_json");
+    dataclass_from_json_call_ = dio.GetAttr("dataclass_from_json");
+  }
+  int result = PyObject_IsInstance(o, bacommon_lang_str_class_.get());
+  if (result == -1) {
+    PyErr_Clear();
+    result = 0;
+  }
+  return result == 1;
+}
+
+auto BasePython::HmacSha256Hex(const std::string& key, const std::string& msg)
+    -> std::string {
+  assert(Python::HaveGIL());
+  // Lazily grab hmac.new + hashlib.sha256 on first use (both stdlib;
+  // avoids a native crypto dependency and keeps this off the bootstrap
+  // path).
+  if (!hmac_new_call_.exists()) {
+    if (hmac_lookup_failed_) {
+      return "";
+    }
+    auto hmac_mod = PythonRef::StolenSoft(PyImport_ImportModule("hmac"));
+    auto hashlib_mod = PythonRef::StolenSoft(PyImport_ImportModule("hashlib"));
+    if (!hmac_mod.exists() || !hashlib_mod.exists()) {
+      PyErr_Clear();
+      hmac_lookup_failed_ = true;
+      return "";
+    }
+    hmac_new_call_ = hmac_mod.GetAttr("new");
+    hashlib_sha256_call_ = hashlib_mod.GetAttr("sha256");
+  }
+  // hmac.new(key.encode(), msg.encode(), hashlib.sha256).hexdigest()
+  auto args = PythonRef::Stolen(Py_BuildValue(
+      "(y#y#O)", key.c_str(), static_cast<Py_ssize_t>(key.size()), msg.c_str(),
+      static_cast<Py_ssize_t>(msg.size()), hashlib_sha256_call_.get()));
+  PythonRef hmac_obj = hmac_new_call_.Call(args);
+  if (!hmac_obj.exists()) {
+    PyErr_Clear();
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "HmacSha256Hex: hmac.new failed.");
+    return "";
+  }
+  PythonRef hexdigest = hmac_obj.GetAttr("hexdigest").Call();
+  if (!hexdigest.exists() || !PyUnicode_Check(hexdigest.get())) {
+    PyErr_Clear();
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "HmacSha256Hex: hexdigest failed.");
+    return "";
+  }
+  return PyUnicode_AsUTF8(hexdigest.get());
+}
+
+auto BasePython::MakeLangStrSpecFromJson(const std::string& json) -> PythonRef {
+  assert(Python::HaveGIL());
+  // Trigger the lazy class/serializer lookups (arg is irrelevant).
+  IsBacommonLangStr_(Py_None);
+  if (!bacommon_lang_str_class_.exists()
+      || !dataclass_from_json_call_.exists()) {
+    return {};
+  }
+  auto args = PythonRef::Stolen(
+      Py_BuildValue("(Os)", bacommon_lang_str_class_.get(), json.c_str()));
+  PythonRef result = dataclass_from_json_call_.Call(args);
+  if (!result.exists()) {
+    PyErr_Clear();
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                         "langstr spec: dataclass parse failed.");
+    return {};
+  }
+  return result;
+}
+
+auto BasePython::ParseBacommonLangStr(PyObject* o)
+    -> std::optional<std::shared_ptr<const LangStr>> {
+  assert(Python::HaveGIL());
+  if (!IsBacommonLangStr_(o)) {
+    return {};
+  }
+  // Serialize the dataclass to its canonical wire JSON and parse
+  // natively.
+  auto args = PythonRef::Stolen(Py_BuildValue("(O)", o));
+  PythonRef json = dataclass_to_json_call_.Call(args);
+  if (!json.exists() || !PyUnicode_Check(json.get())) {
+    PyErr_Clear();
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                         "langstr parse: dataclass serialization failed.");
+    return {};
+  }
+  auto parsed = LangStr::FromJson(PyUnicode_AsUTF8(json.get()));
+  if (!parsed.has_value()) {
+    g_core->logging->Log(LogName::kBa, LogLevel::kWarning,
+                         "langstr parse: " + parsed.error());
+    return {};
+  }
+  return *parsed;
+}
+
+auto BasePython::EvalBacommonLangStr_(PyObject* o)
+    -> std::optional<std::string> {
+  assert(Python::HaveGIL());
+  if (!IsBacommonLangStr_(o)) {
+    return {};
+  }
+  // Fail-visible from here on (it *is* a language-string; problems
+  // should render as sentinels, not type errors). Parse details are
+  // logged by ParseBacommonLangStr.
+  if (auto parsed = ParseBacommonLangStr(o)) {
+    return (*parsed)->Evaluate();
+  }
+  return "LANGSTR_ERROR:parse failed (see log)";
 }
 
 auto BasePython::GetPyLString(PyObject* o) -> std::string {
@@ -259,6 +403,19 @@ auto BasePython::GetPyLString(PyObject* o) -> std::string {
   PyExcType exctype{PyExcType::kType};
   if (PyUnicode_Check(o)) {
     return PyUnicode_AsUTF8(o);
+  } else if (PythonClassLangStr::Check(o)) {
+    // Native language-strings evaluate to flat display text here
+    // (fail-visible; see LangStr::Evaluate). Checked explicitly by
+    // class -- never by sniffing content (see the language-string
+    // initiative's D-s).
+    return PythonClassLangStr::FromPyObj(o).value()->Evaluate();
+  } else if (auto flat = EvalBacommonLangStr_(o)) {
+    // Likewise for the authoring-spec form (bacommon.langstr
+    // LangStrSpec) -- flatten-at-set is correct for the transient
+    // surfaces this funnel feeds (screen-messages etc.); retained
+    // surfaces (widgets) demand the verified babase.LangStr form
+    // instead (D28).
+    return *flat;
   } else {
     // Check if its a Lstr.  If so; we pull its json string representation.
     int result = PyObject_IsInstance(o, objs().Get(ObjID::kLStrClass).get());
@@ -437,7 +594,11 @@ auto BasePython::GetRawConfigValue(const char* name, int default_value) -> int {
     return default_value;
   }
   try {
-    return static_cast_check_fit<int>(Python::GetInt64(value));
+    // Plain GetInt rather than narrowing a GetInt64: config values come
+    // off disk and users hand-edit them, so an out-of-range one must
+    // reach the catch below instead of tripping the assert inside
+    // static_cast_check_fit -- which it could not do in a debug build.
+    return Python::GetInt(value);
   } catch (const std::exception&) {
     g_core->logging->Log(
         LogName::kBa, LogLevel::kError,
@@ -491,7 +652,12 @@ auto BasePython::GetPyEnum_(ObjID enum_class_id, PyObject* obj) -> T {
         Python::ObjToString(obj) + " is not a valid int-valued enum.",
         PyExcType::kType);
   }
-  auto value = PyLong_AS_LONG(value_obj.get());
+  // Via the helper rather than PyLong_AS_LONG. Defense in depth rather
+  // than a live fix: the IsInstance gate above means only our own enum
+  // classes get here, whose values are small by construction, so an
+  // overflow is unreachable today. It is one guard away from being
+  // reachable though, and the helper costs nothing.
+  auto value = Python::GetInt64(value_obj.get());
   if (value < 0 || value >= static_cast<int>(T::kLast)) {
     throw Exception(
         Python::ObjToString(obj) + " is an invalid out-of-range enum value.",
@@ -526,84 +692,6 @@ auto BasePython::PyQuitType(QuitType val) -> PythonRef {
   auto out = objs().Get(ObjID::kQuitTypeClass).Call(args);
   BA_PRECONDITION(out.exists());
   return out;
-}
-
-auto BasePython::GetResource(const char* key, const char* fallback_resource,
-                             const char* fallback_value) -> std::string {
-  assert(Python::HaveGIL());
-  PythonRef results;
-  BA_PRECONDITION(key != nullptr);
-  const PythonRef& get_resource_call(objs().Get(ObjID::kGetResourceCall));
-  if (fallback_value != nullptr) {
-    if (fallback_resource == nullptr) {
-      BA_PRECONDITION(key != nullptr);
-      PythonRef args(Py_BuildValue("(sOs)", key, Py_None, fallback_value),
-                     PythonRef::kSteal);
-
-      // Don't print errors.
-      results = get_resource_call.Call(args, PythonRef(), false);
-    } else {
-      PythonRef args(
-          Py_BuildValue("(sss)", key, fallback_resource, fallback_value),
-          PythonRef::kSteal);
-
-      // Don't print errors.
-      results = get_resource_call.Call(args, PythonRef(), false);
-    }
-  } else if (fallback_resource != nullptr) {
-    PythonRef args(Py_BuildValue("(ss)", key, fallback_resource),
-                   PythonRef::kSteal);
-
-    // Don't print errors
-    results = get_resource_call.Call(args, PythonRef(), false);
-  } else {
-    PythonRef args(Py_BuildValue("(s)", key), PythonRef::kSteal);
-
-    // Don't print errors.
-    results = get_resource_call.Call(args, PythonRef(), false);
-  }
-  if (results.exists()) {
-    try {
-      return GetPyLString(results.get());
-    } catch (const std::exception&) {
-      g_core->logging->Log(LogName::kBa, LogLevel::kError,
-                           "GetResource failed for '" + std::string(key) + "'");
-
-      // Hmm; I guess let's just return the key to help identify/fix the
-      // issue?..
-      return std::string("<res-err: ") + key + ">";
-    }
-  } else {
-    g_core->logging->Log(LogName::kBa, LogLevel::kError,
-                         "GetResource failed for '" + std::string(key) + "'");
-  }
-
-  // Hmm; I guess let's just return the key to help identify/fix the issue?..
-  return std::string("<res-err: ") + key + ">";
-}
-
-auto BasePython::GetTranslation(const char* category, const char* s)
-    -> std::string {
-  assert(Python::HaveGIL());
-  PythonRef results;
-  PythonRef args(Py_BuildValue("(ss)", category, s), PythonRef::kSteal);
-  // Don't print errors.
-  results = objs().Get(ObjID::kTranslateCall).Call(args, PythonRef(), false);
-  if (results.exists()) {
-    try {
-      return GetPyLString(results.get());
-    } catch (const std::exception&) {
-      g_core->logging->Log(
-          LogName::kBa, LogLevel::kError,
-          "GetTranslation failed for '" + std::string(category) + "'");
-      return "";
-    }
-  } else {
-    g_core->logging->Log(
-        LogName::kBa, LogLevel::kError,
-        "GetTranslation failed for category '" + std::string(category) + "'");
-  }
-  return "";
 }
 
 void BasePython::RunDeepLink(const std::string& url) {

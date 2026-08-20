@@ -2,8 +2,6 @@
 #
 """Some handy base class and special purpose Activity types."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 import babase
@@ -159,7 +157,9 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         self._kicked_off_server_shutdown = False
         self._kicked_off_server_restart = False
         self._default_show_tips = True
-        self._custom_continue_message: babase.Lstr | None = None
+        self._custom_continue_message: babase.Lstr | babase.LangStr | None = (
+            None
+        )
         self._server_transitioning: bool | None = None
 
     @override
@@ -191,6 +191,7 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
     @override
     def on_begin(self) -> None:
         # pylint: disable=cyclic-import
+        from bascenev1 import classicassets
         from bascenev1lib.actor.text import Text
 
         super().on_begin()
@@ -202,9 +203,9 @@ class ScoreScreenActivity(Activity[EmptyPlayer, EmptyTeam]):
         if babase.app.ui_v1.uiscale is babase.UIScale.LARGE:
             # FIXME: Need a better way to determine whether we've probably
             #  got a keyboard.
-            sval = babase.Lstr(resource='pressAnyKeyButtonText')
+            sval = classicassets.strings.game.press_any_key_button_continue
         else:
-            sval = babase.Lstr(resource='pressAnyButtonText')
+            sval = classicassets.strings.game.press_any_button_continue
 
         Text(
             (

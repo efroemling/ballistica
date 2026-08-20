@@ -8,8 +8,6 @@ unrecognized attribute data, allowing older clients to interact with newer
 data formats in a nondestructive manner.
 """
 
-from __future__ import annotations
-
 import json
 from enum import Enum
 from typing import TYPE_CHECKING

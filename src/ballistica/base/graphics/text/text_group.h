@@ -57,10 +57,10 @@ class TextGroup : public Object {
 
   auto GetElementMaskUV2Texture(int index) const -> TextureAsset* {
     assert(index < static_cast<int>(entries_.size()));
-    return g_base->assets->SysTexture(entries_[index]->type
-                                              == TextMeshEntryType::kOSRendered
-                                          ? SysTextureID::kSoftRect2
-                                          : SysTextureID::kSoftRect);
+    return g_base->assets->BuiltinTexture(
+        entries_[index]->type == TextMeshEntryType::kOSRendered
+            ? BuiltinTextureID::kTexturesSoftRect2
+            : BuiltinTextureID::kTexturesSoftRect);
   }
 
   void SetText(const std::string& text,

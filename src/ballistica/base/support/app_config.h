@@ -47,6 +47,7 @@ class AppConfig {
     kVRHeadRelativeAudio,
     kMacControllerSubsystem,
     kDevConsoleActiveTab,
+    kInsecureConnections,
     kLast  // Sentinel.
   };
 
@@ -77,6 +78,7 @@ class AppConfig {
     kShowDeprecatedLoginTypes,
     kHighlightPotentialTokenPurchases,
     kUseNativePythonREPL,
+    kDisableXInput,
     kLast  // Sentinel.
   };
 

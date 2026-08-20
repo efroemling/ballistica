@@ -2,8 +2,6 @@
 #
 """Provides UI for inviting/joining friends."""
 
-from __future__ import annotations
-
 import weakref
 import logging
 from enum import Enum
@@ -11,6 +9,8 @@ from typing import override, TYPE_CHECKING
 
 from bauiv1lib.tabs import TabRow
 import bauiv1 as bui
+from bauiv1 import classicassets
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from bauiv1lib.play import PlaylistSelectContext
@@ -175,30 +175,26 @@ class GatherWindow(bui.MainWindow):
             scale=1.3 if uiscale is bui.UIScale.SMALL else 1.0,
             h_align='left' if uiscale is bui.UIScale.SMALL else 'center',
             v_align='center',
-            text=(bui.Lstr(resource=f'{self._r}.titleText')),
+            text=(classicassets.strings.gather.title),
             maxwidth=135 if uiscale is bui.UIScale.SMALL else 320,
         )
 
         # Build up the set of tabs we want.
-        tabdefs: list[tuple[GatherWindow.TabID, bui.Lstr]] = [
-            (self.TabID.ABOUT, bui.Lstr(resource=f'{self._r}.aboutText'))
+        tabdefs: list[tuple[GatherWindow.TabID, bui.Lstr | bui.LangStr]] = [
+            (self.TabID.ABOUT, classicassets.strings.gather.about)
         ]
         if plus.get_v1_account_misc_read_val('enablePublicParties', True):
             tabdefs.append(
                 (
                     self.TabID.INTERNET,
-                    bui.Lstr(resource=f'{self._r}.publicText'),
+                    classicassets.strings.gather.public,
                 )
             )
         tabdefs.append(
-            (self.TabID.PRIVATE, bui.Lstr(resource=f'{self._r}.privateText'))
+            (self.TabID.PRIVATE, classicassets.strings.gather.private)
         )
-        tabdefs.append(
-            (self.TabID.NEARBY, bui.Lstr(resource=f'{self._r}.nearbyText'))
-        )
-        tabdefs.append(
-            (self.TabID.MANUAL, bui.Lstr(resource=f'{self._r}.manualText'))
-        )
+        tabdefs.append((self.TabID.NEARBY, classicassets.strings.gather.nearby))
+        tabdefs.append((self.TabID.MANUAL, classicassets.strings.gather.manual))
 
         tab_inset = 250.0 if uiscale is bui.UIScale.SMALL else 100.0
 
@@ -249,8 +245,8 @@ class GatherWindow(bui.MainWindow):
                 self._width * 0.5 - self._scroll_width * 0.5,
                 self._scroll_bottom,
             ),
-            texture=bui.gettexture('scrollWidget'),
-            mesh_transparent=bui.getmesh('softEdgeOutside'),
+            texture=builtinassets.textures.scroll_widget.get(),
+            mesh_transparent=builtinassets.meshes.soft_edge_outside.get(),
             opacity=0.4,
         )
         self._tab_container: bui.Widget | None = None

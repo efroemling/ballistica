@@ -8,6 +8,7 @@
 
 #include "ballistica/scene_v1/dynamics/part.h"
 #include "ballistica/scene_v1/node/node.h"
+#include "ballistica/shared/math/matrix44f.h"
 
 namespace ballistica::scene_v1 {
 
@@ -59,10 +60,18 @@ class TerrainNode : public Node {
   void set_materials(const std::vector<Material*>& vals);
   auto vr_only() const -> bool { return vr_only_; }
   void set_vr_only(bool val) { vr_only_ = val; }
+  auto position() const -> std::vector<float> { return position_; }
+  void SetPosition(const std::vector<float>& vals);
+  auto rotate() const -> std::vector<float> { return rotate_; }
+  void SetRotate(const std::vector<float>& vals);
 
  private:
   void AddToBGDynamics();
   void RemoveFromBGDynamics();
+
+  /// Rebuild transform_ from position_/rotate_ and push it out to whoever
+  /// is holding a copy of it (physics, bg-dynamics).
+  void UpdateTransform_();
   SceneCollisionMesh* bg_dynamics_collision_mesh_;
   bool vr_only_;
   bool bumper_;
@@ -84,6 +93,10 @@ class TerrainNode : public Node {
   float reflection_scale_r_, reflection_scale_g_, reflection_scale_b_;
   std::vector<float> color_;
   float color_r_, color_g_, color_b_;
+  std::vector<float> position_ = {0.0f, 0.0f, 0.0f};
+  std::vector<float> rotate_ = {0.0f, 0.0f, 0.0f};
+  Matrix44f transform_{kMatrix44fIdentity};
+  bool transformed_{};
 };
 
 }  // namespace ballistica::scene_v1

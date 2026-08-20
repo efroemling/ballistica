@@ -2,8 +2,6 @@
 #
 """UI for player profile upgrades."""
 
-from __future__ import annotations
-
 import time
 import weakref
 from typing import TYPE_CHECKING
@@ -11,6 +9,8 @@ from typing import TYPE_CHECKING
 import bacommon.classic
 
 import bauiv1 as bui
+from bauiv1 import _commonassets, classicassets
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -67,7 +67,7 @@ class ProfileUpgradeWindow(bui.Window):
             size=(155, 60),
             scale=0.8,
             autoselect=True,
-            label=bui.Lstr(resource='cancelText'),
+            label=_commonassets.strings.actions.cancel,
             on_activate_call=self._cancel,
         )
         self._upgrade_button = bui.buttonwidget(
@@ -76,7 +76,7 @@ class ProfileUpgradeWindow(bui.Window):
             size=(155, 60),
             scale=0.8,
             autoselect=True,
-            label=bui.Lstr(resource='upgradeText'),
+            label=_commonassets.strings.actions.upgrade,
             on_activate_call=self._on_upgrade_press,
         )
         bui.containerwidget(
@@ -91,7 +91,7 @@ class ProfileUpgradeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 38 + yoffs),
             size=(0, 0),
-            text=bui.Lstr(resource=f'{self._r}.upgradeToGlobalProfileText'),
+            text=classicassets.strings.profile.upgrade_to_global,
             color=bui.app.ui_v1.title_color,
             maxwidth=self._width * 0.45,
             scale=1.0,
@@ -104,7 +104,7 @@ class ProfileUpgradeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 100 + yoffs),
             size=(0, 0),
-            text=bui.Lstr(resource=f'{self._r}.upgradeProfileInfoText'),
+            text=classicassets.strings.profile.upgrade_profile_info,
             color=bui.app.ui_v1.infotextcolor,
             maxwidth=self._width * 0.8,
             scale=0.7,
@@ -116,9 +116,8 @@ class ProfileUpgradeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 160 + yoffs),
             size=(0, 0),
-            text=bui.Lstr(
-                resource=f'{self._r}.checkingAvailabilityText',
-                subs=[('${NAME}', self._name)],
+            text=classicassets.strings.profile.checking_availability(
+                name=self._name
             ),
             color=(0.8, 0.4, 0.0),
             maxwidth=self._width * 0.8,
@@ -160,7 +159,7 @@ class ProfileUpgradeWindow(bui.Window):
         if isinstance(response, Exception):
             bui.textwidget(
                 edit=self._status_text,
-                text=bui.Lstr(resource='internal.unavailableNoConnectionText'),
+                text=_commonassets.strings.status.unavailable_no_connection,
                 color=(1, 0, 0),
             )
             self._status = 'error'
@@ -174,9 +173,8 @@ class ProfileUpgradeWindow(bui.Window):
             if response.available:
                 bui.textwidget(
                     edit=self._status_text,
-                    text=bui.Lstr(
-                        resource=f'{self._r}.availableText',
-                        subs=[('${NAME}', self._name)],
+                    text=classicassets.strings.profile.available(
+                        name=self._name
                     ),
                     color=(0, 1, 0),
                 )
@@ -188,9 +186,8 @@ class ProfileUpgradeWindow(bui.Window):
             else:
                 bui.textwidget(
                     edit=self._status_text,
-                    text=bui.Lstr(
-                        resource=f'{self._r}.unavailableText',
-                        subs=[('${NAME}', self._name)],
+                    text=classicassets.strings.profile.unavailable(
+                        name=self._name
                     ),
                     color=(1, 0, 0),
                 )
@@ -213,15 +210,15 @@ class ProfileUpgradeWindow(bui.Window):
             # tickets = plus.get_v1_account_ticket_count()
             tickets = classic.tickets
             if tickets < self._cost:
-                bui.getsound('error').play()
+                builtinassets.audio.error.get().play()
                 bui.screenmessage(
-                    bui.Lstr(resource='notEnoughTicketsText'),
+                    classicassets.strings.profile.not_enough_tickets,
                     color=(1, 0, 0),
                 )
                 return
 
             bui.screenmessage(
-                bui.Lstr(resource='purchasingText'), color=(0, 1, 0)
+                classicassets.strings.profile.purchasing, color=(0, 1, 0)
             )
             self._status = 'pre_upgrading'
 
@@ -236,9 +233,9 @@ class ProfileUpgradeWindow(bui.Window):
             if not success:
                 print('profile upgrade: error occurred saving profile')
                 bui.screenmessage(
-                    bui.Lstr(resource='errorText'), color=(1, 0, 0)
+                    _commonassets.strings.values.error, color=(1, 0, 0)
                 )
-                bui.getsound('error').play()
+                builtinassets.audio.error.get().play()
                 return
             plus.add_v1_account_transaction(
                 {'type': 'UPGRADE_PROFILE', 'name': self._name}
@@ -247,7 +244,7 @@ class ProfileUpgradeWindow(bui.Window):
             self._status = 'upgrading'
             self._upgrade_start_time = time.time()
         else:
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
 
     def _update(self) -> None:
         plus = bui.app.plus
@@ -274,7 +271,7 @@ class ProfileUpgradeWindow(bui.Window):
                     ' original edit window gone'
                 )
                 return
-            bui.getsound('gunCocking').play()
+            builtinassets.audio.gun_cocking.get().play()
             edit_profile_window.reload_window()
 
     def _cancel(self) -> None:
@@ -284,6 +281,6 @@ class ProfileUpgradeWindow(bui.Window):
             self._upgrade_start_time is not None
             and time.time() - self._upgrade_start_time < 10.0
         ):
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
         bui.containerwidget(edit=self._root_widget, transition='out_right')

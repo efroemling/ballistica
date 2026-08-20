@@ -10,8 +10,12 @@
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/empty_app_mode.h"
 #include "ballistica/base/audio/audio_server.h"
+#if BA_ENABLE_AUTOMATION
+#include "ballistica/base/automation/automation.h"
+#endif
 #include "ballistica/base/discord/discord.h"
 #include "ballistica/base/graphics/graphics_server.h"
+#include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
@@ -31,299 +35,292 @@ namespace ballistica::base {
 #pragma ide diagnostic ignored "hicpp-signed-bitwise"
 #pragma ide diagnostic ignored "RedundantCast"
 
-// -------------------------- discord_start------------------------------
+// --------------------- discord_request_sign_in_token -------------------------
 
-static auto PyDiscordStart(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+static auto PyDiscordRequestSignInToken(PyObject* self, PyObject* args,
+                                        PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-
-#if BA_ENABLE_DISCORD
-  g_base->discord->client = g_base->discord->init();
-#endif
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyDiscordStartDef = {
-    "discord_start",               // name
-    (PyCFunction)PyDiscordStart,   // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-    "discord_start() -> None\n"
-    "\n"
-    "start the discord sdk and connect the client."};
-
-// -------------------------- discord_is_ready------------------------------
-
-static auto PyDiscordIsReady(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-
-#if BA_ENABLE_DISCORD
-  if (g_base->discord->client_is_ready) {
-    Py_RETURN_TRUE;
+  int attempt_id;
+  static const char* kwlist[] = {"attempt_id", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
+                                   const_cast<char**>(kwlist), &attempt_id)) {
+    return nullptr;
+  }
+  if (g_base->discord) {
+    g_base->discord->SignIn(attempt_id);
   } else {
-    Py_RETURN_FALSE;
+    throw Exception("Discord support is not enabled in this build.",
+                    PyExcType::kRuntime);
   }
-#else
-  // If Discord is not enabled, we return None.
   Py_RETURN_NONE;
-#endif
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyDiscordIsReadyDef = {
-    "discord_is_ready",             // name
-    (PyCFunction)PyDiscordIsReady,  // method
-    METH_VARARGS | METH_KEYWORDS,   // flags
-    "discord_is_ready() -> bool\n"
-    "\n"};
+static PyMethodDef PyDiscordRequestSignInTokenDef = {
+    "discord_request_sign_in_token",           // name
+    (PyCFunction)PyDiscordRequestSignInToken,  // method
+    METH_VARARGS | METH_KEYWORDS,              // flags
 
-// -------------------------- discord_richpresence------------------------------
+    "discord_request_sign_in_token(attempt_id: int) -> None\n"
+    "\n"
+    "Start the Discord OAuth2 sign-in flow (desktop only).\n"
+    "\n"
+    "Opens the user's browser to Discord's authorization page. The\n"
+    "resulting token is reported back via the\n"
+    "``discord_sign_in_token_response`` hook, keyed on ``attempt_id``.\n"
+    "An empty token signals failure (user cancelled, network error,\n"
+    "etc.). Progress is logged to the ``ba.discord`` logger. Raises\n"
+    "RuntimeError if Discord support is not built-in.\n"
+    "\n"
+    ":meta private:",
+};
 
-static auto PyDiscordRichpresence(PyObject* self, PyObject* args,
-                                  PyObject* keywds) -> PyObject* {
+// -------------------------- discord_update_presence --------------------------
+
+static auto PyDiscordUpdatePresence(PyObject* self, PyObject* args,
+                                    PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  const char *state = nullptr, *details = nullptr, *large_image_key = nullptr,
-             *large_image_text = nullptr, *small_image_key = nullptr,
-             *small_image_text = nullptr;
-  int64_t start_timestamp = 0, end_timestamp = 0;
-  static const char* kwlist[] = {const_cast<char*>("state"),
-                                 const_cast<char*>("details"),
-                                 const_cast<char*>("large_image_key"),
-                                 const_cast<char*>("large_image_text"),
-                                 const_cast<char*>("small_image_key"),
-                                 const_cast<char*>("small_image_text"),
-                                 const_cast<char*>("start_timestamp"),
-                                 const_cast<char*>("end_timestamp"),
-                                 nullptr};
+  const char* state = "";
+  const char* details = "";
+  static const char* kwlist[] = {"state", "details", nullptr};
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|ssssssLL", const_cast<char**>(kwlist), &state,
-          &details, &large_image_key, &large_image_text, &small_image_key,
-          &small_image_text, &start_timestamp, &end_timestamp)) {
+          args, keywds, "|ss", const_cast<char**>(kwlist), &state, &details)) {
     return nullptr;
   }
-#if BA_ENABLE_DISCORD
-  if (g_base->discord->client_is_ready) {
-    g_base->discord->SetActivity(
-        state, details, large_image_key, large_image_text, small_image_key,
-        small_image_text, start_timestamp, end_timestamp);
+  if (g_base->discord) {
+    g_base->discord->UpdatePresence(state, details);
+  } else {
+    throw Exception("Discord support is not enabled in this build.",
+                    PyExcType::kRuntime);
   }
-#endif
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyDiscordRichpresenceDef = {
-    "discord_richpresence",              // name
-    (PyCFunction)PyDiscordRichpresence,  // method
-    METH_VARARGS | METH_KEYWORDS,        // flags
-    "discord_richpresence(state: str | None = None,"
-    "details: str | None = None,"
-    "large_image_key: str | None = None,"
-    "large_image_text: str | None = None,"
-    "small_image_key: str | None = None,"
-    "small_image_text: str | None = None,"
-    "start_timestamp: str | None = None,"
-    "end_timestamp: str | None = None,) -> None\n"
-    "\n"
-    "Set Discord Rich Presence information."
-    "\n"
-    "Args:"
-    "\n"
-    "   state: The user's current status"
-    "\n"
-    "   details: What the user is currently doing"
-    "\n"
-    "   large_image_key: Key for the large image"
-    "\n"
-    "   large_image_text: Text displayed when hovering over the large image"
-    "\n"
-    "   small_image_key: Key for the small image"
-    "\n"
-    "   small_image_text: Text displayed when hovering over the small image"
-    "\n"
-    "   start_timestamp: Unix timestamp for game start time"
-    "\n"
-    "   end_timestamp: Unix timestamp for game end time"};
+static PyMethodDef PyDiscordUpdatePresenceDef = {
+    "discord_update_presence",             // name
+    (PyCFunction)PyDiscordUpdatePresence,  // method
+    METH_VARARGS | METH_KEYWORDS,          // flags
 
-// -------------------------- discord_set_party ------------------------------
+    "discord_update_presence(state: str = '', details: str = '') -> None\n"
+    "\n"
+    "Publish a Discord Rich Presence activity (desktop only).\n"
+    "\n"
+    "Requires an active Discord SDK session — if the SDK is not Ready,\n"
+    "this logs a warning and does nothing. Raises RuntimeError if\n"
+    "Discord support is not built-in.\n",
+};
 
-static auto PyDiscordSetParty(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+// ---------------------------- discord_available ------------------------------
+
+static auto PyDiscordAvailable(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
-  const char* partyId = nullptr;
-  int64_t currentPartySize = 0, maxPartySize = 0;
-  static char* kwlist[] = {const_cast<char*>("party_id"),
-                           const_cast<char*>("current_party_size"),
-                           const_cast<char*>("max_party_size"), nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sLL", kwlist, &partyId,
-                                   &currentPartySize, &maxPartySize)) {
+  if (g_base->discord != nullptr) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDiscordAvailableDef = {
+    "discord_available",              // name
+    (PyCFunction)PyDiscordAvailable,  // method
+    METH_NOARGS,                      // flags
+
+    "discord_available() -> bool\n"
+    "\n"
+    "Return whether Discord SDK support is compiled into this build.\n"
+    "\n"
+    "Gate Discord-specific UI (sign-in button, reconnect-on-launch)\n"
+    "on this.\n",
+};
+
+// ----------------------- automation native hooks ----------------------------
+// Opt-in via BA_ENABLE_AUTOMATION (CMake -DENABLE_AUTOMATION=ON). See
+// ballistica/base/automation/automation.h and babase/_automation.py.
+// Unstable, unsupported API; compiled out of default builds.
+#if BA_ENABLE_AUTOMATION
+
+// --------------- automation_capture_screenshot ------------------------------
+
+static auto PyAutomationCaptureScreenshot(PyObject* self, PyObject* args,
+                                          PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* path = nullptr;
+  const char* tag = "screenshot";
+  static const char* kwlist[] = {"path", "tag", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|s",
+                                   const_cast<char**>(kwlist), &path, &tag)) {
     return nullptr;
   }
-#if BA_ENABLE_DISCORD
-  if (g_base->discord->client_is_ready) {
-    g_base->discord->SetParty(partyId, currentPartySize, maxPartySize);
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
   }
-#endif
+  g_base->automation->CaptureScreenshot(path, tag);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyDiscordSetPartyDef = {
-    "discord_set_party",             // name
-    (PyCFunction)PyDiscordSetParty,  // method
-    METH_VARARGS | METH_KEYWORDS,    // flags
-    "discord_set_party(party_id: str | None = None,"
-    "current_party_size: int | None = None, "
-    "max_party_size: int | None = None) -> None\n"
-    "\n"
-    "Set Discord Party information."
-    "\n"
-    "Args:"
-    "\n"
-    "   party_id: Unique identifier for the party"
-    "\n"
-    "   current_party_size: Current number of members in the party"
-    "\n"
-    "   max_party_size: Maximum number of members allowed in the party"};
+static PyMethodDef PyAutomationCaptureScreenshotDef = {
+    "automation_capture_screenshot",             // name
+    (PyCFunction)PyAutomationCaptureScreenshot,  // method
+    METH_VARARGS | METH_KEYWORDS,                // flags
 
-// -------------------------- discord_add_button ------------------------------
+    "automation_capture_screenshot(path: str, tag: str = 'screenshot')"
+    " -> None\n"
+    "\n"
+    "Save the next-rendered framebuffer to an image file. Requires a\n"
+    "build with ``BA_ENABLE_AUTOMATION`` set. The path's extension\n"
+    "picks the format: ``.jpg``/``.jpeg`` gets lossy JPEG — prefer\n"
+    "that; game frames are photographic content and JPEG is a\n"
+    "fraction of PNG's size. Any other extension gets lossless PNG,\n"
+    "which should only be used where pixel-perfect data is actually\n"
+    "needed (exact-color checks etc.).\n"
+    "\n"
+    "Fire-and-forget; the actual glReadPixels + encode + write run on\n"
+    "the graphics thread, and a single ``[automation] <tag> ok|fail\n"
+    "<payload>`` line gets logged to ``ba.app`` when complete. Path\n"
+    "should be absolute. Raises RuntimeError if automation isn't\n"
+    "active in this run (see ``babase._automation`` for activation\n"
+    "rules).\n",
+};
 
-static auto PyDiscordAddButton(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+// ----------------- automation_press_at_virtual ------------------------------
+
+static auto PyAutomationPressAtVirtual(PyObject* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  const char *label = nullptr, *url = nullptr;
-  static char* kwlist[] = {const_cast<char*>("label"), const_cast<char*>("url"),
-                           nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ss", kwlist, &label, &url)) {
+  int button = 1;
+  double vx = 0.0;
+  double vy = 0.0;
+  static const char* kwlist[] = {"button", "x", "y", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "idd", const_cast<char**>(kwlist), &button, &vx, &vy)) {
     return nullptr;
   }
-#if BA_ENABLE_DISCORD
-  if (g_base->discord->client_is_ready) {
-    g_base->discord->AddButton(label, url);
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
   }
-#endif
+  // Synthesized input makes no sense headless (no UI to target).
+  // Surface as a RuntimeError so Python helpers can catch and emit
+  // a structured fail with the caller's tag.
+  if (g_core->HeadlessMode()) {
+    throw Exception("not supported in headless mode", PyExcType::kRuntime);
+  }
+  g_base->input->PushMouseClickAtVirtualCoords(button, static_cast<float>(vx),
+                                               static_cast<float>(vy));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyDiscordAddButtonDef = {
-    "discord_add_button",             // name
-    (PyCFunction)PyDiscordAddButton,  // method
-    METH_VARARGS | METH_KEYWORDS,     // flags
-    "discord_add_button(label: str, url: str) -> None\n"
-    "\n"
-    "Add Discord rich presence button."
-    "\n"
-    "Args:"
-    "\n"
-    "   label: Label for the button"
-    "\n"
-    "   url: URL to open when the button is clicked"};
+static PyMethodDef PyAutomationPressAtVirtualDef = {
+    "automation_press_at_virtual",            // name
+    (PyCFunction)PyAutomationPressAtVirtual,  // method
+    METH_VARARGS | METH_KEYWORDS,             // flags
 
-// -------------------------- discord_join_lobby ------------------------------
+    "automation_press_at_virtual(button: int, x: float, y: float) -> None\n"
+    "\n"
+    "Synthesize a mouse-click at the given virtual-screen coordinates.\n"
+    "Requires a build with ``BA_ENABLE_AUTOMATION`` set. Routes through\n"
+    "the normal UI dispatch path so modals, hit-testing, and focus\n"
+    "chain behave like a real click. Raises RuntimeError in headless\n"
+    "builds (no UI to target).\n"
+    "\n"
+    "The coordinate system is the same Widget::GetCenter uses (virtual\n"
+    "screen pixels, origin bottom-left with y growing upward). Use a\n"
+    "Widget's ``get_screen_space_center()`` plus the screen virtual\n"
+    "size to compute the absolute coords for a given widget.\n",
+};
 
-static auto PyDiscordJoinLobby(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
+// --------------- automation_scroll_at_virtual -------------------------------
+
+static auto PyAutomationScrollAtVirtual(PyObject* self, PyObject* args,
+                                        PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-  const char* lobbySecret = nullptr;
-  static char* kwlist[] = {const_cast<char*>("lobby_secret"), nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s", kwlist, &lobbySecret)) {
+  double vx = 0.0;
+  double vy = 0.0;
+  double dx = 0.0;
+  double dy = 0.0;
+  static const char* kwlist[] = {"x", "y", "dx", "dy", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dddd",
+                                   const_cast<char**>(kwlist), &vx, &vy, &dx,
+                                   &dy)) {
     return nullptr;
   }
-#if BA_ENABLE_DISCORD
-  if (g_base->discord->client_is_ready) {
-    g_base->discord->JoinLobby(lobbySecret);
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
   }
-#endif
+  if (g_core->HeadlessMode()) {
+    throw Exception("not supported in headless mode", PyExcType::kRuntime);
+  }
+  g_base->input->PushMouseScrollAtVirtualCoords(
+      static_cast<float>(vx), static_cast<float>(vy), static_cast<float>(dx),
+      static_cast<float>(dy));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyDiscordJoinLobbyDef = {
-    "discord_join_lobby",             // name
-    (PyCFunction)PyDiscordJoinLobby,  // method
-    METH_VARARGS | METH_KEYWORDS,     // flags
-    "discord_join_lobby(lobby_secret: str) -> None\n"
-    "\n"
-    "Join a discord lobby."
-    "\n"
-    "Args:"
-    "\n"
-    "   lobby_secret: Unique identifier for the lobby"};
+static PyMethodDef PyAutomationScrollAtVirtualDef = {
+    "automation_scroll_at_virtual",            // name
+    (PyCFunction)PyAutomationScrollAtVirtual,  // method
+    METH_VARARGS | METH_KEYWORDS,              // flags
 
-// -------------------------- discord_leave_lobby ------------------------------
+    "automation_scroll_at_virtual(x: float, y: float,\n"
+    "                             dx: float, dy: float) -> None\n"
+    "\n"
+    "Synthesize a mouse-wheel scroll at the given virtual-screen\n"
+    "coordinates. Requires a build with ``BA_ENABLE_AUTOMATION`` set.\n"
+    "Positive dy = scroll up, positive dx = scroll right (matches real\n"
+    "wheel-event sign). Cursor is moved to the target point first\n"
+    "since wheel events dispatch to whatever is under the cursor.\n"
+    "Raises RuntimeError in headless builds (no UI to target).\n",
+};
 
-static auto PyDiscordLeaveLobby(PyObject* self, PyObject* args,
-                                PyObject* keywds) -> PyObject* {
+#endif  // BA_ENABLE_AUTOMATION
+
+// ---------------- discord_reconnect_with_refresh_token ----------------------
+
+static auto PyDiscordReconnectWithRefreshToken(PyObject* self, PyObject* args,
+                                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
-#if BA_ENABLE_DISCORD
-  if (g_base->discord->client_is_ready) {
-    g_base->discord->LeaveLobby();
-  }
-#endif
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyDiscordLeaveLobbyDef = {
-    "discord_leave_lobby",             // name
-    (PyCFunction)PyDiscordLeaveLobby,  // method
-    METH_VARARGS | METH_KEYWORDS,      // flags
-    "discord_leave_lobby() -> None\n"
-    "\n"
-    "Leave a discord lobby."};
-
-// ---------------------- discord_send_lobby_message ---------------------------
-
-static auto PyDiscordSendLobbyMessage(PyObject* self, PyObject* args,
-                                      PyObject* keywds) -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* message = nullptr;
-  static char* kwlist[] = {const_cast<char*>("message"), nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s", kwlist, &message)) {
+  const char* token = nullptr;
+  static const char* kwlist[] = {"refresh_token", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &token)) {
     return nullptr;
   }
-#if BA_ENABLE_DISCORD
-  if (g_base->discord->client_is_ready) {
-    g_base->discord->SendLobbyMessage(message);
+  if (g_base->discord) {
+    g_base->discord->ReconnectWithRefreshToken(token);
+  } else {
+    throw Exception("Discord support is not enabled in this build.",
+                    PyExcType::kRuntime);
   }
-#endif
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyDiscordSendLobbyMessageDef = {
-    "discord_send_lobby_message",            // name
-    (PyCFunction)PyDiscordSendLobbyMessage,  // method
-    METH_VARARGS | METH_KEYWORDS,            // flags
-    "discord_send_lobby_message(message: str) -> None\n"
-    "\n"
-    "Args:"
-    "\n"
-    "       message: Message to send to a discord lobby."};
+static PyMethodDef PyDiscordReconnectWithRefreshTokenDef = {
+    "discord_reconnect_with_refresh_token",           // name
+    (PyCFunction)PyDiscordReconnectWithRefreshToken,  // method
+    METH_VARARGS | METH_KEYWORDS,                     // flags
 
-// -------------------------- discord_shutdown ------------------------------
-
-static auto PyDiscordShutdown(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-#if BA_ENABLE_DISCORD
-  if (g_base->discord->client_is_ready) {
-    g_base->discord->Shutdown();
-  }
-#endif
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyDiscordShutdownDef = {
-    "discord_shutdown",              // name
-    (PyCFunction)PyDiscordShutdown,  // method
-    METH_VARARGS | METH_KEYWORDS,    // flags
-    "discord_shutdown() -> None\n"
+    "discord_reconnect_with_refresh_token(refresh_token: str) -> None\n"
     "\n"
-    "Shutdown and disconnect the Discord client."};
+    "Silently reconnect to the Discord SDK gateway using a stored\n"
+    "refresh token (no browser OAuth flow). On success the SDK\n"
+    "reaches Ready and the rotated refresh token is handed back to\n"
+    "Python via the ``discord_auth_received`` hook; on failure the\n"
+    "same hook is called with empty strings to clear stored state.\n",
+};
 
 // --------------------------------- appname -----------------------------------
 
@@ -503,6 +500,36 @@ static PyMethodDef PyUserRanCommandsDef = {
     METH_VARARGS | METH_KEYWORDS,    // flags
 
     "user_ran_commands() -> None\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- is_user_modified --------------------------------
+
+static auto PyIsUserModified(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  // The cheap user-side taint signals: has anything user-driven had a
+  // chance to alter engine behavior this run? Same trio the
+  // fatal-error reporter sends (fatal_error_report.cc); these flags
+  // only ever go one way within a run, so a False is a "clean so far".
+  assert(g_core);
+  if (g_core->user_ran_commands || g_core->workspaces_in_use
+      || g_core->using_custom_app_python_dir()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyIsUserModifiedDef = {
+    "is_user_modified",             // name
+    (PyCFunction)PyIsUserModified,  // method
+    METH_NOARGS,                    // flags
+
+    "is_user_modified() -> bool\n"
+    "\n"
+    "Whether user actions could have modified engine behavior this\n"
+    "run (commands run, workspaces in use, or custom app scripts).\n"
     "\n"
     ":meta private:",
 };
@@ -1123,35 +1150,6 @@ static PyMethodDef PyEmitLogDef = {
     ":meta private:",
 };
 
-// ----------------------------- v1_cloud_log ----------------------------------
-
-static auto PyV1CloudLog(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* message;
-  static const char* kwlist[] = {"message", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &message)) {
-    return nullptr;
-  }
-  g_core->logging->V1CloudLog(message);
-
-  Py_RETURN_NONE;
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyV1CloudLogDef = {
-    "v1_cloud_log",                // name
-    (PyCFunction)PyV1CloudLog,     // method
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "v1_cloud_log(message: str) -> None\n"
-    "\n"
-    "Push messages to the old v1 cloud log.\n"
-    "\n"
-    ":meta private:",
-};
-
 // --------------------------- music_player_stop -------------------------------
 
 static auto PyMusicPlayerStop(PyObject* self, PyObject* args, PyObject* keywds)
@@ -1281,6 +1279,33 @@ static PyMethodDef PyReloadMediaDef = {
     "Reload all currently loaded game media.\n"
     "\n"
     "Mainly for development/debugging.\n"
+    "\n"
+    ":meta private:",
+};
+
+// ------------------------- reload_changed_media ------------------------------
+
+static auto PyReloadChangedMedia(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  // Phase 1 runs here on the logic thread (re-resolve is logic-thread-only);
+  // it kicks off the graphics-thread unload/reload itself if anything changed.
+  assert(g_base->InLogicThread());
+  g_base->assets->ReloadChangedAssets();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyReloadChangedMediaDef = {
+    "reload_changed_media",  // name
+    PyReloadChangedMedia,    // method
+    METH_VARARGS,            // flags
+
+    "reload_changed_media() -> None\n"
+    "\n"
+    "Reload only assets whose underlying flavor changed since they loaded\n"
+    "(e.g. fallback textures that an asset-package resolve has since fetched\n"
+    "ideal versions of). No-ops when nothing changed, so it is safe to call\n"
+    "after any resolve; reloading runs behind a progress bar.\n"
     "\n"
     ":meta private:",
 };
@@ -1462,6 +1487,16 @@ static auto PyExecArg(PyObject* self) -> PyObject* {
   if (g_core->core_config().exec_command.has_value()) {
     return PyUnicode_FromString(g_core->core_config().exec_command->c_str());
   }
+  // On Android the exec arg rides an activity intent extra rather than
+  // argv, and the engine-init-time capture of it into core-config can
+  // lose a race against activity startup. This runs at on-app-running
+  // time, when the activity is reliably up, so consult the live value
+  // as a fallback. (No-op elsewhere; the base implementation returns
+  // an empty string.)
+  std::string android_exec = g_core->platform->GetAndroidExecArg();
+  if (!android_exec.empty()) {
+    return PyUnicode_FromString(android_exec.c_str());
+  }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1627,16 +1662,15 @@ static auto PyEmptyAppModeHandleAppIntentExec(PyObject* self, PyObject* args,
                                    const_cast<char**>(kwlist), &command)) {
     return nullptr;
   }
-  // Simply run the command.
-  if (g_core->core_config().exec_command.has_value()) {
-    bool success = PythonCommand(*g_core->core_config().exec_command,
-                                 BA_BUILD_COMMAND_FILENAME)
-                       .Exec(true, nullptr, nullptr);
-    if (!success) {
-      // TODO(ericf): what should we do in this case?
-      //  Obviously if we add return/success values for intents we should set
-      //  that here.
-    }
+  // Simply run the command we were passed (the intent carries it;
+  // re-reading core-config here instead used to silently no-op on
+  // Android, where the config capture can lose a startup race).
+  bool success = PythonCommand(command, BA_BUILD_COMMAND_FILENAME)
+                     .Exec(true, nullptr, nullptr);
+  if (!success) {
+    // TODO(ericf): what should we do in this case?
+    //  Obviously if we add return/success values for intents we should set
+    //  that here.
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -1671,6 +1705,33 @@ static PyMethodDef PyGetImmediateReturnCodeDef = {
     METH_NOARGS,                            // flags
 
     "get_immediate_return_code() -> int | None\n"
+    "\n"
+    ":meta private:\n",
+};
+
+// --------------------------- set_app_exit_code -------------------------------
+
+static auto PySetAppExitCode(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  assert(g_base);
+  int code;
+  static const char* kwlist[] = {"code", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "i",
+                                   const_cast<char**>(kwlist), &code)) {
+    return nullptr;
+  }
+  g_base->set_app_exit_code(code);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetAppExitCodeDef = {
+    "set_app_exit_code",            // name
+    (PyCFunction)PySetAppExitCode,  // method
+    METH_VARARGS | METH_KEYWORDS,   // flags
+
+    "set_app_exit_code(code: int) -> None\n"
     "\n"
     ":meta private:\n",
 };
@@ -1812,6 +1873,32 @@ static PyMethodDef PyDevConsoleInputAdapterFinishDef = {
     ":meta private:\n",
 };
 
+// -------------------------- dev_console_exec ---------------------------------
+
+static auto PyDevConsoleExec(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* console = g_base->ui->dev_console();
+  BA_PRECONDITION(console);
+  console->Exec();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyDevConsoleExecDef = {
+    "dev_console_exec",             // name
+    (PyCFunction)PyDevConsoleExec,  // method
+    METH_NOARGS,                    // flags
+
+    "dev_console_exec() -> None\n"
+    "\n"
+    ":meta private:\n"
+    "\n"
+    "Run the dev console's current input, exactly as its Exec button\n"
+    "and the return key do. Used by the platform string editor to make\n"
+    "a submit-style commit run the line instead of just filling it in.\n",
+};
+
 // -------------------------- audio_shutdown_begin -----------------------------
 
 static auto PyAudioShutdownBegin(PyObject* self) -> PyObject* {
@@ -1947,23 +2034,21 @@ static PyMethodDef PyCrashDef = {
 
 auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
   return {
-      // should this also be in #if BA_ENABLE_DISCORD?
-      PyDiscordStartDef,
-      PyDiscordIsReadyDef,
-      PyDiscordRichpresenceDef,
-      PyDiscordSetPartyDef,
-      PyDiscordAddButtonDef,
-      PyDiscordJoinLobbyDef,
-      PyDiscordLeaveLobbyDef,
-      PyDiscordSendLobbyMessageDef,
-      PyDiscordShutdownDef,
+#if BA_ENABLE_AUTOMATION
+      PyAutomationCaptureScreenshotDef,
+      PyAutomationPressAtVirtualDef,
+      PyAutomationScrollAtVirtualDef,
+#endif
+      PyDiscordRequestSignInTokenDef,
+      PyDiscordUpdatePresenceDef,
+      PyDiscordAvailableDef,
+      PyDiscordReconnectWithRefreshTokenDef,
       PyAppNameDef,
       PyAppIsActiveDef,
       PyRunAppDef,
       PyAppNameUpperDef,
       PyIsXCodeBuildDef,
       PyEmitLogDef,
-      PyV1CloudLogDef,
       PyEnvDef,
       PyPreEnvDef,
       PyCommitAppConfigDef,
@@ -1980,7 +2065,9 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyMusicPlayerStopDef,
       PyAppInstanceUUIDDef,
       PyUserRanCommandsDef,
+      PyIsUserModifiedDef,
       PyReloadMediaDef,
+      PyReloadChangedMediaDef,
       PyMacMusicAppInitDef,
       PyMacMusicAppGetVolumeDef,
       PyMacMusicAppSetVolumeDef,
@@ -1998,6 +2085,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyEmptyAppModeHandleAppIntentDefaultDef,
       PyEmptyAppModeHandleAppIntentExecDef,
       PyGetImmediateReturnCodeDef,
+      PySetAppExitCodeDef,
       PyCompleteShutdownDef,
       PyShutdownSuppressBeginDef,
       PyShutdownSuppressEndDef,
@@ -2005,6 +2093,7 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyGetDevConsoleInputTextDef,
       PySetDevConsoleInputTextDef,
       PyDevConsoleInputAdapterFinishDef,
+      PyDevConsoleExecDef,
       PyAudioShutdownBeginDef,
       PyAudioShutdownIsCompleteDef,
       PyGraphicsShutdownBeginDef,

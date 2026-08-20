@@ -2,8 +2,6 @@
 #
 """Utility functionality pertaining to gameplay."""
 
-from __future__ import annotations
-
 import random
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, NewType
@@ -16,7 +14,13 @@ if TYPE_CHECKING:
 
     import bascenev1
 
+#: Monotonic time measurement local to a scene activity — pauses
+#: when the activity pauses, resets when the activity ends.
 Time = NewType('Time', float)
+
+#: Like :data:`Time` but tied to the underlying scene's clock rather
+#: than an activity — keeps advancing across activity transitions
+#: within the same session.
 BaseTime = NewType('BaseTime', float)
 
 TROPHY_CHARS = {
@@ -33,7 +37,7 @@ TROPHY_CHARS = {
 class GameTip:
     """Defines a tip presentable to the user at the start of a game."""
 
-    text: str
+    text: str | babase.LangStr
     icon: bascenev1.Texture | None = None
     sound: bascenev1.Sound | None = None
 

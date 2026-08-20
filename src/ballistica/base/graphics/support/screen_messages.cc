@@ -111,9 +111,11 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
       {
         SimpleComponent c(pass);
         c.SetTransparent(true);
-        c.SetTexture(
-            // g_base->assets->SysTexture(SysTextureID::kSoftRectVertical));
-            g_base->assets->SysTexture(SysTextureID::kShadowSharp));
+        TextureAsset* shadow_tex =
+            // g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesSoftRectVertical);
+            g_base->assets->BuiltinTexture(
+                BuiltinTextureID::kTexturesShadowSharp);
+        c.SetTexture(shadow_tex);
 
         float screen_width = g_base->graphics->screen_virtual_width();
 
@@ -181,7 +183,11 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
             // showing which looks nice.
             fade = std::max(0.07f, (200.0f - static_cast<float>(age)) / 100.0f);
           }
-          c.SetColor(r * fade, g * fade, b * fade, a);
+          // The shadow texture is premultiplied, so the fade-out must scale
+          // rgb as well as alpha; otherwise the rgb contribution holds
+          // constant through the fade and pops off when the message dies.
+          float cmul = shadow_tex->premultiplied() ? a : 1.0f;
+          c.SetColor(r * fade * cmul, g * fade * cmul, b * fade * cmul, a);
 
           {
             auto xf = c.ScopedTransform();
@@ -222,7 +228,7 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
               // Align our bottom with where we just scaled from.
               c.Translate(0, 0.5f, 0);
             }
-            // c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+            // c.DrawMeshAsset(g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
             assert(i->shadow_mesh_.exists());
             c.DrawMesh(i->shadow_mesh_.get());
           }
@@ -286,11 +292,22 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
               continue;
             }
             c.SetTexture(t);
-            if (i->GetText().GetElementCanColor(e)) {
-              c.SetColor(r, g, b, a);
-            } else {
-              c.SetColor(1, 1, 1, a);
+            bool can_color = i->GetText().GetElementCanColor(e);
+            float cr = can_color ? r : 1.0f;
+            float cg = can_color ? g : 1.0f;
+            float cb = can_color ? b : 1.0f;
+            // Premultiplied glyph textures (KTX2 builtin fonts and OS-rendered
+            // text alike) blend with glBlendFunc(GL_ONE,
+            // GL_ONE_MINUS_SRC_ALPHA), so the fade must scale RGB as well as
+            // alpha; premultiply the modulate color by its alpha. Any
+            // straight-alpha texture keeps the raw color and fades via alpha as
+            // before.
+            if (t->premultiplied()) {
+              cr *= a;
+              cg *= a;
+              cb *= a;
             }
+            c.SetColor(cr, cg, cb, a);
             c.SetFlatness(i->GetText().GetElementMaxFlatness(e));
             {
               auto xf = c.ScopedTransform();
@@ -396,16 +413,22 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
             c2.SetColorizeTexture(i->tint_texture.get());
             c2.SetColorizeColor(i->tint.x, i->tint.y, i->tint.z);
             c2.SetColorizeColor2(i->tint2.x, i->tint2.y, i->tint2.z);
-            c2.SetMaskTexture(
-                g_base->assets->SysTexture(SysTextureID::kCharacterIconMask));
+            c2.SetMaskTexture(g_base->assets->BuiltinTexture(
+                BuiltinTextureID::kTexturesCharacterIconMask));
           }
-          c2.SetColor(1, 1, 1, a);
+          // Premultiply rgb by alpha for premultiplied icon textures so
+          // fading icons composite 'over' under premult blend instead of
+          // staying full-brightness (colorize colors stay raw; they modulate
+          // the texture before the base color applies).
+          float icmul = i->texture->premultiplied() ? a : 1.0f;
+          c2.SetColor(icmul, icmul, icmul, a);
           {
             auto xf = c2.ScopedTransform();
             c2.Translate(h - 14, v_base + 10 + i->v_smoothed,
                          kScreenMessageZDepth);
             c2.Scale(22.0f * s_extra, 22.0f * s_extra);
-            c2.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+            c2.DrawMeshAsset(
+                g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
           }
           c2.Submit();
         }
@@ -423,10 +446,14 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
             continue;
           }
           c.SetTexture(t);
+          // Premultiply rgb by alpha for premultiplied textures so fading
+          // top-messages composite 'over' under premult blend (matches the
+          // bottom-message pass); straight-alpha textures keep raw rgb.
+          float cmul = t->premultiplied() ? a : 1.0f;
           if (i->GetText().GetElementCanColor(e)) {
-            c.SetColor(r, g, b, a);
+            c.SetColor(r * cmul, g * cmul, b * cmul, a);
           } else {
-            c.SetColor(1, 1, 1, a);
+            c.SetColor(cmul, cmul, cmul, a);
           }
           c.SetShadow(-0.003f * i->GetText().GetElementUScale(e),
                       -0.003f * i->GetText().GetElementVScale(e), 0.0f,
@@ -457,6 +484,12 @@ void ScreenMessages::AddScreenMessage(const std::string& msg, bool literal,
                                       const Vector3f& tint,
                                       const Vector3f& tint2) {
   assert(g_base->InLogicThread());
+
+  // With no renderer there is nothing to ever display OR trim these;
+  // queueing them would leak for the life of the process.
+  if (g_core->HeadlessMode()) {
+    return;
+  }
 
   // So we know we're always dealing with valid utf8.
   std::string m = Utils::GetValidUTF8(msg.c_str(), "ga9msg");

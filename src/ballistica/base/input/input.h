@@ -10,7 +10,9 @@
 #include <vector>
 
 #include "ballistica/base/base.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/foundation/object.h"
+#include "ballistica/shared/math/vector3f.h"
 
 namespace ballistica::base {
 
@@ -65,6 +67,13 @@ class Input {
   // Return all input devices with this name.
   auto GetInputDevicesWithName(const std::string& name)
       -> std::vector<InputDevice*>;
+
+  /// Return all currently-registered input devices. Includes hidden ones
+  /// (devices the user has flagged as totally-ignored, etc). Intended for
+  /// callers that need to search devices by some property the input
+  /// system itself knows nothing about -- for instance finding whichever
+  /// local device is currently driving a particular networked player.
+  auto GetInputDevices() -> std::vector<InputDevice*>;
 
   /// Release all held buttons/keys/etc. For use when directing input to a
   /// new target (from in-game to UI, etc.) so that old targets don't get
@@ -136,18 +145,61 @@ class Input {
   void PushTextInputEvent(const std::string& text);
   void PushKeyPressEventSimple(int keycode);
   void PushKeyReleaseEventSimple(int keycode);
-  void PushKeyPressEvent(const SDL_Keysym& keysym);
-  void PushKeyReleaseEvent(const SDL_Keysym& keysym);
+  void PushKeyPressEvent(const BAKeysym& keysym);
+  void PushKeyReleaseEvent(const BAKeysym& keysym);
   void PushMouseDownEvent(int button, const Vector2f& position);
   void PushMouseUpEvent(int button, const Vector2f& position);
   void PushMouseMotionEvent(const Vector2f& position);
+
+  /// Synthesize a complete mouse-click (down + up at the same point)
+  /// at the given coordinates in *virtual screen space* (the same
+  /// coordinate system Widget::GetCenter returns, with origin at the
+  /// top-left corner of the virtual screen). Routes through the
+  /// normal UI dispatch path, so modals, hit-testing, and focus all
+  /// behave as they would for a real user click.
+  void PushMouseClickAtVirtualCoords(int button, float virtual_x,
+                                     float virtual_y);
+
+  /// Synthesize a mouse-wheel scroll event at the given virtual-screen
+  /// coordinates. ``amount_x`` / ``amount_y`` are mouse-wheel units in
+  /// the same sign convention real wheel events use (positive y = scroll
+  /// up, positive x = scroll right). Cursor position is first moved to
+  /// the target point since the UI wheel dispatch routes the event to
+  /// whatever's under the cursor.
+  void PushMouseScrollAtVirtualCoords(float virtual_x, float virtual_y,
+                                      float amount_x, float amount_y);
+
   void PushSmoothMouseScrollEvent(const Vector2f& velocity, bool momentum);
   void PushMouseScrollEvent(const Vector2f& amount);
-  void PushJoystickEvent(const SDL_Event& event, InputDevice* input_device);
+  void PushJoystickEvent(const BAEvent& event, InputDevice* input_device);
   void PushAddInputDeviceCall(InputDevice* input_device, bool standard_message);
   void PushRemoveInputDeviceCall(InputDevice* input_device,
                                  bool standard_message);
   void PushTouchEvent(const TouchEvent& touch_event);
+
+  /// Feed a raw device-motion (gyroscope) sample into the engine. Values are
+  /// orientation-corrected angular velocity from a platform sensor layer
+  /// (Android SensorManager, iOS CoreMotion, ...). Safe to call from any
+  /// thread. This drives only a cosmetic 'toy' effect (subtle camera/UI
+  /// parallax via tilt()), not gameplay, so high sample rates aren't needed.
+  void PushGyroEvent(const Vector3f& vals);
+
+  /// Enable/disable device-motion tilt. Re-enabling briefly suppresses
+  /// updates to avoid a hitch from a stale accumulated sample. Driven by app
+  /// suspend/unsuspend.
+  void SetGyroEnabled(bool enable);
+
+  /// Current smoothed device-tilt offset: integrated from gyro samples and
+  /// decayed over time. Consumed by the camera and assorted UI/scene elements
+  /// for subtle parallax. Zero when gyro is unavailable or disabled. Logic
+  /// thread only.
+  auto tilt() const -> Vector3f { return tilt_pos_; }
+
+  /// Integrate the latest gyro sample into the tilt value. Called once per
+  /// rendered frame from the logic thread (just before frame-def build, so
+  /// the freshest sample is used).
+  void UpdateGyro(microsecs_t time_microsecs, microsecs_t elapsed_microsecs);
+
   void PushDestroyKeyboardInputDevices();
   void PushCreateKeyboardInputDevices();
   void LsInputDevices();
@@ -155,10 +207,10 @@ class Input {
   /// Roughly how long in milliseconds have all input devices been idle.
   auto input_idle_time() const { return input_idle_time_; }
 
-  typedef bool(HandleJoystickEventCall)(const SDL_Event& event,
+  typedef bool(HandleJoystickEventCall)(const BAEvent& event,
                                         InputDevice* input_device);
-  typedef bool(HandleKeyPressCall)(const SDL_Keysym& keysym);
-  typedef bool(HandleKeyReleaseCall)(const SDL_Keysym& keysym);
+  typedef bool(HandleKeyPressCall)(const BAKeysym& keysym);
+  typedef bool(HandleKeyReleaseCall)(const BAKeysym& keysym);
 
   void CaptureKeyboardInput(HandleKeyPressCall* press_call,
                             HandleKeyReleaseCall* release_call);
@@ -179,23 +231,24 @@ class Input {
   void AnnounceDisconnects_();
   void HandleKeyPressSimple_(int keycode);
   void HandleKeyReleaseSimple_(int keycode);
-  void HandleKeyPress_(const SDL_Keysym& keysym);
-  void HandleKeyRelease_(const SDL_Keysym& keysym);
+  void HandleKeyPress_(const BAKeysym& keysym);
+  void HandleKeyRelease_(const BAKeysym& keysym);
   void HandleMouseMotion_(const Vector2f& position);
   void HandleMouseDown_(int button, const Vector2f& position);
   void HandleMouseUp_(int button, const Vector2f& position);
   void HandleMouseCancel_(int button, const Vector2f& position);
   void HandleMouseScroll_(const Vector2f& amount);
   void HandleSmoothMouseScroll_(const Vector2f& velocity, bool momentum);
-  void HandleJoystickEvent_(const SDL_Event& event, InputDevice* input_device);
+  void HandleJoystickEvent_(const BAEvent& event, InputDevice* input_device);
   void HandleTouchEvent_(const TouchEvent& e);
+  void HandleGyroEvent_(const Vector3f& vals);
   void ShowStandardInputDeviceConnectedMessage_(InputDevice* j);
   void ShowStandardInputDeviceDisconnectedMessage_(InputDevice* j);
   void PrintLockLabels_();
-  void UpdateModKeyStates_(const SDL_Keysym* keysym, bool press);
+  void UpdateModKeyStates_(const BAKeysym* keysym, bool press);
   void CreateKeyboardInputDevices_();
   void DestroyKeyboardInputDevices_();
-  void AddFakeKeyMods_(SDL_Keysym* sym);
+  void AddFakeKeyMods_(BAKeysym* sym);
   auto GetFuzzyInputDevice_() -> InputDevice*;
 
   std::list<std::string> input_lock_temp_labels_;
@@ -225,6 +278,13 @@ class Input {
   seconds_t last_mouse_move_time_{};
   float cursor_pos_x_{};
   float cursor_pos_y_{};
+  // Device-motion (gyro) -> tilt signal. See PushGyroEvent() / tilt().
+  Vector3f gyro_vals_{0.0f, 0.0f, 0.0f};
+  Vector3f tilt_smoothed_{0.0f, 0.0f, 0.0f};
+  Vector3f tilt_vel_{0.0f, 0.0f, 0.0f};
+  Vector3f tilt_pos_{0.0f, 0.0f, 0.0f};
+  float gyro_mag_test_{};
+  microsecs_t last_suppress_gyro_time_{};
   int connect_print_timer_id_{};
   int disconnect_print_timer_id_{};
   int max_controller_count_so_far_{};
@@ -234,6 +294,9 @@ class Input {
   int8_t input_lock_count_permanent_{};
   bool attract_mode_{};
   bool input_active_{};
+  bool gyro_enabled_{true};
+  bool camera_gyro_explicitly_disabled_{};
+  bool gyro_broken_{};
   bool have_button_using_inputs_{};
   bool have_start_activated_default_button_inputs_{};
   bool have_non_touch_inputs_{};

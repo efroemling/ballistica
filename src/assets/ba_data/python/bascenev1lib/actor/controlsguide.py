@@ -2,11 +2,10 @@
 #
 """Defines Actors related to controls guides."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import _commonassets, builtinassets, classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -74,8 +73,8 @@ class ControlsGuide(bs.Actor):
                 position[1] + 139.0 * scale,
             )
             clr = (1, 1, 1) if bright else (0.7, 0.7, 0.7)
-            tval = bs.Lstr(
-                value='${A}:', subs=[('${A}', bs.Lstr(resource='controlsText'))]
+            tval = _commonassets.strings.compose.heading_suffix(
+                main=classicassets.strings.help.controls
             )
             self._title_text = bs.newnode(
                 'text',
@@ -98,7 +97,7 @@ class ControlsGuide(bs.Actor):
         self._jump_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('buttonJump'),
+                'texture': classicassets.textures.button_jump.get(),
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,
@@ -126,7 +125,7 @@ class ControlsGuide(bs.Actor):
         self._punch_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('buttonPunch'),
+                'texture': classicassets.textures.button_punch.get(),
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,
@@ -154,7 +153,7 @@ class ControlsGuide(bs.Actor):
         self._bomb_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('buttonBomb'),
+                'texture': classicassets.textures.button_bomb.get(),
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,
@@ -182,7 +181,7 @@ class ControlsGuide(bs.Actor):
         self._pickup_image = bs.newnode(
             'image',
             attrs={
-                'texture': bs.gettexture('buttonPickUp'),
+                'texture': classicassets.textures.button_pick_up.get(),
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,
@@ -276,7 +275,9 @@ class ControlsGuide(bs.Actor):
         )
         # -1 means unset; let's show that.
         if button == -1:
-            return bs.Lstr(resource='configGamepadWindow.unsetText').evaluate()
+            return (
+                classicassets.strings.settings.controllers.gamepad.unset
+            ).evaluate()
         return device.get_button_name(button).evaluate()
 
     def _start_updating(self) -> None:
@@ -449,21 +450,10 @@ class ControlsGuide(bs.Actor):
                 bomb_button_names.add('B')
                 pickup_button_names.add('Y')
 
-        run_text = bs.Lstr(
-            value='${R}: ${B}',
-            subs=[
-                ('${R}', bs.Lstr(resource='runText')),
-                (
-                    '${B}',
-                    bs.Lstr(
-                        resource=(
-                            'holdAnyKeyText'
-                            if all_keyboards
-                            else 'holdAnyButtonText'
-                        )
-                    ),
-                ),
-            ],
+        run_text: bs.LangStr = (
+            classicassets.strings.controls.run_hold_any_key
+            if all_keyboards
+            else classicassets.strings.controls.run_hold_any_button
         )
 
         # If we're all keyboards, lets show move keys too.
@@ -478,16 +468,14 @@ class ControlsGuide(bs.Actor):
             down_text = list(down_button_names)[0]
             left_text = list(left_button_names)[0]
             right_text = list(right_button_names)[0]
-            run_text = bs.Lstr(
-                value='${M}: ${U}, ${L}, ${D}, ${R}\n${RUN}',
-                subs=[
-                    ('${M}', bs.Lstr(resource='moveText')),
-                    ('${U}', up_text),
-                    ('${L}', left_text),
-                    ('${D}', down_text),
-                    ('${R}', right_text),
-                    ('${RUN}', run_text),
-                ],
+            run_text = _commonassets.strings.compose.line_pair(
+                first=classicassets.strings.controls.move_directions(
+                    up=up_text,
+                    left=left_text,
+                    down=down_text,
+                    right=right_text,
+                ),
+                second=run_text,
             )
 
         if self._force_hide_button_names:
@@ -497,11 +485,10 @@ class ControlsGuide(bs.Actor):
             pickup_button_names.clear()
 
         self._run_text.text = run_text
-        w_text: bs.Lstr | str
+        w_text: bs.Lstr | bs.LangStr | str
         if only_remote and self._lifespan is None:
-            w_text = bs.Lstr(
-                resource='fireTVRemoteWarningText',
-                subs=[('${REMOTE_APP_NAME}', bs.get_remote_app_name())],
+            w_text = classicassets.strings.controls.fire_tv_remote_warning(
+                remote_app_name=(builtinassets.strings.ui.remote_app_name)
             )
         else:
             w_text = ''

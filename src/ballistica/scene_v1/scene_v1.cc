@@ -49,7 +49,7 @@ void SceneV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_core == nullptr);
   g_core = core::CoreFeatureSet::Import();
 
-  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "_bascenev1 exec begin");
 
   // Create our feature-set's C++ front-end.
@@ -70,7 +70,7 @@ void SceneV1FeatureSet::OnModuleExec(PyObject* module) {
   assert(g_base == nullptr);
   g_base = base::BaseFeatureSet::Import();
 
-  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kInfo,
+  g_core->logging->Log(LogName::kBaLifecycle, LogLevel::kDebug,
                        "_bascenev1 exec end");
 }
 
@@ -103,6 +103,7 @@ SceneV1FeatureSet::SceneV1FeatureSet()
 
   int next_type_id{};
   for (auto* t : init_node_types) {
+    t->FinalizeAttrIndices();
     node_types_[t->name()] = t;
     node_types_by_id_[next_type_id] = t;
     t->set_id(next_type_id++);

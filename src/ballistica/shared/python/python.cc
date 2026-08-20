@@ -4,8 +4,10 @@
 
 #include <Python.h>
 
+#include <climits>
 #include <list>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "ballistica/core/core.h"
@@ -159,9 +161,51 @@ auto GetIntT(PyObject* o) -> T {
   // overhead in other cases.
   if (PyNumber_Check(o)) {
     if (PyObject* f = PyNumber_Long(o)) {
-      auto val{static_cast_check_fit<T>(PyLong_AS_LONG(f))};
-      Py_DECREF(f);
-      return val;
+      // Note the deliberate use of the ...AndOverflow form rather than
+      // PyLong_AS_LONG. Python ints are arbitrary precision, so the value
+      // here may not fit anything; that form reports it via an out-param
+      // WITHOUT setting a Python error, which is what lets us translate
+      // cleanly into C++ exception land.
+      //
+      // The obvious-looking PyLong_AS_LONG is a trap on both counts. It
+      // is an alias for PyLong_AsLong, which on overflow sets
+      // OverflowError and returns -1 -- so the old code here returned a
+      // plausible-looking -1 and left a stray Python error behind, which
+      // CPython then reported as a baffling SystemError at whatever ran
+      // next. And it yields a `long`, which is only 32 bits on Windows,
+      // so GetInt64 could not actually retrieve 64-bit values there.
+      // Range-checks below are explicit rather than leaning on
+      // static_cast_check_fit, whose assert is debug-only -- that would
+      // let a caller's out-of-range value fire an engine assert on one
+      // build and silently truncate on another.
+      if constexpr (std::is_unsigned_v<T>) {
+        // Unsigned targets read through the unsigned API for two
+        // reasons: it keeps the top half of the range reachable (a
+        // signed read rejects anything at or above 2^63), and it
+        // rejects negatives up front. A fit-check alone would not catch
+        // a negative, since -1 round-trips through an unsigned type
+        // unchanged and would sail through as a huge positive.
+        auto raw = PyLong_AsUnsignedLongLong(f);
+        Py_DECREF(f);
+        // Note the error check: ULLONG_MAX is a legitimate value, and
+        // the sentinel for failure, so only the error state tells them
+        // apart.
+        auto failed = (raw == ULLONG_MAX && PyErr_Occurred());
+        if (!failed && check_static_cast_fit<T>(raw)) {
+          return static_cast<T>(raw);
+        }
+      } else {
+        int overflow{};
+        auto raw = PyLong_AsLongLongAndOverflow(f, &overflow);
+        Py_DECREF(f);
+        if (overflow == 0 && !PyErr_Occurred()
+            && check_static_cast_fit<T>(raw)) {
+          return static_cast<T>(raw);
+        }
+      }
+      PyErr_Clear();
+      throw Exception("Int value out of range: " + Python::ObjToString(o) + ".",
+                      PyExcType::kValue);
     }
   }
 
@@ -177,6 +221,23 @@ auto GetIntT(PyObject* o) -> T {
 auto Python::GetInt64(PyObject* o) -> int64_t { return GetIntT<int64_t>(o); }
 
 auto Python::GetInt(PyObject* o) -> int { return GetIntT<int>(o); }
+
+auto Python::GetInt32(PyObject* o) -> int32_t { return GetIntT<int32_t>(o); }
+
+auto Python::GetInt16(PyObject* o) -> int16_t { return GetIntT<int16_t>(o); }
+
+auto Python::GetInt8(PyObject* o) -> int8_t { return GetIntT<int8_t>(o); }
+
+auto Python::IntFromDouble(double val) -> int {
+  if (!std::isfinite(val)
+      || val < static_cast<double>(std::numeric_limits<int>::lowest())
+      || val > static_cast<double>(std::numeric_limits<int>::max())) {
+    throw Exception(
+        "Float value out of int range: " + std::to_string(val) + ".",
+        PyExcType::kValue);
+  }
+  return static_cast<int>(val);
+}
 
 auto Python::GetBool(PyObject* o) -> bool {
   assert(HaveGIL());
@@ -194,9 +255,17 @@ auto Python::GetBool(PyObject* o) -> bool {
   }
   if (PyNumber_Check(o)) {
     if (PyObject* o2 = PyNumber_Long(o)) {
-      auto val = PyLong_AS_LONG(o2);
+      // Test truthiness directly rather than pulling out a C value and
+      // comparing it to zero. Python ints are arbitrary precision, so
+      // extracting one via PyLong_AS_LONG sets OverflowError and returns
+      // -1 for anything large -- which happens to give the right answer
+      // here (-1 != 0) while leaving a stray Python error behind for
+      // something unrelated to trip over later.
+      auto truthy = PyObject_IsTrue(o2);
       Py_DECREF(o2);
-      return (val != 0);
+      if (truthy != -1) {
+        return truthy != 0;
+      }
     }
   }
 
@@ -453,9 +522,34 @@ void Python::MarkReachedEndOfModule(PyObject* module) {
   BA_PRECONDITION_FATAL(result == 0);
 }
 
+#if BA_DEBUG_BUILD
+// Thread-local depth of "no-GIL-block" leaf locks held by this thread (e.g.
+// Asset locks). See Asset's lock-ordering invariant. Checked when a
+// ScopedInterpreterLock acquires the GIL.
+static thread_local int g_no_gil_lock_depth{};
+void Python::PushNoGilLockZone() { g_no_gil_lock_depth++; }
+void Python::PopNoGilLockZone() {
+  g_no_gil_lock_depth--;
+  assert(g_no_gil_lock_depth >= 0);
+}
+#endif  // BA_DEBUG_BUILD
+
 class Python::ScopedInterpreterLock::Impl {
  public:
   Impl() {
+#if BA_DEBUG_BUILD
+    // Lock-ordering guard: blocking to acquire the GIL while holding a leaf
+    // lock the GIL must order after (e.g. an Asset lock) can deadlock against
+    // the logic thread (which holds the GIL and may block on that same lock).
+    // Re-acquiring the GIL when we already hold it is reentrant and safe, so
+    // only flag the case where we would actually block. See Asset's invariant.
+    if (g_no_gil_lock_depth > 0 && !static_cast<bool>(PyGILState_Check())) {
+      FatalError(
+          "Acquiring the GIL while holding a no-GIL lock (e.g. an Asset lock) "
+          "without already holding the GIL; this risks deadlock. See Asset's "
+          "lock-ordering invariant (asset.h).");
+    }
+#endif  // BA_DEBUG_BUILD
     // Grab the python GIL.
     gil_state_ = PyGILState_Ensure();
   }

@@ -2,8 +2,6 @@
 #
 """Functionality related to team games."""
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING, override
 
@@ -145,6 +143,11 @@ class TeamGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         (for results without a single most-important winner).
         """
         # pylint: disable=arguments-renamed
+        # Safe up-call: bascenev1 is fully imported by the time
+        # this runs; the cycle pylint sees is structural only.
+        # pylint: disable-next=cyclic-import
+        from bascenev1 import classicassets
+
         from bascenev1._coopsession import CoopSession
         from bascenev1._multiteamsession import MultiTeamSession
 
@@ -178,5 +181,7 @@ class TeamGameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                 delay = 0.0
             else:
                 delay = 2.0
-                _bascenev1.timer(0.1, _bascenev1.getsound('boxingBell').play)
+                _bascenev1.timer(
+                    0.1, classicassets.audio.boxing_bell.get().play
+                )
             super().end(results, delay=delay, force=force)

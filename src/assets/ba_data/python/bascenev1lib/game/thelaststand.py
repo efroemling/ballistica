@@ -2,14 +2,14 @@
 #
 """Defines the last stand minigame."""
 
-from __future__ import annotations
-
 import random
 import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
+from bascenev1 import classicassets
+from bascenev1 import builtinassets
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.bomb import TNTSpawner
@@ -60,10 +60,6 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
 
     name = 'The Last Stand'
     description = 'Final glorious epic slow motion battle to the death.'
-    tips = [
-        'This level never ends, but a high score here\n'
-        'will earn you eternal respect throughout the world.'
-    ]
 
     # Show messages when players die since it matters here.
     announce_player_deaths = True
@@ -76,9 +72,15 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
     def __init__(self, settings: dict):
         settings['map'] = 'Rampage'
         super().__init__(settings)
-        self._new_wave_sound = bs.getsound('scoreHit01')
-        self._winsound = bs.getsound('score')
-        self._cashregistersound = bs.getsound('cashRegister')
+
+        # Set here rather than as a class attribute: string accessors
+        # are gated until construct-mode hands off, and class bodies
+        # run at import.
+        self.tips = [classicassets.strings.tips.endless_high_score]
+
+        self._new_wave_sound = classicassets.audio.score_hit01.get()
+        self._winsound = classicassets.audio.score.get()
+        self._cashregistersound = builtinassets.audio.cash_register.get()
         self._spawn_center = (0, 5.5, -4.14)
         self._tntspawnpos = (0, 5.5, -6)
         self._powerup_center = (0, 7, -4.14)
@@ -88,8 +90,8 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
         self._scoreboard: Scoreboard | None = None
         self._score = 0
         self._bots = SpazBotSet()
-        self._dingsound = bs.getsound('dingSmall')
-        self._dingsoundhigh = bs.getsound('dingSmallHigh')
+        self._dingsound = classicassets.audio.ding_small.get()
+        self._dingsoundhigh = classicassets.audio.ding_small_high.get()
         self._tntspawner: TNTSpawner | None = None
         self._bot_update_interval: float | None = None
         self._bot_update_timer: bs.Timer | None = None
@@ -118,7 +120,7 @@ class TheLastStandGame(bs.CoopGameActivity[Player, Team]):
         super().on_transition_in()
         bs.timer(1.3, self._new_wave_sound.play)
         self._scoreboard = Scoreboard(
-            label=bs.Lstr(resource='scoreText'), score_split=0.5
+            label=classicassets.strings.game.score, score_split=0.5
         )
 
     @override

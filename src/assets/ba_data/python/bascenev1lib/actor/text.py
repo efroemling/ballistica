@@ -2,8 +2,6 @@
 #
 """Defines Actor(s)."""
 
-from __future__ import annotations
-
 from enum import Enum
 from typing import TYPE_CHECKING, override
 
@@ -55,7 +53,7 @@ class Text(bs.Actor):
 
     def __init__(
         self,
-        text: str | bs.Lstr,
+        text: str | bs.Lstr | bs.LangStr,
         *,
         position: tuple[float, float] = (0.0, 0.0),
         h_align: HAlign = HAlign.LEFT,

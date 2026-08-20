@@ -3,13 +3,18 @@
 #ifndef BALLISTICA_BASE_UI_UI_H_
 #define BALLISTICA_BASE_UI_UI_H_
 
+#include <atomic>
 #include <list>
+#include <map>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/ui/widget_message.h"
+#include "ballistica/core/support/base_soft.h"
+#include "ballistica/shared/math/rect.h"
 #include "ballistica/shared/math/vector4f.h"
 
 namespace ballistica::base {
@@ -56,6 +61,19 @@ class UI {
   /// menu screens to get into a game or a menu brought up within a game
   /// allowing exiting or tweaking settings.
   auto IsMainUIVisible() const -> bool;
+
+  /// Thread-safe snapshot of whether a back/menu press would navigate
+  /// within the game rather than doing nothing at the top level,
+  /// refreshed each display step. Exists for platforms that must decide
+  /// synchronously, off the logic thread, whether to swallow the OS's
+  /// own back/menu handling (tvOS's menu button, which exits the app if
+  /// nothing in the responder chain consumes it, with no programmatic
+  /// way to exit later). Being a snapshot, it can lag by a frame; a
+  /// wrong answer costs one press, so don't build anything on it that
+  /// needs to be exact.
+  auto BackPressWouldNavigateSnapshot() const -> bool {
+    return back_press_would_navigate_.load(std::memory_order_relaxed);
+  }
 
   /// Request invocation a main ui on the behalf of the provided device (or
   /// nullptr if none). Must be called from the logic thread. May have no
@@ -104,6 +122,24 @@ class UI {
   /// Draw regular UI.
   void Draw(FrameDef* frame_def);
 
+  /// Draw any active SimpleDialogs (over all game/UI but under the dev
+  /// console).
+  void DrawSimpleDialogs(FrameDef* frame_def);
+
+  /// SimpleDialog management (dialogs are addressed by integer id from
+  /// Python; see ``_babase.simpledialog_*`` / ``babase.SimpleDialog``).
+  /// CreateSimpleDialog returns the new dialog's id.
+  auto CreateSimpleDialog() -> int;
+  void SetSimpleDialogState(int id, const std::string& title,
+                            const std::string& message, float progress,
+                            const std::string& button_label);
+  void DismissSimpleDialog(int id);
+
+  /// Whether a (modal) SimpleDialog is currently up. While true, input
+  /// handlers should treat it as modal -- swallow input rather than letting
+  /// it reach the UI/game underneath (e.g. don't summon the main UI).
+  auto HasModalSimpleDialog() const -> bool { return !simple_dialogs_.empty(); }
+
   /// Draw dev UI on top.
   void DrawDev(FrameDef* frame_def);
 
@@ -126,6 +162,32 @@ class UI {
   /// directly instead of popping up string edit dialogs.
   auto UIHasDirectKeyboardInput() const -> bool;
 
+  /// Sources for ReportTextEditing(). When multiple sources report in a
+  /// single frame, the highest value wins (the dev console sits above
+  /// bauiv1 and intercepts text input first, so it takes precedence).
+  enum class TextEditSource : uint8_t { kWidget, kDevConsole };
+
+  /// Should be called each frame during drawing by anything actively
+  /// accepting direct inline text editing (i.e. drawing a flashing
+  /// carat). The rect is the on-screen area of the text being edited, in
+  /// virtual coords. Text-editing begin/end is derived from these
+  /// reports appearing/disappearing across frames (see
+  /// ProcessTextEditReports).
+  void ReportTextEditing(const Rect& rect_virtual, TextEditSource source);
+
+  /// Called at the end of each frame build; diffs this frame's
+  /// text-editing reports against the previous frame's and informs the
+  /// app-adapter of begin/end/rect-change (so OS IME machinery/etc. can
+  /// be kept in sync).
+  void ProcessTextEditReports(FrameDef* frame_def);
+
+  /// Whether a text-edit session is currently active (something is
+  /// accepting direct inline text editing; see ReportTextEditing).
+  auto text_editing_active() const -> bool {
+    assert(g_base->InLogicThread());
+    return text_edit_active_;
+  }
+
   /// Return whether currently selected widgets should flash. This will be
   /// false in some situations such as when only touch screen control is
   /// present.
@@ -139,8 +201,7 @@ class UI {
 
   auto* dev_console() const { return dev_console_; }
 
-  void PushDevConsolePrintCall(std::string_view msg, float scale,
-                               Vector4f color);
+  void PushDevConsolePrintCall(std::vector<core::DevConsolePrintEntry> entries);
 
   auto* delegate() const { return delegate_; }
 
@@ -178,16 +239,32 @@ class UI {
   auto InDevConsoleButton_(float x, float y) const -> bool;
   void DrawDevConsoleButton_(FrameDef* frame_def);
 
+  /// If a button-bearing SimpleDialog is active, fire its button and return
+  /// true (consuming the event). Routes OK/confirm from keyboard/controllers/
+  /// remotes (which funnel through SendWidgetMessage) to the dialog.
+  auto HandleSimpleDialogActivate_() -> bool;
+  void DispatchSimpleDialogButton_(int id, const char* source);
+
   Object::Ref<TextGroup> dev_console_button_txt_;
   Object::WeakRef<InputDevice> main_ui_input_device_;
   std::string account_state_name_;
   OperationContext* operation_context_{};
   base::UIDelegateInterface* delegate_{};
   DevConsole* dev_console_{};
+  std::map<int, std::unique_ptr<SimpleDialog>> simple_dialogs_;
+  int next_simple_dialog_id_{1};
   std::list<std::tuple<std::string, float, Vector4f>>
       dev_console_startup_messages_;
   millisecs_t last_main_ui_input_device_use_time_{};
   millisecs_t last_widget_input_reject_err_sound_time_{};
+  Rect text_edit_rect_{};
+  Rect text_edit_rect_norm_prev_{};
+  seconds_t text_edit_flap_window_start_{};
+  int text_edit_flap_count_{};
+  TextEditSource text_edit_source_{};
+  std::atomic<bool> back_press_would_navigate_{};
+  bool text_edit_reported_{};
+  bool text_edit_active_{};
   UIScale uiscale_{UIScale::kLarge};
   int squad_size_label_{};
   bool touch_mode_{};

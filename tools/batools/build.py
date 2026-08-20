@@ -2,8 +2,6 @@
 #
 """General functionality related to running builds."""
 
-from __future__ import annotations
-
 import os
 import sys
 import socket
@@ -123,17 +121,19 @@ class LazyBuildCategory(Enum):
 
     RESOURCES = 'resources_src'
     ASSETS = 'assets_src'
-    META = 'meta_src'
+    CODEGEN = 'codegen_src'
     CMAKE = 'cmake_src'
     WIN = 'win_src'
     DUMMYMODULES = 'dummymodules_src'
+    VANILLA_COMPLETIONS = 'vanilla_completions_src'
+    CHECK_ENVIRONMENT = 'check_environment_src'
 
 
 def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
     """Run some lazybuild presets."""
 
-    # Meta builds.
-    if category is LazyBuildCategory.META:
+    # Codegen builds.
+    if category is LazyBuildCategory.CODEGEN:
         LazyBuildContext(
             target=target,
             command=command,
@@ -141,17 +141,17 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             # away, its not safe to have multiple builds going with it
             # at once.
             buildlockname=category.value,
-            # Regular paths; changes to these will trigger meta build.
+            # Regular paths; changes to these will trigger codegen build.
             srcpaths=[
                 'Makefile',
-                'src/meta',
+                'src/codegen',
                 'src/ballistica/shared/ballistica.h',
                 '.efrocachemap',
             ],
-            # Our meta Makefile targets generally don't list tools
+            # Our codegen Makefile targets generally don't list tools
             # scripts that can affect their creation as sources, so
             # let's set up a catch-all here: when any of our tools stuff
-            # changes we'll blow away all existing meta builds.
+            # changes we'll blow away all existing codegen builds.
             #
             # Update: also including featureset-defs here; any time
             # we're mucking with those it's good to start things fresh
@@ -161,13 +161,13 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'tools/efrotoolsinternal',
                 'tools/batools',
                 'tools/batoolsinternal',
-                'config/featuresets',
+                'pconfig/featuresets',
             ],
             # Maintain a hash of all srcpaths and do a full-clean
             # whenever that changes. Takes care of orphaned files if a
             # featureset is removed/etc.
             manifest_file=f'.cache/lazybuild/manifest_{category.value}',
-            command_fullclean='make meta-clean',
+            command_fullclean='make codegen-clean',
         ).run()
 
     # CMake builds.
@@ -188,7 +188,8 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             ],
             dirfilter=(
                 lambda root, dirname: not (
-                    root == 'src' and dirname in {'meta', 'tools', 'external'}
+                    root == 'src'
+                    and dirname in {'codegen', 'tools', 'external'}
                 )
             ),
             command=command,
@@ -198,7 +199,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
     elif category is LazyBuildCategory.WIN:
 
         def _win_dirfilter(root: str, dirname: str) -> bool:
-            if root == 'src' and dirname in {'meta', 'tools'}:
+            if root == 'src' and dirname in {'codegen', 'tools'}:
                 return False
             if root == 'src/external' and dirname != 'windows':
                 return False
@@ -257,17 +258,37 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
                 'tools',
                 'src/assets',
                 '.efrocachemap',
-                # Needed to rebuild on asset-package changes.
-                'config/projectconfig.json',
+                # Needed to rebuild on asset-bundle apversion
+                # changes ("assets" field). projectconfig is the
+                # single source of truth post-migration; any
+                # change here flows through to bundle-manifest
+                # rules that depend on it directly.
+                'pconfig/projectconfig.json',
             ],
-            # This file won't exist if we are using a dev asset-package,
-            # in which case we want to always run so we can ask the
-            # server for package updates each time.
-            srcpaths_exist=[
-                '.cache/asset_package_resolved',
-            ],
+            # The asset bundle under .cache/asset_bundle is an OUTPUT of
+            # this build, and lazybuild otherwise keys only on input
+            # srcpaths (by mtime, which can't even see a deletion) -- so
+            # blowing it away (e.g. a manual `rm -rf .cache/asset_bundle`)
+            # wouldn't re-trigger the build: the inner Makefile bundle rule
+            # that regenerates the manifests never runs, and staging then
+            # dies on the missing manifest. srcpaths_exist rebuilds when a
+            # listed path is gone; point it at the dir itself rather than
+            # enumerating each profile's manifest, so it guards the `rm -rf`
+            # case without needing updates as new bundle profiles are added,
+            # and -- since the dir exists as long as ANY profile is built --
+            # it doesn't spuriously re-trigger a single-variant build whose
+            # sibling profile was never built.
+            srcpaths_exist=['.cache/asset_bundle'],
             command=command,
             filefilter=_filefilter,
+            # Force a rebuild when re-fetching bundled assets: a
+            # server-side recipe/pipeline-version bump changes the built
+            # output without touching any local input the source-hashing
+            # sees, so without this the whole assets sub-build is skipped
+            # before the Makefile bundle rule (and asset_bundle_build's own
+            # early-out, also keyed on this var) ever run. See the
+            # BA_ASSET_BUNDLE_FORCE_REFETCH note in the /baclient skill.
+            force=os.environ.get('BA_ASSET_BUNDLE_FORCE_REFETCH') == '1',
         )
 
         # TEMP HACK - rebuild with any src-master assets change on my
@@ -301,7 +322,7 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             # definitely want to restrict to one at a time.
             buildlockname=category.value,
             srcpaths=[
-                'config/featuresets',
+                'pconfig/featuresets',
                 'tools/batools/dummymodule.py',
                 'src/ballistica',
                 '.efrocachemap',
@@ -313,6 +334,39 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             # featureset is removed/etc.
             manifest_file=f'.cache/lazybuild/manifest_{category.value}',
             command_fullclean='make dummymodules-clean',
+        ).run()
+
+    # Vanilla completions: introspect the runtime Python tree against
+    # the dummy modules and dump a JSON completion index. Inputs are
+    # the runtime Python sources plus the generator script; the
+    # dummymodules dep handled at Make level since DUMMYMODULES has
+    # its own srcpath set.
+    elif category is LazyBuildCategory.VANILLA_COMPLETIONS:
+        LazyBuildContext(
+            target=target,
+            buildlockname=category.value,
+            srcpaths=[
+                'src/assets/ba_data/python',
+                'tools/batools/vanillacompletions.py',
+            ],
+            command=command,
+        ).run()
+
+    elif category is LazyBuildCategory.CHECK_ENVIRONMENT:
+        LazyBuildContext(
+            target=target,
+            buildlockname=category.value,
+            srcpaths=[
+                'src/assets/ba_data/python',
+                'build/dummymodules',
+                'tools/efro',
+                'tools/efrotools',
+                'tools/bacommon',
+                'tools/batools/checkenvironment.py',
+                'pconfig/toolconfigsrc/mypy.ini',
+                'pconfig/toolconfigsrc/pylintrc',
+            ],
+            command=command,
         ).run()
 
     else:
@@ -349,8 +403,15 @@ def archive_old_builds(
     # this works.
     for fname in sorted(files_to_archive):
         print('Archiving ' + fname, file=sys.stderr)
+        # Concurrent publish jobs (push-all-servers /
+        # push-all-test-packages) can race to archive the same file
+        # between our ls above and this mv; a vanished source means
+        # the other job got it first, which is fine — only fail if
+        # the mv failed with the source still present.
+        src = builds_dir + '/' + fname
         ssh_run(
-            'mv "' + builds_dir + '/' + fname + '" "' + builds_dir + '/old/"'
+            'mv "' + src + '" "' + builds_dir + '/old/"'
+            ' || [ ! -e "' + src + '" ]'
         )
 
 
@@ -468,17 +529,21 @@ def checkenv() -> None:
             'clang-format is required; please install it via apt, brew, etc.'
         )
 
-    # Make sure they've got pip for that python version.
+    # Make sure they've got uv on PATH (we use it to manage venvs and
+    # install packages; ``make env`` will fail without it). Historically
+    # this checked for ``pip`` inside the venv, but since switching to
+    # uv-built venvs that no longer holds — uv doesn't seed pip into
+    # venvs by default and we drive installs via ``uv pip install``.
     if (
         subprocess.run(
-            [sys.executable, '-m', 'pip', '--version'],
-            check=False,
-            capture_output=True,
+            ['uv', '--version'], check=False, capture_output=True
         ).returncode
         != 0
     ):
         raise CleanError(
-            f'pip (for {sys.executable}) is required; please install it.'
+            'uv is required; please install it'
+            ' (https://docs.astral.sh/uv/, brew install uv, or'
+            ' curl -LsSf https://astral.sh/uv/install.sh | sh).'
         )
 
     print(f'{Clr.BLD}Environment ok.{Clr.RST}', flush=True)
@@ -526,13 +591,14 @@ def _get_server_config_template_toml(projroot: str) -> str:
     cfg.unclean_exit_minutes = 90
     cfg.idle_exit_minutes = 20
     cfg.admins = ['a-YOUR-ID-HERE', 'a-ANOTHER-ID-HERE']
-    cfg.protocol_version = 37
+    cfg.protocol_version = 38
     cfg.session_max_players_override = 8
     cfg.playlist_inline = []
     cfg.team_names = ('Red', 'Blue')
     cfg.team_colors = ((0.1, 0.25, 1.0), (1.0, 0.25, 0.2))
     cfg.public_ipv4_address = '123.123.123.123'
     cfg.public_ipv6_address = '123A::A123:23A1:A312:12A3:A213:2A13'
+    cfg.password = 'changeme'
     cfg.log_levels = {'ba.lifecycle': 'INFO', 'ba.assets': 'INFO'}
 
     lines_in = _get_server_config_raw_contents(projroot).splitlines()
@@ -653,7 +719,7 @@ def cmake_prep_dir(dirname: str, verbose: bool = False) -> None:
     # away all cmake builds everywhere (to keep things clean if we
     # rename or move something in the build dir or if we change
     # something cmake doesn't properly handle without a fresh start).
-    entries: list[Entry] = [Entry('explicit cmake rebuild', '4')]
+    entries: list[Entry] = [Entry('explicit cmake rebuild', '5')]
 
     # Start fresh if cmake version changes.
     cmake_ver_output = subprocess.run(

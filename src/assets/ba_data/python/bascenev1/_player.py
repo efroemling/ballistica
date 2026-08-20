@@ -2,11 +2,9 @@
 #
 """Player related functionality."""
 
-from __future__ import annotations
-
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 import babase
 
@@ -17,6 +15,20 @@ if TYPE_CHECKING:
     from typing import Sequence, Any, Callable
 
     import bascenev1
+
+
+#: What happened, for :meth:`bascenev1.Player.send_feedback`. A haptic
+#: request names an event rather than a sensation; each platform decides
+#: how strong and how long that should feel, and may render nothing at
+#: all for one its hardware cannot represent well.
+type FeedbackEvent = Literal[
+    'join',
+    'collect',
+    'grab',
+    'impact_dealt',
+    'impact_received',
+    'death',
+]
 
 
 @dataclass
@@ -267,6 +279,23 @@ class Player[TeamT]:
         assert self._postinited
         assert not self._expired
         self._sessionplayer.resetinput()
+
+    def send_feedback(
+        self, *, event: FeedbackEvent = 'impact_received'
+    ) -> None:
+        """
+        Request physical feedback (controller rumble, device vibration)
+        for whoever is controlling this player.
+
+        ``event`` says what happened; each platform decides how strong
+        and how long that should feel, so there is deliberately nothing
+        else to pass. Note a device may render nothing at all for an
+        event its hardware cannot represent well, so don't rely on any
+        particular one always being felt.
+        """
+        assert self._postinited
+        assert not self._expired
+        self._sessionplayer.send_feedback(event=event)
 
     def __bool__(self) -> bool:
         return self.exists()

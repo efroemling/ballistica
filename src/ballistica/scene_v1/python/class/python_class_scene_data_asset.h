@@ -3,32 +3,30 @@
 #ifndef BALLISTICA_SCENE_V1_PYTHON_CLASS_PYTHON_CLASS_SCENE_DATA_ASSET_H_
 #define BALLISTICA_SCENE_V1_PYTHON_CLASS_PYTHON_CLASS_SCENE_DATA_ASSET_H_
 
-#include "ballistica/scene_v1/scene_v1.h"
-#include "ballistica/shared/foundation/object.h"
-#include "ballistica/shared/python/python_class.h"
+#include "ballistica/base/python/class/python_class_asset_ref.h"
+#include "ballistica/scene_v1/assets/scene_data_asset.h"
 
 namespace ballistica::scene_v1 {
 
-class PythonClassSceneDataAsset : public PythonClass {
+class PythonClassSceneDataAsset
+    : public base::PythonClassAssetRef<PythonClassSceneDataAsset,
+                                       SceneDataAsset> {
  public:
-  static auto type_name() -> const char*;
-  static PyTypeObject type_obj;
-  static auto tp_repr(PythonClassSceneDataAsset* self) -> PyObject*;
-  static void SetupType(PyTypeObject* cls);
-  static auto Create(SceneDataAsset* data) -> PyObject*;
-  static auto Check(PyObject* o) -> bool {
-    return PyObject_TypeCheck(o, &type_obj);
+  static auto type_name() -> const char* { return "Data"; }
+  static constexpr const char* kTpName = "bascenev1.Data";
+  static constexpr const char* kTpDoc =
+      "A reference to a data object.\n"
+      "\n"
+      "Use :meth:`bascenev1.getdata()` to instantiate one.";
+  static constexpr const char* kFactoryCall = "bascenev1.getdata()";
+  static PyMethodDef tp_methods[];
+
+  auto GetData(bool doraise = true) const -> SceneDataAsset* {
+    return GetAsset(doraise);
   }
-  auto GetData(bool doraise = true) const -> SceneDataAsset*;
 
  private:
-  static PyMethodDef tp_methods[];
   static auto GetValue(PythonClassSceneDataAsset* self) -> PyObject*;
-  static auto tp_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
-      -> PyObject*;
-  static void tp_dealloc(PythonClassSceneDataAsset* self);
-  static bool s_create_empty_;
-  Object::Ref<SceneDataAsset>* data_;
 };
 
 }  // namespace ballistica::scene_v1

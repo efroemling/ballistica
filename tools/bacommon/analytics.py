@@ -2,8 +2,6 @@
 #
 """Analytics support."""
 
-from __future__ import annotations
-
 from typing import assert_never, override, Annotated
 
 from enum import Enum, unique

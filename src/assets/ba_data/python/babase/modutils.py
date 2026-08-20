@@ -2,8 +2,6 @@
 #
 """Functionality related to modding."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING
 import os
 
@@ -47,13 +45,14 @@ def get_human_readable_user_scripts_path() -> str:
 
 def _request_storage_permission() -> bool:
     """If needed, requests storage permission from the user (& return true)."""
-    from babase._language import Lstr
-    from babase._mgen.enums import Permission
+    from babase import builtinassets
+    from babase._generated.enums import Permission
 
     if not _babase.have_permission(Permission.STORAGE):
-        _babase.getsimplesound('error').play()
+        builtinassets.audio.error.get().play()
         _babase.screenmessage(
-            Lstr(resource='storagePermissionAccessText'), color=(1, 0, 0)
+            builtinassets.strings.ui.storage_permission_needed,
+            color=(1, 0, 0),
         )
         _babase.apptimer(
             1.0, lambda: _babase.request_permission(Permission.STORAGE)

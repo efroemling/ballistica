@@ -37,8 +37,19 @@ class ConnectionToClient : public Connection {
     return classic_purchases_.get();
   }
   auto build_number() const -> int { return build_number_; }
+  /// Send a screen-message. ``s`` is the legacy flat/resource-json text
+  /// every build understands; ``tagged``, when non-empty, is a lang-str
+  /// tagged wire value (see kLangStrWireTag*) shipped alongside it --
+  /// new enough clients prefer it and render in their own locale.
   void SendScreenMessage(const std::string& s, float r = 1.0f, float g = 1.0f,
-                         float b = 1.0f);
+                         float b = 1.0f,
+                         const std::string& tagged = std::string());
+
+  /// Send a post-handshake join-rejection reason CODE (a BA_REJECT_REASON_*
+  /// value) as a BA_JMESSAGE_REJECT_REASON; the joiner renders its own
+  /// localized string. Only understood by peers at or above
+  /// BA_REJECT_REASON_MIN_BUILD; gate the call on build_number().
+  void SendRejectReason(int reason);
   auto token() const -> const std::string& { return token_; }
   void HandleMasterServerClientInfo(PyObject* info_obj);
 
@@ -70,12 +81,24 @@ class ConnectionToClient : public Connection {
     return protocol_version_;
   }
 
+  /// Protocol version the client claimed in its CLIENT_REQUEST packet, or
+  /// -1 if we never saw one. Note this is client-supplied and completely
+  /// unverified (we don't gate connects on it), so treat it as a
+  /// diagnostic hint only -- it is useful mainly for telling stock
+  /// clients apart from hand-rolled ones when a join goes wrong.
+  auto client_claimed_protocol_version() const {
+    return client_claimed_protocol_version_;
+  }
+  void set_client_claimed_protocol_version(int val) {
+    client_claimed_protocol_version_ = val;
+  }
+
  private:
-  virtual auto ShouldPrintIncompatibleClientErrors() const -> bool;
   auto GetClientInputDevice(int remote_id) -> ClientInputDevice*;
   void Error(const std::string& error_msg) override;
 
   int protocol_version_;
+  int client_claimed_protocol_version_{-1};
   std::string our_handshake_player_spec_str_;
   std::string our_handshake_salt_;
   std::string peer_public_account_id_;

@@ -21,6 +21,9 @@ class CheckBoxWidget : public Widget {
   auto GetWidth() -> float override { return width_; }
   auto GetHeight() -> float override { return height_; }
   void SetText(const std::string& text);
+  /// Set a native language-string as our text (retained; re-evaluated on
+  /// language changes; see TextWidget::SetLangStr).
+  void SetLangStr(std::shared_ptr<const base::LangStr> val);
   void SetValue(bool value);
   void SetMaxWidth(float w) { text_.set_max_width(w); }
   void SetTextScale(float val) { text_.set_center_scale(val); }

@@ -2,13 +2,13 @@
 #
 """Provides a picker for characters."""
 
-from __future__ import annotations
-
 import math
 from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
+from bauiv1 import classicassets
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -61,11 +61,13 @@ class CharacterPicker(PopupWindow):
         self._spazzes = spazappearance.get_appearances()
         self._spazzes.sort()
         self._icon_textures = [
-            bui.gettexture(bui.app.classic.spaz_appearances[s].icon_texture)
+            spazappearance.ui_texture(
+                bui.app.classic.spaz_appearances[s].icon_texture
+            )
             for s in self._spazzes
         ]
         self._icon_tint_textures = [
-            bui.gettexture(
+            spazappearance.ui_texture(
                 bui.app.classic.spaz_appearances[s].icon_mask_texture
             )
             for s in self._spazzes
@@ -125,7 +127,7 @@ class CharacterPicker(PopupWindow):
             background=False,
         )
         index = 0
-        mask_texture = bui.gettexture('characterIconMask')
+        mask_texture = builtinassets.textures.character_icon_mask.get()
         for y in range(rows):
             for x in range(columns):
                 pos = (
@@ -158,8 +160,8 @@ class CharacterPicker(PopupWindow):
                         selected_child=btn,
                         visible_child=btn,
                     )
-                name = bui.Lstr(
-                    translate=('characterNames', self._spazzes[index])
+                name = spazappearance.get_appearance_display_name(
+                    self._spazzes[index], langstr=True
                 )
                 bui.textwidget(
                     parent=self._subcontainer,
@@ -180,10 +182,11 @@ class CharacterPicker(PopupWindow):
             if index >= count:
                 break
         self._get_more_characters_button = btn = bui.buttonwidget(
+            id=f'{self._idprefix}|getmorecharacters',
             parent=self._subcontainer,
             size=(self._sub_width * 0.8, 60),
             position=(self._sub_width * 0.1, 30),
-            label=bui.Lstr(resource='editProfileWindow.getMoreCharactersText'),
+            label=classicassets.strings.profile.get_more_characters,
             on_activate_call=self._on_store_press,
             color=(0.6, 0.6, 0.6),
             textcolor=(0.8, 0.8, 0.8),
@@ -219,5 +222,5 @@ class CharacterPicker(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.get().play()
         self._transition_out()

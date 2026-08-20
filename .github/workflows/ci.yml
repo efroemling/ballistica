@@ -14,21 +14,27 @@ jobs:
   # we can always add an explicit mac job later if it seems worthwhile.
 
   check_linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
         with:
           using-cmake: true
       - name: Run checks
         run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check-ex
+      - name: Verify asset-package pins are prod
+        # Defense in depth: the upstream blessing/preflight gate
+        # in ballistica-internal also refuses non-prod pins, but
+        # re-check here so a stray dev/test pin in the public
+        # tree fails CI loudly rather than shipping.
+        run: tools/pcommand assetpins assert-prod-only
 
   # Compile a server binary and run some tests.
   build_and_test_linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
         with:
@@ -36,7 +42,7 @@ jobs:
       - name: Assemble monolithic server build
         run: make cmake-server-build
       - name: Run tests
-        run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 BA_APP_RUN_BUILD_HEADLESS=1 make test-ex
+        run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make test-ex
 
   # Test spinoff projects - versions of the project with feature-sets
   # added or removed or other changes made.
@@ -44,7 +50,7 @@ jobs:
   spinoff_test_linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
         # Not using the `using-cmake: true`
@@ -62,9 +68,9 @@ jobs:
   # Make a copy of the template feature-set and build with it included.
   # Also take the opportunity to test a modular build (we did monolithic above).
   feature_set_copy_test_linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Setup build env
         uses: ./.github/actions/bombsquad_build_env
         with:
@@ -84,21 +90,29 @@ jobs:
   # significantly between windows and linux/apple. We also are able to
   # build our windows binary.
   build_and_test_windows:
-    runs-on: windows-2022
+    runs-on: windows-2025
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.13"
+          python-version: "3.14"
+      # The Windows job doesn't go through ``make env``, so it
+      # doesn't get the uv-built project venv. We still want uv
+      # available for the ad-hoc dependency install below — same
+      # action as the Linux composite, with --system installs to
+      # avoid the venv layer.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          enable-cache: true
       - name: Create tools/pcommand
         run: |
           $env:PYTHONPATH = "tools"
           python -m efrotools.genwrapper pcommand batools.pcommandmain tools/pcommand
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install pytest typing_extensions urllib3 websockets
+          uv pip install --system pytest typing_extensions urllib3 websockets
           python tools/pcommand win_ci_install_prereqs
       - name: Compile binary
         run: python tools/pcommand win_ci_binary_build

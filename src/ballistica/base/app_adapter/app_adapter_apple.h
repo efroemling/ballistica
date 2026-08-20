@@ -5,6 +5,7 @@
 
 #if BA_XCODE_BUILD
 
+#include <atomic>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -41,6 +42,23 @@ class AppAdapterApple : public AppAdapter {
   auto FullscreenControlKeyShortcut() const
       -> std::optional<std::string> override;
 
+  /// Called by FromSwift (on the main thread) when the OS reports the main
+  /// window entering/exiting fullscreen. We cache the value so the logic
+  /// thread can read it via FullscreenControlGet without a cross-thread Swift
+  /// call. Safe to call from any thread.
+  void OnFullscreenChanged(bool fullscreen);
+
+  /// Called by FromSwift (on the main thread) when input indicates whether a
+  /// pointing device (trackpad/mouse) or direct touch is currently being
+  /// used. On change, flips the UI's touch-mode on the logic thread. This is
+  /// the Apple analog of Android's PlatformAndroid::PushUsingPointingDevice_;
+  /// touch_mode == !using_pointing_device.
+  void SetUsingPointingDevice(bool pointing);
+
+  auto ApplyJoystickFeedback(JoystickInput* device, const FeedbackEvent& event)
+      -> int override;
+  void StopJoystickFeedback(JoystickInput* device) override;
+
   auto HasDirectKeyboardInput() -> bool override;
   void EnableResizeFriendlyMode(int width, int height);
 
@@ -70,6 +88,10 @@ class AppAdapterApple : public AppAdapter {
   void ReloadRenderer_(const GraphicsSettings* settings);
 
   std::thread::id graphics_thread_{};
+  std::atomic<bool> fullscreen_control_value_{false};
+  // Read+written only on the main thread (FromSwift::PushUsingPointingDevice),
+  // so a plain bool suffices. Mirrors Android's using_pointing_device_.
+  bool using_pointing_device_{};
   bool graphics_allowed_{};
   uint8_t resize_friendly_frames_{};
   Vector2f resize_target_resolution_{-1.0f, -1.0f};

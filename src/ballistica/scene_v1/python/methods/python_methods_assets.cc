@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "ballistica/base/assets/assets.h"
 #include "ballistica/scene_v1/assets/scene_collision_mesh.h"
 #include "ballistica/scene_v1/assets/scene_data_asset.h"
 #include "ballistica/scene_v1/assets/scene_mesh.h"
@@ -30,6 +31,7 @@ static auto PyGetTexture(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
+  base::Assets::FailOnAssetPackagePath(name, "gettexture");
   return SceneV1Context::Current().GetTexture(name)->NewPyRef();
   BA_PYTHON_CATCH;
 }
@@ -49,34 +51,37 @@ static PyMethodDef PyGetTextureDef = {
     "they are actually needed, giving them time to load gracefully\n"
     "in the background."};
 
-// -------------------------- get_package_texture ------------------------------
+// ------------------------------ aptextureget ---------------------------------
 
-static auto PyGetPackageTexture(PyObject* self, PyObject* args,
-                                PyObject* keywds) -> PyObject* {
+static auto PyApTextureGet(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
-  PyObject* package_obj;
-  static const char* kwlist[] = {"package", "name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Os",
-                                   const_cast<char**>(kwlist), &package_obj,
-                                   &name)) {
+  static const char* kwlist[] = {"name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
-  auto fullname =
-      g_scene_v1->python->ValidatedPackageAssetName(package_obj, name);
-  return SceneV1Context::Current().GetTexture(fullname)->NewPyRef();
+  base::Assets::FailOnNonAssetPackagePath(name, "aptextureget");
+  return SceneV1Context::Current().GetTexture(name)->NewPyRef();
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyGetPackageTextureDef = {
-    "get_package_texture",             // name
-    (PyCFunction)PyGetPackageTexture,  // method
-    METH_VARARGS | METH_KEYWORDS,      // flags
+static PyMethodDef PyApTextureGetDef = {
+    "aptextureget",                // name
+    (PyCFunction)PyApTextureGet,   // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "get_package_texture(package: bascenev1.AssetPackage, name: str) -> "
-    "bascenev1.Texture\n"
+    "aptextureget(name: str) -> bascenev1.Texture\n"
     "\n"
-    "(internal)"};
+    "Load a texture from an asset-package (internal).\n"
+    "\n"
+    "Do not call this directly; asset-package assets should be accessed\n"
+    "through their package's generated Python wrapper module, which routes\n"
+    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "asset name.\n"
+    "\n"
+    ":meta private:"};
 
 // ------------------------------- getsound ------------------------------------
 
@@ -89,6 +94,7 @@ static auto PyGetSound(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
+  base::Assets::FailOnAssetPackagePath(name, "getsound");
   return SceneV1Context::Current().GetSound(name)->NewPyRef();
   BA_PYTHON_CATCH;
 }
@@ -108,34 +114,37 @@ static PyMethodDef PyGetSoundDef = {
     "they are actually needed, giving them time to load gracefully\n"
     "in the background."};
 
-// --------------------------- get_package_sound -------------------------------
+// ------------------------------- apsoundget ----------------------------------
 
-static auto PyGetPackageSound(PyObject* self, PyObject* args, PyObject* keywds)
+static auto PyApSoundGet(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
-  PyObject* package_obj;
-  static const char* kwlist[] = {"package", "name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Os",
-                                   const_cast<char**>(kwlist), &package_obj,
-                                   &name)) {
+  static const char* kwlist[] = {"name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
-  auto fullname =
-      g_scene_v1->python->ValidatedPackageAssetName(package_obj, name);
-  return SceneV1Context::Current().GetSound(fullname)->NewPyRef();
+  base::Assets::FailOnNonAssetPackagePath(name, "apsoundget");
+  return SceneV1Context::Current().GetSound(name)->NewPyRef();
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyGetPackageSoundDef = {
-    "get_package_sound",             // name
-    (PyCFunction)PyGetPackageSound,  // method
-    METH_VARARGS | METH_KEYWORDS,    // flags
+static PyMethodDef PyApSoundGetDef = {
+    "apsoundget",                  // name
+    (PyCFunction)PyApSoundGet,     // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "get_package_sound(package: bascenev1.AssetPackage, name: str)"
-    " -> bascenev1.Sound\n"
+    "apsoundget(name: str) -> bascenev1.Sound\n"
     "\n"
-    "(internal).\n"};
+    "Load a sound from an asset-package (internal).\n"
+    "\n"
+    "Do not call this directly; asset-package assets should be accessed\n"
+    "through their package's generated Python wrapper module, which routes\n"
+    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "asset name.\n"
+    "\n"
+    ":meta private:"};
 
 // ------------------------------- getdata -------------------------------------
 
@@ -148,6 +157,7 @@ static auto PyGetData(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
+  base::Assets::FailOnAssetPackagePath(name, "getdata");
   return SceneV1Context::Current().GetData(name)->NewPyRef();
   BA_PYTHON_CATCH;
 }
@@ -167,35 +177,6 @@ static PyMethodDef PyGetDataDef = {
     "they are actually needed, giving them time to load gracefully\n"
     "in the background."};
 
-// --------------------------- get_package_data --------------------------------
-
-static auto PyGetPackageData(PyObject* self, PyObject* args, PyObject* keywds)
-    -> PyObject* {
-  BA_PYTHON_TRY;
-  const char* name;
-  PyObject* package_obj;
-  static const char* kwlist[] = {"package", "name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Os",
-                                   const_cast<char**>(kwlist), &package_obj,
-                                   &name)) {
-    return nullptr;
-  }
-  auto fullname =
-      g_scene_v1->python->ValidatedPackageAssetName(package_obj, name);
-  return SceneV1Context::Current().GetData(fullname)->NewPyRef();
-  BA_PYTHON_CATCH;
-}
-
-static PyMethodDef PyGetPackageDataDef = {
-    "get_package_data",             // name
-    (PyCFunction)PyGetPackageData,  // method
-    METH_VARARGS | METH_KEYWORDS,   // flags
-
-    "get_package_data(package: bascenev1.AssetPackage, name: str)"
-    " -> bascenev1.Data\n"
-    "\n"
-    "(internal).\n"};
-
 // -------------------------------- getmesh ------------------------------------
 
 static auto PyGetMesh(PyObject* self, PyObject* args, PyObject* keywds)
@@ -207,6 +188,7 @@ static auto PyGetMesh(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
+  base::Assets::FailOnAssetPackagePath(name, "getmesh");
   return SceneV1Context::Current().GetMesh(name)->NewPyRef();
   BA_PYTHON_CATCH;
 }
@@ -226,35 +208,37 @@ static PyMethodDef PyGetMeshDef = {
     "they are actually needed, giving them time to load gracefully\n"
     "in the background."};
 
-// ---------------------------- get_package_mesh -------------------------------
+// ------------------------------- apmeshget -----------------------------------
 
-static auto PyGetPackageMesh(PyObject* self, PyObject* args, PyObject* keywds)
+static auto PyApMeshGet(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
-  PyObject* package_obj;
-  static const char* kwlist[] = {"package", "name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Os",
-                                   const_cast<char**>(kwlist), &package_obj,
-                                   &name)) {
+  static const char* kwlist[] = {"name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
-  auto fullname =
-      g_scene_v1->python->ValidatedPackageAssetName(package_obj, name);
-  return SceneV1Context::Current().GetMesh(fullname)->NewPyRef();
+  base::Assets::FailOnNonAssetPackagePath(name, "apmeshget");
+  return SceneV1Context::Current().GetMesh(name)->NewPyRef();
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyGetPackageMeshDef = {
-    "get_package_mesh",             // name
-    (PyCFunction)PyGetPackageMesh,  // method
-
+static PyMethodDef PyApMeshGetDef = {
+    "apmeshget",                   // name
+    (PyCFunction)PyApMeshGet,      // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "get_package_mesh(package: bascenev1.AssetPackage, name: str)"
-    " -> bascenev1.Mesh\n"
+    "apmeshget(name: str) -> bascenev1.Mesh\n"
     "\n"
-    "(internal)\n"};
+    "Load a mesh from an asset-package (internal).\n"
+    "\n"
+    "Do not call this directly; asset-package assets should be accessed\n"
+    "through their package's generated Python wrapper module, which routes\n"
+    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "asset name.\n"
+    "\n"
+    ":meta private:"};
 
 // ----------------------------- getcollisionmesh ------------------------------
 
@@ -267,6 +251,7 @@ static auto PyGetCollisionMesh(PyObject* self, PyObject* args, PyObject* keywds)
                                    const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
+  base::Assets::FailOnAssetPackagePath(name, "getcollisionmesh");
   return SceneV1Context::Current().GetCollisionMesh(name)->NewPyRef();
   BA_PYTHON_CATCH;
 }
@@ -289,46 +274,45 @@ static PyMethodDef PyGetCollisionMeshDef = {
     "they are actually needed, giving them time to load gracefully\n"
     "in the background."};
 
-// ------------------------ get_package_collision_mesh -------------------------
+// --------------------------- apcollisionmeshget ------------------------------
 
-static auto PyGetPackageCollisionMesh(PyObject* self, PyObject* args,
-                                      PyObject* keywds) -> PyObject* {
+static auto PyApCollisionMeshGet(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* name;
-  PyObject* package_obj;
-  static const char* kwlist[] = {"package", "name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Os",
-                                   const_cast<char**>(kwlist), &package_obj,
-                                   &name)) {
+  static const char* kwlist[] = {"name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &name)) {
     return nullptr;
   }
-  auto fullname =
-      g_scene_v1->python->ValidatedPackageAssetName(package_obj, name);
-  return SceneV1Context::Current().GetCollisionMesh(fullname)->NewPyRef();
+  base::Assets::FailOnNonAssetPackagePath(name, "apcollisionmeshget");
+  return SceneV1Context::Current().GetCollisionMesh(name)->NewPyRef();
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyGetPackageCollisionMeshDef = {
-    "get_package_collision_mesh",            // name
-    (PyCFunction)PyGetPackageCollisionMesh,  // method
+static PyMethodDef PyApCollisionMeshGetDef = {
+    "apcollisionmeshget",               // name
+    (PyCFunction)PyApCollisionMeshGet,  // method
+    METH_VARARGS | METH_KEYWORDS,       // flags
 
-    METH_VARARGS | METH_KEYWORDS,  // flags
-
-    "get_package_collision_mesh(package: bascenev1.AssetPackage, name: "
-    "str)\n"
-    "-> bascenev1.CollisionMesh\n"
+    "apcollisionmeshget(name: str) -> bascenev1.CollisionMesh\n"
     "\n"
-    "(internal)\n"};
+    "Load a collision-mesh from an asset-package (internal).\n"
+    "\n"
+    "Do not call this directly; asset-package assets should be accessed\n"
+    "through their package's generated Python wrapper module, which routes\n"
+    "through this call. Requires a fully-qualified '<apverid>:<path>'\n"
+    "asset name.\n"
+    "\n"
+    ":meta private:"};
 
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsAssets::GetMethods() -> std::vector<PyMethodDef> {
   return {
-      PyGetCollisionMeshDef, PyGetPackageCollisionMeshDef,
-      PyGetMeshDef,          PyGetPackageMeshDef,
-      PyGetSoundDef,         PyGetPackageSoundDef,
-      PyGetDataDef,          PyGetPackageDataDef,
-      PyGetTextureDef,       PyGetPackageTextureDef,
+      PyGetCollisionMeshDef, PyGetMeshDef,    PyGetSoundDef,
+      PyGetDataDef,          PyGetTextureDef, PyApCollisionMeshGetDef,
+      PyApMeshGetDef,        PyApSoundGetDef, PyApTextureGetDef,
   };
 }
 

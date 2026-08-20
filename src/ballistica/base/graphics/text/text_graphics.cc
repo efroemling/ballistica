@@ -2,6 +2,8 @@
 
 #include "ballistica/base/graphics/text/text_graphics.h"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <list>
 #include <set>
@@ -28,6 +30,191 @@ class TextGraphics::TextSpanBoundsCacheEntry : public Object {
       map_iterator_;
   std::list<Object::Ref<TextSpanBoundsCacheEntry>>::iterator list_iterator_;
 };
+
+// Tight alpha bounding box of each big-font glyph's ink on the legacy
+// 8x8 sheet layout, in absolute normalized texture uv (v-down). The
+// sheet-layout metrics built in the constructor define where each
+// glyph's quad lands on screen; these bounds are what let those quads
+// be tightened to the ink (dropping transparent margin) before being
+// retargeted at the packed atlas. Measured from the (pre-packing)
+// 4096x4096 sheet source at alpha>4; the ink is crisp enough that
+// these barely move between alpha thresholds 1 and 128. Slots 45-63 of
+// the 8x8 sheet are unused (all-empty).
+struct BigGlyphInkBounds {
+  float u_min;
+  float u_max;
+  float v_min;
+  float v_max;
+};
+const BigGlyphInkBounds kBigGlyphInkBounds[64] = {
+    {0.010498f, 0.087646f, 0.000000f, 0.114746f},  // 0
+    {0.157471f, 0.209961f, 0.009277f, 0.113525f},  // 1
+    {0.281006f, 0.333740f, 0.003906f, 0.116211f},  // 2
+    {0.406494f, 0.459961f, 0.007568f, 0.112549f},  // 3
+    {0.532715f, 0.571533f, 0.007080f, 0.109863f},  // 4
+    {0.659424f, 0.696289f, 0.007080f, 0.111816f},  // 5
+    {0.784668f, 0.835938f, 0.008545f, 0.110596f},  // 6
+    {0.908447f, 0.958740f, 0.008057f, 0.111084f},  // 7
+    {0.032471f, 0.057373f, 0.127197f, 0.233154f},  // 8
+    {0.155762f, 0.203613f, 0.133057f, 0.234863f},  // 9
+    {0.281006f, 0.335449f, 0.136719f, 0.234863f},  // 10
+    {0.406494f, 0.450439f, 0.132324f, 0.237061f},  // 11
+    {0.533691f, 0.599609f, 0.133545f, 0.236328f},  // 12
+    {0.658691f, 0.708496f, 0.133301f, 0.234375f},  // 13
+    {0.785156f, 0.832520f, 0.130371f, 0.233398f},  // 14
+    {0.908447f, 0.955566f, 0.134033f, 0.233887f},  // 15
+    {0.036133f, 0.085205f, 0.258545f, 0.371826f},  // 16
+    {0.158447f, 0.206543f, 0.258301f, 0.359131f},  // 17
+    {0.284912f, 0.329102f, 0.259277f, 0.359375f},  // 18
+    {0.406494f, 0.453613f, 0.259277f, 0.357910f},  // 19
+    {0.533691f, 0.583984f, 0.257568f, 0.357422f},  // 20
+    {0.655762f, 0.707031f, 0.256348f, 0.360352f},  // 21
+    {0.779785f, 0.857910f, 0.254639f, 0.358887f},  // 22
+    {0.902832f, 0.950439f, 0.258057f, 0.358154f},  // 23
+    {0.033936f, 0.078369f, 0.382080f, 0.486816f},  // 24
+    {0.158447f, 0.198975f, 0.384521f, 0.484863f},  // 25
+    {0.281738f, 0.325684f, 0.382080f, 0.485840f},  // 26
+    {0.408447f, 0.440918f, 0.384521f, 0.484375f},  // 27
+    {0.533447f, 0.575928f, 0.381592f, 0.484131f},  // 28
+    {0.659424f, 0.701172f, 0.379150f, 0.486084f},  // 29
+    {0.778809f, 0.833496f, 0.385986f, 0.487793f},  // 30
+    {0.906738f, 0.952393f, 0.383057f, 0.486084f},  // 31
+    {0.033691f, 0.076660f, 0.505127f, 0.610840f},  // 32
+    {0.158447f, 0.199707f, 0.507080f, 0.607666f},  // 33
+    {0.283447f, 0.325684f, 0.506592f, 0.612793f},  // 34
+    {0.408447f, 0.450684f, 0.507568f, 0.611816f},  // 35
+    {0.532471f, 0.557617f, 0.506592f, 0.610352f},  // 36
+    {0.658691f, 0.700439f, 0.503662f, 0.610840f},  // 37
+    {0.780029f, 0.803223f, 0.585693f, 0.608887f},  // 38
+    {0.907959f, 0.941895f, 0.556396f, 0.572754f},  // 39
+    {0.031250f, 0.053467f, 0.666748f, 0.734375f},  // 40
+    {0.159424f, 0.230713f, 0.653809f, 0.725830f},  // 41
+    {0.285645f, 0.350098f, 0.650391f, 0.720947f},  // 42
+    {0.407471f, 0.432617f, 0.630859f, 0.735107f},  // 43
+    {0.600586f, 0.618164f, 0.662109f, 0.717285f},  // 44
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 45
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 46
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 47
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 48
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 49
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 50
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 51
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 52
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 53
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 54
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 55
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 56
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 57
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 58
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 59
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 60
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 61
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 62
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 63
+};
+
+// Sampled uv rect of each glyph in the packed big-font atlas
+// (babuiltinassets textures/font_big). Generated (2026-07) by a scratch
+// shelf-packer from the 8192 master: each glyph resampled at a uniform
+// 0.9432x of master resolution (1.886x the old 4096 sheet) and packed
+// into 4096x4096 at 82.9 percent utilization. Zeroed slots draw
+// nothing (space, unused sheet cells).
+//
+// What got packed is each glyph's EXACT tightened sampled window (the
+// ink+margin window computed in the constructor below), NOT the raw
+// ink bbox. That distinction matters: where the original sheet metrics
+// already clipped a glyph (slot 0, 'A' -- ink runs past the sampled
+// window on two sides), ink+margin is wider than the tightened window,
+// and packing anything else would map a different slice of art into
+// the quad and render the glyph shrunk. Because the packed content
+// matches the tightened window 1:1, the constructor can reuse the
+// tightened quad geometry verbatim and just swap in these uvs. If the
+// atlas is ever re-packed, regenerate these from the constructor's
+// tightened windows (dump gb tex bounds per glyph) the same way.
+const BigGlyphInkBounds kBigGlyphPackedUVs[64] = {
+    {0.207520f, 0.333496f, 0.000000f, 0.220215f},  // 0
+    {0.000000f, 0.106934f, 0.230713f, 0.443115f},  // 1
+    {0.100098f, 0.207520f, 0.000000f, 0.222656f},  // 2
+    {0.420654f, 0.529541f, 0.000000f, 0.213867f},  // 3
+    {0.913086f, 0.993896f, 0.230713f, 0.440186f},  // 4
+    {0.711426f, 0.788574f, 0.000000f, 0.213379f},  // 5
+    {0.246826f, 0.351318f, 0.443115f, 0.651123f},  // 6
+    {0.582520f, 0.685059f, 0.230713f, 0.440674f},  // 7
+    {0.657471f, 0.711914f, 0.443115f, 0.650146f},  // 8
+    {0.462646f, 0.560547f, 0.443115f, 0.650635f},  // 9
+    {0.636475f, 0.747314f, 0.651855f, 0.851807f},  // 10
+    {0.529541f, 0.619873f, 0.000000f, 0.213379f},  // 11
+    {0.778809f, 0.913086f, 0.230713f, 0.440186f},  // 12
+    {0.711914f, 0.813477f, 0.443115f, 0.648926f},  // 13
+    {0.560547f, 0.657471f, 0.443115f, 0.650391f},  // 14
+    {0.272217f, 0.368652f, 0.651855f, 0.855225f},  // 15
+    {0.000000f, 0.100098f, 0.000000f, 0.230713f},  // 16
+    {0.813477f, 0.911865f, 0.443115f, 0.648438f},  // 17
+    {0.083984f, 0.174805f, 0.651855f, 0.855713f},  // 18
+    {0.540039f, 0.636475f, 0.651855f, 0.852783f},  // 19
+    {0.437500f, 0.540039f, 0.651855f, 0.855225f},  // 20
+    {0.372314f, 0.476807f, 0.230713f, 0.441895f},  // 21
+    {0.087646f, 0.246826f, 0.443115f, 0.651367f},  // 22
+    {0.174805f, 0.272217f, 0.651855f, 0.855713f},  // 23
+    {0.619873f, 0.711182f, 0.000000f, 0.213379f},  // 24
+    {0.000000f, 0.083984f, 0.651855f, 0.856201f},  // 25
+    {0.281738f, 0.372070f, 0.230713f, 0.442139f},  // 26
+    {0.368652f, 0.437500f, 0.651855f, 0.855225f},  // 27
+    {0.000000f, 0.087646f, 0.443115f, 0.651855f},  // 28
+    {0.788330f, 0.874512f, 0.000000f, 0.212646f},  // 29
+    {0.351318f, 0.462646f, 0.443115f, 0.650635f},  // 30
+    {0.685059f, 0.778809f, 0.230713f, 0.440674f},  // 31
+    {0.193115f, 0.281738f, 0.230713f, 0.442871f},  // 32
+    {0.911621f, 0.997070f, 0.443115f, 0.647949f},  // 33
+    {0.333496f, 0.420654f, 0.000000f, 0.215820f},  // 34
+    {0.874756f, 0.961914f, 0.000000f, 0.212402f},  // 35
+    {0.476807f, 0.529785f, 0.230713f, 0.441895f},  // 36
+    {0.106934f, 0.193115f, 0.230713f, 0.442871f},  // 37
+    {0.180664f, 0.231934f, 0.856201f, 0.907471f},  // 38
+    {0.232178f, 0.303711f, 0.856201f, 0.894531f},  // 39
+    {0.131348f, 0.180908f, 0.856201f, 0.993896f},  // 40
+    {0.747314f, 0.892578f, 0.651855f, 0.798584f},  // 41
+    {0.000000f, 0.131348f, 0.856201f, 1.000000f},  // 42
+    {0.529785f, 0.582764f, 0.230713f, 0.441406f},  // 43
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 44
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 45
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 46
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 47
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 48
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 49
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 50
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 51
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 52
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 53
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 54
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 55
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 56
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 57
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 58
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 59
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 60
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 61
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 62
+    {0.0f, 0.0f, 0.0f, 0.0f},                      // 63
+};
+
+// How much uv padding to keep outside the measured ink when
+// tightening glyph windows.
+//
+// This can't be a small fixed number of texels. The ink bounds are
+// measured on the top mip, but a glyph drawn small samples a coarse mip
+// where one texel covers 2^level source texels, and bilinear reaches a
+// full mip-texel past the edge -- at mip 5 that's ~32 source texels
+// (~0.008 uv here), far outside a 2-texel margin. Cutting the quad
+// inside that bleed slices the soft filtered edge off with a hard line.
+//
+// So the buffer scales with the glyph: a fraction of each axis's own ink
+// extent (which tracks how much mip headroom that glyph has), with an
+// absolute floor so small glyphs like '.' and ':' -- where a percentage
+// of a tiny extent would be nothing -- still get real padding. Both are
+// knobs; raise them if anything looks cut at small sizes.
+const float kBigGlyphInkMarginFrac = 0.04f;
+const float kBigGlyphInkMarginMin = 0.002f;
 
 TextGraphics::TextGraphics() {
   // Init glyph values for our custom font pages.
@@ -379,6 +566,66 @@ TextGraphics::TextGraphics() {
             || g.tex_min_y > 1.0f || g.tex_min_y < 0.0f) {
           BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kWarning,
                       "glyph bounds error");
+        }
+
+        // The sheet-layout metrics just built for ``g`` define where the
+        // glyph's quad lands on screen, but the atlas we actually ship is
+        // packed (see kBigGlyphPackedUVs). Finalize the glyph in two
+        // steps: shrink the quad and its sampled uv window in lockstep
+        // down to the measured ink (plus margin) so only transparent
+        // margin is dropped -- every remaining texel lands at the exact
+        // same spot on screen, and advance is untouched so nothing
+        // reflows -- then swap the sampled uvs for the glyph's rect in
+        // the packed atlas, which holds exactly that tightened window's
+        // content. Space and the unused sheet slots collapse to zero
+        // size so the mesh builder skips their quads entirely.
+        {
+          Glyph gt = g;
+          const BigGlyphInkBounds& ink(kBigGlyphInkBounds[c]);
+          const BigGlyphInkBounds& puv(kBigGlyphPackedUVs[c]);
+
+          // Per-axis buffer; see kBigGlyphInkMarginFrac above.
+          float mx = std::max(kBigGlyphInkMarginMin,
+                              (ink.u_max - ink.u_min) * kBigGlyphInkMarginFrac);
+          float my = std::max(kBigGlyphInkMarginMin,
+                              (ink.v_max - ink.v_min) * kBigGlyphInkMarginFrac);
+
+          // X: tex_min_x is the left edge, tex_max_x the right.
+          float left = std::max(g.tex_min_x, ink.u_min - mx);
+          float right = std::min(g.tex_max_x, ink.u_max + mx);
+          float u_span = g.tex_max_x - g.tex_min_x;
+
+          // Y: note v is flipped -- tex_min_y is the *bottom* of the glyph
+          // and holds the larger v; tex_max_y is the top with the smaller.
+          float bot = std::min(g.tex_min_y, ink.v_max + my);
+          float top = std::max(g.tex_max_y, ink.v_min - my);
+          float v_span = g.tex_max_y - g.tex_min_y;
+
+          if (!(left < right && top < bot)
+              || !(puv.u_max > puv.u_min && puv.v_max > puv.v_min)) {
+            // No ink inside the sheet window (the space glyph, whose
+            // narrow window lands on a blank part of its cell, and the
+            // unused slots) or nothing packed for this slot: collapse to
+            // a zero-size glyph that still advances the pen.
+            gt.x_size = 0.0f;
+            gt.y_size = 0.0f;
+          } else if (std::abs(u_span) > 0.0f && std::abs(v_span) > 0.0f) {
+            float s_left = (left - g.tex_min_x) / u_span;
+            float s_right = (right - g.tex_min_x) / u_span;
+            float t_bot = (bot - g.tex_min_y) / v_span;
+            float t_top = (top - g.tex_min_y) / v_span;
+
+            gt.pen_offset_x = g.pen_offset_x + g.x_size * s_left;
+            gt.x_size = g.x_size * (s_right - s_left);
+            gt.pen_offset_y = g.pen_offset_y + g.y_size * t_bot;
+            gt.y_size = g.y_size * (t_top - t_bot);
+            gt.tex_min_x = puv.u_min;
+            gt.tex_max_x = puv.u_max;
+            // v is flipped in glyph space: tex_min_y is the bottom.
+            gt.tex_min_y = puv.v_max;
+            gt.tex_max_y = puv.v_min;
+          }
+          g = gt;
         }
       }
     }

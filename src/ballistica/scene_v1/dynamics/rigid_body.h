@@ -181,6 +181,11 @@ class RigidBody : public Object {
   void AddBlendOffset(float x, float y, float z);
   auto blend_offset() const -> const Vector3f& { return blend_offset_; }
 
+  /// Position/orient a static (geom-only, single-geom) body in the world.
+  /// Used for terrain; see base::GeomSetTransform() for the matrix
+  /// convention.
+  void SetStaticTransform(const Matrix44f& t);
+
   void ApplyToRenderComponent(base::RenderComponent* c);
 
  private:

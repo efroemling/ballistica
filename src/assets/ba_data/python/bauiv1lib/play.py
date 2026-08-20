@@ -2,13 +2,12 @@
 #
 """Provides the top level play window."""
 
-from __future__ import annotations
-
 # import logging
 from typing import override, TYPE_CHECKING
 
 import bascenev1 as bs
 import bauiv1 as bui
+from bauiv1 import classicassets
 
 if TYPE_CHECKING:
     from bauiv1 import MainWindowState
@@ -133,12 +132,10 @@ class PlayWindow(bui.MainWindow):
                 yoffs - (50 if uiscale is bui.UIScale.SMALL else 70),
             ),
             size=(0, 0),
-            text=bui.Lstr(
-                resource=(
-                    (f'{self._r}.titleText')
-                    if self._playlist_select_context is None
-                    else 'playlistsText'
-                )
+            text=(
+                classicassets.strings.ui.play
+                if self._playlist_select_context is None
+                else classicassets.strings.playlist.playlists
             ),
             scale=1.2 if uiscale is bui.UIScale.SMALL else 1.7,
             res_scale=2.0,
@@ -164,23 +161,23 @@ class PlayWindow(bui.MainWindow):
         )
         hoffs = (width - total_b_width) * 0.5
 
-        self._lineup_tex = bui.gettexture('playerLineup')
-        angry_computer_transparent_mesh = bui.getmesh(
-            'angryComputerTransparent'
+        self._lineup_tex = classicassets.textures.player_lineup.get()
+        angry_computer_transparent_mesh = (
+            classicassets.meshes.angry_computer_transparent.get()
         )
-        self._lineup_1_transparent_mesh = bui.getmesh(
-            'playerLineup1Transparent'
+        self._lineup_1_transparent_mesh = (
+            classicassets.meshes.player_lineup1_transparent.get()
         )
-        self._lineup_2_transparent_mesh = bui.getmesh(
-            'playerLineup2Transparent'
+        self._lineup_2_transparent_mesh = (
+            classicassets.meshes.player_lineup2_transparent.get()
         )
-        self._lineup_3_transparent_mesh = bui.getmesh(
-            'playerLineup3Transparent'
+        self._lineup_3_transparent_mesh = (
+            classicassets.meshes.player_lineup3_transparent.get()
         )
-        self._lineup_4_transparent_mesh = bui.getmesh(
-            'playerLineup4Transparent'
+        self._lineup_4_transparent_mesh = (
+            classicassets.meshes.player_lineup4_transparent.get()
         )
-        self._eyes_mesh = bui.getmesh('plasticEyesTransparent')
+        self._eyes_mesh = classicassets.meshes.plastic_eyes_transparent.get()
 
         self._coop_button: bui.Widget | None = None
 
@@ -259,10 +256,7 @@ class PlayWindow(bui.MainWindow):
                 draw_controller=btn,
                 position=(hoffs + scl * (-10), v + scl * 95),
                 size=(scl * button_width, scl * 50),
-                text=bui.Lstr(
-                    resource='playModes.singlePlayerCoopText',
-                    fallback_resource='playModes.coopText',
-                ),
+                text=classicassets.strings.play_modes.single_player_coop,
                 maxwidth=scl * button_width * 0.7,
                 res_scale=1.5,
                 h_align='center',
@@ -276,7 +270,7 @@ class PlayWindow(bui.MainWindow):
                 draw_controller=btn,
                 position=(hoffs + scl * (-10), v + (scl * 54)),
                 size=(scl * button_width, scl * 30),
-                text=bui.Lstr(resource=f'{self._r}.oneToFourPlayersText'),
+                text=classicassets.strings.play.one_to_four_players,
                 h_align='center',
                 v_align='center',
                 scale=0.83 * scl,
@@ -383,9 +377,7 @@ class PlayWindow(bui.MainWindow):
             draw_controller=btn,
             position=(hoffs + scl * (-10), v + scl * 95),
             size=(scl * button_width, scl * 50),
-            text=bui.Lstr(
-                resource='playModes.teamsText', fallback_resource='teamsText'
-            ),
+            text=classicassets.strings.play_modes.teams,
             res_scale=1.5,
             maxwidth=scl * button_width * 0.7,
             h_align='center',
@@ -398,7 +390,7 @@ class PlayWindow(bui.MainWindow):
             draw_controller=btn,
             position=(hoffs + scl * (-10), v + (scl * 54)),
             size=(scl * button_width, scl * 30),
-            text=bui.Lstr(resource=f'{self._r}.twoToEightPlayersText'),
+            text=classicassets.strings.play.two_to_eight_players,
             h_align='center',
             v_align='center',
             res_scale=1.5,
@@ -500,10 +492,7 @@ class PlayWindow(bui.MainWindow):
             draw_controller=btn,
             position=(hoffs + scl * (-10), v + scl * 95),
             size=(scl * button_width, scl * 50),
-            text=bui.Lstr(
-                resource='playModes.freeForAllText',
-                fallback_resource='freeForAllText',
-            ),
+            text=classicassets.strings.play_modes.free_for_all,
             maxwidth=scl * button_width * 0.7,
             h_align='center',
             v_align='center',
@@ -515,7 +504,7 @@ class PlayWindow(bui.MainWindow):
             draw_controller=btn,
             position=(hoffs + scl * (-10), v + (scl * 54)),
             size=(scl * button_width, scl * 30),
-            text=bui.Lstr(resource=f'{self._r}.twoToEightPlayersText'),
+            text=classicassets.strings.play.two_to_eight_players,
             h_align='center',
             v_align='center',
             scale=0.83 * scl,

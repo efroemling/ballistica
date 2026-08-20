@@ -2,13 +2,12 @@
 #
 """Shiny new doc-ui based store."""
 
-from __future__ import annotations
-
 from typing import override, TYPE_CHECKING
 
 from bauiv1lib.docui import DocUIController
 
 import bauiv1 as bui
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from bacommon.docui import DocUIRequest, DocUIResponse
@@ -31,10 +30,10 @@ class LeaguePresidencyUIController(DocUIController):
             bui.screenmessage(
                 f'Invalid local-action "{action.name}".', color=(1, 0, 0)
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
 
     def _get_tokens(self, action: DocUILocalAction) -> None:
         from bauiv1lib.gettokens import show_get_tokens_window
 
-        bui.getsound('swish').play()
+        builtinassets.audio.swish.get().play()
         show_get_tokens_window(origin_widget=bui.existing(action.widget))

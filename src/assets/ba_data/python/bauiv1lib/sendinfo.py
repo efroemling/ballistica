@@ -2,13 +2,13 @@
 #
 """UI functionality for entering promo codes."""
 
-from __future__ import annotations
-
 import time
 import logging
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
+from bauiv1 import _commonassets, classicassets
+from bauiv1 import builtinassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -90,7 +90,7 @@ class SendInfoWindow(bui.MainWindow):
         v += -30 if uiscale is bui.UIScale.SMALL else 10
         bui.textwidget(
             parent=self._root_widget,
-            text=bui.Lstr(resource='sendInfoDescriptionText'),
+            text=classicassets.strings.send_info.send_info_description,
             maxwidth=width * 0.9,
             position=(width * 0.5, v),
             color=(0.7, 0.7, 0.7, 1.0),
@@ -104,7 +104,7 @@ class SendInfoWindow(bui.MainWindow):
         txoffs = -270
         bui.textwidget(
             parent=self._root_widget,
-            text=bui.Lstr(resource='descriptionText'),
+            text=_commonassets.strings.values.description,
             position=(width * 0.5 + txoffs + 22, v),
             color=(0.8, 0.8, 0.8, 1.0),
             size=(90, 30),
@@ -123,7 +123,7 @@ class SendInfoWindow(bui.MainWindow):
             v_align='center',
             max_chars=64,
             color=(0.9, 0.9, 0.9, 1.0),
-            description=bui.Lstr(resource='descriptionText'),
+            description=_commonassets.strings.values.description,
             editable=True,
             autoselect=True,
             padding=4,
@@ -140,9 +140,7 @@ class SendInfoWindow(bui.MainWindow):
             position=(width * 0.5 - b_width * 0.5, v),
             size=(b_width, 60),
             scale=1.0,
-            label=bui.Lstr(
-                resource='submitText', fallback_resource=f'{self._r}.enterText'
-            ),
+            label=_commonassets.strings.actions.submit,
             on_activate_call=self._do_enter,
             autoselect=True,
         )
@@ -273,7 +271,7 @@ class SendInfoWindowLegacyModal(bui.Window):
         txoffs = -200
         bui.textwidget(
             parent=self._root_widget,
-            text=bui.Lstr(resource=f'{self._r}.codeText'),
+            text=_commonassets.strings.values.code,
             position=(width * 0.5 + txoffs + 22, v),
             color=(0.8, 0.8, 0.8, 1.0),
             size=(90, 30),
@@ -291,7 +289,7 @@ class SendInfoWindowLegacyModal(bui.Window):
             v_align='center',
             max_chars=64,
             color=(0.9, 0.9, 0.9, 1.0),
-            description=bui.Lstr(resource=f'{self._r}.codeText'),
+            description=_commonassets.strings.values.code,
             editable=True,
             autoselect=True,
             padding=4,
@@ -307,9 +305,7 @@ class SendInfoWindowLegacyModal(bui.Window):
             position=(width * 0.5 - b_width * 0.5, v),
             size=(b_width, 60),
             scale=1.0,
-            label=bui.Lstr(
-                resource='submitText', fallback_resource=f'{self._r}.enterText'
-            ),
+            label=_commonassets.strings.actions.submit,
             on_activate_call=self._do_enter,
             autoselect=True,
         )
@@ -361,9 +357,9 @@ class SendInfoWindowLegacyModal(bui.Window):
         # accounts: talk directly to V1 server via transactions.
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(
-                bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
+                classicassets.strings.account.not_signed_in, color=(1, 0, 0)
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
         else:
             plus.add_v1_account_transaction(
                 {
@@ -390,10 +386,10 @@ async def _send_info(description: str) -> None:
         # Don't allow *anything* if our V2 transport connection isn't up.
         if not plus.cloud.connected:
             bui.screenmessage(
-                bui.Lstr(resource='internal.unavailableNoConnectionText'),
+                _commonassets.strings.status.unavailable_no_connection,
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
 
         # Pause root ui updates so stuff like token counts don't change
@@ -412,10 +408,13 @@ async def _send_info(description: str) -> None:
                 SendInfoMessage(description)
             )
 
-        # Support simple message printing from v2 server.
+        # Support simple message printing from v2 server. (Current
+        # servers only populate this for old builds -- new ones get
+        # client-effects -- so treat anything arriving as literal
+        # display text rather than legacy-translating it.)
         if response.message is not None:
             bui.screenmessage(
-                bui.Lstr(translate=('serverResponses', response.message)),
+                bui.langstr_value(response.message),
                 color=(0, 1, 0),
             )
         # As of newer builds we support client-effects too.
@@ -429,9 +428,9 @@ async def _send_info(description: str) -> None:
         # Ok; V2 didn't handle it. Try V1 if we're signed in there.
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(
-                bui.Lstr(resource='notSignedInErrorText'), color=(1, 0, 0)
+                classicassets.strings.account.not_signed_in, color=(1, 0, 0)
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
 
         # Push it along to v1 as an old style code. Allow v2 response to
@@ -451,7 +450,7 @@ async def _send_info(description: str) -> None:
     except Exception:
         logging.exception('Error sending promo code.')
         bui.screenmessage('Error sending code (see log).', color=(1, 0, 0))
-        bui.getsound('error').play()
+        builtinassets.audio.error.get().play()
     finally:
         # Make sure ui-pause is dead even if something is holding
         # on to this stack frame.

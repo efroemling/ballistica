@@ -7,8 +7,6 @@
 #
 # pylint: disable=unidiomatic-typecheck
 
-from __future__ import annotations
-
 import logging
 from enum import Enum
 import dataclasses
@@ -22,6 +20,7 @@ from efro.dataclassio._base import (
     _get_origin,
     SIMPLE_TYPES,
     IOMultiType,
+    DCIO_META_ATTR,
 )
 
 if TYPE_CHECKING:
@@ -30,6 +29,39 @@ if TYPE_CHECKING:
 
 # Use a single logger for all dataclassio stuff.
 logger = logging.getLogger('efro.dataclassio')
+
+
+def _instances_have_dict(cls: type) -> bool:
+    """Whether instances of ``cls`` carry a ``__dict__``.
+
+    True unless every class in the MRO (excluding ``object``) declares
+    ``__slots__`` without reintroducing ``__dict__``.
+    """
+    for c in cls.__mro__:
+        if c is object:
+            continue
+        slots = getattr(c, '__slots__', None)
+        if slots is None or '__dict__' in slots:
+            return True
+    return False
+
+
+def _check_slotted_reserves_meta(cls: type) -> None:
+    """Ensure a slotted ioprepped class reserves the metadata slot."""
+    if _instances_have_dict(cls):
+        return  # Has a __dict__; the metadata attr can live there.
+    names: set[str] = set()
+    for c in cls.__mro__:
+        slots = getattr(c, '__slots__', ())
+        names.update((slots,) if isinstance(slots, str) else slots)
+    if DCIO_META_ATTR not in names:
+        raise TypeError(
+            f'ioprepped dataclass {cls} is slotted but its __slots__ does'
+            f' not reserve {DCIO_META_ATTR!r} (needed to stamp lossy /'
+            f' extra-attrs metadata during load). Add it -- splat'
+            f' efro.dataclassio.IO_SLOTS into __slots__.'
+        )
+
 
 # How deep we go when prepping nested types (basically for detecting
 # recursive types)
@@ -55,13 +87,14 @@ def ioprep(cls: type, globalns: dict | None = None) -> None:
     early in a process to ensure any invalid types or configuration are caught
     immediately.
 
-    Prepping a dataclass involves evaluating its type annotations, which,
-    as of PEP 563, are stored simply as strings. This evaluation is done
-    with localns set to the class dict (so that types defined in the class
-    can be used) and globalns set to the containing module's class.
-    It is possible to override globalns for special cases such as when
-    prepping happens as part of an execed string instead of within a
-    module.
+    Prepping a dataclass involves evaluating its type annotations
+    (deferred under PEP 649/749 semantics as of Python 3.14, or stored
+    as strings for any remaining PEP 563 / explicitly-quoted cases).
+    This evaluation is done with localns set to the class dict (so that
+    types defined in the class can be used) and globalns set to the
+    containing module's dict. It is possible to override globalns for
+    special cases such as when prepping happens as part of an execed
+    string instead of within a module.
     """
     PrepSession(explicit=True, globalns=globalns).prep_dataclass(
         cls, recursion_level=0
@@ -118,6 +151,11 @@ class PrepData:
     # Map of storage names to attr names.
     storage_names_to_attr_names: dict[str, str]
 
+    # The full set of storage names used by this class (including ones
+    # that match their attr name). Used to detect clashes with things
+    # like IOMultiType type-id-storage-names.
+    storage_names: set[str]
+
 
 class PrepSession:
     """Context for a prep."""
@@ -153,6 +191,14 @@ class PrepSession:
         cls_any: Any = cls
         if not isinstance(cls_any, type) or not dataclasses.is_dataclass(cls):
             raise TypeError(f'Passed arg {cls} is not a dataclass type.')
+
+        # If the class is slotted (instances have no __dict__), it must
+        # reserve a slot for our per-instance metadata attr, or lossy /
+        # extra-attrs decode would fail with AttributeError on the rare
+        # paths that stamp it -- a landmine that passes basic tests and
+        # blows up only on tolerant/lossy loads. Catch it here, loudly,
+        # at prep time.
+        _check_slotted_reserves_meta(cls)
 
         # Add a pointer to the prep-session while doing the prep. This
         # way we can ignore types that we're already in the process of
@@ -242,6 +288,7 @@ class PrepSession:
         prepdata = PrepData(
             annotations=resolved_annotations,
             storage_names_to_attr_names=storage_names_to_attr_names,
+            storage_names=all_storage_names,
         )
         setattr(cls, PREP_ATTR, prepdata)
 
@@ -259,7 +306,6 @@ class PrepSession:
         recursion_level: int,
     ) -> None:
         """Run prep on a dataclass."""
-        # pylint: disable=too-many-positional-arguments
         # pylint: disable=too-many-return-statements
         # pylint: disable=too-many-branches
 
@@ -461,23 +507,72 @@ class PrepSession:
     ) -> None:
         """Run prep on a Union type."""
         typeargs = typing.get_args(anntype)
+
+        # The simple Optional form (SomeType | None) is always allowed;
+        # the non-None member can be anything dataclassio supports.
         if (
-            len(typeargs) != 2
-            or len([c for c in typeargs if c is type(None)]) != 1
+            len(typeargs) == 2
+            and len([c for c in typeargs if c is type(None)]) == 1
         ):  # noqa
+            for childtype in typeargs:
+                self.prep_type(
+                    cls,
+                    attrname,
+                    childtype,
+                    None,
+                    recursion_level=recursion_level + 1,
+                )
+            return
+
+        # Anything else must be a 'type-disjoint' union: each member
+        # must map to a distinct wire type so values can be matched to
+        # members with no tagging. Members may be str, bool, int OR
+        # float (not both; they are both numbers on the wire), None,
+        # and at most one object-shaped type (a dataclass or
+        # IOMultiType).
+        seen_number = False
+        seen_object = False
+        for childtype in typeargs:
+            childorigin = _get_origin(childtype)
+            if childtype is type(None) or childorigin in (str, bool):
+                continue
+            if childorigin in (int, float):
+                if seen_number:
+                    raise TypeError(
+                        f'Union {anntype} for attr \'{attrname}\' on'
+                        f' {cls.__name__} is not supported by dataclassio;'
+                        f' int and float cannot coexist in a union (both'
+                        f' are numbers on the wire).'
+                    )
+                seen_number = True
+                continue
+            if isinstance(childorigin, type) and (
+                dataclasses.is_dataclass(childorigin)
+                or issubclass(childorigin, IOMultiType)
+            ):
+                if seen_object:
+                    raise TypeError(
+                        f'Union {anntype} for attr \'{attrname}\' on'
+                        f' {cls.__name__} is not supported by dataclassio;'
+                        f' only one dataclass or IOMultiType member is'
+                        f' allowed in a union (they are indistinguishable'
+                        f' on the wire).'
+                    )
+                seen_object = True
+                self.prep_type(
+                    cls,
+                    attrname,
+                    childtype,
+                    None,
+                    recursion_level=recursion_level + 1,
+                )
+                continue
             raise TypeError(
                 f'Union {anntype} for attr \'{attrname}\' on'
                 f' {cls.__name__} is not supported by dataclassio;'
-                f' only 2 member Unions with one type being None'
-                f' are supported.'
-            )
-        for childtype in typeargs:
-            self.prep_type(
-                cls,
-                attrname,
-                childtype,
-                None,
-                recursion_level=recursion_level + 1,
+                f' multi-member unions may contain only str, bool,'
+                f' int OR float, None, and at most one dataclass or'
+                f' IOMultiType member (found \'{childtype}\').'
             )
 
     def prep_enum(

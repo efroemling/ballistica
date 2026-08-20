@@ -2,8 +2,6 @@
 #
 """General project related functionality."""
 
-from __future__ import annotations
-
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -107,7 +105,7 @@ class ProjectUpdater:
             self.run_file_checks = False
         else:
             # Schedule updates for all the things in normal mode.
-            self._update_meta_makefile()
+            self._update_codegen_makefile()
             self._update_resources_makefile()
             self._update_assets_makefile()
             self._update_top_level_makefile()
@@ -115,6 +113,7 @@ class ProjectUpdater:
             self._update_visual_studio_projects()
             self._update_xcode_projects()
             self._update_app_module()
+            self._update_cloud_module()
 
     @property
     def source_files(self) -> list[str]:
@@ -154,14 +153,16 @@ class ProjectUpdater:
 
         # Run some lovely checks.
         if self.run_file_checks:
-            from batools.project import _checks
+            from batools.project import _checks, _checks_cpp
 
             _checks.check_makefiles(self)
             _checks.check_python_files(self)
             _checks.check_sync_states(self)
             _checks.check_misc(self)
-            _checks.check_source_files(self)
-            _checks.check_headers(self)
+            _checks_cpp.check_source_files(self)
+            _checks_cpp.check_headers(self)
+            _checks.check_builtin_asset_ids(self)
+            _checks.check_asset_name_compat(self)
 
         # Make sure nobody is changing this while processing.
         self._can_generate_files = False
@@ -175,7 +176,7 @@ class ProjectUpdater:
         """Prepare"""
         # Make sure we're operating from a project root.
         if not os.path.isdir(
-            os.path.join(self.projroot, 'config')
+            os.path.join(self.projroot, 'pconfig')
         ) or not os.path.isdir(os.path.join(self.projroot, 'tools')):
             raise RuntimeError(
                 f"ProjectUpdater projroot '{self.projroot}' is not valid."
@@ -403,14 +404,16 @@ class ProjectUpdater:
 
             elif path == 'src/resources/Makefile':
                 self._generate_resources_makefile(path, existing_data)
-            elif path == 'src/meta/Makefile':
-                self._generate_meta_makefile(existing_data)
+            elif path == 'src/codegen/Makefile':
+                self._generate_codegen_makefile(existing_data)
             elif path == 'src/assets/ba_data/python/babase/_app.py':
                 self._generate_app_module(path, existing_data)
-            elif path.startswith('src/meta/.meta_manifest_'):
+            elif path == 'src/assets/ba_data/python/baplus/_cloud.py':
+                self._generate_cloud_module(path, existing_data)
+            elif path.startswith('src/codegen/.codegen_manifest_'):
                 # These are always generated as a side-effect of the
-                # meta Makefile.
-                self.generate_file('src/meta/Makefile')
+                # codegen Makefile.
+                self.generate_file('src/codegen/Makefile')
                 assert path in self._generated_files
             else:
                 raise RuntimeError(
@@ -422,6 +425,12 @@ class ProjectUpdater:
 
     def _update_app_module(self) -> None:
         self.enqueue_update('src/assets/ba_data/python/babase/_app.py')
+
+    def _update_cloud_module(self) -> None:
+        # baplus's typed cloud-message send overloads (the file only
+        # exists when the plus feature-set is present).
+        if 'plus' in self.feature_sets:
+            self.enqueue_update('src/assets/ba_data/python/baplus/_cloud.py')
 
     def _update_xcode_projects(self) -> None:
         # from batools.xcode import update_xcode_project
@@ -569,6 +578,8 @@ class ProjectUpdater:
             self._update_visual_studio_project('HeadlessPlus')
             self._update_visual_studio_project('Oculus')
             self._update_visual_studio_project('OculusPlus')
+            self._update_visual_studio_project('TestBuild')
+            self._update_visual_studio_project('TestBuildPlus')
 
     def _is_public_source_file(self, filename: str) -> bool:
         assert filename.startswith('/')
@@ -640,15 +651,19 @@ class ProjectUpdater:
                 if any(ftst.endswith(ext) for ext in header_exts):
                     header_files.add(os.path.join(root, ftst)[len(scan_dir) :])
 
-        # IMPORTANT - exclude generated files.
-        # For now these just consist of headers so its ok to completely
-        # ignore their existence here, but at some point if we start
-        # generating .cc files that need to be compiled we'll have to
-        # ask the meta system which files it *will* be generating and
-        # add THAT list (not what we see on disk) to projects.
-        self._source_files = sorted(s for s in src_files if '/mgen/' not in s)
+        # IMPORTANT - exclude generated files. (See docs/design/codegen.md
+        # for the broader codegen-output convention this exclusion is
+        # part of.) For now these just consist of headers so its ok to
+        # completely ignore their existence here, but at some point if
+        # we start generating .cc files that need to be compiled we'll
+        # have to ask the codegen system which files it *will* be
+        # generating and add THAT list (not what we see on disk) to
+        # projects.
+        self._source_files = sorted(
+            s for s in src_files if '/generated/' not in s
+        )
         self._header_files = sorted(
-            h for h in header_files if '/mgen/' not in h
+            h for h in header_files if '/generated/' not in h
         )
 
     def _update_assets_makefile(self) -> None:
@@ -684,26 +699,30 @@ class ProjectUpdater:
                                 self._generated_files[manpath] = infile.read()
                 return
 
-        # We need to know what files meta will be creating (since they
-        # can be asset sources).
-        meta_manifests: dict[str, str] = {}
+        # We need to know what files codegen will be creating (since
+        # they can be asset sources).
+        codegen_manifests: dict[str, str] = {}
         for mantype in ['public', 'private']:
-            manifest_file_name = f'src/meta/.meta_manifest_{mantype}.json'
-            meta_manifests[manifest_file_name] = self.generate_file(
+            manifest_file_name = f'src/codegen/.codegen_manifest_{mantype}.json'
+            codegen_manifests[manifest_file_name] = self.generate_file(
                 manifest_file_name
             )
 
         # Special case; the app module file in the base feature set
         # is created/updated here as a project file. It may or may not
         # exist on disk, but we want to ignore it if it does and add it
-        # explicitly similarly to meta-manifests.
+        # explicitly similarly to codegen-manifests.
         if 'base' in self.feature_sets:
             explicit_sources = {'src/assets/ba_data/python/babase/_app.py'}
         else:
             explicit_sources = set()
 
         outfiles = generate_assets_makefile(
-            self.projroot, path, existing_data, meta_manifests, explicit_sources
+            self.projroot,
+            path,
+            existing_data,
+            codegen_manifests,
+            explicit_sources,
         )
 
         for out_path, out_contents in outfiles.items():
@@ -728,16 +747,23 @@ class ProjectUpdater:
             self.projroot, self.feature_sets, existing_data
         )
 
-    def _update_meta_makefile(self) -> None:
-        self.enqueue_update('src/meta/Makefile')
+    def _generate_cloud_module(self, path: str, existing_data: str) -> None:
+        from batools.cloudmsgs import generate_cloud_module
+
+        self._generated_files[path] = generate_cloud_module(
+            self.projroot, existing_data
+        )
+
+    def _update_codegen_makefile(self) -> None:
+        self.enqueue_update('src/codegen/Makefile')
 
     def _generate_passthrough_file(self, path: str, existing_data: str) -> None:
         self._generated_files[path] = existing_data
 
-    def _generate_meta_makefile(self, existing_data: str) -> None:
-        from batools.metamakefile import generate_meta_makefile
+    def _generate_codegen_makefile(self, existing_data: str) -> None:
+        from batools.codegenmakefile import generate_codegen_makefile
 
-        outfiles = generate_meta_makefile(self.projroot, existing_data)
+        outfiles = generate_codegen_makefile(self.projroot, existing_data)
         for out_path, out_contents in outfiles.items():
             self._generated_files[out_path] = out_contents
 

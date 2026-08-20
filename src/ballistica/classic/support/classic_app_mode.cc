@@ -5,8 +5,10 @@
 #include <algorithm>
 #include <cstdio>
 #include <string>
+#include <utility>
 #include <vector>
 
+#include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
 #include "ballistica/base/graphics/graphics.h"
@@ -36,7 +38,7 @@
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
-#include "ballistica/shared/generic/json.h"
+#include "ballistica/shared/generic/json_facade.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/networking/sockaddr.h"
 #include "ballistica/ui_v1/ui_v1.h"
@@ -61,11 +63,29 @@ const int kKickVoteFailRetryDelayInitiatorExtra{120000};
 // to kick).
 const int kKickVoteMinimumClients{g_buildconfig.headless_build() ? 3 : 4};
 
+// Budget for the json payload of a v2 host-query packet, keeping the
+// full datagram comfortably inside a single un-fragmented packet on
+// typical LANs.
+const size_t kHostQueryV2MaxJsonBytes{1400};
+
+// Budget for the variable-length portion (the package listing) of a
+// single requirements-response page; the envelope (version/page fields
+// etc.) rides in the headroom up to kHostQueryV2MaxJsonBytes.
+const size_t kRequirementsPageBudgetBytes{1300};
+
 struct ClassicAppMode::ScanResultsEntryPriv_ {
   scene_v1::PlayerSpec player_spec;
   std::string address;
   uint32_t last_query_id{};
   millisecs_t last_contact_time{};
+  // Extras delivered only by V2 query responses.
+  bool has_v2{};
+  std::string party_name;
+  int party_size{};
+  int party_max_size{};
+  bool auth_required{};
+  int build_number{};
+  int protocol_version{};
 };
 
 base::InputDeviceDelegate* ClassicAppMode::CreateInputDeviceDelegate(
@@ -279,6 +299,28 @@ void ClassicAppMode::HostScanCycle() {
 
   // Ok we've got a valid scanner socket. Now lets send out broadcast pings on
   // all available networks.
+  //
+  // We broadcast both query forms: v1 for old hosts and v2 (which
+  // carries a json description of us so hosts can tailor their
+  // response) for new ones. New hosts answer both; results get
+  // deduped by app-instance-uuid with v2 data preferred.
+  uint8_t data[5];
+  data[0] = BA_PACKET_HOST_QUERY;
+  memcpy(data + 1, &next_scan_query_id_, 4);
+
+  std::vector<uint8_t> data_v2;
+  {
+    JsonBuilder builder;
+    JsonObjBuilder dict = builder.root_object();
+    dict.Add("b", kEngineBuildNumber);
+    dict.Add("v", 1);
+    std::string query_json = builder.Write();
+    data_v2.resize(5 + query_json.size());
+    data_v2[0] = BA_PACKET_HOST_QUERY_V2;
+    memcpy(data_v2.data() + 1, &next_scan_query_id_, 4);
+    memcpy(data_v2.data() + 5, query_json.data(), query_json.size());
+  }
+
   std::vector<uint32_t> addrs = g_core->platform->GetBroadcastAddrs();
   for (auto&& i : addrs) {
     sockaddr_in addr{};
@@ -286,32 +328,35 @@ void ClassicAppMode::HostScanCycle() {
     addr.sin_port = htons(kDefaultPort);  // NOLINT
     addr.sin_addr.s_addr = htonl(i);      // NOLINT
 
-    // Include our query id (so we can sort out which responses come back
-    // quickest).
-    uint8_t data[5];
-    data[0] = BA_PACKET_HOST_QUERY;
-    memcpy(data + 1, &next_scan_query_id_, 4);
-    BA_DEBUG_TIME_CHECK_BEGIN(sendto);
-    ssize_t result = sendto(
-        scan_socket_, reinterpret_cast<socket_send_data_t*>(data), sizeof(data),
-        0, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
-    BA_DEBUG_TIME_CHECK_END(sendto, 10);
-    if (result == -1) {
-      int err = g_core->platform->GetSocketError();
-      switch (err) {  // NOLINT(hicpp-multiway-paths-covered)
-        case ENETUNREACH:
-          break;
-        default:
-          g_core->logging->Log(LogName::kBaNetworking, LogLevel::kError,
-                               "Error on scan-socket sendto: "
-                                   + g_core->platform->GetSocketErrorString());
+    for (int form = 0; form < 2; ++form) {
+      auto* send_data =
+          (form == 0) ? reinterpret_cast<socket_send_data_t*>(data)
+                      : reinterpret_cast<socket_send_data_t*>(data_v2.data());
+      size_t send_size = (form == 0) ? sizeof(data) : data_v2.size();
+      BA_DEBUG_TIME_CHECK_BEGIN(sendto);
+      ssize_t result = sendto(scan_socket_, send_data, send_size, 0,
+                              reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
+      BA_DEBUG_TIME_CHECK_END(sendto, 10);
+      if (result == -1) {
+        int err = g_core->platform->GetSocketError();
+        switch (err) {  // NOLINT(hicpp-multiway-paths-covered)
+          case ENETUNREACH:
+            break;
+          default:
+            g_core->logging->Log(
+                LogName::kBaNetworking, LogLevel::kError,
+                "Error on scan-socket sendto: "
+                    + g_core->platform->GetSocketErrorString());
+        }
       }
     }
   }
   next_scan_query_id_++;
 
   // ..and see if any responses came in from previous sends.
-  char buffer[256];
+  // (Buffer covers max v1 responses (366 bytes) as well as max-size v2
+  // json responses.)
+  char buffer[5 + kHostQueryV2MaxJsonBytes];
   sockaddr_storage from{};
   socklen_t from_size = sizeof(from);
   while (true) {
@@ -394,6 +439,55 @@ void ClassicAppMode::HostScanCycle() {
             LogName::kBaNetworking, LogLevel::kError,
             "Got invalid BA_PACKET_HOST_QUERY_RESPONSE packet");
       }
+    } else if (result >= 6
+               && static_cast<uint8_t>(buffer[0])
+                      == BA_PACKET_HOST_QUERY_RESPONSE_V2) {
+      uint32_t query_id;
+      memcpy(&query_id, buffer + 1, 4);
+
+      auto doc = JsonDoc::Parse(
+          std::string_view(buffer + 5, static_cast<size_t>(result) - 5),
+          {.max_bytes = kHostQueryV2MaxJsonBytes});
+      if (!doc || !doc->root().is_object()) {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "Got unparsable v2 host-query-response packet.");
+        continue;
+      }
+      JsonRef response = doc->root();
+      auto instance_id = response["i"].as_string();
+      auto player_spec_str = response["s"].as_string();
+      if (!instance_id.has_value() || !player_spec_str.has_value()) {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "Got incomplete v2 host-query-response packet.");
+        continue;
+      }
+
+      // Add or modify an entry for this (ignoring ourself). Unlike v1
+      // responses, v2 always updates the entry — it carries strictly
+      // more info, so it wins whichever order the pair arrives in.
+      {
+        std::scoped_lock lock(scan_results_mutex_);
+        if (*instance_id != g_base->LocalAppInstanceUUID()) {
+          ScanResultsEntryPriv_& entry(
+              scan_results_[std::string(*instance_id)]);
+          entry.player_spec =
+              scene_v1::PlayerSpec(std::string(*player_spec_str));
+          char buffer2[256];
+          entry.address = inet_ntop(
+              AF_INET, &((reinterpret_cast<sockaddr_in*>(&from))->sin_addr),
+              buffer2, sizeof(buffer2));
+          entry.last_query_id = query_id;
+          entry.last_contact_time = g_core->AppTimeMillisecs();
+          entry.has_v2 = true;
+          entry.party_name = std::string(response["n"].string_or(""));
+          entry.party_size = static_cast<int>(response["sz"].int_or(0));
+          entry.party_max_size = static_cast<int>(response["szx"].int_or(0));
+          entry.auth_required = response["a"].bool_or(false);
+          entry.build_number = static_cast<int>(response["b"].int_or(0));
+          entry.protocol_version = static_cast<int>(response["p"].int_or(0));
+        }
+        PruneScanResults_();
+      }
     }
   }
 }
@@ -430,11 +524,41 @@ auto ClassicAppMode::GetScanResults()
       ScanResultsEntry& out(results[out_num]);
       out.display_string = in.player_spec.GetDisplayString();
       out.address = in.address;
+      out.has_v2 = in.has_v2;
+      out.party_name = in.party_name;
+      out.party_size = in.party_size;
+      out.party_max_size = in.party_max_size;
+      out.auth_required = in.auth_required;
+      out.build_number = in.build_number;
+      out.protocol_version = in.protocol_version;
       out_num++;
     }
     PruneScanResults_();
   }
   return results;
+}
+
+void ClassicAppMode::SetHostingAssetPackages(
+    std::vector<std::string> packages) {
+  assert(g_base->InLogicThread());
+  std::scoped_lock lock(hosting_asset_packages_mutex_);
+  hosting_asset_packages_ = std::move(packages);
+}
+
+auto ClassicAppMode::GetHostingAssetPackages() -> std::vector<std::string> {
+  std::scoped_lock lock(hosting_asset_packages_mutex_);
+  return hosting_asset_packages_;
+}
+
+void ClassicAppMode::SetHostPassword(const std::string& password) {
+  assert(g_base->InLogicThread());
+  std::scoped_lock lock(host_password_mutex_);
+  host_password_ = password;
+}
+
+auto ClassicAppMode::GetHostPassword() -> std::string {
+  std::scoped_lock lock(host_password_mutex_);
+  return host_password_;
 }
 
 auto ClassicAppMode::GetActive() -> ClassicAppMode* {
@@ -498,8 +622,7 @@ auto ClassicAppMode::GetSingleton() -> ClassicAppMode* {
 }
 
 ClassicAppMode::ClassicAppMode()
-    : game_roster_(cJSON_CreateArray()),
-      connections_(std::make_unique<scene_v1::ConnectionSet>()) {}
+    : connections_(std::make_unique<scene_v1::ConnectionSet>()) {}
 
 void ClassicAppMode::HandleIncomingUDPPacket(const std::vector<uint8_t>& data,
                                              const SockAddr& addr) {
@@ -510,26 +633,53 @@ void ClassicAppMode::HandleIncomingUDPPacket(const std::vector<uint8_t>& data,
 auto ClassicAppMode::HandleJSONPing(const std::string& data_str)
     -> std::string {
   // Note to self - this is called in a non-logic thread.
-  cJSON* data = cJSON_Parse(data_str.c_str());
-  if (data == nullptr) {
+
+  // Require valid json (we don't currently use the contents).
+  if (!JsonDoc::Parse(data_str)) {
     return "";
   }
-  cJSON_Delete(data);
 
   // Ok lets include some basic info that might be pertinent to someone
   // pinging us. Currently that includes our current/max connection count.
-  char buffer[256];
-  snprintf(buffer, sizeof(buffer), R"({"b":%d,"ps":%d,"psmx":%d})",
-           kEngineBuildNumber, public_party_size(), public_party_max_size());
-  return buffer;
+  JsonBuilder builder;
+  builder.root_object()
+      .Add("b", kEngineBuildNumber)
+      .Add("ps", public_party_size())
+      .Add("psmx", public_party_max_size());
+  return builder.Write();
 }
 
-void ClassicAppMode::SetGameRoster(cJSON* r) {
+void ClassicAppMode::SetGameRoster(const JsonRef& roster) {
   assert(g_base->InLogicThread());
-  if (game_roster_ != nullptr) {
-    cJSON_Delete(game_roster_);
+
+  // Decode the (untrusted) array of client entries into our native roster,
+  // copying out what we need. Anything missing or wrong-typed is skipped, so
+  // a malformed/malicious roster yields a sane (possibly partial) result
+  // rather than garbage. Mirrors the wire keys built in UpdateGameRoster().
+  std::vector<GameRosterEntry> new_roster;
+  for (JsonRef client : roster.elements()) {
+    if (!client.is_object()) {
+      continue;
+    }
+    GameRosterEntry entry;
+    entry.spec = client["spec"].string_or("");
+    entry.client_id = static_cast<int>(client["i"].int_or(0));
+    if (auto account_id = client["a"].as_string()) {
+      entry.account_id = std::string(*account_id);
+    }
+    for (JsonRef player : client["p"].elements()) {
+      if (!player.is_object()) {
+        continue;
+      }
+      GameRosterEntry::Player p;
+      p.name = player["n"].string_or("");
+      p.name_full = player["nf"].string_or("");
+      p.id = static_cast<int>(player["i"].int_or(-1));
+      entry.players.push_back(std::move(p));
+    }
+    new_roster.push_back(std::move(entry));
   }
-  game_roster_ = r;
+  game_roster_ = std::move(new_roster);
   OnGameRosterChanged_();
 }
 
@@ -540,8 +690,7 @@ void ClassicAppMode::OnGameRosterChanged_() {
 
 auto ClassicAppMode::GetPartySize() const -> int {
   assert(g_base->InLogicThread());
-  assert(game_roster_ != nullptr);
-  return cJSON_GetArraySize(game_roster_);
+  return static_cast<int>(game_roster_.size());
 }
 
 auto ClassicAppMode::GetHeadlessNextDisplayTimeStep() -> microsecs_t {
@@ -657,16 +806,39 @@ void ClassicAppMode::StepDisplayTime() {
 }
 
 auto ClassicAppMode::GetGameRosterMessage_() -> std::vector<uint8_t> {
-  // This message is simply a flattened json string of our roster (including
-  // terminating char).
-  char* s = cJSON_PrintUnformatted(game_roster_);
-  auto s_len = strlen(s);
-  std::vector<uint8_t> msg(1 + s_len + 1);
+  // The message is a flattened json string of our roster (including the
+  // terminating null char, which the receiver relies on). Serialize our
+  // native roster back to the historical wire shape: an array of client
+  // dicts {spec, p:[{n,nf,i}], i, (a)}.
+  JsonBuilder builder;
+  JsonArrBuilder arr = builder.root_array();
+  for (auto&& entry : game_roster_) {
+    JsonObjBuilder client = arr.AddObject();
+    client.Add("spec", entry.spec);
+    JsonArrBuilder players = client.AddArray("p");
+    for (auto&& player : entry.players) {
+      JsonObjBuilder pj = players.AddObject();
+      pj.Add("n", player.name);
+      pj.Add("nf", player.name_full);
+      pj.Add("i", player.id);
+    }
+    client.Add("i", entry.client_id);
+    if (entry.account_id.has_value()) {
+      client.Add("a", *entry.account_id);
+    }
+  }
+  std::string s = builder.Write();
+
+  std::vector<uint8_t> msg(1 + s.size() + 1);
   msg[0] = BA_MESSAGE_PARTY_ROSTER;
-  memcpy(&(msg[1]), s, s_len + 1);
-  free(s);
+  memcpy(&(msg[1]), s.c_str(), s.size() + 1);  // +1 to include null terminator.
 
   return msg;
+}
+
+auto ClassicAppMode::InReplay() const -> bool {
+  return dynamic_cast<scene_v1::ClientSessionReplay*>(GetForegroundSession())
+         != nullptr;
 }
 
 base::ContextRef ClassicAppMode::GetForegroundContext() {
@@ -681,13 +853,8 @@ base::ContextRef ClassicAppMode::GetForegroundContext() {
 void ClassicAppMode::UpdateGameRoster() {
   assert(g_base->InLogicThread());
 
-  assert(game_roster_ != nullptr);
-  if (game_roster_ != nullptr) {
-    cJSON_Delete(game_roster_);
-  }
-
-  // Our party-roster is just a json array of dicts containing player-specs.
-  game_roster_ = cJSON_CreateArray();
+  // Our party-roster is an array of client entries, each with player-specs.
+  game_roster_.clear();
 
   int total_party_size = 1;  // include ourself here..
 
@@ -700,15 +867,10 @@ void ClassicAppMode::UpdateGameRoster() {
   if (auto* hs = dynamic_cast<scene_v1::HostSession*>(GetForegroundSession())) {
     // Add our host-y self.
     if (include_self) {
-      cJSON* client_dict = cJSON_CreateObject();
-      cJSON_AddItemToObject(
-          client_dict, "spec",
-          cJSON_CreateString(scene_v1::PlayerSpec::GetAccountPlayerSpec()
-                                 .GetSpecString()
-                                 .c_str()));
+      GameRosterEntry entry;
+      entry.spec = scene_v1::PlayerSpec::GetAccountPlayerSpec().GetSpecString();
 
       // Add our list of local players.
-      cJSON* player_array = cJSON_CreateArray();
       for (auto&& p : hs->players()) {
         auto* delegate = p->input_device_delegate();
         if (delegate == nullptr || !delegate->InputDeviceExists()) {
@@ -721,37 +883,22 @@ void ClassicAppMode::UpdateGameRoster() {
         // Add some basic info for each local player (only ones with real
         // names though; don't wanna send <selecting character>, etc).
         if (p->accepted() && p->name_is_real() && !delegate->IsRemoteClient()) {
-          cJSON* player_dict = cJSON_CreateObject();
-          cJSON_AddItemToObject(player_dict, "n",
-                                cJSON_CreateString(p->GetName().c_str()));
-          cJSON_AddItemToObject(player_dict, "nf",
-                                cJSON_CreateString(p->GetName(true).c_str()));
-          cJSON_AddItemToObject(player_dict, "i", cJSON_CreateNumber(p->id()));
-          cJSON_AddItemToArray(player_array, player_dict);
+          entry.players.push_back({p->GetName(), p->GetName(true), p->id()});
         }
       }
-      cJSON_AddItemToObject(client_dict, "p", player_array);
-      cJSON_AddItemToObject(
-          client_dict, "i",
-          cJSON_CreateNumber(-1));  // -1 client_id means we're the host.
-      cJSON_AddItemToArray(game_roster_, client_dict);
+      entry.client_id = -1;  // -1 client_id means we're the host.
+      game_roster_.push_back(std::move(entry));
     }
 
     // Add all connected clients.
-    bool doing_v2_auth =
-        require_client_authentication() && client_authentication_version() == 2;
+    bool doing_v2_auth = require_client_authentication();
     for (auto&& i : connections()->connections_to_clients()) {
       if (i.second->can_communicate()) {
-        cJSON* client_dict = cJSON_CreateObject();
-        cJSON_AddItemToObject(
-            client_dict, "spec",
-            cJSON_CreateString(i.second->peer_spec().GetSpecString().c_str()));
+        GameRosterEntry entry;
+        entry.spec = i.second->peer_spec().GetSpecString();
 
-        // Add their list of players.
-        cJSON* player_array = cJSON_CreateArray();
-
-        // Include all players that are remote and coming from this same
-        // client connection.
+        // Add their list of players: all players that are remote and coming
+        // from this same client connection.
         for (auto&& p : hs->players()) {
           auto* delegate = p->input_device_delegate();
           if (delegate == nullptr || !delegate->InputDeviceExists()) {
@@ -770,27 +917,16 @@ void ClassicAppMode::UpdateGameRoster() {
 
             // Add some basic info for each remote player.
             if (ctc != nullptr && ctc == i.second.get()) {
-              cJSON* player_dict = cJSON_CreateObject();
-              cJSON_AddItemToObject(player_dict, "n",
-                                    cJSON_CreateString(p->GetName().c_str()));
-              cJSON_AddItemToObject(
-                  player_dict, "nf",
-                  cJSON_CreateString(p->GetName(true).c_str()));
-              cJSON_AddItemToObject(player_dict, "i",
-                                    cJSON_CreateNumber(p->id()));
-              cJSON_AddItemToArray(player_array, player_dict);
+              entry.players.push_back(
+                  {p->GetName(), p->GetName(true), p->id()});
             }
           }
         }
-        cJSON_AddItemToObject(client_dict, "p", player_array);
-        cJSON_AddItemToObject(client_dict, "i",
-                              cJSON_CreateNumber(i.second->id()));
+        entry.client_id = i.second->id();
         if (doing_v2_auth && !i.second->peer_public_account_id().empty()) {
-          cJSON_AddItemToObject(
-              client_dict, "a",
-              cJSON_CreateString(i.second->peer_public_account_id().c_str()));
+          entry.account_id = i.second->peer_public_account_id();
         }
-        cJSON_AddItemToArray(game_roster_, client_dict);
+        game_roster_.push_back(std::move(entry));
         total_party_size += 1;
       }
     }
@@ -849,8 +985,10 @@ void ClassicAppMode::UpdateKickVote_() {
   }
 
   if (vote_failed) {
-    connections()->SendScreenMessageToClients(R"({"r":"kickVoteFailedText"})",
-                                              1, 1, 0);
+    connections()->SendScreenMessageToClients(
+        R"({"r":"kickVoteFailedText"})", 1, 1, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::KickVoteFailed()));
     kick_vote_in_progress_ = false;
 
     // Disallow kicking for a while for everyone.. but ESPECIALLY so for the
@@ -865,30 +1003,20 @@ void ClassicAppMode::UpdateKickVote_() {
           std::max(client->next_kick_vote_allow_time(), current_time + delay));
     }
   } else {
+    // On gui builds the host is a player too, so they count as a
+    // participant even though only clients get to vote.
+    int participant_count =
+        total_client_count + (g_core->HeadlessMode() ? 0 : 1);
     int votes_required;
-    switch (total_client_count) {
-      case 1:
-      case 2:
-        votes_required = 2;  // Shouldn't actually be possible.
-        break;
-      case 3:
-        votes_required = g_core->HeadlessMode() ? 2 : 3;
-        break;
-      case 4:
-        votes_required = 3;
-        break;
-      case 5:
-        votes_required = g_core->HeadlessMode() ? 3 : 4;
-        break;
-      case 6:
-        votes_required = 4;
-        break;
-      case 7:
-        votes_required = g_core->HeadlessMode() ? 4 : 5;
-        break;
-      default:
-        votes_required = total_client_count - 3;
-        break;
+    if (total_client_count <= 2) {
+      votes_required = 2;  // Shouldn't actually be possible.
+    } else if (total_client_count <= 7) {
+      // Small parties: a majority of everyone present.
+      votes_required = participant_count / 2 + 1;
+    } else {
+      // Large parties: all-but-3 of the clients must agree; kicks
+      // should approach unanimity as crowds grow.
+      votes_required = total_client_count - 3;
     }
     int votes_needed = votes_required - yes_votes;
     if (votes_needed <= 0) {
@@ -899,7 +1027,10 @@ void ClassicAppMode::UpdateKickVote_() {
                                          .GetDisplayString()
                                          .c_str())
               + "]]}",
-          1, 1, 0);
+          1, 1, 0,
+          scene_v1::ConnectionSet::LangStrWireTagged(
+              base::BuiltinStrings::Session::KickOccurred(
+                  kick_vote_target->GetCombinedSpec().GetDisplayString())));
       kick_vote_in_progress_ = false;
       connections()->DisconnectClient(kick_vote_target->id(), kKickBanSeconds);
 
@@ -908,7 +1039,9 @@ void ClassicAppMode::UpdateKickVote_() {
       connections()->SendScreenMessageToClients(
           R"({"r":"votesNeededText","s":[["${NUMBER}",")"
               + std::to_string(votes_needed) + "\"]]}",
-          1, 1, 0);
+          1, 1, 0,
+          scene_v1::ConnectionSet::LangStrWireTagged(
+              base::BuiltinStrings::Session::KickVotesNeeded(votes_needed)));
     }
   }
 }
@@ -920,14 +1053,20 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
 
   if (starter == target) {
     // Don't let anyone kick themselves.
-    starter->SendScreenMessage(R"({"r":"kickVoteCantKickSelfText",)"
-                               R"("f":"kickVoteFailedText"})",
-                               1, 0, 0);
+    starter->SendScreenMessage(
+        R"({"r":"kickVoteCantKickSelfText",)"
+        R"("f":"kickVoteFailedText"})",
+        1, 0, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::KickVoteCantKickSelf()));
   } else if (target->IsAdmin()) {
     // Admins are immune to kicking
-    starter->SendScreenMessage(R"({"r":"kickVoteCantKickAdminText",)"
-                               R"("f":"kickVoteFailedText"})",
-                               1, 0, 0);
+    starter->SendScreenMessage(
+        R"({"r":"kickVoteCantKickAdminText",)"
+        R"("f":"kickVoteFailedText"})",
+        1, 0, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::KickVoteCantKickAdmins()));
   } else if (starter->IsAdmin()) {
     // Admin doing the kicking succeeds instantly.
     connections()->SendScreenMessageToClients(
@@ -935,34 +1074,51 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
             + Utils::GetJSONString(
                 target->GetCombinedSpec().GetDisplayString().c_str())
             + "]]}",
-        1, 1, 0);
+        1, 1, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::KickOccurred(
+                target->GetCombinedSpec().GetDisplayString())));
     connections()->DisconnectClient(target->id(), kKickBanSeconds);
-    starter->SendScreenMessage(R"({"r":"kickVoteCantKickAdminText",)"
-                               R"("f":"kickVoteFailedText"})",
-                               1, 0, 0);
+    starter->SendScreenMessage(
+        R"({"r":"kickVoteCantKickAdminText",)"
+        R"("f":"kickVoteFailedText"})",
+        1, 0, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::KickVoteCantKickAdmins()));
   } else if (!kick_voting_enabled_) {
     // No kicking otherwise if its disabled.
-    starter->SendScreenMessage(R"({"r":"kickVotingDisabledText",)"
-                               R"("f":"kickVoteFailedText"})",
-                               1, 0, 0);
+    starter->SendScreenMessage(
+        R"({"r":"kickVotingDisabledText",)"
+        R"("f":"kickVoteFailedText"})",
+        1, 0, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::KickVotingDisabled()));
   } else if (kick_vote_in_progress_) {
     // Vote in progress error.
-    starter->SendScreenMessage(R"({"r":"voteInProgressText"})", 1, 0, 0);
+    starter->SendScreenMessage(
+        R"({"r":"voteInProgressText"})", 1, 0, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::VoteInProgress()));
   } else if (connections()->GetConnectedClientCount()
              < kKickVoteMinimumClients) {
     // There's too few clients to effectively vote.
-    starter->SendScreenMessage(R"({"r":"kickVoteFailedNotEnoughVotersText",)"
-                               R"("f":"kickVoteFailedText"})",
-                               1, 0, 0);
+    starter->SendScreenMessage(
+        R"({"r":"kickVoteFailedNotEnoughVotersText",)"
+        R"("f":"kickVoteFailedText"})",
+        1, 0, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::KickVoteNotEnoughPlayers()));
   } else if (current_time < starter->next_kick_vote_allow_time()) {
     // Not yet allowed error.
+    auto delay_seconds =
+        std::max(millisecs_t{1},
+                 (starter->next_kick_vote_allow_time() - current_time) / 1000);
     starter->SendScreenMessage(
         R"({"r":"voteDelayText","s":[["${NUMBER}",")"
-            + std::to_string(std::max(
-                millisecs_t{1},
-                (starter->next_kick_vote_allow_time() - current_time) / 1000))
-            + "\"]]}",
-        1, 0, 0);
+            + std::to_string(delay_seconds) + "\"]]}",
+        1, 0, 0,
+        scene_v1::ConnectionSet::LangStrWireTagged(
+            base::BuiltinStrings::Session::VoteDelay(delay_seconds)));
   } else {
     std::vector<scene_v1::ConnectionToClient*> connected_clients =
         connections()->GetConnectionsToClients();
@@ -976,10 +1132,18 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
                 + Utils::GetJSONString(
                     target->GetCombinedSpec().GetDisplayString().c_str())
                 + "]]}",
-            1, 1, 0);
-        client->SendScreenMessage(R"({"r":"kickWithChatText","s":)"
-                                  R"([["${YES}","'1'"],["${NO}","'0'"]]})",
-                                  1, 1, 0);
+            1, 1, 0,
+            scene_v1::ConnectionSet::LangStrWireTagged(
+                base::BuiltinStrings::Session::KickQuestion(
+                    target->GetCombinedSpec().GetDisplayString())));
+        // (The vote handler takes chat '1' as yes and '2' as no; the
+        // legacy text long said '0' for no, which did nothing.)
+        client->SendScreenMessage(
+            R"({"r":"kickWithChatText","s":)"
+            R"([["${YES}","'1'"],["${NO}","'2'"]]})",
+            1, 1, 0,
+            scene_v1::ConnectionSet::LangStrWireTagged(
+                base::BuiltinStrings::Session::KickWithChat("'1'", "'2'")));
       } else {
         // For the kicker/kickee, simply print that a kick vote has been
         // started.
@@ -988,7 +1152,10 @@ void ClassicAppMode::StartKickVote(scene_v1::ConnectionToClient* starter,
                 + Utils::GetJSONString(
                     target->GetCombinedSpec().GetDisplayString().c_str())
                 + "]]}",
-            1, 1, 0);
+            1, 1, 0,
+            scene_v1::ConnectionSet::LangStrWireTagged(
+                base::BuiltinStrings::Session::KickVoteStarted(
+                    target->GetCombinedSpec().GetDisplayString())));
       }
     }
     kick_vote_end_time_ = current_time + kKickVoteDuration;
@@ -1280,7 +1447,7 @@ void ClassicAppMode::LocalDisplayChatMessage(
         g_scene_v1->python->HandleLocalChatMessage(final_message);
       }
       if (!chat_muted_) {
-        g_base->audio->SafePlaySysSound(base::SysSoundID::kTap);
+        g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioTap);
       }
     }
   }
@@ -1334,7 +1501,7 @@ void ClassicAppMode::PruneSessions_() {
     }
   }
   if (have_dead_session) {
-    std::vector<Object::Ref<scene_v1::Session> > live_list;
+    std::vector<Object::Ref<scene_v1::Session>> live_list;
     for (auto&& i : sessions_) {
       if (i.exists()) {
         live_list.push_back(i);
@@ -1543,65 +1710,247 @@ void ClassicAppMode::SetInternalMusic(base::SoundAsset* music, float volume,
 
 void ClassicAppMode::HandleGameQuery(const char* buffer, size_t size,
                                      sockaddr_storage* from) {
-  if (size == 5) {
-    // If we're already in a party, don't advertise since they wouldn't be
-    // able to join us anyway.
-    if (g_base->app_mode()->HasConnectionToHost()) {
-      return;
+  assert(size >= 1);
+  switch (static_cast<uint8_t>(buffer[0])) {
+    case BA_PACKET_HOST_QUERY: {
+      if (size != 5) {
+        // Log invalid packets only once to avoid weaponized log spam.
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "Got invalid game-query packet of len "
+                        + std::to_string(size) + "; expected 5.");
+        return;
+      }
+      // If we're already in a party, don't advertise since they wouldn't
+      // be able to join us anyway.
+      if (g_base->app_mode()->HasConnectionToHost()) {
+        return;
+      }
+
+      // Pull the query id from the packet.
+      uint32_t query_id;
+      memcpy(&query_id, buffer + 1, 4);
+
+      // Ship them a response packet containing the query id, our protocol
+      // version, our unique-app-instance-id, and our player_spec.
+      char msg[400];
+
+      std::string usid = g_base->LocalAppInstanceUUID();
+      std::string player_spec_string;
+
+      // If we're signed in, send our account spec. Otherwise just send a
+      // dummy made with our device name.
+      player_spec_string =
+          scene_v1::PlayerSpec::GetAccountPlayerSpec().GetSpecString();
+
+      // This should always be the case (len needs to be 1 byte)
+      BA_PRECONDITION_FATAL(player_spec_string.size() < 256);
+
+      BA_PRECONDITION_FATAL(!usid.empty());
+      if (usid.size() > 100) {
+        g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                             "had to truncate session-id; shouldn't happen");
+        usid.resize(100);
+      }
+      if (usid.empty()) {
+        usid = "error";
+      }
+
+      msg[0] = BA_PACKET_HOST_QUERY_RESPONSE;
+      memcpy(msg + 1, &query_id, 4);
+      uint32_t protocol_version = host_protocol_version();
+      memcpy(msg + 5, &protocol_version, 4);
+      msg[9] = static_cast<char>(usid.size());
+      msg[10] = static_cast<char>(player_spec_string.size());
+
+      memcpy(msg + 11, usid.c_str(), usid.size());
+      memcpy(msg + 11 + usid.size(), player_spec_string.c_str(),
+             player_spec_string.size());
+      size_t msg_len = 11 + player_spec_string.size() + usid.size();
+      BA_PRECONDITION_FATAL(msg_len <= sizeof(msg));
+
+      std::vector<uint8_t> msg_buffer(msg_len);
+      memcpy(msg_buffer.data(), msg, msg_len);
+
+      g_base->network_writer->PushSendToCall(msg_buffer, SockAddr(*from));
+      break;
     }
 
-    // Pull the query id from the packet.
-    uint32_t query_id;
-    memcpy(&query_id, buffer + 1, 4);
+    case BA_PACKET_HOST_QUERY_V2: {
+      // Type byte + 4 byte query-id + at minimum '{}'.
+      if (size < 7) {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "Got invalid v2 game-query packet of len "
+                        + std::to_string(size) + ".");
+        return;
+      }
+      // As above: don't advertise if we couldn't be joined.
+      if (g_base->app_mode()->HasConnectionToHost()) {
+        return;
+      }
+      uint32_t query_id;
+      memcpy(&query_id, buffer + 1, 4);
 
-    // Ship them a response packet containing the query id, our protocol
-    // version, our unique-app-instance-id, and our player_spec.
-    char msg[400];
+      auto doc = JsonDoc::Parse(std::string_view(buffer + 5, size - 5),
+                                {.max_bytes = kHostQueryV2MaxJsonBytes});
+      if (!doc || !doc->root().is_object()) {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "Got unparsable v2 game-query packet.");
+        return;
+      }
+      JsonRef query = doc->root();
 
-    std::string usid = g_base->LocalAppInstanceUUID();
-    std::string player_spec_string;
+      // The asker describes themselves; this is where we can tailor
+      // responses per engine-build if formats ever need to shift
+      // (nothing varies yet). Require a valid format version though.
+      auto asker_build = query["b"].int_or(0);
+      auto asker_format_version = query["v"].int_or(0);
+      static_cast<void>(asker_build);
+      if (asker_format_version < 1) {
+        return;
+      }
 
-    // If we're signed in, send our account spec. Otherwise just send a
-    // dummy made with our device name.
-    player_spec_string =
-        scene_v1::PlayerSpec::GetAccountPlayerSpec().GetSpecString();
+      // Build our json response; open-ended so unknown fields are
+      // always ignorable by both sides. This is lightweight *discovery*
+      // info only; anything potentially large (the asset-package
+      // listing, etc.) lives in the paged requirements query below.
+      std::string response;
+      {
+        JsonBuilder builder;
+        JsonObjBuilder dict = builder.root_object();
+        dict.Add("v", 1);
+        dict.Add("b", kEngineBuildNumber);
+        dict.Add("p", host_protocol_version());
+        dict.Add("i", g_base->LocalAppInstanceUUID());
+        dict.Add("s",
+                 scene_v1::PlayerSpec::GetAccountPlayerSpec().GetSpecString());
+        std::string party_name = public_party_name();
+        if (!party_name.empty()) {
+          dict.Add("n", party_name);
+        }
+        dict.Add("sz", public_party_size());
+        dict.Add("szx", public_party_max_size());
+        dict.Add("a", require_client_authentication());
+        response = builder.Write();
+      }
+      if (response.size() > kHostQueryV2MaxJsonBytes) {
+        // Shouldn't be possible (all fields are small/bounded), but
+        // never ship a fragmenting datagram.
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "V2 host-query response exceeded datagram budget ("
+                        + std::to_string(response.size()) + " bytes).");
+        return;
+      }
 
-    // This should always be the case (len needs to be 1 byte)
-    BA_PRECONDITION_FATAL(player_spec_string.size() < 256);
+      std::vector<uint8_t> msg_buffer(5 + response.size());
+      msg_buffer[0] = BA_PACKET_HOST_QUERY_RESPONSE_V2;
+      memcpy(msg_buffer.data() + 1, &query_id, 4);
+      memcpy(msg_buffer.data() + 5, response.data(), response.size());
 
-    BA_PRECONDITION_FATAL(!usid.empty());
-    if (usid.size() > 100) {
-      g_core->logging->Log(LogName::kBa, LogLevel::kError,
-                           "had to truncate session-id; shouldn't happen");
-      usid.resize(100);
+      g_base->network_writer->PushSendToCall(msg_buffer, SockAddr(*from));
+      break;
     }
-    if (usid.empty()) {
-      usid = "error";
+
+    case BA_PACKET_HOST_REQUIREMENTS_QUERY: {
+      // Type byte + 4 byte query-id + at minimum '{}'.
+      if (size < 7) {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "Got invalid requirements-query packet of len "
+                        + std::to_string(size) + ".");
+        return;
+      }
+      // As with discovery queries: don't answer if we couldn't be
+      // joined anyway.
+      if (g_base->app_mode()->HasConnectionToHost()) {
+        return;
+      }
+      uint32_t query_id;
+      memcpy(&query_id, buffer + 1, 4);
+
+      auto doc = JsonDoc::Parse(std::string_view(buffer + 5, size - 5),
+                                {.max_bytes = kHostQueryV2MaxJsonBytes});
+      if (!doc || !doc->root().is_object()) {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                    "Got unparsable requirements-query packet.");
+        return;
+      }
+      JsonRef query = doc->root();
+
+      // As with the v2 discovery query: the asker describes themselves
+      // ('b' is the future tailoring hook); require a valid format
+      // version.
+      auto asker_build = query["b"].int_or(0);
+      static_cast<void>(asker_build);
+      if (query["v"].int_or(0) < 1) {
+        return;
+      }
+      auto page = query["p"].int_or(0);
+
+      // Snapshot our requirements: the hosting asset-package listing
+      // plus scalar requirements (currently just password-required).
+      // Scalars ride page 0 only; clients merge fragments (arrays
+      // concatenate, scalars are first-seen).
+      std::vector<std::string> packages = GetHostingAssetPackages();
+      bool password_required = !GetHostPassword().empty();
+
+      // Partition the package list into page ranges fitting the
+      // datagram budget (estimated json cost per entry: value + quotes
+      // + comma; the envelope margin covers the rest). The hosting set
+      // is stable for the whole app run, so pages are mutually
+      // consistent across queries with no continuation state.
+      std::vector<std::pair<size_t, size_t>> pages;
+      {
+        size_t begin{0};
+        size_t bytes{0};
+        for (size_t i = 0; i < packages.size(); ++i) {
+          size_t cost = packages[i].size() + 3;
+          if (i > begin && bytes + cost > kRequirementsPageBudgetBytes) {
+            pages.emplace_back(begin, i);
+            begin = i;
+            bytes = 0;
+          }
+          bytes += cost;
+        }
+        // Always at least one (possibly empty) page.
+        pages.emplace_back(begin, packages.size());
+      }
+      if (page < 0 || static_cast<size_t>(page) >= pages.size()) {
+        // Out-of-range page requests are simply dropped.
+        return;
+      }
+
+      std::string response;
+      {
+        JsonBuilder builder;
+        JsonObjBuilder dict = builder.root_object();
+        dict.Add("v", 1);
+        dict.Add("p", static_cast<int>(page));
+        dict.Add("n", static_cast<int>(pages.size()));
+        JsonObjBuilder reqs = dict.AddObject("r");
+        if (page == 0 && password_required) {
+          reqs.Add("pw", true);
+        }
+        JsonArrBuilder arr = reqs.AddArray("ap");
+        auto [range_begin, range_end] = pages[static_cast<size_t>(page)];
+        for (size_t i = range_begin; i < range_end; ++i) {
+          arr.Add(packages[i]);
+        }
+        response = builder.Write();
+      }
+
+      std::vector<uint8_t> msg_buffer(5 + response.size());
+      msg_buffer[0] = BA_PACKET_HOST_REQUIREMENTS_RESPONSE;
+      memcpy(msg_buffer.data() + 1, &query_id, 4);
+      memcpy(msg_buffer.data() + 5, response.data(), response.size());
+
+      g_base->network_writer->PushSendToCall(msg_buffer, SockAddr(*from));
+      break;
     }
 
-    msg[0] = BA_PACKET_HOST_QUERY_RESPONSE;
-    memcpy(msg + 1, &query_id, 4);
-    uint32_t protocol_version = host_protocol_version();
-    memcpy(msg + 5, &protocol_version, 4);
-    msg[9] = static_cast<char>(usid.size());
-    msg[10] = static_cast<char>(player_spec_string.size());
-
-    memcpy(msg + 11, usid.c_str(), usid.size());
-    memcpy(msg + 11 + usid.size(), player_spec_string.c_str(),
-           player_spec_string.size());
-    size_t msg_len = 11 + player_spec_string.size() + usid.size();
-    BA_PRECONDITION_FATAL(msg_len <= sizeof(msg));
-
-    std::vector<uint8_t> msg_buffer(msg_len);
-    memcpy(msg_buffer.data(), msg, msg_len);
-
-    g_base->network_writer->PushSendToCall(msg_buffer, SockAddr(*from));
-
-  } else {
-    // Log invalid packets only once to avoid weaponized log spam.
-    BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
-                "Got invalid game-query packet of len " + std::to_string(size)
-                    + "; expected 5.");
+    default:
+      BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kError,
+                  "Got unexpected game-query packet type "
+                      + std::to_string(static_cast<int>(buffer[0])) + ".");
+      break;
   }
 }
 

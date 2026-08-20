@@ -24,6 +24,7 @@
 #include "ballistica/base/support/repeater.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/vector4f.h"
 #include "ballistica/shared/python/python_command.h"
@@ -183,8 +184,12 @@ static void DrawRect(RenderPass* pass, Mesh* mesh, float x, float y,
                      float alpha = 1.0f) {
   SimpleComponent c(pass);
   c.SetTransparent(true);
-  c.SetColor(bgcolor.x, bgcolor.y, bgcolor.z, alpha);
-  c.SetTexture(g_base->assets->SysTexture(SysTextureID::kCircle));
+  auto* tex = g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesCircle);
+  // Premultiply rgb by alpha for the premultiplied texture so faded rects
+  // composite 'over' correctly (see docs/design/premultiplied-alpha.md).
+  float cmul = tex->premultiplied() ? alpha : 1.0f;
+  c.SetColor(bgcolor.x * cmul, bgcolor.y * cmul, bgcolor.z * cmul, alpha);
+  c.SetTexture(tex);
   // Draw mesh bg.
   if (mesh) {
     auto xf = c.ScopedTransform();
@@ -203,7 +208,13 @@ static void DrawText(RenderPass* pass, TextGroup* tgrp, float tscale, float x,
     c.Translate(x, y, kDevConsoleZDepth);
     c.Scale(tscale, tscale, 1.0f);
     int elem_count = tgrp->GetElementCount();
-    c.SetColor(fgcolor.x, fgcolor.y, fgcolor.z, alpha);
+    // OS-rendered text-group textures are premultiplied-alpha; premultiply
+    // rgb by alpha so faded text composites 'over' correctly (see
+    // docs/design/premultiplied-alpha.md).
+    float cmul = (elem_count > 0 && tgrp->GetElementTexture(0)->premultiplied())
+                     ? alpha
+                     : 1.0f;
+    c.SetColor(fgcolor.x * cmul, fgcolor.y * cmul, fgcolor.z * cmul, alpha);
     c.SetFlatness(1.0f);
     for (int e = 0; e < elem_count; e++) {
       c.SetTexture(tgrp->GetElementTexture(e));
@@ -971,7 +982,7 @@ void DevConsole::InputAdapterFinish() {
   string_edit_adapter_.Release();
 }
 
-auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
+auto DevConsole::HandleKeyPress(const BAKeysym* keysym) -> bool {
   assert(g_base->InLogicThread());
 
   // Any presses or releases cancels repeat actions.
@@ -983,7 +994,7 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
 
   // Stuff we always look for.
   switch (keysym->sym) {
-    case SDLK_ESCAPE:
+    case BAK_ESCAPE:
       Dismiss();
       return true;
     default:
@@ -1007,98 +1018,98 @@ auto DevConsole::HandleKeyPress(const SDL_Keysym* keysym) -> bool {
     bool do_move_to_beginning{};
     bool do_kill_line{};
     switch (keysym->sym) {
-      case SDLK_BACKSPACE: {
-        if (keysym->mod & KMOD_ALT) {
+      case BAK_BACKSPACE: {
+        if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_backspace = true;
         } else {
           do_backspace = true;
         }
         break;
       }
-      case SDLK_DELETE: {
-        if (keysym->mod & KMOD_ALT) {
+      case BAK_DELETE: {
+        if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_forward_delete = true;
         } else {
           do_forward_delete = true;
         }
         break;
       }
-      case SDLK_HOME:
+      case BAK_HOME:
         do_move_to_beginning = true;
         break;
-      case SDLK_END:
+      case BAK_END:
         do_move_to_end = true;
         break;
-      case SDLK_UP:
+      case BAK_UP:
         do_history_up = true;
         break;
-      case SDLK_DOWN:
+      case BAK_DOWN:
         do_history_down = true;
         break;
-      case SDLK_RIGHT:
-        if (keysym->mod & KMOD_ALT) {
+      case BAK_RIGHT:
+        if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_carat_right = true;
         } else {
           do_carat_right = true;
         }
         break;
-      case SDLK_LEFT:
-        if (keysym->mod & KMOD_ALT) {
+      case BAK_LEFT:
+        if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_carat_left = true;
         } else {
           do_carat_left = true;
         }
         break;
-      case SDLK_KP_ENTER:
-      case SDLK_RETURN: {
+      case BAK_KP_ENTER:
+      case BAK_RETURN: {
         Exec();
         break;
       }
 
       // Wheeee emacs key shortcuts!!
-      case SDLK_n:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_n:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_history_down = true;
         }
         break;
-      case SDLK_f:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_f:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_carat_right = true;
-        } else if (keysym->mod & KMOD_ALT) {
+        } else if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_carat_right = true;
         }
         break;
-      case SDLK_b:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_b:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_carat_left = true;
-        } else if (keysym->mod & KMOD_ALT) {
+        } else if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_carat_left = true;
         }
         break;
-      case SDLK_p:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_p:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_history_up = true;
         }
         break;
-      case SDLK_a:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_a:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_move_to_beginning = true;
         }
         break;
-      case SDLK_d:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_d:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_forward_delete = true;
-        } else if (keysym->mod & KMOD_ALT) {
+        } else if (keysym->mod & BA_KMOD_ALT) {
           do_hungry_forward_delete = true;
         }
         break;
-      case SDLK_e:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_e:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_move_to_end = true;
         }
         break;
-      case SDLK_k:
-        if (keysym->mod & KMOD_CTRL) {
+      case BAK_k:
+        if (keysym->mod & BA_KMOD_CTRL) {
           do_kill_line = true;
         }
       default: {
@@ -1287,7 +1298,7 @@ auto DevConsole::HandleTextEditing(const std::string& text) -> bool {
   return true;
 }
 
-auto DevConsole::HandleKeyRelease(const SDL_Keysym* keysym) -> bool {
+auto DevConsole::HandleKeyRelease(const BAKeysym* keysym) -> bool {
   // Any presses or releases cancels repeat actions.
   key_repeater_.Clear();
 
@@ -1406,7 +1417,7 @@ void DevConsole::CycleState(bool backwards) {
       g_base->logic->event_loop()->PushCall([this] { RefreshTabContents_(); });
     }
   }
-  g_base->audio->SafePlaySysSound(SysSoundID::kBlip);
+  g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioBlip);
   transition_start_ = g_base->logic->display_time();
 }
 
@@ -1549,19 +1560,35 @@ void DevConsole::Draw(FrameDef* frame_def) {
   {
     SimpleComponent c(pass);
     c.SetTransparent(true);
-    c.SetColor(0.03, 0, 0.09, 0.9f);
-    c.SetTexture(g_base->assets->SysTexture(SysTextureID::kSoftRectVertical));
+    // kTexturesSoftRectVertical is premultiplied-alpha, so premultiply the
+    // modulate rgb by its alpha (0.9) to composite 'over' correctly (premult
+    // blend adds rgb directly rather than weighting it by alpha).
+    c.SetColor(0.03f * 0.9f, 0.0f, 0.09f * 0.9f, 0.9f);
+    c.SetTexture(g_base->assets->BuiltinTexture(
+        BuiltinTextureID::kTexturesSoftRectVertical));
     {
       auto scissor = c.ScopedScissor({0.0f, 0.0f, pass->virtual_width(),
                                       bottom - (border_height * 0.75f) * bs});
       auto xf = c.ScopedTransform();
       c.Translate(pass->virtual_width() * 0.5f, bottom + 160.0f);
       c.Scale(pass->virtual_width() * 1.2f, 600.0f);
-      c.DrawMeshAsset(g_base->assets->SysMesh(SysMeshID::kImage1x1));
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
     }
   }
 
   if (python_terminal_visible_) {
+    // Report our input line as the app's live text-editing target
+    // (drives OS IME positioning/etc). We outrank any bauiv1 widget
+    // that might also be editing, since text input comes to us first.
+    // Skip while transitioning out (state kInactive still draws briefly).
+    if (state_ != State_::kInactive) {
+      g_base->ui->ReportTextEditing(
+          Rect{0.0f, bottom + 15.0f * bs, pass->virtual_width(),
+               bottom + 30.0f * bs},
+          UI::TextEditSource::kDevConsole);
+    }
+
     if (input_text_dirty_) {
       input_text_group_.SetText(input_string_);
       input_text_dirty_ = false;
@@ -1570,7 +1597,10 @@ void DevConsole::Draw(FrameDef* frame_def) {
       SimpleComponent c(pass);
       c.SetFlatness(1.0f);
       c.SetTransparent(true);
-      c.SetColor(0.4f, 0.33f, 0.45f, 0.8f);
+      // OS-rendered text-group textures are premultiplied-alpha, so
+      // premultiply this faint (alpha 0.8) rgb ourselves so the build/title
+      // labels don't draw over-bright under premult blend.
+      c.SetColor(0.4f * 0.8f, 0.33f * 0.8f, 0.45f * 0.8f, 0.8f);
 
       // Build.
       int elem_count = built_text_group_.GetElementCount();
@@ -1623,8 +1653,15 @@ void DevConsole::Draw(FrameDef* frame_def) {
       }
     }
 
-    // Carat.
-    if (!carat_mesh_.exists() || carat_dirty_) {
+    // Carat. Skip it entirely on setups where terminal input goes
+    // through the platform string-editor dialog (same condition as our
+    // tap handling) - the dialog draws its own blinking cursor and two
+    // of those flashing at once looks broken. With direct keyboard
+    // input (or no string editor) typing really does land here, so the
+    // carat stays.
+    bool show_carat = g_base->ui->UIHasDirectKeyboardInput()
+                      || !g_base->platform->HaveStringEditor();
+    if (show_carat && (!carat_mesh_.exists() || carat_dirty_)) {
       // Note: we explicitly update here if carat is dirty because
       // that updates last_carat_change_time_ which affects whether
       // we draw or not. GetCaratX_() only updates it *if* we draw.
@@ -1632,11 +1669,17 @@ void DevConsole::Draw(FrameDef* frame_def) {
     }
     millisecs_t app_time = pass->frame_def()->app_time_millisecs();
     millisecs_t since_change = app_time - last_carat_x_change_time_;
-    if (since_change < 300 || since_change % 1000 < 500) {
+    if (show_carat && (since_change < 300 || since_change % 1000 < 500)) {
       SimpleComponent c(pass);
       c.SetTransparent(true);
-      c.SetTexture(g_base->assets->SysTexture(SysTextureID::kShadow));
-      c.SetColor(0.8, 0.0, 1.0, 0.3f);
+      c.SetTexture(
+          g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesShadow));
+      // kTexturesShadow is now a premultiplied-alpha texture, so this draws
+      // with premult (additive) blend. Premultiply the modulate rgb by its
+      // alpha (0.3) so the glow keeps its original brightness instead of
+      // blowing out (premult-blend adds rgb directly rather than weighting it
+      // by alpha).
+      c.SetColor(0.8f * 0.3f, 0.0f * 0.3f, 1.0f * 0.3f, 0.3f);
       {
         auto xf = c.ScopedTransform();
         auto carat_x = GetCaratX_();
@@ -1645,7 +1688,8 @@ void DevConsole::Draw(FrameDef* frame_def) {
         c.Translate(carat_x, 0.0f, 0.0f);
         c.DrawMesh(carat_glow_mesh_.get());
       }
-      c.SetTexture(g_base->assets->SysTexture(SysTextureID::kShadowSharp));
+      c.SetTexture(g_base->assets->BuiltinTexture(
+          BuiltinTextureID::kTexturesShadowSharp));
       c.SetColor(1.0, 1.0, 1.0, 1.0f);
       {
         auto xf = c.ScopedTransform();
@@ -1671,8 +1715,13 @@ void DevConsole::Draw(FrameDef* frame_def) {
       for (auto i = output_lines_.rbegin(); i != output_lines_.rend(); i++) {
         int elem_count = i->GetText().GetElementCount();
         for (int e = 0; e < elem_count; e++) {
-          c.SetColor(i->color.x, i->color.y, i->color.z, i->color.a);
-          c.SetTexture(i->GetText().GetElementTexture(e));
+          auto* tex = i->GetText().GetElementTexture(e);
+          // Premultiply rgb by alpha for premultiplied text textures so faded
+          // output lines don't draw over-bright.
+          float cmul = tex->premultiplied() ? i->color.a : 1.0f;
+          c.SetColor(i->color.x * cmul, i->color.y * cmul, i->color.z * cmul,
+                     i->color.a);
+          c.SetTexture(tex);
           {
             auto xf = c.ScopedTransform();
             c.Translate(h, v + 2, kDevConsoleZDepth);
@@ -1769,7 +1818,7 @@ auto DevConsole::PasteFromClipboard() -> bool {
           }
 
           if (strstr(text.c_str(), "\n") || strstr(text.c_str(), "\r")) {
-            g_base->audio->SafePlaySysSound(SysSoundID::kErrorBeep);
+            g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioError);
             g_base->ScreenMessage("Can only paste single lines of text.",
                                   Vector3f(1.0f, 0.0f, 0.0f));
           } else {

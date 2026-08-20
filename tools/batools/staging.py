@@ -1,24 +1,16 @@
 # Released under the MIT License. See LICENSE for details.
 #
-# pylint: disable=too-many-lines
 """Stage files for builds."""
 
-from __future__ import annotations
-
-import hashlib
 import os
 import sys
 import subprocess
-from functools import partial
-from typing import TYPE_CHECKING
 
 from efro.terminal import Clr
 from efro.util import extract_arg, extract_flag
 from efrotools.util import is_wsl_windows_build_path
 from efrotools.pyver import PYVER, PYVERNODOT
-
-if TYPE_CHECKING:
-    from concurrent.futures import Future
+from batools._androidpayload import write_payload_file
 
 
 def stage_build(projroot: str, args: list[str] | None = None) -> None:
@@ -40,26 +32,26 @@ class BuildStager:
         self.src = f'{self.projroot}/build/assets'
         self.dst: str | None = None
         self.serverdst: str | None = None
-        self.asset_package_flavor: str | None = None
         self.win_extras_src: str | None = None
         self.win_platform: str | None = None
         self.win_type: str | None = None
         self.include_python_dylib = False
         self.include_shell_executable = False
-        self.include_audio = True
-        self.include_meshes = True
-        self.include_collision_meshes = True
         self.include_scripts = True
         self.include_python = True
-        self.include_textures = True
         self.include_fonts = True
         self.include_json = True
         self.include_pylib = False
+        # Name of the asset-bundle profile to stage (see
+        # batools.assetbundleprofiles). When set, copies
+        # ``.cache/asset_bundle/<profile>/manifest.json`` + the CAS
+        # blobs it references into ``<staged>/ba_data/``. None means no
+        # bundle is staged for this build.
+        self.asset_bundle_profile: str | None = None
         self.include_binary_executable = False
         self.executable_name: str | None = None
         self.pylib_src_path: str | None = None
         self.include_payload_file = False
-        self.tex_suffix: str | None = None
         self.is_payload_full = False
         self.debug: bool | None = None
         self.builddir: str | None = None
@@ -117,9 +109,8 @@ class BuildStager:
         # Legacy assets going into ba_data.
         self._sync_ba_data_legacy()
 
-        # New asset-package stuff going into ba_data.
-        if self.asset_package_flavor is not None:
-            self._sync_ba_data_new()
+        if self.asset_bundle_profile is not None:
+            self._sync_asset_bundle()
 
         if self.include_binary_executable:
             self._sync_binary_executable()
@@ -134,10 +125,9 @@ class BuildStager:
         # pull out of the apk.
         if self.include_payload_file:
             assert self.dst is not None
-            _write_payload_file(self.dst, self.is_payload_full)
+            write_payload_file(self.dst, self.is_payload_full)
 
     def _parse_args(self, args: list[str]) -> None:
-        # pylint: disable=too-many-statements
         """Parse args and apply to ourself."""
 
         if len(args) < 1:
@@ -173,24 +163,19 @@ class BuildStager:
 
         if platform_arg == '-android':
             self.desc = 'android'
-            self._parse_android_args(args)
+            self._parse_android_args()
         elif platform_arg.startswith('-win'):
             self.desc = 'windows'
-            self.asset_package_flavor = 'gui_desktop_v2dev1'
             self._parse_win_args(platform_arg, args)
         elif platform_arg == '-cmake':
             self.desc = 'cmake'
             self.dst = args[-1]
-            self.tex_suffix = '.dds'
-            self.asset_package_flavor = 'gui_desktop_v2dev1'
             # Link/copy in a binary *if* builddir is provided.
             self.include_binary_executable = self.builddir is not None
             self.executable_name = 'ballisticakit'
         elif platform_arg == '-cmakemodular':
             self.desc = 'cmake modular'
             self.dst = args[-1]
-            self.tex_suffix = '.dds'
-            self.asset_package_flavor = 'gui_desktop_v2dev1'
             self.include_python_dylib = True
             self.include_shell_executable = True
             self.executable_name = 'ballisticakit'
@@ -198,9 +183,6 @@ class BuildStager:
             self.desc = 'cmake server'
             self.dst = os.path.join(args[-1], 'dist')
             self.serverdst = args[-1]
-            self.include_textures = False
-            self.include_audio = False
-            self.include_meshes = False
             # Link/copy in a binary *if* builddir is provided.
             self.include_binary_executable = self.builddir is not None
             self.executable_name = 'ballisticakit_headless'
@@ -208,9 +190,6 @@ class BuildStager:
             self.desc = 'cmake modular server'
             self.dst = os.path.join(args[-1], 'dist')
             self.serverdst = args[-1]
-            self.include_textures = False
-            self.include_audio = False
-            self.include_meshes = False
             self.include_python_dylib = True
             self.include_shell_executable = True
             self.executable_name = 'ballisticakit_headless'
@@ -224,20 +203,33 @@ class BuildStager:
             )
             self.include_pylib = True
             self.pylib_src_path = 'pylib-apple'
-            self.tex_suffix = '.dds'
-        elif platform_arg == '-xcode-ios':
-            self.desc = 'xcode ios'
-            self.src = os.environ['SOURCE_ROOT'] + '/build/assets'
+        elif platform_arg in ('-xcode-ios', '-xcode-tvos'):
+            # iOS and tvOS stage identically (same Apple pylib + asset
+            # layout into the .app bundle's flat Resources dir).
+            self.desc = 'xcode ' + platform_arg.removeprefix('-xcode-')
+            self.src = os.environ['SOURCE_ROOT'] + '/../build/assets'
             self.dst = (
                 os.environ['TARGET_BUILD_DIR']
                 + '/'
                 + os.environ['UNLOCALIZED_RESOURCES_FOLDER_PATH']
             )
-            self.include_pylib = False
-            # self.pylib_src_path = 'pylib-apple'
-            self.tex_suffix = '.pvr'
+            self.include_pylib = True
+            self.pylib_src_path = 'pylib-apple'
         else:
             raise RuntimeError('No valid platform arg provided.')
+
+        # Every staged build bundles a named asset-package profile (see
+        # batools.assetbundleprofiles): server builds (``serverdst`` set)
+        # get the headless profile, other builds the gui one. This now
+        # includes Apple Xcode builds -- their staging phase runs
+        # remotely (inside xcodebuild on the ba-apple env), so their
+        # cloud-build Make targets (_mac-cloud-build / _ios-cloud-build /
+        # _tvos-cloud-build) run `asset_bundle_build gui-minimal` on that
+        # remote env before xcodebuild, ensuring the .cache/asset_bundle
+        # tree is present when this staging phase reads it there.
+        self.asset_bundle_profile = (
+            'headless-minimal' if self.serverdst is not None else 'gui-minimal'
+        )
 
         # Special case: running rsync to a windows drive via WSL fails
         # to overwrite non-writable files.
@@ -249,51 +241,15 @@ class BuildStager:
         if is_wsl_windows_build_path(self.projroot):
             self.wsl_chmod_workaround = True
 
-    def _parse_android_args(self, args: list[str]) -> None:
-        # On Android we get nitpicky with exactly what we want to copy
-        # in since we can speed up iterations by installing stripped
-        # down apks.
+    def _parse_android_args(self) -> None:
+        # Android pulls its assets out of the apk at runtime via the
+        # payload manifest; we always stage the full asset set (the
+        # per-asset-type 'partial apk' selection has been retired).
         self.dst = 'assets/ballistica_files'
         self.pylib_src_path = 'pylib-android'
         self.include_payload_file = True
-        self.tex_suffix = '.ktx'
-        self.include_audio = False
-        self.include_meshes = False
-        self.include_collision_meshes = False
-        self.include_scripts = False
-        self.include_python = False
-        self.include_textures = False
-        self.include_fonts = False
-        self.include_json = False
-        self.include_pylib = False
-        for arg in args:
-            if arg == '-full':
-                self.include_audio = True
-                self.include_meshes = True
-                self.include_collision_meshes = True
-                self.include_scripts = True
-                self.include_python = True
-                self.include_textures = True
-                self.include_fonts = True
-                self.include_json = True
-                self.is_payload_full = True
-                self.include_pylib = True
-            elif arg == '-none':
-                pass
-            elif arg == '-meshes':
-                self.include_meshes = True
-                self.include_collision_meshes = True
-            elif arg == '-python':
-                self.include_python = True
-                self.include_pylib = True
-            elif arg == '-textures':
-                self.include_textures = True
-            elif arg == '-fonts':
-                self.include_fonts = True
-            elif arg == '-scripts':
-                self.include_scripts = True
-            elif arg == '-audio':
-                self.include_audio = True
+        self.is_payload_full = True
+        self.include_pylib = True
 
     def _parse_win_args(self, platform: str, args: list[str]) -> None:
         """Parse sub-args in the windows platform string."""
@@ -301,16 +257,12 @@ class BuildStager:
         self.win_platform = winplt
         self.win_type = wintype
         assert winempty == ''
-        self.tex_suffix = '.dds'
 
         if wintype == 'win':
             self.dst = args[-1]
         elif wintype == 'winserver':
             self.dst = os.path.join(args[-1], 'dist')
             self.serverdst = args[-1]
-            self.include_textures = False
-            self.include_audio = False
-            self.include_meshes = False
         else:
             raise RuntimeError(f"Invalid wintype: '{wintype}'.")
 
@@ -396,11 +348,13 @@ class BuildStager:
                 'libvorbisfile.dll',
                 'ogg.dll',
                 'OpenAL32.dll',
-                'SDL2.dll',
-                # zlib1.dll lives in DLLs/ (Python dependency) but also needs
-                # to be at the top level because ANGLE (libGLESv2.dll) depends
-                # on it for shader blob caching.
-                'DLLs/zlib1.dll',
+                'SDL3.dll',
+                # ANGLE (libGLESv2.dll) depends on zlib1.dll for shader
+                # blob caching. Through Python 3.13 we borrowed the copy
+                # in Python's DLLs/; 3.14 links zlib statically and no
+                # longer ships the dll, so we now stage our own top-level
+                # copy alongside the other ANGLE bits.
+                'zlib1.dll',
             ]
         elif self.win_type == 'winserver':
             toplevelfiles += [f'python{dbgsfx}.exe']
@@ -507,28 +461,19 @@ class BuildStager:
 
         # Traditionally we used --delete-excluded so that we could do
         # sparse syncs for quick iteration on android apks/etc. However
-        # for our modular builds (and now for asset-package assets) we
-        # need to avoid that flag because we do further passes after to
-        # sync in python-dylib stuff or asset-package stuff and with
-        # that flag it all gets blown away on the first pass.
-        if not self.include_python_dylib and self.asset_package_flavor is None:
+        # for our modular builds we need to avoid that flag because we
+        # do a further pass after to sync in python-dylib stuff and
+        # with that flag it all gets blown away on the first pass.
+        if not self.include_python_dylib:
             cmd.append('--delete-excluded')
         else:
             # Shouldn't be trying to do sparse stuff in server builds.
             if self.serverdst is not None:
-                assert self.include_json and self.include_collision_meshes
+                assert self.include_json
             else:
-                assert (
-                    self.include_textures
-                    and self.include_audio
-                    and self.include_fonts
-                    and self.include_json
-                    and self.include_meshes
-                    and self.include_collision_meshes
-                )
+                assert self.include_fonts and self.include_json
             # Keep rsync from deleting the other stuff we're overlaying.
             cmd += ['--exclude', '/python-dylib']
-            cmd += ['--exclude', '/textures2']
 
         if self.include_scripts:
             cmd += [
@@ -536,26 +481,17 @@ class BuildStager:
                 '*.py',
                 '--include',
                 '*.pem',
+                # Bundled zstd dictionaries (e.g. bacommon mesh dicts) ride
+                # along with the scripts they accompany.
+                '--include',
+                '*.zstddict',
             ]
-
-        if self.include_textures:
-            assert self.tex_suffix is not None
-            cmd += ['--include', f'*{self.tex_suffix}']
-
-        if self.include_audio:
-            cmd += ['--include', '*.ogg']
 
         if self.include_fonts:
             cmd += ['--include', '*.fdata']
 
         if self.include_json:
             cmd += ['--include', '*.json']
-
-        if self.include_meshes:
-            cmd += ['--include', '*.bob']
-
-        if self.include_collision_meshes:
-            cmd += ['--include', '*.cob']
 
         # By default we want to include all dirs and exclude all files.
         cmd += [
@@ -569,145 +505,241 @@ class BuildStager:
         self._purge_pycache_dirs(f'{self.dst}/ba_data/')
         subprocess.run(cmd, check=True)
 
-    def _sync_ba_data_new(self) -> None:
+    def _collect_bundle_hashes(self, bundle_manifest_path: str) -> set[str]:
+        """Walk the top-level bundle and return every transitively
+        referenced CAS hash (bucket-manifest blobs plus the data
+        blobs those manifests reference)."""
         import json
-        import stat
+
+        with open(bundle_manifest_path, encoding='utf-8') as infile:
+            bundle = json.loads(infile.read())
+
+        flavor_manifest_maps = [
+            e['flavor_manifests']
+            for e in bundle['asset_package_versions'].values()
+        ]
+
+        hashes: set[str] = set()
+        for flavor_manifests in flavor_manifest_maps:
+            for manifest_hash in flavor_manifests.values():
+                hashes.add(manifest_hash)
+                blob_path = (
+                    f'{self.projroot}/.cache/assetdata/'
+                    f'{manifest_hash[:2]}/{manifest_hash[2:]}'
+                )
+                with open(blob_path, encoding='utf-8') as infile:
+                    flavor_manifest = json.loads(infile.read())
+                # Each entry is a part-keyed component map (decision #16);
+                # flatten over parts to collect every data-blob hash.
+                hashes.update(
+                    comp['h']
+                    for info in flavor_manifest['e'].values()
+                    for comp in info.values()
+                )
+        return hashes
+
+    def _verify_builtin_apverid_bundled(
+        self, bundle_manifest_path: str
+    ) -> None:
+        """Fail loudly if the compiled-in builtin apverid isn't bundled.
+
+        ``base.h``'s autogenerated ``kBuiltinAssetsApverid`` is the
+        asset-package version the binary's ``LoadBuiltinTexture`` calls
+        ask for at startup. If the asset-id splice drifts from the staged
+        bundle — a half-applied ``assetpins update``, a lazybuild-skipped
+        codegen, a hand-edited pin — every builtin load asks for an
+        unbundled package and the binary crashes on launch under a flood
+        of ``Asset not found in package`` errors. Catching it here, the
+        last step before the artifact is runnable, turns that confusing
+        runtime crash into one actionable build-time message.
+
+        Compares apverid strings only (not the full splice): that's the
+        field that drifts, and it's robust without a resolved manifest or
+        a matching clang-format. Skips quietly if base.h has no splice.
+        """
+        import re
+        import json
+
+        from efro.error import CleanError
+
+        base_h_path = f'{self.projroot}/src/ballistica/base/base.h'
+        if not os.path.exists(base_h_path):
+            return
+        with open(base_h_path, encoding='utf-8') as infile:
+            match = re.search(
+                r'kBuiltinAssetsApverid\s*=\s*"([^"]+)"', infile.read()
+            )
+        if match is None:
+            return
+        builtin_apverid = match.group(1)
+
+        with open(bundle_manifest_path, encoding='utf-8') as infile:
+            bundled = set(json.load(infile).get('asset_package_versions', {}))
+
+        if builtin_apverid not in bundled:
+            raise CleanError(
+                f"Builtin-asset splice is stale: base.h kBuiltinAssetsApverid"
+                f" is '{builtin_apverid}', but the staged"
+                f" '{self.asset_bundle_profile}' bundle contains"
+                f' {sorted(bundled)}. The compiled-in builtin package is not'
+                f' in the bundle, so this build would crash on launch. Re-sync'
+                f' the splice with `tools/pcommand assetpins update'
+                f' babuiltinassets <ver>` (now self-healing) or `tools/pcommand'
+                f' gen_builtin_asset_ids`, then rebuild.'
+            )
+
+    def _sync_asset_bundle(self) -> None:
+        """Stage the build's asset bundle into ba_data/.
+
+        Reads ``.cache/asset_bundle/<profile>/manifest.json``
+        for whichever bundle profile (e.g. ``gui-minimal`` /
+        ``headless-minimal``) this build was configured for, walks
+        it to collect every transitively-referenced CAS blob
+        (bucket-manifests plus the data blobs those manifests
+        reference), and mirrors
+        the resulting set into ``<staged>/ba_data/assets/``.
+        Already-correct blobs (right hash already at the right
+        path) are left alone, missing ones are copied in, and
+        anything else under ``assets/`` — stale orphans from
+        prior builds, cruft like ``.DS_Store`` — is pruned.
+        Also copies the top-level ``manifest.json`` itself to
+        ``<staged>/ba_data/manifest.json``.
+        """
         import shutil
-        from threading import Lock
-        from concurrent.futures import ThreadPoolExecutor
+        import concurrent.futures
 
-        from bacommon.bacloud import asset_file_cache_path
-
-        assert self.asset_package_flavor is not None
         assert self.dst is not None
+        assert self.asset_bundle_profile is not None
 
-        # Just going with raw json here instead of dataclassio to
-        # maximize speed; we'll be going over lots of files here.
-        with open(
-            f'{self.projroot}/.cache/assetmanifests/'
-            f'{self.asset_package_flavor}',
-            encoding='utf-8',
-        ) as infile:
-            manifest = json.loads(infile.read())
+        bundle_manifest_path = (
+            f'{self.projroot}/.cache/asset_bundle/'
+            f'{self.asset_bundle_profile}/manifest.json'
+        )
+        if not os.path.exists(bundle_manifest_path):
+            bundle_root = f'{self.projroot}/.cache/asset_bundle'
+            siblings = (
+                sorted(
+                    e
+                    for e in os.listdir(bundle_root)
+                    if os.path.isdir(os.path.join(bundle_root, e))
+                )
+                if os.path.isdir(bundle_root)
+                else []
+            )
+            if siblings:
+                # Our profile is missing but *other* profiles are present:
+                # this is a corrupt/partial asset cache, not an asset-target
+                # wiring bug. lazybuild guards the assets sub-build on the
+                # existence of the shared .cache/asset_bundle dir (so a full
+                # `rm -rf .cache/asset_bundle` re-triggers it), but a sibling
+                # profile's presence satisfies that dir-level check -- so with
+                # a stale lazybuild marker a single missing profile gets
+                # skipped rather than rebuilt. Clearing the whole dir restores
+                # the guard's ability to fire.
+                raise RuntimeError(
+                    f"Asset bundle manifest for profile"
+                    f" '{self.asset_bundle_profile}' was not found at"
+                    f' {bundle_manifest_path}, but other profiles are present'
+                    f' ({', '.join(siblings)}). This is a corrupt/partial'
+                    f' asset cache (a single bundle profile is missing while'
+                    f' siblings remain), so lazybuild -- which guards the'
+                    f' assets sub-build on the existence of the shared'
+                    f' .cache/asset_bundle dir -- saw the dir present (via a'
+                    f' sibling) and skipped the rebuild. Clear the asset'
+                    f' bundle cache and rebuild:\n'
+                    f'    rm -rf .cache/asset_bundle\n'
+                    f' (with the dir fully gone, lazybuild re-triggers the'
+                    f' assets build and regenerates every profile).'
+                )
+            raise RuntimeError(
+                f"Asset bundle manifest for profile"
+                f" '{self.asset_bundle_profile}' was not found at"
+                f' {bundle_manifest_path}. The'
+                f' asset-build phase should have produced it (the manifest'
+                f' rides the COMMON_GUI / COMMON_SERVER target lists in'
+                f' src/assets/Makefile). This almost always means this build'
+                f' stages a different bundle variant than its asset'
+                f' prerequisite builds -- e.g. a server staging path'
+                f' (-cmakeserver / -winserver) sourcing a gui assets target.'
+                f' Point the build at the assets target that builds the'
+                f' matching variant: gui staging needs a gui assets target'
+                f' (assets-cmake / assets-windows), server staging needs a'
+                f' server assets target (assets-server /'
+                f' assets-windows-server).'
+            )
 
-        filehashes: dict[str, str] = manifest['h']
+        # Last-chance consistency gate before this bundle becomes a
+        # runnable artifact: the compiled-in builtin apverid must be one
+        # of the packages we're staging (see the method docstring).
+        self._verify_builtin_apverid_bundled(bundle_manifest_path)
 
-        mkdirlock = Lock()
+        wanted_hashes = self._collect_bundle_hashes(bundle_manifest_path)
+        wanted: set[tuple[str, str]] = {(h[:2], h[2:]) for h in wanted_hashes}
+        wanted_prefixes: set[str] = {p for p, _ in wanted}
 
-        def _prep_syncdir(syncdir: str) -> None:
-            # First, take a pass through and delete all files not found
-            # in our manifest.
-            assert self.dst is not None
-            dstdir = os.path.join(self.dst, syncdir)
-            os.makedirs(dstdir, exist_ok=True)
-            for entry in os.scandir(dstdir):
-                if entry.is_file():
-                    path = os.path.join(syncdir, entry.name)
-                    if path not in filehashes:
-                        os.unlink(os.path.join(self.dst, path))
+        # Scan the existing staged tree once. CAS naming means
+        # "file at the right path = right content", so anything
+        # already present that matches a wanted entry needs no
+        # work; anything present that doesn't is an orphan to
+        # prune (covers both stale hashes from prior builds and
+        # cruft files like .DS_Store — no special-case needed).
+        assets_root = f'{self.dst}/ba_data/assets'
+        existing: set[tuple[str, str]] = set()
+        existing_prefixes: set[str] = set()
+        if os.path.isdir(assets_root):
+            for entry in os.scandir(assets_root):
+                if entry.is_dir(follow_symlinks=False):
+                    existing_prefixes.add(entry.name)
+                    for sub in os.scandir(entry.path):
+                        if sub.is_file(follow_symlinks=False):
+                            existing.add((entry.name, sub.name))
+                elif entry.is_file(follow_symlinks=False):
+                    # Stray file at assets/ root (.DS_Store, etc.);
+                    # the wanted set lives only under prefix dirs.
+                    os.unlink(entry.path)
 
-        def _sync_path(src: str, dst: str) -> None:
-            # Quick-out: if there's a file already at dst and its
-            # modtime and size *exactly* match src, we're done. Note
-            # that this is a bit different than Makefile logic where
-            # things update when src is newer than dst. In our case, a
-            # manifest change could cause src to point to a cache file
-            # with an *older* modtime than the previous one (cache file
-            # modtimes are static and arbitrary) so such logic doesn't
-            # work. However if we look for an *exact* modtime match as
-            # well as size match we can be reasonably sure that the file
-            # is still the same. We'll see how this goes...
-            srcstat = os.stat(src)
-            try:
-                dststat = os.stat(dst)
-            except FileNotFoundError:
-                dststat = None
-            if (
-                dststat is not None
-                and srcstat.st_size == dststat.st_size
-                and srcstat.st_mtime == dststat.st_mtime
-            ):
-                return
+        to_copy = wanted - existing
+        to_delete = existing - wanted
 
-            # If dst is a directory, blow it away (use the stat we
-            # already fetched to save a bit of time).
-            if dststat is not None and stat.S_ISDIR(dststat.st_mode):
-                shutil.rmtree(dst)
+        # Pre-create any prefix dirs we'll be writing into.
+        for prefix in wanted_prefixes:
+            os.makedirs(f'{assets_root}/{prefix}', exist_ok=True)
 
-            # Hold a lock while creating any parent directories just in
-            # case multiple files are trying to create the same
-            # directory simultaneously (not sure if that could cause
-            # problems but might as well be extra safe).
-            with mkdirlock:
-                os.makedirs(os.path.dirname(dst), exist_ok=True)
-
-            # Ok, dst doesn't exist or modtimes don't line up. Copy it
-            # and try to copy its modtime.
+        def _copy_one(item: tuple[str, str]) -> None:
+            prefix, rest = item
+            src = f'{self.projroot}/.cache/assetdata/{prefix}/{rest}'
+            dst = f'{assets_root}/{prefix}/{rest}'
             shutil.copyfile(src, dst)
             shutil.copystat(src, dst)
 
-        def _cleanup_syncdir(syncdir: str) -> None:
-            """Handle pruning empty directories."""
-            # Walk the tree bottom-up so we can properly kill recursive
-            # empty dirs.
-            assert self.dst is not None
-            dstdir = os.path.join(self.dst, syncdir)
-            for basename, dirnames, filenames in os.walk(dstdir, topdown=False):
-                # It seems that child dirs we kill during the walk are
-                # still listed when the parent dir is visited, so lets
-                # make sure to only acknowledge still-existing ones.
-                dirnames = [
-                    d
-                    for d in dirnames
-                    if os.path.exists(os.path.join(basename, d))
-                ]
-                if not dirnames and not filenames and basename != dstdir:
-                    os.rmdir(basename)
+        def _delete_one(item: tuple[str, str]) -> None:
+            prefix, rest = item
+            os.unlink(f'{assets_root}/{prefix}/{rest}')
 
-        syncdirs: list[str] = ['ba_data/textures2']
+        # Parallel I/O for the two bulk passes. The pool exits
+        # eagerly on exception so a copy/delete failure surfaces
+        # rather than getting swallowed.
+        if to_copy or to_delete:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=16) as pool:
+                for _ in pool.map(_copy_one, to_copy):
+                    pass
+                for _ in pool.map(_delete_one, to_delete):
+                    pass
 
-        futures: list[Future]
-        with ThreadPoolExecutor(max_workers=4) as executor:
+        # Drop now-empty prefix dirs (existing − wanted). Silently
+        # skip non-empty ones — those carry leftover non-CAS junk
+        # we'd rather not touch.
+        for prefix in existing_prefixes - wanted_prefixes:
+            try:
+                os.rmdir(f'{assets_root}/{prefix}')
+            except OSError:
+                pass
 
-            # First, prep each of our sync dirs (make sure they exist,
-            # blow away files not in our manifest, etc.)
-            futures = []
-            for syncdir in syncdirs:
-                futures.append(executor.submit(_prep_syncdir, syncdir=syncdir))
-            # Await all results to get any exceptions.
-            for future in futures:
-                _result = future.result()
-
-            # Now go through all our manifest paths, syncing any files
-            # destined for any of our syncdirs.
-            futures = []
-            for path, hashval in filehashes.items():
-                for syncdir in syncdirs:
-                    if path.startswith(syncdir):
-                        futures.append(
-                            executor.submit(
-                                _sync_path,
-                                src=(
-                                    f'{self.projroot}/.cache/assetdata/'
-                                    f'{asset_file_cache_path(hashval)}'
-                                ),
-                                dst=os.path.join(self.dst, path),
-                            )
-                        )
-            # Await all results to get any exceptions.
-            for future in futures:
-                _result = future.result()
-
-            # Lastly, run a cleanup pass on all our sync dirs (blow away
-            # empty dirs, etc.)
-            futures = []
-            for syncdir in syncdirs:
-                futures.append(
-                    executor.submit(_cleanup_syncdir, syncdir=syncdir)
-                )
-            # Await all results to get any exceptions.
-            for future in futures:
-                _result = future.result()
+        # And the top-level pointer.
+        bundle_dst = f'{self.dst}/ba_data/manifest.json'
+        os.makedirs(os.path.dirname(bundle_dst), exist_ok=True)
+        shutil.copyfile(bundle_manifest_path, bundle_dst)
+        shutil.copystat(bundle_manifest_path, bundle_dst)
 
     def _sync_shell_executable(self) -> None:
         if self.executable_name is None:
@@ -741,7 +773,7 @@ class BuildStager:
                 '# Basically this will do:\n'
                 '#   import baenv; baenv.configure();'
                 ' import babase; babase.app.run().\n'
-                'exec python3.13 ba_data/python/baenv.py "$@"\n'
+                f'exec python{PYVER} ba_data/python/baenv.py "$@"\n'
             )
         subprocess.run(['chmod', '+x', path], check=True)
 
@@ -877,52 +909,6 @@ class BuildStager:
                 infilename=f'{self.projroot}/src/assets/server_package/{fname}',
                 outfilename=os.path.join(self.serverdst, fname),
             )
-
-
-def _filehash(filename: str) -> str:
-    """Generate a hash for a file."""
-    md5 = hashlib.md5()
-    with open(filename, mode='rb') as infile:
-        for buf in iter(partial(infile.read, 1024), b''):
-            md5.update(buf)
-    return md5.hexdigest()
-
-
-def _write_payload_file(assets_root: str, full: bool) -> None:
-    if not assets_root.endswith('/'):
-        assets_root = f'{assets_root}/'
-
-    # Now construct a payload file if we have any files.
-    file_list = []
-    payload_str = ''
-    for root, _subdirs, fnames in os.walk(assets_root):
-        for fname in fnames:
-            if fname.startswith('.'):
-                continue
-            if fname == 'payload_info':
-                continue
-            fpath = os.path.join(root, fname)
-            fpathshort = fpath.replace(assets_root, '')
-            if ' ' in fpathshort:
-                raise RuntimeError(
-                    f"Invalid filename (contains spaces): '{fpathshort}'"
-                )
-            payload_str += f'{fpathshort} {_filehash(fpath)}\n'
-            file_list.append(fpathshort)
-
-    payload_path = f'{assets_root}/payload_info'
-    if file_list:
-        # Write the file count, whether this is a 'full' payload, and
-        # finally the file list.
-        fullstr = '1' if full else '0'
-        payload_str = f'{len(file_list)}\n{fullstr}\n{payload_str}'
-        with open(payload_path, 'w', encoding='utf-8') as outfile:
-            outfile.write(payload_str)
-    else:
-        # Remove the payload file; this will cause the game to
-        # completely skip the payload processing step.
-        if os.path.exists(payload_path):
-            os.unlink(payload_path)
 
 
 def _write_if_changed(

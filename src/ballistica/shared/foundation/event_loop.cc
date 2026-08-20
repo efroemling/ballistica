@@ -14,6 +14,7 @@
 #include "ballistica/core/platform/platform.h"
 #include "ballistica/core/support/base_soft.h"
 #include "ballistica/shared/foundation/fatal_error.h"
+#include "ballistica/shared/python/python.h"
 
 namespace ballistica {
 
@@ -690,6 +691,19 @@ void EventLoop::PushRunnable(Runnable* runnable) {
 }
 
 void EventLoop::PushRunnableSynchronous(Runnable* runnable) {
+#if BA_DEBUG_BUILD
+  // Lock-ordering guard (dual of Asset's GIL invariant): a synchronous
+  // cross-thread call while holding the Python GIL risks deadlock -- the
+  // target thread (or one it depends on) may need the GIL to make progress,
+  // or may be blocked waiting on us. The GIL must be a leaf lock: release it
+  // before blocking cross-thread. See python.cc / asset.h.
+  if (Py_IsInitialized() && Python::HaveGIL()) {
+    FatalError(
+        "PushRunnableSynchronous called while holding the Python GIL; this "
+        "risks deadlock. Release the GIL before making a synchronous "
+        "cross-thread call. See the GIL-leaf-lock invariant (python.cc).");
+  }
+#endif
   bool complete{};
   bool* complete_ptr{&complete};
 

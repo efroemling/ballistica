@@ -110,26 +110,26 @@ void LocatorNode::SetSize(const std::vector<float>& vals) {
 }
 
 void LocatorNode::Draw(base::FrameDef* frame_def) {
-  base::SysMeshID mesh;
+  base::BuiltinMeshID mesh;
   if (shape_ == Shape::kBox) {
-    mesh = base::SysMeshID::kLocatorBox;
+    mesh = base::BuiltinMeshID::kMeshesLocatorBox;
   } else if (shape_ == Shape::kCircle) {
-    mesh = base::SysMeshID::kLocatorCircle;
+    mesh = base::BuiltinMeshID::kMeshesLocatorCircle;
   } else if (shape_ == Shape::kCircleOutline) {
-    mesh = base::SysMeshID::kLocatorCircleOutline;
+    mesh = base::BuiltinMeshID::kMeshesLocatorCircleOutline;
   } else {
-    mesh = base::SysMeshID::kLocator;
+    mesh = base::BuiltinMeshID::kMeshesLocator;
   }
 
-  base::SysTextureID texture;
+  base::BuiltinTextureID texture;
   if (shape_ == Shape::kCircle) {
-    texture = additive_ ? base::SysTextureID::kCircleNoAlpha
-                        : base::SysTextureID::kCircle;
+    texture = additive_ ? base::BuiltinTextureID::kTexturesCircleNoAlpha
+                        : base::BuiltinTextureID::kTexturesCircle;
   } else if (shape_ == Shape::kCircleOutline) {
-    texture = additive_ ? base::SysTextureID::kCircleOutlineNoAlpha
-                        : base::SysTextureID::kCircleOutline;
+    texture = additive_ ? base::BuiltinTextureID::kTexturesCircleOutlineNoAlpha
+                        : base::BuiltinTextureID::kTexturesCircleOutline;
   } else {
-    texture = base::SysTextureID::kRGBStripes;
+    texture = base::BuiltinTextureID::kTexturesRgbStripes;
   }
 
   bool transparent = false;
@@ -143,13 +143,19 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
     if (transparent) {
       c.SetTransparent(true);
     }
-    c.SetColor(color_[0], color_[1], color_[2], opacity_);
-    c.SetTexture(g_base->assets->SysTexture(texture));
+    auto* tex = g_base->assets->BuiltinTexture(texture);
+    // For a premultiplied texture drawn transparent with a faded straight
+    // color, premultiply rgb by alpha ourselves (see
+    // docs/design/premultiplied-alpha.md). Opaque draws ignore alpha, so
+    // only do this when transparent.
+    float cmul = (transparent && tex->premultiplied()) ? opacity_ : 1.0f;
+    c.SetColor(color_[0] * cmul, color_[1] * cmul, color_[2] * cmul, opacity_);
+    c.SetTexture(tex);
     {
       auto xf = c.ScopedTransform();
       c.Translate(position_[0], position_[1], position_[2]);
       c.Scale(size_[0], size_[1], size_[2]);
-      c.DrawMeshAsset(g_base->assets->SysMesh(mesh));
+      c.DrawMeshAsset(g_base->assets->BuiltinMesh(mesh));
     }
     c.Submit();
   }
@@ -163,18 +169,23 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
       if (additive_) {
         c.SetPremultiplied(true);
       }
+      auto* tex = g_base->assets->BuiltinTexture(texture);
       if (additive_) {
         c.SetColor(color_[0] * opacity_, color_[1] * opacity_,
                    color_[2] * opacity_, 0.0f);
       } else {
-        c.SetColor(color_[0], color_[1], color_[2], opacity_);
+        // Premultiplied texture + straight faded color; premultiply rgb by
+        // alpha ourselves (see docs/design/premultiplied-alpha.md).
+        float cmul = tex->premultiplied() ? opacity_ : 1.0f;
+        c.SetColor(color_[0] * cmul, color_[1] * cmul, color_[2] * cmul,
+                   opacity_);
       }
-      c.SetTexture(g_base->assets->SysTexture(texture));
+      c.SetTexture(tex);
       {
         auto xf = c.ScopedTransform();
         c.Translate(position_[0], position_[1], position_[2]);
         c.Scale(size_[0], size_[1], size_[2]);
-        c.DrawMeshAsset(g_base->assets->SysMesh(mesh));
+        c.DrawMeshAsset(g_base->assets->BuiltinMesh(mesh));
       }
       c.Submit();
     } else {
@@ -186,7 +197,7 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(position_[0], position_[1], position_[2]);
         c.Scale(size_[0], size_[1], size_[2]);
-        c.DrawMeshAsset(g_base->assets->SysMesh(mesh));
+        c.DrawMeshAsset(g_base->assets->BuiltinMesh(mesh));
       }
       c.Submit();
     }

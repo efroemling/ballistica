@@ -5,15 +5,16 @@
 # FIXME: Break this up.
 # pylint: disable=too-many-lines
 
-from __future__ import annotations
-
 import logging
 from typing import TYPE_CHECKING, override
 
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
+from bauiv1 import builtinassets
+from bauiv1 import _commonassets, classicassets
 
 from bauiv1lib.utils import scroll_fade_top, scroll_fade_bottom
+from bauiv1lib.league import league_display_name
 from bauiv1lib.connectivity import wait_for_connectivity
 
 if TYPE_CHECKING:
@@ -56,7 +57,7 @@ class CoopBrowserWindow(bui.MainWindow):
             bui.apptimer(
                 1.0,
                 lambda: bui.screenmessage(
-                    bui.Lstr(resource='noTournamentsInTestBuildText'),
+                    classicassets.strings.coop.no_tournaments_in_test_build,
                     color=(1, 1, 0),
                 ),
             )
@@ -66,11 +67,11 @@ class CoopBrowserWindow(bui.MainWindow):
         self._tournament_button_count = app.config.get('Tournament Rows', 0)
         assert isinstance(self._tournament_button_count, int)
 
-        self.star_tex = bui.gettexture('star')
-        self.lsbt = bui.getmesh('level_select_button_transparent')
-        self.lsbo = bui.getmesh('level_select_button_opaque')
-        self.a_outline_tex = bui.gettexture('achievementOutline')
-        self.a_outline_mesh = bui.getmesh('achievementOutline')
+        self.star_tex = classicassets.textures.star.get()
+        self.lsbt = classicassets.meshes.level_select_button_transparent.get()
+        self.lsbo = classicassets.meshes.level_select_button_opaque.get()
+        self.a_outline_tex = classicassets.textures.achievement_outline.get()
+        self.a_outline_mesh = classicassets.meshes.achievement_outline.get()
         self._campaign_sub_container: bui.Widget | None = None
         self._tournament_info_button: bui.Widget | None = None
         self._easy_button: bui.Widget | None = None
@@ -244,10 +245,7 @@ class CoopBrowserWindow(bui.MainWindow):
                 yoffs - (50 if uiscale is bui.UIScale.SMALL else 24),
             ),
             size=(0, 0),
-            text=bui.Lstr(
-                resource='playModes.singlePlayerCoopText',
-                fallback_resource='playModes.coopText',
-            ),
+            text=classicassets.strings.play_modes.single_player_coop,
             h_align='center',
             color=app.ui_v1.title_color,
             scale=0.85 if uiscale is bui.UIScale.SMALL else 1.5,
@@ -396,7 +394,9 @@ class CoopBrowserWindow(bui.MainWindow):
                 bui.textwidget(
                     edit=tbtn.time_remaining_value_text,
                     text=(
-                        bui.timestring(tbtn.time_remaining, centi=False)
+                        bui.timestring(
+                            tbtn.time_remaining, centi=False, langstr=True
+                        )
                         if (
                             tbtn.has_time_remaining
                             and self._tourney_data_up_to_date
@@ -487,7 +487,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         assert bui.app.classic is not None
         if difficulty != self._campaign_difficulty:
-            bui.getsound('gunCocking').play()
+            builtinassets.audio.gun_cocking.get().play()
             if difficulty not in ('easy', 'hard'):
                 print('ERROR: invalid campaign difficulty:', difficulty)
                 difficulty = 'easy'
@@ -501,7 +501,7 @@ class CoopBrowserWindow(bui.MainWindow):
             )
             self._refresh_campaign_row()
         else:
-            bui.getsound('click01').play()
+            builtinassets.audio.click01.get().play()
 
     def _refresh_campaign_row(self) -> None:
         # pylint: disable=cyclic-import
@@ -528,7 +528,7 @@ class CoopBrowserWindow(bui.MainWindow):
             id=f'{self.main_window_id_prefix}|easy',
             position=(h + 30, v2 + 105),
             size=(120, 70),
-            label=bui.Lstr(resource='difficultyEasyText'),
+            label=classicassets.strings.ui.easy,
             button_type='square',
             autoselect=True,
             enable_sound=False,
@@ -556,14 +556,14 @@ class CoopBrowserWindow(bui.MainWindow):
                 selected_child=self._easy_button,
                 visible_child=self._easy_button,
             )
-        lock_tex = bui.gettexture('lock')
+        lock_tex = classicassets.textures.lock.get()
 
         self._hard_button = bui.buttonwidget(
             parent=parent_widget,
             id=f'{self.main_window_id_prefix}|hard',
             position=(h + 30, v2 + 32),
             size=(120, 70),
-            label=bui.Lstr(resource='difficultyHardText'),
+            label=classicassets.strings.ui.hard,
             button_type='square',
             autoselect=True,
             enable_sound=False,
@@ -659,12 +659,8 @@ class CoopBrowserWindow(bui.MainWindow):
 
         self._campaign_percent_text = bui.textwidget(
             edit=self._campaign_percent_text,
-            text=bui.Lstr(
-                value='${C} (${P})',
-                subs=[
-                    ('${C}', bui.Lstr(resource=f'{self._r}.campaignText')),
-                    ('${P}', p_str),
-                ],
+            text=_commonassets.strings.compose.paren_suffix(
+                main=classicassets.strings.coop.campaign, note=p_str
             ),
         )
 
@@ -672,7 +668,7 @@ class CoopBrowserWindow(bui.MainWindow):
         # pylint: disable=cyclic-import
         from bauiv1lib.confirm import ConfirmWindow
 
-        txt = bui.Lstr(resource=f'{self._r}.tournamentInfoText')
+        txt = classicassets.strings.coop.tournament_info
         ConfirmWindow(
             txt,
             cancel_button=False,
@@ -773,10 +769,8 @@ class CoopBrowserWindow(bui.MainWindow):
 
         v -= 53
         # FIXME shouldn't use hard-coded strings here.
-        txt = bui.Lstr(
-            resource='tournamentsText', fallback_resource='tournamentText'
-        ).evaluate()
-        t_width = bui.get_string_width(txt, suppress_warning=True)
+        txt = classicassets.strings.coop.tournaments
+        t_width = bui.get_string_width(txt.evaluate(), suppress_warning=True)
         bui.textwidget(
             parent=w_parent,
             position=(h_base + 27, v + 30),
@@ -811,14 +805,11 @@ class CoopBrowserWindow(bui.MainWindow):
         # not signed in add that as well (that's probably why we see no
         # tournaments).
         if self._tournament_button_count == 0:
-            unavailable_text = bui.Lstr(resource='unavailableText')
+            unavailable_text = _commonassets.strings.status.unavailable_status
             if plus.get_v1_account_state() != 'signed_in':
-                unavailable_text = bui.Lstr(
-                    value='${A} (${B})',
-                    subs=[
-                        ('${A}', unavailable_text),
-                        ('${B}', bui.Lstr(resource='notSignedInText')),
-                    ],
+                unavailable_text = _commonassets.strings.compose.paren_suffix(
+                    main=unavailable_text,
+                    note=classicassets.strings.ui.not_signed_in_status,
                 )
             bui.textwidget(
                 parent=w_parent,
@@ -885,10 +876,7 @@ class CoopBrowserWindow(bui.MainWindow):
             parent=w_parent,
             position=(h_base + 27, v + 30 + 198),
             size=(0, 0),
-            text=bui.Lstr(
-                resource='practiceText',
-                fallback_resource='coopSelectWindow.customText',
-            ),
+            text=classicassets.strings.ui.practice,
             h_align='left',
             v_align='center',
             color=bui.app.ui_v1.title_color,
@@ -1045,10 +1033,10 @@ class CoopBrowserWindow(bui.MainWindow):
 
         if classic.chest_dock_full:
             ConfirmWindow(
-                bui.Lstr(resource='chests.slotsFullWarningText'),
+                classicassets.strings.coop.chest_slots_full_warning,
                 width=550,
                 height=140,
-                ok_text=bui.Lstr(resource='continueText'),
+                ok_text=_commonassets.strings.actions.continue_,
                 origin_widget=origin_widget,
                 action=strict_partial(
                     self._run_game, game=game, origin_widget=origin_widget
@@ -1062,7 +1050,7 @@ class CoopBrowserWindow(bui.MainWindow):
     ) -> None:
         """Run the provided game."""
         # pylint: disable=cyclic-import
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.confirm import ConfirmWindow
         from bauiv1lib.account.signin import show_sign_in_prompt
@@ -1077,10 +1065,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         if game == 'Easy:The Last Stand':
             ConfirmWindow(
-                bui.Lstr(
-                    resource='difficultyHardUnlockOnlyText',
-                    fallback_resource='difficultyHardOnlyText',
-                ),
+                classicassets.strings.coop.difficulty_hard_unlock_only,
                 cancel_button=False,
                 width=460,
                 height=130,
@@ -1108,7 +1093,7 @@ class CoopBrowserWindow(bui.MainWindow):
                     on_connected=lambda: self.main_window_replace(
                         bui.CallStrict(
                             StoreUIController().create_window,
-                            dui1.Request(
+                            dui2.Request(
                                 '/',
                                 args={'unlockreqs': required_purchases},
                             ),
@@ -1132,7 +1117,7 @@ class CoopBrowserWindow(bui.MainWindow):
         """Run the provided tournament game."""
         # pylint: disable=too-many-return-statements
 
-        import bacommon.docui.v1 as dui1
+        import bacommon.docui.v2 as dui2
 
         from bauiv1lib.account.signin import show_sign_in_prompt
         from bauiv1lib.tournamententry import TournamentEntryWindow
@@ -1150,47 +1135,36 @@ class CoopBrowserWindow(bui.MainWindow):
 
         if bui.workspaces_in_use():
             bui.screenmessage(
-                bui.Lstr(resource='tournamentsDisabledWorkspaceText'),
+                classicassets.strings.coop.tournaments_disabled_workspace,
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
 
         if not self._tourney_data_up_to_date:
             bui.screenmessage(
-                bui.Lstr(resource='tournamentCheckingStateText'),
+                classicassets.strings.coop.tournament_checking_state,
                 color=(1, 1, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
 
         if tournament_button.tournament_id is None:
             bui.screenmessage(
-                bui.Lstr(resource='internal.unavailableNoConnectionText'),
+                _commonassets.strings.status.unavailable_no_connection,
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
 
         if tournament_button.required_league is not None:
             bui.screenmessage(
-                bui.Lstr(
-                    resource='league.tournamentLeagueText',
-                    subs=[
-                        (
-                            '${NAME}',
-                            bui.Lstr(
-                                translate=(
-                                    'leagueNames',
-                                    tournament_button.required_league,
-                                )
-                            ),
-                        )
-                    ],
+                classicassets.strings.league.tournament_required(
+                    name=league_display_name(tournament_button.required_league)
                 ),
                 color=(1, 0, 0),
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
 
         if tournament_button.game is not None and not classic.is_game_unlocked(
@@ -1220,7 +1194,7 @@ class CoopBrowserWindow(bui.MainWindow):
                         on_connected=lambda: self.main_window_replace(
                             bui.CallStrict(
                                 StoreUIController().create_window,
-                                dui1.Request(
+                                dui2.Request(
                                     '/',
                                     args={'unlockreqs': required_purchases},
                                 ),
@@ -1241,9 +1215,9 @@ class CoopBrowserWindow(bui.MainWindow):
 
         if tournament_button.time_remaining <= 0:
             bui.screenmessage(
-                bui.Lstr(resource='tournamentEndedText'), color=(1, 0, 0)
+                classicassets.strings.coop.tournament_ended, color=(1, 0, 0)
             )
-            bui.getsound('error').play()
+            builtinassets.audio.error.get().play()
             return
 
         self._save_state()
