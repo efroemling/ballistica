@@ -11,15 +11,6 @@ inputs:
     required: false
     type: boolean
     default: false
-  save-asset-cache:
-    description: |
-      "Set to true on exactly ONE job per workflow to have that job save"
-      "the shared bombsquad asset cache. Every other job restores only."
-      "Saving is additionally limited to the default branch; see the"
-      "asset cache steps below for why."
-    required: false
-    type: boolean
-    default: false
 
 runs:
   using: "composite"
@@ -38,26 +29,32 @@ runs:
       with:
         enable-cache: true
         cache-dependency-glob: "pconfig/requirements.txt"
-    # Restore-only. We deliberately do NOT key on hashFiles('.efrocachemap'):
-    # that file is regenerated on every single commit, so such a key can
-    # never hit and actions/cache would re-save the (~440MB) entry on every
-    # job of every run, which alone was consuming half of the repo's 10GB
-    # cache budget and evicting everything else.
+    # Keyed on the UTC date, NOT hashFiles('.efrocachemap'): that file is
+    # regenerated on every single commit, so such a key can never hit,
+    # which made this mint a fresh ~440MB entry per commit (6 in one day,
+    # observed) and crowd the repo's 10GB budget. A date key throttles
+    # that to one entry per day for free -- actions/cache does not save
+    # when the primary key hits exactly, so only the day's first job
+    # saves and the rest just restore.
     #
     # A stale restore is always correct here: .cache/efrocache is a
     # content-addressed store (see get_local_cache_dir /
     # get_existing_file_hash in tools/efrotools/efrocache.py), so the
     # 'Update assets' step below re-fetches only the files whose hashes
-    # actually changed.
-    - name: Restore Bombsquad assets cache
-      uses: actions/cache/restore@v5
+    # actually changed. A day of drift is cheap.
+    - name: Compute asset cache day
+      id: asset-day
+      shell: bash
+      run: echo "day=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
+    - name: Cache Bombsquad assets
+      uses: actions/cache@v5
       env:
         cache-name: cache-bombsquad-assets
       with:
         path: |
           build/assets
           .cache/efrocache/
-        key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.run_id }}
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ steps.asset-day.outputs.day }}
         restore-keys: |
           ${{ runner.os }}-${{ env.cache-name }}-
     - name: Setup project environment
@@ -84,24 +81,6 @@ runs:
         done
         echo "::error::Asset assembly failed after 3 attempts." >&2
         exit 1
-    # Exactly one job (opted in via save-asset-cache) refreshes the shared
-    # cache, and only on the default branch. Caches written from a PR ref
-    # are scoped to that PR and can never be read by anything else, so
-    # saving there would just burn budget. Comparing against
-    # default_branch rather than a hardcoded 'main' keeps this working in
-    # forks too.
-    - name: Save Bombsquad assets cache
-      if: ${{ inputs.save-asset-cache == 'true'
-        && github.ref_name == github.event.repository.default_branch }}
-      uses: actions/cache/save@v5
-      env:
-        cache-name: cache-bombsquad-assets
-      with:
-        path: |
-          build/assets
-          .cache/efrocache/
-        key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.run_id }}
-
     # Following steps only run for inputs.using-cmake == 'true'
     - name: Cache apt archives
       if: ${{ inputs.using-cmake == 'true' }}

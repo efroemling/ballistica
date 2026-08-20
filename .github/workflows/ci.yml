@@ -21,10 +21,6 @@ jobs:
         uses: ./.github/actions/bombsquad_build_env
         with:
           using-cmake: true
-          # This job is the one that refreshes the shared asset cache for
-          # the repo (it runs on every push and isn't arch-specific). All
-          # other jobs everywhere else restore only.
-          save-asset-cache: true
       - name: Run checks
         run: BA_PCOMMANDBATCH_BUILD_REQUIRE=1 make check-ex
       - name: Verify asset-package pins are prod
