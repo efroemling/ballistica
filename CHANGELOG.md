@@ -88,6 +88,8 @@
   `babase` asset-package wrapper type for this pre-featureset layer.)
 - Add `in_world` attribute to image node, as in text node (Thanks Dliwk!).
 - Game Controller Haptics!
+- Fixed the private party join screen not indicating that sign-in is required
+  when the user is signed out.
 - The game now restricts the view area to reasonable aspect-ratios and draws
   black outside of them. This gives us a clean goal of everything drawing
   reasonably within the supported range; it should no longer be possible to see
