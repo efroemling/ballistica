@@ -22,6 +22,8 @@ import _babase
 if TYPE_CHECKING:
     from typing import Any
 
+    from bacommon.assetspec import AssetBucketKind
+
 _lifecyclelog = logging.getLogger('ba.lifecycle')
 
 # Apverids of the BUILTIN (bundled) packages, populated at startup by
@@ -165,6 +167,39 @@ def loaded_asset_package_apverids() -> list[str]:
     out = list(_builtin_apverids)
     out.extend(a for a in _resolved_apverids if a not in _builtin_apverids)
     return out
+
+
+def asset_package_bucket_paths(
+    apverid: str, kind: 'AssetBucketKind'
+) -> list[str] | None:
+    """Canonical sorted logical paths in a loaded package's bucket.
+
+    This is the list integer asset references address -- doc-ui's flat
+    refs and scene_v1's indexed wire refs both index into it -- and it
+    is portable across flavors by the identical-key-set invariant
+    (asset-packages D23/D24), so two ends holding different texture
+    profiles still agree on what an index means.
+
+    ``None`` means the package isn't registered, which is a
+    resolve-ordering fault worth surfacing; distinguish it from ``[]``,
+    a package that genuinely has no assets of that kind.
+    """
+    return _babase.get_asset_package_bucket_paths(apverid, kind.value)
+
+
+def asset_package_string_count(apverid: str) -> int | None:
+    """How many language-strings a loaded package holds, this locale.
+
+    The size of the canonical sorted name list that string indices
+    address -- enough to fold a flat wire index back into the
+    ``(package, string)`` pair the native decoder consumes, without
+    surfacing the names themselves.
+
+    ``None`` when the package has no language table loaded, which must
+    be distinguished from a package holding zero strings: treating the
+    first as zero would silently shift every later package's offset.
+    """
+    return _babase.get_asset_package_string_count(apverid)
 
 
 def register_resolved_apverids(apverids: list[str]) -> None:

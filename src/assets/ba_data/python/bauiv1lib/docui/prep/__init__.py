@@ -17,7 +17,12 @@ from bauiv1lib.docui.prep._types import (
     RowPrep,
     PagePrep,
 )
-from bauiv1lib.docui.prep._calls import prep_page, instantiate_page_prep
+from bauiv1lib.docui.prep._calls import (
+    prep_page,
+    instantiate_page_prep,
+    instantiate_decorations,
+    prep_frames,
+)
 from bauiv1lib.docui.prep._calls2 import (
     prep_text,
     prep_decorations,
@@ -25,7 +30,7 @@ from bauiv1lib.docui.prep._calls2 import (
     prep_row_debug,
     prep_row_debug_button,
     prep_button_debug,
-    prep_display_item,
+    prep_frame,
 )
 
 __all__ = [
@@ -35,11 +40,13 @@ __all__ = [
     'PagePrep',
     'prep_page',
     'instantiate_page_prep',
+    'instantiate_decorations',
+    'prep_frames',
     'prep_text',
     'prep_decorations',
     'prep_image',
     'prep_row_debug',
     'prep_row_debug_button',
     'prep_button_debug',
-    'prep_display_item',
+    'prep_frame',
 ]

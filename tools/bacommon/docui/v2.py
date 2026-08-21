@@ -23,7 +23,7 @@ from typing import Annotated, override, assert_never
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
 import bacommon.clienteffect as clfx
-import bacommon.displayitem as ditm
+import bacommon.legacydisplayitem as lditm
 from bacommon.langstr import LangStrSpec
 from bacommon.assetspec import TextureSpec, MeshSpec
 from bacommon.docui._docui import (
@@ -212,6 +212,7 @@ class DecorationTypeID(Enum):
     TEXT = 't'
     IMAGE = 'i'
     DISPLAY_ITEM = 'd'
+    FRAME = 'f'
 
 
 class Decoration(IOMultiType[DecorationTypeID]):
@@ -235,6 +236,8 @@ class Decoration(IOMultiType[DecorationTypeID]):
             return Image
         if type_id is t.DISPLAY_ITEM:
             return DisplayItem
+        if type_id is t.FRAME:
+            return Frame
         assert_never(type_id)
 
     @override
@@ -267,7 +270,12 @@ class Text(Decoration):
     ``text`` is a language-agnostic :class:`~bacommon.langstr.LangStrSpec`.
     """
 
-    text: Annotated[LangStrSpec, IOAttrs('t')]
+    #: The text. An ``int`` is the indexed form -- a flat index
+    #: into the string domain of :attr:`Response.packages` (see
+    #: ``bacommon.langstr._flatindex``); the client unfolds it
+    #: into the two-integer form the native decoder consumes while
+    #: resolving. Strings carrying substitutions never fold.
+    text: Annotated[LangStrSpec | int, IOAttrs('t')]
     position: Annotated[tuple[float, float], IOAttrs('p')]
 
     #: Effectively max-width and max-height.
@@ -309,7 +317,13 @@ class Image(Decoration):
     rendered directly.
     """
 
-    texture: Annotated[TextureSpec, IOAttrs('t')]
+    #: The image's texture. An ``int`` is the indexed form -- a flat
+    #: index into the textures domain of :attr:`Response.packages` (see
+    #: ``bacommon.assetspec._index``); the client swaps it for a
+    #: :class:`~bacommon.assetspec.TextureSpec` while resolving, so
+    #: everything downstream of resolve sees only specs. Old clients are
+    #: served the spec form.
+    texture: Annotated[TextureSpec | int, IOAttrs('t')]
     position: Annotated[tuple[float, float], IOAttrs('p')]
     size: Annotated[tuple[float, float], IOAttrs('s')]
     color: Annotated[
@@ -323,7 +337,7 @@ class Image(Decoration):
         VAlign.CENTER
     )
     tint_texture: Annotated[
-        TextureSpec | None, IOAttrs('tt', store_default=False)
+        TextureSpec | int | None, IOAttrs('tt', store_default=False)
     ] = None
     tint_color: Annotated[
         tuple[float, float, float] | None, IOAttrs('tc1', store_default=False)
@@ -332,21 +346,95 @@ class Image(Decoration):
         tuple[float, float, float] | None, IOAttrs('tc2', store_default=False)
     ] = None
     mask_texture: Annotated[
-        TextureSpec | None, IOAttrs('mt', store_default=False)
+        TextureSpec | int | None, IOAttrs('mt', store_default=False)
     ] = None
     mesh_opaque: Annotated[
-        MeshSpec | None, IOAttrs('mo', store_default=False)
+        MeshSpec | int | None, IOAttrs('mo', store_default=False)
     ] = None
     mesh_transparent: Annotated[
-        MeshSpec | None, IOAttrs('mn', store_default=False)
+        MeshSpec | int | None, IOAttrs('mn', store_default=False)
     ] = None
     highlight: Annotated[bool, IOAttrs('h', store_default=False)] = True
     depth_range: Annotated[tuple[float, float] | None, IOAttrs('z')] = None
+
+    #: Show this image's bounds; useful during development. Worth
+    #: having separately from the art because a texture with a
+    #: transparent margin gives no clue where its box really is.
+    debug: Annotated[bool, IOAttrs('d', store_default=False)] = False
 
     @override
     @classmethod
     def get_type_id(cls) -> DecorationTypeID:
         return DecorationTypeID.IMAGE
+
+
+@ioprepped
+@dataclass
+class Frame(Decoration):
+    """A self-contained grouping of non-interactive decorations.
+
+    A frame lets a producer describe *how something looks* — an item,
+    a badge, a composed graphic — instead of naming a thing the client
+    must already know how to draw. Its children are positioned relative
+    to the frame's own origin and are transformed as a group, so the
+    same frame can be placed anywhere at any size.
+
+    Frames are decorations themselves, so they embed in doc-ui pages
+    like any other; they can also be drawn straight into a plain
+    container widget. They are deliberately non-interactive for now.
+
+    By default a frame imposes no bounds -- it knows only where its
+    center is and how big to draw. Give it a :attr:`size` and it
+    instead fits its children into that box; see there.
+    """
+
+    #: Child decorations, positioned relative to this frame's origin.
+    #: Nested frames are allowed -- except under :attr:`size`.
+    decorations: Annotated[list[Decoration], IOAttrs('d')]
+
+    position: Annotated[tuple[float, float], IOAttrs('p')]
+    scale: Annotated[float, IOAttrs('s', store_default=False)] = 1.0
+    highlight: Annotated[bool, IOAttrs('h', store_default=False)] = True
+
+    #: Fit the children into this box -- measure their combined
+    #: extent, center that on the frame's position, and scale it
+    #: down (never up) if it would not otherwise fit.
+    #:
+    #: This exists so a producer can compose things whose size it
+    #: cannot know. Centering a count beside its currency icon needs
+    #: the count's rendered width, which only the client can measure --
+    #: so the producer says "these two, together, in this box" and the
+    #: client works out the rest at prep time, where it is already
+    #: measuring text.
+    #:
+    #: **Children must be text and images only.** Their combined
+    #: extent has to be computable before anything is drawn, which
+    #: rules out nested frames and display-items. A frame that breaks
+    #: this draws unfitted rather than silently mis-centering.
+    size: Annotated[
+        tuple[float, float] | None, IOAttrs('b', store_default=False)
+    ] = None
+
+    #: Where the fitted content sits in :attr:`size`. Only matters when
+    #: the content is smaller than the box, since content that had to
+    #: shrink already fills it on the binding axis.
+    h_align: Annotated[HAlign, IOAttrs('ha', store_default=False)] = (
+        HAlign.CENTER
+    )
+    v_align: Annotated[VAlign, IOAttrs('va', store_default=False)] = (
+        VAlign.CENTER
+    )
+
+    #: Draw this frame's bounds; useful during development. Shows the
+    #: :attr:`size` box and, inside it, the extent the children
+    #: actually occupy -- so a composition that does not sit where it
+    #: was meant to is visible rather than inferred.
+    debug: Annotated[bool, IOAttrs('d2', store_default=False)] = False
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> DecorationTypeID:
+        return DecorationTypeID.FRAME
 
 
 class DisplayItemStyle(Enum):
@@ -369,12 +457,12 @@ class DisplayItemStyle(Enum):
 class DisplayItem(Decoration):
     """DisplayItem decoration.
 
-    The wrapped :class:`~bacommon.displayitem.Wrapper` already
+    The wrapped :class:`~bacommon.legacydisplayitem.Wrapper` already
     localizes its own text client-side, so it carries over from v1
     unchanged.
     """
 
-    wrapper: Annotated[ditm.Wrapper, IOAttrs('w')]
+    wrapper: Annotated[lditm.Wrapper, IOAttrs('w')]
     position: Annotated[tuple[float, float], IOAttrs('p')]
     size: Annotated[tuple[float, float], IOAttrs('s')]
     style: Annotated[DisplayItemStyle, IOAttrs('t', store_default=False)] = (
@@ -416,9 +504,9 @@ class Button:
     Size, padding, and all decorations scale consistently with ``scale``.
     """
 
-    label: Annotated[LangStrSpec | None, IOAttrs('l', store_default=False)] = (
-        None
-    )
+    label: Annotated[
+        LangStrSpec | int | None, IOAttrs('l', store_default=False)
+    ] = None
 
     action: Annotated[Action | None, IOAttrs('a', store_default=False)] = None
     size: Annotated[
@@ -439,7 +527,7 @@ class Button:
         float | None, IOAttrs('lf', store_default=False)
     ] = None
     texture: Annotated[
-        TextureSpec | None, IOAttrs('tex', store_default=False)
+        TextureSpec | int | None, IOAttrs('tex', store_default=False)
     ] = None
     scale: Annotated[float, IOAttrs('sc', store_default=False)] = 1.0
     padding_left: Annotated[float, IOAttrs('pl', store_default=False)] = 0.0
@@ -455,9 +543,9 @@ class Button:
     default: Annotated[bool, IOAttrs('df', store_default=False)] = False
     selected: Annotated[bool, IOAttrs('sel', store_default=False)] = False
 
-    icon: Annotated[TextureSpec | None, IOAttrs('icn', store_default=False)] = (
-        None
-    )
+    icon: Annotated[
+        TextureSpec | int | None, IOAttrs('icn', store_default=False)
+    ] = None
     icon_scale: Annotated[float | None, IOAttrs('is', store_default=False)] = (
         None
     )
@@ -547,9 +635,9 @@ class ButtonRow(Row):
         list[Decoration] | None, IOAttrs('hdr', store_default=False)
     ] = None
 
-    title: Annotated[LangStrSpec | None, IOAttrs('t', store_default=False)] = (
-        None
-    )
+    title: Annotated[
+        LangStrSpec | int | None, IOAttrs('t', store_default=False)
+    ] = None
     title_color: Annotated[
         tuple[float, float, float, float] | None,
         IOAttrs('tc', store_default=False),
@@ -562,7 +650,7 @@ class ButtonRow(Row):
     ] = None
 
     subtitle: Annotated[
-        LangStrSpec | None, IOAttrs('s', store_default=False)
+        LangStrSpec | int | None, IOAttrs('s', store_default=False)
     ] = None
     subtitle_color: Annotated[
         tuple[float, float, float, float] | None,
@@ -614,7 +702,7 @@ class Page:
     ``title`` is a language-agnostic :class:`~bacommon.langstr.LangStrSpec`.
     """
 
-    title: Annotated[LangStrSpec, IOAttrs('t')]
+    title: Annotated[LangStrSpec | int, IOAttrs('t')]
     rows: Annotated[list[Row], IOAttrs('r')]
 
     #: Center content vertically when it's smaller than the available height.

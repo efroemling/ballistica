@@ -948,6 +948,23 @@ void RendererGL::SyncGLState_() {
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
   BA_DEBUG_CHECK_GL_ERROR;
+
+#if !BA_OPENGL_IS_ES
+  // Filter cube-map edges across face boundaries instead of clamping
+  // within each face. GLES 3.0+ mandates this and does not define the
+  // token at all (hence the compile-time guard rather than a runtime
+  // check); desktop GL has it core since 3.2 but defaults it OFF, so
+  // without this desktop would show face-edge seams -- worst in low
+  // mips -- that mobile does not. Untracked global state, so it lives
+  // here with the other context-level defaults.
+  //
+  // NOTE: core-since-3.2 exactly matches the desktop floor enforced in
+  // CheckGLVersion(). If that floor is ever lowered, this needs a real
+  // GL_ARB_seamless_cube_map extension check.
+  glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+  BA_DEBUG_CHECK_GL_ERROR;
+#endif
+
   double_sided_ = false;
   draw_front_ = true;
   glDisable(GL_DEPTH_TEST);

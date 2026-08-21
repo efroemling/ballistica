@@ -38,6 +38,25 @@ const float kMessageScaleFactor = 0.8f;
 /// text is top-aligned); a longer one is scaled down to fit.
 const float kMessageAreaLines = 3.0f;
 
+/// The gap above the button, as a multiple of the standard inter-element gap.
+/// The button is a solid slab where the blocks above it are open text, so an
+/// identical gap reads as tighter than the title-to-message one; opening it up
+/// balances the stack (and makes the dialog correspondingly taller).
+const float kButtonGapFactor = 2.0f;
+
+/// How much the message's neighboring gaps are tightened, as a multiple of
+/// the standard inter-element gap. Applied to the title-to-message gap only
+/// when no progress bar sits between the two (with a bar, the pair of gaps
+/// bracketing it read fine at full width), and always to the message-to-button
+/// gap so the two move together by the same amount.
+const float kTightenFactor = 0.4f;
+
+/// Extra breathing room *under* the button, as a multiple of the standard
+/// inter-element gap. The plain bottom margin reads tight beneath the button's
+/// solid slab (the panel's rounded corners crowd in on it in a way they don't
+/// beneath open text), so a button adds a little to it.
+const float kButtonBottomPadFactor = 0.5f;
+
 /// How long the button shows its pressed glow after a key/controller
 /// activation (which is instantaneous, unlike a held mouse press).
 const millisecs_t kButtonFlashMillisecs = 150;
@@ -188,6 +207,13 @@ void SimpleDialog::Draw(FrameDef* frame_def) {
   // the title, kMessageAreaLines for the message.
   float margin = width * 0.025f;
   float gap = width * 0.02f;
+  float tighten = gap * kTightenFactor;
+  // The gap directly above the message. With a bar present that's the
+  // bar-to-message gap (kept standard); with no bar it's the title-to-message
+  // gap, which reads roomier with nothing between the two blocks.
+  float message_gap = has_bar ? gap : gap - tighten;
+  float button_gap = gap * kButtonGapFactor - tighten;
+  float button_bottom_pad = gap * kButtonBottomPadFactor;
   float title_h = line_height * title_scale;
   float bar_h = width * 0.04f;
   float message_h = line_height * message_scale * kMessageAreaLines;
@@ -195,12 +221,12 @@ void SimpleDialog::Draw(FrameDef* frame_def) {
   float button_w = button_h * 3.0f;
 
   // Sum the stacked pieces (plus top/bottom margins) for the total height.
-  float height = margin + title_h + gap + message_h + margin;
+  float height = margin + title_h + message_gap + message_h + margin;
   if (has_bar) {
     height += gap + bar_h;
   }
   if (has_button) {
-    height += gap + button_h;
+    height += button_gap + button_h + button_bottom_pad;
   }
 
   // Background panel. Real geometry: an opaque dark-purple rounded rect (like
@@ -311,7 +337,7 @@ void SimpleDialog::Draw(FrameDef* frame_def) {
 
   // Message text-area: top-aligned multi-line text rendered at the fixed
   // message scale, shrinking only to fit the area's width or height.
-  y -= gap;
+  y -= message_gap;
   float message_top = y;
   float message_cy = y - message_h * 0.5f;
   y -= message_h;
@@ -353,7 +379,7 @@ void SimpleDialog::Draw(FrameDef* frame_def) {
 
   // The single (centered) button.
   if (has_button) {
-    y -= gap;
+    y -= button_gap;
     button_.width = button_w;
     button_.height = button_h;
     button_.center_x = cx;

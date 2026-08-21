@@ -20,7 +20,14 @@ if TYPE_CHECKING:
 
     from bacommon.locale import Locale
     from bacommon.docui import DocUIRequest
-    from bacommon.assetspec import TextureSpec, MeshSpec
+    from bacommon.assetspec import (
+        TextureSpec,
+        MeshSpec,
+        SoundSpec,
+        CollisionMeshSpec,
+        AssetBucketKind,
+    )
+    import bacommon.clienteffect as clfx
 
 
 def request_is_get(request: DocUIRequest) -> bool:
@@ -61,6 +68,7 @@ def check_finalization_leaks(response: dui2.Response) -> None:
         1
         for effect in response.client_effects
         if isinstance(effect, clfx.ScreenMessageV2)
+        and not isinstance(effect.message, int)
         and contains_resource_form(effect.message)
     )
     if leaks:
@@ -141,6 +149,11 @@ def resolve_response(response: dui2.Response) -> None:
     def _deindex_effects(effects: 'list[clfx.Effect]') -> None:
         for effect in effects:
             if isinstance(effect, clfx.ScreenMessageV2):
+                if isinstance(effect.message, int):
+                    # deindex_langstrs runs first, so a folded index
+                    # here means it failed to unfold; leave it to fail
+                    # visibly at run time rather than guessing.
+                    continue
                 try:
                     effect.message = dataclass_from_json(
                         LangStrSpec, _native(effect.message).to_resource_json()
@@ -151,6 +164,10 @@ def resolve_response(response: dui2.Response) -> None:
                     )
 
     if response.packages:
+        # Strings first: the effect de-index below consumes them, and
+        # it expects the two-int form rather than a folded index.
+        deindex_langstrs(response.page, packages, response.client_effects)
+        deindex_assets(response.page, packages, response.client_effects)
         _deindex_effects(response.client_effects)
         for row in response.page.rows:
             if not isinstance(row, dui2.ButtonRow):
@@ -158,6 +175,178 @@ def resolve_response(response: dui2.Response) -> None:
             for button in row.buttons:
                 if isinstance(button.action, dui2.Local):
                     _deindex_effects(button.action.immediate_client_effects)
+
+
+def package_asset_listing(apverid: str) -> list[str] | None:
+    """Canonical sorted logical paths for every asset in a package.
+
+    The client's half of the flat-index mapping. Deliberately the union
+    across buckets rather than one bucket: the server derives its
+    listing from a vendored wrapper tree that groups paths differently
+    (collision meshes sit in the ``constant`` bucket here but under
+    ``meshes`` there), so only the union is guaranteed to agree. Indexing
+    the whole package makes the grouping irrelevant.
+
+    ``None`` when the package isn't registered at all -- a
+    resolve-ordering fault -- as distinct from a registered package that
+    holds nothing.
+    """
+    import babase
+
+    from bacommon.assetspec import AssetBucketKind
+
+    out: list[str] = []
+    known = False
+    for kind in AssetBucketKind:
+        paths = babase.asset_package_bucket_paths(apverid, kind)
+        if paths is None:
+            continue
+        known = True
+        out.extend(paths)
+    if not known:
+        return None
+    return sorted(set(out))
+
+
+def package_string_count(apverid: str) -> int | None:
+    """Language-string count for a package, this locale.
+
+    The client's half of the flat string mapping. Only the count is
+    needed: unfolding produces the two-integer form the native decoder
+    already consumes, so the names stay native.
+    """
+    import babase
+
+    return babase.asset_package_string_count(apverid)
+
+
+def deindex_langstrs(
+    page: dui2.Page,
+    packages: list[str],
+    effects: 'list[clfx.Effect] | None' = None,
+) -> None:
+    """Unfold a page's flat string indices into the two-int form.
+
+    Runs after the page's packages resolve, so every language table the
+    indices address is loaded. Produces
+    :class:`~bacommon.langstr.LangStrSpecResourceIndexed` -- exactly
+    what the native decoder already consumed before folding existed --
+    so nothing downstream changes.
+
+    Fail-visible per slot: a bad index logs and leaves the integer in
+    place rather than substituting a wrong string.
+    """
+    import bauiv1 as bui
+    from bacommon.langstr import (
+        LangStrFlatIndexContext,
+        LangStrIndexError,
+        LangStrSpecResourceIndexed,
+    )
+    from bacommon.docui.walk import walk_page
+
+    if not packages:
+        return
+
+    ctx = LangStrFlatIndexContext(packages, package_string_count)
+
+    def _lstr(val: 'LangStrSpec | int') -> 'LangStrSpec | None':
+        # Spec-form strings pass through: a response can mix forms, and
+        # anything with substitutions never folds.
+        if not isinstance(val, int):
+            return None
+        try:
+            pkg, index = ctx.from_flat(val)
+        except LangStrIndexError:
+            bui.uilog.exception('Error unfolding string index %d.', val)
+            return None
+        return LangStrSpecResourceIndexed(pkg=pkg, index=index)
+
+    walk_page(page, langstr=_lstr)
+    if effects:
+        # Response-level effects are outside the page walk, and they
+        # carry folded strings just the same.
+        import bacommon.clienteffect as clfx
+
+        clfx.walk_effects(effects, langstr=_lstr)
+
+
+def deindex_assets(
+    page: dui2.Page,
+    packages: list[str],
+    effects: 'list[clfx.Effect] | None' = None,
+) -> None:
+    """Replace a page's flat asset indices with real specs.
+
+    Runs after the page's packages are resolved, so every listing the
+    indices address is locally available. Everything downstream of this
+    -- prep, render, the depiction code -- therefore only ever sees
+    specs, and never has to know the indexed form existed.
+
+    Fail-visible per reference: a bad index logs and leaves the integer
+    in place rather than substituting a wrong asset, and the render then
+    fails on that one slot.
+    """
+    import bauiv1 as bui
+
+    # Runtime imports: the narrowing below is real isinstance work, not
+    # just annotation.
+    from bacommon.assetspec import (
+        AssetIndexContext,
+        AssetIndexError,
+        TextureSpec,
+        MeshSpec,
+        SoundSpec,
+    )
+    from bacommon.docui.walk import walk_page
+
+    if not packages:
+        return
+
+    ctx = AssetIndexContext(packages, package_asset_listing)
+
+    def _convert(
+        ref: 'TextureSpec | MeshSpec | SoundSpec | int',
+        kind: 'AssetBucketKind',
+    ) -> 'TextureSpec | MeshSpec | SoundSpec | CollisionMeshSpec | None':
+        # Spec-form refs pass through: a response can legitimately mix
+        # forms (an old-form producer, a locally-built page).
+        if not isinstance(ref, int):
+            return None
+        try:
+            return ctx.from_index(ref, kind)
+        except AssetIndexError:
+            bui.uilog.exception(
+                'Error de-indexing %s asset ref %d.', kind.value, ref
+            )
+            return None
+
+    # Two thin wrappers rather than one visitor: each walk's slots hold
+    # a different spec union, and a visitor's *return* has to fit the
+    # slot it is written back into.
+    def _pageref(
+        ref: 'TextureSpec | MeshSpec | int', kind: 'AssetBucketKind'
+    ) -> 'TextureSpec | MeshSpec | int | None':
+        out = _convert(ref, kind)
+        # Page slots hold textures and meshes only; anything else means
+        # the slot's kind and the domain disagreed, which should fail
+        # loudly rather than write a wrong type into the page.
+        if out is None or isinstance(out, (TextureSpec, MeshSpec)):
+            return out
+        return None
+
+    def _effectref(
+        ref: 'SoundSpec | int', kind: 'AssetBucketKind'
+    ) -> 'SoundSpec | int | None':
+        out = _convert(ref, kind)
+        return out if isinstance(out, SoundSpec) else None
+
+    walk_page(page, assetref=_pageref)
+    if effects:
+        # Response-level effects are outside the page walk, and their
+        # sounds are indexed the same as page art.
+        import bacommon.clienteffect as clfx
+
+        clfx.walk_effects(effects, assetref=_effectref)
 
 
 def _resolve_packages_blocking(apverids: list[str], locale: Locale) -> None:
@@ -197,52 +386,40 @@ def _resolve_packages_blocking(apverids: list[str], locale: Locale) -> None:
 
 
 def collect_apverids(page: dui2.Page, acc: set[str]) -> None:
-    """Gather every asset-package-version the page's l-strings reference."""
-    import bacommon.clienteffect as clfx
+    """Gather every asset-package a page references into ``acc``.
+
+    Covers both the packages its language-strings resolve against and
+    the ones its textures and meshes live in -- the client must have
+    all of them before it can render.
+    """
     from bacommon import langstr
+    import bacommon.clienteffect as clfx
+    from bacommon.docui.walk import walk_page
 
-    # (The recursive langstr walk lives at module level in
-    # bacommon.langstr; a self-recursive closure here would create a
-    # reference cycle per call.)
-    def _walk(lstr: LangStrSpec) -> None:
-        langstr.collect_apverids(lstr, acc)
+    def _lstr(lstr: 'LangStrSpec | int') -> None:
+        # Read-only: returning nothing leaves the slot as it is. A
+        # folded index names no package of its own.
+        if not isinstance(lstr, int):
+            langstr.collect_apverids(lstr, acc)
 
-    def _maybe(lstr: LangStrSpec | None) -> None:
-        if lstr is not None:
-            _walk(lstr)
-
-    def _ref(ref: TextureSpec | MeshSpec | None) -> None:
-        if ref is not None:
+    def _ref(
+        ref: 'TextureSpec | MeshSpec | int', _kind: 'AssetBucketKind'
+    ) -> None:
+        # An already-indexed ref names no package of its own -- it
+        # resolves through ``Response.packages``, which the caller
+        # already seeded ``acc`` from. Nothing to collect.
+        if not isinstance(ref, int):
             acc.add(ref.apverid)
 
-    def _decos(decos: list[dui2.Decoration] | None) -> None:
-        for deco in decos or []:
-            if isinstance(deco, dui2.Text):
-                _walk(deco.text)
-            elif isinstance(deco, dui2.Image):
-                _ref(deco.texture)
-                _ref(deco.tint_texture)
-                _ref(deco.mask_texture)
-                _ref(deco.mesh_opaque)
-                _ref(deco.mesh_transparent)
+    walk_page(page, langstr=_lstr, assetref=_ref)
 
-    _walk(page.title)
+    # Client-effects hanging off buttons reference packages too;
+    # gathering them here pre-warms them during page resolve so
+    # press-time runs are cache hits. They have their own walk.
     for row in page.rows:
         if not isinstance(row, dui2.ButtonRow):
             continue
-        _maybe(row.title)
-        _maybe(row.subtitle)
-        _decos(row.header_decorations_left)
-        _decos(row.header_decorations_center)
-        _decos(row.header_decorations_right)
         for button in row.buttons:
-            _maybe(button.label)
-            _ref(button.texture)
-            _ref(button.icon)
-            _decos(button.decorations)
-            # Button-press effects (v2 forms) reference packages too;
-            # gathering them here pre-warms them during page resolve so
-            # press-time runs are cache hits.
             if isinstance(button.action, dui2.Local):
                 clfx.collect_apverids(
                     button.action.immediate_client_effects, acc
@@ -257,31 +434,15 @@ def page_langstrs(page: dui2.Page) -> 'Iterator[LangStrSpec]':
     *not* yielded separately; walk each yielded tree if you need
     those).
     """
-    import bacommon.clienteffect as clfx
+    from bacommon.docui.walk import walk_page
 
-    def _decos(
-        decos: list[dui2.Decoration] | None,
-    ) -> 'Iterator[LangStrSpec]':
-        for deco in decos or []:
-            if isinstance(deco, dui2.Text):
-                yield deco.text
+    out: list['LangStrSpec'] = []
 
-    yield page.title
-    for row in page.rows:
-        if not isinstance(row, dui2.ButtonRow):
-            continue
-        if row.title is not None:
-            yield row.title
-        if row.subtitle is not None:
-            yield row.subtitle
-        yield from _decos(row.header_decorations_left)
-        yield from _decos(row.header_decorations_center)
-        yield from _decos(row.header_decorations_right)
-        for button in row.buttons:
-            if button.label is not None:
-                yield button.label
-            yield from _decos(button.decorations)
-            if isinstance(button.action, dui2.Local):
-                for effect in button.action.immediate_client_effects:
-                    if isinstance(effect, clfx.ScreenMessageV2):
-                        yield effect.message
+    def _lstr(lstr: 'LangStrSpec | int') -> None:
+        # A folded index carries no inspectable content; callers that
+        # want one resolved should unfold it first.
+        if not isinstance(lstr, int):
+            out.append(lstr)
+
+    walk_page(page, langstr=_lstr)
+    yield from out

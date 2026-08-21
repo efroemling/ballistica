@@ -11,13 +11,31 @@
 import datetime
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import Annotated, override, assert_never
+from typing import TYPE_CHECKING, Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
-from bacommon import langstr
+from bacommon import langstr as langstrmod
 from bacommon.langstr import LangStrSpec
 from bacommon.assetspec import SoundSpec
+
+if TYPE_CHECKING:
+    from typing import Callable
+
+    from bacommon.assetspec import AssetBucketKind
+
+    #: An effect's asset slot: a spec, or the flat index addressing the
+    #: same asset through its payload's package manifest.
+    type EffectAssetRef = SoundSpec | int
+
+    #: An effect's string slot: a spec, or its flat integer index.
+    type LangStrRef = LangStrSpec | int
+
+    #: Return a replacement, or None to leave the slot as it is.
+    type LangStrVisitor = Callable[[LangStrRef], 'LangStrRef | None']
+    type AssetRefVisitor = Callable[
+        [EffectAssetRef, 'AssetBucketKind'], 'EffectAssetRef | None'
+    ]
 
 #: First engine build carrying the v2 client-effect machinery
 #: (``ScreenMessageV2``/``PlaySoundV2`` + resolve-before-run).
@@ -174,7 +192,10 @@ class ScreenMessageV2(Effect):
     legacy form where the message matters.
     """
 
-    message: Annotated[LangStrSpec, IOAttrs('m')]
+    #: The message. An ``int`` is the indexed form (see
+    #: ``bacommon.langstr._flatindex``), unfolded during
+    #: resolve like every other indexed slot.
+    message: Annotated[LangStrSpec | int, IOAttrs('m')]
     color: Annotated[
         tuple[float, float, float], IOAttrs('c', store_default=False)
     ] = (1.0, 1.0, 1.0)
@@ -223,13 +244,87 @@ class PlaySoundV2(Effect):
     :class:`Unknown`.
     """
 
-    sound: Annotated[SoundSpec, IOAttrs('s')]
+    #: The sound to play. An ``int`` is the indexed form -- a flat index
+    #: into the audio domain of the payload's package manifest (see
+    #: ``bacommon.assetspec._index``). The client swaps it for a
+    #: :class:`~bacommon.assetspec.SoundSpec` while resolving, because
+    #: an effect may run long after the manifest that gave the index
+    #: meaning is gone.
+    sound: Annotated[SoundSpec | int, IOAttrs('s')]
     volume: Annotated[float, IOAttrs('v', store_default=False)] = 1.0
 
     @override
     @classmethod
     def get_type_id(cls) -> EffectTypeID:
         return EffectTypeID.SOUND_V2
+
+
+def walk_effects(
+    effects: list[Effect],
+    *,
+    langstr: 'LangStrVisitor | None' = None,
+    assetref: 'AssetRefVisitor | None' = None,
+) -> None:
+    """Visit every language-string and asset ref in a list of effects.
+
+    The effects counterpart of
+    :func:`bacommon.docui.walk.walk_page`, and exhaustive in the same
+    way: it dispatches on :class:`EffectTypeID` with ``assert_never`` at
+    the end, so an effect type that gains a string or asset ref cannot
+    quietly go unvisited.
+
+    That mattered here. This started as an ``isinstance`` chain with no
+    final else -- the same shape that silently under-reported doc-ui
+    pages three times -- and the doc-ui page walk separately reached in
+    for :attr:`ScreenMessageV2.message` while ignoring
+    :attr:`PlaySoundV2.sound`, so the split between the two walks was
+    arbitrary rather than principled. Effects keep their own entry point
+    because they travel outside doc-ui too (bacloud responses), but both
+    walks now cover their whole surface.
+
+    Either callback may return a replacement, which is what lets one
+    traversal serve readers and rewriters alike.
+    """
+    from bacommon.assetspec import AssetBucketKind
+
+    def _lstr(val: 'LangStrRef') -> 'LangStrRef':
+        if langstr is None:
+            return val
+        out = langstr(val)
+        return val if out is None else out
+
+    for effect in effects:
+        typeid = effect.get_type_id()
+        t = EffectTypeID
+
+        if typeid is t.SCREEN_MESSAGE_V2:
+            assert isinstance(effect, ScreenMessageV2)
+            effect.message = _lstr(effect.message)
+
+        elif typeid is t.SOUND_V2:
+            assert isinstance(effect, PlaySoundV2)
+            if assetref is not None:
+                out = assetref(effect.sound, AssetBucketKind.AUDIO)
+                if out is not None:
+                    effect.sound = out
+
+        elif typeid in (
+            t.UNKNOWN,
+            t.LEGACY_SCREEN_MESSAGE,
+            t.SCREEN_MESSAGE,
+            t.SOUND,
+            t.DELAY,
+            t.CHEST_WAIT_TIME_ANIMATION,
+            t.TICKETS_ANIMATION,
+            t.TOKENS_ANIMATION,
+        ):
+            # Carry no language-agnostic strings or typed asset refs:
+            # the legacy forms hold pre-localized text and bare asset
+            # names, and the animations hold only numbers and ids.
+            pass
+
+        else:
+            assert_never(typeid)
 
 
 def collect_apverids(effects: list[Effect], acc: set[str]) -> None:
@@ -240,11 +335,20 @@ def collect_apverids(effects: list[Effect], acc: set[str]) -> None:
     running the effects are derived by walking them — nothing extra
     rides the wire. Mirrors the doc-ui-v2 pattern.
     """
-    for effect in effects:
-        if isinstance(effect, ScreenMessageV2):
-            langstr.collect_apverids(effect.message, acc)
-        elif isinstance(effect, PlaySoundV2):
-            acc.add(effect.sound.apverid)
+
+    def _lstr(val: 'LangStrSpec | int') -> None:
+        # A folded index resolves through its payload's manifest, which
+        # the caller seeds from separately; it names no package itself.
+        if not isinstance(val, int):
+            langstrmod.collect_apverids(val, acc)
+
+    def _ref(ref: 'SoundSpec | int', _kind: 'AssetBucketKind') -> None:
+        # An indexed ref resolves through its payload's manifest, which
+        # the caller seeds from separately; it names no package itself.
+        if not isinstance(ref, int):
+            acc.add(ref.apverid)
+
+    walk_effects(effects, langstr=_lstr, assetref=_ref)
 
 
 @ioprepped

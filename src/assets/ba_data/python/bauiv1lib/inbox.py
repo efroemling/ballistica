@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     import datetime
     from typing import Callable
 
-    import bacommon.displayitem as ditm
+    import bacommon.legacydisplayitem as lditm
 
 
 class _Section:
@@ -176,7 +176,7 @@ class _DisplayItemsSection(_Section):
         self,
         *,
         sub_width: float,
-        items: list[ditm.Wrapper],
+        items: list[lditm.Wrapper],
         width: float = 100.0,
         spacing_top: float = 0.0,
         spacing_bottom: float = 0.0,

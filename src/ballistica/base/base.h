@@ -299,6 +299,17 @@ enum class TextureCompressionType : uint8_t {
   kBPTC,
 };
 
+/// How a texture samples past its edge, per axis. Authored per-texture
+/// in the asset workspace and delivered in the KTX2 key/value data;
+/// maps 1:1 onto the GL wrap modes. Absent key => kClamp, which is
+/// both the pipeline default and the right answer for the vast
+/// majority of our textures (they do not tile).
+enum class TextureWrapping : uint8_t {
+  kClamp,
+  kRepeat,
+  kMirroredRepeat,
+};
+
 enum class TextureMinQuality : uint8_t {
   kLow,
   kMedium,

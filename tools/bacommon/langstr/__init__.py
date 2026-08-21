@@ -44,6 +44,11 @@ from bacommon.langstr._core import (
     contains_resource_form,
     collect_apverids,
 )
+from bacommon.langstr._flatindex import (
+    LANGSTR_FLAT_MIN_BUILD,
+    LangStrFlatIndexContext,
+    LangStrIndexError,
+)
 from bacommon.langstr._wrapper import (
     LangStrDir,
     WrapperTree,
@@ -74,6 +79,9 @@ __all__ = [
     'LangStrSpecResource',
     'LangStrSpecValue',
     'LangStrSpecResourceIndexed',
+    'LANGSTR_FLAT_MIN_BUILD',
+    'LangStrFlatIndexContext',
+    'LangStrIndexError',
     'LangStrSpecTypeID',
     'LANGSTR_EXT_MIN_BUILD',
     'MAX_NESTING_DEPTH',

@@ -430,6 +430,8 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_calls2.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docui/prep/_types.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitest.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestframes.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1lib/docuitestitems.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/fileselector.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/gather/_gather.py \
@@ -532,6 +534,7 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/assetcas.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetspec/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetspec/_core.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/assetspec/_index.py \
   $(BUILD_DIR)/ba_data/python/bacommon/assetspec/_wrapper.py \
   $(BUILD_DIR)/ba_data/python/bacommon/automationchannel.py \
   $(BUILD_DIR)/ba_data/python/bacommon/bacloud.py \
@@ -540,7 +543,6 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/classic/_account.py \
   $(BUILD_DIR)/ba_data/python/bacommon/classic/_chest.py \
   $(BUILD_DIR)/ba_data/python/bacommon/classic/_classic.py \
-  $(BUILD_DIR)/ba_data/python/bacommon/classic/_displayitem.py \
   $(BUILD_DIR)/ba_data/python/bacommon/classic/_msg.py \
   $(BUILD_DIR)/ba_data/python/bacommon/clienteffect.py \
   $(BUILD_DIR)/ba_data/python/bacommon/cloud.py \
@@ -552,13 +554,17 @@ SCRIPT_TARGETS_PY_PUBLIC_TOOLS = \
   $(BUILD_DIR)/ba_data/python/bacommon/displayitem.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/_docui.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/framefit.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/v1.py \
   $(BUILD_DIR)/ba_data/python/bacommon/docui/v2.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/docui/walk.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/__init__.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_blob.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_core.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/langstr/_flatindex.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_format.py \
   $(BUILD_DIR)/ba_data/python/bacommon/langstr/_wrapper.py \
+  $(BUILD_DIR)/ba_data/python/bacommon/legacydisplayitem.py \
   $(BUILD_DIR)/ba_data/python/bacommon/locale.py \
   $(BUILD_DIR)/ba_data/python/bacommon/loctext.py \
   $(BUILD_DIR)/ba_data/python/bacommon/loggercontrol.py \

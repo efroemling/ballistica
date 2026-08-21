@@ -7,7 +7,7 @@ from typing import assert_never, Annotated, override
 from dataclasses import dataclass
 
 from efro.dataclassio import ioprepped, IOAttrs
-import bacommon.displayitem as ditm
+import bacommon.legacydisplayitem as lditm
 
 
 class ClassicChestAppearance(Enum):
@@ -48,17 +48,43 @@ class ClassicChestAppearance(Enum):
         assert_never(self)
 
 
+#: ``(tint, tint2)`` for depicting a chest of each appearance.
+#:
+#: Lives here rather than with the client's chest code so a *producer*
+#: can depict a chest -- under frames the producer decides how things
+#: look, and it has no view of client-side presentation tables. The
+#: client's richer :class:`~baclassic.ChestAppearanceDisplayInfo` (which
+#: also carries textures the C++ layer reads) is built from these, so
+#: there is one source rather than two that can drift.
+CHEST_APPEARANCE_TINTS: dict[
+    ClassicChestAppearance,
+    tuple[tuple[float, float, float], tuple[float, float, float]],
+] = {
+    ClassicChestAppearance.L2: ((0.65, 1.0, 0.8), (0.65, 1.0, 0.8)),
+    ClassicChestAppearance.L3: ((0.7, 1, 1.9), (0.7, 1, 1.9)),
+    ClassicChestAppearance.L4: ((1.4, 1.6, 2.0), (1.4, 1.6, 2.0)),
+    ClassicChestAppearance.L5: ((1.0, 0.8, 0.0), (1.0, 0.8, 0.0)),
+    ClassicChestAppearance.L6: ((2, 2, 2), (2, 2, 2)),
+}
+
+#: ``(tint, tint2)`` for an appearance with no entry above -- UNKNOWN,
+#: DEFAULT and L1 all rely on this.
+CHEST_APPEARANCE_TINT_DEFAULT: tuple[
+    tuple[float, float, float], tuple[float, float, float]
+] = ((1, 1, 1), (1, 1, 1))
+
+
 @ioprepped
 @dataclass
-class ClassicChestDisplayItem(ditm.Item):
+class ClassicChestDisplayItem(lditm.Item):
     """Display a chest."""
 
     appearance: Annotated[ClassicChestAppearance, IOAttrs('a')]
 
     @override
     @classmethod
-    def get_type_id(cls) -> ditm.ItemTypeID:
-        return ditm.ItemTypeID.CHEST
+    def get_type_id(cls) -> lditm.ItemTypeID:
+        return lditm.ItemTypeID.CHEST
 
     @override
     def get_description(self) -> tuple[str, list[tuple[str, str]]]:

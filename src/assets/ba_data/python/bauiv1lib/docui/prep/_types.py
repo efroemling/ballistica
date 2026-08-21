@@ -23,7 +23,9 @@ if TYPE_CHECKING:
 class DecorationPrep:
     """Prep for a decoration in a doc-ui."""
 
-    call: Callable[..., bauiv1.Widget]
+    #: Creates the widget(s). A frame's call creates several and
+    #: returns None; single-widget decorations return theirs.
+    call: Callable[..., bauiv1.Widget | None]
     textures: dict[str, str]
     meshes: dict[str, str]
     highlight: bool

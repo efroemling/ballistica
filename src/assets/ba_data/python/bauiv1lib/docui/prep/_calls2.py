@@ -9,13 +9,12 @@ thread so there's as little work to do in the ui thread as possible.
 from functools import partial
 from typing import TYPE_CHECKING, assert_never
 
-from efro.util import pairs_from_flat
 from efro.dataclassio import dataclass_to_json
-import bacommon.displayitem as ditm
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
 from bauiv1 import builtinassets
-from bauiv1 import classicassets
+
+from bacommon.docui.framefit import fit_bounds, aligned_box
 
 from bauiv1lib.docui.prep._types import DecorationPrep
 
@@ -23,11 +22,24 @@ if TYPE_CHECKING:
     from typing import Any, Callable
 
     from bacommon.langstr import LangStrSpec
+    from bacommon.assetspec import TextureSpec, MeshSpec
+    from bacommon.docui.framefit import Bounds
     from bauiv1lib.docui import DocUIWindow
 
 
-def _native(lstr: 'LangStrSpec', packages: list[str]) -> bui.LangStr:
-    """Native handle bound against a payload's package list."""
+def _native(lstr: 'LangStrSpec | int', packages: list[str]) -> bui.LangStr:
+    """Native handle bound against a payload's package list.
+
+    Accepts the folded index form only to reject it: indices are
+    unfolded during resolve (``_resolve.deindex_langstrs``), so one
+    reaching render means that step was skipped or failed. Stating the
+    assumption here beats every call site assuming it silently.
+    """
+    if isinstance(lstr, int):
+        raise RuntimeError(
+            f'Unfolded language-string index {lstr} reached render; the'
+            f' page was not resolved, or unfolding failed.'
+        )
     return bui.LangStr(dataclass_to_json(lstr), packages=packages)
 
 
@@ -36,14 +48,18 @@ def _btex(name: str) -> str:
     return f'{builtinassets.__asset_package__}:textures/{name}'
 
 
-def _stex(name: str) -> str:
-    """Qualified classicassets texture ref."""
-    return f'{classicassets.__asset_package__}:textures/{name}'
+def _refstr(ref: 'TextureSpec | MeshSpec | int') -> str:
+    """Qualified engine name for a typed asset ref.
 
+    Delegates so the un-de-indexed-index check lives in exactly one
+    place. This was previously typed ``Any``, which meant a widened
+    asset-slot type could pass an integer straight through to the
+    renderer without mypy noticing -- the sibling in ``_calls`` caught
+    it, this one did not.
+    """
+    from bauiv1lib.docui.prep._calls import refstr
 
-def _refstr(ref: 'Any') -> str:
-    """Qualified engine name for a typed asset ref."""
-    return f'{ref.apverid}:{ref.name}'
+    return refstr(ref)
 
 
 def prep_decorations(
@@ -89,17 +105,265 @@ def prep_decorations(
                 highlight=highlight,
             )
         elif dectypeid is dui2.DecorationTypeID.DISPLAY_ITEM:
-            assert isinstance(decoration, dui2.DisplayItem)
-            prep_display_item(
+            # This build depicts nothing itself; producers send frames
+            # to anything at or past FRAME_DEPICTION_MIN_BUILD, and
+            # this build is one. Reaching here means a producer got the
+            # audience wrong, so say so rather than drawing nothing
+            # silently.
+            if bui.do_once():
+                bui.uilog.error(
+                    'DocUI received a display-item decoration, which'
+                    ' this build no longer draws; the producer should'
+                    ' have sent a frame.'
+                )
+        elif dectypeid is dui2.DecorationTypeID.FRAME:
+            assert isinstance(decoration, dui2.Frame)
+            prep_frame(
                 decoration,
                 (center_x, center_y),
                 scale,
                 tdelay,
                 out_decoration_preps,
+                packages=packages,
                 highlight=highlight,
             )
         else:
             assert_never(dectypeid)
+
+
+def prep_frame(
+    frame: dui2.Frame,
+    bcenter: tuple[float, float],
+    bscale: float,
+    tdelay: float | None,
+    out_decoration_preps: list[DecorationPrep],
+    *,
+    packages: list[str],
+    highlight: bool,
+) -> None:
+    """Prep a frame and everything inside it.
+
+    The frame's children are prepped into their own list and wrapped in
+    a single self-contained call, so the frame survives prep as one
+    thing rather than dissolving into its siblings. That is what lets
+    frame-level properties (a group transition, clipping, an eventual
+    rotation) have somewhere to live; flattening would silently drop
+    them.
+
+    The result is an ordinary :class:`DecorationPrep`, so the doc-ui
+    instantiate path runs frames with no special case. Its texture and
+    mesh maps are empty because the wrapped call resolves its own
+    children's assets.
+    """
+    # pylint: disable=cyclic-import
+    # Safe up-call: _calls only imports us from inside a function, so
+    # by the time this runs it is fully imported.
+    from bauiv1lib.docui.prep._calls import instantiate_decorations
+
+    # Children are positioned relative to the frame's own origin, so
+    # compose the frame's placement onto the incoming transform and let
+    # the normal per-decoration prep do the rest.
+    # The frame's own space, before any fitting. The size box lives
+    # here; only the content moves and shrinks.
+    base_scale = bscale * frame.scale
+    base_cx = bcenter[0] + frame.position[0] * bscale
+    base_cy = bcenter[1] + frame.position[1] * bscale
+
+    cscale = base_scale
+    cx = base_cx
+    cy = base_cy
+
+    # A sized frame fits its children into its box instead: measure
+    # their combined extent, center that, and shrink if needed. Both
+    # adjustments fold into the transform above, so the children prep
+    # exactly as they otherwise would.
+    content = _measure_children(frame, packages, quiet=frame.size is None)
+    if frame.size is not None:
+        if content is None:
+            bui.uilog.error(
+                'Sized doc-ui frame has unmeasurable children; drawing'
+                ' them unfitted. Sized frames take text and images only.'
+            )
+        else:
+            fit = fit_bounds(content, frame.size, frame.h_align, frame.v_align)
+            cscale *= fit.scale
+            cx += fit.offset[0] * cscale
+            cy += fit.offset[1] * cscale
+
+    if frame.debug:
+        _prep_frame_debug(
+            frame,
+            content,
+            base=((base_cx, base_cy), base_scale),
+            fitted=((cx, cy), cscale),
+            tdelay=tdelay,
+            out_decoration_preps=out_decoration_preps,
+        )
+
+    child_preps: list[DecorationPrep] = []
+    prep_decorations(
+        frame.decorations,
+        cx,
+        cy,
+        cscale,
+        tdelay,
+        packages=packages,
+        highlight=highlight and frame.highlight,
+        out_decoration_preps=child_preps,
+    )
+
+    def _instantiate(
+        parent: bui.Widget, draw_controller: bui.Widget | None = None
+    ) -> None:
+        instantiate_decorations(
+            child_preps, parent=parent, draw_controller=draw_controller
+        )
+
+    out_decoration_preps.append(
+        DecorationPrep(
+            call=_instantiate,
+            textures={},
+            meshes={},
+            highlight=frame.highlight,
+        )
+    )
+
+
+def _measure_children(
+    frame: dui2.Frame, packages: list[str], quiet: bool
+) -> Bounds | None:
+    """Return the combined extent of a frame's children, or None.
+
+    None means some child's size cannot be known before drawing, which
+    is a contract violation for a sized frame but merely uninteresting
+    for an unsized one -- hence ``quiet``.
+    """
+    out: Bounds | None = None
+    for child in frame.decorations:
+        bounds = _child_bounds(child, packages)
+        if bounds is None:
+            if not quiet:
+                bui.uilog.error(
+                    'Sized doc-ui frame contains a %s, which cannot be'
+                    ' measured.',
+                    type(child).__name__,
+                )
+            return None
+        out = bounds if out is None else out.union(bounds)
+    return out
+
+
+def _child_bounds(child: dui2.Decoration, packages: list[str]) -> Bounds | None:
+    """Return a child's extent in frame-local units.
+
+    None means "not measurable" -- a nested frame or display-item,
+    whose own contents would have to be resolved first.
+    """
+    dectypeid = child.get_type_id()
+
+    if dectypeid is dui2.DecorationTypeID.IMAGE:
+        assert isinstance(child, dui2.Image)
+        return aligned_box(
+            child.position,
+            child.size[0],
+            child.size[1],
+            child.h_align,
+            child.v_align,
+        )
+
+    if dectypeid is dui2.DecorationTypeID.TEXT:
+        assert isinstance(child, dui2.Text)
+        # Rendered extent is the string's measured size times the
+        # text's own scale; the frame transform supplies the rest.
+        text = _native(child.text, packages).evaluate()
+        return aligned_box(
+            child.position,
+            bui.get_string_width(text, suppress_warning=True) * child.scale,
+            bui.get_string_height(text, suppress_warning=True) * child.scale,
+            child.h_align,
+            child.v_align,
+        )
+
+    return None
+
+
+def _prep_frame_debug(
+    frame: dui2.Frame,
+    content: Bounds | None,
+    *,
+    base: tuple[tuple[float, float], float],
+    fitted: tuple[tuple[float, float], float],
+    tdelay: float | None,
+    out_decoration_preps: list[DecorationPrep],
+) -> None:
+    """Draw a frame's size box and the extent its children occupy.
+
+    Two rects rather than one, and in two different spaces: the box is
+    where content was asked to go, drawn in the frame's own space, and
+    the extent is where it ended up, drawn in the fitted space. Content
+    that overflows its box or sits off-center in it therefore looks
+    wrong here rather than having to be inferred.
+    """
+    base_center, base_scale = base
+    fit_center, fit_scale = fitted
+
+    if frame.size is not None:
+        out_decoration_preps.append(
+            _debug_rect(
+                (
+                    base_center[0] - frame.size[0] * 0.5 * base_scale,
+                    base_center[1] - frame.size[1] * 0.5 * base_scale,
+                ),
+                (
+                    frame.size[0] * base_scale,
+                    frame.size[1] * base_scale,
+                ),
+                (0, 1, 1),
+                0.25,
+                tdelay,
+            )
+        )
+
+    if content is not None:
+        out_decoration_preps.append(
+            _debug_rect(
+                (
+                    fit_center[0] + content.minx * fit_scale,
+                    fit_center[1] + content.miny * fit_scale,
+                ),
+                (
+                    content.width * fit_scale,
+                    content.height * fit_scale,
+                ),
+                (1, 0, 1),
+                0.25,
+                tdelay,
+            )
+        )
+
+
+def _debug_rect(
+    position: tuple[float, float],
+    size: tuple[float, float],
+    color: tuple[float, float, float],
+    opacity: float,
+    tdelay: float | None,
+) -> DecorationPrep:
+    """A flat translucent rect, for showing bounds during development."""
+    return DecorationPrep(
+        call=partial(
+            bui.imagewidget,
+            position=position,
+            size=size,
+            color=color,
+            opacity=opacity,
+            transition_delay=tdelay,
+            transition_type='scale',
+        ),
+        textures={'texture': _btex('white')},
+        meshes={},
+        highlight=True,
+    )
 
 
 def prep_text(
@@ -267,6 +531,19 @@ def prep_image(
         )
     )
 
+    # Show the box in debug mode. Worth having separately from the art:
+    # a texture with a transparent margin draws smaller than its bounds.
+    if image.debug:
+        out_decoration_preps.append(
+            _debug_rect(
+                (xoffsfin, yoffsfin),
+                (widthfull, heightfull),
+                (0, 1, 0),
+                0.2,
+                tdelay,
+            )
+        )
+
 
 def prep_row_debug(
     size: tuple[float, float],
@@ -358,283 +635,3 @@ def prep_button_debug(
             highlight=True,
         )
     )
-
-
-def prep_display_item(
-    display_item: dui2.DisplayItem,
-    parent_center: tuple[float, float],
-    parent_scale: float,
-    tdelay: float | None,
-    out_decoration_preps: list[DecorationPrep],
-    *,
-    highlight: bool,
-) -> None:
-    # pylint: disable=too-many-statements
-    """Prep decorations for a display-item."""
-    # pylint: disable=too-many-branches
-    # pylint: disable=too-many-locals
-
-    # Calc center and size of our bounds based on parent.
-    our_center = (
-        parent_center[0] + display_item.position[0] * parent_scale,
-        parent_center[1] + display_item.position[1] * parent_scale,
-    )
-    bounds_size = (
-        parent_scale * display_item.size[0],
-        parent_scale * display_item.size[1],
-    )
-
-    wrapper = display_item.wrapper
-    item = wrapper.item
-    itemtype = item.get_type_id()
-
-    # Draw our bounds if debug mode is enabled (or we're a test-item).
-    if display_item.debug or itemtype is ditm.ItemTypeID.TEST:
-        out_decoration_preps.append(
-            DecorationPrep(
-                call=partial(
-                    bui.imagewidget,
-                    color=(1, 1, 0),
-                    opacity=0.1,
-                    position=(
-                        our_center[0] - bounds_size[0] * 0.5,
-                        our_center[1] - bounds_size[1] * 0.5,
-                    ),
-                    size=bounds_size,
-                    transition_delay=tdelay,
-                    transition_type='scale',
-                ),
-                textures={'texture': _btex('white')},
-                meshes={},
-                highlight=highlight and display_item.highlight,
-            )
-        )
-
-    # Calc our width and height based on our aspect ratio so we fit in
-    # the provided bounds.
-    if display_item.style is dui2.DisplayItemStyle.FULL:
-        aspect_ratio = 0.75  # Bit less tall than wide (graphic centric).
-        compact = False
-        icon = False
-    elif display_item.style is dui2.DisplayItemStyle.COMPACT:
-        aspect_ratio = 0.5  # Significantly wider (text centric)
-        compact = True
-        icon = False
-    elif display_item.style is dui2.DisplayItemStyle.ICON:
-        aspect_ratio = 1.0  # Square
-        compact = False
-        icon = True
-    else:
-        # Make sure we cover all possibilities.
-        assert_never(display_item.style)
-
-    if bounds_size[0] * aspect_ratio > bounds_size[1]:
-        height = bounds_size[1]
-        width = height / aspect_ratio
-    else:
-        width = bounds_size[0]
-        height = width * aspect_ratio
-
-    # Show our constrained bounds in debug mode.
-    if display_item.debug or itemtype is ditm.ItemTypeID.TEST:
-        out_decoration_preps.append(
-            DecorationPrep(
-                call=partial(
-                    bui.imagewidget,
-                    color=(1, 0.5, 0),
-                    opacity=0.2,
-                    position=(
-                        our_center[0] - width * 0.5,
-                        our_center[1] - height * 0.5,
-                    ),
-                    size=(width, height),
-                    transition_delay=tdelay,
-                    transition_type='scale',
-                ),
-                textures={'texture': _btex('white')},
-                meshes={},
-                highlight=highlight and display_item.highlight,
-            )
-        )
-
-    img: str | None = None
-    img_x_offs = 0.0
-    img_y_offs = 0.0
-    imgsize = width * (0.5 if compact else 1.0 if icon else 0.33)
-
-    show_text = True
-    text_mult = 0.006
-    text: str | None = None  # Uses default if None
-    text_x_offs = 0.0
-    text_y_offs = 0.0
-    text_align = 'center'
-    text_max_width: float | None = width * 0.9
-
-    if itemtype is ditm.ItemTypeID.CHEST:
-        from baclassic import (
-            CHEST_APPEARANCE_DISPLAY_INFOS,
-            CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,
-        )
-        import bacommon.classic
-
-        assert isinstance(item, bacommon.classic.ClassicChestDisplayItem)
-
-        img = None
-        show_text = False
-        c_info = CHEST_APPEARANCE_DISPLAY_INFOS.get(
-            item.appearance, CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT
-        )
-        c_size = width * (0.66 if compact else 1.05 if icon else 0.83)
-        out_decoration_preps.append(
-            DecorationPrep(
-                call=partial(
-                    bui.imagewidget,
-                    position=(
-                        our_center[0] - c_size * 0.5,
-                        our_center[1] - c_size * 0.5,
-                    ),
-                    size=(c_size, c_size),
-                    transition_delay=tdelay,
-                    transition_type='scale',
-                    tint_color=c_info.tint,
-                    tint2_color=c_info.tint2,
-                    depth_range=display_item.depth_range,
-                ),
-                textures={
-                    'texture': c_info.texclosed,
-                    'tint_texture': c_info.texclosedtint,
-                },
-                meshes={},
-                highlight=highlight and display_item.highlight,
-            )
-        )
-    elif itemtype is ditm.ItemTypeID.TEST:
-        assert isinstance(item, ditm.Test)
-        # Nothing to do here. This is just another way to enable debug
-        # drawing.
-        if icon or compact:
-            text_mult = 0.02  # Very large text.
-
-    elif (
-        itemtype is ditm.ItemTypeID.TOKENS
-        or itemtype is ditm.ItemTypeID.TICKETS
-        or itemtype is ditm.ItemTypeID.TICKETS_PURPLE
-    ):
-        if itemtype is ditm.ItemTypeID.TOKENS:
-            assert isinstance(item, ditm.Tokens)
-            img = _stex('coin')
-            if compact:
-                text = str(item.count)
-        elif itemtype is ditm.ItemTypeID.TICKETS:
-            assert isinstance(item, ditm.Tickets)
-            img = _stex('tickets')
-            if compact:
-                text = str(item.count)
-        elif itemtype is ditm.ItemTypeID.TICKETS_PURPLE:
-            assert isinstance(item, ditm.PurpleTickets)
-            img = _stex('tickets_purple')
-            if compact:
-                text = str(item.count)
-        else:
-            assert_never(itemtype)
-
-        if compact:
-            imgamt = 0.85  # How much of img dimensions we measure.
-
-            assert text is not None
-            text_mult = 0.01
-            strwidth = (
-                width
-                * bui.get_string_width(text, suppress_warning=True)
-                * text_mult
-            )
-            totwidth = strwidth + imgsize * imgamt
-
-            maxwidth = width * 0.95
-            if totwidth > maxwidth:
-                mult = maxwidth / totwidth
-                text_mult *= mult
-                strwidth *= mult
-                totwidth *= mult
-                imgsize *= mult
-
-            text_max_width = None  # We calc this fully ourself.
-            # Move to right and then left by half img width.
-            img_x_offs = totwidth * 0.5 - imgsize * imgamt * 0.5
-            # Move to left and then right by half text width.
-            text_x_offs = totwidth * -0.5 + strwidth * 0.5
-        elif icon:
-            img_y_offs = 0.0
-            show_text = False
-        else:
-            img_y_offs = width * 0.11
-            text_y_offs = width * -0.15
-    elif itemtype is ditm.ItemTypeID.UNKNOWN:
-        assert isinstance(item, ditm.Unknown)
-        # Just do default text here.
-        if icon:
-            text_mult = 0.02  # Very large text.
-    else:
-        # Make sure we cover all possibilities.
-        assert_never(itemtype)
-
-    if img is not None:
-        out_decoration_preps.append(
-            DecorationPrep(
-                call=partial(
-                    bui.imagewidget,
-                    position=(
-                        our_center[0] - imgsize * 0.5 + img_x_offs,
-                        our_center[1] - imgsize * 0.5 + img_y_offs,
-                    ),
-                    size=(imgsize, imgsize),
-                    transition_delay=tdelay,
-                    transition_type='scale',
-                    depth_range=display_item.depth_range,
-                ),
-                textures={'texture': img},
-                meshes={},
-                highlight=highlight and display_item.highlight,
-            )
-        )
-    if show_text:
-        if text is None:
-            subs = wrapper.description_subs
-            if subs is None:
-                subs = []
-            text = bui.Lstr(
-                translate=('displayItemNames', wrapper.description),
-                subs=pairs_from_flat(subs),
-            ).as_json()
-
-        out_decoration_preps.append(
-            DecorationPrep(
-                call=partial(
-                    bui.textwidget,
-                    position=(
-                        our_center[0] + text_x_offs,
-                        our_center[1] + text_y_offs,
-                    ),
-                    scale=width * text_mult,
-                    maxwidth=text_max_width,
-                    h_align=text_align,
-                    v_align='center',
-                    size=(0, 0),
-                    color=(
-                        (1, 1, 1)
-                        if display_item.text_color is None
-                        else display_item.text_color
-                    ),
-                    text=text,
-                    flatness=1.0,
-                    shadow=1.0,
-                    literal=False,
-                    transition_delay=tdelay,
-                    transition_type='scale',
-                    depth_range=display_item.depth_range,
-                ),
-                textures={},
-                meshes={},
-                highlight=highlight and display_item.highlight,
-            )
-        )

@@ -65,6 +65,83 @@ static auto BytesPerPixelForFormat(TextureFormat fmt) -> size_t {
   }
 }
 
+// Key/value keys carrying our per-axis wrapping (written by
+// ``_kvd_section`` in bamaster assetsv1tex.py). ``KTX``/``ktx`` is
+// reserved by the spec for its own keys, so ours take a ``ba`` prefix.
+// Wire values -- never rename.
+static const char* kKvdKeyWrapH = "baTextureWrappingH";
+static const char* kKvdKeyWrapV = "baTextureWrappingV";
+
+// Map a wrapping wire string to its enum. Unknown values (a newer
+// pipeline emitting a mode this build predates) fall back to clamp,
+// which is the safe default: it can only ever look wrong on a texture
+// that was meant to tile, never break one that wasn't.
+static auto WrappingFromString(const char* val) -> TextureWrapping {
+  if (!strcmp(val, "repeat")) {
+    return TextureWrapping::kRepeat;
+  }
+  if (!strcmp(val, "mirrored_repeat")) {
+    return TextureWrapping::kMirroredRepeat;
+  }
+  return TextureWrapping::kClamp;
+}
+
+// Read our wrapping keys out of a KTX2 key/value data section.
+//
+// Layout per entry (spec 3.11): uint32 keyAndValueByteLength, then a
+// NUL-terminated UTF-8 key followed by the value, then zero padding to
+// the next 4-byte boundary. We only emit KVD for non-clamp wrapping, so
+// the overwhelmingly common case is kvd_byte_length == 0 and this is a
+// no-op. Anything malformed leaves the defaults rather than throwing --
+// wrapping is a rendering nicety, not worth failing a texture load over.
+static void ReadWrappingFromKVD(FILE* f, const KTX2Header& hdr,
+                                TextureWrapping* wrap_h,
+                                TextureWrapping* wrap_v) {
+  // Sanity-bound the section so a corrupt header can't make us allocate
+  // wildly. Our own sections are a few dozen bytes.
+  const uint32_t kMaxKVDBytes = 64 * 1024;
+  if (hdr.kvd_byte_offset == 0 || hdr.kvd_byte_length == 0
+      || hdr.kvd_byte_length > kMaxKVDBytes) {
+    return;
+  }
+  // fseek takes a long by definition; same cast the DFD read above uses.
+  auto kvd_offset = static_cast<long>(hdr.kvd_byte_offset);  // NOLINT
+  if (fseek(f, kvd_offset, SEEK_SET) != 0) {
+    return;
+  }
+  std::vector<uint8_t> kvd(hdr.kvd_byte_length);
+  if (fread(kvd.data(), 1, kvd.size(), f) != kvd.size()) {
+    return;
+  }
+
+  size_t pos{};
+  while (pos + 4 <= kvd.size()) {
+    uint32_t entry_len{};
+    memcpy(&entry_len, kvd.data() + pos, sizeof(entry_len));
+    pos += 4;
+    if (entry_len == 0 || pos + entry_len > kvd.size()) {
+      return;  // Malformed; keep whatever we have.
+    }
+    // The entry must be a NUL-terminated key followed by a
+    // NUL-terminated value for us to read it as strings.
+    const char* key = reinterpret_cast<const char*>(kvd.data() + pos);
+    size_t keylen = strnlen(key, entry_len);
+    if (keylen + 1 < entry_len) {
+      const char* val = key + keylen + 1;
+      size_t vallen = strnlen(val, entry_len - keylen - 1);
+      if (vallen + keylen + 1 < entry_len) {  // value is NUL-terminated
+        if (!strcmp(key, kKvdKeyWrapH)) {
+          *wrap_h = WrappingFromString(val);
+        } else if (!strcmp(key, kKvdKeyWrapV)) {
+          *wrap_v = WrappingFromString(val);
+        }
+      }
+    }
+    pos += entry_len;
+    pos += (4 - (entry_len % 4)) % 4;  // padding to 4-byte alignment
+  }
+}
+
 // Shared loader core for 2D (1 face) and cube-map (6 face) KTX2 files.
 // ``targets`` must hold ``expected_face_count`` entries; each face gets
 // the full mip chain. Within a level, faces are tightly packed
@@ -76,9 +153,13 @@ static void LoadKTX2Impl(const std::string& file_name,
   // the legacy texture-quality mip-skip knob does not apply here (see
   // the header and initiative §7 texture-quality decoupling).
   bool premultiplied{};
+  TextureWrapping wrap_h{TextureWrapping::kClamp};
+  TextureWrapping wrap_v{TextureWrapping::kClamp};
   for (uint32_t fi = 0; fi < expected_face_count; ++fi) {
     *targets[fi].base_level = 0;
     *targets[fi].premultiplied = false;
+    *targets[fi].wrap_h = TextureWrapping::kClamp;
+    *targets[fi].wrap_v = TextureWrapping::kClamp;
   }
 
   FILE* f = g_core->platform->FOpen(file_name.c_str(), "rb");
@@ -158,8 +239,14 @@ static void LoadKTX2Impl(const std::string& file_name,
       }
     }
   }
+  // Per-axis wrapping from the key/value data. Absent (the common case
+  // -- we only emit KVD for non-clamp wrapping) leaves both clamped.
+  ReadWrappingFromKVD(f, hdr, &wrap_h, &wrap_v);
+
   for (uint32_t fi = 0; fi < expected_face_count; ++fi) {
     *targets[fi].premultiplied = premultiplied;
+    *targets[fi].wrap_h = wrap_h;
+    *targets[fi].wrap_v = wrap_v;
   }
 
   // No quality-driven base_level bump: asset-package textures load all
@@ -243,9 +330,10 @@ static void LoadKTX2Impl(const std::string& file_name,
 
 void LoadKTX2(const std::string& file_name, unsigned char** buffers,
               int* widths, int* heights, TextureFormat* formats, size_t* sizes,
-              int* base_level, bool* premultiplied) {
-  KTX2FaceTarget target{buffers, widths,     heights,      formats,
-                        sizes,   base_level, premultiplied};
+              int* base_level, bool* premultiplied, TextureWrapping* wrap_h,
+              TextureWrapping* wrap_v) {
+  KTX2FaceTarget target{buffers,    widths,        heights, formats, sizes,
+                        base_level, premultiplied, wrap_h,  wrap_v};
   LoadKTX2Impl(file_name, 1, &target);
 }
 

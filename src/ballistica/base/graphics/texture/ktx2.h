@@ -84,7 +84,8 @@ static_assert(sizeof(KTX2LevelIndex) == 24,
 /// see initiative decision #12).
 void LoadKTX2(const std::string& file_name, unsigned char** buffers,
               int* widths, int* heights, TextureFormat* formats, size_t* sizes,
-              int* base_level, bool* premultiplied);
+              int* base_level, bool* premultiplied, TextureWrapping* wrap_h,
+              TextureWrapping* wrap_v);
 
 /// One face's output destination for a cube-map KTX2 load — the same
 /// array set :func:`LoadKTX2` fills for a single 2D image.
@@ -96,6 +97,8 @@ struct KTX2FaceTarget {
   size_t* sizes;
   int* base_level;
   bool* premultiplied;
+  TextureWrapping* wrap_h;
+  TextureWrapping* wrap_v;
 };
 
 /// Load a ``faceCount=6`` cube-map KTX 2.0 file (asset-packages decision

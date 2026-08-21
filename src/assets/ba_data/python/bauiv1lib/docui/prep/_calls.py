@@ -20,8 +20,9 @@ from bauiv1 import _commonassets
 from bauiv1lib.docui.prep._types import PagePrep, RowPrep, ButtonPrep
 
 if TYPE_CHECKING:
-    from typing import Callable
+    from typing import Callable, Sequence
 
+    from bauiv1lib.docui.prep._types import DecorationPrep
     from bacommon.langstr import LangStrSpec
     from bacommon.assetspec import TextureSpec, MeshSpec
     from bauiv1lib.docui import DocUIWindow
@@ -32,8 +33,20 @@ def _btex(name: str) -> str:
     return f'{builtinassets.__asset_package__}:textures/{name}'
 
 
-def refstr(ref: 'TextureSpec | MeshSpec') -> str:
-    """Qualified engine name for a typed asset ref."""
+def refstr(ref: 'TextureSpec | MeshSpec | int') -> str:
+    """Qualified engine name for a typed asset ref.
+
+    Accepts the flat-index form only to reject it: indices are replaced
+    with specs during resolve (``_resolve.deindex_assets``), so one
+    reaching render means that step was skipped or failed. Raising here
+    states the assumption once, rather than leaving eleven call sites
+    each assuming it silently.
+    """
+    if isinstance(ref, int):
+        raise RuntimeError(
+            f'Un-de-indexed asset ref {ref} reached render; the page was'
+            f' not resolved, or de-indexing failed.'
+        )
     return f'{ref.apverid}:{ref.name}'
 
 
@@ -55,8 +68,18 @@ def prep_page(
 
     import bauiv1lib.docui.prep._calls2 as prepcalls2
 
-    def _n(lstr: 'LangStrSpec') -> bui.LangStr:
-        """Native handle bound against this payload's package list."""
+    def _n(lstr: 'LangStrSpec | int') -> bui.LangStr:
+        """Native handle bound against this payload's package list.
+
+        Accepts a folded index only to reject it: indices are unfolded
+        during resolve, so one arriving here means that step was
+        skipped or failed.
+        """
+        if isinstance(lstr, int):
+            raise RuntimeError(
+                f'Unfolded language-string index {lstr} reached render;'
+                f' the page was not resolved, or unfolding failed.'
+            )
         return bui.LangStr(dataclass_to_json(lstr), packages=packages)
 
     # Create a filtered list of rows we know how to display.
@@ -674,6 +697,93 @@ def prep_page(
     )
 
 
+def prep_frames(
+    frames: Sequence[dui2.Frame],
+    *,
+    packages: list[str],
+    allow_logic_thread: bool = False,
+) -> Callable[..., None]:
+    """Prep frames for drawing into a plain container widget.
+
+    Does every bit of layout math up front and returns a single call
+    that instantiates the whole batch at once; run that on the logic
+    thread with ``parent=<container widget>``. Each frame carries its
+    own center position and scale, so placement is decided here rather
+    than at instantiate time.
+
+    This takes a *sequence* deliberately. A single-frame entry point
+    invites being called in a loop, which is the inefficient shape this
+    batching exists to avoid, so callers drawing one frame should pass
+    a one-element sequence.
+
+    Prep is meant to run off the logic thread; doing otherwise
+    reintroduces exactly the stutter the prep/instantiate split exists
+    to prevent, so it logs a warning. Pass ``allow_logic_thread`` only
+    if a caller genuinely has no other option. (Note this is unrelated
+    to ``prep_page``'s ``immediate``, which concerns transition delays.)
+    """
+    if not allow_logic_thread and bui.in_logic_thread():
+        bui.uilog.warning(
+            'prep_frames() called on the logic thread; this blocks the'
+            ' ui while it runs. Prep from a background thread, or pass'
+            ' allow_logic_thread=True if there is genuinely no option.'
+        )
+
+    # pylint: disable=cyclic-import
+    # Safe up-call; see prep_page.
+    import bauiv1lib.docui.prep._calls2 as prepcalls2
+
+    decoration_preps: list[DecorationPrep] = []
+    for frame in frames:
+        prepcalls2.prep_frame(
+            frame,
+            (0.0, 0.0),
+            1.0,
+            None,
+            decoration_preps,
+            packages=packages,
+            highlight=False,
+        )
+
+    def _instantiate(parent: bui.Widget) -> None:
+        instantiate_decorations(decoration_preps, parent=parent)
+
+    return _instantiate
+
+
+def instantiate_decorations(
+    decorations: list[DecorationPrep],
+    *,
+    parent: bui.Widget,
+    draw_controller: bui.Widget | None = None,
+) -> None:
+    """Instantiate prepped decorations under a parent widget.
+
+    The one place prepped decorations turn into live widgets. Asset
+    refs are resolved here rather than at prep time because prep
+    generally runs off the logic thread.
+
+    Decorations carry no knowledge of where they live, so ``parent``
+    fully determines that; this is what lets the same prepped
+    decorations be drawn into a doc-ui page or into any plain
+    container widget.
+
+    ``draw_controller``, when passed, is applied to decorations whose
+    ``highlight`` is set, tying their draw state to that widget (used
+    for decorations layered over a button). Decorations drawn outside
+    of a button context simply pass nothing here.
+    """
+    for decoration in decorations:
+        kwds: dict = {'parent': parent}
+        if draw_controller is not None and decoration.highlight:
+            kwds['draw_controller'] = draw_controller
+        for texarg, texname in decoration.textures.items():
+            kwds[texarg] = bui.aptextureget(texname)
+        for mesharg, meshname in decoration.meshes.items():
+            kwds[mesharg] = bui.apmeshget(meshname)
+        decoration.call(**kwds)
+
+
 def instantiate_page_prep(
     pageprep: PagePrep,
     *,
@@ -685,7 +795,6 @@ def instantiate_page_prep(
 ) -> bui.Widget:
     """Create a UI using prepped data."""
     # pylint: disable=too-many-locals
-    # pylint: disable=too-many-branches
     outrows: list[tuple[bui.Widget, list[bui.Widget]]] = []
 
     # Now go through and run our prepped ui calls to build our
@@ -698,18 +807,12 @@ def instantiate_page_prep(
             uicall(parent=subcontainer)
         assert rowprep.hscrollcall is not None
         hscroll = rowprep.hscrollcall(parent=subcontainer)
-        for decoration in rowprep.decorations:
-            kwds: dict = {'parent': subcontainer}
-            for texarg, texname in decoration.textures.items():
-                kwds[texarg] = bui.aptextureget(texname)
-            for mesharg, meshname in decoration.meshes.items():
-                kwds[mesharg] = bui.apmeshget(meshname)
-            decoration.call(**kwds)
+        instantiate_decorations(rowprep.decorations, parent=subcontainer)
         outrow: tuple[bui.Widget, list[bui.Widget]] = (hscroll, [])
         assert rowprep.hsubcall is not None
         hsub = rowprep.hsubcall(parent=hscroll)
         for i, buttonprep in enumerate(rowprep.buttons):
-            kwds = {
+            kwds: dict = {
                 'parent': hsub,
                 'on_activate_call': strict_partial(
                     window.controller.run_action,
@@ -723,15 +826,9 @@ def instantiate_page_prep(
             btn = buttonprep.buttoncall(**kwds)
             assert buttonprep.buttoneditcall is not None
             buttonprep.buttoneditcall(edit=btn)
-            for decoration in buttonprep.decorations:
-                kwds = {'parent': hsub}
-                if decoration.highlight:
-                    kwds['draw_controller'] = btn
-                for texarg, texname in decoration.textures.items():
-                    kwds[texarg] = bui.aptextureget(texname)
-                for mesharg, meshname in decoration.meshes.items():
-                    kwds[mesharg] = bui.apmeshget(meshname)
-                decoration.call(**kwds)
+            instantiate_decorations(
+                buttonprep.decorations, parent=hsub, draw_controller=btn
+            )
 
             # Make sure row is scrolled so leftmost button is
             # visible (though it kinda seems like this should happen

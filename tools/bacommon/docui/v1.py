@@ -8,7 +8,7 @@ from typing import Annotated, override, assert_never
 
 from efro.dataclassio import ioprepped, IOAttrs, IOMultiType
 
-import bacommon.displayitem as ditm
+import bacommon.legacydisplayitem as lditm
 import bacommon.clienteffect as clfx
 from bacommon.langstr import WrapParams
 from bacommon.docui._docui import (
@@ -431,7 +431,7 @@ class DisplayItemStyle(Enum):
 class DisplayItem(Decoration):
     """DisplayItem decoration."""
 
-    wrapper: Annotated[ditm.Wrapper, IOAttrs('w')]
+    wrapper: Annotated[lditm.Wrapper, IOAttrs('w')]
     position: Annotated[tuple[float, float], IOAttrs('p')]
     size: Annotated[tuple[float, float], IOAttrs('s')]
     style: Annotated[DisplayItemStyle, IOAttrs('t', store_default=False)] = (

@@ -368,6 +368,14 @@ class PackageStructure:
             name: tuple(sorted(params)) for name, params in strings.items()
         }
 
+    def string_count(self) -> int:
+        """How many strings this package holds.
+
+        The size of the canonical sorted name list -- all a producer
+        needs to fold indices into one flat domain across a manifest.
+        """
+        return len(self._names)
+
     def index_of(self, name: str) -> int:
         """Return the integer index for a string name."""
         return self._index[name]
@@ -396,11 +404,18 @@ class LanguageStringEncodeContext:
         self,
         lstrs: list[LangStrSpec],
         structures: dict[str, PackageStructure],
+        also: set[str] | None = None,
     ) -> None:
         self._structures = structures
         apverids: set[str] = set()
         for lstr in lstrs:
             self._collect(lstr, apverids)
+        # ``also`` folds in packages referenced by something other than
+        # strings -- asset refs, above all -- so one manifest and one
+        # package-index space serves every indexed thing in a payload
+        # rather than strings having a private one.
+        if also:
+            apverids |= also
         # Sorted -> deterministic indices for a given apverid set.
         self._pkg_index = {av: i for i, av in enumerate(sorted(apverids))}
 

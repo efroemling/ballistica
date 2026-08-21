@@ -1918,8 +1918,12 @@ auto Assets::LoadBundledFallbackTextureRGBA(const std::string& name)
     size_t sizes[kMaxTextureLevels]{};
     int base_level{};
     bool premultiplied{};
+    // Bundled RGBA extraction doesn't upload through the GL path, so
+    // wrapping is read and discarded here.
+    TextureWrapping wrap_h{};
+    TextureWrapping wrap_v{};
     LoadKTX2(blob_path(*data_hash), buffers, widths, heights, formats, sizes,
-             &base_level, &premultiplied);
+             &base_level, &premultiplied, &wrap_h, &wrap_v);
 
     BundledTextureRGBAData out;
     out.premultiplied = premultiplied;

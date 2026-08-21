@@ -15,6 +15,22 @@
 
 namespace ballistica::base {
 
+/// GL wrap token for a texture's per-axis wrapping. Clamp is the
+/// default for essentially all our textures; the repeating modes are
+/// opt-in per axis from the asset workspace (delivered in the KTX2
+/// key/value data).
+inline auto GLWrapForWrapping(TextureWrapping wrapping) -> GLint {
+  switch (wrapping) {
+    case TextureWrapping::kRepeat:
+      return GL_REPEAT;
+    case TextureWrapping::kMirroredRepeat:
+      return GL_MIRRORED_REPEAT;
+    case TextureWrapping::kClamp:
+      break;
+  }
+  return GL_CLAMP_TO_EDGE;
+}
+
 class RendererGL::TextureDataGL : public TextureAssetRendererData {
  public:
   TextureDataGL(const TextureAsset& texture_in, RendererGL* renderer_in)
@@ -154,8 +170,13 @@ class RendererGL::TextureDataGL : public TextureAssetRendererData {
       }
 
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      // Per-axis wrapping as authored (KTX2 key/value data). Clamp is
+      // the default and the right answer for nearly everything we ship;
+      // it also matches how the pipeline filtered this texture's mips.
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                      GLWrapForWrapping(preload_data->wrap_h));
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+                      GLWrapForWrapping(preload_data->wrap_v));
 
       int src_level = base_src_level;
       int level = 0;

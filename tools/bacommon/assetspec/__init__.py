@@ -28,6 +28,13 @@ from bacommon.assetspec._core import (
     CollisionMeshSpec,
 )
 from bacommon.assetspec._wrapper import AssetGroup, AssetGroupTree
+from bacommon.assetspec._index import (
+    ASSET_INDEX_MIN_BUILD,
+    AssetBucketKind,
+    AssetIndexContext,
+    AssetIndexError,
+    spec_kind,
+)
 
 __all__ = [
     'TextureSpec',
@@ -36,4 +43,9 @@ __all__ = [
     'CollisionMeshSpec',
     'AssetGroup',
     'AssetGroupTree',
+    'ASSET_INDEX_MIN_BUILD',
+    'AssetBucketKind',
+    'AssetIndexContext',
+    'AssetIndexError',
+    'spec_kind',
 ]

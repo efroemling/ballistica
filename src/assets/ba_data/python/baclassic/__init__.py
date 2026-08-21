@@ -27,7 +27,11 @@ from baclassic._chest import (
     CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT,
     CHEST_APPEARANCE_DISPLAY_INFOS,
 )
-from baclassic._displayitem import show_display_item
+from baclassic._displayitem import (
+    show_display_item,
+    display_item_frame,
+    depiction_assets,
+)
 from baclassic._music import MusicPlayer
 
 __all__ = [
@@ -39,6 +43,8 @@ __all__ = [
     'Achievement',
     'AchievementSubsystem',
     'show_display_item',
+    'display_item_frame',
+    'depiction_assets',
     'MusicPlayer',
     'reload_hooks',
 ]

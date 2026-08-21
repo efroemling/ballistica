@@ -160,6 +160,14 @@ def _run_effects(
                 logging.error(
                     'Got ScreenMessageV2 effect with no decode context.'
                 )
+            elif isinstance(effect.message, int):
+                # Unfolded during resolve; a folded index here means
+                # that failed. Skip loudly rather than guess.
+                assetslog.error(
+                    'Unfolded string index %d in a client-effect;'
+                    ' skipping it.',
+                    effect.message,
+                )
             else:
                 bauiv1.apptimer(
                     delay,
@@ -175,6 +183,19 @@ def _run_effects(
             assert isinstance(effect, clfx.PlaySoundV2)
             # The referenced package is resolved at this point, so the
             # qualified '<apverid>:<name>' ref loads like any asset.
+            #
+            # An index reaching here means de-indexing was skipped or
+            # failed -- effects can run long after their payload's
+            # manifest is gone, so they are converted to specs during
+            # resolve. Skip the effect loudly rather than play a wrong
+            # sound.
+            if isinstance(effect.sound, int):
+                assetslog.error(
+                    'Un-de-indexed sound ref %d in a client-effect;'
+                    ' skipping it.',
+                    effect.sound,
+                )
+                continue
             bauiv1.apptimer(
                 delay,
                 strict_partial(

@@ -94,6 +94,11 @@ _OPEN_TIMEOUT_SECONDS = 15.0
 #: moment; it is never worth hanging an exit.
 _END_TIMEOUT_SECONDS = 2.0
 
+#: Bound on the close handshake itself, deliberately under
+#: :data:`_END_TIMEOUT_SECONDS` so the session thread always finishes
+#: before the join covering it gives up. See its use in ``_dial``.
+_CLOSE_TIMEOUT_SECONDS = 1.5
+
 
 class BacloudSession:
     """A live conversation with the bacloud server.
@@ -133,6 +138,12 @@ class BacloudSession:
         self._ever_connected = False
         self._ready = threading.Event()
         self._ended = threading.Event()
+        #: Asks the loop to say goodbye and wind down; see :meth:`end`.
+        #: Built here rather than in :meth:`_run` so :meth:`end` can
+        #: never race its creation -- an ``asyncio.Event`` binds to no
+        #: loop until it is first awaited, so constructing it off the
+        #: session thread is fine.
+        self._end_requested = asyncio.Event()
         self._thread = threading.Thread(
             target=self._thread_main, name='bacloud-session', daemon=True
         )
@@ -241,32 +252,38 @@ class BacloudSession:
         not coming back, and a relay that is told so releases the
         channel (and its node-side task) now instead of holding the
         slot through the whole linger window.
+
+        We only *ask*; ``_end_when_requested`` does the saying, on
+        the session thread. That split is load-bearing in two ways.
+
+        It is the only place the goodbye can work at all: once
+        ``endpoint.run()`` has returned, the transport is already gone
+        and ``endpoint.end()`` has nothing left to send -- so a
+        goodbye issued from out here was silently a no-op in exactly
+        the case it was written for.
+
+        And scheduling a *coroutine* in from out here is not merely
+        useless but unsafe. ``run_coroutine_threadsafe`` creates a
+        task, and creating one while ``asyncio.run`` is tearing the
+        loop down races the C ``_asyncio`` accelerator's task
+        bookkeeping and segfaults the interpreter. That window is not
+        exotic: the node closes the channel when a command finishes,
+        so a run whose last command just completed arrives here with
+        the loop already unwinding. (Reported from a build 2026-08-19;
+        the ``_ended`` flag could not guard it, since it is set only
+        after ``asyncio.run`` has fully returned.)
+        ``call_soon_threadsafe`` is the one loop method documented as
+        thread-safe, creates no task, and raises rather than crashing
+        if the loop is already closed.
         """
         loop = self._loop
-        endpoint = self._endpoint
-        if (
-            loop is not None
-            and endpoint is not None
-            and not self._ended.is_set()
-        ):
-            # Build the coroutine only once we know we can schedule
-            # it, and close it by hand if we can't. A session that
-            # died on its own (refused, unreachable node) leaves a
-            # loop that has already stopped, and handing it a
-            # coroutine there produces a 'never awaited' RuntimeWarning
-            # on the user's terminal -- on what is a completely normal
-            # path, since the run just falls back to the other
-            # transport.
-            coro = endpoint.end('client exiting')
+        if loop is not None:
             try:
-                future = asyncio.run_coroutine_threadsafe(coro, loop)
-            except Exception:  # pylint: disable=broad-except
-                coro.close()
-            else:
-                try:
-                    future.result(timeout=_END_TIMEOUT_SECONDS)
-                except Exception:  # pylint: disable=broad-except
-                    pass
+                loop.call_soon_threadsafe(self._end_requested.set)
+            except RuntimeError:
+                # Loop already closed -- the session is gone and there
+                # is nobody left to say goodbye to.
+                pass
         self._thread.join(timeout=_END_TIMEOUT_SECONDS)
 
     # --- session thread ----------------------------------------
@@ -299,15 +316,33 @@ class BacloudSession:
         # behind a hang. Wait for the connection, then let the caller
         # go.
         waiter = asyncio.create_task(self._await_connected(endpoint))
+        ender = asyncio.create_task(self._end_when_requested(endpoint))
         try:
             await endpoint.run()
         finally:
             waiter.cancel()
+            ender.cancel()
             if endpoint.close_code and not _is_clean_close(endpoint.close_code):
                 self._closed_error = (
                     f'bacloud session closed'
                     f' ({endpoint.close_code} {endpoint.close_reason}).'
                 )
+
+    async def _end_when_requested(
+        self, endpoint: SmartSocketEndpoint[RequestData, ResponseData]
+    ) -> None:
+        """Say goodbye once :meth:`end` asks for one.
+
+        Lives on the session thread for the whole life of the loop so
+        the goodbye is sent from *inside* the loop that owns the
+        connection rather than injected into it from outside (see
+        :meth:`end` for why that distinction is not cosmetic). Ending
+        the endpoint is what makes ``endpoint.run()`` return, which
+        unwinds :meth:`_run` and finishes the thread -- so the join in
+        :meth:`end` is what waits for this to land.
+        """
+        await self._end_requested.wait()
+        await endpoint.end('client exiting')
 
     async def _await_connected(
         self, endpoint: SmartSocketEndpoint[RequestData, ResponseData]
@@ -376,6 +411,17 @@ class BacloudSession:
             subprotocols=[websockets.Subprotocol(_WS_SUBPROTOCOL)],
             additional_headers=headers,
             open_timeout=_OPEN_TIMEOUT_SECONDS,
+            # Must stay under _END_TIMEOUT_SECONDS. The goodbye is a
+            # close handshake -- a Close frame out, the peer's echo
+            # back -- and websockets' 10s default for that is five
+            # times the budget end() gives the whole wind-down. A peer
+            # that never echoes would leave this thread parked in
+            # close() well past the point end() stops joining, and
+            # since it is a daemon the process would then finalize
+            # around a thread still inside websockets and TLS. Capping
+            # it below the join means the thread always finishes on its
+            # own first, so that never comes up.
+            close_timeout=_CLOSE_TIMEOUT_SECONDS,
             # SmartSocket runs its own app-level ping/pong on a
             # policy-driven interval; a second liveness mechanism
             # would only add ways to disagree.

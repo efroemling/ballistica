@@ -20,6 +20,8 @@ from bacommon.classic._classic import (
 from bacommon.classic._chest import (
     ClassicChestAppearance,
     ClassicChestDisplayItem,
+    CHEST_APPEARANCE_TINTS,
+    CHEST_APPEARANCE_TINT_DEFAULT,
 )
 from bacommon.classic._msg import (
     GetClassicLeaguePresidentButtonInfoMessage,
@@ -48,6 +50,8 @@ __all__ = [
     'ClassicLiveAccountClientData',
     'ClassicChestAppearance',
     'ClassicChestDisplayItem',
+    'CHEST_APPEARANCE_TINTS',
+    'CHEST_APPEARANCE_TINT_DEFAULT',
     'GetClassicLeaguePresidentButtonInfoMessage',
     'GetClassicLeaguePresidentButtonInfoResponse',
     'GetClassicPurchasesMessage',

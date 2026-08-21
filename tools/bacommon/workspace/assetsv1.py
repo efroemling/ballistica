@@ -773,6 +773,38 @@ class Bc7Settings:
     rdo: Annotated[Bc7Rdo, IOAttrs('rdo', store_default=False)] = Bc7Rdo.ONE
 
 
+class TextureWrapping(Enum):
+    """How a texture's sampling behaves past its edge, per axis.
+
+    This is authoring *intent*, not just sampler state: it is a build
+    input. Mip levels are filtered with a kernel that wraps (or
+    mirrors) at the edge for the repeating modes and clamps for
+    ``CLAMP``, so changing it changes the built pixels -- a texture's
+    wrapping is part of its identity, not an annotation on top of it.
+    It also travels to the engine in the KTX2 key/value data and
+    becomes the GL wrap mode for its axis.
+
+    ``CLAMP`` is the default and the only mode that permits
+    non-power-of-two dimensions on its axis: the repeating modes halve
+    their way down the mip chain, and an odd intermediate size puts
+    each level's texel grid out of phase with its parent, which breaks
+    edge continuity precisely where a repeating texture needs it.
+    """
+
+    #: Sample the edge texel for anything past the edge
+    #: (``GL_CLAMP_TO_EDGE``). Mips filter with a clamped kernel.
+    CLAMP = 'clamp'
+
+    #: Tile (``GL_REPEAT``). Mips filter with a kernel that wraps
+    #: around to the opposite edge, so the tiling seam stays
+    #: continuous at every level.
+    REPEAT = 'repeat'
+
+    #: Tile with every other copy flipped (``GL_MIRRORED_REPEAT``).
+    #: Seamless by construction; mips filter with a mirrored kernel.
+    MIRRORED_REPEAT = 'mirrored_repeat'
+
+
 @ioprepped
 @dataclass
 class AssetsV1PathValsTexV1(AssetsV1PathVals):
@@ -790,6 +822,20 @@ class AssetsV1PathValsTexV1(AssetsV1PathVals):
     texture_role: Annotated[
         Role, IOAttrs('texture_role', store_default=False)
     ] = Role.DEFAULT
+
+    #: Horizontal (u/s axis) wrapping. See :class:`TextureWrapping` --
+    #: this feeds mip filtering, the KTX2 key/value data, and the
+    #: engine's ``GL_TEXTURE_WRAP_S``.
+    texture_wrapping_h: Annotated[
+        TextureWrapping, IOAttrs('texture_wrapping_h', store_default=False)
+    ] = TextureWrapping.CLAMP
+
+    #: Vertical (v/t axis) wrapping. See :class:`TextureWrapping` --
+    #: this feeds mip filtering, the KTX2 key/value data, and the
+    #: engine's ``GL_TEXTURE_WRAP_T``.
+    texture_wrapping_v: Annotated[
+        TextureWrapping, IOAttrs('texture_wrapping_v', store_default=False)
+    ] = TextureWrapping.CLAMP
 
     #: Per-format encode settings, consulted only when
     #: ``texture_quality`` is ``CUSTOM``. Fully defaulted so a texture

@@ -9,7 +9,7 @@ from typing import Annotated, override
 from efro.dataclassio import ioprepped, IOAttrs
 from efro.message import Message, Response
 
-import bacommon.displayitem as ditm
+import bacommon.legacydisplayitem as lditm
 import bacommon.clouddialog as cdlg
 import bacommon.clienteffect as clfx
 from bacommon.classic._chest import ClassicChestAppearance
@@ -152,7 +152,7 @@ class ChestInfoResponse(Response):
             """A possible set of prizes for this chest."""
 
             weight: Annotated[float, IOAttrs('w')]
-            contents: Annotated[list[ditm.Wrapper], IOAttrs('c')]
+            contents: Annotated[list[lditm.Wrapper], IOAttrs('c')]
 
         appearance: Annotated[
             ClassicChestAppearance,

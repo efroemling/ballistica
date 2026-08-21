@@ -140,9 +140,9 @@ nitpick_ignore = [
     # Stuff that is part of 'private' apis that we've intentionally
     # hidden despite having public naming. See 'skip_prefixes' below.
     ('py:class', 'v1prep.PagePrep'),
-    ('py:class', 'bacommon.displayitem.Wrapper'),
-    ('py:class', 'bacommon.displayitem.Item'),
-    ('py:class', 'bacommon.displayitem.ItemTypeID'),
+    ('py:class', 'bacommon.legacydisplayitem.Wrapper'),
+    ('py:class', 'bacommon.legacydisplayitem.Item'),
+    ('py:class', 'bacommon.legacydisplayitem.ItemTypeID'),
     # Rendered unqualified in bacloud client signatures; their module
     # (bacommon.bacloud) is a skipped namespace, so the qualified
     # regex below never sees these forms.
@@ -169,6 +169,11 @@ nitpick_ignore = [
     ('py:class', 'Logger'),
     ('py:class', 'PlaylistType'),
     ('py:class', 'ValueDispatcherMethod'),
+    # TYPE_CHECKING-only aliases naming a callback's shape; they exist
+    # to document the signature, not as referenceable types.
+    ('py:class', 'ListingSource'),
+    ('py:class', 'CountSource'),
+    ('py:class', 'AnySpec'),
     #
     # 'Fake' classes declared with typing.NewType() so don't have
     # doctrings.
@@ -462,7 +467,11 @@ _wrangle_logging()
 # are private).
 skip_prefixes = [
     'bauiv1lib.docui.v1prep.',
+    'bacommon.legacydisplayitem.',
     'bacommon.displayitem.',
+    # Internal plumbing; public-named only because a featureset
+    # package may not import a private bacommon module.
+    'bacommon.docui.walk.',
     'bacommon.net.',
     'bacommon.cloud.',
     'bacommon.transfer.',

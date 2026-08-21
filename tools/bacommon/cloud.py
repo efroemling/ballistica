@@ -24,7 +24,7 @@ from bacommon.login import LoginType
 from bacommon.loggercontrol import LoggerControlConfig
 from bacommon.logreporting import LogReportSpec
 from bacommon.docui import DocUIRequest, DocUIResponse
-import bacommon.displayitem as ditm
+import bacommon.legacydisplayitem as lditm
 import bacommon.clienteffect as clfx
 
 if TYPE_CHECKING:
@@ -726,7 +726,7 @@ class ChestActionResponse(Response):
 
     # If present, signifies the chest has been opened and we should show
     # the user this stuff that was in it.
-    contents: Annotated[list[ditm.Wrapper] | None, IOAttrs('c')] = None
+    contents: Annotated[list[lditm.Wrapper] | None, IOAttrs('c')] = None
 
     # If contents are present, which of the chest's prize-sets they
     # represent.

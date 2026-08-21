@@ -9,7 +9,7 @@ from typing import override, TYPE_CHECKING
 
 from efro.util import strict_partial, strip_exception_tracebacks
 import bacommon.classic
-import bacommon.displayitem as ditm
+import bacommon.legacydisplayitem as lditm
 import bauiv1 as bui
 from bauiv1 import builtinassets
 from bauiv1 import _commonassets, classicassets
@@ -840,13 +840,13 @@ class ChestWindow(bui.MainWindow):
 
             for item in p.contents:
                 x += 5.0
-                if isinstance(item.item, ditm.Tickets):
+                if isinstance(item.item, lditm.Tickets):
                     _mktxt(str(item.item.count))
                     _mkicon(_stex('tickets'))
-                elif isinstance(item.item, ditm.PurpleTickets):
+                elif isinstance(item.item, lditm.PurpleTickets):
                     _mktxt(str(item.item.count))
                     _mkicon(_stex('tickets_purple'))
-                elif isinstance(item.item, ditm.Tokens):
+                elif isinstance(item.item, lditm.Tokens):
                     _mktxt(str(item.item.count))
                     _mkicon(_stex('coin'))
                 else:
@@ -1047,7 +1047,7 @@ class ChestWindow(bui.MainWindow):
 
         # Insert test items for testing.
         if bool(False):
-            response.contents += [ditm.Wrapper.for_item(ditm.Test())]
+            response.contents += [lditm.Wrapper.for_item(lditm.Test())]
 
         tincr = 0.4
         tendoffs = tincr * 4.0

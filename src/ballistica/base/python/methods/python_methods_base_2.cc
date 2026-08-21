@@ -18,6 +18,7 @@
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/support/python_context_call.h"
+#include "ballistica/base/support/lang_str.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging_macros.h"
@@ -1368,6 +1369,114 @@ static PyMethodDef PyGetAssetPackageConstantBlobPathDef = {
     "blob should live (writable CAS root, else bundle root); a caller\n"
     "must still handle a genuine ``open()`` failure."};
 
+// ---------------- get_asset_package_bucket_paths -----------------------------
+
+static auto PyGetAssetPackageBucketPaths(PyObject* self, PyObject* args,
+                                         PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* apverid;
+  const char* kind;
+  static const char* kwlist[] = {"apverid", "kind", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "ss", const_cast<char**>(kwlist), &apverid, &kind)) {
+    return nullptr;
+  }
+  auto* registry = g_base->assets->package_registry();
+
+  // Kind names match bacommon.assetspec.AssetBucketKind values.
+  std::string kindstr{kind};
+  std::string bucket_id;
+  if (kindstr == "textures") {
+    bucket_id = registry->LookupTextureBucketId(apverid);
+  } else if (kindstr == "meshes") {
+    bucket_id = registry->LookupMeshBucketId(apverid);
+  } else if (kindstr == "audio") {
+    bucket_id = registry->LookupAudioBucketId(apverid);
+  } else if (kindstr == "constant") {
+    bucket_id = registry->LookupConstantBucketId(apverid);
+  } else {
+    throw Exception("Invalid asset bucket kind: '" + kindstr + "'.",
+                    PyExcType::kValue);
+  }
+  if (bucket_id.empty()) {
+    // Not registered, or no bucket of this kind. None rather than an
+    // empty list: the caller needs to tell "package absent" (which may
+    // be a resolve-ordering bug) from "package has no textures".
+    Py_RETURN_NONE;
+  }
+  auto keys = registry->BucketLogicalPathsSorted(apverid, bucket_id);
+  PyObject* out = PyList_New(0);
+  for (auto&& key : keys) {
+    PythonRef keyobj(PyUnicode_FromString(key.c_str()), PythonRef::kSteal);
+    PyList_Append(out, keyobj.get());
+  }
+  return out;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetAssetPackageBucketPathsDef = {
+    "get_asset_package_bucket_paths",           // name
+    (PyCFunction)PyGetAssetPackageBucketPaths,  // method
+    METH_VARARGS | METH_KEYWORDS,               // flags
+
+    "get_asset_package_bucket_paths(apverid: str,\n"
+    "                               kind: str) -> list[str] | None\n"
+    "\n"
+    "(internal) Return a registered asset-package bucket's canonical\n"
+    "sorted logical-path list. ``kind`` is a\n"
+    "``bacommon.assetspec.AssetBucketKind`` value (``textures``,\n"
+    "``meshes``, ``audio``, ``constant``). Returns ``None`` if the\n"
+    "package isn't registered or has no bucket of that kind -- which a\n"
+    "caller must distinguish from an empty list.\n"
+    "\n"
+    "This is the list integer asset indices address, both for doc-ui\n"
+    "flat refs and scene_v1 wire refs; it is portable across flavors by\n"
+    "the identical-key-set invariant (asset-packages D23/D24)."};
+
+// ---------------- get_asset_package_string_count -----------------------------
+
+static auto PyGetAssetPackageStringCount(PyObject* self, PyObject* args,
+                                         PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* apverid;
+  static const char* kwlist[] = {"apverid", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &apverid)) {
+    return nullptr;
+  }
+  auto tables = g_base->assets->LangStrTablesSnapshot();
+  if (!tables) {
+    Py_RETURN_NONE;
+  }
+  auto it = tables->packages.find(apverid);
+  if (it == tables->packages.end()) {
+    // Not loaded for the current locale. None rather than 0 so the
+    // caller can tell "no language table" from "a package with no
+    // strings" -- the first would silently shift every later offset.
+    Py_RETURN_NONE;
+  }
+  return PyLong_FromLong(
+      static_cast<long>(it->second.sorted_names.size()));  // NOLINT
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetAssetPackageStringCountDef = {
+    "get_asset_package_string_count",           // name
+    (PyCFunction)PyGetAssetPackageStringCount,  // method
+    METH_VARARGS | METH_KEYWORDS,               // flags
+
+    "get_asset_package_string_count(apverid: str) -> int | None\n"
+    "\n"
+    "(internal) How many language-strings a loaded package holds for\n"
+    "the current locale -- the size of the canonical sorted name list\n"
+    "that string indices address. ``None`` if the package has no\n"
+    "language table loaded, which a caller must distinguish from a\n"
+    "package holding zero strings.\n"
+    "\n"
+    "Used to fold a flat wire index back into the (package, string)\n"
+    "pair the native decoder consumes; only the count is needed, since\n"
+    "the names themselves stay native."};
+
 // ---------------- set_asset_name_compat_versions -----------------------------
 
 static auto PySetAssetNameCompatVersions(PyObject* self, PyObject* args,
@@ -1485,6 +1594,8 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyRegisterAssetPackageBucketsDef,
       PyMarkConstructAssetsCompleteDef,
       PyGetAssetPackageConstantBlobPathDef,
+      PyGetAssetPackageBucketPathsDef,
+      PyGetAssetPackageStringCountDef,
       PySetAssetNameCompatVersionsDef,
       PyResolveLegacyAssetNameDef,
       PyPreferredTextureProfileDef,

@@ -137,6 +137,8 @@ from babase._appintent import AppIntent, AppIntentDefault, AppIntentExec
 from babase._asset_packages import (
     check_asset_package_load,
     loaded_asset_package_apverids,
+    asset_package_bucket_paths,
+    asset_package_string_count,
 )
 from babase._assetref import SimpleSoundHandle, getsimplesound
 from babase._appmode import (
@@ -364,6 +366,8 @@ __all__ = [
     'LanguageSubsystem',
     'check_asset_package_load',
     'loaded_asset_package_apverids',
+    'asset_package_bucket_paths',
+    'asset_package_string_count',
     'LocaleSubsystem',
     'lifecyclelog',
     'LangStr',

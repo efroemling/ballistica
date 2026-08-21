@@ -275,7 +275,8 @@ void TextureAsset::DoPreload() {
                  preload_datas_[0].widths, preload_datas_[0].heights,
                  preload_datas_[0].formats, preload_datas_[0].sizes,
                  &preload_datas_[0].base_level,
-                 &preload_datas_[0].premultiplied);
+                 &preload_datas_[0].premultiplied, &preload_datas_[0].wrap_h,
+                 &preload_datas_[0].wrap_v);
       } else if (matches(".android_dds")) {
         // Etc1 or dxt3 for non-alpha and dxt5 for alpha (.android_dds).
         LoadDDS(file_name_full_, preload_datas_[0].buffers,
@@ -378,10 +379,11 @@ void TextureAsset::DoPreload() {
         KTX2FaceTarget faces[6];
         for (int d = 0; d < 6; d++) {
           faces[d] = KTX2FaceTarget{
-              preload_datas_[d].buffers,       preload_datas_[d].widths,
-              preload_datas_[d].heights,       preload_datas_[d].formats,
-              preload_datas_[d].sizes,         &preload_datas_[d].base_level,
-              &preload_datas_[d].premultiplied};
+              preload_datas_[d].buffers,        preload_datas_[d].widths,
+              preload_datas_[d].heights,        preload_datas_[d].formats,
+              preload_datas_[d].sizes,          &preload_datas_[d].base_level,
+              &preload_datas_[d].premultiplied, &preload_datas_[d].wrap_h,
+              &preload_datas_[d].wrap_v};
         }
         LoadKTX2CubeMap(file_name_full_, faces);
       } else if (file_name_full_.find('#') == std::string::npos

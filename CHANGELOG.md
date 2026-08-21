@@ -1,4 +1,4 @@
-### 1.8.0 (build 22991, api 9, 2026-08-19)
+### 1.8.0 (build 22994, api 9, 2026-08-20)
 - Fully implemented asset packages (more on this soon)
 - App-config committing (dirty-tracking, debounced disk writes, and
   suspend/shutdown flushes) now lives fully in `babase` instead of routing
@@ -106,6 +106,11 @@
   the new rotation value on the prop node. For example, to point a prop in
   random heading (rotating around the up axis) you can do:
   `"rotate": bs.Quat.from_angles(heading=random.uniform(0.0, 360.0))`
+- Added wrapping params for textures (clamp by default), and relaxed the
+  requirement that texture dimensions be a power-of-two. That requirement now
+  only applies to wrapped dimensions (where there are some subtle technical
+  benefits). In other cases they can be any size (though dimensions must be
+  divisible by 4).
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.
