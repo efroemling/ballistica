@@ -100,9 +100,7 @@ runs:
         # apt's fetch sandbox drops to the _apt user, which can't reach an
         # archive dir inside the runner workspace -- apt notices and falls
         # back to fetching as root anyway, just with a warning per package.
-        # Ask for that fallback explicitly so it isn't noise. Downloads then
-        # land as root:root 0644, which the cache save (running as the
-        # runner user) can still read.
+        # Ask for that fallback explicitly so it isn't noise.
         mkdir -p .cache/apt-archives/partial
         sudo apt-get update -qq -o Acquire::Languages=none
         sudo apt-get install -y --no-install-recommends \
@@ -114,6 +112,14 @@ runs:
           libpango1.0-dev \
           ninja-build \
           libsdl3-dev
+
+        # Running unsandboxed means apt leaves root-owned droppings here.
+        # The .debs are 0644 and readable, but 'lock' is 0640 and 'partial'
+        # is root-owned too, which makes the cache save's tar bail out.
+        # Neither is worth caching, so drop them; chown the rest back so
+        # tar (running as the runner user) can read everything left.
+        sudo rm -rf .cache/apt-archives/lock .cache/apt-archives/partial
+        sudo chown -R "$(id -u):$(id -g)" .cache/apt-archives
     - name: Setup env variables
       if: ${{ inputs.using-cmake == 'true' }}
       shell: bash
