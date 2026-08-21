@@ -97,22 +97,23 @@ runs:
       if: ${{ inputs.using-cmake == 'true' }}
       shell: bash
       run: |
-        # apt drops privileges to _apt to download, so it needs to own the
-        # archive dir; we take it back afterwards so the cache save (which
-        # runs as the runner user) can read it.
+        # apt's fetch sandbox drops to the _apt user, which can't reach an
+        # archive dir inside the runner workspace -- apt notices and falls
+        # back to fetching as root anyway, just with a warning per package.
+        # Ask for that fallback explicitly so it isn't noise. Downloads then
+        # land as root:root 0644, which the cache save (running as the
+        # runner user) can still read.
         mkdir -p .cache/apt-archives/partial
-        sudo chown -R _apt:root .cache/apt-archives
         sudo apt-get update -qq -o Acquire::Languages=none
         sudo apt-get install -y --no-install-recommends \
           -o Dir::Cache::archives="$PWD/.cache/apt-archives" \
+          -o APT::Sandbox::User=root \
           libglut-dev \
           libopenal-dev \
           libvorbis-dev \
           libpango1.0-dev \
           ninja-build \
           libsdl3-dev
-
-        sudo chown -R "$(id -u):$(id -g)" .cache/apt-archives
     - name: Setup env variables
       if: ${{ inputs.using-cmake == 'true' }}
       shell: bash
