@@ -178,3 +178,63 @@ def test_empty_manifest() -> None:
     assert ctx.domain_size() == 0
     with pytest.raises(AssetIndexError):
         ctx.from_index(0, AssetBucketKind.TEXTURES)
+
+
+def test_digest_catches_a_short_listing() -> None:
+    """A listing short by one entry is a different domain.
+
+    The failure this guards is silent: dropping an entry from an early
+    package leaves every later index in range but pointing one slot
+    off, so the consumer renders the wrong asset and nothing raises.
+    Only the digest distinguishes the two domains.
+    """
+    short = dict(_LISTINGS)
+    short[PKG_A] = ['meshes/box', 'textures/ant']
+
+    full_ctx = _ctx()
+    short_ctx = AssetIndexContext([PKG_A, PKG_B, PKG_C], short.get)
+
+    # Same index, different asset -- with no error either way.
+    idx = full_ctx.to_index(TextureSpec(PKG_C, 'textures/dog'))
+    assert full_ctx.from_index(idx, AssetBucketKind.TEXTURES).name == (
+        'textures/dog'
+    )
+    assert short_ctx.from_index(idx, AssetBucketKind.TEXTURES).name != (
+        'textures/dog'
+    )
+    assert full_ctx.domain_digest() != short_ctx.domain_digest()
+
+
+def test_digest_is_stable_for_the_same_domain() -> None:
+    """Two contexts over the same listings agree."""
+    assert _ctx().domain_digest() == _ctx().domain_digest()
+
+
+def test_digest_notices_reordered_packages() -> None:
+    """Manifest order is part of the domain, so it is part of the digest."""
+    assert (
+        _ctx([PKG_A, PKG_C]).domain_digest()
+        != _ctx([PKG_C, PKG_A]).domain_digest()
+    )
+
+
+def test_unknown_and_empty_packages_agree() -> None:
+    """A package neither end lists is zero-width on both, so not drift.
+
+    ``PKG_B`` is empty here; a producer that simply has no listing for
+    it lays out the same domain, and flagging that as a mismatch would
+    fire on every strings-only package in a manifest.
+    """
+    absent = {k: v for k, v in _LISTINGS.items() if k != PKG_B}
+    assert (
+        AssetIndexContext([PKG_A, PKG_B, PKG_C], absent.get).domain_digest()
+        == _ctx().domain_digest()
+    )
+
+
+def test_describe_domain_names_each_package() -> None:
+    """The mismatch log has to point at a package, not just fail."""
+    text = _ctx().describe_domain()
+    assert f'{PKG_A}=3' in text
+    assert f'{PKG_B}=0' in text
+    assert f'{PKG_C}=4' in text

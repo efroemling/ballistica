@@ -26,7 +26,9 @@ if TYPE_CHECKING:
         SoundSpec,
         CollisionMeshSpec,
         AssetBucketKind,
+        AssetIndexContext,
     )
+    from bacommon.langstr import LangStrFlatIndexContext
     import bacommon.clienteffect as clfx
 
 
@@ -166,8 +168,18 @@ def resolve_response(response: dui2.Response) -> None:
     if response.packages:
         # Strings first: the effect de-index below consumes them, and
         # it expects the two-int form rather than a folded index.
-        deindex_langstrs(response.page, packages, response.client_effects)
-        deindex_assets(response.page, packages, response.client_effects)
+        deindex_langstrs(
+            response.page,
+            packages,
+            response.client_effects,
+            expect_digest=response.langstr_index_digest,
+        )
+        deindex_assets(
+            response.page,
+            packages,
+            response.client_effects,
+            expect_digest=response.asset_index_digest,
+        )
         _deindex_effects(response.client_effects)
         for row in response.page.rows:
             if not isinstance(row, dui2.ButtonRow):
@@ -181,11 +193,17 @@ def package_asset_listing(apverid: str) -> list[str] | None:
     """Canonical sorted logical paths for every asset in a package.
 
     The client's half of the flat-index mapping. Deliberately the union
-    across buckets rather than one bucket: the server derives its
-    listing from a vendored wrapper tree that groups paths differently
-    (collision meshes sit in the ``constant`` bucket here but under
-    ``meshes`` there), so only the union is guaranteed to agree. Indexing
-    the whole package makes the grouping irrelevant.
+    across buckets rather than one bucket: the server groups the same
+    paths differently (collision meshes sit in the ``constant`` bucket
+    here but under ``meshes`` there), so only the union is guaranteed
+    to agree. Indexing the whole package makes the grouping irrelevant.
+
+    This is the *registry*, i.e. what the package actually built, which
+    is why the server has to vendor an equally complete listing rather
+    than derive one from its wrapper accessors -- cube maps and the
+    legacy-language-data blob appear here and have no accessor. When
+    the two lists disagree the digest check in :func:`_domains_agree`
+    is what catches it; nothing else would.
 
     ``None`` when the package isn't registered at all -- a
     resolve-ordering fault -- as distinct from a registered package that
@@ -224,6 +242,8 @@ def deindex_langstrs(
     page: dui2.Page,
     packages: list[str],
     effects: 'list[clfx.Effect] | None' = None,
+    *,
+    expect_digest: str | None = None,
 ) -> None:
     """Unfold a page's flat string indices into the two-int form.
 
@@ -232,6 +252,11 @@ def deindex_langstrs(
     :class:`~bacommon.langstr.LangStrSpecResourceIndexed` -- exactly
     what the native decoder already consumed before folding existed --
     so nothing downstream changes.
+
+    ``expect_digest`` is the producer's
+    :meth:`~bacommon.langstr.LangStrFlatIndexContext.domain_digest`;
+    see :func:`deindex_assets` for why a mismatch means we must not
+    unfold at all.
 
     Fail-visible per slot: a bad index logs and leaves the integer in
     place rather than substituting a wrong string.
@@ -248,6 +273,8 @@ def deindex_langstrs(
         return
 
     ctx = LangStrFlatIndexContext(packages, package_string_count)
+    if not _domains_agree(ctx, expect_digest, 'language-string'):
+        return
 
     def _lstr(val: 'LangStrSpec | int') -> 'LangStrSpec | None':
         # Spec-form strings pass through: a response can mix forms, and
@@ -270,10 +297,51 @@ def deindex_langstrs(
         clfx.walk_effects(effects, langstr=_lstr)
 
 
+def _domains_agree(
+    ctx: 'AssetIndexContext | LangStrFlatIndexContext',
+    expect_digest: str | None,
+    what: str,
+) -> bool:
+    """Whether an index domain matches the one the producer used.
+
+    The two ends build their domains from different sources, so they
+    can disagree -- and a disagreement hides itself: an index that is
+    wrong but still in range names a different asset or string, so the
+    page renders wrong and nothing raises. The digest is the only thing
+    that makes that visible, which is why a mismatch has to stop the
+    de-index entirely rather than proceed per-slot. Leaving the
+    integers in place lands the failure on the existing loud paths.
+
+    A payload with no digest (an older producer) is taken as agreeing;
+    the digest is a guard, not a requirement.
+    """
+    import bauiv1 as bui
+
+    if expect_digest is None:
+        return True
+    ours = ctx.domain_digest()
+    if ours == expect_digest:
+        return True
+    bui.uilog.error(
+        'Doc-ui %s index domain disagrees with the producer'
+        ' (ours %s, theirs %s); refusing to de-index, so this page will'
+        ' render incompletely. Our per-package sizes: %s. This means the'
+        ' two ends derive different listings for some package above;'
+        ' compare those sizes against the producer side.',
+        what,
+        ours,
+        expect_digest,
+        ctx.describe_domain(),
+    )
+    return False
+
+
 def deindex_assets(
     page: dui2.Page,
     packages: list[str],
     effects: 'list[clfx.Effect] | None' = None,
+    *,
+    expect_digest: str | None = None,
 ) -> None:
     """Replace a page's flat asset indices with real specs.
 
@@ -282,27 +350,25 @@ def deindex_assets(
     -- prep, render, the depiction code -- therefore only ever sees
     specs, and never has to know the indexed form existed.
 
+    ``expect_digest`` is the producer's
+    :meth:`~bacommon.assetspec.AssetIndexContext.domain_digest`; a
+    mismatch skips de-indexing entirely (see :func:`_domains_agree`).
+
     Fail-visible per reference: a bad index logs and leaves the integer
     in place rather than substituting a wrong asset, and the render then
     fails on that one slot.
     """
     import bauiv1 as bui
 
-    # Runtime imports: the narrowing below is real isinstance work, not
-    # just annotation.
-    from bacommon.assetspec import (
-        AssetIndexContext,
-        AssetIndexError,
-        TextureSpec,
-        MeshSpec,
-        SoundSpec,
-    )
+    from bacommon.assetspec import AssetIndexContext, AssetIndexError
     from bacommon.docui.walk import walk_page
 
     if not packages:
         return
 
     ctx = AssetIndexContext(packages, package_asset_listing)
+    if not _domains_agree(ctx, expect_digest, 'asset'):
+        return
 
     def _convert(
         ref: 'TextureSpec | MeshSpec | SoundSpec | int',
@@ -320,33 +386,20 @@ def deindex_assets(
             )
             return None
 
-    # Two thin wrappers rather than one visitor: each walk's slots hold
-    # a different spec union, and a visitor's *return* has to fit the
-    # slot it is written back into.
-    def _pageref(
-        ref: 'TextureSpec | MeshSpec | int', kind: 'AssetBucketKind'
-    ) -> 'TextureSpec | MeshSpec | int | None':
-        out = _convert(ref, kind)
-        # Page slots hold textures and meshes only; anything else means
-        # the slot's kind and the domain disagreed, which should fail
-        # loudly rather than write a wrong type into the page.
-        if out is None or isinstance(out, (TextureSpec, MeshSpec)):
-            return out
-        return None
-
-    def _effectref(
-        ref: 'SoundSpec | int', kind: 'AssetBucketKind'
-    ) -> 'SoundSpec | int | None':
-        out = _convert(ref, kind)
-        return out if isinstance(out, SoundSpec) else None
-
-    walk_page(page, assetref=_pageref)
+    # One visitor for every slot, not one per spec union. `walk_page`
+    # hands a button's immediate client-effects to `walk_effects` using
+    # the *page* visitor, so a textures-and-meshes-only visitor silently
+    # dropped the sound refs in them -- they stayed integers and failed
+    # at run time with 'Un-de-indexed sound ref N in a client-effect'.
+    # The slot's own `kind` already decides which spec `_convert`
+    # produces, so no narrowing is needed (or correct) here.
+    walk_page(page, assetref=_convert)  # type: ignore[arg-type]
     if effects:
         # Response-level effects are outside the page walk, and their
         # sounds are indexed the same as page art.
         import bacommon.clienteffect as clfx
 
-        clfx.walk_effects(effects, assetref=_effectref)
+        clfx.walk_effects(effects, assetref=_convert)  # type: ignore[arg-type]
 
 
 def _resolve_packages_blocking(apverids: list[str], locale: Locale) -> None:

@@ -15,9 +15,26 @@ rendering it, which only works if the walk that gathers them descends
 into frames.
 """
 
+import importlib.util
+
+import pytest
+
 import bacommon.docui.v2 as dui2
 from bacommon.assetspec import TextureSpec
 from bacommon.langstr import LangStrSpecValue
+
+# Importing the client's resolve module pulls in bauiv1 -> babase ->
+# _babase, the engine's binary module. That is present wherever the
+# engine has been built (and where dummy-modules stand in for it), but
+# not on CI legs that only run the test suite -- public Windows CI
+# being the one that caught this. Skip there rather than fail: the
+# walk itself is covered engine-free in test_bacommon/test_docui_walk,
+# and what these add is that the *client's* gatherer descends the same
+# way.
+pytestmark = pytest.mark.skipif(
+    importlib.util.find_spec('_babase') is None,
+    reason='client ui modules need the engine binary module',
+)
 
 #: A package nothing else in the page mentions, so a walk that misses
 #: frames comes back without it.

@@ -61,6 +61,78 @@ if TYPE_CHECKING:
         [AssetRef, AssetBucketKind], 'AssetRef | None'
     ]
 
+    #: The slot-level wrappers :func:`walk_page` hands to
+    #: :func:`_walk_decorations`. Unlike the public visitors these
+    #: always return a value (the original when the visitor declined),
+    #: so callers can assign the result straight into a slot.
+    type LangStrSlot = Callable[[LangStrRef], LangStrRef]
+    type AssetRefSlot = Callable[
+        ['AssetRef | None', AssetBucketKind], 'AssetRef | None'
+    ]
+
+
+def _walk_decorations(
+    decos: list[dui2.Decoration] | None,
+    lstr: 'LangStrSlot',
+    ref: 'AssetRefSlot',
+) -> None:
+    """Visit one decoration list, recursing into frames.
+
+    Module level rather than nested inside :func:`walk_page`, because a
+    *self-recursive* nested function holds itself in its own closure
+    cell -- a reference cycle minted on every call, which then pins the
+    visitor closures (and whatever they capture, e.g. an index context)
+    until a cyclic-gc pass runs. Passing the two slot wrappers in keeps
+    the recursion cycle-free.
+    """
+    for deco in decos or []:
+        dectypeid = deco.get_type_id()
+
+        if dectypeid is dui2.DecorationTypeID.TEXT:
+            assert isinstance(deco, dui2.Text)
+            deco.text = lstr(deco.text)
+
+        elif dectypeid is dui2.DecorationTypeID.IMAGE:
+            assert isinstance(deco, dui2.Image)
+            # Note the narrowing casts: the visitor is typed over
+            # the union, while each slot holds one specific kind.
+            deco.texture = ref(deco.texture, _TEX)  # type: ignore[assignment]
+            deco.tint_texture = ref(  # type: ignore[assignment]
+                deco.tint_texture, _TEX
+            )
+            deco.mask_texture = ref(  # type: ignore[assignment]
+                deco.mask_texture, _TEX
+            )
+            deco.mesh_opaque = ref(  # type: ignore[assignment]
+                deco.mesh_opaque, _MESH
+            )
+            deco.mesh_transparent = ref(  # type: ignore[assignment]
+                deco.mesh_transparent, _MESH
+            )
+
+        elif dectypeid is dui2.DecorationTypeID.FRAME:
+            assert isinstance(deco, dui2.Frame)
+            # A frame's children are page content like any other.
+            # Recurses, since frames nest.
+            _walk_decorations(deco.decorations, lstr, ref)
+
+        elif dectypeid is dui2.DecorationTypeID.DISPLAY_ITEM:
+            # Names an item rather than describing it, so it holds
+            # no strings or refs of its own -- the client derives
+            # them. Legacy; producers send frames now.
+            pass
+
+        elif dectypeid is dui2.DecorationTypeID.UNKNOWN:
+            # A decoration from a newer producer. Nothing here can
+            # be said about its contents, so there is nothing to do
+            # but leave it be.
+            pass
+
+        else:
+            # The point of this whole module: a new decoration type
+            # fails here, at build time, in one place.
+            assert_never(dectypeid)
+
 
 def walk_page(
     page: dui2.Page,
@@ -104,55 +176,7 @@ def walk_page(
         return val if out is None else out
 
     def _decos(decos: list[dui2.Decoration] | None) -> None:
-        for deco in decos or []:
-            dectypeid = deco.get_type_id()
-
-            if dectypeid is dui2.DecorationTypeID.TEXT:
-                assert isinstance(deco, dui2.Text)
-                deco.text = _lstr(deco.text)
-
-            elif dectypeid is dui2.DecorationTypeID.IMAGE:
-                assert isinstance(deco, dui2.Image)
-                # Note the narrowing casts: the visitor is typed over
-                # the union, while each slot holds one specific kind.
-                deco.texture = _ref(  # type: ignore[assignment]
-                    deco.texture, _TEX
-                )
-                deco.tint_texture = _ref(  # type: ignore[assignment]
-                    deco.tint_texture, _TEX
-                )
-                deco.mask_texture = _ref(  # type: ignore[assignment]
-                    deco.mask_texture, _TEX
-                )
-                deco.mesh_opaque = _ref(  # type: ignore[assignment]
-                    deco.mesh_opaque, _MESH
-                )
-                deco.mesh_transparent = _ref(  # type: ignore[assignment]
-                    deco.mesh_transparent, _MESH
-                )
-
-            elif dectypeid is dui2.DecorationTypeID.FRAME:
-                assert isinstance(deco, dui2.Frame)
-                # A frame's children are page content like any other.
-                # Recurses, since frames nest.
-                _decos(deco.decorations)
-
-            elif dectypeid is dui2.DecorationTypeID.DISPLAY_ITEM:
-                # Names an item rather than describing it, so it holds
-                # no strings or refs of its own -- the client derives
-                # them. Legacy; producers send frames now.
-                pass
-
-            elif dectypeid is dui2.DecorationTypeID.UNKNOWN:
-                # A decoration from a newer producer. Nothing here can
-                # be said about its contents, so there is nothing to do
-                # but leave it be.
-                pass
-
-            else:
-                # The point of this whole module: a new decoration type
-                # fails here, at build time, in one place.
-                assert_never(dectypeid)
+        _walk_decorations(decos, _lstr, _ref)
 
     page.title = _lstr(page.title)
 

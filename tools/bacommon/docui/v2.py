@@ -765,6 +765,28 @@ class Response(DocUIResponse):
         default_factory=list
     )
 
+    #: Digest of the exact asset-index domain the producer indexed
+    #: against, from
+    #: :meth:`~bacommon.assetspec.AssetIndexContext.domain_digest`. The
+    #: two ends build that domain from different sources, and a
+    #: disagreement is invisible on its own -- an index that is wrong
+    #: but still in range simply names a different asset, so the page
+    #: renders with the wrong art and nothing logs. A consumer whose
+    #: own digest differs must refuse to de-index rather than trust it;
+    #: leaving the integers in place makes the failure loud and names
+    #: the packages involved. Set only when asset refs were indexed.
+    asset_index_digest: Annotated[
+        str | None, IOAttrs('adg', store_default=False)
+    ] = None
+
+    #: The same guard for folded language-string references, from
+    #: :meth:`~bacommon.langstr.LangStrFlatIndexContext.domain_digest`.
+    #: Separate from the asset digest so a mismatch says which of the
+    #: two domains drifted. Set only when string refs were folded.
+    langstr_index_digest: Annotated[
+        str | None, IOAttrs('ldg', store_default=False)
+    ] = None
+
     #: Effects to run on the client when this response is initially
     #: received (not re-run on automatic page refreshes). Note that
     #: effect payloads are not yet v2-native — text in them is

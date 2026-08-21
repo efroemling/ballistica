@@ -20,6 +20,7 @@ live in a bare integer. Those keep the object form, and a payload
 mixing the two is normal.
 """
 
+import hashlib
 from bisect import bisect_right
 from typing import TYPE_CHECKING
 
@@ -120,3 +121,30 @@ class LangStrFlatIndexContext:
         if not self._sizes:
             return 0
         return self._offsets[-1] + self._sizes[-1]
+
+    def domain_digest(self) -> str:
+        """Short digest of the exact domain this context addresses.
+
+        The string counterpart to
+        :meth:`~bacommon.assetspec.AssetIndexContext.domain_digest`, and
+        for the same reason: a folded index that lands in the wrong
+        package still decodes to *a* string, so nothing downstream
+        notices. A payload carries the producer's digest and the
+        consumer refuses to unfold when its own does not match.
+
+        Counts alone, since counts are all the layout depends on -- the
+        names stay native at both ends.
+        """
+        self._prepare()
+        hasher = hashlib.sha256()
+        for apverid, size in zip(self._packages, self._sizes, strict=True):
+            hasher.update(f'{apverid}:{size}\n'.encode())
+        return hasher.hexdigest()[:16]
+
+    def describe_domain(self) -> str:
+        """Per-package string counts, for diagnosing a digest mismatch."""
+        self._prepare()
+        return ', '.join(
+            f'{apverid}={size}'
+            for apverid, size in zip(self._packages, self._sizes, strict=True)
+        )

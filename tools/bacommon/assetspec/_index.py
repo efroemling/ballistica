@@ -11,12 +11,22 @@ assets, whatever kind -- concatenated in manifest order.
 Deliberately whole-package rather than per-bucket-kind. The two ends
 partition a package's paths into buckets differently: a client's
 registry splits collision meshes into the flavor-invariant ``constant``
-bucket while the server's vendored wrapper tree keeps every ``meshes/``
-path together. Measured on baclassicassets that is 360+30 against 390 --
+bucket while the server's listing keeps every ``meshes/`` path
+together. Measured on baclassicassets that is 360+30 against 390 --
 the same 1115 paths overall, grouped differently, which would have
 shifted every mesh index past the first collision mesh onto the wrong
 asset. Indexing the whole package sidesteps the disagreement entirely,
 since only the *union* has to match, and it does.
+
+The union has to be the package's *built* assets, not the ones a
+producer can name in Python. Those differ: cube maps are deliberately
+wrapper-invisible (decision #24) and the legacy-language-data blob is
+a build output with no source file, yet both sit in a client's
+registry. Deriving the server's listing from its wrapper tree left it
+short by exactly those seven on ``babuiltinassets``, and since that is
+the first package in the manifest it moved every later package's slice
+-- every store icon rendered as a neighbouring texture, silently. The
+server now vendors the real listing per package instead.
 
 The slot's bucket kind is therefore a *check*, not a domain selector:
 it says what type the decoded path must be, and a mismatch is an error
@@ -43,12 +53,20 @@ partition identically. Here the two ends derive from different sources,
 so the domain has to be the one thing they agree on.
 
 The arithmetic lives here, apart from either end's way of obtaining a
-listing: the server reads vendored wrapper trees, the client reads its
-resolved package registry, and neither concern belongs in the indexing
-rules. That also makes the rules unit-testable with no engine and no
-packages present.
+listing: the server reads a listing vendored alongside each package,
+the client reads its resolved package registry, and neither concern
+belongs in the indexing rules. That also makes the rules unit-testable
+with no engine and no packages present.
+
+Because the two ends obtain that listing differently they can disagree,
+and a disagreement is invisible on its own -- an index that is wrong
+but still in range names a different asset, so the page renders wrong
+art and nothing raises. :meth:`AssetIndexContext.domain_digest` is what
+makes it visible: a payload carries the producer's digest and the
+consumer refuses to de-index when its own differs.
 """
 
+import hashlib
 from enum import Enum
 from bisect import bisect_right
 from typing import TYPE_CHECKING, assert_never
@@ -241,3 +259,45 @@ class AssetIndexContext:
         if not self._names:
             return 0
         return self._offsets[-1] + len(self._names[-1])
+
+    def domain_digest(self) -> str:
+        """Short digest of the exact domain this context addresses.
+
+        The two ends derive their listings from different sources (the
+        server from vendored package data, the client from its resolved
+        registry), and nothing about a wrong-but-in-range index makes
+        itself known: it simply names a different asset. So a payload
+        carries the producer's digest and the consumer refuses to
+        de-index when its own does not match -- turning a silent
+        wrong-art render into a loud, locatable failure.
+
+        Taken over the *effective* listings, i.e. the slices actually
+        laid out, with an unknown package contributing an empty one
+        exactly as it does when preparing the offset table. That is the
+        right thing to compare: a package one end has no listing for
+        still occupies zero width on both, and it is the widths and
+        contents that decide what an index means.
+        """
+        self._prepare()
+        hasher = hashlib.sha256()
+        for apverid, names in zip(self._packages, self._names, strict=True):
+            hasher.update(apverid.encode())
+            hasher.update(b'\0')
+            for name in names:
+                hasher.update(name.encode())
+                hasher.update(b'\n')
+            hasher.update(b'\0')
+        return hasher.hexdigest()[:16]
+
+    def describe_domain(self) -> str:
+        """Per-package slice widths, for diagnosing a digest mismatch.
+
+        Names each package and how wide a slice it got here, which is
+        what pins a mismatch to one package rather than to the payload
+        as a whole.
+        """
+        self._prepare()
+        return ', '.join(
+            f'{apverid}={len(names)}'
+            for apverid, names in zip(self._packages, self._names, strict=True)
+        )
