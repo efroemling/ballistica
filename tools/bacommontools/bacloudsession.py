@@ -56,11 +56,14 @@ from typing import TYPE_CHECKING
 
 from efro.error import CleanError
 from efro.smartsocket import (
+    MAX_MESSAGE_BYTES,
     SmartSocketClosed,
     SmartSocketEndpoint,
 )
+from efro.dataclassio import dataclass_from_json
 from bacommon.bacloud import (
     BACLOUD_VERSION,
+    ChunkedResponse,
     RequestData,
     ResponseData,
     SessionHandleResponse,
@@ -132,6 +135,12 @@ class BacloudSession:
             SmartSocketEndpoint[RequestData, ResponseData] | None
         ) = None
         self._inbox: queue.Queue[ResponseData | None] = queue.Queue()
+
+        # Slices of a response being reassembled. The session is
+        # gapless and in order and a sender finishes one response
+        # before starting the next, so a plain list is enough -- there
+        # is nothing to interleave with.
+        self._chunks: list[str] = []
         #: Set once a connection has actually completed its hello.
         #: Until then a dial failure means 'no session here', not 'a
         #: session to recover'.
@@ -356,6 +365,21 @@ class BacloudSession:
             await asyncio.sleep(0.05)
 
     async def _on_message(self, response: ResponseData) -> None:
+        if isinstance(response, ChunkedResponse):
+            # A response too large for one message, arriving in
+            # ordered slices. Collect, and decode only once the last
+            # one lands -- nothing above this layer ever learns the
+            # response was split.
+            self._chunks.append(response.data)
+            if response.index + 1 < response.count:
+                return
+            joined = ''.join(self._chunks)
+            self._chunks.clear()
+            # Slices are of the serialized response, so rejoining
+            # yields exactly what an unsplit send would have.
+            self._inbox.put(dataclass_from_json(ResponseData, joined))
+            return
+
         if isinstance(response, SessionHandleResponse):
             # Not an answer to anything -- the node telling us how to
             # get back in. Hold it; don't hand it to a waiting caller.
@@ -426,6 +450,13 @@ class BacloudSession:
             # policy-driven interval; a second liveness mechanism
             # would only add ways to disagree.
             ping_interval=None,
+            # Pin the receive limit to the protocol's own cap rather
+            # than inheriting whatever this library defaults to. They
+            # happened to match, but only by luck -- and the relay had
+            # no matching per-message limit, so a response between this
+            # and the relay's 4 MB buffer cap was sent and never
+            # received, presenting as an unexplained hang.
+            max_size=MAX_MESSAGE_BYTES,
         )
 
 

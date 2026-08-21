@@ -394,6 +394,39 @@ def action_for_close_code(code: int) -> SmartSocketAction:
 #: every window to run the recovery matrix in seconds).
 LOSS_DETECTION_FLOOR_SECONDS = 15.0
 
+#: Largest WebSocket message the protocol puts on the wire, in bytes.
+#:
+#: Every leg's socket-level receive limit is configured to exactly
+#: this, explicitly. Left to library defaults they disagree --
+#: ``websockets`` caps incoming messages at 1 MiB, ``aiohttp`` at 4 MB
+#: -- and a disagreement here does not surface as an error: the relay
+#: buffers each frame for resume, so a message the far socket refuses
+#: is *retained and retried*, not dropped. A ~1.5 MB bacloud response
+#: landed in exactly that gap and presented as a 30-minute hang with
+#: the server-side work done in 13 seconds.
+MAX_MESSAGE_BYTES = 1024 * 1024
+
+#: Room reserved for the frame envelope around a payload (seq, type
+#: id, JSON punctuation). Tiny next to the cap; explicit so the
+#: subtraction below is not a mystery constant.
+_FRAME_OVERHEAD_BYTES = 1024
+
+#: Largest app payload a single message may carry, in bytes.
+#:
+#: Smaller than :data:`MAX_MESSAGE_BYTES` because a payload is
+#: JSON-escaped *into* its frame, and the payloads here are themselves
+#: JSON -- every ``"`` becomes ``\\"``. Measured inflation is ~1.03x
+#: for typical bodies and ~1.0x for base64, but the worst case (a
+#: payload that is all quotes) is 2.02x, so the halving is what makes
+#: "this payload fits" true regardless of content rather than true for
+#: the bodies we happen to send today.
+#:
+#: This is the number a sender checks and a chunker splits on. It is
+#: load-bearing for the relay's resend-buffer and linger math, so it
+#: does not grow to fit one caller's message: anything larger must be
+#: split *above* this layer.
+MAX_PAYLOAD_BYTES = MAX_MESSAGE_BYTES // 2 - _FRAME_OVERHEAD_BYTES
+
 
 class SmartSocketClosed(Exception):
     """Raised by a transport when its connection has closed.
@@ -494,7 +527,7 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         recv_type: type[RecvT],
         on_message: Callable[[RecvT], Awaitable[None]] | None = None,
         refresh: Callable[[], Awaitable[None]] | None = None,
-        in_flight_cap_bytes: int = 1024 * 1024,
+        in_flight_cap_bytes: int = MAX_PAYLOAD_BYTES,
         attach_timeout_seconds: float = 10.0,
         loss_detection_floor_seconds: float = (LOSS_DETECTION_FLOOR_SECONDS),
         logger: logging.Logger | None = None,
