@@ -16,7 +16,7 @@ runs:
   using: "composite"
   steps:
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v7
       with:
         python-version: "3.14"
 
@@ -31,30 +31,18 @@ runs:
         enable-cache: true
         cache-dependency-glob: "pconfig/requirements.txt"
 
-    # Keyed on just the build/assets/ slice of .efrocachemap rather than the
-    # whole file. That file is 1687 build/assets/ entries plus 44
-    # build/prefab/ entries, and the prefab ones (prebuilt binaries, which
-    # this cache does not hold) churn on ~60% of commits while the asset
-    # entries change on ~13%. Hashing the whole file therefore threw this
-    # cache away 53 times per 100 commits for reasons unrelated to its
-    # contents; hashing only the assets slice: 9 times.
+    # Hash only the build/assets/ slice of .efrocachemap. The rest of that
+    # file is build/prefab/ entries (prebuilt binaries we don't cache here)
+    # which churn far more often, so a whole-file hash discarded this cache
+    # 53 times per 100 commits vs 9 for the slice.
     #
-    # A stale restore via restore-keys is always safe: efrocache is
-    # content-addressed, so the 'Update assets' step below re-fetches only
-    # the files whose hashes actually changed (see get_target in
-    # tools/efrotools/efrocache.py).
+    # .cache/efrocache is deliberately not cached: get_target() (see
+    # tools/efrotools/efrocache.py) skips it entirely when build/assets is
+    # already in place, and can't hold the new hashes when it isn't. Stale
+    # restores via restore-keys are safe for the same reason -- only
+    # genuinely changed files get re-fetched.
     #
-    # .cache/efrocache is deliberately NOT cached here. get_target() returns
-    # early when the target file is already in place with a matching hash,
-    # without ever consulting that dir, so it goes unread whenever
-    # build/assets restores intact -- and when build/assets is stale the
-    # wanted hashes are new, so an older efrocache could not hold them
-    # either. It is 8x the size of build/assets, nothing ever prunes it, and
-    # its only real consumer (warm_start_cache, reached solely by the
-    # 'make test-ex' job) just re-fetches a 3MB starter archive without it.
-    #
-    # Bump the -v1- token to force a cold rebuild if build/assets ever
-    # accumulates orphaned files across a long restore-key chain.
+    # Bump the -v1- token to force a cold rebuild.
     - name: Compute asset cache key
       id: asset-key
       shell: bash
