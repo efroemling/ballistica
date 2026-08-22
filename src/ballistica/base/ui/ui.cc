@@ -471,10 +471,11 @@ void UI::ProcessTextEditReports(FrameDef* frame_def) {
     c.Submit();
   }
 
-  // Convert to normalized (0-1) window coords, y-up. Note that game
-  // content occupies only our active render rect within the window
-  // (there can be black borders in tv-mode / at extreme window aspect
-  // ratios), so the mapping goes virtual -> active-rect -> window.
+  // Convert to normalized (0-1) window coords, y-up. Note that our
+  // virtual coord system covers only the virtual bounds within the
+  // window (there can be black borders in tv-mode / at extreme window
+  // aspect ratios, plus cutout insets inside those), so the mapping
+  // goes virtual -> virtual-bounds -> window.
   Rect norm{};
   if (active) {
     auto* graphics = g_base->graphics;
@@ -482,7 +483,7 @@ void UI::ProcessTextEditReports(FrameDef* frame_def) {
     float vh = graphics->screen_virtual_height();
     float pw = graphics->screen_pixel_width();
     float ph = graphics->screen_pixel_height();
-    const Rect& arect = graphics->active_render_rect();
+    const Rect& arect = graphics->virtual_bounds_rect();
     if (vw > 0.0f && vh > 0.0f && pw > 0.0f && ph > 0.0f) {
       norm.l = (arect.l + rect.l / vw * arect.width()) / pw;
       norm.r = (arect.l + rect.r / vw * arect.width()) / pw;

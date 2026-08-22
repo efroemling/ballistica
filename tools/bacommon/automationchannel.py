@@ -136,6 +136,7 @@ class AutomationEventTypeID(Enum):
     LOG_ENTRIES = 'l'
     SCREENSHOT = 's'
     GAP = 'g'
+    CHUNK = 'c'
 
 
 class AutomationEvent(IOMultiType[AutomationEventTypeID]):
@@ -160,6 +161,8 @@ class AutomationEvent(IOMultiType[AutomationEventTypeID]):
             out = ScreenshotEvent
         elif type_id is AutomationEventTypeID.GAP:
             out = GapEvent
+        elif type_id is AutomationEventTypeID.CHUNK:
+            out = ChunkEvent
         else:
             raise ValueError(f'Unrecognized type-id {type_id}.')
         return out
@@ -307,3 +310,43 @@ class GapEvent(AutomationEvent):
     @classmethod
     def get_type_id(cls) -> AutomationEventTypeID:
         return AutomationEventTypeID.GAP
+
+
+@ioprepped
+@dataclass
+class ChunkEvent(AutomationEvent):
+    """One ordered slice of an event too large for a single message.
+
+    The transport caps a single message on purpose (see
+    ``efro.smartsocket.MAX_MESSAGE_BYTES``), and exceeding it does not
+    fail cleanly -- the relay retains and retries a message the far
+    socket refuses. An event past the cap is therefore split here,
+    above the transport, and rejoined by the driver before it decodes
+    anything. A lossless screenshot is the case that motivated this;
+    the mechanism is type-agnostic.
+
+    No correlation id and no total-length field: the channel delivers
+    gaplessly and in order, and the device handles one command at a
+    time, so "collect until ``index == count - 1``" cannot interleave
+    with another chunk sequence. Log traffic is never chunked -- it
+    sheds as a :class:`GapEvent` instead -- so nothing else can start
+    one either.
+
+    ``data`` is a slice of the *serialized* event, not a serialized
+    slice, so rejoining is string concatenation and the result decodes
+    exactly as it would have unsplit.
+    """
+
+    #: Position of this slice, from zero.
+    index: Annotated[int, IOAttrs('i')]
+
+    #: How many slices the whole event was split into.
+    count: Annotated[int, IOAttrs('n')]
+
+    #: This slice of the serialized event.
+    data: Annotated[str, IOAttrs('d')]
+
+    @override
+    @classmethod
+    def get_type_id(cls) -> AutomationEventTypeID:
+        return AutomationEventTypeID.CHUNK

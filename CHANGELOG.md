@@ -1,4 +1,4 @@
-### 1.8.0 (build 22996, api 9, 2026-08-21)
+### 1.8.0 (build 22997, api 9, 2026-08-22)
 - Fully implemented asset packages (more on this soon)
 - App-config committing (dirty-tracking, debounced disk writes, and
   suspend/shutdown flushes) now lives fully in `babase` instead of routing
@@ -111,6 +111,8 @@
   only applies to wrapped dimensions (where there are some subtle technical
   benefits). In other cases they can be any size (though dimensions must be
   divisible by 4).
+- Android builds should now properly respect camera cutouts and round corners.
+  Please holler if you see any UI elements being cut off at this point.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

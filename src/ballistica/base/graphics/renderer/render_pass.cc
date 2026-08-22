@@ -188,8 +188,14 @@ void RenderPass::Render(RenderTarget* render_target, bool transparent) {
         } else {
           renderer->SetDepthRange(kBackingDepth1B, kBackingDepth2);
         }
-        g_base->graphics_server->SetOrthoProjection(0, virtual_width(), 0,
-                                                    virtual_height(), -1, 1);
+        // Project over the render rect expressed in virtual coords
+        // rather than the plain virtual rect. Identical to
+        // (0, vw, 0, vh) unless the virtual bounds are inset, in which
+        // case this is what lets drawing continue out past the bounds
+        // to the physical edge instead of being squashed into them.
+        const Rect& vout = virtual_outer_rect_;
+        g_base->graphics_server->SetOrthoProjection(vout.l, vout.r, vout.b,
+                                                    vout.t, -1, 1);
       }
       break;
     }
@@ -415,11 +421,14 @@ void RenderPass::Reset() {
     case Type::kVRCoverPass:
     case Type::kOverlayFixedPass:
     case Type::kBlitPass: {
-      // Content passes cover the active render rect (the window minus any
-      // tv-border/aspect-limit black bars), not the raw window; among
-      // other things this is what perspective passes derive their aspect
-      // ratio from.
-      const Rect& rect = g_base->graphics->active_render_rect();
+      // Content passes draw *as if* the virtual bounds were the whole
+      // surface, so that's what our physical dims describe (and thus
+      // what perspective passes derive their aspect ratio from). We
+      // still physically cover the active render rect, but that shows
+      // up as the outward projection extension below rather than as a
+      // different aspect ratio; a bounds inset must not squash or
+      // stretch anything relative to an equally-inset render rect.
+      const Rect& rect = g_base->graphics->virtual_bounds_rect();
       physical_width_ = rect.width();
       physical_height_ = rect.height();
       break;
@@ -452,6 +461,15 @@ void RenderPass::Reset() {
       break;
   }
 
+  // Our projections cover the virtual bounds; grab how much further we
+  // physically reach so they can be extended outward to fill it. In
+  // virtual coords for the ortho passes, and as per-edge fractions of
+  // the bounds for the perspective ones. Both are no-ops (0 / the plain
+  // virtual rect) whenever the bounds aren't inset.
+  virtual_outer_rect_ = g_base->graphics->virtual_outer_rect();
+  render_rect_ = g_base->graphics->active_render_rect();
+  bounds_rect_ = g_base->graphics->virtual_bounds_rect();
+
   // Clear the command buffers this pass cares about.
   if (UsesWorldLists()) {
     for (auto& command : commands_) {
@@ -471,6 +489,8 @@ void RenderPass::SetFrustum(float near_val, float far_val) {
     float r = near_val * cam_fov_r_tan_;
     float t = near_val * cam_fov_t_tan_;
     float b = near_val * cam_fov_b_tan_;
+    Graphics::ExtendFrustumToRenderRect(render_rect_, bounds_rect_, &l, &r, &b,
+                                        &t);
     projection_matrix_ = Matrix44fFrustum(-l, r, -b, t, near_val, far_val);
   } else {
     // Old angle-based stuff:
@@ -485,7 +505,13 @@ void RenderPass::SetFrustum(float near_val, float far_val) {
     } else {
       x = y * GetPhysicalAspectRatio();
     }
-    projection_matrix_ = Matrix44fFrustum(-x, x, -y, y, near_val, far_val);
+    float l = x;
+    float r = x;
+    float b = y;
+    float t = y;
+    Graphics::ExtendFrustumToRenderRect(render_rect_, bounds_rect_, &l, &r, &b,
+                                        &t);
+    projection_matrix_ = Matrix44fFrustum(-l, r, -b, t, near_val, far_val);
   }
   g_base->graphics_server->SetProjectionMatrix(projection_matrix_);
 }

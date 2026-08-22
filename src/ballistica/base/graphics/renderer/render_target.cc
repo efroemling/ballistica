@@ -28,6 +28,29 @@ auto RenderTarget::content_rect() const -> Rect {
   return {0.0f, 0.0f, physical_width_, physical_height_};
 }
 
+auto RenderTarget::virtual_bounds_content_rect() const -> Rect {
+  Rect content = content_rect();
+
+  // A target's content region corresponds to the screen's active render
+  // rect (either literally, for the screen itself, or scaled to its own
+  // dims for offscreen buffers). So find where the virtual bounds sit
+  // within that render rect and apply the same fractions here. Reduces
+  // to content_rect() whenever the bounds aren't inset.
+  const Rect& rrect = g_base->graphics_server->screen_active_rect();
+  const Rect& brect = g_base->graphics_server->screen_virtual_bounds_rect();
+  float rw = rrect.width();
+  float rh = rrect.height();
+  if (rw <= 0.0f || rh <= 0.0f) {
+    return content;
+  }
+  float cw = content.width();
+  float ch = content.height();
+  return Rect{content.l + cw * ((brect.l - rrect.l) / rw),
+              content.b + ch * ((brect.b - rrect.b) / rh),
+              content.l + cw * ((brect.r - rrect.l) / rw),
+              content.b + ch * ((brect.t - rrect.b) / rh)};
+}
+
 auto RenderTarget::content_rect_is_full() const -> bool {
   Rect rect = content_rect();
   return rect.l == 0.0f && rect.b == 0.0f && rect.r == physical_width_
@@ -42,8 +65,11 @@ auto RenderTarget::GetScissorX(float x) const -> float {
     return physical_width_
            * (((x / res_x_virtual) + (kVRBorder * 0.5f)) / (1.0f + kVRBorder));
   } else {
-    // Map virtual coords onto our content region.
-    Rect rect = content_rect();
+    // Map virtual coords onto the region our virtual coord system
+    // covers. Coords outside the virtual bounds land outside that
+    // region (out in the margins), which is correct - a scissor there
+    // should clip where the drawing it is clipping actually lands.
+    Rect rect = virtual_bounds_content_rect();
     return rect.l
            + rect.width()
                  * (x / g_base->graphics_server->screen_virtual_width());
@@ -58,7 +84,7 @@ auto RenderTarget::GetScissorY(float y) const -> float {
     return physical_height_
            * (((y / res_y_virtual) + (kVRBorder * 0.5f)) / (1.0f + kVRBorder));
   } else {
-    Rect rect = content_rect();
+    Rect rect = virtual_bounds_content_rect();
     return rect.b
            + rect.height()
                  * (y / g_base->graphics_server->screen_virtual_height());
@@ -71,7 +97,7 @@ auto RenderTarget::GetScissorScaleX() const -> float {
     float f = physical_width_ / g_base->graphics_server->screen_virtual_width();
     return f / (1.0f + kVRBorder);
   } else {
-    return content_rect().width()
+    return virtual_bounds_content_rect().width()
            / g_base->graphics_server->screen_virtual_width();
   }
 }
@@ -83,7 +109,7 @@ auto RenderTarget::GetScissorScaleY() const -> float {
         physical_height_ / g_base->graphics_server->screen_virtual_height();
     return f / (1.0f + kVRBorder);
   } else {
-    return content_rect().height()
+    return virtual_bounds_content_rect().height()
            / g_base->graphics_server->screen_virtual_height();
   }
 }

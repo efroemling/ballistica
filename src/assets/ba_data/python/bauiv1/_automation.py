@@ -410,8 +410,19 @@ def _label_text(widget: object) -> str:
     raw: str | None = None
     for query in (_bauiv1.textwidget, _bauiv1.buttonwidget):
         try:
-            # Cast through Any since we accept opaque widget refs.
-            raw = str(query(query=widget))  # type: ignore[arg-type]
+            # Note the empty context. UI functions refuse to run with a
+            # context set, and driver-supplied code arrives here with
+            # the foreground context in place (the automation exec
+            # pushcall passes other_thread_use_fg_context=True so that
+            # driver code can touch gameplay). Without this, BOTH
+            # queries raise and every widget reports an empty label -
+            # which silently disables press_by_label, the dump's label
+            # column, and wait_for_widget(label_text=...). This is the
+            # documented idiom for the situation; see the
+            # babase.ContextRef.empty() docs.
+            with babase.ContextRef.empty():
+                # Cast through Any since we accept opaque widget refs.
+                raw = str(query(query=widget))  # type: ignore[arg-type]
             break
         except Exception:  # pylint: disable=broad-except
             continue

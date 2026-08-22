@@ -9,6 +9,7 @@
 #include "ballistica/base/base.h"
 #include "ballistica/shared/foundation/exception.h"
 #include "ballistica/shared/math/matrix44f.h"
+#include "ballistica/shared/math/rect.h"
 
 namespace ballistica::base {
 
@@ -165,6 +166,15 @@ class RenderPass {
   float physical_height_{};
   float virtual_width_{};
   float virtual_height_{};
+
+  // Our active render rect in virtual coords, plus the two pixel rects
+  // projections are built from: content is composed for the bounds and
+  // then extended out to the render rect. Identical rects (and a plain
+  // virtual outer rect) unless the bounds are inset. See
+  // Graphics::virtual_bounds_rect.
+  Rect virtual_outer_rect_{};
+  Rect render_rect_{};
+  Rect bounds_rect_{};
 
   // We can now alternately supply left, right, top, bottom frustum tangents.
   float cam_fov_l_tan_{1.0f};

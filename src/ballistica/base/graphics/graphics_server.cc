@@ -86,20 +86,30 @@ void GraphicsServer::ApplySettings(const GraphicsSettings* settings) {
     renderer_->set_pixel_scale(pixel_scale);
   }
   // Note: need to look at physical/virtual res plus the active render
-  // rect here; each can change independently of the others (ui-scale
-  // changes can move virtual res alone; a tv-border toggle can move the
-  // rect alone).
+  // rect and virtual bounds here; each can change independently of the
+  // others (ui-scale changes can move virtual res alone; a tv-border
+  // toggle can move the render rect alone; a cutout-inset change can
+  // move the bounds alone).
   const Rect& arect = settings->active_render_rect;
+  const Rect& vbrect = settings->virtual_bounds_rect;
   if (res_x_ != settings->resolution.x || res_y_ != settings->resolution.y
       || res_x_virtual_ != settings->resolution_virtual.x
       || res_y_virtual_ != settings->resolution_virtual.y
       || active_render_rect_.l != arect.l || active_render_rect_.r != arect.r
-      || active_render_rect_.b != arect.b || active_render_rect_.t != arect.t) {
+      || active_render_rect_.b != arect.b || active_render_rect_.t != arect.t
+      || virtual_bounds_rect_.l != vbrect.l
+      || virtual_bounds_rect_.r != vbrect.r
+      || virtual_bounds_rect_.b != vbrect.b
+      || virtual_bounds_rect_.t != vbrect.t) {
     res_x_ = settings->resolution.x;
     res_y_ = settings->resolution.y;
     res_x_virtual_ = settings->resolution_virtual.x;
     res_y_virtual_ = settings->resolution_virtual.y;
     active_render_rect_ = arect;
+    virtual_bounds_rect_ = vbrect;
+    virtual_outer_rect_ = Graphics::CalcVirtualOuterRect(
+        active_render_rect_, virtual_bounds_rect_, res_x_virtual_,
+        res_y_virtual_);
     if (renderer_) {
       renderer_->OnScreenSizeChange();
     }

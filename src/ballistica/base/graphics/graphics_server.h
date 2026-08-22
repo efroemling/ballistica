@@ -238,6 +238,22 @@ class GraphicsServer {
     return active_render_rect_;
   }
 
+  /// The sub-rect of the screen our virtual coord system maps onto
+  /// (pixels, bottom-left origin). Equal to screen_active_rect() unless
+  /// inset for camera cutouts/rounded corners. Does not clip; see
+  /// Graphics::virtual_bounds_rect.
+  auto screen_virtual_bounds_rect() const -> const Rect& {
+    assert(InGraphicsContext_());
+    return virtual_bounds_rect_;
+  }
+
+  /// The active render rect expressed in virtual coords; what
+  /// projections extend out to. See Graphics::virtual_outer_rect.
+  auto screen_virtual_outer_rect() const -> const Rect& {
+    assert(InGraphicsContext_());
+    return virtual_outer_rect_;
+  }
+
   auto SupportsTextureCompressionType(TextureCompressionType t) const -> bool {
     assert(InGraphicsContext_());
     assert(texture_compression_types_set_);
@@ -352,6 +368,8 @@ class GraphicsServer {
   float res_x_virtual_{};
   float res_y_virtual_{};
   Rect active_render_rect_{};
+  Rect virtual_bounds_rect_{};
+  Rect virtual_outer_rect_{};
   Matrix44f model_view_matrix_{kMatrix44fIdentity};
   Matrix44f view_world_matrix_{kMatrix44fIdentity};
   Matrix44f projection_matrix_{kMatrix44fIdentity};

@@ -191,6 +191,15 @@ auto PlatformApple::GetDefaultUIScale() -> UIScale {
 #endif
 }
 
+auto PlatformApple::IsRunningOnTV() -> bool {
+  // tvOS is only ever on a TV. Note this drives more than it sounds
+  // like: the tv-border default, a forced medium ui-scale, the 'tv'
+  // env value scripts branch on, and the 'OnTV' version-string tag.
+  // Until this existed, tvOS quietly answered no to all four -- which
+  // never bit us only because no tvOS build has shipped yet.
+  return g_buildconfig.platform_tvos();
+}
+
 auto PlatformApple::IsRunningOnDesktop() -> bool {
 #if BA_PLATFORM_IOS_TVOS
   return false;

@@ -319,6 +319,8 @@ def _writefuncs(
                 returnstr = "return {'foo': [('bar', 'baz')]}"
             elif returns == 'list[int]':
                 returnstr = 'return [0]'
+            elif returns == 'list[tuple[float, float]]':
+                returnstr = 'return [(0.0, 0.0)]'
             elif returns in {
                 'session.Session',
                 'team.Team',

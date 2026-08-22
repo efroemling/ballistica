@@ -145,7 +145,7 @@ class DevConsoleTabUI(DevConsoleTab):
     def refresh(self) -> None:
         from babase._generated.enums import UIScale
 
-        xoffs = -305.0
+        xoffs = -410.0
         yoffs = 10.0
 
         custom_buttons = _babase.app.mode.get_dev_console_ui_tab_buttons()
@@ -166,23 +166,36 @@ class DevConsoleTabUI(DevConsoleTab):
 
         self.text(
             'A UI should either fit in the virtual safe area'
-            ' or dynamically respond to screen size changes.',
+            ' or dynamically respond to screen size changes,'
+            ' and should keep its important bits inside the virtual bounds.',
             scale=0.6,
             pos=(xoffs + 8, yoffs + 65),
             h_align='left',
             v_align='center',
         )
 
+        # Bounds on the left, safe area on the right: they nest that
+        # way on screen (bounds is the outer rect), so the buttons read
+        # in the same order as what they draw.
+        bounds_overlay = _babase.get_draw_virtual_bounds()
+        self.button(
+            'Virtual Bounds ON' if bounds_overlay else 'Virtual Bounds OFF',
+            pos=(xoffs + 10, yoffs + 10),
+            size=(200, 30),
+            label_scale=0.6,
+            call=self.toggle_bounds_overlay,
+            style='bright' if bounds_overlay else 'normal',
+        )
         ui_overlay = _babase.get_draw_virtual_safe_area_bounds()
         self.button(
             'Virtual Safe Area ON' if ui_overlay else 'Virtual Safe Area OFF',
-            pos=(xoffs + 10, yoffs + 10),
+            pos=(xoffs + 220, yoffs + 10),
             size=(200, 30),
             label_scale=0.6,
             call=self.toggle_ui_overlay,
             style='bright' if ui_overlay else 'normal',
         )
-        x = 300
+        x = 510
         self.text(
             'UI-Scale',
             pos=(xoffs + x - 5, yoffs + 15),
@@ -212,7 +225,7 @@ class DevConsoleTabUI(DevConsoleTab):
             for custom_button in custom_buttons:
                 self.button(
                     custom_button.name,
-                    pos=(xoffs + x, yoffs + 15),
+                    pos=(xoffs + x, yoffs + 5),
                     size=(cbwidth, 40),
                     label_scale=0.6,
                     call=custom_button.call,
@@ -225,6 +238,11 @@ class DevConsoleTabUI(DevConsoleTab):
         _babase.set_draw_virtual_safe_area_bounds(
             not _babase.get_draw_virtual_safe_area_bounds()
         )
+        self.request_refresh()
+
+    def toggle_bounds_overlay(self) -> None:
+        """Toggle virtual-bounds guide drawing."""
+        _babase.set_draw_virtual_bounds(not _babase.get_draw_virtual_bounds())
         self.request_refresh()
 
 

@@ -85,6 +85,24 @@ MESSAGES: list[Message] = [
         doc='ConnectivityManager network availability changed.',
     ),
     Message(
+        name='DisplayInsetsChanged',
+        direction=Dir.JAVA_TO_NATIVE,
+        fields=[
+            Field('left', FLOAT),
+            Field('right', FLOAT),
+            Field('bottom', FLOAT),
+            Field('top', FLOAT),
+        ],
+        doc=(
+            'Display-cutout safe insets changed, as fractions (0-1) of'
+            ' the window in each direction. Fractions rather than'
+            ' pixels because the GL surface is often a scaled-down'
+            ' version of the window; sending pixels invites applying'
+            " window-space values in surface space. Sent on rotation"
+            ' and any other insets update.'
+        ),
+    ),
+    Message(
         name='SetRunning',
         direction=Dir.JAVA_TO_NATIVE,
         fields=[Field('running', BOOL)],

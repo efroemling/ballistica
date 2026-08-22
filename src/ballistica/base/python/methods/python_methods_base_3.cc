@@ -2,6 +2,7 @@
 
 #include "ballistica/base/python/methods/python_methods_base_3.h"
 
+#include <cmath>
 #include <list>
 #include <optional>
 #include <string>
@@ -25,6 +26,8 @@
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
+#include "ballistica/shared/math/matrix44f.h"
+#include "ballistica/shared/math/rect.h"
 #include "ballistica/shared/python/python.h"
 #include "external/monocypher/monocypher-ed25519.h"
 
@@ -2010,6 +2013,216 @@ static PyMethodDef PyGetDrawVirtualSafeAreaBoundsDef = {
     ":meta private:",
 };
 
+// --------------------- virtual_bounds_calc_probe -----------------------------
+
+static auto PyVirtualBoundsCalcProbe(PyObject* self, PyObject* args,
+                                     PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  PyObject* render_obj;
+  double res_x;
+  double res_y;
+  double inset_l = 0.0;
+  double inset_r = 0.0;
+  double inset_b = 0.0;
+  double inset_t = 0.0;
+  double bleed = 0.0;
+  static const char* kwlist[] = {"render_rect", "res_x",   "res_y",
+                                 "inset_l",     "inset_r", "inset_b",
+                                 "inset_t",     "bleed",   nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "Odd|ddddd", const_cast<char**>(kwlist), &render_obj,
+          &res_x, &res_y, &inset_l, &inset_r, &inset_b, &inset_t, &bleed)) {
+    return nullptr;
+  }
+  auto vals = Python::GetFloats(render_obj);
+  if (vals.size() != 4) {
+    throw Exception("Expected 4 rect values (l, b, r, t).", PyExcType::kValue);
+  }
+  Rect out = Graphics::CalcVirtualBoundsRect(
+      Rect{vals[0], vals[1], vals[2], vals[3]}, static_cast<float>(res_x),
+      static_cast<float>(res_y), static_cast<float>(inset_l),
+      static_cast<float>(inset_r), static_cast<float>(inset_b),
+      static_cast<float>(inset_t), static_cast<float>(bleed));
+  return Py_BuildValue("(ffff)", out.l, out.b, out.r, out.t);
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyVirtualBoundsCalcProbeDef = {
+    "virtual_bounds_calc_probe",            // name
+    (PyCFunction)PyVirtualBoundsCalcProbe,  // method
+    METH_VARARGS | METH_KEYWORDS,           // flags
+
+    "virtual_bounds_calc_probe(render_rect: Sequence[float], res_x: float,\n"
+    "  res_y: float, inset_l: float = 0.0, inset_r: float = 0.0,\n"
+    "  inset_b: float = 0.0, inset_t: float = 0.0, bleed: float = 0.0)"
+    " -> tuple[float, float, float, float]\n"
+    "\n"
+    ":meta private:",
+};
+
+// -------------------- virtual_bounds_project_probe ---------------------------
+
+static auto PyVirtualBoundsProjectProbe(PyObject* self, PyObject* args,
+                                        PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  PyObject* render_obj;
+  PyObject* bounds_obj;
+  PyObject* points_obj;
+  double fov_y = 60.0;
+  double near_val = 4.0;
+  double far_val = 1000.0;
+  static const char* kwlist[] = {"render_rect", "bounds_rect", "points",
+                                 "fov_y",       "near_val",    "far_val",
+                                 nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "OOO|ddd", const_cast<char**>(kwlist), &render_obj,
+          &bounds_obj, &points_obj, &fov_y, &near_val, &far_val)) {
+    return nullptr;
+  }
+
+  auto rect_from = [](PyObject* obj) -> Rect {
+    auto vals = Python::GetFloats(obj);
+    if (vals.size() != 4) {
+      throw Exception("Expected 4 rect values (l, b, r, t).",
+                      PyExcType::kValue);
+    }
+    return Rect{vals[0], vals[1], vals[2], vals[3]};
+  };
+  Rect render_rect = rect_from(render_obj);
+  Rect bounds_rect = rect_from(bounds_obj);
+
+  // Compose for the bounds: symmetric frustum at the bounds' aspect,
+  // exactly as the aspect-derived branch of RenderPass::SetFrustum
+  // does.
+  float aspect = bounds_rect.height() > 0.0f
+                     ? bounds_rect.width() / bounds_rect.height()
+                     : 1.0f;
+  float y = static_cast<float>(near_val
+                               * tan((fov_y / 2.0) * 3.14159265358979 / 180.0));
+  float x = y * aspect;
+  float l = x;
+  float r = x;
+  float b = y;
+  float t = y;
+
+  // ..then extend out to the render rect. Same function the renderer
+  // uses, so this cannot drift from what actually gets drawn.
+  Graphics::ExtendFrustumToRenderRect(render_rect, bounds_rect, &l, &r, &b, &t);
+  Matrix44f proj = Matrix44fFrustum(-l, r, -b, t, static_cast<float>(near_val),
+                                    static_cast<float>(far_val));
+
+  // Project each eye-space point and map to window pixels through the
+  // render rect, which is what the viewport is set to.
+  PyObject* out = PyList_New(0);
+  PyObject* pts_fast = PySequence_Fast(points_obj, "Expected a sequence.");
+  if (pts_fast == nullptr) {
+    Py_DECREF(out);
+    return nullptr;
+  }
+  Py_ssize_t npts = PySequence_Fast_GET_SIZE(pts_fast);
+  for (Py_ssize_t i = 0; i < npts; ++i) {
+    auto pt = Python::GetFloats(PySequence_Fast_GET_ITEM(pts_fast, i));
+    if (pt.size() != 3) {
+      Py_DECREF(pts_fast);
+      Py_DECREF(out);
+      throw Exception("Expected 3 values per point.", PyExcType::kValue);
+    }
+    float px_clip =
+        pt[0] * proj.m[0] + pt[1] * proj.m[4] + pt[2] * proj.m[8] + proj.m[12];
+    float py_clip =
+        pt[0] * proj.m[1] + pt[1] * proj.m[5] + pt[2] * proj.m[9] + proj.m[13];
+    float w_clip =
+        pt[0] * proj.m[3] + pt[1] * proj.m[7] + pt[2] * proj.m[11] + proj.m[15];
+    if (w_clip == 0.0f) {
+      Py_DECREF(pts_fast);
+      Py_DECREF(out);
+      throw Exception("Degenerate projection for point.", PyExcType::kValue);
+    }
+    float px =
+        render_rect.l + (px_clip / w_clip * 0.5f + 0.5f) * render_rect.width();
+    float py =
+        render_rect.b + (py_clip / w_clip * 0.5f + 0.5f) * render_rect.height();
+    PyObject* pair = Py_BuildValue("(ff)", px, py);
+    PyList_Append(out, pair);
+    Py_DECREF(pair);
+  }
+  Py_DECREF(pts_fast);
+  return out;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyVirtualBoundsProjectProbeDef = {
+    "virtual_bounds_project_probe",            // name
+    (PyCFunction)PyVirtualBoundsProjectProbe,  // method
+    METH_VARARGS | METH_KEYWORDS,              // flags
+
+    "virtual_bounds_project_probe(render_rect: Sequence[float],\n"
+    "  bounds_rect: Sequence[float], points: Sequence[Sequence[float]],\n"
+    "  fov_y: float = 60.0, near_val: float = 4.0,\n"
+    "  far_val: float = 1000.0) -> list[tuple[float, float]]\n"
+    "\n"
+    ":meta private:",
+};
+
+// ---------------------- get_draw_virtual_bounds ------------------------------
+
+static auto PyGetDrawVirtualBounds(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+  if (g_base->graphics->draw_virtual_bounds()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetDrawVirtualBoundsDef = {
+    "get_draw_virtual_bounds",            // name
+    (PyCFunction)PyGetDrawVirtualBounds,  // method
+    METH_NOARGS,                          // flags
+
+    "get_draw_virtual_bounds() -> bool\n"
+    "\n"
+    ":meta private:",
+};
+
+// ---------------------- set_draw_virtual_bounds ------------------------------
+
+static auto PySetDrawVirtualBounds(PyObject* self, PyObject* args,
+                                   PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  int value;
+  static const char* kwlist[] = {"value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &value)) {
+    return nullptr;
+  }
+
+  g_base->graphics->set_draw_virtual_bounds(value);
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetDrawVirtualBoundsDef = {
+    "set_draw_virtual_bounds",            // name
+    (PyCFunction)PySetDrawVirtualBounds,  // method
+    METH_VARARGS | METH_KEYWORDS,         // flags
+
+    "set_draw_virtual_bounds(value: bool) -> None\n"
+    "\n"
+    ":meta private:",
+};
+
 // -------------------------- get_initial_app_config ---------------------------
 
 static auto PyGetInitialAppConfig(PyObject* self) -> PyObject* {
@@ -2407,6 +2620,10 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyRequestMainUIDef,
       PyGetDrawVirtualSafeAreaBoundsDef,
       PySetDrawVirtualSafeAreaBoundsDef,
+      PyGetDrawVirtualBoundsDef,
+      PySetDrawVirtualBoundsDef,
+      PyVirtualBoundsProjectProbeDef,
+      PyVirtualBoundsCalcProbeDef,
       PyGetInitialAppConfigDef,
       PySetAppConfigDef,
       PyUpdateInternalLoggerLevelsDef,

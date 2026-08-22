@@ -25,6 +25,15 @@ Canonical design (rationale, tradeoffs, defaults):
 "SmartSocket v1 wire contract" section.
 """
 
+# The wire protocol and the endpoint that speaks it, deliberately in
+# one module: they are one contract, and the frames are meaningless
+# apart from the state machine that interprets them. Splitting would
+# mean an ``efro/smartsocket/`` package (the convention used by
+# ``bacommon/langstr`` and friends, which keeps importers unchanged) --
+# worth doing when this grows again, but it adds files to a module
+# synced across six repos, so it is not a drive-by.
+# pylint: disable=too-many-lines
+
 import time
 import asyncio
 import logging
@@ -239,6 +248,26 @@ class MsgFrame(SmartSocketFrame):
         return SmartSocketFrameTypeID.MSG
 
 
+#: Sizing frames uses a seq wide enough that a real one is never
+#: longer, so the measurement can only over-estimate.
+_SIZING_SEQ = 2**53
+
+
+def framed_size(payload: str) -> int:
+    """Bytes one payload will occupy as a wire message.
+
+    Not ``len(payload)``: a payload is JSON-escaped into its frame, so
+    what it costs depends on what is in it. Quote-heavy JSON nearly
+    doubles while base64 does not grow at all -- a 2x difference, and
+    assuming the worst of it would reject payloads that fit with room
+    to spare (an automation screenshot is base64 and inflates ~0%).
+
+    Measuring is cheap here because the frame gets serialized on the
+    way out regardless.
+    """
+    return len(dataclass_to_json(MsgFrame(seq=_SIZING_SEQ, payload=payload)))
+
+
 @ioprepped
 @dataclass
 class AckFrame(SmartSocketFrame):
@@ -333,6 +362,16 @@ SS_CLOSE_ROLE_VIOLATION = 4202
 SS_CLOSE_SEQ_VIOLATION = 4203
 SS_CLOSE_BAD_PAYLOAD = 4204  # not of the endpoint's declared type
 
+# The two below are never sent on the wire; an endpoint records them
+# locally when it gives up. They live in the registry so they cannot
+# collide with a real code and so they land in the DEAD band, which
+# reads as "do not reconnect" anywhere that interprets a code. Being
+# nonzero matters too: consumers commonly test the code for truthiness
+# before reporting a reason, so a give-up recorded as 0 gets silently
+# dropped along with the only diagnostic string it had.
+SS_CLOSE_SERVE_FAILED = 4205  # serving kept throwing
+SS_CLOSE_RECONNECT_EXHAUSTED = 4206  # never got back in
+
 
 # ---------------------------------------------------------------- #
 # Close-code interpretation.
@@ -394,6 +433,16 @@ def action_for_close_code(code: int) -> SmartSocketAction:
 #: every window to run the recovery matrix in seconds).
 LOSS_DETECTION_FLOOR_SECONDS = 15.0
 
+#: Consecutive connections that may die from an unexpected exception
+#: before the endpoint stops trying.
+#:
+#: The reconnect budget cannot bound this: a successful hello resets
+#: it, so a connection that attaches fine and *then* throws gets a
+#: fresh budget every attempt -- and the relay replays its buffered
+#: frames on resume, so a failure caused by one reproduces forever.
+#: Small on purpose: a transient error clears on the next attempt.
+MAX_CONSECUTIVE_SERVE_FAILURES = 3
+
 #: Largest WebSocket message the protocol puts on the wire, in bytes.
 #:
 #: Every leg's socket-level receive limit is configured to exactly
@@ -421,10 +470,21 @@ _FRAME_OVERHEAD_BYTES = 1024
 #: "this payload fits" true regardless of content rather than true for
 #: the bodies we happen to send today.
 #:
-#: This is the number a sender checks and a chunker splits on. It is
-#: load-bearing for the relay's resend-buffer and linger math, so it
-#: does not grow to fit one caller's message: anything larger must be
-#: split *above* this layer.
+#: This is the number a *chunker* splits on -- not one senders check.
+#: A sender is guarded against the real framed cost of its payload
+#: (see :func:`framed_size` and the checks in
+#: :meth:`SmartSocketEndpoint.send`), which lets base64-ish content
+#: through at close to the full :data:`MAX_MESSAGE_BYTES`; this value
+#: is the pessimistic size that fits regardless of content, so it is
+#: what a splitter should use when it already knows a payload is too
+#: big. Note a chunker embedding slices in an envelope of its own
+#: incurs the 2x escape a second time, so it wants half of this again
+#: (see basn's ``_RESPONSE_SLICE_BYTES`` and the automation channel's
+#: ``_EVENT_SLICE_BYTES``).
+#:
+#: It is load-bearing for the relay's resend-buffer and linger math,
+#: so it does not grow to fit one caller's message: anything larger
+#: must be split *above* this layer.
 MAX_PAYLOAD_BYTES = MAX_MESSAGE_BYTES // 2 - _FRAME_OVERHEAD_BYTES
 
 
@@ -463,6 +523,51 @@ class SmartSocketPayloadTooLarge(Exception):
             f' {cap} bytes; split it into smaller messages.'
         )
         self.size = size
+        self.cap = cap
+
+
+class SmartSocketSendWouldDeadlock(Exception):
+    """A message handler tried to send past the in-flight cap.
+
+    Inbound messages and acks arrive on one reader loop, and
+    :attr:`SmartSocketEndpoint.on_message` runs inside it. So a
+    handler that waits for in-flight space is waiting for acks that
+    only its own -- now blocked -- reader could consume: a permanent
+    wedge, not a slowdown. The endpoint knows when it is inside its
+    own dispatch, so it says so here instead of hanging.
+
+    This is the cumulative-send counterpart to
+    :class:`SmartSocketPayloadTooLarge`, which catches the same
+    hazard for a single oversized message; sending several smaller
+    ones from a handler adds up to the same wait with nobody left to
+    end it.
+
+    Fixes, in preference order: size the endpoint's
+    ``in_flight_cap_bytes`` past anything a handler may send; bound
+    what a handler sends and refuse the rest cleanly (a caller told
+    'too big' can do something about it; a wedged channel cannot);
+    or move the send off the reader loop entirely -- queue the work
+    in the handler and serve it from a task of its own.
+
+    Detection is scoped to the dispatching task, so it catches the
+    send a handler makes itself (directly or down its own await
+    chain) and not one made by some other task that merely happens
+    to be sending while a handler runs -- that one has a reader loop
+    to un-block it. A handler that hands its send to a task and then
+    waits on that task is the same deadlock wearing a disguise, and
+    is not detectable here.
+    """
+
+    def __init__(self, size: int, unacked: int, cap: int) -> None:
+        super().__init__(
+            f'sending {size} bytes with {unacked} un-acked would block'
+            f' past the in-flight cap of {cap} bytes, from inside a'
+            f' message handler -- the acks that would unblock it are'
+            f' read by the loop this handler is running on, so it'
+            f' would never return.'
+        )
+        self.size = size
+        self.unacked = unacked
         self.cap = cap
 
 
@@ -527,7 +632,7 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         recv_type: type[RecvT],
         on_message: Callable[[RecvT], Awaitable[None]] | None = None,
         refresh: Callable[[], Awaitable[None]] | None = None,
-        in_flight_cap_bytes: int = MAX_PAYLOAD_BYTES,
+        in_flight_cap_bytes: int = MAX_MESSAGE_BYTES,
         attach_timeout_seconds: float = 10.0,
         loss_detection_floor_seconds: float = (LOSS_DETECTION_FLOOR_SECONDS),
         logger: logging.Logger | None = None,
@@ -543,6 +648,13 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
 
         #: Called with each inbound payload, decoded, in order,
         #: exactly once.
+        #:
+        #: Runs on the reader loop, which is also what consumes
+        #: inbound acks -- so a handler that blocks stops the acks
+        #: too, and one that blocks *waiting* on them deadlocks. See
+        #: :class:`SmartSocketSendWouldDeadlock`; sending from a
+        #: handler is fine, sending more than the in-flight cap's
+        #: worth from one is not.
         self.on_message = on_message
 
         self.policy: SmartSocketEndpointPolicy | None = None
@@ -550,6 +662,10 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         self.done = False
         self.close_code = 0
         self.close_reason = ''
+        #: Connections that died from an unexpected exception
+        #: since the last one that ended the normal way; see
+        #: MAX_CONSECUTIVE_SERVE_FAILURES.
+        self._serve_failures = 0
 
         self._transport: SmartSocketTransport | None = None
         self._next_seq = 1
@@ -570,6 +686,12 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         self._connect_failure_signature: str | None = None
         self._connect_failures_start = 0.0
         self._stopping = False
+        #: The task running :attr:`on_message` right now, if any.
+        #: Identity, not a bool: only a send made *by* the handler
+        #: can be the deadlock, and a send from elsewhere during a
+        #: dispatch is an ordinary wait. See
+        #: :class:`SmartSocketSendWouldDeadlock`.
+        self._dispatch_task: asyncio.Task | None = None
         #: Set when *we* close a connection in order to recover.
         #: Our own close code must never be run through the inbound
         #: action table -- SS_CLOSE_DETACH is a code we *send*, and
@@ -639,6 +761,11 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         bigger than the whole in-flight buffer -- it could never be
         sent, so we say so instead of blocking forever waiting for
         space that can't appear.
+
+        Raises :class:`SmartSocketSendWouldDeadlock` when the block
+        would happen inside this endpoint's own
+        :attr:`on_message` dispatch, where the acks that would end
+        it can never arrive.
         """
         if not isinstance(message, self._send_type):
             raise TypeError(
@@ -647,11 +774,33 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
             )
         payload = dataclass_to_json(message)
 
-        # A message that alone exceeds the cap can never fit the
-        # un-acked buffer, so the wait below would never end. Fail
-        # loudly rather than hang.
+        # Two ways one message can be impossible, both of which would
+        # otherwise hang: too big for the far socket to receive (it
+        # refuses the frame, and the relay replays it forever), or
+        # bigger than the whole un-acked buffer (the wait below would
+        # never end). Fail loudly instead, at the real framed cost
+        # rather than a worst-case guess.
+        framed = framed_size(payload)
+        if framed > MAX_MESSAGE_BYTES:
+            raise SmartSocketPayloadTooLarge(framed, MAX_MESSAGE_BYTES)
         if len(payload) > self._in_flight_cap:
             raise SmartSocketPayloadTooLarge(len(payload), self._in_flight_cap)
+
+        # The third way a send can never finish, and the only one
+        # the sizes alone cannot show: a handler's sends adding up
+        # past the cap. Waiting would park the reader loop that the
+        # acks have to come through, so say so rather than wedging
+        # the session in a state where it cannot even notice the
+        # peer leaving.
+        if (
+            not self.done
+            and self._unacked_bytes + len(payload) > self._in_flight_cap
+            and self._dispatch_task is not None
+            and asyncio.current_task() is self._dispatch_task
+        ):
+            raise SmartSocketSendWouldDeadlock(
+                len(payload), self._unacked_bytes, self._in_flight_cap
+            )
 
         while (
             not self.done
@@ -713,13 +862,34 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
             self._note_close(exc.code, exc.reason)
             return self._action_for(exc.code)
         except Exception:  # pylint: disable=broad-except
+            self._serve_failures += 1
             self._logger.exception('smartsocket connection')
+            if self._serve_failures >= MAX_CONSECUTIVE_SERVE_FAILURES:
+                # Reconnecting has reproduced this the same way every
+                # time; it is not the connection. Stop, and say so at
+                # a level that survives -- looping here is invisible
+                # to anyone whose logger is silenced.
+                self._logger.error(
+                    'smartsocket giving up: %d consecutive failures'
+                    ' serving the connection. Reconnecting reproduces'
+                    ' this, so it is not a transport problem.',
+                    self._serve_failures,
+                )
+                self._note_close(
+                    SS_CLOSE_SERVE_FAILED,
+                    f'{self._serve_failures} consecutive failures serving'
+                    f' the connection',
+                )
+                return SmartSocketAction.DEAD
             return SmartSocketAction.RESUME
         finally:
             for task in tasks:
                 task.cancel()
             self.connected = False
             self._transport = None
+        # Ended by a close code rather than by throwing: whatever the
+        # code says, the serving path itself worked.
+        self._serve_failures = 0
         return self._action_for(self.close_code)
 
     def _note_connect_failure(self, exc: BaseException) -> None:
@@ -799,7 +969,17 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
         while True:
             data = await transport.recv()
             self._last_inbound = time.monotonic()
-            frame = dataclass_from_json(SmartSocketFrame, data)
+            try:
+                frame = dataclass_from_json(SmartSocketFrame, data)
+            except Exception:  # pylint: disable=broad-except
+                # Die rather than resume: the relay replays this
+                # frame on reconnect, so retrying reproduces it
+                # exactly -- what the close-code table sends to DEAD,
+                # arriving as an exception instead of a code. This is
+                # how the relay already handles ours.
+                self._logger.exception('smartsocket: undecodable frame')
+                await self._fail(SS_CLOSE_BAD_FRAME, 'undecodable frame')
+                return
 
             if isinstance(frame, HelloFrame):
                 if helloed:
@@ -869,7 +1049,14 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
             await self._fail(SS_CLOSE_BAD_PAYLOAD, 'undecodable payload')
             return False
 
-        await self.on_message(message)
+        # Marked so a send from inside the handler can tell that
+        # its back-pressure has nobody left to relieve it; see
+        # SmartSocketSendWouldDeadlock.
+        self._dispatch_task = asyncio.current_task()
+        try:
+            await self.on_message(message)
+        finally:
+            self._dispatch_task = None
         return True
 
     def _trim(self, acked: int) -> None:
@@ -940,7 +1127,9 @@ class SmartSocketEndpoint[SendT: IOMultiType, RecvT: IOMultiType]:
                     time.monotonic() - self._connect_failures_start,
                     self._connect_failure_signature,
                 )
-            self._note_close(0, 'reconnect budget exhausted')
+            self._note_close(
+                SS_CLOSE_RECONNECT_EXHAUSTED, 'reconnect budget exhausted'
+            )
             return False
         delay = self._reconnect_delay * (1.0 + 0.3 * _jitter())
         self._reconnect_delay = min(self._reconnect_delay * 2.0, 10.0)

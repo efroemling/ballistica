@@ -45,13 +45,18 @@ import babase
 import baenv
 
 from efro.util import break_websocket_logger_cycle
+from efro.dataclassio import dataclass_to_json
 from efro.smartsocket import (
+    MAX_MESSAGE_BYTES,
+    MAX_PAYLOAD_BYTES,
+    framed_size,
     SmartSocketClosed,
     SmartSocketEndpoint,
     SmartSocketPayloadTooLarge,
 )
 from bacommon.automationchannel import (
     AutomationCommand,
+    ChunkEvent,
     # Runtime import, not TYPE_CHECKING: the endpoint takes the root
     # types as real arguments, since generics are erased at runtime.
     AutomationEvent,
@@ -70,6 +75,43 @@ if TYPE_CHECKING:
     from typing import Any
 
 logger = logging.getLogger('ba.automationsession')
+
+#: How many un-acked bytes this endpoint may hold.
+#:
+#: Bigger than the transport default (one message's worth) because a
+#: chunked screenshot is several messages that must ALL fit without
+#: blocking. Blocking here is not merely slow, it deadlocks: a
+#: SmartSocket reads message frames and ack frames in one loop, and a
+#: command handler runs inside that loop, so a handler that waits for
+#: in-flight space is waiting for acks its own caller is blocked from
+#: reading. Sizing the buffer past anything we will send is what keeps
+#: that unreachable; ``_MAX_CHUNKED_PAYLOAD_BYTES`` enforces the other
+#: half.
+#:
+#: Costs real device memory in the worst case, which is affordable for
+#: a developer-build-only channel.
+_IN_FLIGHT_CAP_BYTES = 8 * 1024 * 1024
+
+#: Largest event we will split rather than refuse.
+#:
+#: Leaves headroom under the in-flight cap for the chunk envelopes and
+#: for whatever else is in flight (log traffic keeps flowing during a
+#: capture). Past this we answer with a clean failure, because sending
+#: it would risk the deadlock described above -- a caller told "too
+#: big" can do something about it; a wedged channel cannot.
+_MAX_CHUNKED_PAYLOAD_BYTES = _IN_FLIGHT_CAP_BYTES // 2
+
+#: How much serialized event one :class:`ChunkEvent` carries.
+#:
+#: Half the always-safe payload size, less envelope room. A slice is
+#: JSON that gets escaped again into the chunk envelope, so it can
+#: double -- the same worst case ``MAX_PAYLOAD_BYTES`` already budgets
+#: for once. Deliberately the guaranteed-safe size rather than a
+#: measured one: this is the path for payloads already known not to
+#: fit, so being generous here just risks a chunk that also doesn't.
+#: Mirrors basn's ``_RESPONSE_SLICE_BYTES``, which solves this same
+#: problem for bacloud responses.
+_EVENT_SLICE_BYTES = MAX_PAYLOAD_BYTES // 2 - 1024
 
 #: Env var that turns the channel on. The capability is compiled into
 #: developer builds only, but even there it stays off until asked
@@ -354,6 +396,7 @@ class AutomationSessionManager:
             send_type=AutomationEvent,
             recv_type=AutomationCommand,
             on_message=self._on_command,
+            in_flight_cap_bytes=_IN_FLIGHT_CAP_BYTES,
         )
         self._endpoint = endpoint
 
@@ -383,15 +426,104 @@ class AutomationSessionManager:
                 self._endpoint = None
         return True
 
-    async def _emit(self, event: AutomationEvent) -> None:
-        """Send one event, tolerating a channel that just died."""
+    async def _emit(
+        self, event: AutomationEvent, *, shed_when_oversized: bool = False
+    ) -> None:
+        """Send one event, tolerating a channel that just died.
+
+        An event too big for one message is split across several and
+        rejoined by the driver, so a caller gets its answer whatever
+        the size. ``shed_when_oversized`` opts out of that for log
+        traffic, which drops the event and expresses the loss as a
+        gap instead.
+
+        The distinction matters: shedding is a *logging* policy, and
+        applying it to everything is what made an over-cap screenshot
+        vanish with no result event and no error -- the caller's own
+        too-large handler could never run, because this method had
+        already swallowed the exception. A command must never
+        complete without an answer.
+        """
         endpoint = self._endpoint
         if endpoint is None:
             return
         try:
-            await endpoint.send(event)
+            if shed_when_oversized:
+                await endpoint.send(event)
+            else:
+                await self._send_possibly_chunked(endpoint, event)
         except SmartSocketClosed:
             pass  # The run loop observes this and winds up.
+        except SmartSocketPayloadTooLarge as exc:
+            if not shed_when_oversized:
+                # Chunking should have made this unreachable; if it
+                # somehow didn't, the caller owns the answer. Letting
+                # this through is what keeps "a command always gets a
+                # result" true rather than aspirational.
+                raise
+            # Shedding upstream bounds the entry *count*; nothing
+            # bounds bytes, and a handful of very long lines (a stack
+            # dump, a big repr) blows the cap while staying well under
+            # the count. Express it as a gap, the same way every other
+            # loss here is expressed -- the alternative is this
+            # escaping into the run loop and taking the channel down
+            # because something logged too much.
+            logger.warning(
+                'automation: dropping a %d-byte %s; over the channel'
+                ' message cap.',
+                exc.size,
+                type(event).__name__,
+            )
+            if isinstance(event, LogEntriesEvent):
+                try:
+                    # A GapEvent is tiny, so this cannot recurse.
+                    await endpoint.send(GapEvent(dropped=len(event.entries)))
+                except SmartSocketClosed:
+                    pass
+
+    async def _send_possibly_chunked(
+        self,
+        endpoint: SmartSocketEndpoint[AutomationEvent, AutomationCommand],
+        event: AutomationEvent,
+    ) -> None:
+        """Send one event, splitting it if it can't fit in one message."""
+        payload = dataclass_to_json(event)
+
+        # Test what this payload actually costs framed rather than
+        # assuming the worst: a screenshot is base64 and inflates ~0%,
+        # so a pessimistic trigger would chop events that fit whole.
+        if framed_size(payload) <= MAX_MESSAGE_BYTES:
+            await endpoint.send(event)
+            return
+
+        # Refuse what we could not send without blocking. See
+        # _MAX_CHUNKED_PAYLOAD_BYTES: waiting for in-flight space from
+        # inside a command handler deadlocks the channel, so the size
+        # we can chunk is bounded by the buffer rather than by
+        # patience.
+        if len(payload) > _MAX_CHUNKED_PAYLOAD_BYTES:
+            raise SmartSocketPayloadTooLarge(
+                len(payload), _MAX_CHUNKED_PAYLOAD_BYTES
+            )
+
+        # Slice the serialized form, not the object: rejoining is
+        # concatenation and the result decodes exactly as it would
+        # have unsplit, so this carries every event type without
+        # knowing anything about them.
+        slices = [
+            payload[i : i + _EVENT_SLICE_BYTES]
+            for i in range(0, len(payload), _EVENT_SLICE_BYTES)
+        ]
+        logger.debug(
+            'automation: splitting a %d-byte %s into %d chunks.',
+            len(payload),
+            type(event).__name__,
+            len(slices),
+        )
+        for index, chunk in enumerate(slices):
+            await endpoint.send(
+                ChunkEvent(index=index, count=len(slices), data=chunk)
+            )
 
     async def _pump_log(self) -> None:
         """Push new log entries as they appear."""
@@ -421,7 +553,9 @@ class AutomationSessionManager:
                 await self._emit(GapEvent(dropped=skipped))
 
             self._log_index = archive.start_index + len(archive.entries)
-            await self._emit(LogEntriesEvent(entries=entries))
+            await self._emit(
+                LogEntriesEvent(entries=entries), shed_when_oversized=True
+            )
 
     async def _on_command(self, command: AutomationCommand) -> None:
         """Handle one command from a driver.
@@ -538,11 +672,13 @@ class AutomationSessionManager:
         # whole image as content).
         meta = await self._read_screenshot_meta(meta_path)
 
-        # A lossless PNG of a large screen can exceed what one channel
-        # message may carry. Answer with a clean failure rather than
-        # letting the too-large error tear through the dispatch path;
-        # the fix if this ever matters is chunking (deferred), not a
-        # bigger cap. (JPEG -- the default -- never gets close.)
+        # A lossless PNG of a large screen exceeds what one channel
+        # message may carry, so _emit splits it across several. (JPEG
+        # -- the default -- never gets close.) The handler below is a
+        # backstop for a payload that somehow overruns even chunked:
+        # a command must never complete without a result, which is
+        # exactly what went wrong when this arm was unreachable and an
+        # over-cap capture vanished in silence.
         try:
             await self._emit(
                 ScreenshotEvent(

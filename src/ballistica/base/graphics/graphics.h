@@ -36,6 +36,72 @@ const float kTVBorder = 0.035f;
 const float kMinAspectRatio = 4.0f / 3.0f;
 const float kMaxAspectRatio = 21.0f / 9.0f;
 
+// Whether content may bleed a little past a computed OS inset.
+//
+// SET THIS FALSE WHEN MEASURING VIRTUAL BOUNDS AGAINST OS-PROVIDED
+// GEOMETRY -- notches, cutouts, rounded corners. The bleed deliberately
+// pulls the bounds *inside* the obstruction, so with it on you cannot
+// tell a correct inset from one that is off by about the bleed amount.
+// Our alignment checks all assume it is off.
+const bool kVirtualBoundsBleedEnabled = true;
+
+// How far past a computed inset content may extend, in VIRTUAL units
+// (the same units widgets are positioned in, where the safe area is
+// 1280x720). Defining property: a rect this many units wide, drawn in
+// virtual coords, is exactly the overhang.
+//
+// Virtual units rather than pixels because this offsets our own UI's
+// margins, which are in virtual units too -- compensating in the same
+// units as the thing being compensated keeps it right across devices.
+// Our elements already sit some way in from the virtual screen edge,
+// so insetting by an obstruction's full depth stacks that margin on
+// clearance that is already sufficient.
+//
+// A starting guess, meant to be tuned by eye rather than derived. Note
+// there is no obstruction we can safely bleed into "for free": a
+// rounded corner starts clipping immediately, and so does a cutout
+// that reaches the screen edge. Even one that floats clear of the edge
+// (an iPhone's Dynamic Island) only spares us until the bleed reaches
+// it. So this is a judgment across all of those at once -- how much
+// overhang looks right given our elements' own margins -- and not a
+// figure any single case implies.
+const float kVirtualBoundsBleed = 55.0f;
+
+// Most of one edge of the active render rect we will give up to an
+// OS-reported inset. This drives camera framing and UI layout now, so
+// a device reporting something absurd (or a unit mix-up in a platform
+// layer) should cost us a clipped corner, not the play area.
+const float kMaxVirtualBoundsInsetFraction = 0.15f;
+
+// Debug-only forced virtual-bounds inset, as fractions of the active
+// render rect (l/r of its width, b/t of its height). Deliberately
+// ASYMMETRIC on all four edges: a symmetric inset would hide a
+// transposed or sign-flipped axis, which is exactly the bug class the
+// A/B test exists to catch. Only ever applied when the
+// BA_VIRTUAL_BOUNDS_AB env var asks for it.
+const float kDebugVirtualBoundsInsetL = 0.060f;
+const float kDebugVirtualBoundsInsetR = 0.020f;
+const float kDebugVirtualBoundsInsetB = 0.100f;
+const float kDebugVirtualBoundsInsetT = 0.035f;
+
+// How long each config is shown for in A/B toggle mode.
+const millisecs_t kDebugVirtualBoundsABPeriod{1000};
+
+/// Which of the two equivalent virtual-bounds configs to run in. Both
+/// use the exact same bounds rect; they differ only in how far drawing
+/// extends past it, so anything inside the bounds must look identical
+/// in both. See docs/initiatives/active-render-rect.md.
+enum class VirtualBoundsABMode : uint8_t {
+  /// No forced inset; bounds match the render rect (normal operation).
+  kDisabled,
+  /// Render rect inset to the bounds, so black fills the margins.
+  kA,
+  /// Render rect left full, so real drawn content fills the margins.
+  kB,
+  /// Alternate A and B once per second.
+  kToggle
+};
+
 const float kVRBorder = 0.085f;
 
 // Light/shadow res is divided by this to get pure light res.
@@ -86,6 +152,26 @@ class Graphics {
 
   /// Should be called when UIScale changes.
   void OnUIScaleChange();
+
+  /// Report the OS-provided safe-area insets for the current display,
+  /// as fractions (0-1) of the full drawable area in each direction.
+  ///
+  /// Fractions rather than pixels on purpose: a platform's insets and
+  /// our GL surface are often in different pixel spaces (an Android
+  /// window of 2424x1080 backing a 1616x720 surface, iOS points vs
+  /// pixels), and handing pixels across that seam invites applying
+  /// them in the wrong one. A fraction is the same number in either.
+  ///
+  /// Platform layers call this whenever their values change (rotation,
+  /// a fold, a window move between displays); it is cheap to call
+  /// redundantly since identical values are ignored. All four edges are
+  /// taken even though only left/right are honored today -- see
+  /// UpdateScreen_ for why that split lives at the point of use rather
+  /// than at the platform layers.
+  ///
+  /// Must be called from the logic thread; platform layers generally
+  /// need to push a call (see AppAdapter/from_swift for the pattern).
+  void SetOSSafeAreaInsets(float l, float r, float b, float t);
 
   void StepDisplayTime();
 
@@ -171,6 +257,11 @@ class Graphics {
   }
 
   void DrawVirtualSafeAreaBounds(RenderPass* pass);
+  void DrawVirtualBounds(RenderPass* pass);
+  void ReadVirtualBoundsABMode_();
+  void StepVirtualBoundsABToggle_();
+  auto CalcDebugVirtualBoundsRect_(const Rect& render_rect) -> Rect;
+  auto CalcVirtualBoundsRect_(const Rect& render_rect) -> Rect;
   static void GetBaseVirtualRes(float* x, float* y);
 
   // Enable progress bar drawing locally.
@@ -268,25 +359,119 @@ class Graphics {
   }
 
   auto PixelToVirtualX(float x) const -> float {
-    // Map based on our position within the active render rect (the
-    // sub-rect of the window that game content occupies). Positions in
-    // border regions map outside the 0..virtual-res range.
+    // Map based on our position within the virtual bounds (the sub-rect
+    // of the window our virtual coordinate system maps onto). Positions
+    // in border or bounds-margin regions map outside the
+    // 0..virtual-res range.
     return res_x_virtual_
-           * ((x - active_render_rect_.l) / active_render_rect_.width());
+           * ((x - virtual_bounds_rect_.l) / virtual_bounds_rect_.width());
   }
 
   auto PixelToVirtualY(float y) const -> float {
     return res_y_virtual_
-           * ((y - active_render_rect_.b) / active_render_rect_.height());
+           * ((y - virtual_bounds_rect_.b) / virtual_bounds_rect_.height());
   }
 
   /// The sub-rect of the physical window that game content occupies, in
   /// pixels (bottom-left origin, y-up). Everything outside it is kept
   /// cleared to black. Matches the full window unless tv-border mode
   /// and/or aspect-ratio limiting is in effect.
+  ///
+  /// Note that this governs only how far drawing *extends*; what
+  /// drawing coordinates *mean* is governed by virtual_bounds_rect().
   auto active_render_rect() const -> const Rect& {
     assert(g_base->InLogicThread());
     return active_render_rect_;
+  }
+
+  /// The sub-rect of the active render rect that our virtual coordinate
+  /// system maps onto, in pixels (bottom-left origin, y-up). Equal to
+  /// the active render rect unless inset to dodge camera cutouts,
+  /// rounded screen corners, etc.
+  ///
+  /// Unlike the active render rect this does NOT clip anything; drawing
+  /// simply continues out to the render rect edge with coords beyond
+  /// the 0..virtual-res range. We draw *as if* this rect were the
+  /// render rect and let the leftover margins fill with whatever the
+  /// same drawing commands put there (backgrounds and whatnot), so
+  /// important elements can stay inside it while the screen still
+  /// paints edge to edge.
+  auto virtual_bounds_rect() const -> const Rect& {
+    assert(g_base->InLogicThread());
+    return virtual_bounds_rect_;
+  }
+
+  /// The active render rect expressed in virtual coords. Equals
+  /// (0, 0, virtual-res-x, virtual-res-y) when the virtual bounds
+  /// aren't inset; otherwise l/b go negative and r/t exceed the virtual
+  /// res by the margins. This is what projections extend out to and
+  /// what full-screen-cover geometry needs to span.
+  auto virtual_outer_rect() const -> const Rect& {
+    assert(g_base->InLogicThread());
+    return virtual_outer_rect_;
+  }
+
+  /// Calc the virtual bounds for a render rect, given OS safe-area
+  /// insets as fractions (0-1) of a ``res_x`` by ``res_y`` screen.
+  ///
+  /// Honors left/right only; the other two are accepted so the policy
+  /// lives here rather than being re-decided per platform, and so that
+  /// honoring them later is a change in one tested place.
+  ///
+  /// Note this *intersects* the unobscured region with the render rect
+  /// rather than insetting the rect: tv-mode's border and the
+  /// aspect clamp can already have pulled the rect in past a cutout,
+  /// and insetting again would double-count. Whichever constraint
+  /// reaches further in wins.
+  ///
+  /// Static and pure so the render path and its test share one
+  /// implementation.
+  static auto CalcVirtualBoundsRect(const Rect& render_rect, float res_x,
+                                    float res_y, float inset_l, float inset_r,
+                                    float inset_b, float inset_t,
+                                    float bleed = 0.0f) -> Rect;
+
+  /// Extend a frustum built for ``bounds_rect`` outward so the same
+  /// projection keeps going out to ``render_rect``.
+  ///
+  /// The l/r/b/t are frustum edge distances at the near plane (as
+  /// ``Matrix44fFrustum`` wants them, i.e. the left edge sits at
+  /// ``-l``). This extends rather than rescales: everything within
+  /// the bounds lands on exactly the pixels it would have landed on
+  /// had the render rect matched the bounds, which is the invariant
+  /// virtual bounds exist to keep. A no-op when the two rects match.
+  ///
+  /// Static and pure so the render path and its test can share one
+  /// implementation rather than two that agree until they don't.
+  static void ExtendFrustumToRenderRect(const Rect& render_rect,
+                                        const Rect& bounds_rect, float* l,
+                                        float* r, float* b, float* t);
+
+  /// Calc the active render rect expressed in virtual coords, given the
+  /// render rect, the virtual bounds within it, and the virtual res the
+  /// bounds map to. Shared by the logic and graphics threads so the two
+  /// can't drift.
+  static auto CalcVirtualOuterRect(const Rect& render_rect,
+                                   const Rect& bounds_rect, float res_x_virtual,
+                                   float res_y_virtual) -> Rect {
+    // Guard against degenerate bounds; callers log those separately.
+    float bw = bounds_rect.width();
+    float bh = bounds_rect.height();
+    if (bw <= 0.0f || bh <= 0.0f) {
+      return Rect{0.0f, 0.0f, res_x_virtual, res_y_virtual};
+    }
+    float sx = res_x_virtual / bw;
+    float sy = res_y_virtual / bh;
+    return Rect{(render_rect.l - bounds_rect.l) * sx,
+                (render_rect.b - bounds_rect.b) * sy,
+                (render_rect.r - bounds_rect.l) * sx,
+                (render_rect.t - bounds_rect.b) * sy};
+  }
+
+  /// Which forced virtual-bounds A/B config we're running, if any.
+  auto virtual_bounds_ab_mode() const {
+    assert(g_base->InLogicThread());
+    return virtual_bounds_ab_mode_;
   }
 
   /// Calc the active render rect for a given window size and tv-border
@@ -382,6 +567,20 @@ class Graphics {
     assert(client_context_snapshot_.exists());
     return client_context_snapshot_.get()->get();
   }
+  /// Whether to draw a guide showing the virtual bounds - the area our
+  /// virtual coord system covers. With no cutout inset this sits right
+  /// at the edge of what we draw; inset, it pulls in and everything
+  /// between it and the screen edge is margin that keeps getting drawn
+  /// into. UI should stay inside it.
+  auto draw_virtual_bounds() const {
+    assert(g_base->InLogicThread());
+    return draw_virtual_bounds_;
+  }
+  void set_draw_virtual_bounds(bool val) {
+    assert(g_base->InLogicThread());
+    draw_virtual_bounds_ = val;
+  }
+
   auto draw_virtual_safe_area_bounds() const {
     return draw_virtual_safe_area_bounds_;
   }
@@ -446,6 +645,10 @@ class Graphics {
   bool sent_initial_graphics_settings_{};
   bool got_screen_resolution_{};
   bool draw_virtual_safe_area_bounds_{};
+  bool draw_virtual_bounds_{};
+  bool virtual_bounds_ab_showing_b_{};
+  VirtualBoundsABMode virtual_bounds_ab_mode_{VirtualBoundsABMode::kDisabled};
+  millisecs_t virtual_bounds_ab_last_switch_time_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector2f shadow_scale_{1.0f, 1.0f};
   Vector3f tint_{1.0f, 1.0f, 1.0f};
@@ -475,6 +678,12 @@ class Graphics {
   float res_x_virtual_{256.0f};
   float res_y_virtual_{256.0f};
   Rect active_render_rect_{0.0f, 0.0f, 256.0f, 256.0f};
+  float os_inset_l_{};
+  float os_inset_r_{};
+  float os_inset_b_{};
+  float os_inset_t_{};
+  Rect virtual_bounds_rect_{0.0f, 0.0f, 256.0f, 256.0f};
+  Rect virtual_outer_rect_{0.0f, 0.0f, 256.0f, 256.0f};
   float overlay_node_z_depth_{};
   float progress_bar_progress_{};
   float shadow_lower_bottom_{-4.0f};

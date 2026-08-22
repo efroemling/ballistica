@@ -539,14 +539,23 @@ void Renderer::UpdateCameraRenderTargets(FrameDef* frame_def) {
       float pixel_scale_fin = std::min(1.0f, std::max(0.1f, pixel_scale_));
       // Note: offscreen content buffers represent only the screen's
       // content region (which excludes any tv-border/aspect-limit black
-      // bars), so size off that.
+      // bars), so size off that. Note this is the full render rect and
+      // not the virtual bounds within it - the buffer has to physically
+      // hold the bounds margins too, since we keep drawing out into
+      // them.
       Rect content_rect = screen_render_target_->content_rect();
       int w = static_cast<int>(content_rect.width() * pixel_scale_fin);
       int h = static_cast<int>(content_rect.height() * pixel_scale_fin);
 
-      // Calc and store the number of blur levels we'll want
-      // based on this resolution.
-      int max_res = std::max(w, h);
+      // Calc and store the number of blur levels we'll want based on
+      // this resolution. Unlike the allocation above, this is a quality
+      // decision, so take it from the virtual bounds: we want the same
+      // answer whether a given inset is achieved by shrinking the
+      // render rect or by insetting the bounds within it.
+      Rect bounds_rect = screen_render_target_->virtual_bounds_content_rect();
+      int max_res =
+          static_cast<int>(std::max(bounds_rect.width(), bounds_rect.height())
+                           * pixel_scale_fin);
       blur_res_count_ = 0;
       int blur_res = max_res;
       while (blur_res > 250) {

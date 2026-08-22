@@ -36,7 +36,11 @@ import babase
 import baenv
 
 from efro.util import break_websocket_logger_cycle
-from efro.smartsocket import SmartSocketClosed, SmartSocketEndpoint
+from efro.smartsocket import (
+    SmartSocketClosed,
+    SmartSocketEndpoint,
+    SmartSocketPayloadTooLarge,
+)
 from bacommon.consolechannel import (
     ConsolePermission,
     PermissionEvent,
@@ -478,6 +482,27 @@ class ConsoleSessionManager:
             await endpoint.send(event)
         except SmartSocketClosed:
             pass  # The run loop observes this and winds up.
+        except SmartSocketPayloadTooLarge as exc:
+            # The shedding above bounds the entry *count*; nothing
+            # bounds bytes, and a few very long lines (a stack dump, a
+            # big repr) blow the cap while staying well under the
+            # count. Keep to this module's rule -- loss is expressed in
+            # the payload, never by the transport silently gapping --
+            # rather than letting this escape and kill the session
+            # because something logged too much.
+            logger.warning(
+                'console session %s: dropping a %d-byte %s; over the'
+                ' channel message cap.',
+                session.session_id,
+                exc.size,
+                type(event).__name__,
+            )
+            if isinstance(event, LogEntriesEvent):
+                try:
+                    # A GapEvent is tiny, so this cannot recurse.
+                    await endpoint.send(GapEvent(dropped=len(event.entries)))
+                except SmartSocketClosed:
+                    pass
 
     async def _on_command(
         self, session: _Session, command: ConsoleCommand

@@ -93,7 +93,75 @@ auto Graphics::IsShaderTransparent(ShadingType c) -> bool {
 Graphics::Graphics() : screenmessages{new ScreenMessages()} {}
 Graphics::~Graphics() = default;
 
-void Graphics::OnAppStart() { assert(g_base->InLogicThread()); }
+void Graphics::OnAppStart() {
+  assert(g_base->InLogicThread());
+  ReadVirtualBoundsABMode_();
+}
+
+void Graphics::ReadVirtualBoundsABMode_() {
+  assert(g_base->InLogicThread());
+
+  auto envval = g_core->platform->GetEnv("BA_VIRTUAL_BOUNDS_AB");
+  if (!envval.has_value()) {
+    return;
+  }
+  const std::string& val = *envval;
+  if (val == "a") {
+    virtual_bounds_ab_mode_ = VirtualBoundsABMode::kA;
+  } else if (val == "b") {
+    virtual_bounds_ab_mode_ = VirtualBoundsABMode::kB;
+  } else if (val == "toggle") {
+    virtual_bounds_ab_mode_ = VirtualBoundsABMode::kToggle;
+  } else {
+    g_core->logging->Log(LogName::kBaGraphics, LogLevel::kError,
+                         "Invalid BA_VIRTUAL_BOUNDS_AB value '" + val
+                             + "'; expected a, b, or toggle.");
+    return;
+  }
+
+  // Say so loudly; this deliberately mangles what gets drawn, so a run
+  // that has it on by accident should be obvious.
+  g_core->logging->Log(
+      LogName::kBaGraphics, LogLevel::kWarning,
+      "USING FORCED VIRTUAL-BOUNDS INSET (BA_VIRTUAL_BOUNDS_AB=" + val + ").");
+
+  // Config choice feeds into rect calcs, so redo those.
+  UpdateScreen_();
+}
+
+auto Graphics::CalcDebugVirtualBoundsRect_(const Rect& render_rect) -> Rect {
+  // Note both A and B derive their bounds from this one call, so the two
+  // configs cannot drift apart. In particular we inset the render rect
+  // DIRECTLY here rather than shrinking the window and re-running
+  // CalcActiveRenderRect - that would let the aspect clamp modify A's
+  // rect but not B's bounds, and the resulting mismatch would look
+  // exactly like a virtual-bounds bug while being the clamp correctly
+  // doing its job.
+  float w = render_rect.width();
+  float h = render_rect.height();
+  return Rect{render_rect.l + w * kDebugVirtualBoundsInsetL,
+              render_rect.b + h * kDebugVirtualBoundsInsetB,
+              render_rect.r - w * kDebugVirtualBoundsInsetR,
+              render_rect.t - h * kDebugVirtualBoundsInsetT};
+}
+
+void Graphics::StepVirtualBoundsABToggle_() {
+  assert(g_base->InLogicThread());
+
+  if (virtual_bounds_ab_mode_ != VirtualBoundsABMode::kToggle) {
+    return;
+  }
+
+  // Wall-clock rather than app time so the cadence stays a predictable
+  // one second for whoever is watching the screen.
+  auto now = core::Platform::TimeMonotonicMillisecs();
+  if (now - virtual_bounds_ab_last_switch_time_ < kDebugVirtualBoundsABPeriod) {
+    return;
+  }
+  virtual_bounds_ab_last_switch_time_ = now;
+  virtual_bounds_ab_showing_b_ = !virtual_bounds_ab_showing_b_;
+  UpdateScreen_();
+}
 
 void Graphics::OnAppSuspend() { assert(g_base->InLogicThread()); }
 
@@ -179,7 +247,10 @@ void Graphics::UpdateInitialGraphicsSettingsSend_() {
   }
 }
 
-void Graphics::StepDisplayTime() { assert(g_base->InLogicThread()); }
+void Graphics::StepDisplayTime() {
+  assert(g_base->InLogicThread());
+  StepVirtualBoundsABToggle_();
+}
 
 void Graphics::AddCleanFrameCommand(const Object::Ref<PythonContextCall>& c) {
   assert(g_base->InLogicThread());
@@ -566,9 +637,15 @@ void Graphics::InitInternalComponents(FrameDef* frame_def) {
         -(0.5f * kVRBorder) * w, (-0.5f * kVRBorder) * h, kScreenMeshZDepth,
         (1.0f + kVRBorder) * w, (1.0f + kVRBorder) * h);
   } else {
-    // The virtual screen covers everything visible (anything outside the
-    // active render rect is black borders drawn by the renderer).
-    screen_mesh_->SetPositionAndSize(0.0f, 0.0f, kScreenMeshZDepth, w, h);
+    // Cover everything we physically draw into, which is the active
+    // render rect - the virtual screen alone is not enough once the
+    // virtual bounds are inset (anything outside the render rect is
+    // black borders drawn by the renderer, but the bounds margins
+    // inside it are real content that fades/blotches must cover too).
+    // Identical to the plain virtual screen when bounds aren't inset.
+    const Rect& vout = virtual_outer_rect_;
+    screen_mesh_->SetPositionAndSize(vout.l, vout.b, kScreenMeshZDepth,
+                                     vout.width(), vout.height());
   }
   progress_bar_top_mesh_ = Object::New<ImageMesh>();
   progress_bar_bottom_mesh_ = Object::New<ImageMesh>();
@@ -688,7 +765,11 @@ void Graphics::DrawUI(FrameDef* frame_def) {
   // Special variants like GraphicsVR may do fancier stuff here.
   g_base->ui->Draw(frame_def);
 
-  // We may want to see the virtual screen safe area.
+  // We may want to see the virtual bounds our coord system covers,
+  // and/or the safe area within it. Bounds first, and set behind in z
+  // below, so the safe-area guide reads on top wherever the two touch
+  // (it is the tighter constraint, so it is the one worth seeing).
+  DrawVirtualBounds(frame_def->overlay_pass());
   DrawVirtualSafeAreaBounds(frame_def->overlay_pass());
 }
 
@@ -1601,6 +1682,120 @@ void Graphics::SetScreenResolution(float x, float y) {
   UpdateScreen_();
 }
 
+void Graphics::SetOSSafeAreaInsets(float l, float r, float b, float t) {
+  assert(g_base->InLogicThread());
+
+  // Ignore redundant sets; platform layers are free to call this on
+  // every insets callback without worrying about churn.
+  if (os_inset_l_ == l && os_inset_r_ == r && os_inset_b_ == b
+      && os_inset_t_ == t) {
+    return;
+  }
+  os_inset_l_ = l;
+  os_inset_r_ = r;
+  os_inset_b_ = b;
+  os_inset_t_ = t;
+
+  g_core->logging->Log(LogName::kBaGraphics, LogLevel::kDebug,
+                       "OS safe-area insets now l=" + std::to_string(l) + " r="
+                           + std::to_string(r) + " b=" + std::to_string(b)
+                           + " t=" + std::to_string(t) + ".");
+
+  UpdateScreen_();
+}
+
+auto Graphics::CalcVirtualBoundsRect(const Rect& render_rect, float res_x,
+                                     float res_y, float inset_l, float inset_r,
+                                     float inset_b, float inset_t, float bleed)
+    -> Rect {
+  float width = render_rect.width();
+  float height = render_rect.height();
+  if (width <= 0.0f || height <= 0.0f || res_x <= 0.0f || res_y <= 0.0f) {
+    return render_rect;
+  }
+
+  // Left/right only for now; see the header. inset_b/inset_t are
+  // deliberately unused rather than absent, so honoring them later is
+  // a change here and nowhere else.
+  (void)inset_b;
+  (void)inset_t;
+
+  // Fractions are of the whole screen, so resolve them against that and
+  // work in absolute coords, then intersect. A render rect already
+  // sitting inside the obscured strip has nothing further to give up.
+  float unobscured_l = inset_l * res_x;
+  float unobscured_r = res_x - inset_r * res_x;
+
+  Rect out{std::max(render_rect.l, unobscured_l), render_rect.b,
+           std::min(render_rect.r, unobscured_r), render_rect.t};
+
+  // Clamp what we actually give up per edge, measured against the
+  // render rect. A device reporting something absurd (or a unit mix-up
+  // in a platform layer, which has happened) should cost a clipped
+  // corner, not the play area.
+  float maxinset = width * kMaxVirtualBoundsInsetFraction;
+  out.l = std::min(out.l, render_rect.l + maxinset);
+  out.r = std::max(out.r, render_rect.r - maxinset);
+
+  // Let content bleed back out a little; see kVirtualBoundsBleed. The
+  // bleed is in virtual units, so resolve it through this rect's own
+  // virtual scale.
+  //
+  // Note that is well-defined rather than circular, but only just: the
+  // scale comes from CalcVirtualRes_, which pins *height* to the base
+  // res whenever the rect is wider than the base aspect -- and we only
+  // ever inset left/right, so the dimension the scale depends on is
+  // one the bleed never touches. In the narrow case it pins width
+  // instead and the two would feed each other, so measure the scale
+  // off the pre-bleed rect and be done.
+  if (bleed > 0.0f && out.width() > 0.0f && out.height() > 0.0f) {
+    float virtual_w = out.width();
+    float virtual_h = out.height();
+    CalcVirtualRes_(&virtual_w, &virtual_h);
+    if (virtual_h > 0.0f) {
+      float px_per_virtual_unit = out.height() / virtual_h;
+      float bleed_px = bleed * px_per_virtual_unit;
+
+      // Never past the render rect: bleeding beyond what we actually
+      // draw into would put the bounds outside the screen.
+      out.l = std::max(render_rect.l, out.l - bleed_px);
+      out.r = std::min(render_rect.r, out.r + bleed_px);
+    }
+  }
+
+  // Degenerate insets would take the bounds inside-out.
+  if (out.width() <= 0.0f) {
+    return render_rect;
+  }
+  return out;
+}
+
+auto Graphics::CalcVirtualBoundsRect_(const Rect& render_rect) -> Rect {
+  assert(g_base->InLogicThread());
+
+  // TVs are covered by tv-mode's border, which defaults on there.
+  // Honoring an OS inset as well would compensate twice for the same
+  // overscan.
+  if (g_core->platform->IsRunningOnTV()) {
+    return render_rect;
+  }
+
+  Rect out = CalcVirtualBoundsRect(
+      render_rect, res_x_, res_y_, os_inset_l_, os_inset_r_, os_inset_b_,
+      os_inset_t_, kVirtualBoundsBleedEnabled ? kVirtualBoundsBleed : 0.0f);
+
+  float maxinset = render_rect.width() * kMaxVirtualBoundsInsetFraction;
+  if (out.l - render_rect.l >= maxinset || render_rect.r - out.r >= maxinset) {
+    BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kWarning,
+                "Clamped an OS side inset (l=" + std::to_string(os_inset_l_)
+                    + " r=" + std::to_string(os_inset_r_)
+                    + " as screen fractions) to " + std::to_string(maxinset)
+                    + "px of a " + std::to_string(render_rect.width())
+                    + "px rect.");
+  }
+  return out;
+}
+
 void Graphics::OnUIScaleChange() {
   // UIScale affects our virtual res calculations. Redo those.
   UpdateScreen_();
@@ -1616,12 +1811,12 @@ void Graphics::UpdateScreen_() {
   // screen size (since it gets drawn to an overlay).
   if (g_core->vr_mode()) {
     active_render_rect_ = Rect{0.0f, 0.0f, res_x_, res_y_};
+    virtual_bounds_rect_ = active_render_rect_;
     res_x_virtual_ = kBaseVirtualResX;
     res_y_virtual_ = kBaseVirtualResY;
   } else {
-    // Game content occupies our active render rect (the window minus
-    // tv-borders and aspect-ratio limiting); virtual res derives from
-    // that rect, not the raw window.
+    // Drawing extends across our active render rect (the window minus
+    // tv-borders and aspect-ratio limiting)...
     active_render_rect_ = CalcActiveRenderRect(res_x_, res_y_, tv_border_);
     if (active_render_rect_.width() <= 0.0f
         || active_render_rect_.height() <= 0.0f) {
@@ -1632,10 +1827,48 @@ void Graphics::UpdateScreen_() {
                       + " for window " + std::to_string(res_x_) + "x"
                       + std::to_string(res_y_) + ").");
     }
-    res_x_virtual_ = active_render_rect_.width();
-    res_y_virtual_ = active_render_rect_.height();
+
+    // ...but what our drawing coords *mean* comes from the virtual
+    // bounds within that rect. We draw as if the bounds were the render
+    // rect; anything beyond simply keeps drawing out to the render rect
+    // edge.
+    virtual_bounds_rect_ = CalcVirtualBoundsRect_(active_render_rect_);
+
+    // The debug knob replaces any OS-derived inset rather than
+    // stacking on it: it exists to produce a known, deliberately
+    // asymmetric rect, and adding a device's own inset on top would
+    // make the A/B comparison test something other than what it says.
+    if (virtual_bounds_ab_mode_ != VirtualBoundsABMode::kDisabled) {
+      // Both configs share this one bounds rect; they differ only in
+      // whether the render rect shrinks to meet it (A - black outside)
+      // or stays put (B - drawn content outside). Everything inside the
+      // bounds must therefore look identical in the two, which is the
+      // whole point of the exercise.
+      Rect inset_rect = CalcDebugVirtualBoundsRect_(active_render_rect_);
+      virtual_bounds_rect_ = inset_rect;
+      bool use_a = virtual_bounds_ab_mode_ == VirtualBoundsABMode::kA
+                   || (virtual_bounds_ab_mode_ == VirtualBoundsABMode::kToggle
+                       && !virtual_bounds_ab_showing_b_);
+      if (use_a) {
+        active_render_rect_ = inset_rect;
+      }
+    }
+    if (virtual_bounds_rect_.width() <= 0.0f
+        || virtual_bounds_rect_.height() <= 0.0f) {
+      BA_LOG_ONCE(LogName::kBaGraphics, LogLevel::kError,
+                  "Virtual bounds rect is degenerate ("
+                      + std::to_string(virtual_bounds_rect_.width()) + "x"
+                      + std::to_string(virtual_bounds_rect_.height())
+                      + " for window " + std::to_string(res_x_) + "x"
+                      + std::to_string(res_y_) + ").");
+    }
+    res_x_virtual_ = virtual_bounds_rect_.width();
+    res_y_virtual_ = virtual_bounds_rect_.height();
     CalcVirtualRes_(&res_x_virtual_, &res_y_virtual_);
   }
+  virtual_outer_rect_ =
+      CalcVirtualOuterRect(active_render_rect_, virtual_bounds_rect_,
+                           res_x_virtual_, res_y_virtual_);
 
   // Need to rebuild internal components (some are sized to the screen).
   internal_components_inited_ = false;
@@ -1820,6 +2053,63 @@ void Graphics::DrawVirtualSafeAreaBounds(RenderPass* pass) {
       // Slight offset in z to reduce z fighting.
       c.Translate(0.5f * pass->virtual_width(), 0.5f * pass->virtual_height(),
                   0.0f);
+      c.Scale(width, height, 0.01f);
+      c.DrawMeshAsset(
+          g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesOverlayGuide));
+    }
+    c.Submit();
+  }
+}
+
+void Graphics::ExtendFrustumToRenderRect(const Rect& render_rect,
+                                         const Rect& bounds_rect, float* l,
+                                         float* r, float* b, float* t) {
+  float bw = bounds_rect.width();
+  float bh = bounds_rect.height();
+  if (bw <= 0.0f || bh <= 0.0f) {
+    return;  // Degenerate; callers log those separately.
+  }
+
+  // How far past the bounds we physically reach on each edge, as a
+  // fraction of the bounds.
+  float ext_l = (bounds_rect.l - render_rect.l) / bw;
+  float ext_r = (render_rect.r - bounds_rect.r) / bw;
+  float ext_b = (bounds_rect.b - render_rect.b) / bh;
+  float ext_t = (render_rect.t - bounds_rect.t) / bh;
+
+  // Push each edge out by its own margin, scaled by the frustum's full
+  // extent in that axis.
+  float width = *l + *r;
+  float height = *b + *t;
+  *l += width * ext_l;
+  *r += width * ext_r;
+  *b += height * ext_b;
+  *t += height * ext_t;
+}
+
+void Graphics::DrawVirtualBounds(RenderPass* pass) {
+  // Optionally show where our virtual coord system ends. With no cutout
+  // inset this lands right at the edge of the drawn area; inset, it
+  // pulls in and whatever sits between it and the edge is margin we
+  // keep drawing into (backgrounds and whatnot) but that UI should stay
+  // out of. Green so it reads distinctly from the red safe-area guide
+  // when both are on.
+  if (draw_virtual_bounds_) {
+    SimpleComponent c(pass);
+    c.SetColor(0, 1, 0);
+    {
+      auto xf = c.ScopedTransform();
+
+      // The virtual bounds are exactly our virtual rect by definition,
+      // so this is the plain (0, 0)-(virtual-res) box. It only *looks*
+      // inset once the bounds are, since our projections then extend
+      // out past it.
+      float width = pass->virtual_width();
+      float height = pass->virtual_height();
+
+      // Slight offset in z to reduce z fighting, negative so we sit
+      // behind the safe-area guide where the two coincide.
+      c.Translate(0.5f * width, 0.5f * height, -0.02f);
       c.Scale(width, height, 0.01f);
       c.DrawMeshAsset(
           g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesOverlayGuide));
