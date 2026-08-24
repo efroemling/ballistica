@@ -35,6 +35,7 @@ class ScreenMessages::ScreenMessageEntry {
         tint2(tint2) {}
   auto GetText() -> TextGroup&;
   void UpdateTranslation();
+  void PrefetchTextMeasures();
   bool literal;
   bool top_style;
   uint32_t creation_time;
@@ -131,6 +132,13 @@ void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
           // Don't actually need the text just yet but need shadow mesh
           // which is calculated as part of it.
           i->GetText();
+
+          // If the entry's text measures are still pending (cold OS
+          // spans being measured in the background), it has no shadow
+          // mesh yet and occupies no space; it pops in once ready.
+          if (i->mesh_dirty) {
+            continue;
+          }
 
           millisecs_t age = g_core->AppTimeMillisecs() - i->creation_time;
           youngest_age = std::min(youngest_age, age);
@@ -505,9 +513,11 @@ void ScreenMessages::AddScreenMessage(const std::string& msg, bool literal,
                                       g_core->AppTimeMillisecs(), color,
                                       texture, tint_texture, tint, tint2);
     screen_messages_top_.back().v_smoothed = start_v;
+    screen_messages_top_.back().PrefetchTextMeasures();
   } else {
     screen_messages_.emplace_back(m, literal, false, g_core->AppTimeMillisecs(),
                                   color, texture, tint_texture, tint, tint2);
+    screen_messages_.back().PrefetchTextMeasures();
   }
 }
 
@@ -538,12 +548,21 @@ auto ScreenMessages::ScreenMessageEntry::GetText() -> TextGroup& {
     mesh_dirty = true;
   }
   if (mesh_dirty) {
+    // Measure without stalling: cold OS-span measures run in the
+    // background and we simply stay dirty (showing nothing new) until
+    // they land — a chat message with a first-seen script pops in a
+    // beat late instead of hitching the logic thread on font loads.
+    auto width_opt =
+        g_base->text_graphics->TryGetStringWidth(s_translated.c_str());
+    if (!width_opt.has_value()) {
+      return *s_mesh_;
+    }
     s_mesh_->SetText(
         s_translated,
         top_style ? TextMesh::HAlign::kLeft : TextMesh::HAlign::kCenter,
         TextMesh::VAlign::kBottom);
 
-    str_width = g_base->text_graphics->GetStringWidth(s_translated.c_str());
+    str_width = *width_opt;
     str_height = g_base->text_graphics->GetStringHeight(s_translated.c_str());
 
     if (!top_style) {
@@ -565,6 +584,15 @@ auto ScreenMessages::ScreenMessageEntry::GetText() -> TextGroup& {
     mesh_dirty = false;
   }
   return *s_mesh_;
+}
+
+void ScreenMessages::ScreenMessageEntry::PrefetchTextMeasures() {
+  // Kick any needed background OS-span measures right at add-time
+  // rather than waiting for our first draw; warm-font measures usually
+  // land before that draw, avoiding a blank first frame. Fully async
+  // (even the O(length) walk runs on the assets loop).
+  UpdateTranslation();
+  g_base->text_graphics->WarmUpStringAsync(s_translated);
 }
 
 void ScreenMessages::ScreenMessageEntry::UpdateTranslation() {

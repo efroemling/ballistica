@@ -1,4 +1,4 @@
-### 1.8.0 (build 22997, api 9, 2026-08-22)
+### 1.8.0 (build 22998, api 9, 2026-08-24)
 - Fully implemented asset packages (more on this soon)
 - App-config committing (dirty-tracking, debounced disk writes, and
   suspend/shutdown flushes) now lives fully in `babase` instead of routing
@@ -113,6 +113,10 @@
   divisible by 4).
 - Android builds should now properly respect camera cutouts and round corners.
   Please holler if you see any UI elements being cut off at this point.
+- OS Text rendering (Asian languages, emoji, etc.) is now more efficient and
+  renders more cleanly in the background, meaning it should never cause frame
+  hitches. The credits window used to be a major offender here and should now
+  come up smoothly.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

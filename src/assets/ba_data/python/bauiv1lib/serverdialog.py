@@ -36,7 +36,10 @@ class ServerDialogWindow(bui.Window):
         txt = txt.strip()
         txt_scale = 1.5
         txt_height = (
-            bui.get_string_height(txt, suppress_warning=True) * txt_scale
+            bui.get_string_height(
+                txt, suppress_warning=True, suppress_logic_thread_warning=True
+            )
+            * txt_scale
         )
         self._width = 500
         self._height = 160 + min(200, txt_height)

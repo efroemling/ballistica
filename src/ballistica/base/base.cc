@@ -364,6 +364,10 @@ void BaseFeatureSet::SuspendApp() {
       }
       return;
     }
+    // Don't spin at full speed while we wait; we'd be pinning a core at
+    // 100% at exactly the moment the audio thread is trying to ramp its
+    // volume down cleanly (and the OS is snapshotting us/etc).
+    core::Platform::SleepMillisecs(1);
   } while (std::abs(core::Platform::TimeMonotonicMillisecs() - start_time)
            < max_duration);
 

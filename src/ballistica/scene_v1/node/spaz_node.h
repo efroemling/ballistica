@@ -50,7 +50,7 @@ class SpazNode : public Node {
     area_of_interest_radius_ = val;
   }
   auto name() const -> std::string { return name_; }
-  void set_name(const std::string& val) { name_ = val; }
+  void set_name(const std::string& val);
   auto counter_text() const -> std::string { return counter_text_; }
   void set_counter_text(const std::string& val) { counter_text_ = val; }
   auto mini_billboard_1_texture() const -> SceneTexture* {

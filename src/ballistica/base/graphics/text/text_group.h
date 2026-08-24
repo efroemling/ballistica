@@ -10,6 +10,7 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/texture_asset.h"
 #include "ballistica/base/graphics/mesh/text_mesh.h"
+#include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/shared/foundation/object.h"
 
 namespace ballistica::base {
@@ -20,7 +21,18 @@ namespace ballistica::base {
 class TextGroup : public Object {
  public:
   // The number of meshes needing to be drawn for this text.
-  auto GetElementCount() -> int { return static_cast<int>(entries_.size()); }
+  auto GetElementCount() -> int {
+    // Self-heal: if our last build deferred cold OS-span measures
+    // (they get measured in the background to avoid stalling the
+    // logic thread on OS font loads), rebuild once results have
+    // landed. All consumers call this each draw, so deferred text
+    // simply pops in when ready with no caller involvement.
+    if (incomplete_
+        && g_base->text_graphics->os_span_measure_epoch() != build_epoch_) {
+      SetText(text_, alignment_h_, alignment_v_, big_raw_, res_scale_);
+    }
+    return static_cast<int>(entries_.size());
+  }
 
   auto GetElementMesh(int index) const -> TextMesh* {
     assert(index < static_cast<int>(entries_.size()));
@@ -70,9 +82,13 @@ class TextGroup : public Object {
 
   auto text() const -> const std::string& { return text_; }
 
-  void GetCaratPts(const std::string& text_in, TextMesh::HAlign alignment_h,
+  /// Calc the carat position for the given text/carat-index. Returns
+  /// false if some needed OS-span measure is still warming in the
+  /// background (never stalls); skip drawing the carat that frame and
+  /// retry later.
+  auto GetCaratPts(const std::string& text_in, TextMesh::HAlign alignment_h,
                    TextMesh::VAlign alignment_v, int carat_pos, float* carat_x,
-                   float* carat_y);
+                   float* carat_y) -> bool;
 
  private:
   struct TextMeshEntry {
@@ -88,6 +104,19 @@ class TextGroup : public Object {
   std::vector<std::unique_ptr<TextMeshEntry>> entries_;
   std::string text_;
   bool big_{};
+
+  // Set when a build deferred cold OS-span measures; we then present
+  // NO elements (blank until ready, like unrendered text textures) and
+  // GetElementCount() re-runs SetText once the measure epoch moves.
+  bool incomplete_{};
+  int64_t build_epoch_{};
+
+  // SetText args stored for self-healing rebuilds (big_ above is the
+  // post-HaveBigChars effective value, so the raw arg lives here).
+  TextMesh::HAlign alignment_h_{TextMesh::HAlign::kLeft};
+  TextMesh::VAlign alignment_v_{TextMesh::VAlign::kNone};
+  bool big_raw_{};
+  float res_scale_{1.0f};
 };
 
 }  // namespace ballistica::base

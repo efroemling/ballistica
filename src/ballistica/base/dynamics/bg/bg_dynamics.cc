@@ -2,6 +2,7 @@
 
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 
+#include <algorithm>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -173,6 +174,35 @@ void BGDynamics::SetDebrisKillHeight(float val) {
   g_base->bg_dynamics_server->PushSetDebrisKillHeightCall(val);
 }
 
+auto BGDynamics::QuadIndices_(int slot, size_t quad_count)
+    -> const Object::Ref<MeshIndexBuffer16>& {
+  assert(g_base->InLogicThread());
+  assert(slot >= 0 && slot < 3);
+  auto& cached = quad_indices_[slot];
+  // 16-bit indices address 4 verts per quad up to 16383 quads.
+  assert(quad_count <= 16383);
+  size_t have = cached.exists() ? cached->elements.size() / 6 : 0;
+  if (quad_count > have) {
+    // Grow generously so this settles quickly.
+    size_t new_count = std::max(quad_count, std::max(have * 2, size_t{256}));
+    new_count = std::min(new_count, size_t{16383});
+    auto* ibuf = Object::NewDeferred<MeshIndexBuffer16>(new_count * 6);
+    uint16_t* i_out = &ibuf->elements[0];
+    for (size_t i = 0; i < new_count; ++i) {
+      auto v = static_cast<uint16_t>(i * 4);
+      i_out[0] = v;
+      i_out[1] = static_cast<uint16_t>(v + 1);
+      i_out[2] = static_cast<uint16_t>(v + 2);
+      i_out[3] = static_cast<uint16_t>(v + 1);
+      i_out[4] = static_cast<uint16_t>(v + 3);
+      i_out[5] = static_cast<uint16_t>(v + 2);
+      i_out += 6;
+    }
+    cached = Object::CompleteDeferred(ibuf);
+  }
+  return cached;
+}
+
 void BGDynamics::Draw(FrameDef* frame_def) {
   assert(g_base->InLogicThread());
 
@@ -184,7 +214,9 @@ void BGDynamics::Draw(FrameDef* frame_def) {
   // Draw sparks.
   if (ds->spark_vertices.exists()) {
     if (!sparks_mesh_.exists()) sparks_mesh_ = Object::New<SpriteMesh>();
-    sparks_mesh_->SetIndexData(ds->spark_indices);
+    size_t quads = ds->spark_vertices->elements.size() / 4;
+    sparks_mesh_->SetIndexData(QuadIndices_(kQuadIndexSlotSparks, quads));
+    sparks_mesh_->set_index_draw_count(static_cast<uint32_t>(quads * 6));
     sparks_mesh_->SetData(
         Object::Ref<MeshBuffer<VertexSprite>>(ds->spark_vertices));
 
@@ -204,11 +236,11 @@ void BGDynamics::Draw(FrameDef* frame_def) {
 
   // Draw lights.
   if (ds->light_vertices.exists()) {
-    assert(ds->light_indices.exists());
-    assert(!ds->light_indices->elements.empty());
     assert(!ds->light_vertices->elements.empty());
     if (!lights_mesh_.exists()) lights_mesh_ = Object::New<SpriteMesh>();
-    lights_mesh_->SetIndexData(ds->light_indices);
+    size_t quads = ds->light_vertices->elements.size() / 4;
+    lights_mesh_->SetIndexData(QuadIndices_(kQuadIndexSlotLights, quads));
+    lights_mesh_->set_index_draw_count(static_cast<uint32_t>(quads * 6));
     lights_mesh_->SetData(
         Object::Ref<MeshBuffer<VertexSprite>>(ds->light_vertices));
     SpriteComponent c(frame_def->light_shadow_pass());
@@ -220,11 +252,12 @@ void BGDynamics::Draw(FrameDef* frame_def) {
 
   // Draw shadows.
   if (ds->shadow_vertices.exists()) {
-    assert(ds->shadow_indices.exists());
     if (!shadows_mesh_.exists()) {
       shadows_mesh_ = Object::New<SpriteMesh>();
     }
-    shadows_mesh_->SetIndexData(ds->shadow_indices);
+    size_t quads = ds->shadow_vertices->elements.size() / 4;
+    shadows_mesh_->SetIndexData(QuadIndices_(kQuadIndexSlotShadows, quads));
+    shadows_mesh_->set_index_draw_count(static_cast<uint32_t>(quads * 6));
     shadows_mesh_->SetData(
         Object::Ref<MeshBuffer<VertexSprite>>(ds->shadow_vertices));
     SpriteComponent c(frame_def->light_shadow_pass());

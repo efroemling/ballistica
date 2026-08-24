@@ -278,7 +278,9 @@ class AccountViewerWindow(PopupWindow):
                 account_name_spacing = 15
                 tscale = 0.65
                 ts_height = bui.get_string_height(
-                    trophystr, suppress_warning=True
+                    trophystr,
+                    suppress_warning=True,
+                    suppress_logic_thread_warning=True,
                 )
                 sub_width = self._width - 80
                 sub_height = (
@@ -428,7 +430,11 @@ class AccountViewerWindow(PopupWindow):
                     ).evaluate()
                     rank_str_width = min(
                         sub_width * maxwidth_scale,
-                        bui.get_string_width(rank_str, suppress_warning=True)
+                        bui.get_string_width(
+                            rank_str,
+                            suppress_warning=True,
+                            suppress_logic_thread_warning=True,
+                        )
                         * 0.55,
                     )
 
@@ -488,7 +494,11 @@ class AccountViewerWindow(PopupWindow):
                     rank_str = f'{season_str}:    {rank_part}'
                     rank_str_width = min(
                         sub_width * maxwidth_scale,
-                        bui.get_string_width(rank_str, suppress_warning=True)
+                        bui.get_string_width(
+                            rank_str,
+                            suppress_warning=True,
+                            suppress_logic_thread_warning=True,
+                        )
                         * 0.3,
                     )
 

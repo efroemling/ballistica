@@ -32,11 +32,8 @@ class BGDynamicsDrawSnapshot {
                         static_cast<Object*>(tendril_vertices.get()),
                         static_cast<Object*>(fuse_indices.get()),
                         static_cast<Object*>(fuse_vertices.get()),
-                        static_cast<Object*>(shadow_indices.get()),
                         static_cast<Object*>(shadow_vertices.get()),
-                        static_cast<Object*>(light_indices.get()),
                         static_cast<Object*>(light_vertices.get()),
-                        static_cast<Object*>(spark_indices.get()),
                         static_cast<Object*>(spark_vertices.get())}) {
         if (o) {
           o->SetThreadOwnership(Object::ThreadOwnership::kClassDefault);
@@ -64,16 +61,11 @@ class BGDynamicsDrawSnapshot {
   Object::Ref<MeshIndexBuffer16> fuse_indices;
   Object::Ref<MeshBufferVertexSimpleFull> fuse_vertices;
 
-  // Shadows.
-  Object::Ref<MeshIndexBuffer16> shadow_indices;
+  // Shadows/lights/sparks. (These are all quads drawn via the shared
+  // canonical quad-index pattern client-side, so no index buffers
+  // ride along; quad count is vertex count / 4.)
   Object::Ref<MeshBufferVertexSprite> shadow_vertices;
-
-  // Lights.
-  Object::Ref<MeshIndexBuffer16> light_indices;
   Object::Ref<MeshBufferVertexSprite> light_vertices;
-
-  // Sparks.
-  Object::Ref<MeshIndexBuffer16> spark_indices;
   Object::Ref<MeshBufferVertexSprite> spark_vertices;
 };
 

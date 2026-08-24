@@ -190,7 +190,9 @@ class PopupMenuWindow(PopupWindow):
                     min(
                         maxwidth,
                         bui.get_string_width(
-                            choice_display_name, suppress_warning=True
+                            choice_display_name,
+                            suppress_warning=True,
+                            suppress_logic_thread_warning=True,
                         ),
                     )
                     + 75,
@@ -201,7 +203,9 @@ class PopupMenuWindow(PopupWindow):
                     min(
                         maxwidth,
                         bui.get_string_width(
-                            choice_display_name, suppress_warning=True
+                            choice_display_name,
+                            suppress_warning=True,
+                            suppress_logic_thread_warning=True,
                         ),
                     )
                     + 60,

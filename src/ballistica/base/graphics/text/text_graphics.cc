@@ -6,30 +6,24 @@
 #include <cmath>
 #include <cstdio>
 #include <list>
+#include <memory>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "ballistica/base/assets/assets_server.h"
+#include "ballistica/base/base.h"
 #include "ballistica/base/graphics/text/font_page_map_data.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/platform/platform.h"
+#include "ballistica/shared/foundation/event_loop.h"
+#include "ballistica/shared/generic/native_stack_trace.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
-
-class TextGraphics::TextSpanBoundsCacheEntry : public Object {
- public:
-  std::string string;
-  Rect r;
-  float width{};
-  std::unordered_map<std::string,
-                     Object::Ref<TextSpanBoundsCacheEntry>>::iterator
-      map_iterator_;
-  std::list<Object::Ref<TextSpanBoundsCacheEntry>>::iterator list_iterator_;
-};
 
 // Tight alpha bounding box of each big-font glyph's ink on the legacy
 // 8x8 sheet layout, in absolute normalized texture uv (v-down). The
@@ -215,6 +209,45 @@ const BigGlyphInkBounds kBigGlyphPackedUVs[64] = {
 // knobs; raise them if anything looks cut at small sizes.
 const float kBigGlyphInkMarginFrac = 0.04f;
 const float kBigGlyphInkMarginMin = 0.002f;
+
+// Boot-time OS-text warm-up is currently DISABLED: we can never
+// exhaustively pre-load every script that may appear in online content
+// (player names, chat, etc.), so lazy per-script font loads need to be
+// made non-hitching *structurally* — background measuring/prep, as the
+// credits window does — rather than papered over for a hand-picked set
+// that would leave the uncovered scripts getting less attention. A
+// short delay before such text first appears is fine; a frame hitch is
+// not. Also, players who never encounter a given script (likely a
+// substantial number for any specific one) shouldn't pay its load cost.
+// The machinery stays wired so a more *targeted* warm-up (emoji-only,
+// or driven by the user's own locale) can be enabled later if desired.
+constexpr bool kEnableOSTextWarmUp{false};
+
+void TextGraphics::WarmUpOSText() {
+  if (!kEnableOSTextWarmUp) {
+    return;
+  }
+  if (!g_buildconfig.enable_os_font_rendering()) {
+    return;
+  }
+  g_base->assets_server->event_loop()->PushCall([] {
+    millisecs_t start = g_core->AppTimeMillisecs();
+    // A measure call on text the engine has no glyphs for (CJK here)
+    // forces the backend's full one-time init (font-map build, font
+    // loads). Multiple scripts pull in a couple of fallback fonts
+    // while we're at it.
+    Rect r;
+    float width{};
+    g_core->platform->GetTextBoundsAndWidth(
+        "\xe6\x96\x87\xe5\xad\x97\xe3\x83\x86\xe3\x82\xb9"
+        "\xe3\x83\x88\xed\x95\x9c\xea\xb8\x80",
+        &r, &width);
+    g_core->logging->Log(LogName::kBaPerformance, LogLevel::kDebug, [start] {
+      return "os-text warm-up took "
+             + std::to_string(g_core->AppTimeMillisecs() - start) + "ms";
+    });
+  });
+}
 
 TextGraphics::TextGraphics() {
   // Init glyph values for our custom font pages.
@@ -1282,6 +1315,19 @@ auto TextGraphics::HaveChars(const std::string& text) -> bool {
   }
 }
 
+auto TextGraphics::HasOSChars(const std::string& text) -> bool {
+  std::vector<uint32_t> unicode = Utils::UnicodeFromUTF8(text, "cf0d9j");
+  // NOLINTNEXTLINE(readability-use-anyofallof)
+  for (auto&& val : unicode) {
+    // Anything past our glyph range that isn't one of our special chars
+    // goes to the OS (see GetGlyph()).
+    if (val >= kGlyphCount && !IsSpecialChar(val)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 auto TextGraphics::GetGlyph(uint32_t val, bool big) -> TextGraphics::Glyph* {
   if (big) {
     int index = GetBigGlyphIndex(val);
@@ -1306,54 +1352,192 @@ auto TextGraphics::GetGlyph(uint32_t val, bool big) -> TextGraphics::Glyph* {
 
 void TextGraphics::GetOSTextSpanBoundsAndWidth(const std::string& s, Rect* r,
                                                float* width) {
-  assert(g_base->InLogicThread());
+  // Note: callable from ANY thread (logic-thread UI measuring,
+  // background warm-ups, doc-ui background prep). Cache state is
+  // mutex-guarded here and the platform backends handle their own
+  // synchronization.
 
   // Asking the OS to calculate text bounds sounds expensive,
   // so let's use a cache of recent results.
-  auto i = text_span_bounds_cache_map_.find(s);
-  if (i != text_span_bounds_cache_map_.end()) {
-    auto entry = Object::Ref<TextSpanBoundsCacheEntry>(i->second);
-    *r = entry->r;
-    *width = entry->width;
+  {
+    std::scoped_lock lock(text_span_bounds_cache_mutex_);
+    auto i = text_span_bounds_cache_map_.find(s);
+    if (i != text_span_bounds_cache_map_.end()) {
+      *r = i->second.r;
+      *width = i->second.width;
 
-    // Send this entry to the back of the list since we used it.
-    text_span_bounds_cache_.erase(entry->list_iterator_);
-
-    entry->list_iterator_ =
-        text_span_bounds_cache_.insert(text_span_bounds_cache_.end(), entry);
-    return;
+      // Send this entry to the back of the lru list since we used it.
+      text_span_bounds_cache_lru_.splice(text_span_bounds_cache_lru_.end(),
+                                         text_span_bounds_cache_lru_,
+                                         i->second.lru_iterator);
+      return;
+    }
   }
-  auto entry(Object::New<TextSpanBoundsCacheEntry>());
-  entry->string = s;
+
+  // Cache miss.
+
+  // Root-out aid (all builds): a *synchronous* cold measure on the
+  // logic thread can stall on lazy OS font loads (tens of ms = a frame
+  // hitch). Deferring consumers (text meshes, widgets) route through
+  // TryGetOSTextSpanBoundsAndWidth/TryGetStringWidth instead; anything
+  // landing here on the logic thread is a call site that should be
+  // converted to those (or moved to a background thread). The goal is
+  // ZERO expected triggers — treat any sighting as a bug to fix, not
+  // noise to ignore. Logged once per unique span, capped per run;
+  // debug builds add a native stack trace to finger the call site.
+  // Cost note: this lives on the cache-MISS path only (hits return
+  // above), so it adds nothing measurable to normal text flow.
+  if (g_base->InLogicThread() && !ScopedSyncMeasureAck::active()) {
+    // (Logic-thread-only by the check above, so no locking needed.)
+    static std::set<std::string> s_warned_spans;
+    if (s_warned_spans.size() < 10 && s_warned_spans.insert(s).second) {
+      std::string trace_str;
+      if (g_buildconfig.debug_build()) {
+        std::unique_ptr<NativeStackTrace> trace(
+            g_core->platform->GetNativeStackTrace());
+        trace_str = "\n"
+                    + (trace ? trace->FormatForDisplay()
+                             : std::string("<native trace unavailable>"));
+      }
+      g_core->logging->Log(
+          LogName::kBaGraphics, LogLevel::kWarning,
+          "os-text span measured synchronously on the logic thread (span='" + s
+              + "'); cold measures can stall on OS font loads. Prefer the"
+                " TryGet measure variants or a background thread."
+                " (once per unique span, capped per run)"
+              + trace_str);
+    }
+  }
+
+  // Measure *without* holding our lock: a cold measure can
+  // take milliseconds-plus (lazy per-script font loads in the OS
+  // backend) and must not block cache hits on other threads meanwhile.
+  Rect bounds;
+  float bounds_width;
   if (g_buildconfig.enable_os_font_rendering()) {
-    g_core->platform->GetTextBoundsAndWidth(s, &entry->r, &entry->width);
+    g_core->platform->GetTextBoundsAndWidth(s, &bounds, &bounds_width);
   } else {
     BA_LOG_ONCE(
         LogName::kBaGraphics, LogLevel::kError,
         "FIXME: GetOSTextSpanBoundsAndWidth unimplemented on this platform");
-    r->l = 0.0f;
-    r->r = 1.0f;
-    r->t = 1.0f;
-    r->b = 0.0f;
-    *width = 1.0f;
+    bounds.l = 0.0f;
+    bounds.r = 1.0f;
+    bounds.t = 1.0f;
+    bounds.b = 0.0f;
+    bounds_width = 1.0f;
   }
-  entry->list_iterator_ =
-      text_span_bounds_cache_.insert(text_span_bounds_cache_.end(), entry);
-  entry->map_iterator_ =
-      text_span_bounds_cache_map_.insert(std::make_pair(s, entry)).first;
-  *r = entry->r;
-  *width = entry->width;
+  *r = bounds;
+  *width = bounds_width;
 
-  // Keep cache from growing too large.
-  while (text_span_bounds_cache_.size() > 300) {
-    text_span_bounds_cache_map_.erase(
-        text_span_bounds_cache_.front()->map_iterator_);
-    text_span_bounds_cache_.pop_front();
+  std::scoped_lock lock(text_span_bounds_cache_mutex_);
+
+  // Another thread may have measured and inserted this same span while
+  // we were measuring; results are identical so just leave theirs.
+  if (text_span_bounds_cache_map_.contains(s)) {
+    return;
+  }
+  auto lru_iterator =
+      text_span_bounds_cache_lru_.insert(text_span_bounds_cache_lru_.end(), s);
+  text_span_bounds_cache_map_[s] =
+      TextSpanBoundsCacheEntry_{bounds, bounds_width, lru_iterator};
+
+  // Keep cache from growing too large. (Size note: background prep
+  // passes pre-measure big batches — the credits window populates
+  // several hundred spans — and those entries need to survive until
+  // the logic thread's mesh building consumes them, so this must
+  // comfortably exceed such batch sizes. Entries are small; ~1000 is
+  // on the order of 100KB.)
+  //
+  // Eviction-vs-deferral invariant: a background-measured result CAN
+  // in principle be evicted here before its deferred requester
+  // re-polls (would need 1000+ unique spans in between). That is safe
+  // only because deferring consumers re-REQUEST on their next attempt
+  // rather than assuming a completed measure implies a cached result;
+  // each round still converges since the fonts stay warm. Keep that
+  // property if reworking the deferral flow.
+  while (text_span_bounds_cache_lru_.size() > 1000) {
+    text_span_bounds_cache_map_.erase(text_span_bounds_cache_lru_.front());
+    text_span_bounds_cache_lru_.pop_front();
   }
 }
 
+void TextGraphics::WarmUpStringAsync(const std::string& text, bool big) {
+  if (!g_buildconfig.enable_os_font_rendering()) {
+    return;
+  }
+  g_base->assets_server->event_loop()->PushCall([this, text, big] {
+    // A plain measure walk; every span it touches lands in the cache
+    // (cold ones pay their font loads here, off the logic thread).
+    GetStringWidth(text, big);
+  });
+}
+
+auto TextGraphics::TryGetOSTextSpanBoundsAndWidth(const std::string& s, Rect* r,
+                                                  float* width) -> bool {
+  {
+    std::scoped_lock lock(text_span_bounds_cache_mutex_);
+    auto i = text_span_bounds_cache_map_.find(s);
+    if (i != text_span_bounds_cache_map_.end()) {
+      *r = i->second.r;
+      *width = i->second.width;
+      text_span_bounds_cache_lru_.splice(text_span_bounds_cache_lru_.end(),
+                                         text_span_bounds_cache_lru_,
+                                         i->second.lru_iterator);
+      return true;
+    }
+  }
+
+  // Cache miss. Off the logic thread we can simply measure inline.
+  if (!g_base->InLogicThread()) {
+    GetOSTextSpanBoundsAndWidth(s, r, width);
+    return true;
+  }
+
+  // Logic-thread cache miss: measuring inline can stall on lazy OS
+  // font loads (tens of ms), so kick a background measure instead
+  // (dedup'd against ones already in flight) and let the caller defer.
+  {
+    std::scoped_lock lock(text_span_bounds_cache_mutex_);
+    if (!os_span_measures_in_flight_.insert(s).second) {
+      return false;  // Already being measured.
+    }
+  }
+  g_base->assets_server->event_loop()->PushCall([this, s] {
+    Rect r2;
+    float width2;
+    GetOSTextSpanBoundsAndWidth(s, &r2, &width2);
+    {
+      std::scoped_lock lock(text_span_bounds_cache_mutex_);
+      os_span_measures_in_flight_.erase(s);
+    }
+    // Bump AFTER the result is in the cache, so anyone woken by this
+    // is guaranteed to find it.
+    os_span_measure_epoch_.fetch_add(1, std::memory_order_relaxed);
+  });
+  return false;
+}
+
 auto TextGraphics::GetStringWidth(const char* text, bool big) -> float {
+  bool complete{};
+  return StringWidthInternal_(text, big, false, &complete);
+}
+
+auto TextGraphics::TryGetStringWidth(const char* text, bool big)
+    -> std::optional<float> {
+  bool complete{};
+  float width = StringWidthInternal_(text, big, true, &complete);
+  if (!complete) {
+    return {};
+  }
+  return width;
+}
+
+auto TextGraphics::StringWidthInternal_(const char* text, bool big,
+                                        bool allow_defer, bool* complete)
+    -> float {
   assert(Utils::IsValidUTF8(text));
+
+  *complete = true;
 
   // even if they ask for the big font, their string might not support it...
   big = (big && TextGraphics::HaveBigChars(text));
@@ -1366,13 +1550,31 @@ auto TextGraphics::GetStringWidth(const char* text, bool big) -> float {
   // We have the OS render some chars, broken into single-line spans.
   std::vector<uint32_t> os_span;
 
+  // Tally an os-span's width into line_length. In allow-defer mode a
+  // cold span contributes nothing but flips 'complete' off (a
+  // background measure gets kicked; note we keep walking so ALL of the
+  // string's cold spans get their measures in flight in one pass).
+  auto tally_span = [&] {
+    std::string s = Utils::UTF8FromUnicode(os_span);
+    os_span.clear();
+    if (allow_defer) {
+      Rect r;
+      float width{};
+      if (TryGetOSTextSpanBoundsAndWidth(s, &r, &width)) {
+        line_length += width;
+      } else {
+        *complete = false;
+      }
+    } else {
+      line_length += GetOSTextSpanWidth(s);
+    }
+  };
+
   while (*t != 0) {
     if (*t == '\n') {
       // Add/reset os-span.
       if (!os_span.empty()) {
-        std::string s = Utils::UTF8FromUnicode(os_span);
-        line_length += GetOSTextSpanWidth(s);
-        os_span.clear();
+        tally_span();
       }
       if (line_length > max_line_length) {
         max_line_length = line_length;
@@ -1390,9 +1592,7 @@ auto TextGraphics::GetStringWidth(const char* text, bool big) -> float {
       } else if (Glyph* g = GetGlyph(val, big)) {
         // If we *had* been building a span, add its length.
         if (!os_span.empty()) {
-          std::string s = Utils::UTF8FromUnicode(os_span);
-          line_length += GetOSTextSpanWidth(s);
-          os_span.clear();
+          tally_span();
         }
         line_length += char_width * g->advance;
       } else {
@@ -1405,9 +1605,7 @@ auto TextGraphics::GetStringWidth(const char* text, bool big) -> float {
   }
   // Tally final span if there is one.
   if (!os_span.empty()) {
-    std::string s = Utils::UTF8FromUnicode(os_span);
-    line_length += GetOSTextSpanWidth(s);
-    os_span.clear();
+    tally_span();
   }
   // Check last line.
   if (line_length > max_line_length) {

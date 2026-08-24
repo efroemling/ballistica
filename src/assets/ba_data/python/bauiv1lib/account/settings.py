@@ -543,7 +543,12 @@ class AccountSettingsWindow(bui.MainWindow):
                 v -= via_space * 0.1
                 sscale = 0.7
                 swidth = (
-                    bui.get_string_width(via, suppress_warning=True) * sscale
+                    bui.get_string_width(
+                        via,
+                        suppress_warning=True,
+                        suppress_logic_thread_warning=True,
+                    )
+                    * sscale
                 )
                 bui.textwidget(
                     parent=self._subcontainer,

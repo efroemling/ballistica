@@ -14,6 +14,7 @@
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/discord/discord.h"
 #include "ballistica/base/graphics/graphics.h"
+#include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/base_python.h"
@@ -136,6 +137,13 @@ void Logic::CompleteAppBootstrapping_() {
 
   // Let base know it can create the console or other asset-dependent things.
   g_base->OnAssetsAvailable();
+
+  // Warm up the OS text backend in the background so its one-time init
+  // cost doesn't hitch the first UI that measures or draws OS-rendered
+  // text. Queued behind boot-critical asset work on the assets-server
+  // loop; done long before a human can navigate anywhere text-heavy.
+  // (Currently a no-op; see kEnableOSTextWarmUp in text_graphics.cc.)
+  g_base->text_graphics->WarmUpOSText();
 
   // Set up our timers.
   process_pending_work_timer_ = event_loop()->NewTimer(

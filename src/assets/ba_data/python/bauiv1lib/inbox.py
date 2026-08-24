@@ -71,14 +71,23 @@ class _TextSection(_Section):
         # that scale.
         t_width = max(
             10.0,
-            bui.get_string_width(self.textbaked, suppress_warning=True) * scale,
+            bui.get_string_width(
+                self.textbaked,
+                suppress_warning=True,
+                suppress_logic_thread_warning=True,
+            )
+            * scale,
         )
         self.text_scale = scale * min(1.0, (sub_width * 0.9) / t_width)
 
         self.text_height = (
             0.0
             if not self.textbaked
-            else bui.get_string_height(self.textbaked, suppress_warning=True)
+            else bui.get_string_height(
+                self.textbaked,
+                suppress_warning=True,
+                suppress_logic_thread_warning=True,
+            )
         ) * self.text_scale
 
         self.full_height = self.text_height + spacing_top + spacing_bottom

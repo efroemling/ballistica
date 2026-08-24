@@ -1394,6 +1394,7 @@ class CoopScoreScreen(bs.Activity[bs.Player, bs.Team]):
                                     ).evaluate()
                                 ),
                                 suppress_warning=True,
+                                suppress_logic_thread_warning=True,
                             ),
                         )
 

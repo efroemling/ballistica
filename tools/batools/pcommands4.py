@@ -447,3 +447,58 @@ def prefab_symbols_fetch() -> None:
     from batools.prefabsymbols import fetch_prefab_symbols
 
     fetch_prefab_symbols()
+
+
+def push_ipa_to_archive() -> None:
+    """Construct an ios IPA and publish it to a bamaster archive.
+
+    Like push_ipa but uploads into the archive system (signed-URL GCS
+    storage) instead of rsyncing to the staging server. Pass
+    --archive-id to override the default ('ios-test-builds').
+    """
+    import sys
+
+    from efro.util import extract_arg
+    import efrotools.ios
+
+    args = sys.argv[2:]
+    signing_config = extract_arg(args, '--signing-config')
+    archive_id = extract_arg(args, '--archive-id')
+
+    if len(args) != 1:
+        raise RuntimeError('Expected 1 mode arg (debug or release).')
+    modename = args[0].lower()
+    efrotools.ios.push_ipa_to_archive(
+        pcommand.PROJROOT,
+        modename,
+        signing_config=signing_config,
+        archive_id=('ios-test-builds' if archive_id is None else archive_id),
+    )
+
+
+def push_apk_to_archive() -> None:
+    """Publish an already-built android apk to a bamaster archive.
+
+    The android counterpart to push_ipa_to_archive. Takes the path to
+    the apk gradle produced (the build targets pass $(AN_APK)); pass
+    --archive-id to override the default ('android-test-builds').
+    """
+    import pathlib
+
+    import sys
+
+    from efro.util import extract_arg
+    import efrotools.android
+
+    args = sys.argv[2:]
+    archive_id = extract_arg(args, '--archive-id')
+
+    if len(args) != 1:
+        raise RuntimeError('Expected 1 apk path arg.')
+    efrotools.android.push_apk_to_archive(
+        pcommand.PROJROOT,
+        pathlib.Path(args[0]),
+        archive_id=(
+            'android-test-builds' if archive_id is None else archive_id
+        ),
+    )

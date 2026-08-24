@@ -194,6 +194,9 @@ class FrameDef {
   auto mesh_index_sizes() const -> const std::vector<int8_t>& {
     return mesh_index_sizes_;
   }
+  auto mesh_index_draw_counts() const -> const std::vector<uint32_t>& {
+    return mesh_index_draw_counts_;
+  }
   auto media_components() const -> const std::vector<Object::Ref<Asset>>& {
     return media_components_;
   }
@@ -244,6 +247,10 @@ class FrameDef {
   std::vector<Object::Ref<MeshDataClientHandle>> meshes_;
   std::vector<Object::Ref<MeshBufferBase>> mesh_buffers_;
   std::vector<int8_t> mesh_index_sizes_;
+
+  // Per-mesh index-draw-count (parallel to mesh_index_sizes_); 0 =
+  // draw the mesh's full index buffer.
+  std::vector<uint32_t> mesh_index_draw_counts_;
   std::vector<Object::Ref<Asset>> media_components_;
 
 #if BA_DEBUG_BUILD

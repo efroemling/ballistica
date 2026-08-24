@@ -451,7 +451,9 @@ class PartyWindow(bui.Window):
                                 twd = min(
                                     c_width * 0.85,
                                     bui.get_string_width(
-                                        p_str, suppress_warning=True
+                                        p_str,
+                                        suppress_warning=True,
+                                        suppress_logic_thread_warning=True,
                                     )
                                     * t_scale,
                                 )

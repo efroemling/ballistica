@@ -999,7 +999,9 @@ void RendererGL::SyncGLState_() {
     assert(indices16                                                         \
            && indices16 == dynamic_cast<MeshIndexBuffer16*>(buffer->get())); \
   }                                                                          \
+  uint32_t mesh_index_draw_count = *index_draw_count;                        \
   index_size++;                                                              \
+  index_draw_count++;                                                        \
   buffer++
 
 #define GET_BUFFER(TYPE, VAR)                              \
@@ -1013,8 +1015,10 @@ void RendererGL::SyncGLState_() {
 void RendererGL::UpdateMeshes(
     const std::vector<Object::Ref<MeshDataClientHandle> >& meshes,
     const std::vector<int8_t>& index_sizes,
+    const std::vector<uint32_t>& index_draw_counts,
     const std::vector<Object::Ref<MeshBufferBase> >& buffers) {
   auto index_size = index_sizes.begin();
+  auto index_draw_count = index_draw_counts.begin();
   auto buffer = buffers.begin();
   for (auto&& mesh : meshes) {
     // For each mesh, plug in the latest and greatest buffers it should be
@@ -1031,6 +1035,7 @@ void RendererGL::UpdateMeshes(
         } else {
           m->SetIndexData(indices16);
         }
+        m->SetIndexDrawCount(mesh_index_draw_count);
         m->SetStaticData(static_data);
         m->SetDynamicData(dynamic_data);
         break;
@@ -1045,6 +1050,7 @@ void RendererGL::UpdateMeshes(
         } else {
           m->SetIndexData(indices16);
         }
+        m->SetIndexDrawCount(mesh_index_draw_count);
         m->SetStaticData(static_data);
         m->SetDynamicData(dynamic_data);
         break;
@@ -1058,6 +1064,7 @@ void RendererGL::UpdateMeshes(
         } else {
           m->SetIndexData(indices16);
         }
+        m->SetIndexDrawCount(mesh_index_draw_count);
         m->SetData(data);
         break;
       }
@@ -1070,6 +1077,7 @@ void RendererGL::UpdateMeshes(
         } else {
           m->SetIndexData(indices16);
         }
+        m->SetIndexDrawCount(mesh_index_draw_count);
         m->SetData(data);
         break;
       }
@@ -1082,6 +1090,7 @@ void RendererGL::UpdateMeshes(
         } else {
           m->SetIndexData(indices16);
         }
+        m->SetIndexDrawCount(mesh_index_draw_count);
         m->SetData(data);
         break;
       }
@@ -1094,6 +1103,7 @@ void RendererGL::UpdateMeshes(
         } else {
           m->SetIndexData(indices16);
         }
+        m->SetIndexDrawCount(mesh_index_draw_count);
         m->SetData(data);
         break;
       }
@@ -1104,6 +1114,7 @@ void RendererGL::UpdateMeshes(
   }
   // We should have gone through all lists exactly.
   assert(index_size == index_sizes.end());
+  assert(index_draw_count == index_draw_counts.end());
   assert(buffer == buffers.end());
 }
 #undef GET_MESH_DATA
@@ -3120,9 +3131,14 @@ auto RendererGL::NewMeshData(MeshDataType mesh_type, MeshDrawType draw_type)
 
 void RendererGL::DeleteMeshData(MeshRendererData* source_in,
                                 MeshDataType mesh_type) {
-  // When we're done with mesh-data we keep it around for recycling. It
-  // seems that killing off VAO/VBOs can be hitchy (on mac at least). Hmmm
-  // should we have some sort of threshold at which point we kill off some?
+  // When we're done with mesh-data we keep it around for recycling
+  // (killing off VAO/VBOs can be hitchy - on mac at least - and
+  // recreating them in bulk measured expensive on mobile). Pools are
+  // capped though: entries keep their GL buffer storage from their
+  // last use, so an uncapped pool would permanently retain the
+  // high-water memory of the biggest ui screen ever shown (a
+  // text-heavy window can leave several MB behind).
+  const size_t kMaxRecycleMeshDatas{32};
 
   switch (mesh_type) {
     case MeshDataType::kIndexedSimpleSplit: {
@@ -3130,7 +3146,11 @@ void RendererGL::DeleteMeshData(MeshRendererData* source_in,
       assert(source
              && source == dynamic_cast<MeshDataSimpleSplitGL*>(source_in));
       source->Reset();
-      recycle_mesh_datas_simple_split_.push_back(source);
+      if (recycle_mesh_datas_simple_split_.size() < kMaxRecycleMeshDatas) {
+        recycle_mesh_datas_simple_split_.push_back(source);
+      } else {
+        delete source;
+      }
       break;
     }
     case MeshDataType::kIndexedObjectSplit: {
@@ -3138,7 +3158,11 @@ void RendererGL::DeleteMeshData(MeshRendererData* source_in,
       assert(source
              && source == dynamic_cast<MeshDataObjectSplitGL*>(source_in));
       source->Reset();
-      recycle_mesh_datas_object_split_.push_back(source);
+      if (recycle_mesh_datas_object_split_.size() < kMaxRecycleMeshDatas) {
+        recycle_mesh_datas_object_split_.push_back(source);
+      } else {
+        delete source;
+      }
       break;
     }
     case MeshDataType::kIndexedSimpleFull: {
@@ -3146,7 +3170,11 @@ void RendererGL::DeleteMeshData(MeshRendererData* source_in,
       assert(source
              && source == dynamic_cast<MeshDataSimpleFullGL*>(source_in));
       source->Reset();
-      recycle_mesh_datas_simple_full_.push_back(source);
+      if (recycle_mesh_datas_simple_full_.size() < kMaxRecycleMeshDatas) {
+        recycle_mesh_datas_simple_full_.push_back(source);
+      } else {
+        delete source;
+      }
       break;
     }
     case MeshDataType::kIndexedDualTextureFull: {
@@ -3154,21 +3182,33 @@ void RendererGL::DeleteMeshData(MeshRendererData* source_in,
       assert(source
              && source == dynamic_cast<MeshDataDualTextureFullGL*>(source_in));
       source->Reset();
-      recycle_mesh_datas_dual_texture_full_.push_back(source);
+      if (recycle_mesh_datas_dual_texture_full_.size() < kMaxRecycleMeshDatas) {
+        recycle_mesh_datas_dual_texture_full_.push_back(source);
+      } else {
+        delete source;
+      }
       break;
     }
     case MeshDataType::kIndexedSmokeFull: {
       auto source = static_cast<MeshDataSmokeFullGL*>(source_in);
       assert(source && source == dynamic_cast<MeshDataSmokeFullGL*>(source_in));
       source->Reset();
-      recycle_mesh_datas_smoke_full_.push_back(source);
+      if (recycle_mesh_datas_smoke_full_.size() < kMaxRecycleMeshDatas) {
+        recycle_mesh_datas_smoke_full_.push_back(source);
+      } else {
+        delete source;
+      }
       break;
     }
     case MeshDataType::kSprite: {
       auto source = static_cast<MeshDataSpriteGL*>(source_in);
       assert(source && source == dynamic_cast<MeshDataSpriteGL*>(source_in));
       source->Reset();
-      recycle_mesh_datas_sprite_.push_back(source);
+      if (recycle_mesh_datas_sprite_.size() < kMaxRecycleMeshDatas) {
+        recycle_mesh_datas_sprite_.push_back(source);
+      } else {
+        delete source;
+      }
       break;
     }
     default:

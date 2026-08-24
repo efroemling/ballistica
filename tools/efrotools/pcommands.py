@@ -55,6 +55,10 @@ def requirements_upgrade() -> None:
         filterlines: list[tuple[str, str]] = [
             # Fails to build on bastaging (submitted fix).
             ('pyicu==2.16.1', 'pyicu==2.15.2'),
+            # Percent-encodes '(default)' in gRPC routing headers,
+            # breaking ALL Firestore calls ('400 Invalid database id
+            # %28default%29'); took down prod bamaster 2026-08-24.
+            ('google-api-core==2.35.0', 'google-api-core==2.34.0'),
             # ('google-auth-oauthlib==1.2.3', 'google-auth-oauthlib==1.2.2'),
             # ('pylint==4.0.4', 'pylint==4.0.3'),
             # ('Sphinx==9.1.0', 'Sphinx==8.2.3'),

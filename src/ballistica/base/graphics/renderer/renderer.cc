@@ -82,7 +82,7 @@ void Renderer::PreprocessFrameDef(FrameDef* frame_def) {
 
   // Pull latest mesh data in from this frame_def.
   UpdateMeshes(frame_def->meshes(), frame_def->mesh_index_sizes(),
-               frame_def->mesh_buffers());
+               frame_def->mesh_index_draw_counts(), frame_def->mesh_buffers());
 
   // Ensure all media used by this frame_def is loaded.
   LoadMedia(frame_def);

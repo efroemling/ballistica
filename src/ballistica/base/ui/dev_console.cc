@@ -1840,7 +1840,14 @@ void DevConsole::UpdateCarat_() {
 
   unichars_clamped.resize(carat_char_);
   auto clamped_str = Utils::UTF8FromUnicode(unichars_clamped);
-  carat_x_ = g_base->text_graphics->GetStringWidth(clamped_str);
+  // Non-stalling measures: cold OS spans (e.g. just-pasted foreign
+  // text) defer to the background; we keep the previous carat pos for
+  // a beat and a subsequent update picks up the real value.
+  auto carat_x = g_base->text_graphics->TryGetStringWidth(clamped_str);
+  if (!carat_x.has_value()) {
+    return;
+  }
+  carat_x_ = *carat_x;
 
   // Use a base width if we're not covering a char, and use the char's width
   // if we are.
@@ -1848,8 +1855,9 @@ void DevConsole::UpdateCarat_() {
   if (carat_char_ < static_cast<int>(unichars.size())) {
     std::vector<uint32_t> covered_char{unichars[carat_char_]};
     auto covered_char_str = Utils::UTF8FromUnicode(covered_char);
-    width =
-        std::max(3.0f, g_base->text_graphics->GetStringWidth(covered_char_str));
+    width = std::max(3.0f,
+                     g_base->text_graphics->TryGetStringWidth(covered_char_str)
+                         .value_or(14.0f));
   }
 
   float height = 32.0f;

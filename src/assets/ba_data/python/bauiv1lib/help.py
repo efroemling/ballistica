@@ -201,7 +201,10 @@ class HelpWindow(bui.MainWindow):
         )
         txt_width = min(
             txt_maxwidth,
-            bui.get_string_width(txt, suppress_warning=True) * txt_scale,
+            bui.get_string_width(
+                txt, suppress_warning=True, suppress_logic_thread_warning=True
+            )
+            * txt_scale,
         )
 
         icon_size = 70
@@ -385,7 +388,10 @@ class HelpWindow(bui.MainWindow):
         )
         txt_width = min(
             txt_maxwidth,
-            bui.get_string_width(txt, suppress_warning=True) * txt_scale,
+            bui.get_string_width(
+                txt, suppress_warning=True, suppress_logic_thread_warning=True
+            )
+            * txt_scale,
         )
         icon_size = 70
 
@@ -579,7 +585,10 @@ class HelpWindow(bui.MainWindow):
         )
         txt_width = min(
             txt_maxwidth,
-            bui.get_string_width(txt, suppress_warning=True) * txt_scale,
+            bui.get_string_width(
+                txt, suppress_warning=True, suppress_logic_thread_warning=True
+            )
+            * txt_scale,
         )
         icon_size = 70
         hval2 = h - (txt_width * 0.5 + icon_size * 0.5 * icon_buffer)

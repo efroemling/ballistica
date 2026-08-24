@@ -24,6 +24,11 @@ class MeshIndexedBase : public Mesh {
 
   void SetIndexData(const Object::Ref<MeshIndexBuffer32>& data) {
     assert(data.exists() && !data->elements.empty());
+    // Setting the same buffer object again is a no-op (buffers are
+    // immutable once handed off).
+    if (data.get() == index_data_32_.get()) {
+      return;
+    }
     // unlike vertex data, index data might often remain the same, so lets test
     // for that and avoid some gl updates..
     if (index_data_32_.exists()) {
@@ -41,6 +46,12 @@ class MeshIndexedBase : public Mesh {
 
   void SetIndexData(const Object::Ref<MeshIndexBuffer16>& data) {
     assert(data.exists() && !data->elements.empty());
+    // Setting the same buffer object again is a no-op (buffers are
+    // immutable once handed off; see the shared quad-index cache in
+    // BGDynamics for a caller leaning on this).
+    if (data.get() == index_data_16_.get()) {
+      return;
+    }
     // unlike vertex data, index data might often remain the same, so lets test
     // for that and avoid some gl updates..
     if (index_data_16_.exists()) {
@@ -56,6 +67,15 @@ class MeshIndexedBase : public Mesh {
     // kill any other index data we have
     index_data_32_.Clear();
   }
+
+  /// Limit drawing to the first n indices of the current index buffer
+  /// (0 = draw the whole buffer, the default). Lets an oversized
+  /// shared/grow-only index buffer (e.g. the canonical quad pattern)
+  /// be reused across frames with only the per-frame count changing —
+  /// no index re-upload. The count travels per-frame via the
+  /// frame-def, so there is no cross-frame race.
+  void set_index_draw_count(uint32_t count) { index_draw_count_ = count; }
+  auto index_draw_count() const -> uint32_t { return index_draw_count_; }
 
   // call this if you have nothing to draw
   void SetEmpty() {
@@ -97,6 +117,7 @@ class MeshIndexedBase : public Mesh {
   }
 
  private:
+  uint32_t index_draw_count_{};
   Object::Ref<MeshIndexBuffer32> index_data_32_;
   Object::Ref<MeshIndexBuffer16> index_data_16_;
   int index_data_size_ = 0;

@@ -84,6 +84,11 @@ class AudioServer {
 
   void SetSuspended_(bool suspended);
 
+  /// Ramp OpenAL's master (listener) gain to silence ahead of a device
+  /// suspend, or back up again after an unsuspend. Blocks this thread for a
+  /// fraction of a second. No-ops when there's nothing audible to fade.
+  void FadeMasterGainForSuspend_(bool out);
+
   void SetMusicVolume_(float volume);
   void SetSoundVolume_(float volume);
   void SetSoundPitch_(float pitch);
@@ -126,6 +131,7 @@ class AudioServer {
   bool shutting_down_{};
   bool shipped_reconnect_logs_{};
   bool using_null_device_{};
+  bool master_gain_faded_{};
   int al_source_count_{};
   seconds_t last_connected_time_{};
   seconds_t last_reset_attempt_time_{-999.0};

@@ -804,7 +804,13 @@ class ChestWindow(bui.MainWindow):
                 )
             )
             if advance:
-                x += (bui.get_string_width(txt, suppress_warning=True)) * tscale
+                x += (
+                    bui.get_string_width(
+                        txt,
+                        suppress_warning=True,
+                        suppress_logic_thread_warning=True,
+                    )
+                ) * tscale
 
         self._prizesettxts = {}
         self._prizesetimgs = {}

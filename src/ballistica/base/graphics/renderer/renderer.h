@@ -147,6 +147,7 @@ class Renderer {
   virtual void UpdateMeshes(
       const std::vector<Object::Ref<MeshDataClientHandle>>& meshes,
       const std::vector<int8_t>& index_sizes,
+      const std::vector<uint32_t>& index_draw_counts,
       const std::vector<Object::Ref<MeshBufferBase>>& buffers) = 0;
   virtual void SetDepthWriting(bool enable) = 0;
   virtual void SetDepthTesting(bool enable) = 0;

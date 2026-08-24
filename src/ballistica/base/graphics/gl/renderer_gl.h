@@ -177,6 +177,7 @@ class RendererGL : public Renderer {
   void UpdateMeshes(
       const std::vector<Object::Ref<MeshDataClientHandle> >& meshes,
       const std::vector<int8_t>& index_sizes,
+      const std::vector<uint32_t>& index_draw_counts,
       const std::vector<Object::Ref<MeshBufferBase> >& buffers) override;
   void PushGroupMarker(const char* label) override;
   void PopGroupMarker() override;

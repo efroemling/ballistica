@@ -49,7 +49,8 @@ calls three `from_swift` entry points — `SetAppActive(bool)`, `SuspendApp()`,
 - **running** (`sceneWillEnterForeground` / `sceneDidEnterBackground`, the
   analogue of Android onStart/onStop) → `UnsuspendApp()` / `SuspendApp()`.
   `SuspendApp` parks all event-loop threads; the audio thread's suspend
-  callback calls `alcDevicePauseSOFT`, which is what actually stops audio.
+  callback fades master volume out and then calls `alcDevicePauseSOFT`,
+  which is what actually stops audio (see "Audio around suspend" below).
   The `CADisplayLink` is also paused
   (`UIKitGLViewController.setRenderingPaused`) so no GPU work happens in the
   background.
@@ -70,6 +71,34 @@ its native running-state false and emits a benign no-op `UnsuspendApp` at
 boot; the iOS shell avoids that.)
 
 Files: `app_platform/apple/{from_swift.h,from_swift.cc,UIKitSupport.swift,UIKitSceneDelegate.swift,UIKitGLViewController.swift}`.
+
+## Audio around suspend
+
+`alcDevicePauseSOFT` is a hard stop: it stops the CoreAudio unit
+immediately, so before 2026-08-22 backgrounding cut whatever was playing
+off mid-waveform at full amplitude. On iOS that lands right as the OS is
+tearing down our audio session, and the result sounded like a moment of
+corrupted audio rather than a clean stop.
+
+`AudioServer::FadeMasterGainForSuspend_` therefore ramps OpenAL's master
+(listener) gain to silence over 120ms and lets the mixer run on that
+silence for another 60ms *before* pausing the device, then ramps back up
+after unsuspending. It early-outs when nothing audible is playing, so it
+only costs time when it buys something. Budget-wise this is fine: a
+measured suspend with music playing completes in ~211ms against
+`SuspendApp`'s 4s cap (and Apple's ~5s background deadline).
+
+Two related facts worth knowing before touching this:
+
+- **Nobody in the process owns the `AVAudioSession`** — not our code, and
+  not the OpenAL Soft xcframework (it links AudioToolbox/CoreAudio, no
+  AVFAudio). So we run on the implicit default category, never explicitly
+  activated, with no interruption handler, and the system's session
+  teardown races our own `AudioOutputUnitStop`. The fade hides the
+  symptom; owning the session would remove the race. See `followups.md`.
+- **Listener gain is otherwise unused** by the engine (only
+  position/velocity/orientation are set), which is why it's available as
+  a master knob here.
 
 ## Input
 
@@ -181,6 +210,56 @@ platform-specific pieces worth knowing:
   --predicate 'subsystem == "net.froemling.ballistica"'` (or `log stream`).
   Note `simctl launch --console[-pty]` does *not* capture the sim app's
   stderr — os_log is the reliable channel.
+- **`LowLevelDebugLog` goes nowhere on Apple.** `HandleLowLevelDebugLog`
+  is only overridden on Android (crash-log breadcrumbs); the base impl in
+  `platform.cc` is empty. So calls like the `"Calling alcDevicePauseSOFT
+  at ..."` breadcrumbs in `audio_server.cc` are invisible here — don't
+  plan an iOS investigation around grepping for one. Use a real logger.
+- **Exercising background/foreground in the Simulator**: background the
+  app by launching another one (`xcrun simctl launch booted
+  com.apple.Preferences`), then foreground it with `xcrun simctl launch
+  booted <our-bundle-id>` — that resumes the existing process rather than
+  relaunching (same pid back), so it exercises the real
+  suspend/unsuspend path. Pair with `--log 'ba=DEBUG'` to get
+  `SuspendApp() completed in Nms.` / `UnsuspendApp() completed in Nms.`,
+  which are logged on `LogName::kBa` at DEBUG in debug builds only.
+- **`make ios` / `make tvos` device pick** (impl: lifecycle in
+  `tools/batools/iossim.py`; pcommands `ios_sim_run` / `ios_sim_log` in
+  `tools/batools/pcommands4.py`). Order, no config needed:
+  `IOS_SIM_DEVICE` override (name or udid) → reuse an already-booted
+  device → the Simulator app's `CurrentDeviceUDID` (`defaults read
+  com.apple.iphonesimulator`) → newest available, booted on demand. The
+  `CurrentDeviceUDID` step matters: `open -a Simulator` auto-boots the
+  app's last-used device, so a disagreeing pick yields TWO sim windows.
+  Booting is async — always `simctl bootstatus -b` before install, and
+  boot BEFORE opening Simulator.app (opening first races the auto-boot
+  → "Unable to boot device in current state: Booted").
+
+### Testing the software keyboard in the Simulator
+
+Verifying anything keyboard-related needs setup the sim fights you on
+(cost ~20 min on 2026-08-19):
+
+- The sim **suppresses the software keyboard by default** (hardware
+  keyboard connected), so keyboard-layout bugs simply cannot appear.
+  `defaults write com.apple.iphonesimulator ConnectHardwareKeyboard
+  -bool false` is **blocked by the unsandboxed-Bash hook**, and `simctl
+  ui` has no equivalent — so ask Eric to hit ⌘⇧K (I/O ▸ Keyboard ▸
+  Connect Hardware Keyboard) once the sim is up.
+- iOS then shows a one-time **swipe-typing intro** covering the keyboard;
+  `xcrun simctl spawn booted defaults write
+  com.apple.keyboard.ContinuousPath DidShowContinuousPathIntroduction
+  -bool true` clears it (works sandboxed — it writes inside the sim, not
+  host prefs).
+- `automation_drive --screenshot` captures **only the GL framebuffer**,
+  so UIKit overlays (the string editor, the keyboard) are invisible in
+  it. Use `xcrun simctl io booted screenshot <path>` instead — note it
+  captures portrait-rotated for a landscape app.
+- Android counterpart: the emulator reports `keysexposed-qwerty`
+  (`adb shell am get-config`), so any code branching on "is a hardware
+  keyboard attached" always takes the hardware path there and cannot be
+  tested; Gboard's **stylus-handwriting onboarding** blocks the keyboard
+  until `adb shell settings put secure stylus_handwriting_enabled 0`.
 
 ### Simulator build/launch recipe (verified 2026-06-18)
 

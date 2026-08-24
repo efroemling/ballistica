@@ -2,6 +2,7 @@
 
 #include "ballistica/base/python/methods/python_methods_base_2.h"
 
+#include <set>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -529,6 +530,84 @@ static PyMethodDef PyEvaluateLstrDef = {
     ":meta private:",
 };
 
+// Warn (once, with a traceback) when the logic thread measures text
+// containing OS-rendered chars. The OS measure can block on one-time
+// lazy per-script font loads (tens of ms for some scripts), which is a
+// frame hitch when it happens on the logic thread; such measuring
+// belongs on background threads (measurement is thread-safe).
+static void WarnOnLogicThreadOSTextMeasure(const char* funcname,
+                                           const std::string& s) {
+  // Presence-based (fires even on warm-cache measures, unlike the
+  // miss-path warning in TextGraphics): this is what catches call
+  // sites whose stall potential is hidden by another path having
+  // warmed the cache first. Goal is ZERO expected triggers — treat
+  // any sighting as a bug to fix (or, where the width is genuinely
+  // needed for logic-thread layout, acknowledge it by passing
+  // suppress_logic_thread_warning=True, which downgrades reporting to
+  // actual-stalls-only; see MeasureOnLogicThreadAcked below). Once
+  // per unique string, capped per run.
+  if (!g_base->InLogicThread()) {
+    return;
+  }
+  static std::set<std::string> s_warned_strings;
+  if (s_warned_strings.size() >= 5 || !s_warned_strings.insert(s).second) {
+    return;
+  }
+  Python::PrintStackTrace();
+  g_core->logging->Log(
+      LogName::kBaGraphics, LogLevel::kWarning,
+      std::string(funcname)
+          + " called on the logic thread with OS-rendered characters"
+            " present; this can hitch on lazy OS font loads. Measure such"
+            " strings from a background thread instead, or pass"
+            " suppress_logic_thread_warning=True to acknowledge the site"
+            " (reports actual stalls only). (see stack trace above;"
+            " once per unique string, capped per run).");
+}
+
+/// A sync logic-thread stall past this is reported even for
+/// acknowledged (suppress_warning=True) measure calls; below it they
+/// stay quiet. Set to catch font-load-scale stalls (tens of ms)
+/// while ignoring routine measures.
+constexpr microsecs_t kAckedMeasureStallWarnThreshold{5000};
+
+/// Run a measure func for an acknowledged logic-thread call site:
+/// suppresses the presence/miss warnings but times the measure and
+/// reports (capped per run) if it genuinely stalled. Keeps
+/// acknowledged sites quiet in the common warm case while worst
+/// offenders still surface from the field.
+template <typename F>
+static auto MeasureOnLogicThreadAcked(const char* funcname,
+                                      const std::string& s, F&& measure)
+    -> float {
+  if (!g_base->InLogicThread()) {
+    return measure();
+  }
+  microsecs_t start = g_core->AppTimeMicrosecs();
+  float result;
+  {
+    TextGraphics::ScopedSyncMeasureAck ack;
+    result = measure();
+  }
+  microsecs_t dur = g_core->AppTimeMicrosecs() - start;
+  if (dur >= kAckedMeasureStallWarnThreshold) {
+    static int s_warn_count{};
+    if (s_warn_count < 5) {
+      s_warn_count++;
+      Python::PrintStackTrace();
+      g_core->logging->Log(
+          LogName::kBaGraphics, LogLevel::kWarning,
+          std::string(funcname) + " stalled the logic thread for "
+              + std::to_string(dur / 1000) + "ms measuring '" + s
+              + "' (an acknowledged call site, but this exceeded the"
+                " stall threshold; likely a cold OS font load). Consider"
+                " measuring this off-thread. (see stack trace above;"
+                " capped per run)");
+    }
+  }
+  return result;
+}
+
 // --------------------------- get_string_height -------------------------------
 
 static auto PyGetStringHeight(PyObject* self, PyObject* args, PyObject* keywds)
@@ -536,11 +615,13 @@ static auto PyGetStringHeight(PyObject* self, PyObject* args, PyObject* keywds)
   BA_PYTHON_TRY;
   std::string s;
   int suppress_warning = 0;
+  int suppress_logic_thread_warning = 0;
   PyObject* s_obj;
-  static const char* kwlist[] = {"string", "suppress_warning", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|i",
-                                   const_cast<char**>(kwlist), &s_obj,
-                                   &suppress_warning)) {
+  static const char* kwlist[] = {"string", "suppress_warning",
+                                 "suppress_logic_thread_warning", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "O|ii", const_cast<char**>(kwlist), &s_obj,
+          &suppress_warning, &suppress_logic_thread_warning)) {
     return nullptr;
   }
   if (!suppress_warning) {
@@ -557,7 +638,31 @@ static auto PyGetStringHeight(PyObject* self, PyObject* args, PyObject* keywds)
   }
 #endif
   assert(g_base->graphics);
-  return Py_BuildValue("f", g_base->text_graphics->GetStringHeight(s));
+  float height;
+  if (TextGraphics::HasOSChars(s)) {
+    auto measure = [&s] {
+      // Release the GIL while measuring: this is callable from
+      // background threads (doc-ui prep etc.) and a cold measure can
+      // block for milliseconds-plus on a lazy OS font load, which must
+      // not stall logic-thread Python meanwhile. (Glyph-only measures
+      // above skip this; they're pure math and the GIL round-trip
+      // would outweigh them.)
+      float val;
+      Py_BEGIN_ALLOW_THREADS;
+      val = g_base->text_graphics->GetStringHeight(s);
+      Py_END_ALLOW_THREADS;
+      return val;
+    };
+    if (suppress_logic_thread_warning) {
+      height = MeasureOnLogicThreadAcked("get_string_height()", s, measure);
+    } else {
+      WarnOnLogicThreadOSTextMeasure("get_string_height()", s);
+      height = measure();
+    }
+  } else {
+    height = g_base->text_graphics->GetStringHeight(s);
+  }
+  return Py_BuildValue("f", height);
   BA_PYTHON_CATCH;
 }
 
@@ -566,10 +671,13 @@ static PyMethodDef PyGetStringHeightDef = {
     (PyCFunction)PyGetStringHeight,  // method
     METH_VARARGS | METH_KEYWORDS,    // flags
 
-    "get_string_height(string: str, suppress_warning: bool = False) -> "
-    "float\n"
+    "get_string_height(string: str, suppress_warning: bool = False,\n"
+    "  suppress_logic_thread_warning: bool = False) -> float\n"
     "\n"
     "Given a string, returns its height with the standard small app font.\n"
+    "\n"
+    "Pass suppress_logic_thread_warning=True to acknowledge a logic-thread\n"
+    "call site measuring OS-rendered text; see get_string_width.\n"
     "\n"
     ":meta private:",
 };
@@ -582,10 +690,12 @@ static auto PyGetStringWidth(PyObject* self, PyObject* args, PyObject* keywds)
   std::string s;
   PyObject* s_obj;
   int suppress_warning = 0;
-  static const char* kwlist[] = {"string", "suppress_warning", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|i",
-                                   const_cast<char**>(kwlist), &s_obj,
-                                   &suppress_warning)) {
+  int suppress_logic_thread_warning = 0;
+  static const char* kwlist[] = {"string", "suppress_warning",
+                                 "suppress_logic_thread_warning", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "O|ii", const_cast<char**>(kwlist), &s_obj,
+          &suppress_warning, &suppress_logic_thread_warning)) {
     return nullptr;
   }
   if (!suppress_warning) {
@@ -602,7 +712,26 @@ static auto PyGetStringWidth(PyObject* self, PyObject* args, PyObject* keywds)
   }
 #endif
   assert(g_base->graphics);
-  return Py_BuildValue("f", g_base->text_graphics->GetStringWidth(s));
+  float strwidth;
+  if (TextGraphics::HasOSChars(s)) {
+    auto measure = [&s] {
+      // Release the GIL while measuring (see PyGetStringHeight for why).
+      float val;
+      Py_BEGIN_ALLOW_THREADS;
+      val = g_base->text_graphics->GetStringWidth(s);
+      Py_END_ALLOW_THREADS;
+      return val;
+    };
+    if (suppress_logic_thread_warning) {
+      strwidth = MeasureOnLogicThreadAcked("get_string_width()", s, measure);
+    } else {
+      WarnOnLogicThreadOSTextMeasure("get_string_width()", s);
+      strwidth = measure();
+    }
+  } else {
+    strwidth = g_base->text_graphics->GetStringWidth(s);
+  }
+  return Py_BuildValue("f", strwidth);
   BA_PYTHON_CATCH;
 }
 
@@ -611,10 +740,15 @@ static PyMethodDef PyGetStringWidthDef = {
     (PyCFunction)PyGetStringWidth,  // method
     METH_VARARGS | METH_KEYWORDS,   // flags
 
-    "get_string_width(string: str, suppress_warning: bool = False) -> "
-    "float\n"
+    "get_string_width(string: str, suppress_warning: bool = False,\n"
+    "  suppress_logic_thread_warning: bool = False) -> float\n"
     "\n"
     "Given a string, returns its width in the standard small app font.\n"
+    "\n"
+    "Pass suppress_logic_thread_warning=True to acknowledge a logic-thread\n"
+    "call site measuring OS-rendered text (foreign scripts, emoji,\n"
+    "etc.); acknowledged sites warn only when a measure genuinely\n"
+    "stalls (cold OS font loads) instead of on every use.\n"
     "\n"
     ":meta private:",
 };

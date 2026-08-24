@@ -226,7 +226,12 @@ class EditProfileWindow(
             txtl = classicassets.strings.profile.account_profile.evaluate()
             b_width = min(
                 270.0,
-                bui.get_string_width(txtl, suppress_warning=True) * 0.6,
+                bui.get_string_width(
+                    txtl,
+                    suppress_warning=True,
+                    suppress_logic_thread_warning=True,
+                )
+                * 0.6,
             )
             bui.textwidget(
                 parent=self._root_widget,
@@ -304,7 +309,12 @@ class EditProfileWindow(
             txtl = classicassets.strings.profile.global_profile.evaluate()
             b_width = min(
                 240.0,
-                bui.get_string_width(txtl, suppress_warning=True) * 0.6,
+                bui.get_string_width(
+                    txtl,
+                    suppress_warning=True,
+                    suppress_logic_thread_warning=True,
+                )
+                * 0.6,
             )
             bui.textwidget(
                 parent=self._root_widget,
@@ -349,7 +359,12 @@ class EditProfileWindow(
             txtl = classicassets.strings.profile.local_profile.evaluate()
             b_width = min(
                 270.0,
-                bui.get_string_width(txtl, suppress_warning=True) * 0.6,
+                bui.get_string_width(
+                    txtl,
+                    suppress_warning=True,
+                    suppress_logic_thread_warning=True,
+                )
+                * 0.6,
             )
             bui.textwidget(
                 parent=self._root_widget,

@@ -19,6 +19,19 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
                         float resolution_scale) {
   text_ = text;
 
+  // Stored for self-healing rebuilds (see GetElementCount()).
+  alignment_h_ = alignment_h;
+  alignment_v_ = alignment_v;
+  big_raw_ = big;
+  res_scale_ = resolution_scale;
+  incomplete_ = false;
+
+  // Snapshot this BEFORE building: any measures our build kicks off
+  // complete (and bump the epoch) strictly after this, so a completion
+  // can never slip between our build and our snapshot and leave us
+  // waiting forever.
+  int64_t epoch_before = g_base->text_graphics->os_span_measure_epoch();
+
   // In order to *actually* draw big, all our letters must be available in
   // the big font.
   big_ = (big && TextGraphics::HaveBigChars(text));
@@ -110,7 +123,16 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
       entry->mesh.SetText(text, alignment_h, alignment_v, false, min, max,
                           entry->type, packer.get());
 
-      if (packer.exists()) {
+      if (!entry->mesh.complete()) {
+        // Some OS-span measures were cold and got deferred to the
+        // background; this build is a throwaway (we present nothing
+        // until the rebuild; see below). Importantly, do NOT create a
+        // texture from the packer in this case — its spans carry
+        // placeholder bounds and text textures are content-cached.
+        incomplete_ = true;
+      }
+
+      if (packer.exists() && !incomplete_) {
         // If we made a text-packer, we need to fetch/generate a texture
         // that matches it.
         // There should only ever be one of these.
@@ -189,12 +211,21 @@ void TextGroup::SetText(const std::string& text, TextMesh::HAlign alignment_h,
       entries_.push_back(std::move(entry));
     }
   }
+
+  if (incomplete_) {
+    // Present nothing until our deferred measures land and we rebuild
+    // (blank-until-ready, same story as unrendered text textures).
+    // GetElementCount() re-runs us once the epoch moves past this.
+    entries_.clear();
+    os_texture_.Clear();
+    build_epoch_ = epoch_before;
+  }
 }
 
-void TextGroup::GetCaratPts(const std::string& text_in,
+auto TextGroup::GetCaratPts(const std::string& text_in,
                             TextMesh::HAlign alignment_h,
                             TextMesh::VAlign alignment_v, int carat_position,
-                            float* carat_x, float* carat_y) {
+                            float* carat_x, float* carat_y) -> bool {
   assert(carat_x && carat_y);
   assert(Utils::IsValidUTF8(text_in));
   const char* txt = text_in.c_str();
@@ -335,10 +366,17 @@ void TextGroup::GetCaratPts(const std::string& text_in,
     }
     char_num++;
   }
-  *carat_x = x_offset
-             + g_base->text_graphics->GetStringWidth(
-                 Utils::UTF8FromUnicode(line).c_str());
+  // Non-stalling: a cold OS-span measure here defers to the background
+  // (we report failure; the carat skips a frame and picks up the value
+  // on a later attempt).
+  auto line_width = g_base->text_graphics->TryGetStringWidth(
+      Utils::UTF8FromUnicode(line).c_str());
+  if (!line_width.has_value()) {
+    return false;
+  }
+  *carat_x = x_offset + *line_width;
   *carat_y = y_offset;
+  return true;
 }
 
 }  // namespace ballistica::base

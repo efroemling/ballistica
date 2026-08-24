@@ -65,7 +65,7 @@ const bool kVirtualBoundsBleedEnabled = true;
 // it. So this is a judgment across all of those at once -- how much
 // overhang looks right given our elements' own margins -- and not a
 // figure any single case implies.
-const float kVirtualBoundsBleed = 55.0f;
+const float kVirtualBoundsBleed = 50.0f;
 
 // Most of one edge of the active render rect we will give up to an
 // OS-reported inset. This drives camera framing and UI layout now, so

@@ -78,7 +78,6 @@ from batools.pcommands import (
     lazy_increment_build,
     androidaddr,
     push_ipa,
-    push_ipa_to_archive,
     printcolors,
     prune_includes,
     python_version_android,
@@ -166,6 +165,8 @@ from batools.pcommands4 import (
     assetworkspace,
     cst_test,
     prefab_symbols_fetch,
+    push_ipa_to_archive,
+    push_apk_to_archive,
 )
 
 # pylint: enable=unused-import

@@ -4,6 +4,7 @@
 #define BALLISTICA_UI_V1_WIDGET_TEXT_WIDGET_H_
 
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "ballistica/base/graphics/mesh/text_mesh.h"
@@ -106,7 +107,7 @@ class TextWidget : public Widget {
   void set_shadow(float shadow) { shadow_ = shadow; }
   void set_res_scale(float res_scale);
   void set_allow_clear_button(bool val) { allow_clear_button_ = val; }
-  auto GetTextWidth() -> float;
+  auto TryGetTextWidth() -> std::optional<float>;
   void OnLanguageChange() override;
   void AdapterFinished();
 
@@ -130,6 +131,7 @@ class TextWidget : public Widget {
   auto ShouldUseStringEditor_() const -> bool;
   void InvokeStringEditor_();
   void UpdateTranslation_();
+  void PrefetchTextMeasures_();
   void DoDrawCarat_(base::RenderPass* pass, base::TextMesh::HAlign align_h,
                     base::TextMesh::VAlign align_v, float x_offset,
                     float y_offset, float max_width_scale,

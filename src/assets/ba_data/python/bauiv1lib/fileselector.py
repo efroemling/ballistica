@@ -309,7 +309,11 @@ class FileSelectorWindow(bui.MainWindow):
         max_str_width = 300.0
         str_width = min(
             max_str_width,
-            bui.get_string_width(folder_name, suppress_warning=True),
+            bui.get_string_width(
+                folder_name,
+                suppress_warning=True,
+                suppress_logic_thread_warning=True,
+            ),
         )
         bui.textwidget(
             edit=self._path_text, text=folder_name, maxwidth=max_str_width

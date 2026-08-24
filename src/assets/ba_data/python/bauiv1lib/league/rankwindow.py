@@ -1114,7 +1114,9 @@ class LeagueRankWindow(bui.MainWindow):
         bui.textwidget(edit=self._league_text, text=lname, color=lcolor)
         l_text_width = min(
             self._league_text_maxwidth,
-            bui.get_string_width(lname, suppress_warning=True)
+            bui.get_string_width(
+                lname, suppress_warning=True, suppress_logic_thread_warning=True
+            )
             * self._league_text_scale,
         )
         bui.textwidget(

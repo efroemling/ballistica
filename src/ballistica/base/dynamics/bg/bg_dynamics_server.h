@@ -46,8 +46,7 @@ class BGDynamicsServer {
     void Emit(const Vector3f& pos, const Vector3f& vel, float r, float g,
               float b, float a, float dlife, float size, float d_size,
               float flicker);
-    void UpdateAndCreateSnapshot(Object::Ref<MeshIndexBuffer16>* index_buffer,
-                                 Object::Ref<MeshBufferVertexSprite>* buffer);
+    void UpdateAndCreateSnapshot(Object::Ref<MeshBufferVertexSprite>* buffer);
   };
 
   struct ShadowStepData {

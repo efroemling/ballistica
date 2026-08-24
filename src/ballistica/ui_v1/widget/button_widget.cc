@@ -203,8 +203,13 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   }
 
   if (text_width_dirty_) {
-    text_width_ = text_->GetTextWidth();
-    text_width_dirty_ = false;
+    // Empty while OS-span measures warm in the background; stay dirty
+    // and keep using our previous width until the value lands (the
+    // label's own drawing defers in that state too).
+    if (auto text_width = text_->TryGetTextWidth()) {
+      text_width_ = *text_width;
+      text_width_dirty_ = false;
+    }
   }
 
   float string_scale = text_scale_;

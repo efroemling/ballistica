@@ -79,6 +79,7 @@ void FrameDef::Reset() {
   media_components_.clear();
   meshes_.clear();
   mesh_index_sizes_.clear();
+  mesh_index_draw_counts_.clear();
   mesh_buffers_.clear();
 
   quality_ = Graphics::GraphicsQualityFromRequest(
@@ -147,6 +148,7 @@ void FrameDef::AddMesh(Mesh* mesh) {
         assert(m == dynamic_cast<MeshIndexedSimpleSplit*>(mesh));
         mesh_index_sizes_.push_back(
             static_cast_check_fit<int8_t>(m->index_data_size()));
+        mesh_index_draw_counts_.push_back(m->index_draw_count());
         mesh_buffers_.emplace_back(m->GetIndexData());
         mesh_buffers_.emplace_back(m->static_data());
         mesh_buffers_.emplace_back(m->dynamic_data());
@@ -158,6 +160,7 @@ void FrameDef::AddMesh(Mesh* mesh) {
         assert(m == dynamic_cast<MeshIndexedObjectSplit*>(mesh));
         mesh_index_sizes_.push_back(
             static_cast_check_fit<int8_t>(m->index_data_size()));
+        mesh_index_draw_counts_.push_back(m->index_draw_count());
         mesh_buffers_.emplace_back(m->GetIndexData());
         mesh_buffers_.emplace_back(m->static_data());
         mesh_buffers_.emplace_back(m->dynamic_data());
@@ -169,6 +172,7 @@ void FrameDef::AddMesh(Mesh* mesh) {
         assert(m == dynamic_cast<MeshIndexedSimpleFull*>(mesh));
         mesh_index_sizes_.push_back(
             static_cast_check_fit<int8_t>(m->index_data_size()));
+        mesh_index_draw_counts_.push_back(m->index_draw_count());
         mesh_buffers_.emplace_back(m->GetIndexData());
         mesh_buffers_.emplace_back(m->data());
         break;
@@ -179,6 +183,7 @@ void FrameDef::AddMesh(Mesh* mesh) {
         assert(m == dynamic_cast<MeshIndexedDualTextureFull*>(mesh));
         mesh_index_sizes_.push_back(
             static_cast_check_fit<int8_t>(m->index_data_size()));
+        mesh_index_draw_counts_.push_back(m->index_draw_count());
         mesh_buffers_.emplace_back(m->GetIndexData());
         mesh_buffers_.emplace_back(m->data());
         break;
@@ -189,6 +194,7 @@ void FrameDef::AddMesh(Mesh* mesh) {
         assert(m == dynamic_cast<MeshIndexedSmokeFull*>(mesh));
         mesh_index_sizes_.push_back(
             static_cast_check_fit<int8_t>(m->index_data_size()));
+        mesh_index_draw_counts_.push_back(m->index_draw_count());
         mesh_buffers_.emplace_back(m->GetIndexData());
         mesh_buffers_.emplace_back(m->data());
         break;
@@ -199,6 +205,7 @@ void FrameDef::AddMesh(Mesh* mesh) {
         assert(m == dynamic_cast<SpriteMesh*>(mesh));
         mesh_index_sizes_.push_back(
             static_cast_check_fit<int8_t>(m->index_data_size()));
+        mesh_index_draw_counts_.push_back(m->index_draw_count());
         mesh_buffers_.emplace_back(m->GetIndexData());
         mesh_buffers_.emplace_back(m->data());
         break;

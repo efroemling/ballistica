@@ -770,7 +770,11 @@ class CoopBrowserWindow(bui.MainWindow):
         v -= 53
         # FIXME shouldn't use hard-coded strings here.
         txt = classicassets.strings.coop.tournaments
-        t_width = bui.get_string_width(txt.evaluate(), suppress_warning=True)
+        t_width = bui.get_string_width(
+            txt.evaluate(),
+            suppress_warning=True,
+            suppress_logic_thread_warning=True,
+        )
         bui.textwidget(
             parent=w_parent,
             position=(h_base + 27, v + 30),

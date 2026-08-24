@@ -384,12 +384,23 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     text_group_ = Object::New<base::TextGroup>();
   }
   if (text_group_dirty_) {
-    text_group_->SetText(text_translated_, align_h, align_v, big_, res_scale_);
-    text_width_ = g_base->text_graphics->GetStringWidth(text_translated_, big_);
+    // Measure without stalling: cold OS-span measures happen in the
+    // background, and until they land we simply stay dirty and keep
+    // showing our previous content (retries here are cheap cache
+    // probes; the measure requests themselves are dedup'd). Our
+    // scale calcs below always see a width consistent with what's
+    // actually built.
+    auto text_width =
+        g_base->text_graphics->TryGetStringWidth(text_translated_, big_);
+    if (text_width.has_value()) {
+      text_group_->SetText(text_translated_, align_h, align_v, big_,
+                           res_scale_);
+      text_width_ = *text_width;
 
-    // FIXME: doesnt support big.
-    text_height_ = g_base->text_graphics->GetStringHeight(text_translated_);
-    text_group_dirty_ = false;
+      // FIXME: doesnt support big.
+      text_height_ = g_base->text_graphics->GetStringHeight(text_translated_);
+      text_group_dirty_ = false;
+    }
   }
 
   // Calc scaling factors due to max width/height restrictions.
@@ -536,27 +547,30 @@ void TextWidget::DoDrawCarat_(base::RenderPass* pass,
       float h, v;
       // In password mode, carat positions must be computed against the
       // masked display string (same char count; different glyph widths).
-      text_group_->GetCaratPts(password_ ? text_translated_ : text_raw_,
-                               align_h, align_v, carat_position_, &h, &v);
-      base::SimpleComponent c(pass);
-      c.SetPremultiplied(true);
-      c.SetTransparent(true);
-      {
-        auto xf = c.ScopedTransform();
-        c.SetColor(0.17f, 0.12f, 0, 0);
-        c.Translate(x_offset, y_offset);
-        float max_width_height_scale = max_width_scale * max_height_scale;
-        c.Scale(max_width_height_scale, max_width_height_scale);
-        c.Translate(h + 4, v + 17.0f);
-        c.Scale(6, 27);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
-        c.SetColor(1, 1, 1, 0);
-        c.Scale(0.3f, 0.8f);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
+      // (On false, some OS-span measure is still warming in the
+      // background; skip the carat this frame - it blinks anyway.)
+      if (text_group_->GetCaratPts(password_ ? text_translated_ : text_raw_,
+                                   align_h, align_v, carat_position_, &h, &v)) {
+        base::SimpleComponent c(pass);
+        c.SetPremultiplied(true);
+        c.SetTransparent(true);
+        {
+          auto xf = c.ScopedTransform();
+          c.SetColor(0.17f, 0.12f, 0, 0);
+          c.Translate(x_offset, y_offset);
+          float max_width_height_scale = max_width_scale * max_height_scale;
+          c.Scale(max_width_height_scale, max_width_height_scale);
+          c.Translate(h + 4, v + 17.0f);
+          c.Scale(6, 27);
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
+          c.SetColor(1, 1, 1, 0);
+          c.Scale(0.3f, 0.8f);
+          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
+              base::BuiltinMeshID::kMeshesImage1x1));
+        }
+        c.Submit();
       }
-      c.Submit();
     }
   }
 }
@@ -585,6 +599,7 @@ void TextWidget::SetLangStr(std::shared_ptr<const base::LangStr> val) {
   lang_str_ = std::move(val);
   text_raw_.clear();
   text_translation_dirty_ = true;
+  PrefetchTextMeasures_();
 }
 
 void TextWidget::SetText(const std::string& text_in_raw) {
@@ -649,6 +664,7 @@ void TextWidget::SetText(const std::string& text_in_raw) {
   text_translation_dirty_ = true;
   text_raw_ = text_in;
   carat_position_ = 9999;
+  PrefetchTextMeasures_();
 }
 
 void TextWidget::SetBig(bool big) {
@@ -1035,6 +1051,18 @@ void TextWidget::AddCharsToText_(const std::string& addchars) {
   text_translation_dirty_ = true;
 }
 
+void TextWidget::PrefetchTextMeasures_() {
+  // Kick any needed background OS-span measures for our current text
+  // right away rather than waiting for our first draw. Warm-font
+  // measures usually complete before that draw, avoiding a blank
+  // first frame; cold font loads still defer (delay, never a hitch).
+  // Fully async: even the measure *walk* is O(length) and adds up
+  // when many widgets are created in one frame, so it runs on the
+  // assets loop; this costs only a string copy here.
+  UpdateTranslation_();
+  g_base->text_graphics->WarmUpStringAsync(text_translated_, big_);
+}
+
 void TextWidget::UpdateTranslation_() {
   // Apply subs/resources to get our actual text if need be.
   if (text_translation_dirty_) {
@@ -1065,14 +1093,18 @@ void TextWidget::UpdateTranslation_() {
   }
 }
 
-auto TextWidget::GetTextWidth() -> float {
+auto TextWidget::TryGetTextWidth() -> std::optional<float> {
   UpdateTranslation_();
 
-  // Should we cache this?
-  return g_base->text_graphics->GetStringWidth(text_translated_, big_);
+  // Empty while OS-span measures warm in the background (they get
+  // kicked here if needed); callers should stay dirty and retry.
+  return g_base->text_graphics->TryGetStringWidth(text_translated_, big_);
 }
 
-void TextWidget::OnLanguageChange() { text_translation_dirty_ = true; }
+void TextWidget::OnLanguageChange() {
+  text_translation_dirty_ = true;
+  PrefetchTextMeasures_();
+}
 
 void TextWidget::SetHAlign(HAlign a) {
   if (alignment_h_ != a) {

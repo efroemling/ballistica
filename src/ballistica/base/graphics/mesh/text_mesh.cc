@@ -22,7 +22,9 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
                        VAlign alignment_v, bool big, uint32_t min_val,
                        uint32_t max_val, TextMeshEntryType entry_type,
                        TextPacker* packer) {
-  if (text_in == text_) {
+  // (An incomplete build must be allowed to re-run with the same text
+  // once its deferred measures come in.)
+  if (text_in == text_ && complete_) {
     // Covers corner case where we assign a new string to empty.
     if (text_in.empty()) {
       SetEmpty();
@@ -30,6 +32,7 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
     return;
   }
   text_ = text_in;
+  complete_ = true;
 
   assert(Utils::IsValidUTF8(text_));
 
@@ -146,10 +149,13 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
     if (first_char || char_val == '\n') {
       // If we've been building an os-span, add it to the text-packer.
       if (char_val == '\n' && !os_span.empty()) {
-        Rect r2;
-        float width;
+        Rect r2{};
+        float width{};
         std::string s = Utils::UTF8FromUnicode(os_span);
-        g_base->text_graphics->GetOSTextSpanBoundsAndWidth(s, &r2, &width);
+        if (!g_base->text_graphics->TryGetOSTextSpanBoundsAndWidth(s, &r2,
+                                                                   &width)) {
+          complete_ = false;  // Placeholder values; rebuilt when warm.
+        }
         if (packer) {
           packer->AddSpan(s, x_offset, y_offset, r2);
         }
@@ -197,8 +203,14 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
                 // Flipping back to glyphs; if we had been building an os_span,
                 // tally it.
                 if (!os_span_l.empty()) {
+                  Rect r2{};
+                  float width{};
                   std::string s = Utils::UTF8FromUnicode(os_span_l);
-                  line_length += g_base->text_graphics->GetOSTextSpanWidth(s);
+                  if (!g_base->text_graphics->TryGetOSTextSpanBoundsAndWidth(
+                          s, &r2, &width)) {
+                    complete_ = false;
+                  }
+                  line_length += width;
                   os_span_l.clear();
                 }
                 line_length += char_width * g->advance;
@@ -215,8 +227,14 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
 
           // Add final os_span if there is one.
           if (!os_span_l.empty()) {
+            Rect r2{};
+            float width{};
             std::string s = Utils::UTF8FromUnicode(os_span_l);
-            line_length += g_base->text_graphics->GetOSTextSpanWidth(s);
+            if (!g_base->text_graphics->TryGetOSTextSpanBoundsAndWidth(
+                    s, &r2, &width)) {
+              complete_ = false;
+            }
+            line_length += width;
             os_span_l.clear();
           }
           if (alignment_h == HAlign::kCenter) {
@@ -258,10 +276,13 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
           // If we had been building up an OS-text span,
           // commit it since we're flipping to glyphs now.
           if (!os_span.empty()) {
-            Rect r2;
-            float width;
+            Rect r2{};
+            float width{};
             std::string s = Utils::UTF8FromUnicode(os_span);
-            g_base->text_graphics->GetOSTextSpanBoundsAndWidth(s, &r2, &width);
+            if (!g_base->text_graphics->TryGetOSTextSpanBoundsAndWidth(
+                    s, &r2, &width)) {
+              complete_ = false;  // Placeholder values; rebuilt when warm.
+            }
             if (packer) packer->AddSpan(s, x_offset, y_offset, r2);
             x_offset += width;
             os_span.clear();
@@ -359,10 +380,13 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
   // Commit any final OS-text span (can skip this if we're not
   // the one drawing OS text).
   if ((!os_span.empty()) && packer) {
-    Rect r2;
-    float width;
+    Rect r2{};
+    float width{};
     std::string s = Utils::UTF8FromUnicode(os_span);
-    g_base->text_graphics->GetOSTextSpanBoundsAndWidth(s, &r2, &width);
+    if (!g_base->text_graphics->TryGetOSTextSpanBoundsAndWidth(s, &r2,
+                                                               &width)) {
+      complete_ = false;  // Placeholder values; rebuilt when warm.
+    }
     packer->AddSpan(s, x_offset, y_offset, r2);
     os_span.clear();
   }

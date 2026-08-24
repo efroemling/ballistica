@@ -137,6 +137,7 @@ void TextNode::SetText(const std::string& val) {
     text_raw_ = val;
     text_mode_ = TextMode::kLegacy;
     text_lang_str_.reset();
+    PrefetchTextMeasures_();
   }
 }
 
@@ -171,6 +172,7 @@ void TextNode::SetTextWire(const std::string& wire,
       break;
   }
   text_translation_dirty_ = true;
+  PrefetchTextMeasures_();
 }
 
 void TextNode::SetBig(bool val) {
@@ -382,6 +384,42 @@ void TextNode::Update() {
   }
 }
 
+void TextNode::UpdateTranslation_() {
+  if (!text_translation_dirty_) {
+    return;
+  }
+  switch (text_mode_) {
+    case TextMode::kLegacy:
+      text_translated_ = g_base->assets->CompileResourceString(text_raw_);
+      break;
+    case TextMode::kLiteral:
+      text_translated_ = text_raw_.substr(1);
+      break;
+    case TextMode::kLegacyJson:
+      text_translated_ =
+          g_base->assets->CompileResourceString(text_raw_.substr(1));
+      break;
+    case TextMode::kLangStr:
+      text_translated_ = text_lang_str_ != nullptr
+                             ? text_lang_str_->Evaluate()
+                             : "LANGSTR_ERROR:unparsed wire value";
+      break;
+  }
+  text_translation_dirty_ = false;
+  text_group_dirty_ = true;
+  text_width_dirty_ = true;
+}
+
+void TextNode::PrefetchTextMeasures_() {
+  // Kick any needed background OS-span measures for our text right at
+  // set-time rather than waiting for our first draw; warm-font
+  // measures usually land before that draw, avoiding a blank first
+  // frame. Fully async (even the O(length) walk runs on the assets
+  // loop); costs only a string copy here.
+  UpdateTranslation_();
+  g_base->text_graphics->WarmUpStringAsync(text_translated_, big_);
+}
+
 void TextNode::Draw(base::FrameDef* frame_def) {
   if (client_only_ && context_ref().GetHostSession()) {
     return;
@@ -391,28 +429,7 @@ void TextNode::Draw(base::FrameDef* frame_def) {
   }
 
   // Apply subs/resources to get our actual text if need be.
-  if (text_translation_dirty_) {
-    switch (text_mode_) {
-      case TextMode::kLegacy:
-        text_translated_ = g_base->assets->CompileResourceString(text_raw_);
-        break;
-      case TextMode::kLiteral:
-        text_translated_ = text_raw_.substr(1);
-        break;
-      case TextMode::kLegacyJson:
-        text_translated_ =
-            g_base->assets->CompileResourceString(text_raw_.substr(1));
-        break;
-      case TextMode::kLangStr:
-        text_translated_ = text_lang_str_ != nullptr
-                               ? text_lang_str_->Evaluate()
-                               : "LANGSTR_ERROR:unparsed wire value";
-        break;
-    }
-    text_translation_dirty_ = false;
-    text_group_dirty_ = true;
-    text_width_dirty_ = true;
-  }
+  UpdateTranslation_();
 
   if (text_translated_.empty()) {
     return;
@@ -420,9 +437,15 @@ void TextNode::Draw(base::FrameDef* frame_def) {
 
   // recalc our text width if need be..
   if (text_width_dirty_) {
-    text_width_ =
-        g_base->text_graphics->GetStringWidth(text_translated_.c_str(), big_);
-    text_width_dirty_ = false;
+    // Measure without stalling; if OS-span measures are cold they run
+    // in the background and we stay dirty (our text-group defers its
+    // own display in that case too, so nothing draws mismatched).
+    auto text_width = g_base->text_graphics->TryGetStringWidth(
+        text_translated_.c_str(), big_);
+    if (text_width.has_value()) {
+      text_width_ = *text_width;
+      text_width_dirty_ = false;
+    }
   }
 
   bool vr_2d_text = (g_core->vr_mode() && !in_world_);

@@ -537,7 +537,6 @@ void BGDynamicsServer::ParticleSet::Emit(const Vector3f& pos,
 }
 
 void BGDynamicsServer::ParticleSet::UpdateAndCreateSnapshot(
-    Object::Ref<MeshIndexBuffer16>* index_buffer,
     Object::Ref<MeshBufferVertexSprite>* buffer) {
   assert(g_base->InBGDynamicsThread());
 
@@ -554,19 +553,12 @@ void BGDynamicsServer::ParticleSet::UpdateAndCreateSnapshot(
   particles[!current_set].resize(particles[current_set].size());
   Particle* p_dst = &particles[!current_set][0];
 
-  auto* ibuf = Object::NewDeferred<MeshIndexBuffer16>(p_count * 6);
-  // Logic thread is default owner for this type. It needs to be us until
-  // we hand it over, so set that up before creating the first ref.
-  ibuf->SetThreadOwnership(Object::ThreadOwnership::kNextReferencing);
-  *index_buffer = Object::CompleteDeferred(ibuf);
-
   auto* vbuf = Object::NewDeferred<MeshBufferVertexSprite>(p_count * 4);
   // Logic thread is default owner for this type. It needs to be us until
   // we hand it over, so set that up before creating the first ref.
   vbuf->SetThreadOwnership(Object::ThreadOwnership::kNextReferencing);
   *buffer = Object::CompleteDeferred(vbuf);
 
-  uint16_t* i_render = &(*index_buffer)->elements[0];
   VertexSprite* p_render = &(*buffer)->elements[0];
   uint32_t p_index = 0;
   uint32_t p_count_remaining = 0;
@@ -614,15 +606,8 @@ void BGDynamicsServer::ParticleSet::UpdateAndCreateSnapshot(
       if (p_dst->flicker > 0.0f && p_dst->size > 0.0f) {
         p_count_rendered++;
 
-        // Add our 6 indices.
-        {
-          i_render[0] = static_cast<uint16_t>(p_index);
-          i_render[1] = static_cast<uint16_t>(p_index + 1);
-          i_render[2] = static_cast<uint16_t>(p_index + 2);
-          i_render[3] = static_cast<uint16_t>(p_index + 1);
-          i_render[4] = static_cast<uint16_t>(p_index + 3);
-          i_render[5] = static_cast<uint16_t>(p_index + 2);
-        }
+        // (Indices come from the shared client-side quad pattern; we
+        // just pack rendered quads contiguously here.)
 
         p_render[0].uv[0] = 0;
         p_render[0].uv[1] = 0;
@@ -650,7 +635,6 @@ void BGDynamicsServer::ParticleSet::UpdateAndCreateSnapshot(
         p_render[0].color[3] = p_render[1].color[3] = p_render[2].color[3] =
             p_render[3].color[3] = p_dst->a * o;
 
-        i_render += 6;
         p_render += 4;
         p_index += 4;
       }
@@ -668,10 +652,8 @@ void BGDynamicsServer::ParticleSet::UpdateAndCreateSnapshot(
     // If we dropped all the way to zero, return empty.
     // Otherwise, return a downsized buffer.
     if (p_count_rendered == 0) {
-      *index_buffer = Object::Ref<MeshIndexBuffer16>();
       *buffer = Object::Ref<MeshBufferVertexSprite>();
     } else {
-      (*index_buffer)->elements.resize(p_count_rendered * 6);
       (*buffer)->elements.resize(p_count_rendered * 4);
     }
   }
@@ -1599,18 +1581,10 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
 
   // Allocate buffers as if we're drawing *all* lights/shadows for chunks.
   // We may prune this down.
-  uint16_t *s_index = nullptr, *l_index = nullptr;
   VertexSprite *s_vertex = nullptr, *l_vertex = nullptr;
   uint32_t s_vertex_index = 0, l_vertex_index = 0;
 
   if (shadow_max_count > 0) {
-    auto* ibuf = Object::NewDeferred<MeshIndexBuffer16>(shadow_max_count * 6);
-    // Logic thread is default owner for this type. It needs to be us until
-    // we hand it over, so set that up before creating the first ref.
-    ibuf->SetThreadOwnership(Object::ThreadOwnership::kNextReferencing);
-    ss->shadow_indices = Object::CompleteDeferred(ibuf);
-    s_index = &ss->shadow_indices->elements[0];
-
     auto* vbuf =
         Object::NewDeferred<MeshBufferVertexSprite>(shadow_max_count * 4);
     // Logic thread is default owner for this type. It needs to be us until
@@ -1622,13 +1596,6 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
   }
 
   if (light_max_count > 0) {
-    auto* ibuf = Object::NewDeferred<MeshIndexBuffer16>(light_max_count * 6);
-    // Logic thread is default owner for this type. It needs to be us until
-    // we hand it over, so set that up before creating the first ref.
-    ibuf->SetThreadOwnership(Object::ThreadOwnership::kNextReferencing);
-    ss->light_indices = Object::CompleteDeferred(ibuf);
-    l_index = &ss->light_indices->elements[0];
-
     auto* vbuf =
         Object::NewDeferred<MeshBufferVertexSprite>(light_max_count * 4);
     // Logic thread is default owner for this type. It needs to be us until
@@ -1765,24 +1732,16 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
         float sd = shadow_dist;
 
         // Ok we'll draw this fella.
-        uint16_t* this_i{};
         VertexSprite* this_v{};
-        uint32_t this_v_index{};
         if (draw_shadow) {
           shadow_drawn_count++;
-          this_i = s_index;
           this_v = s_vertex;
-          this_v_index = s_vertex_index;
-          s_index += 6;
           s_vertex += 4;
           s_vertex_index += 4;
         } else {
           light_drawn_count++;
           assert(draw_light);
-          this_i = l_index;
           this_v = l_vertex;
-          this_v_index = l_vertex_index;
-          l_index += 6;
           l_vertex += 4;
           l_vertex_index += 4;
         }
@@ -1825,17 +1784,8 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
         // Do this *after* this is used to modulate density.
         shadow_scale *= shadow_scale_mult;
 
-        // Add our 6 indices.
-        {
-          this_i[0] = static_cast<uint16_t>(this_v_index);
-          this_i[1] = static_cast<uint16_t>(this_v_index + 1);
-          this_i[2] = static_cast<uint16_t>(this_v_index + 2);
-          this_i[3] = static_cast<uint16_t>(this_v_index + 1);
-          this_i[4] = static_cast<uint16_t>(this_v_index + 3);
-          this_i[5] = static_cast<uint16_t>(this_v_index + 2);
-        }
-
-        // Add our 4 verts.
+        // Add our 4 verts. (Indices come from the shared client-side
+        // quad pattern; rendered quads pack contiguously.)
         this_v[0].uv[0] = 0;
         this_v[0].uv[1] = 0;
         this_v[1].uv[0] = 0;
@@ -1921,21 +1871,14 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
   if (shadow_max_count > 0) {
     if (shadow_drawn_count == 0) {
       // If we didn't actually draw *any*, completely kill our buffers.
-      ss->shadow_indices.Clear();
       ss->shadow_vertices.Clear();
     } else if (shadow_drawn_count != shadow_max_count) {
       // Otherwise, resize our buffers down to what we actually used.
-      assert(s_index - (&ss->shadow_indices->elements[0])
-             == shadow_drawn_count * 6);
       assert(s_vertex - (&ss->shadow_vertices->elements[0])
              == shadow_drawn_count * 4);
-      assert(ss->shadow_indices->elements.size() == shadow_max_count * 6);
-      ss->shadow_indices->elements.resize(shadow_drawn_count * 6);
       assert(ss->shadow_vertices->elements.size() == shadow_max_count * 4);
       ss->shadow_vertices->elements.resize(shadow_drawn_count * 4);
     } else {
-      assert(s_index - (&ss->shadow_indices->elements[0])
-             == shadow_max_count * 6);
       assert(s_vertex - (&ss->shadow_vertices->elements[0])
              == shadow_max_count * 4);
     }
@@ -1943,21 +1886,14 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
   if (light_max_count > 0) {
     // If we didn't actually draw *any*, clear our buffers.
     if (light_drawn_count == 0) {
-      ss->light_indices.Clear();
       ss->light_vertices.Clear();
     } else if (light_drawn_count != light_max_count) {
       // Otherwise, resize our buffers down to what we actually used.
-      assert(l_index - (&ss->light_indices->elements[0])
-             == light_drawn_count * 6);
       assert(l_vertex - (&ss->light_vertices->elements[0])
              == light_drawn_count * 4);
-      assert(ss->light_indices->elements.size() == light_max_count * 6);
-      ss->light_indices->elements.resize(light_drawn_count * 6);
       assert(ss->light_vertices->elements.size() == light_max_count * 4);
       ss->light_vertices->elements.resize(light_drawn_count * 4);
     } else {
-      assert(l_index - (&ss->light_indices->elements[0])
-             == light_max_count * 6);
       assert(l_vertex - (&ss->light_vertices->elements[0])
              == light_max_count * 4);
     }
@@ -2226,8 +2162,7 @@ auto BGDynamicsServer::CreateDrawSnapshot() -> BGDynamicsDrawSnapshot* {
   if (!spark_particles_) {
     spark_particles_ = std::make_unique<ParticleSet>();
   }
-  spark_particles_->UpdateAndCreateSnapshot(&ss->spark_indices,
-                                            &ss->spark_vertices);
+  spark_particles_->UpdateAndCreateSnapshot(&ss->spark_vertices);
 
   return ss;
 }  // NOLINT (yes this should be shorter)

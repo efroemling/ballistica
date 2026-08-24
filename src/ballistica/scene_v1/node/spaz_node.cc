@@ -5050,7 +5050,11 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
           c.Translate(torso_pos[0] - 0.0f, torso_pos[1] + 0.89f + 0.4f * extra,
                       torso_pos[2] - 0.2f);
           float s = (0.01f + 0.01f * extra) * death_scale;
-          float w = g_base->text_graphics->GetStringWidth(name_.c_str());
+          // Non-stalling measure; by the time our name group has
+          // elements to draw, spans are warm and this succeeds (a
+          // cache-evicted miss just skips the squish for a frame).
+          float w = g_base->text_graphics->TryGetStringWidth(name_.c_str())
+                        .value_or(0.0f);
           if (w > 100.0f) s *= (100.0f / w);
           s *= s_extra;
           c.Scale(s, s, s);
@@ -6219,6 +6223,15 @@ auto SpazNode::GetMaterials() const -> std::vector<Material*> {
 
 void SpazNode::SetMaterials(const std::vector<Material*>& vals) {
   spaz_part_.SetMaterials(vals);
+}
+
+void SpazNode::set_name(const std::string& val) {
+  name_ = val;
+  // Kick any needed background OS-span measures for the name right at
+  // set-time rather than waiting for its first draw; warm-font
+  // measures usually land before that draw, avoiding a blank first
+  // frame for the name tag. Fully async.
+  g_base->text_graphics->WarmUpStringAsync(name_);
 }
 
 void SpazNode::SetNameColor(const std::vector<float>& vals) {

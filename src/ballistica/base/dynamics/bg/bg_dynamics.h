@@ -74,6 +74,24 @@ class BGDynamics {
  private:
   void DrawChunks(FrameDef* frame_def, std::vector<Matrix44f>* instances,
                   BGDynamicsChunkType chunk_type);
+
+  /// Return a cached grow-only index buffer holding the canonical
+  /// quad pattern (0,1,2, 1,3,2, 4,5,6, ...) covering at least
+  /// quad_count quads for one quad sprite mesh (sparks/lights/
+  /// shadows each get their own slot). Meshes set per-frame prefix
+  /// draw-counts instead of uploading fresh indices every frame; the
+  /// buffer itself changes (and re-uploads) only on growth. One cache
+  /// per consuming mesh — NOT shared — because MeshBufferBase::state
+  /// dirty-tracking assumes a single owning mesh; sharing one buffer
+  /// object across meshes lets their state stamps collide and skip
+  /// uploads of grown buffers (which draws garbage indices).
+  auto QuadIndices_(int slot, size_t quad_count)
+      -> const Object::Ref<MeshIndexBuffer16>&;
+
+  static constexpr int kQuadIndexSlotLights{0};
+  static constexpr int kQuadIndexSlotShadows{1};
+  static constexpr int kQuadIndexSlotSparks{2};
+  Object::Ref<MeshIndexBuffer16> quad_indices_[3];
   Object::Ref<SpriteMesh> lights_mesh_;
   Object::Ref<SpriteMesh> shadows_mesh_;
   Object::Ref<SpriteMesh> sparks_mesh_;

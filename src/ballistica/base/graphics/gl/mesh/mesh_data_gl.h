@@ -152,6 +152,17 @@ class RendererGL::MeshDataGL : public MeshRendererData {
     BA_DEBUG_CHECK_GL_ERROR;
   }
 
+  /// Cap drawing to the first n indices of the current index buffer
+  /// (0 = draw the whole thing). Applied after SetIndexData each
+  /// update pass, so an oversized shared index buffer can be reused
+  /// across frames with only the count changing.
+  void SetIndexDrawCount(uint32_t count) {
+    if (count != 0) {
+      assert(uses_index_data_);
+      elem_count_ = count;
+    }
+  }
+
   // When dynamic-draw is on, it means *all* buffers should be flagged as
   // dynamic.
   void set_dynamic_draw(bool enable) { dynamic_draw_ = enable; }
@@ -190,7 +201,15 @@ class RendererGL::MeshDataGL : public MeshRendererData {
     }
   }
 
-  // FIXME: Should do some sort of ring-buffer system.
+  // Note: dynamic updates re-specify these buffers via full
+  // glBufferData calls, which is the classic buffer-orphaning idiom:
+  // the driver detaches the old storage (keeping it alive for any
+  // in-flight draws) and hands back fresh storage, so no pipeline
+  // sync occurs. All backends we ship on (ANGLE->Metal/D3D,
+  // ES3-class Adreno/Mali, desktop GL) implement this well, so an
+  // explicit ring of buffers would just duplicate what the driver
+  // already does while complicating VAO ownership. (An old FIXME here
+  // suggested a ring-buffer system; that predates our ES3 baseline.)
   GLuint vbos_[3]{};
   GLuint vao_{};
   auto GetBufferCount() const -> int {

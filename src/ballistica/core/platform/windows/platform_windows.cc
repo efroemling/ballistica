@@ -1240,9 +1240,16 @@ static constexpr DWRITE_FONT_WEIGHT kFontWeight = DWRITE_FONT_WEIGHT_SEMI_BOLD;
 // File-scope factory singletons, initialized once via call_once.
 // D2D1_FACTORY_TYPE_MULTI_THREADED is required because CreateTextTexture may
 // run on any thread (asset preloads are not thread-pinned; see
-// Asset::DoPreload()) while GetTextBoundsAndWidth runs on the Logic thread.
+// Asset::DoPreload()) while GetTextBoundsAndWidth may itself run on any
+// thread (logic-thread UI measuring, background warm-ups, doc-ui prep).
 static ID2D1Factory1* g_d2d_factory = nullptr;
 static IDWriteFactory* g_dwrite_factory = nullptr;
+// Shared text format for the measure path (fixed size; the texture
+// path scales per call so it keeps making its own). DirectWrite
+// objects from the shared factory are thread-safe and this is
+// immutable after creation, so concurrent measures may share it.
+// Creating a format per measure call was pure per-call waste.
+static IDWriteTextFormat* g_dwrite_measure_format = nullptr;
 // WARP D3D11 device — software rasterizer, no GPU required.
 static ID3D11Device* g_d3d11_device = nullptr;
 static ID3D11DeviceContext* g_d3d11_context = nullptr;
@@ -1279,6 +1286,15 @@ static void InitFontFactories_() {
     BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
                 "DWriteCreateFactory failed; hr=" + std::to_string(hr));
     return;
+  }
+
+  // Shared measure-path text format (see decl above).
+  hr = g_dwrite_factory->CreateTextFormat(
+      kFontFamily, nullptr, kFontWeight, DWRITE_FONT_STYLE_NORMAL,
+      DWRITE_FONT_STRETCH_NORMAL, kBaseFontSize, L"", &g_dwrite_measure_format);
+  if (FAILED(hr)) {
+    BA_LOG_ONCE(LogName::kBa, LogLevel::kError,
+                "CreateTextFormat (measure) failed; hr=" + std::to_string(hr));
   }
 
   // D3D11 WARP device (software rasterizer — no GPU required).
@@ -1567,21 +1583,16 @@ void PlatformWindows::GetTextBoundsAndWidth(const std::string& text, Rect* r,
     return;
   }
 
-  std::wstring wtext = UTF8Decode(text);
-
-  IDWriteTextFormat* text_format = nullptr;
-  HRESULT hr = g_dwrite_factory->CreateTextFormat(
-      kFontFamily, nullptr, kFontWeight, DWRITE_FONT_STYLE_NORMAL,
-      DWRITE_FONT_STRETCH_NORMAL, kBaseFontSize, L"", &text_format);
-  if (FAILED(hr) || !text_format) {
+  if (!g_dwrite_measure_format) {
     return;
   }
 
+  std::wstring wtext = UTF8Decode(text);
+
   IDWriteTextLayout* layout = nullptr;
-  hr = g_dwrite_factory->CreateTextLayout(
-      wtext.c_str(), static_cast<UINT32>(wtext.size()), text_format, 100000.0f,
-      100000.0f, &layout);
-  text_format->Release();
+  HRESULT hr = g_dwrite_factory->CreateTextLayout(
+      wtext.c_str(), static_cast<UINT32>(wtext.size()), g_dwrite_measure_format,
+      100000.0f, 100000.0f, &layout);
   if (FAILED(hr) || !layout) {
     return;
   }
