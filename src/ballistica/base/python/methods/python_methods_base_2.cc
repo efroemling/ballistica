@@ -1122,6 +1122,28 @@ static PyMethodDef PySupportsMaxFPSDef = {
     ":meta private:\n",
 };
 
+// ---------------------------- get_last_fps -----------------------------------
+
+static auto PyGetLastFPS(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  return PyLong_FromLong(g_base->graphics->last_fps());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetLastFPSDef = {
+    "get_last_fps",             // name
+    (PyCFunction)PyGetLastFPS,  // method
+    METH_NOARGS,                // flags
+
+    "get_last_fps() -> int\n"
+    "\n"
+    "(internal) Frames rendered over the most recent one-second stats\n"
+    "window -- the same value the in-game 'Show FPS' display shows,\n"
+    "tracked whether or not that display is enabled. Always 0 in\n"
+    "headless builds, which render no frames. Logic thread only.\n",
+};
+
 // ---------------------- supports_unicode_display -----------------------------
 
 static auto PySupportsUnicodeDisplay(PyObject* self) -> PyObject* {
@@ -1442,6 +1464,9 @@ static auto PyMarkConstructAssetsComplete(PyObject* self, PyObject* args)
     -> PyObject* {
   BA_PYTHON_TRY;
   g_base->assets->package_registry()->SetConstructComplete();
+  // Bring-up is done from the OS's perspective; end any loading-phase
+  // power boost (Android GameState; no-op elsewhere).
+  g_core->platform->SetOSGameLoadingState(false);
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -1759,6 +1784,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyAllowsTicketSalesDef,
       PySupportsVSyncDef,
       PySupportsMaxFPSDef,
+      PyGetLastFPSDef,
       PySupportsUnicodeDisplayDef,
       PyShowProgressBarDef,
       PyFullscreenControlKeyShortcutDef,

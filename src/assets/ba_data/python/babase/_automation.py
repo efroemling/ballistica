@@ -96,6 +96,19 @@ def ping(tag: str = 'ping') -> None:
     _emit(tag, 'ok', 'pong')
 
 
+def fps(tag: str = 'fps') -> None:
+    """Report the current render frame rate.
+
+    Emits ``[automation] <tag> ok <fps>``, where ``<fps>`` is the
+    number of frames rendered over the most recent one-second stats
+    window -- the same value the in-game 'Show FPS' display shows,
+    tracked whether or not that display is enabled. Always ``0`` in
+    headless builds, which render no frames. Note the window updates
+    once per second, so a just-launched app can briefly report ``0``.
+    """
+    _emit(tag, 'ok', str(_babase.get_last_fps()))
+
+
 def shutdown(tag: str = 'shutdown') -> None:
     """Cleanly quit the running game.
 

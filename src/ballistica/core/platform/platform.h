@@ -203,6 +203,11 @@ class Platform {
   virtual void AndroidSetResString(const std::string& res);
   virtual auto AndroidGetExternalFilesDir() -> std::string;
 
+  /// Inform the OS whether the app is currently in a loading phase
+  /// (Android's GameState API; no-op elsewhere). The OS may boost
+  /// clocks for the duration. Safe to call from any thread.
+  virtual void SetOSGameLoadingState(bool loading);
+
 #pragma mark PERMISSIONS -------------------------------------------------------
 
   /// Request the permission asynchronously. If the permission cannot be

@@ -854,6 +854,8 @@ void Platform::AndroidSetResString(const std::string& res) {
   throw Exception();
 }
 
+void Platform::SetOSGameLoadingState(bool loading) {}
+
 auto Platform::GetDeviceV1AccountID() -> std::string {
   if (g_core->HeadlessMode()) {
     return "S-" + GetLegacyDeviceUUID();

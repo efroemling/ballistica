@@ -314,6 +314,14 @@ class Graphics {
     assert(g_base->InLogicThread());
     vignette_inner_ = val;
   }
+  /// Frames rendered over the most recent one-second stats window.
+  /// Updated continuously while rendering (whether or not the
+  /// on-screen fps display is enabled); always 0 in headless builds.
+  auto last_fps() const {
+    assert(g_base->InLogicThread());
+    return last_fps_;
+  }
+
   auto shadow_offset() const {
     assert(g_base->InLogicThread());
     return shadow_offset_;

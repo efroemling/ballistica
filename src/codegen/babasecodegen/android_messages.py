@@ -505,6 +505,19 @@ MESSAGES: list[Message] = [
         ],
         doc='Raw Google Play Player Analytics counter increment (2-arg form).',
     ),
+    Message(
+        name='SetGameLoading',
+        direction=Dir.NATIVE_TO_JAVA,
+        fields=[Field('loading', BOOL)],
+        doc=(
+            "Tell the OS whether the game is in a loading phase, via "
+            "Android's GameState API (API 33+). The Java side also flips "
+            'this on by itself when it kicks off native-layer init; the '
+            'engine sends false when the construct-mode asset gate opens '
+            '(bring-up complete). Devices whose Power HAL wires the '
+            'GAME_LOADING power mode can boost clocks for the duration.'
+        ),
+    ),
     # ---- Native -> Java (flavor-specific actions) ----
     Message(
         name='ShowLeaderboards',

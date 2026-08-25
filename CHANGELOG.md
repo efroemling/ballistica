@@ -1,4 +1,4 @@
-### 1.8.0 (build 22998, api 9, 2026-08-24)
+### 1.8.0 (build 22999, api 9, 2026-08-25)
 - Fully implemented asset packages (more on this soon)
 - App-config committing (dirty-tracking, debounced disk writes, and
   suspend/shutdown flushes) now lives fully in `babase` instead of routing
@@ -117,6 +117,10 @@
   renders more cleanly in the background, meaning it should never cause frame
   hitches. The credits window used to be a major offender here and should now
   come up smoothly.
+- On Android, frame-rate should now be the native device frame-rate instead of
+  60 by default, and should respond to game-mode and thermal settings so it
+  drops to 60 if the device is getting hot or the user puts it into energy-saver
+  mode via game-overlays or whatnot.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.
