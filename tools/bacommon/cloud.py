@@ -172,6 +172,13 @@ class LoginProxyStateQueryResponse(Response):
     # On success, these will be filled out.
     credentials: Annotated[str | None, IOAttrs('tk')]
 
+    # On FAIL: whether the failure is the sign-in window having
+    # expired (client took too long) rather than anything wrong with
+    # the sign-in itself. A flag rather than a State value on purpose:
+    # old clients reject unknown enum values but ignore unknown keys,
+    # so this reaches new clients without breaking old ones.
+    expired: Annotated[bool, IOAttrs('e', soft_default=False)] = False
+
 
 @ioprepped
 @dataclass

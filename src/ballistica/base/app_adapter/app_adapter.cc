@@ -78,6 +78,18 @@ auto AppAdapter::FullscreenControlKeyShortcut() const
   return {};
 }
 
+auto AppAdapter::GetWindowSize(int* width, int* height) -> bool {
+  // Unsupported by default; adapters running in a desktop window
+  // override this.
+  return false;
+}
+
+auto AppAdapter::SetWindowSize(int width, int height) -> bool {
+  // Unsupported by default; adapters running in a desktop window
+  // override this.
+  return false;
+}
+
 void AppAdapter::CursorPositionForDraw(float* x, float* y) {
   assert(x && y);
 

@@ -184,6 +184,104 @@ def _automation_screenshots_dir() -> str:
     return os.path.join(os.getcwd(), 'screenshots')
 
 
+def drag_at(
+    x: float,
+    y: float,
+    x2: float,
+    y2: float,
+    *,
+    steps: int = 8,
+    tag: str = 'drag',
+) -> None:
+    """Synthesize a mouse drag between two virtual-screen points.
+
+    Presses at ``(x, y)``, delivers ``steps`` interpolated motion
+    events towards ``(x2, y2)``, and releases there -- all through the
+    normal UI dispatch path, so anything with real press/drag/release
+    behavior (the draggable dev-console button, for one) responds the
+    way it would to a real pointer. Same coordinate system as
+    :func:`click_at` (origin bottom-left, y up).
+
+    Emits ``[automation] <tag> fail not_compiled_in`` when the build
+    was made without ``BA_ENABLE_AUTOMATION``, or ``fail
+    headless_mode`` when called from a headless build.
+    """
+    if not hasattr(_babase, 'automation_drag_at_virtual'):
+        _emit(tag, 'fail', 'not_compiled_in')
+        return
+    try:
+        _badev.automation_drag_at_virtual(x=x, y=y, x2=x2, y2=y2, steps=steps)
+    except RuntimeError as exc:
+        if 'headless' in str(exc).lower():
+            _emit(tag, 'fail', 'headless_mode')
+            return
+        raise
+    _emit(tag, 'ok', f'{x:.0f},{y:.0f} -> {x2:.0f},{y2:.0f}')
+
+
+def window_size(tag: str = 'window_size') -> None:
+    """Report the app's current OS-window size.
+
+    Emits ``[automation] <tag> ok <W>x<H>`` (logical units, which is
+    what :func:`set_window_size` accepts -- on retina displays the
+    backing framebuffer, and thus screenshot captures, will be larger).
+    Only functions where the app runs in a desktop window (the SDL /
+    cmake builds); elsewhere emits ``fail not_supported``.
+
+    Fire-and-forget -- the query runs on the main thread and the result
+    line lands in the log shortly after.
+
+    Emits ``[automation] <tag> fail not_compiled_in`` when the build
+    was made without ``BA_ENABLE_AUTOMATION``, or ``fail
+    headless_mode`` when called from a headless build.
+    """
+    if not hasattr(_babase, 'automation_get_window_size'):
+        _emit(tag, 'fail', 'not_compiled_in')
+        return
+    try:
+        _badev.automation_get_window_size(tag=tag)
+    except RuntimeError as exc:
+        if 'headless' in str(exc).lower():
+            _emit(tag, 'fail', 'headless_mode')
+            return
+        raise
+
+
+def set_window_size(
+    width: int, height: int, *, tag: str = 'set_window_size'
+) -> None:
+    """Resize the app's OS window.
+
+    Takes logical units (the same ones :func:`window_size` reports).
+    Only functions where the app runs in a desktop window (the SDL /
+    cmake builds) and only in windowed mode; emits ``fail fullscreen``
+    or ``fail not_supported`` otherwise. The resize goes through the
+    same OS window-resized path a hand-drag does, so UI reflow /
+    aspect-clamp behavior gets exercised for real -- useful for
+    checking layouts at multiple window shapes within one run.
+
+    Fire-and-forget -- the resize runs on the main thread and a
+    ``[automation] <tag> ok <W>x<H>`` line reporting the size actually
+    applied (the OS may clamp; e.g. macOS to display bounds) lands in
+    the log shortly after. Give the UI a beat to reflow before
+    capturing a screenshot of the result.
+
+    Emits ``[automation] <tag> fail not_compiled_in`` when the build
+    was made without ``BA_ENABLE_AUTOMATION``, or ``fail
+    headless_mode`` when called from a headless build.
+    """
+    if not hasattr(_babase, 'automation_set_window_size'):
+        _emit(tag, 'fail', 'not_compiled_in')
+        return
+    try:
+        _badev.automation_set_window_size(width=width, height=height, tag=tag)
+    except RuntimeError as exc:
+        if 'headless' in str(exc).lower():
+            _emit(tag, 'fail', 'headless_mode')
+            return
+        raise
+
+
 def _evaluate_lstr_json(raw: str) -> str:
     """Evaluate a JSON-encoded :class:`babase.Lstr` blob to its display text.
 

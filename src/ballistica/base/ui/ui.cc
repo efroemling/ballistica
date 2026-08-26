@@ -4,6 +4,7 @@
 
 #include <Python.h>
 
+#include <algorithm>
 #include <cmath>
 #include <exception>
 #include <memory>
@@ -36,6 +37,10 @@
 namespace ballistica::base {
 
 static const int kUIOwnerTimeoutSeconds = 15;
+
+/// How far (in virtual-screen units) a press on the dev-console button
+/// must travel before it converts from a pending press to a drag.
+static const float kDevConsoleButtonDragThreshold = 12.0f;
 
 /// Flip to true to spin up a placeholder SimpleDialog at boot (with a
 /// self-animating progress bar) for iterating on the dialog's looks without a
@@ -246,6 +251,19 @@ void UI::ApplyAppConfig() {
   show_dev_console_button_ =
       g_base->app_config->Resolve(AppConfig::BoolID::kShowDevConsoleButton);
 
+  // Custom dragged position for the button (both coords or nothing).
+  auto btnx = g_base->app_config->Resolve(
+      AppConfig::OptionalFloatID::kDevConsoleButtonPosX);
+  auto btny = g_base->app_config->Resolve(
+      AppConfig::OptionalFloatID::kDevConsoleButtonPosY);
+  if (btnx.has_value() && btny.has_value()) {
+    dev_console_button_has_custom_pos_ = true;
+    dev_console_button_custom_x_ = *btnx;
+    dev_console_button_custom_y_ = *btny;
+  } else {
+    dev_console_button_has_custom_pos_ = false;
+  }
+
   if (dev_console_) {
     dev_console_->ApplyAppConfig();
   }
@@ -334,6 +352,16 @@ auto UI::HandleMouseDown(int button, float x, float y, bool double_click)
     if (InDevConsoleButton_(x, y)) {
       if (button == 1) {
         dev_console_button_pressed_ = true;
+        dev_console_button_dragging_ = false;
+        dev_console_button_press_x_ = x;
+        dev_console_button_press_y_ = y;
+        // Remember where in the button we grabbed it so a drag moves the
+        // button relative to that point instead of snapping its center
+        // to the cursor.
+        float centerx, centery;
+        DevConsoleButtonCenter_(&centerx, &centery);
+        dev_console_button_drag_offset_x_ = centerx - x;
+        dev_console_button_drag_offset_y_ = centery - y;
       }
       handled = true;
     }
@@ -389,7 +417,20 @@ void UI::HandleMouseUp(int button, float x, float y) {
 
   if (dev_console_button_pressed_ && button == 1) {
     dev_console_button_pressed_ = false;
-    if (InDevConsoleButton_(x, y)) {
+    if (dev_console_button_dragging_) {
+      // A drag consumed this press; releasing drops the button and
+      // persists its new position. Store the *clamped* position (what
+      // the user actually sees) rather than the raw drag point.
+      dev_console_button_dragging_ = false;
+      DevConsoleButtonCenter_(&dev_console_button_custom_x_,
+                              &dev_console_button_custom_y_);
+      PythonRef args(Py_BuildValue("(ff)", dev_console_button_custom_x_,
+                                   dev_console_button_custom_y_),
+                     PythonRef::kSteal);
+      g_base->python->objs()
+          .Get(BasePython::ObjID::kAppDevConsoleSaveButtonPositionCall)
+          .Call(args);
+    } else if (InDevConsoleButton_(x, y)) {
       if (dev_console_) {
         dev_console_->CycleState();
       }
@@ -413,6 +454,7 @@ void UI::HandleMouseCancel(int button, float x, float y) {
 
   if (dev_console_button_pressed_ && button == 1) {
     dev_console_button_pressed_ = false;
+    dev_console_button_dragging_ = false;
   }
 }
 
@@ -559,6 +601,27 @@ void UI::ProcessTextEditReports(FrameDef* frame_def) {
 }
 
 void UI::HandleMouseMotion(float x, float y) {
+  // A pressed dev-console button converts to a drag once the pointer
+  // moves far enough from the press point; from then on the pending
+  // press is canceled and motion just moves the button.
+  if (dev_console_button_pressed_) {
+    if (!dev_console_button_dragging_) {
+      float diffx = x - dev_console_button_press_x_;
+      float diffy = y - dev_console_button_press_y_;
+      if (diffx * diffx + diffy * diffy
+          >= kDevConsoleButtonDragThreshold * kDevConsoleButtonDragThreshold) {
+        dev_console_button_dragging_ = true;
+      }
+    }
+    if (dev_console_button_dragging_) {
+      dev_console_button_has_custom_pos_ = true;
+      dev_console_button_custom_x_ = x + dev_console_button_drag_offset_x_;
+      dev_console_button_custom_y_ = y + dev_console_button_drag_offset_y_;
+      // Motion belongs to the button while dragging it.
+      return;
+    }
+  }
+
   SendWidgetMessage(
       WidgetMessage(WidgetMessage::Type::kMouseMove, nullptr, x, y));
 }
@@ -893,13 +956,32 @@ auto UI::DevConsoleButtonSize_() const -> float {
   return 60.0f;
 }
 
-auto UI::InDevConsoleButton_(float x, float y) const -> bool {
+void UI::DevConsoleButtonCenter_(float* x, float* y) const {
+  assert(x && y);
   float vwidth = g_base->graphics->screen_virtual_width();
   float vheight = g_base->graphics->screen_virtual_height();
-  float bsz = DevConsoleButtonSize_();
-  float bszh = bsz * 0.5f;
-  float centerx = vwidth - bsz * 0.5f;
-  float centery = vheight * 0.5f;
+  float bszh = DevConsoleButtonSize_() * 0.5f;
+  if (dev_console_button_has_custom_pos_) {
+    *x = dev_console_button_custom_x_;
+    *y = dev_console_button_custom_y_;
+  } else {
+    // Default: docked at the right edge, 75% of the way up. Virtual
+    // coords span the virtual *bounds* (which cutout insets already
+    // shape), so this stays clear of camera cutouts — unlike a
+    // previous vertically-centered default, which could overlap them.
+    *x = vwidth - bszh;
+    *y = vheight * 0.75f;
+  }
+  // Never let the button get stranded out of reach (dragged towards an
+  // edge, or a custom position outliving a shrink of the virtual screen).
+  *x = std::clamp(*x, bszh, vwidth - bszh);
+  *y = std::clamp(*y, bszh, vheight - bszh);
+}
+
+auto UI::InDevConsoleButton_(float x, float y) const -> bool {
+  float bszh = DevConsoleButtonSize_() * 0.5f;
+  float centerx, centery;
+  DevConsoleButtonCenter_(&centerx, &centery);
   float diffx = ::std::abs(centerx - x);
   float diffy = ::std::abs(centery - y);
   return diffx <= bszh && diffy <= bszh;
@@ -911,8 +993,6 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
     dev_console_button_txt_->SetText("dev");
   }
   auto& grp(*dev_console_button_txt_);
-  float vwidth = g_base->graphics->screen_virtual_width();
-  float vheight = g_base->graphics->screen_virtual_height();
   float bsz = DevConsoleButtonSize_();
 
   SimpleComponent c(frame_def->overlay_front_pass());
@@ -929,9 +1009,11 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
   } else {
     c.SetColor(0.5f * cmul, 0.5f * cmul, 0.5f * cmul, 0.8f);
   }
+  float centerx, centery;
+  DevConsoleButtonCenter_(&centerx, &centery);
   {
     auto xf = c.ScopedTransform();
-    c.Translate(vwidth - bsz * 0.5f, vheight * 0.5f, kDevConsoleZDepth + 0.01f);
+    c.Translate(centerx, centery, kDevConsoleZDepth + 0.01f);
     c.Scale(bsz, bsz, 1.0f);
     c.DrawMeshAsset(
         g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));

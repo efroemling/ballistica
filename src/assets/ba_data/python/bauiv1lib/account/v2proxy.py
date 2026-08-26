@@ -331,10 +331,22 @@ class V2ProxySignInWindow(bui.Window):
                 return
 
             if response.state is response.State.FAIL:
-                logging.info('LoginProxy failed.')
+                logging.info(
+                    'LoginProxy failed%s.',
+                    ' (expired)' if response.expired else '',
+                )
                 builtinassets.audio.error.get().play()
+                # An expired flow is not an *error*; the approval may
+                # even have succeeded and we simply took too long to
+                # collect it (backgrounded app, flaky network). Say
+                # that, so the player's move is obvious: try again.
                 bui.screenmessage(
-                    _commonassets.strings.values.error, color=(1, 0, 0)
+                    (
+                        _commonassets.strings.status.sign_in_timed_out
+                        if response.expired
+                        else _commonassets.strings.values.error
+                    ),
+                    color=(1, 0, 0),
                 )
                 self._done()
                 return

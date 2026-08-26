@@ -1488,6 +1488,30 @@ void Input::PushMouseClickAtVirtualCoords(int button, float virtual_x,
   });
 }
 
+void Input::PushMouseDragAtVirtualCoords(int button, float virtual_x,
+                                         float virtual_y, float virtual_end_x,
+                                         float virtual_end_y, int steps) {
+  // Schedule the dispatch on the logic thread (where UI lives).
+  g_base->logic->event_loop()->PushCall([this, button, virtual_x, virtual_y,
+                                         virtual_end_x, virtual_end_y, steps] {
+    assert(g_base->InLogicThread());
+
+    // Down at the start point, interpolated motion towards the end
+    // point, then up there — the same UI entry points real events use.
+    cursor_pos_x_ = virtual_x;
+    cursor_pos_y_ = virtual_y;
+    g_base->ui->HandleMouseDown(button, cursor_pos_x_, cursor_pos_y_, false);
+    int stepsfull = std::max(1, steps);
+    for (int i = 1; i <= stepsfull; ++i) {
+      float amt = static_cast<float>(i) / static_cast<float>(stepsfull);
+      cursor_pos_x_ = virtual_x + (virtual_end_x - virtual_x) * amt;
+      cursor_pos_y_ = virtual_y + (virtual_end_y - virtual_y) * amt;
+      g_base->ui->HandleMouseMotion(cursor_pos_x_, cursor_pos_y_);
+    }
+    g_base->ui->HandleMouseUp(button, cursor_pos_x_, cursor_pos_y_);
+  });
+}
+
 void Input::PushMouseScrollAtVirtualCoords(float virtual_x, float virtual_y,
                                            float amount_x, float amount_y) {
   g_base->logic->event_loop()->PushCall(

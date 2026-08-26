@@ -161,6 +161,20 @@ class AppAdapter {
   virtual auto FullscreenControlKeyShortcut() const
       -> std::optional<std::string>;
 
+  /// Return the current size of the app's OS window in logical units,
+  /// for adapters running in a desktop window (SDL builds). Returns
+  /// false where unsupported (no desktop window). Must be called from
+  /// the main thread.
+  virtual auto GetWindowSize(int* width, int* height) -> bool;
+
+  /// Resize the app's OS window, for adapters running in a desktop
+  /// window (SDL builds). Only functions in windowed mode; returns
+  /// false where unsupported or currently fullscreen. The OS may clamp
+  /// the result (e.g. macOS to display bounds); follow with
+  /// GetWindowSize() for the size actually applied. Must be called
+  /// from the main thread.
+  virtual auto SetWindowSize(int width, int height) -> bool;
+
   /// Return whether this AppAdapter supports vsync controls for its display.
   virtual auto SupportsVSync() -> bool const;
 

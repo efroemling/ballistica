@@ -186,6 +186,12 @@ void AppConfig::SetupEntries_() {
 
   optional_float_entries_[OptionalFloatID::kIdleExitMinutes] =
       OptionalFloatEntry("Idle Exit Minutes", std::optional<float>());
+  // Custom dev-console button center (virtual-screen coords; set by
+  // dragging the button). Unset = the default docked position.
+  optional_float_entries_[OptionalFloatID::kDevConsoleButtonPosX] =
+      OptionalFloatEntry("Dev Console Button Pos X", std::optional<float>());
+  optional_float_entries_[OptionalFloatID::kDevConsoleButtonPosY] =
+      OptionalFloatEntry("Dev Console Button Pos Y", std::optional<float>());
 
   string_entries_[StringID::kResolutionAndroid] =
       StringEntry("Resolution (Android)", "Auto");

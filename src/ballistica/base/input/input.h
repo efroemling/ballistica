@@ -169,6 +169,14 @@ class Input {
   void PushMouseScrollAtVirtualCoords(float virtual_x, float virtual_y,
                                       float amount_x, float amount_y);
 
+  /// Synthesize a complete mouse drag in virtual screen space: down at
+  /// (x, y), ``steps`` interpolated motion events towards (end_x, end_y),
+  /// then up there. Routes through the normal UI dispatch path like
+  /// PushMouseClickAtVirtualCoords.
+  void PushMouseDragAtVirtualCoords(int button, float virtual_x,
+                                    float virtual_y, float virtual_end_x,
+                                    float virtual_end_y, int steps);
+
   void PushSmoothMouseScrollEvent(const Vector2f& velocity, bool momentum);
   void PushMouseScrollEvent(const Vector2f& amount);
   void PushJoystickEvent(const BAEvent& event, InputDevice* input_device);

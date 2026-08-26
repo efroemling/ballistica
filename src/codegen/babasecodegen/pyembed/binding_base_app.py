@@ -26,4 +26,5 @@ values = [
     app.devconsole.save_tab,  # kAppDevConsoleSaveTabCall
     app.on_screen_size_change,  # kAppOnScreenSizeChangeCall
     app.gc.collect,  # kAppGCCollectCall
+    app.devconsole.save_button_position,  # kAppDevConsoleSaveButtonPositionCall
 ]

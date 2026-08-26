@@ -34,6 +34,8 @@ class AppConfig {
 
   enum class OptionalFloatID {
     kIdleExitMinutes,
+    kDevConsoleButtonPosX,
+    kDevConsoleButtonPosY,
     kLast  // Sentinel.
   };
 

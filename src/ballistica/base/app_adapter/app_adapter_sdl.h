@@ -42,6 +42,8 @@ class AppAdapterSDL : public AppAdapter {
   auto FullscreenControlAvailable() const -> bool override;
   auto FullscreenControlKeyShortcut() const
       -> std::optional<std::string> override;
+  auto GetWindowSize(int* width, int* height) -> bool override;
+  auto SetWindowSize(int width, int height) -> bool override;
   auto SupportsVSync() -> bool const override;
   auto SupportsMaxFPS() -> bool const override;
 

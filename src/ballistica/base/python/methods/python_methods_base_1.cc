@@ -285,6 +285,148 @@ static PyMethodDef PyAutomationScrollAtVirtualDef = {
     "Raises RuntimeError in headless builds (no UI to target).\n",
 };
 
+// ----------------- automation_drag_at_virtual -------------------------------
+
+static auto PyAutomationDragAtVirtual(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int button = 1;
+  int steps = 8;
+  double vx = 0.0;
+  double vy = 0.0;
+  double vx2 = 0.0;
+  double vy2 = 0.0;
+  static const char* kwlist[] = {"x",     "y",      "x2",   "y2",
+                                 "steps", "button", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dddd|ii",
+                                   const_cast<char**>(kwlist), &vx, &vy, &vx2,
+                                   &vy2, &steps, &button)) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
+  }
+  if (g_core->HeadlessMode()) {
+    throw Exception("not supported in headless mode", PyExcType::kRuntime);
+  }
+  g_base->input->PushMouseDragAtVirtualCoords(
+      button, static_cast<float>(vx), static_cast<float>(vy),
+      static_cast<float>(vx2), static_cast<float>(vy2), steps);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationDragAtVirtualDef = {
+    "automation_drag_at_virtual",            // name
+    (PyCFunction)PyAutomationDragAtVirtual,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
+
+    "automation_drag_at_virtual(x: float, y: float, x2: float, y2: float,\n"
+    "                           steps: int = 8, button: int = 1) -> None\n"
+    "\n"
+    "Synthesize a mouse drag: press at (x, y), ``steps`` interpolated\n"
+    "motion events towards (x2, y2), release there. Virtual-screen\n"
+    "coords; routes through the normal UI dispatch path. Requires a\n"
+    "build with ``BA_ENABLE_AUTOMATION`` set. Raises RuntimeError in\n"
+    "headless builds (no UI to target).\n",
+};
+
+// ----------------- automation_get_window_size -------------------------------
+
+static auto PyAutomationGetWindowSize(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* tag = "window_size";
+  static const char* kwlist[] = {"tag", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s",
+                                   const_cast<char**>(kwlist), &tag)) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
+  }
+  // No OS window headless; surface as a RuntimeError so Python
+  // helpers can catch and emit a structured fail with the caller's tag.
+  if (g_core->HeadlessMode()) {
+    throw Exception("not supported in headless mode", PyExcType::kRuntime);
+  }
+  g_base->automation->GetWindowSize(tag);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationGetWindowSizeDef = {
+    "automation_get_window_size",            // name
+    (PyCFunction)PyAutomationGetWindowSize,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
+
+    "automation_get_window_size(tag: str = 'window_size') -> None\n"
+    "\n"
+    "Report the app's current OS-window size. Requires a build with\n"
+    "``BA_ENABLE_AUTOMATION`` set and an app-adapter running in a\n"
+    "desktop window (SDL builds). Fire-and-forget: the query runs on\n"
+    "the main thread and a single ``[automation] <tag> ok <W>x<H>``\n"
+    "line (logical units) or structured fail line gets logged to\n"
+    "``ba.app`` when complete. Raises RuntimeError in headless builds\n"
+    "(no OS window).\n",
+};
+
+// ----------------- automation_set_window_size -------------------------------
+
+static auto PyAutomationSetWindowSize(PyObject* self, PyObject* args,
+                                      PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int width{};
+  int height{};
+  const char* tag = "set_window_size";
+  static const char* kwlist[] = {"width", "height", "tag", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ii|s",
+                                   const_cast<char**>(kwlist), &width, &height,
+                                   &tag)) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
+  }
+  if (g_core->HeadlessMode()) {
+    throw Exception("not supported in headless mode", PyExcType::kRuntime);
+  }
+  if (width < 1 || height < 1) {
+    throw Exception("Invalid window size requested.", PyExcType::kValue);
+  }
+  g_base->automation->SetWindowSize(width, height, tag);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationSetWindowSizeDef = {
+    "automation_set_window_size",            // name
+    (PyCFunction)PyAutomationSetWindowSize,  // method
+    METH_VARARGS | METH_KEYWORDS,            // flags
+
+    "automation_set_window_size(width: int, height: int,\n"
+    "                           tag: str = 'set_window_size') -> None\n"
+    "\n"
+    "Resize the app's OS window. Requires a build with\n"
+    "``BA_ENABLE_AUTOMATION`` set and an app-adapter running in a\n"
+    "desktop window (SDL builds); only functions in windowed mode.\n"
+    "Fire-and-forget: the resize runs on the main thread and a single\n"
+    "``[automation] <tag> ok <W>x<H>`` line reporting the size\n"
+    "actually applied (the OS may clamp; e.g. macOS to display\n"
+    "bounds) or structured fail line (``fullscreen``,\n"
+    "``not_supported``) gets logged to ``ba.app`` when complete.\n"
+    "Raises RuntimeError in headless builds (no OS window).\n",
+};
+
 #endif  // BA_ENABLE_AUTOMATION
 
 // ---------------- discord_reconnect_with_refresh_token ----------------------
@@ -2038,6 +2180,9 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyAutomationCaptureScreenshotDef,
       PyAutomationPressAtVirtualDef,
       PyAutomationScrollAtVirtualDef,
+      PyAutomationDragAtVirtualDef,
+      PyAutomationGetWindowSizeDef,
+      PyAutomationSetWindowSizeDef,
 #endif
       PyDiscordRequestSignInTokenDef,
       PyDiscordUpdatePresenceDef,

@@ -1,19 +1,19 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.260812`` (bauiv1).
+"""Asset-package wrapper for ``a-0.baclassicassets.260825b`` (bauiv1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.baclassicassets.260812
+# ba_meta require asset-package a-0.baclassicassets.260825b
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.baclassicassets.260812'
+__asset_package__ = 'a-0.baclassicassets.260825b'
 
 from typing import TYPE_CHECKING
 
@@ -9696,6 +9696,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Button resetting the on-screen dev-console button to its default
+        #:     position (it can be moved by dragging it).
+        #:
+        #:     English: "Reset Button Position"
+        reset_button_position: LangStr
+
+        #: ::
+        #:
         #:     Checkbox showing the on-screen dev-console button.
         #:
         #:     English: "Show Dev Console Button"
@@ -11765,8 +11773,8 @@ if TYPE_CHECKING:
     #: ``action_hero_lower_leg``, and 355 more). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 1161 strings (``account``, ``achievements``,
-    #: ``app_invite``, ``characters``, ``chest``, and 1156 more). Full list in
+    #: The ``strings`` group - 1162 strings (``account``, ``achievements``,
+    #: ``app_invite``, ``characters``, ``chest``, and 1157 more). Full list in
     #: source.
     strings: StringsGroup
 
@@ -13704,6 +13712,7 @@ _TREE = {
             'dev_tools': {
                 'create_user_system_scripts': (),
                 'delete_user_system_scripts': (),
+                'reset_button_position': (),
                 'show_dev_console_button': (),
                 'title': (),
             },

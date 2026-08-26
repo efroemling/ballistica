@@ -1,4 +1,4 @@
-### 1.8.0 (build 22999, api 9, 2026-08-25)
+### 1.8.0 (build 23000, api 9, 2026-08-25)
 - Fully implemented asset packages (more on this soon)
 - App-config committing (dirty-tracking, debounced disk writes, and
   suspend/shutdown flushes) now lives fully in `babase` instead of routing
@@ -121,6 +121,7 @@
   60 by default, and should respond to game-mode and thermal settings so it
   drops to 60 if the device is getting hot or the user puts it into energy-saver
   mode via game-overlays or whatnot.
+- The dev-console on-screen button can now be dragged around.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

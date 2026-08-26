@@ -1465,6 +1465,13 @@ void TextGraphics::WarmUpStringAsync(const std::string& text, bool big) {
   if (!g_buildconfig.enable_os_font_rendering()) {
     return;
   }
+  // Warm-up is purely an optimization, and very early screen-messages
+  // can land before the assets-server loop exists; skip quietly there
+  // (the string then simply gets measured on demand later).
+  if (g_base->assets_server == nullptr
+      || g_base->assets_server->event_loop() == nullptr) {
+    return;
+  }
   g_base->assets_server->event_loop()->PushCall([this, text, big] {
     // A plain measure walk; every span it touches lands in the cache
     // (cold ones pay their font loads here, off the logic thread).

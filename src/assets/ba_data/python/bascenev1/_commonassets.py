@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.bacommonassets.260814`` (bascenev1).
+"""Asset-package wrapper for ``a-0.bacommonassets.260825`` (bascenev1).
 
 Cross-cutting assets used everywhere -- by the engine, by every game built on
 it, and by the master server's own web pages. Content here must be free of any
@@ -9,13 +9,13 @@ single game's concepts, which is what distinguishes it from BaClassicAssets.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.bacommonassets.260814
+# ba_meta require asset-package a-0.bacommonassets.260825
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.bacommonassets.260814'
+__asset_package__ = 'a-0.bacommonassets.260825'
 
 from typing import TYPE_CHECKING
 
@@ -1062,6 +1062,14 @@ if TYPE_CHECKING:
 
         #: ::
         #:
+        #:     Transient screen-message when a browser-based sign-in flow
+        #:     expires before the app collects the result.
+        #:
+        #:     English: "Sign-in took too long - please try again."
+        sign_in_timed_out: LangStr
+
+        #: ::
+        #:
         #:     Notice shown when a feature needs the OS storage-access
         #:     permission (mobile).
         #:
@@ -1285,8 +1293,8 @@ if TYPE_CHECKING:
         status: StringsStatusGroup
         values: StringsValuesGroup
 
-    #: The ``strings`` group - 146 strings (``actions``, ``compose``,
-    #: ``control``, ``locales``, ``status``, and 141 more). Full list in source.
+    #: The ``strings`` group - 147 strings (``actions``, ``compose``,
+    #: ``control``, ``locales``, ``status``, and 142 more). Full list in source.
     strings: StringsGroup
 
 _TREE = {
@@ -1419,6 +1427,7 @@ _TREE = {
             'please_wait': (),
             'server_error': (),
             'sharing': (),
+            'sign_in_timed_out': (),
             'storage_permission_needed': (),
             'unable_to_complete': (),
             'unavailable_no_connection': (),

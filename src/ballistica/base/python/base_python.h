@@ -126,6 +126,7 @@ class BasePython {
     kGetDevConsoleTabNamesCall,
     kAppDevConsoleDoRefreshTabCall,
     kAppDevConsoleSaveTabCall,
+    kAppDevConsoleSaveButtonPositionCall,
     kUnsupportedControllerMessageCall,
     kGetV2AccountIdCall,
     kAppOnNativeActiveChangedCall,

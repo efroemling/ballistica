@@ -698,10 +698,17 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         ):
             return
 
-        # Do the recreate.
-        winstate = self.save_main_window_state(mainwindow)
-        self.clear_main_window(transition='instant')
-        self.restore_main_window_state(winstate)
+        # Do the recreate. Force an empty context for this: timers fire
+        # under whatever context they were created in, and if the
+        # schedule call came from code running under an activity context
+        # (a scale/screen-size change driven from game code or an
+        # automation exec) the window creation below would otherwise
+        # refuse — after the old window was already cleared, leaving no
+        # main window at all.
+        with babase.ContextRef.empty():
+            winstate = self.save_main_window_state(mainwindow)
+            self.clear_main_window(transition='instant')
+            self.restore_main_window_state(winstate)
 
         # Store the size we created this for to avoid redundant
         # future recreates.

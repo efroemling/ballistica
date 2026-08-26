@@ -4,7 +4,9 @@
 
 from typing import override
 
-import babase
+# Note: import the submodule explicitly — attribute access on bare
+# `babase` only works if something else happened to import it first.
+import babase.modutils
 import bauiv1 as bui
 from bauiv1 import _commonassets, classicassets
 
@@ -58,7 +60,7 @@ class DevToolsWindow(bui.MainWindow):
         self._scroll_bottom = yoffs - 64 - self._scroll_height
 
         self._sub_width = self._scroll_width * 0.95
-        self._sub_height = 300.0
+        self._sub_height = 410.0
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -146,15 +148,19 @@ class DevToolsWindow(bui.MainWindow):
         this_button_width = 410
 
         v -= self._spacing * 2.5
+        # Keep our left edge aligned with the buttons below us no matter
+        # how wide the window gets (our sub-width tracks window width at
+        # small ui-scale). The extra 10 units visually lines the check
+        # box up with the button contents.
         self._show_dev_console_button_check_box = ConfigCheckBox(
             parent=self._subcontainer,
             check_box_id=f'{self.main_window_id_prefix}|showdevsonsole',
-            position=(90, v + 40),
-            size=(self._sub_width - 100, 30),
+            position=(self._sub_width / 2 - this_button_width / 2 + 10, v + 40),
+            size=(this_button_width, 30),
             configkey='Show Dev Console Button',
             displayname=_devstrs.show_dev_console_button,
             scale=1.0,
-            maxwidth=400,
+            maxwidth=350,
         )
         if self._back_button is not None:
             bui.widget(
@@ -163,6 +169,20 @@ class DevToolsWindow(bui.MainWindow):
             )
 
         v -= self._spacing * 1.2
+        self._reset_dev_console_button_position_button = bui.buttonwidget(
+            parent=self._subcontainer,
+            id=f'{self.main_window_id_prefix}|resetdevconsolebuttonposition',
+            position=(self._sub_width / 2 - this_button_width / 2, v - 10),
+            size=(this_button_width, 60),
+            autoselect=True,
+            label=_devstrs.reset_button_position,
+            text_scale=1.0,
+            on_activate_call=self._reset_dev_console_button_position,
+        )
+
+        # Extra gap here so the position-reset button above reads as
+        # grouped with the dev-console-button checkbox.
+        v -= self._spacing * 3.4
         self._create_user_system_scripts_button = bui.buttonwidget(
             parent=self._subcontainer,
             id=f'{self.main_window_id_prefix}|createusersystemscripts',
@@ -187,6 +207,14 @@ class DevToolsWindow(bui.MainWindow):
                 action=babase.modutils.delete_user_system_scripts,
             ),
         )
+
+    def _reset_dev_console_button_position(self) -> None:
+        # Drop our stored custom position; applying then reverts the
+        # button to its default docked spot.
+        cfg = bui.app.config
+        cfg.pop('Dev Console Button Pos X', None)
+        cfg.pop('Dev Console Button Pos Y', None)
+        cfg.apply_and_commit()
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:

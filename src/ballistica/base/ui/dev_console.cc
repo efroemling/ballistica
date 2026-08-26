@@ -669,6 +669,14 @@ void DevConsole::ApplyAppConfig() {
 
 void DevConsole::OnUIScaleChanged() {
   g_base->logic->event_loop()->PushCall([this] {
+    // If we're not currently shown there's nothing to rebuild;
+    // activating from inactive refreshes everything anyway (see
+    // CycleState_). Refreshing while inactive is not merely wasted
+    // work — some tab refreshes (the Python terminal's) require an
+    // active console and would raise.
+    if (!IsActive()) {
+      return;
+    }
     RefreshCloseButton_();
     RefreshTabButtons_();
     RefreshTabContents_();

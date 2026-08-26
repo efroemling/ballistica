@@ -115,6 +115,44 @@ void Automation::CaptureScreenshot(const std::string& path,
   }
 }
 
+void Automation::GetWindowSize(const std::string& tag) {
+  // Window state lives with the main thread; query it there and emit
+  // the result asynchronously like our other capabilities.
+  g_base->app_adapter->PushMainThreadCall([tag] {
+    int width{};
+    int height{};
+    if (!g_base->app_adapter->GetWindowSize(&width, &height)) {
+      EmitAutomationLog(tag, "fail", "not_supported");
+      return;
+    }
+    EmitAutomationLog(tag, "ok",
+                      std::to_string(width) + "x" + std::to_string(height));
+  });
+}
+
+void Automation::SetWindowSize(int width, int height, const std::string& tag) {
+  g_base->app_adapter->PushMainThreadCall([width, height, tag] {
+    if (!g_base->app_adapter->SetWindowSize(width, height)) {
+      // Distinguish 'no desktop window to resize' from 'window exists
+      // but is fullscreen right now' — the get path works in both
+      // windowed and fullscreen modes.
+      int w{};
+      int h{};
+      EmitAutomationLog(tag, "fail",
+                        g_base->app_adapter->GetWindowSize(&w, &h)
+                            ? "fullscreen"
+                            : "not_supported");
+      return;
+    }
+    // Report the size actually applied (the OS may clamp our ask).
+    int applied_w{width};
+    int applied_h{height};
+    g_base->app_adapter->GetWindowSize(&applied_w, &applied_h);
+    EmitAutomationLog(
+        tag, "ok", std::to_string(applied_w) + "x" + std::to_string(applied_h));
+  });
+}
+
 void Automation::RunPendingCaptures() {
   // Runs in the graphics context at the tail of a frame draw. Grab the
   // queue quickly under lock, then do the work outside it.

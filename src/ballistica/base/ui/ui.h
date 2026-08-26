@@ -236,6 +236,7 @@ class UI {
  private:
   void RequestMainUI_(InputDevice* device);
   auto DevConsoleButtonSize_() const -> float;
+  void DevConsoleButtonCenter_(float* x, float* y) const;
   auto InDevConsoleButton_(float x, float y) const -> bool;
   void DrawDevConsoleButton_(FrameDef* frame_def);
 
@@ -259,6 +260,14 @@ class UI {
   millisecs_t last_widget_input_reject_err_sound_time_{};
   Rect text_edit_rect_{};
   Rect text_edit_rect_norm_prev_{};
+  // Dev-console button custom position (virtual coords; active once the
+  // button has been dragged) and in-flight press/drag tracking.
+  float dev_console_button_custom_x_{};
+  float dev_console_button_custom_y_{};
+  float dev_console_button_press_x_{};
+  float dev_console_button_press_y_{};
+  float dev_console_button_drag_offset_x_{};
+  float dev_console_button_drag_offset_y_{};
   seconds_t text_edit_flap_window_start_{};
   int text_edit_flap_count_{};
   TextEditSource text_edit_source_{};
@@ -272,6 +281,8 @@ class UI {
   bool force_scale_{};
   bool show_dev_console_button_{};
   bool dev_console_button_pressed_{};
+  bool dev_console_button_dragging_{};
+  bool dev_console_button_has_custom_pos_{};
   bool mousing_in_main_ui_{};
 };
 

@@ -1444,6 +1444,31 @@ auto AppAdapterSDL::FullscreenControlKeyShortcut() const
   return "Alt+Enter";
 };
 
+auto AppAdapterSDL::GetWindowSize(int* width, int* height) -> bool {
+  assert(g_core->InMainThread());
+  assert(width && height);
+  if (sdl_window_ == nullptr) {
+    return false;
+  }
+  return SDL_GetWindowSize(sdl_window_, width, height);
+}
+
+auto AppAdapterSDL::SetWindowSize(int width, int height) -> bool {
+  assert(g_core->InMainThread());
+  // Resizing only makes sense in windowed mode; a fullscreen window's
+  // size is owned by the display.
+  if (sdl_window_ == nullptr || fullscreen_) {
+    return false;
+  }
+  if (!SDL_SetWindowSize(sdl_window_, width, height)) {
+    return false;
+  }
+  // Window ops can apply asynchronously on some platforms; sync so a
+  // follow-up GetWindowSize() reflects the size actually applied.
+  SDL_SyncWindow(sdl_window_);
+  return true;
+}
+
 auto AppAdapterSDL::SupportsVSync() -> bool const { return true; }
 auto AppAdapterSDL::SupportsMaxFPS() -> bool const { return true; }
 
