@@ -208,27 +208,8 @@ class AdvancedSettingsWindow(bui.MainWindow):
             selection_loops_to_parent=True,
         )
 
-        # With full-screen scrolling, fade content as it approaches
-        # toolbars. (but only in the main menu where we're showing said
-        # toolbars). Note that we intentionally use the original
-        # un-margin-extended scroll geometry here; the fades were
-        # placed to coincide with toolbar elements, which don't move
-        # when we extend out into screen margins.
-        if uiscale is bui.UIScale.SMALL and bui.in_main_menu():
-            scroll_fade_top(
-                self._root_widget,
-                self._width * 0.5 - self._scroll_width * 0.5,
-                scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
-            )
-            scroll_fade_bottom(
-                self._root_widget,
-                self._width * 0.5 - self._scroll_width * 0.5,
-                scroll_bottom,
-                self._scroll_width,
-                self._scroll_height,
-            )
+        if uiscale is bui.UIScale.SMALL:
+            self._make_scroll_fades(scroll_bottom)
 
         self._title_text = bui.textwidget(
             parent=self._root_widget,
@@ -257,6 +238,31 @@ class AdvancedSettingsWindow(bui.MainWindow):
             {'b': app.env.engine_build_number},
             callback=bui.WeakCallPartial(self._completed_langs_cb),
         )
+
+    def _make_scroll_fades(self, scroll_bottom: float) -> None:
+        # With full-screen scrolling, fade content as it approaches
+        # toolbars (even with the minimal in-game toolbar, the top fade
+        # keeps our title readable; the bottom one applies only in the
+        # main menu where there's actually a bottom toolbar). Note that
+        # we intentionally use the original un-margin-extended scroll
+        # geometry here; the fades were placed to coincide with toolbar
+        # elements, which don't move when we extend out into screen
+        # margins.
+        scroll_fade_top(
+            self._root_widget,
+            self._width * 0.5 - self._scroll_width * 0.5,
+            scroll_bottom,
+            self._scroll_width,
+            self._scroll_height,
+        )
+        if bui.in_main_menu():
+            scroll_fade_bottom(
+                self._root_widget,
+                self._width * 0.5 - self._scroll_width * 0.5,
+                scroll_bottom,
+                self._scroll_width,
+                self._scroll_height,
+            )
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:

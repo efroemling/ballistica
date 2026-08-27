@@ -241,10 +241,14 @@ auto AppAdapterApple::FullscreenControlGet() const -> bool {
 #endif
 }
 
+std::atomic<bool> AppAdapterApple::fullscreen_control_value_{false};
+
 void AppAdapterApple::OnFullscreenChanged(bool fullscreen) {
   // Pushed from Swift's NSWindow fullscreen delegate callbacks (main thread);
   // read on the logic thread via FullscreenControlGet. An atomic bool is all
-  // the synchronization a single published flag needs.
+  // the synchronization a single published flag needs. Static (no g_base
+  // access) because window state restoration can fire this during launch
+  // before the engine exists.
   fullscreen_control_value_.store(fullscreen);
 }
 
