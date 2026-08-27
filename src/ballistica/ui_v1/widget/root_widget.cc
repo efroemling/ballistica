@@ -574,7 +574,9 @@ void RootWidget::Setup() {
     {
       TextDef_ td;
       td.button = b;
-      td.x = 0.0f;
+      // Nudge the icon slightly left; reads better centered now that
+      // safe-area margins tend to keep the button's left side visible.
+      td.x = -2.0f;
       td.y = 0.0f;
       td.width = bd.width * 0.9f;
       td.text = g_base->assets->CharStr(SpecialChar::kBack);

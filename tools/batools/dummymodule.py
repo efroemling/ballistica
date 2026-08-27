@@ -10,7 +10,7 @@ successfully (albeit with limited functionality).
 """
 
 import os
-
+import re
 import types
 import textwrap
 import subprocess
@@ -115,6 +115,32 @@ def _get_varying_func_info(sig_in: str) -> tuple[str, str]:
     return sig, returns
 
 
+def _get_deprecation_message(docstr: str, funcname: str) -> str:
+    """Extract a `.. deprecated::` directive's body as plain text."""
+    lines = docstr.splitlines()
+    index = next(
+        i
+        for i, line in enumerate(lines)
+        if line.lstrip().startswith('.. deprecated::')
+    )
+    dirindent = len(lines[index]) - len(lines[index].lstrip())
+    bodylines: list[str] = []
+    for line in lines[index + 1 :]:
+        if not line.strip():
+            if bodylines:
+                break
+            continue
+        if len(line) - len(line.lstrip()) <= dirindent:
+            break
+        bodylines.append(line.strip())
+    if not bodylines:
+        raise RuntimeError(
+            f'Unable to extract deprecation message for {funcname}.'
+        )
+    # Boil RST refs such as :meth:`~babase.foo()` down to plain babase.foo().
+    return re.sub(r':\w+:`~?([^`]+)`', r'\1', ' '.join(bodylines))
+
+
 def _writefuncs(
     parent: Any,
     funcnames: Sequence[str],
@@ -178,6 +204,13 @@ def _writefuncs(
 
             if is_classmethod:
                 defslines = f'{indstr}@classmethod\n{defslines}'
+
+            # Surface `.. deprecated::` docstring directives to type
+            # checkers (and dummy-module runtime use) via PEP-702's
+            # @deprecated decorator.
+            if '.. deprecated::' in docstr:
+                depmsg = _get_deprecation_message(docstr, funcname)
+                defslines = f'{indstr}@deprecated({depmsg!r})\n{defslines}'
 
             # if funcname in {'quit', 'newnode', 'basetimer'}:
             #     defslines = (
@@ -1017,6 +1050,7 @@ class Generator:
             '# pylint: disable=too-many-positional-arguments\n'
             '\n'
             f'from typing import {typing_imports}\n'
+            'from warnings import deprecated\n'
             '\n'
             f'{enum_import_lines}'
             'if TYPE_CHECKING:\n'

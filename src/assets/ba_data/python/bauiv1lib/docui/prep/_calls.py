@@ -57,6 +57,7 @@ def prep_page(
     uiscale: bui.UIScale,
     scroll_width: float,
     scroll_height: float,
+    margins: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0),
     idprefix: str,
     immediate: bool = False,
 ) -> PagePrep:
@@ -110,10 +111,17 @@ def prep_page(
     row_title_height_no_subtitle = 38.0
     row_subtitle_height = 30.0
 
+    # Screen margins our host scroll-widget extends into beyond its
+    # nominal scroll-width/height (space between the virtual bounds
+    # and the actual screen edges in small ui). Our overall size grows
+    # to cover these and h-scroll rows extend through them, but
+    # content itself stays laid out within the virtual bounds.
+    margin_left, margin_right, margin_bottom, margin_top = margins
+
     # Buffers for *everything*. Set bases here that look decent and
     # allow page to offset them.
-    top_buffer = 20.0 + page.padding_top
-    bot_buffer = 20.0 + page.padding_bottom
+    top_buffer = 20.0 + page.padding_top + margin_top
+    bot_buffer = 20.0 + page.padding_bottom + margin_bottom
     left_buffer = 10.0 + page.padding_left
     # Nudge a bit due to scrollbar.
     right_buffer = 20.0 + page.padding_right
@@ -140,7 +148,7 @@ def prep_page(
 
     rootcall: Callable[..., bui.Widget] | None = None
     rows: list[RowPrep] = []
-    width: float = scroll_width + fudge
+    width: float = scroll_width + fudge + margin_left + margin_right
     height: float = (
         top_buffer
         + bot_buffer
@@ -165,6 +173,8 @@ def prep_page(
         this_row_width = (
             left_buffer
             + right_buffer
+            + margin_left
+            + margin_right
             + row.padding_left
             + row.padding_right
             + row.button_spacing * (len(row.buttons) - 1)
@@ -254,7 +264,7 @@ def prep_page(
         )
         prepcalls2.prep_decorations(
             hdecs_l,
-            left_buffer + header_inset_left,
+            margin_left + left_buffer + header_inset_left,
             y + header_height_full * 0.5,
             row.header_scale,
             tdelay=None if immediate else (tdelaybase + 0.05),
@@ -269,7 +279,7 @@ def prep_page(
         )
         prepcalls2.prep_decorations(
             hdecs_c,
-            width * 0.5,
+            margin_left + (width - margin_left - margin_right) * 0.5,
             y + header_height_full * 0.5,
             row.header_scale,
             tdelay=None if immediate else (tdelaybase + 0.05),
@@ -284,7 +294,7 @@ def prep_page(
         )
         prepcalls2.prep_decorations(
             hdecs_r,
-            width - right_buffer - header_inset_right,
+            width - margin_right - right_buffer - header_inset_right,
             y + header_height_full * 0.5,
             row.header_scale,
             tdelay=None if immediate else (tdelaybase + 0.05),
@@ -299,10 +309,20 @@ def prep_page(
                     bui.textwidget,
                     position=(
                         (
-                            ((width - left_buffer - right_buffer) * 0.5)
+                            margin_left
+                            + (
+                                (
+                                    width
+                                    - margin_left
+                                    - margin_right
+                                    - left_buffer
+                                    - right_buffer
+                                )
+                                * 0.5
+                            )
                             + 7.0  # Fudge factor to match hscroll
                             if row.center_title
-                            else (left_buffer + header_inset_left)
+                            else (margin_left + left_buffer + header_inset_left)
                         ),
                         y - row_subtitle_height * 0.5,
                     ),
@@ -317,10 +337,18 @@ def prep_page(
                     shadow=row.title_shadow,
                     scale=1.0,
                     maxwidth=(
-                        (width - left_buffer - right_buffer)
+                        (
+                            width
+                            - margin_left
+                            - margin_right
+                            - left_buffer
+                            - right_buffer
+                        )
                         if row.center_title
                         else (
                             width
+                            - margin_left
+                            - margin_right
                             - left_buffer
                             - right_buffer
                             - header_inset_left
@@ -347,10 +375,20 @@ def prep_page(
                     bui.textwidget,
                     position=(
                         (
-                            ((width - left_buffer - right_buffer) * 0.5)
+                            margin_left
+                            + (
+                                (
+                                    width
+                                    - margin_left
+                                    - margin_right
+                                    - left_buffer
+                                    - right_buffer
+                                )
+                                * 0.5
+                            )
                             + 7.0  # Fudge factor to match hscroll
                             if row.center_title
-                            else (left_buffer + header_inset_left)
+                            else (margin_left + left_buffer + header_inset_left)
                         ),
                         y - row_subtitle_height * 0.5,
                     ),
@@ -365,10 +403,18 @@ def prep_page(
                     shadow=row.subtitle_shadow,
                     scale=0.7,
                     maxwidth=(
-                        (width - left_buffer - right_buffer)
+                        (
+                            width
+                            - margin_left
+                            - margin_right
+                            - left_buffer
+                            - right_buffer
+                        )
                         if row.center_title
                         else (
                             width
+                            - margin_left
+                            - margin_right
                             - left_buffer
                             - right_buffer
                             - header_inset_left
@@ -402,10 +448,14 @@ def prep_page(
                 rowheightfull += row_subtitle_height
             prepcalls2.prep_row_debug(
                 (
-                    width - left_buffer - right_buffer,
+                    width
+                    - margin_left
+                    - margin_right
+                    - left_buffer
+                    - right_buffer,
                     rowheightfull,
                 ),
-                (left_buffer, y),
+                (margin_left + left_buffer, y),
                 None if immediate else tdelaybase,
                 rowprep.decorations,
             )
@@ -414,6 +464,8 @@ def prep_page(
             bui.hscrollwidget,
             size=(width - hscrollinset, rowprep.height),
             position=(hscrollinset, y),
+            button_inset_left=margin_left,
+            button_inset_right=margin_right,
             claims_left_right=True,
             highlight=False,
             border_opacity=0.0,
@@ -435,7 +487,7 @@ def prep_page(
             ),
             background=False,
         )
-        x = left_buffer + row.padding_left
+        x = margin_left + left_buffer + row.padding_left
         # Calc height of buttons themselves (includes button padding but
         # not row padding).
         button_row_height = (

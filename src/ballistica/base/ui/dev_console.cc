@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -15,6 +16,7 @@
 #include "ballistica/base/app_platform/app_platform.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/logic/logic.h"
@@ -1532,15 +1534,21 @@ void DevConsole::Draw(FrameDef* frame_def) {
 
   float bottom = Bottom_();
 
+  // Our backing, stripe, bottom border, and drop shadow all extend to
+  // the edges of the visible area (the reported virtual outer rect)
+  // rather than stopping at the virtual rect; otherwise we look oddly
+  // cut off when margins are present. Content stays in virtual coords.
+  Rect vout = g_base->graphics->reported_virtual_outer_rect();
+
   float border_height{3.0f};
   {
-    bg_mesh_.SetPositionAndSize(0, bottom, kDevConsoleZDepth,
-                                pass->virtual_width(),
-                                (pass->virtual_height() - bottom));
-    stripe_mesh_.SetPositionAndSize(0, bottom + 15.0f * bs, kDevConsoleZDepth,
-                                    pass->virtual_width(), 15.0f * bs);
-    border_mesh_.SetPositionAndSize(0, bottom - border_height * bs,
-                                    kDevConsoleZDepth, pass->virtual_width(),
+    bg_mesh_.SetPositionAndSize(vout.l, bottom, kDevConsoleZDepth, vout.width(),
+                                (vout.t - bottom));
+    stripe_mesh_.SetPositionAndSize(vout.l, bottom + 15.0f * bs,
+                                    kDevConsoleZDepth, vout.width(),
+                                    15.0f * bs);
+    border_mesh_.SetPositionAndSize(vout.l, bottom - border_height * bs,
+                                    kDevConsoleZDepth, vout.width(),
                                     border_height * bs);
     {
       SimpleComponent c(pass);
@@ -1575,11 +1583,11 @@ void DevConsole::Draw(FrameDef* frame_def) {
     c.SetTexture(g_base->assets->BuiltinTexture(
         BuiltinTextureID::kTexturesSoftRectVertical));
     {
-      auto scissor = c.ScopedScissor({0.0f, 0.0f, pass->virtual_width(),
-                                      bottom - (border_height * 0.75f) * bs});
+      auto scissor = c.ScopedScissor(
+          {vout.l, vout.b, vout.r, bottom - (border_height * 0.75f) * bs});
       auto xf = c.ScopedTransform();
-      c.Translate(pass->virtual_width() * 0.5f, bottom + 160.0f);
-      c.Scale(pass->virtual_width() * 1.2f, 600.0f);
+      c.Translate((vout.l + vout.r) * 0.5f, bottom + 160.0f);
+      c.Scale(vout.width() * 1.2f, 600.0f);
       c.DrawMeshAsset(
           g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesImage1x1));
     }
@@ -1810,35 +1818,52 @@ auto DevConsole::PasteFromClipboard() -> bool {
     if (python_terminal_visible_) {
       if (g_base->ClipboardIsSupported()) {
         if (g_base->ClipboardHasText()) {
-          auto text = g_base->ClipboardGetText();
-
-          // Strip trailing newlines (if we have a single line ending with a
-          // newline we want to allow that).
-
-          // Find the position of the last character that is not a newline.
-          size_t endpos = text.find_last_not_of("\n\r");
-          if (std::string::npos != endpos) {
-            // Erase all characters after the last non-newline character.
-            text.erase(endpos + 1);
-          } else {
-            // The string is entirely newlines.
-            text.clear();
-          }
-
-          if (strstr(text.c_str(), "\n") || strstr(text.c_str(), "\r")) {
-            g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioError);
-            g_base->ScreenMessage("Can only paste single lines of text.",
-                                  Vector3f(1.0f, 0.0f, 0.0f));
-          } else {
-            HandleTextEditing(text);
-          }
-          // Ok, we either pasted or complained, so consider it handled.
+          g_base->ClipboardGetTextAsync([](std::optional<std::string> text) {
+            // Text may arrive late (OS permission prompts, etc.); apply
+            // to whatever console exists at that point, provided its
+            // terminal is still up.
+            auto* console = g_base->ui->dev_console();
+            if (!text.has_value() || console == nullptr
+                || console->state_ == State_::kInactive
+                || !console->python_terminal_visible_) {
+              return;
+            }
+            console->ApplyPastedText_(*text);
+          });
+          // Ok, we've kicked off a paste (which may complain when it
+          // lands), so consider it handled.
           return true;
         }
       }
     }
   }
   return false;
+}
+
+void DevConsole::ApplyPastedText_(const std::string& text_in) {
+  assert(g_base->InLogicThread());
+  std::string text = text_in;
+
+  // Strip trailing newlines (if we have a single line ending with a
+  // newline we want to allow that).
+
+  // Find the position of the last character that is not a newline.
+  size_t endpos = text.find_last_not_of("\n\r");
+  if (std::string::npos != endpos) {
+    // Erase all characters after the last non-newline character.
+    text.erase(endpos + 1);
+  } else {
+    // The string is entirely newlines.
+    text.clear();
+  }
+
+  if (strstr(text.c_str(), "\n") || strstr(text.c_str(), "\r")) {
+    g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioError);
+    g_base->ScreenMessage("Can only paste single lines of text.",
+                          Vector3f(1.0f, 0.0f, 0.0f));
+  } else {
+    HandleTextEditing(text);
+  }
 }
 
 void DevConsole::UpdateCarat_() {

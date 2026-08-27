@@ -3,6 +3,8 @@
 #ifndef BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_H_
 #define BALLISTICA_BASE_APP_ADAPTER_APP_ADAPTER_H_
 
+#include <functional>
+#include <optional>
 #include <string>
 
 #include "ballistica/base/base.h"
@@ -284,6 +286,16 @@ class AppAdapter {
   virtual auto DoClipboardHasText() -> bool;
   virtual void DoClipboardSetText(const std::string& text);
   virtual auto DoClipboardGetText() -> std::string;
+
+  /// Fetch clipboard text asynchronously. Called in the logic thread,
+  /// and only when DoClipboardIsSupported() is true. Implementations
+  /// must (eventually) invoke completion_call in the logic thread with
+  /// the fetched text or an empty optional if none could be fetched;
+  /// the default implementation simply reads synchronously. Note that
+  /// completion_call may hold thread-affine state, so implementations
+  /// must not copy/destroy it in other threads.
+  virtual void DoClipboardGetTextAsync(
+      std::function<void(std::optional<std::string>)> completion_call);
 
   virtual auto SupportsPurchases() -> bool;
 

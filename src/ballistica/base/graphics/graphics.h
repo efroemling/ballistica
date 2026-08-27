@@ -65,7 +65,7 @@ const bool kVirtualBoundsBleedEnabled = true;
 // it. So this is a judgment across all of those at once -- how much
 // overhang looks right given our elements' own margins -- and not a
 // figure any single case implies.
-const float kVirtualBoundsBleed = 50.0f;
+const float kVirtualBoundsBleed = 40.0f;
 
 // Most of one edge of the active render rect we will give up to an
 // OS-reported inset. This drives camera framing and UI layout now, so
@@ -86,6 +86,35 @@ const float kDebugVirtualBoundsInsetT = 0.035f;
 
 // How long each config is shown for in A/B toggle mode.
 const millisecs_t kDebugVirtualBoundsABPeriod{1000};
+
+// Debug-only forced max-margin virtual bounds: the margin between the
+// virtual bounds and the virtual outer rect on each edge while the
+// mode is on, in VIRTUAL units (x applies to left and right, y to
+// bottom and top). Fixed virtual-unit values on purpose - the margin
+// UIs calibrate against must be identical on every device and window
+// shape - and sized to comfortably exceed anything OS insets produce
+// in the wild (worst current case is an iPhone notch at roughly 100
+// units pre-bleed). OS insets and the bleed are irrelevant while this
+// is on; those exist to derive reasonable bounds from hardware, where
+// this forces exact margins regardless of hardware. Toggled from the
+// dev-console UI tab.
+const float kDebugMaxVirtualBoundsMarginX = 80.0f;
+const float kDebugMaxVirtualBoundsMarginY = 40.0f;
+
+// Debug-only: alternate the virtual outer rect *as reported to UI
+// code* once per second between the no-margins rect (matching the
+// virtual bounds) and the real thing, firing a full screen-size-change
+// reflow on each flip. For eyeballing UIs being adapted to the outer
+// rect: backgrounds should expand to fill the margins and snap back
+// while layout within the virtual bounds stays put. Pair with the
+// dev-console Max Margins toggle to get margins on a desktop window.
+//
+// Reported-only on purpose: actual rendering (projection extension,
+// fade coverage, the graphics-server side) keeps using the real rect,
+// so nothing stretches and no camera buffers rebuild - only UI
+// consumers (babase.get_virtual_outer_rect() and friends) see the
+// alternation.
+const bool kDebugVirtualOuterRectToggleEnabled = false;
 
 /// Which of the two equivalent virtual-bounds configs to run in. Both
 /// use the exact same bounds rect; they differ only in how far drawing
@@ -260,6 +289,7 @@ class Graphics {
   void DrawVirtualBounds(RenderPass* pass);
   void ReadVirtualBoundsABMode_();
   void StepVirtualBoundsABToggle_();
+  void StepVirtualOuterRectToggle_();
   auto CalcDebugVirtualBoundsRect_(const Rect& render_rect) -> Rect;
   auto CalcVirtualBoundsRect_(const Rect& render_rect) -> Rect;
   static void GetBaseVirtualRes(float* x, float* y);
@@ -419,6 +449,19 @@ class Graphics {
     return virtual_outer_rect_;
   }
 
+  /// The virtual outer rect as reported to UI code. Normally identical
+  /// to virtual_outer_rect(); under kDebugVirtualOuterRectToggleEnabled
+  /// it alternates with the no-margins rect so outer-rect UI adaptation
+  /// can be eyeballed. UI consumers should use this; rendering
+  /// machinery must use virtual_outer_rect().
+  auto reported_virtual_outer_rect() const -> Rect {
+    assert(g_base->InLogicThread());
+    if (kDebugVirtualOuterRectToggleEnabled && virtual_outer_rect_collapsed_) {
+      return Rect{0.0f, 0.0f, res_x_virtual_, res_y_virtual_};
+    }
+    return virtual_outer_rect_;
+  }
+
   /// Calc the virtual bounds for a render rect, given OS safe-area
   /// insets as fractions (0-1) of a ``res_x`` by ``res_y`` screen.
   ///
@@ -438,6 +481,27 @@ class Graphics {
                                     float res_y, float inset_l, float inset_r,
                                     float inset_b, float inset_t,
                                     float bleed = 0.0f) -> Rect;
+
+  /// Calc a virtual-bounds rect inset from ``render_rect`` so that
+  /// exactly ``margin_x`` VIRTUAL units of margin land on the left and
+  /// right edges and ``margin_y`` on the bottom and top, given the base
+  /// virtual res the bounds' virtual scale will pin to.
+  ///
+  /// Margins are in virtual units while the virtual scale derives from
+  /// the bounds being computed, so this solves that fixed point rather
+  /// than approximating it: with the margins added, the outer rect
+  /// spans (base-res + 2 * margin) virtual units on whichever axis
+  /// CalcVirtualRes_ pins, so pixels-per-virtual-unit is render-size
+  /// over that span - and the pinned axis is the one yielding the
+  /// smaller scale.
+  ///
+  /// Static and pure so the render path and its test share one
+  /// implementation.
+  static auto CalcMaxMarginsVirtualBoundsRect(const Rect& render_rect,
+                                              float base_virtual_res_x,
+                                              float base_virtual_res_y,
+                                              float margin_x, float margin_y)
+      -> Rect;
 
   /// Extend a frustum built for ``bounds_rect`` outward so the same
   /// projection keeps going out to ``render_rect``.
@@ -595,6 +659,16 @@ class Graphics {
   void set_draw_virtual_safe_area_bounds(bool val) {
     draw_virtual_safe_area_bounds_ = val;
   }
+
+  /// Whether virtual bounds are being forced to leave fixed max
+  /// margins against the virtual outer rect (a debug calibration
+  /// target; see kDebugMaxVirtualBoundsMarginX/Y).
+  auto force_max_virtual_bounds_margins() const {
+    assert(g_base->InLogicThread());
+    return force_max_virtual_bounds_margins_;
+  }
+  void SetForceMaxVirtualBoundsMargins(bool val);
+
   auto building_frame_def() const { return building_frame_def_; }
 
   ScreenMessages* const screenmessages;
@@ -654,9 +728,12 @@ class Graphics {
   bool got_screen_resolution_{};
   bool draw_virtual_safe_area_bounds_{};
   bool draw_virtual_bounds_{};
+  bool force_max_virtual_bounds_margins_{};
   bool virtual_bounds_ab_showing_b_{};
+  bool virtual_outer_rect_collapsed_{};
   VirtualBoundsABMode virtual_bounds_ab_mode_{VirtualBoundsABMode::kDisabled};
   millisecs_t virtual_bounds_ab_last_switch_time_{};
+  millisecs_t virtual_outer_rect_toggle_last_switch_time_{};
   Vector3f shadow_offset_{0.0f, 0.0f, 0.0f};
   Vector2f shadow_scale_{1.0f, 1.0f};
   Vector3f tint_{1.0f, 1.0f, 1.0f};

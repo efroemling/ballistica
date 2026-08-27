@@ -4,6 +4,7 @@
 #define BALLISTICA_BASE_BASE_H_
 
 #include <atomic>
+#include <functional>
 #include <mutex>
 #include <optional>
 #include <string>
@@ -870,7 +871,20 @@ class BaseFeatureSet : public FeatureSetNativeComponent,
 
   /// Return current text from the clipboard. Raises an Exception if
   /// clipboard is unsupported or if there's no text on the clipboard.
+  /// Deprecated; use ClipboardGetTextAsync() instead, which can handle
+  /// platforms where clipboard reads may block on the OS (permission
+  /// prompts, etc.).
   auto ClipboardGetText() -> std::string;
+
+  /// Fetch text from the clipboard asynchronously. Must be called from
+  /// the logic thread. The provided call will be run in the logic thread
+  /// and passed the fetched text, or an empty optional if no text could
+  /// be fetched for any reason (clipboard unsupported, no text present,
+  /// access denied by the OS, etc.). On some platforms fetching clipboard
+  /// contents can require the OS to ask the user for permission, so the
+  /// call may not run until they respond (or may never run at all).
+  void ClipboardGetTextAsync(
+      std::function<void(std::optional<std::string>)> call);
 
   /// Set current clipboard text. Raises an Exception if clipboard is
   /// unsupported.

@@ -28,6 +28,14 @@ HScrollWidget::HScrollWidget() {
 
 HScrollWidget::~HScrollWidget() = default;
 
+auto HScrollWidget::PageLeftButtonX_() const -> float {
+  return kPageButtonInset + button_inset_left_;
+}
+
+auto HScrollWidget::PageRightButtonX_() const -> float {
+  return width() - kPageButtonInset - kPageButtonSize - button_inset_right_;
+}
+
 auto HScrollWidget::ShouldShowPageLeftButton_() -> bool {
   // Slight fudge factor - avoid showing button when we'd barely move.
   return child_offset_h_ < child_max_offset_ - 5.0f;
@@ -267,9 +275,14 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
               if (x_diff != y_diff && dist > 30.0f) {
                 new_scroll_touch_ = false;
 
-                // If they haven't moved far enough yet, ignore it.
                 if (x_diff < y_diff) {
-                  return claimed;
+                  // If this touch started on a page button, release it -
+                  // the press would otherwise keep us claiming these
+                  // moves, and would fire a page-jump on the disown
+                  // mouse-up.
+                  page_left_pressed_ = false;
+                  page_right_pressed_ = false;
+                  return false;
                 }
               }
             }
@@ -321,8 +334,8 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                            + kPageButtonYOffs
                && y <= height() * 0.5f + kPageButtonSize * 0.5f
                            + kPageButtonYOffs
-               && x >= kPageButtonInset
-               && x <= kPageButtonInset + kPageButtonSize);
+               && x >= PageLeftButtonX_()
+               && x <= PageLeftButtonX_() + kPageButtonSize);
 
           hovering_page_right_ =
               (ShouldShowPageRightButton_()
@@ -330,8 +343,8 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
                            + kPageButtonYOffs
                && y <= height() * 0.5f + kPageButtonSize * 0.5f
                            + kPageButtonYOffs
-               && x >= width() - kPageButtonInset - kPageButtonSize
-               && x <= width() - kPageButtonInset);
+               && x >= PageRightButtonX_()
+               && x <= PageRightButtonX_() + kPageButtonSize);
 
           if (hovering_thumb_ || hovering_page_left_ || hovering_page_right_) {
             claimed = true;
@@ -394,15 +407,19 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       auto in_page_left_button =
           (y >= height() * 0.5f - kPageButtonSize * 0.5f + kPageButtonYOffs
            && y <= height() * 0.5f + kPageButtonSize * 0.5f + kPageButtonYOffs
-           && x >= kPageButtonInset && x <= kPageButtonInset + kPageButtonSize);
+           && x >= PageLeftButtonX_()
+           && x <= PageLeftButtonX_() + kPageButtonSize);
 
       auto in_page_right_button =
           (y >= height() * 0.5f - kPageButtonSize * 0.5f + kPageButtonYOffs
            && y <= height() * 0.5f + kPageButtonSize * 0.5f + kPageButtonYOffs
-           && x >= width() - kPageButtonInset - kPageButtonSize
-           && x <= width() - kPageButtonInset);
+           && x >= PageRightButtonX_()
+           && x <= PageRightButtonX_() + kPageButtonSize);
 
-      if (page_left_pressed_ && in_page_left_button
+      // (The touch_is_scrolling_ check keeps a horizontal drag that
+      // started on a page button from also firing a page-jump if the
+      // finger releases inside the button.)
+      if (page_left_pressed_ && in_page_left_button && !touch_is_scrolling_
           && m.type == base::WidgetMessage::Type::kMouseUp) {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
         child_offset_h_ +=
@@ -412,7 +429,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       }
       page_left_pressed_ = false;
 
-      if (page_right_pressed_ && in_page_right_button
+      if (page_right_pressed_ && in_page_right_button && !touch_is_scrolling_
           && m.type == base::WidgetMessage::Type::kMouseUp) {
         smoothing_amount_ = 1.0f;  // So we can see the transition.
         child_offset_h_ -=
@@ -544,15 +561,15 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
             (ShouldShowPageLeftButton_()
              && y >= height() * 0.5f - kPageButtonSize * 0.5f + kPageButtonYOffs
              && y <= height() * 0.5f + kPageButtonSize * 0.5f + kPageButtonYOffs
-             && x >= kPageButtonInset
-             && x <= kPageButtonInset + kPageButtonSize);
+             && x >= PageLeftButtonX_()
+             && x <= PageLeftButtonX_() + kPageButtonSize);
 
         auto in_page_right_button =
             (ShouldShowPageRightButton_()
              && y >= height() * 0.5f - kPageButtonSize * 0.5f + kPageButtonYOffs
              && y <= height() * 0.5f + kPageButtonSize * 0.5f + kPageButtonYOffs
-             && x >= width() - kPageButtonInset - kPageButtonSize
-             && x <= width() - kPageButtonInset);
+             && x >= PageRightButtonX_()
+             && x <= PageRightButtonX_() + kPageButtonSize);
 
         // On touch devices, clicks begin scrolling, (and eventually can
         // count as clicks if they don't move). Only if we're showing less
@@ -959,7 +976,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       {
         auto xf = c.ScopedTransform();
-        c.Translate(kPageButtonInset + kPageButtonSize * 0.5f,
+        c.Translate(PageLeftButtonX_() + kPageButtonSize * 0.5f,
                     height() * 0.5 + kPageButtonYOffs, 0.9f);
         c.Scale(scale_ex * kPageButtonSize, scale_ex * kPageButtonSize, 0.1f);
         c.Rotate(180.0f, 0.0f, 0.0f, 1.0f);
@@ -995,7 +1012,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.SetTexture(tex);
       {
         auto xf = c.ScopedTransform();
-        c.Translate(width() - kPageButtonInset - kPageButtonSize * 0.5f,
+        c.Translate(PageRightButtonX_() + kPageButtonSize * 0.5f,
                     height() * 0.5 + kPageButtonYOffs, 0.9f);
         c.Scale(scale_ex * kPageButtonSize, scale_ex * kPageButtonSize, 0.1f);
         if (draw_transparent) {

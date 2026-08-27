@@ -85,6 +85,9 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         self._upkeeptimer: babase.AppTimer | None = None
         self._cleanupchecks: list[_UICleanupCheck] = []
         self._last_win_recreate_screen_size: tuple[float, float] | None = None
+        self._last_win_recreate_outer_rect: (
+            tuple[float, float, float, float] | None
+        ) = None
         self._last_win_recreate_uiscale: bauiv1.UIScale | None = None
         self._last_win_recreate_time: float | None = None
         self._win_recreate_timer: babase.AppTimer | None = None
@@ -232,6 +235,8 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             self._last_win_recreate_screen_size = (
                 babase.get_virtual_screen_size()
             )
+        if self._last_win_recreate_outer_rect is None:
+            self._last_win_recreate_outer_rect = babase.get_virtual_outer_rect()
         if self._last_win_recreate_uiscale is None:
             self._last_win_recreate_uiscale = babase.app.ui_v1.uiscale
 
@@ -683,17 +688,24 @@ class UIV1AppSubsystem(babase.AppSubsystem):
             return
 
         virtual_screen_size = babase.get_virtual_screen_size()
+        virtual_outer_rect = babase.get_virtual_outer_rect()
         uiscale = babase.app.ui_v1.uiscale
 
         # These should always get actual values when a main-window is
         # assigned so should never still be None here.
         assert self._last_win_recreate_uiscale is not None
         assert self._last_win_recreate_screen_size is not None
+        assert self._last_win_recreate_outer_rect is not None
 
-        # If uiscale hasn't changed and our screen-size hasn't either
-        # (or it has but we don't care) then we're done.
+        # If uiscale hasn't changed and neither has our screen-size or
+        # outer-rect (or they have but we don't care) then we're done.
+        # The outer rect matters even when virtual res is unchanged:
+        # full-screen windows may fit their backings to it.
         if uiscale is self._last_win_recreate_uiscale and (
-            virtual_screen_size == self._last_win_recreate_screen_size
+            (
+                virtual_screen_size == self._last_win_recreate_screen_size
+                and virtual_outer_rect == self._last_win_recreate_outer_rect
+            )
             or not mainwindow.refreshes_on_screen_size_changes
         ):
             return
@@ -714,6 +726,7 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         # future recreates.
         self._last_win_recreate_uiscale = uiscale
         self._last_win_recreate_screen_size = virtual_screen_size
+        self._last_win_recreate_outer_rect = virtual_outer_rect
 
     def _upkeep(self) -> None:
         """Run UI cleanup checks, etc. should be called periodically."""

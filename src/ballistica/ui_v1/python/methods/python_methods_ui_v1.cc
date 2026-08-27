@@ -2158,6 +2158,8 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* claims_left_right_obj{Py_None};
   PyObject* claims_up_down_obj{Py_None};
   PyObject* autoselect_obj{Py_None};
+  PyObject* button_inset_left_obj{Py_None};
+  PyObject* button_inset_right_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -2175,15 +2177,18 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "claims_left_right",
                                  "claims_up_down",
                                  "autoselect",
+                                 "button_inset_left",
+                                 "button_inset_right",
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &background_obj,
           &selected_child_obj, &capture_arrows_obj, &on_select_call_obj,
           &center_small_content_obj, &color_obj, &highlight_obj,
           &border_opacity_obj, &simple_culling_h_obj, &claims_left_right_obj,
-          &claims_up_down_obj, &autoselect_obj))
+          &claims_up_down_obj, &autoselect_obj, &button_inset_left_obj,
+          &button_inset_right_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2264,6 +2269,12 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (autoselect_obj != Py_None) {
     widget->set_auto_select(Python::GetBool(autoselect_obj));
   }
+  if (button_inset_left_obj != Py_None) {
+    widget->set_button_inset_left(Python::GetFloat(button_inset_left_obj));
+  }
+  if (button_inset_right_obj != Py_None) {
+    widget->set_button_inset_right(Python::GetFloat(button_inset_right_obj));
+  }
 
   // if making a new widget add it at the end
   if (edit_obj == Py_None) {
@@ -2298,9 +2309,15 @@ static PyMethodDef PyHScrollWidgetDef = {
     "  border_opacity: float | None = None,\n"
     "  simple_culling_h: float | None = None,\n"
     "  claims_left_right: bool | None = None,\n"
-    "  claims_up_down: bool | None = None)  -> bauiv1.Widget\n"
+    "  claims_up_down: bool | None = None,\n"
+    "  button_inset_left: float | None = None,\n"
+    "  button_inset_right: float | None = None)  -> bauiv1.Widget\n"
     "\n"
     "Create or edit a horizontal scroll widget.\n"
+    "\n"
+    "The button insets nudge the page-left/page-right buttons in from\n"
+    "the widget's edges; scrolls extended across screen margins use\n"
+    "them to keep the buttons anchored to the virtual rect.\n"
     "\n"
     "Pass a valid existing bauiv1.Widget as 'edit' to modify it; otherwise\n"
     "a new one is created and returned. Arguments that are not set to None\n"

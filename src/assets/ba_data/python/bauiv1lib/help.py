@@ -10,6 +10,8 @@ import bauiv1 as bui
 from bauiv1 import classicassets
 from bauiv1 import builtinassets
 
+from bauiv1lib.utils import get_screen_margins
+
 
 class HelpWindow(bui.MainWindow):
     """A window providing help on how to play."""
@@ -66,6 +68,17 @@ class HelpWindow(bui.MainWindow):
             scroll_height = target_height - 36
             scroll_bottom = yoffs - 64 - scroll_height
 
+        # In small ui (where we cover the screen), extend our scroll
+        # area out to cover any margins between the virtual rect and
+        # the visible screen edges (cutout insets and whatnot),
+        # insetting content by those same amounts so it stays put and
+        # only the scroll surface itself reaches further out.
+        margin_left, margin_right, margin_bottom, margin_top = (
+            get_screen_margins(scale)
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0, 0.0)
+        )
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(width, height),
@@ -103,8 +116,14 @@ class HelpWindow(bui.MainWindow):
 
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
-            size=(scroll_width, scroll_height),
-            position=(width * 0.5 - scroll_width * 0.5, scroll_bottom),
+            size=(
+                scroll_width + margin_left + margin_right,
+                scroll_height + margin_bottom + margin_top,
+            ),
+            position=(
+                width * 0.5 - scroll_width * 0.5 - margin_left,
+                scroll_bottom - margin_bottom,
+            ),
             simple_culling_v=100.0,
             capture_arrows=True,
             border_opacity=0.4,
@@ -136,10 +155,23 @@ class HelpWindow(bui.MainWindow):
         if uiscale is bui.UIScale.SMALL:
             self._sub_height += inline_title_height
 
+        # Grow to cover any screen margins, insetting content to match
+        # (via sub_center_x and the margin_top shifts below). Content
+        # centering still works out with asymmetric margins: the scroll
+        # centers us within itself, which spans the full visible area,
+        # so our center sits at the visible center and the extra
+        # margin_left baked into sub_center_x lands content back at the
+        # virtual-rect center.
+        self._sub_height += margin_bottom + margin_top
+        sub_center_x = margin_left + 0.5 * self._sub_width
+
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
             id=f'{self.main_window_id_prefix}|sub',
-            size=(self._sub_width, self._sub_height),
+            size=(
+                self._sub_width + margin_left + margin_right,
+                self._sub_height,
+            ),
             background=False,
             claims_left_right=False,
         )
@@ -153,7 +185,7 @@ class HelpWindow(bui.MainWindow):
                 else self._root_widget
             ),
             position=(
-                (self._sub_width * 0.5, self._sub_height - 20)
+                (sub_center_x, self._sub_height - margin_top - 20)
                 if uiscale is bui.UIScale.SMALL
                 else (width * 0.5, yoffs - 25)
             ),
@@ -169,9 +201,9 @@ class HelpWindow(bui.MainWindow):
         )
 
         spacing = 1.0
-        baseh = self._sub_width * 0.5
+        baseh = sub_center_x
         h = baseh + 30
-        v = self._sub_height - 55
+        v = self._sub_height - margin_top - 55
         if uiscale is bui.UIScale.SMALL:
             v -= inline_title_height
 

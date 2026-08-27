@@ -2,15 +2,20 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 
+#include <functional>
+#include <optional>
 #include <string>
+#include <utility>
 
 #include "ballistica/base/graphics/support/graphics_client_context.h"
 #include "ballistica/base/graphics/support/graphics_settings.h"
 #include "ballistica/base/input/input.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/shared/foundation/event_loop.h"
 
 namespace ballistica::base {
 
@@ -158,6 +163,28 @@ auto AppAdapter::DoClipboardGetText() -> std::string {
   // Shouldn't get here since we default to no clipboard support.
   FatalError("Shouldn't get here.");
   return "";
+}
+
+void AppAdapter::DoClipboardGetTextAsync(
+    std::function<void(std::optional<std::string>)> completion_call) {
+  assert(g_base->InLogicThread());
+
+  // Default behavior is a simple synchronous read with the completion
+  // scheduled for an upcoming logic-thread cycle. Platforms where reads
+  // can block on the OS (permission prompts, etc.) should override this
+  // with a genuinely async fetch.
+  std::optional<std::string> text{};
+  if (DoClipboardHasText()) {
+    try {
+      text = DoClipboardGetText();
+    } catch (const std::exception&) {
+      // Contents changing under us or whatnot; count this as no-text.
+    }
+  }
+  g_base->logic->event_loop()->PushCall(
+      [call = std::move(completion_call), text = std::move(text)] {
+        call(text);
+      });
 }
 
 auto AppAdapter::GetKeyName(int keycode) -> std::string {

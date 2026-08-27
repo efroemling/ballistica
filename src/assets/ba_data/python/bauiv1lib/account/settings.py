@@ -14,7 +14,11 @@ import bauiv1 as bui
 from bauiv1 import builtinassets
 from bauiv1 import _commonassets, classicassets
 
-from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
+from bauiv1lib.utils import (
+    get_screen_margins,
+    scroll_fade_bottom,
+    scroll_fade_top,
+)
 from bauiv1lib.connectivity import wait_for_connectivity
 
 
@@ -101,7 +105,19 @@ class AccountSettingsWindow(bui.MainWindow):
         self._sign_in_button = None
         self._sign_in_text = None
 
+        # In small ui (where we cover the screen), extend our scroll
+        # area sideways to cover any margins between the virtual rect
+        # and the visible screen edges (cutout insets and whatnot),
+        # insetting content by those same amounts so it stays put and
+        # only the scroll surface itself reaches further out.
+        self._margin_left, self._margin_right = (
+            get_screen_margins(scale)[:2]
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0)
+        )
+
         self._sub_width = self._scroll_width - 20
+        self._sub_center_x = self._margin_left + 0.5 * self._sub_width
 
         # Determine which sign-in/sign-out buttons we should show.
         self._show_sign_in_buttons: list[str] = []
@@ -164,9 +180,14 @@ class AccountSettingsWindow(bui.MainWindow):
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=False,
-            size=(self._scroll_width, self._scroll_height),
+            size=(
+                self._scroll_width + self._margin_left + self._margin_right,
+                self._scroll_height,
+            ),
             position=(
-                self._width * 0.5 - self._scroll_width * 0.5,
+                self._width * 0.5
+                - self._scroll_width * 0.5
+                - self._margin_left,
                 scroll_bottom,
             ),
             claims_left_right=True,
@@ -175,7 +196,10 @@ class AccountSettingsWindow(bui.MainWindow):
         )
 
         # With full-screen scrolling, fade content as it approaches
-        # toolbars.
+        # toolbars. Note that we intentionally use the original
+        # un-margin-extended scroll geometry here; the fades were
+        # placed to coincide with toolbar elements, which don't move
+        # when we extend out into screen margins.
         if uiscale is bui.UIScale.SMALL:
             scroll_fade_top(
                 self._root_widget,
@@ -491,9 +515,16 @@ class AccountSettingsWindow(bui.MainWindow):
             self._sub_height += delete_account_button_space
         if show_cancel_sign_in_button:
             self._sub_height += cancel_sign_in_button_space
+        # Note: we span the full scroll width including any
+        # visible-area margins; content is laid out relative to
+        # self._sub_center_x, which keeps it inside the virtual rect
+        # (see the margin calc in __init__).
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
-            size=(self._sub_width, self._sub_height),
+            size=(
+                self._sub_width + self._margin_left + self._margin_right,
+                self._sub_height,
+            ),
             background=False,
             claims_left_right=True,
             selection_loops_to_parent=True,
@@ -513,7 +544,7 @@ class AccountSettingsWindow(bui.MainWindow):
             txt = classicassets.strings.account.you_are_signed_in_as
             bui.textwidget(
                 parent=self._subcontainer,
-                position=(self._sub_width * 0.5, v),
+                position=(self._sub_center_x, v),
                 size=(0, 0),
                 text=txt,
                 scale=0.9,
@@ -525,7 +556,7 @@ class AccountSettingsWindow(bui.MainWindow):
             v -= signed_in_as_space * 0.5
             self._account_name_text = bui.textwidget(
                 parent=self._subcontainer,
-                position=(self._sub_width * 0.5, v),
+                position=(self._sub_center_x, v),
                 size=(0, 0),
                 scale=1.5,
                 maxwidth=self._sub_width * 0.9,
@@ -552,7 +583,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 )
                 bui.textwidget(
                     parent=self._subcontainer,
-                    position=(self._sub_width * 0.5, v),
+                    position=(self._sub_center_x, v),
                     size=(0, 0),
                     text=via,
                     scale=sscale,
@@ -564,7 +595,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 )
                 bui.textwidget(
                     parent=self._subcontainer,
-                    position=(self._sub_width * 0.5 - swidth * 0.5 - 5, v),
+                    position=(self._sub_center_x - swidth * 0.5 - 5, v),
                     size=(0, 0),
                     # Layout fragment: the open-paren pairs with a
                     # close-paren widget placed separately.
@@ -580,7 +611,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 )
                 bui.textwidget(
                     parent=self._subcontainer,
-                    position=(self._sub_width * 0.5 + swidth * 0.5 + 10, v),
+                    position=(self._sub_center_x + swidth * 0.5 + 10, v),
                     size=(0, 0),
                     text=')',
                     scale=0.5,
@@ -606,7 +637,7 @@ class AccountSettingsWindow(bui.MainWindow):
             bui.textwidget(
                 parent=self._subcontainer,
                 position=(
-                    self._sub_width * 0.5,
+                    self._sub_center_x,
                     v + sign_in_benefits_space * 0.4,
                 ),
                 size=(0, 0),
@@ -625,7 +656,7 @@ class AccountSettingsWindow(bui.MainWindow):
             bui.textwidget(
                 parent=self._subcontainer,
                 position=(
-                    self._sub_width * 0.5,
+                    self._sub_center_x,
                     v + signing_in_text_space * 0.5,
                 ),
                 size=(0, 0),
@@ -643,7 +674,7 @@ class AccountSettingsWindow(bui.MainWindow):
             btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|signingoogleplay',
-                position=((self._sub_width - button_width) * 0.5, v - 20),
+                position=(self._sub_center_x - button_width * 0.5, v - 20),
                 autoselect=True,
                 size=(button_width, 60),
                 label=_commonassets.strings.compose.icon_label(
@@ -669,7 +700,7 @@ class AccountSettingsWindow(bui.MainWindow):
             btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|signingamecenter',
-                position=((self._sub_width - button_width) * 0.5, v - 20),
+                position=(self._sub_center_x - button_width * 0.5, v - 20),
                 autoselect=True,
                 size=(button_width, 60),
                 # Note: Apparently Game Center is just called 'Game Center'
@@ -700,7 +731,7 @@ class AccountSettingsWindow(bui.MainWindow):
             btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|signindiscord',
-                position=((self._sub_width - button_width) * 0.5, v - 20),
+                position=(self._sub_center_x - button_width * 0.5, v - 20),
                 autoselect=True,
                 size=(button_width, 60),
                 # "Discord" is a brand name so we pass it as a literal
@@ -729,7 +760,7 @@ class AccountSettingsWindow(bui.MainWindow):
             self._sign_in_v2_proxy_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|signinv2',
-                position=((self._sub_width - button_width) * 0.5, v - 20),
+                position=(self._sub_center_x - button_width * 0.5, v - 20),
                 autoselect=True,
                 size=(button_width, 60),
                 label='',
@@ -753,7 +784,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 v_align='center',
                 size=(0, 0),
                 position=(
-                    self._sub_width * 0.5,
+                    self._sub_center_x,
                     v + (17 if v2infotext is not None else 10),
                 ),
                 text=_commonassets.strings.compose.icon_label(
@@ -770,7 +801,7 @@ class AccountSettingsWindow(bui.MainWindow):
                     h_align='center',
                     v_align='center',
                     size=(0, 0),
-                    position=(self._sub_width * 0.5, v - 4),
+                    position=(self._sub_center_x, v - 4),
                     text=v2infotext,
                     flatness=1.0,
                     scale=0.57,
@@ -792,7 +823,7 @@ class AccountSettingsWindow(bui.MainWindow):
             self._sign_in_device_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|signindevice',
-                position=((self._sub_width - button_width) * 0.5, v - 20),
+                position=(self._sub_center_x - button_width * 0.5, v - 20),
                 autoselect=True,
                 size=(button_width, 60),
                 label='',
@@ -803,7 +834,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 size=(0, 0),
-                position=(self._sub_width * 0.5, v + 60),
+                position=(self._sub_center_x, v + 60),
                 text=_commonassets.strings.values.deprecated,
                 scale=0.8,
                 maxwidth=300,
@@ -816,7 +847,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 size=(0, 0),
-                position=(self._sub_width * 0.5, v + 17),
+                position=(self._sub_center_x, v + 17),
                 text=_commonassets.strings.compose.icon_label(
                     icon=bui.charstr(bui.SpecialChar.LOCAL_ACCOUNT),
                     label=classicassets.strings.account.sign_in_with_device,
@@ -830,7 +861,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 size=(0, 0),
-                position=(self._sub_width * 0.5, v - 4),
+                position=(self._sub_center_x, v - 4),
                 text=classicassets.strings.account.sign_in_with_device_info,
                 flatness=1.0,
                 scale=0.57,
@@ -853,7 +884,7 @@ class AccountSettingsWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 size=(0, 0),
-                position=(self._sub_width * 0.5, v + 35.0),
+                position=(self._sub_center_x, v + 35.0),
                 text=(
                     'YOU ARE SIGNED IN WITH A V1 ACCOUNT.\n'
                     'THESE ARE NO LONGER SUPPORTED AND MANY\n'
@@ -872,7 +903,7 @@ class AccountSettingsWindow(bui.MainWindow):
             self._manage_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|manage',
-                position=((self._sub_width - button_width) * 0.5, v),
+                position=(self._sub_center_x - button_width * 0.5, v),
                 autoselect=True,
                 size=(button_width, 60),
                 label=classicassets.strings.account.manage_account,
@@ -896,7 +927,7 @@ class AccountSettingsWindow(bui.MainWindow):
             self._create_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|create',
-                position=((self._sub_width - button_width) * 0.5, v - 30),
+                position=(self._sub_center_x - button_width * 0.5, v - 30),
                 autoselect=True,
                 size=(button_width, 60),
                 label=classicassets.strings.account.create_an_account,
@@ -934,7 +965,7 @@ class AccountSettingsWindow(bui.MainWindow):
             self._game_center_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|gamecenter',
-                position=((self._sub_width - button_width) * 0.5, v),
+                position=(self._sub_center_x - button_width * 0.5, v),
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
@@ -957,7 +988,7 @@ class AccountSettingsWindow(bui.MainWindow):
             v -= achievements_text_space * 0.5
             self._achievements_text = bui.textwidget(
                 parent=self._subcontainer,
-                position=(self._sub_width * 0.5, v),
+                position=(self._sub_center_x, v),
                 size=(0, 0),
                 scale=0.9,
                 color=(0.75, 0.7, 0.8),
@@ -979,7 +1010,7 @@ class AccountSettingsWindow(bui.MainWindow):
             self._leaderboards_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|leaderboards',
-                position=((self._sub_width - button_width) * 0.5, v),
+                position=(self._sub_center_x - button_width * 0.5, v),
                 color=(0.55, 0.5, 0.6),
                 textcolor=(0.75, 0.7, 0.8),
                 autoselect=True,
@@ -1003,7 +1034,7 @@ class AccountSettingsWindow(bui.MainWindow):
             v -= campaign_progress_space * 0.5
             self._campaign_progress_text = bui.textwidget(
                 parent=self._subcontainer,
-                position=(self._sub_width * 0.5, v),
+                position=(self._sub_center_x, v),
                 size=(0, 0),
                 scale=0.9,
                 color=(0.75, 0.7, 0.8),
@@ -1021,7 +1052,7 @@ class AccountSettingsWindow(bui.MainWindow):
             v -= tickets_space * 0.5
             self._tickets_text = bui.textwidget(
                 parent=self._subcontainer,
-                position=(self._sub_width * 0.5, v),
+                position=(self._sub_center_x, v),
                 size=(0, 0),
                 scale=0.9,
                 color=(0.75, 0.7, 0.8),
@@ -1043,7 +1074,7 @@ class AccountSettingsWindow(bui.MainWindow):
             self._sign_out_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|signout',
-                position=((self._sub_width - button_width) * 0.5, v),
+                position=(self._sub_center_x - button_width * 0.5, v),
                 size=(button_width, 60),
                 label=classicassets.strings.account.sign_out,
                 color=(0.55, 0.5, 0.6),
@@ -1063,7 +1094,7 @@ class AccountSettingsWindow(bui.MainWindow):
             self._cancel_sign_in_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|cancelsignin',
-                position=((self._sub_width - button_width) * 0.5, v),
+                position=(self._sub_center_x - button_width * 0.5, v),
                 size=(button_width, 60),
                 label=_commonassets.strings.actions.cancel,
                 color=(0.55, 0.5, 0.6),
@@ -1083,7 +1114,7 @@ class AccountSettingsWindow(bui.MainWindow):
             self._delete_account_button = btn = bui.buttonwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|deleteaccount',
-                position=((self._sub_width - button_width) * 0.5, v),
+                position=(self._sub_center_x - button_width * 0.5, v),
                 size=(button_width, 60),
                 label=classicassets.strings.account.delete_account,
                 color=(0.85, 0.5, 0.6),

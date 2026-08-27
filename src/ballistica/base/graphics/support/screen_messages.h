@@ -26,7 +26,7 @@ class ScreenMessages {
                         const Vector3f& tint = {1, 1, 1},
                         const Vector3f& tint2 = {1, 1, 1});
 
-  void DrawMiscOverlays(FrameDef* frame_def);
+  void Draw(FrameDef* frame_def);
   void Reset();
 
  private:

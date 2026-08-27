@@ -11,6 +11,8 @@ import bauiv1 as bui
 from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
+from bauiv1lib.utils import get_screen_margins
+
 if TYPE_CHECKING:
     from typing import Any, Callable
 
@@ -73,6 +75,17 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         self._scroll_height = target_height - 75
         self._scroll_bottom = yoffs - 98 - self._scroll_height
         self._button_height = self._scroll_height / 6.0
+
+        # In small ui (where we cover the screen), extend our scroll
+        # area rightward to cover any margin between the virtual rect
+        # and the visible screen edge there. Content is left-anchored
+        # so nothing else moves; our other edges sit against interior
+        # elements and stay put.
+        margin_right = (
+            get_screen_margins(scale)[1]
+            if uiscale is bui.UIScale.SMALL
+            else 0.0
+        )
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -199,7 +212,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
 
         scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
-            size=(self._scroll_width, self._scroll_height),
+            size=(self._scroll_width + margin_right, self._scroll_height),
             position=(
                 self._width * 0.5
                 - (self._scroll_width + self._button_width) * 0.5

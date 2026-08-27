@@ -8,7 +8,11 @@ import bauiv1 as bui
 from bauiv1 import _commonassets
 
 from bacommon.docui import DocUIRequestTypeID, DocUIResponseTypeID
-from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
+from bauiv1lib.utils import (
+    get_screen_margins,
+    scroll_fade_bottom,
+    scroll_fade_top,
+)
 
 if TYPE_CHECKING:
     from typing import Callable
@@ -118,6 +122,22 @@ class DocUIWindow(bui.MainWindow):
         if uiscale is not bui.UIScale.SMALL:
             self._vis_top += 12.0
 
+        # In small ui we extend our scrollable area out into the screen
+        # margins (space between the virtual bounds and the actual
+        # screen edges) while keeping content laid out within the
+        # virtual bounds (page prep gets these margins so it can lay
+        # things out accordingly).
+        (
+            self._margin_left,
+            self._margin_right,
+            self._margin_bottom,
+            self._margin_top,
+        ) = (
+            get_screen_margins(self._root_scale)
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0, 0.0)
+        )
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -143,8 +163,14 @@ class DocUIWindow(bui.MainWindow):
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=True,  # Will turn off once we have UI.
-            size=(self._scroll_width, self._scroll_height),
-            position=(self._scroll_left, self._scroll_bottom),
+            size=(
+                self._scroll_width + self._margin_left + self._margin_right,
+                self._scroll_height + self._margin_bottom + self._margin_top,
+            ),
+            position=(
+                self._scroll_left - self._margin_left,
+                self._scroll_bottom - self._margin_bottom,
+            ),
             border_opacity=0.4,
             center_small_content_horizontally=True,
             claims_left_right=True,
@@ -385,6 +411,18 @@ class DocUIWindow(bui.MainWindow):
     def scroll_height(self) -> float:
         """Height of our scroll area."""
         return self._scroll_height
+
+    @property
+    def screen_margins(self) -> tuple[float, float, float, float]:
+        """Screen margins (left, right, bottom, top) our scroll extends
+        into beyond its standard scroll-width/height area.
+        """
+        return (
+            self._margin_left,
+            self._margin_right,
+            self._margin_bottom,
+            self._margin_top,
+        )
 
     def set_last_response(self, response: DocUIResponse, success: bool) -> None:
         """Set a response to a request."""

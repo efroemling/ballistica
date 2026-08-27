@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 from bauiv1 import _commonassets, classicassets
+from bauiv1lib.utils import get_screen_margins, scroll_fade_top
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -51,6 +52,34 @@ class TestingWindow(bui.MainWindow):
         self._scroll_height = target_height - 47
         self._scroll_bottom = yoffs - 78 - self._scroll_height
 
+        # In small ui we extend our scrollable area out into the screen
+        # margins (space between the virtual bounds and the actual
+        # screen edges) while keeping content laid out within the
+        # virtual bounds.
+        margin_left, margin_right, margin_bottom, margin_top = (
+            get_screen_margins(scale)
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0, 0.0)
+        )
+
+        # In small ui we also extend the scroll's top edge all the way
+        # up to the top of the screen; soft blobs then keep our title
+        # and info text legible over any content scrolled up there.
+        # Content gets padded to stay exactly where it would be with
+        # the top edge in its standard spot below the title.
+        top_extend = (
+            (0.5 * self._height + 0.5 * (screensize[1] / scale))
+            - (self._scroll_bottom + self._scroll_height)
+            + margin_top
+            if uiscale is bui.UIScale.SMALL
+            else 0.0
+        )
+
+        # A bit of extra padding above our content so the soft blobs
+        # fading things out under the title don't eat into our top
+        # row when scrolled to the top.
+        top_pad = 15.0
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -87,6 +116,41 @@ class TestingWindow(bui.MainWindow):
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
         self.title = title
+        self._scrollwidget = bui.scrollwidget(
+            parent=self._root_widget,
+            size=(
+                self._scroll_width + margin_left + margin_right,
+                self._scroll_height + margin_bottom + top_extend,
+            ),
+            position=(
+                self._width * 0.5 - self._scroll_width * 0.5 - margin_left,
+                self._scroll_bottom - margin_bottom,
+            ),
+            highlight=False,
+            border_opacity=0.4,
+            center_small_content_horizontally=True,
+        )
+        bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
+
+        # Our scroll area extends up past our title; these soft blobs
+        # (plus the title and info text being drawn after the scroll
+        # area) keep those legible over content scrolled up there.
+        # Note that we intentionally use the original
+        # un-margin-extended scroll geometry here so the blobs
+        # coincide with the title, which doesn't move when we extend
+        # out into screen margins.
+        if uiscale is bui.UIScale.SMALL:
+            scroll_fade_top(
+                self._root_widget,
+                self._width * 0.5 - self._scroll_width * 0.5,
+                self._scroll_bottom,
+                self._scroll_width,
+                self._scroll_height,
+                # Nudge the blobs up so their most-opaque core covers
+                # our title and info-text area.
+                yoffs_extra=30.0,
+            )
+
         bui.textwidget(
             parent=self._root_widget,
             position=(
@@ -116,22 +180,18 @@ class TestingWindow(bui.MainWindow):
             maxwidth=self._scroll_width * 0.75,
             text=classicassets.strings.settings.testing.for_testing_note,
         )
-        self._scrollwidget = bui.scrollwidget(
-            parent=self._root_widget,
-            size=(self._scroll_width, self._scroll_height),
-            position=(
-                self._width * 0.5 - self._scroll_width * 0.5,
-                self._scroll_bottom,
-            ),
-            highlight=False,
-            border_opacity=0.4,
-        )
-        bui.containerwidget(edit=self._scrollwidget, claims_left_right=True)
 
         self._spacing = 50
 
         self._sub_width = self._scroll_width * 0.95
-        self._sub_height = 50 + len(self._entries) * self._spacing + 60
+        self._sub_height = (
+            50
+            + len(self._entries) * self._spacing
+            + 60
+            + margin_bottom
+            + top_extend
+            + top_pad
+        )
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
             size=(self._sub_width, self._sub_height),
@@ -139,7 +199,9 @@ class TestingWindow(bui.MainWindow):
         )
 
         h = 230
-        v = self._sub_height - 48
+        # (start below the top-edge extension plus padding so content
+        # sits just below where the soft blobs fade things out).
+        v = self._sub_height - top_extend - top_pad - 48
 
         for i, entry in enumerate(self._entries):
             entry_name = entry['name']

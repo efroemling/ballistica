@@ -96,6 +96,14 @@ Graphics::~Graphics() = default;
 void Graphics::OnAppStart() {
   assert(g_base->InLogicThread());
   ReadVirtualBoundsABMode_();
+
+  if (kDebugVirtualOuterRectToggleEnabled) {
+    // Say so loudly; a build with this compiled in relayouts all UI
+    // once per second, so a run with it on by accident should be
+    // obvious.
+    g_core->logging->Log(LogName::kBaGraphics, LogLevel::kWarning,
+                         "USING VIRTUAL-OUTER-RECT DEBUG TOGGLE.");
+  }
 }
 
 void Graphics::ReadVirtualBoundsABMode_() {
@@ -250,6 +258,31 @@ void Graphics::UpdateInitialGraphicsSettingsSend_() {
 void Graphics::StepDisplayTime() {
   assert(g_base->InLogicThread());
   StepVirtualBoundsABToggle_();
+  StepVirtualOuterRectToggle_();
+}
+
+void Graphics::StepVirtualOuterRectToggle_() {
+  assert(g_base->InLogicThread());
+
+  if (!kDebugVirtualOuterRectToggleEnabled) {
+    return;
+  }
+
+  // Wall-clock rather than app time so the cadence stays a predictable
+  // one second for whoever is watching the screen (same as the A/B
+  // toggle, whose period we share).
+  auto now = core::Platform::TimeMonotonicMillisecs();
+  if (now - virtual_outer_rect_toggle_last_switch_time_
+      < kDebugVirtualBoundsABPeriod) {
+    return;
+  }
+  virtual_outer_rect_toggle_last_switch_time_ = now;
+  virtual_outer_rect_collapsed_ = !virtual_outer_rect_collapsed_;
+
+  // Nothing about the real rects changes; this re-drive exists to fire
+  // the screen-size-change chain so UI consumers re-query the reported
+  // outer rect and reflow.
+  UpdateScreen_();
 }
 
 void Graphics::AddCleanFrameCommand(const Object::Ref<PythonContextCall>& c) {
@@ -565,8 +598,6 @@ void Graphics::DrawMiscOverlays(FrameDef* frame_def) {
       }
     }
   }
-
-  screenmessages->DrawMiscOverlays(frame_def);
 }
 
 auto Graphics::GetDebugGraph(const std::string& name, bool smoothed)
@@ -873,6 +904,12 @@ void Graphics::BuildAndPushFrameDef() {
 
     // Let UI draw dev console and whatever else.
     DrawDevUI(frame_def);
+
+    // Screen-messages: submitted after simple-dialogs and the dev console
+    // (and at a depth in front of both) so they stay visible over them;
+    // fades and the cursor, submitted later at higher depths, still draw
+    // over us.
+    screenmessages->Draw(frame_def);
 
     // Draw our light/shadow images to the screen if desired.
     DrawDebugBuffers(overlay_pass);
@@ -1770,6 +1807,53 @@ auto Graphics::CalcVirtualBoundsRect(const Rect& render_rect, float res_x,
   return out;
 }
 
+auto Graphics::CalcMaxMarginsVirtualBoundsRect(const Rect& render_rect,
+                                               float base_virtual_res_x,
+                                               float base_virtual_res_y,
+                                               float margin_x, float margin_y)
+    -> Rect {
+  float width = render_rect.width();
+  float height = render_rect.height();
+  if (width <= 0.0f || height <= 0.0f || base_virtual_res_x <= 0.0f
+      || base_virtual_res_y <= 0.0f || margin_x < 0.0f || margin_y < 0.0f) {
+    return render_rect;
+  }
+
+  // With the margins in place, the outer rect spans (base-res +
+  // 2 * margin) virtual units along whichever axis CalcVirtualRes_
+  // pins to the base res, so pixels-per-virtual-unit is the render
+  // size over that span. The pinned axis is the one yielding the
+  // smaller scale: the other axis then ends up with more virtual
+  // units than its base span, which is exactly the condition
+  // CalcVirtualRes_ pins by.
+  float scale = std::min(width / (base_virtual_res_x + 2.0f * margin_x),
+                         height / (base_virtual_res_y + 2.0f * margin_y));
+
+  // Margins can never invert the rect: each pair takes at most
+  // 2 * margin / (base-res + 2 * margin) of its axis.
+  return Rect{
+      render_rect.l + margin_x * scale, render_rect.b + margin_y * scale,
+      render_rect.r - margin_x * scale, render_rect.t - margin_y * scale};
+}
+
+void Graphics::SetForceMaxVirtualBoundsMargins(bool val) {
+  assert(g_base->InLogicThread());
+  if (val == force_max_virtual_bounds_margins_) {
+    return;
+  }
+  force_max_virtual_bounds_margins_ = val;
+
+  if (val) {
+    // Say so loudly, same as the A/B knob: this deliberately mangles
+    // what gets drawn, so a run with it on should be obvious.
+    g_core->logging->Log(LogName::kBaGraphics, LogLevel::kWarning,
+                         "USING FORCED MAX-MARGIN VIRTUAL BOUNDS.");
+  }
+
+  // Feeds into rect calcs, so redo those.
+  UpdateScreen_();
+}
+
 auto Graphics::CalcVirtualBoundsRect_(const Rect& render_rect) -> Rect {
   assert(g_base->InLogicThread());
 
@@ -1792,6 +1876,40 @@ auto Graphics::CalcVirtualBoundsRect_(const Rect& render_rect) -> Rect {
                     + " as screen fractions) to " + std::to_string(maxinset)
                     + "px of a " + std::to_string(render_rect.width())
                     + "px rect.");
+  }
+
+  // Stay aware of any device out in the wild whose *applied* margins
+  // (post-clamp, post-bleed) exceed the max-margins calibration target
+  // (kDebugMaxVirtualBoundsMarginX/Y) - UIs are calibrated against
+  // those values, so such a device would be seeing layouts nothing was
+  // ever tested at.
+  if (out.width() > 0.0f && out.height() > 0.0f) {
+    float virtual_w = out.width();
+    float virtual_h = out.height();
+    CalcVirtualRes_(&virtual_w, &virtual_h);
+    if (virtual_h > 0.0f) {
+      float px_per_virtual_unit = out.height() / virtual_h;
+      float margin_l = (out.l - render_rect.l) / px_per_virtual_unit;
+      float margin_r = (render_rect.r - out.r) / px_per_virtual_unit;
+      float margin_b = (out.b - render_rect.b) / px_per_virtual_unit;
+      float margin_t = (render_rect.t - out.t) / px_per_virtual_unit;
+      if (margin_l > kDebugMaxVirtualBoundsMarginX
+          || margin_r > kDebugMaxVirtualBoundsMarginX
+          || margin_b > kDebugMaxVirtualBoundsMarginY
+          || margin_t > kDebugMaxVirtualBoundsMarginY) {
+        BA_LOG_ONCE(
+            LogName::kBaGraphics, LogLevel::kWarning,
+            "OS-derived virtual-bounds margins (l="
+                + std::to_string(margin_l) + " r=" + std::to_string(margin_r)
+                + " b=" + std::to_string(margin_b)
+                + " t=" + std::to_string(margin_t)
+                + " virtual units) exceed the max-margins calibration"
+                  " target ("
+                + std::to_string(kDebugMaxVirtualBoundsMarginX) + "/"
+                + std::to_string(kDebugMaxVirtualBoundsMarginY)
+                + "); UIs are not calibrated for this much margin.");
+      }
+    }
   }
   return out;
 }
@@ -1834,11 +1952,20 @@ void Graphics::UpdateScreen_() {
     // edge.
     virtual_bounds_rect_ = CalcVirtualBoundsRect_(active_render_rect_);
 
-    // The debug knob replaces any OS-derived inset rather than
-    // stacking on it: it exists to produce a known, deliberately
-    // asymmetric rect, and adding a device's own inset on top would
-    // make the A/B comparison test something other than what it says.
-    if (virtual_bounds_ab_mode_ != VirtualBoundsABMode::kDisabled) {
+    // The debug knobs replace any OS-derived inset (and the bleed)
+    // rather than stacking on them: each exists to produce a known
+    // rect, and adding a device's own inset on top would make it
+    // something other than what it claims. Max-margins takes
+    // precedence over the A/B knob when both are somehow on; the
+    // dev-console toggle is the more immediate intent.
+    if (force_max_virtual_bounds_margins_) {
+      float base_virtual_res_x;
+      float base_virtual_res_y;
+      GetBaseVirtualRes(&base_virtual_res_x, &base_virtual_res_y);
+      virtual_bounds_rect_ = CalcMaxMarginsVirtualBoundsRect(
+          active_render_rect_, base_virtual_res_x, base_virtual_res_y,
+          kDebugMaxVirtualBoundsMarginX, kDebugMaxVirtualBoundsMarginY);
+    } else if (virtual_bounds_ab_mode_ != VirtualBoundsABMode::kDisabled) {
       // Both configs share this one bounds rect; they differ only in
       // whether the render rect shrinks to meet it (A - black outside)
       // or stays put (B - drawn content outside). Everything inside the

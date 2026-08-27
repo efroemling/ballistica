@@ -4,11 +4,15 @@
 #include "ballistica/base/app_adapter/app_adapter_apple.h"
 
 #include <algorithm>
+#include <functional>
 #include <iterator>
+#include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_platform/apple/from_swift.h"
+#include "ballistica/base/app_platform/apple/uikit_pasteboard.h"
 #include "ballistica/base/app_platform/support/min_sdl_key_names.h"
 #include "ballistica/base/graphics/gl/renderer_gl.h"
 #include "ballistica/base/graphics/graphics.h"
@@ -448,6 +452,8 @@ auto AppAdapterApple::GetKeyRepeatInterval() -> float {
 auto AppAdapterApple::DoClipboardIsSupported() -> bool {
 #if BA_PLATFORM_MACOS
   return BallisticaKit::CocoaFromCpp::clipboardIsSupported();
+#elif BA_PLATFORM_IOS
+  return true;
 #else
   return AppAdapter::DoClipboardIsSupported();
 #endif
@@ -456,6 +462,8 @@ auto AppAdapterApple::DoClipboardIsSupported() -> bool {
 auto AppAdapterApple::DoClipboardHasText() -> bool {
 #if BA_PLATFORM_MACOS
   return BallisticaKit::CocoaFromCpp::clipboardHasText();
+#elif BA_PLATFORM_IOS
+  return UIKitPasteboardHasText();
 #else
   return AppAdapter::DoClipboardHasText();
 #endif
@@ -464,6 +472,8 @@ auto AppAdapterApple::DoClipboardHasText() -> bool {
 void AppAdapterApple::DoClipboardSetText(const std::string& text) {
 #if BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::clipboardSetText(text);
+#elif BA_PLATFORM_IOS
+  UIKitPasteboardSetText(text);
 #else
   AppAdapter::DoClipboardSetText(text);
 #endif
@@ -476,8 +486,45 @@ auto AppAdapterApple::DoClipboardGetText() -> std::string {
     return std::string(contents.get());
   }
   throw Exception("No text on clipboard.");
+#elif BA_PLATFORM_IOS
+  // Synchronous reads can block on an OS permission prompt here, which
+  // would hang the logic thread; we deliberately support only the async
+  // path (iOS shipped after the sync call was deprecated, so nothing
+  // legitimately relies on this).
+  BA_LOG_ONCE(LogName::kBa, LogLevel::kWarning,
+              "Synchronous clipboard reads are not supported on this"
+              " platform; use clipboard_get_text_async().");
+  throw Exception(
+      "Synchronous clipboard reads are not supported on this platform;"
+      " use clipboard_get_text_async().",
+      PyExcType::kRuntime);
 #else
   return AppAdapter::DoClipboardGetText();
+#endif
+}
+
+void AppAdapterApple::DoClipboardGetTextAsync(
+    std::function<void(std::optional<std::string>)> completion_call) {
+#if BA_PLATFORM_IOS
+  assert(g_base->InLogicThread());
+
+  // The completion may hold thread-affine state, so park it here on the
+  // logic thread and send a state-free completion down to the ObjC
+  // layer; results marshal back to the logic thread and complete FIFO
+  // (safe since reads run on a serial queue, preserving order).
+  clipboard_get_text_calls_.push_back(std::move(completion_call));
+  UIKitPasteboardGetTextAsync([](std::optional<std::string> text) {
+    // (Runs on the pasteboard background queue.)
+    g_base->logic->event_loop()->PushCall([text = std::move(text)] {
+      auto* adapter = AppAdapterApple::Get(g_base);
+      assert(!adapter->clipboard_get_text_calls_.empty());
+      auto call = std::move(adapter->clipboard_get_text_calls_.front());
+      adapter->clipboard_get_text_calls_.pop_front();
+      call(std::move(text));
+    });
+  });
+#else
+  AppAdapter::DoClipboardGetTextAsync(std::move(completion_call));
 #endif
 }
 

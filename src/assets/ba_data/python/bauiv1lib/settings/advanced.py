@@ -13,7 +13,11 @@ from bacommon.locale import (
 import bauiv1 as bui
 from bauiv1 import _commonassets, classicassets
 
-from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
+from bauiv1lib.utils import (
+    get_screen_margins,
+    scroll_fade_bottom,
+    scroll_fade_top,
+)
 from bauiv1lib.popup import PopupMenu
 
 if TYPE_CHECKING:
@@ -82,6 +86,16 @@ class AdvancedSettingsWindow(bui.MainWindow):
             self._scroll_height += 27
             scroll_bottom += 1
 
+        # In small ui we extend our scrollable area out into the screen
+        # margins (space between the virtual bounds and the actual
+        # screen edges) while keeping content laid out within the
+        # virtual bounds.
+        margin_left, margin_right, margin_bottom, self._margin_top = (
+            get_screen_margins(scale)
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0, 0.0)
+        )
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -136,7 +150,12 @@ class AdvancedSettingsWindow(bui.MainWindow):
         if self._do_net_test_button:
             self._sub_height += self._extra_button_spacing
         self._sub_height += self._spacing * 2.0  # plugins
-        self._sub_height += self._spacing * 2.0  # dev tools
+
+        # Dev tools, plus extra space to cover any screen margins our
+        # scroll area extends into (content stays in virtual bounds).
+        self._sub_height += (
+            self._spacing * 2.0 + margin_bottom + self._margin_top
+        )
 
         self._r = 'settingsWindowAdvanced'
 
@@ -163,10 +182,13 @@ class AdvancedSettingsWindow(bui.MainWindow):
 
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
-            size=(self._scroll_width, self._scroll_height),
+            size=(
+                self._scroll_width + margin_left + margin_right,
+                self._scroll_height + margin_bottom + self._margin_top,
+            ),
             position=(
-                self._width * 0.5 - self._scroll_width * 0.5,
-                scroll_bottom,
+                self._width * 0.5 - self._scroll_width * 0.5 - margin_left,
+                scroll_bottom - margin_bottom,
             ),
             simple_culling_v=20.0,
             highlight=False,
@@ -188,7 +210,10 @@ class AdvancedSettingsWindow(bui.MainWindow):
 
         # With full-screen scrolling, fade content as it approaches
         # toolbars. (but only in the main menu where we're showing said
-        # toolbars).
+        # toolbars). Note that we intentionally use the original
+        # un-margin-extended scroll geometry here; the fades were
+        # placed to coincide with toolbar elements, which don't move
+        # when we extend out into screen margins.
         if uiscale is bui.UIScale.SMALL and bui.in_main_menu():
             scroll_fade_top(
                 self._root_widget,
@@ -345,7 +370,9 @@ class AdvancedSettingsWindow(bui.MainWindow):
         for child in children:
             child.delete()
 
-        v = self._sub_height - 35
+        # Start below any screen margin the scroll area extends into;
+        # content itself stays within the virtual bounds.
+        v = self._sub_height - self._margin_top - 35
 
         # For fullscreen scrollable, account for toolbar.
         uiscale = bui.app.ui_v1.uiscale

@@ -15,8 +15,8 @@ class FrameDef;
 
 /// Where on the overlay-front-pass we draw. Just under the dev-console
 /// depth (and submitted just before it) so the dev-console -- and the
-/// fade/cursor drawn above it -- layer cleanly on top of us, for both
-/// transparent and opaque geometry.
+/// screen-messages/fade/cursor drawn above it -- layer cleanly on top of
+/// us, for both transparent and opaque geometry.
 const float kSimpleDialogZDepth = kDevConsoleZDepth - 0.01f;
 
 /// A minimal core dialog, drawn end-to-end here using only babase + builtin

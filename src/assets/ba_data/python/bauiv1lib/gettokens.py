@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, assert_never, override
 
 import bacommon.cloud
 import bacommon.classic
+from bauiv1lib.utils import get_screen_margins
 import bauiv1 as bui
 from bauiv1 import builtinassets
 from bauiv1 import _commonassets, classicassets
@@ -314,7 +315,7 @@ class GetTokensWindow(bui.MainWindow):
         )
 
         uiscale = bui.app.ui_v1.uiscale
-        self._width = 1200.0 if uiscale is bui.UIScale.SMALL else 1070.0
+        self._width = 1300.0 if uiscale is bui.UIScale.SMALL else 1070.0
         self._height = 800 if uiscale is bui.UIScale.SMALL else 520.0
 
         self._r = 'getTokensWindow'
@@ -323,8 +324,10 @@ class GetTokensWindow(bui.MainWindow):
         # size of our backing container. This lets us fit to the exact
         # screen shape at small ui scale.
         screensize = bui.get_virtual_screen_size()
+        # Slightly reduced scale in small ui so our full button set
+        # fits on screen without scrolling on phone-ish aspect ratios.
         scale = (
-            1.5
+            1.425
             if uiscale is bui.UIScale.SMALL
             else 1.1 if uiscale is bui.UIScale.MEDIUM else 0.95
         )
@@ -338,6 +341,15 @@ class GetTokensWindow(bui.MainWindow):
         self._yoffs = 0.5 * self._height + 0.5 * target_height + 20.0
 
         self._scroll_width = target_width
+
+        # In small ui we extend our h-scroll out into the screen
+        # margins (space between the virtual bounds and the actual
+        # screen edges).
+        self._margin_left, self._margin_right = (
+            get_screen_margins(scale)[:2]
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0)
+        )
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -596,20 +608,30 @@ class GetTokensWindow(bui.MainWindow):
 
         h_scroll = bui.hscrollwidget(
             parent=self._root_widget,
-            size=(self._scroll_width, scrollheight),
+            size=(
+                self._scroll_width + self._margin_left + self._margin_right,
+                scrollheight,
+            ),
             position=(
-                self._width * 0.5 - 0.5 * self._scroll_width,
+                self._width * 0.5
+                - 0.5 * self._scroll_width
+                - self._margin_left,
                 self._height * 0.5 - 0.5 * scrollheight - 40,
             ),
             claims_left_right=True,
             highlight=False,
             border_opacity=0.0,
             center_small_content=True,
+            button_inset_left=self._margin_left,
+            button_inset_right=self._margin_right,
         )
         subcontainer = bui.containerwidget(
             parent=h_scroll,
             background=False,
-            size=(total_button_width, scrollheight),
+            size=(
+                total_button_width + self._margin_left + self._margin_right,
+                scrollheight,
+            ),
         )
         tinfobtn = bui.buttonwidget(
             parent=self._root_widget,
@@ -641,7 +663,7 @@ class GetTokensWindow(bui.MainWindow):
             right_widget=bui.get_special_widget('tokens_meter'),
         )
 
-        x = sidepad + xfudge
+        x = sidepad + xfudge + self._margin_left
         bwidgets: list[bui.Widget] = []
         for i, buttondef in enumerate(buttondefs_shown):
 

@@ -8,7 +8,11 @@ import logging
 from typing import override, TYPE_CHECKING
 
 import bascenev1 as bs
-from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
+from bauiv1lib.utils import (
+    get_screen_margins,
+    scroll_fade_bottom,
+    scroll_fade_top,
+)
 import bauiv1 as bui
 from bauiv1 import _commonassets, classicassets
 
@@ -91,6 +95,22 @@ class PlaylistBrowserWindow(bui.MainWindow):
             self._scroll_height += 35
             scroll_bottom -= 2
 
+        # In small ui (where we cover the screen), extend our scroll
+        # area out to cover any margins between the virtual rect and
+        # the visible screen edges (cutout insets and whatnot),
+        # insetting content by those same amounts so it stays put and
+        # only the scroll surface itself reaches further out.
+        (
+            self._margin_left,
+            self._margin_right,
+            self._margin_bottom,
+            self._margin_top,
+        ) = (
+            get_screen_margins(scale)
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0, 0.0)
+        )
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -132,10 +152,15 @@ class PlaylistBrowserWindow(bui.MainWindow):
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=False,
-            size=(self._scroll_width, self._scroll_height),
+            size=(
+                self._scroll_width + self._margin_left + self._margin_right,
+                self._scroll_height + self._margin_bottom + self._margin_top,
+            ),
             position=(
-                self._width * 0.5 - self._scroll_width * 0.5,
-                scroll_bottom,
+                self._width * 0.5
+                - self._scroll_width * 0.5
+                - self._margin_left,
+                scroll_bottom - self._margin_bottom,
             ),
             border_opacity=0.4,
             center_small_content_horizontally=True,
@@ -146,11 +171,15 @@ class PlaylistBrowserWindow(bui.MainWindow):
         self._last_config = None
 
         # With full-screen scrolling, fade content as it approaches
-        # toolbars.
+        # toolbars. Note that we intentionally use the original
+        # un-margin-extended scroll geometry here; the fades were
+        # placed to coincide with toolbar elements, which don't move
+        # when we extend out into screen margins.
         if uiscale is bui.UIScale.SMALL and bool(True):
+            fade_left = self._width * 0.5 - self._scroll_width * 0.5
             scroll_fade_top(
                 self._root_widget,
-                self._width * 0.5 - self._scroll_width * 0.5,
+                fade_left,
                 scroll_bottom,
                 self._scroll_width,
                 self._scroll_height,
@@ -158,7 +187,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
             if playlist_select_context is None:
                 scroll_fade_bottom(
                     self._root_widget,
-                    self._width * 0.5 - self._scroll_width * 0.5,
+                    fade_left,
                     scroll_bottom,
                     self._scroll_width,
                     self._scroll_height,
@@ -412,13 +441,23 @@ class PlaylistBrowserWindow(bui.MainWindow):
 
         extra_bottom_buffer = 50
 
-        self._sub_width = columns * button_width + 2 * button_buffer_h
+        self._sub_width = (
+            columns * button_width
+            + 2 * button_buffer_h
+            + self._margin_left
+            + self._margin_right
+        )
 
         self._sub_height = (
             40.0
             + rows * (button_height + 2 * button_buffer_v)
             + 90
             + extra_bottom_buffer
+            # Grow to cover any screen margins; the margin_top shift on
+            # yoffs below insets content to match, leaving margin_bottom
+            # of extra padding at the bottom.
+            + self._margin_bottom
+            + self._margin_top
         )
 
         # For fullscreen scrollable, account for toolbar.
@@ -447,8 +486,10 @@ class PlaylistBrowserWindow(bui.MainWindow):
             40 if uiscale is bui.UIScale.SMALL and screensize[0] < 1400 else 0
         )
 
-        # For fullscreen scrollable, account for toolbar.
-        yoffs = 0
+        # For fullscreen scrollable, account for toolbar, plus any
+        # screen margin above us (content insets to stay put while the
+        # scroll surface extends).
+        yoffs = -self._margin_top
         if uiscale is bui.UIScale.SMALL:
             yoffs -= 35
 
@@ -456,7 +497,10 @@ class PlaylistBrowserWindow(bui.MainWindow):
         bui.textwidget(
             parent=self._subcontainer,
             text=classicassets.strings.playlist.playlists,
-            position=(40 + xoffs, self._sub_height + yoffs - 26),
+            position=(
+                self._margin_left + 40 + xoffs,
+                self._sub_height + yoffs - 26,
+            ),
             size=(0, 0),
             scale=1.0,
             maxwidth=400,
@@ -484,7 +528,8 @@ class PlaylistBrowserWindow(bui.MainWindow):
                 name = items[index][0]
                 assert name is not None
                 pos = (
-                    x * (button_width + 2 * button_buffer_h)
+                    self._margin_left
+                    + x * (button_width + 2 * button_buffer_h)
                     + button_buffer_h
                     + 8
                     + h_offs,
@@ -717,7 +762,10 @@ class PlaylistBrowserWindow(bui.MainWindow):
             parent=self._subcontainer,
             id=f'{self.main_window_id_prefix}|customize',
             size=(100, 30),
-            position=(34 + h_offs_bottom, 50 + extra_bottom_buffer),
+            position=(
+                self._margin_left + 34 + h_offs_bottom,
+                self._margin_bottom + 50 + extra_bottom_buffer,
+            ),
             text_scale=0.6,
             label=_commonassets.strings.actions.customize,
             on_activate_call=self._on_customize_press,

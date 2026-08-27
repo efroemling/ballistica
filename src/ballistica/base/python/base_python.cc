@@ -214,6 +214,7 @@ void BasePython::OnScreenSizeChange() {
 
   float screen_res_x{g_base->graphics->screen_virtual_width()};
   float screen_res_y{g_base->graphics->screen_virtual_height()};
+  Rect outer_rect{g_base->graphics->reported_virtual_outer_rect()};
 
   // This call runs for all screen sizes including the initial one. However
   // we only want to inform the Python layer of *changes*, so we only store
@@ -221,18 +222,26 @@ void BasePython::OnScreenSizeChange() {
   if (last_screen_res_x_ < 0.0) {
     last_screen_res_x_ = screen_res_x;
     last_screen_res_y_ = g_base->graphics->screen_virtual_height();
+    last_virtual_outer_rect_ = outer_rect;
     return;
   }
 
-  // Ignore any redundant values that might come through.
-  if (last_screen_res_x_ == screen_res_x
-      && last_screen_res_y_ == screen_res_y) {
+  // Ignore any redundant values that might come through. Note that the
+  // virtual outer rect can change even when virtual res doesn't (an
+  // inset appearing under a fixed bounds shape) and UI adapts to it, so
+  // it counts as a change too.
+  if (last_screen_res_x_ == screen_res_x && last_screen_res_y_ == screen_res_y
+      && last_virtual_outer_rect_.l == outer_rect.l
+      && last_virtual_outer_rect_.b == outer_rect.b
+      && last_virtual_outer_rect_.r == outer_rect.r
+      && last_virtual_outer_rect_.t == outer_rect.t) {
     return;
   }
 
   // Aight; we got a fresh, non-initial value. Store it and inform Python.
   last_screen_res_x_ = screen_res_x;
   last_screen_res_y_ = screen_res_y;
+  last_virtual_outer_rect_ = outer_rect;
 
   objs().Get(ObjID::kAppOnScreenSizeChangeCall).Call();
 }

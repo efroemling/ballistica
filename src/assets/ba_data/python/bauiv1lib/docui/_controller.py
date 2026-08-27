@@ -420,6 +420,7 @@ class DocUIController:
                 uiscale=bui.app.ui_v1.uiscale,
                 scroll_width=win.scroll_width,
                 scroll_height=win.scroll_height,
+                margins=win.screen_margins,
                 idprefix=win.main_window_id_prefix,
                 immediate=False,
             )
@@ -502,6 +503,7 @@ class DocUIController:
                 uiscale=bui.app.ui_v1.uiscale,
                 scroll_width=win.scroll_width,
                 scroll_height=win.scroll_height,
+                margins=win.screen_margins,
                 idprefix=win.main_window_id_prefix,
                 # If this window has had a response already, snap things
                 # in immediately with no transitions.
@@ -591,6 +593,7 @@ class DocUIController:
                 uiscale=bui.app.ui_v1.uiscale,
                 scroll_width=win.scroll_width,
                 scroll_height=win.scroll_height,
+                margins=win.screen_margins,
                 idprefix=win.main_window_id_prefix,
                 immediate=True,
                 explicit_error=explicit_error,
@@ -773,6 +776,7 @@ class DocUIController:
         uiscale: bui.UIScale,
         scroll_width: float,
         scroll_height: float,
+        margins: tuple[float, float, float, float],
         idprefix: str,
         immediate: bool,
         explicit_error: ErrorType | None = None,
@@ -879,6 +883,7 @@ class DocUIController:
             uiscale=uiscale,
             scroll_width=scroll_width,
             scroll_height=scroll_height,
+            margins=margins,
             immediate=immediate,
             idprefix=idprefix,
         )

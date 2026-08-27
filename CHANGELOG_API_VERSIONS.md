@@ -142,3 +142,12 @@ change behavior a mod may be relying on or can now take advantage of.
   will be removed when api 9 support ends. Replace `IOAttrs(float_times=True)`
   with `IOAttrs(time_format='float')`.
 
+- `babase.clipboard_get_text()` is deprecated and will be removed; use the new
+  `babase.clipboard_get_text_async()` instead, which passes its result to a
+  callback: text, or `None` if no text could be fetched for any reason. On
+  some platforms (notably iOS), reading the clipboard can require the OS to
+  ask the user for permission, so a synchronous read would hang the app while
+  that prompt is up; the async form lets things keep running. Note that
+  `babase.clipboard_has_text()` is *not* going anywhere - platforms provide
+  prompt-free ways to check for text, so it remains a synchronous call and the
+  right way to decide whether to show paste UI.

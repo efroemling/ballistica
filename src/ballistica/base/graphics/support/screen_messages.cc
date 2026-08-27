@@ -11,12 +11,16 @@
 #include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/graphics/text/text_graphics.h"
 #include "ballistica/base/graphics/text/text_group.h"
+#include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/shared/generic/utils.h"
 
 namespace ballistica::base {
 
-const float kScreenMessageZDepth{-0.06f};
+/// Where on the overlay-front pass we draw. Above the dev-console and
+/// simple-dialog depths (and submitted after both) so messages stay
+/// visible over them; the fade and cursor still draw above us.
+const float kScreenMessageZDepth{kDevConsoleZDepth + 0.05f};
 
 class ScreenMessages::ScreenMessageEntry {
  public:
@@ -60,8 +64,8 @@ class ScreenMessages::ScreenMessageEntry {
 
 ScreenMessages::ScreenMessages() = default;
 
-void ScreenMessages::DrawMiscOverlays(FrameDef* frame_def) {
-  RenderPass* pass = frame_def->overlay_pass();
+void ScreenMessages::Draw(FrameDef* frame_def) {
+  RenderPass* pass = frame_def->overlay_front_pass();
 
   // Screen messages (bottom).
   {

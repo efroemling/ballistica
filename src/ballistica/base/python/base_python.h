@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "ballistica/base/base.h"
+#include "ballistica/shared/math/rect.h"
 #include "ballistica/shared/python/python_object_set.h"
 
 namespace ballistica::base {
@@ -247,6 +248,7 @@ class BasePython {
   bool bacommon_lang_str_lookup_failed_{};
   float last_screen_res_x_{-1.0f};
   float last_screen_res_y_{-1.0f};
+  Rect last_virtual_outer_rect_{};
 };
 
 }  // namespace ballistica::base

@@ -6,7 +6,10 @@
 #if BA_XCODE_BUILD
 
 #include <atomic>
+#include <functional>
+#include <list>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -80,12 +83,22 @@ class AppAdapterApple : public AppAdapter {
   auto DoClipboardHasText() -> bool override;
   void DoClipboardSetText(const std::string& text) override;
   auto DoClipboardGetText() -> std::string override;
+  void DoClipboardGetTextAsync(
+      std::function<void(std::optional<std::string>)> completion_call) override;
   void DoNativeReviewRequest() override;
 
  private:
   class ScopedAllowGraphics_;
 
   void ReloadRenderer_(const GraphicsSettings* settings);
+
+#if BA_PLATFORM_IOS
+  // Pending clipboard-read completions, appended and popped (FIFO) only
+  // in the logic thread; completion order is guaranteed to match request
+  // order since reads run on a serial queue (see uikit_pasteboard.mm).
+  std::list<std::function<void(std::optional<std::string>)>>
+      clipboard_get_text_calls_;
+#endif
 
   std::thread::id graphics_thread_{};
   std::atomic<bool> fullscreen_control_value_{false};

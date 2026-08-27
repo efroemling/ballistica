@@ -12,6 +12,8 @@ import bauiv1 as bui
 from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
 
+from bauiv1lib.utils import get_screen_margins
+
 if TYPE_CHECKING:
     from typing import Any
 
@@ -73,6 +75,16 @@ class WatchWindow(bui.MainWindow):
         self._scroll_width = target_width
         self._scroll_height = target_height - 55
         self._scroll_y = self.yoffs - 85 - self._scroll_height
+
+        # In small ui (where we cover the screen), extend our backing
+        # imagery out to cover any margins between the virtual rect and
+        # the visible screen edges (cutout insets and whatnot). Content
+        # positioning is unaffected; only the imagery reaches further.
+        margin_left, margin_right, margin_bottom, _margin_top = (
+            get_screen_margins(scale)
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0, 0.0)
+        )
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -164,12 +176,17 @@ class WatchWindow(bui.MainWindow):
             bui.widget(edit=first_tab.button, up_widget=bbtn, left_widget=bbtn)
 
         # Not actually using a scroll widget anymore; just an image.
+        # It extends left/right/bottom across any screen margins; the
+        # top edge stays put since the tab row hangs off it.
         bui.imagewidget(
             parent=self._root_widget,
-            size=(self._scroll_width, self._scroll_height),
+            size=(
+                self._scroll_width + margin_left + margin_right,
+                self._scroll_height + margin_bottom,
+            ),
             position=(
-                self._width * 0.5 - self._scroll_width * 0.5,
-                self._scroll_y,
+                self._width * 0.5 - self._scroll_width * 0.5 - margin_left,
+                self._scroll_y - margin_bottom,
             ),
             texture=builtinassets.textures.scroll_widget.get(),
             mesh_transparent=builtinassets.meshes.soft_edge_outside.get(),

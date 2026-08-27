@@ -18,6 +18,7 @@
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
+#include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/support/app_config.h"
 #include "ballistica/base/ui/dev_console.h"
 #include "ballistica/base/ui/ui.h"
@@ -349,10 +350,17 @@ static PyMethodDef PyClipboardSetTextDef = {
 
 // --------------------------- clipboard_get_text ------------------------------
 
+// REMOVE WHEN API 9 SUPPORT ENDS
 static auto PyClipboardGetText(PyObject* self) -> PyObject* {
   BA_PYTHON_TRY;
+  if (PyErr_WarnEx(PyExc_DeprecationWarning,
+                   "clipboard_get_text() will be removed when api 9 support"
+                   " ends; use clipboard_get_text_async() instead.",
+                   1)
+      == -1) {
+    return nullptr;
+  }
   return PyUnicode_FromString(g_base->ClipboardGetText().c_str());
-  Py_RETURN_FALSE;
   BA_PYTHON_CATCH;
 }
 
@@ -366,7 +374,63 @@ static PyMethodDef PyClipboardGetTextDef = {
     "Return text currently on the system clipboard.\n"
     "\n"
     "Ensure that :meth:`~babase.clipboard_has_text()` returns True before\n"
-    "calling this function.",
+    "calling this function.\n"
+    "\n"
+    ".. deprecated:: 1.8.0\n"
+    "   Use :meth:`~babase.clipboard_get_text_async()`.\n"
+    "   Will be removed when api 9 support ends.",
+};
+
+// ------------------------ clipboard_get_text_async ---------------------------
+
+static auto PyClipboardGetTextAsync(PyObject* self, PyObject* args,
+                                    PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  PyObject* call_obj{};
+  static const char* kwlist[] = {"call", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char**>(kwlist), &call_obj)) {
+    return nullptr;
+  }
+  if (!PyCallable_Check(call_obj)) {
+    throw Exception("Object is not callable.", PyExcType::kType);
+  }
+
+  // Wrap their callable in a context-call so it runs in the context
+  // that kicked this off, and hand it over to the engine's async fetch.
+  auto context_call{Object::New<PythonContextCall>(call_obj)};
+  g_base->ClipboardGetTextAsync(
+      [context_call](std::optional<std::string> text) {
+        assert(g_base->InLogicThread());
+        PythonRef callargs(text ? Py_BuildValue("(s)", text->c_str())
+                                : Py_BuildValue("(O)", Py_None),
+                           PythonRef::kSteal);
+        context_call->Run(callargs);
+      });
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyClipboardGetTextAsyncDef = {
+    "clipboard_get_text_async",            // name
+    (PyCFunction)PyClipboardGetTextAsync,  // method
+    METH_VARARGS | METH_KEYWORDS,          // flags
+
+    "clipboard_get_text_async(call: Callable[[str | None], None]) -> None\n"
+    "\n"
+    "Fetch text from the system clipboard asynchronously.\n"
+    "\n"
+    "The provided callback will be run in the logic thread and passed\n"
+    "the fetched text, or None if no text could be fetched for any\n"
+    "reason (clipboard unsupported on this build, no text present,\n"
+    "access denied by the OS, etc.).\n"
+    "\n"
+    "On some platforms, fetching clipboard contents can require\n"
+    "the OS to ask the user for permission; the async nature of this\n"
+    "call allows the app to keep running normally while that happens.\n"
+    "Note that in such cases the callback may not run until the user\n"
+    "responds (or may never run at all).",
 };
 
 // ------------------------------ setup_sigint ---------------------------------
@@ -2062,6 +2126,49 @@ static PyMethodDef PyVirtualBoundsCalcProbeDef = {
     ":meta private:",
 };
 
+// ------------------ virtual_bounds_max_margins_probe -------------------------
+
+static auto PyVirtualBoundsMaxMarginsProbe(PyObject* self, PyObject* args,
+                                           PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  PyObject* render_obj;
+  double base_res_x;
+  double base_res_y;
+  double margin_x;
+  double margin_y;
+  static const char* kwlist[] = {"render_rect", "base_res_x", "base_res_y",
+                                 "margin_x",    "margin_y",   nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "Odddd", const_cast<char**>(kwlist), &render_obj,
+          &base_res_x, &base_res_y, &margin_x, &margin_y)) {
+    return nullptr;
+  }
+  auto vals = Python::GetFloats(render_obj);
+  if (vals.size() != 4) {
+    throw Exception("Expected 4 rect values (l, b, r, t).", PyExcType::kValue);
+  }
+  Rect out = Graphics::CalcMaxMarginsVirtualBoundsRect(
+      Rect{vals[0], vals[1], vals[2], vals[3]}, static_cast<float>(base_res_x),
+      static_cast<float>(base_res_y), static_cast<float>(margin_x),
+      static_cast<float>(margin_y));
+  return Py_BuildValue("(ffff)", out.l, out.b, out.r, out.t);
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyVirtualBoundsMaxMarginsProbeDef = {
+    "virtual_bounds_max_margins_probe",           // name
+    (PyCFunction)PyVirtualBoundsMaxMarginsProbe,  // method
+    METH_VARARGS | METH_KEYWORDS,                 // flags
+
+    "virtual_bounds_max_margins_probe(render_rect: Sequence[float],\n"
+    "  base_res_x: float, base_res_y: float, margin_x: float,\n"
+    "  margin_y: float) -> tuple[float, float, float, float]\n"
+    "\n"
+    ":meta private:",
+};
+
 // -------------------- virtual_bounds_project_probe ---------------------------
 
 static auto PyVirtualBoundsProjectProbe(PyObject* self, PyObject* args,
@@ -2219,6 +2326,62 @@ static PyMethodDef PySetDrawVirtualBoundsDef = {
     METH_VARARGS | METH_KEYWORDS,         // flags
 
     "set_draw_virtual_bounds(value: bool) -> None\n"
+    "\n"
+    ":meta private:",
+};
+
+// ---------------- get_force_max_virtual_bounds_margins -----------------------
+
+static auto PyGetForceMaxVirtualBoundsMargins(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  if (g_base->graphics->force_max_virtual_bounds_margins()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetForceMaxVirtualBoundsMarginsDef = {
+    "get_force_max_virtual_bounds_margins",          // name
+    (PyCFunction)PyGetForceMaxVirtualBoundsMargins,  // method
+    METH_NOARGS,                                     // flags
+
+    "get_force_max_virtual_bounds_margins() -> bool\n"
+    "\n"
+    ":meta private:",
+};
+
+// ---------------- set_force_max_virtual_bounds_margins -----------------------
+
+static auto PySetForceMaxVirtualBoundsMargins(PyObject* self, PyObject* args,
+                                              PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  int value;
+  static const char* kwlist[] = {"value", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "p",
+                                   const_cast<char**>(kwlist), &value)) {
+    return nullptr;
+  }
+
+  g_base->graphics->SetForceMaxVirtualBoundsMargins(value);
+  Py_RETURN_NONE;
+
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetForceMaxVirtualBoundsMarginsDef = {
+    "set_force_max_virtual_bounds_margins",          // name
+    (PyCFunction)PySetForceMaxVirtualBoundsMargins,  // method
+    METH_VARARGS | METH_KEYWORDS,                    // flags
+
+    "set_force_max_virtual_bounds_margins(value: bool) -> None\n"
     "\n"
     ":meta private:",
 };
@@ -2554,6 +2717,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyClipboardHasTextDef,
       PyClipboardSetTextDef,
       PyClipboardGetTextDef,
+      PyClipboardGetTextAsyncDef,
       PyDoOnceDef,
       PyVerifyEd25519Def,
       PyGetAppDef,
@@ -2622,8 +2786,11 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PySetDrawVirtualSafeAreaBoundsDef,
       PyGetDrawVirtualBoundsDef,
       PySetDrawVirtualBoundsDef,
+      PyGetForceMaxVirtualBoundsMarginsDef,
+      PySetForceMaxVirtualBoundsMarginsDef,
       PyVirtualBoundsProjectProbeDef,
       PyVirtualBoundsCalcProbeDef,
+      PyVirtualBoundsMaxMarginsProbeDef,
       PyGetInitialAppConfigDef,
       PySetAppConfigDef,
       PyUpdateInternalLoggerLevelsDef,

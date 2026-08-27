@@ -10,6 +10,8 @@ from efro.util import strip_exception_tracebacks
 import bauiv1 as bui
 from bauiv1 import classicassets
 
+from bauiv1lib.utils import get_screen_margins
+
 if TYPE_CHECKING:
     from typing import Sequence, TypeAlias
 
@@ -341,6 +343,22 @@ class CreditsWindow(bui.MainWindow):
             scroll_height = target_height - 29
             scroll_y = yoffs - 58 - scroll_height
 
+        # In small ui (where we cover the screen), extend our scroll
+        # area out to cover any margins between the virtual rect and
+        # the visible screen edges (cutout insets and whatnot),
+        # insetting content by those same amounts so it stays put and
+        # only the scroll surface itself reaches further out.
+        (
+            self._margin_left,
+            self._margin_right,
+            self._margin_bottom,
+            self._margin_top,
+        ) = (
+            get_screen_margins(scale)
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0, 0.0)
+        )
+
         self._r = 'creditsWindow'
         super().__init__(
             root_widget=bui.containerwidget(
@@ -378,8 +396,14 @@ class CreditsWindow(bui.MainWindow):
 
         scroll = self._scroll = bui.scrollwidget(
             parent=self._root_widget,
-            size=(scroll_width, scroll_height),
-            position=(width * 0.5 - scroll_width * 0.5, scroll_y),
+            size=(
+                scroll_width + self._margin_left + self._margin_right,
+                scroll_height + self._margin_bottom + self._margin_top,
+            ),
+            position=(
+                width * 0.5 - scroll_width * 0.5 - self._margin_left,
+                scroll_y - self._margin_bottom,
+            ),
             capture_arrows=True,
             border_opacity=0.4,
             center_small_content_horizontally=True,
@@ -464,12 +488,19 @@ class CreditsWindow(bui.MainWindow):
         # Make space for our title when we're stuffing it inline.
         if self._uiscale is bui.UIScale.SMALL:
             sub_height += inline_title_height
+
+        # Grow to cover any screen margins, insetting content to match
+        # (via the margin_left/margin_top shifts below) so it stays put.
+        sub_height += self._margin_bottom + self._margin_top
         self._sub_height = sub_height
 
         self._subcontainer = bui.containerwidget(
             parent=self._scroll,
             id=f'{self.main_window_id_prefix}|sub',
-            size=(self._sub_width, sub_height),
+            size=(
+                self._sub_width + self._margin_left + self._margin_right,
+                sub_height,
+            ),
             background=False,
             claims_left_right=False,
         )
@@ -483,7 +514,10 @@ class CreditsWindow(bui.MainWindow):
                 else self._root_widget
             ),
             position=(
-                (self._sub_width * 0.5, sub_height - 20)
+                (
+                    self._margin_left + self._sub_width * 0.5,
+                    sub_height - self._margin_top - 20,
+                )
                 if self._uiscale is bui.UIScale.SMALL
                 else (self._width * 0.5, self._yoffs - 28)
             ),
@@ -508,7 +542,7 @@ class CreditsWindow(bui.MainWindow):
         # frame budget. Specs are ordered top-down so visible content
         # lands first; the rest fills in below over the next fraction
         # of a second.
-        self._content_top = sub_height - 20 + voffs
+        self._content_top = sub_height - self._margin_top - 20 + voffs
         self._specs = specs
         self._spec_index = 0
         self._build_timer = bui.DisplayTimer(
@@ -535,7 +569,10 @@ class CreditsWindow(bui.MainWindow):
                 scale=_TEXT_SCALE,
                 flatness=1.0,
                 size=(0, 0),
-                position=(xoffs, self._content_top - y_down),
+                position=(
+                    self._margin_left + xoffs,
+                    self._content_top - y_down,
+                ),
                 h_align='left',
                 v_align='top',
                 text=text,

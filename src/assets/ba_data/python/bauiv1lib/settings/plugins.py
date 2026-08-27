@@ -10,6 +10,7 @@ from bauiv1 import builtinassets
 from bauiv1 import _commonassets, classicassets
 
 from bauiv1lib import popup
+from bauiv1lib.utils import get_screen_margins, scroll_fade_top
 
 if TYPE_CHECKING:
     pass
@@ -80,6 +81,47 @@ class PluginWindow(bui.MainWindow):
         self._scroll_height = target_height - 40
         self._scroll_bottom = yoffs - 64 - self._scroll_height
 
+        # In small ui we extend our scrollable area out into the screen
+        # margins (space between the virtual bounds and the actual
+        # screen edges) while keeping content laid out within the
+        # virtual bounds.
+        (
+            self._margin_left,
+            self._margin_right,
+            self._margin_bottom,
+            margin_top,
+        ) = (
+            get_screen_margins(scale)
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0, 0.0)
+        )
+
+        # In small ui we also extend the scroll's top edge all the way
+        # up to the top of the screen; soft blobs then keep our title
+        # and toolbar buttons legible over any content scrolled up
+        # there.
+        top_extend = (
+            (0.5 * self._height + 0.5 * (screensize[1] / scale))
+            - (self._scroll_bottom + self._scroll_height)
+            + margin_top
+            if uiscale is bui.UIScale.SMALL
+            else 0.0
+        )
+
+        # Generous padding above our content so the first plugin row
+        # stays clear of the soft blobs and the large back button when
+        # scrolled to the top.
+        top_pad = 35.0 if uiscale is bui.UIScale.SMALL else 0.0
+
+        # Indent plugin rows a bit in small ui so they don't hug the
+        # left screen edge (rows shrink to match so settings buttons
+        # on the right are unaffected).
+        self._row_indent = 25.0 if uiscale is bui.UIScale.SMALL else 0.0
+
+        # Total dead space above our content within the subcontainer
+        # (used by our layout code).
+        self._content_top_offs = top_extend + top_pad
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height),
@@ -119,6 +161,45 @@ class PluginWindow(bui.MainWindow):
             )
             bui.containerwidget(
                 edit=self._root_widget, cancel_button=self._back_button
+            )
+
+        self._scrollwidget = bui.scrollwidget(
+            parent=self._root_widget,
+            size=(
+                self._scroll_width + self._margin_left + self._margin_right,
+                self._scroll_height + self._margin_bottom + top_extend,
+            ),
+            position=(
+                self._width * 0.5
+                - self._scroll_width * 0.5
+                - self._margin_left,
+                self._scroll_bottom - self._margin_bottom,
+            ),
+            simple_culling_v=20.0,
+            highlight=False,
+            selection_loops_to_parent=True,
+            claims_left_right=True,
+            border_opacity=0.4,
+        )
+        bui.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
+
+        # Our scroll area extends up past our title; these soft blobs
+        # (plus the title and toolbar buttons being drawn after the
+        # scroll area) keep those legible over content scrolled up
+        # there. Note that we intentionally use the original
+        # un-margin-extended scroll geometry here so the blobs
+        # coincide with that chrome, which doesn't move when we extend
+        # out into screen margins.
+        if uiscale is bui.UIScale.SMALL:
+            scroll_fade_top(
+                self._root_widget,
+                self._width * 0.5 - self._scroll_width * 0.5,
+                self._scroll_bottom,
+                self._scroll_width,
+                self._scroll_height,
+                # Nudge the blobs up so their most-opaque core covers
+                # our title and toolbar-button area.
+                yoffs_extra=30.0,
             )
 
         self._title_text = bui.textwidget(
@@ -168,6 +249,10 @@ class PluginWindow(bui.MainWindow):
             color=(0.55, 0.73, 0.25),
             iconscale=1.2,
         )
+        # Explicitly slot our opaque parts in front of the soft blobs
+        # (all children of a container share a single depth slice, so
+        # creation order alone doesn't do it).
+        bui.widget(edit=self._category_button, depth_range=(0.95, 1.0))
 
         self._settings_button = bui.buttonwidget(
             parent=self._root_widget,
@@ -177,35 +262,22 @@ class PluginWindow(bui.MainWindow):
             label='',
             on_activate_call=self._open_settings,
         )
+        bui.widget(edit=self._settings_button, depth_range=(0.95, 1.0))
 
-        bui.imagewidget(
+        gearimg = bui.imagewidget(
             parent=self._root_widget,
             position=(settings_button_x + 3, button_row_yoffs - 57),
             draw_controller=self._settings_button,
             size=(35, 35),
             texture=classicassets.textures.settings_icon.get(),
         )
+        bui.widget(edit=gearimg, depth_range=(0.95, 1.0))
 
         bui.widget(
             edit=self._settings_button,
             up_widget=self._settings_button,
             right_widget=self._settings_button,
         )
-
-        self._scrollwidget = bui.scrollwidget(
-            parent=self._root_widget,
-            size=(self._scroll_width, self._scroll_height),
-            position=(
-                self._width * 0.5 - self._scroll_width * 0.5,
-                self._scroll_bottom,
-            ),
-            simple_culling_v=20.0,
-            highlight=False,
-            selection_loops_to_parent=True,
-            claims_left_right=True,
-            border_opacity=0.4,
-        )
-        bui.widget(edit=self._scrollwidget, right_widget=self._scrollwidget)
 
         self._no_plugins_installed_text = bui.textwidget(
             parent=self._root_widget,
@@ -227,9 +299,13 @@ class PluginWindow(bui.MainWindow):
         plugstates: dict[str, dict] = bui.app.config.get('Plugins', {})
         assert isinstance(plugstates, dict)
 
-        plug_line_height = 50
-        sub_width = self._scroll_width
-        sub_height = len(plugspecs) * plug_line_height
+        plug_line_height = 50.0
+        sub_width = self._scroll_width + self._margin_left + self._margin_right
+        sub_height = (
+            len(plugspecs) * plug_line_height
+            + self._margin_bottom
+            + self._content_top_offs
+        )
         self._subcontainer = bui.containerwidget(
             parent=self._scrollwidget,
             id=f'{self.main_window_id_prefix}|subc',
@@ -319,7 +395,7 @@ class PluginWindow(bui.MainWindow):
         plugstates: dict[str, dict] = bui.app.config.setdefault('Plugins', {})
         assert isinstance(plugstates, dict)
 
-        plug_line_height = 50
+        plug_line_height = 50.0
         sub_width = self._scroll_width
         num_enabled = 0
         num_disabled = 0
@@ -341,22 +417,25 @@ class PluginWindow(bui.MainWindow):
 
         if self._category is Category.ALL:
             sub_height = len(plugspecs) * plug_line_height
-            bui.containerwidget(
-                edit=self._subcontainer, size=(self._scroll_width, sub_height)
-            )
         elif self._category is Category.ENABLED:
             sub_height = num_enabled * plug_line_height
-            bui.containerwidget(
-                edit=self._subcontainer, size=(self._scroll_width, sub_height)
-            )
         elif self._category is Category.DISABLED:
             sub_height = num_disabled * plug_line_height
-            bui.containerwidget(
-                edit=self._subcontainer, size=(self._scroll_width, sub_height)
-            )
         else:
             # Make sure we handle all cases.
             assert_never(self._category)
+
+        # Cover any screen margins our scroll area extends into plus
+        # the padding above our content (content stays in virtual
+        # bounds, clear of top blobs/buttons).
+        sub_height += self._margin_bottom + self._content_top_offs
+        bui.containerwidget(
+            edit=self._subcontainer,
+            size=(
+                self._scroll_width + self._margin_left + self._margin_right,
+                sub_height,
+            ),
+        )
 
         num_shown = 0
         for classpath, plugspec in plugspecs_sorted:
@@ -375,7 +454,11 @@ class PluginWindow(bui.MainWindow):
             if not show:
                 continue
 
-            item_y = sub_height - (num_shown + 1) * plug_line_height
+            item_y = (
+                sub_height
+                - self._content_top_offs
+                - (num_shown + 1) * plug_line_height
+            )
             check = bui.checkboxwidget(
                 parent=self._subcontainer,
                 id=f'{self.main_window_id_prefix}|enabled.{classpath}',
@@ -383,13 +466,17 @@ class PluginWindow(bui.MainWindow):
                 autoselect=True,
                 value=enabled,
                 maxwidth=self._scroll_width
+                - self._row_indent
                 - (
                     200
                     if plugin is not None and plugin.has_settings_ui()
                     else 80
                 ),
-                position=(10, item_y),
-                size=(self._scroll_width - 40, 50),
+                position=(
+                    10 + self._margin_left + self._row_indent,
+                    item_y,
+                ),
+                size=(self._scroll_width - 40 - self._row_indent, 50),
                 on_value_change_call=bui.CallPartial(
                     self._check_value_changed, plugspec
                 ),
@@ -410,7 +497,10 @@ class PluginWindow(bui.MainWindow):
                     label=classicassets.strings.settings.title,
                     autoselect=True,
                     size=(100, 40),
-                    position=(sub_width - 130, item_y + 6),
+                    position=(
+                        self._margin_left + sub_width - 130,
+                        item_y + 6,
+                    ),
                 )
                 bui.buttonwidget(
                     edit=button,

@@ -1272,6 +1272,35 @@ static PyMethodDef PyGetVirtualSafeAreaSizeDef = {
     "Return the size of the area on screen that will always be visible.",
 };
 
+// ------------------------ get_virtual_outer_rect -----------------------------
+
+static auto PyGetVirtualOuterRect(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+
+  Rect rect{g_base->graphics->reported_virtual_outer_rect()};
+  return Py_BuildValue("(ffff)", rect.l, rect.b, rect.r, rect.t);
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyGetVirtualOuterRectDef = {
+    "get_virtual_outer_rect",            // name
+    (PyCFunction)PyGetVirtualOuterRect,  // method
+    METH_NOARGS,                         // flags
+
+    "get_virtual_outer_rect() -> tuple[float, float, float, float]\n"
+    "\n"
+    "Return the full visible drawing area in virtual coords.\n"
+    "\n"
+    "Returns the left, bottom, right, and top edges of the active render\n"
+    "rect expressed in virtual coordinates. This equals (0, 0, virtual-\n"
+    "res-x, virtual-res-y) unless the virtual bounds are inset to dodge\n"
+    "camera cutouts or the like, in which case left/bottom may be\n"
+    "negative and right/top may exceed the virtual res. Use this to\n"
+    "extend visuals to the edge of the visible area; note that content\n"
+    "outside the regular virtual bounds may be partially obscured.",
+};
+
 // -------------------------------- atexit -------------------------------------
 
 static auto PyAtExit(PyObject* self, PyObject* args, PyObject* keywds)
@@ -1793,6 +1822,7 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PySetAccountSignInStateDef,
       PyGetVirtualScreenSizeDef,
       PyGetVirtualSafeAreaSizeDef,
+      PyGetVirtualOuterRectDef,
       PyAtExitDef,
   };
 }

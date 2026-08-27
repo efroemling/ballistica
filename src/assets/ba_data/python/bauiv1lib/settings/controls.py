@@ -48,15 +48,11 @@ class ControlsSettingsWindow(bui.MainWindow):
         # app-adapter to determine whether to show this stuff; not
         # hard-code it.
 
-        show_gamepads = False
+        # All our current supported platforms support gamepads in some
+        # form, so we always show this now.
         platform = app.classic.platform
-        subplatform = app.classic.subplatform
-        non_vr_windows = platform == 'windows' and (
-            subplatform != 'oculus' or not app.env.vr
-        )
-        if platform in ('linux', 'android', 'mac') or non_vr_windows:
-            show_gamepads = True
-            buttons_height += spacing
+        show_gamepads = True
+        buttons_height += spacing
 
         show_touch = False
         if bs.have_touchscreen_input():

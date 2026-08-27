@@ -13,7 +13,11 @@ import bauiv1 as bui
 from bauiv1 import builtinassets
 from bauiv1 import _commonassets, classicassets
 
-from bauiv1lib.utils import scroll_fade_top, scroll_fade_bottom
+from bauiv1lib.utils import (
+    get_screen_margins,
+    scroll_fade_bottom,
+    scroll_fade_top,
+)
 from bauiv1lib.league import league_display_name
 from bauiv1lib.connectivity import wait_for_connectivity
 
@@ -144,6 +148,22 @@ class CoopBrowserWindow(bui.MainWindow):
             - self._scroll_height
         )
 
+        # In small ui (where we cover the screen), extend our scroll
+        # area (and the horizontal rows within it) out to cover any
+        # margins between the virtual rect and the visible screen
+        # edges, insetting content by those same amounts so it stays
+        # put and only the scroll surfaces reach further out.
+        (
+            self._margin_left,
+            self._margin_right,
+            self._margin_bottom,
+            self._margin_top,
+        ) = (
+            get_screen_margins(scale)
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0, 0.0)
+        )
+
         super().__init__(
             root_widget=bui.containerwidget(
                 size=(self._width, self._height + top_extra),
@@ -198,7 +218,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         self._selected_row = cfg.get('Selected Coop Row', None)
 
-        self._subcontainerwidth = 800.0
+        self._subcontainerwidth = 800.0 + self._margin_left + self._margin_right
         self._subcontainerheight = 1400.0
 
         # Allow empty space at top when our toolbar overlaps scroll area.
@@ -208,10 +228,15 @@ class CoopBrowserWindow(bui.MainWindow):
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             highlight=False,
-            size=(self._scroll_width, self._scroll_height),
+            size=(
+                self._scroll_width + self._margin_left + self._margin_right,
+                self._scroll_height + self._margin_bottom + self._margin_top,
+            ),
             position=(
-                self._width * 0.5 - self._scroll_width * 0.5,
-                self._scroll_bottom,
+                self._width * 0.5
+                - self._scroll_width * 0.5
+                - self._margin_left,
+                self._scroll_bottom - self._margin_bottom,
             ),
             simple_culling_v=10.0,
             claims_left_right=True,
@@ -220,18 +245,22 @@ class CoopBrowserWindow(bui.MainWindow):
         )
 
         # Splotches at the top to fade scrollable content as it hits
-        # toolbars.
+        # toolbars. Note that we intentionally use the original
+        # un-margin-extended scroll geometry here; the fades were
+        # placed to coincide with toolbar elements, which don't move
+        # when we extend out into screen margins.
         if uiscale is bui.UIScale.SMALL and bool(True):
+            fade_left = self._width * 0.5 - self._scroll_width * 0.5
             scroll_fade_top(
                 self._root_widget,
-                self._width * 0.5 - self._scroll_width * 0.5,
+                fade_left,
                 self._scroll_bottom,
                 self._scroll_width,
                 self._scroll_height,
             )
             scroll_fade_bottom(
                 self._root_widget,
-                self._width * 0.5 - self._scroll_width * 0.5,
+                fade_left,
                 self._scroll_bottom,
                 self._scroll_width,
                 self._scroll_height,
@@ -516,7 +545,7 @@ class CoopBrowserWindow(bui.MainWindow):
 
         next_widget_down = self._tournament_info_button
 
-        h = 0
+        h = self._margin_left
         v2 = -2
         sel_color = (0.75, 0.85, 0.5)
         sel_color_hard = (0.4, 0.7, 0.2)
@@ -621,7 +650,7 @@ class CoopBrowserWindow(bui.MainWindow):
         items += [campaignname + ':The Last Stand']
         if self._selected_campaign_level is None:
             self._selected_campaign_level = items[0]
-        h = 150
+        h = 150 + self._margin_left
         for i in items:
             is_last_sel = i == self._selected_campaign_level
             campaign_buttons.append(
@@ -695,7 +724,13 @@ class CoopBrowserWindow(bui.MainWindow):
 
         tourney_row_height = 200
         self._subcontainerheight = (
-            700 + self._tournament_button_count * tourney_row_height
+            700
+            + self._tournament_button_count * tourney_row_height
+            # Grow to cover any screen margins; the margin_top shift on
+            # our start position below insets content to match, leaving
+            # margin_bottom of extra padding at the bottom.
+            + self._margin_bottom
+            + self._margin_top
         )
 
         self._subcontainer = bui.containerwidget(
@@ -711,9 +746,9 @@ class CoopBrowserWindow(bui.MainWindow):
         )
 
         w_parent = self._subcontainer
-        h_base = 6
+        h_base = 6 + self._margin_left
 
-        v = self._subcontainerheight - 90
+        v = self._subcontainerheight - self._margin_top - 90
 
         # Move down past toolbar when it overlaps us.
         uiscale = bui.app.ui_v1.uiscale
@@ -739,12 +774,17 @@ class CoopBrowserWindow(bui.MainWindow):
 
         h_scroll = bui.hscrollwidget(
             parent=w_parent,
-            size=(self._scroll_width, 205),
+            size=(
+                self._scroll_width + self._margin_left + self._margin_right,
+                205,
+            ),
             position=(-5, v),
             simple_culling_h=70,
             highlight=False,
             border_opacity=0.0,
             color=(0.45, 0.4, 0.5),
+            button_inset_left=self._margin_left,
+            button_inset_right=self._margin_right,
             on_select_call=lambda: self._on_row_selected('campaign'),
         )
         self._campaign_h_scroll = h_scroll
@@ -760,7 +800,12 @@ class CoopBrowserWindow(bui.MainWindow):
             )
         bui.containerwidget(edit=h_scroll, claims_left_right=True)
         self._campaign_sub_container = bui.containerwidget(
-            parent=h_scroll, size=(180 + 200 * 10, 200), background=False
+            parent=h_scroll,
+            size=(
+                180 + 200 * 10 + self._margin_left + self._margin_right,
+                200,
+            ),
+            background=False,
         )
 
         # Tournaments
@@ -833,11 +878,18 @@ class CoopBrowserWindow(bui.MainWindow):
             for i in range(self._tournament_button_count):
                 tournament_h_scroll = h_scroll = bui.hscrollwidget(
                     parent=w_parent,
-                    size=(self._scroll_width, 205),
+                    size=(
+                        self._scroll_width
+                        + self._margin_left
+                        + self._margin_right,
+                        205,
+                    ),
                     position=(-5, v),
                     highlight=False,
                     border_opacity=0.0,
                     color=(0.45, 0.4, 0.5),
+                    button_inset_left=self._margin_left,
+                    button_inset_right=self._margin_right,
                     on_select_call=bui.CallStrict(
                         self._on_row_selected, 'tournament' + str(i + 1)
                     ),
@@ -857,10 +909,16 @@ class CoopBrowserWindow(bui.MainWindow):
                 bui.containerwidget(edit=h_scroll, claims_left_right=True)
                 sc2 = bui.containerwidget(
                     parent=h_scroll,
-                    size=(self._scroll_width - 24, 200),
+                    size=(
+                        self._scroll_width
+                        - 24
+                        + self._margin_left
+                        + self._margin_right,
+                        200,
+                    ),
                     background=False,
                 )
-                h = 0
+                h = self._margin_left
                 v2 = -2
                 is_last_sel = True
                 self._tournament_buttons.append(
@@ -915,11 +973,16 @@ class CoopBrowserWindow(bui.MainWindow):
 
         self._custom_h_scroll = custom_h_scroll = h_scroll = bui.hscrollwidget(
             parent=w_parent,
-            size=(self._scroll_width, 205),
+            size=(
+                self._scroll_width + self._margin_left + self._margin_right,
+                205,
+            ),
             position=(-5, v),
             highlight=False,
             border_opacity=0.0,
             color=(0.45, 0.4, 0.5),
+            button_inset_left=self._margin_left,
+            button_inset_right=self._margin_right,
             on_select_call=bui.CallStrict(self._on_row_selected, 'custom'),
         )
         bui.widget(
@@ -935,12 +998,17 @@ class CoopBrowserWindow(bui.MainWindow):
         bui.containerwidget(edit=h_scroll, claims_left_right=True)
         sc2 = bui.containerwidget(
             parent=h_scroll,
-            size=(max(self._scroll_width - 24, 30 + 200 * len(items)), 200),
+            size=(
+                max(self._scroll_width - 24, 30 + 200 * len(items))
+                + self._margin_left
+                + self._margin_right,
+                200,
+            ),
             background=False,
         )
         h_spacing = 200
         self._custom_buttons: list[GameButton] = []
-        h = 0
+        h = self._margin_left
         v2 = -2
         for item in items:
             is_last_sel = item == self._selected_custom_level

@@ -90,6 +90,7 @@ class DevConsole {
   auto CaratCharValid_() -> bool;
   auto GetCaratX_() -> float;
   void UpdateCarat_();
+  void ApplyPastedText_(const std::string& text_in);
   auto Bottom_() const -> float;
   void SubmitPythonCommand_(const std::string& command);
   void InvokeStringEditor_();

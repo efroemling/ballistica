@@ -973,9 +973,14 @@ void UI::DevConsoleButtonCenter_(float* x, float* y) const {
     *y = vheight * 0.75f;
   }
   // Never let the button get stranded out of reach (dragged towards an
-  // edge, or a custom position outliving a shrink of the virtual screen).
-  *x = std::clamp(*x, bszh, vwidth - bszh);
-  *y = std::clamp(*y, bszh, vheight - bszh);
+  // edge, or a custom position outliving a shrink of the visible area).
+  // Clamp to the virtual *outer* rect, not the virtual bounds — the
+  // button may be parked anywhere visible, cutout margins included.
+  // (The *reported* rect, so the button behaves like any other adapted
+  // UI under the outer-rect debug toggle.)
+  Rect vout = g_base->graphics->reported_virtual_outer_rect();
+  *x = std::clamp(*x, vout.l + bszh, vout.r - bszh);
+  *y = std::clamp(*y, vout.b + bszh, vout.t - bszh);
 }
 
 auto UI::InDevConsoleButton_(float x, float y) const -> bool {

@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -792,10 +793,18 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
   if (editable() && !ShouldUseStringEditor_()
       && m.type == base::WidgetMessage::Type::kPaste) {
     if (g_base->ClipboardIsSupported()) {
-      if (g_base->ClipboardHasText()) {
-        // Just enter it char by char as if we had typed it...
-        AddCharsToText_(g_base->ClipboardGetText());
-      }
+      auto weak_this{Object::WeakRef<TextWidget>(this)};
+      g_base->ClipboardGetTextAsync(
+          [weak_this](std::optional<std::string> text) {
+            // Text may arrive late (OS permission prompts, etc.); apply
+            // only if we still exist and something was actually fetched.
+            if (auto* widget = weak_this.get()) {
+              if (text.has_value()) {
+                // Just enter it char by char as if we had typed it...
+                widget->AddCharsToText_(*text);
+              }
+            }
+          });
     }
   }
 

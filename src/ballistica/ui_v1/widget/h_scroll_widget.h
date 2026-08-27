@@ -43,6 +43,13 @@ class HScrollWidget : public ContainerWidget {
   void setBorderOpacity(float val) { border_opacity_ = val; }
   auto getBorderOpacity() const -> float { return border_opacity_; }
 
+  /// Extra inset for the page-left/page-right buttons from our left
+  /// and right edges. For scrolls extended across screen margins,
+  /// this keeps the buttons anchored to the virtual rect instead of
+  /// drifting into the margins with the widget edge.
+  void set_button_inset_left(float val) { button_inset_left_ = val; }
+  void set_button_inset_right(float val) { button_inset_right_ = val; }
+
  protected:
   void UpdateLayout() override;
 
@@ -53,6 +60,9 @@ class HScrollWidget : public ContainerWidget {
   auto ShouldShowPageLeftButton_() -> bool;
   auto ShouldShowPageRightButton_() -> bool;
   void UpdatePageLeftRightButtons_(seconds_t display_time_elapsed);
+  /// Left edge x of the page-left/page-right buttons (insets applied).
+  auto PageLeftButtonX_() const -> float;
+  auto PageRightButtonX_() const -> float;
 
   Object::Ref<base::AppTimer> touch_delay_timer_;
   seconds_t last_scroll_bar_show_time_{};
@@ -98,6 +108,8 @@ class HScrollWidget : public ContainerWidget {
   float inertia_scroll_rate_{};
   float page_left_button_presence_{};
   float page_right_button_presence_{};
+  float button_inset_left_{};
+  float button_inset_right_{};
   float scroll_h_accum_{};
   millisecs_t inertia_scroll_update_time_millisecs_{};
   int touch_held_click_count_{};

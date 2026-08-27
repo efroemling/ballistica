@@ -17,7 +17,11 @@ from efro.error import CommunicationError
 import bacommon.clouddialog as cdlg
 import bacommon.clouddialog.basic as bcdlg
 import bacommon.classic
-from bauiv1lib.utils import scroll_fade_bottom, scroll_fade_top
+from bauiv1lib.utils import (
+    get_screen_margins,
+    scroll_fade_bottom,
+    scroll_fade_top,
+)
 import bauiv1 as bui
 from bauiv1 import _commonassets, classicassets
 from bauiv1 import builtinassets
@@ -341,7 +345,13 @@ class InboxWindow(bui.MainWindow):
 
         self._entry_displays: list[_EntryDisplay] = []
 
-        self._width = 900 if uiscale is bui.UIScale.SMALL else 500
+        # Small-ui width is sized so our backing covers the widest
+        # possible visible area (21:9 aspect -> 1680 virtual units,
+        # plus max screen margins -> ~1840; 1000 * 1.9 scale = 1900),
+        # and so the scroll's window-width clamp never stops it short
+        # of the screen edges. Contents are all centered, so extra
+        # backing width changes nothing visually on narrower screens.
+        self._width = 1000 if uiscale is bui.UIScale.SMALL else 500
         self._height = (
             600
             if uiscale is bui.UIScale.SMALL
@@ -374,6 +384,23 @@ class InboxWindow(bui.MainWindow):
         if uiscale is bui.UIScale.SMALL:
             scroll_height += 36
             scroll_bottom -= 4
+
+        # In small ui (where we cover the screen), extend our scroll
+        # area out to cover any margins between the virtual rect and
+        # the visible screen edges (cutout insets and whatnot),
+        # insetting content vertically to match so it stays put.
+        # Horizontally our fixed-width message column just stays
+        # centered in the (possibly widened) scroll.
+        (
+            self._screen_margin_left,
+            self._screen_margin_right,
+            self._screen_margin_bottom,
+            self._screen_margin_top,
+        ) = (
+            get_screen_margins(scale)
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0, 0.0)
+        )
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -438,8 +465,20 @@ class InboxWindow(bui.MainWindow):
         self._scrollwidget = bui.scrollwidget(
             parent=self._root_widget,
             id=f'{self.main_window_id_prefix}|scroll',
-            size=(scroll_width, scroll_height),
-            position=(self._width * 0.5 - scroll_width * 0.5, scroll_bottom),
+            size=(
+                scroll_width
+                + self._screen_margin_left
+                + self._screen_margin_right,
+                scroll_height
+                + self._screen_margin_bottom
+                + self._screen_margin_top,
+            ),
+            position=(
+                self._width * 0.5
+                - scroll_width * 0.5
+                - self._screen_margin_left,
+                scroll_bottom - self._screen_margin_bottom,
+            ),
             capture_arrows=True,
             simple_culling_v=200,
             claims_left_right=True,
@@ -458,18 +497,22 @@ class InboxWindow(bui.MainWindow):
             )
 
         # When we're doing fullscreen scrolling, fade content around
-        # toolbars.
+        # toolbars. Note that we intentionally use the original
+        # un-margin-extended scroll geometry here; the fades were
+        # placed to coincide with toolbar elements, which don't move
+        # when we extend out into screen margins.
         if uiscale is bui.UIScale.SMALL:
+            fade_left = self._width * 0.5 - scroll_width * 0.5
             scroll_fade_top(
                 self._root_widget,
-                self._width * 0.5 - scroll_width * 0.5,
+                fade_left,
                 scroll_bottom,
                 scroll_width,
                 scroll_height,
             )
             scroll_fade_bottom(
                 self._root_widget,
-                self._width * 0.5 - scroll_width * 0.5,
+                fade_left,
                 scroll_bottom,
                 scroll_width,
                 scroll_height,
@@ -1028,6 +1071,14 @@ class InboxWindow(bui.MainWindow):
 
         sub_height += margin_bottom
 
+        # Grow to cover any screen margins; the screen-margin-top shift
+        # on our start position below insets content to match, leaving
+        # screen-margin-bottom of extra padding at the bottom. (This
+        # also keeps content pinned in the vertically-centered
+        # short-content case; the extra height offsets the view's own
+        # center shift.)
+        sub_height += self._screen_margin_bottom + self._screen_margin_top
+
         subcontainer = bui.containerwidget(
             id=f'{self.main_window_id_prefix}|subc',
             parent=self._scrollwidget,
@@ -1043,7 +1094,7 @@ class InboxWindow(bui.MainWindow):
         assert bui.app.classic is not None
 
         buttonrows: list[list[bui.Widget]] = []
-        y = sub_height - margin_top
+        y = sub_height - self._screen_margin_top - margin_top
 
         # For fullscreen scrollable, account for toolbar.
         uiscale = bui.app.ui_v1.uiscale

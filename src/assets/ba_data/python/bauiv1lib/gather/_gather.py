@@ -8,6 +8,7 @@ from enum import Enum
 from typing import override, TYPE_CHECKING
 
 from bauiv1lib.tabs import TabRow
+from bauiv1lib.utils import get_screen_margins
 import bauiv1 as bui
 from bauiv1 import classicassets
 from bauiv1 import builtinassets
@@ -121,6 +122,18 @@ class GatherWindow(bui.MainWindow):
         self._scroll_height = target_height - 65
         self._scroll_bottom = yoffs - 93 - self._scroll_height
         self._scroll_left = (self._width - self._scroll_width) * 0.5
+
+        # In small ui (where we cover the screen), our backing imagery
+        # and region-spanning scrolls extend out to cover any margins
+        # between the virtual rect and the visible screen edges on the
+        # left/right/bottom (the top edge carries the tab row and stays
+        # put). Tabs consult these to extend their own region-spanning
+        # bits, insetting content to match so it stays put.
+        self.margin_left, self.margin_right, self.margin_bottom = (
+            get_screen_margins(scale)[:3]
+            if uiscale is bui.UIScale.SMALL
+            else (0.0, 0.0, 0.0)
+        )
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -238,12 +251,17 @@ class GatherWindow(bui.MainWindow):
             )
 
         # Not actually using a scroll widget anymore; just an image.
+        # It extends left/right/bottom across any screen margins; the
+        # top edge stays put since the tab row hangs off it.
         bui.imagewidget(
             parent=self._root_widget,
-            size=(self._scroll_width, self._scroll_height),
+            size=(
+                self._scroll_width + self.margin_left + self.margin_right,
+                self._scroll_height + self.margin_bottom,
+            ),
             position=(
-                self._width * 0.5 - self._scroll_width * 0.5,
-                self._scroll_bottom,
+                self._width * 0.5 - self._scroll_width * 0.5 - self.margin_left,
+                self._scroll_bottom - self.margin_bottom,
             ),
             texture=builtinassets.textures.scroll_widget.get(),
             mesh_transparent=builtinassets.meshes.soft_edge_outside.get(),

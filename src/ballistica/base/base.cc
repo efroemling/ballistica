@@ -3,6 +3,8 @@
 #include "ballistica/base/base.h"
 
 #include <cstdio>
+#include <functional>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -935,6 +937,17 @@ auto BaseFeatureSet::ClipboardGetText() -> std::string {
                     PyExcType::kRuntime);
   }
   return app_adapter->DoClipboardGetText();
+}
+
+void BaseFeatureSet::ClipboardGetTextAsync(
+    std::function<void(std::optional<std::string>)> call) {
+  BA_PRECONDITION(InLogicThread());
+
+  if (!ClipboardIsSupported()) {
+    logic->event_loop()->PushCall([call = std::move(call)] { call({}); });
+    return;
+  }
+  app_adapter->DoClipboardGetTextAsync(std::move(call));
 }
 
 void BaseFeatureSet::SetAppActive(bool active) {
