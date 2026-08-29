@@ -13,8 +13,8 @@ from baclassic._chest import (
 )
 import babase
 import bascenev1
-from bascenev1 import classicassets
-from bascenev1 import builtinassets
+from bascenev1 import _classicassets
+from bascenev1 import _builtinassets
 import bauiv1
 
 if TYPE_CHECKING:
@@ -72,8 +72,8 @@ ACH_LEVEL_NAMES = {
 
 
 def _tex(name: str) -> str:
-    """Qualified classicassets ref for an achievement icon name."""
-    return f'{classicassets.__asset_package__}:textures/{name}'
+    """Qualified _classicassets ref for an achievement icon name."""
+    return f'{_classicassets.__asset_package__}:textures/{name}'
 
 
 class AchievementSubsystem:
@@ -1000,7 +1000,7 @@ class Achievement:
 
             if hmo:
                 txtactor = Text(
-                    classicassets.strings.coop.difficulty_hard_only,
+                    _classicassets.strings.coop.difficulty_hard_only,
                     host_only=True,
                     maxwidth=txt2_max_w * 0.7,
                     position=(x + 60, y + 5),
@@ -1109,10 +1109,10 @@ class Achievement:
             if complete:
                 objs.append(
                     Image(
-                        classicassets.textures.achievement_outline.get(),
+                        _classicassets.textures.achievement_outline.get(),
                         host_only=True,
                         mesh_transparent=(
-                            classicassets.meshes
+                            _classicassets.meshes
                         ).achievement_outline.get(),
                         color=(2, 1.4, 0.4, 1),
                         vr_depth=8,
@@ -1196,7 +1196,7 @@ class Achievement:
                     # when that's the case.
                     if hmo:
                         txtactor = Text(
-                            classicassets.strings.coop.difficulty_hard_only,
+                            _classicassets.strings.coop.difficulty_hard_only,
                             host_only=True,
                             maxwidth=300 * 0.7,
                             position=(x + 60, y + 5),
@@ -1309,10 +1309,11 @@ class Achievement:
             return
 
         if sound:
-            classicassets.audio.achievement.get().play(host_only=True)
+            _classicassets.audio.achievement.get().play(host_only=True)
         else:
             bascenev1.timer(
-                0.5, lambda: builtinassets.audio.ding.get().play(host_only=True)
+                0.5,
+                lambda: _builtinassets.audio.ding.get().play(host_only=True),
             )
 
         in_time = 0.300
@@ -1340,7 +1341,7 @@ class Achievement:
         y_offs = 110 * self._completion_banner_slot
         objs: list[bascenev1.Actor] = []
         obj = Image(
-            builtinassets.textures.shadow.get(),
+            _builtinassets.textures.shadow.get(),
             position=(-30, 30 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,
@@ -1355,7 +1356,7 @@ class Achievement:
         assert obj.node
         obj.node.host_only = True
         obj = Image(
-            builtinassets.textures.light.get(),
+            _builtinassets.textures.light.get(),
             position=(-180, 60 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,
@@ -1444,8 +1445,8 @@ class Achievement:
         combine.connectattr('output', obj.node, 'color')
 
         obj = Image(
-            classicassets.textures.achievement_outline.get(),
-            mesh_transparent=classicassets.meshes.achievement_outline.get(),
+            _classicassets.textures.achievement_outline.get(),
+            mesh_transparent=_classicassets.meshes.achievement_outline.get(),
             position=(-180, 60 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,
@@ -1491,7 +1492,7 @@ class Achievement:
         objs.append(obj)
 
         objt = Text(
-            classicassets.strings.coop.achievement_label,
+            _classicassets.strings.coop.achievement_label,
             position=(-120, 91 + y_offs),
             front=True,
             v_attach=Text.VAttach.BOTTOM,

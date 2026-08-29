@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, cast
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Callable
@@ -34,7 +34,7 @@ class PasswordPromptWindow:
         self._result_sent = False
 
         if description is None:
-            description = classicassets.strings.gather.party_requires_password
+            description = _classicassets.strings.gather.party_requires_password
 
         width = 420.0
         height = 200.0

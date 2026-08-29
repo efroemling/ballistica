@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, overload, override
 
 import bascenev1 as bs
-from bascenev1 import builtinassets, classicassets
+from bascenev1 import _builtinassets, _classicassets
 
 from bascenev1lib.actor.spaz import Spaz, PickupMessage
 
@@ -264,12 +264,12 @@ class PlayerSpaz(Spaz):
                     if now > bs.app.classic.last_spaz_turbo_warn_time + 30.0:
                         bs.app.classic.last_spaz_turbo_warn_time = now
                         bs.broadcastmessage(
-                            classicassets.strings.game.turbo_warning(
+                            _classicassets.strings.game.turbo_warning(
                                 name=self.node.name
                             ),
                             color=(1, 0.5, 0),
                         )
-                        builtinassets.audio.error.get().play()
+                        _builtinassets.audio.error.get().play()
         else:
             self._turbo_filter_times = {}
             self._turbo_filter_time_bucket = t_bucket

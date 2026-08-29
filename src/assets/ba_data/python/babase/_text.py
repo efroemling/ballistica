@@ -94,9 +94,9 @@ def timestring(
         # Safe up-call: babase is fully imported by the time this runs;
         # the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from babase import builtinassets
+        from babase import _builtinassets
 
-        tstrs = builtinassets.strings.time
+        tstrs = _builtinassets.strings.time
         accessors = {
             'h': tstrs.suffix_hours,
             'm': tstrs.suffix_minutes,
@@ -108,7 +108,7 @@ def timestring(
         # join template (at most three deep for h/m/s).
         out = vals[0]
         for val in vals[1:]:
-            out = builtinassets.strings.ui.spaced_pair(first=out, second=val)
+            out = _builtinassets.strings.ui.spaced_pair(first=out, second=val)
         return out
 
     from babase._language import Lstr

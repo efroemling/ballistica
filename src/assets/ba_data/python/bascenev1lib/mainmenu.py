@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING, override
 
 from bacommon.locale import LocaleResolved
 import bascenev1 as bs
-from bascenev1 import classicassets
-from bascenev1 import builtinassets
+from bascenev1 import _classicassets
+from bascenev1 import _builtinassets
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -22,8 +22,8 @@ if TYPE_CHECKING:
 
 
 def _tex(name: str) -> str:
-    """Qualified classicassets ref for a logo texture name."""
-    return f'{classicassets.__asset_package__}:textures/{name}'
+    """Qualified _classicassets ref for a logo texture name."""
+    return f'{_classicassets.__asset_package__}:textures/{name}'
 
 
 class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
@@ -71,7 +71,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         # Throw up some text that only clients can see so they know that
         # the host is navigating menus while they're just staring at an
         # empty-ish screen.
-        tval = classicassets.strings.main_menu.host_navigating_menus(
+        tval = _classicassets.strings.main_menu.host_navigating_menus(
             host=plus.get_v1_account_display_string()
         )
         self._host_is_navigating_text = bs.NodeActor(
@@ -94,7 +94,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         self.beta_info = self.beta_info_2 = None
         badge_text: bs.LangStr | str | None = None
         if env.variant is type(env.variant).TEST_BUILD:
-            badge_text = classicassets.strings.main_menu.test_build
+            badge_text = _classicassets.strings.main_menu.test_build
         if badge_text is not None:
             pos = (230, 35)
             self.beta_info = bs.NodeActor(
@@ -117,8 +117,8 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 assert self.beta_info.node
                 bs.animate(self.beta_info.node, 'opacity', {1.3: 0, 1.8: 1.0})
 
-        trees_mesh = classicassets.meshes.trees.get()
-        trees_texture = classicassets.textures.trees_color.get()
+        trees_mesh = _classicassets.meshes.trees.get()
+        trees_texture = _classicassets.textures.trees_color.get()
 
         gnode = self.globalsnode
         gnode.camera_mode = 'rotate'
@@ -179,12 +179,12 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
                 self._logo_node.mesh_opaque = (
                     None
                     if custom_texture is not None
-                    else classicassets.meshes.logo.get()
+                    else _classicassets.meshes.logo.get()
                 )
                 self._logo_node.mesh_transparent = (
                     None
                     if custom_texture is not None
-                    else classicassets.meshes.logo_transparent.get()
+                    else _classicassets.meshes.logo_transparent.get()
                 )
 
         # If language has changed, recreate our logo text/graphics.
@@ -522,12 +522,12 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         mopaque = (
             None
             if custom_texture is not None
-            else classicassets.meshes.logo.get()
+            else _classicassets.meshes.logo.get()
         )
         mtrans = (
             None
             if custom_texture is not None
-            else classicassets.meshes.logo_transparent.get()
+            else _classicassets.meshes.logo_transparent.get()
         )
         logo_attrs = {
             'position': (x, y),
@@ -714,7 +714,7 @@ class NewsDisplay:
                 if val == '__ACH__':
                     vrmode = app.env.vr
                     Text(
-                        classicassets.strings.main_menu.next_achievements,
+                        _classicassets.strings.main_menu.next_achievements,
                         color=((1, 1, 1, 1) if vrmode else (0.95, 0.9, 1, 0.4)),
                         host_only=True,
                         maxwidth=200,
@@ -833,12 +833,12 @@ def _preload1() -> None:
     ]:
         bs.getmesh(mname)
     # Asset-package textures warm up through their wrappers.
-    _ = builtinassets.textures.character_icon_mask.get()
-    _ = classicassets.textures.player_lineup.get()
-    _ = classicassets.textures.lock.get()
-    _ = classicassets.textures.icon_runaround.get()
-    _ = classicassets.textures.icon_onslaught.get()
-    _ = classicassets.textures.bg.get()
+    _ = _builtinassets.textures.character_icon_mask.get()
+    _ = _classicassets.textures.player_lineup.get()
+    _ = _classicassets.textures.lock.get()
+    _ = _classicassets.textures.icon_runaround.get()
+    _ = _classicassets.textures.icon_onslaught.get()
+    _ = _classicassets.textures.bg.get()
     from bascenev1lib.actor.powerupbox import PowerupBoxFactory
 
     PowerupBoxFactory.get()
@@ -851,22 +851,22 @@ def _preload2() -> None:
     #  (even if the actual result is cached).
     for mname in ['powerup', 'powerupSimple']:
         bs.getmesh(mname)
-    _ = classicassets.textures.powerup_bomb.get()
-    _ = classicassets.textures.powerup_speed.get()
-    _ = classicassets.textures.powerup_punch.get()
-    _ = classicassets.textures.powerup_ice_bombs.get()
-    _ = classicassets.textures.powerup_sticky_bombs.get()
-    _ = classicassets.textures.powerup_shield.get()
-    _ = classicassets.textures.powerup_impact_bombs.get()
-    _ = classicassets.textures.powerup_health.get()
-    _ = classicassets.audio.powerup01.get()
-    _ = classicassets.audio.box_drop.get()
-    _ = classicassets.audio.boxing_bell.get()
-    _ = classicassets.audio.score_hit01.get()
-    _ = classicassets.audio.score_hit02.get()
-    _ = classicassets.audio.dripity.get()
-    _ = classicassets.audio.spawn.get()
-    _ = classicassets.audio.gong.get()
+    _ = _classicassets.textures.powerup_bomb.get()
+    _ = _classicassets.textures.powerup_speed.get()
+    _ = _classicassets.textures.powerup_punch.get()
+    _ = _classicassets.textures.powerup_ice_bombs.get()
+    _ = _classicassets.textures.powerup_sticky_bombs.get()
+    _ = _classicassets.textures.powerup_shield.get()
+    _ = _classicassets.textures.powerup_impact_bombs.get()
+    _ = _classicassets.textures.powerup_health.get()
+    _ = _classicassets.audio.powerup01.get()
+    _ = _classicassets.audio.box_drop.get()
+    _ = _classicassets.audio.boxing_bell.get()
+    _ = _classicassets.audio.score_hit01.get()
+    _ = _classicassets.audio.score_hit02.get()
+    _ = _classicassets.audio.dripity.get()
+    _ = _classicassets.audio.spawn.get()
+    _ = _classicassets.audio.gong.get()
     from bascenev1lib.actor.bomb import BombFactory
 
     BombFactory.get()
@@ -878,30 +878,30 @@ def _preload3() -> None:
 
     for mname in ['bomb', 'bombSticky', 'impactBomb']:
         bs.getmesh(mname)
-    _ = classicassets.textures.bomb_color.get()
-    _ = classicassets.textures.bomb_color_ice.get()
-    _ = classicassets.textures.bomb_sticky_color.get()
-    _ = classicassets.textures.impact_bomb_color.get()
-    _ = classicassets.textures.impact_bomb_color_lit.get()
-    _ = classicassets.audio.freeze.get()
-    _ = classicassets.audio.fuse01.get()
-    _ = classicassets.audio.activate_beep.get()
-    _ = classicassets.audio.warn_beep.get()
+    _ = _classicassets.textures.bomb_color.get()
+    _ = _classicassets.textures.bomb_color_ice.get()
+    _ = _classicassets.textures.bomb_sticky_color.get()
+    _ = _classicassets.textures.impact_bomb_color.get()
+    _ = _classicassets.textures.impact_bomb_color_lit.get()
+    _ = _classicassets.audio.freeze.get()
+    _ = _classicassets.audio.fuse01.get()
+    _ = _classicassets.audio.activate_beep.get()
+    _ = _classicassets.audio.warn_beep.get()
     SpazFactory.get()
     bui.apptimer(0.2, _preload4)
 
 
 def _preload4() -> None:
-    _ = classicassets.textures.bar.get()
-    _ = classicassets.textures.null.get()
-    _ = classicassets.textures.flag_color.get()
-    _ = classicassets.textures.achievement_outline.get()
+    _ = _classicassets.textures.bar.get()
+    _ = _classicassets.textures.null.get()
+    _ = _classicassets.textures.flag_color.get()
+    _ = _classicassets.textures.achievement_outline.get()
     for mname in ['frameInset', 'meterTransparent', 'achievementOutline']:
         bs.getmesh(mname)
-    _ = classicassets.audio.metal_hit.get()
-    _ = classicassets.audio.metal_skid.get()
-    _ = classicassets.audio.ref_whistle.get()
-    _ = classicassets.audio.achievement.get()
+    _ = _classicassets.audio.metal_hit.get()
+    _ = _classicassets.audio.metal_skid.get()
+    _ = _classicassets.audio.ref_whistle.get()
+    _ = _classicassets.audio.achievement.get()
     from bascenev1lib.actor.flag import FlagFactory
 
     FlagFactory.get()

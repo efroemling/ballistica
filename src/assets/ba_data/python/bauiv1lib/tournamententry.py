@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, override
 
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
-from bauiv1 import builtinassets
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import _commonassets, _classicassets
 
 from bauiv1lib.popup import PopupWindow
 
@@ -145,7 +145,7 @@ class TournamentEntryWindow(PopupWindow):
             h_align='center',
             v_align='center',
             scale=0.6,
-            text=classicassets.strings.tournament_entry.title,
+            text=_classicassets.strings.tournament_entry.title,
             maxwidth=180,
             color=bui.app.ui_v1.title_color,
         )
@@ -167,7 +167,7 @@ class TournamentEntryWindow(PopupWindow):
             draw_controller=btn,
             size=(80, 80),
             position=self._ticket_img_pos,
-            texture=classicassets.textures.tickets.get(),
+            texture=_classicassets.textures.tickets.get(),
         )
         self._ticket_cost_text_position = (87 + x_offs, 88 + off_p)
         self._ticket_cost_text_position_free = (87 + x_offs, 120 + off_p)
@@ -212,7 +212,7 @@ class TournamentEntryWindow(PopupWindow):
                 draw_controller=btn,
                 size=(80, 80),
                 position=(210, 94 + off_p),
-                texture=classicassets.textures.tv.get(),
+                texture=_classicassets.textures.tv.get(),
             )
 
             self._ad_text_position = (251, 88 + off_p)
@@ -234,7 +234,7 @@ class TournamentEntryWindow(PopupWindow):
                 scale=0.6,
                 # Note to self: AdMob requires rewarded ad usage
                 # specifically says 'Ad' in it.
-                text=classicassets.strings.tournament_entry.watch_an_ad,
+                text=_classicassets.strings.tournament_entry.watch_an_ad,
                 maxwidth=95,
                 color=(0, 1, 0),
             )
@@ -280,7 +280,7 @@ class TournamentEntryWindow(PopupWindow):
                 position=btn_pos,
                 autoselect=True,
                 size=btn_size,
-                label=classicassets.strings.ui.practice,
+                label=_classicassets.strings.ui.practice,
                 on_activate_call=self._on_practice_press,
             )
 
@@ -315,7 +315,7 @@ class TournamentEntryWindow(PopupWindow):
             size=(0, 0),
             h_align='center',
             v_align='center',
-            text=classicassets.strings.coop.time_remaining,
+            text=_classicassets.strings.coop.time_remaining,
             scale=0.45,
             flatness=1.0,
             maxwidth=100,
@@ -471,7 +471,7 @@ class TournamentEntryWindow(PopupWindow):
         bui.textwidget(
             edit=self._ticket_cost_text,
             text=(
-                classicassets.strings.ui.play
+                _classicassets.strings.ui.play
                 # if self._purchase_price == 0
                 # else bui.Lstr(
                 #     resource='getTicketsWindow.ticketsText',
@@ -608,11 +608,11 @@ class TournamentEntryWindow(PopupWindow):
             try:
                 if not practice:
                     bui.apptimer(
-                        0.1, classicassets.audio.drum_roll_short.get().play
+                        0.1, _classicassets.audio.drum_roll_short.get().play
                     )
-                    # bui.apptimer(0.1, builtinassets.audio.cash_register.play)
+                    # bui.apptimer(0.1, _builtinassets.audio.cash_register.play)
                     bui.screenmessage(
-                        classicassets.strings.tournament_entry.entering,
+                        _classicassets.strings.tournament_entry.entering,
                         color=(0, 1, 0),
                     )
                 bui.apptimer(0 if practice else 0.3, self._transition_out)
@@ -635,11 +635,11 @@ class TournamentEntryWindow(PopupWindow):
         if not launched:
             if not practice:
                 bui.apptimer(
-                    0.1, classicassets.audio.drum_roll_short.get().play
+                    0.1, _classicassets.audio.drum_roll_short.get().play
                 )
-                # bui.apptimer(0.1, builtinassets.audio.cash_register.play)
+                # bui.apptimer(0.1, _builtinassets.audio.cash_register.play)
                 bui.screenmessage(
-                    classicassets.strings.tournament_entry.entering,
+                    _classicassets.strings.tournament_entry.entering,
                     color=(0, 1, 0),
                 )
             bui.apptimer(
@@ -673,27 +673,27 @@ class TournamentEntryWindow(PopupWindow):
 
         if not self._have_valid_data:
             bui.screenmessage(
-                classicassets.strings.coop.tournament_checking_state,
+                _classicassets.strings.coop.tournament_checking_state,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # If we don't have a price.
         if self._purchase_price is None:
             bui.screenmessage(
-                classicassets.strings.coop.tournament_checking_state,
+                _classicassets.strings.coop.tournament_checking_state,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # Deny if it looks like the tourney has ended.
         if self._seconds_remaining == 0:
             bui.screenmessage(
-                classicassets.strings.coop.tournament_ended, color=(1, 0, 0)
+                _classicassets.strings.coop.tournament_ended, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # Deny if we don't have enough tickets.
@@ -705,9 +705,9 @@ class TournamentEntryWindow(PopupWindow):
             ticket_count = None
         ticket_cost = self._purchase_price
         if ticket_count is not None and ticket_count < ticket_cost:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             bui.screenmessage(
-                classicassets.strings.profile.not_enough_tickets,
+                _classicassets.strings.profile.not_enough_tickets,
                 color=(1, 0, 0),
             )
             # gettickets.show_get_tickets_prompt()
@@ -739,18 +739,18 @@ class TournamentEntryWindow(PopupWindow):
 
         if not self._have_valid_data:
             bui.screenmessage(
-                classicassets.strings.coop.tournament_checking_state,
+                _classicassets.strings.coop.tournament_checking_state,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # Deny if it looks like the tourney has ended.
         if self._seconds_remaining == 0:
             bui.screenmessage(
-                classicassets.strings.coop.tournament_ended, color=(1, 0, 0)
+                _classicassets.strings.coop.tournament_ended, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         cur_time = bui.apptime()
@@ -773,9 +773,9 @@ class TournamentEntryWindow(PopupWindow):
         # Deny if it looks like the tourney has ended.
         if self._seconds_remaining == 0:
             bui.screenmessage(
-                classicassets.strings.coop.tournament_ended, color=(1, 0, 0)
+                _classicassets.strings.coop.tournament_ended, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         self._entering = True
@@ -805,7 +805,7 @@ class TournamentEntryWindow(PopupWindow):
             bui.screenmessage(
                 _commonassets.strings.values.error, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         self._entering = True
@@ -835,7 +835,7 @@ class TournamentEntryWindow(PopupWindow):
                 or self._entering
             )
         ):
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
         self._transition_out()
 
@@ -851,5 +851,5 @@ class TournamentEntryWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
         self._on_cancel()

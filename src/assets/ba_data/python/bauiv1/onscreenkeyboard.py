@@ -132,7 +132,7 @@ class OnScreenKeyboardWindow(Window):
         # Safe up-call: bauiv1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bauiv1 import _commonassets, builtinassets, classicassets
+        from bauiv1 import _commonassets, _builtinassets, _classicassets
 
         self._keyboard = self._get_keyboard()
         # We want to get just chars without column data, etc.
@@ -149,7 +149,7 @@ class OnScreenKeyboardWindow(Window):
         key_color = self._key_color
         key_color_dark = self._key_color_dark
 
-        self._click_sound = builtinassets.audio.click01.get()
+        self._click_sound = _builtinassets.audio.click01.get()
 
         # kill prev char keys
         for key in self._char_keys:
@@ -251,7 +251,7 @@ class OnScreenKeyboardWindow(Window):
                         autoselect=True,
                         textcolor=key_textcolor,
                         color=key_color_dark,
-                        label=classicassets.strings.keyboard.space_key,
+                        label=_classicassets.strings.keyboard.space_key,
                         on_activate_call=babase.CallStrict(
                             self._type_char, ' '
                         ),
@@ -273,7 +273,7 @@ class OnScreenKeyboardWindow(Window):
                             position=(210, v - 70),
                             size=(key_width * 6.1, key_height + 15),
                             text=(
-                                classicassets.strings.keyboard
+                                _classicassets.strings.keyboard
                             ).change_instructions,
                             scale=0.75,
                         )
@@ -396,7 +396,7 @@ class OnScreenKeyboardWindow(Window):
         # Safe up-call: bauiv1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bauiv1 import _commonassets, builtinassets, classicassets
+        from bauiv1 import _commonassets, _builtinassets, _classicassets
 
         assert babase.app.meta.scanresults is not None
         kbexports = babase.app.meta.scanresults.exports_by_name(
@@ -406,14 +406,14 @@ class OnScreenKeyboardWindow(Window):
 
         self._load_keyboard()
         if len(kbexports) < 2:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             babase.screenmessage(
-                classicassets.strings.keyboard.no_others_available,
+                _classicassets.strings.keyboard.no_others_available,
                 color=(1, 0, 0),
             )
         else:
             babase.screenmessage(
-                classicassets.strings.keyboard.switched(
+                _classicassets.strings.keyboard.switched(
                     name=self._keyboard.name
                 ),
                 color=(0, 1, 0),
@@ -466,10 +466,10 @@ class OnScreenKeyboardWindow(Window):
         # Safe up-call: bauiv1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bauiv1 import builtinassets
+        from bauiv1 import _builtinassets
 
         self._adapter.cancel()
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
         _bauiv1.containerwidget(edit=self._root_widget, transition='out_scale')
 
     def _done(self) -> None:

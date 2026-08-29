@@ -5,7 +5,7 @@
 from typing import override
 
 import bascenev1 as bs
-from bascenev1 import _commonassets, classicassets
+from bascenev1 import _commonassets, _classicassets
 
 from bascenev1lib.actor.text import Text
 from bascenev1lib.actor.image import Image
@@ -17,7 +17,7 @@ def _score_label_display(label: str) -> str | bs.LangStr:
     Games declare their own score label, so anything outside the
     built-in set (a mod's custom label) is shown untranslated.
     """
-    strs = classicassets.strings
+    strs = _classicassets.strings
     return {
         'Score': strs.game.score,
         'Flags': strs.score_types.flags,
@@ -33,8 +33,8 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
 
     def __init__(self, settings: dict):
         super().__init__(settings=settings)
-        self._score_display_sound = classicassets.audio.score_hit01.get()
-        self._score_display_sound_small = classicassets.audio.score_hit02.get()
+        self._score_display_sound = _classicassets.audio.score_hit01.get()
+        self._score_display_sound_small = _classicassets.audio.score_hit02.get()
 
         self._show_up_next: bool = True
 
@@ -44,7 +44,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
         session = self.session
         if self._show_up_next and isinstance(session, bs.MultiTeamSession):
             txt = _commonassets.strings.compose.gapped_pair(
-                first=classicassets.strings.multi_team.up_next(
+                first=_classicassets.strings.multi_team.up_next(
                     count=str(session.get_game_number() + 1)
                 ),
                 second=session.get_next_game_description(langstr=True),
@@ -167,7 +167,7 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
 
         session = self.session
         assert isinstance(session, bs.MultiTeamSession)
-        tval = classicassets.strings.multi_team.game_leaders(
+        tval = _classicassets.strings.multi_team.game_leaders(
             count=session.get_game_number()
         )
         _txt(
@@ -181,11 +181,11 @@ class MultiTeamScoreScreenActivity(bs.ScoreScreenActivity):
         _txt(
             -15,
             4,
-            classicassets.strings.multi_team.player,
+            _classicassets.strings.multi_team.player,
             h_align=Text.HAlign.LEFT,
         )
-        _txt(180, 4, classicassets.strings.multi_team.kills)
-        _txt(280, 4, classicassets.strings.multi_team.deaths, maxwidth=100)
+        _txt(180, 4, _classicassets.strings.multi_team.kills)
+        _txt(280, 4, _classicassets.strings.multi_team.deaths, maxwidth=100)
 
         score_label = 'Score' if results is None else results.score_label
         translated = _score_label_display(score_label)

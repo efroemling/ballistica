@@ -32,7 +32,7 @@ class JoinInfo:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import _commonassets, classicassets
+        from bascenev1 import _commonassets, _classicassets
         from bascenev1._nodeactor import NodeActor
 
         self._state = 0
@@ -43,7 +43,7 @@ class JoinInfo:
             babase.SpecialChar.RIGHT_BUTTON
         )
         self._joinmsg: babase.LangStr = (
-            classicassets.strings.lobby.press_any_button_to_join
+            _classicassets.strings.lobby.press_any_button_to_join
         )
         can_switch_teams = len(lobby.sessionteams) > 1
 
@@ -76,15 +76,15 @@ class JoinInfo:
         if variant is vart.DEMO or variant is vart.ARCADE:
             self._messages = [self._joinmsg]
         else:
-            msg1 = classicassets.strings.lobby.press_to_select_profile(
+            msg1 = _classicassets.strings.lobby.press_to_select_profile(
                 buttons=(
                     babase.charstr(babase.SpecialChar.UP_ARROW)
                     + ' '
                     + babase.charstr(babase.SpecialChar.DOWN_ARROW)
                 )
             )
-            msg2 = classicassets.strings.lobby.press_to_override_character(
-                buttons=classicassets.strings.lobby.bomb
+            msg2 = _classicassets.strings.lobby.press_to_override_character(
+                buttons=_classicassets.strings.lobby.bomb
             )
             msg3 = _commonassets.strings.compose.angle_button_suffix(
                 main=msg2, button=self._press_to_bomb
@@ -92,7 +92,7 @@ class JoinInfo:
             self._messages = (
                 (
                     [
-                        classicassets.strings.lobby.press_to_select_team(
+                        _classicassets.strings.lobby.press_to_select_team(
                             buttons=(
                                 babase.charstr(babase.SpecialChar.LEFT_ARROW)
                                 + ' '
@@ -116,7 +116,7 @@ class JoinInfo:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import _commonassets, classicassets
+        from bascenev1 import _commonassets, _classicassets
 
         classic = babase.app.classic
         assert classic is not None
@@ -135,7 +135,7 @@ class JoinInfo:
             a=compose.quoted(text=bomb_key), b=self._press_to_bomb
         )
         self._joinmsg = _commonassets.strings.compose.angle_button_suffix(
-            main=classicassets.strings.lobby.press_punch_to_join,
+            main=_classicassets.strings.lobby.press_punch_to_join,
             button=self._press_to_punch,
         )
 
@@ -177,14 +177,14 @@ class Chooser:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import _commonassets, builtinassets, classicassets
+        from bascenev1 import _commonassets, _builtinassets, _classicassets
 
-        self._deek_sound = builtinassets.audio.deek.get()
-        self._click_sound = builtinassets.audio.click01.get()
-        self._punchsound = builtinassets.audio.punch01.get()
-        self._swish_sound = classicassets.audio.punch_swish.get()
-        self._errorsound = builtinassets.audio.error.get()
-        self._mask_texture = builtinassets.textures.character_icon_mask.get()
+        self._deek_sound = _builtinassets.audio.deek.get()
+        self._click_sound = _builtinassets.audio.click01.get()
+        self._punchsound = _builtinassets.audio.punch01.get()
+        self._swish_sound = _classicassets.audio.punch_swish.get()
+        self._errorsound = _builtinassets.audio.error.get()
+        self._mask_texture = _builtinassets.textures.character_icon_mask.get()
         self._vpos = vpos
         self._lobby = weakref.ref(lobby)
         self._sessionplayer = sessionplayer
@@ -259,7 +259,7 @@ class Chooser:
 
         # Set our initial name to '<choosing player>' in case anyone asks.
         self._sessionplayer.setname(
-            classicassets.strings.lobby.choosing_player.evaluate(), real=False
+            _classicassets.strings.lobby.choosing_player.evaluate(), real=False
         )
 
         # Init these to our rando but they should get switched to the
@@ -562,7 +562,7 @@ class Chooser:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import _commonassets, classicassets
+        from bascenev1 import _commonassets, _classicassets
 
         name_raw = name = self._profilenames[self._profileindex]
         clamp = False
@@ -583,7 +583,7 @@ class Chooser:
         elif name == '_edit':
             # Explicitly flattening this to a str; it's only relevant on
             # the host so that's ok.
-            name = classicassets.strings.lobby.create_edit_player.evaluate()
+            name = _classicassets.strings.lobby.create_edit_player.evaluate()
         else:
             # If we have a regular profile marked as global with an icon,
             # use it (for full only).
@@ -788,7 +788,7 @@ class Chooser:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets
+        from bascenev1 import _builtinassets
 
         if isinstance(msg, ChangeMessage):
             self._handle_repeat_message_attack()
@@ -817,7 +817,7 @@ class Chooser:
                 if len(self._profilenames) == 1:
                     # This should be pretty hard to hit now with
                     # automatic local accounts.
-                    builtinassets.audio.error.get().play()
+                    _builtinassets.audio.error.get().play()
                 else:
                     # Pick the next player profile and assign our name
                     # and character based on that.
@@ -843,7 +843,7 @@ class Chooser:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import _commonassets, classicassets
+        from bascenev1 import _commonassets, _classicassets
 
         assert self._text_node is not None
         text: str | babase.LangStr
@@ -852,7 +852,7 @@ class Chooser:
             # for it so we get appended numbers and stuff.
             text = _commonassets.strings.compose.paren_suffix(
                 main=self._sessionplayer.getname(full=True),
-                note=classicassets.strings.lobby.ready,
+                note=_classicassets.strings.lobby.ready,
             )
         else:
             text = self._getname(full=True)
@@ -934,12 +934,12 @@ class Chooser:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import _commonassets, builtinassets, classicassets
+        from bascenev1 import _commonassets, _builtinassets, _classicassets
 
         assert babase.app.classic is not None
         if self._profilenames[self._profileindex] == '_edit':
-            tex = builtinassets.textures.black.get()
-            tint_tex = builtinassets.textures.black.get()
+            tex = _builtinassets.textures.black.get()
+            tint_tex = _builtinassets.textures.black.get()
             self.icon.color = (1, 1, 1)
             self.icon.texture = tex
             self.icon.tint_texture = tint_tex
@@ -961,8 +961,8 @@ class Chooser:
             tintval = appearance.icon_mask_texture
         except Exception:
             logging.exception('Error updating char icon list')
-            texval = classicassets.textures.neo_spaz_icon
-            tintval = classicassets.textures.neo_spaz_icon_color_mask
+            texval = _classicassets.textures.neo_spaz_icon
+            tintval = _classicassets.textures.neo_spaz_icon_color_mask
 
         tex = spazappearance.scene_texture(texval)
         tint_tex = spazappearance.scene_texture(tintval)

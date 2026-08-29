@@ -10,7 +10,7 @@ from bauiv1lib.utils import (
     scroll_fade_top,
 )
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
 
 class AchievementsWindow(bui.MainWindow):
@@ -184,7 +184,7 @@ class AchievementsWindow(bui.MainWindow):
                 scale=0.6,
                 text=_commonassets.strings.compose.spaced_pair(
                     first=_commonassets.strings.compose.heading_suffix(
-                        main=classicassets.strings.ui.achievements
+                        main=_classicassets.strings.ui.achievements
                     ),
                     second=f'{num_complete}/{len(achievements)}',
                 ),
@@ -202,7 +202,7 @@ class AchievementsWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 scale=0.6,
-                text=classicassets.strings.account.achievement_progress(
+                text=_classicassets.strings.account.achievement_progress(
                     complete=str(num_complete),
                     total=str(len(achievements)),
                 ),
@@ -288,7 +288,7 @@ class AchievementsWindow(bui.MainWindow):
                     ),
                     size=(28, 28),
                     color=(2, 1.4, 0),
-                    texture=classicassets.textures.achievement_outline.get(),
+                    texture=_classicassets.textures.achievement_outline.get(),
                 )
             bui.textwidget(
                 parent=self._subcontainer,
@@ -359,7 +359,7 @@ class AchievementsWindow(bui.MainWindow):
                 flatness=1.0,
                 shadow=0.0,
                 scale=0.6,
-                text=classicassets.strings.coop.power_ranking_points(
+                text=_classicassets.strings.coop.power_ranking_points(
                     number=str(pts)
                 ),
                 size=(0, 0),
@@ -383,7 +383,7 @@ class AchievementsWindow(bui.MainWindow):
             text=_commonassets.strings.compose.spaced_pair(
                 first=_commonassets.strings.values.total,
                 second=(
-                    classicassets.strings.league
+                    _classicassets.strings.league
                 ).power_ranking_points_equals(number=str(total_pts)),
             ),
             size=(0, 0),

@@ -1,5 +1,13 @@
-### 1.8.0 (build 23003, api 9, 2026-08-28)
+### 1.8.0 (build 23004, api 9, 2026-08-28)
 - Fully implemented asset packages (more on this soon)
+- The asset-package wrapper modules bundled with the engine are now all
+  private: `babase.builtinassets`, `bascenev1.builtinassets`, and
+  `bauiv1.builtinassets` are now `_builtinassets`, and
+  `bascenev1.classicassets` / `bauiv1.classicassets` are now
+  `_classicassets` (joining the already-private `_commonassets`). Mods can
+  bundle their own generated wrapper modules for whatever packages they
+  use, so there is no reason for ours to be public API we would then have
+  to keep stable.
 - App-config committing (dirty-tracking, debounced disk writes, and
   suspend/shutdown flushes) now lives fully in `babase` instead of routing
   through the `plus` feature-set; the engine can now persist its config with

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import classicassets
+from bascenev1 import _classicassets
 
 from bascenev1lib.gameutils import SharedObjects
 
@@ -62,8 +62,8 @@ class FlagFactory:
             ),
         )
 
-        self.impact_sound = classicassets.audio.metal_hit.get()
-        self.skid_sound = classicassets.audio.metal_skid.get()
+        self.impact_sound = _classicassets.audio.metal_hit.get()
+        self.skid_sound = _classicassets.audio.metal_skid.get()
         self.flagmaterial.add_actions(
             conditions=(
                 'they_have_material',
@@ -98,7 +98,7 @@ class FlagFactory:
             ),
         )
 
-        self.flag_texture = classicassets.textures.flag_color.get()
+        self.flag_texture = _classicassets.textures.flag_color.get()
 
     @classmethod
     def get(cls) -> FlagFactory:

@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 import bascenev1 as bs
 
-from bascenev1 import classicassets
-from bascenev1 import builtinassets
+from bascenev1 import _classicassets
+from bascenev1 import _builtinassets
 
 from bascenev1lib.actor import spazappearance
 from bascenev1lib.gameutils import SharedObjects
@@ -101,30 +101,30 @@ class SpazFactory:
 
         shared = SharedObjects.get()
         self.impact_sounds_medium = (
-            classicassets.audio.impact_medium.get(),
-            classicassets.audio.impact_medium2.get(),
+            _classicassets.audio.impact_medium.get(),
+            _classicassets.audio.impact_medium2.get(),
         )
         self.impact_sounds_hard = (
-            classicassets.audio.impact_hard.get(),
-            classicassets.audio.impact_hard2.get(),
-            classicassets.audio.impact_hard3.get(),
+            _classicassets.audio.impact_hard.get(),
+            _classicassets.audio.impact_hard2.get(),
+            _classicassets.audio.impact_hard3.get(),
         )
         self.impact_sounds_harder = (
-            classicassets.audio.big_impact.get(),
-            classicassets.audio.big_impact2.get(),
+            _classicassets.audio.big_impact.get(),
+            _classicassets.audio.big_impact2.get(),
         )
-        self.single_player_death_sound = classicassets.audio.player_death.get()
-        self.punch_sound_weak = classicassets.audio.punch_weak01.get()
-        self.punch_sound = builtinassets.audio.punch01.get()
+        self.single_player_death_sound = _classicassets.audio.player_death.get()
+        self.punch_sound_weak = _classicassets.audio.punch_weak01.get()
+        self.punch_sound = _builtinassets.audio.punch01.get()
         self.punch_sound_strong = (
-            classicassets.audio.punch_strong01.get(),
-            classicassets.audio.punch_strong02.get(),
+            _classicassets.audio.punch_strong01.get(),
+            _classicassets.audio.punch_strong02.get(),
         )
-        self.punch_sound_stronger = classicassets.audio.super_punch.get()
-        self.swish_sound = classicassets.audio.punch_swish.get()
-        self.block_sound = classicassets.audio.block.get()
-        self.shatter_sound = classicassets.audio.shatter.get()
-        self.splatter_sound = classicassets.audio.splatter.get()
+        self.punch_sound_stronger = _classicassets.audio.super_punch.get()
+        self.swish_sound = _classicassets.audio.punch_swish.get()
+        self.block_sound = _classicassets.audio.block.get()
+        self.shatter_sound = _classicassets.audio.shatter.get()
+        self.splatter_sound = _classicassets.audio.splatter.get()
         self.spaz_material = bs.Material()
         self.roller_material = bs.Material()
         self.punch_material = bs.Material()
@@ -195,13 +195,13 @@ class SpazFactory:
         )
 
         self.foot_impact_sounds = (
-            classicassets.audio.foot_impact01.get(),
-            classicassets.audio.foot_impact02.get(),
-            classicassets.audio.foot_impact03.get(),
+            _classicassets.audio.foot_impact01.get(),
+            _classicassets.audio.foot_impact02.get(),
+            _classicassets.audio.foot_impact03.get(),
         )
 
-        self.foot_skid_sound = classicassets.audio.skid01.get()
-        self.foot_roll_sound = classicassets.audio.scamper01.get()
+        self.foot_skid_sound = _classicassets.audio.skid01.get()
+        self.foot_roll_sound = _classicassets.audio.scamper01.get()
 
         self.roller_material.add_actions(
             conditions=('they_have_material', footing_material),
@@ -212,7 +212,7 @@ class SpazFactory:
             ),
         )
 
-        self.skid_sound = classicassets.audio.gravel_skid.get()
+        self.skid_sound = _classicassets.audio.gravel_skid.get()
 
         self.spaz_material.add_actions(
             conditions=('they_have_material', footing_material),
@@ -223,9 +223,9 @@ class SpazFactory:
             ),
         )
 
-        self.shield_up_sound = classicassets.audio.shield_up.get()
-        self.shield_down_sound = classicassets.audio.shield_down.get()
-        self.shield_hit_sound = classicassets.audio.shield_hit.get()
+        self.shield_up_sound = _classicassets.audio.shield_up.get()
+        self.shield_down_sound = _classicassets.audio.shield_down.get()
+        self.shield_hit_sound = _classicassets.audio.shield_hit.get()
 
         # We don't want to collide with stuff we're initially overlapping
         # (unless its marked with a special region material).

@@ -47,7 +47,7 @@ class PluginSubsystem(AppSubsystem):
 
         :meta private:
         """
-        from babase import builtinassets
+        from babase import _builtinassets
 
         config_changed = False
         found_new = False
@@ -89,9 +89,9 @@ class PluginSubsystem(AppSubsystem):
         # found new ones.
         if found_new and not auto_enable_new_plugins:
             _babase.screenmessage(
-                builtinassets.strings.plugins.detected, color=(0, 1, 0)
+                _builtinassets.strings.plugins.detected, color=(0, 1, 0)
             )
-            builtinassets.audio.ding.get().play()
+            _builtinassets.audio.ding.get().play()
 
         # Ok, now go through all plugins registered in the app-config
         # that weren't covered by the meta stuff above, either creating
@@ -140,9 +140,9 @@ class PluginSubsystem(AppSubsystem):
         # later reappear. This makes it much smoother to switch between
         # users or workspaces.
         if disappeared_plugs:
-            builtinassets.audio.powerdown01.get().play()
+            _builtinassets.audio.powerdown01.get().play()
             _babase.screenmessage(
-                builtinassets.strings.plugins.removed(
+                _builtinassets.strings.plugins.removed(
                     count=len(disappeared_plugs)
                 ),
                 color=(1, 1, 0),
@@ -268,7 +268,7 @@ class PluginSpec:
 
     def attempt_load_if_enabled(self) -> Plugin | None:
         """Possibly load the plugin and log any errors."""
-        from babase import builtinassets
+        from babase import _builtinassets
         from babase._general import getclass
 
         assert not self.attempted_load
@@ -282,9 +282,9 @@ class PluginSpec:
         try:
             cls = getclass(self.class_path, Plugin, True)
         except Exception as exc:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             _babase.screenmessage(
-                builtinassets.strings.plugins.class_load_error(
+                _builtinassets.strings.plugins.class_load_error(
                     plugin=self.class_path, error=str(exc)
                 ),
                 color=(1, 0, 0),
@@ -299,9 +299,9 @@ class PluginSpec:
         except Exception as exc:
             from babase import _error
 
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             _babase.screenmessage(
-                builtinassets.strings.plugins.init_error(
+                _builtinassets.strings.plugins.init_error(
                     plugin=self.class_path, error=str(exc)
                 ),
                 color=(1, 0, 0),

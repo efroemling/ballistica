@@ -5,15 +5,15 @@
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
-from bauiv1 import builtinassets
+from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
     pass
 
 
-_audstrs = classicassets.strings.settings.audio
+_audstrs = _classicassets.strings.settings.audio
 
 
 class AudioSettingsWindow(bui.MainWindow):
@@ -118,7 +118,7 @@ class AudioSettingsWindow(bui.MainWindow):
         y = height * 0.5 + (100 if show_soundtracks else 70)
         y -= spacing * 1.0
 
-        swish = builtinassets.audio.swish.get()
+        swish = _builtinassets.audio.swish.get()
         self._sound_volume_slider = svs = ConfigSlider(
             parent=self._root_widget,
             idprefix=f'{self.main_window_id_prefix}|soundvolume',
@@ -222,7 +222,7 @@ class AudioSettingsWindow(bui.MainWindow):
         # We require disk access for soundtracks; request it if we don't
         # have it.
         if not bui.have_permission(bui.Permission.STORAGE):
-            builtinassets.audio.ding.get().play()
+            _builtinassets.audio.ding.get().play()
             bui.screenmessage(
                 _commonassets.strings.status.storage_permission_needed,
                 color=(0.5, 1, 0.5),

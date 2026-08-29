@@ -39,7 +39,7 @@ class AdsSubsystem:
         # Safe up-call: the featureset is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from babase import builtinassets
+        from babase import _builtinassets
 
         # Print this message once every 10 minutes at most.
         tval = babase.apptime()
@@ -51,7 +51,7 @@ class AdsSubsystem:
                 babase.apptimer(
                     1.0,
                     lambda: babase.screenmessage(
-                        builtinassets.strings.store.remove_ads_token_offer,
+                        _builtinassets.strings.store.remove_ads_token_offer,
                         color=(1, 1, 0),
                     ),
                 )

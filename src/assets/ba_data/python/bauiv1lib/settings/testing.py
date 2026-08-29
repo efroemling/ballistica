@@ -6,7 +6,7 @@ import copy
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 from bauiv1lib.utils import get_screen_margins, scroll_fade_top
 
 if TYPE_CHECKING:
@@ -178,7 +178,7 @@ class TestingWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
             maxwidth=self._scroll_width * 0.75,
-            text=classicassets.strings.settings.testing.for_testing_note,
+            text=_classicassets.strings.settings.testing.for_testing_note,
         )
 
         self._spacing = 50

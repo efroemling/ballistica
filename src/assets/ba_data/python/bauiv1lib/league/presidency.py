@@ -7,7 +7,7 @@ from typing import override, TYPE_CHECKING
 from bauiv1lib.docui import DocUIController
 
 import bauiv1 as bui
-from bauiv1 import builtinassets
+from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
     from bacommon.docui import DocUIRequest, DocUIResponse
@@ -30,10 +30,10 @@ class LeaguePresidencyUIController(DocUIController):
             bui.screenmessage(
                 f'Invalid local-action "{action.name}".', color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
 
     def _get_tokens(self, action: DocUILocalAction) -> None:
         from bauiv1lib.gettokens import show_get_tokens_window
 
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
         show_get_tokens_window(origin_widget=bui.existing(action.widget))

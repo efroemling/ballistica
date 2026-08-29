@@ -16,8 +16,8 @@ from typing import TYPE_CHECKING
 
 import bacommon.docui.v2 as dui2
 from bacommon.displayitem import DisplayItem, DepictionAssets
-from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import _classicassets
 
 if TYPE_CHECKING:
     import bacommon.legacydisplayitem as lditm
@@ -43,12 +43,12 @@ def depiction_assets() -> DepictionAssets:
         )
 
         _g_assets = DepictionAssets(
-            white=builtinassets.textures.white,
-            coin=classicassets.textures.coin,
-            tickets=classicassets.textures.tickets,
-            tickets_purple=classicassets.textures.tickets_purple,
-            chest_icon=classicassets.textures.chest_icon,
-            chest_icon_tint=classicassets.textures.chest_icon_tint,
+            white=_builtinassets.textures.white,
+            coin=_classicassets.textures.coin,
+            tickets=_classicassets.textures.tickets,
+            tickets_purple=_classicassets.textures.tickets_purple,
+            chest_icon=_classicassets.textures.chest_icon,
+            chest_icon_tint=_classicassets.textures.chest_icon_tint,
             chest_tints={
                 appearance: (info.tint, info.tint2)
                 for appearance, info in CHEST_APPEARANCE_DISPLAY_INFOS.items()

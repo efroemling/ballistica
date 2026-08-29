@@ -486,9 +486,9 @@ def make_progress_reporter(
     """
     # The wrapper import is function-local by convention (modules
     # never import their own top-level package at module scope).
-    from babase import builtinassets
+    from babase import _builtinassets
 
-    strs = builtinassets.strings.assets
+    strs = _builtinassets.strings.assets
 
     last_time = -1.0e9
     last_phase: ResolvePhase | None = None
@@ -1657,7 +1657,7 @@ class AssetSubsystem(AppSubsystem):
 
         # Function-local by convention (modules never import their own
         # top-level package at module scope).
-        from babase import builtinassets
+        from babase import _builtinassets
 
         cfg = _babase.app.config
         was_showing = bool(cfg.get(_FALLBACK_ASSETS_CONFIG_KEY, False))
@@ -1666,7 +1666,7 @@ class AssetSubsystem(AppSubsystem):
             # config file on every boot of a steady state.
             return
 
-        strs = builtinassets.strings.assets
+        strs = _builtinassets.strings.assets
         if now_showing:
             cfg[_FALLBACK_ASSETS_CONFIG_KEY] = True
             _babase.screenmessage(

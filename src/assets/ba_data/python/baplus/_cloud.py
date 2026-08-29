@@ -324,9 +324,9 @@ class CloudSubsystem(babase.AppSubsystem):
 
         self._update_available_notice_pending = False
 
-        from babase import builtinassets
+        from babase import _builtinassets
 
-        notice = builtinassets.strings.ui.update_available
+        notice = _builtinassets.strings.ui.update_available
 
         if not babase.app.env.gui:
             # Colorization keys off stdout being a terminal (Clr does
@@ -341,7 +341,7 @@ class CloudSubsystem(babase.AppSubsystem):
             )
             return
 
-        builtinassets.audio.ding.get().play()
+        _builtinassets.audio.ding.get().play()
 
         babase.screenmessage(notice, color=(0.4, 1.0, 0.4))
 

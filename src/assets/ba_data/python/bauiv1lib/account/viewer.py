@@ -7,8 +7,8 @@ import logging
 
 import bauiv1 as bui
 from bascenev1lib.actor import spazappearance
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
 
 from bauiv1lib.popup import PopupWindow, PopupMenuWindow
 
@@ -24,7 +24,7 @@ def _league_tier_name(name: str) -> bui.LangStr:
     Known tiers map to their authored entries; anything else (a future
     tier from a newer server) shows verbatim.
     """
-    lstrs = classicassets.strings.league
+    lstrs = _classicassets.strings.league
     entry = {
         'Bronze': lstrs.bronze,
         'Silver': lstrs.silver,
@@ -108,7 +108,7 @@ class AccountViewerWindow(PopupWindow):
             h_align='center',
             v_align='center',
             scale=0.6,
-            text=classicassets.strings.account.player_info,
+            text=_classicassets.strings.account.player_info,
             maxwidth=200,
             color=bui.app.ui_v1.title_color,
         )
@@ -196,14 +196,14 @@ class AccountViewerWindow(PopupWindow):
         choices = ['more', 'report']
         choices_display = [
             _commonassets.strings.actions.more,
-            classicassets.strings.account.report_this_player,
+            _classicassets.strings.account.report_this_player,
         ]
         is_admin = False
         if is_admin:
             bui.screenmessage('TEMP FORCING ADMIN ON')
             choices.append('ban')
             choices_display.append(
-                classicassets.strings.account.ban_this_player
+                _classicassets.strings.account.ban_this_player
             )
 
         assert bui.app.classic is not None
@@ -321,7 +321,7 @@ class AccountViewerWindow(PopupWindow):
                                 )
                                 icon_tex = character.icon_texture
                                 tint_tex = character.icon_mask_texture
-                                btex = builtinassets.textures
+                                btex = _builtinassets.textures
                                 mask_texture = btex.character_icon_mask.get()
                                 bui.imagewidget(
                                     parent=self._subcontainer,
@@ -359,9 +359,9 @@ class AccountViewerWindow(PopupWindow):
 
                 v = sub_height - 20
                 if len(data['accountDisplayStrings']) <= 1:
-                    account_title = classicassets.strings.account.title
+                    account_title = _classicassets.strings.account.title
                 else:
-                    account_title = classicassets.strings.account.accounts
+                    account_title = _classicassets.strings.account.accounts
                 bui.textwidget(
                     parent=self._subcontainer,
                     size=(0, 0),
@@ -403,7 +403,7 @@ class AccountViewerWindow(PopupWindow):
                     v_align='center',
                     scale=title_scale,
                     color=bui.app.ui_v1.infotextcolor,
-                    text=classicassets.strings.ui.rank,
+                    text=_classicassets.strings.ui.rank,
                     maxwidth=sub_width * maxwidth_scale,
                 )
                 v -= 14
@@ -415,7 +415,7 @@ class AccountViewerWindow(PopupWindow):
                     # and hand-place a bracketed suffix), so we evaluate
                     # to flat text locally.
                     suffix_at_end = (
-                        classicassets.strings.league.rank_in_league(
+                        _classicassets.strings.league.rank_in_league(
                             rank=str(data['rank'][2]),
                             name=_league_tier_name(data['rank'][0]),
                             suffix=_SUFFIX_MARKER,
@@ -423,7 +423,7 @@ class AccountViewerWindow(PopupWindow):
                         .evaluate()
                         .endswith(_SUFFIX_MARKER)
                     )
-                    rank_str = classicassets.strings.league.rank_in_league(
+                    rank_str = _classicassets.strings.league.rank_in_league(
                         rank=str(data['rank'][2]),
                         name=_league_tier_name(data['rank'][0]),
                         suffix='',
@@ -470,7 +470,7 @@ class AccountViewerWindow(PopupWindow):
                 v -= 14
 
                 suffix_at_end = (
-                    classicassets.strings.league.rank_in_league(
+                    _classicassets.strings.league.rank_in_league(
                         rank='0',
                         name='',
                         suffix=_SUFFIX_MARKER,
@@ -483,10 +483,10 @@ class AccountViewerWindow(PopupWindow):
                 for prev_rank in data['prevRanks']:
                     # Layout code again: measure/place flat text. The
                     # ':    ' glue is locale-invariant.
-                    season_str = classicassets.strings.league.season(
+                    season_str = _classicassets.strings.league.season(
                         number=str(prev_rank[0])
                     ).evaluate()
-                    rank_part = classicassets.strings.league.rank_in_league(
+                    rank_part = _classicassets.strings.league.rank_in_league(
                         rank=str(prev_rank[3]),
                         name=_league_tier_name(prev_rank[1]),
                         suffix='',
@@ -547,7 +547,7 @@ class AccountViewerWindow(PopupWindow):
                     v_align='center',
                     scale=title_scale,
                     color=bui.app.ui_v1.infotextcolor,
-                    text=classicassets.strings.ui.achievements,
+                    text=_classicassets.strings.ui.achievements,
                     maxwidth=sub_width * maxwidth_scale,
                 )
                 v -= 14
@@ -582,7 +582,7 @@ class AccountViewerWindow(PopupWindow):
                     scale=title_scale,
                     color=bui.app.ui_v1.infotextcolor,
                     flatness=1.0,
-                    text=classicassets.strings.account.trophies_this_season,
+                    text=_classicassets.strings.account.trophies_this_season,
                     maxwidth=sub_width * maxwidth_scale,
                 )
                 v -= 19
@@ -609,5 +609,5 @@ class AccountViewerWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
         self._transition_out()

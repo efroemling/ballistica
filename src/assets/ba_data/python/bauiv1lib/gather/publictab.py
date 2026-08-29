@@ -13,14 +13,17 @@ from typing import TYPE_CHECKING, cast, override
 from bacommon.analytics import ClassicAnalyticsEvent
 from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
 import bascenev1 as bs
 
 if TYPE_CHECKING:
     from typing import Callable, Any
 
     from bauiv1lib.gather import GatherWindow
+
+# Module-level alias to keep long accessor chains under the line limit.
+_gs = _classicassets.strings.gather
 
 # Print a bit of info about pings, queries, etc.
 DEBUG_SERVER_COMMUNICATION = False
@@ -159,7 +162,7 @@ class UIRow:
             self._stats_button = bui.buttonwidget(
                 color=(0.3, 0.6, 0.94),
                 textcolor=(1.0, 1.0, 1.0),
-                label=classicassets.strings.ui.stats,
+                label=_classicassets.strings.ui.stats,
                 parent=columnwidget,
                 autoselect=True,
                 on_activate_call=bui.CallStrict(bui.open_url, url),
@@ -462,7 +465,7 @@ class PublicGatherTab(GatherTab):
                 region_height,
                 playsound=True,
             ),
-            text=classicassets.strings.gather.join_public_party,
+            text=_gs.join_public_party,
             glow_type='uniform',
         )
         self._host_text = bui.textwidget(
@@ -484,7 +487,7 @@ class PublicGatherTab(GatherTab):
                 region_height,
                 playsound=True,
             ),
-            text=classicassets.strings.gather.host_public_party,
+            text=_gs.host_public_party,
             glow_type='uniform',
         )
         bui.widget(edit=self._join_text, up_widget=tab_button)
@@ -561,7 +564,7 @@ class PublicGatherTab(GatherTab):
     ) -> None:
         assert self._container
         if playsound:
-            builtinassets.audio.click01.get().play()
+            _builtinassets.audio.click01.get().play()
 
         # Reset our selection (prevents selecting something way down the
         # list if we switched away and came back).
@@ -647,7 +650,7 @@ class PublicGatherTab(GatherTab):
             v_align='center',
         )
         bui.textwidget(
-            text=classicassets.strings.gather.party_size,
+            text=_gs.party_size,
             parent=self._container,
             size=(0, 0),
             position=(
@@ -662,7 +665,7 @@ class PublicGatherTab(GatherTab):
             v_align='center',
         )
         bui.textwidget(
-            text=classicassets.strings.gather.ping,
+            text=_gs.ping,
             parent=self._container,
             size=(0, 0),
             position=(
@@ -749,14 +752,14 @@ class PublicGatherTab(GatherTab):
             flatness=1.0,
             color=(0.5, 0.46, 0.5),
             position=(region_width * 0.5, v + 10),
-            text=classicassets.strings.gather.public_host_router_config,
+            text=_gs.public_host_router_config,
         )
         v -= 20
 
         # Nudge party name and size values to be mostly centered.
         xoffs = region_width * 0.5 - 500
 
-        party_name_text = classicassets.strings.gather.party_name
+        party_name_text = _gs.party_name
         assert bui.app.classic is not None
         bui.textwidget(
             parent=self._container,
@@ -786,7 +789,7 @@ class PublicGatherTab(GatherTab):
         )
 
         v -= 60
-        party_password_text = classicassets.strings.gather.password_optional
+        party_password_text = _gs.password_optional
         bui.textwidget(
             parent=self._container,
             size=(0, 0),
@@ -826,7 +829,7 @@ class PublicGatherTab(GatherTab):
             scale=0.8,
             color=bui.app.ui_v1.infotextcolor,
             position=(210 + xoffs, v - 9),
-            text=classicassets.strings.gather.max_party_size,
+            text=_gs.max_party_size,
         )
         self._host_max_party_size_value = bui.textwidget(
             parent=self._container,
@@ -863,9 +866,9 @@ class PublicGatherTab(GatherTab):
         v -= 45
         v -= 90
         if is_public_enabled:
-            label = classicassets.strings.gather.make_party_private
+            label = _gs.make_party_private
         else:
-            label = classicassets.strings.gather.make_party_public
+            label = _gs.make_party_public
         self._host_toggle_button = bui.buttonwidget(
             parent=self._container,
             id=f'{self._idprefix}|hosttoggle',
@@ -891,7 +894,7 @@ class PublicGatherTab(GatherTab):
         v -= 10
         self._host_status_text = bui.textwidget(
             parent=self._container,
-            text=classicassets.strings.gather.party_status_not_public,
+            text=_gs.party_status_not_public,
             size=(0, 0),
             scale=0.7,
             flatness=1.0,
@@ -904,7 +907,7 @@ class PublicGatherTab(GatherTab):
         v -= 90
         bui.textwidget(
             parent=self._container,
-            text=classicassets.strings.gather.dedicated_server_info,
+            text=_gs.dedicated_server_info,
             size=(0, 0),
             scale=0.7,
             flatness=1.0,
@@ -1024,7 +1027,7 @@ class PublicGatherTab(GatherTab):
             if not signed_in:
                 bui.textwidget(
                     edit=self._join_status_text,
-                    text=classicassets.strings.ui.not_signed_in_status,
+                    text=_classicassets.strings.ui.not_signed_in_status,
                 )
                 bui.spinnerwidget(edit=self._join_status_spinner, visible=False)
             else:
@@ -1083,7 +1086,7 @@ class PublicGatherTab(GatherTab):
         if self._have_valid_server_list and not self._parties_displayed:
             bui.textwidget(
                 edit=self._no_servers_found_text,
-                text=classicassets.strings.gather.no_servers_found,
+                text=_gs.no_servers_found,
             )
             return
 
@@ -1378,13 +1381,13 @@ class PublicGatherTab(GatherTab):
                 bui.textwidget(
                     edit=text,
                     text=(
-                        classicassets.strings.gather
+                        _classicassets.strings.gather
                     ).party_status_no_connection,
                     color=(1, 0, 0),
                 )
             else:
                 if not data.get('accessible', False):
-                    gstrs = classicassets.strings.gather
+                    gstrs = _classicassets.strings.gather
                     compose = _commonassets.strings.compose
                     status = compose.line_pair(
                         first=gstrs.party_status_not_public,
@@ -1408,7 +1411,7 @@ class PublicGatherTab(GatherTab):
                 else:
                     bui.textwidget(
                         edit=text,
-                        text=classicassets.strings.gather.party_status_joinable,
+                        text=_gs.party_status_joinable,
                         color=(0, 1, 0),
                     )
 
@@ -1417,7 +1420,7 @@ class PublicGatherTab(GatherTab):
         bui.textwidget(
             edit=self._host_status_text,
             color=(1, 1, 0),
-            text=classicassets.strings.gather.party_status_checking,
+            text=_gs.party_status_checking,
         )
         bui.app.classic.master_server_v1_get(
             'bsAccessCheck',
@@ -1440,10 +1443,10 @@ class PublicGatherTab(GatherTab):
         name = cast(str, bui.textwidget(query=self._host_name_text))
         if name == '':
             bui.screenmessage(
-                classicassets.strings.gather.invalid_name_error,
+                _gs.invalid_name_error,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
         bs.set_public_party_name(name)
         password = cast(str, bui.textwidget(query=self._host_password_text))
@@ -1452,7 +1455,7 @@ class PublicGatherTab(GatherTab):
         cfg['Public Party Name'] = name
         cfg['Public Party Password'] = password
         cfg.commit()
-        classicassets.audio.shield_up.get().play()
+        _classicassets.audio.shield_up.get().play()
         bs.set_public_party_enabled(True)
 
         # In GUI builds we want to authenticate clients only when
@@ -1462,7 +1465,7 @@ class PublicGatherTab(GatherTab):
         self._do_status_check()
         bui.buttonwidget(
             edit=self._host_toggle_button,
-            label=classicassets.strings.gather.make_party_private,
+            label=_gs.make_party_private,
             on_activate_call=self._on_stop_advertising_press,
         )
 
@@ -1480,17 +1483,17 @@ class PublicGatherTab(GatherTab):
         # In GUI builds we want to authenticate clients only when
         # hosting public parties.
         bs.set_authenticate_clients(False)
-        classicassets.audio.shield_down.get().play()
+        _classicassets.audio.shield_down.get().play()
         text = self._host_status_text
         if text:
             bui.textwidget(
                 edit=text,
-                text=classicassets.strings.gather.party_status_not_public,
+                text=_gs.party_status_not_public,
                 color=(0.6, 0.6, 0.6),
             )
         bui.buttonwidget(
             edit=self._host_toggle_button,
-            label=classicassets.strings.gather.make_party_public,
+            label=_gs.make_party_public,
             on_activate_call=self._on_start_advertizing_press,
         )
 
@@ -1507,7 +1510,7 @@ class PublicGatherTab(GatherTab):
         if party.queue is not None:
             from bauiv1lib.partyqueue import PartyQueueWindow
 
-            builtinassets.audio.swish.get().play()
+            _builtinassets.audio.swish.get().play()
             PartyQueueWindow(party.queue, party.address, party.port)
         else:
             address = party.address

@@ -6,8 +6,8 @@ from typing import override
 
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
-from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import _classicassets
 
 
 class GetBSRemoteWindow(PopupWindow):
@@ -48,7 +48,7 @@ class GetBSRemoteWindow(PopupWindow):
             parent=self.root_widget,
             position=(self._width * 0.5 - 110, self._height * 0.67 - 110),
             size=(220, 220),
-            texture=classicassets.textures.multiplayer_examples.get(),
+            texture=_classicassets.textures.multiplayer_examples.get(),
         )
         bui.textwidget(
             parent=self.root_widget,
@@ -57,9 +57,9 @@ class GetBSRemoteWindow(PopupWindow):
             v_align='center',
             maxwidth=self._width * 0.8,
             position=(self._width * 0.5, 60),
-            text=classicassets.strings.get_remote.info_short(
-                app_name=classicassets.strings.ui.app_name,
-                remote_app_name=classicassets.strings.ui.remote_app_name,
+            text=_classicassets.strings.get_remote.info_short(
+                app_name=_classicassets.strings.ui.app_name,
+                remote_app_name=_classicassets.strings.ui.remote_app_name,
             ),
         )
 
@@ -73,5 +73,5 @@ class GetBSRemoteWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
         self._transition_out()

@@ -5,9 +5,9 @@
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
-from bauiv1 import builtinassets
+from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     )
 
 
-_gpstrs = classicassets.strings.settings.controllers.gamepad
+_gpstrs = _classicassets.strings.settings.controllers.gamepad
 
 
 class GamepadAdvancedSettingsWindow(bui.Window):
@@ -551,7 +551,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
                                 control
                             ),
                         )
-                    builtinassets.audio.gun_cocking.get().play()
+                    _builtinassets.audio.gun_cocking.get().play()
                     dialog.die()
         else:
             if event['type'] == 'BUTTONDOWN':
@@ -565,7 +565,7 @@ class GamepadAdvancedSettingsWindow(bui.Window):
                             control
                         ),
                     )
-                builtinassets.audio.gun_cocking.get().play()
+                _builtinassets.audio.gun_cocking.get().play()
                 dialog.die()
 
     def _done(self) -> None:

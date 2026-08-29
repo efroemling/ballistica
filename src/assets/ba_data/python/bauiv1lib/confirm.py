@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, builtinassets, classicassets
+from bauiv1 import _commonassets, _builtinassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -178,10 +178,10 @@ class QuitWindow:
             ui.quit_window.delete()
             ui.quit_window = None
         if swish:
-            builtinassets.audio.swish.get().play()
+            _builtinassets.audio.swish.get().play()
 
         # Generally Macs say Quit and other stuff says Exit
-        strs = classicassets.strings.ui
+        strs = _classicassets.strings.ui
         confirmstr = (
             strs.quit_app_confirm
             if platform is type(platform).MACOS

@@ -62,18 +62,18 @@ class AccountV1Subsystem:
 
         (internal)
         """
-        from babase import builtinassets
+        from babase import _builtinassets
 
         # Safe up-call: the featureset is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         babase.screenmessage(
-            classicassets.strings.economy.received_tickets(count=count),
+            _classicassets.strings.economy.received_tickets(count=count),
             color=(0, 1, 0),
         )
-        builtinassets.audio.cash_register.get().play()
+        _builtinassets.audio.cash_register.get().play()
 
     def cache_league_rank_data(self, data: Any) -> None:
         """(internal)"""
@@ -269,7 +269,7 @@ class AccountV1Subsystem:
         # Safe up-call: the featureset is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets
+        from bascenev1 import _builtinassets
 
         cur_time = babase.apptime()
         if (
@@ -278,20 +278,20 @@ class AccountV1Subsystem:
         ):
             self.last_post_purchase_message_time = cur_time
             babase.screenmessage(
-                builtinassets.strings.account.updating_account,
+                _builtinassets.strings.account.updating_account,
                 color=(0, 1, 0),
             )
             # Ick; this can get called early in the bootstrapping process
             # before we're allowed to load assets. Guard against that.
             if babase.asset_loads_allowed():
-                builtinassets.audio.click01.get().play()
+                _builtinassets.audio.click01.get().play()
 
     def on_account_state_changed(self) -> None:
         """(internal)"""
         # Safe up-call: the featureset is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         plus = babase.app.plus
         if plus is None:
@@ -303,7 +303,7 @@ class AccountV1Subsystem:
         ):
             for code in self.pending_promo_codes:
                 babase.screenmessage(
-                    classicassets.strings.account.submitting_code,
+                    _classicassets.strings.account.submitting_code,
                     color=(0, 1, 0),
                 )
                 plus.add_v1_account_transaction(
@@ -321,7 +321,7 @@ class AccountV1Subsystem:
         # Safe up-call: the featureset is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets, classicassets
+        from bascenev1 import _builtinassets, _classicassets
 
         plus = babase.app.plus
         if plus is None:
@@ -331,9 +331,9 @@ class AccountV1Subsystem:
                 'Error adding pending promo code; plus not present.'
             )
             babase.screenmessage(
-                builtinassets.strings.ui.error, color=(1, 0, 0)
+                _builtinassets.strings.ui.error, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # If we're not signed in, queue up the code to run the next time we
@@ -348,16 +348,16 @@ class AccountV1Subsystem:
                 # inform the user that they need to sign in to use them.
                 if self.pending_promo_codes:
                     babase.screenmessage(
-                        classicassets.strings.account.sign_in_for_codes,
+                        _classicassets.strings.account.sign_in_for_codes,
                         color=(1, 0, 0),
                     )
-                    builtinassets.audio.error.get().play()
+                    _builtinassets.audio.error.get().play()
 
             self.pending_promo_codes.append(code)
             babase.apptimer(6.0, check_pending_codes)
             return
         babase.screenmessage(
-            classicassets.strings.account.submitting_code,
+            _classicassets.strings.account.submitting_code,
             color=(0, 1, 0),
         )
         plus.add_v1_account_transaction(

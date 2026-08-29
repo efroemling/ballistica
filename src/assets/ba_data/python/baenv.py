@@ -55,8 +55,8 @@ logger = logging.getLogger('ba.env')
 
 # Build number and version of the ballistica binary we expect to be
 # using.
-TARGET_BALLISTICA_BUILD = 23003
-TARGET_BALLISTICA_VERSION = '1.8.0a106'
+TARGET_BALLISTICA_BUILD = 23004
+TARGET_BALLISTICA_VERSION = '1.8.0a107'
 
 
 @dataclass

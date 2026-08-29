@@ -8,7 +8,7 @@
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import classicassets
+from bascenev1 import _classicassets
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -107,7 +107,7 @@ class DeathMatchGame(bs.TeamGameActivity[Player, Team]):
         super().__init__(settings)
         self._scoreboard = Scoreboard()
         self._score_to_win: int | None = None
-        self._dingsound = classicassets.audio.ding_small.get()
+        self._dingsound = _classicassets.audio.ding_small.get()
         self._epic_mode = bool(settings['Epic Mode'])
         self._kills_to_win_per_player = int(settings['Kills to Win Per Player'])
         self._time_limit = float(settings['Time Limit'])

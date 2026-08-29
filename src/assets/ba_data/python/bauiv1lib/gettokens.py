@@ -11,16 +11,16 @@ import bacommon.cloud
 import bacommon.classic
 from bauiv1lib.utils import get_screen_margins
 import bauiv1 as bui
-from bauiv1 import builtinassets
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
 
 
 def _tex(name: str) -> str:
-    """Qualified classicassets ref for a button image texture."""
-    return f'{classicassets.__asset_package__}:textures/{name}'
+    """Qualified _classicassets ref for a button image texture."""
+    return f'{_classicassets.__asset_package__}:textures/{name}'
 
 
 @dataclass
@@ -111,7 +111,7 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        classicassets.strings.get_tokens.num_tokens(
+                        _classicassets.strings.get_tokens.num_tokens(
                             count=bacommon.classic.TOKENS1_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
@@ -150,7 +150,7 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        classicassets.strings.get_tokens.num_tokens(
+                        _classicassets.strings.get_tokens.num_tokens(
                             count=bacommon.classic.TOKENS2_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
@@ -189,7 +189,7 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        classicassets.strings.get_tokens.num_tokens(
+                        _classicassets.strings.get_tokens.num_tokens(
                             count=bacommon.classic.TOKENS3_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
@@ -228,7 +228,7 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        classicassets.strings.get_tokens.num_tokens(
+                        _classicassets.strings.get_tokens.num_tokens(
                             count=bacommon.classic.TOKENS4_COUNT
                         ),
                         pos=(bwidthstd * 0.5, pos1),
@@ -266,28 +266,28 @@ class GetTokensWindow(bui.MainWindow):
                 ],
                 txtdefs=[
                     _TxtDef(
-                        classicassets.strings.get_tokens.gold_pass,
+                        _classicassets.strings.get_tokens.gold_pass,
                         pos=(bwidthwide * 0.5, pos1 + 27),
                         color=(1.1, 1.05, 1.0),
                         scale=titlescale,
                         maxwidth=bwidthwide * 0.8,
                     ),
                     _TxtDef(
-                        classicassets.strings.get_tokens.gold_pass_desc1,
+                        _classicassets.strings.get_tokens.gold_pass_desc1,
                         pos=(bwidthwide * 0.5, pos1 + 6),
                         color=(1.1, 1.05, 1.0),
                         scale=0.4,
                         maxwidth=bwidthwide * 0.8,
                     ),
                     _TxtDef(
-                        classicassets.strings.get_tokens.gold_pass_desc2,
+                        _classicassets.strings.get_tokens.gold_pass_desc2,
                         pos=(bwidthwide * 0.5, pos1 + 6 - 13 * 1),
                         color=(1.1, 1.05, 1.0),
                         scale=0.4,
                         maxwidth=bwidthwide * 0.8,
                     ),
                     _TxtDef(
-                        classicassets.strings.get_tokens.gold_pass_desc3,
+                        _classicassets.strings.get_tokens.gold_pass_desc3,
                         pos=(bwidthwide * 0.5, pos1 + 6 - 13 * 2),
                         color=(1.1, 1.05, 1.0),
                         scale=0.4,
@@ -408,7 +408,7 @@ class GetTokensWindow(bui.MainWindow):
             scale=1.2,
             h_align='center',
             v_align='center',
-            text=classicassets.strings.resource_type_info.get_tokens,
+            text=_classicassets.strings.resource_type_info.get_tokens,
             maxwidth=260,
         )
 
@@ -530,7 +530,7 @@ class GetTokensWindow(bui.MainWindow):
             bui.textwidget(
                 edit=self._status_text,
                 color=(1, 0, 0),
-                text=classicassets.strings.account.not_signed_in,
+                text=_classicassets.strings.account.not_signed_in,
             )
         elif state is self.State.LOADING:
             raise RuntimeError('Should never return to loading state.')
@@ -538,7 +538,7 @@ class GetTokensWindow(bui.MainWindow):
             bui.textwidget(
                 edit=self._status_text,
                 color=(0, 1, 0),
-                text=classicassets.strings.get_tokens.you_have_gold_pass,
+                text=_classicassets.strings.get_tokens.you_have_gold_pass,
             )
         elif state is self.State.SHOWING_STORE:
             assert self._last_query_response is not None
@@ -753,7 +753,7 @@ class GetTokensWindow(bui.MainWindow):
                 size=(0, 0),
                 h_align='center',
                 v_align='center',
-                text=classicassets.strings.get_tokens.shiny_new_currency,
+                text=_classicassets.strings.get_tokens.shiny_new_currency,
             )
 
         has_removed_ads = classic is not None and (
@@ -779,7 +779,7 @@ class GetTokensWindow(bui.MainWindow):
                 h_align='center',
                 v_align='center',
                 maxwidth=self._scroll_width * 0.9,
-                text=classicassets.strings.get_tokens.remove_ads_offer,
+                text=_classicassets.strings.get_tokens.remove_ads_offer,
             )
 
         # Most of our UI won't exist until this point so we need to
@@ -798,15 +798,17 @@ class GetTokensWindow(bui.MainWindow):
         if price is None:
             if plus is not None and plus.supports_purchases():
                 # Looks like internet is down or something temporary.
-                errmsg = classicassets.strings.get_tokens.purchase_not_available
+                errmsg = (
+                    _classicassets.strings.get_tokens.purchase_not_available
+                )
             else:
                 # Looks like purchases will never work here.
                 errmsg = (
-                    classicassets.strings.get_tokens.purchase_never_available
+                    _classicassets.strings.get_tokens.purchase_never_available
                 )
 
             bui.screenmessage(errmsg, color=(1, 0.5, 0))
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         assert plus is not None
@@ -835,18 +837,18 @@ def show_get_tokens_prompt(origin_widget: bui.Widget | None = None) -> None:
     # Currently always allowing token purchases.
     if bool(True):
         ConfirmWindow(
-            classicassets.strings.get_tokens.not_enough_tokens,
+            _classicassets.strings.get_tokens.not_enough_tokens,
             bui.CallStrict(
                 show_get_tokens_window, origin_widget=get_tokens_button
             ),
-            ok_text=classicassets.strings.resource_type_info.get_tokens,
+            ok_text=_classicassets.strings.resource_type_info.get_tokens,
             width=460,
             height=130,
             origin_widget=origin_widget,
         )
     else:
         ConfirmWindow(
-            classicassets.strings.get_tokens.not_enough_tokens,
+            _classicassets.strings.get_tokens.not_enough_tokens,
             cancel_button=False,
             width=460,
             height=130,

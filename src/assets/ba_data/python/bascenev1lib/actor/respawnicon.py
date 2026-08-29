@@ -5,7 +5,7 @@
 import weakref
 
 import bascenev1 as bs
-from bascenev1 import builtinassets
+from bascenev1 import _builtinassets
 
 
 class RespawnIcon:
@@ -27,7 +27,7 @@ class RespawnIcon:
         # Cache our mask tex on the team for easy access.
         mask_tex = player.team.customdata.get(self._MASKTEXSTORENAME)
         if mask_tex is None:
-            mask_tex = builtinassets.textures.character_icon_mask.get()
+            mask_tex = _builtinassets.textures.character_icon_mask.get()
             player.team.customdata[self._MASKTEXSTORENAME] = mask_tex
         assert isinstance(mask_tex, bs.Texture)
 

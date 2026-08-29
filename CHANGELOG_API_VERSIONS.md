@@ -56,11 +56,14 @@ change behavior a mod may be relying on or can now take advantage of.
   bare sound name (`'error'`, `'shieldDown'`, ...), which only ever resolved
   while that sound's asset-package happened to be registered — so the same
   call could work or silently fail depending on when it ran. It now returns a
-  silent sound and warns. Load the sound from its asset-package wrapper
-  instead: `babase.builtinassets.audio.error.get().play()`. Sounds outside the
-  builtin package (most of the classic ones) come from that package's own
-  wrapper via `bascenev1`/`bauiv1`, and cannot be loaded before the app
-  finishes bringing assets up.
+  silent sound and warns. Load the sound through a generated asset-package
+  wrapper module for the package it lives in instead
+  (`<wrapper>.audio.error.get().play()`). Note that the engine's own bundled
+  wrapper modules are private (`_builtinassets`, `_classicassets`,
+  `_commonassets`) and not API you should depend on; generate and bundle your
+  own wrapper for whichever packages your mod uses. Sounds outside the builtin
+  package (most of the classic ones) cannot be loaded before the app finishes
+  bringing assets up.
 - `ba*.Lstr` is going away. Migrate all uses of it to the new `ba*.LangStr`
   class.
 - Engine calls that return an `Lstr` are growing a `langstr` keyword argument.

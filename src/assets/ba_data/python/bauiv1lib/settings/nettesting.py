@@ -14,7 +14,7 @@ from efro.util import strip_exception_tracebacks, strict_partial
 from bauiv1lib.settings.testing import TestingWindow
 from bauiv1lib.utils import get_screen_margins, scroll_fade_top
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -206,7 +206,7 @@ class NetTestingWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(self._width * 0.5, yoffs - 55),
             size=(0, 0),
-            text=classicassets.strings.settings.net_testing.title,
+            text=_classicassets.strings.settings.net_testing.title,
             color=(0.8, 0.8, 0.8, 1.0),
             h_align='center',
             v_align='center',
@@ -563,7 +563,7 @@ def get_net_val_testing_window() -> TestingWindow:
         {'name': 'showNetInfo', 'label': 'Show Net Info', 'increment': 1},
     ]
     return TestingWindow(
-        title=classicassets.strings.settings.net_testing.title,
+        title=_classicassets.strings.settings.net_testing.title,
         entries=entries,
     )
 
@@ -587,7 +587,7 @@ def get_net_val_testing_window() -> TestingWindow:
 #             {'name': 'showNetInfo', 'label': 'Show Net Info', 'increment': 1},
 #         ]
 #         super().__init__(
-#             title=classicassets.strings.settings.net_testing.title,
+#             title=_classicassets.strings.settings.net_testing.title,
 #             entries=entries,
 #             transition=transition,
 #         )

@@ -7,7 +7,7 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -94,7 +94,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             size=(0, 0),
             maxwidth=260,
             scale=1.1,
-            text=classicassets.strings.playlist.map_select_title(
+            text=_classicassets.strings.playlist.map_select_title(
                 game=self._gametype.get_display_string(langstr=True)
             ),
             color=bui.app.ui_v1.title_color,
@@ -165,9 +165,9 @@ class PlaylistMapSelectWindow(bui.MainWindow):
         if self._subcontainer is not None:
             self._subcontainer.delete()
 
-        mesh_opaque = classicassets.meshes.level_select_button_opaque.get()
+        mesh_opaque = _classicassets.meshes.level_select_button_opaque.get()
         mesh_transparent = (
-            classicassets.meshes.level_select_button_transparent.get()
+            _classicassets.meshes.level_select_button_transparent.get()
         )
 
         self._maps = []
@@ -209,7 +209,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             background=False,
         )
         index = 0
-        mask_texture = classicassets.textures.map_preview_mask.get()
+        mask_texture = _classicassets.textures.map_preview_mask.get()
         h_offs = 130 if len(self._maps) == 1 else 0
         for y in range(rows):
             for x in range(columns):
@@ -279,7 +279,7 @@ class PlaylistMapSelectWindow(bui.MainWindow):
             parent=self._subcontainer,
             size=(self._sub_width * 0.8, 60),
             position=(self._sub_width * 0.1, 30),
-            label=classicassets.strings.playlist.get_more_maps,
+            label=_classicassets.strings.playlist.get_more_maps,
             on_activate_call=self._on_store_press,
             color=(0.6, 0.53, 0.63),
             textcolor=(0.75, 0.7, 0.8),

@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import builtinassets
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -27,8 +27,8 @@ class SoundtrackEditWindow(bui.MainWindow):
 
         appconfig = bui.app.config
         self._r = 'editSoundtrackWindow'
-        self._folder_tex = classicassets.textures.folder.get()
-        self._file_tex = classicassets.textures.file.get()
+        self._folder_tex = _classicassets.textures.folder.get()
+        self._file_tex = _classicassets.textures.file.get()
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         self._width = 1200 if uiscale is bui.UIScale.SMALL else 648
@@ -103,9 +103,9 @@ class SoundtrackEditWindow(bui.MainWindow):
             position=(0, yoffs - 50),
             size=(self._width, 25),
             text=(
-                classicassets.strings.soundtrack.edit_soundtrack
+                _classicassets.strings.soundtrack.edit_soundtrack
                 if existing_soundtrack is not None
-                else classicassets.strings.soundtrack.new_soundtrack
+                else _classicassets.strings.soundtrack.new_soundtrack
             ),
             color=bui.app.ui_v1.title_color,
             h_align='center',
@@ -164,7 +164,7 @@ class SoundtrackEditWindow(bui.MainWindow):
                 # edited by the user from here on, so it stops being a
                 # language-string the moment we pick it.
                 self._soundtrack_name = (
-                    classicassets.strings.soundtrack.new_soundtrack_name(
+                    _classicassets.strings.soundtrack.new_soundtrack_name(
                         count=str(i)
                     ).evaluate()
                 )
@@ -359,7 +359,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             btn = bui.buttonwidget(
                 parent=row,
                 size=(50, 32),
-                label=classicassets.strings.soundtrack.test,
+                label=_classicassets.strings.soundtrack.test,
                 text_scale=0.6,
                 on_activate_call=bui.CallStrict(
                     self._test, bs.MusicType(song_type)
@@ -388,7 +388,7 @@ class SoundtrackEditWindow(bui.MainWindow):
             None if musictype not in soundtrack else soundtrack[musictype]
         )
         if existing_entry != entry:
-            builtinassets.audio.gun_cocking.get().play()
+            _builtinassets.audio.gun_cocking.get().play()
 
         # Make sure this doesn't get mucked with after we get it.
         if entry is not None:
@@ -446,9 +446,9 @@ class SoundtrackEditWindow(bui.MainWindow):
 
         # Warn if volume is zero.
         if bui.app.config.resolve('Music Volume') < 0.01:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             bui.screenmessage(
-                classicassets.strings.soundtrack.music_volume_zero_warning,
+                _classicassets.strings.soundtrack.music_volume_zero_warning,
                 color=(1, 0.5, 0),
             )
         music.set_music_play_mode(bui.app.classic.MusicPlayMode.TEST)
@@ -466,7 +466,7 @@ class SoundtrackEditWindow(bui.MainWindow):
         etype = music.get_soundtrack_entry_type(entry)
         ename: str | bui.Lstr | bui.LangStr
         if etype == 'default':
-            ename = classicassets.strings.soundtrack.default_game_music
+            ename = _classicassets.strings.soundtrack.default_game_music
         elif etype in ('musicFile', 'musicFolder'):
             ename = os.path.basename(music.get_soundtrack_entry_name(entry))
         else:
@@ -510,23 +510,23 @@ class SoundtrackEditWindow(bui.MainWindow):
         new_name = cast(str, bui.textwidget(query=self._text_field))
         if new_name != self._soundtrack_name and new_name in cfg['Soundtracks']:
             bui.screenmessage(
-                classicassets.strings.soundtrack.cant_save_already_exists
+                _classicassets.strings.soundtrack.cant_save_already_exists
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
         if not new_name:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
         if (
             new_name
             == (
-                classicassets.strings.soundtrack
+                _classicassets.strings.soundtrack
             ).default_soundtrack_name.evaluate()
         ):
             bui.screenmessage(
-                classicassets.strings.soundtrack.cant_overwrite_default
+                _classicassets.strings.soundtrack.cant_overwrite_default
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # Make sure config exists.
@@ -543,7 +543,7 @@ class SoundtrackEditWindow(bui.MainWindow):
         cfg['Soundtrack'] = new_name
 
         cfg.commit()
-        builtinassets.audio.gun_cocking.get().play()
+        _builtinassets.audio.gun_cocking.get().play()
 
         # Resets music back to normal.
         music.set_music_play_mode(
@@ -553,5 +553,5 @@ class SoundtrackEditWindow(bui.MainWindow):
         self.main_window_back()
 
     def _do_it_with_sound(self) -> None:
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
         self._do_it()

@@ -9,8 +9,8 @@ import logging
 from efro.util import strip_exception_tracebacks
 import bacommon.cloud
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
 
 STATUS_CHECK_INTERVAL_SECONDS = 2.0
 
@@ -247,7 +247,7 @@ class V2ProxySignInWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 95),
             size=(0, 0),
-            text=classicassets.strings.account.v2_link_instructions,
+            text=_classicassets.strings.account.v2_link_instructions,
             color=bui.app.ui_v1.title_color,
             maxwidth=self._width * 0.9,
             h_align='center',
@@ -335,7 +335,7 @@ class V2ProxySignInWindow(bui.Window):
                     'LoginProxy failed%s.',
                     ' (expired)' if response.expired else '',
                 )
-                builtinassets.audio.error.get().play()
+                _builtinassets.audio.error.get().play()
                 # An expired flow is not an *error*; the approval may
                 # even have succeeded and we simply took too long to
                 # collect it (backgrounded app, flaky network). Say

@@ -8,8 +8,8 @@ import time
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
 
 from bauiv1lib.utils import get_screen_margins
 
@@ -126,7 +126,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(0, yoffs - (77 if uiscale is bui.UIScale.SMALL else 77)),
             size=(self._width, 25),
-            text=classicassets.strings.playlist.customize_title(
+            text=_classicassets.strings.playlist.customize_title(
                 type=self._pvars.window_title_name
             ),
             color=bui.app.ui_v1.heading_color,
@@ -442,10 +442,10 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         # Clamp at our max playlist number.
         if len(bui.app.config[self._config_name_full]) > self._max_playlists:
             bui.screenmessage(
-                classicassets.strings.playlist.max_reached,
+                _classicassets.strings.playlist.max_reached,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # In case they cancel so we can return to this state.
@@ -461,8 +461,8 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         if self._selected_playlist_name is None:
             return
         if self._selected_playlist_name == '__default__':
-            builtinassets.audio.error.get().play()
-            bui.screenmessage(classicassets.strings.playlist.cant_edit_default)
+            _builtinassets.audio.error.get().play()
+            bui.screenmessage(_classicassets.strings.playlist.cant_edit_default)
             return
         self._save_playlist_selection()
         PlaylistEditController(
@@ -482,7 +482,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
             }
         )
         plus.run_v1_account_transactions()
-        classicassets.audio.shield_down.get().play()
+        _classicassets.audio.shield_down.get().play()
 
         # (we don't use len()-1 here because the default list adds one)
         assert self._selected_playlist_index is not None
@@ -502,9 +502,9 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         # Gotta be signed in for this to work.
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(
-                classicassets.strings.account.not_signed_in, color=(1, 0, 0)
+                _classicassets.strings.account.not_signed_in, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         share.SharePlaylistImportWindow(
@@ -526,7 +526,7 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                 _commonassets.strings.status.unavailable_no_connection,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
         share.SharePlaylistResultsWindow(name, response)
 
@@ -537,14 +537,14 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         # Gotta be signed in for this to work.
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(
-                classicassets.strings.account.not_signed_in, color=(1, 0, 0)
+                _classicassets.strings.account.not_signed_in, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
         if self._selected_playlist_name == '__default__':
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             bui.screenmessage(
-                classicassets.strings.playlist.cant_share_default,
+                _classicassets.strings.playlist.cant_share_default,
                 color=(1, 0, 0),
             )
             return
@@ -572,13 +572,13 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         if self._selected_playlist_name is None:
             return
         if self._selected_playlist_name == '__default__':
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             bui.screenmessage(
-                classicassets.strings.playlist.cant_delete_default
+                _classicassets.strings.playlist.cant_delete_default
             )
         else:
             ConfirmWindow(
-                classicassets.strings.gather.delete_confirm_list(
+                _classicassets.strings.gather.delete_confirm_list(
                     list=self._selected_playlist_name
                 ),
                 self._do_delete_playlist,
@@ -607,16 +607,16 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
                 self._selected_playlist_name
             )
             if plst is None:
-                builtinassets.audio.error.get().play()
+                _builtinassets.audio.error.get().play()
                 return
 
         # Clamp at our max playlist number.
         if len(bui.app.config[self._config_name_full]) > self._max_playlists:
             bui.screenmessage(
-                classicassets.strings.playlist.max_reached,
+                _classicassets.strings.playlist.max_reached,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # Flattening is correct here: these feed *stored* playlist
@@ -662,5 +662,5 @@ class PlaylistCustomizeBrowserWindow(bui.MainWindow):
         )
         plus.run_v1_account_transactions()
 
-        builtinassets.audio.gun_cocking.get().play()
+        _builtinassets.audio.gun_cocking.get().play()
         self._refresh(select_playlist=test_name)

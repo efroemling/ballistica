@@ -55,7 +55,7 @@ class DepictionAssets:
 
     Everything here is something ``bacommon`` cannot reach on its own:
     each host keeps its asset-reference wrappers in its own place (the
-    client's ``bauiv1.classicassets``, the master server's vendored
+    client's ``bauiv1._classicassets``, the master server's vendored
     ``bamaster.assets.baclassicassets``), and the chest appearance
     colors live with the client's chest code.
 

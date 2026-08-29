@@ -119,9 +119,9 @@ def check_asset_package_load(apverid: str, path: str) -> None:
         # Deferred: this module is imported while babase itself is still
         # coming up, well before the wrapper is importable.
         # pylint: disable-next=cyclic-import
-        from babase import builtinassets
+        from babase import _builtinassets
 
-        _g_construct_apverid = builtinassets.__asset_package__
+        _g_construct_apverid = _builtinassets.__asset_package__
 
     if apverid == _g_construct_apverid:
         return

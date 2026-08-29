@@ -4,7 +4,7 @@
 
 from typing import TYPE_CHECKING
 
-from bauiv1 import classicassets
+from bauiv1 import _classicassets
 
 if TYPE_CHECKING:
     import bauiv1 as bui
@@ -18,7 +18,7 @@ def league_display_name(name: str) -> str | bui.LangStr:
     build predates, say) degrades honestly to its own untranslated
     text rather than being silently mistranslated.
     """
-    strs = classicassets.strings.league
+    strs = _classicassets.strings.league
     return {
         'Bronze': strs.bronze,
         'Silver': strs.silver,

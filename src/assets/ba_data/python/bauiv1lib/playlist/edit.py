@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
     from bauiv1lib.playlist.editcontroller import PlaylistEditController
@@ -91,7 +91,7 @@ class PlaylistEditWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(-10, self._height - 50 + yoffs),
             size=(self._width, 25),
-            text=classicassets.strings.playlist.editor_title,
+            text=_classicassets.strings.playlist.editor_title,
             color=bui.app.ui_v1.title_color,
             scale=1.05,
             h_align='center',
@@ -105,7 +105,7 @@ class PlaylistEditWindow(bui.MainWindow):
 
         bui.textwidget(
             parent=self._root_widget,
-            text=classicassets.strings.playlist.list_name,
+            text=_classicassets.strings.playlist.list_name,
             position=(196 + x_inset, v + 31),
             maxwidth=150,
             color=(0.8, 0.8, 0.8, 0.5),
@@ -126,7 +126,7 @@ class PlaylistEditWindow(bui.MainWindow):
             maxwidth=380,
             autoselect=True,
             color=(0.9, 0.9, 0.9, 1.0),
-            description=classicassets.strings.playlist.list_name,
+            description=_classicassets.strings.playlist.list_name,
             editable=True,
             padding=4,
             on_return_press_call=self._save_press_with_sound,
@@ -162,7 +162,7 @@ class PlaylistEditWindow(bui.MainWindow):
             color=b_color,
             textcolor=b_textcolor,
             text_scale=0.8,
-            label=classicassets.strings.playlist.add_game_button,
+            label=_classicassets.strings.playlist.add_game_button,
         )
         bui.widget(edit=add_game_button, up_widget=self._text_field)
         v -= 63.0 * scl
@@ -178,7 +178,7 @@ class PlaylistEditWindow(bui.MainWindow):
             color=b_color,
             textcolor=b_textcolor,
             text_scale=0.8,
-            label=classicassets.strings.playlist.edit_game_button,
+            label=_classicassets.strings.playlist.edit_game_button,
         )
         v -= 63.0 * scl
 
@@ -192,7 +192,7 @@ class PlaylistEditWindow(bui.MainWindow):
             button_type='square',
             color=b_color,
             textcolor=b_textcolor,
-            label=classicassets.strings.playlist.remove_game_button,
+            label=_classicassets.strings.playlist.remove_game_button,
         )
         v -= 40
         h += 9
@@ -302,7 +302,7 @@ class PlaylistEditWindow(bui.MainWindow):
         if not self._root_widget or self._root_widget.transitioning_out:
             return
 
-        builtinassets.audio.powerdown01.get().play()
+        _builtinassets.audio.powerdown01.get().play()
         self.main_window_back()
 
     def _add(self) -> None:
@@ -341,25 +341,25 @@ class PlaylistEditWindow(bui.MainWindow):
             ]
         ):
             bui.screenmessage(
-                classicassets.strings.playlist.cant_save_already_exists
+                _classicassets.strings.playlist.cant_save_already_exists
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
         if not new_name:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
         if not self._editcontroller.get_playlist():
-            bui.screenmessage(classicassets.strings.playlist.cant_save_empty)
-            builtinassets.audio.error.get().play()
+            bui.screenmessage(_classicassets.strings.playlist.cant_save_empty)
+            _builtinassets.audio.error.get().play()
             return
 
         # We couldn't actually replace the default list anyway, but disallow
         # using its exact name to avoid confusion.
         if new_name == self._editcontroller.get_default_list_name().evaluate():
             bui.screenmessage(
-                classicassets.strings.playlist.cant_overwrite_default
+                _classicassets.strings.playlist.cant_overwrite_default
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # If we had an old one, delete it.
@@ -384,12 +384,12 @@ class PlaylistEditWindow(bui.MainWindow):
         )
         plus.run_v1_account_transactions()
 
-        builtinassets.audio.gun_cocking.get().play()
+        _builtinassets.audio.gun_cocking.get().play()
 
         self.main_window_back()
 
     def _save_press_with_sound(self) -> None:
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
         self._save_press()
 
     def _select(self, index: int) -> None:
@@ -472,5 +472,5 @@ class PlaylistEditWindow(bui.MainWindow):
             index = len(playlist) - 1
         self._editcontroller.set_playlist(playlist)
         self._editcontroller.set_selected_index(index)
-        classicassets.audio.shield_down.get().play()
+        _classicassets.audio.shield_down.get().play()
         self._refresh()

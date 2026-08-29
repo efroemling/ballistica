@@ -15,8 +15,8 @@ import bacommon.classic
 import babase
 from babase import AppMode
 import bauiv1 as bui
-from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import _classicassets
 from bauiv1lib.connectivity import wait_for_connectivity
 
 import _baclassic
@@ -119,12 +119,12 @@ class ClassicAppMode(AppMode):
         # AssetNameCompat in the native layer). Sourcing these from
         # the wrappers means a modder-swapped package keeps working.
         # (The bauiv1 and bascenev1 wrapper flavors carry identical
-        # __asset_package__ ids; builtinassets and classicassets here are
+        # __asset_package__ ids; _builtinassets and _classicassets here are
         # our module-level bauiv1 imports.)
         babase.set_asset_name_compat_versions(
             {
-                'builtinassets': builtinassets.__asset_package__,
-                'classicassets': classicassets.__asset_package__,
+                '_builtinassets': _builtinassets.__asset_package__,
+                '_classicassets': _classicassets.__asset_package__,
             }
         )
 
@@ -325,24 +325,24 @@ class ClassicAppMode(AppMode):
                 ),
                 clfx.Delay(anim_time),
                 clfx.ScreenMessageV2(
-                    message=classicassets.strings.economy.you_got_tokens(
+                    message=_classicassets.strings.economy.you_got_tokens(
                         tokens=tokens
                     ).spec,
                     color=(0, 1, 0),
                 ),
-                clfx.PlaySoundV2(sound=builtinassets.audio.cash_register),
+                clfx.PlaySoundV2(sound=_builtinassets.audio.cash_register),
             ]
             bui.app.classic.run_bs_client_effects(effects)
 
         elif item_id.startswith('gold_pass'):
             bui.screenmessage(
-                builtinassets.strings.account.you_got_item(
-                    item=classicassets.strings.get_tokens.gold_pass
+                _builtinassets.strings.account.you_got_item(
+                    item=_classicassets.strings.get_tokens.gold_pass
                 ),
                 color=(0, 1, 0),
             )
             if bui.asset_loads_allowed():
-                builtinassets.audio.cash_register.get().play()
+                _builtinassets.audio.cash_register.get().play()
 
         else:
 
@@ -351,11 +351,11 @@ class ClassicAppMode(AppMode):
                 'on_purchase_process_end got unexpected item_id: %s.', item_id
             )
             bui.screenmessage(
-                builtinassets.strings.account.you_got_item(item=item_id),
+                _builtinassets.strings.account.you_got_item(item=item_id),
                 color=(0, 1, 0),
             )
             if bui.asset_loads_allowed():
-                builtinassets.audio.cash_register.get().play()
+                _builtinassets.audio.cash_register.get().play()
 
     def on_engine_will_reset(self) -> None:
         """Called just before classic resets the engine.
@@ -644,7 +644,7 @@ class ClassicAppMode(AppMode):
             inbox_count=val.inbox_count,
             inbox_count_is_max=val.inbox_count_is_max,
             inbox_announce_text=(
-                classicassets.strings.inbox.unclaimed_prizes.evaluate()
+                _classicassets.strings.inbox.unclaimed_prizes.evaluate()
                 if val.inbox_contains_prize
                 else ''
             ),
@@ -733,7 +733,7 @@ class ClassicAppMode(AppMode):
         old_window = ui.get_main_window()
         if old_window is not None:
 
-            builtinassets.audio.swish.get().play()
+            _builtinassets.audio.swish.get().play()
 
             classic = bui.app.classic
             assert classic is not None
@@ -891,7 +891,7 @@ class ClassicAppMode(AppMode):
         plus = bui.app.plus
         if plus is None:
             bui.screenmessage('This requires plus.', color=(1, 0, 0))
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return False
         if plus.accounts.primary is None:
             show_sign_in_prompt(origin_widget=origin_widget)
@@ -1036,13 +1036,13 @@ class ClassicAppMode(AppMode):
                 ' Open a menu or whatnot first.',
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # Unintuitively, swish sounds come from buttons, not windows.
         # And dev-console buttons don't make sounds. So we need to
         # explicitly do so here.
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
 
         show_template_main_window()
 
@@ -1056,9 +1056,9 @@ class ClassicAppMode(AppMode):
                 ' Open a menu or whatnot first.',
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
 
         show_test_doc_ui_v2_window()

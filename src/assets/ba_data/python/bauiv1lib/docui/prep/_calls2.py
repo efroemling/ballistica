@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, assert_never
 from efro.dataclassio import dataclass_to_json
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
-from bauiv1 import builtinassets
+from bauiv1 import _builtinassets
 
 from bacommon.docui.framefit import fit_bounds, aligned_box
 
@@ -45,7 +45,7 @@ def _native(lstr: 'LangStrSpec | int', packages: list[str]) -> bui.LangStr:
 
 def _btex(name: str) -> str:
     """Qualified ref for a texture in the builtin asset-package."""
-    return f'{builtinassets.__asset_package__}:textures/{name}'
+    return f'{_builtinassets.__asset_package__}:textures/{name}'
 
 
 def _refstr(ref: 'TextureSpec | MeshSpec | int') -> str:

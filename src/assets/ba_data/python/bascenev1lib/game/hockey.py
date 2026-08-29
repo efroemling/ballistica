@@ -8,7 +8,7 @@
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import classicassets
+from bascenev1 import _classicassets
 
 from bascenev1lib.actor.playerspaz import PlayerSpaz
 from bascenev1lib.actor.scoreboard import Scoreboard
@@ -169,14 +169,14 @@ class HockeyGame(bs.TeamGameActivity[Player, Team]):
         super().__init__(settings)
         shared = SharedObjects.get()
         self._scoreboard = Scoreboard()
-        self._cheer_sound = classicassets.audio.cheer.get()
-        self._chant_sound = classicassets.audio.crowd_chant.get()
-        self._foghorn_sound = classicassets.audio.foghorn.get()
-        self._swipsound = classicassets.audio.swip.get()
-        self._whistle_sound = classicassets.audio.ref_whistle.get()
-        self.puck_mesh = classicassets.meshes.puck.get()
-        self.puck_tex = classicassets.textures.puck_color.get()
-        self._puck_sound = classicassets.audio.metal_hit.get()
+        self._cheer_sound = _classicassets.audio.cheer.get()
+        self._chant_sound = _classicassets.audio.crowd_chant.get()
+        self._foghorn_sound = _classicassets.audio.foghorn.get()
+        self._swipsound = _classicassets.audio.swip.get()
+        self._whistle_sound = _classicassets.audio.ref_whistle.get()
+        self.puck_mesh = _classicassets.meshes.puck.get()
+        self.puck_tex = _classicassets.textures.puck_color.get()
+        self._puck_sound = _classicassets.audio.metal_hit.get()
         self.puck_material = bs.Material()
         self.puck_material.add_actions(
             actions=('modify_part_collision', 'friction', 0.5)

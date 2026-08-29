@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, cast, override
 from bauiv1lib.popup import PopupWindow
 from bauiv1lib.colorpicker import ColorPicker
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
     from typing import Sequence
@@ -21,7 +21,7 @@ def _team_display_name(name: str) -> str | bui.LangStr:
     authored entries; a custom name is shown exactly as the player
     typed it.
     """
-    strs = classicassets.strings.teams
+    strs = _classicassets.strings.teams
     return {
         'Good Guys': strs.good_guys,
         'Bad Guys': strs.bad_guys,
@@ -203,10 +203,10 @@ class TeamNamesColorsWindow(PopupWindow):
             name = cast(str, bui.textwidget(query=self._color_text_fields[i]))
             if not name:
                 bui.screenmessage(
-                    classicassets.strings.profile.name_not_empty,
+                    _classicassets.strings.profile.name_not_empty,
                     color=(1, 0, 0),
                 )
-                builtinassets.audio.error.get().play()
+                _builtinassets.audio.error.get().play()
                 return
             new_names.append(name)
 
@@ -241,7 +241,7 @@ class TeamNamesColorsWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
         self._transition_out()
 
     def _on_cancel_press(self) -> None:

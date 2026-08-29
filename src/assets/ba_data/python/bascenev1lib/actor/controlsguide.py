@@ -5,7 +5,7 @@
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import _commonassets, builtinassets, classicassets
+from bascenev1 import _commonassets, _builtinassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -74,7 +74,7 @@ class ControlsGuide(bs.Actor):
             )
             clr = (1, 1, 1) if bright else (0.7, 0.7, 0.7)
             tval = _commonassets.strings.compose.heading_suffix(
-                main=classicassets.strings.help.controls
+                main=_classicassets.strings.help.controls
             )
             self._title_text = bs.newnode(
                 'text',
@@ -97,7 +97,7 @@ class ControlsGuide(bs.Actor):
         self._jump_image = bs.newnode(
             'image',
             attrs={
-                'texture': classicassets.textures.button_jump.get(),
+                'texture': _classicassets.textures.button_jump.get(),
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,
@@ -125,7 +125,7 @@ class ControlsGuide(bs.Actor):
         self._punch_image = bs.newnode(
             'image',
             attrs={
-                'texture': classicassets.textures.button_punch.get(),
+                'texture': _classicassets.textures.button_punch.get(),
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,
@@ -153,7 +153,7 @@ class ControlsGuide(bs.Actor):
         self._bomb_image = bs.newnode(
             'image',
             attrs={
-                'texture': classicassets.textures.button_bomb.get(),
+                'texture': _classicassets.textures.button_bomb.get(),
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,
@@ -181,7 +181,7 @@ class ControlsGuide(bs.Actor):
         self._pickup_image = bs.newnode(
             'image',
             attrs={
-                'texture': classicassets.textures.button_pick_up.get(),
+                'texture': _classicassets.textures.button_pick_up.get(),
                 'absolute_scale': True,
                 'host_only': True,
                 'vr_depth': 10,
@@ -276,7 +276,7 @@ class ControlsGuide(bs.Actor):
         # -1 means unset; let's show that.
         if button == -1:
             return (
-                classicassets.strings.settings.controllers.gamepad.unset
+                _classicassets.strings.settings.controllers.gamepad.unset
             ).evaluate()
         return device.get_button_name(button).evaluate()
 
@@ -451,9 +451,9 @@ class ControlsGuide(bs.Actor):
                 pickup_button_names.add('Y')
 
         run_text: bs.LangStr = (
-            classicassets.strings.controls.run_hold_any_key
+            _classicassets.strings.controls.run_hold_any_key
             if all_keyboards
-            else classicassets.strings.controls.run_hold_any_button
+            else _classicassets.strings.controls.run_hold_any_button
         )
 
         # If we're all keyboards, lets show move keys too.
@@ -469,7 +469,7 @@ class ControlsGuide(bs.Actor):
             left_text = list(left_button_names)[0]
             right_text = list(right_button_names)[0]
             run_text = _commonassets.strings.compose.line_pair(
-                first=classicassets.strings.controls.move_directions(
+                first=_classicassets.strings.controls.move_directions(
                     up=up_text,
                     left=left_text,
                     down=down_text,
@@ -487,8 +487,8 @@ class ControlsGuide(bs.Actor):
         self._run_text.text = run_text
         w_text: bs.Lstr | bs.LangStr | str
         if only_remote and self._lifespan is None:
-            w_text = classicassets.strings.controls.fire_tv_remote_warning(
-                remote_app_name=(builtinassets.strings.ui.remote_app_name)
+            w_text = _classicassets.strings.controls.fire_tv_remote_warning(
+                remote_app_name=(_builtinassets.strings.ui.remote_app_name)
             )
         else:
             w_text = ''

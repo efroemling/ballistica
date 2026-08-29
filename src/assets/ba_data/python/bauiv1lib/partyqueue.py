@@ -8,8 +8,8 @@ import logging
 from typing import TYPE_CHECKING
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -240,34 +240,34 @@ class PartyQueueWindow(bui.Window):
         self._line_width = self._width - 190
         self._line_bottom = self._height * 0.4
         self.lineup_tex: bui.Texture = (
-            classicassets.textures.player_lineup.get()
+            _classicassets.textures.player_lineup.get()
         )
         self._smoothing = 0.0
         self._initial_offset = 0.0
         self._boost_tickets = 0
         self._boost_strength = 0.0
         self._angry_computer_transparent_mesh = (
-            classicassets.meshes.angry_computer_transparent.get()
+            _classicassets.meshes.angry_computer_transparent.get()
         )
         self._angry_computer_image: bui.Widget | None = None
         self.lineup_1_transparent_mesh: bui.Mesh = (
-            classicassets.meshes.player_lineup1_transparent.get()
+            _classicassets.meshes.player_lineup1_transparent.get()
         )
         self._lineup_2_transparent_mesh: bui.Mesh = (
-            classicassets.meshes.player_lineup2_transparent.get()
+            _classicassets.meshes.player_lineup2_transparent.get()
         )
 
         self._lineup_3_transparent_mesh = (
-            classicassets.meshes.player_lineup3_transparent.get()
+            _classicassets.meshes.player_lineup3_transparent.get()
         )
         self._lineup_4_transparent_mesh = (
-            classicassets.meshes.player_lineup4_transparent.get()
+            _classicassets.meshes.player_lineup4_transparent.get()
         )
         self._line_image: bui.Widget | None = None
         self.eyes_mesh: bui.Mesh = (
-            classicassets.meshes.plastic_eyes_transparent.get()
+            _classicassets.meshes.plastic_eyes_transparent.get()
         )
-        self._white_tex = builtinassets.textures.white.get()
+        self._white_tex = _builtinassets.textures.white.get()
         uiscale = bui.app.ui_v1.uiscale
         super().__init__(
             root_widget=bui.containerwidget(
@@ -357,7 +357,7 @@ class PartyQueueWindow(bui.Window):
         from bauiv1lib.account.viewer import AccountViewerWindow
 
         if account_id is None:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
         AccountViewerWindow(
             account_id=account_id,
@@ -475,7 +475,7 @@ class PartyQueueWindow(bui.Window):
             if should_show_field:
                 bui.textwidget(
                     edit=self._title_text,
-                    text=classicassets.strings.party_queue.waiting_in_line,
+                    text=_classicassets.strings.party_queue.waiting_in_line,
                     position=(self._width * 0.5, self._height * 0.85),
                 )
                 self._update_field(response)
@@ -515,7 +515,7 @@ class PartyQueueWindow(bui.Window):
                         scale=1.5,
                         h_align='center',
                         v_align='center',
-                        text=classicassets.strings.ui.boost,
+                        text=_classicassets.strings.ui.boost,
                         maxwidth=150,
                     )
                     self._boost_price = bui.textwidget(
@@ -580,14 +580,14 @@ class PartyQueueWindow(bui.Window):
             return
 
         if classic.tickets < self._boost_tickets:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             bui.screenmessage(
-                classicassets.strings.profile.not_enough_tickets,
+                _classicassets.strings.profile.not_enough_tickets,
                 color=(1, 0, 0),
             )
             return
 
-        classicassets.audio.laser_reverse.get().play()
+        _classicassets.audio.laser_reverse.get().play()
         plus.add_v1_account_transaction(
             {
                 'type': 'PARTY_QUEUE_BOOST',

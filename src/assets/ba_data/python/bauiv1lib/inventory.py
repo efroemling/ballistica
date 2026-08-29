@@ -12,8 +12,8 @@ from bacommon.assetspec import TextureSpec
 from bacommon.langstr import LangStrSpecValue
 import bauiv1 as bui
 from bascenev1lib.actor import spazappearance
-from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import _classicassets
 
 from bauiv1lib.docui import DocUIController
 
@@ -52,8 +52,8 @@ class InventoryUIController(DocUIController):
     def fulfill_request(self, request: DocUIRequest) -> DocUIResponse:
         # All local authoring here uses strings from BUNDLED packages
         # (baclassicassets/builtin) so these pages keep working offline.
-        invstrs = classicassets.strings.inventory
-        profstrs = classicassets.strings.profiles
+        invstrs = _classicassets.strings.inventory
+        profstrs = _classicassets.strings.profiles
 
         response: DocUIResponse
 
@@ -104,7 +104,7 @@ class InventoryUIController(DocUIController):
                                             if not signed_in
                                             else invstrs.only_available_online
                                         ).spec,
-                                        texture=builtinassets.textures.white,
+                                        texture=_builtinassets.textures.white,
                                         size=(600, 100),
                                         color=(1, 1, 1, 0.0),
                                         label_scale=0.7,
@@ -150,7 +150,7 @@ class InventoryUIController(DocUIController):
                             default_sound=False,
                             immediate_local_action='new_profile',
                         ),
-                        icon=classicassets.textures.plus_button,
+                        icon=_classicassets.textures.plus_button,
                         icon_scale=1.3,
                         icon_color=(0.7, 0.6, 0.9, 1),
                         style=dui2.ButtonStyle.MEDIUM,
@@ -177,7 +177,7 @@ class InventoryUIController(DocUIController):
             bui.screenmessage(
                 f'Invalid local-action "{action.name}".', color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
 
     @override
     def restore_window_shared_state(
@@ -282,7 +282,7 @@ class InventoryUIController(DocUIController):
 
             buttons.append(
                 dui2.Button(
-                    texture=builtinassets.textures.white,
+                    texture=_builtinassets.textures.white,
                     size=(145, 175),
                     action=dui2.Local(
                         default_sound=False,
@@ -300,7 +300,7 @@ class InventoryUIController(DocUIController):
                             position=(0, 15),
                             size=(140, 140),
                             mask_texture=(
-                                builtinassets.textures.character_icon_mask
+                                _builtinassets.textures.character_icon_mask
                             ),
                             tint_texture=spazappearance.texture_spec(
                                 appearance.icon_mask_texture
@@ -330,7 +330,7 @@ class InventoryUIController(DocUIController):
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.edit import EditProfileWindow
 
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
 
         plus = bui.app.plus
         assert plus is not None
@@ -340,10 +340,10 @@ class InventoryUIController(DocUIController):
         profiles = bui.app.config.get('Player Profiles', {})
         if len(profiles) > 100:
             bui.screenmessage(
-                classicassets.strings.profiles.max_reached,
+                _classicassets.strings.profiles.max_reached,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         action.window.main_window_replace(
@@ -358,7 +358,7 @@ class InventoryUIController(DocUIController):
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.edit import EditProfileWindow
 
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
 
         profile = action.args.get('profile')
         assert isinstance(profile, str)

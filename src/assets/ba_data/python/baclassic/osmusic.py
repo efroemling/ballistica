@@ -81,7 +81,7 @@ class OSMusicPlayer(MusicPlayer):
         # Safe up-call: the featureset is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         if error is not None:
             music = (
@@ -90,7 +90,7 @@ class OSMusicPlayer(MusicPlayer):
                 else '<multiple>'
             )
             err_str = (
-                classicassets.strings.soundtrack.error_playing_music(
+                _classicassets.strings.soundtrack.error_playing_music(
                     music=music
                 ).evaluate()
                 + '; '
@@ -135,7 +135,7 @@ class _PickFolderSongThread(threading.Thread):
         # Safe up-call: the featureset is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         do_log_error = True
         try:
@@ -155,7 +155,7 @@ class _PickFolderSongThread(threading.Thread):
                 do_log_error = False
                 raise RuntimeError(
                     (
-                        classicassets.strings.soundtrack
+                        _classicassets.strings.soundtrack
                     ).no_music_files_in_folder.evaluate()
                 )
             babase.pushcall(

@@ -7,8 +7,8 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -90,7 +90,7 @@ class SendInfoWindow(bui.MainWindow):
         v += -30 if uiscale is bui.UIScale.SMALL else 10
         bui.textwidget(
             parent=self._root_widget,
-            text=classicassets.strings.send_info.send_info_description,
+            text=_classicassets.strings.send_info.send_info_description,
             maxwidth=width * 0.9,
             position=(width * 0.5, v),
             color=(0.7, 0.7, 0.7, 1.0),
@@ -357,9 +357,9 @@ class SendInfoWindowLegacyModal(bui.Window):
         # accounts: talk directly to V1 server via transactions.
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(
-                classicassets.strings.account.not_signed_in, color=(1, 0, 0)
+                _classicassets.strings.account.not_signed_in, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
         else:
             plus.add_v1_account_transaction(
                 {
@@ -389,7 +389,7 @@ async def _send_info(description: str) -> None:
                 _commonassets.strings.status.unavailable_no_connection,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # Pause root ui updates so stuff like token counts don't change
@@ -428,9 +428,9 @@ async def _send_info(description: str) -> None:
         # Ok; V2 didn't handle it. Try V1 if we're signed in there.
         if plus.get_v1_account_state() != 'signed_in':
             bui.screenmessage(
-                classicassets.strings.account.not_signed_in, color=(1, 0, 0)
+                _classicassets.strings.account.not_signed_in, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # Push it along to v1 as an old style code. Allow v2 response to
@@ -450,7 +450,7 @@ async def _send_info(description: str) -> None:
     except Exception:
         logging.exception('Error sending promo code.')
         bui.screenmessage('Error sending code (see log).', color=(1, 0, 0))
-        builtinassets.audio.error.get().play()
+        _builtinassets.audio.error.get().play()
     finally:
         # Make sure ui-pause is dead even if something is holding
         # on to this stack frame.

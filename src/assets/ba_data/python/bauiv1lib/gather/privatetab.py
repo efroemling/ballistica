@@ -26,8 +26,8 @@ from bauiv1lib.play import PlaylistSelectContext
 from bauiv1lib.gettokens import show_get_tokens_prompt
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
 
 # Module-level alias to keep long accessor chains under the line limit.
-_gs = classicassets.strings.gather
+_gs = _classicassets.strings.gather
 
 # Print a bit of info about queries, etc.
 DEBUG_SERVER_COMMUNICATION = os.environ.get('BA_DEBUG_PPTABCOM') == '1'
@@ -135,7 +135,7 @@ class PrivateGatherTab(GatherTab):
                 SubTabType.JOIN,
                 playsound=True,
             ),
-            text=classicassets.strings.gather.private_party_join,
+            text=_classicassets.strings.gather.private_party_join,
             glow_type='uniform',
         )
         self._host_sub_tab_text = bui.textwidget(
@@ -155,7 +155,7 @@ class PrivateGatherTab(GatherTab):
                 SubTabType.HOST,
                 playsound=True,
             ),
-            text=classicassets.strings.gather.private_party_host,
+            text=_classicassets.strings.gather.private_party_host,
             glow_type='uniform',
         )
         bui.widget(edit=self._join_sub_tab_text, up_widget=tab_button)
@@ -439,7 +439,7 @@ class PrivateGatherTab(GatherTab):
     def _set_sub_tab(self, value: SubTabType, playsound: bool = False) -> None:
         assert self._container
         if playsound:
-            builtinassets.audio.click01.get().play()
+            _builtinassets.audio.click01.get().play()
 
         # If switching from join to host, force some refreshes.
         if self._state.sub_tab is SubTabType.JOIN and value is SubTabType.HOST:
@@ -527,7 +527,7 @@ class PrivateGatherTab(GatherTab):
             maxwidth=250,
             h_align='center',
             v_align='center',
-            text=classicassets.strings.gather.party_code,
+            text=_classicassets.strings.gather.party_code,
         )
 
         self._join_party_code_text = bui.textwidget(
@@ -539,7 +539,7 @@ class PrivateGatherTab(GatherTab):
             size=(300, 50),
             editable=True,
             max_chars=20,
-            description=classicassets.strings.gather.party_code,
+            description=_classicassets.strings.gather.party_code,
             autoselect=True,
             h_align='left',
             v_align='center',
@@ -585,7 +585,7 @@ class PrivateGatherTab(GatherTab):
                 scale=0.8,
                 color=(0.6, 0.56, 0.6),
                 position=(self._c_width * 0.5, self._c_height * 0.5),
-                text=classicassets.strings.account.not_signed_in,
+                text=_classicassets.strings.account.not_signed_in,
             )
             self._showing_not_signed_in_screen = True
             return
@@ -601,7 +601,7 @@ class PrivateGatherTab(GatherTab):
                 scale=0.8,
                 color=(0.6, 0.56, 0.6),
                 position=(self._c_width * 0.5, self._c_height * 0.5),
-                text=classicassets.strings.gather.v2_account_required,
+                text=_classicassets.strings.gather.v2_account_required,
             )
             self._showing_not_signed_in_screen = True
             return
@@ -653,7 +653,7 @@ class PrivateGatherTab(GatherTab):
                 color=(0.5, 0.46, 0.5),
                 position=(self._c_width * 0.5, v),
                 text=(
-                    classicassets.strings.gather
+                    _classicassets.strings.gather
                 ).private_party_cloud_description,
             )
 
@@ -670,7 +670,7 @@ class PrivateGatherTab(GatherTab):
                 scale=0.8,
                 color=(0.6, 0.56, 0.6),
                 position=(self._c_width * 0.5 - 210, v),
-                text=classicassets.strings.ui.playlist,
+                text=_classicassets.strings.ui.playlist,
             )
             self._host_playlist_button = bui.buttonwidget(
                 parent=self._container,
@@ -705,7 +705,7 @@ class PrivateGatherTab(GatherTab):
                 scale=0.9,
                 color=(0.7, 0.64, 0.7),
                 position=(self._c_width * 0.5, v + 90),
-                text=classicassets.strings.gather.party_server_running,
+                text=_classicassets.strings.gather.party_server_running,
             )
             bui.textwidget(
                 parent=self._container,
@@ -716,7 +716,7 @@ class PrivateGatherTab(GatherTab):
                 scale=0.7,
                 color=(0.7, 0.64, 0.7),
                 position=(self._c_width * 0.5, v + 50),
-                text=classicassets.strings.gather.party_code,
+                text=_classicassets.strings.gather.party_code,
             )
             bui.textwidget(
                 parent=self._container,
@@ -738,7 +738,7 @@ class PrivateGatherTab(GatherTab):
                     size=(140, 40),
                     color=(0.6, 0.5, 0.6),
                     textcolor=(0.8, 0.75, 0.8),
-                    label=classicassets.strings.gather.copy_code,
+                    label=_classicassets.strings.gather.copy_code,
                     on_activate_call=self._host_copy_press,
                     position=(self._c_width * 0.5 - 150, v - 70),
                     autoselect=True,
@@ -800,7 +800,7 @@ class PrivateGatherTab(GatherTab):
                     else (0.0, 1.0, 0.0)
                 ),
                 position=(self._c_width * 0.5, v),
-                text=classicassets.strings.gather.start_stop_hosting_minutes(
+                text=_classicassets.strings.gather.start_stop_hosting_minutes(
                     minutes=int(hostingstate.free_host_minutes_remaining)
                 ),
             )
@@ -820,7 +820,7 @@ class PrivateGatherTab(GatherTab):
                         color=(0.0, 1.0, 0.0),
                         position=(self._c_width * 0.5, v),
                         text=(
-                            classicassets.strings.gather
+                            _classicassets.strings.gather
                         ).free_cloud_server_available,
                     )
                 else:
@@ -836,7 +836,7 @@ class PrivateGatherTab(GatherTab):
                             color=(1.0, 0.6, 0.0),
                             position=(self._c_width * 0.5, v),
                             text=(
-                                classicassets.strings.gather
+                                _classicassets.strings.gather
                             ).free_cloud_server_not_available,
                         )
                     else:
@@ -865,18 +865,18 @@ class PrivateGatherTab(GatherTab):
             btnlabel = _commonassets.strings.status.one_moment
         else:
             if hostingstate.unavailable_error is not None:
-                btnlabel = classicassets.strings.gather.hosting_unavailable
+                btnlabel = _classicassets.strings.gather.hosting_unavailable
             elif hostingstate.party_code is None:
                 ticon = bui.charstr(bui.SpecialChar.TOKEN)
                 nowtokens = hostingstate.tokens_to_host_now
                 if nowtokens > 0 and not havegoldpass:
-                    btnlabel = classicassets.strings.gather.start_hosting_paid(
+                    btnlabel = _classicassets.strings.gather.start_hosting_paid(
                         cost=f'{ticon}{nowtokens}'
                     )
                 else:
-                    btnlabel = classicassets.strings.gather.start_hosting
+                    btnlabel = _classicassets.strings.gather.start_hosting
             else:
-                btnlabel = classicassets.strings.gather.stop_hosting
+                btnlabel = _classicassets.strings.gather.stop_hosting
 
         disabled = (
             hostingstate.unavailable_error is not None
@@ -913,7 +913,7 @@ class PrivateGatherTab(GatherTab):
     def _host_copy_press(self) -> None:
         assert self._hostingstate.party_code is not None
         bui.clipboard_set_text(self._hostingstate.party_code)
-        bui.screenmessage(classicassets.strings.gather.copy_code_confirm)
+        bui.screenmessage(_classicassets.strings.gather.copy_code_confirm)
 
     def _host_connect_press(self) -> None:
         assert self._hostingstate.party_code is not None
@@ -971,16 +971,16 @@ class PrivateGatherTab(GatherTab):
             return
 
         if plus.get_v1_account_state() != 'signed_in':
-            bui.screenmessage(classicassets.strings.account.not_signed_in)
-            builtinassets.audio.error.get().play()
+            bui.screenmessage(_classicassets.strings.account.not_signed_in)
+            _builtinassets.audio.error.get().play()
             self._refresh_sub_tab()
             return
 
         if self._hostingstate.unavailable_error is not None:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
-        builtinassets.audio.click01.get().play()
+        _builtinassets.audio.click01.get().play()
 
         # We need our v2 info for this.
         if self._v2state is None or self._v2state.datacode is None:
@@ -988,7 +988,7 @@ class PrivateGatherTab(GatherTab):
                 _commonassets.strings.status.unavailable_no_connection,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # If we're not hosting, start.
@@ -1003,7 +1003,7 @@ class PrivateGatherTab(GatherTab):
                     < self._hostingstate.tokens_to_host_now
                 ):
                     show_get_tokens_prompt()
-                    builtinassets.audio.error.get().play()
+                    _builtinassets.audio.error.get().play()
                     return
 
             self._last_action_send_time = time.time()
@@ -1029,7 +1029,7 @@ class PrivateGatherTab(GatherTab):
                 callback=bui.WeakCallPartial(self._hosting_state_response),
             )
             plus.run_v1_account_transactions()
-        builtinassets.audio.click01.get().play()
+        _builtinassets.audio.click01.get().play()
 
         self._waiting_for_start_stop_response = True
         self._refresh_sub_tab()
@@ -1044,7 +1044,7 @@ class PrivateGatherTab(GatherTab):
                 _gs.invalid_code_error,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         self._connect_to_party_code(code)
@@ -1063,7 +1063,7 @@ class PrivateGatherTab(GatherTab):
                     bui.translate_server_text(cresult.error),
                     (1, 0, 0),
                 )
-                builtinassets.audio.error.get().play()
+                _builtinassets.audio.error.get().play()
                 return
             self._debug_server_comm('got valid connect response')
             assert cresult.address4 is not None and cresult.port is not None
@@ -1075,7 +1075,7 @@ class PrivateGatherTab(GatherTab):
             bs.connect_to_party(cresult.address4, port=cresult.port)
         except Exception:
             self._debug_server_comm('got connect response error')
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
 
     @override
     def save_state(self) -> None:

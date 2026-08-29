@@ -6,7 +6,7 @@ import copy
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -54,7 +54,7 @@ class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(20, self._height - 54),
             size=(self._width, 25),
-            text=classicassets.strings.soundtrack.select_a_playlist,
+            text=_classicassets.strings.soundtrack.select_a_playlist,
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -75,7 +75,7 @@ class MacMusicAppPlaylistSelectWindow(bui.MainWindow):
         bui.textwidget(
             parent=self._column,
             size=(self._width - 80, 22),
-            text=classicassets.strings.soundtrack.fetching_itunes,
+            text=_classicassets.strings.soundtrack.fetching_itunes,
             color=(0.6, 0.9, 0.6, 1.0),
             scale=0.8,
         )

@@ -103,7 +103,7 @@ def init_campaigns() -> None:
     # (bauiv1 deferred alongside these: the ui feature-set is not a
     # dependency of ours, and level previews are the only thing here
     # that needs it.)
-    from bauiv1 import classicassets as uiclassicassets
+    from bauiv1 import _classicassets as uiclassicassets
 
     from bascenev1._level import Level
     from bascenev1lib.game.onslaught import OnslaughtGame

@@ -11,8 +11,8 @@ from efro.util import strict_partial, strip_exception_tracebacks
 import bacommon.classic
 import bacommon.legacydisplayitem as lditm
 import bauiv1 as bui
-from bauiv1 import builtinassets
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     import datetime
@@ -23,8 +23,8 @@ _g_open_voices: list[tuple[float, str, float]] = []
 
 
 def _stex(name: str) -> str:
-    """Qualified classicassets texture ref."""
-    return f'{classicassets.__asset_package__}:textures/{name}'
+    """Qualified _classicassets texture ref."""
+    return f'{_classicassets.__asset_package__}:textures/{name}'
 
 
 class ChestWindow(bui.MainWindow):
@@ -46,7 +46,7 @@ class ChestWindow(bui.MainWindow):
         self._uiopenstate = bui.UIOpenState(f'classicchest{index}')
 
         # Get this loading before we need it.
-        self._quote_bubble_tex = classicassets.textures.quote_bubble.get()
+        self._quote_bubble_tex = _classicassets.textures.quote_bubble.get()
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
@@ -129,7 +129,7 @@ class ChestWindow(bui.MainWindow):
                 self._yoffstop - (36 if uiscale is bui.UIScale.SMALL else 10),
             ),
             size=(0, 0),
-            text=classicassets.strings.chest.slot_number(num=str(index + 1)),
+            text=_classicassets.strings.chest.slot_number(num=str(index + 1)),
             color=bui.app.ui_v1.title_color,
             maxwidth=110.0 if uiscale is bui.UIScale.SMALL else 200,
             scale=0.9 if uiscale is bui.UIScale.SMALL else 1.1,
@@ -189,7 +189,7 @@ class ChestWindow(bui.MainWindow):
             return
 
         if plus.accounts.primary is None:
-            self._error(classicassets.strings.ui.not_signed_in_status)
+            self._error(_classicassets.strings.ui.not_signed_in_status)
             return
 
         # Start by showing info/options for our target chest. Note that
@@ -401,7 +401,7 @@ class ChestWindow(bui.MainWindow):
                     self._chest_yoffs + 27.0,
                 ),
                 size=(lsize, lsize),
-                texture=classicassets.textures.lock.get(),
+                texture=_classicassets.textures.lock.get(),
             )
 
         # Time string.
@@ -421,7 +421,7 @@ class ChestWindow(bui.MainWindow):
                 parent=self._root_widget,
                 position=(self._width * 0.5, self._yoffs - 85 + 18),
                 size=(0, 0),
-                text=classicassets.strings.chest.unlocks_in,
+                text=_classicassets.strings.chest.unlocks_in,
                 maxwidth=700,
                 scale=0.4,
                 color=(0.7, 0.65, 1, 0.55),
@@ -479,7 +479,7 @@ class ChestWindow(bui.MainWindow):
             self._open_now_texts.append(
                 bui.textwidget(
                     parent=self._root_widget,
-                    text=classicassets.strings.chest.open,
+                    text=_classicassets.strings.chest.open,
                     position=(
                         self._width * 0.5 + boffsx,
                         self._yoffs + bposy + bheight * 0.5,
@@ -497,7 +497,7 @@ class ChestWindow(bui.MainWindow):
             self._open_now_texts.append(
                 bui.textwidget(
                     parent=self._root_widget,
-                    text=classicassets.strings.chest.open_now,
+                    text=_classicassets.strings.chest.open_now,
                     position=(
                         self._width * 0.5 + boffsx,
                         self._yoffs + bposy + bheight * 1.15,
@@ -522,13 +522,13 @@ class ChestWindow(bui.MainWindow):
                             self._yoffs + bposy + bheight * 0.35,
                         ),
                         draw_controller=self._open_now_button,
-                        texture=classicassets.textures.coin.get(),
+                        texture=_classicassets.textures.coin.get(),
                     )
                 )
                 self._open_now_texts.append(
                     bui.textwidget(
                         parent=self._root_widget,
-                        text=classicassets.strings.get_tokens.num_tokens(
+                        text=_classicassets.strings.get_tokens.num_tokens(
                             count=chest.unlock_tokens
                         ),
                         position=(
@@ -556,7 +556,7 @@ class ChestWindow(bui.MainWindow):
         if show_ad_button:
             bui.textwidget(
                 parent=self._root_widget,
-                text=classicassets.strings.chest.reduce_wait,
+                text=_classicassets.strings.chest.reduce_wait,
                 position=(
                     self._width * 0.5 + hspace * 0.5 + bwidth * 0.5,
                     self._yoffs + bposy + bheight * 1.15,
@@ -593,13 +593,13 @@ class ChestWindow(bui.MainWindow):
                 ),
                 draw_controller=self._watch_ad_button,
                 color=(1.5, 1.0, 2.0),
-                texture=classicassets.textures.tv.get(),
+                texture=_classicassets.textures.tv.get(),
             )
             # Note to self: AdMob requires rewarded ad usage
             # specifically says 'Ad' in it.
             bui.textwidget(
                 parent=self._root_widget,
-                text=classicassets.strings.tournament_entry.watch_an_ad,
+                text=_classicassets.strings.tournament_entry.watch_an_ad,
                 position=(
                     self._width * 0.5 + hspace * 0.5 + bwidth * 0.5,
                     self._yoffs + bposy + bheight * 0.25,
@@ -652,7 +652,7 @@ class ChestWindow(bui.MainWindow):
                     position=(open_me_x, open_me_y - 40),
                     size=(0, 0),
                     text=_commonassets.strings.compose.star_prefix(
-                        text=builtinassets.strings.ui.open_me
+                        text=_builtinassets.strings.ui.open_me
                     ),
                     maxwidth=175,
                     scale=0.7,
@@ -668,7 +668,7 @@ class ChestWindow(bui.MainWindow):
                     parent=self._root_widget,
                     position=(open_me_x, open_me_y - 79),
                     size=(0, 0),
-                    text=classicassets.strings.chest.open_now_description,
+                    text=_classicassets.strings.chest.open_now_description,
                     maxwidth=175,
                     max_height=55,
                     scale=0.55,
@@ -682,7 +682,7 @@ class ChestWindow(bui.MainWindow):
             btn = bui.buttonwidget(
                 parent=self._root_widget,
                 position=(open_me_x - 70, open_me_y - 140),
-                label=classicassets.strings.chest.stop_reminding_me,
+                label=_classicassets.strings.chest.stop_reminding_me,
                 size=(140, 30),
                 textcolor=(0.0, 1.0, 0.7),
                 text_scale=0.5,
@@ -756,7 +756,7 @@ class ChestWindow(bui.MainWindow):
         # Title.
         bui.textwidget(
             parent=self._root_widget,
-            text=classicassets.strings.chest.prize_odds,
+            text=_classicassets.strings.chest.prize_odds,
             color=(0.7, 0.65, 1, 0.5),
             flatness=1.0,
             shadow=1.0,
@@ -878,28 +878,28 @@ class ChestWindow(bui.MainWindow):
     def _open_press(self, user_tokens: int, token_payment: int) -> None:
         from bauiv1lib.gettokens import show_get_tokens_prompt
 
-        builtinassets.audio.click01.get().play()
+        _builtinassets.audio.click01.get().play()
 
         # Allow only one in-flight action at once.
         if self._action_in_flight:
             bui.screenmessage(
                 _commonassets.strings.status.please_wait, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         plus = bui.app.plus
         assert plus is not None
 
         if plus.accounts.primary is None:
-            self._error(classicassets.strings.ui.not_signed_in_status)
+            self._error(_classicassets.strings.ui.not_signed_in_status)
             return
 
         # Offer to purchase tokens if they don't have enough.
         if user_tokens < token_payment:
             # Hack: We disable normal swish for the open button and it
             # seems weird without a swish here, so explicitly do one.
-            builtinassets.audio.swish.get().play()
+            _builtinassets.audio.swish.get().play()
             show_get_tokens_prompt(origin_widget=self._open_now_button)
             return
 
@@ -932,14 +932,14 @@ class ChestWindow(bui.MainWindow):
 
     def _watch_ad_press(self) -> None:
 
-        builtinassets.audio.click01.get().play()
+        _builtinassets.audio.click01.get().play()
 
         # Allow only one in-flight action at once.
         if self._action_in_flight:
             bui.screenmessage(
                 _commonassets.strings.status.please_wait, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         assert bui.app.plus is not None
@@ -975,14 +975,14 @@ class ChestWindow(bui.MainWindow):
             bui.screenmessage(
                 _commonassets.strings.status.please_wait, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         plus = bui.app.plus
         assert plus is not None
 
         if plus.accounts.primary is None:
-            self._error(classicassets.strings.ui.not_signed_in_status)
+            self._error(_classicassets.strings.ui.not_signed_in_status)
             return
 
         self._action_in_flight = True
@@ -1030,7 +1030,7 @@ class ChestWindow(bui.MainWindow):
         self._reset()
         bui.textwidget(
             edit=self._infotext,
-            text=classicassets.strings.chest.slot_description,
+            text=_classicassets.strings.chest.slot_description,
             color=(1, 1, 1),
         )
         # This is somewhat redundant with the close button, but we need
@@ -1059,7 +1059,7 @@ class ChestWindow(bui.MainWindow):
         tendoffs = tincr * 4.0
         toffs = 0.0
 
-        classicassets.audio.rev_up.get().play(volume=2.0)
+        _classicassets.audio.rev_up.get().play(volume=2.0)
 
         # Show nothing but the chest icon and animate it shaking.
         self._reset()
@@ -1111,7 +1111,7 @@ class ChestWindow(bui.MainWindow):
         xoffs = -0.5 * (len(response.contents) - 1) * xspacing
         bui.apptimer(
             toffs - 0.2,
-            lambda: classicassets.audio.cork_pop2.get().play(volume=4.0),
+            lambda: _classicassets.audio.cork_pop2.get().play(volume=4.0),
         )
         # Play a variety of voice sounds.
 
@@ -1150,7 +1150,7 @@ class ChestWindow(bui.MainWindow):
         for item in response.contents:
             toffs += tincr
             bui.apptimer(
-                toffs - 0.1, builtinassets.audio.cash_register.get().play
+                toffs - 0.1, _builtinassets.audio.cash_register.get().play
             )
             bui.apptimer(
                 toffs,
@@ -1209,7 +1209,7 @@ class ChestWindow(bui.MainWindow):
 
         self._reset()
         imgsize = 145
-        classicassets.audio.hiss.get().play()
+        _classicassets.audio.hiss.get().play()
         assert self._chestdisplayinfo is not None
         img = bui.imagewidget(
             parent=self._root_widget,

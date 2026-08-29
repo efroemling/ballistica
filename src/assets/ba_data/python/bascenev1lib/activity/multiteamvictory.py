@@ -5,7 +5,7 @@
 from typing import override, TYPE_CHECKING, Any, cast
 
 import bascenev1 as bs
-from bascenev1 import _commonassets, classicassets
+from bascenev1 import _commonassets, _classicassets
 
 from bascenev1lib.activity.multiteamscore import MultiTeamScoreScreenActivity
 
@@ -44,9 +44,9 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         )
         assert bs.app.classic is not None
         if bs.app.ui_v1.uiscale is bs.UIScale.LARGE:
-            sval = classicassets.strings.game.press_any_key_button_play_again
+            sval = _classicassets.strings.game.press_any_key_button_play_again
         else:
-            sval = classicassets.strings.game.press_any_button_play_again
+            sval = _classicassets.strings.game.press_any_button_play_again
         self._show_up_next = False
         self._custom_continue_message = sval
         super().on_begin()
@@ -104,7 +104,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         if self._is_ffa:
             assert isinstance(session, bs.FreeForAllSession)
             txt = _commonassets.strings.compose.heading_suffix(
-                main=classicassets.strings.multi_team.first_to_final(
+                main=_classicassets.strings.multi_team.first_to_final(
                     count=str(session.get_ffa_series_length())
                 )
             )
@@ -118,13 +118,13 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             #  with a wording that works everywhere.
             if always_use_first_to:
                 txt = _commonassets.strings.compose.heading_suffix(
-                    main=classicassets.strings.multi_team.first_to_final(
+                    main=_classicassets.strings.multi_team.first_to_final(
                         count=str(session.get_series_length() / 2 + 1)
                     )
                 )
             else:
                 txt = _commonassets.strings.compose.heading_suffix(
-                    main=classicassets.strings.multi_team.best_of_final(
+                    main=_classicassets.strings.multi_team.best_of_final(
                         count=str(session.get_series_length())
                     )
                 )
@@ -150,7 +150,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
 
         if not self._is_ffa:
             Text(
-                classicassets.strings.multi_team.games_to(
+                _classicassets.strings.multi_team.games_to(
                     wincount=str(win_score), losecount=str(lose_score)
                 ),
                 color=(0.5, 0.5, 0.5, 1.0),
@@ -181,7 +181,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                     break
             if mvp is not None:
                 Text(
-                    classicassets.strings.multi_team.most_valuable_player,
+                    _classicassets.strings.multi_team.most_valuable_player,
                     color=(0.5, 0.5, 0.5, 1.0),
                     v_align=Text.VAlign.CENTER,
                     maxwidth=300,
@@ -222,7 +222,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 most_kills = entry[2].kill_count
         if mvp is not None:
             Text(
-                classicassets.strings.multi_team.most_violent_player,
+                _classicassets.strings.multi_team.most_violent_player,
                 color=(0.5, 0.5, 0.5, 1.0),
                 v_align=Text.VAlign.CENTER,
                 maxwidth=300,
@@ -233,7 +233,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             Text(
                 _commonassets.strings.compose.parenthesized(
-                    note=classicassets.strings.multi_team.kills_tally(
+                    note=_classicassets.strings.multi_team.kills_tally(
                         count=str(most_kills)
                     )
                 ),
@@ -276,7 +276,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
                 most_killed = entry[2].killed_count
         if mkp is not None:
             Text(
-                classicassets.strings.multi_team.most_destroyed_player,
+                _classicassets.strings.multi_team.most_destroyed_player,
                 color=(0.5, 0.5, 0.5, 1.0),
                 v_align=Text.VAlign.CENTER,
                 maxwidth=300,
@@ -287,7 +287,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             ).autoretain()
             Text(
                 _commonassets.strings.compose.parenthesized(
-                    note=classicassets.strings.multi_team.deaths_tally(
+                    note=_classicassets.strings.multi_team.deaths_tally(
                         count=str(most_killed)
                     )
                 ),
@@ -322,7 +322,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         # Now show individual scores.
         tdelay = tval
         Text(
-            classicassets.strings.game.final_scores,
+            _classicassets.strings.game.final_scores,
             color=(0.5, 0.5, 0.5, 1.0),
             position=(ts_h_offs, ts_height / 2),
             transition=Text.Transition.IN_RIGHT,
@@ -437,7 +437,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
         # here purely because translation coverage differed
         # between them; the opening phrase itself is identical, so
         # the ported entry is shared.
-        wins_text = classicassets.strings.multi_team.wins_the_series_intro
+        wins_text = _classicassets.strings.multi_team.wins_the_series_intro
 
         ZoomText(
             wins_text,
@@ -448,7 +448,7 @@ class TeamSeriesVictoryScoreScreenActivity(MultiTeamScoreScreenActivity):
             maxwidth=250,
         ).autoretain()
         ZoomText(
-            classicassets.strings.multi_team.series,
+            _classicassets.strings.multi_team.series,
             position=(0, -110 + offs_v),
             scale=1.0 * s_extra,
             color=team.color,

@@ -23,8 +23,8 @@ from bauiv1lib.utils import (
     scroll_fade_top,
 )
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
     import datetime
@@ -267,7 +267,7 @@ class _ExpireTimeSection(_Section):
         val: bui.LangStr
         if now < self.time:
             color = (1.0, 1.0, 1.0, 0.3)
-            val = classicassets.strings.inbox.expires_in(
+            val = _classicassets.strings.inbox.expires_in(
                 t=bui.timestring(
                     (self.time - now).total_seconds(),
                     centi=False,
@@ -276,7 +276,7 @@ class _ExpireTimeSection(_Section):
             )
         else:
             color = (1.0, 0.3, 0.3, 0.5)
-            val = classicassets.strings.inbox.expired_ago(
+            val = _classicassets.strings.inbox.expired_ago(
                 t=bui.timestring(
                     (now - self.time).total_seconds(),
                     centi=False,
@@ -534,7 +534,7 @@ class InboxWindow(bui.MainWindow):
             h_align='center',
             v_align='center',
             scale=0.6 if uiscale is bui.UIScale.SMALL else 0.8,
-            text=classicassets.strings.ui.inbox,
+            text=_classicassets.strings.ui.inbox,
             maxwidth=200,
             color=bui.app.ui_v1.title_color,
         )
@@ -542,7 +542,7 @@ class InboxWindow(bui.MainWindow):
         # Kick off request.
         plus = bui.app.plus
         if plus is None or plus.accounts.primary is None:
-            self._error(classicassets.strings.ui.not_signed_in_status)
+            self._error(_classicassets.strings.ui.not_signed_in_status)
             return
 
         bui.app.create_async_task(
@@ -581,7 +581,7 @@ class InboxWindow(bui.MainWindow):
         if display is None:
             return
 
-        builtinassets.audio.click01.get().play()
+        _builtinassets.audio.click01.get().play()
 
         self._neuter_entry_display(display)
 
@@ -596,9 +596,9 @@ class InboxWindow(bui.MainWindow):
         plus = bui.app.plus
         if plus is None or plus.accounts.primary is None:
             bui.screenmessage(
-                classicassets.strings.ui.not_signed_in_status, color=(1, 0, 0)
+                _classicassets.strings.ui.not_signed_in_status, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # Pause the root ui so stuff like token counts don't change
@@ -643,7 +643,7 @@ class InboxWindow(bui.MainWindow):
         self.main_window_back()
 
     def _neuter_entry_display(self, entry: _EntryDisplay) -> None:
-        errsound = builtinassets.audio.error.get()
+        errsound = _builtinassets.audio.error.get()
         if entry.button_positive is not None:
             bui.buttonwidget(
                 edit=entry.button_positive,
@@ -727,7 +727,7 @@ class InboxWindow(bui.MainWindow):
         # Show error message if so.
         if error_message is not None:
             bui.screenmessage(error_message, color=(1, 0, 0))
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             if button is not None:
                 bui.buttonwidget(
                     edit=button, label=_commonassets.strings.values.error
@@ -793,7 +793,7 @@ class InboxWindow(bui.MainWindow):
             bui.textwidget(
                 edit=self._infotext,
                 color=(0.4, 0.4, 0.5),
-                text=classicassets.strings.inbox.no_messages,
+                text=_classicassets.strings.inbox.no_messages,
             )
             return
 
@@ -920,7 +920,7 @@ class InboxWindow(bui.MainWindow):
                                     levelname
                                 ).displayname_langstr,
                                 second=(
-                                    classicassets.strings.coop
+                                    _classicassets.strings.coop
                                 ).player_count_abbreviated(
                                     count=str(component.players)
                                 ),
@@ -990,7 +990,7 @@ class InboxWindow(bui.MainWindow):
 
                         section = _ButtonSection(
                             sub_width=sub_width,
-                            label=classicassets.strings.inbox.final_standings,
+                            label=_classicassets.strings.inbox.final_standings,
                             color=color,
                             call=partial(
                                 _do_tourney_scores, component.tournament_id
@@ -1005,7 +1005,7 @@ class InboxWindow(bui.MainWindow):
                         if component.prizes:
                             section = _TextSection(
                                 sub_width=sub_width,
-                                text=classicassets.strings.inbox.your_prize,
+                                text=_classicassets.strings.inbox.your_prize,
                                 spacing_top=6,
                                 color=(1.0, 1.0, 1.0, 0.4),
                                 scale=0.35,
@@ -1051,7 +1051,7 @@ class InboxWindow(bui.MainWindow):
 
                 section = _TextSection(
                     sub_width=sub_width,
-                    text=classicassets.strings.inbox.must_update,
+                    text=_classicassets.strings.inbox.must_update,
                 )
                 total_height += section.get_height()
                 sections.append(section)
@@ -1089,7 +1089,7 @@ class InboxWindow(bui.MainWindow):
             claims_up_down=True,
         )
 
-        backing_tex = builtinassets.textures.button_square_wide.get()
+        backing_tex = _builtinassets.textures.button_square_wide.get()
 
         assert bui.app.classic is not None
 

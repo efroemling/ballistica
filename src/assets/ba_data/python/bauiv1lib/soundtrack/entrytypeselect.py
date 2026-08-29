@@ -6,7 +6,7 @@ import copy
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -86,7 +86,7 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 32),
             size=(0, 0),
-            text=classicassets.strings.soundtrack.music_source,
+            text=_classicassets.strings.soundtrack.music_source,
             color=bui.app.ui_v1.title_color,
             maxwidth=230,
             h_align='center',
@@ -114,7 +114,7 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
                 parent=self._root_widget,
                 size=(self._width - 100, 60),
                 position=(50, v),
-                label=classicassets.strings.soundtrack.use_default_game_music,
+                label=_classicassets.strings.soundtrack.use_default_game_music,
                 on_activate_call=self._on_default_press,
             )
             if current_entry_type == 'default':
@@ -126,7 +126,7 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
                 parent=self._root_widget,
                 size=(self._width - 100, 60),
                 position=(50, v),
-                label=classicassets.strings.soundtrack.use_itunes_playlist,
+                label=_classicassets.strings.soundtrack.use_itunes_playlist,
                 on_activate_call=self._on_mac_music_app_playlist_press,
                 icon=None,
             )
@@ -139,9 +139,9 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
                 parent=self._root_widget,
                 size=(self._width - 100, 60),
                 position=(50, v),
-                label=classicassets.strings.soundtrack.use_music_file,
+                label=_classicassets.strings.soundtrack.use_music_file,
                 on_activate_call=self._on_music_file_press,
-                icon=classicassets.textures.file.get(),
+                icon=_classicassets.textures.file.get(),
             )
             if current_entry_type == 'musicFile':
                 bui.containerwidget(edit=self._root_widget, selected_child=btn)
@@ -152,9 +152,9 @@ class SoundtrackEntryTypeSelectWindow(bui.MainWindow):
                 parent=self._root_widget,
                 size=(self._width - 100, 60),
                 position=(50, v),
-                label=classicassets.strings.soundtrack.use_music_folder,
+                label=_classicassets.strings.soundtrack.use_music_folder,
                 on_activate_call=self._on_music_folder_press,
-                icon=classicassets.textures.folder.get(),
+                icon=_classicassets.textures.folder.get(),
                 icon_color=(1.1, 0.8, 0.2),
             )
             if current_entry_type == 'musicFolder':

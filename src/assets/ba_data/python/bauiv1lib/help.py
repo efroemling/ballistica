@@ -7,8 +7,8 @@ from typing import override
 import random
 
 import bauiv1 as bui
-from bauiv1 import classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _classicassets
+from bauiv1 import _builtinassets
 
 from bauiv1lib.utils import get_screen_margins
 
@@ -190,8 +190,8 @@ class HelpWindow(bui.MainWindow):
                 else (width * 0.5, yoffs - 25)
             ),
             size=(0, 0),
-            text=classicassets.strings.help.title(
-                app_name=classicassets.strings.ui.app_name
+            text=_classicassets.strings.help.title(
+                app_name=_classicassets.strings.ui.app_name
             ),
             scale=0.9,
             maxwidth=scroll_width * 0.7,
@@ -207,14 +207,14 @@ class HelpWindow(bui.MainWindow):
         if uiscale is bui.UIScale.SMALL:
             v -= inline_title_height
 
-        logo_tex = classicassets.textures.logo.get()
+        logo_tex = _classicassets.textures.logo.get()
         icon_buffer = 1.1
         header = (0.7, 1.0, 0.7, 1.0)
         header2 = (0.8, 0.8, 1.0, 1.0)
         paragraph = (0.8, 0.8, 1.0, 1.0)
 
-        txt = classicassets.strings.help.welcome(
-            app_name=classicassets.strings.ui.app_name
+        txt = _classicassets.strings.help.welcome(
+            app_name=_classicassets.strings.ui.app_name
         ).evaluate()
         txt_scale = 1.4
         txt_maxwidth = 480
@@ -253,7 +253,7 @@ class HelpWindow(bui.MainWindow):
         assert app.classic is not None
 
         v -= spacing * 50.0
-        txt = classicassets.strings.help.some_days.evaluate()
+        txt = _classicassets.strings.help.some_days.evaluate()
         bui.textwidget(
             parent=self._subcontainer,
             position=(h, v),
@@ -269,7 +269,7 @@ class HelpWindow(bui.MainWindow):
         # (+ someDaysExtraSpace, English value 0; see followups.md)
         v -= spacing * 25.0
         txt_scale = 0.66
-        txt = classicassets.strings.help.or_punching_something.evaluate()
+        txt = _classicassets.strings.help.or_punching_something.evaluate()
         bui.textwidget(
             parent=self._subcontainer,
             position=(h, v),
@@ -285,8 +285,8 @@ class HelpWindow(bui.MainWindow):
         # (+ orPunchingSomethingExtraSpace, English value 0; see followups.md)
         v -= spacing * 27.0
         txt_scale = 1.0
-        txt = classicassets.strings.help.can_help(
-            app_name=classicassets.strings.ui.app_name
+        txt = _classicassets.strings.help.can_help(
+            app_name=_classicassets.strings.ui.app_name
         ).evaluate()
         bui.textwidget(
             parent=self._subcontainer,
@@ -302,7 +302,7 @@ class HelpWindow(bui.MainWindow):
 
         v -= spacing * 70.0
         txt_scale = 1.0
-        txt = classicassets.strings.help.to_get_the_most.evaluate()
+        txt = _classicassets.strings.help.to_get_the_most.evaluate()
         bui.textwidget(
             parent=self._subcontainer,
             position=(h, v),
@@ -320,7 +320,7 @@ class HelpWindow(bui.MainWindow):
 
         v -= spacing * 40.0
         txt_scale = 0.74
-        txt = classicassets.strings.help.friends.evaluate()
+        txt = _classicassets.strings.help.friends.evaluate()
         hval2 = h - 220
         bui.textwidget(
             parent=self._subcontainer,
@@ -335,8 +335,8 @@ class HelpWindow(bui.MainWindow):
             flatness=1.0,
         )
 
-        txt = classicassets.strings.help.friends_good(
-            app_name=classicassets.strings.ui.app_name
+        txt = _classicassets.strings.help.friends_good(
+            app_name=_classicassets.strings.ui.app_name
         ).evaluate()
         txt_scale = 0.7
         bui.textwidget(
@@ -355,9 +355,9 @@ class HelpWindow(bui.MainWindow):
 
         v -= spacing * 45.0
         txt = (
-            classicassets.strings.help.devices.evaluate()
+            _classicassets.strings.help.devices.evaluate()
             if app.env.vr
-            else classicassets.strings.help.controllers.evaluate()
+            else _classicassets.strings.help.controllers.evaluate()
         )
         txt_scale = 0.74
         hval2 = h - 220
@@ -376,13 +376,13 @@ class HelpWindow(bui.MainWindow):
 
         txt_scale = 0.7
         if not app.env.vr:
-            txt = classicassets.strings.help.controllers_info(
-                app_name=classicassets.strings.ui.app_name,
-                remote_app_name=classicassets.strings.ui.remote_app_name,
+            txt = _classicassets.strings.help.controllers_info(
+                app_name=_classicassets.strings.ui.app_name,
+                remote_app_name=_classicassets.strings.ui.remote_app_name,
             ).evaluate()
         else:
-            txt = classicassets.strings.help.devices_info(
-                app_name=classicassets.strings.ui.app_name
+            txt = _classicassets.strings.help.devices_info(
+                app_name=_classicassets.strings.ui.app_name
             ).evaluate()
 
         bui.textwidget(
@@ -402,7 +402,7 @@ class HelpWindow(bui.MainWindow):
 
         h = baseh + 30
 
-        txt = classicassets.strings.help.controls.evaluate()
+        txt = _classicassets.strings.help.controls.evaluate()
         txt_scale = 1.4
         txt_maxwidth = 480
         bui.textwidget(
@@ -440,8 +440,8 @@ class HelpWindow(bui.MainWindow):
         h = baseh
 
         txt_scale = 0.7
-        txt = classicassets.strings.help.controls_subtitle(
-            app_name=classicassets.strings.ui.app_name
+        txt = _classicassets.strings.help.controls_subtitle(
+            app_name=_classicassets.strings.ui.app_name
         ).evaluate()
         bui.textwidget(
             parent=self._subcontainer,
@@ -467,7 +467,7 @@ class HelpWindow(bui.MainWindow):
             label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
-            texture=classicassets.textures.button_punch.get(),
+            texture=_classicassets.textures.button_punch.get(),
             color=(1, 0.7, 0.3),
             selectable=False,
             enable_sound=False,
@@ -477,7 +477,7 @@ class HelpWindow(bui.MainWindow):
         )
 
         txt_scale = 0.6  # punchInfoTextScale (English value; see followups.md)
-        txt = classicassets.strings.help.punch_info.evaluate()
+        txt = _classicassets.strings.help.punch_info.evaluate()
         bui.textwidget(
             parent=self._subcontainer,
             position=(h - sep - 185 + 70, v + 120),
@@ -497,7 +497,7 @@ class HelpWindow(bui.MainWindow):
             label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
-            texture=classicassets.textures.button_bomb.get(),
+            texture=_classicassets.textures.button_bomb.get(),
             color=(1, 0.3, 0.3),
             selectable=False,
             enable_sound=False,
@@ -506,7 +506,7 @@ class HelpWindow(bui.MainWindow):
             ),
         )
 
-        txt = classicassets.strings.help.bomb_info.evaluate()
+        txt = _classicassets.strings.help.bomb_info.evaluate()
         txt_scale = 0.6  # bombInfoTextScale (English value; see followups.md)
         bui.textwidget(
             parent=self._subcontainer,
@@ -528,7 +528,7 @@ class HelpWindow(bui.MainWindow):
             label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
-            texture=classicassets.textures.button_pick_up.get(),
+            texture=_classicassets.textures.button_pick_up.get(),
             color=(0.5, 0.5, 1),
             selectable=False,
             enable_sound=False,
@@ -537,7 +537,7 @@ class HelpWindow(bui.MainWindow):
             ),
         )
 
-        txtl: bui.Lstr | bui.LangStr = classicassets.strings.help.pick_up_info
+        txtl: bui.Lstr | bui.LangStr = _classicassets.strings.help.pick_up_info
         txt_scale = 0.6  # pickUpInfoTextScale (English value; see followups.md)
         bui.textwidget(
             parent=self._subcontainer,
@@ -558,7 +558,7 @@ class HelpWindow(bui.MainWindow):
             label='',
             size=(icon_size, icon_size),
             position=(hval2 - 0.5 * icon_size, vval2 - 0.5 * icon_size),
-            texture=classicassets.textures.button_jump.get(),
+            texture=_classicassets.textures.button_jump.get(),
             color=(0.4, 1, 0.4),
             selectable=False,
             enable_sound=False,
@@ -567,7 +567,7 @@ class HelpWindow(bui.MainWindow):
             ),
         )
 
-        txt = classicassets.strings.help.jump_info.evaluate()
+        txt = _classicassets.strings.help.jump_info.evaluate()
         txt_scale = 0.6  # jumpInfoTextScale (English value; see followups.md)
         bui.textwidget(
             parent=self._subcontainer,
@@ -581,7 +581,7 @@ class HelpWindow(bui.MainWindow):
             v_align='top',
         )
 
-        txt = classicassets.strings.help.run_info.evaluate()
+        txt = _classicassets.strings.help.run_info.evaluate()
         txt_scale = 0.6  # runInfoTextScale (English value; see followups.md)
         bui.textwidget(
             parent=self._subcontainer,
@@ -600,7 +600,7 @@ class HelpWindow(bui.MainWindow):
 
         h = baseh + 30
 
-        txt = classicassets.strings.help.powerups.evaluate()
+        txt = _classicassets.strings.help.powerups.evaluate()
         txt_scale = 1.4
         txt_maxwidth = 480
         bui.textwidget(
@@ -636,7 +636,7 @@ class HelpWindow(bui.MainWindow):
         v -= spacing * 50.0
         # powerupsSubtitleTextScale (English value; see followups.md)
         txt_scale = 0.8
-        txt = classicassets.strings.help.powerups_subtitle.evaluate()
+        txt = _classicassets.strings.help.powerups_subtitle.evaluate()
         bui.textwidget(
             parent=self._subcontainer,
             position=(h, v),
@@ -664,10 +664,10 @@ class HelpWindow(bui.MainWindow):
         t_big = 1.1
         t_small = 0.65
 
-        shadow_tex = builtinassets.textures.shadow_sharp.get()
+        shadow_tex = _builtinassets.textures.shadow_sharp.get()
 
-        hstrs = classicassets.strings.help
-        htex = classicassets.textures
+        hstrs = _classicassets.strings.help
+        htex = _classicassets.textures
         for name, desc, tex in [
             (
                 hstrs.powerup_punch_name,

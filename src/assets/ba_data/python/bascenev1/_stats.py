@@ -134,7 +134,7 @@ class PlayerRecord:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         self._multi_kill_count += 1
         stats = self._stats()
@@ -148,35 +148,35 @@ class PlayerRecord:
             sound = None
         elif self._multi_kill_count == 2:
             score = 20
-            name = classicassets.strings.game.double_kill
+            name = _classicassets.strings.game.double_kill
             color = (0.1, 1.0, 0.0, 1)
             scale = 1.0
             delay = 0.0
             sound = stats.orchestrahitsound1
         elif self._multi_kill_count == 3:
             score = 40
-            name = classicassets.strings.game.triple_kill
+            name = _classicassets.strings.game.triple_kill
             color = (1.0, 0.7, 0.0, 1)
             scale = 1.1
             delay = 0.3
             sound = stats.orchestrahitsound2
         elif self._multi_kill_count == 4:
             score = 60
-            name = classicassets.strings.game.quad_kill
+            name = _classicassets.strings.game.quad_kill
             color = (1.0, 1.0, 0.0, 1)
             scale = 1.2
             delay = 0.6
             sound = stats.orchestrahitsound3
         elif self._multi_kill_count == 5:
             score = 80
-            name = classicassets.strings.game.five_kill
+            name = _classicassets.strings.game.five_kill
             color = (1.0, 0.5, 0.0, 1)
             scale = 1.3
             delay = 0.9
             sound = stats.orchestrahitsound4
         else:
             score = 100
-            name = classicassets.strings.game.multi_kill(
+            name = _classicassets.strings.game.multi_kill(
                 count=self._multi_kill_count
             )
             color = (1.0, 0.5, 0.0, 1)
@@ -216,7 +216,7 @@ class PlayerRecord:
             activity = self.getactivity()
             if activity is not None:
                 popupval: babase.LangStr = (
-                    classicassets.strings.game.points_gained_titled(
+                    _classicassets.strings.game.points_gained_titled(
                         points=str(score2), title=name2
                     )
                     if showpoints2
@@ -288,12 +288,12 @@ class Stats:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
-        self.orchestrahitsound1 = classicassets.audio.orchestra_hit.get()
-        self.orchestrahitsound2 = classicassets.audio.orchestra_hit2.get()
-        self.orchestrahitsound3 = classicassets.audio.orchestra_hit3.get()
-        self.orchestrahitsound4 = classicassets.audio.orchestra_hit4.get()
+        self.orchestrahitsound1 = _classicassets.audio.orchestra_hit.get()
+        self.orchestrahitsound2 = _classicassets.audio.orchestra_hit2.get()
+        self.orchestrahitsound3 = _classicassets.audio.orchestra_hit3.get()
+        self.orchestrahitsound4 = _classicassets.audio.orchestra_hit4.get()
 
     def reset(self) -> None:
         """Reset the stats instance completely."""
@@ -366,7 +366,7 @@ class Stats:
         # pylint: disable=too-many-locals
         from bascenev1lib.actor.popuptext import PopupText
 
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
         from bascenev1._gameactivity import GameActivity
 
         del victim_player  # Currently unused.
@@ -392,7 +392,7 @@ class Stats:
                 if isinstance(activity, GameActivity):
                     name_full = player.getname(full=True, icon=False)
                     activity.show_zoom_message(
-                        classicassets.strings.game.name_scores(name=name_full),
+                        _classicassets.strings.game.name_scores(name=name_full),
                         color=babase.normalized_color(player.team.color),
                     )
             except Exception:
@@ -424,11 +424,11 @@ class Stats:
                             subs=[('${A}', str(points)), ('${B}', title)],
                         )
                     elif title is not None:
-                        sval = classicassets.strings.game.points_gained_titled(
+                        sval = _classicassets.strings.game.points_gained_titled(
                             points=str(points), title=title
                         )
                     else:
-                        sval = classicassets.strings.game.points_gained(
+                        sval = _classicassets.strings.game.points_gained(
                             points=str(points)
                         )
                     PopupText(
@@ -447,7 +447,7 @@ class Stats:
         try:
             if screenmessage and not kill:
                 _bascenev1.broadcastmessage(
-                    classicassets.strings.game.name_scores(name=name),
+                    _classicassets.strings.game.name_scores(name=name),
                     top=True,
                     color=player.color,
                     image=player.get_icon(),
@@ -476,7 +476,7 @@ class Stats:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         name = player.getname()
         prec = self._player_records[name]
@@ -488,7 +488,7 @@ class Stats:
             if killed and _bascenev1.getactivity().announce_player_deaths:
                 if killer is player:
                     _bascenev1.broadcastmessage(
-                        classicassets.strings.game.name_suicide(name=name),
+                        _classicassets.strings.game.name_suicide(name=name),
                         top=True,
                         color=player.color,
                         image=player.get_icon(),
@@ -496,7 +496,7 @@ class Stats:
                 elif killer is not None:
                     if killer.team is player.team:
                         _bascenev1.broadcastmessage(
-                            classicassets.strings.game.name_betrayed(
+                            _classicassets.strings.game.name_betrayed(
                                 name=killer.getname(), victim=name
                             ),
                             top=True,
@@ -505,7 +505,7 @@ class Stats:
                         )
                     else:
                         _bascenev1.broadcastmessage(
-                            classicassets.strings.game.name_killed(
+                            _classicassets.strings.game.name_killed(
                                 name=killer.getname(), victim=name
                             ),
                             top=True,
@@ -514,7 +514,7 @@ class Stats:
                         )
                 else:
                     _bascenev1.broadcastmessage(
-                        classicassets.strings.game.name_died(name=name),
+                        _classicassets.strings.game.name_died(name=name),
                         top=True,
                         color=player.color,
                         image=player.get_icon(),

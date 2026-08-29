@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, overload
 from bacommon.assetspec import TextureSpec
 import babase
 import bascenev1 as bs
-from bascenev1 import classicassets
+from bascenev1 import _classicassets
 
 if TYPE_CHECKING:
     from typing import Literal
@@ -29,7 +29,7 @@ def _character_name_table() -> dict[str, babase.LangStr]:
     Alien/Gladiator/Robot/Warrior/Witch/Wrestler -- show their own
     name untranslated.
     """
-    c = classicassets.strings.characters
+    c = _classicassets.strings.characters
     return {
         'Kronk': c.kronk,
         'Zoe': c.zoe,
@@ -178,7 +178,7 @@ def get_appearances(
 
 
 #: An appearance's texture field. Prefer a handle off an
-#: asset-package wrapper (``classicassets.textures.zoe_icon``); the bare
+#: asset-package wrapper (``_classicassets.textures.zoe_icon``); the bare
 #: ``str`` form is the legacy asset name, kept so existing mods keep
 #: working, and goes away when api 9 support ends.
 type TexVal = str | bs.TextureHandle
@@ -254,7 +254,7 @@ def texture_spec(val: TexVal) -> TextureSpec:
     qualified = babase.resolve_legacy_asset_name(val, 'textures')
     apverid, sep, name = qualified.partition(':')
     if not sep or not name:
-        return classicassets.textures.neo_spaz_icon
+        return _classicassets.textures.neo_spaz_icon
     return TextureSpec(apverid, name)
 
 
@@ -302,9 +302,9 @@ def register_appearances() -> None:
 
     # Shorthands for the wrapper groups; these blocks are almost
     # entirely asset assignments and the full paths drown them out.
-    tex = classicassets.textures
-    mesh = classicassets.meshes
-    snd = classicassets.audio
+    tex = _classicassets.textures
+    mesh = _classicassets.meshes
+    snd = _classicassets.audio
 
     # Spaz #######################################
     a = Appearance('Spaz')

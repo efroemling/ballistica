@@ -598,8 +598,8 @@ def check_asset_name_compat(self: ProjectUpdater) -> None:
 
     wrapper_dir = projroot / 'src/assets/ba_data/python/bascenev1'
     wrapper_for_key = {
-        'builtinassets': wrapper_dir / 'builtinassets.py',
-        'classicassets': wrapper_dir / 'classicassets.py',
+        'builtinassets': wrapper_dir / '_builtinassets.py',
+        'classicassets': wrapper_dir / '_classicassets.py',
     }
     paths_for_key = {
         key: _wrapper_logical_paths(path)

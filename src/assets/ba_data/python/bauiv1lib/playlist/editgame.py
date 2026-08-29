@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, cast, override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -62,7 +62,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
 
         valid_maps = gametype.get_supported_maps(sessiontype)
         if not valid_maps:
-            bui.screenmessage(classicassets.strings.playlist.no_valid_maps)
+            bui.screenmessage(_classicassets.strings.playlist.no_valid_maps)
             raise RuntimeError('No valid maps found.')
 
         self._config = config
@@ -164,7 +164,7 @@ class PlaylistEditGameWindow(bui.MainWindow):
             scale=0.75,
             text_scale=1.3,
             label=(
-                classicassets.strings.playlist.add_game_title
+                _classicassets.strings.playlist.add_game_title
                 if is_add
                 else _commonassets.strings.actions.apply
             ),
@@ -229,21 +229,21 @@ class PlaylistEditGameWindow(bui.MainWindow):
             position=(h + 49, v - 63),
             size=(100, 30),
             maxwidth=110,
-            text=classicassets.strings.ui.map,
+            text=_classicassets.strings.ui.map,
             h_align='left',
             color=(0.8, 0.8, 0.8, 1.0),
             v_align='center',
         )
 
-        mesh_trans = classicassets.meshes.level_select_button_transparent.get()
+        mesh_trans = _classicassets.meshes.level_select_button_transparent.get()
         bui.imagewidget(
             parent=self._subcontainer,
             size=(256 * 0.7, 125 * 0.7),
             position=(h + 261 - 128 + 128.0 * 0.56, v - 90),
             texture=map_tex,
-            mesh_opaque=classicassets.meshes.level_select_button_opaque.get(),
+            mesh_opaque=_classicassets.meshes.level_select_button_opaque.get(),
             mesh_transparent=mesh_trans,
-            mask_texture=classicassets.textures.map_preview_mask.get(),
+            mask_texture=_classicassets.textures.map_preview_mask.get(),
         )
         map_button = btn = bui.buttonwidget(
             parent=self._subcontainer,
@@ -663,7 +663,7 @@ def _setting_name_table() -> dict[str, bui.LangStr]:
     names (durations, Short/Normal/Long), so they must each read
     correctly standing alone.
     """
-    s = classicassets.strings.game_settings
+    s = _classicassets.strings.game_settings
     return {
         '1 Second': s.one_second,
         '2 Seconds': s.two_seconds,

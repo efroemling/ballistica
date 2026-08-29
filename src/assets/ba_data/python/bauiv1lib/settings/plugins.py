@@ -6,8 +6,8 @@ from enum import Enum
 from typing import TYPE_CHECKING, assert_never, override
 
 import bauiv1 as bui
-from bauiv1 import builtinassets
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import _commonassets, _classicassets
 
 from bauiv1lib import popup
 from bauiv1lib.utils import get_screen_margins, scroll_fade_top
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     pass
 
 
-_plgstrs = classicassets.strings.settings.plugins
+_plgstrs = _classicassets.strings.settings.plugins
 
 
 class Category(Enum):
@@ -269,7 +269,7 @@ class PluginWindow(bui.MainWindow):
             position=(settings_button_x + 3, button_row_yoffs - 57),
             draw_controller=self._settings_button,
             size=(35, 35),
-            texture=classicassets.textures.settings_icon.get(),
+            texture=_classicassets.textures.settings_icon.get(),
         )
         bui.widget(edit=gearimg, depth_range=(0.95, 1.0))
 
@@ -294,7 +294,7 @@ class PluginWindow(bui.MainWindow):
             bui.screenmessage(
                 'Still scanning plugins; please try again.', color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
         plugspecs = bui.app.plugins.plugin_specs
         plugstates: dict[str, dict] = bui.app.config.get('Plugins', {})
         assert isinstance(plugstates, dict)
@@ -494,7 +494,7 @@ class PluginWindow(bui.MainWindow):
                 button = bui.buttonwidget(
                     parent=self._subcontainer,
                     id=f'{self.main_window_id_prefix}|settings.{classpath}',
-                    label=classicassets.strings.settings.title,
+                    label=_classicassets.strings.settings.title,
                     autoselect=True,
                     size=(100, 40),
                     position=(

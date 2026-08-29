@@ -8,13 +8,13 @@ from typing import override
 # `babase` only works if something else happened to import it first.
 import babase.modutils
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
 from bauiv1lib.confirm import ConfirmWindow
 from bauiv1lib.config import ConfigCheckBox
 from bauiv1lib.utils import get_screen_margins, scroll_fade_top
 
-_devstrs = classicassets.strings.settings.dev_tools
+_devstrs = _classicassets.strings.settings.dev_tools
 
 
 class DevToolsWindow(bui.MainWindow):

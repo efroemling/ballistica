@@ -369,7 +369,7 @@ async def resolve_asset_packages_with_dialog(
     # The wrapper import stays deferred: bascenev1 is fully imported by
     # the time this runs; the cycle pylint sees is structural only.
     # pylint: disable-next=cyclic-import
-    from bascenev1 import builtinassets
+    from bascenev1 import _builtinassets
 
     dialog: babase.SimpleDialog | None = None
 
@@ -381,9 +381,9 @@ async def resolve_asset_packages_with_dialog(
         nonlocal dialog
         if dialog is None and babase.app.env.gui:
             dialog = babase.SimpleDialog(
-                title=builtinassets.strings.ui.updating,
+                title=_builtinassets.strings.ui.updating,
                 progress=0.0,
-                button_label=builtinassets.strings.ui.cancel,
+                button_label=_builtinassets.strings.ui.cancel,
                 on_button=on_cancel,
             )
 
@@ -416,15 +416,15 @@ async def resolve_asset_packages_with_dialog(
         netlog.exception('Content resolve failed (%s).', context)
         if dialog is not None:
             dialog.update(
-                title=builtinassets.strings.ui.error,
-                message=builtinassets.strings.net.unavailable_no_connection,
+                title=_builtinassets.strings.ui.error,
+                message=_builtinassets.strings.net.unavailable_no_connection,
                 progress=None,
-                button_label=builtinassets.strings.ui.ok,
+                button_label=_builtinassets.strings.ui.ok,
                 on_button=dialog.dismiss,
             )
         else:
             babase.screenmessage(
-                builtinassets.strings.net.unavailable_no_connection,
+                _builtinassets.strings.net.unavailable_no_connection,
                 color=(1, 0, 0),
             )
         return False
@@ -509,10 +509,10 @@ def _interpret_probe_result(
         # by the time this runs; the cycle pylint sees is structural
         # only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets
+        from bascenev1 import _builtinassets
 
         babase.screenmessage(
-            builtinassets.strings.net.connection_failed,
+            _builtinassets.strings.net.connection_failed,
             color=(1, 0, 0),
         )
         return None, False

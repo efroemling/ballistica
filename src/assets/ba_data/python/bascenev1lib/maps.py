@@ -7,8 +7,8 @@
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import classicassets
-from bauiv1 import classicassets as uiclassicassets
+from bascenev1 import _classicassets
+from bauiv1 import _classicassets as uiclassicassets
 
 from bascenev1lib.gameutils import SharedObjects
 
@@ -65,16 +65,16 @@ class HockeyStadium(bs.Map):
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
             'meshes': (
-                classicassets.meshes.hockey_stadium_outer.get(),
-                classicassets.meshes.hockey_stadium_inner.get(),
-                classicassets.meshes.hockey_stadium_stands.get(),
+                _classicassets.meshes.hockey_stadium_outer.get(),
+                _classicassets.meshes.hockey_stadium_inner.get(),
+                _classicassets.meshes.hockey_stadium_stands.get(),
             ),
-            'vr_fill_mesh': classicassets.meshes.football_stadium_vrfill.get(),
+            'vr_fill_mesh': _classicassets.meshes.football_stadium_vrfill.get(),
             'collision_mesh': (
-                classicassets.meshes.hockey_stadium_collide.get()
+                _classicassets.meshes.hockey_stadium_collide.get()
             ),
-            'tex': classicassets.textures.hockey_stadium.get(),
-            'stands_tex': classicassets.textures.football_stadium.get(),
+            'tex': _classicassets.textures.hockey_stadium.get(),
+            'stands_tex': _classicassets.textures.football_stadium.get(),
         }
         mat = bs.Material()
         mat.add_actions(actions=('modify_part_collision', 'friction', 0.01))
@@ -161,12 +161,12 @@ class FootballStadium(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh': classicassets.meshes.football_stadium.get(),
-            'vr_fill_mesh': classicassets.meshes.football_stadium_vrfill.get(),
+            'mesh': _classicassets.meshes.football_stadium.get(),
+            'vr_fill_mesh': _classicassets.meshes.football_stadium_vrfill.get(),
             'collision_mesh': (
-                classicassets.meshes.football_stadium_collide.get()
+                _classicassets.meshes.football_stadium_collide.get()
             ),
-            'tex': classicassets.textures.football_stadium.get(),
+            'tex': _classicassets.textures.football_stadium.get(),
         }
         return data
 
@@ -234,20 +234,20 @@ class Bridgit(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh_top': classicassets.meshes.bridgit_level_top.get(),
-            'mesh_bottom': classicassets.meshes.bridgit_level_bottom.get(),
-            'mesh_bg': classicassets.meshes.nature_background.get(),
+            'mesh_top': _classicassets.meshes.bridgit_level_top.get(),
+            'mesh_bottom': _classicassets.meshes.bridgit_level_bottom.get(),
+            'mesh_bg': _classicassets.meshes.nature_background.get(),
             'bg_vr_fill_mesh': (
-                classicassets.meshes.nature_background_vrfill.get()
+                _classicassets.meshes.nature_background_vrfill.get()
             ),
-            'collision_mesh': classicassets.meshes.bridgit_level_collide.get(),
-            'tex': classicassets.textures.bridgit_level_color.get(),
+            'collision_mesh': _classicassets.meshes.bridgit_level_collide.get(),
+            'tex': _classicassets.textures.bridgit_level_color.get(),
             'mesh_bg_tex': (
-                classicassets.textures.nature_background_color.get()
+                _classicassets.textures.nature_background_color.get()
             ),
-            'collide_bg': classicassets.meshes.nature_background_collide.get(),
+            'collide_bg': _classicassets.meshes.nature_background_collide.get(),
             'railing_collision_mesh': (
-                classicassets.meshes.bridgit_level_railing_collide.get()
+                _classicassets.meshes.bridgit_level_railing_collide.get()
             ),
             'bg_material': bs.Material(),
         }
@@ -351,19 +351,19 @@ class BigG(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh_top': classicassets.meshes.big_g.get(),
-            'mesh_bottom': classicassets.meshes.big_gbottom.get(),
-            'mesh_bg': classicassets.meshes.nature_background.get(),
+            'mesh_top': _classicassets.meshes.big_g.get(),
+            'mesh_bottom': _classicassets.meshes.big_gbottom.get(),
+            'mesh_bg': _classicassets.meshes.nature_background.get(),
             'bg_vr_fill_mesh': (
-                classicassets.meshes.nature_background_vrfill.get()
+                _classicassets.meshes.nature_background_vrfill.get()
             ),
-            'collision_mesh': classicassets.meshes.big_gcollide.get(),
-            'tex': classicassets.textures.big_g.get(),
+            'collision_mesh': _classicassets.meshes.big_gcollide.get(),
+            'tex': _classicassets.textures.big_g.get(),
             'mesh_bg_tex': (
-                classicassets.textures.nature_background_color.get()
+                _classicassets.textures.nature_background_color.get()
             ),
-            'collide_bg': classicassets.meshes.nature_background_collide.get(),
-            'bumper_collision_mesh': classicassets.meshes.big_gbumper.get(),
+            'collide_bg': _classicassets.meshes.nature_background_collide.get(),
+            'bumper_collision_mesh': _classicassets.meshes.big_gbumper.get(),
             'bg_material': bs.Material(),
         }
         data['bg_material'].add_actions(
@@ -461,22 +461,22 @@ class Roundabout(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh': classicassets.meshes.roundabout_level.get(),
-            'mesh_bottom': classicassets.meshes.roundabout_level_bottom.get(),
-            'mesh_bg': classicassets.meshes.nature_background.get(),
+            'mesh': _classicassets.meshes.roundabout_level.get(),
+            'mesh_bottom': _classicassets.meshes.roundabout_level_bottom.get(),
+            'mesh_bg': _classicassets.meshes.nature_background.get(),
             'bg_vr_fill_mesh': (
-                classicassets.meshes.nature_background_vrfill.get()
+                _classicassets.meshes.nature_background_vrfill.get()
             ),
             'collision_mesh': (
-                classicassets.meshes.roundabout_level_collide.get()
+                _classicassets.meshes.roundabout_level_collide.get()
             ),
-            'tex': classicassets.textures.roundabout_level_color.get(),
+            'tex': _classicassets.textures.roundabout_level_color.get(),
             'mesh_bg_tex': (
-                classicassets.textures.nature_background_color.get()
+                _classicassets.textures.nature_background_color.get()
             ),
-            'collide_bg': classicassets.meshes.nature_background_collide.get(),
+            'collide_bg': _classicassets.meshes.nature_background_collide.get(),
             'railing_collision_mesh': (
-                classicassets.meshes.roundabout_level_bumper.get()
+                _classicassets.meshes.roundabout_level_bumper.get()
             ),
             'bg_material': bs.Material(),
         }
@@ -574,22 +574,22 @@ class MonkeyFace(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh': classicassets.meshes.monkey_face_level.get(),
-            'bottom_mesh': classicassets.meshes.monkey_face_level_bottom.get(),
-            'mesh_bg': classicassets.meshes.nature_background.get(),
+            'mesh': _classicassets.meshes.monkey_face_level.get(),
+            'bottom_mesh': _classicassets.meshes.monkey_face_level_bottom.get(),
+            'mesh_bg': _classicassets.meshes.nature_background.get(),
             'bg_vr_fill_mesh': (
-                classicassets.meshes.nature_background_vrfill.get()
+                _classicassets.meshes.nature_background_vrfill.get()
             ),
             'collision_mesh': (
-                classicassets.meshes.monkey_face_level_collide.get()
+                _classicassets.meshes.monkey_face_level_collide.get()
             ),
-            'tex': classicassets.textures.monkey_face_level_color.get(),
+            'tex': _classicassets.textures.monkey_face_level_color.get(),
             'mesh_bg_tex': (
-                classicassets.textures.nature_background_color.get()
+                _classicassets.textures.nature_background_color.get()
             ),
-            'collide_bg': classicassets.meshes.nature_background_collide.get(),
+            'collide_bg': _classicassets.meshes.nature_background_collide.get(),
             'railing_collision_mesh': (
-                classicassets.meshes.monkey_face_level_bumper.get()
+                _classicassets.meshes.monkey_face_level_bumper.get()
             ),
             'bg_material': bs.Material(),
         }
@@ -693,20 +693,20 @@ class ZigZag(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh': classicassets.meshes.zig_zag_level.get(),
-            'mesh_bottom': classicassets.meshes.zig_zag_level_bottom.get(),
-            'mesh_bg': classicassets.meshes.nature_background.get(),
+            'mesh': _classicassets.meshes.zig_zag_level.get(),
+            'mesh_bottom': _classicassets.meshes.zig_zag_level_bottom.get(),
+            'mesh_bg': _classicassets.meshes.nature_background.get(),
             'bg_vr_fill_mesh': (
-                classicassets.meshes.nature_background_vrfill.get()
+                _classicassets.meshes.nature_background_vrfill.get()
             ),
-            'collision_mesh': classicassets.meshes.zig_zag_level_collide.get(),
-            'tex': classicassets.textures.zig_zag_level_color.get(),
+            'collision_mesh': _classicassets.meshes.zig_zag_level_collide.get(),
+            'tex': _classicassets.textures.zig_zag_level_color.get(),
             'mesh_bg_tex': (
-                classicassets.textures.nature_background_color.get()
+                _classicassets.textures.nature_background_color.get()
             ),
-            'collide_bg': classicassets.meshes.nature_background_collide.get(),
+            'collide_bg': _classicassets.meshes.nature_background_collide.get(),
             'railing_collision_mesh': (
-                classicassets.meshes.zig_zag_level_bumper.get()
+                _classicassets.meshes.zig_zag_level_bumper.get()
             ),
             'bg_material': bs.Material(),
         }
@@ -803,19 +803,19 @@ class ThePad(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh': classicassets.meshes.the_pad_level.get(),
-            'bottom_mesh': classicassets.meshes.the_pad_level_bottom.get(),
-            'collision_mesh': classicassets.meshes.the_pad_level_collide.get(),
-            'tex': classicassets.textures.the_pad_level_color.get(),
-            'bgtex': classicassets.textures.menu_bg.get(),
-            'bgmesh': classicassets.meshes.the_pad_bg.get(),
+            'mesh': _classicassets.meshes.the_pad_level.get(),
+            'bottom_mesh': _classicassets.meshes.the_pad_level_bottom.get(),
+            'collision_mesh': _classicassets.meshes.the_pad_level_collide.get(),
+            'tex': _classicassets.textures.the_pad_level_color.get(),
+            'bgtex': _classicassets.textures.menu_bg.get(),
+            'bgmesh': _classicassets.meshes.the_pad_bg.get(),
             'railing_collision_mesh': (
-                classicassets.meshes.the_pad_level_bumper.get()
+                _classicassets.meshes.the_pad_level_bumper.get()
             ),
             'vr_fill_mound_mesh': (
-                classicassets.meshes.the_pad_vrfill_mound.get()
+                _classicassets.meshes.the_pad_vrfill_mound.get()
             ),
-            'vr_fill_mound_tex': classicassets.textures.vr_fill_mound.get(),
+            'vr_fill_mound_tex': _classicassets.textures.vr_fill_mound.get(),
         }
         # fixme should chop this into vr/non-vr sections for efficiency
         return data
@@ -919,16 +919,16 @@ class DoomShroom(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh': classicassets.meshes.doom_shroom_level.get(),
+            'mesh': _classicassets.meshes.doom_shroom_level.get(),
             'collision_mesh': (
-                classicassets.meshes.doom_shroom_level_collide.get()
+                _classicassets.meshes.doom_shroom_level_collide.get()
             ),
-            'tex': classicassets.textures.doom_shroom_level_color.get(),
-            'bgtex': classicassets.textures.doom_shroom_bgcolor.get(),
-            'bgmesh': classicassets.meshes.doom_shroom_bg.get(),
-            'vr_fill_mesh': classicassets.meshes.doom_shroom_vrfill.get(),
-            'stem_mesh': classicassets.meshes.doom_shroom_stem.get(),
-            'collide_bg': classicassets.meshes.doom_shroom_stem_collide.get(),
+            'tex': _classicassets.textures.doom_shroom_level_color.get(),
+            'bgtex': _classicassets.textures.doom_shroom_bgcolor.get(),
+            'bgmesh': _classicassets.meshes.doom_shroom_bg.get(),
+            'vr_fill_mesh': _classicassets.meshes.doom_shroom_vrfill.get(),
+            'stem_mesh': _classicassets.meshes.doom_shroom_stem.get(),
+            'collide_bg': _classicassets.meshes.doom_shroom_stem_collide.get(),
         }
         return data
 
@@ -1020,17 +1020,17 @@ class LakeFrigid(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh': classicassets.meshes.lake_frigid.get(),
-            'mesh_top': classicassets.meshes.lake_frigid_top.get(),
+            'mesh': _classicassets.meshes.lake_frigid.get(),
+            'mesh_top': _classicassets.meshes.lake_frigid_top.get(),
             'mesh_reflections': (
-                classicassets.meshes.lake_frigid_reflections.get()
+                _classicassets.meshes.lake_frigid_reflections.get()
             ),
-            'collision_mesh': classicassets.meshes.lake_frigid_collide.get(),
-            'tex': classicassets.textures.lake_frigid.get(),
+            'collision_mesh': _classicassets.meshes.lake_frigid_collide.get(),
+            'tex': _classicassets.textures.lake_frigid.get(),
             'tex_reflections': (
-                classicassets.textures.lake_frigid_reflections.get()
+                _classicassets.textures.lake_frigid_reflections.get()
             ),
-            'vr_fill_mesh': classicassets.meshes.lake_frigid_vrfill.get(),
+            'vr_fill_mesh': _classicassets.meshes.lake_frigid_vrfill.get(),
         }
         mat = bs.Material()
         mat.add_actions(actions=('modify_part_collision', 'friction', 0.01))
@@ -1113,14 +1113,14 @@ class TipTop(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh': classicassets.meshes.tip_top_level.get(),
-            'bottom_mesh': classicassets.meshes.tip_top_level_bottom.get(),
-            'collision_mesh': classicassets.meshes.tip_top_level_collide.get(),
-            'tex': classicassets.textures.tip_top_level_color.get(),
-            'bgtex': classicassets.textures.tip_top_bgcolor.get(),
-            'bgmesh': classicassets.meshes.tip_top_bg.get(),
+            'mesh': _classicassets.meshes.tip_top_level.get(),
+            'bottom_mesh': _classicassets.meshes.tip_top_level_bottom.get(),
+            'collision_mesh': _classicassets.meshes.tip_top_level_collide.get(),
+            'tex': _classicassets.textures.tip_top_level_color.get(),
+            'bgtex': _classicassets.textures.tip_top_bgcolor.get(),
+            'bgmesh': _classicassets.meshes.tip_top_bg.get(),
             'railing_collision_mesh': (
-                classicassets.meshes.tip_top_level_bumper.get()
+                _classicassets.meshes.tip_top_level_bumper.get()
             ),
         }
         return data
@@ -1195,21 +1195,21 @@ class CragCastle(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh': classicassets.meshes.crag_castle_level.get(),
-            'bottom_mesh': classicassets.meshes.crag_castle_level_bottom.get(),
+            'mesh': _classicassets.meshes.crag_castle_level.get(),
+            'bottom_mesh': _classicassets.meshes.crag_castle_level_bottom.get(),
             'collision_mesh': (
-                classicassets.meshes.crag_castle_level_collide.get()
+                _classicassets.meshes.crag_castle_level_collide.get()
             ),
-            'tex': classicassets.textures.crag_castle_level_color.get(),
-            'bgtex': classicassets.textures.menu_bg.get(),
-            'bgmesh': classicassets.meshes.the_pad_bg.get(),
+            'tex': _classicassets.textures.crag_castle_level_color.get(),
+            'bgtex': _classicassets.textures.menu_bg.get(),
+            'bgmesh': _classicassets.meshes.the_pad_bg.get(),
             'railing_collision_mesh': (
-                classicassets.meshes.crag_castle_level_bumper.get()
+                _classicassets.meshes.crag_castle_level_bumper.get()
             ),
             'vr_fill_mound_mesh': (
-                classicassets.meshes.crag_castle_vrfill_mound.get()
+                _classicassets.meshes.crag_castle_vrfill_mound.get()
             ),
-            'vr_fill_mound_tex': classicassets.textures.vr_fill_mound.get(),
+            'vr_fill_mound_tex': _classicassets.textures.vr_fill_mound.get(),
         }
         # fixme should chop this into vr/non-vr sections
         return data
@@ -1295,14 +1295,14 @@ class TowerD(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh': classicassets.meshes.tower_dlevel.get(),
-            'mesh_bottom': classicassets.meshes.tower_dlevel_bottom.get(),
-            'collision_mesh': classicassets.meshes.tower_dlevel_collide.get(),
-            'tex': classicassets.textures.tower_dlevel_color.get(),
-            'bgtex': classicassets.textures.menu_bg.get(),
-            'bgmesh': classicassets.meshes.the_pad_bg.get(),
+            'mesh': _classicassets.meshes.tower_dlevel.get(),
+            'mesh_bottom': _classicassets.meshes.tower_dlevel_bottom.get(),
+            'collision_mesh': _classicassets.meshes.tower_dlevel_collide.get(),
+            'tex': _classicassets.textures.tower_dlevel_color.get(),
+            'bgtex': _classicassets.textures.menu_bg.get(),
+            'bgmesh': _classicassets.meshes.the_pad_bg.get(),
             'player_wall_collision_mesh': (
-                classicassets.meshes
+                _classicassets.meshes
             ).tower_dplayer_wall.get(),
             'player_wall_material': bs.Material(),
         }
@@ -1320,9 +1320,9 @@ class TowerD(bs.Map):
             actions=('modify_part_collision', 'collide', False),
         )
         data['vr_fill_mound_mesh'] = (
-            classicassets.meshes.step_right_up_vrfill_mound.get()
+            _classicassets.meshes.step_right_up_vrfill_mound.get()
         )
-        data['vr_fill_mound_tex'] = classicassets.textures.vr_fill_mound.get()
+        data['vr_fill_mound_tex'] = _classicassets.textures.vr_fill_mound.get()
         return data
 
     def __init__(self) -> None:
@@ -1429,18 +1429,18 @@ class HappyThoughts(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh': classicassets.meshes.always_land_level.get(),
-            'bottom_mesh': classicassets.meshes.always_land_level_bottom.get(),
-            'bgmesh': classicassets.meshes.always_land_bg.get(),
+            'mesh': _classicassets.meshes.always_land_level.get(),
+            'bottom_mesh': _classicassets.meshes.always_land_level_bottom.get(),
+            'bgmesh': _classicassets.meshes.always_land_bg.get(),
             'collision_mesh': (
-                classicassets.meshes.always_land_level_collide.get()
+                _classicassets.meshes.always_land_level_collide.get()
             ),
-            'tex': classicassets.textures.always_land_level_color.get(),
-            'bgtex': classicassets.textures.always_land_bgcolor.get(),
+            'tex': _classicassets.textures.always_land_level_color.get(),
+            'bgtex': _classicassets.textures.always_land_bgcolor.get(),
             'vr_fill_mound_mesh': (
-                classicassets.meshes.always_land_vrfill_mound.get()
+                _classicassets.meshes.always_land_vrfill_mound.get()
             ),
-            'vr_fill_mound_tex': classicassets.textures.vr_fill_mound.get(),
+            'vr_fill_mound_tex': _classicassets.textures.vr_fill_mound.get(),
         }
         return data
 
@@ -1504,7 +1504,7 @@ class HappyThoughts(bs.Map):
         txt = bs.newnode(
             'text',
             attrs={
-                'text': classicassets.strings.game.press_jump_to_fly,
+                'text': _classicassets.strings.game.press_jump_to_fly,
                 'scale': 1.2,
                 'maxwidth': 800,
                 'position': (0, 200),
@@ -1546,20 +1546,20 @@ class StepRightUp(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh': classicassets.meshes.step_right_up_level.get(),
+            'mesh': _classicassets.meshes.step_right_up_level.get(),
             'mesh_bottom': (
-                classicassets.meshes.step_right_up_level_bottom.get()
+                _classicassets.meshes.step_right_up_level_bottom.get()
             ),
             'collision_mesh': (
-                classicassets.meshes.step_right_up_level_collide.get()
+                _classicassets.meshes.step_right_up_level_collide.get()
             ),
-            'tex': classicassets.textures.step_right_up_level_color.get(),
-            'bgtex': classicassets.textures.menu_bg.get(),
-            'bgmesh': classicassets.meshes.the_pad_bg.get(),
+            'tex': _classicassets.textures.step_right_up_level_color.get(),
+            'bgtex': _classicassets.textures.menu_bg.get(),
+            'bgmesh': _classicassets.meshes.the_pad_bg.get(),
             'vr_fill_mound_mesh': (
-                classicassets.meshes
+                _classicassets.meshes
             ).step_right_up_vrfill_mound.get(),
-            'vr_fill_mound_tex': classicassets.textures.vr_fill_mound.get(),
+            'vr_fill_mound_tex': _classicassets.textures.vr_fill_mound.get(),
         }
         # fixme should chop this into vr/non-vr chunks
         return data
@@ -1635,16 +1635,16 @@ class Courtyard(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh': classicassets.meshes.courtyard_level.get(),
-            'mesh_bottom': classicassets.meshes.courtyard_level_bottom.get(),
+            'mesh': _classicassets.meshes.courtyard_level.get(),
+            'mesh_bottom': _classicassets.meshes.courtyard_level_bottom.get(),
             'collision_mesh': (
-                classicassets.meshes.courtyard_level_collide.get()
+                _classicassets.meshes.courtyard_level_collide.get()
             ),
-            'tex': classicassets.textures.courtyard_level_color.get(),
-            'bgtex': classicassets.textures.menu_bg.get(),
-            'bgmesh': classicassets.meshes.the_pad_bg.get(),
+            'tex': _classicassets.textures.courtyard_level_color.get(),
+            'bgtex': _classicassets.textures.menu_bg.get(),
+            'bgmesh': _classicassets.meshes.the_pad_bg.get(),
             'player_wall_collision_mesh': (
-                classicassets.meshes.courtyard_player_wall.get()
+                _classicassets.meshes.courtyard_player_wall.get()
             ),
             'player_wall_material': bs.Material(),
         }
@@ -1662,9 +1662,9 @@ class Courtyard(bs.Map):
             actions=('modify_part_collision', 'collide', False),
         )
         data['vr_fill_mound_mesh'] = (
-            classicassets.meshes.step_right_up_vrfill_mound.get()
+            _classicassets.meshes.step_right_up_vrfill_mound.get()
         )
-        data['vr_fill_mound_tex'] = classicassets.textures.vr_fill_mound.get()
+        data['vr_fill_mound_tex'] = _classicassets.textures.vr_fill_mound.get()
         return data
 
     def __init__(self) -> None:
@@ -1759,17 +1759,17 @@ class Rampage(bs.Map):
     @classmethod
     def on_preload(cls) -> Any:
         data: dict[str, Any] = {
-            'mesh': classicassets.meshes.rampage_level.get(),
-            'bottom_mesh': classicassets.meshes.rampage_level_bottom.get(),
-            'collision_mesh': classicassets.meshes.rampage_level_collide.get(),
-            'tex': classicassets.textures.rampage_level_color.get(),
-            'bgtex': classicassets.textures.rampage_bgcolor.get(),
-            'bgtex2': classicassets.textures.rampage_bgcolor2.get(),
-            'bgmesh': classicassets.meshes.rampage_bg.get(),
-            'bgmesh2': classicassets.meshes.rampage_bg2.get(),
-            'vr_fill_mesh': classicassets.meshes.rampage_vrfill.get(),
+            'mesh': _classicassets.meshes.rampage_level.get(),
+            'bottom_mesh': _classicassets.meshes.rampage_level_bottom.get(),
+            'collision_mesh': _classicassets.meshes.rampage_level_collide.get(),
+            'tex': _classicassets.textures.rampage_level_color.get(),
+            'bgtex': _classicassets.textures.rampage_bgcolor.get(),
+            'bgtex2': _classicassets.textures.rampage_bgcolor2.get(),
+            'bgmesh': _classicassets.meshes.rampage_bg.get(),
+            'bgmesh2': _classicassets.meshes.rampage_bg2.get(),
+            'vr_fill_mesh': _classicassets.meshes.rampage_vrfill.get(),
             'railing_collision_mesh': (
-                classicassets.meshes.rampage_bumper.get()
+                _classicassets.meshes.rampage_bumper.get()
             ),
         }
         return data

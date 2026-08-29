@@ -14,7 +14,7 @@ from efro.util import strict_partial
 from efro.dataclassio import dataclass_to_json
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
-from bauiv1 import builtinassets
+from bauiv1 import _builtinassets
 from bauiv1 import _commonassets
 
 from bauiv1lib.docui.prep._types import PagePrep, RowPrep, ButtonPrep
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 def _btex(name: str) -> str:
     """Qualified ref for a texture in the builtin asset-package."""
-    return f'{builtinassets.__asset_package__}:textures/{name}'
+    return f'{_builtinassets.__asset_package__}:textures/{name}'
 
 
 def refstr(ref: 'TextureSpec | MeshSpec | int') -> str:
@@ -95,7 +95,7 @@ def prep_page(
                         label_color=(1, 1, 1, 0.3),
                         size=(220, 100),
                         label_scale=0.6,
-                        texture=builtinassets.textures.button_square_wide,
+                        texture=_builtinassets.textures.button_square_wide,
                         padding_top=-8,
                         padding_bottom=-10,
                         color=(0.2, 0.2, 0.2, 0.15),

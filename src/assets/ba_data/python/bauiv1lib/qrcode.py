@@ -5,7 +5,7 @@
 from typing import override
 
 import bauiv1 as bui
-from bauiv1 import builtinassets
+from bauiv1 import _builtinassets
 
 from bauiv1lib.popup import PopupWindow
 
@@ -61,5 +61,5 @@ class QRCodeWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
         self._transition_out()

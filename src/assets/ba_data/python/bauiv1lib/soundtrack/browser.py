@@ -7,8 +7,8 @@ import logging
 from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _commonassets, _builtinassets
+from bauiv1 import _classicassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -85,7 +85,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             ),
             size=(0, 0),
             maxwidth=300,
-            text=classicassets.strings.soundtrack.title,
+            text=_classicassets.strings.soundtrack.title,
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
@@ -98,7 +98,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         h = 43 + x_inset
         b_color = (0.6, 0.53, 0.63)
         b_textcolor = (0.75, 0.7, 0.8)
-        lock_tex = classicassets.textures.lock.get()
+        lock_tex = _classicassets.textures.lock.get()
         self._lock_images: list[bui.Widget] = []
 
         scl = 1.2
@@ -114,7 +114,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             autoselect=True,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=classicassets.strings.soundtrack.new_soundtrack,
+            label=_classicassets.strings.soundtrack.new_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -144,7 +144,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             autoselect=True,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=classicassets.strings.soundtrack.edit_soundtrack,
+            label=_classicassets.strings.soundtrack.edit_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -173,7 +173,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             color=b_color,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=classicassets.strings.soundtrack.duplicate_soundtrack,
+            label=_classicassets.strings.soundtrack.duplicate_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -202,7 +202,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             autoselect=True,
             textcolor=b_textcolor,
             text_scale=0.7,
-            label=classicassets.strings.soundtrack.delete_soundtrack,
+            label=_classicassets.strings.soundtrack.delete_soundtrack,
         )
         self._lock_images.append(
             bui.imagewidget(
@@ -289,7 +289,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         if self._selected_soundtrack in soundtracks:
             del soundtracks[self._selected_soundtrack]
         cfg.commit()
-        classicassets.audio.shield_down.get().play()
+        _classicassets.audio.shield_down.get().play()
         assert self._selected_soundtrack_index is not None
         assert self._soundtracks is not None
         self._selected_soundtrack_index = min(
@@ -304,14 +304,14 @@ class SoundtrackBrowserWindow(bui.MainWindow):
         if self._selected_soundtrack is None:
             return
         if self._selected_soundtrack == '__default__':
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             bui.screenmessage(
-                classicassets.strings.soundtrack.cant_delete_default,
+                _classicassets.strings.soundtrack.cant_delete_default,
                 color=(1, 0, 0),
             )
         else:
             ConfirmWindow(
-                classicassets.strings.soundtrack.delete_confirm(
+                _classicassets.strings.soundtrack.delete_confirm(
                     name=self._selected_soundtrack
                 ),
                 self._do_delete_soundtrack,
@@ -372,7 +372,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
 
         # If it varies from current, commit and play.
         if current_soundtrack != name and self._allow_changing_soundtracks:
-            builtinassets.audio.gun_cocking.get().play()
+            _builtinassets.audio.gun_cocking.get().play()
             cfg['Soundtrack'] = self._selected_soundtrack
             cfg.commit()
 
@@ -383,7 +383,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             )
 
     def _edit_soundtrack_with_sound(self) -> None:
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
         self._edit_soundtrack()
 
     def _edit_soundtrack(self) -> None:
@@ -397,9 +397,9 @@ class SoundtrackBrowserWindow(bui.MainWindow):
             return
 
         if self._selected_soundtrack == '__default__':
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             bui.screenmessage(
-                classicassets.strings.soundtrack.cant_edit_default,
+                _classicassets.strings.soundtrack.cant_edit_default,
                 color=(1, 0, 0),
             )
             return
@@ -412,7 +412,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
 
     def _get_soundtrack_display_name(self, soundtrack: str) -> bui.LangStr:
         if soundtrack == '__default__':
-            return classicassets.strings.soundtrack.default_soundtrack_name
+            return _classicassets.strings.soundtrack.default_soundtrack_name
         return bui.LangStr.from_text(soundtrack)
 
     def _refresh(self, select_soundtrack: str | None = None) -> None:
@@ -508,7 +508,7 @@ class SoundtrackBrowserWindow(bui.MainWindow):
 
     def _create_done(self, new_soundtrack: str) -> None:
         if new_soundtrack is not None:
-            builtinassets.audio.gun_cocking.get().play()
+            _builtinassets.audio.gun_cocking.get().play()
             self._refresh(select_soundtrack=new_soundtrack)
 
     def _save_state(self) -> None:

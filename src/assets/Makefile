@@ -208,6 +208,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_asyncio.py \
   $(BUILD_DIR)/ba_data/python/babase/_automation.py \
   $(BUILD_DIR)/ba_data/python/babase/_baeventloop.py \
+  $(BUILD_DIR)/ba_data/python/babase/_builtinassets.py \
   $(BUILD_DIR)/ba_data/python/babase/_cloud.py \
   $(BUILD_DIR)/ba_data/python/babase/_cloudloggercontrol.py \
   $(BUILD_DIR)/ba_data/python/babase/_commonassets.py \
@@ -236,7 +237,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_text.py \
   $(BUILD_DIR)/ba_data/python/babase/_ui.py \
   $(BUILD_DIR)/ba_data/python/babase/_workspace.py \
-  $(BUILD_DIR)/ba_data/python/babase/builtinassets.py \
   $(BUILD_DIR)/ba_data/python/babase/modutils.py \
   $(BUILD_DIR)/ba_data/python/baclassic/__init__.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_accountv1.py \
@@ -273,7 +273,9 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activitytypes.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_actor.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_assetref.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_builtinassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_campaign.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_classicassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_collision.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_commonassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_coopgame.py \
@@ -305,8 +307,6 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_stats.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_team.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_teamgame.py \
-  $(BUILD_DIR)/ba_data/python/bascenev1/builtinassets.py \
-  $(BUILD_DIR)/ba_data/python/bascenev1/classicassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/activity/coopjoin.py \
@@ -387,14 +387,14 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_assetref.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_automation.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_builtinassets.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_classicassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_commonassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_docuiv2testassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_window.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/builtinassets.py \
-  $(BUILD_DIR)/ba_data/python/bauiv1/classicassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__init__.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/account/__init__.py \

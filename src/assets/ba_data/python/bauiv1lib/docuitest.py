@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, override
 from efro.error import CleanError
 from bacommon.langstr import LangStrSpecValue
 import bauiv1 as bui
-from bauiv1 import builtinassets
-from bauiv1 import classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import _classicassets
 
 from bauiv1lib.docui import DocUIWindow, DocUIController
 
@@ -23,12 +23,12 @@ if TYPE_CHECKING:
 
 def _btex(name: str) -> str:
     """Qualified ref for a texture in the builtin asset-package."""
-    return f'{builtinassets.__asset_package__}:textures/{name}'
+    return f'{_builtinassets.__asset_package__}:textures/{name}'
 
 
 def _stex(name: str) -> str:
-    """Qualified classicassets texture ref."""
-    return f'{classicassets.__asset_package__}:textures/{name}'
+    """Qualified _classicassets texture ref."""
+    return f'{_classicassets.__asset_package__}:textures/{name}'
 
 
 def show_test_doc_ui_v2_window() -> None:
@@ -118,7 +118,7 @@ def _test_v2_page_root(
     The full v1 test root page, with all text authored as
     language-agnostic ``LangStrSpec`` values from the ``badocuiv2testassets``
     package, textures/meshes as typed refs from
-    ``builtinassets``/``classicassets``, and multi-line labels wrapped via
+    ``_builtinassets``/``_classicassets``, and multi-line labels wrapped via
     definition-time :class:`~bacommon.langstr.WrapParams` on the
     package's string definitions (decision D-t) instead of v1's
     hand-baked newlines. The client resolves the referenced packages
@@ -167,7 +167,7 @@ def _test_v2_page_root(
                             debug=debug,
                         ),
                         dui2.Image(
-                            texture=builtinassets.textures.nub,
+                            texture=_builtinassets.textures.nub,
                             position=(0, -58 + 20),
                             size=(60, 60),
                         ),
@@ -223,7 +223,7 @@ def _test_v2_page_root(
                                     ),
                                     clfx.PlaySoundV2(
                                         sound=(
-                                            builtinassets.audio
+                                            _builtinassets.audio
                                         ).cash_register,
                                     ),
                                     clfx.Delay(1.0),
@@ -235,7 +235,7 @@ def _test_v2_page_root(
                                     ),
                                     clfx.PlaySoundV2(
                                         sound=(
-                                            builtinassets.audio
+                                            _builtinassets.audio
                                         ).cash_register,
                                     ),
                                 ]
@@ -385,7 +385,7 @@ def _test_v2_page_root(
                         # Testing custom button images and opacity.
                         dui2.Button(
                             label=strs.nav.test_three.spec,
-                            texture=builtinassets.textures.button_square_wide,
+                            texture=_builtinassets.textures.button_square_wide,
                             padding_left=10.0,
                             padding_right=10.0,
                             color=(1, 1, 1, 0.3),
@@ -394,7 +394,7 @@ def _test_v2_page_root(
                         # Testing image drawing vs bounds
                         dui2.Button(
                             label=strs.layout.bounds_test.spec,
-                            texture=builtinassets.textures.white,
+                            texture=_builtinassets.textures.white,
                             color=(1, 1, 1, 0.3),
                             size=(150, 100),
                             debug=debug,
@@ -433,16 +433,16 @@ def _test_v2_page_root(
                             size=(150, 100),
                             decorations=[
                                 dui2.Image(
-                                    texture=classicassets.textures.zoe_icon,
+                                    texture=_classicassets.textures.zoe_icon,
                                     position=(0, 0),
                                     size=(70, 70),
                                     tint_texture=(
-                                        classicassets.textures
+                                        _classicassets.textures
                                     ).zoe_icon_color_mask,
                                     tint_color=(1, 0, 0),
                                     tint2_color=(0, 1, 0),
                                     mask_texture=(
-                                        builtinassets.textures
+                                        _builtinassets.textures
                                     ).character_icon_mask,
                                 ),
                             ],
@@ -452,18 +452,18 @@ def _test_v2_page_root(
                             decorations=[
                                 dui2.Image(
                                     texture=(
-                                        classicassets.textures
+                                        _classicassets.textures
                                     ).bridgit_preview,
                                     position=(0, 10),
                                     size=(120, 60),
                                     mask_texture=(
-                                        classicassets.textures.map_preview_mask
+                                        _classicassets.textures.map_preview_mask
                                     ),
                                     mesh_opaque=(
-                                        classicassets.meshes
+                                        _classicassets.meshes
                                     ).level_select_button_opaque,
                                     mesh_transparent=(
-                                        classicassets.meshes
+                                        _classicassets.meshes
                                     ).level_select_button_transparent,
                                 ),
                             ],
@@ -507,7 +507,7 @@ def _test_v2_page_root(
                             size=(300, 80),
                             style=dui2.ButtonStyle.MEDIUM,
                             color=(0.8, 0.8, 0.8, 1),
-                            icon=classicassets.textures.button_punch,
+                            icon=_classicassets.textures.button_punch,
                             icon_color=(0.5, 0.3, 1.0, 1.0),
                             icon_scale=1.2,
                         ),
@@ -545,12 +545,12 @@ def _test_v2_page_root(
                 message=strs.effects.response_effects_hello.spec,
                 color=(0, 1, 0),
             ),
-            clfx.PlaySoundV2(sound=builtinassets.audio.cash_register),
+            clfx.PlaySoundV2(sound=_builtinassets.audio.cash_register),
             clfx.Delay(1.0),
             clfx.ScreenMessageV2(
                 message=strs.effects.effect_success.spec, color=(0, 1, 0)
             ),
-            clfx.PlaySoundV2(sound=builtinassets.audio.cash_register),
+            clfx.PlaySoundV2(sound=_builtinassets.audio.cash_register),
         ]
 
     # Include a local-action if they ask (the 'Response LocalAction'
@@ -572,13 +572,13 @@ def _layout_test_decos(debug: bool) -> list[bacommon.docui.v2.Decoration]:
 
     return [
         dui2.Image(
-            texture=classicassets.textures.powerup_punch,
+            texture=_classicassets.textures.powerup_punch,
             position=(-70, 0),
             size=(40, 40),
             h_align=dui2.HAlign.LEFT,
         ),
         dui2.Image(
-            texture=classicassets.textures.powerup_speed,
+            texture=_classicassets.textures.powerup_speed,
             position=(0, 75),
             size=(35, 35),
             v_align=dui2.VAlign.TOP,
@@ -793,7 +793,9 @@ def _test_v2_bounds(
                     label=strs.layout.hello.spec,
                     size=size,
                     style=style,
-                    texture=(builtinassets.textures.white if texture else None),
+                    texture=(
+                        _builtinassets.textures.white if texture else None
+                    ),
                     color=(1, 0, 0, 0.3) if texture else None,
                     debug=True,
                 )

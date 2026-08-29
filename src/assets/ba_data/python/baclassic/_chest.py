@@ -10,15 +10,15 @@ from bacommon.classic import (
     CHEST_APPEARANCE_TINTS,
     CHEST_APPEARANCE_TINT_DEFAULT,
 )
-from bascenev1 import classicassets
+from bascenev1 import _classicassets
 
 if TYPE_CHECKING:
     pass
 
 
 def _tex(name: str) -> str:
-    """Qualified classicassets ref for a chest texture name."""
-    return f'{classicassets.__asset_package__}:textures/{name}'
+    """Qualified _classicassets ref for a chest texture name."""
+    return f'{_classicassets.__asset_package__}:textures/{name}'
 
 
 @dataclass

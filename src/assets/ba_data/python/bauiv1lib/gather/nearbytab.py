@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, override
 
 from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _classicassets
 import bascenev1 as bs
 
 from bauiv1lib.gather import GatherTab
@@ -179,7 +179,7 @@ class NearbyGatherTab(GatherTab):
             maxwidth=c_width * 0.9,
             h_align='center',
             v_align='center',
-            text=classicassets.strings.gather.local_network_description,
+            text=_classicassets.strings.gather.local_network_description,
         )
         v -= 15
         v -= sub_scroll_height + 23

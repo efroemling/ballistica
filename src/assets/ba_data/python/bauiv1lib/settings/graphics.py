@@ -7,13 +7,13 @@ from typing import TYPE_CHECKING, cast, override
 from bauiv1lib.popup import PopupMenu
 from bauiv1lib.config import ConfigCheckBox
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     from typing import Any
 
 
-_gfxstrs = classicassets.strings.settings.graphics
+_gfxstrs = _classicassets.strings.settings.graphics
 
 
 class GraphicsSettingsWindow(bui.MainWindow):

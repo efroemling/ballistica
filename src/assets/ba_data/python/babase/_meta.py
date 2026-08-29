@@ -185,7 +185,7 @@ class MetadataSubsystem:
 
     def _handle_scan_results(self) -> None:
         """Called in the logic thread with results of a completed scan."""
-        from babase import builtinassets
+        from babase import _builtinassets
 
         assert _babase.in_logic_thread()
 
@@ -198,13 +198,13 @@ class MetadataSubsystem:
         # mention that specifically.
         if results.incorrect_api_modules:
             if len(results.incorrect_api_modules) > 1:
-                msg = builtinassets.strings.scripts.modules_need_update(
+                msg = _builtinassets.strings.scripts.modules_need_update(
                     path=results.incorrect_api_modules[0],
                     count=len(results.incorrect_api_modules) - 1,
                     api=str(_babase.app.env.api_version),
                 )
             else:
-                msg = builtinassets.strings.scripts.module_needs_update(
+                msg = _builtinassets.strings.scripts.module_needs_update(
                     path=results.incorrect_api_modules[0],
                     api=str(_babase.app.env.api_version),
                 )
@@ -215,12 +215,12 @@ class MetadataSubsystem:
         # they may want to look at.
         if results.announce_errors_occurred:
             _babase.screenmessage(
-                builtinassets.strings.scripts.scan_error, color=(1, 0, 0)
+                _builtinassets.strings.scripts.scan_error, color=(1, 0, 0)
             )
             do_play_error_sound = True
 
         if do_play_error_sound:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
 
         # Let the game know we're done.
         assert self._scan_complete_cb is not None

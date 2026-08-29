@@ -6,7 +6,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import builtinassets
+from bascenev1 import _builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -72,7 +72,7 @@ class Image(bs.Actor):
                     else bs.gettexture(mask_tex_name)
                 )
             else:
-                mask_texture = builtinassets.textures.character_icon_mask.get()
+                mask_texture = _builtinassets.textures.character_icon_mask.get()
             texture = texture['texture']
         else:
             tint_color = (1, 1, 1)

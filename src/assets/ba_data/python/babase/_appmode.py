@@ -141,7 +141,7 @@ class AppMode:
         # pylint: disable=cyclic-import
         import babase
 
-        from babase import builtinassets
+        from babase import _builtinassets
 
         del item_id  # Unused.
 
@@ -150,13 +150,13 @@ class AppMode:
             return
 
         babase.screenmessage(
-            builtinassets.strings.account.updating_account,
+            _builtinassets.strings.account.updating_account,
             color=(0, 1, 0),
         )
         # Ick; we can be called early in the bootstrapping process
         # before we're allowed to load assets. Guard against that.
         if babase.asset_loads_allowed():
-            builtinassets.audio.click01.get().play()
+            _builtinassets.audio.click01.get().play()
 
     def on_purchase_process_end(
         self, item_id: str, user_initiated: bool, applied: bool
@@ -185,14 +185,14 @@ class AppMode:
 
         # By default just announce the item id we got. Real app-modes
         # probably want to do something more specific based on item-id.
-        from babase import builtinassets
+        from babase import _builtinassets
 
         babase.screenmessage(
-            builtinassets.strings.account.you_got_item(item=item_id),
+            _builtinassets.strings.account.you_got_item(item=item_id),
             color=(0, 1, 0),
         )
         if babase.asset_loads_allowed():
-            builtinassets.audio.cash_register.get().play()
+            _builtinassets.audio.cash_register.get().play()
 
     def get_dev_console_ui_tab_buttons(self) -> list[DevConsoleButtonDef]:
         """Define buttons to show up in the UI dev console.

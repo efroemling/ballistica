@@ -49,7 +49,7 @@ def test_page_frames(
     request: bacommon.docui.v2.Request,
 ) -> bacommon.docui.v2.Response:
     """Testing frames, with and without size-to-fit."""
-    from bauiv1 import classicassets, _docuiv2testassets
+    from bauiv1 import _classicassets, _docuiv2testassets
 
     strs = _docuiv2testassets.strings
 
@@ -72,7 +72,7 @@ def test_page_frames(
                 debug=debug,
             ),
             dui2.Image(
-                texture=classicassets.textures.coin,
+                texture=_classicassets.textures.coin,
                 position=(icon_size * 0.5, 0.0),
                 size=(icon_size, icon_size),
                 debug=debug,

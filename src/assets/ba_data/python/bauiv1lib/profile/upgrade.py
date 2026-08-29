@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING
 import bacommon.classic
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -91,7 +91,7 @@ class ProfileUpgradeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 38 + yoffs),
             size=(0, 0),
-            text=classicassets.strings.profile.upgrade_to_global,
+            text=_classicassets.strings.profile.upgrade_to_global,
             color=bui.app.ui_v1.title_color,
             maxwidth=self._width * 0.45,
             scale=1.0,
@@ -104,7 +104,7 @@ class ProfileUpgradeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 100 + yoffs),
             size=(0, 0),
-            text=classicassets.strings.profile.upgrade_profile_info,
+            text=_classicassets.strings.profile.upgrade_profile_info,
             color=bui.app.ui_v1.infotextcolor,
             maxwidth=self._width * 0.8,
             scale=0.7,
@@ -116,7 +116,7 @@ class ProfileUpgradeWindow(bui.Window):
             parent=self._root_widget,
             position=(self._width * 0.5, self._height - 160 + yoffs),
             size=(0, 0),
-            text=classicassets.strings.profile.checking_availability(
+            text=_classicassets.strings.profile.checking_availability(
                 name=self._name
             ),
             color=(0.8, 0.4, 0.0),
@@ -173,7 +173,7 @@ class ProfileUpgradeWindow(bui.Window):
             if response.available:
                 bui.textwidget(
                     edit=self._status_text,
-                    text=classicassets.strings.profile.available(
+                    text=_classicassets.strings.profile.available(
                         name=self._name
                     ),
                     color=(0, 1, 0),
@@ -186,7 +186,7 @@ class ProfileUpgradeWindow(bui.Window):
             else:
                 bui.textwidget(
                     edit=self._status_text,
-                    text=classicassets.strings.profile.unavailable(
+                    text=_classicassets.strings.profile.unavailable(
                         name=self._name
                     ),
                     color=(1, 0, 0),
@@ -210,15 +210,15 @@ class ProfileUpgradeWindow(bui.Window):
             # tickets = plus.get_v1_account_ticket_count()
             tickets = classic.tickets
             if tickets < self._cost:
-                builtinassets.audio.error.get().play()
+                _builtinassets.audio.error.get().play()
                 bui.screenmessage(
-                    classicassets.strings.profile.not_enough_tickets,
+                    _classicassets.strings.profile.not_enough_tickets,
                     color=(1, 0, 0),
                 )
                 return
 
             bui.screenmessage(
-                classicassets.strings.profile.purchasing, color=(0, 1, 0)
+                _classicassets.strings.profile.purchasing, color=(0, 1, 0)
             )
             self._status = 'pre_upgrading'
 
@@ -235,7 +235,7 @@ class ProfileUpgradeWindow(bui.Window):
                 bui.screenmessage(
                     _commonassets.strings.values.error, color=(1, 0, 0)
                 )
-                builtinassets.audio.error.get().play()
+                _builtinassets.audio.error.get().play()
                 return
             plus.add_v1_account_transaction(
                 {'type': 'UPGRADE_PROFILE', 'name': self._name}
@@ -244,7 +244,7 @@ class ProfileUpgradeWindow(bui.Window):
             self._status = 'upgrading'
             self._upgrade_start_time = time.time()
         else:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
 
     def _update(self) -> None:
         plus = bui.app.plus
@@ -271,7 +271,7 @@ class ProfileUpgradeWindow(bui.Window):
                     ' original edit window gone'
                 )
                 return
-            builtinassets.audio.gun_cocking.get().play()
+            _builtinassets.audio.gun_cocking.get().play()
             edit_profile_window.reload_window()
 
     def _cancel(self) -> None:
@@ -281,6 +281,6 @@ class ProfileUpgradeWindow(bui.Window):
             self._upgrade_start_time is not None
             and time.time() - self._upgrade_start_time < 10.0
         ):
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
         bui.containerwidget(edit=self._root_widget, transition='out_right')

@@ -41,9 +41,9 @@ def get_game_display_name(name: str) -> babase.LangStr:
     # Safe up-call: bascenev1 is fully imported by the time this runs;
     # the cycle pylint sees is structural only.
     # pylint: disable-next=cyclic-import
-    from bascenev1 import classicassets
+    from bascenev1 import _classicassets
 
-    s = classicassets.strings.game_names
+    s = _classicassets.strings.game_names
     entry = {
         'Assault': s.assault,
         'Capture the Flag': s.capture_the_flag,
@@ -84,9 +84,9 @@ def get_game_description(
     # Safe up-call: bascenev1 is fully imported by the time this runs;
     # the cycle pylint sees is structural only.
     # pylint: disable-next=cyclic-import
-    from bascenev1 import classicassets
+    from bascenev1 import _classicassets
 
-    gd = classicassets.strings.game_descriptions
+    gd = _classicassets.strings.game_descriptions
     if arg is None:
         plain: dict[str, babase.LangStr] = {
             (
@@ -279,11 +279,11 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         """
         if langstr:
             # pylint: disable-next=cyclic-import
-            from bascenev1 import classicassets
+            from bascenev1 import _classicassets
 
             lname = get_game_display_name(cls.getname())
             if settings is not None:
-                gstrs = classicassets.strings.game
+                gstrs = _classicassets.strings.game
                 if settings.get('Solo Mode'):
                     lname = gstrs.solo_name_filter(name=lname)
                 if settings.get('Epic Mode'):
@@ -427,14 +427,14 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         """
         if langstr:
             # pylint: disable-next=cyclic-import
-            from bascenev1 import classicassets
+            from bascenev1 import _classicassets
 
             lname = cls.get_display_string(config['settings'], langstr=True)
             mapname = config['settings'].get('map', config.get('map'))
             if mapname is None:
                 print('invalid game config - expected map entry under settings')
                 return babase.LangStr.from_text('???')
-            return classicassets.strings.game.game_on_map(
+            return _classicassets.strings.game.game_on_map(
                 name=lname,
                 mapname=_map.get_map_display_string(
                     _map.get_filtered_map_name(mapname), langstr=True
@@ -493,7 +493,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         super().__init__(settings)
 
@@ -504,7 +504,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         # Go ahead and get our map loading.
         self._map_type = _map.get_map_class(self._calc_map_name(settings))
 
-        self._spawn_sound = classicassets.audio.spawn.get()
+        self._spawn_sound = _classicassets.audio.spawn.get()
         self._map_type.preload()
         self._map: bascenev1.Map | None = None
         self._powerup_drop_timer: bascenev1.Timer | None = None
@@ -850,7 +850,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         from bascenev1._gameutils import animate
         from bascenev1lib.actor.zoomtext import ZoomText
@@ -866,9 +866,9 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
             color=(0.93 * 1.25, 0.9 * 1.25, 1.0 * 1.25),
             trailcolor=(0.15, 0.05, 1.0, 0.0),
         ).autoretain()
-        _bascenev1.timer(0.2, classicassets.audio.gong.get().play)
+        _bascenev1.timer(0.2, _classicassets.audio.gong.get().play)
         # _bascenev1.timer(
-        #     0.2, Call(_bascenev1.playsound, classicassets.audio.gong)
+        #     0.2, Call(_bascenev1.playsound, _classicassets.audio.gong)
         # )
 
         # The description can be either a string or a sequence with args
@@ -886,7 +886,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
 
         # Do some standard filters (epic mode, etc).
         if self.settings_raw.get('Epic Mode', False):
-            translation = classicassets.strings.game.epic_description_filter(
+            translation = _classicassets.strings.game.epic_description_filter(
                 description=translation
             )
         vrmode = babase.app.env.vr
@@ -920,13 +920,13 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
         from bascenev1._gameutils import animate, GameTip
 
         # If there's any tips left on the list, display one.
         if self.tips:
             tip = self.tips.pop(random.randrange(len(self.tips)))
-            tip_title = classicassets.strings.game.tip_title
+            tip_title = _classicassets.strings.game.tip_title
             icon: bascenev1.Texture | None = None
             sound: bascenev1.Sound | None = None
             if isinstance(tip, GameTip):
@@ -1289,7 +1289,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         from bascenev1._gameutils import animate
 
@@ -1313,7 +1313,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                 animate(cnode, 'input1', {0: 1, 0.15: 0.5}, loop=True)
                 animate(cnode, 'input2', {0: 0.1, 0.15: 0.0}, loop=True)
                 cnode.input3 = 1.0
-            classicassets.audio.tick.get().play()
+            _classicassets.audio.tick.get().play()
         if self._standard_time_limit_time <= 0:
             self._standard_time_limit_timer = None
             self.end_game()
@@ -1326,10 +1326,10 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                     'color': (1, 0.7, 0, 1),
                     'position': (0, -90),
                     'scale': 1.2,
-                    'text': classicassets.strings.game.time_expired,
+                    'text': _classicassets.strings.game.time_expired,
                 },
             )
-            classicassets.audio.ref_whistle.get().play()
+            _classicassets.audio.ref_whistle.get().play()
             animate(node, 'scale', {0.0: 0.0, 0.1: 1.4, 0.15: 1.2})
 
     def _setup_tournament_time_limit(self, duration: float) -> None:
@@ -1342,7 +1342,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
         from bascenev1._nodeactor import NodeActor
 
         if duration <= 0.0:
@@ -1372,7 +1372,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                     'position': (-60, 50),
                     'flatness': 1.0,
                     'scale': 0.5,
-                    'text': classicassets.strings.coop.tournament,
+                    'text': _classicassets.strings.coop.tournament,
                 },
             )
         )
@@ -1412,7 +1412,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         from bascenev1._gameutils import animate
 
@@ -1445,11 +1445,11 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                 animate(cnode, 'input1', {0: 1, 0.15: 0.5}, loop=True)
                 animate(cnode, 'input2', {0: 0.1, 0.15: 0.0}, loop=True)
                 cnode.input3 = 1.0
-            classicassets.audio.tick.get().play()
+            _classicassets.audio.tick.get().play()
         if self._tournament_time_limit <= 0:
             self._tournament_time_limit_timer = None
             self.end_game()
-            tval = classicassets.strings.game.tournament_time_expired
+            tval = _classicassets.strings.game.tournament_time_expired
             node = _bascenev1.newnode(
                 'text',
                 attrs={
@@ -1462,7 +1462,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                     'text': tval,
                 },
             )
-            classicassets.audio.ref_whistle.get().play()
+            _classicassets.audio.ref_whistle.get().play()
             animate(node, 'scale', {0: 0.0, 0.1: 1.4, 0.15: 1.2})
 
         # Normally we just connect this to time, but since this is a bit of a
@@ -1513,7 +1513,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         map_name: str
         if 'map' in settings:
@@ -1533,7 +1533,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
             ]
             if not valid_maps:
                 _bascenev1.broadcastmessage(
-                    classicassets.strings.game.no_valid_maps_error
+                    _classicassets.strings.game.no_valid_maps_error
                 )
                 raise RuntimeError('No valid maps')
             map_name = valid_maps[random.randrange(len(valid_maps))]

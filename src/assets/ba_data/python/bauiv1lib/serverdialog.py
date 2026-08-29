@@ -10,7 +10,7 @@ from efro.dataclassio import ioprepped, IOAttrs
 
 import bauiv1 as bui
 from bauiv1 import _commonassets
-from bauiv1 import builtinassets
+from bauiv1 import _builtinassets
 
 
 @ioprepped
@@ -58,7 +58,7 @@ class ServerDialogWindow(bui.Window):
         )
         self._starttime = bui.apptime()
 
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
         bui.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, 70 + (self._height - 70) * 0.5),
@@ -144,7 +144,7 @@ class ServerDialogWindow(bui.Window):
         plus = bui.app.plus
         assert plus is not None
         if bui.apptime() - self._starttime < 1.0:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
         plus.add_v1_account_transaction(
             {
@@ -159,7 +159,7 @@ class ServerDialogWindow(bui.Window):
         plus = bui.app.plus
         assert plus is not None
         if bui.apptime() - self._starttime < 1.0:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
         plus.add_v1_account_transaction(
             {

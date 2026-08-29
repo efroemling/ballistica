@@ -10,8 +10,8 @@ from typing import TYPE_CHECKING, override
 
 import bacommon.classic
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
 from bauiv1lib.utils import (
     get_screen_margins,
     scroll_fade_bottom,
@@ -209,7 +209,7 @@ class LeagueRankWindow(bui.MainWindow):
                 yoffs - (55 if uiscale is bui.UIScale.SMALL else 30),
             ),
             size=(0, 0),
-            text=classicassets.strings.league.league_rank,
+            text=_classicassets.strings.league.league_rank,
             h_align='center',
             color=bui.app.ui_v1.title_color,
             scale=1.2 if uiscale is bui.UIScale.SMALL else 1.3,
@@ -310,11 +310,11 @@ class LeagueRankWindow(bui.MainWindow):
         else:
             bui.screenmessage(
                 (
-                    classicassets.strings.league
+                    _classicassets.strings.league
                 ).achievements_unavailable_old_seasons,
                 color=(1, 0, 0),
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
 
     def _on_activity_mult_press(self) -> None:
         from bauiv1lib import confirm
@@ -324,7 +324,7 @@ class LeagueRankWindow(bui.MainWindow):
 
         # (The legacy form passed a ${MAX} sub that neither string
         # actually contained; dropped with the port.)
-        lstrs = classicassets.strings.league
+        lstrs = _classicassets.strings.league
         txt = (
             lstrs.activeness_all_time_info
             if self._season == 'a'
@@ -344,7 +344,7 @@ class LeagueRankWindow(bui.MainWindow):
         plus = bui.app.plus
         assert plus is not None
 
-        txt = classicassets.strings.league.up_to_date_bonus_description(
+        txt = _classicassets.strings.league.up_to_date_bonus_description(
             percent=str(
                 plus.get_v1_account_misc_read_val('proPowerRankingBoost', 10)
             )
@@ -369,7 +369,7 @@ class LeagueRankWindow(bui.MainWindow):
                 data=info,
             )
         else:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
 
     def _on_power_ranking_query_response(
         self, data: dict[str, Any] | None
@@ -485,7 +485,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
-            text=classicassets.strings.ui.points,
+            text=_classicassets.strings.ui.points,
             h_align='left',
             v_align='center',
             scale=0.8,
@@ -498,7 +498,7 @@ class LeagueRankWindow(bui.MainWindow):
             id=f'{self.main_window_id_prefix}|ach',
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 80),
-            icon=classicassets.textures.achievements_icon.get(),
+            icon=_classicassets.textures.achievements_icon.get(),
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(self._on_achievements_press),
             up_widget=self._back_button,
@@ -529,7 +529,7 @@ class LeagueRankWindow(bui.MainWindow):
             id=f'{self.main_window_id_prefix}|trophies',
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 80),
-            icon=classicassets.textures.medal_silver.get(),
+            icon=_classicassets.textures.medal_silver.get(),
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(self._on_trophies_press),
             left_widget=self._back_button,
@@ -559,7 +559,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
-            text=classicassets.strings.league.multipliers,
+            text=_classicassets.strings.league.multipliers,
             h_align='left',
             v_align='center',
             scale=0.8,
@@ -574,9 +574,9 @@ class LeagueRankWindow(bui.MainWindow):
                 id=f'{self.main_window_id_prefix}|amult',
                 position=(self._xoffs + h2 - 60, v2 + 10),
                 size=(200, 60),
-                icon=classicassets.textures.heart.get(),
+                icon=_classicassets.textures.heart.get(),
                 icon_color=(0.5, 0, 0.5),
-                label=classicassets.strings.ui.activity,
+                label=_classicassets.strings.ui.activity,
                 autoselect=True,
                 on_activate_call=bui.WeakCallStrict(
                     self._on_activity_mult_press
@@ -608,9 +608,9 @@ class LeagueRankWindow(bui.MainWindow):
             id=f'{self.main_window_id_prefix}|uptodatebonus',
             position=(self._xoffs + h2 - 60, v2 + 10),
             size=(200, 60),
-            icon=classicassets.textures.logo.get(),
+            icon=_classicassets.textures.logo.get(),
             icon_color=(0.3, 0, 0.3),
-            label=classicassets.strings.league.up_to_date_bonus,
+            label=_classicassets.strings.league.up_to_date_bonus,
             autoselect=True,
             on_activate_call=bui.WeakCallStrict(
                 self._on_up_to_date_bonus_press
@@ -642,7 +642,7 @@ class LeagueRankWindow(bui.MainWindow):
             size=(0, 0),
             flatness=1.0,
             shadow=0.0,
-            text=classicassets.strings.ui.final_score,
+            text=_classicassets.strings.ui.final_score,
             h_align='right',
             v_align='center',
             scale=0.9,
@@ -669,7 +669,7 @@ class LeagueRankWindow(bui.MainWindow):
             label='',
             position=(self._xoffs + h2 - 60, v2 - 100),
             color=(0.7, 0.55, 0.9),
-            texture=builtinassets.textures.button_square_wide.get(),
+            texture=_builtinassets.textures.button_square_wide.get(),
             opacity=0.3,
             size=(200, 80),
             autoselect=True,
@@ -677,7 +677,7 @@ class LeagueRankWindow(bui.MainWindow):
         )
         self._president_label = bui.textwidget(
             parent=w_parent,
-            text=classicassets.strings.league.league_president,
+            text=_classicassets.strings.league.league_president,
             flatness=1.0,
             shadow=0.0,
             color=(0.6, 0.6, 1, 0.7),
@@ -705,7 +705,7 @@ class LeagueRankWindow(bui.MainWindow):
         self._president_star1 = bui.imagewidget(
             parent=w_parent,
             draw_controller=self._president_button,
-            texture=classicassets.textures.star.get(),
+            texture=_classicassets.textures.star.get(),
             color=(0.7, 0.55, 0.9),
             opacity=0.2,
             position=(self._xoffs + h2 - 60 + 5, v2 - 100 + 17),
@@ -714,7 +714,7 @@ class LeagueRankWindow(bui.MainWindow):
         self._president_star1 = bui.imagewidget(
             parent=w_parent,
             draw_controller=self._president_button,
-            texture=classicassets.textures.star.get(),
+            texture=_classicassets.textures.star.get(),
             color=(0.7, 0.55, 0.9),
             opacity=0.2,
             position=(self._xoffs + h2 - 60 + 200 - 5 - 32, v2 - 100 + 17),
@@ -889,9 +889,9 @@ class LeagueRankWindow(bui.MainWindow):
         # We should be signed in at this point, but let's be sure.
         if plus.accounts.primary is None:
             bui.screenmessage(
-                classicassets.strings.account.not_signed_in, color=(1, 0, 0)
+                _classicassets.strings.account.not_signed_in, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # Wait for connectivity if need be, then bring up a cloud based
@@ -916,7 +916,7 @@ class LeagueRankWindow(bui.MainWindow):
 
         our_login_id = plus.get_v1_account_public_login_id()
         if not self._can_do_more_button or our_login_id is None:
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             bui.screenmessage(
                 _commonassets.strings.status.unavailable_status, color=(1, 0, 0)
             )
@@ -960,7 +960,7 @@ class LeagueRankWindow(bui.MainWindow):
         def num_str(number: str) -> str:
             # Layout code (flat widths/placement); evaluate locally.
             return (
-                classicassets.strings.league.number_badge(number=number)
+                _classicassets.strings.league.number_badge(number=number)
             ).evaluate()
 
         do_percent = False
@@ -970,7 +970,7 @@ class LeagueRankWindow(bui.MainWindow):
         if plus.get_v1_account_state() != 'signed_in':
             status_text = (
                 '('
-                + classicassets.strings.ui.not_signed_in_status.evaluate()
+                + _classicassets.strings.ui.not_signed_in_status.evaluate()
                 + ')'
             )
         elif in_top:
@@ -1031,7 +1031,7 @@ class LeagueRankWindow(bui.MainWindow):
                 season_choices.append(ssn)
                 if ssn != 'a' and not did_first:
                     season_choices_display.append(
-                        classicassets.strings.league.current_season(number=ssn)
+                        _classicassets.strings.league.current_season(number=ssn)
                     )
                     did_first = True
 
@@ -1041,11 +1041,11 @@ class LeagueRankWindow(bui.MainWindow):
                         self._is_current_season = True
                 elif ssn == 'a':
                     season_choices_display.append(
-                        classicassets.strings.league.all_time
+                        _classicassets.strings.league.all_time
                     )
                 else:
                     season_choices_display.append(
-                        classicassets.strings.league.season(number=ssn)
+                        _classicassets.strings.league.season(number=ssn)
                     )
             assert self._subcontainer
             self._season_popup_menu = PopupMenu(
@@ -1083,7 +1083,7 @@ class LeagueRankWindow(bui.MainWindow):
             text=(
                 ''
                 if self._season == 'a'
-                else classicassets.strings.league.league
+                else _classicassets.strings.league.league
             ),
         )
 
@@ -1093,7 +1093,7 @@ class LeagueRankWindow(bui.MainWindow):
             lcolor = (1, 1, 1)
             self._league_url_arg = ''
         elif self._season == 'a':
-            lname = classicassets.strings.league.all_time.evaluate()
+            lname = _classicassets.strings.league.all_time.evaluate()
             lnum = ''
             lcolor = (1, 1, 1)
             self._league_url_arg = ''
@@ -1117,22 +1117,22 @@ class LeagueRankWindow(bui.MainWindow):
             days_to_end = data['se'][0]
             minutes_to_end = data['se'][1]
             if days_to_end > 0:
-                to_end_string = classicassets.strings.league.season_ends_days(
+                to_end_string = _classicassets.strings.league.season_ends_days(
                     days=days_to_end
                 )
             elif days_to_end == 0 and minutes_to_end >= 60:
-                to_end_string = classicassets.strings.league.season_ends_hours(
+                to_end_string = _classicassets.strings.league.season_ends_hours(
                     hours=minutes_to_end // 60
                 )
             elif days_to_end == 0 and minutes_to_end >= 0:
                 to_end_string = (
-                    classicassets.strings.league.season_ends_minutes(
+                    _classicassets.strings.league.season_ends_minutes(
                         minutes=minutes_to_end
                     )
                 )
             else:
                 to_end_string = (
-                    classicassets.strings.league.season_ended_days_ago(
+                    _classicassets.strings.league.season_ended_days_ago(
                         days=-(days_to_end + 1)
                     )
                 )
@@ -1141,7 +1141,7 @@ class LeagueRankWindow(bui.MainWindow):
         bui.textwidget(
             edit=self._trophy_counts_reset_text,
             text=(
-                classicassets.strings.league.trophy_counts_reset
+                _classicassets.strings.league.trophy_counts_reset
                 if self._is_current_season and show_season_end
                 else ''
             ),
@@ -1170,7 +1170,7 @@ class LeagueRankWindow(bui.MainWindow):
         bui.textwidget(
             edit=self._to_ranked_text,
             text=(
-                classicassets.strings.league.to_ranked.evaluate()
+                _classicassets.strings.league.to_ranked.evaluate()
                 + ''
                 + extra_text
                 if do_percent
@@ -1180,7 +1180,7 @@ class LeagueRankWindow(bui.MainWindow):
 
         bui.textwidget(
             edit=self._your_power_ranking_text,
-            text=(classicassets.strings.ui.rank if (not do_percent) else ''),
+            text=(_classicassets.strings.ui.rank if (not do_percent) else ''),
         )
         bui.spinnerwidget(edit=self._loading_spinner, visible=False)
 
@@ -1245,7 +1245,7 @@ class LeagueRankWindow(bui.MainWindow):
         bui.buttonwidget(
             edit=self._power_ranking_achievements_button,
             label=('' if data is None else str(data['a']) + ' ')
-            + classicassets.strings.ui.achievements.evaluate(),
+            + _classicassets.strings.ui.achievements.evaluate(),
         )
 
         # For the achievement value, use the number they gave us for
@@ -1274,7 +1274,7 @@ class LeagueRankWindow(bui.MainWindow):
         bui.buttonwidget(
             edit=self._power_ranking_trophies_button,
             label=('' if data is None else str(total_trophies_count) + ' ')
-            + classicassets.strings.ui.trophies.evaluate(),
+            + _classicassets.strings.ui.trophies.evaluate(),
         )
         bui.textwidget(
             edit=self._power_ranking_trophies_total_text,
@@ -1377,7 +1377,7 @@ class LeagueRankWindow(bui.MainWindow):
     ) -> None:
         from bauiv1lib.account.viewer import AccountViewerWindow
 
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
         AccountViewerWindow(
             account_id=account_id, position=textwidget.get_screen_space_center()
         )

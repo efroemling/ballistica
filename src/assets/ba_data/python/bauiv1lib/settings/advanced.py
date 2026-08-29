@@ -11,7 +11,7 @@ from bacommon.locale import (
     language_picker_label,
 )
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
 from bauiv1lib.utils import (
     get_screen_margins,
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from typing import Any
 
 
-_advstrs = classicassets.strings.settings.advanced
+_advstrs = _classicassets.strings.settings.advanced
 
 
 class AdvancedSettingsWindow(bui.MainWindow):
@@ -479,7 +479,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             position=(90, v + 10),
             size=(0, 0),
             text=_advstrs.help_translate(
-                app_name=classicassets.strings.ui.app_name
+                app_name=_classicassets.strings.ui.app_name
             ),
             maxwidth=self._sub_width * 0.9 - 10,
             max_height=55,
@@ -497,7 +497,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             position=(self._sub_width / 2 - this_button_width / 2, v - 24),
             size=(this_button_width, 60),
             label=_advstrs.translation_editor(
-                app_name=classicassets.strings.ui.app_name
+                app_name=_classicassets.strings.ui.app_name
             ),
             autoselect=True,
             on_activate_call=bui.CallStrict(
@@ -737,7 +737,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
             size=(this_button_width, 60),
             autoselect=True,
-            label=classicassets.strings.settings.dev_tools.title,
+            label=_classicassets.strings.settings.dev_tools.title,
             text_scale=1.0,
             on_activate_call=self._on_dev_tools_button_press,
         )
@@ -789,7 +789,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             position=(self._sub_width / 2 - this_button_width / 2, v - 10),
             size=(this_button_width, 60),
             autoselect=True,
-            label=classicassets.strings.settings.plugins.title,
+            label=_classicassets.strings.settings.plugins.title,
             text_scale=1.0,
             on_activate_call=self._on_plugins_button_press,
         )
@@ -805,7 +805,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
                 position=(self._sub_width / 2 - this_button_width / 2, v - 14),
                 size=(this_button_width, 60),
                 autoselect=True,
-                label=classicassets.strings.settings.vr_testing.title,
+                label=_classicassets.strings.settings.vr_testing.title,
                 text_scale=1.0,
                 on_activate_call=self._on_vr_test_press,
             )
@@ -821,7 +821,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
                 position=(self._sub_width / 2 - this_button_width / 2, v - 14),
                 size=(this_button_width, 60),
                 autoselect=True,
-                label=classicassets.strings.settings.net_testing.title,
+                label=_classicassets.strings.settings.net_testing.title,
                 text_scale=1.0,
                 on_activate_call=self._on_net_test_press,
             )
@@ -835,7 +835,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
             position=(self._sub_width / 2 - this_button_width / 2, v - 14),
             size=(this_button_width, 60),
             autoselect=True,
-            label=classicassets.strings.settings.benchmarks.title,
+            label=_classicassets.strings.settings.benchmarks.title,
             text_scale=1.0,
             on_activate_call=self._on_benchmark_press,
         )

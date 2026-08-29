@@ -7,8 +7,8 @@ from typing import override, TYPE_CHECKING
 from bauiv1lib.docui import DocUIController
 
 import bauiv1 as bui
-from bauiv1 import classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _classicassets
+from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
     from bacommon.docui import DocUIRequest, DocUIResponse
@@ -34,7 +34,7 @@ class StoreUIController(DocUIController):
             bui.screenmessage(
                 f'Invalid local-action "{action.name}".', color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
 
     def _restore_purchases(self) -> None:
 
@@ -44,9 +44,9 @@ class StoreUIController(DocUIController):
         # We should always be signed in here. Make noise if not.
         if plus.accounts.primary is None:
             bui.screenmessage(
-                classicassets.strings.ui.not_signed_in_status, color=(1, 0, 0)
+                _classicassets.strings.ui.not_signed_in_status, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         plus.restore_purchases()
@@ -54,6 +54,6 @@ class StoreUIController(DocUIController):
     def _get_tokens(self, action: DocUILocalAction) -> None:
         from bauiv1lib.gettokens import show_get_tokens_window
 
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
 
         show_get_tokens_window(origin_widget=bui.existing(action.widget))

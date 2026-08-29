@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, override
 from efro.util import strip_exception_tracebacks
 
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _classicassets
 
 from bauiv1lib.utils import get_screen_margins
 
@@ -158,7 +158,7 @@ def _compose_credits_rows(
     # pre-laid-out plain text (name rows get positioned-widget
     # treatment instead so their columns line up exactly), so Lstr
     # values get evaluated at the boundary.
-    sound_and_music = classicassets.strings.credits.song_credit(
+    sound_and_music = _classicassets.strings.credits.song_credit(
         title="'William Tell (Trumpet Entry)'",
         performer='The Apollo Symphony Orchestra',
         composer='Gioacchino Rossini',
@@ -199,39 +199,39 @@ def _compose_credits_rows(
 
     part_before_freesound = (
         '  '
-        + classicassets.strings.credits.coding_graphics_audio(
+        + _classicassets.strings.credits.coding_graphics_audio(
             name='Eric Froemling'
         ).evaluate()
         + '\n'
         '\n'
         '  '
-        + classicassets.strings.credits.additional_audio_art_ideas(
+        + _classicassets.strings.credits.additional_audio_art_ideas(
             name='Raphael Suter'
         ).evaluate()
         + '\n'
         '\n'
-        '  ' + classicassets.strings.credits.sound_and_music.evaluate() + '\n'
+        '  ' + _classicassets.strings.credits.sound_and_music.evaluate() + '\n'
         '\n' + sound_and_music + '\n'
         '\n'
         '     '
-        + classicassets.strings.credits.public_domain_music_via(
+        + _classicassets.strings.credits.public_domain_music_via(
             name='Musopen.com'
         ).evaluate()
         + '\n'
         '        '
-        + classicassets.strings.credits.thanks_especially_to(
+        + _classicassets.strings.credits.thanks_especially_to(
             name='the US Army, Navy, and Marine Bands'
         ).evaluate()
         + '\n'
         '\n'
         '     '
-        + classicassets.strings.credits.additional_music_from(
+        + _classicassets.strings.credits.additional_music_from(
             name='The YouTube Audio Library'
         ).evaluate()
         + '\n'
         '\n'
         '     '
-        + classicassets.strings.credits.sounds_source(
+        + _classicassets.strings.credits.sounds_source(
             source='Freesound.org'
         ).evaluate()
         + '\n\n'
@@ -239,7 +239,7 @@ def _compose_credits_rows(
 
     part_before_translators = (
         '\n\n  '
-        + classicassets.strings.credits.language_translations.evaluate()
+        + _classicassets.strings.credits.language_translations.evaluate()
         + '\n\n'
     )
 
@@ -258,22 +258,22 @@ def _compose_credits_rows(
         '\n'
         '  Holiday theme vector art designed by Freepik\n'
         '\n'
-        '  ' + classicassets.strings.credits.special_thanks.evaluate() + '\n'
+        '  ' + _classicassets.strings.credits.special_thanks.evaluate() + '\n'
         '\n'
         '     Todd, Laura, and Robert Froemling\n'
         '     '
-        + classicassets.strings.credits.all_my_family.evaluate().replace(
+        + _classicassets.strings.credits.all_my_family.evaluate().replace(
             '\n', '\n     '
         )
         + '\n'
         '     '
-        + classicassets.strings.credits.whoever_invented_coffee.evaluate()
+        + _classicassets.strings.credits.whoever_invented_coffee.evaluate()
         + '\n'
         '\n'
-        '  ' + classicassets.strings.credits.legal.evaluate() + '\n'
+        '  ' + _classicassets.strings.credits.legal.evaluate() + '\n'
         '\n'
         '     '
-        + classicassets.strings.credits.software_based_on(
+        + _classicassets.strings.credits.software_based_on(
             name='the Khronos Group'
         ).evaluate()
         + '\n'
@@ -523,8 +523,8 @@ class CreditsWindow(bui.MainWindow):
             ),
             size=(0, 0),
             scale=0.8 if self._uiscale is bui.UIScale.SMALL else 1.0,
-            text=classicassets.strings.credits.title(
-                app_name=classicassets.strings.ui.app_name
+            text=_classicassets.strings.credits.title(
+                app_name=_classicassets.strings.ui.app_name
             ),
             h_align='center',
             v_align='center',

@@ -42,9 +42,9 @@ def get_map_display_name(name: str) -> babase.LangStr:
     # Safe up-call: bascenev1 is fully imported by the time this runs;
     # the cycle pylint sees is structural only.
     # pylint: disable-next=cyclic-import
-    from bascenev1 import classicassets
+    from bascenev1 import _classicassets
 
-    s = classicassets.strings.map_names
+    s = _classicassets.strings.map_names
     entry = {
         'Big G': s.big_g,
         'Bridgit': s.bridgit,

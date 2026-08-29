@@ -3,8 +3,8 @@
 """Bits of utility functionality related to co-op levels."""
 
 import bauiv1 as bui
-from bauiv1 import builtinassets
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _builtinassets
+from bauiv1 import _commonassets, _classicassets
 
 
 class CoopLevelLockedWindow(bui.Window):
@@ -13,7 +13,7 @@ class CoopLevelLockedWindow(bui.Window):
     def __init__(self, name: bui.LangStr, dep_name: bui.LangStr):
         width = 550.0
         height = 250.0
-        lock_tex = classicassets.textures.lock.get()
+        lock_tex = _classicassets.textures.lock.get()
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
         super().__init__(
@@ -33,7 +33,7 @@ class CoopLevelLockedWindow(bui.Window):
             size=(0, 0),
             h_align='left',
             v_align='center',
-            text=classicassets.strings.coop.level_is_locked(level=name),
+            text=_classicassets.strings.coop.level_is_locked(level=name),
             maxwidth=400,
             color=(1, 0.8, 0.3, 1),
             scale=1.1,
@@ -44,7 +44,7 @@ class CoopLevelLockedWindow(bui.Window):
             size=(0, 0),
             h_align='left',
             v_align='center',
-            text=(classicassets.strings.coop).level_must_be_completed_first(
+            text=(_classicassets.strings.coop).level_must_be_completed_first(
                 level=dep_name
             ),
             maxwidth=400,
@@ -68,7 +68,7 @@ class CoopLevelLockedWindow(bui.Window):
         bui.containerwidget(
             edit=self._root_widget, selected_child=btn, start_button=btn
         )
-        builtinassets.audio.error.get().play()
+        _builtinassets.audio.error.get().play()
 
     def _ok(self) -> None:
         bui.containerwidget(edit=self._root_widget, transition='out_left')

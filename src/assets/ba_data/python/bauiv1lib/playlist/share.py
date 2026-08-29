@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, override
 from efro.util import strict_partial
 from bauiv1lib.sendinfo import SendInfoWindowLegacyModal
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
-from bauiv1 import builtinassets
+from bauiv1 import _commonassets, _classicassets
+from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -31,26 +31,26 @@ class SharePlaylistImportWindow(SendInfoWindowLegacyModal):
             bui.screenmessage(
                 _commonassets.strings.values.error, color=(1, 0, 0)
             )
-            builtinassets.audio.error.get().play()
+            _builtinassets.audio.error.get().play()
             return
 
         # Server-sent playlist-type values map to authored mode names
         # (type-checked refs); anything unknown displays verbatim.
         playlist_type_name = {
-            'Team Tournament': classicassets.strings.play_modes.teams,
-            'Free-for-All': classicassets.strings.play_modes.free_for_all,
+            'Team Tournament': _classicassets.strings.play_modes.teams,
+            'Free-for-All': _classicassets.strings.play_modes.free_for_all,
         }.get(response['playlistType'])
         if playlist_type_name is None:
             playlist_type_name = bui.langstr_value(response['playlistType'])
 
         bui.screenmessage(
-            classicassets.strings.playlist.import_success(
+            _classicassets.strings.playlist.import_success(
                 type=playlist_type_name,
                 name=response['playlistName'],
             ),
             color=(0, 1, 0),
         )
-        builtinassets.audio.gun_cocking.get().play()
+        _builtinassets.audio.gun_cocking.get().play()
         if self._on_success_callback is not None:
             self._on_success_callback()
         bui.containerwidget(
@@ -98,8 +98,8 @@ class SharePlaylistResultsWindow(bui.Window):
                 darken_behind=True,
             )
         )
-        builtinassets.audio.cash_register.get().play()
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.cash_register.get().play()
+        _builtinassets.audio.swish.get().play()
 
         self._cancel_button = bui.buttonwidget(
             parent=self._root_widget,
@@ -125,7 +125,7 @@ class SharePlaylistResultsWindow(bui.Window):
             flatness=1.0,
             h_align='center',
             v_align='center',
-            text=classicassets.strings.playlist.export_success(name=name),
+            text=_classicassets.strings.playlist.export_success(name=name),
             maxwidth=self._width * 0.85,
         )
 
@@ -138,7 +138,7 @@ class SharePlaylistResultsWindow(bui.Window):
             flatness=1.0,
             h_align='center',
             v_align='center',
-            text=classicassets.strings.playlist.import_instructions,
+            text=_classicassets.strings.playlist.import_instructions,
             maxwidth=self._width * 0.85,
         )
 
@@ -160,7 +160,7 @@ class SharePlaylistResultsWindow(bui.Window):
                 textcolor=(1, 1, 1),
                 color=(0.45, 0.63, 0.15),
                 on_activate_call=strict_partial(self._copy_press, code),
-                label=classicassets.strings.gather.copy_code,
+                label=_classicassets.strings.gather.copy_code,
                 position=(self._width * 0.5 - 70, 35),
                 autoselect=True,
             )
@@ -171,4 +171,4 @@ class SharePlaylistResultsWindow(bui.Window):
 
     def _copy_press(self, code: str) -> None:
         bui.clipboard_set_text(code)
-        bui.screenmessage(classicassets.strings.gather.copy_code_confirm)
+        bui.screenmessage(_classicassets.strings.gather.copy_code_confirm)

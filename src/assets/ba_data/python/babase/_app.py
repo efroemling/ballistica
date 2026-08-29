@@ -763,7 +763,7 @@ class App:
 
     def handle_deep_link(self, url: str) -> None:
         """Handle a deep link URL."""
-        from babase import builtinassets
+        from babase import _builtinassets
 
         assert _babase.in_logic_thread()
 
@@ -775,9 +775,9 @@ class App:
         else:
             try:
                 _babase.screenmessage(
-                    builtinassets.strings.ui.error, color=(1, 0, 0)
+                    _builtinassets.strings.ui.error, color=(1, 0, 0)
                 )
-                builtinassets.audio.error.get().play()
+                _builtinassets.audio.error.get().play()
             except ImportError:
                 pass
 
@@ -1033,11 +1033,11 @@ class App:
 
     def _display_set_intent_error(self, intent: AppIntent) -> None:
         """Show the *user* something went wrong setting an intent."""
-        from babase import builtinassets
+        from babase import _builtinassets
 
         del intent
-        _babase.screenmessage(builtinassets.strings.ui.error, color=(1, 0, 0))
-        builtinassets.audio.error.get().play()
+        _babase.screenmessage(_builtinassets.strings.ui.error, color=(1, 0, 0))
+        _builtinassets.audio.error.get().play()
 
     def _on_initing(self) -> None:
         """Called when the app enters the initing state.

@@ -14,10 +14,10 @@ from typing import TYPE_CHECKING, override, assert_never, final
 from efro.dataclassio import dataclass_from_dict
 import babase
 import bauiv1
-from bauiv1 import _commonassets, builtinassets
-from bauiv1 import classicassets as uiclassicassets
+from bauiv1 import _commonassets, _builtinassets
+from bauiv1 import _classicassets as uiclassicassets
 import bascenev1
-from bascenev1 import classicassets
+from bascenev1 import _classicassets
 
 import _baclassic
 from baclassic._music import MusicSubsystem
@@ -406,7 +406,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             with activity.context:
                 globs = activity.globalsnode
                 if not globs.paused:
-                    classicassets.audio.ref_whistle.get().play()
+                    _classicassets.audio.ref_whistle.get().play()
                     globs.paused = True
 
                 # FIXME: This should not be an attr on Actor.
@@ -414,7 +414,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
                     bascenev1.newnode(
                         'text',
                         attrs={
-                            'text': classicassets.strings.game.paused_by_host,
+                            'text': _classicassets.strings.game.paused_by_host,
                             'client_only': True,
                             'flatness': 1.0,
                             'h_align': 'center',
@@ -436,7 +436,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             with activity.context:
                 globs = activity.globalsnode
                 if globs.paused:
-                    classicassets.audio.ref_whistle.get().play()
+                    _classicassets.audio.ref_whistle.get().play()
                     globs.paused = False
 
                     # FIXME: This should not be an actor attr.
@@ -906,7 +906,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # Play explicit swish sound so it occurs due to keypresses/etc.
         # This means we have to disable it for any button or else we get
         # double.
-        builtinassets.audio.swish.get().play()
+        _builtinassets.audio.swish.get().play()
 
         # If it exists, dismiss it; otherwise make a new one.
         party_window = (
@@ -928,7 +928,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             # need to make sure to disable swish sounds for any buttons
             # that lead us here.
             if babase.app.env.gui:
-                builtinassets.audio.swish.get().play()
+                _builtinassets.audio.swish.get().play()
 
             # Pause gameplay.
             self.pause()
@@ -1041,7 +1041,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             logging.error(
                 'Got BasicCloudDialog.ButtonLabel.UNKNOWN; should not happen.'
             )
-            return builtinassets.strings.ui.error
+            return _builtinassets.strings.ui.error
 
         if label is cls.OK:
             return acts.ok

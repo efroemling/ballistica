@@ -14,7 +14,7 @@ from bauiv1lib.utils import (
     scroll_fade_top,
 )
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
     from bauiv1lib.play import PlaylistSelectContext
@@ -258,8 +258,8 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     'type': 'ADD_PLAYLIST',
                     'playlistType': 'Free-for-All',
                     'playlistName': (
-                        classicassets.strings.playlist.single_game_name(
-                            game=classicassets.strings.game_names.death_match
+                        _classicassets.strings.playlist.single_game_name(
+                            game=_classicassets.strings.game_names.death_match
                         ).evaluate()
                     ),
                     'playlist': [
@@ -291,9 +291,9 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     'type': 'ADD_PLAYLIST',
                     'playlistType': 'Team Tournament',
                     'playlistName': (
-                        classicassets.strings.playlist.single_game_name(
+                        _classicassets.strings.playlist.single_game_name(
                             game=(
-                                classicassets.strings.game_names
+                                _classicassets.strings.game_names
                             ).capture_the_flag
                         ).evaluate()
                     ),
@@ -342,7 +342,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     'type': 'ADD_PLAYLIST',
                     'playlistType': 'Team Tournament',
                     'playlistName': (
-                        classicassets.strings.playlist.just_sports
+                        _classicassets.strings.playlist.just_sports
                     ).evaluate(),
                     'playlist': [
                         {
@@ -371,7 +371,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                     'type': 'ADD_PLAYLIST',
                     'playlistType': 'Free-for-All',
                     'playlistName': (
-                        classicassets.strings.playlist.just_epic
+                        _classicassets.strings.playlist.just_epic
                     ).evaluate(),
                     'playlist': [
                         {
@@ -496,7 +496,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
         assert bui.app.classic is not None
         bui.textwidget(
             parent=self._subcontainer,
-            text=classicassets.strings.playlist.playlists,
+            text=_classicassets.strings.playlist.playlists,
             position=(
                 self._margin_left + 40 + xoffs,
                 self._sub_height + yoffs - 26,
@@ -512,11 +512,11 @@ class PlaylistBrowserWindow(bui.MainWindow):
         index = 0
         appconfig = bui.app.config
 
-        mesh_opaque = classicassets.meshes.level_select_button_opaque.get()
+        mesh_opaque = _classicassets.meshes.level_select_button_opaque.get()
         mesh_transparent = (
-            classicassets.meshes.level_select_button_transparent.get()
+            _classicassets.meshes.level_select_button_transparent.get()
         )
-        mask_tex = classicassets.textures.map_preview_mask.get()
+        mask_tex = _classicassets.textures.map_preview_mask.get()
 
         # h_offs = 225 if count == 1 else 115 if count == 2 else 0
         h_offs = 2
@@ -726,7 +726,7 @@ class PlaylistBrowserWindow(bui.MainWindow):
                                         size=(scl * 100.0, scl * 100.0),
                                         position=(h + scl * 75, v + scl * 10),
                                         texture=(
-                                            classicassets.textures
+                                            _classicassets.textures
                                         ).lock.get(),
                                         draw_controller=btn,
                                     )

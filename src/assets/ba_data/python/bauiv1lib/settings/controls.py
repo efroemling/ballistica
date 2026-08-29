@@ -6,11 +6,11 @@ from typing import override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
-from bauiv1 import builtinassets
+from bauiv1 import _builtinassets
 
-_ctlstrs = classicassets.strings.settings.controllers
+_ctlstrs = _classicassets.strings.settings.controllers
 
 
 class ControlsSettingsWindow(bui.MainWindow):
@@ -316,7 +316,7 @@ class ControlsSettingsWindow(bui.MainWindow):
                     _commonassets.strings.status.must_restart,
                     color=(1, 1, 0),
                 )
-                builtinassets.audio.gun_cocking.get().play()
+                _builtinassets.audio.gun_cocking.get().play()
                 cfg = bui.app.config
                 cfg['Disable XInput'] = value
                 cfg.apply_and_commit()

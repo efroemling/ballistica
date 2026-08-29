@@ -101,9 +101,9 @@ def getsimplesound(name: str) -> 'babase.SimpleSound':
     """Load a sound by legacy bare name.
 
     .. deprecated:: 1.8.0
-       Inert; returns a silent sound. Use an asset-package wrapper --
-       ``babase.builtinassets.audio.error.get()`` and friends -- and it
-       will be removed when api 9 support ends.
+       Inert; returns a silent sound. Load sounds through a generated
+       asset-package wrapper module instead. Will be removed when api 9
+       support ends.
 
     :meta private:
     """
@@ -112,13 +112,13 @@ def getsimplesound(name: str) -> 'babase.SimpleSound':
     # trap: a bare name only resolves while its package happens to be
     # registered, so the same call worked or failed depending on when it
     # ran and which packages the build bundled. Most of these names live
-    # in classicassets, which is not up at all during bring-up -- and
+    # in _classicassets, which is not up at all during bring-up -- and
     # plugin startup hooks (``Plugin.on_app_running``) run there, before
     # construct-mode hands off.
     warnings.warn(
         f"babase.getsimplesound('{name}') is inert and will be removed"
-        ' when api 9 support ends; load the sound from its asset-package'
-        ' wrapper instead (e.g. babase.builtinassets.audio.error.get()).',
+        ' when api 9 support ends; load the sound through a generated'
+        ' asset-package wrapper module instead.',
         DeprecationWarning,
         stacklevel=2,
     )
@@ -126,6 +126,6 @@ def getsimplesound(name: str) -> 'babase.SimpleSound':
     # cycle is structural only -- by the time anyone can call this, the
     # wrapper is long since imported.
     # pylint: disable-next=cyclic-import
-    from babase import builtinassets
+    from babase import _builtinassets
 
-    return builtinassets.audio.blank.get()
+    return _builtinassets.audio.blank.get()

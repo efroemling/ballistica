@@ -10,7 +10,7 @@ from enum import Enum
 
 import babase
 import bascenev1
-from bascenev1 import MusicType, classicassets
+from bascenev1 import MusicType, _classicassets
 
 if TYPE_CHECKING:
     from typing import Callable, Any
@@ -35,8 +35,8 @@ class AssetSoundtrackEntry:
 
 
 def _audioref(name: str) -> str:
-    """Qualified asset-package ref for a classicassets audio asset."""
-    return f'{classicassets.__asset_package__}:audio/{name}'
+    """Qualified asset-package ref for a _classicassets audio asset."""
+    return f'{_classicassets.__asset_package__}:audio/{name}'
 
 
 # What gets played by default for our different music types:

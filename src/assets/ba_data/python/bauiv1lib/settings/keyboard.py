@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib.popup import PopupMenuWindow
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
-from bauiv1 import builtinassets
+from bauiv1 import _builtinassets
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -17,8 +17,8 @@ if TYPE_CHECKING:
     from bauiv1lib.popup import PopupWindow
 
 
-_kbstrs = classicassets.strings.settings.controllers.keyboard
-_gpstrs = classicassets.strings.settings.controllers.gamepad
+_kbstrs = _classicassets.strings.settings.controllers.keyboard
+_gpstrs = _classicassets.strings.settings.controllers.gamepad
 
 
 class ConfigKeyboardWindow(bui.MainWindow):
@@ -187,28 +187,28 @@ class ConfigKeyboardWindow(bui.MainWindow):
             pos=(h_offs, v + 0.95 * dist),
             color=d_color,
             button='buttonUp',
-            texture=classicassets.textures.up_button.get(),
+            texture=_classicassets.textures.up_button.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs - 1.2 * dist, v),
             color=d_color,
             button='buttonLeft',
-            texture=classicassets.textures.left_button.get(),
+            texture=_classicassets.textures.left_button.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs + 1.2 * dist, v),
             color=d_color,
             button='buttonRight',
-            texture=classicassets.textures.right_button.get(),
+            texture=_classicassets.textures.right_button.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs, v - 0.95 * dist),
             color=d_color,
             button='buttonDown',
-            texture=classicassets.textures.down_button.get(),
+            texture=_classicassets.textures.down_button.get(),
             scale=1.0,
         )
 
@@ -217,7 +217,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
                 pos=(self._width * 0.5, v + 0.1 * dist),
                 color=(0.4, 0.4, 0.6),
                 button='buttonStart',
-                texture=builtinassets.textures.start_button.get(),
+                texture=_builtinassets.textures.start_button.get(),
                 scale=0.8,
             )
 
@@ -227,28 +227,28 @@ class ConfigKeyboardWindow(bui.MainWindow):
             pos=(h_offs, v + 0.95 * dist),
             color=(0.6, 0.4, 0.8),
             button='buttonPickUp',
-            texture=classicassets.textures.button_pick_up.get(),
+            texture=_classicassets.textures.button_pick_up.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs - 1.2 * dist, v),
             color=(0.7, 0.5, 0.1),
             button='buttonPunch',
-            texture=classicassets.textures.button_punch.get(),
+            texture=_classicassets.textures.button_punch.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs + 1.2 * dist, v),
             color=(0.5, 0.2, 0.1),
             button='buttonBomb',
-            texture=classicassets.textures.button_bomb.get(),
+            texture=_classicassets.textures.button_bomb.get(),
             scale=1.0,
         )
         self._capture_button(
             pos=(h_offs, v - 0.95 * dist),
             color=(0.2, 0.5, 0.2),
             button='buttonJump',
-            texture=classicassets.textures.button_jump.get(),
+            texture=_classicassets.textures.button_jump.get(),
             scale=1.0,
         )
 
@@ -349,7 +349,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
         self._settings = {}
         self._get_config_mapping(default=True)
         self._rebuild_ui(is_reset=True)
-        builtinassets.audio.gun_cocking.get().play()
+        _builtinassets.audio.gun_cocking.get().play()
 
     def _do_more(self) -> None:
         """Show a burger menu with extra settings."""
@@ -396,7 +396,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
             return
 
         assert bui.app.classic is not None
-        builtinassets.audio.gun_cocking.get().play()
+        _builtinassets.audio.gun_cocking.get().play()
 
         # There's a chance the device disappeared; handle that
         # gracefully.
@@ -492,7 +492,7 @@ class AwaitKeyboardInputWindow(bui.Window):
         if event['type'] == 'BUTTONDOWN':
             bname = event['input_device'].get_button_name(event['button'])
             bui.textwidget(edit=self._capture_key_ui, text=bname)
-            builtinassets.audio.gun_cocking.get().play()
+            _builtinassets.audio.gun_cocking.get().play()
             self._die()
 
     def _decrement(self) -> None:

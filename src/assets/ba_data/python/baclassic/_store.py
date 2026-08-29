@@ -15,12 +15,12 @@ if TYPE_CHECKING:
 
 
 def _tex(name: str) -> str:
-    """Qualified classicassets ref for a store preview texture."""
+    """Qualified _classicassets ref for a store preview texture."""
     # Deferred; only runs post-import.
     # pylint: disable-next=cyclic-import
-    from bascenev1 import classicassets
+    from bascenev1 import _classicassets
 
-    return f'{classicassets.__asset_package__}:textures/{name}'
+    return f'{_classicassets.__asset_package__}:textures/{name}'
 
 
 class StoreSubsystem:
@@ -36,7 +36,7 @@ class StoreSubsystem:
         """Return a display name for a store item."""
         # pylint: disable=cyclic-import
         # pylint: disable=too-many-return-statements
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         item_info = self.get_store_item(item_name)
         if item_name.startswith('characters.'):
@@ -46,10 +46,10 @@ class StoreSubsystem:
                 item_info['character'], langstr=True
             )
         if item_name in ['merch']:
-            return classicassets.strings.store.merch
+            return _classicassets.strings.store.merch
         if item_name in ['upgrades.pro', 'pro']:
-            return classicassets.strings.store.pro_name(
-                app_name=classicassets.strings.ui.app_name
+            return _classicassets.strings.store.pro_name(
+                app_name=_classicassets.strings.ui.app_name
             )
         if item_name.startswith('maps.'):
             map_type: type[bascenev1.Map] = item_info['map_type']
@@ -58,11 +58,11 @@ class StoreSubsystem:
             gametype: type[bascenev1.GameActivity] = item_info['gametype']
             return gametype.get_display_string(langstr=True)
         if item_name.startswith('icons.'):
-            return classicassets.strings.profile.icon
+            return _classicassets.strings.profile.icon
         if item_name == 'upgrades.infinite_runaround':
-            return classicassets.strings.coop_levels.infinite_runaround
+            return _classicassets.strings.coop_levels.infinite_runaround
         if item_name == 'upgrades.infinite_onslaught':
-            return classicassets.strings.coop_levels.infinite_onslaught
+            return _classicassets.strings.coop_levels.infinite_onslaught
         raise ValueError('unrecognized item: ' + item_name)
 
     def get_store_item_display_size(

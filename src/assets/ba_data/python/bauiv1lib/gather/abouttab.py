@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, override
 
 from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
-from bauiv1 import classicassets
+from bauiv1 import _classicassets
 
 if TYPE_CHECKING:
     from bauiv1lib.gather import GatherWindow
@@ -56,10 +56,10 @@ class AboutGatherTab(GatherTab):
         # (nested fragments never wrap themselves), and paragraph gaps
         # come from the block heights here.
         message_blocks: list[tuple[bui.LangStr, float]] = [
-            (classicassets.strings.gather.about_intro, 75 * msquish),
-            (classicassets.strings.gather.about_parties_info, 110 * msquish),
+            (_classicassets.strings.gather.about_intro, 75 * msquish),
+            (_classicassets.strings.gather.about_parties_info, 110 * msquish),
             (
-                classicassets.strings.gather.about_party_button(
+                _classicassets.strings.gather.about_party_button(
                     party=bui.charstr(bui.SpecialChar.PARTY_ICON),
                     button=bui.charstr(bui.SpecialChar.TOP_BUTTON),
                 ),
@@ -69,7 +69,7 @@ class AboutGatherTab(GatherTab):
         if show_message_extra:
             message_blocks.append(
                 (
-                    classicassets.strings.gather.about_local_multiplayer_extra,
+                    _classicassets.strings.gather.about_local_multiplayer_extra,
                     105 * msquish,
                 )
             )
@@ -148,7 +148,7 @@ class AboutGatherTab(GatherTab):
                 h_align='right',
                 v_align='center',
                 flatness=1.0,
-                text=classicassets.strings.gather.invite_a_friend(
+                text=_classicassets.strings.gather.invite_a_friend(
                     count=str(try_tickets)
                 ),
             )
@@ -159,7 +159,7 @@ class AboutGatherTab(GatherTab):
                 size=(230, 50),
                 color=(0.54, 0.42, 0.56),
                 textcolor=(0, 1, 0),
-                label=classicassets.strings.gather.invite_friends,
+                label=_classicassets.strings.gather.invite_friends,
                 autoselect=True,
                 on_activate_call=bui.WeakCallStrict(self._invite_to_try_press),
                 up_widget=tab_button,
@@ -180,7 +180,7 @@ class AboutGatherTab(GatherTab):
                 h_align='right',
                 v_align='center',
                 flatness=1.0,
-                text=classicassets.strings.gather.discord_friends,
+                text=_classicassets.strings.gather.discord_friends,
             )
             discord_button = bui.buttonwidget(
                 parent=container,
@@ -189,7 +189,7 @@ class AboutGatherTab(GatherTab):
                 size=(230, 50),
                 color=(0.54, 0.42, 0.56),
                 textcolor=(0.6, 0.6, 1),
-                label=classicassets.strings.gather.discord_join,
+                label=_classicassets.strings.gather.discord_join,
                 autoselect=True,
                 on_activate_call=bui.WeakCallStrict(
                     self._join_the_discord_press

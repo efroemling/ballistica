@@ -10,7 +10,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
-from bascenev1 import classicassets
+from bascenev1 import _classicassets
 
 from bascenev1lib.actor.flag import Flag
 from bascenev1lib.actor.playerspaz import PlayerSpaz
@@ -101,19 +101,19 @@ class KingOfTheHillGame(bs.TeamGameActivity[Player, Team]):
         super().__init__(settings)
         shared = SharedObjects.get()
         self._scoreboard = Scoreboard()
-        self._swipsound = classicassets.audio.swip.get()
-        self._tick_sound = classicassets.audio.tick.get()
+        self._swipsound = _classicassets.audio.swip.get()
+        self._tick_sound = _classicassets.audio.tick.get()
         self._countdownsounds = {
-            10: classicassets.audio.announce_ten.get(),
-            9: classicassets.audio.announce_nine.get(),
-            8: classicassets.audio.announce_eight.get(),
-            7: classicassets.audio.announce_seven.get(),
-            6: classicassets.audio.announce_six.get(),
-            5: classicassets.audio.announce_five.get(),
-            4: classicassets.audio.announce_four.get(),
-            3: classicassets.audio.announce_three.get(),
-            2: classicassets.audio.announce_two.get(),
-            1: classicassets.audio.announce_one.get(),
+            10: _classicassets.audio.announce_ten.get(),
+            9: _classicassets.audio.announce_nine.get(),
+            8: _classicassets.audio.announce_eight.get(),
+            7: _classicassets.audio.announce_seven.get(),
+            6: _classicassets.audio.announce_six.get(),
+            5: _classicassets.audio.announce_five.get(),
+            4: _classicassets.audio.announce_four.get(),
+            3: _classicassets.audio.announce_three.get(),
+            2: _classicassets.audio.announce_two.get(),
+            1: _classicassets.audio.announce_one.get(),
         }
         self._flag_pos: Sequence[float] | None = None
         self._flag_state: FlagState | None = None

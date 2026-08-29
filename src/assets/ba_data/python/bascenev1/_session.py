@@ -219,7 +219,7 @@ class Session:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets, classicassets
+        from bascenev1 import _builtinassets, _classicassets
 
         # Limit player counts *unless* we're in a stress test.
         if (
@@ -229,9 +229,9 @@ class Session:
             if len(self.sessionplayers) >= self.max_players >= 0:
                 # Print a rejection message *only* to the client trying to
                 # join (prevents spamming everyone else in the game).
-                builtinassets.audio.error.get().play()
+                _builtinassets.audio.error.get().play()
                 _bascenev1.broadcastmessage(
-                    classicassets.strings.session.player_limit_reached(
+                    _classicassets.strings.session.player_limit_reached(
                         count=self.max_players
                     ),
                     color=(0.8, 0.0, 0.0),
@@ -249,7 +249,7 @@ class Session:
                     _g_player_rejoin_cooldown - babase.apptime() + leave_time
                 )
                 _bascenev1.broadcastmessage(
-                    builtinassets.strings.session.join_cooldown(seconds=diff),
+                    _builtinassets.strings.session.join_cooldown(seconds=diff),
                     color=(1, 1, 0),
                     clients=[player.inputdevice.client_id],
                     transient=True,
@@ -257,7 +257,7 @@ class Session:
                 return False
             self._player_requested_identifiers[player.id] = identifier
 
-        classicassets.audio.dripity.get().play()
+        _classicassets.audio.dripity.get().play()
         return True
 
     def on_player_leave(self, sessionplayer: bascenev1.SessionPlayer) -> None:
@@ -265,7 +265,7 @@ class Session:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
 
         if sessionplayer not in self.sessionplayers:
             print(
@@ -274,7 +274,7 @@ class Session:
             )
             return
 
-        classicassets.audio.player_left.get().play()
+        _classicassets.audio.player_left.get().play()
 
         activity = self._activity_weak()
 
@@ -304,7 +304,7 @@ class Session:
             assert sessionteam is not None
 
             _bascenev1.broadcastmessage(
-                classicassets.strings.session.player_left(
+                _classicassets.strings.session.player_left(
                     player=sessionplayer.getname(full=True)
                 )
             )
@@ -663,7 +663,7 @@ class Session:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import builtinassets, classicassets
+        from bascenev1 import _builtinassets, _classicassets
 
         lobby = chooser.lobby
         activity = self._activity_weak()
@@ -691,12 +691,12 @@ class Session:
                 self._complete_end_activity(activity, {})
             else:
                 _bascenev1.broadcastmessage(
-                    classicassets.strings.session.not_enough_players(
+                    _classicassets.strings.session.not_enough_players(
                         count=min_players
                     ),
                     color=(1, 1, 0),
                 )
-                builtinassets.audio.error.get().play()
+                _builtinassets.audio.error.get().play()
 
         # Otherwise just add players on the fly.
         else:
@@ -735,7 +735,7 @@ class Session:
         # Safe up-call: bascenev1 is fully imported by the time
         # this runs; the cycle pylint sees is structural only.
         # pylint: disable-next=cyclic-import
-        from bascenev1 import classicassets
+        from bascenev1 import _classicassets
         from bascenev1._team import SessionTeam
 
         sessionplayer = chooser.getplayer()
@@ -767,7 +767,7 @@ class Session:
                 pass_to_activity = False
                 with self.context:
                     _bascenev1.broadcastmessage(
-                        classicassets.strings.session.player_delayed_join(
+                        _classicassets.strings.session.player_delayed_join(
                             player=sessionplayer.getname(full=True)
                         ),
                         color=(0, 1, 0),

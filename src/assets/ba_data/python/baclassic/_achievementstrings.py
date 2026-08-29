@@ -17,7 +17,7 @@ from these tables -- a mod's -- have no authored strings.
 
 from typing import TYPE_CHECKING
 
-from bascenev1 import classicassets
+from bascenev1 import _classicassets
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 def name_table() -> 'dict[str, _LevelStr]':
     """Achievement name -> its display name, given the level's name."""
-    a = classicassets.strings.achievements
+    a = _classicassets.strings.achievements
     return {
         'Boom Goes the Dynamite': lambda v: (a.boom_goes_the_dynamite.name),
         'Boxer': lambda v: (a.boxer.name),
@@ -108,7 +108,7 @@ def short_description_table() -> (
     Only the achievements tied to a campaign level have these; the rest
     show their full description in both spots.
     """
-    a = classicassets.strings.achievements
+    a = _classicassets.strings.achievements
     return {
         'Boom Goes the Dynamite': (
             a.boom_goes_the_dynamite.description,
@@ -259,7 +259,7 @@ def short_description_table() -> (
 
 def full_description_table() -> 'dict[str, tuple[_LevelStr, _LevelStr]]':
     """Achievement name -> its (unearned, earned) full descriptions."""
-    a = classicassets.strings.achievements
+    a = _classicassets.strings.achievements
     return {
         'Boom Goes the Dynamite': (
             lambda v: (a.boom_goes_the_dynamite.description_full(level=v)),
@@ -460,7 +460,7 @@ def level_name_table() -> 'dict[str, babase.LangStr]':
     The levels the built-in achievements are earned on; substituted into
     the parameterized names and full descriptions above.
     """
-    c = classicassets.strings.coop_levels
+    c = _classicassets.strings.coop_levels
     return {
         'Infinite Onslaught': c.infinite_onslaught,
         'Infinite Runaround': c.infinite_runaround,

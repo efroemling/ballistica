@@ -6,15 +6,15 @@ from typing import TYPE_CHECKING, override
 
 import bascenev1 as bs
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 
-from bauiv1 import builtinassets
+from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
     from typing import Any
 
 
-_ctlstrs = classicassets.strings.settings.controllers
+_ctlstrs = _classicassets.strings.settings.controllers
 
 
 class GamepadSelectWindow(bui.MainWindow):
@@ -143,8 +143,8 @@ class GamepadSelectWindow(bui.MainWindow):
 
         assert bui.app.classic is not None
 
-        classicassets.audio.activate_beep.get().play()
-        builtinassets.audio.swish.get().play()
+        _classicassets.audio.activate_beep.get().play()
+        _builtinassets.audio.swish.get().play()
         device = event['input_device']
         assert isinstance(device, bs.InputDevice)
 
@@ -193,7 +193,7 @@ class _NotConfigurableWindow(bui.MainWindow):
             msg = _ctlstrs.configure_in_system_settings(device=device.name)
         elif device.is_controller_app:
             msg = _ctlstrs.remote_configured_in_app(
-                remote_app_name=classicassets.strings.ui.remote_app_name
+                remote_app_name=_classicassets.strings.ui.remote_app_name
             )
         else:
             msg = _ctlstrs.cant_configure_device(device=device.name)

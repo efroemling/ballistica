@@ -58,16 +58,16 @@ class WorkspaceSubsystem:
         ).start()
 
     def _errmsg(self, msg: str | babase.LangStr) -> None:
-        from babase import builtinassets
+        from babase import _builtinassets
 
         _babase.screenmessage(msg, color=(1, 0, 0))
-        builtinassets.audio.error.get().play()
+        _builtinassets.audio.error.get().play()
 
     def _successmsg(self, msg: str | babase.LangStr) -> None:
-        from babase import builtinassets
+        from babase import _builtinassets
 
         _babase.screenmessage(msg, color=(0, 1, 0))
-        builtinassets.audio.gun_cocking.get().play()
+        _builtinassets.audio.gun_cocking.get().play()
 
     def _set_active_workspace_bg(
         self,
@@ -76,7 +76,7 @@ class WorkspaceSubsystem:
         workspacename: str,
         on_completed: Callable[[], None],
     ) -> None:
-        from babase import builtinassets
+        from babase import _builtinassets
 
         class _SkipSyncError(RuntimeError):
             pass
@@ -143,7 +143,7 @@ class WorkspaceSubsystem:
             _babase.pushcall(
                 partial(
                     self._successmsg,
-                    builtinassets.strings.workspace.activated(
+                    _builtinassets.strings.workspace.activated(
                         thing=workspacename
                     ),
                 ),
@@ -154,7 +154,7 @@ class WorkspaceSubsystem:
             _babase.pushcall(
                 partial(
                     self._errmsg,
-                    builtinassets.strings.workspace.sync_reuse(
+                    _builtinassets.strings.workspace.sync_reuse(
                         workspace=workspacename
                     ),
                 ),
@@ -177,7 +177,7 @@ class WorkspaceSubsystem:
             _babase.pushcall(
                 partial(
                     self._errmsg,
-                    builtinassets.strings.workspace.sync_error(
+                    _builtinassets.strings.workspace.sync_error(
                         workspace=workspacename
                     ),
                 ),

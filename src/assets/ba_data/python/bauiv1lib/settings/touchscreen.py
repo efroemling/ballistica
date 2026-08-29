@@ -5,7 +5,7 @@
 from typing import override
 
 import bauiv1 as bui
-from bauiv1 import _commonassets, classicassets
+from bauiv1 import _commonassets, _classicassets
 from bauiv1lib.utils import (
     get_screen_margins,
     scroll_fade_bottom,
@@ -14,7 +14,7 @@ from bauiv1lib.utils import (
 
 import bascenev1 as bs
 
-_tsstrs = classicassets.strings.settings.controllers.touchscreen
+_tsstrs = _classicassets.strings.settings.controllers.touchscreen
 
 
 class TouchscreenSettingsWindow(bui.MainWindow):
