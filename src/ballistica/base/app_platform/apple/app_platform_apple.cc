@@ -72,8 +72,7 @@ auto AppPlatformApple::OverlayWebBrowserIsSupported() -> bool {
 #if BA_PLATFORM_MACOS
   return BallisticaKit::CocoaFromCpp::haveOverlayWebBrowser();
 #else
-  // TODO(ericf): Implement for uikit.
-  return AppPlatform::OverlayWebBrowserIsSupported();
+  return BallisticaKit::UIKitFromCpp::haveOverlayWebBrowser();
 #endif  // BA_PLATFORM_MACOS
 
 #else
@@ -87,8 +86,7 @@ void AppPlatformApple::DoOverlayWebBrowserOpenURL(const std::string& url) {
 #if BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::openURLInOverlayWebBrowser(url);
 #else
-  // TODO(ericf): Implement for uikit.
-  AppPlatform::DoOverlayWebBrowserOpenURL(url);
+  BallisticaKit::UIKitFromCpp::openURLInOverlayWebBrowser(url);
 #endif  // BA_PLATFORM_MACOS
 
 #else
@@ -102,8 +100,7 @@ void AppPlatformApple::DoOverlayWebBrowserClose() {
 #if BA_PLATFORM_MACOS
   BallisticaKit::CocoaFromCpp::closeOverlayWebBrowser();
 #else
-  // TODO(ericf): Implement for uikit.
-  AppPlatform::OverlayWebBrowserIsSupported();
+  BallisticaKit::UIKitFromCpp::closeOverlayWebBrowser();
 #endif  // BA_PLATFORM_MACOS
 
 #else

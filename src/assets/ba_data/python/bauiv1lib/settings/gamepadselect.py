@@ -27,83 +27,123 @@ class GamepadSelectWindow(bui.MainWindow):
     ) -> None:
         from typing import cast
 
-        width = 480
-        height = 170
         spacing = 40
         self._r = 'configGamepadSelectWindow'
 
         assert bui.app.classic is not None
         uiscale = bui.app.ui_v1.uiscale
+
+        # At small ui-scale we fill the screen and lean on the toolbar's
+        # back button; elsewhere we're a small floating panel.
+        width = 1200.0 if uiscale is bui.UIScale.SMALL else 480.0
+        height = 800.0 if uiscale is bui.UIScale.SMALL else 170.0
+
+        # Do some fancy math to fill all available screen area up to the
+        # size of our backing container. This lets us fit to the exact
+        # screen shape at small ui scale.
+        screensize = bui.get_virtual_screen_size()
+        scale = (
+            1.8
+            if uiscale is bui.UIScale.SMALL
+            else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
+        )
+        # Calc screen size in our local container space and clamp to a
+        # bit smaller than our container size.
+        target_height = min(height - 70, screensize[1] / scale)
+
+        # To get top/left coords, go to the center of our window and
+        # offset by half the width/height of our target area.
+        yoffs = 0.5 * height + 0.5 * target_height + 30.0
+
         super().__init__(
             root_widget=bui.containerwidget(
-                scale=(
-                    2.3
-                    if uiscale is bui.UIScale.SMALL
-                    else 1.5 if uiscale is bui.UIScale.MEDIUM else 1.0
-                ),
+                scale=scale,
                 size=(width, height),
+                toolbar_visibility=(
+                    'menu_minimal'
+                    if uiscale is bui.UIScale.SMALL
+                    else 'menu_full'
+                ),
             ),
             transition=transition,
             origin_widget=origin_widget,
+            # We're affected by screen size only at small ui-scale.
+            refresh_on_screen_size_changes=uiscale is bui.UIScale.SMALL,
         )
 
-        btn = bui.buttonwidget(
-            parent=self._root_widget,
-            position=(20, height - 60),
-            size=(130, 60),
-            label=_commonassets.strings.actions.back,
-            button_type='back',
-            scale=0.8,
-            on_activate_call=self.main_window_back,
-        )
+        btn: bui.Widget | None
+        if uiscale is bui.UIScale.SMALL:
+            # The toolbar's back button serves here.
+            btn = None
+            bui.containerwidget(
+                edit=self._root_widget, on_cancel_call=self.main_window_back
+            )
+        else:
+            btn = bui.buttonwidget(
+                parent=self._root_widget,
+                position=(20, height - 60),
+                size=(60, 60),
+                label=bui.charstr(bui.SpecialChar.BACK),
+                button_type='backSmall',
+                scale=0.8,
+                on_activate_call=self.main_window_back,
+            )
+            bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
         # Let's not have anything selected by default; its misleading
         # looking for the controller getting configured.
         bui.containerwidget(
             edit=self._root_widget,
-            cancel_button=btn,
             selected_child=cast(bui.Widget, 0),
         )
+
+        # At small ui-scale the title rides at the top of the visible
+        # screen area and the body sits centered in all that space; at
+        # other scales we're a short panel, so both stay packed together
+        # near its top as before.
+        show_android_note = bui.app.classic.platform == 'android'
+        content_height: float = spacing
+        if show_android_note:
+            content_height += spacing * 1.24
+
+        v: float
+        if uiscale is bui.UIScale.SMALL:
+            title_y = yoffs - 52
+            v = height * 0.5 + content_height * 0.5
+        else:
+            title_y = height - 50
+            v = height - 60 - spacing
+
         bui.textwidget(
             parent=self._root_widget,
-            position=(20, height - 50),
-            size=(width, 25),
+            position=(width * 0.5, title_y),
+            size=(0, 0),
             text=_ctlstrs.configure_controllers,
             maxwidth=250,
             color=bui.app.ui_v1.title_color,
             h_align='center',
             v_align='center',
         )
-
-        bui.buttonwidget(
-            edit=btn,
-            button_type='backSmall',
-            size=(60, 60),
-            label=bui.charstr(bui.SpecialChar.BACK),
-        )
-
-        v: float = height - 60
-        v -= spacing
         bui.textwidget(
             parent=self._root_widget,
             position=(15, v),
             size=(width - 30, 30),
             scale=0.8,
             text=_ctlstrs.press_any_button_to_configure,
-            maxwidth=width * 0.95,
+            maxwidth=min(width * 0.95, 420.0),
             color=bui.app.ui_v1.infotextcolor,
             h_align='center',
             v_align='top',
         )
         v -= spacing * 1.24
-        if bui.app.classic.platform == 'android':
+        if show_android_note:
             bui.textwidget(
                 parent=self._root_widget,
                 position=(15, v),
                 size=(width - 30, 30),
                 scale=0.46,
                 text=_ctlstrs.android_note,
-                maxwidth=width * 0.95,
+                maxwidth=min(width * 0.95, 420.0),
                 color=(0.7, 0.9, 0.7, 0.5),
                 h_align='center',
                 v_align='top',
