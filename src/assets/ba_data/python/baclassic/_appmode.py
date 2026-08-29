@@ -120,11 +120,13 @@ class ClassicAppMode(AppMode):
         # the wrappers means a modder-swapped package keeps working.
         # (The bauiv1 and bascenev1 wrapper flavors carry identical
         # __asset_package__ ids; _builtinassets and _classicassets here are
-        # our module-level bauiv1 imports.)
+        # our module-level bauiv1 imports. The dict keys are the native
+        # compat table's frozen package keys, NOT wrapper module names;
+        # they never change when a wrapper module is renamed.)
         babase.set_asset_name_compat_versions(
             {
-                '_builtinassets': _builtinassets.__asset_package__,
-                '_classicassets': _classicassets.__asset_package__,
+                'builtinassets': _builtinassets.__asset_package__,
+                'classicassets': _classicassets.__asset_package__,
             }
         )
 

@@ -25,7 +25,9 @@ class AssetNameCompat {
   /// classic-app-mode activation with values sourced from the Python
   /// wrapper modules' __asset_package__ attrs, so a modder-swapped
   /// package keeps working as long as it carries the same logical
-  /// paths.
+  /// paths. Throws for a package key our table doesn't know; the keys
+  /// are frozen alongside the legacy names and are unrelated to
+  /// wrapper module names.
   static void SetPackageVersion(const std::string& package_key,
                                 const std::string& apverid);
 

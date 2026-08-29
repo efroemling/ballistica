@@ -1703,7 +1703,9 @@ static PyMethodDef PySetAssetNameCompatVersionsDef = {
     "('builtinassets' / 'classicassets'). Until a package key is\n"
     "registered, legacy names mapping into it pass through unmapped.\n"
     "Called at classic-app-mode activation with values sourced from\n"
-    "the asset-package wrapper modules."};
+    "the asset-package wrapper modules. Raises an Exception for an\n"
+    "unrecognized package key (these are fixed table keys, not\n"
+    "wrapper module names)."};
 
 // ---------------- resolve_legacy_asset_name ----------------------------------
 

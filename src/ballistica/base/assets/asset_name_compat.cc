@@ -2,6 +2,7 @@
 
 #include "ballistica/base/assets/asset_name_compat.h"
 
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -1423,6 +1424,8 @@ struct State_ {
   std::unordered_map<std::string, std::string> package_versions;
   // Versionless apverid prefix ('a-0.babuiltinassets') -> package_key.
   std::unordered_map<std::string, std::string> versionless_to_key;
+  // Every package key appearing in kRows; sorted for tidy error output.
+  std::set<std::string> package_keys;
 };
 
 static auto GetState_() -> State_& {
@@ -1435,6 +1438,7 @@ static auto GetState_() -> State_& {
                                                   row.logical_path};
       st->to_legacy[std::string(row.package_key) + ":" + row.logical_path] =
           row.legacy;
+      st->package_keys.insert(row.package_key);
     }
     return st;
   }();
@@ -1452,6 +1456,24 @@ void AssetNameCompat::SetPackageVersion(const std::string& package_key,
                                         const std::string& apverid) {
   assert(g_base->InLogicThread());
   auto& state = GetState_();
+
+  // Keys are the frozen package keys from our table - never wrapper
+  // module names, which can be renamed independently. Catch a
+  // mismatch here; otherwise every FromLegacy() call for the package
+  // quietly returns its bare legacy name and the failure surfaces
+  // later as an unrelated-looking 'Can't find asset' error.
+  if (!state.package_keys.contains(package_key)) {
+    std::string valid;
+    for (const std::string& key : state.package_keys) {
+      if (!valid.empty()) {
+        valid += ", ";
+      }
+      valid += "'" + key + "'";
+    }
+    throw Exception("Unknown asset-name-compat package key '" + package_key
+                    + "'; expected one of " + valid + ".");
+  }
+
   // Drop any versionless mapping from a previous registration.
   auto old = state.package_versions.find(package_key);
   if (old != state.package_versions.end()) {
