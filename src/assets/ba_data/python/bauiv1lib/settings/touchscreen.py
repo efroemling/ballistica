@@ -130,6 +130,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
                 button_type='backSmall',
                 scale=0.8,
                 on_activate_call=self.main_window_back,
+                autoselect=True,
             )
             bui.containerwidget(edit=self._root_widget, cancel_button=btn)
 
@@ -239,7 +240,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
         return False
 
     def _build_gui(self) -> None:
-        from bauiv1lib.config import ConfigNumberEdit, ConfigCheckBox
+        from bauiv1lib.config import ConfigSlider, ConfigCheckBox
         from bauiv1lib.radiogroup import make_radio_group
 
         # Clear anything already there.
@@ -277,7 +278,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             color=clr,
             v_align='center',
         )
-        cb1 = bui.checkboxwidget(
+        move_joystick_cb = bui.checkboxwidget(
             parent=self._subcontainer,
             position=(h + hoffs + 220, v),
             size=(170, 30),
@@ -286,7 +287,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             textcolor=clr2,
             scale=0.9,
         )
-        cb2 = bui.checkboxwidget(
+        move_swipe_cb = bui.checkboxwidget(
             parent=self._subcontainer,
             position=(h + hoffs + 357, v),
             size=(170, 30),
@@ -297,16 +298,22 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             scale=0.9,
         )
         make_radio_group(
-            (cb1, cb2), ('joystick', 'swipe'), cur_val, self._movement_changed
+            (move_joystick_cb, move_swipe_cb),
+            ('joystick', 'swipe'),
+            cur_val,
+            self._movement_changed,
         )
         v -= 50
-        ConfigNumberEdit(
+        move_scale = ConfigSlider(
             parent=self._subcontainer,
             position=(h, v),
             xoffset=hoffs2 + 65,
+            width=200.0,
+            # Nothing audible accompanies an apply and the effect is
+            # visible on screen, so track a drag closely.
+            drag_apply_interval=0.1,
             configkey='Touch Controls Scale Movement',
             displayname=_tsstrs.movement_control_scale,
-            changesound=False,
             minval=0.1,
             maxval=4.0,
             increment=0.1,
@@ -322,7 +329,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             color=clr,
             v_align='center',
         )
-        cb1 = bui.checkboxwidget(
+        act_buttons_cb = bui.checkboxwidget(
             parent=self._subcontainer,
             position=(h + hoffs + 220, v),
             size=(170, 30),
@@ -331,7 +338,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             textcolor=clr2,
             scale=0.9,
         )
-        cb2 = bui.checkboxwidget(
+        act_swipe_cb = bui.checkboxwidget(
             parent=self._subcontainer,
             position=(h + hoffs + 357, v),
             size=(170, 30),
@@ -341,16 +348,20 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             scale=0.9,
         )
         make_radio_group(
-            (cb1, cb2), ('buttons', 'swipe'), cur_val, self._actions_changed
+            (act_buttons_cb, act_swipe_cb),
+            ('buttons', 'swipe'),
+            cur_val,
+            self._actions_changed,
         )
         v -= 50
-        ConfigNumberEdit(
+        act_scale = ConfigSlider(
             parent=self._subcontainer,
             position=(h, v),
             xoffset=hoffs2 + 65,
+            width=200.0,
+            drag_apply_interval=0.1,
             configkey='Touch Controls Scale Actions',
             displayname=_tsstrs.action_control_scale,
-            changesound=False,
             minval=0.1,
             maxval=4.0,
             increment=0.1,
@@ -367,7 +378,7 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             v_align='center',
         )
 
-        ConfigCheckBox(
+        hide_swipe_cb = ConfigCheckBox(
             parent=self._subcontainer,
             position=(h + hoffs3, v),
             size=(100, 30),
@@ -384,7 +395,24 @@ class TouchscreenSettingsWindow(bui.MainWindow):
             label=_commonassets.strings.actions.reset,
             scale=0.75,
             on_activate_call=self._reset,
+            autoselect=True,
         )
+
+        # Wire each slider's vertical neighbors by hand. Left to itself,
+        # selection moving between a slider and a radio row lands on that
+        # row's 'swipe' option rather than its first one: CheckBoxWidget
+        # reports its center at 20% across rather than the middle, which
+        # puts 'swipe' nearer a slider's center than the option before it.
+        bui.widget(
+            edit=move_scale.slider,
+            up_widget=move_joystick_cb,
+            down_widget=act_buttons_cb,
+        )
+        bui.widget(edit=move_joystick_cb, down_widget=move_scale.slider)
+        bui.widget(edit=act_swipe_cb, up_widget=move_scale.slider)
+        bui.widget(edit=act_scale.slider, up_widget=act_buttons_cb)
+        bui.widget(edit=act_buttons_cb, down_widget=act_scale.slider)
+        bui.widget(edit=hide_swipe_cb.widget, up_widget=act_scale.slider)
 
     def _actions_changed(self, v: str) -> None:
         cfg = bui.app.config

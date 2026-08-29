@@ -471,6 +471,12 @@ def prep_page(
             border_opacity=0.0,
             center_small_content=row.center_content,
             simple_culling_h=row.simple_culling_h,
+            # Have the page-left/right buttons scale in along with our
+            # buttons and decorations, but only when those are actually
+            # animating; otherwise (a refresh in place, a back-nav to a
+            # page we already have) the arrows would be the lone thing
+            # transitioning while the rest of the page simply appears.
+            transition_in=not immediate,
         )
         rowprep.hsubcall = partial(
             bui.containerwidget,
@@ -746,6 +752,7 @@ def prep_page(
         center_vertically=center_vertically,
         title=title,
         root_post_calls=root_post_calls,
+        immediate=immediate,
     )
 
 

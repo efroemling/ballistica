@@ -198,7 +198,7 @@ class MainWindow(Window):
         )
         babase.app.ui_v1.main_window_shared_states[keyfin] = shared_state
 
-    def main_window_restore_shared_state(self) -> None:
+    def main_window_restore_shared_state(self, animate: bool = True) -> None:
         """Restore shared state (such as widget selection), if any.
 
         This is automatically called just after main-windows are
@@ -208,6 +208,11 @@ class MainWindow(Window):
         State contained here is intended to operate on
         already-constructed UI; state that influences which UI is
         contructed should go through other mechanisms.
+
+        Pass ``animate=False`` to have any scroll needed to reveal the
+        restored selection snap instead of gliding. Do that when the ui
+        being restored into was itself just built, since there is then
+        nothing on screen for the motion to read as movement from.
         """
 
         # pylint: disable=assignment-from-none
@@ -251,7 +256,7 @@ class MainWindow(Window):
                 if widget is not None:
                     if widget.selectable:
                         widget.global_select()
-                        widget.scroll_into_view()
+                        widget.scroll_into_view(animate=animate)
                     else:
                         babase.uilog.debug(
                             "Unable to restore selection '%s';"

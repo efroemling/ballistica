@@ -43,6 +43,12 @@ class InventoryUIController(DocUIController):
         self._player_profiles_only = player_profiles_only
 
     @override
+    def get_cache_key_extra(self) -> str | None:
+        # We serve an entirely different page depending on this -- from
+        # the same '/' request path -- so it has to partition the cache.
+        return f'profilesonly={self._player_profiles_only}'
+
+    @override
     def fulfill_request(self, request: DocUIRequest) -> DocUIResponse:
         # All local authoring here uses strings from BUNDLED packages
         # (baclassicassets/builtin) so these pages keep working offline.

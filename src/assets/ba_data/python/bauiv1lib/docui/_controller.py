@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, assert_never
 from dataclasses import dataclass
 from enum import Enum
 import weakref
+import copy
 
 from efro.util import asserttype
 from efro.error import CleanError, CommunicationError
@@ -27,7 +28,7 @@ from bacommon.docui import (
 import bauiv1 as bui
 from bauiv1 import builtinassets
 
-from bauiv1lib.docui import _bgrunner
+from bauiv1lib.docui import _bgrunner, _cache
 from bauiv1lib.docui._types import DocUILocalAction
 from bauiv1lib.docui._window import DocUIWindow
 
@@ -398,6 +399,13 @@ class DocUIController:
         """Create a new window to handle a request."""
         assert bui.in_logic_thread()
 
+        # If we've already got this exact page for this account and
+        # locale, show it immediately instead of staring at a spinner.
+        # We still fetch a fresh copy in the background (see
+        # _apply_response), so nothing on screen is ever more than one
+        # round-trip stale.
+        cached = _cache.get(self, request)
+
         # Create a shiny new window.
         win = DocUIWindow(
             self,
@@ -407,8 +415,19 @@ class DocUIController:
             auxiliary_style=auxiliary_style,
             uiopenstateid=uiopenstateid,
             suppress_win_extra_type_warning=suppress_win_extra_type_warning,
+            # A cache hit means content appears under the spinner, which
+            # is what both of these describe.
+            restored=cached is not None,
+            has_had_response=cached is not None,
         )
-        self._set_win_data(win, _WinData(_WinState.FETCHING_FRESH_REQUEST))
+        self._set_win_data(
+            win,
+            _WinData(
+                _WinState.FETCHING_FRESH_REQUEST
+                if cached is None
+                else _WinState.REDISPLAYING_OLD_STATE
+            ),
+        )
 
         # Lock its ui and kick off a bg task to populate it.
         win.lock_ui()
@@ -422,7 +441,10 @@ class DocUIController:
                 scroll_height=win.scroll_height,
                 margins=win.screen_margins,
                 idprefix=win.main_window_id_prefix,
-                immediate=False,
+                # Cached content has no delayed appearance to soften, so
+                # snap it in rather than animating.
+                immediate=cached is not None,
+                explicit_response=cached,
             )
         )
         return win
@@ -438,6 +460,21 @@ class DocUIController:
     ) -> None:
         """Called when a window shared state is being restored."""
         del window, state  # Unused.
+
+    def get_cache_key_extra(self) -> str | None:
+        """Extra identity for response caching.
+
+        Cached responses are keyed by controller class, request,
+        account and locale. A controller whose *instance* state changes
+        what it returns for a given request must declare that state
+        here; otherwise two instances differing in it share one cache
+        entry and briefly show each other's pages.
+
+        Return ``None`` to opt out of caching entirely, which is the
+        right answer when a response depends on state that cannot be
+        summarized as a string.
+        """
+        return ''
 
     @classmethod
     def get_window_extra_type_id(cls) -> str:
@@ -795,6 +832,11 @@ class DocUIController:
         response: DocUIResponse | None = None
         error: DocUIController.ErrorType | None = None
 
+        # The de-indexed copy prep renders from. Kept distinct from
+        # `response`, which stays un-de-indexed so it can be cached and
+        # re-prepped; see _resolve.deindex_response().
+        prepresponse: dui2.Response | None = None
+
         if explicit_error is not None:
             error = explicit_error
         elif explicit_response is not None:
@@ -848,18 +890,27 @@ class DocUIController:
                     response = None
                 else:
                     try:
-                        # Resolve referenced packages in our locale and
-                        # de-index deferred effects; the page then preps
-                        # and renders natively.
+                        # Resolve referenced packages in our locale, then
+                        # de-index a throwaway copy for prep to render
+                        # from; the page then preps and renders natively.
                         from bauiv1lib.docui import _resolve
 
-                        _resolve.resolve_response(response)
+                        _resolve.resolve_packages(response)
+
+                        # De-indexing rewrites the page in place, so it
+                        # gets a copy and the wire response stays
+                        # pristine. Everything the prep hands forward
+                        # (button actions and their deferred effects)
+                        # points into the copy.
+                        prepresponse = copy.deepcopy(response)
+                        _resolve.deindex_response(prepresponse)
                     except Exception:
                         bui.uilog.exception(
                             'Error resolving v2 doc-ui response.'
                         )
                         error = self.ErrorType.GENERIC
                         response = None
+                        prepresponse = None
             elif responsetype is DocUIResponseTypeID.UNKNOWN:
                 assert isinstance(response, UnknownDocUIResponse)
                 bui.uilog.debug(
@@ -873,13 +924,17 @@ class DocUIController:
 
         if error is not None:
             response = self.error_response(request, error)
+            # Locally authored, so it carries no package manifest and
+            # has nothing to de-index; prep can render it directly.
+            prepresponse = asserttype(response, dui2.Response)
 
         # Currently must be v2 if it made it to here.
         assert isinstance(response, dui2.Response)
+        assert prepresponse is not None
 
         pageprep = prep.prep_page(
-            response.page,
-            packages=list(response.packages),
+            prepresponse.page,
+            packages=list(prepresponse.packages),
             uiscale=uiscale,
             scroll_width=scroll_width,
             scroll_height=scroll_height,
@@ -887,6 +942,11 @@ class DocUIController:
             immediate=immediate,
             idprefix=idprefix,
         )
+
+        # Carry the de-indexed display-time effects along on the prep;
+        # the response we hand to the ui thread is un-de-indexed, so
+        # its own copies are not the runnable form.
+        pageprep.client_effects = prepresponse.client_effects
 
         # Go ahead and just push the response along with our weakref
         # back to the logic thread for handling. We could quick-out here
@@ -933,12 +993,23 @@ class DocUIController:
 
         state = self._get_win_data(win).state
 
+        # Remember fresh successful fetches so the next open of this
+        # page is instant. Deliberately the un-de-indexed response --
+        # prep rendered from its own copy, and keeping this one
+        # un-de-indexed is what lets it be re-prepped later at whatever
+        # ui-scale or window size it next appears at.
+        if (
+            state is _WinState.FETCHING_FRESH_REQUEST
+            or state is _WinState.REFRESHING
+        ) and response.status is dui2.ResponseStatus.SUCCESS:
+            _cache.put(self, win.request, response)
+
         # Run client-effects and local-actions ONLY after fresh requests
         # (don't want sounds and other actions firing when we navigate
         # back or resize a window).
         if state is _WinState.FETCHING_FRESH_REQUEST:
-            if response.client_effects and bui.app.classic is not None:
-                bui.app.classic.run_bs_client_effects(response.client_effects)
+            if pageprep.client_effects and bui.app.classic is not None:
+                bui.app.classic.run_bs_client_effects(pageprep.client_effects)
             if response.local_action is not None:
                 try:
                     self.local_action(

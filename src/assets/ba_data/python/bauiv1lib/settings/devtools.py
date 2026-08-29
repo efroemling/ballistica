@@ -34,7 +34,7 @@ class DevToolsWindow(bui.MainWindow):
         self._height = (
             800
             if uiscale is bui.UIScale.SMALL
-            else 450.0 if uiscale is bui.UIScale.MEDIUM else 520.0
+            else 540.0 if uiscale is bui.UIScale.MEDIUM else 624.0
         )
         self._spacing = 32
 
@@ -45,9 +45,9 @@ class DevToolsWindow(bui.MainWindow):
         # Slightly reduced scale in small ui so our short list of
         # content requires minimal scrolling on phone-ish aspects.
         scale = (
-            1.9
+            1.52
             if uiscale is bui.UIScale.SMALL
-            else 1.4 if uiscale is bui.UIScale.MEDIUM else 1.0
+            else 1.12 if uiscale is bui.UIScale.MEDIUM else 0.8
         )
         # Calc screen size in our local container space and clamp to a
         # bit smaller than our container size.
@@ -91,7 +91,7 @@ class DevToolsWindow(bui.MainWindow):
         top_pad = 15.0
 
         self._sub_width = self._scroll_width * 0.95
-        self._sub_height = 410.0 + margin_bottom + top_extend + top_pad
+        self._sub_height = 390.0 + margin_bottom + top_extend + top_pad
 
         super().__init__(
             root_widget=bui.containerwidget(
@@ -202,7 +202,7 @@ class DevToolsWindow(bui.MainWindow):
         v = self._sub_height - top_extend - top_pad - 35
         this_button_width = 410
 
-        v -= self._spacing * 2.5
+        v -= self._spacing * 1.9
         # Keep our left edge aligned with the buttons below us no matter
         # how wide the window gets (our sub-width tracks window width at
         # small ui-scale). The extra 10 units visually lines the check

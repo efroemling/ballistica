@@ -515,7 +515,13 @@ class DocUIWindow(bui.MainWindow):
         # Note to self: perhaps we should *not* do this if significant
         # time has passed since the window was made or if input commands
         # have happened.
-        self.main_window_restore_shared_state()
+        #
+        # Match the scroll to how the page itself arrived: a page that
+        # snapped in should snap to the restored selection too. Our
+        # scroll-widget has already drawn by now (it was up with a
+        # spinner while this page was fetched and prepped) so its own
+        # not-yet-drawn snap can't cover this case.
+        self.main_window_restore_shared_state(animate=not pageprep.immediate)
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:

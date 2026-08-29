@@ -253,6 +253,16 @@ class DevConsole::Widget_ {
   virtual void HandleMouseUp(float mx, float my) {}
   virtual void HandleMouseCancel(float mx, float my) {}
   virtual void Draw(RenderPass* pass, float bottom) = 0;
+
+ protected:
+  /// Feedback for a button-like widget being activated. Lives here so
+  /// every dev-console button sounds the same; call it from the spot
+  /// that runs the button's callback, not from the callbacks
+  /// themselves (those are also reachable from key bindings and
+  /// deferred calls, which should stay silent).
+  void PlayActivateSound_() {
+    g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioClick01);
+  }
 };
 
 class DevConsole::Text_ : public DevConsole::Widget_ {
@@ -344,6 +354,7 @@ class DevConsole::Button_ : public DevConsole::Widget_ {
     if (pressed) {
       pressed = false;
       if (InUs(mx, my)) {
+        PlayActivateSound_();
         if (call.exists()) {
           call.get()->Run();
         }
@@ -507,6 +518,7 @@ class DevConsole::ToggleButton_ : public DevConsole::Widget_ {
     if (pressed) {
       pressed = false;
       if (InUs(mx, my)) {
+        PlayActivateSound_();
         on = !on;
         auto&& call = on ? on_call : off_call;
         if (call.exists()) {
@@ -595,6 +607,7 @@ class DevConsole::TabButton_ : public DevConsole::Widget_ {
         // unselected for a frame before the deferred call runs.
         selected = true;
 
+        PlayActivateSound_();
         if (call.exists()) {
           call.get()->Run();
         }

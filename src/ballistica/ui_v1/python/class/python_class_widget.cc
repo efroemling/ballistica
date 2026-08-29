@@ -11,6 +11,7 @@
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/ui_v1/widget/container_widget.h"
+#include "ballistica/ui_v1/widget/slider_widget.h"
 
 namespace ballistica::ui_v1 {
 
@@ -368,6 +369,20 @@ auto PythonClassWidget::GetSelectedChild(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
+auto PythonClassWidget::GetSliderValue(PythonClassWidget* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  Widget* w = self->widget_->get();
+  if (!w) {
+    throw Exception(PyExcType::kWidgetNotFound);
+  }
+  if (auto* sw = dynamic_cast<SliderWidget*>(w)) {
+    return PyFloat_FromDouble(sw->value());
+  }
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
 auto PythonClassWidget::GetScreenSpaceCenter(PythonClassWidget* self)
     -> PyObject* {
   BA_PYTHON_TRY;
@@ -470,14 +485,21 @@ auto PythonClassWidget::GlobalSelect(PythonClassWidget* self) -> PyObject* {
   BA_PYTHON_CATCH;
 }
 
-auto PythonClassWidget::ScrollIntoView(PythonClassWidget* self) -> PyObject* {
+auto PythonClassWidget::ScrollIntoView(PythonClassWidget* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   BA_PRECONDITION(g_base->InLogicThread());
+  int animate{1};
+  static const char* kwlist[] = {"animate", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|p",
+                                   const_cast<char**>(kwlist), &animate)) {
+    return nullptr;
+  }
   Widget* w = self->widget_->get();
   if (!w) {
     throw Exception(PyExcType::kWidgetNotFound);
   }
-  w->ScrollIntoView();
+  w->ScrollIntoView(static_cast<bool>(animate));
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
@@ -536,6 +558,18 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
      "get_selected_child() -> bauiv1.Widget | None\n"
      "\n"
      "Returns the selected child Widget or None if nothing is selected."},
+    {"get_slider_value", (PyCFunction)GetSliderValue, METH_NOARGS,
+     "get_slider_value() -> float | None\n"
+     "\n"
+     "Returns a slider Widget's current value, or None if this is not a\n"
+     "slider.\n"
+     "\n"
+     "Slider callbacks announce every change, so UI code can simply track\n"
+     "the value it is given; this exists for callers that would rather ask\n"
+     "the widget than shadow it -- automation and tests especially. Note\n"
+     "that callbacks are deferred to the end of the current UI operation,\n"
+     "so within one operation this reports the live value while a\n"
+     "callback-tracked copy may not have caught up yet."},
     // NOLINTNEXTLINE (signed bitwise stuff)
     {"delete", (PyCFunction)Delete, METH_VARARGS | METH_KEYWORDS,
      "delete(ignore_missing: bool = True) -> None\n"
@@ -558,10 +592,15 @@ PyMethodDef PythonClassWidget::tp_methods[] = {
      "\n"
      ":meta private:"},
     {"scroll_into_view", (PyCFunction)ScrollIntoView,
-     METH_NOARGS,  // NOLINT (signed bitwise stuff)
-     "scroll_into_view() -> None\n"
+     METH_VARARGS | METH_KEYWORDS,  // NOLINT (signed bitwise stuff)
+     "scroll_into_view(animate: bool = True) -> None\n"
      "\n"
-     "Scroll to show this widget if possible."},
+     "Scroll to show this widget if possible.\n"
+     "\n"
+     "Pass animate=False to snap straight to the destination instead of\n"
+     "gliding. Use that when the scrolled content was itself just built,\n"
+     "since there is then nothing on screen for the motion to read as\n"
+     "movement from."},
     {"__dir__", (PyCFunction)Dir, METH_NOARGS,
      "allows inclusion of our custom attrs in standard python dir()"},
     {nullptr}};

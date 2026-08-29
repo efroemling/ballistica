@@ -70,7 +70,7 @@ def requirements_upgrade() -> None:
             # else floats. Exact-match means a future websockets release
             # goes stale loudly (resolver conflict) rather than silently
             # pinning forever; re-check genai's cap when that fires.
-            filterlines.append(('websockets==17.0.1', 'websockets==16.1.1'))
+            filterlines.append(('websockets==17.1', 'websockets==16.1.1'))
         for fsrc, fdst in filterlines:
             if fsrc in reqs_new:
                 reqs_new = reqs_new.replace(fsrc, fdst)

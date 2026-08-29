@@ -25,7 +25,7 @@ class AudioSettingsWindow(bui.MainWindow):
         origin_widget: bui.Widget | None = None,
     ):
         # pylint: disable=cyclic-import
-        from bauiv1lib.config import ConfigNumberEdit
+        from bauiv1lib.config import ConfigSlider
 
         assert bui.app.classic is not None
         music = bui.app.classic.music
@@ -35,7 +35,7 @@ class AudioSettingsWindow(bui.MainWindow):
         spacing = 50.0
         uiscale = bui.app.ui_v1.uiscale
 
-        width = 1200.0 if uiscale is bui.UIScale.SMALL else 500.0
+        width = 1200.0 if uiscale is bui.UIScale.SMALL else 620.0
         height = 800.0 if uiscale is bui.UIScale.SMALL else 350.0
 
         show_soundtracks = False
@@ -110,40 +110,51 @@ class AudioSettingsWindow(bui.MainWindow):
             v_align='center',
         )
 
-        # Roughly center everything else in our window.
-        x = width * 0.5 - 160
+        # Roughly center everything else in our window. The offset is half
+        # the width of a settings row: its label starts here and its
+        # controls end 440 out (230 to the controls, plus a 200 slider and
+        # the 10 xoffset below).
+        x = width * 0.5 - 220
         y = height * 0.5 + (100 if show_soundtracks else 70)
         y -= spacing * 1.0
 
-        self._sound_volume_numedit = svne = ConfigNumberEdit(
+        swish = builtinassets.audio.swish.get()
+        self._sound_volume_slider = svs = ConfigSlider(
             parent=self._root_widget,
             idprefix=f'{self.main_window_id_prefix}|soundvolume',
             position=(x, y),
             xoffset=10,
+            width=200.0,
             configkey='Sound Volume',
             displayname=_audstrs.sound_volume,
             minval=0.0,
             maxval=1.0,
             increment=0.05,
             as_percent=True,
-        )
-        bui.widget(
-            edit=svne.plusbutton,
-            right_widget=bui.get_special_widget('squad_button'),
+            # Fires once per applied value -- the throttled cadence while
+            # dragging, and always for the value settled on -- so the
+            # level being set is audible as it is set.
+            callback=lambda _v: swish.play(),
+            # Slower than music's: each apply here is an audible blip, and
+            # they run together if they come much faster than this.
+            drag_apply_interval=1.0 / 3.0,
         )
         y -= spacing
-        self._music_volume_numedit = ConfigNumberEdit(
+        self._music_volume_slider = ConfigSlider(
             parent=self._root_widget,
             idprefix=f'{self.main_window_id_prefix}|musicvolume',
             position=(x, y),
             xoffset=10,
+            width=200.0,
             configkey='Music Volume',
             displayname=_audstrs.music_volume,
             minval=0.0,
             maxval=1.0,
             increment=0.05,
             callback=music.music_volume_changed,
-            changesound=False,
+            # Faster than the default: nothing audible accompanies an
+            # apply here, so this is free to track a drag more closely.
+            drag_apply_interval=0.25,
             as_percent=True,
         )
 
@@ -177,14 +188,14 @@ class AudioSettingsWindow(bui.MainWindow):
         else:
             self._soundtrack_button = None
 
-        # Tweak a few navigation bits.
+        # Tweak a few navigation bits. Note that sliders consume left and
+        # right to adjust their value, so only the vertical links here do
+        # anything -- horizontal ones would never be followed.
         if self._back_button is not None:
-            bui.widget(edit=self._back_button, down_widget=svne.minusbutton)
+            bui.widget(edit=self._back_button, down_widget=svs.slider)
         else:
             spback = bui.get_special_widget('back_button')
-            bui.widget(
-                edit=svne.minusbutton, up_widget=spback, left_widget=spback
-            )
+            bui.widget(edit=svs.slider, up_widget=spback)
 
     @override
     def get_main_window_state(self) -> bui.MainWindowState:

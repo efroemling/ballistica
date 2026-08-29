@@ -1,4 +1,4 @@
-### 1.8.0 (build 23002, api 9, 2026-08-26)
+### 1.8.0 (build 23003, api 9, 2026-08-28)
 - Fully implemented asset packages (more on this soon)
 - App-config committing (dirty-tracking, debounced disk writes, and
   suspend/shutdown flushes) now lives fully in `babase` instead of routing
@@ -122,6 +122,9 @@
   drops to 60 if the device is getting hot or the user puts it into energy-saver
   mode via game-overlays or whatnot.
 - The dev-console on-screen button can now be dragged around.
+- Improved caching and restore behavior on DocUI - re-opening the store should
+  generally now be instant after it has loaded once successfully/etc.
+- Finally added a slider widget! - `bauiv1.sliderwidget()`.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

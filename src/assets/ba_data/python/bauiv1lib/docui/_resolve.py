@@ -82,14 +82,17 @@ def check_finalization_leaks(response: dui2.Response) -> None:
         )
 
 
-def resolve_response(response: dui2.Response) -> None:
-    """Resolve packages + de-index deferred effects for a v2 response.
+def resolve_packages(response: dui2.Response) -> None:
+    """Resolve every asset-package a v2 response references.
 
     Runs in a background thread (the resolve itself is marshalled to
     the logic thread and awaited). After this returns, every package
-    the page references is locally resolved in the current locale and
-    the response's client-effects carry self-describing language
-    strings, so the page can be prepped and rendered natively.
+    the page references is locally resolved in the current locale, so
+    the language tables the de-index step addresses are loaded.
+
+    Takes ``response`` read-only; the mutating half of pre-display
+    work lives in :func:`deindex_response`, which must run after this
+    and on a copy. See that function for why the two are split.
     """
     import bauiv1 as bui
 
@@ -99,8 +102,8 @@ def resolve_response(response: dui2.Response) -> None:
 
     # Sanity check: responses can be tailored per-build (client-effect
     # forms etc.), so one stamped for a different build is stale — note
-    # it loudly. (When response caching arrives this should become a
-    # toss-and-refetch.)
+    # it loudly. (A cached response can't outlive its build: the cache
+    # is in-memory only, so a new build starts with an empty one.)
     ourbuild = bui.app.env.engine_build_number
     if response.for_build is not None and response.for_build != ourbuild:
         bui.uilog.warning(
@@ -132,12 +135,37 @@ def resolve_response(response: dui2.Response) -> None:
         'docui v2 prep: resolve complete for locale %s.', locale.name
     )
 
+
+def deindex_response(response: dui2.Response) -> None:
+    """Unfold a v2 response's folded string and asset indices in place.
+
+    Runs in a background thread after :func:`resolve_packages` has
+    loaded the language tables the indices address.
+
+    **Mutates ``response``**, so callers pass a copy and keep the
+    pristine wire object elsewhere. That split is what lets a response
+    be cached and re-prepped: the wire form is the durable thing (it
+    can be re-prepped at any ui-scale, in any locale, any number of
+    times) while the de-indexed form is a per-display product, and
+    keeping the two apart means a cached response is never a
+    partially-transformed one. Only the copy is reachable from the
+    resulting prep, so a button's deferred effects hold de-indexed
+    strings without the cached response ever being touched.
+    """
+    import bauiv1 as bui
+
+    assert not bui.in_logic_thread()
+
+    import babase
+    import bacommon.clienteffect as clfx
+    from efro.dataclassio import dataclass_to_json, dataclass_from_json
+
+    if not response.packages:
+        return
+
     # Native handles bound against this payload's package manifest;
     # evaluation and de-indexing both resolve through the native
     # language tables the resolve just (re)loaded.
-    import babase
-    from efro.dataclassio import dataclass_to_json, dataclass_from_json
-
     packages = list(response.packages)
 
     def _native(lstr: LangStrSpec) -> babase.LangStr:
@@ -165,28 +193,27 @@ def resolve_response(response: dui2.Response) -> None:
                         'Error de-indexing client-effect message.'
                     )
 
-    if response.packages:
-        # Strings first: the effect de-index below consumes them, and
-        # it expects the two-int form rather than a folded index.
-        deindex_langstrs(
-            response.page,
-            packages,
-            response.client_effects,
-            expect_digest=response.langstr_index_digest,
-        )
-        deindex_assets(
-            response.page,
-            packages,
-            response.client_effects,
-            expect_digest=response.asset_index_digest,
-        )
-        _deindex_effects(response.client_effects)
-        for row in response.page.rows:
-            if not isinstance(row, dui2.ButtonRow):
-                continue
-            for button in row.buttons:
-                if isinstance(button.action, dui2.Local):
-                    _deindex_effects(button.action.immediate_client_effects)
+    # Strings first: the effect de-index below consumes them, and it
+    # expects the two-int form rather than a folded index.
+    deindex_langstrs(
+        response.page,
+        packages,
+        response.client_effects,
+        expect_digest=response.langstr_index_digest,
+    )
+    deindex_assets(
+        response.page,
+        packages,
+        response.client_effects,
+        expect_digest=response.asset_index_digest,
+    )
+    _deindex_effects(response.client_effects)
+    for row in response.page.rows:
+        if not isinstance(row, dui2.ButtonRow):
+            continue
+        for button in row.buttons:
+            if isinstance(button.action, dui2.Local):
+                _deindex_effects(button.action.immediate_client_effects)
 
 
 def package_asset_listing(apverid: str) -> list[str] | None:

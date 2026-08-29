@@ -268,6 +268,10 @@ class UI {
   float dev_console_button_press_y_{};
   float dev_console_button_drag_offset_x_{};
   float dev_console_button_drag_offset_y_{};
+  // When the dev-console button was last activated (drives its fade back
+  // from the lit-up look). Starts far enough in the past to never light up
+  // at launch.
+  seconds_t dev_console_button_activate_time_{-999.0};
   seconds_t text_edit_flap_window_start_{};
   int text_edit_flap_count_{};
   TextEditSource text_edit_source_{};

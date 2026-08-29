@@ -35,13 +35,15 @@ class PythonClassWidget : public PythonClass {
   static auto Activate(PythonClassWidget* self) -> PyObject*;
   static auto GetChildren(PythonClassWidget* self) -> PyObject*;
   static auto GetSelectedChild(PythonClassWidget* self) -> PyObject*;
+  static auto GetSliderValue(PythonClassWidget* self) -> PyObject*;
   static auto GetScreenSpaceCenter(PythonClassWidget* self) -> PyObject*;
   static auto Delete(PythonClassWidget* self, PyObject* args, PyObject* keywds)
       -> PyObject*;
   static auto AddDeleteCallback(PythonClassWidget* self, PyObject* args,
                                 PyObject* keywds) -> PyObject*;
   static auto GlobalSelect(PythonClassWidget* self) -> PyObject*;
-  static auto ScrollIntoView(PythonClassWidget* self) -> PyObject*;
+  static auto ScrollIntoView(PythonClassWidget* self, PyObject* args,
+                             PyObject* keywds) -> PyObject*;
   Object::WeakRef<Widget>* widget_;
   static auto nb_bool(PythonClassWidget* self) -> int;
   static PyNumberMethods as_number_;

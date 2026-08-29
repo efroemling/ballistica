@@ -296,6 +296,7 @@
  "ba_data/python/bauiv1lib/discord.py",
  "ba_data/python/bauiv1lib/docui/__init__.py",
  "ba_data/python/bauiv1lib/docui/_bgrunner.py",
+ "ba_data/python/bauiv1lib/docui/_cache.py",
  "ba_data/python/bauiv1lib/docui/_controller.py",
  "ba_data/python/bauiv1lib/docui/_resolve.py",
  "ba_data/python/bauiv1lib/docui/_types.py",

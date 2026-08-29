@@ -209,12 +209,19 @@ auto ScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         }
       }
 
-      // Go into smooth mode momentarily.
-      smoothing_amount_ = 1.0f;
+      // Go into smooth mode momentarily (nothing to smooth if the
+      // caller asked us not to animate).
+      if (m.animate) {
+        smoothing_amount_ = 1.0f;
+      }
 
-      // Snap our smoothed value to this *only* if we haven't drawn yet.
-      // (keeps new widgets from inexplicably scrolling around)
-      if (!have_drawn_) {
+      // Snap our smoothed value to this if the caller asked for no
+      // animation, or if we haven't drawn yet (which keeps new widgets
+      // from inexplicably scrolling around). The two cover different
+      // things: have_drawn_ means nobody has seen us, so a jump is free;
+      // animate=false means our contents were just rebuilt, so there is
+      // nothing on screen to glide away from.
+      if (!m.animate || !have_drawn_) {
         child_offset_v_smoothed_ = child_offset_v_;
       }
       MarkForUpdate();

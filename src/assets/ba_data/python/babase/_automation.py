@@ -219,6 +219,76 @@ def drag_at(
     _emit(tag, 'ok', f'{x:.0f},{y:.0f} -> {x2:.0f},{y2:.0f}')
 
 
+def mouse_button_at(
+    x: float,
+    y: float,
+    pressed: bool,
+    *,
+    tag: str = 'mousebutton',
+) -> None:
+    """Synthesize one half of a mouse click at virtual-screen coords.
+
+    Same coordinate system as :func:`click_at`. Unlike that function --
+    which presses and releases in a single dispatch, so no frame ever
+    renders between -- this leaves the button held until a matching
+    ``pressed=False`` call. That makes it the only way to observe a
+    widget's *held* appearance from automation: a pressed button's
+    glow, a slider's grabbed nub.
+
+    Always pair a press with a release; leaving one outstanding leaves
+    the UI thinking a button is down.
+
+    Emits ``[automation] <tag> fail not_compiled_in`` when the build
+    was made without ``BA_ENABLE_AUTOMATION``, or ``fail
+    headless_mode`` when called from a headless build.
+    """
+    if not hasattr(_babase, 'automation_mouse_button_at_virtual'):
+        _emit(tag, 'fail', 'not_compiled_in')
+        return
+    try:
+        _badev.automation_mouse_button_at_virtual(
+            button=1, x=x, y=y, pressed=pressed
+        )
+    except RuntimeError as exc:
+        if 'headless' in str(exc).lower():
+            _emit(tag, 'fail', 'headless_mode')
+            return
+        raise
+    updown = 'down' if pressed else 'up'
+    _emit(tag, 'ok', f'{updown} @ {x:.0f},{y:.0f}')
+
+
+def ui_nav(direction: str, tag: str = 'uinav') -> None:
+    """Synthesize a UI-navigation event.
+
+    ``direction`` is one of ``'left'``, ``'right'``, ``'up'``,
+    ``'down'``, ``'activate'``, ``'cancel'`` -- the messages arrow keys
+    and controller d-pads produce. Delivered through the normal UI
+    dispatch path, so selection order and message claiming behave as
+    they would for real input.
+
+    This is the only way to exercise widgets that consume directional
+    messages rather than passing them to navigation; a slider adjusting
+    its value on left/right, for one, is unreachable via
+    :func:`click_at` or :func:`drag_at`.
+
+    Emits ``[automation] <tag> fail not_compiled_in`` when the build
+    was made without ``BA_ENABLE_AUTOMATION``, or ``fail
+    headless_mode`` when called from a headless build.
+    """
+    if not hasattr(_babase, 'automation_ui_nav'):
+        _emit(tag, 'fail', 'not_compiled_in')
+        return
+    try:
+        _badev.automation_ui_nav(direction=direction)
+    except RuntimeError as exc:
+        if 'headless' in str(exc).lower():
+            _emit(tag, 'fail', 'headless_mode')
+            return
+        raise
+    _emit(tag, 'ok', direction)
+
+
 def window_size(tag: str = 'window_size') -> None:
     """Report the app's current OS-window size.
 

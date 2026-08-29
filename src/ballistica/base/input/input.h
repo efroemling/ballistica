@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "ballistica/base/base.h"
+#include "ballistica/base/ui/widget_message.h"
 #include "ballistica/shared/foundation/input_types.h"
 #include "ballistica/shared/foundation/object.h"
 #include "ballistica/shared/math/vector3f.h"
@@ -179,6 +180,17 @@ class Input {
 
   void PushSmoothMouseScrollEvent(const Vector2f& velocity, bool momentum);
   void PushMouseScrollEvent(const Vector2f& amount);
+
+  /// Synthesize a UI-navigation event (the messages arrow keys and
+  /// controller d-pads produce). For automation; dispatches on the logic
+  /// thread through the same UI entry point real navigation uses.
+  void PushUINavEvent(WidgetMessage::Type type);
+
+  /// Synthesize one half of a mouse click, so a press can be *held*
+  /// across frames (PushMouseClickAtVirtualCoords does both halves in one
+  /// go, which no frame ever renders between). For automation.
+  void PushMouseButtonAtVirtualCoords(int button, float virtual_x,
+                                      float virtual_y, bool pressed);
   void PushJoystickEvent(const BAEvent& event, InputDevice* input_device);
   void PushAddInputDeviceCall(InputDevice* input_device, bool standard_message);
   void PushRemoveInputDeviceCall(InputDevice* input_device,

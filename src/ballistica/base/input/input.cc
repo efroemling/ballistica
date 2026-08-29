@@ -1468,6 +1468,40 @@ void Input::HandleMouseUp_(int button, const Vector2f& position) {
   g_base->ui->HandleMouseUp(button, cursor_pos_x_, cursor_pos_y_);
 }
 
+void Input::PushUINavEvent(WidgetMessage::Type type) {
+  // Schedule the dispatch on the logic thread (where UI lives).
+  g_base->logic->event_loop()->PushCall([type] {
+    assert(g_base->InLogicThread());
+
+    // Gather up any user code the message triggers and run it at the end,
+    // as the real navigation path does.
+    UI::OperationContext ui_op_context;
+    g_base->ui->SendWidgetMessage(WidgetMessage(type));
+    ui_op_context.Finish();
+  });
+}
+
+void Input::PushMouseButtonAtVirtualCoords(int button, float virtual_x,
+                                           float virtual_y, bool pressed) {
+  // Schedule the dispatch on the logic thread (where UI lives).
+  g_base->logic->event_loop()->PushCall([this, button, virtual_x, virtual_y,
+                                         pressed] {
+    assert(g_base->InLogicThread());
+
+    cursor_pos_x_ = virtual_x;
+    cursor_pos_y_ = virtual_y;
+    if (pressed) {
+      millisecs_t click_time = g_core->AppTimeMillisecs();
+      bool double_click = (click_time - last_click_time_ <= double_click_time_);
+      last_click_time_ = click_time;
+      g_base->ui->HandleMouseDown(button, cursor_pos_x_, cursor_pos_y_,
+                                  double_click);
+    } else {
+      g_base->ui->HandleMouseUp(button, cursor_pos_x_, cursor_pos_y_);
+    }
+  });
+}
+
 void Input::PushMouseClickAtVirtualCoords(int button, float virtual_x,
                                           float virtual_y) {
   // Schedule the dispatch on the logic thread (where UI lives).

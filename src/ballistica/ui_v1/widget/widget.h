@@ -76,7 +76,9 @@ class Widget : public Object {
   void GlobalSelect();
 
   /// Show this widget if possible (by scrolling to it, etc).
-  void ScrollIntoView();
+  /// Ask our ancestor scrolls to bring us into view. Pass animate=false
+  /// to snap rather than glide -- see WidgetMessage::animate.
+  void ScrollIntoView(bool animate = true);
 
   /// Returns true if the widget is the currently selected child of its
   /// parent. Note that this does not mean that the parent is selected,

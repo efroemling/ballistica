@@ -42,6 +42,11 @@ static const int kUIOwnerTimeoutSeconds = 15;
 /// must travel before it converts from a pending press to a drag.
 static const float kDevConsoleButtonDragThreshold = 12.0f;
 
+/// How long the dev-console button stays lit up after being activated
+/// before fading back to its resting look. Without this, an instantaneous
+/// press (a tap) would produce no visible feedback at all.
+static const seconds_t kDevConsoleButtonActivateFadeSeconds = 0.2;
+
 /// Flip to true to spin up a placeholder SimpleDialog at boot (with a
 /// self-animating progress bar) for iterating on the dialog's looks without a
 /// live asset resolve. Must stay false in committed code.
@@ -432,6 +437,7 @@ void UI::HandleMouseUp(int button, float x, float y) {
           .Call(args);
     } else if (InDevConsoleButton_(x, y)) {
       if (dev_console_) {
+        dev_console_button_activate_time_ = g_base->logic->display_time();
         dev_console_->CycleState();
       }
     }
@@ -1000,6 +1006,19 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
   auto& grp(*dev_console_button_txt_);
   float bsz = DevConsoleButtonSize_();
 
+  // How lit-up we are; 1 while held down, and fading back to 0 over a
+  // moment after an activation so that even an instantaneous tap shows
+  // some feedback.
+  float highlight;
+  if (dev_console_button_pressed_) {
+    highlight = 1.0f;
+  } else {
+    seconds_t since_activate{g_base->logic->display_time()
+                             - dev_console_button_activate_time_};
+    highlight = static_cast<float>(std::clamp(
+        1.0 - since_activate / kDevConsoleButtonActivateFadeSeconds, 0.0, 1.0));
+  }
+
   SimpleComponent c(frame_def->overlay_front_pass());
   c.SetTransparent(true);
   auto* button_tex =
@@ -1009,11 +1028,8 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
   // (alpha 0.8) button composites 'over' correctly (see
   // docs/design/premultiplied-alpha.md).
   float cmul = button_tex->premultiplied() ? 0.8f : 1.0f;
-  if (dev_console_button_pressed_) {
-    c.SetColor(cmul, cmul, cmul, 0.8f);
-  } else {
-    c.SetColor(0.5f * cmul, 0.5f * cmul, 0.5f * cmul, 0.8f);
-  }
+  float bl = (0.5f + 0.5f * highlight) * cmul;
+  c.SetColor(bl, bl, bl, 0.8f);
   float centerx, centery;
   DevConsoleButtonCenter_(&centerx, &centery);
   {
@@ -1027,11 +1043,10 @@ void UI::DrawDevConsoleButton_(FrameDef* frame_def) {
       c.Scale(0.017f, 0.017f, 1.0f);
       c.Translate(-20.0f, -15.0f, 0.0f);
       int text_elem_count = grp.GetElementCount();
-      if (dev_console_button_pressed_) {
-        c.SetColor(1.0f, 1.0f, 1.0f, 1.0f);
-      } else {
-        c.SetColor(0.15f, 0.15f, 0.15f, 1.0f);
-      }
+      // Text darkens as the button brightens, keeping it readable against
+      // the lit-up circle.
+      float tl = 0.15f * (1.0f - highlight);
+      c.SetColor(tl, tl, tl, 1.0f);
       for (int e = 0; e < text_elem_count; e++) {
         c.SetTexture(grp.GetElementTexture(e));
         c.SetFlatness(0.0f);

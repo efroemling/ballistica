@@ -140,6 +140,9 @@ nitpick_ignore = [
     # Stuff that is part of 'private' apis that we've intentionally
     # hidden despite having public naming. See 'skip_prefixes' below.
     ('py:class', 'v1prep.PagePrep'),
+    # Private shared base of ConfigNumberEdit/ConfigSlider; it appears in
+    # their documented signatures but is deliberately not itself public.
+    ('py:class', 'bauiv1lib.config._NumericConfigControl'),
     ('py:class', 'bacommon.legacydisplayitem.Wrapper'),
     ('py:class', 'bacommon.legacydisplayitem.Item'),
     ('py:class', 'bacommon.legacydisplayitem.ItemTypeID'),

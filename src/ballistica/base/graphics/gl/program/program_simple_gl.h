@@ -57,10 +57,11 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
       flatness_location = glGetUniformLocation(program(), "flatness");
       assert(flatness_location != -1);
     }
-    // texPremultiplied selects premult-vs-straight handling in both the
-    // flatness lerp and the shadow-compositing path, so it exists whenever
-    // either is present.
-    if ((flags & SHD_FLATNESS) || (flags & SHD_SHADOW)) {
+    // texPremultiplied selects premult-vs-straight handling in the
+    // flatness lerp, the shadow-compositing path, and the masked-draw
+    // additive frame term, so it exists whenever any of those are present.
+    if ((flags & SHD_FLATNESS) || (flags & SHD_SHADOW)
+        || ((flags & SHD_MASKED) && (flags & SHD_MODULATE))) {
       tex_premultiplied_location_ =
           glGetUniformLocation(program(), "texPremultiplied");
       assert(tex_premultiplied_location_ != -1);
@@ -148,7 +149,8 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
   // the flatness lerp target and the shadow-compositing path so premult and
   // straight-alpha textures both render correctly (see GetFragmentCode).
   void SetTexPremultiplied(float premultiplied) {
-    assert((flags_ & SHD_FLATNESS) || (flags_ & SHD_SHADOW));
+    assert((flags_ & SHD_FLATNESS) || (flags_ & SHD_SHADOW)
+           || ((flags_ & SHD_MASKED) && (flags_ & SHD_MODULATE)));
     assert(IsBound());
     if (premultiplied != tex_premultiplied_) {
       tex_premultiplied_ = premultiplied;
@@ -285,7 +287,8 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
     if (flags & SHD_FLATNESS) {
       s += "uniform " BA_GLSL_MEDIUMP "float flatness;\n";
     }
-    if ((flags & SHD_FLATNESS) || (flags & SHD_SHADOW)) {
+    if ((flags & SHD_FLATNESS) || (flags & SHD_SHADOW)
+        || ((flags & SHD_MASKED) && (flags & SHD_MODULATE))) {
       s += "uniform " BA_GLSL_MEDIUMP "float texPremultiplied;\n";
     }
     if (flags & SHD_SHADOW) {
@@ -373,8 +376,21 @@ class RendererGL::ProgramSimpleGL : public RendererGL::ProgramGL {
           s += " * (vec4(1.0 - colorizeB) + colorize2Color * colorizeB)";
         }
         if (flags & SHD_MASKED) {
-          s += " * vec4(vec3(mask.r), mask.a) + "
-               "vec4(vec3(mask.g) * colorizeColor.rgb + vec3(mask.b), 0.0)";
+          // The mask's g/b channels *add* frame-tint and white-highlight
+          // rgb with zero alpha. Under straight blend the hardware weights
+          // that rgb by fragment alpha at blend time so it fades with the
+          // modulate alpha for free; under premult blend (GL_ONE) it would
+          // stay full-brightness forever, so scale it by the modulate
+          // color's alpha ourselves (decision #23). texPremultiplied (0/1)
+          // preserves the exact legacy path for straight-alpha textures.
+          if (flags & SHD_MODULATE) {
+            s += " * vec4(vec3(mask.r), mask.a) + "
+                 "vec4((vec3(mask.g) * colorizeColor.rgb + vec3(mask.b))"
+                 " * mix(1.0, color.a, texPremultiplied), 0.0)";
+          } else {
+            s += " * vec4(vec3(mask.r), mask.a) + "
+                 "vec4(vec3(mask.g) * colorizeColor.rgb + vec3(mask.b), 0.0)";
+          }
         }
         s += ";\n";
 

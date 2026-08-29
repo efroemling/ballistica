@@ -26,6 +26,7 @@
 #include "ballistica/ui_v1/widget/root_widget.h"
 #include "ballistica/ui_v1/widget/row_widget.h"
 #include "ballistica/ui_v1/widget/scroll_widget.h"
+#include "ballistica/ui_v1/widget/slider_widget.h"
 #include "ballistica/ui_v1/widget/spinner_widget.h"
 
 namespace ballistica::ui_v1 {
@@ -1237,6 +1238,152 @@ static PyMethodDef PySpinnerWidgetDef = {
     "are applied to the Widget.",
 };
 
+// ----------------------------- sliderwidget ----------------------------------
+
+static auto PySliderWidget(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  PyObject* edit_obj{Py_None};
+  PyObject* parent_obj{Py_None};
+  ContainerWidget* parent_widget{};
+  PyObject* id_obj{Py_None};
+  PyObject* size_obj{Py_None};
+  PyObject* pos_obj{Py_None};
+  PyObject* color_obj{Py_None};
+  PyObject* value_obj{Py_None};
+  PyObject* min_value_obj{Py_None};
+  PyObject* max_value_obj{Py_None};
+  PyObject* increment_obj{Py_None};
+  PyObject* on_drag_call_obj{Py_None};
+  PyObject* on_change_call_obj{Py_None};
+  PyObject* autoselect_obj{Py_None};
+
+  static const char* kwlist[] = {
+      "edit",         "parent",         "id",         "size",      "position",
+      "color",        "value",          "min_value",  "max_value", "increment",
+      "on_drag_call", "on_change_call", "autoselect", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "|OOOOOOOOOOOOO", const_cast<char**>(kwlist), &edit_obj,
+          &parent_obj, &id_obj, &size_obj, &pos_obj, &color_obj, &value_obj,
+          &min_value_obj, &max_value_obj, &increment_obj, &on_drag_call_obj,
+          &on_change_call_obj, &autoselect_obj)) {
+    return nullptr;
+  }
+
+  if (!g_base->CurrentContext().IsEmpty()) {
+    throw Exception("UI functions must be called with no context set.");
+  }
+
+  // Gather up any user code triggered by this stuff and run it at the end
+  // before we return.
+  base::UI::OperationContext ui_op_context;
+
+  // Grab the edited widget or create a new one.
+  Object::Ref<SliderWidget> b;
+  if (edit_obj != Py_None) {
+    b = dynamic_cast<SliderWidget*>(UIV1Python::GetPyWidget(edit_obj));
+    if (!b.exists()) {
+      throw Exception("Invalid or nonexistent widget.",
+                      PyExcType::kWidgetNotFound);
+    }
+  } else {
+    parent_widget = parent_obj == Py_None
+                        ? g_ui_v1->screen_root_widget()
+                        : dynamic_cast<ContainerWidget*>(
+                              UIV1Python::GetPyWidget(parent_obj));
+    if (parent_widget == nullptr) {
+      throw Exception("Parent widget nonexistent or not a container.",
+                      PyExcType::kWidgetNotFound);
+    }
+    b = Object::New<SliderWidget>();
+  }
+  if (id_obj != Py_None) {
+    b->SetID(Python::GetString(id_obj));
+  }
+  if (size_obj != Py_None) {
+    Point2D p = Python::GetPoint2D(size_obj);
+    b->set_width(p.x);
+    b->set_height(p.y);
+  }
+  if (pos_obj != Py_None) {
+    Point2D p = Python::GetPoint2D(pos_obj);
+    b->set_translate(p.x, p.y);
+  }
+  if (color_obj != Py_None) {
+    std::vector<float> c = Python::GetFloats(color_obj);
+    if (c.size() != 3) {
+      throw Exception("Expected 3 floats for color.", PyExcType::kValue);
+    }
+    b->set_color(c[0], c[1], c[2]);
+  }
+
+  // Range before value, so a value handed in alongside a range is clamped
+  // against that range rather than the one it replaced.
+  if (min_value_obj != Py_None || max_value_obj != Py_None) {
+    b->SetRange(
+        min_value_obj == Py_None ? 0.0f : Python::GetFloat(min_value_obj),
+        max_value_obj == Py_None ? 100.0f : Python::GetFloat(max_value_obj));
+  }
+  if (increment_obj != Py_None) {
+    b->set_increment(Python::GetFloat(increment_obj));
+  }
+  if (value_obj != Py_None) {
+    b->SetValue(Python::GetFloat(value_obj));
+  }
+  if (on_drag_call_obj != Py_None) {
+    b->SetOnDragCall(on_drag_call_obj);
+  }
+  if (on_change_call_obj != Py_None) {
+    b->SetOnChangeCall(on_change_call_obj);
+  }
+  if (autoselect_obj != Py_None) {
+    b->set_auto_select(Python::GetBool(autoselect_obj));
+  }
+
+  // If making a new widget, add it at the end.
+  if (edit_obj == Py_None) {
+    g_ui_v1->AddWidget(b.get(), parent_widget);
+  }
+
+  // Run any calls built up by UI callbacks.
+  ui_op_context.Finish();
+
+  return b->NewPyRef();
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySliderWidgetDef = {
+    "sliderwidget",                // name
+    (PyCFunction)PySliderWidget,   // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "sliderwidget(*,\n"
+    "  edit: bauiv1.Widget | None = None,\n"
+    "  parent: bauiv1.Widget | None = None,\n"
+    "  id: str | None = None,\n"
+    "  size: Sequence[float] | None = None,\n"
+    "  position: Sequence[float] | None = None,\n"
+    "  color: Sequence[float] | None = None,\n"
+    "  value: float | None = None,\n"
+    "  min_value: float | None = None,\n"
+    "  max_value: float | None = None,\n"
+    "  increment: float | None = None,\n"
+    "  on_drag_call: Callable[[float], None] | None = None,\n"
+    "  on_change_call: Callable[[float], None] | None = None,\n"
+    "  autoselect: bool | None = None,\n"
+    ") -> bauiv1.Widget\n"
+    "\n"
+    "Create or edit a slider widget.\n"
+    "\n"
+    "Pass a valid existing bauiv1.Widget as 'edit' to modify it; otherwise\n"
+    "a new one is created and returned. Arguments that are not set to None\n"
+    "are applied to the Widget.\n"
+    "\n"
+    "'on_drag_call' is passed the value repeatedly while the nub is being\n"
+    "dragged; 'on_change_call' is passed it when a drag is released having\n"
+    "changed it, or when a key or controller press steps it.",
+};
+
 // ----------------------------- columnwidget ----------------------------------
 
 static auto PyColumnWidget(PyObject* self, PyObject* args, PyObject* keywds)
@@ -2160,6 +2307,7 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   PyObject* autoselect_obj{Py_None};
   PyObject* button_inset_left_obj{Py_None};
   PyObject* button_inset_right_obj{Py_None};
+  PyObject* transition_in_obj{Py_None};
 
   static const char* kwlist[] = {"edit",
                                  "parent",
@@ -2179,16 +2327,17 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
                                  "autoselect",
                                  "button_inset_left",
                                  "button_inset_right",
+                                 "transition_in",
                                  nullptr};
 
   if (!PyArg_ParseTupleAndKeywords(
-          args, keywds, "|OOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
+          args, keywds, "|OOOOOOOOOOOOOOOOOOO", const_cast<char**>(kwlist),
           &edit_obj, &parent_obj, &size_obj, &pos_obj, &background_obj,
           &selected_child_obj, &capture_arrows_obj, &on_select_call_obj,
           &center_small_content_obj, &color_obj, &highlight_obj,
           &border_opacity_obj, &simple_culling_h_obj, &claims_left_right_obj,
           &claims_up_down_obj, &autoselect_obj, &button_inset_left_obj,
-          &button_inset_right_obj))
+          &button_inset_right_obj, &transition_in_obj))
     return nullptr;
 
   if (!g_base->CurrentContext().IsEmpty()) {
@@ -2275,6 +2424,9 @@ static auto PyHScrollWidget(PyObject* self, PyObject* args, PyObject* keywds)
   if (button_inset_right_obj != Py_None) {
     widget->set_button_inset_right(Python::GetFloat(button_inset_right_obj));
   }
+  if (transition_in_obj != Py_None) {
+    widget->set_transition_in(Python::GetBool(transition_in_obj));
+  }
 
   // if making a new widget add it at the end
   if (edit_obj == Py_None) {
@@ -2311,13 +2463,19 @@ static PyMethodDef PyHScrollWidgetDef = {
     "  claims_left_right: bool | None = None,\n"
     "  claims_up_down: bool | None = None,\n"
     "  button_inset_left: float | None = None,\n"
-    "  button_inset_right: float | None = None)  -> bauiv1.Widget\n"
+    "  button_inset_right: float | None = None,\n"
+    "  transition_in: bool | None = None)  -> bauiv1.Widget\n"
     "\n"
     "Create or edit a horizontal scroll widget.\n"
     "\n"
     "The button insets nudge the page-left/page-right buttons in from\n"
     "the widget's edges; scrolls extended across screen margins use\n"
     "them to keep the buttons anchored to the virtual rect.\n"
+    "\n"
+    "Set 'transition_in' to have the page-left/page-right buttons animate\n"
+    "in when the widget first appears. Off by default, so they simply\n"
+    "start in their final form; turn it on only in ui that animates its\n"
+    "own contents in, so the buttons arrive along with everything else.\n"
     "\n"
     "Pass a valid existing bauiv1.Widget as 'edit' to modify it; otherwise\n"
     "a new one is created and returned. Arguments that are not set to None\n"
@@ -3313,6 +3471,7 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyCheckBoxWidgetDef,
       PyImageWidgetDef,
       PySpinnerWidgetDef,
+      PySliderWidgetDef,
       PyColumnWidgetDef,
       PyContainerWidgetDef,
       PyRowWidgetDef,

@@ -1498,7 +1498,7 @@ auto ContainerWidget::GetTopmostToolbarInfluencingWidget() -> Widget* {
   return nullptr;
 }
 
-void ContainerWidget::ShowWidget(Widget* w) {
+void ContainerWidget::ShowWidget(Widget* w, bool animate) {
   if (!w) {
     return;
   }
@@ -1520,8 +1520,10 @@ void ContainerWidget::ShowWidget(Widget* w) {
   float ty = (w->ty() - buffer_bottom) * s;
   float width = (w->GetWidth() * w->scale() + buffer_left + buffer_right) * s;
   float height = (w->GetHeight() * w->scale() + buffer_bottom + buffer_top) * s;
-  HandleMessage(base::WidgetMessage(base::WidgetMessage::Type::kShow, nullptr,
-                                    tx, ty, width, height));
+  auto msg{base::WidgetMessage(base::WidgetMessage::Type::kShow, nullptr, tx,
+                               ty, width, height)};
+  msg.animate = animate;
+  HandleMessage(msg);
 }
 
 void ContainerWidget::SelectWidget(Widget* w, SelectionCause c) {

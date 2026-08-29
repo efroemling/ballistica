@@ -238,6 +238,123 @@ static PyMethodDef PyAutomationPressAtVirtualDef = {
     "size to compute the absolute coords for a given widget.\n",
 };
 
+// --------------- automation_mouse_button_at_virtual --------------------------
+
+static auto PyAutomationMouseButtonAtVirtual(PyObject* self, PyObject* args,
+                                             PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  int button{1};
+  double vx{0.0};
+  double vy{0.0};
+  int pressed{1};
+  static const char* kwlist[] = {"button", "x", "y", "pressed", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "iddp",
+                                   const_cast<char**>(kwlist), &button, &vx,
+                                   &vy, &pressed)) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
+  }
+  if (g_core->HeadlessMode()) {
+    throw Exception("not supported in headless mode", PyExcType::kRuntime);
+  }
+  g_base->input->PushMouseButtonAtVirtualCoords(button, static_cast<float>(vx),
+                                                static_cast<float>(vy),
+                                                static_cast<bool>(pressed));
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationMouseButtonAtVirtualDef = {
+    "automation_mouse_button_at_virtual",           // name
+    (PyCFunction)PyAutomationMouseButtonAtVirtual,  // method
+    METH_VARARGS | METH_KEYWORDS,                   // flags
+
+    "automation_mouse_button_at_virtual(button: int, x: float, y: float,\n"
+    "                                   pressed: bool) -> None\n"
+    "\n"
+    "Synthesize one half of a mouse click at the given virtual-screen\n"
+    "coordinates. Requires a build with ``BA_ENABLE_AUTOMATION`` set.\n"
+    "Raises RuntimeError in headless builds (no UI to target).\n"
+    "\n"
+    "Unlike ``automation_press_at_virtual``, which presses and releases\n"
+    "in a single dispatch, this leaves the button held until a matching\n"
+    "released call -- so frames render while it is down. That is the\n"
+    "only way to observe a widget's *held* appearance (a pressed\n"
+    "button's glow, a slider's grabbed nub) from automation.\n"
+    "\n"
+    "Always pair a pressed call with a released one; leaving a\n"
+    "synthesized press outstanding leaves the UI thinking a button is\n"
+    "down.\n",
+};
+
+// --------------- automation_ui_nav ------------------------------------------
+
+static auto PyAutomationUINav(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* direction;
+  static const char* kwlist[] = {"direction", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &direction)) {
+    return nullptr;
+  }
+  if (g_base->automation == nullptr) {
+    throw Exception(
+        "Automation subsystem not active "
+        "(requires a developer build).",
+        PyExcType::kRuntime);
+  }
+  // Synthesized input makes no sense headless (no UI to target).
+  if (g_core->HeadlessMode()) {
+    throw Exception("not supported in headless mode", PyExcType::kRuntime);
+  }
+  std::string dir{direction};
+  WidgetMessage::Type type;
+  if (dir == "left") {
+    type = WidgetMessage::Type::kMoveLeft;
+  } else if (dir == "right") {
+    type = WidgetMessage::Type::kMoveRight;
+  } else if (dir == "up") {
+    type = WidgetMessage::Type::kMoveUp;
+  } else if (dir == "down") {
+    type = WidgetMessage::Type::kMoveDown;
+  } else if (dir == "activate") {
+    type = WidgetMessage::Type::kActivate;
+  } else if (dir == "cancel") {
+    type = WidgetMessage::Type::kCancel;
+  } else {
+    throw Exception("Invalid direction: '" + dir + "'.", PyExcType::kValue);
+  }
+  g_base->input->PushUINavEvent(type);
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyAutomationUINavDef = {
+    "automation_ui_nav",             // name
+    (PyCFunction)PyAutomationUINav,  // method
+    METH_VARARGS | METH_KEYWORDS,    // flags
+
+    "automation_ui_nav(direction: str) -> None\n"
+    "\n"
+    "Synthesize a UI-navigation event -- the messages arrow keys and\n"
+    "controller d-pads produce. Direction is one of 'left', 'right',\n"
+    "'up', 'down', 'activate', 'cancel'. Requires a build with\n"
+    "``BA_ENABLE_AUTOMATION`` set. Routes through the normal UI\n"
+    "dispatch path, so selection order, message claiming, and focus\n"
+    "chains behave as they would for real input. Raises RuntimeError\n"
+    "in headless builds (no UI to target).\n"
+    "\n"
+    "This reaches behavior no pointer synthesis can: widgets that\n"
+    "consume directional messages (sliders adjusting their value, for\n"
+    "one) are only exercisable this way.\n",
+};
+
 // --------------- automation_scroll_at_virtual -------------------------------
 
 static auto PyAutomationScrollAtVirtual(PyObject* self, PyObject* args,
@@ -2180,6 +2297,8 @@ auto PythonMethodsBase1::GetMethods() -> std::vector<PyMethodDef> {
       PyAutomationCaptureScreenshotDef,
       PyAutomationPressAtVirtualDef,
       PyAutomationScrollAtVirtualDef,
+      PyAutomationUINavDef,
+      PyAutomationMouseButtonAtVirtualDef,
       PyAutomationDragAtVirtualDef,
       PyAutomationGetWindowSizeDef,
       PyAutomationSetWindowSizeDef,

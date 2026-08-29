@@ -7,6 +7,7 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/mesh/nine_patch_mesh.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/support/app_timer.h"
 #include "ballistica/base/ui/ui.h"
@@ -20,6 +21,14 @@ static const float kPageButtonInset{15.0f};
 static const float kPageButtonSize{80.0f};
 static const float kPageButtonYOffs{7.0f};
 static const float kBottomOverlap{3.0f};
+
+/// Visible thickness of the scroll thumb, and how far its bottom edge
+/// sits above ours. Note these describe the *drawn bar*, which is
+/// deliberately smaller than scroll_bar_height_ -- that is the
+/// interactive track height, kept larger so the thumb stays easy to
+/// grab. Values chosen to land where the previous mesh-based thumb drew.
+static const float kThumbThickness{8.0f};
+static const float kThumbBottomInset{5.0f};
 
 HScrollWidget::HScrollWidget() {
   set_draggable(false);
@@ -162,7 +171,7 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
       float vis_width{(width() - 2.0f * (border_width_ + kMarginH))};
       bool changing{};
 
-      // See where we'd have to scroll to get selection at left and right.
+      // See where we'd have to scroll to get target at left and right.
       float child_offset_left = scroll_child_width - target_x - vis_width;
       float child_offset_right = scroll_child_width - target_x - target_width;
 
@@ -174,11 +183,11 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         child_offset_h_ = 0.5f * (child_offset_left + child_offset_right);
         changing = true;
       } else {
-        // If we're in the middle, dont do anything.
+        // If its already fully visible, don't do anything.
         if (child_offset_h_ > child_offset_left
             && child_offset_h_ < child_offset_right) {
         } else {
-          // Do whatever offset is less of a move.
+          // Do whichever offset is less of a move.
           if (std::abs(child_offset_left - child_offset_h_)
               < std::abs(child_offset_right - child_offset_h_)) {
             child_offset_h_ = child_offset_left;
@@ -194,7 +203,9 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         {
           float max_val = scroll_child_width
                           - (width() - 2.0f * (border_width_ + kMarginH));
-          if (child_offset_h_ > max_val) child_offset_h_ = max_val;
+          if (child_offset_h_ > max_val) {
+            child_offset_h_ = max_val;
+          }
         }
 
         // If we're moving right, stop at the end.
@@ -205,12 +216,19 @@ auto HScrollWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         }
       }
 
-      // Go into smooth mode momentarily.
-      smoothing_amount_ = 1.0f;
+      // Go into smooth mode momentarily (nothing to smooth if the
+      // caller asked us not to animate).
+      if (m.animate) {
+        smoothing_amount_ = 1.0f;
+      }
 
-      // Snap our smoothed value to this *only* if we haven't drawn yet
-      // (keeps new widgets from inexplicably scrolling around).
-      if (!have_drawn_) {
+      // Snap our smoothed value to this if the caller asked for no
+      // animation, or if we haven't drawn yet (which keeps new widgets
+      // from inexplicably scrolling around). The two cover different
+      // things: have_drawn_ means nobody has seen us, so a jump is free;
+      // animate=false means our contents were just rebuilt, so there is
+      // nothing on screen to glide away from.
+      if (!m.animate || !have_drawn_) {
         child_offset_h_smoothed_ = child_offset_h_;
       }
       MarkForUpdate();
@@ -838,8 +856,62 @@ void HScrollWidget::UpdateScrolling_(millisecs_t current_time_millisecs) {
   }
 }
 
+void HScrollWidget::EnsureThumbRoundMesh_(float w, float h) {
+  if (thumb_round_mesh_.exists() && thumb_round_mesh_width_ == w
+      && thumb_round_mesh_height_ == h) {
+    return;
+  }
+  thumb_round_mesh_width_ = w;
+  thumb_round_mesh_height_ = h;
+
+  // Radius of half our height makes the left and right ends exact
+  // half-circles: the top and bottom borders each come out at 0.5, so the
+  // ninepatch's middle row collapses to nothing and the two end columns
+  // are pure semicircle.
+  float radius{h * 0.5f};
+  thumb_round_mesh_ = Object::New<base::NinePatchMesh>(
+      0.0f, 0.0f, 0.0f, w, h,
+      base::NinePatchMesh::BorderForRadius(radius, w, h),
+      base::NinePatchMesh::BorderForRadius(radius, h, w),
+      base::NinePatchMesh::BorderForRadius(radius, w, h),
+      base::NinePatchMesh::BorderForRadius(radius, h, w));
+}
+
+void HScrollWidget::SnapPageLeftRightButtons_() {
+  // Evaluate against a settled scroll offset rather than our live one.
+  // child_offset_h_ starts at a far-off-screen sentinel and springs
+  // toward its resting place over the first several frames, so the
+  // predicates would otherwise read a position we are merely passing
+  // through -- which for a non-overflowing scroll means snapping the
+  // page-left button to visible and then fading it back out, exactly the
+  // artifact we are here to remove.
+  float settled =
+      std::clamp(child_offset_h_, 0.0f, std::max(0.0f, child_max_offset_));
+  page_left_button_presence_ = settled < child_max_offset_ - 5.0f ? 1.0f : 0.0f;
+  page_right_button_presence_ = settled > 5.0f ? 1.0f : 0.0f;
+}
+
 void HScrollWidget::UpdatePageLeftRightButtons_(
     seconds_t display_time_elapsed) {
+  // On our very first update, land the buttons at their final form
+  // instead of easing up from nothing; otherwise a scroll that is simply
+  // *there* (a ui appearing instantly, a page refreshed in place, a
+  // back-navigation) shows its arrows fading in alone while everything
+  // around them is already settled. Ui that animates its own contents in
+  // sets transition_in so the buttons arrive along with the rest.
+  //
+  // Note this must run *after* layout: the target below reads
+  // child_max_offset_, which UpdateLayout() computes (see the ordering in
+  // Draw). Snapping before that would read a stale zero and land both
+  // buttons at hidden.
+  if (!page_buttons_initialized_) {
+    page_buttons_initialized_ = true;
+    if (!transition_in_) {
+      SnapPageLeftRightButtons_();
+      return;
+    }
+  }
+
   // Step our page-left/right buttons in the transparent pass.
   auto increase_rate{6.0f};
   auto decrease_rate{6.0f};
@@ -873,10 +945,15 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // don't have that currently)
   if (!draw_transparent) {
     UpdateScrolling_(current_time_millisecs);
-    UpdatePageLeftRightButtons_(pass->frame_def()->display_time_elapsed());
   }
 
   CheckLayout();
+
+  // Must come after layout; the button-presence targets read
+  // child_max_offset_, which UpdateLayout() computes.
+  if (!draw_transparent) {
+    UpdatePageLeftRightButtons_(pass->frame_def()->display_time_elapsed());
+  }
 
   Vector3f tilt = 0.02f * g_base->input->tilt();
   float extra_offs_x = tilt.y;
@@ -1028,33 +1105,21 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   if (amount_visible_ > 0.0f && amount_visible_ < 1.0f) {
     // Scroll thumb at depth 0.8 - 0.9.
     {
-      float sb_thumb_width = amount_visible_ * (width() - 2.0f * border_width_);
       if (thumb_dirty_) {
-        float sb_thumb_right =
-            r - border_width_
-            - ((width() - (border_width_ * 2.0f) - sb_thumb_width)
-               * child_offset_h_smoothed_ / child_max_offset_);
-        float b2 = 4.0f;
-        float t2 = b2 + scroll_bar_height_;
-        float r2 = sb_thumb_right;
-        float l2 = r2 - sb_thumb_width;
-        float b_border, t_border, l_border, r_border;
-        b_border = 6.0f;
-        t_border = 3.0f;
-        if (sb_thumb_width > 100.0f) {
-          auto wd = r2 - l2;
-          l_border = wd * 0.04f;
-          r_border = wd * 0.06f;
-        } else {
-          auto wd = r2 - l2;
-          r_border = wd * 0.12f;
-          l_border = wd * 0.08f;
-        }
-        thumb_height_ = t2 - b2 + b_border + t_border;
-        thumb_width_ = r2 - l2 + l_border + r_border;
+        // The thumb spans a fraction of the track equal to the fraction
+        // of the content that is visible, positioned along it by how far
+        // we have scrolled.
+        float track_left{l + border_width_};
+        float track_width{width() - 2.0f * border_width_};
+        float thumb_width{amount_visible_ * track_width};
+        float scrolled{child_offset_h_smoothed_ / child_max_offset_};
 
-        thumb_center_y_ = b2 - b_border + thumb_height_ * 0.5f;
-        thumb_center_x_ = l2 - l_border + thumb_width_ * 0.5f;
+        thumb_rect_width_ = thumb_width;
+        thumb_rect_height_ = kThumbThickness;
+        thumb_rect_left_ =
+            track_left + (1.0f - scrolled) * (track_width - thumb_width);
+        thumb_rect_bottom_ = kThumbBottomInset;
+
         thumb_dirty_ = false;
       }
 
@@ -1069,7 +1134,11 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           last_scroll_bar_show_time_ = frame_def->display_time();
         }
       } else {
-        if (smooth_diff || mouse_held_thumb_
+        // Hovering the thumb holds the bar visible on its own. The
+        // mouse-over test below requires a *move* within the last 0.1s,
+        // so without this the bar fades out from under a stationary
+        // pointer -- taking the hover highlight with it.
+        if (smooth_diff || mouse_held_thumb_ || hovering_thumb_
             || std::abs(inertia_scroll_rate_) > 1.0f
             || (mouse_over_
                 && frame_def->display_time() - last_mouse_move_time_ < 0.1f)) {
@@ -1086,27 +1155,38 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       }
 
       if (touch_fade_ > 0.0f && draw_transparent) {
+        // Rounded rect via a ninepatch over the circle texture. Our color
+        // is pure black, so there is no straight-vs-premultiplied rgb
+        // adjustment to make here (see
+        // docs/design/premultiplied-alpha.md) -- zero premultiplies to
+        // zero.
+        EnsureThumbRoundMesh_(thumb_rect_width_, thumb_rect_height_);
+
+        // Firm up on mouse-over and again while dragging, matching what
+        // the vertical scroll widget does. It scales its *color* by these
+        // amounts; ours is pure black, where brightening would wash it
+        // out rather than emphasize it, so we scale opacity instead.
+        float emphasis{1.0f};
+        if (mouse_held_thumb_) {
+          emphasis = 1.8f;
+        } else if (hovering_thumb_) {
+          emphasis = 1.25f;
+        }
+
         base::SimpleComponent c(pass);
         c.SetTransparent(draw_transparent);
-        c.SetColor(0, 0, 0, std::min(1.0f, 0.3f * touch_fade_));
-
+        c.SetColor(0, 0, 0, std::min(1.0f, 0.3f * emphasis * touch_fade_));
+        c.SetTexture(g_base->assets->BuiltinTexture(
+            base::BuiltinTextureID::kTexturesCircle));
         {
           auto scissor =
               c.ScopedScissor({l + border_width_, b + border_height_ + 1.0f,
                                l + (width()), b + (height() * 0.995f)});
           auto xf = c.ScopedTransform();
-          c.Translate(thumb_center_x_, thumb_center_y_, 0.75f);
-          c.Scale(-thumb_width_, thumb_height_, 0.1f);
-          c.FlipCullFace();
-          c.Rotate(-90.0f, 0.0f, 0.0f, 1.0f);
-
-          if (draw_transparent) {
-            c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-                sb_thumb_width > 100.0f
-                    ? base::BuiltinMeshID::kMeshesScrollBarThumbSimple
-                    : base::BuiltinMeshID::kMeshesScrollBarThumbShortSimple));
-          }
-          c.FlipCullFace();
+          // Ninepatch meshes span [0,w] x [0,h], so translate to the
+          // bar's lower-left rather than its center, and never scale.
+          c.Translate(thumb_rect_left_, thumb_rect_bottom_, 0.75f);
+          c.DrawMesh(thumb_round_mesh_.get());
           c.Submit();
         }
       }

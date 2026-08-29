@@ -40,7 +40,9 @@ class ContainerWidget : public Widget {
   // nullptr to deselect widgets.
   void SelectWidget(Widget* w, SelectionCause s = SelectionCause::kNone);
   void ReselectLastSelectedWidget();
-  void ShowWidget(Widget* w);
+  /// Scroll as needed to bring a child into view. Pass animate=false to
+  /// snap rather than glide -- see WidgetMessage::animate.
+  void ShowWidget(Widget* w, bool animate = true);
   void set_background(bool enable) { background_ = enable; }
   void SetRootSelectable(bool enable);
   void set_selectable(bool val) { selectable_ = val; }

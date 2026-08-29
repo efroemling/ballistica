@@ -50,6 +50,13 @@ class HScrollWidget : public ContainerWidget {
   void set_button_inset_left(float val) { button_inset_left_ = val; }
   void set_button_inset_right(float val) { button_inset_right_ = val; }
 
+  /// Whether our page-left/page-right buttons animate in when we first
+  /// appear. Off by default, so a freshly-made scroll draws them at
+  /// their final form immediately; ui that animates its own contents in
+  /// can turn this on so the buttons arrive along with everything else.
+  /// Only meaningful before our first draw.
+  void set_transition_in(bool val) { transition_in_ = val; }
+
  protected:
   void UpdateLayout() override;
 
@@ -60,11 +67,26 @@ class HScrollWidget : public ContainerWidget {
   auto ShouldShowPageLeftButton_() -> bool;
   auto ShouldShowPageRightButton_() -> bool;
   void UpdatePageLeftRightButtons_(seconds_t display_time_elapsed);
+  void SnapPageLeftRightButtons_();
+  /// Rebuild thumb_round_mesh_ if the thumb's size has changed. Ninepatch
+  /// corners must not be scaled (it would distort them), so the mesh is
+  /// built at exact size and only translated when drawn.
+  void EnsureThumbRoundMesh_(float w, float h);
   /// Left edge x of the page-left/page-right buttons (insets applied).
   auto PageLeftButtonX_() const -> float;
   auto PageRightButtonX_() const -> float;
 
   Object::Ref<base::AppTimer> touch_delay_timer_;
+  /// Rounded-rect thumb mesh, built at exact pixel size (see
+  /// EnsureThumbRoundMesh_).
+  Object::Ref<base::NinePatchMesh> thumb_round_mesh_;
+  float thumb_round_mesh_width_{-1.0f};
+  float thumb_round_mesh_height_{-1.0f};
+  /// The thumb's rect, in our local space.
+  float thumb_rect_left_{};
+  float thumb_rect_bottom_{};
+  float thumb_rect_width_{};
+  float thumb_rect_height_{};
   seconds_t last_scroll_bar_show_time_{};
   seconds_t last_mouse_move_time_{};
   millisecs_t last_h_scroll_event_time_millisecs_{};
@@ -82,10 +104,6 @@ class HScrollWidget : public ContainerWidget {
   float trough_height_{};
   float trough_center_x_{};
   float trough_center_y_{};
-  float thumb_width_{};
-  float thumb_height_{};
-  float thumb_center_x_{};
-  float thumb_center_y_{};
   float smoothing_amount_{1.0f};
   float glow_width_{};
   float glow_height_{};
@@ -141,6 +159,8 @@ class HScrollWidget : public ContainerWidget {
   bool page_right_pressed_{};
   bool last_mouse_move_in_bounds_{};
   bool last_scroll_was_touch_{};
+  bool transition_in_{};
+  bool page_buttons_initialized_{};
 };
 
 }  // namespace ballistica::ui_v1

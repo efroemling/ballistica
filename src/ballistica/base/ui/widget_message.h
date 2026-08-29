@@ -40,6 +40,15 @@ struct WidgetMessage {
 
   Type type{};
   bool has_keysym{};
+
+  /// For kShow: whether the scroll to bring the target into view should
+  /// animate. False snaps straight to the destination -- appropriate
+  /// when the content being scrolled within was itself just built, so
+  /// there is nothing on screen for the motion to read as movement
+  /// *from*. All four float slots are spoken for by the show-rect, so
+  /// this rides as its own field.
+  bool animate{true};
+
   BAKeysym keysym{};
   float fval1{};
   float fval2{};

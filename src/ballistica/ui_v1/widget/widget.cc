@@ -144,7 +144,7 @@ void Widget::GlobalSelect() {
   }
 }
 
-void Widget::ScrollIntoView() {
+void Widget::ScrollIntoView(bool animate) {
   assert(g_base->InLogicThread());
   Widget* w = this;
   ContainerWidget* c = parent_widget();
@@ -152,7 +152,7 @@ void Widget::ScrollIntoView() {
     return;
   }
   while (true) {
-    c->ShowWidget(w);
+    c->ShowWidget(w, animate);
     w = c;
     c = c->parent_widget();
     if (!c) {

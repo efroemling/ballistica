@@ -13,6 +13,12 @@ namespace ballistica::ui_v1 {
 
 class ButtonWidget : public Widget {
  public:
+  /// Our default color. Exposed so other widgets can match buttons rather
+  /// than duplicating the numbers and quietly drifting from them.
+  static constexpr float kDefaultColorR{0.5f};
+  static constexpr float kDefaultColorG{0.7f};
+  static constexpr float kDefaultColorB{0.2f};
+
   ButtonWidget();
   ~ButtonWidget() override;
   void Draw(base::RenderPass* pass, bool transparent) override;
@@ -144,9 +150,9 @@ class ButtonWidget : public Widget {
   float height_{30.0f};
   float text_scale_{1.0f};
   float text_width_{0.0f};
-  float color_red_{0.5f};
-  float color_green_{0.7f};
-  float color_blue_{0.2f};
+  float color_red_{kDefaultColorR};
+  float color_green_{kDefaultColorG};
+  float color_blue_{kDefaultColorB};
   float icon_color_red_{1.0f};
   float icon_color_green_{1.0f};
   float icon_color_blue_{1.0f};

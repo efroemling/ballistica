@@ -1403,6 +1403,10 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetColorize2Color(colorize2_r, colorize2_g, colorize2_b);
             p->SetColorizeTexture(buffer->GetTexture());
             p->SetMaskTexture(buffer->GetTexture());
+            // Blending is off here, so the premult additive-frame fade
+            // never applies; set 0 explicitly since the program object is
+            // shared with the transparent masked path.
+            p->SetTexPremultiplied(0.0f);
             break;
           }
           case ShadingType::kSimpleTextureModulatedTransparentColorized: {
@@ -1459,6 +1463,9 @@ void RendererGL::ProcessRenderCommandBuffer(RenderCommandBuffer* buffer,
             p->SetColorize2Color(colorize2_r, colorize2_g, colorize2_b);
             p->SetColorizeTexture(buffer->GetTexture());
             p->SetMaskTexture(buffer->GetTexture());
+            // Lets the shader fade the mask's additive frame term for
+            // premult textures (straight-alpha gets it free at blend time).
+            p->SetTexPremultiplied(premult ? 1.0f : 0.0f);
             break;
           }
           case ShadingType::kObject: {
