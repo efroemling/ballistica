@@ -11,7 +11,7 @@ from bauiv1lib.tabs import TabRow
 from bauiv1lib.utils import get_screen_margins
 import bauiv1 as bui
 from bauiv1 import _classicassets
-from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from bauiv1lib.play import PlaylistSelectContext
@@ -267,8 +267,8 @@ class GatherWindow(bui.MainWindow):
                 self._width * 0.5 - self._scroll_width * 0.5 - self.margin_left,
                 self._scroll_bottom - self.margin_bottom,
             ),
-            texture=_builtinassets.textures.scroll_widget.get(),
-            mesh_transparent=_builtinassets.meshes.soft_edge_outside.get(),
+            texture=_uiv1assets.textures.scroll_widget.get(),
+            mesh_transparent=_uiv1assets.meshes.soft_edge_outside.get(),
             opacity=0.4,
         )
         self._tab_container: bui.Widget | None = None

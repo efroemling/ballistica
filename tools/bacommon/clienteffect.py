@@ -8,6 +8,8 @@
   it in mod code.
 """
 
+# pylint: disable=protected-access
+
 import datetime
 from enum import Enum
 from dataclasses import dataclass, field
@@ -346,7 +348,7 @@ def collect_apverids(effects: list[Effect], acc: set[str]) -> None:
         # An indexed ref resolves through its payload's manifest, which
         # the caller seeds from separately; it names no package itself.
         if not isinstance(ref, int):
-            acc.add(ref.apverid)
+            acc.add(ref._apverid)
 
     walk_effects(effects, langstr=_lstr, assetref=_ref)
 

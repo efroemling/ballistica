@@ -65,6 +65,11 @@ class Audio {
   /// not (possibly logging warnings or errors).
   auto SafePlayBuiltinSound(BuiltinSoundID sound_id) -> std::optional<uint32_t>;
 
+  /// SafePlayBuiltinSound's sibling for arbitrary loaded sounds (e.g.
+  /// base-asset-set slots): same guards (headless no-op, logic-thread
+  /// and sys-assets-loaded checks) without the builtin-id table.
+  auto SafePlaySound(SoundAsset* sound) -> std::optional<uint32_t>;
+
   /// Call this if you want to prevent repeated plays of the same sound. It'll
   /// tell you if the sound has been played recently.  The one-shot sound-play
   /// functions use this under the hood. (PlaySound, PlaySoundAtPosition).

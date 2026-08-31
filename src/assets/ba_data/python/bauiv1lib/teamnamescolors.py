@@ -9,6 +9,7 @@ from bauiv1lib.colorpicker import ColorPicker
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from typing import Sequence
@@ -241,7 +242,7 @@ class TeamNamesColorsWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
         self._transition_out()
 
     def _on_cancel_press(self) -> None:

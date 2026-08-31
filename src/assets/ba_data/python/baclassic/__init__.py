@@ -19,7 +19,7 @@ designed in a more modular way.
 import logging
 
 from _baclassic import reload_hooks
-from baclassic._appmode import ClassicAppMode
+from baclassic._appmode import ClassicAppMode, ClassicAppModeConfig
 from baclassic._appsubsystem import ClassicAppSubsystem
 from baclassic._achievement import Achievement, AchievementSubsystem
 from baclassic._chest import (
@@ -39,6 +39,7 @@ __all__ = [
     'CHEST_APPEARANCE_DISPLAY_INFO_DEFAULT',
     'CHEST_APPEARANCE_DISPLAY_INFOS',
     'ClassicAppMode',
+    'ClassicAppModeConfig',
     'ClassicAppSubsystem',
     'Achievement',
     'AchievementSubsystem',

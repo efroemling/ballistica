@@ -84,18 +84,19 @@ static PyMethodDef PyGetSimpleSoundDef = {
 static auto PyApSimpleSoundGet(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
+  const char* apverid;
   const char* name;
-  static const char* kwlist[] = {"name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &name)) {
+  static const char* kwlist[] = {"apverid", "name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "ss", const_cast<char**>(kwlist), &apverid, &name)) {
     return nullptr;
   }
   BA_PRECONDITION(g_base->InLogicThread());
   BA_PRECONDITION(g_base->assets->asset_loads_allowed());
-  Assets::FailOnNonAssetPackagePath(name, "apsimplesoundget");
   {
     Assets::AssetListLock lock;
-    Object::Ref<SoundAsset> sound = g_base->assets->GetSound(name);
+    Object::Ref<SoundAsset> sound =
+        g_base->assets->GetPackageSound(apverid, name);
     return PythonClassSimpleSound::Create(sound.get());
   }
   Py_RETURN_NONE;
@@ -107,7 +108,7 @@ static PyMethodDef PyApSimpleSoundGetDef = {
     (PyCFunction)PyApSimpleSoundGet,  // method
     METH_VARARGS | METH_KEYWORDS,     // flags
 
-    "apsimplesoundget(name: str) -> SimpleSound\n"
+    "apsimplesoundget(apverid: str, name: str) -> SimpleSound\n"
     "\n"
     "Load a simple sound from an asset-package (internal).\n"
     "\n"

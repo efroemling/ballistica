@@ -70,9 +70,8 @@ void ScorchNode::Draw(base::FrameDef* frame_def) {
                                           position_[2]);
   base::SimpleComponent c(frame_def->light_shadow_pass());
   c.SetTransparent(true);
-  auto* tex = g_base->assets->BuiltinTexture(
-      big_ ? base::BuiltinTextureID::kTexturesScorchBig
-           : base::BuiltinTextureID::kTexturesScorch);
+  auto* tex = big_ ? g_scene_v1->assets().scorch_big.get()
+                   : g_scene_v1->assets().scorch.get();
   // Premultiplied texture + straight faded color; premultiply rgb by alpha
   // ourselves (see docs/design/premultiplied-alpha.md).
   float a = o * 0.35f;
@@ -86,8 +85,7 @@ void ScorchNode::Draw(base::FrameDef* frame_def) {
             o * size_ * rand_size_[2]);
     c.Rotate(Utils::precalc_rand_1(id() % kPrecalcRandsCount) * 360.0f, 0, 1,
              0);
-    c.DrawMeshAsset(
-        g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesScorch));
+    c.DrawMeshAsset(g_scene_v1->assets().scorch_mesh.get());
   }
   c.Submit();
 }

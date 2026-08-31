@@ -7,7 +7,7 @@ import logging
 
 import bauiv1 as bui
 from bauiv1 import _classicassets
-from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -117,7 +117,7 @@ class MainMenuWindow(bui.MainWindow):
                         try:
                             from bauiv1lib.getremote import GetBSRemoteWindow
 
-                            _builtinassets.audio.swish.get().play()
+                            _uiv1assets.audio.swish.get().play()
                             GetBSRemoteWindow()
                         except Exception:
                             logging.exception(
@@ -339,7 +339,7 @@ class MainMenuWindow(bui.MainWindow):
                 + 0.65 * side_button_height * side_button_scale
                 - 0.5 * icon_size,
             ),
-            texture=_builtinassets.textures.users_button.get(),
+            texture=_uiv1assets.textures.users_button.get(),
         )
         thistdelay = self._tdelay + td1 * self._t_delay_inc
 

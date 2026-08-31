@@ -23,6 +23,11 @@ class UIDelegateInterface {
   virtual void OnActivate() = 0;
 
   /// Called when this delegate is resigning active status.
+  ///
+  /// Note that this fires on every session reset, not once per
+  /// app-mode; anything scoped to the *supplying app-mode* should be
+  /// wiped by that app-subsystem's reset() on the Python side, which
+  /// runs at every app-mode switch.
   virtual void OnDeactivate() = 0;
 
   virtual void OnScreenSizeChange() = 0;

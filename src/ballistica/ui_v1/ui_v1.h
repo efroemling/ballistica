@@ -11,6 +11,7 @@
 
 #include "ballistica/base/ui/ui_delegate.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
+#include "ballistica/ui_v1/generated/ui_asset_set.h"
 
 // Common header that most everything using our feature-set should include.
 // It predeclares our feature-set's various types and globals and other
@@ -126,6 +127,38 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
   // as the top/bottom bars
   auto root_widget() -> ui_v1::RootWidget* { return root_widget_.get(); }
 
+  /// The assets our widgets draw themselves with, supplied by the active
+  /// app-mode (see bauiv1.set_ui_asset_set). This is what lets an app-mode
+  /// skin the ui.
+  ///
+  /// Supplied during app-mode activation, before the mode asks the
+  /// native layer to activate (which is what builds the root widget),
+  /// so drawing code can rely on every member being present -- an
+  /// activation without a complete set builds no widgets at all (see
+  /// OnActivate). Asserts in debug builds if that ever breaks.
+  auto assets() -> const UIAssetSet& {
+    assert(ui_assets_.complete());
+    return ui_assets_;
+  }
+
+  /// Supply the art for as long as the current app-mode is active.
+  ///
+  /// The supply outlives our own deactivate/reactivate cycles (we are
+  /// reset on every session change); the Python layer wipes it via
+  /// clear_assets() at each app-mode switch (UIV1AppSubsystem.reset()),
+  /// so an incoming app-mode can never inherit the outgoing one's art.
+  void set_assets(const UIAssetSet& assets) { ui_assets_ = assets; }
+
+  /// Drop any app-mode-supplied art. Called at app-mode switches; safe
+  /// while we are inactive (which is when switches happen).
+  void clear_assets() { ui_assets_ = UIAssetSet(); }
+
+  /// Do we currently hold a complete asset set? False while zombified
+  /// (activated without one) or before any app-mode supplied ours --
+  /// the rare code that can run in those states must check this
+  /// before touching assets().
+  auto have_assets() const -> bool { return ui_assets_.complete(); }
+
   // Add a widget to a container. If a parent is provided, the widget is
   // added to it; otherwise it is added to the root widget.
   void AddWidget(Widget* w, ContainerWidget* to);
@@ -164,6 +197,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
 
  private:
   UIV1FeatureSet();
+  UIAssetSet ui_assets_;
   std::unordered_map<std::string, int> ui_open_counts_;
   Object::Ref<ContainerWidget> screen_root_widget_;
   Object::Ref<ContainerWidget> overlay_root_widget_;

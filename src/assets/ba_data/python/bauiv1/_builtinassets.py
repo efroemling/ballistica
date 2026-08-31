@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260819`` (bauiv1).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260831f`` (bauiv1).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,19 +9,19 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260819
+# ba_meta require asset-package a-0.babuiltinassets.260831f
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
-
-__asset_package__ = 'a-0.babuiltinassets.260819'
 
 from typing import TYPE_CHECKING
 
 from bauiv1._assetref import AssetGroup
 
 from babase import LangStrDir
+
+_ASSET_PACKAGE = 'a-0.babuiltinassets.260831f'
 
 if TYPE_CHECKING:
     import datetime
@@ -42,22 +42,11 @@ if TYPE_CHECKING:
         blip: SoundHandle
         cash_register: SoundHandle
         click01: SoundHandle
-        cork_pop: SoundHandle
-        deek: SoundHandle
         ding: SoundHandle
         error: SoundHandle
         gun_cocking: SoundHandle
         powerdown01: SoundHandle
-        punch01: SoundHandle
-        score_increase: SoundHandle
-        sparkle01: SoundHandle
-        sparkle02: SoundHandle
-        sparkle03: SoundHandle
-        swish: SoundHandle
-        swish2: SoundHandle
-        swish3: SoundHandle
         tap: SoundHandle
-        ticking_crazy: SoundHandle
 
     class MeshesGroup:
         """
@@ -68,78 +57,11 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
-        action_button_bottom: MeshHandle
-        action_button_left: MeshHandle
-        action_button_right: MeshHandle
-        action_button_top: MeshHandle
-        arrow_back: MeshHandle
-        arrow_front: MeshHandle
         box: MeshHandle
-        boxing_glove: MeshHandle
-        button_back_opaque: MeshHandle
-        button_back_small_opaque: MeshHandle
-        button_back_small_transparent: MeshHandle
-        button_back_transparent: MeshHandle
-        button_large_opaque: MeshHandle
-        button_large_transparent: MeshHandle
-        button_larger_opaque: MeshHandle
-        button_larger_transparent: MeshHandle
-        button_medium_opaque: MeshHandle
-        button_medium_transparent: MeshHandle
-        button_small_opaque: MeshHandle
-        button_small_transparent: MeshHandle
-        button_square_opaque: MeshHandle
-        button_square_transparent: MeshHandle
-        button_tab_opaque: MeshHandle
-        button_tab_transparent: MeshHandle
-        check_transparent: MeshHandle
-        cross_out: MeshHandle
-        cylinder: MeshHandle
-        eye_ball: MeshHandle
-        eye_ball_iris: MeshHandle
-        eye_lid: MeshHandle
-        flag_pole: MeshHandle
-        flag_stand: MeshHandle
-        flash: MeshHandle
-        hair_tuft1: MeshHandle
-        hair_tuft1b: MeshHandle
-        hair_tuft2: MeshHandle
-        hair_tuft3: MeshHandle
-        hair_tuft4: MeshHandle
-        image16x1: MeshHandle
         image1x1: MeshHandle
-        image1x1_full_screen: MeshHandle
-        image1x1_vrfull_screen: MeshHandle
-        image2x1: MeshHandle
-        image4x1: MeshHandle
-        locator: MeshHandle
-        locator_box: MeshHandle
-        locator_circle: MeshHandle
-        locator_circle_outline: MeshHandle
         overlay_guide: MeshHandle
-        scorch: MeshHandle
-        scroll_bar_thumb_opaque: MeshHandle
-        scroll_bar_thumb_short_opaque: MeshHandle
-        scroll_bar_thumb_short_simple: MeshHandle
-        scroll_bar_thumb_short_transparent: MeshHandle
-        scroll_bar_thumb_simple: MeshHandle
-        scroll_bar_thumb_transparent: MeshHandle
-        scroll_bar_trough_transparent: MeshHandle
-        shield: MeshHandle
-        shock_wave: MeshHandle
-        shrapnel1: MeshHandle
-        shrapnel_board: MeshHandle
-        shrapnel_slime: MeshHandle
-        soft_edge_inside: MeshHandle
-        soft_edge_outside: MeshHandle
-        text_box_transparent: MeshHandle
         vr_fade: MeshHandle
         vr_overlay: MeshHandle
-        window_hsmall_vmed_opaque: MeshHandle
-        window_hsmall_vmed_transparent: MeshHandle
-        window_hsmall_vsmall_opaque: MeshHandle
-        window_hsmall_vsmall_transparent: MeshHandle
-        wing: MeshHandle
 
     class StringsAccountGroup:
         """
@@ -1510,26 +1432,10 @@ if TYPE_CHECKING:
             See source for the full asset list.
         """
 
-        action_buttons: TextureHandle
-        arrow: TextureHandle
-        back_icon: TextureHandle
         black: TextureHandle
-        bomb_button: TextureHandle
-        boxing_gloves_color: TextureHandle
-        button_square: TextureHandle
-        button_square_wide: TextureHandle
-        character_icon_mask: TextureHandle
         circle: TextureHandle
-        circle_no_alpha: TextureHandle
-        circle_outline: TextureHandle
-        circle_outline_no_alpha: TextureHandle
         circle_shadow: TextureHandle
-        circle_soft: TextureHandle
         cursor: TextureHandle
-        explosion: TextureHandle
-        eye_color: TextureHandle
-        eye_color_tint_mask: TextureHandle
-        flag_pole_color: TextureHandle
         font_big: TextureHandle
         font_extras: TextureHandle
         font_extras2: TextureHandle
@@ -1544,70 +1450,27 @@ if TYPE_CHECKING:
         font_small5: TextureHandle
         font_small6: TextureHandle
         font_small7: TextureHandle
-        fuse: TextureHandle
-        glow: TextureHandle
-        light: TextureHandle
-        light_sharp: TextureHandle
-        light_soft: TextureHandle
-        menu_button: TextureHandle
-        nub: TextureHandle
-        ouya_abutton: TextureHandle
-        page_left_right: TextureHandle
-        rgb_stripes: TextureHandle
-        scorch: TextureHandle
-        scorch_big: TextureHandle
-        scroll_widget: TextureHandle
-        scroll_widget_glow: TextureHandle
         shadow: TextureHandle
         shadow_sharp: TextureHandle
-        shadow_soft: TextureHandle
-        shield: TextureHandle
-        shrapnel1_color: TextureHandle
-        smoke: TextureHandle
         soft_rect: TextureHandle
         soft_rect2: TextureHandle
         soft_rect_vertical: TextureHandle
-        sparks: TextureHandle
-        spinner: TextureHandle
-        spinner0: TextureHandle
-        spinner1: TextureHandle
-        spinner10: TextureHandle
-        spinner11: TextureHandle
-        spinner2: TextureHandle
-        spinner3: TextureHandle
-        spinner4: TextureHandle
-        spinner5: TextureHandle
-        spinner6: TextureHandle
-        spinner7: TextureHandle
-        spinner8: TextureHandle
-        spinner9: TextureHandle
-        start_button: TextureHandle
-        text_clear_button: TextureHandle
-        touch_arrows: TextureHandle
-        touch_arrows_actions: TextureHandle
-        ui_atlas: TextureHandle
-        ui_atlas2: TextureHandle
-        users_button: TextureHandle
         white: TextureHandle
-        window_hsmall_vmed: TextureHandle
-        window_hsmall_vsmall: TextureHandle
-        wings: TextureHandle
 
-    #: The ``audio`` group - 20 assets (``blank``, ``blip``, ``cash_register``,
-    #: ``click01``, ``cork_pop``, and 15 more). Full list in source.
+    #: The ``audio`` group - 9 assets (``blank``, ``blip``, ``cash_register``,
+    #: ``click01``, ``ding``, and 4 more). Full list in source.
     audio: AudioGroup
 
-    #: The ``meshes`` group - 72 assets (``action_button_bottom``,
-    #: ``action_button_left``, ``action_button_right``, ``action_button_top``,
-    #: ``arrow_back``, and 67 more). Full list in source.
+    #: The ``meshes`` group - 5 assets (``box``, ``image1x1``,
+    #: ``overlay_guide``, ``vr_fade``, ``vr_overlay``). Full list in source.
     meshes: MeshesGroup
 
     #: The ``strings`` group - 127 strings (``account``, ``assets``, ``audio``,
     #: ``input``, ``net``, and 122 more). Full list in source.
     strings: StringsGroup
 
-    #: The ``textures`` group - 82 assets (``action_buttons``, ``arrow``,
-    #: ``back_icon``, ``black``, ``bomb_button``, and 77 more). Full list in
+    #: The ``textures`` group - 24 assets (``black``, ``circle``,
+    #: ``circle_shadow``, ``cursor``, ``font_big``, and 19 more). Full list in
     #: source.
     textures: TexturesGroup
 
@@ -1617,96 +1480,18 @@ _TREE = {
         'blip': 's',
         'cash_register': 's',
         'click01': 's',
-        'cork_pop': 's',
-        'deek': 's',
         'ding': 's',
         'error': 's',
         'gun_cocking': 's',
         'powerdown01': 's',
-        'punch01': 's',
-        'score_increase': 's',
-        'sparkle01': 's',
-        'sparkle02': 's',
-        'sparkle03': 's',
-        'swish': 's',
-        'swish2': 's',
-        'swish3': 's',
         'tap': 's',
-        'ticking_crazy': 's',
     },
     'meshes': {
-        'action_button_bottom': 'm',
-        'action_button_left': 'm',
-        'action_button_right': 'm',
-        'action_button_top': 'm',
-        'arrow_back': 'm',
-        'arrow_front': 'm',
         'box': 'm',
-        'boxing_glove': 'm',
-        'button_back_opaque': 'm',
-        'button_back_small_opaque': 'm',
-        'button_back_small_transparent': 'm',
-        'button_back_transparent': 'm',
-        'button_large_opaque': 'm',
-        'button_large_transparent': 'm',
-        'button_larger_opaque': 'm',
-        'button_larger_transparent': 'm',
-        'button_medium_opaque': 'm',
-        'button_medium_transparent': 'm',
-        'button_small_opaque': 'm',
-        'button_small_transparent': 'm',
-        'button_square_opaque': 'm',
-        'button_square_transparent': 'm',
-        'button_tab_opaque': 'm',
-        'button_tab_transparent': 'm',
-        'check_transparent': 'm',
-        'cross_out': 'm',
-        'cylinder': 'm',
-        'eye_ball': 'm',
-        'eye_ball_iris': 'm',
-        'eye_lid': 'm',
-        'flag_pole': 'm',
-        'flag_stand': 'm',
-        'flash': 'm',
-        'hair_tuft1': 'm',
-        'hair_tuft1b': 'm',
-        'hair_tuft2': 'm',
-        'hair_tuft3': 'm',
-        'hair_tuft4': 'm',
-        'image16x1': 'm',
         'image1x1': 'm',
-        'image1x1_full_screen': 'm',
-        'image1x1_vrfull_screen': 'm',
-        'image2x1': 'm',
-        'image4x1': 'm',
-        'locator': 'm',
-        'locator_box': 'm',
-        'locator_circle': 'm',
-        'locator_circle_outline': 'm',
         'overlay_guide': 'm',
-        'scorch': 'm',
-        'scroll_bar_thumb_opaque': 'm',
-        'scroll_bar_thumb_short_opaque': 'm',
-        'scroll_bar_thumb_short_simple': 'm',
-        'scroll_bar_thumb_short_transparent': 'm',
-        'scroll_bar_thumb_simple': 'm',
-        'scroll_bar_thumb_transparent': 'm',
-        'scroll_bar_trough_transparent': 'm',
-        'shield': 'm',
-        'shock_wave': 'm',
-        'shrapnel1': 'm',
-        'shrapnel_board': 'm',
-        'shrapnel_slime': 'm',
-        'soft_edge_inside': 'm',
-        'soft_edge_outside': 'm',
-        'text_box_transparent': 'm',
         'vr_fade': 'm',
         'vr_overlay': 'm',
-        'window_hsmall_vmed_opaque': 'm',
-        'window_hsmall_vmed_transparent': 'm',
-        'window_hsmall_vsmall_opaque': 'm',
-        'window_hsmall_vsmall_transparent': 'm',
-        'wing': 'm',
     },
     'strings': {
         'account': {
@@ -1859,26 +1644,10 @@ _TREE = {
         },
     },
     'textures': {
-        'action_buttons': 't',
-        'arrow': 't',
-        'back_icon': 't',
         'black': 't',
-        'bomb_button': 't',
-        'boxing_gloves_color': 't',
-        'button_square': 't',
-        'button_square_wide': 't',
-        'character_icon_mask': 't',
         'circle': 't',
-        'circle_no_alpha': 't',
-        'circle_outline': 't',
-        'circle_outline_no_alpha': 't',
         'circle_shadow': 't',
-        'circle_soft': 't',
         'cursor': 't',
-        'explosion': 't',
-        'eye_color': 't',
-        'eye_color_tint_mask': 't',
-        'flag_pole_color': 't',
         'font_big': 't',
         'font_extras': 't',
         'font_extras2': 't',
@@ -1893,66 +1662,24 @@ _TREE = {
         'font_small5': 't',
         'font_small6': 't',
         'font_small7': 't',
-        'fuse': 't',
-        'glow': 't',
-        'light': 't',
-        'light_sharp': 't',
-        'light_soft': 't',
-        'menu_button': 't',
-        'nub': 't',
-        'ouya_abutton': 't',
-        'page_left_right': 't',
-        'rgb_stripes': 't',
-        'scorch': 't',
-        'scorch_big': 't',
-        'scroll_widget': 't',
-        'scroll_widget_glow': 't',
         'shadow': 't',
         'shadow_sharp': 't',
-        'shadow_soft': 't',
-        'shield': 't',
-        'shrapnel1_color': 't',
-        'smoke': 't',
         'soft_rect': 't',
         'soft_rect2': 't',
         'soft_rect_vertical': 't',
-        'sparks': 't',
-        'spinner': 't',
-        'spinner0': 't',
-        'spinner1': 't',
-        'spinner10': 't',
-        'spinner11': 't',
-        'spinner2': 't',
-        'spinner3': 't',
-        'spinner4': 't',
-        'spinner5': 't',
-        'spinner6': 't',
-        'spinner7': 't',
-        'spinner8': 't',
-        'spinner9': 't',
-        'start_button': 't',
-        'text_clear_button': 't',
-        'touch_arrows': 't',
-        'touch_arrows_actions': 't',
-        'ui_atlas': 't',
-        'ui_atlas2': 't',
-        'users_button': 't',
         'white': 't',
-        'window_hsmall_vmed': 't',
-        'window_hsmall_vsmall': 't',
-        'wings': 't',
     },
 }
 _DISPLAY_KINDS = {'strings/time/duration_value': {'t': 'millis'}}
 
 
 if not TYPE_CHECKING:
-    audio = AssetGroup(__asset_package__, _TREE['audio'], 'audio')
-    meshes = AssetGroup(__asset_package__, _TREE['meshes'], 'meshes')
+    audio = AssetGroup(_ASSET_PACKAGE, _TREE['audio'], 'audio')
+    meshes = AssetGroup(_ASSET_PACKAGE, _TREE['meshes'], 'meshes')
     strings = LangStrDir(
-        __asset_package__,
+        _ASSET_PACKAGE,
         _TREE['strings'],
         'strings',
         display_kinds=_DISPLAY_KINDS,
     )
-    textures = AssetGroup(__asset_package__, _TREE['textures'], 'textures')
+    textures = AssetGroup(_ASSET_PACKAGE, _TREE['textures'], 'textures')

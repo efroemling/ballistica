@@ -8,7 +8,7 @@ import bascenev1 as bs
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 
-from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -184,7 +184,7 @@ class GamepadSelectWindow(bui.MainWindow):
         assert bui.app.classic is not None
 
         _classicassets.audio.activate_beep.get().play()
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
         device = event['input_device']
         assert isinstance(device, bs.InputDevice)
 

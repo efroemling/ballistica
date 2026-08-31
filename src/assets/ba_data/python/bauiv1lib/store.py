@@ -8,6 +8,7 @@ from bauiv1lib.docui import DocUIController
 
 import bauiv1 as bui
 from bauiv1 import _classicassets
+from bauiv1 import _uiv1assets
 from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
@@ -54,6 +55,6 @@ class StoreUIController(DocUIController):
     def _get_tokens(self, action: DocUILocalAction) -> None:
         from bauiv1lib.gettokens import show_get_tokens_window
 
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
 
         show_get_tokens_window(origin_widget=bui.existing(action.widget))

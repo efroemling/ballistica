@@ -1,4 +1,4 @@
-### 1.8.0 (build 23006, api 9, 2026-08-28)
+### 1.8.0 (build 23007, api 9, 2026-08-31)
 - Fully implemented asset packages (more on this soon)
 - The asset-package wrapper modules bundled with the engine are now all
   private: `babase.builtinassets`, `bascenev1.builtinassets`, and
@@ -133,6 +133,9 @@
 - Improved caching and restore behavior on DocUI - re-opening the store should
   generally now be instant after it has loaded once successfully/etc.
 - Finally added a slider widget! - `bauiv1.sliderwidget()`.
+- Assets for bauiv1 and bascenev2 are now fed in through Python - this means it
+  will be possible to replace them with custom assets using mods; no need to
+  hack system scripts.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

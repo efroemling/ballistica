@@ -239,21 +239,18 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.SetTransparent(true);
         c.SetPremultiplied(true);
         c.SetColor(0.25f * m, 0.3f * m, 0, 0.3f * m);
-        c.SetTexture(g_base->assets->BuiltinTexture(
-            base::BuiltinTextureID::kTexturesGlow));
+        c.SetTexture(g_ui_v1->assets().glow.get());
         {
           auto xf = c.ScopedTransform();
           c.Translate(highlight_center_x_, highlight_center_y_, 0.1f);
           c.Scale(highlight_width_, highlight_height_);
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              base::BuiltinMeshID::kMeshesImage1x1));
+          c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
         }
       } else {
         assert(glow_type_ == GlowType::kUniform);
         base::SimpleComponent c(pass);
         c.SetTransparent(true);
-        auto* tex = g_base->assets->BuiltinTexture(
-            base::BuiltinTextureID::kTexturesShadowSharp);
+        auto* tex = g_ui_v1->assets().shadow_sharp.get();
         // Premultiply rgb by alpha for premultiplied textures so the
         // highlight composites 'over' under premult blend instead of adding
         // full-brightness rgb.
@@ -285,14 +282,12 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetColor(1, 1, 1, 1);
-      c.SetTexture(g_base->assets->BuiltinTexture(
-          base::BuiltinTextureID::kTexturesUiAtlas));
+      c.SetTexture(g_ui_v1->assets().ui_atlas.get());
       {
         auto xf = c.ScopedTransform();
         c.Translate(outline_center_x_, outline_center_y_, 0.1f);
         c.Scale(outline_width_, outline_height_);
-        c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-            base::BuiltinMeshID::kMeshesTextBoxTransparent));
+        c.DrawMeshAsset(g_ui_v1->assets().text_box_transparent.get());
       }
       c.Submit();
     }
@@ -308,8 +303,7 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       } else {
         c.SetColor(0.5f, 0.5f, 0.5f, 1);
       }
-      c.SetTexture(g_base->assets->BuiltinTexture(
-          base::BuiltinTextureID::kTexturesTextClearButton));
+      c.SetTexture(g_ui_v1->assets().text_clear_button.get());
       {
         auto xf = c.ScopedTransform();
         c.Translate(r - 20, b * 0.5f + t * 0.5f, 0.1f);
@@ -318,8 +312,7 @@ void TextWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         } else {
           c.Scale(25, 25);
         }
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
+        c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
       }
       c.Submit();
     }
@@ -563,12 +556,10 @@ void TextWidget::DoDrawCarat_(base::RenderPass* pass,
           c.Scale(max_width_height_scale, max_width_height_scale);
           c.Translate(h + 4, v + 17.0f);
           c.Scale(6, 27);
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              base::BuiltinMeshID::kMeshesImage1x1));
+          c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
           c.SetColor(1, 1, 1, 0);
           c.Scale(0.3f, 0.8f);
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              base::BuiltinMeshID::kMeshesImage1x1));
+          c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
         }
         c.Submit();
       }
@@ -825,8 +816,7 @@ auto TextWidget::HandleMessage(const base::WidgetMessage& m) -> bool {
         if (g_buildconfig.platform_ios_tvos()
             || g_buildconfig.platform_android()) {
           // On mobile, return currently just deselects us.
-          g_base->audio->SafePlayBuiltinSound(
-              base::BuiltinSoundID::kAudioSwish);
+          g_base->audio->PlaySound(g_ui_v1->assets().swish.get());
           parent_widget()->SelectWidget(nullptr);
           return true;
         } else {

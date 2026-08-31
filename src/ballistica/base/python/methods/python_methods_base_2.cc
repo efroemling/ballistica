@@ -1665,6 +1665,69 @@ static PyMethodDef PyGetAssetPackageStringCountDef = {
     "pair the native decoder consumes; only the count is needed, since\n"
     "the names themselves stay native."};
 
+// ---------------------- set_base_asset_set -----------------------------------
+
+static auto BaseAssetSetFromPyArgs(PyObject* args, BaseAssetSet* out) -> bool {
+#include "ballistica/base/generated/base_asset_set_unpack.inc"
+}
+
+static auto PySetBaseAssetSet(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  BaseAssetSet assets;
+  if (!BaseAssetSetFromPyArgs(args, &assets)) {
+    return nullptr;
+  }
+  assert(assets.complete());
+  g_base->assets->set_base_assets(assets);
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetBaseAssetSetDef = {
+    "set_base_asset_set_native",     // name
+    (PyCFunction)PySetBaseAssetSet,  // method
+    METH_VARARGS,                    // flags
+
+    "set_base_asset_set_native(*args: bacommon.assetspec.TextureSpec"
+    " | bacommon.assetspec.CubeMapTextureSpec"
+    " | bacommon.assetspec.MeshSpec"
+    " | bacommon.assetspec.SoundSpec) -> None\n"
+    "\n"
+    "(internal) Supply the classic-flavored art base draws with.\n"
+    "\n"
+    "Do not call this directly -- babase.set_base_asset_set() is the\n"
+    "entry point. Args arrive positionally in spec order; both sides\n"
+    "are generated from src/codegen/babasecodegen/base_assets.py, so\n"
+    "they cannot drift.",
+};
+
+// ------------------- restore_base_asset_placeholders
+// --------------------------
+
+static auto PyRestoreBaseAssetPlaceholders(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_base->assets->RestoreBaseAssetPlaceholders();
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyRestoreBaseAssetPlaceholdersDef = {
+    "restore_base_asset_placeholders_native",     // name
+    (PyCFunction)PyRestoreBaseAssetPlaceholders,  // method
+    METH_NOARGS,                                  // flags
+
+    "restore_base_asset_placeholders_native() -> None\n"
+    "\n"
+    "(internal) Restore the base asset set to neutral placeholders.\n"
+    "\n"
+    "Called by the asset app-subsystem's reset() at app-mode switches\n"
+    "-- restored rather than cleared, since base draws between modes.",
+};
+
 // ---------------- set_asset_name_compat_versions -----------------------------
 
 static auto PySetAssetNameCompatVersions(PyObject* self, PyObject* args,
@@ -1780,6 +1843,8 @@ static PyMethodDef PyPreferredTextureProfileDef = {
 
 auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
   return {
+      PySetBaseAssetSetDef,
+      PyRestoreBaseAssetPlaceholdersDef,
       PyRegisterAssetPackageBucketDef,
       PyRegisterAssetPackageBucketsDef,
       PyMarkConstructAssetsCompleteDef,

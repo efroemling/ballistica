@@ -2,6 +2,10 @@
 #
 """Tests for flat asset-reference indexing."""
 
+# Exercising the spec types' own addressing; reading their
+# private parts is the point of these tests.
+# pylint: disable=protected-access
+
 import pytest
 
 from bacommon.assetspec import (
@@ -104,7 +108,7 @@ def test_kind_selects_the_spec_type_only() -> None:
     astex = ctx.from_index(idx, AssetBucketKind.TEXTURES)
     asmesh = ctx.from_index(idx, AssetBucketKind.MESHES)
     # Same asset either way -- only the wrapper type differs.
-    assert astex.name == asmesh.name == 'meshes/box'
+    assert astex._name == asmesh._name == 'meshes/box'
     assert isinstance(astex, TextureSpec)
     assert isinstance(asmesh, MeshSpec)
 
@@ -114,7 +118,7 @@ def test_empty_package_slice_is_skipped() -> None:
     ctx = _ctx()
     # PKG_B is empty; index 3 must land in PKG_C, not PKG_B. bisect on
     # equal offsets is the subtle part.
-    assert ctx.from_index(3, AssetBucketKind.AUDIO).apverid == PKG_C
+    assert ctx.from_index(3, AssetBucketKind.AUDIO)._apverid == PKG_C
 
 
 def test_package_order_changes_indices() -> None:
@@ -196,10 +200,10 @@ def test_digest_catches_a_short_listing() -> None:
 
     # Same index, different asset -- with no error either way.
     idx = full_ctx.to_index(TextureSpec(PKG_C, 'textures/dog'))
-    assert full_ctx.from_index(idx, AssetBucketKind.TEXTURES).name == (
+    assert full_ctx.from_index(idx, AssetBucketKind.TEXTURES)._name == (
         'textures/dog'
     )
-    assert short_ctx.from_index(idx, AssetBucketKind.TEXTURES).name != (
+    assert short_ctx.from_index(idx, AssetBucketKind.TEXTURES)._name != (
         'textures/dog'
     )
     assert full_ctx.domain_digest() != short_ctx.domain_digest()

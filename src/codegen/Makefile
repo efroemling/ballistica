@@ -24,7 +24,15 @@ clean:
 
 sources: \
   $(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/__init__.py \
+  $(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/base_asset_set.py \
   $(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/enums.py \
+  $(PROJ_SRC_DIR)/assets/ba_data/python/bascenev1/_generated/__init__.py \
+  $(PROJ_SRC_DIR)/assets/ba_data/python/bascenev1/_generated/scene_asset_set.py \
+  $(PROJ_SRC_DIR)/assets/ba_data/python/bauiv1/_generated/__init__.py \
+  $(PROJ_SRC_DIR)/assets/ba_data/python/bauiv1/_generated/ui_asset_set.py \
+  $(PROJ_SRC_DIR)/ballistica/base/generated/base_asset_set.h \
+  $(PROJ_SRC_DIR)/ballistica/base/generated/base_asset_set_placeholders.inc \
+  $(PROJ_SRC_DIR)/ballistica/base/generated/base_asset_set_unpack.inc \
   $(PROJ_SRC_DIR)/ballistica/base/generated/pyembed/binding_base.inc \
   $(PROJ_SRC_DIR)/ballistica/base/generated/pyembed/binding_base_app.inc \
   $(PROJ_SRC_DIR)/ballistica/classic/generated/pyembed/binding_classic.inc \
@@ -32,8 +40,12 @@ sources: \
   $(PROJ_SRC_DIR)/ballistica/core/generated/pyembed/env.inc \
   $(PROJ_SRC_DIR)/ballistica/core/generated/python_modules_monolithic.h \
   $(PROJ_SRC_DIR)/ballistica/scene_v1/generated/pyembed/binding_scene_v1.inc \
+  $(PROJ_SRC_DIR)/ballistica/scene_v1/generated/scene_asset_set.h \
+  $(PROJ_SRC_DIR)/ballistica/scene_v1/generated/scene_asset_set_unpack.inc \
   $(PROJ_SRC_DIR)/ballistica/template_fs/generated/pyembed/binding_template_fs.inc \
-  $(PROJ_SRC_DIR)/ballistica/ui_v1/generated/pyembed/binding_ui_v1.inc
+  $(PROJ_SRC_DIR)/ballistica/ui_v1/generated/pyembed/binding_ui_v1.inc \
+  $(PROJ_SRC_DIR)/ballistica/ui_v1/generated/ui_asset_set.h \
+  $(PROJ_SRC_DIR)/ballistica/ui_v1/generated/ui_asset_set_unpack.inc
 
 $(PROJ_SRC_DIR)/ballistica/core/generated/python_modules_monolithic.h : $(PROJ_DIR)/pconfig/featuresets/featureset_base.py $(PROJ_DIR)/pconfig/featuresets/featureset_classic.py $(PROJ_DIR)/pconfig/featuresets/featureset_core.py $(PROJ_DIR)/pconfig/featuresets/featureset_plus.py $(PROJ_DIR)/pconfig/featuresets/featureset_scene_v1.py $(PROJ_DIR)/pconfig/featuresets/featureset_scene_v1_lib.py $(PROJ_DIR)/pconfig/featuresets/featureset_template_fs.py $(PROJ_DIR)/pconfig/featuresets/featureset_ui_v1.py $(PROJ_DIR)/pconfig/featuresets/featureset_ui_v1_lib.py
 	@$(PCOMMAND) gen_monolithic_register_modules $@
@@ -68,6 +80,52 @@ $(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/__init__.py : $(TOOLS_DI
 $(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/enums.py : $(PROJ_DIR)/src/ballistica/shared/ballistica.h $(TOOLS_DIR)/batools/enumspython.py
 	@$(PCOMMAND) gen_python_enums_module $< $@
 
+$(PROJ_SRC_DIR)/assets/ba_data/python/bauiv1/_generated/ui_asset_set.py : bauiv1codegen/ui_assets.py $(TOOLS_DIR)/batools/ui_assets.py
+	@mkdir -p "$(PROJ_SRC_DIR)/assets/ba_data/python/bauiv1/_generated"
+	@$(PCOMMAND) gen_ui_asset_set_py $@
+
+$(PROJ_SRC_DIR)/ballistica/ui_v1/generated/ui_asset_set.h : bauiv1codegen/ui_assets.py $(TOOLS_DIR)/batools/ui_assets.py
+	@mkdir -p "$(PROJ_SRC_DIR)/ballistica/ui_v1/generated"
+	@$(PCOMMAND) gen_ui_asset_set_cpp $@
+
+$(PROJ_SRC_DIR)/ballistica/ui_v1/generated/ui_asset_set_unpack.inc : bauiv1codegen/ui_assets.py $(TOOLS_DIR)/batools/ui_assets.py
+	@mkdir -p "$(PROJ_SRC_DIR)/ballistica/ui_v1/generated"
+	@$(PCOMMAND) gen_ui_asset_set_cpp $@
+
+$(PROJ_SRC_DIR)/assets/ba_data/python/bauiv1/_generated/__init__.py : $(TOOLS_DIR)/batools/pcommands.py
+	@$(PCOMMAND) gen_python_init_module $@
+
+$(PROJ_SRC_DIR)/assets/ba_data/python/bascenev1/_generated/scene_asset_set.py : bascenev1codegen/scene_assets.py $(TOOLS_DIR)/batools/scene_assets.py
+	@mkdir -p "$(PROJ_SRC_DIR)/assets/ba_data/python/bascenev1/_generated"
+	@$(PCOMMAND) gen_scene_asset_set_py $@
+
+$(PROJ_SRC_DIR)/ballistica/scene_v1/generated/scene_asset_set.h : bascenev1codegen/scene_assets.py $(TOOLS_DIR)/batools/scene_assets.py
+	@mkdir -p "$(PROJ_SRC_DIR)/ballistica/scene_v1/generated"
+	@$(PCOMMAND) gen_scene_asset_set_cpp $@
+
+$(PROJ_SRC_DIR)/ballistica/scene_v1/generated/scene_asset_set_unpack.inc : bascenev1codegen/scene_assets.py $(TOOLS_DIR)/batools/scene_assets.py
+	@mkdir -p "$(PROJ_SRC_DIR)/ballistica/scene_v1/generated"
+	@$(PCOMMAND) gen_scene_asset_set_cpp $@
+
+$(PROJ_SRC_DIR)/assets/ba_data/python/bascenev1/_generated/__init__.py : $(TOOLS_DIR)/batools/pcommands.py
+	@$(PCOMMAND) gen_python_init_module $@
+
+$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/base_asset_set.py : babasecodegen/base_assets.py $(TOOLS_DIR)/batools/base_assets.py
+	@mkdir -p "$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated"
+	@$(PCOMMAND) gen_base_asset_set_py $@
+
+$(PROJ_SRC_DIR)/ballistica/base/generated/base_asset_set.h : babasecodegen/base_assets.py $(TOOLS_DIR)/batools/base_assets.py
+	@mkdir -p "$(PROJ_SRC_DIR)/ballistica/base/generated"
+	@$(PCOMMAND) gen_base_asset_set_cpp $@
+
+$(PROJ_SRC_DIR)/ballistica/base/generated/base_asset_set_unpack.inc : babasecodegen/base_assets.py $(TOOLS_DIR)/batools/base_assets.py
+	@mkdir -p "$(PROJ_SRC_DIR)/ballistica/base/generated"
+	@$(PCOMMAND) gen_base_asset_set_cpp $@
+
+$(PROJ_SRC_DIR)/ballistica/base/generated/base_asset_set_placeholders.inc : babasecodegen/base_assets.py $(TOOLS_DIR)/batools/base_assets.py
+	@mkdir -p "$(PROJ_SRC_DIR)/ballistica/base/generated"
+	@$(PCOMMAND) gen_base_asset_set_cpp $@
+
 # __AUTOGENERATED_PUBLIC_END__
 
 # This section is generated by batools.codegenmakefile; do not edit by hand.
@@ -80,7 +138,15 @@ $(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/enums.py : $(PROJ_DIR)/s
 
 efrocache-list:
 	@echo "$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/__init__.py" \
+        "$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/base_asset_set.py" \
         "$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated/enums.py" \
+        "$(PROJ_SRC_DIR)/assets/ba_data/python/bascenev1/_generated/__init__.py" \
+        "$(PROJ_SRC_DIR)/assets/ba_data/python/bascenev1/_generated/scene_asset_set.py" \
+        "$(PROJ_SRC_DIR)/assets/ba_data/python/bauiv1/_generated/__init__.py" \
+        "$(PROJ_SRC_DIR)/assets/ba_data/python/bauiv1/_generated/ui_asset_set.py" \
+        "$(PROJ_SRC_DIR)/ballistica/base/generated/base_asset_set.h" \
+        "$(PROJ_SRC_DIR)/ballistica/base/generated/base_asset_set_placeholders.inc" \
+        "$(PROJ_SRC_DIR)/ballistica/base/generated/base_asset_set_unpack.inc" \
         "$(PROJ_SRC_DIR)/ballistica/base/generated/pyembed/binding_base.inc" \
         "$(PROJ_SRC_DIR)/ballistica/base/generated/pyembed/binding_base_app.inc" \
         "$(PROJ_SRC_DIR)/ballistica/classic/generated/pyembed/binding_classic.inc" \
@@ -88,8 +154,12 @@ efrocache-list:
         "$(PROJ_SRC_DIR)/ballistica/core/generated/pyembed/env.inc" \
         "$(PROJ_SRC_DIR)/ballistica/core/generated/python_modules_monolithic.h" \
         "$(PROJ_SRC_DIR)/ballistica/scene_v1/generated/pyembed/binding_scene_v1.inc" \
+        "$(PROJ_SRC_DIR)/ballistica/scene_v1/generated/scene_asset_set.h" \
+        "$(PROJ_SRC_DIR)/ballistica/scene_v1/generated/scene_asset_set_unpack.inc" \
         "$(PROJ_SRC_DIR)/ballistica/template_fs/generated/pyembed/binding_template_fs.inc" \
-        "$(PROJ_SRC_DIR)/ballistica/ui_v1/generated/pyembed/binding_ui_v1.inc"
+        "$(PROJ_SRC_DIR)/ballistica/ui_v1/generated/pyembed/binding_ui_v1.inc" \
+        "$(PROJ_SRC_DIR)/ballistica/ui_v1/generated/ui_asset_set.h" \
+        "$(PROJ_SRC_DIR)/ballistica/ui_v1/generated/ui_asset_set_unpack.inc"
 
 efrocache-build: sources
 

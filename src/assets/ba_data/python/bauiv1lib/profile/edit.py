@@ -457,7 +457,7 @@ class EditProfileWindow(
             size=(b_size_2, b_size_2),
             label='',
             color=(1, 1, 1),
-            mask_texture=_builtinassets.textures.character_icon_mask.get(),
+            mask_texture=_classicassets.textures.character_icon_mask.get(),
         )
         if not self._is_account_profile and not self._global:
             bui.containerwidget(

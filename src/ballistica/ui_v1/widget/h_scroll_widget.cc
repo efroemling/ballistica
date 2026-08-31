@@ -1006,8 +1006,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
-      auto* tex = g_base->assets->BuiltinTexture(
-          base::BuiltinTextureID::kTexturesUiAtlas);
+      auto* tex = g_ui_v1->assets().ui_atlas.get();
       // Premultiplied texture + straight faded color; premultiply rgb
       // ourselves (see docs/design/premultiplied-alpha.md).
       float cmul = tex->premultiplied() ? border_opacity_ : 1.0f;
@@ -1018,8 +1017,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.Translate(trough_center_x_, trough_center_y_, 0.7f);
         c.Scale(trough_width_, trough_height_, 0.1f);
         c.Rotate(-90, 0, 0, 1);
-        c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-            base::BuiltinMeshID::kMeshesScrollBarTroughTransparent));
+        c.DrawMeshAsset(g_ui_v1->assets().scroll_bar_trough_transparent.get());
       }
       c.Submit();
     }
@@ -1044,8 +1042,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       } else {
         brightness = 1.0f;
       }
-      auto* tex = g_base->assets->BuiltinTexture(
-          base::BuiltinTextureID::kTexturesPageLeftRight);
+      auto* tex = g_ui_v1->assets().page_left_right.get();
       float cmul = tex->premultiplied() ? page_left_button_presence_ : 1.0f;
       c.SetColor(brightness * cmul, brightness * cmul, brightness * cmul,
                  page_left_button_presence_);
@@ -1058,8 +1055,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         c.Scale(scale_ex * kPageButtonSize, scale_ex * kPageButtonSize, 0.1f);
         c.Rotate(180.0f, 0.0f, 0.0f, 1.0f);
         if (draw_transparent) {
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              base::BuiltinMeshID::kMeshesImage1x1));
+          c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
         }
         c.Submit();
       }
@@ -1081,8 +1077,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       } else {
         brightness = 1.0f;
       }
-      auto* tex = g_base->assets->BuiltinTexture(
-          base::BuiltinTextureID::kTexturesPageLeftRight);
+      auto* tex = g_ui_v1->assets().page_left_right.get();
       float cmul = tex->premultiplied() ? page_right_button_presence_ : 1.0f;
       c.SetColor(brightness * cmul, brightness * cmul, brightness * cmul,
                  page_right_button_presence_);
@@ -1093,8 +1088,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                     height() * 0.5 + kPageButtonYOffs, 0.9f);
         c.Scale(scale_ex * kPageButtonSize, scale_ex * kPageButtonSize, 0.1f);
         if (draw_transparent) {
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              base::BuiltinMeshID::kMeshesImage1x1));
+          c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
         }
         c.Submit();
       }
@@ -1176,8 +1170,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         base::SimpleComponent c(pass);
         c.SetTransparent(draw_transparent);
         c.SetColor(0, 0, 0, std::min(1.0f, 0.3f * emphasis * touch_fade_));
-        c.SetTexture(g_base->assets->BuiltinTexture(
-            base::BuiltinTextureID::kTexturesCircle));
+        c.SetTexture(g_ui_v1->assets().circle.get());
         {
           auto scissor =
               c.ScopedScissor({l + border_width_, b + border_height_ + 1.0f,
@@ -1213,8 +1206,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     }
     base::SimpleComponent c(pass);
     c.SetTransparent(true);
-    auto* tex = g_base->assets->BuiltinTexture(
-        base::BuiltinTextureID::kTexturesScrollWidget);
+    auto* tex = g_ui_v1->assets().scroll_widget.get();
     float cmul = tex->premultiplied() ? border_opacity_ : 1.0f;
     c.SetColor(cmul, cmul, cmul, border_opacity_);
     c.SetTexture(tex);
@@ -1222,8 +1214,7 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       auto xf = c.ScopedTransform();
       c.Translate(outline_center_x_, outline_center_y_, 0.9f);
       c.Scale(outline_width_, outline_height_, 0.1f);
-      c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-          base::BuiltinMeshID::kMeshesSoftEdgeOutside));
+      c.DrawMeshAsset(g_ui_v1->assets().soft_edge_outside.get());
     }
     c.Submit();
   }
@@ -1258,14 +1249,12 @@ void HScrollWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     c.SetTransparent(true);
     c.SetPremultiplied(true);
     c.SetColor(0.4f * m, 0.5f * m, 0.05f * m, 0.0f);
-    c.SetTexture(g_base->assets->BuiltinTexture(
-        base::BuiltinTextureID::kTexturesScrollWidgetGlow));
+    c.SetTexture(g_ui_v1->assets().scroll_widget_glow.get());
     {
       auto xf = c.ScopedTransform();
       c.Translate(glow_center_x_, glow_center_y_, 0.9f);
       c.Scale(glow_width_, glow_height_, 0.1f);
-      c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-          base::BuiltinMeshID::kMeshesSoftEdgeOutside));
+      c.DrawMeshAsset(g_ui_v1->assets().soft_edge_outside.get());
     }
     c.Submit();
   }

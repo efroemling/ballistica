@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, override
 from bacommon.locale import LocaleResolved
 import bascenev1 as bs
 from bascenev1 import _classicassets
-from bascenev1 import _builtinassets
 import bauiv1 as bui
 
 if TYPE_CHECKING:
@@ -23,7 +22,12 @@ if TYPE_CHECKING:
 
 def _tex(name: str) -> str:
     """Qualified _classicassets ref for a logo texture name."""
-    return f'{_classicassets.__asset_package__}:textures/{name}'
+    # LEGACY: builds a qualified path by hand, which nothing should
+    # do -- the parts are private now precisely to flag it. Kept
+    # only until this file's callers hold handles instead; see
+    # docs/followups.md "hand-built asset paths".
+    # pylint: disable-next=protected-access
+    return f'{_classicassets._ASSET_PACKAGE}:textures/{name}'
 
 
 class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
@@ -171,7 +175,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
             custom_texture = self._get_custom_logo_tex_name()
             if custom_texture != self._custom_logo_tex_name:
                 self._custom_logo_tex_name = custom_texture
-                self._logo_node.texture = bs.aptextureget(
+                self._logo_node.texture = bs.texture_from_ref(
                     custom_texture
                     if custom_texture is not None
                     else _tex('logo')
@@ -516,7 +520,7 @@ class MainMenuActivity(bs.Activity[bs.Player, bs.Team]):
         if custom_texture is None:
             custom_texture = self._get_custom_logo_tex_name()
         self._custom_logo_tex_name = custom_texture
-        ltex = bs.aptextureget(
+        ltex = bs.texture_from_ref(
             custom_texture if custom_texture is not None else _tex('logo')
         )
         mopaque = (
@@ -833,7 +837,7 @@ def _preload1() -> None:
     ]:
         bs.getmesh(mname)
     # Asset-package textures warm up through their wrappers.
-    _ = _builtinassets.textures.character_icon_mask.get()
+    _ = _classicassets.textures.character_icon_mask.get()
     _ = _classicassets.textures.player_lineup.get()
     _ = _classicassets.textures.lock.get()
     _ = _classicassets.textures.icon_runaround.get()

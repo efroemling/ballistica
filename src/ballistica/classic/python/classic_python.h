@@ -55,6 +55,7 @@ class ClassicPython {
     Vector3f tint2;
   };
 
+  auto QualifiedRefFromHandle_(const PythonRef& handle) -> std::string;
   auto ChestDisplayFromPython(const PythonRef& ref) -> ChestDisplay_;
   ChestDisplay_ chest_display_default_;
   std::unordered_map<std::string, ChestDisplay_> chest_displays_;

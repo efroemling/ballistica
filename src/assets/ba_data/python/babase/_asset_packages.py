@@ -121,7 +121,9 @@ def check_asset_package_load(apverid: str, path: str) -> None:
         # pylint: disable-next=cyclic-import
         from babase import _builtinassets
 
-        _g_construct_apverid = _builtinassets.__asset_package__
+        # Package identity for the construct pin, not a path.
+        # pylint: disable-next=protected-access
+        _g_construct_apverid = _builtinassets._ASSET_PACKAGE
 
     if apverid == _g_construct_apverid:
         return

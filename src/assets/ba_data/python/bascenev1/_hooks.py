@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 import babase
 
 import _bascenev1
+from bascenev1._assetref import texture_from_ref
 
 if TYPE_CHECKING:
     from typing import Any
@@ -26,8 +27,8 @@ def launch_main_menu_session() -> None:
 def get_player_icon(sessionplayer: bascenev1.SessionPlayer) -> dict[str, Any]:
     info = sessionplayer.get_icon_info()
     return {
-        'texture': _bascenev1.aptextureget(info['texture']),
-        'tint_texture': _bascenev1.aptextureget(info['tint_texture']),
+        'texture': texture_from_ref(info['texture']),
+        'tint_texture': texture_from_ref(info['tint_texture']),
         'tint_color': info['tint_color'],
         'tint2_color': info['tint2_color'],
     }

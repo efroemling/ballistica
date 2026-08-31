@@ -167,7 +167,13 @@ from _bascenev1 import (
 )
 from bascenev1._activity import Activity
 from bascenev1._activitytypes import JoinActivity, ScoreScreenActivity
+from bascenev1._appsubsystem import SceneV1AppSubsystem
+from bascenev1._generated.scene_asset_set import (
+    SceneV1AssetSet,
+    set_scene_asset_set,
+)
 from bascenev1._assetref import (
+    texture_from_ref,
     TextureHandle,
     MeshHandle,
     SoundHandle,
@@ -279,12 +285,16 @@ from bascenev1._team import SessionTeam, Team, EmptyTeam
 from bascenev1._teamgame import TeamGameActivity
 
 __all__ = [
+    'texture_from_ref',
     'Activity',
     'ActivityData',
     'ActivityNotFoundError',
     'Actor',
     'TextureHandle',
     'SoundHandle',
+    'SceneV1AppSubsystem',
+    'SceneV1AssetSet',
+    'set_scene_asset_set',
     'MeshHandle',
     'CollisionMeshHandle',
     'animate',

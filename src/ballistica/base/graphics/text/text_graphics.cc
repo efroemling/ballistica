@@ -1316,6 +1316,20 @@ auto TextGraphics::HaveChars(const std::string& text) -> bool {
 }
 
 auto TextGraphics::HasOSChars(const std::string& text) -> bool {
+  // Fast path: pure-ascii strings (the vast majority -- scores, timers,
+  // plain labels, often re-checked every frame via the warm-up path)
+  // can never contain OS chars (ascii tops out at 0x7F, far inside the
+  // bundled glyph range), so skip the decode allocation entirely.
+  bool ascii_only{true};
+  for (char c : text) {
+    if (static_cast<unsigned char>(c) >= 0x80) {
+      ascii_only = false;
+      break;
+    }
+  }
+  if (ascii_only) {
+    return false;
+  }
   std::vector<uint32_t> unicode = Utils::UnicodeFromUTF8(text, "cf0d9j");
   // NOLINTNEXTLINE(readability-use-anyofallof)
   for (auto&& val : unicode) {
@@ -1465,6 +1479,13 @@ void TextGraphics::WarmUpStringAsync(const std::string& text, bool big) {
   if (!g_buildconfig.enable_os_font_rendering()) {
     return;
   }
+  // The common case by far (scores, timers, plain-ascii labels -- often
+  // re-set every frame) needs no OS spans at all; a quick scan here
+  // beats paying a heap closure, a cross-thread push, and a measure
+  // walk on the assets loop for a guaranteed no-op.
+  if (!HasOSChars(text)) {
+    return;
+  }
   // Warm-up is purely an optimization, and very early screen-messages
   // can land before the assets-server loop exists; skip quietly there
   // (the string then simply gets measured on demand later).
@@ -1481,6 +1502,27 @@ void TextGraphics::WarmUpStringAsync(const std::string& text, bool big) {
 
 auto TextGraphics::TryGetOSTextSpanBoundsAndWidth(const std::string& s, Rect* r,
                                                   float* width) -> bool {
+  // Debug builds exercise callers' defer branches: every 16th unique
+  // span's first logic-thread Try reports cold even when the warm-up
+  // already landed it (the text-measure analog of baenv's
+  // cache-ninja). A caller missing its defer branch then fails its
+  // assert within a handful of drawn OS-span strings on any run --
+  // instead of only when it loses the warm-up race (which is how the
+  // TextNode defer gap escaped notice; see followups 2026-08-31). The
+  // caller's natural next-frame retry takes the normal path. 1-in-16
+  // rather than every span keeps the visual effect (one deferred
+  // frame for the affected string) below noticeability in non-english
+  // locales while still tripping broken callers quickly.
+  if (g_buildconfig.debug_build() && g_base->InLogicThread()) {
+    std::scoped_lock lock(text_span_bounds_cache_mutex_);
+    // (capped so pathological span churn can't grow this forever)
+    if (debug_chaos_seen_spans_.size() < 10000
+        && debug_chaos_seen_spans_.insert(s).second) {
+      if (debug_chaos_span_count_++ % 16 == 15) {
+        return false;
+      }
+    }
+  }
   {
     std::scoped_lock lock(text_span_bounds_cache_mutex_);
     auto i = text_span_bounds_cache_map_.find(s);

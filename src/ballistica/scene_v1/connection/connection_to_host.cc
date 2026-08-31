@@ -122,7 +122,8 @@ ConnectionToHost::~ConnectionToHost() {
                 ->Evaluate();
       }
       g_base->ScreenMessage(s, {1, 0.5f, 0.0f});
-      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioCorkPop);
+      g_base->audio->SafePlaySound(
+          g_base->assets->base_assets().cork_pop.get());
     } else {
       g_base->ScreenMessage(
           base::BuiltinStrings::Net::ConnectionRejected()->Evaluate(),
@@ -664,8 +665,8 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
                 PlayerSpec(str_buffer.data()).GetDisplayString())
                 ->Evaluate(),
             {0.5f, 1.0f, 0.5f});
-        g_base->audio->SafePlayBuiltinSound(
-            base::BuiltinSoundID::kAudioGunCocking);
+        g_base->audio->SafePlaySound(
+            g_base->assets->base_assets().gun_cocking.get());
       }
       break;
     }
@@ -681,8 +682,8 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
                 PlayerSpec(&(str_buffer[0])).GetDisplayString())
                 ->Evaluate(),
             {1, 0.5f, 0.0f});
-        g_base->audio->SafePlayBuiltinSound(
-            base::BuiltinSoundID::kAudioCorkPop);
+        g_base->audio->SafePlaySound(
+            g_base->assets->base_assets().cork_pop.get());
       }
       break;
     }
@@ -840,7 +841,8 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
               ->Evaluate();
     }
     g_base->ScreenMessage(s, {0.5f, 1, 0.5f});
-    g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioGunCocking);
+    g_base->audio->SafePlaySound(
+        g_base->assets->base_assets().gun_cocking.get());
 
     printed_connect_message_ = true;
   }

@@ -10,6 +10,8 @@ traversal lives in one place now; these check it reaches everything and
 that it cannot quietly stop covering a new decoration type.
 """
 
+# pylint: disable=protected-access
+
 from typing import TYPE_CHECKING
 
 import bacommon.docui.v2 as dui2
@@ -34,9 +36,9 @@ def _text(name: str) -> dui2.Text:
 
 def _image(pkg: str) -> dui2.Image:
     return dui2.Image(
-        texture=TextureSpec(apverid=pkg, name='textures/a'),
-        tint_texture=TextureSpec(apverid=pkg, name='textures/b'),
-        mesh_opaque=MeshSpec(apverid=pkg, name='meshes/c'),
+        texture=TextureSpec(pkg, 'textures/a'),
+        tint_texture=TextureSpec(pkg, 'textures/b'),
+        mesh_opaque=MeshSpec(pkg, 'meshes/c'),
         position=(0.0, 0.0),
         size=(1.0, 1.0),
     )
@@ -57,7 +59,7 @@ def _apverids(page: dui2.Page) -> set[str]:
 
     def _ref(ref: TextureSpec | MeshSpec | int, _kind: object) -> None:
         assert not isinstance(ref, int)
-        acc.add(ref.apverid)
+        acc.add(ref._apverid)
 
     walk_page(page, assetref=_ref)
     return acc
@@ -114,9 +116,7 @@ def test_reaches_refs_including_inside_frames() -> None:
                 buttons=[
                     dui2.Button(
                         size=(1, 1),
-                        texture=TextureSpec(
-                            apverid='a-0.btn.1', name='textures/btn'
-                        ),
+                        texture=TextureSpec('a-0.btn.1', 'textures/btn'),
                         decorations=[
                             _image('a-0.loose.1'),
                             dui2.Frame(decorations=[deep], position=(0.0, 0.0)),

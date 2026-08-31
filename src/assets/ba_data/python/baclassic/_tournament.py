@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 from bacommon.classic import ClassicChestAppearance
 import babase
 import bauiv1
-import bascenev1
 
 from baclassic._chest import (
     CHEST_APPEARANCE_DISPLAY_INFOS,
@@ -96,8 +95,8 @@ def set_tournament_prize_chest_image(
         edit=image,
         opacity=1.0,
         color=chestdisplayinfo.color,
-        texture=bauiv1.aptextureget(chestdisplayinfo.texclosed),
-        tint_texture=bauiv1.aptextureget(chestdisplayinfo.texclosedtint),
+        texture=chestdisplayinfo.texclosed.ui().get(),
+        tint_texture=chestdisplayinfo.texclosedtint.ui().get(),
         tint_color=chestdisplayinfo.tint,
         tint2_color=chestdisplayinfo.tint2,
     )
@@ -135,10 +134,8 @@ def create_in_game_tournament_prize_image(
         # Provide magical extended dict version of texture that Image
         # actor supports.
         texture={
-            'texture': bascenev1.aptextureget(chestdisplayinfo.texclosed),
-            'tint_texture': bascenev1.aptextureget(
-                chestdisplayinfo.texclosedtint
-            ),
+            'texture': chestdisplayinfo.texclosed.get(),
+            'tint_texture': chestdisplayinfo.texclosedtint.get(),
             'tint_color': chestdisplayinfo.tint,
             'tint2_color': chestdisplayinfo.tint2,
             'mask_texture': None,

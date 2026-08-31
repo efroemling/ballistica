@@ -15,11 +15,11 @@ single game's concepts, which is what distinguishes it from BaClassicAssets.
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.bacommonassets.260825'
-
 from typing import TYPE_CHECKING
 
 from babase import LangStrDir
+
+_ASSET_PACKAGE = 'a-0.bacommonassets.260825'
 
 if TYPE_CHECKING:
     from babase import LangStr
@@ -1465,7 +1465,7 @@ _DISPLAY_KINDS = {'strings/compose/data_size': {'size': 'bytes'}}
 
 if not TYPE_CHECKING:
     strings = LangStrDir(
-        __asset_package__,
+        _ASSET_PACKAGE,
         _TREE['strings'],
         'strings',
         display_kinds=_DISPLAY_KINDS,

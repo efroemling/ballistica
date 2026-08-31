@@ -66,6 +66,11 @@ makes it visible: a payload carries the producer's digest and the
 consumer refuses to de-index when its own differs.
 """
 
+# This module is the spec types' own addressing logic and lives in
+# their package; reading their private parts here is the implementation,
+# not a reach-in from outside.
+# pylint: disable=protected-access
+
 import hashlib
 from enum import Enum
 from bisect import bisect_right
@@ -197,15 +202,15 @@ class AssetIndexContext:
         self._prepare()
         assert self._offsets is not None
         try:
-            pkgidx = self._packages.index(spec.apverid)
+            pkgidx = self._packages.index(spec._apverid)
         except ValueError:
             raise AssetIndexError(
-                f'package {spec.apverid!r} is not in this manifest'
+                f'package {spec._apverid!r} is not in this manifest'
             ) from None
-        local = self._lookup[pkgidx].get(spec.name)
+        local = self._lookup[pkgidx].get(spec._name)
         if local is None:
             raise AssetIndexError(
-                f'asset {spec.name!r} not found in {spec.apverid}'
+                f'asset {spec._name!r} not found in {spec._apverid}'
             )
         return self._offsets[pkgidx] + local
 
@@ -243,13 +248,13 @@ class AssetIndexContext:
         # result to ``Any``, and this way a new bucket kind fails here
         # at build time.
         if kind is AssetBucketKind.TEXTURES:
-            return TextureSpec(apverid=apverid, name=name)
+            return TextureSpec(apverid, name)
         if kind is AssetBucketKind.MESHES:
-            return MeshSpec(apverid=apverid, name=name)
+            return MeshSpec(apverid, name)
         if kind is AssetBucketKind.AUDIO:
-            return SoundSpec(apverid=apverid, name=name)
+            return SoundSpec(apverid, name)
         if kind is AssetBucketKind.CONSTANT:
-            return CollisionMeshSpec(apverid=apverid, name=name)
+            return CollisionMeshSpec(apverid, name)
         assert_never(kind)
 
     def domain_size(self) -> int:

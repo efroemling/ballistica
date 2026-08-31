@@ -16,3 +16,6 @@ fset = FeatureSet.get_active()
 # Ideally we shouldn't need scene_v1_lib, but things are tangled for
 # historical reasons.
 fset.requirements = {'core', 'base', 'classic', 'scene_v1_lib'}
+
+# We provide 'ba*.app.scene_v1'.
+fset.has_python_app_subsystem = True

@@ -88,7 +88,8 @@ ConnectionToClient::~ConnectionToClient() {
                               ->Evaluate(),
                           {1, 0.5f, 0.0f});
     if (g_base->assets->sys_assets_loaded()) {
-      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioCorkPop);
+      g_base->audio->SafePlaySound(
+          g_base->assets->base_assets().cork_pop.get());
     }
   }
 }
@@ -405,8 +406,8 @@ void ConnectionToClient::HandleGamePacket(const std::vector<uint8_t>& data) {
                                     ->Evaluate(),
                                 {0.5f, 1, 0.5f});
           if (g_base->assets->sys_assets_loaded()) {
-            g_base->audio->SafePlayBuiltinSound(
-                base::BuiltinSoundID::kAudioGunCocking);
+            g_base->audio->SafePlaySound(
+                g_base->assets->base_assets().gun_cocking.get());
           }
         }
 

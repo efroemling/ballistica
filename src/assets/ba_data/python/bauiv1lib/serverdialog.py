@@ -10,6 +10,7 @@ from efro.dataclassio import ioprepped, IOAttrs
 
 import bauiv1 as bui
 from bauiv1 import _commonassets
+from bauiv1 import _uiv1assets
 from bauiv1 import _builtinassets
 
 
@@ -58,7 +59,7 @@ class ServerDialogWindow(bui.Window):
         )
         self._starttime = bui.apptime()
 
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
         bui.textwidget(
             parent=self._root_widget,
             position=(self._width * 0.5, 70 + (self._height - 70) * 0.5),

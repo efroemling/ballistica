@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 import babase
 
 import _bauiv1
+from bauiv1 import _uiv1assets
 from bauiv1._keyboard import Keyboard
 from bauiv1._window import Window
 
@@ -469,7 +470,7 @@ class OnScreenKeyboardWindow(Window):
         from bauiv1 import _builtinassets
 
         self._adapter.cancel()
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
         _bauiv1.containerwidget(edit=self._root_widget, transition='out_scale')
 
     def _done(self) -> None:

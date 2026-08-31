@@ -184,6 +184,20 @@ class PluginSubsystem(AppSubsystem):
             except Exception:
                 balog.exception('Error in plugin on_app_running().')
 
+    def offer_app_mode_config(self, config: babase.AppModeConfig) -> None:
+        """Give each active plugin its on_app_mode_config() call.
+
+        Errors are caught per-plugin so one broken plugin can't spoil
+        the config phase for the mode or for other plugins.
+
+        :meta private:
+        """
+        for plugin in self.active_plugins:
+            try:
+                plugin.on_app_mode_config(config)
+            except Exception:
+                balog.exception('Error in plugin on_app_mode_config().')
+
     @override
     def on_app_suspend(self) -> None:
         """:meta private:"""
@@ -336,6 +350,30 @@ class Plugin:
 
         Note that a plugin's module is not even imported until this
         point, so plugin code never runs before assets are ready.
+        """
+
+    def on_app_mode_config(self, config: babase.AppModeConfig) -> None:
+        """Called when an app-mode is about to become active.
+
+        ``config`` is the :class:`~babase.AppModeConfig` the incoming
+        mode built to describe how it should run; its concrete type
+        identifies the mode, so a plugin targeting a particular mode
+        checks for that mode's config type and amends what it finds::
+
+            @override
+            def on_app_mode_config(
+                self, config: babase.AppModeConfig
+            ) -> None:
+                if isinstance(config, baclassic.ClassicAppModeConfig):
+                    config.ui_assets.trophy = my_trophy_texture
+
+        By convention, only *describe* here -- mutate the config and
+        touch nothing live. The mode reads the final result as it
+        activates, so if several plugins amend the same value the last
+        writer wins.
+
+        This never fires before construct-mode completes (plugins do
+        not run at all until then), so assets are safe to load here.
         """
 
     def on_app_suspend(self) -> None:

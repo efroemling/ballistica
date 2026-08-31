@@ -10,11 +10,11 @@
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
 
-__asset_package__ = 'a-0.badocuiv2testassets.260718a'
-
 from typing import TYPE_CHECKING
 
 from babase import LangStrDir
+
+_ASSET_PACKAGE = 'a-0.badocuiv2testassets.260718a'
 
 if TYPE_CHECKING:
     from babase import LangStr
@@ -705,4 +705,4 @@ _TREE = {
 
 
 if not TYPE_CHECKING:
-    strings = LangStrDir(__asset_package__, _TREE['strings'], 'strings')
+    strings = LangStrDir(_ASSET_PACKAGE, _TREE['strings'], 'strings')

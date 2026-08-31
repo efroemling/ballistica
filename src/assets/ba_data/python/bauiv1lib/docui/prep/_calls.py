@@ -14,7 +14,7 @@ from efro.util import strict_partial
 from efro.dataclassio import dataclass_to_json
 import bacommon.docui.v2 as dui2
 import bauiv1 as bui
-from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 from bauiv1 import _commonassets
 
 from bauiv1lib.docui.prep._types import PagePrep, RowPrep, ButtonPrep
@@ -26,11 +26,6 @@ if TYPE_CHECKING:
     from bacommon.langstr import LangStrSpec
     from bacommon.assetspec import TextureSpec, MeshSpec
     from bauiv1lib.docui import DocUIWindow
-
-
-def _btex(name: str) -> str:
-    """Qualified ref for a texture in the builtin asset-package."""
-    return f'{_builtinassets.__asset_package__}:textures/{name}'
 
 
 def refstr(ref: 'TextureSpec | MeshSpec | int') -> str:
@@ -47,7 +42,10 @@ def refstr(ref: 'TextureSpec | MeshSpec | int') -> str:
             f'Un-de-indexed asset ref {ref} reached render; the page was'
             f' not resolved, or de-indexing failed.'
         )
-    return f'{ref.apverid}:{ref.name}'
+    # This is the render boundary; the spec's parts are private
+    # precisely so the conversion happens here and not ad hoc.
+    # pylint: disable-next=protected-access
+    return f'{ref._apverid}:{ref._name}'
 
 
 def prep_page(
@@ -95,7 +93,7 @@ def prep_page(
                         label_color=(1, 1, 1, 0.3),
                         size=(220, 100),
                         label_scale=0.6,
-                        texture=_builtinassets.textures.button_square_wide,
+                        texture=_uiv1assets.textures.button_square_wide,
                         padding_top=-8,
                         padding_bottom=-10,
                         color=(0.2, 0.2, 0.2, 0.15),
@@ -837,9 +835,9 @@ def instantiate_decorations(
         if draw_controller is not None and decoration.highlight:
             kwds['draw_controller'] = draw_controller
         for texarg, texname in decoration.textures.items():
-            kwds[texarg] = bui.aptextureget(texname)
+            kwds[texarg] = bui.texture_from_ref(texname)
         for mesharg, meshname in decoration.meshes.items():
-            kwds[mesharg] = bui.apmeshget(meshname)
+            kwds[mesharg] = bui.mesh_from_ref(meshname)
         decoration.call(**kwds)
 
 
@@ -881,7 +879,7 @@ def instantiate_page_prep(
                 ),
             }
             for texarg, texname in buttonprep.textures.items():
-                kwds[texarg] = bui.aptextureget(texname)
+                kwds[texarg] = bui.texture_from_ref(texname)
             btn = buttonprep.buttoncall(**kwds)
             assert buttonprep.buttoneditcall is not None
             buttonprep.buttoneditcall(edit=btn)

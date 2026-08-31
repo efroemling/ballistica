@@ -13,14 +13,18 @@ from efro.error import CommunicationError
 import bacommon.clienteffect as clfx
 import bacommon.classic
 import babase
-from babase import AppMode
+from babase import AppMode, AppModeConfig
 import bauiv1 as bui
 from bauiv1 import _builtinassets
 from bauiv1 import _classicassets
+from bauiv1 import _uiv1assets
+from baclassic._uiassetdefaults import make_ui_asset_set
+from baclassic._baseassetdefaults import make_base_asset_set
 from bauiv1lib.connectivity import wait_for_connectivity
 
 import _baclassic
 import bascenev1
+from bascenev1 import _scenev1assets
 
 if TYPE_CHECKING:
     from typing import Callable, Any, Literal, Iterable
@@ -28,6 +32,36 @@ if TYPE_CHECKING:
     from efro.call import CallbackRegistration
     import bacommon.cloud
     from bauiv1lib.chest import ChestWindow
+
+
+class ClassicAppModeConfig(AppModeConfig):
+    """Describes how a :class:`ClassicAppMode` should run.
+
+    Built fresh (with classic's defaults) for each activation via
+    :meth:`ClassicAppMode.new_app_mode_config`; amend attrs here --
+    from a mode subclass's override of that method or a plugin's
+    :meth:`~babase.Plugin.on_app_mode_config` -- to alter how the mode
+    sets itself up.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        #: The art the ui layer will be drawn with (see
+        #: :class:`bauiv1.UIAssetSet`). Starts out as classic's
+        #: standard look; reassign any slot to restyle.
+        self.ui_assets = make_ui_asset_set()
+
+        #: The art the scene_v1 node layer draws itself with (see
+        #: :class:`bascenev1.SceneV1AssetSet`). Every slot starts at
+        #: scene_v1's own art; reassign any to restyle.
+        self.scene_assets = bascenev1.SceneV1AssetSet()
+
+        #: The classic-flavored art baked into base's own draw paths
+        #: (debris, smoke, VR hands, reflections; see
+        #: :class:`babase.BaseAssetSet`). Starts at classic's real art;
+        #: reassign any slot to restyle.
+        self.base_assets = make_base_asset_set()
 
 
 # ba_meta export babase.AppMode
@@ -111,7 +145,14 @@ class ClassicAppMode(AppMode):
         )
 
     @override
-    def on_activate(self) -> None:
+    def new_app_mode_config(self) -> AppModeConfig:
+        return ClassicAppModeConfig()
+
+    @override
+    def on_activate(self, config: AppModeConfig) -> None:
+        # Recover our concrete config type (subclasses substituting
+        # their own config should also subclass ours).
+        assert isinstance(config, ClassicAppModeConfig)
         # Register the asset-package versions backing our asset
         # wrapper modules so legacy bare asset names arriving from old
         # peers, old replays, server-driven docui content, or modder
@@ -119,16 +160,35 @@ class ClassicAppMode(AppMode):
         # AssetNameCompat in the native layer). Sourcing these from
         # the wrappers means a modder-swapped package keeps working.
         # (The bauiv1 and bascenev1 wrapper flavors carry identical
-        # __asset_package__ ids; _builtinassets and _classicassets here are
+        # _ASSET_PACKAGE ids; _builtinassets and _classicassets here are
         # our module-level bauiv1 imports. The dict keys are the native
         # compat table's frozen package keys, NOT wrapper module names;
         # they never change when a wrapper module is renamed.)
+        # Reading package identity for registration, not
+        # building asset paths.
+        # pylint: disable=protected-access
         babase.set_asset_name_compat_versions(
             {
-                'builtinassets': _builtinassets.__asset_package__,
-                'classicassets': _classicassets.__asset_package__,
+                'builtinassets': _builtinassets._ASSET_PACKAGE,
+                'classicassets': _classicassets._ASSET_PACKAGE,
+                'bauiv1assets': _uiv1assets._ASSET_PACKAGE,
+                'scenev1assets': _scenev1assets._ASSET_PACKAGE,
             }
         )
+
+        # Hand scene_v1 the assets its nodes draw themselves with,
+        # before the native activate below (sessions and their nodes
+        # come after). Unlike the ui set this applies on headless
+        # builds too -- servers run scenes.
+        bascenev1.set_scene_asset_set(config.scene_assets)
+        babase.set_base_asset_set(config.base_assets)
+
+        # Hand ui_v1 the assets its widgets draw themselves with. Must
+        # happen *before* the native activate below: that builds the
+        # root widget, which pulls from this set as it constructs
+        # itself. Supplying them here (rather than ui_v1 reaching for
+        # them itself) is what lets an app-mode skin the ui.
+        bui.set_ui_asset_set(config.ui_assets)
 
         # Let the native layer do its thing.
         _baclassic.classic_app_mode_activate()
@@ -735,7 +795,7 @@ class ClassicAppMode(AppMode):
         old_window = ui.get_main_window()
         if old_window is not None:
 
-            _builtinassets.audio.swish.get().play()
+            _uiv1assets.audio.swish.get().play()
 
             classic = bui.app.classic
             assert classic is not None
@@ -1044,7 +1104,7 @@ class ClassicAppMode(AppMode):
         # Unintuitively, swish sounds come from buttons, not windows.
         # And dev-console buttons don't make sounds. So we need to
         # explicitly do so here.
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
 
         show_template_main_window()
 
@@ -1061,6 +1121,6 @@ class ClassicAppMode(AppMode):
             _builtinassets.audio.error.get().play()
             return
 
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
 
         show_test_doc_ui_v2_window()

@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 import babase
 import _bascenev1
+from bascenev1 import _assetref
 from bascenev1._profile import get_player_profile_colors
 from bascenev1._gameutils import animate, animate_array
 
@@ -179,12 +180,12 @@ class Chooser:
         # pylint: disable-next=cyclic-import
         from bascenev1 import _commonassets, _builtinassets, _classicassets
 
-        self._deek_sound = _builtinassets.audio.deek.get()
+        self._deek_sound = _classicassets.audio.deek.get()
         self._click_sound = _builtinassets.audio.click01.get()
-        self._punchsound = _builtinassets.audio.punch01.get()
+        self._punchsound = _classicassets.audio.punch01.get()
         self._swish_sound = _classicassets.audio.punch_swish.get()
         self._errorsound = _builtinassets.audio.error.get()
-        self._mask_texture = _builtinassets.textures.character_icon_mask.get()
+        self._mask_texture = _classicassets.textures.character_icon_mask.get()
         self._vpos = vpos
         self._lobby = weakref.ref(lobby)
         self._sessionplayer = sessionplayer
@@ -999,8 +1000,8 @@ class Chooser:
         texspec = spazappearance.texture_spec(texval)
         tintspec = spazappearance.texture_spec(tintval)
         self._sessionplayer.set_icon_info(
-            f'{texspec.apverid}:{texspec.name}',
-            f'{tintspec.apverid}:{tintspec.name}',
+            _assetref.qualified_ref(texspec),
+            _assetref.qualified_ref(tintspec),
             clr,
             clr2,
         )

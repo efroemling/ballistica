@@ -725,6 +725,15 @@ class AssetSubsystem(AppSubsystem):
     async :meth:`resolve`; see the module docstring for scope.
     """
 
+    @override
+    def reset(self) -> None:
+        # Restore the base asset set to its neutral placeholders (see
+        # babase.set_base_asset_set). We run at every app-mode switch,
+        # so this is what guarantees an incoming mode can never inherit
+        # the outgoing one's art; restored rather than cleared since
+        # base draws between modes too.
+        _babase.restore_base_asset_placeholders_native()
+
     def __init__(self) -> None:
         super().__init__()
 

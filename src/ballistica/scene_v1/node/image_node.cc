@@ -364,19 +364,20 @@ void ImageNode::Draw(base::FrameDef* frame_def) {
   if (!mesh_opaque_.exists() && !mesh_transparent_.exists()) {
     if (vr && fill_screen_) {
 #if BA_VR_BUILD
-      mesh_opaque_used = g_base->assets->BuiltinMesh(
-          base::BuiltinMeshID::kMeshesImage1x1VrfullScreen);
+      mesh_opaque_used = g_scene_v1->assets().image1x1_vrfull_screen.get();
 #else
       throw Exception();
 #endif  // BA_VR_BUILD
     } else {
-      base::BuiltinMeshID m =
-          fill_screen_ ? base::BuiltinMeshID::kMeshesImage1x1FullScreen
-                       : base::BuiltinMeshID::kMeshesImage1x1;
+      // (The plain 1x1 sheet stays a builtin; base shares it.)
+      base::MeshAsset* m = fill_screen_
+                               ? g_scene_v1->assets().image1x1_full_screen.get()
+                               : g_base->assets->BuiltinMesh(
+                                     base::BuiltinMeshID::kMeshesImage1x1);
       if (has_alpha_channel) {
-        mesh_transparent_used = g_base->assets->BuiltinMesh(m);
+        mesh_transparent_used = m;
       } else {
-        mesh_opaque_used = g_base->assets->BuiltinMesh(m);
+        mesh_opaque_used = m;
       }
     }
   }

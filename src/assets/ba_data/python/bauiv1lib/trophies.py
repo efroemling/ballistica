@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, override
 from bauiv1lib import popup
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
-from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -212,5 +212,5 @@ class TrophiesWindow(popup.PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
         self._transition_out()

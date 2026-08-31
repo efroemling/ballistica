@@ -49,10 +49,21 @@ class TextureHandle(_TextureSpec):
 
     __slots__ = ()
 
+    @classmethod
+    def from_spec(cls, spec: _TextureSpec) -> 'TextureHandle':
+        """Loadable handle for a spec that arrived from outside.
+
+        Server-sent content and the wire carry plain specs; this is how
+        one becomes loadable without anyone rebuilding a path string.
+        Verification still happens in :meth:`get`.
+        """
+        # pylint: disable=protected-access
+        return cls(spec._apverid, spec._name)
+
     def get(self) -> 'bauiv1.Texture':
         """Resolve and return the live engine texture for this reference."""
-        check_asset_package_load(self.apverid, self.name)
-        return _bauiv1.aptextureget(f'{self.apverid}:{self.name}')
+        check_asset_package_load(self._apverid, self._name)
+        return _bauiv1.aptextureget(self._apverid, self._name)
 
 
 class MeshHandle(_MeshSpec):
@@ -60,10 +71,21 @@ class MeshHandle(_MeshSpec):
 
     __slots__ = ()
 
+    @classmethod
+    def from_spec(cls, spec: _MeshSpec) -> 'MeshHandle':
+        """Loadable handle for a spec that arrived from outside.
+
+        Server-sent content and the wire carry plain specs; this is how
+        one becomes loadable without anyone rebuilding a path string.
+        Verification still happens in :meth:`get`.
+        """
+        # pylint: disable=protected-access
+        return cls(spec._apverid, spec._name)
+
     def get(self) -> 'bauiv1.Mesh':
         """Resolve and return the live engine mesh for this reference."""
-        check_asset_package_load(self.apverid, self.name)
-        return _bauiv1.apmeshget(f'{self.apverid}:{self.name}')
+        check_asset_package_load(self._apverid, self._name)
+        return _bauiv1.apmeshget(self._apverid, self._name)
 
 
 class SoundHandle(_SoundSpec):
@@ -71,10 +93,21 @@ class SoundHandle(_SoundSpec):
 
     __slots__ = ()
 
+    @classmethod
+    def from_spec(cls, spec: _SoundSpec) -> 'SoundHandle':
+        """Loadable handle for a spec that arrived from outside.
+
+        Server-sent content and the wire carry plain specs; this is how
+        one becomes loadable without anyone rebuilding a path string.
+        Verification still happens in :meth:`get`.
+        """
+        # pylint: disable=protected-access
+        return cls(spec._apverid, spec._name)
+
     def get(self) -> 'bauiv1.Sound':
         """Resolve and return the live engine sound for this reference."""
-        check_asset_package_load(self.apverid, self.name)
-        return _bauiv1.apsoundget(f'{self.apverid}:{self.name}')
+        check_asset_package_load(self._apverid, self._name)
+        return _bauiv1.apsoundget(self._apverid, self._name)
 
 
 #: A node in a wrapper's kind-code tree: each key is one path segment; a
@@ -125,3 +158,52 @@ def _make(
     if kind == 's':
         return SoundHandle(apverid, path)
     raise ValueError(f'Invalid asset-ref kind {kind!r} for {apverid}:{path}.')
+
+
+def _split_ref(ref: str) -> tuple[str, str]:
+    """Split a qualified ``<apverid>:<name>`` ref into its two parts.
+
+    **Boundary use only.** Asset identity inside the app is a typed
+    handle from a generated wrapper module; nothing here builds or
+    accepts a path string. But refs do still arrive from *outside* as
+    strings -- server-sent content, saved app-config, the scene wire,
+    stored player profiles -- and something has to turn those into
+    assets. That conversion happens here, in one named place, rather
+    than ambiently.
+
+    New code should hold a handle and call its ``get()`` instead.
+    """
+    apverid, sep, name = ref.partition(':')
+    if not sep:
+        raise ValueError(
+            f"Not a qualified asset-package ref: '{ref}'. Legacy bare"
+            f' names load through the legacy get* calls instead.'
+        )
+    return apverid, name
+
+
+def texture_from_ref(ref: str) -> 'bauiv1.Texture':
+    """Load a texture from a qualified ref string.
+
+    See ``_split_ref()`` -- boundary use only.
+    """
+    apverid, assetname = _split_ref(ref)
+    return _bauiv1.aptextureget(apverid, assetname)
+
+
+def mesh_from_ref(ref: str) -> 'bauiv1.Mesh':
+    """Load a mesh from a qualified ref string.
+
+    See ``_split_ref()`` -- boundary use only.
+    """
+    apverid, assetname = _split_ref(ref)
+    return _bauiv1.apmeshget(apverid, assetname)
+
+
+def sound_from_ref(ref: str) -> 'bauiv1.Sound':
+    """Load a sound from a qualified ref string.
+
+    See ``_split_ref()`` -- boundary use only.
+    """
+    apverid, assetname = _split_ref(ref)
+    return _bauiv1.apsoundget(apverid, assetname)

@@ -14,6 +14,7 @@ from bacommon.analytics import ClassicAnalyticsEvent
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 import bascenev1 as bs
 
 from bauiv1lib.gather import GatherTab
@@ -953,7 +954,7 @@ class ManualGatherTab(GatherTab):
         tscl = 0.85
         tspc = 25
 
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
         bui.textwidget(
             parent=container,
             position=(c_width * 0.5 - 10, v2),

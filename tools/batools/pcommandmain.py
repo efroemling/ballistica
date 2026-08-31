@@ -128,6 +128,12 @@ from batools.pcommands import (
 )
 from batools.pcommands2 import (
     gen_builtin_asset_ids,
+    gen_base_asset_set_py,
+    gen_base_asset_set_cpp,
+    gen_scene_asset_set_py,
+    gen_scene_asset_set_cpp,
+    gen_ui_asset_set_py,
+    gen_ui_asset_set_cpp,
     gen_python_init_module,
     gen_monolithic_register_modules,
     py_examine,

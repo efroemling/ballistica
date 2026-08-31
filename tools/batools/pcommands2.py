@@ -856,3 +856,94 @@ def _assemble_one_package(apverid: str, pkg: BundlePackage) -> dict[str, Any]:
     finally:
         if os.path.exists(tmppath):
             os.unlink(tmppath)
+
+
+def gen_base_asset_set_py() -> None:
+    """Generate babase.BaseAssetSet from the base-asset spec.
+
+    Emits ``babase/_generated/base_asset_set.py`` from
+    ``src/codegen/babasecodegen/base_assets.py``. Companion to
+    ``gen_base_asset_set_cpp``; the base sibling of
+    ``gen_scene_asset_set_py``.
+    """
+    import batools.base_assets
+    from efro.error import CleanError
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (output path).')
+    batools.base_assets.generate_python(
+        projroot=str(pcommand.PROJROOT), out_path=sys.argv[2]
+    )
+
+
+def gen_base_asset_set_cpp() -> None:
+    """Generate the base_asset_set .h / _unpack.inc / _placeholders.inc."""
+    import batools.base_assets
+    from efro.error import CleanError
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (output path).')
+    batools.base_assets.generate_cpp(
+        projroot=str(pcommand.PROJROOT), out_path=sys.argv[2]
+    )
+
+
+def gen_scene_asset_set_py() -> None:
+    """Generate bascenev1.SceneV1AssetSet from the scene-asset spec.
+
+    Emits ``bascenev1/_generated/scene_asset_set.py`` from
+    ``src/codegen/bascenev1codegen/scene_assets.py``. Companion to
+    ``gen_scene_asset_set_cpp``; the scene sibling of
+    ``gen_ui_asset_set_py``.
+    """
+    import batools.scene_assets
+    from efro.error import CleanError
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (output path).')
+    batools.scene_assets.generate_python(
+        projroot=str(pcommand.PROJROOT), out_path=sys.argv[2]
+    )
+
+
+def gen_scene_asset_set_cpp() -> None:
+    """Generate scene_asset_set.h / scene_asset_set_unpack.inc."""
+    import batools.scene_assets
+    from efro.error import CleanError
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (output path).')
+    batools.scene_assets.generate_cpp(
+        projroot=str(pcommand.PROJROOT), out_path=sys.argv[2]
+    )
+
+
+def gen_ui_asset_set_py() -> None:
+    """Generate the bauiv1.UIAssetSet dataclass from the ui-asset spec.
+
+    Emits ``bauiv1/_generated/<set>.py`` from
+    ``src/codegen/bauiv1codegen/ui_assets.py``. Companion to
+    ``gen_ui_asset_set_cpp``, which emits the matching native struct and
+    the unpacker between them; generating all three from one spec is
+    what keeps a renamed or added slot from silently drifting.
+    """
+    import batools.ui_assets
+    from efro.error import CleanError
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (output path).')
+    batools.ui_assets.generate_python(
+        projroot=str(pcommand.PROJROOT), out_path=sys.argv[2]
+    )
+
+
+def gen_ui_asset_set_cpp() -> None:
+    """Generate ui_asset_set.h / ui_asset_set_unpack.inc from spec."""
+    import batools.ui_assets
+    from efro.error import CleanError
+
+    if len(sys.argv) != 3:
+        raise CleanError('Expected 1 arg (output path).')
+    batools.ui_assets.generate_cpp(
+        projroot=str(pcommand.PROJROOT), out_path=sys.argv[2]
+    )

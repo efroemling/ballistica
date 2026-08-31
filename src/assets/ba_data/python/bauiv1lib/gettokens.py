@@ -20,7 +20,12 @@ if TYPE_CHECKING:
 
 def _tex(name: str) -> str:
     """Qualified _classicassets ref for a button image texture."""
-    return f'{_classicassets.__asset_package__}:textures/{name}'
+    # LEGACY: builds a qualified path by hand, which nothing should
+    # do -- the parts are private now precisely to flag it. Kept
+    # only until this file's callers hold handles instead; see
+    # docs/followups.md "hand-built asset paths".
+    # pylint: disable-next=protected-access
+    return f'{_classicassets._ASSET_PACKAGE}:textures/{name}'
 
 
 @dataclass
@@ -441,7 +446,7 @@ class GetTokensWindow(bui.MainWindow):
         # they'll be in place by the time we show them.
         for bdef in self._buttondefs:
             for bimg in bdef.imgdefs:
-                bui.aptextureget(bimg.tex)
+                bui.texture_from_ref(bimg.tex)
 
         self._state = self.State.LOADING
 
@@ -699,7 +704,7 @@ class GetTokensWindow(bui.MainWindow):
                     draw_controller=btn,
                     draw_controller_mult=imgdef.draw_controller_mult,
                     color=imgdef.color,
-                    texture=bui.aptextureget(imgdef.tex),
+                    texture=bui.texture_from_ref(imgdef.tex),
                     transition_delay=tdelay,
                     opacity=imgdef.opacity,
                 )

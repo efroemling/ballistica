@@ -1824,16 +1824,16 @@ void SpazNode::DoFlyPress() {
         const dReal* p_torso = dGeomGetPosition(body_torso_->geom());
         s->SetPosition(p_torso[0], p_torso[1], p_torso[2]);
         s->SetGain(0.3f);
-        base::BuiltinSoundID s_id;
+        base::SoundAsset* sparkle;
         int r = rand() % 100;  // NOLINT
         if (r < 33) {
-          s_id = base::BuiltinSoundID::kAudioSparkle01;
+          sparkle = g_scene_v1->assets().sparkle01.get();
         } else if (r < 66) {
-          s_id = base::BuiltinSoundID::kAudioSparkle02;
+          sparkle = g_scene_v1->assets().sparkle02.get();
         } else {
-          s_id = base::BuiltinSoundID::kAudioSparkle03;
+          sparkle = g_scene_v1->assets().sparkle03.get();
         }
-        s->Play(g_base->assets->BuiltinSound(s_id));
+        s->Play(sparkle);
         s->End();
       }
     }
@@ -3973,11 +3973,9 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
   if (blink_smooth_ < 0.9f) {
     if (shading) {
       oc->SetLightShadow(base::LightShadowType::kObject);
-      oc->SetTexture(g_base->assets->BuiltinTexture(
-          base::BuiltinTextureID::kTexturesEyeColor));
+      oc->SetTexture(g_scene_v1->assets().eye_color.get());
       oc->SetColorizeColor(eye_color_red_, eye_color_green_, eye_color_blue_);
-      oc->SetColorizeTexture(g_base->assets->BuiltinTexture(
-          base::BuiltinTextureID::kTexturesEyeColorTintMask));
+      oc->SetColorizeTexture(g_scene_v1->assets().eye_color_tint_mask.get());
       oc->SetReflection(base::ReflectionType::kSharpest);
       oc->SetReflectionScale(3, 3, 3);
       oc->SetAddColor(add_color[0], add_color[1], add_color[2]);
@@ -4001,15 +3999,13 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
           c->Scale(death_scale, death_scale, death_scale);
         }
         if (!frosty_ && !eyeless_) {
-          c->DrawMeshAsset(
-              g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeBall));
+          c->DrawMeshAsset(g_scene_v1->assets().eye_ball.get());
           if (shading) {
             oc->SetReflectionScale(2, 2, 2);
           }
           if (death_scale != 1.0f)
             c->Scale(death_scale, death_scale, death_scale);
-          c->DrawMeshAsset(g_base->assets->BuiltinMesh(
-              base::BuiltinMeshID::kMeshesEyeBallIris));
+          c->DrawMeshAsset(g_scene_v1->assets().eye_ball_iris.get());
         }
       }
 
@@ -4026,16 +4022,14 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
           if (death_scale != 1.0f) {
             c->Scale(death_scale, death_scale, death_scale);
           }
-          c->DrawMeshAsset(
-              g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeBall));
+          c->DrawMeshAsset(g_scene_v1->assets().eye_ball.get());
           if (death_scale != 1.0f) {
             c->Scale(death_scale, death_scale, death_scale);
           }
           if (shading) {
             oc->SetReflectionScale(2, 2, 2);
           }
-          c->DrawMeshAsset(g_base->assets->BuiltinMesh(
-              base::BuiltinMeshID::kMeshesEyeBallIris));
+          c->DrawMeshAsset(g_scene_v1->assets().eye_ball_iris.get());
         }
       }
     }
@@ -4044,8 +4038,7 @@ void SpazNode::DrawEyeBalls(base::RenderComponent* c, base::ObjectComponent* oc,
 
 void SpazNode::SetupEyeLidShading(base::ObjectComponent* c, float death_fade,
                                   float* add_color) {
-  c->SetTexture(g_base->assets->BuiltinTexture(
-      base::BuiltinTextureID::kTexturesEyeColor));
+  c->SetTexture(g_scene_v1->assets().eye_color.get());
   c->SetColorizeTexture(nullptr);
   float r, g, b;
   r = eye_lid_color_red_;
@@ -4092,8 +4085,7 @@ void SpazNode::DrawEyeLids(base::RenderComponent* c, float death_fade,
     }
 
     if (!frosty_ && !eyeless_) {
-      c->DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeLid));
+      c->DrawMeshAsset(g_scene_v1->assets().eye_lid.get());
     }
   }
 
@@ -4118,8 +4110,7 @@ void SpazNode::DrawEyeLids(base::RenderComponent* c, float death_fade,
       c->Scale(death_scale, death_scale, death_scale);
     }
     if (!pirate_ && !frosty_ && !eyeless_) {
-      c->DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesEyeLid));
+      c->DrawMeshAsset(g_scene_v1->assets().eye_lid.get());
     }
   }
   c->FlipCullFace();  // back to normal
@@ -4188,8 +4179,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft1));
+      c->DrawMeshAsset(g_scene_v1->assets().hair_tuft1.get());
     }
 
     // Hair tuft 1b; just reuse tuft 1 with some extra translating.
@@ -4204,8 +4194,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft1b));
+      c->DrawMeshAsset(g_scene_v1->assets().hair_tuft1b.get());
     }
   }
 
@@ -4215,8 +4204,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       auto xf = c->ScopedTransform();
       hair_front_left_body_->ApplyToRenderComponent(c);
       if (death_scale != 1.0f) c->Scale(death_scale, death_scale, death_scale);
-      c->DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft2));
+      c->DrawMeshAsset(g_scene_v1->assets().hair_tuft2.get());
     }
   }
 
@@ -4228,8 +4216,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft3));
+      c->DrawMeshAsset(g_scene_v1->assets().hair_tuft3.get());
     }
   }
 
@@ -4241,8 +4228,7 @@ void SpazNode::DrawBodyParts(base::ObjectComponent* c, bool shading,
       if (death_scale != 1.0f) {
         c->Scale(death_scale, death_scale, death_scale);
       }
-      c->DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesHairTuft4));
+      c->DrawMeshAsset(g_scene_v1->assets().hair_tuft4.get());
     }
   }
 
@@ -5101,8 +5087,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
         auto xf = c2.ScopedTransform();
         c2.Translate(pos[0], pos[1] + 1.6f, pos[2] - 0.2f);
         c2.Scale(2.3f * 0.2f * s, 2.3f * 0.2f * s, 2.3f * 0.2f * s);
-        c2.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesCrossOut));
+        c2.DrawMeshAsset(g_scene_v1->assets().cross_out.get());
       }
       c2.Submit();
     }
@@ -5231,8 +5216,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
     c.SetColor(1, 1, 1, 1.0f);
     c.SetReflection(base::ReflectionType::kSoft);
     c.SetReflectionScale(0.4f, 0.4f, 0.4f);
-    c.SetTexture(
-        g_base->assets->BuiltinTexture(base::BuiltinTextureID::kTexturesWings));
+    c.SetTexture(g_scene_v1->assets().wings.get());
 
     // Fade to reddish on death.
     if (dead_ && !frozen_) {
@@ -5311,8 +5295,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesWing));
+      c.DrawMeshAsset(g_scene_v1->assets().wing.get());
     }
 
     Vector3f to_right_wing = wing_pos_right_ - torso_pos2;
@@ -5331,8 +5314,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesWing));
+      c.DrawMeshAsset(g_scene_v1->assets().wing.get());
     }
     c.Submit();
   }
@@ -5369,8 +5351,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       }
     }
     c.SetLightShadow(base::LightShadowType::kObject);
-    c.SetTexture(g_base->assets->BuiltinTexture(
-        base::BuiltinTextureID::kTexturesBoxingGlovesColor));
+    c.SetTexture(g_base->assets->base_assets().boxing_gloves_color.get());
 
     {
       auto xf = c.ScopedTransform();
@@ -5378,8 +5359,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBoxingGlove));
+      c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
     }
 
     c.FlipCullFace();
@@ -5390,8 +5370,7 @@ void SpazNode::Draw(base::FrameDef* frame_def) {
       if (death_scale != 1.0f) {
         c.Scale(death_scale, death_scale, death_scale);
       }
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesBoxingGlove));
+      c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
       c.FlipCullFace();
     }
     c.Submit();
@@ -6321,8 +6300,7 @@ void SpazNode::SetCurseDeathTime(millisecs_t val) {
         s->SetLooping(true);
         const dReal* p_head = dGeomGetPosition(body_head_->geom());
         s->SetPosition(p_head[0], p_head[1], p_head[2]);
-        tick_play_id_ = s->Play(g_base->assets->BuiltinSound(
-            base::BuiltinSoundID::kAudioTickingCrazy));
+        tick_play_id_ = s->Play(g_scene_v1->assets().ticking_crazy.get());
         s->End();
       }
     }

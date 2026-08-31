@@ -378,15 +378,13 @@ void FlagNode::Draw(base::FrameDef* frame_def) {
   // Flag pole.
   {
     base::ObjectComponent c(frame_def->beauty_pass());
-    c.SetTexture(g_base->assets->BuiltinTexture(
-        base::BuiltinTextureID::kTexturesFlagPoleColor));
+    c.SetTexture(g_base->assets->base_assets().flag_pole_color.get());
     c.SetReflection(base::ReflectionType::kSharp);
     c.SetReflectionScale(0.1f, 0.1f, 0.1f);
     {
       auto xf = c.ScopedTransform();
       body_->ApplyToRenderComponent(&c);
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesFlagPole));
+      c.DrawMeshAsset(g_scene_v1->assets().flag_pole.get());
     }
     c.Submit();
   }

@@ -85,15 +85,13 @@ void ImageWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           if (radial_amount_ < 1.0f) {
             draw_radial_transparent = true;
           } else {
-            mesh_transparent_used = g_base->assets->BuiltinMesh(
-                base::BuiltinMeshID::kMeshesImage1x1);
+            mesh_transparent_used = g_ui_v1->assets().image1x1.get();
           }
         } else {
           if (radial_amount_ < 1.0f) {
             draw_radial_opaque = true;
           } else {
-            mesh_opaque_used = g_base->assets->BuiltinMesh(
-                base::BuiltinMeshID::kMeshesImage1x1);
+            mesh_opaque_used = g_ui_v1->assets().image1x1.get();
           }
         }
       }

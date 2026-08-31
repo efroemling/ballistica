@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, override
 from bauiv1lib.popup import PopupWindow
 import bauiv1 as bui
 from bauiv1 import _classicassets
+from bauiv1 import _uiv1assets
 from bauiv1 import _builtinassets
 
 if TYPE_CHECKING:
@@ -217,7 +218,7 @@ class TournamentScoresWindow(PopupWindow):
         if len(entry[2]) != 1:
             _builtinassets.audio.error.get().play()
             return
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
         AccountViewerWindow(
             account_id=entry[2][0].get('a', None),
             profile_id=entry[2][0].get('p', None),
@@ -235,5 +236,5 @@ class TournamentScoresWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
         self._transition_out()

@@ -179,6 +179,10 @@ void TextNode::SetBig(bool val) {
   big_ = val;
   text_group_dirty_ = true;
   text_width_dirty_ = true;
+  // Big-ness is part of a measure's identity, so re-warm for the new
+  // value like the text setters do (otherwise the next draw can find
+  // measures cold and defer a frame).
+  PrefetchTextMeasures_();
 }
 
 auto TextNode::GetHAlign() const -> std::string {
@@ -446,6 +450,14 @@ void TextNode::Draw(base::FrameDef* frame_def) {
       text_width_ = *text_width;
       text_width_dirty_ = false;
     }
+  }
+  if (text_width_dirty_) {
+    // Spans are still warming; skip drawing entirely this frame
+    // rather than drawing with a stale width. This is the node-side
+    // half of the deferral the comment above describes -- without it
+    // we fell through to draw math asserting a clean width (the
+    // text_width_dirty_ boot abort noted in followups 2026-08-31).
+    return;
   }
 
   bool vr_2d_text = (g_core->vr_mode() && !in_world_);

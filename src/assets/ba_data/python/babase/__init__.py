@@ -142,9 +142,21 @@ from babase._asset_packages import (
     asset_package_bucket_paths,
     asset_package_string_count,
 )
-from babase._assetref import SimpleSoundHandle, getsimplesound
+from babase._assetref import (
+    SimpleSoundHandle,
+    getsimplesound,
+    simple_sound_from_ref,
+    TextureHandle,
+    MeshHandle,
+    CubeMapTextureHandle,
+)
+from babase._generated.base_asset_set import (
+    BaseAssetSet,
+    set_base_asset_set,
+)
 from babase._appmode import (
     AppMode,
+    AppModeConfig,
     ControlPermission,
     ControlPermissionRequest,
 )
@@ -257,6 +269,7 @@ app = App()
 _babase.app = app
 
 __all__ = [
+    'simple_sound_from_ref',
     'accountlog',
     'AccountV2Handle',
     'AccountV2Subsystem',
@@ -275,6 +288,7 @@ __all__ = [
     'AppIntentDefault',
     'AppIntentExec',
     'AppMode',
+    'AppModeConfig',
     'ControlPermission',
     'ControlPermissionRequest',
     'AppState',
@@ -447,6 +461,11 @@ __all__ = [
     'SimpleDialog',
     'SimpleSound',
     'SimpleSoundHandle',
+    'set_base_asset_set',
+    'BaseAssetSet',
+    'CubeMapTextureHandle',
+    'TextureHandle',
+    'MeshHandle',
     'suppress_config_and_state_writes',
     'SpecialChar',
     'storagename',

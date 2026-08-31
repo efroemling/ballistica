@@ -8,7 +8,7 @@ import logging
 import bauiv1 as bui
 from bascenev1lib.actor import spazappearance
 from bauiv1 import _commonassets, _classicassets
-from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 from bauiv1lib.popup import PopupWindow, PopupMenuWindow
 
@@ -321,7 +321,7 @@ class AccountViewerWindow(PopupWindow):
                                 )
                                 icon_tex = character.icon_texture
                                 tint_tex = character.icon_mask_texture
-                                btex = _builtinassets.textures
+                                btex = _classicassets.textures
                                 mask_texture = btex.character_icon_mask.get()
                                 bui.imagewidget(
                                     parent=self._subcontainer,
@@ -609,5 +609,5 @@ class AccountViewerWindow(PopupWindow):
 
     @override
     def on_popup_cancel(self) -> None:
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
         self._transition_out()

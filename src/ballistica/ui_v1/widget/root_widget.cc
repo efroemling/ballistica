@@ -33,12 +33,6 @@
 
 namespace ballistica::ui_v1 {
 
-// Builtin textures now live in the builtin asset-package; this builds
-// the qualified ref for one so name-based lookups find it.
-static auto BuiltinTexRef(const char* path) -> std::string {
-  return std::string(base::kBuiltinAssetsApverid) + ":textures/" + path;
-}
-
 static const float kBotLeftColorR{0.6f};
 static const float kBotLeftColorG{0.6f};
 static const float kBotLeftColorB{0.8f};
@@ -96,9 +90,10 @@ struct RootWidget::ChestSlot_ {
 // For defining toolbar buttons.
 struct RootWidget::ButtonDef_ {
   std::string label;
-  std::string img;
-  std::string mesh_transparent;
-  std::string mesh_opaque;
+  // Assets come from the app-mode-supplied set (see
+  // bauiv1.UIAssetSet); nothing here is named by string.
+  base::TextureAsset* img{};
+  base::MeshAsset* mesh_transparent{};
   std::string widget_id;
   VAlign_ v_align{VAlign_::kTop};
   UIV1Python::ObjID call{UIV1Python::ObjID::kEmptyCall};
@@ -192,7 +187,7 @@ struct RootWidget::ImageDef_ {
   float color_r{1.0f};
   float color_g{1.0f};
   float color_b{1.0f};
-  std::string img;
+  base::TextureAsset* img{};
 };
 
 struct RootWidget::Image_ {
@@ -275,8 +270,8 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
     bd.height = 36.0f;
     bd.y = -36.0f + 10.0f - y_offs_small;
     bd.y_offs_small = y_offs_small;
-    bd.img = BuiltinTexRef("ui_atlas2");
-    bd.mesh_transparent = "currencyMeter";
+    bd.img = g_ui_v1->assets().ui_atlas2.get();
+    bd.mesh_transparent = g_ui_v1->assets().currency_meter.get();
     bd.selectable = true;
 
     bd.color_r = kMeterColorR;
@@ -448,16 +443,16 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
       imgd.height = 54.0f;
       switch (type) {
         case MeterType_::kLevel:
-          imgd.img = "levelIcon";
+          imgd.img = g_ui_v1->assets().level_icon.get();
           break;
         case MeterType_::kTrophy:
-          imgd.img = "trophy";
+          imgd.img = g_ui_v1->assets().trophy.get();
           break;
         case MeterType_::kTokens:
-          imgd.img = "coin";
+          imgd.img = g_ui_v1->assets().coin.get();
           break;
         case MeterType_::kTickets:
-          imgd.img = "tickets";
+          imgd.img = g_ui_v1->assets().tickets.get();
           break;
         default:
           break;
@@ -506,8 +501,8 @@ void RootWidget::AddMeter_(MeterType_ type, float h_align, float r, float g,
     bd.width = bd.height = 45.0f;
     bd.y = -36.0f + 11.0f - y_offs_small;
     bd.y_offs_small = y_offs_small;
-    bd.img = BuiltinTexRef("ui_atlas2");
-    bd.mesh_transparent = "currencyPlusButton";
+    bd.img = g_ui_v1->assets().ui_atlas2.get();
+    bd.mesh_transparent = g_ui_v1->assets().currency_plus_button.get();
     bd.color_r = kGetTokensButtonColorR;
     bd.color_g = kGetTokensButtonColorG;
     bd.color_b = kGetTokensButtonColorB;
@@ -559,7 +554,7 @@ void RootWidget::Setup() {
     bd.color_g = 0.4f;
     bd.color_b = 0.35f;
     bd.y = -40.0f;
-    bd.img = BuiltinTexRef("nub");
+    bd.img = g_ui_v1->assets().nub.get();
     bd.call = UIV1Python::ObjID::kRootUIBackButtonPressCall;
     bd.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuMinimal)
@@ -597,8 +592,8 @@ void RootWidget::Setup() {
     bd.height = 90.0f;
     bd.x = 256.0f;
     bd.y = -20.0f;
-    bd.img = BuiltinTexRef("ui_atlas2");
-    bd.mesh_transparent = "toolbarBackingTop2";
+    bd.img = g_ui_v1->assets().ui_atlas2.get();
+    bd.mesh_transparent = g_ui_v1->assets().toolbar_backing_top2.get();
     bd.selectable = false;
     bd.color_r = 0.44f;
     bd.color_g = 0.41f;
@@ -621,8 +616,8 @@ void RootWidget::Setup() {
     bd.height = 90.0f;
     bd.x = 0.0f;
     bd.y = -20.0f;
-    bd.img = BuiltinTexRef("ui_atlas2");
-    bd.mesh_transparent = "toolbarBackingTop2";
+    bd.img = g_ui_v1->assets().ui_atlas2.get();
+    bd.mesh_transparent = g_ui_v1->assets().toolbar_backing_top2.get();
     bd.selectable = false;
     bd.color_r = 0.44f;
     bd.color_g = 0.41f;
@@ -692,7 +687,7 @@ void RootWidget::Setup() {
     b.v_align = VAlign_::kTop;
     b.width = b.height = 65.0f;
     b.y = b.height * -0.48f;
-    b.img = BuiltinTexRef("menu_button");
+    b.img = g_ui_v1->assets().menu_button.get();
     b.call = UIV1Python::ObjID::kRootUIMenuButtonPressCall;
     b.color_r = 0.3f;
     b.color_g = 0.5f;
@@ -722,7 +717,7 @@ void RootWidget::Setup() {
     b.v_align = VAlign_::kTop;
     b.width = b.height = 70.0f;
     b.y = b.height * -0.41f;
-    b.img = BuiltinTexRef("users_button");
+    b.img = g_ui_v1->assets().users_button.get();
     b.call = UIV1Python::ObjID::kRootUISquadButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kInGame)
@@ -777,8 +772,8 @@ void RootWidget::Setup() {
       bd.height = 100.0f;
       bd.x = 0.0f;
       bd.y = 41.0f;
-      bd.img = BuiltinTexRef("ui_atlas2");
-      bd.mesh_transparent = "toolbarBackingBottom2";
+      bd.img = g_ui_v1->assets().ui_atlas2.get();
+      bd.mesh_transparent = g_ui_v1->assets().toolbar_backing_bottom2.get();
       bd.selectable = false;
       bd.color_r = 0.473f;
       bd.color_g = 0.44f;
@@ -813,7 +808,7 @@ void RootWidget::Setup() {
     b.allow_in_game = false;
 
     b.y = 44.0f;
-    b.img = "chestIconEmpty";
+    b.img = g_ui_v1->assets().chest_icon_empty.get();
     b.width = b.height = 80.0f;
     b.opacity = 1.0f;
 
@@ -844,7 +839,7 @@ void RootWidget::Setup() {
       imgd.y = -23.0f;
       imgd.width = 32.0f;
       imgd.height = 32.0f;
-      imgd.img = "lock";
+      imgd.img = g_ui_v1->assets().lock.get();
       imgd.depth_min = 0.3f;
 
       imgd.button = chest0.button;
@@ -867,7 +862,7 @@ void RootWidget::Setup() {
       imgd.y = -27.0f;
       imgd.width = 32.0f;
       imgd.height = 32.0f;
-      imgd.img = "tv";
+      imgd.img = g_ui_v1->assets().tv.get();
       imgd.depth_min = 0.3f;
       imgd.color_r = 1.5f;
       imgd.color_g = 1.0f;
@@ -924,7 +919,7 @@ void RootWidget::Setup() {
     b.color_r = kBotLeftColorR;
     b.color_g = kBotLeftColorG;
     b.color_b = kBotLeftColorB;
-    b.img = "logIcon";
+    b.img = g_ui_v1->assets().log_icon.get();
     b.call = UIV1Python::ObjID::kRootUIInboxButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
@@ -945,7 +940,7 @@ void RootWidget::Setup() {
       imgd.y = 24.0f;
       imgd.width = 32.0f;
       imgd.height = 32.0f;
-      imgd.img = BuiltinTexRef("circle");
+      imgd.img = g_ui_v1->assets().circle.get();
       imgd.depth_min = 0.3f;
       imgd.color_r = 1.0f;
       imgd.color_g = 0.0f;
@@ -1001,7 +996,7 @@ void RootWidget::Setup() {
     b.color_r = kBotLeftColorR;
     b.color_g = kBotLeftColorG;
     b.color_b = kBotLeftColorB;
-    b.img = "achievementsIcon";
+    b.img = g_ui_v1->assets().achievements_icon.get();
     b.call = UIV1Python::ObjID::kRootUIAchievementsButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
@@ -1043,7 +1038,7 @@ void RootWidget::Setup() {
     b.color_r = kBotLeftColorR;
     b.color_g = kBotLeftColorG;
     b.color_b = kBotLeftColorB;
-    b.img = "leaderboardsIcon";
+    b.img = g_ui_v1->assets().leaderboards_icon.get();
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
          | static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFullNoBack)
@@ -1062,7 +1057,7 @@ void RootWidget::Setup() {
     b.color_r = kBotLeftColorR;
     b.color_g = kBotLeftColorG;
     b.color_b = kBotLeftColorB;
-    b.img = "settingsIcon";
+    b.img = g_ui_v1->assets().settings_icon.get();
     b.call = UIV1Python::ObjID::kRootUISettingsButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
@@ -1083,7 +1078,7 @@ void RootWidget::Setup() {
     b.width = b.height = 135.0f;
     // b.x = -80.0f;
     b.y = b.height * 0.45f;
-    b.img = "inventoryIcon";
+    b.img = g_ui_v1->assets().inventory_icon.get();
     b.call = UIV1Python::ObjID::kRootUIInventoryButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
@@ -1109,7 +1104,7 @@ void RootWidget::Setup() {
     b.v_align = VAlign_::kBottom;
     b.width = b.height = 85.0f;
     b.y = b.height * 0.5f;
-    b.img = "storeIcon";
+    b.img = g_ui_v1->assets().store_icon.get();
     b.call = UIV1Python::ObjID::kRootUIStoreButtonPressCall;
     b.visibility_mask =
         (static_cast<uint32_t>(Widget::ToolbarVisibility::kMenuFull)
@@ -1129,7 +1124,7 @@ void RootWidget::Setup() {
     imgd.y = 50.0f;
     imgd.width = 50.0f;
     imgd.height = 50.0f;
-    imgd.img = BuiltinTexRef("white");
+    imgd.img = g_ui_v1->assets().white.get();
     // imgd.depth_min = 0.3f;
 
     imgd.button = store_button_;
@@ -1551,18 +1546,11 @@ auto RootWidget::AddButton_(const ButtonDef_& def) -> RootWidget::Button_* {
   // widgets since we'll probably outlive those outside widgets.
   b.widget->set_neighbors_locked(true);
 
-  if (!def.img.empty()) {
-    base::Assets::AssetListLock lock;
-    b.widget->SetTexture(g_base->assets->GetTexture(def.img).get());
+  if (def.img != nullptr) {
+    b.widget->SetTexture(def.img);
   }
-  if (!def.mesh_transparent.empty()) {
-    base::Assets::AssetListLock lock;
-    b.widget->SetMeshTransparent(
-        g_base->assets->GetMesh(def.mesh_transparent).get());
-  }
-  if (!def.mesh_opaque.empty()) {
-    base::Assets::AssetListLock lock;
-    b.widget->SetMeshOpaque(g_base->assets->GetMesh(def.mesh_opaque).get());
+  if (def.mesh_transparent != nullptr) {
+    b.widget->SetMeshTransparent(def.mesh_transparent);
   }
   if (def.call != UIV1Python::ObjID::kEmptyCall) {
     b.widget->SetOnActivateCall(g_ui_v1->python->objs().Get(def.call).get());
@@ -1614,9 +1602,8 @@ auto RootWidget::AddImage_(const ImageDef_& def) -> RootWidget::Image_* {
   img.widget->set_width(def.width);
   img.widget->set_height(def.height);
   img.widget->set_depth_range(def.depth_min, def.depth_max);
-  if (!def.img.empty()) {
-    base::Assets::AssetListLock lock;
-    img.widget->SetTexture(g_base->assets->GetTexture(def.img).get());
+  if (def.img != nullptr) {
+    img.widget->SetTexture(def.img);
   }
   img.widget->set_color(def.color_r, def.color_g, def.color_b);
   assert(def.button->widget.exists());
@@ -2558,8 +2545,7 @@ void RootWidget::UpdateLeagueRankDisplay_() {
         if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
           s->SetPositional(false);
           league_rank_anim_sound_play_id_ =
-              s->Play(g_base->assets->BuiltinSound(
-                  base::BuiltinSoundID::kAudioScoreIncrease));
+              s->Play(g_ui_v1->assets().score_increase.get());
           s->End();
         }
       }
@@ -2593,7 +2579,7 @@ void RootWidget::SetStoreStyle(const std::string& val) {
   if (val == "s") {
     base::Assets::AssetListLock lock;
     store_decoration_->widget->SetTexture(
-        g_base->assets->GetTexture("storeCharacterXmas").get());
+        g_ui_v1->assets().store_character_xmas.get());
     store_decoration_->visible = true;
   } else {
     // Normal style.
@@ -2876,7 +2862,7 @@ void RootWidget::UpdateChests_() {
       slot.button->y = have_chests ? 44.0f : -2.0f;
       {
         base::Assets::AssetListLock lock;
-        tex = g_base->assets->GetTexture("chestIconEmpty");
+        tex = g_ui_v1->assets().chest_icon_empty;
       }
       slot.lock_icon->visible = false;
       slot.tv_icon->visible = false;
@@ -2909,17 +2895,14 @@ void RootWidget::UpdateChests_() {
       Vector3f chest_color;
       Vector3f chest_tint;
       Vector3f chest_tint2;
-      if (auto* classic = g_base->classic()) {
-        classic->GetClassicChestDisplayInfo(
-            slot.appearance, &chest_tex_closed, &chest_tex_closed_tint,
-            &chest_color, &chest_tint, &chest_tint2);
-      } else {
-        chest_tex_closed = "chestIcon";
-        chest_tex_closed_tint = BuiltinTexRef("white");
-        chest_color = Vector3f{1.0f, 1.0f, 1.0f};
-        chest_tint = Vector3f{1.0f, 1.0f, 1.0f};
-        chest_tint2 = Vector3f{1.0f, 1.0f, 1.0f};
-      }
+      // Chest slots only exist under classic, which is also the only
+      // thing that installs us as ui-delegate -- so classic is always
+      // here by the time we draw one.
+      auto* classic = g_base->classic();
+      BA_PRECONDITION(classic);
+      classic->GetClassicChestDisplayInfo(slot.appearance, &chest_tex_closed,
+                                          &chest_tex_closed_tint, &chest_color,
+                                          &chest_tint, &chest_tint2);
       {
         base::Assets::AssetListLock lock;
         tex = g_base->assets->GetTexture(chest_tex_closed);
@@ -3164,8 +3147,7 @@ void RootWidget::AnimateChestUnlockTime(const std::string& chestid,
     if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
       s->SetPositional(false);
       chest_unlock_time_anim_sound_play_id_ =
-          s->Play(g_base->assets->BuiltinSound(
-              base::BuiltinSoundID::kAudioScoreIncrease));
+          s->Play(g_ui_v1->assets().score_increase.get());
       s->End();
     }
   }
@@ -3186,8 +3168,8 @@ void RootWidget::AnimateTickets(seconds_t duration, int startvalue,
   if (!tickets_anim_sound_play_id_.has_value()) {
     if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
       s->SetPositional(false);
-      tickets_anim_sound_play_id_ = s->Play(g_base->assets->BuiltinSound(
-          base::BuiltinSoundID::kAudioScoreIncrease));
+      tickets_anim_sound_play_id_ =
+          s->Play(g_ui_v1->assets().score_increase.get());
       s->End();
     }
   }
@@ -3208,8 +3190,8 @@ void RootWidget::AnimateTokens(seconds_t duration, int startvalue,
   if (!tokens_anim_sound_play_id_.has_value()) {
     if (base::AudioSource* s = g_base->audio->SourceBeginNew()) {
       s->SetPositional(false);
-      tokens_anim_sound_play_id_ = s->Play(g_base->assets->BuiltinSound(
-          base::BuiltinSoundID::kAudioScoreIncrease));
+      tokens_anim_sound_play_id_ =
+          s->Play(g_ui_v1->assets().score_increase.get());
       s->End();
     }
   }

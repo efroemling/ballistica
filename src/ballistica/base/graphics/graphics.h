@@ -209,8 +209,10 @@ class Graphics {
   auto VSyncFromAppConfig() -> VSyncRequest;
 
   static auto IsShaderTransparent(ShadingType c) -> bool;
+  /// The environment cube map for a reflection type, from the
+  /// app-mode-supplied base asset set (see babase.set_base_asset_set).
   static auto CubeMapFromReflectionType(ReflectionType reflection_type)
-      -> BuiltinCubeMapTextureID;
+      -> TextureAsset*;
 
   // Given a string, return a reflection type.
   static auto ReflectionTypeFromString(const std::string& s) -> ReflectionType;

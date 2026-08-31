@@ -48,9 +48,9 @@ void SpinnerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   auto alpha{std::max(0.0, std::min(1.0, presence_ * 2.0 - 1.0))};
 
   // Select our texture up front so we can honor its premultiplied flag below.
-  base::BuiltinTextureID tex_id;
+  base::TextureAsset* tex;
   if (style_ == Style::kSimple) {
-    tex_id = base::BuiltinTextureID::kTexturesSpinner;
+    tex = g_ui_v1->assets().spinner.get();
   } else {
     assert(style_ == Style::kBomb);
     // Advance through our 12 frames at 24fps.
@@ -58,45 +58,43 @@ void SpinnerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         static_cast<int>(std::floor(std::fmod(current_time * 24.0, 12.0)))};
     switch (frame) {
       case 0:
-        tex_id = base::BuiltinTextureID::kTexturesSpinner0;
+        tex = g_ui_v1->assets().spinner0.get();
         break;
       case 1:
-        tex_id = base::BuiltinTextureID::kTexturesSpinner1;
+        tex = g_ui_v1->assets().spinner1.get();
         break;
       case 2:
-        tex_id = base::BuiltinTextureID::kTexturesSpinner2;
+        tex = g_ui_v1->assets().spinner2.get();
         break;
       case 3:
-        tex_id = base::BuiltinTextureID::kTexturesSpinner3;
+        tex = g_ui_v1->assets().spinner3.get();
         break;
       case 4:
-        tex_id = base::BuiltinTextureID::kTexturesSpinner4;
+        tex = g_ui_v1->assets().spinner4.get();
         break;
       case 5:
-        tex_id = base::BuiltinTextureID::kTexturesSpinner5;
+        tex = g_ui_v1->assets().spinner5.get();
         break;
       case 6:
-        tex_id = base::BuiltinTextureID::kTexturesSpinner6;
+        tex = g_ui_v1->assets().spinner6.get();
         break;
       case 7:
-        tex_id = base::BuiltinTextureID::kTexturesSpinner7;
+        tex = g_ui_v1->assets().spinner7.get();
         break;
       case 8:
-        tex_id = base::BuiltinTextureID::kTexturesSpinner8;
+        tex = g_ui_v1->assets().spinner8.get();
         break;
       case 9:
-        tex_id = base::BuiltinTextureID::kTexturesSpinner9;
+        tex = g_ui_v1->assets().spinner9.get();
         break;
       case 10:
-        tex_id = base::BuiltinTextureID::kTexturesSpinner10;
+        tex = g_ui_v1->assets().spinner10.get();
         break;
       default:
-        tex_id = base::BuiltinTextureID::kTexturesSpinner11;
+        tex = g_ui_v1->assets().spinner11.get();
         break;
     }
   }
-  base::TextureAsset* tex = g_base->assets->BuiltinTexture(tex_id);
-
   // Premultiply rgb by alpha for premultiplied textures so the spinner fades
   // via 'over' compositing under premult blend instead of staying full-
   // brightness (premult blend adds rgb directly rather than weighting it by
@@ -119,8 +117,7 @@ void SpinnerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     if (style_ == Style::kSimple) {
       c.Rotate(-360.0f * std::fmod(current_time * 2.0, 1.0), 0.0f, 0.0f, 1.0f);
     }
-    c.DrawMeshAsset(
-        g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
+    c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
   }
   c.Submit();
 }

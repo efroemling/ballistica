@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, override
 
 import bauiv1 as bui
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
@@ -176,7 +177,7 @@ class FileSelectorWindow(bui.MainWindow):
 
     def _on_back_press(self) -> None:
         if len(self._recent_paths) > 1:
-            _builtinassets.audio.swish.get().play()
+            _uiv1assets.audio.swish.get().play()
             self._recent_paths.pop()
             self._set_path(self._recent_paths.pop())
         else:
@@ -205,11 +206,11 @@ class FileSelectorWindow(bui.MainWindow):
                 else:
                     test_path = self._path + '/' + entry
                 if os.path.isdir(test_path):
-                    _builtinassets.audio.swish.get().play()
+                    _uiv1assets.audio.swish.get().play()
                     new_path = test_path
                 elif os.path.isfile(test_path):
                     if self._is_valid_file_path(test_path):
-                        _builtinassets.audio.swish.get().play()
+                        _uiv1assets.audio.swish.get().play()
                         if self._callback is not None:
                             self._callback(test_path)
                     else:

@@ -10,6 +10,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "ballistica/shared/foundation/object.h"
@@ -132,6 +133,13 @@ class TextGraphics {
   /// self-healing for the canonical pattern).
   auto TryGetOSTextSpanBoundsAndWidth(const std::string& s, Rect* r,
                                       float* width) -> bool;
+
+  /// Debug builds only: spans already considered by the defer-chaos
+  /// block in TryGetOSTextSpanBoundsAndWidth (every 16th new span gets
+  /// its first Try reported cold). Guarded by
+  /// text_span_bounds_cache_mutex_.
+  std::unordered_set<std::string> debug_chaos_seen_spans_;
+  int debug_chaos_span_count_{};
 
   /// Bumped each time a background span measure kicked off by
   /// TryGetOSTextSpanBoundsAndWidth() completes.

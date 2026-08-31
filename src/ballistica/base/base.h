@@ -460,205 +460,57 @@ enum class SystemDataID : uint8_t {};
 // their callsites migrate.
 
 inline constexpr const char* kBuiltinAssetsApverid =
-    "a-0.babuiltinassets.260819";
+    "a-0.babuiltinassets.260831f";
 
 enum class BuiltinTextureID : uint16_t {
-  kTexturesActionButtons,         // textures/action_buttons
-  kTexturesArrow,                 // textures/arrow
-  kTexturesBackIcon,              // textures/back_icon
-  kTexturesBlack,                 // textures/black
-  kTexturesBombButton,            // textures/bomb_button
-  kTexturesBoxingGlovesColor,     // textures/boxing_gloves_color
-  kTexturesButtonSquare,          // textures/button_square
-  kTexturesButtonSquareWide,      // textures/button_square_wide
-  kTexturesCharacterIconMask,     // textures/character_icon_mask
-  kTexturesCircle,                // textures/circle
-  kTexturesCircleNoAlpha,         // textures/circle_no_alpha
-  kTexturesCircleOutline,         // textures/circle_outline
-  kTexturesCircleOutlineNoAlpha,  // textures/circle_outline_no_alpha
-  kTexturesCircleShadow,          // textures/circle_shadow
-  kTexturesCircleSoft,            // textures/circle_soft
-  kTexturesCursor,                // textures/cursor
-  kTexturesExplosion,             // textures/explosion
-  kTexturesEyeColor,              // textures/eye_color
-  kTexturesEyeColorTintMask,      // textures/eye_color_tint_mask
-  kTexturesFlagPoleColor,         // textures/flag_pole_color
-  kTexturesFontBig,               // textures/font_big
-  kTexturesFontExtras,            // textures/font_extras
-  kTexturesFontExtras2,           // textures/font_extras2
-  kTexturesFontExtras3,           // textures/font_extras3
-  kTexturesFontExtras4,           // textures/font_extras4
-  kTexturesFontExtras5,           // textures/font_extras5
-  kTexturesFontSmall0,            // textures/font_small0
-  kTexturesFontSmall1,            // textures/font_small1
-  kTexturesFontSmall2,            // textures/font_small2
-  kTexturesFontSmall3,            // textures/font_small3
-  kTexturesFontSmall4,            // textures/font_small4
-  kTexturesFontSmall5,            // textures/font_small5
-  kTexturesFontSmall6,            // textures/font_small6
-  kTexturesFontSmall7,            // textures/font_small7
-  kTexturesFuse,                  // textures/fuse
-  kTexturesGlow,                  // textures/glow
-  kTexturesLight,                 // textures/light
-  kTexturesLightSharp,            // textures/light_sharp
-  kTexturesLightSoft,             // textures/light_soft
-  kTexturesMenuButton,            // textures/menu_button
-  kTexturesNub,                   // textures/nub
-  kTexturesOuyaAbutton,           // textures/ouya_abutton
-  kTexturesPageLeftRight,         // textures/page_left_right
-  kTexturesRgbStripes,            // textures/rgb_stripes
-  kTexturesScorch,                // textures/scorch
-  kTexturesScorchBig,             // textures/scorch_big
-  kTexturesScrollWidget,          // textures/scroll_widget
-  kTexturesScrollWidgetGlow,      // textures/scroll_widget_glow
-  kTexturesShadow,                // textures/shadow
-  kTexturesShadowSharp,           // textures/shadow_sharp
-  kTexturesShadowSoft,            // textures/shadow_soft
-  kTexturesShield,                // textures/shield
-  kTexturesShrapnel1Color,        // textures/shrapnel1_color
-  kTexturesSmoke,                 // textures/smoke
-  kTexturesSoftRect,              // textures/soft_rect
-  kTexturesSoftRect2,             // textures/soft_rect2
-  kTexturesSoftRectVertical,      // textures/soft_rect_vertical
-  kTexturesSparks,                // textures/sparks
-  kTexturesSpinner,               // textures/spinner
-  kTexturesSpinner0,              // textures/spinner0
-  kTexturesSpinner1,              // textures/spinner1
-  kTexturesSpinner10,             // textures/spinner10
-  kTexturesSpinner11,             // textures/spinner11
-  kTexturesSpinner2,              // textures/spinner2
-  kTexturesSpinner3,              // textures/spinner3
-  kTexturesSpinner4,              // textures/spinner4
-  kTexturesSpinner5,              // textures/spinner5
-  kTexturesSpinner6,              // textures/spinner6
-  kTexturesSpinner7,              // textures/spinner7
-  kTexturesSpinner8,              // textures/spinner8
-  kTexturesSpinner9,              // textures/spinner9
-  kTexturesStartButton,           // textures/start_button
-  kTexturesTextClearButton,       // textures/text_clear_button
-  kTexturesTouchArrows,           // textures/touch_arrows
-  kTexturesTouchArrowsActions,    // textures/touch_arrows_actions
-  kTexturesUiAtlas,               // textures/ui_atlas
-  kTexturesUiAtlas2,              // textures/ui_atlas2
-  kTexturesUsersButton,           // textures/users_button
-  kTexturesWhite,                 // textures/white
-  kTexturesWindowHsmallVmed,      // textures/window_hsmall_vmed
-  kTexturesWindowHsmallVsmall,    // textures/window_hsmall_vsmall
-  kTexturesWings,                 // textures/wings
+  kTexturesBlack,             // textures/black
+  kTexturesCircle,            // textures/circle
+  kTexturesCircleShadow,      // textures/circle_shadow
+  kTexturesCursor,            // textures/cursor
+  kTexturesFontBig,           // textures/font_big
+  kTexturesFontExtras,        // textures/font_extras
+  kTexturesFontExtras2,       // textures/font_extras2
+  kTexturesFontExtras3,       // textures/font_extras3
+  kTexturesFontExtras4,       // textures/font_extras4
+  kTexturesFontExtras5,       // textures/font_extras5
+  kTexturesFontSmall0,        // textures/font_small0
+  kTexturesFontSmall1,        // textures/font_small1
+  kTexturesFontSmall2,        // textures/font_small2
+  kTexturesFontSmall3,        // textures/font_small3
+  kTexturesFontSmall4,        // textures/font_small4
+  kTexturesFontSmall5,        // textures/font_small5
+  kTexturesFontSmall6,        // textures/font_small6
+  kTexturesFontSmall7,        // textures/font_small7
+  kTexturesShadow,            // textures/shadow
+  kTexturesShadowSharp,       // textures/shadow_sharp
+  kTexturesSoftRect,          // textures/soft_rect
+  kTexturesSoftRect2,         // textures/soft_rect2
+  kTexturesSoftRectVertical,  // textures/soft_rect_vertical
+  kTexturesWhite,             // textures/white
 };
 
 enum class BuiltinCubeMapTextureID : uint16_t {
-  kTexturesReflectionChar,      // textures/reflection_char
-  kTexturesReflectionPowerup,   // textures/reflection_powerup
-  kTexturesReflectionSharp,     // textures/reflection_sharp
-  kTexturesReflectionSharper,   // textures/reflection_sharper
-  kTexturesReflectionSharpest,  // textures/reflection_sharpest
-  kTexturesReflectionSoft,      // textures/reflection_soft
+  kTexturesBlackCube,  // textures/black_cube
 };
 
 enum class BuiltinSoundID : uint16_t {
-  kAudioBlank,          // audio/blank
-  kAudioBlip,           // audio/blip
-  kAudioCashRegister,   // audio/cash_register
-  kAudioClick01,        // audio/click01
-  kAudioCorkPop,        // audio/cork_pop
-  kAudioDeek,           // audio/deek
-  kAudioDing,           // audio/ding
-  kAudioError,          // audio/error
-  kAudioGunCocking,     // audio/gun_cocking
-  kAudioPowerdown01,    // audio/powerdown01
-  kAudioPunch01,        // audio/punch01
-  kAudioScoreIncrease,  // audio/score_increase
-  kAudioSparkle01,      // audio/sparkle01
-  kAudioSparkle02,      // audio/sparkle02
-  kAudioSparkle03,      // audio/sparkle03
-  kAudioSwish,          // audio/swish
-  kAudioSwish2,         // audio/swish2
-  kAudioSwish3,         // audio/swish3
-  kAudioTap,            // audio/tap
-  kAudioTickingCrazy,   // audio/ticking_crazy
+  kAudioBlank,         // audio/blank
+  kAudioBlip,          // audio/blip
+  kAudioCashRegister,  // audio/cash_register
+  kAudioClick01,       // audio/click01
+  kAudioDing,          // audio/ding
+  kAudioError,         // audio/error
+  kAudioGunCocking,    // audio/gun_cocking
+  kAudioPowerdown01,   // audio/powerdown01
+  kAudioTap,           // audio/tap
 };
 
 enum class BuiltinMeshID : uint16_t {
-  kMeshesActionButtonBottom,     // meshes/action_button_bottom
-  kMeshesActionButtonLeft,       // meshes/action_button_left
-  kMeshesActionButtonRight,      // meshes/action_button_right
-  kMeshesActionButtonTop,        // meshes/action_button_top
-  kMeshesArrowBack,              // meshes/arrow_back
-  kMeshesArrowFront,             // meshes/arrow_front
-  kMeshesBox,                    // meshes/box
-  kMeshesBoxingGlove,            // meshes/boxing_glove
-  kMeshesButtonBackOpaque,       // meshes/button_back_opaque
-  kMeshesButtonBackSmallOpaque,  // meshes/button_back_small_opaque
-  // meshes/button_back_small_transparent
-  kMeshesButtonBackSmallTransparent,
-  kMeshesButtonBackTransparent,    // meshes/button_back_transparent
-  kMeshesButtonLargeOpaque,        // meshes/button_large_opaque
-  kMeshesButtonLargeTransparent,   // meshes/button_large_transparent
-  kMeshesButtonLargerOpaque,       // meshes/button_larger_opaque
-  kMeshesButtonLargerTransparent,  // meshes/button_larger_transparent
-  kMeshesButtonMediumOpaque,       // meshes/button_medium_opaque
-  kMeshesButtonMediumTransparent,  // meshes/button_medium_transparent
-  kMeshesButtonSmallOpaque,        // meshes/button_small_opaque
-  kMeshesButtonSmallTransparent,   // meshes/button_small_transparent
-  kMeshesButtonSquareOpaque,       // meshes/button_square_opaque
-  kMeshesButtonSquareTransparent,  // meshes/button_square_transparent
-  kMeshesButtonTabOpaque,          // meshes/button_tab_opaque
-  kMeshesButtonTabTransparent,     // meshes/button_tab_transparent
-  kMeshesCheckTransparent,         // meshes/check_transparent
-  kMeshesCrossOut,                 // meshes/cross_out
-  kMeshesCylinder,                 // meshes/cylinder
-  kMeshesEyeBall,                  // meshes/eye_ball
-  kMeshesEyeBallIris,              // meshes/eye_ball_iris
-  kMeshesEyeLid,                   // meshes/eye_lid
-  kMeshesFlagPole,                 // meshes/flag_pole
-  kMeshesFlagStand,                // meshes/flag_stand
-  kMeshesFlash,                    // meshes/flash
-  kMeshesHairTuft1,                // meshes/hair_tuft1
-  kMeshesHairTuft1b,               // meshes/hair_tuft1b
-  kMeshesHairTuft2,                // meshes/hair_tuft2
-  kMeshesHairTuft3,                // meshes/hair_tuft3
-  kMeshesHairTuft4,                // meshes/hair_tuft4
-  kMeshesImage16x1,                // meshes/image16x1
-  kMeshesImage1x1,                 // meshes/image1x1
-  kMeshesImage1x1FullScreen,       // meshes/image1x1_full_screen
-  kMeshesImage1x1VrfullScreen,     // meshes/image1x1_vrfull_screen
-  kMeshesImage2x1,                 // meshes/image2x1
-  kMeshesImage4x1,                 // meshes/image4x1
-  kMeshesLocator,                  // meshes/locator
-  kMeshesLocatorBox,               // meshes/locator_box
-  kMeshesLocatorCircle,            // meshes/locator_circle
-  kMeshesLocatorCircleOutline,     // meshes/locator_circle_outline
-  kMeshesOverlayGuide,             // meshes/overlay_guide
-  kMeshesScorch,                   // meshes/scorch
-  kMeshesScrollBarThumbOpaque,     // meshes/scroll_bar_thumb_opaque
-  // meshes/scroll_bar_thumb_short_opaque
-  kMeshesScrollBarThumbShortOpaque,
-  // meshes/scroll_bar_thumb_short_simple
-  kMeshesScrollBarThumbShortSimple,
-  // meshes/scroll_bar_thumb_short_transparent
-  kMeshesScrollBarThumbShortTransparent,
-  kMeshesScrollBarThumbSimple,       // meshes/scroll_bar_thumb_simple
-  kMeshesScrollBarThumbTransparent,  // meshes/scroll_bar_thumb_transparent
-  // meshes/scroll_bar_trough_transparent
-  kMeshesScrollBarTroughTransparent,
-  kMeshesShield,                  // meshes/shield
-  kMeshesShockWave,               // meshes/shock_wave
-  kMeshesShrapnel1,               // meshes/shrapnel1
-  kMeshesShrapnelBoard,           // meshes/shrapnel_board
-  kMeshesShrapnelSlime,           // meshes/shrapnel_slime
-  kMeshesSoftEdgeInside,          // meshes/soft_edge_inside
-  kMeshesSoftEdgeOutside,         // meshes/soft_edge_outside
-  kMeshesTextBoxTransparent,      // meshes/text_box_transparent
-  kMeshesVrFade,                  // meshes/vr_fade
-  kMeshesVrOverlay,               // meshes/vr_overlay
-  kMeshesWindowHsmallVmedOpaque,  // meshes/window_hsmall_vmed_opaque
-  // meshes/window_hsmall_vmed_transparent
-  kMeshesWindowHsmallVmedTransparent,
-  kMeshesWindowHsmallVsmallOpaque,  // meshes/window_hsmall_vsmall_opaque
-  // meshes/window_hsmall_vsmall_transparent
-  kMeshesWindowHsmallVsmallTransparent,
-  kMeshesWing,  // meshes/wing
+  kMeshesBox,           // meshes/box
+  kMeshesImage1x1,      // meshes/image1x1
+  kMeshesOverlayGuide,  // meshes/overlay_guide
+  kMeshesVrFade,        // meshes/vr_fade
+  kMeshesVrOverlay,     // meshes/vr_overlay
 };
 // __AUTOGENERATED_BUILTIN_ASSET_IDS_END__
 

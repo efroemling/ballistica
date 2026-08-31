@@ -975,17 +975,17 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
   // Update bg vals if need be (we may need these even if bg is turned off
   // so always calc them).
   if (bg_dirty_) {
-    base::BuiltinTextureID tex_id;
+    const UIAssetSet& uiassets = g_ui_v1->assets();
+    Object::Ref<base::TextureAsset> tex;
     float l_border, r_border, b_border, t_border;
     [[maybe_unused]] float center_x_amt;
     [[maybe_unused]] float center_y_amt;
     float width = r - l;
     float height = t - b;
     if (height > width * 0.6f) {
-      tex_id = base::BuiltinTextureID::kTexturesWindowHsmallVmed;
-      bg_mesh_transparent_id_ =
-          base::BuiltinMeshID::kMeshesWindowHsmallVmedTransparent;
-      bg_mesh_opaque_id_ = base::BuiltinMeshID::kMeshesWindowHsmallVmedOpaque;
+      tex = uiassets.window_hsmall_vmed;
+      bg_mesh_transparent_ = uiassets.window_hsmall_vmed_transparent;
+      bg_mesh_opaque_ = uiassets.window_hsmall_vmed_opaque;
       l_border = width * 0.07f;
       r_border = width * 0.19f;
       b_border = height * 0.1f;
@@ -995,10 +995,9 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       bg_center_fudge_x_ = -0.05f;
       bg_center_fudge_y_ = 0.0f;
     } else {
-      tex_id = base::BuiltinTextureID::kTexturesWindowHsmallVsmall;
-      bg_mesh_transparent_id_ =
-          base::BuiltinMeshID::kMeshesWindowHsmallVsmallTransparent;
-      bg_mesh_opaque_id_ = base::BuiltinMeshID::kMeshesWindowHsmallVsmallOpaque;
+      tex = uiassets.window_hsmall_vsmall;
+      bg_mesh_transparent_ = uiassets.window_hsmall_vsmall_transparent;
+      bg_mesh_opaque_ = uiassets.window_hsmall_vsmall_opaque;
       l_border = width * 0.12f;
       r_border = width * 0.19f;
       b_border = height * 0.45f;
@@ -1013,7 +1012,7 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     bg_center_x_ = l - l_border + bg_width_ * 0.5f;
     bg_center_y_ = b - b_border + bg_height_ * 0.5f;
     if (background_) {
-      tex_ = g_base->assets->BuiltinTexture(tex_id);
+      tex_ = tex;
     }
     bg_dirty_ = false;
   }
@@ -1074,15 +1073,13 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             amt = 1.0f;
           }
           c.SetColor(0.0f, 0.0f, 0.0f, 0.6 * amt);
-          c.SetTexture(g_base->assets->BuiltinTexture(
-              base::BuiltinTextureID::kTexturesCircleSoft));
+          c.SetTexture(g_ui_v1->assets().circle_soft.get());
           auto s{8.0f * std::max(bg_width_, bg_height_)};
           {
             auto xf = c.ScopedTransform();
             c.Translate(bg_center_x_, bg_center_y_);
             c.Scale(s, s);
-            c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-                base::BuiltinMeshID::kMeshesImage1x1));
+            c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
           }
           c.Submit();
         }
@@ -1105,8 +1102,8 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         auto xf = c.ScopedTransform();
         c.Translate(bg_center_x_, bg_center_y_, zoffs);
         c.Scale(bg_width_ * transition_scale_, bg_height_ * transition_scale_);
-        c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-            draw_transparent ? bg_mesh_transparent_id_ : bg_mesh_opaque_id_));
+        c.DrawMeshAsset(
+            (draw_transparent ? bg_mesh_transparent_ : bg_mesh_opaque_).get());
       }
       c.Submit();
     }
@@ -1136,15 +1133,13 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       base::SimpleComponent c(pass);
       c.SetTransparent(true);
       c.SetPremultiplied(true);
-      c.SetTexture(g_base->assets->BuiltinTexture(
-          base::BuiltinTextureID::kTexturesGlow));
+      c.SetTexture(g_ui_v1->assets().glow.get());
       c.SetColor(0.25f * m, 0.25f * m, 0, 0.3f * m);
       {
         auto xf = c.ScopedTransform();
         c.Translate(glow_center_x_, glow_center_y_);
         c.Scale(glow_width_, glow_height_);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
+        c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
       }
       c.Submit();
     }

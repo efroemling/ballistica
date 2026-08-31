@@ -43,7 +43,7 @@ OTHERPKG = 'a-0.someotherpackage.999999'
 
 def _image(pkg: str = OTHERPKG) -> dui2.Image:
     return dui2.Image(
-        texture=TextureSpec(apverid=pkg, name='textures/whatever'),
+        texture=TextureSpec(pkg, 'textures/whatever'),
         position=(0.0, 0.0),
         size=(1.0, 1.0),
     )

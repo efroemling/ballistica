@@ -147,8 +147,7 @@ void ExplosionNode::Draw(base::FrameDef* frame_def) {
                     1.0f + s * 0.8f * 0.0015f * age,
                     1.0f + s * 0.8f * 0.025f * age);
             c.Scale(0.7f, 0.7f, 0.7f);
-            c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-                                base::BuiltinMeshID::kMeshesShockWave),
+            c.DrawMeshAsset(g_scene_v1->assets().shock_wave.get(),
                             base::kMeshDrawFlagNoReflection);
           }
           c.Submit();
@@ -167,8 +166,7 @@ void ExplosionNode::Draw(base::FrameDef* frame_def) {
                     1.0f + s * 0.8f * 0.0015f * age,
                     1.0f + s * 0.8f * 0.025f * age);
             c.Scale(0.7f, 0.7f, 0.7f);
-            c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-                                base::BuiltinMeshID::kMeshesShockWave),
+            c.DrawMeshAsset(g_scene_v1->assets().shock_wave.get(),
                             base::kMeshDrawFlagNoReflection);
           }
           c.Submit();
@@ -205,8 +203,7 @@ void ExplosionNode::Draw(base::FrameDef* frame_def) {
     c.SetTransparent(true);
     c.SetLightShadow(base::LightShadowType::kNone);
     c.SetPremultiplied(true);
-    c.SetTexture(g_base->assets->BuiltinTexture(
-        base::BuiltinTextureID::kTexturesExplosion));
+    c.SetTexture(g_scene_v1->assets().explosion.get());
     c.SetColor(1.3f * o * color_[0] * b, o * color_[1] * b, o * color_[2] * b,
                0.0f);
     {
@@ -221,16 +218,14 @@ void ExplosionNode::Draw(base::FrameDef* frame_def) {
       Matrix44f om = Matrix44fOrient(right, to_cam, up);
       c.MultMatrix((om * m).m);
       c.Scale(0.9f * s, 0.9f * s, 0.9f * s);
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesShield),
-          base::kMeshDrawFlagNoReflection);
+      c.DrawMeshAsset(g_scene_v1->assets().shield_mesh.get(),
+                      base::kMeshDrawFlagNoReflection);
       c.Scale(0.6f, 0.6f, 0.6f);
       c.Rotate(33, 0, 1, 0);
       c.SetColor(o * 7.0f * color_[0], o * 7.0f * color_[1],
                  o * 7.0f * color_[2], 0);
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesShield),
-          base::kMeshDrawFlagNoReflection);
+      c.DrawMeshAsset(g_scene_v1->assets().shield_mesh.get(),
+                      base::kMeshDrawFlagNoReflection);
     }
     c.Submit();
   }

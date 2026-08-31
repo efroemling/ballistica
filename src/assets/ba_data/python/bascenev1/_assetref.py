@@ -36,6 +36,7 @@ from bacommon.assetspec import (
     MeshSpec as _MeshSpec,
     SoundSpec as _SoundSpec,
     CollisionMeshSpec as _CollisionMeshSpec,
+    CubeMapTextureSpec as _CubeMapTextureSpec,
 )
 
 if TYPE_CHECKING:
@@ -55,13 +56,24 @@ class TextureHandle(_TextureSpec):
 
     __slots__ = ()
 
+    @classmethod
+    def from_spec(cls, spec: _TextureSpec) -> 'TextureHandle':
+        """Loadable handle for a spec that arrived from outside.
+
+        Server-sent content and the wire carry plain specs; this is how
+        one becomes loadable without anyone rebuilding a path string.
+        Verification still happens in :meth:`get`.
+        """
+        # pylint: disable=protected-access
+        return cls(spec._apverid, spec._name)
+
     def get(self) -> 'bascenev1.Texture':
         """Resolve and return the live scene texture for this reference.
 
         Loads into the current scene context (see module docs).
         """
-        check_asset_package_load(self.apverid, self.name)
-        return _bascenev1.aptextureget(f'{self.apverid}:{self.name}')
+        check_asset_package_load(self._apverid, self._name)
+        return _bascenev1.aptextureget(self._apverid, self._name)
 
     def ui(self) -> 'bauiv1.TextureHandle':
         """This same verified reference, in ui form.
@@ -82,7 +94,7 @@ class TextureHandle(_TextureSpec):
         # pylint: disable-next=cyclic-import
         import bauiv1
 
-        return bauiv1.TextureHandle(self.apverid, self.name)
+        return bauiv1.TextureHandle(self._apverid, self._name)
 
 
 class MeshHandle(_MeshSpec):
@@ -90,10 +102,21 @@ class MeshHandle(_MeshSpec):
 
     __slots__ = ()
 
+    @classmethod
+    def from_spec(cls, spec: _MeshSpec) -> 'MeshHandle':
+        """Loadable handle for a spec that arrived from outside.
+
+        Server-sent content and the wire carry plain specs; this is how
+        one becomes loadable without anyone rebuilding a path string.
+        Verification still happens in :meth:`get`.
+        """
+        # pylint: disable=protected-access
+        return cls(spec._apverid, spec._name)
+
     def get(self) -> 'bascenev1.Mesh':
         """Resolve and return the live scene mesh for this reference."""
-        check_asset_package_load(self.apverid, self.name)
-        return _bascenev1.apmeshget(f'{self.apverid}:{self.name}')
+        check_asset_package_load(self._apverid, self._name)
+        return _bascenev1.apmeshget(self._apverid, self._name)
 
     def ui(self) -> 'bauiv1.MeshHandle':
         """This same verified reference, in ui form.
@@ -114,7 +137,7 @@ class MeshHandle(_MeshSpec):
         # pylint: disable-next=cyclic-import
         import bauiv1
 
-        return bauiv1.MeshHandle(self.apverid, self.name)
+        return bauiv1.MeshHandle(self._apverid, self._name)
 
 
 class SoundHandle(_SoundSpec):
@@ -122,10 +145,21 @@ class SoundHandle(_SoundSpec):
 
     __slots__ = ()
 
+    @classmethod
+    def from_spec(cls, spec: _SoundSpec) -> 'SoundHandle':
+        """Loadable handle for a spec that arrived from outside.
+
+        Server-sent content and the wire carry plain specs; this is how
+        one becomes loadable without anyone rebuilding a path string.
+        Verification still happens in :meth:`get`.
+        """
+        # pylint: disable=protected-access
+        return cls(spec._apverid, spec._name)
+
     def get(self) -> 'bascenev1.Sound':
         """Resolve and return the live scene sound for this reference."""
-        check_asset_package_load(self.apverid, self.name)
-        return _bascenev1.apsoundget(f'{self.apverid}:{self.name}')
+        check_asset_package_load(self._apverid, self._name)
+        return _bascenev1.apsoundget(self._apverid, self._name)
 
     def ui(self) -> 'bauiv1.SoundHandle':
         """This same verified reference, in ui form.
@@ -146,7 +180,7 @@ class SoundHandle(_SoundSpec):
         # pylint: disable-next=cyclic-import
         import bauiv1
 
-        return bauiv1.SoundHandle(self.apverid, self.name)
+        return bauiv1.SoundHandle(self._apverid, self._name)
 
 
 class CollisionMeshHandle(_CollisionMeshSpec):
@@ -154,10 +188,35 @@ class CollisionMeshHandle(_CollisionMeshSpec):
 
     __slots__ = ()
 
+    @classmethod
+    def from_spec(cls, spec: _CollisionMeshSpec) -> 'CollisionMeshHandle':
+        """Loadable handle for a spec that arrived from outside.
+
+        Server-sent content and the wire carry plain specs; this is how
+        one becomes loadable without anyone rebuilding a path string.
+        Verification still happens in :meth:`get`.
+        """
+        # pylint: disable=protected-access
+        return cls(spec._apverid, spec._name)
+
     def get(self) -> 'bascenev1.CollisionMesh':
         """Resolve and return the live collision-mesh for this reference."""
-        check_asset_package_load(self.apverid, self.name)
-        return _bascenev1.apcollisionmeshget(f'{self.apverid}:{self.name}')
+        check_asset_package_load(self._apverid, self._name)
+        return _bascenev1.apcollisionmeshget(self._apverid, self._name)
+
+
+class CubeMapTextureHandle(_CubeMapTextureSpec):
+    """A cube-map texture reference (scene wrapper flavor).
+
+    Deliberately has no ``get()``: cube maps never surface as loaded
+    Python objects (scene node reflections are engine-side, keyed by
+    a :class:`~bascenev1.Node` string attr). The handle exists to be
+    passed along -- most notably into base or scene asset-set slots,
+    whose native sides read the reference and load the engine asset
+    themselves.
+    """
+
+    __slots__ = ()
 
 
 #: A node in a wrapper's kind-code tree: each key is one path segment; a
@@ -188,7 +247,7 @@ class AssetGroup:
         self, name: str
     ) -> (
         'AssetGroup | TextureHandle | MeshHandle'
-        ' | SoundHandle | CollisionMeshHandle'
+        ' | SoundHandle | CollisionMeshHandle | CubeMapTextureHandle'
     ):
         try:
             child = self._node[name]
@@ -202,7 +261,10 @@ class AssetGroup:
 
 def _make(
     apverid: str, path: str, kind: str
-) -> 'TextureHandle | MeshHandle | SoundHandle' ' | CollisionMeshHandle':
+) -> (
+    'TextureHandle | MeshHandle | SoundHandle'
+    ' | CollisionMeshHandle | CubeMapTextureHandle'
+):
     """Build a single leaf reference by its single-char kind code."""
     if kind == 't':
         return TextureHandle(apverid, path)
@@ -212,4 +274,49 @@ def _make(
         return SoundHandle(apverid, path)
     if kind == 'c':
         return CollisionMeshHandle(apverid, path)
+    if kind == 'ct':
+        return CubeMapTextureHandle(apverid, path)
     raise ValueError(f'Invalid asset-ref kind {kind!r} for {apverid}:{path}.')
+
+
+def _split_ref(ref: str) -> tuple[str, str]:
+    """Split a qualified ``<apverid>:<name>`` ref into its two parts.
+
+    **Boundary use only.** Asset identity inside the app is a typed
+    handle from a generated wrapper module; nothing here builds or
+    accepts a path string. But refs do still arrive from *outside* as
+    strings -- server-sent content, saved app-config, the scene wire,
+    stored player profiles -- and something has to turn those into
+    assets. That conversion happens here, in one named place, rather
+    than ambiently.
+
+    New code should hold a handle and call its ``get()`` instead.
+    """
+    apverid, sep, name = ref.partition(':')
+    if not sep:
+        raise ValueError(
+            f"Not a qualified asset-package ref: '{ref}'. Legacy bare"
+            f' names load through the legacy get* calls instead.'
+        )
+    return apverid, name
+
+
+def texture_from_ref(ref: str) -> 'bascenev1.Texture':
+    """Load a texture from a qualified ref string.
+
+    See ``_split_ref()`` -- boundary use only.
+    """
+    apverid, assetname = _split_ref(ref)
+    return _bascenev1.aptextureget(apverid, assetname)
+
+
+def qualified_ref(spec: '_TextureSpec') -> str:
+    """Render a spec as a qualified ``<apverid>:<name>`` string.
+
+    **Boundary use only**, and the outward twin of ``_split_ref()``:
+    for refs *leaving* the app as strings, where the receiver is not
+    ours to change -- the scene wire to other clients, stored player
+    profiles. Everything staying inside should pass the spec itself.
+    """
+    # pylint: disable=protected-access
+    return f'{spec._apverid}:{spec._name}'

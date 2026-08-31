@@ -12,6 +12,7 @@
 
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/base.h"
+#include "ballistica/base/generated/base_asset_set.h"
 #include "ballistica/base/support/lang_str.h"
 #include "ballistica/shared/foundation/object.h"
 
@@ -117,6 +118,46 @@ class Assets {
   auto GetCollisionMesh(const std::string& file_name)
       -> Object::Ref<CollisionMeshAsset>;
 
+  /// Asset-package forms of the getters above, taking the package id and
+  /// logical path separately.
+  ///
+  /// This is the form generated wrapper modules use, and they always
+  /// hold the two parts apart -- so joining them in Python only for us
+  /// to validate and re-split was pure round-tripping. A qualified ref
+  /// is also never a legacy bare name, so these skip the compat lookup
+  /// the string forms have to do.
+  auto GetPackageTexture(const std::string& apverid, const std::string& name)
+      -> Object::Ref<TextureAsset>;
+  auto GetPackageMesh(const std::string& apverid, const std::string& name)
+      -> Object::Ref<MeshAsset>;
+  auto GetPackageSound(const std::string& apverid, const std::string& name)
+      -> Object::Ref<SoundAsset>;
+  auto GetPackageCollisionMesh(const std::string& apverid,
+                               const std::string& name)
+      -> Object::Ref<CollisionMeshAsset>;
+  auto GetPackageCubeMapTexture(const std::string& apverid,
+                                const std::string& name)
+      -> Object::Ref<TextureAsset>;
+
+  /// Classic-flavored art base draws itself with (debris, smoke, VR
+  /// hands, reflections), supplied by the active app-mode (see
+  /// babase.set_base_asset_set). Boot-filled with neutral builtin
+  /// placeholders and *restored* to them (never cleared) at app-mode
+  /// switches, so it is always complete -- base draws before and
+  /// between app-modes.
+  auto base_assets() -> const BaseAssetSet& {
+    assert(base_assets_.complete());
+    return base_assets_;
+  }
+  void set_base_assets(const BaseAssetSet& assets) { base_assets_ = assets; }
+  void RestoreBaseAssetPlaceholders();
+
+ private:
+  // Body of the above; caller must hold the asset-list lock (the boot
+  // path calls this from inside the builtin load, which already does).
+  void RestoreBaseAssetPlaceholdersLocked_();
+
+ public:
   auto total_mesh_count() const -> uint32_t {
     return static_cast<uint32_t>(meshes_.size());
   }
@@ -310,15 +351,11 @@ class Assets {
   /// asset-load bindings (gettexture() and friends), which accept only
   /// legacy bare names: asset-package assets must load through their
   /// generated wrapper modules (which route through the private
-  /// ap*get bindings; see FailOnNonAssetPackagePath). `call_name` is
-  /// the Python-visible callable name, used in the error message.
+  /// ap*get bindings; those take the package id and logical path as
+  /// separate args, so they cannot be handed a path at all).
+  /// `call_name` is the Python-visible callable name, used in the
+  /// error message.
   static void FailOnAssetPackagePath(const char* name, const char* call_name);
-
-  /// Inverse of FailOnAssetPackagePath, for the private ap*get Python
-  /// bindings: raise a Python ValueError if `name` is *not* a
-  /// qualified asset-package path.
-  static void FailOnNonAssetPackagePath(const char* name,
-                                        const char* call_name);
 
  private:
   /// Resolve a qualified-ref name (``<apverid>:<asset_name>``) into a
@@ -383,6 +420,7 @@ class Assets {
 
   std::vector<Object::Ref<DataAsset> > system_datas_;
 
+  BaseAssetSet base_assets_;
   std::vector<Object::Ref<TextureAsset> > builtin_textures_;
   std::vector<Object::Ref<TextureAsset> > builtin_cube_map_textures_;
   std::vector<Object::Ref<SoundAsset> > builtin_sounds_;

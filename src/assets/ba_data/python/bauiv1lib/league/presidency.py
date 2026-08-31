@@ -8,6 +8,7 @@ from bauiv1lib.docui import DocUIController
 
 import bauiv1 as bui
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from bacommon.docui import DocUIRequest, DocUIResponse
@@ -35,5 +36,5 @@ class LeaguePresidencyUIController(DocUIController):
     def _get_tokens(self, action: DocUILocalAction) -> None:
         from bauiv1lib.gettokens import show_get_tokens_window
 
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
         show_get_tokens_window(origin_widget=bui.existing(action.widget))

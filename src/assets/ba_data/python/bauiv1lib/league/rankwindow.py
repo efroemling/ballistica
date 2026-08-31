@@ -12,6 +12,7 @@ import bacommon.classic
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 from bauiv1lib.utils import (
     get_screen_margins,
     scroll_fade_bottom,
@@ -669,7 +670,7 @@ class LeagueRankWindow(bui.MainWindow):
             label='',
             position=(self._xoffs + h2 - 60, v2 - 100),
             color=(0.7, 0.55, 0.9),
-            texture=_builtinassets.textures.button_square_wide.get(),
+            texture=_uiv1assets.textures.button_square_wide.get(),
             opacity=0.3,
             size=(200, 80),
             autoselect=True,
@@ -1377,7 +1378,7 @@ class LeagueRankWindow(bui.MainWindow):
     ) -> None:
         from bauiv1lib.account.viewer import AccountViewerWindow
 
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
         AccountViewerWindow(
             account_id=account_id, position=textwidget.get_screen_space_center()
         )

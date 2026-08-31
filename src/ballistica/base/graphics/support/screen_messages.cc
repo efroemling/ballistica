@@ -425,8 +425,8 @@ void ScreenMessages::Draw(FrameDef* frame_def) {
             c2.SetColorizeTexture(i->tint_texture.get());
             c2.SetColorizeColor(i->tint.x, i->tint.y, i->tint.z);
             c2.SetColorizeColor2(i->tint2.x, i->tint2.y, i->tint2.z);
-            c2.SetMaskTexture(g_base->assets->BuiltinTexture(
-                BuiltinTextureID::kTexturesCharacterIconMask));
+            c2.SetMaskTexture(
+                g_base->assets->base_assets().character_icon_mask.get());
           }
           // Premultiply rgb by alpha for premultiplied icon textures so
           // fading icons composite 'over' under premult blend instead of

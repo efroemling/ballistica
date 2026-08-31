@@ -49,12 +49,22 @@ void ClassicPython::ImportPythonObjs() {
   }
 }
 
+auto ClassicPython::QualifiedRefFromHandle_(const PythonRef& handle)
+    -> std::string {
+  // The parts are private on the Python side (nothing there may build
+  // an asset path); reading them here is the sanctioned boundary.
+  return handle.GetAttr("_apverid").ValueAsString() + ":"
+         + handle.GetAttr("_name").ValueAsString();
+}
+
 auto ClassicPython::ChestDisplayFromPython(const PythonRef& ref)
     -> ChestDisplay_ {
   ChestDisplay_ out;
 
-  out.texclosed = ref.GetAttr("texclosed").ValueAsString().c_str();
-  out.texclosedtint = ref.GetAttr("texclosedtint").ValueAsString().c_str();
+  // These are asset handles now, not name strings; join their parts
+  // into the qualified form the asset system keys on. Init-time only.
+  out.texclosed = QualifiedRefFromHandle_(ref.GetAttr("texclosed"));
+  out.texclosedtint = QualifiedRefFromHandle_(ref.GetAttr("texclosedtint"));
   out.color = base::BasePython::GetPyVector3f(ref.GetAttr("color").get());
   out.tint = base::BasePython::GetPyVector3f(ref.GetAttr("tint").get());
   out.tint2 = base::BasePython::GetPyVector3f(ref.GetAttr("tint2").get());

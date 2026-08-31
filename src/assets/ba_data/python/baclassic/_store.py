@@ -20,7 +20,12 @@ def _tex(name: str) -> str:
     # pylint: disable-next=cyclic-import
     from bascenev1 import _classicassets
 
-    return f'{_classicassets.__asset_package__}:textures/{name}'
+    # LEGACY: builds a qualified path by hand, which nothing should
+    # do -- the parts are private now precisely to flag it. Kept
+    # only until this file's callers hold handles instead; see
+    # docs/followups.md "hand-built asset paths".
+    # pylint: disable-next=protected-access
+    return f'{_classicassets._ASSET_PACKAGE}:textures/{name}'
 
 
 class StoreSubsystem:

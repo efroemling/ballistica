@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import bauiv1 as bui
 from bauiv1 import _classicassets
-from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     pass
@@ -119,7 +119,7 @@ def _scroll_fade(
     blotchheight = scrollwidth * 0.23
     bimg = bui.imagewidget(
         parent=container,
-        texture=_builtinassets.textures.ui_atlas.get(),
+        texture=_uiv1assets.textures.ui_atlas.get(),
         mesh_transparent=_classicassets.meshes.window_bgblotch.get(),
         position=(
             scrollleft + 60.0 - blotchwidth * 0.5,
@@ -131,7 +131,7 @@ def _scroll_fade(
     bui.widget(edit=bimg, depth_range=(0.9, 1.0))
     bimg = bui.imagewidget(
         parent=container,
-        texture=_builtinassets.textures.ui_atlas.get(),
+        texture=_uiv1assets.textures.ui_atlas.get(),
         mesh_transparent=_classicassets.meshes.window_bgblotch.get(),
         position=(
             scrollleft + scrollwidth - 60.0 - blotchwidth * 0.5,
@@ -145,7 +145,7 @@ def _scroll_fade(
     if center:
         bimg = bui.imagewidget(
             parent=container,
-            texture=_builtinassets.textures.ui_atlas.get(),
+            texture=_uiv1assets.textures.ui_atlas.get(),
             mesh_transparent=_classicassets.meshes.window_bgblotch.get(),
             position=(
                 scrollleft + scrollwidth * 0.5 - blotchwidth * 0.5,

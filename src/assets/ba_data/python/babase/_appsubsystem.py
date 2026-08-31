@@ -83,6 +83,10 @@ class AppSubsystem:
     def reset(self) -> None:
         """Reset the subsystem to a default state.
 
-        This is called when switching app modes, but may be called at
-        other times too.
+        Called at the start of every app-mode switch, before the
+        incoming mode's config phase and activation. This is THE place
+        to wipe any per-app-mode customization a mode may have applied
+        to the subsystem, so nothing can leak from one mode into the
+        next; the incoming mode then re-applies whatever it wants as
+        it activates. May be called at other times too.
         """

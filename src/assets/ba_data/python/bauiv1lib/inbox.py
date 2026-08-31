@@ -25,6 +25,7 @@ from bauiv1lib.utils import (
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     import datetime
@@ -1089,7 +1090,7 @@ class InboxWindow(bui.MainWindow):
             claims_up_down=True,
         )
 
-        backing_tex = _builtinassets.textures.button_square_wide.get()
+        backing_tex = _uiv1assets.textures.button_square_wide.get()
 
         assert bui.app.classic is not None
 

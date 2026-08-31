@@ -46,6 +46,7 @@ if TYPE_CHECKING:
 
     from baclassic import ClassicAppSubsystem
     from baplus import PlusAppSubsystem
+    from bascenev1 import SceneV1AppSubsystem
     from bauiv1 import UIV1AppSubsystem
 
     # __FEATURESET_APP_SUBSYSTEM_IMPORTS_END__
@@ -401,6 +402,21 @@ class App:
         except Exception:
             balog.exception('Error importing baplus.')
             return None
+
+    @property
+    def scene_v1(self) -> SceneV1AppSubsystem:
+        """Our scene_v1 subsystem (always available)."""
+        return self._get_subsystem_property(
+            'scene_v1', self._create_scene_v1_subsystem
+        )  # type: ignore
+
+    @staticmethod
+    def _create_scene_v1_subsystem() -> SceneV1AppSubsystem:
+        # pylint: disable=cyclic-import
+
+        from bascenev1 import SceneV1AppSubsystem
+
+        return SceneV1AppSubsystem()
 
     @property
     def ui_v1(self) -> UIV1AppSubsystem:
@@ -940,14 +956,7 @@ class App:
                         'Error in reset() for subsystem %s.', subsystem
                     )
 
-            self._mode = mode
-            try:
-                mode.on_activate()
-            except Exception:
-                # Hmm; what should we do in this case?...
-                balog.exception('Error activating app-mode %s.', mode)
-
-            self._on_app_mode_activated()
+            self._activate_app_mode(mode, offer_config_to_plugins=True)
 
             # Let the world know when we first have an app-mode; certain
             # app stuff such as input processing can proceed at that
@@ -961,6 +970,39 @@ class App:
             balog.exception(
                 'Error handling intent %s in app-mode %s.', intent, mode
             )
+
+    def _activate_app_mode(
+        self, mode: AppMode, *, offer_config_to_plugins: bool
+    ) -> None:
+        """Run the config phase for ``mode`` and make it active.
+
+        The caller is expected to have deactivated any previous mode
+        and reset all subsystems (which wipes per-app-mode
+        customization) before calling this.
+        """
+        from babase._appmode import AppModeConfig
+
+        self._mode = mode
+
+        # Config phase: ask the mode how it wants to run, then give
+        # plugins their chance to amend. By convention nothing here
+        # takes effect yet; the mode reads the final result as it
+        # activates.
+        try:
+            config = mode.new_app_mode_config()
+        except Exception:
+            balog.exception('Error creating app-mode-config for %s.', mode)
+            config = AppModeConfig()
+        if offer_config_to_plugins:
+            self.plugins.offer_app_mode_config(config)
+
+        try:
+            mode.on_activate(config)
+        except Exception:
+            # Hmm; what should we do in this case?...
+            balog.exception('Error activating app-mode %s.', mode)
+
+        self._on_app_mode_activated()
 
     def _on_app_mode_activated(self) -> None:
         """Tell subsystems an app-mode just became active."""
@@ -1015,13 +1057,11 @@ class App:
             except Exception:
                 balog.exception('Error in reset() for subsystem %s.', subsystem)
 
-        self._mode = mode
-        try:
-            mode.on_activate()
-        except Exception:
-            balog.exception('Error activating construct-mode %s.', mode)
-
-        self._on_app_mode_activated()
+        # No plugin config pass here, and deliberately so: plugins do
+        # not run at all until construct-mode completes (their modules
+        # are not even imported yet, and the asset guarantees they are
+        # promised do not exist yet).
+        self._activate_app_mode(mode, offer_config_to_plugins=False)
 
         # First app-mode is now set; start the consoles / enable input.
         # (Under the server manager, the stdin reader itself holds off on
@@ -1074,6 +1114,7 @@ class App:
         # Poke these attrs to create all our subsystems.
         _ = self.plus
         _ = self.classic
+        _ = self.scene_v1
         _ = self.ui_v1
 
         # __FEATURESET_APP_SUBSYSTEM_CREATE_END__

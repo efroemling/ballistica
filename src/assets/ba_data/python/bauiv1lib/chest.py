@@ -12,6 +12,7 @@ import bacommon.classic
 import bacommon.legacydisplayitem as lditm
 import bauiv1 as bui
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 from bauiv1 import _commonassets, _classicassets
 
 if TYPE_CHECKING:
@@ -24,7 +25,12 @@ _g_open_voices: list[tuple[float, str, float]] = []
 
 def _stex(name: str) -> str:
     """Qualified _classicassets texture ref."""
-    return f'{_classicassets.__asset_package__}:textures/{name}'
+    # LEGACY: builds a qualified path by hand, which nothing should
+    # do -- the parts are private now precisely to flag it. Kept
+    # only until this file's callers hold handles instead; see
+    # docs/followups.md "hand-built asset paths".
+    # pylint: disable-next=protected-access
+    return f'{_classicassets._ASSET_PACKAGE}:textures/{name}'
 
 
 class ChestWindow(bui.MainWindow):
@@ -383,8 +389,8 @@ class ChestWindow(bui.MainWindow):
             position=(self._width * 0.5 - imgsize * 0.5, self._chest_yoffs),
             color=self._chestdisplayinfo.color,
             size=(imgsize, imgsize),
-            texture=bui.aptextureget(self._chestdisplayinfo.texclosed),
-            tint_texture=bui.aptextureget(self._chestdisplayinfo.texclosedtint),
+            texture=self._chestdisplayinfo.texclosed.ui().get(),
+            tint_texture=self._chestdisplayinfo.texclosedtint.ui().get(),
             tint_color=self._chestdisplayinfo.tint,
             tint2_color=self._chestdisplayinfo.tint2,
         )
@@ -780,7 +786,7 @@ class ChestWindow(bui.MainWindow):
                     parent=self._root_widget,
                     size=(iconsize, iconsize),
                     position=(x, y - iconsize * 0.5),
-                    texture=bui.aptextureget(img),
+                    texture=bui.texture_from_ref(img),
                     opacity=0.4,
                 )
             )
@@ -899,7 +905,7 @@ class ChestWindow(bui.MainWindow):
         if user_tokens < token_payment:
             # Hack: We disable normal swish for the open button and it
             # seems weird without a swish here, so explicitly do one.
-            _builtinassets.audio.swish.get().play()
+            _uiv1assets.audio.swish.get().play()
             show_get_tokens_prompt(origin_widget=self._open_now_button)
             return
 
@@ -1068,8 +1074,8 @@ class ChestWindow(bui.MainWindow):
         img = bui.imagewidget(
             parent=self._root_widget,
             color=self._chestdisplayinfo.color,
-            texture=bui.aptextureget(self._chestdisplayinfo.texclosed),
-            tint_texture=bui.aptextureget(self._chestdisplayinfo.texclosedtint),
+            texture=self._chestdisplayinfo.texclosed.ui().get(),
+            tint_texture=self._chestdisplayinfo.texclosedtint.ui().get(),
             tint_color=self._chestdisplayinfo.tint,
             tint2_color=self._chestdisplayinfo.tint2,
         )
@@ -1214,8 +1220,8 @@ class ChestWindow(bui.MainWindow):
         img = bui.imagewidget(
             parent=self._root_widget,
             color=self._chestdisplayinfo.color,
-            texture=bui.aptextureget(self._chestdisplayinfo.texopen),
-            tint_texture=bui.aptextureget(self._chestdisplayinfo.texopentint),
+            texture=self._chestdisplayinfo.texopen.ui().get(),
+            tint_texture=self._chestdisplayinfo.texopentint.ui().get(),
             tint_color=self._chestdisplayinfo.tint,
             tint2_color=self._chestdisplayinfo.tint2,
         )

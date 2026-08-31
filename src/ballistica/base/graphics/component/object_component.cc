@@ -77,10 +77,8 @@ void ObjectComponent::WriteConfig() {
               color_add_r_, color_add_g_, color_add_b_, reflection_scale_r_,
               reflection_scale_g_, reflection_scale_b_);
           cmd_buffer_->PutTexture(texture_);
-          BuiltinCubeMapTextureID r =
-              Graphics::CubeMapFromReflectionType(reflection_);
           cmd_buffer_->PutCubeMapTexture(
-              g_base->assets->BuiltinCubeMapTexture(r));
+              Graphics::CubeMapFromReflectionType(reflection_));
         } else {
           ConfigForShading(ShadingType::kObjectReflectTransparent);
           cmd_buffer_->PutInt(premult_blend);
@@ -88,10 +86,8 @@ void ObjectComponent::WriteConfig() {
                                  color_b_ * cmul, color_a_, reflection_scale_r_,
                                  reflection_scale_g_, reflection_scale_b_);
           cmd_buffer_->PutTexture(texture_);
-          BuiltinCubeMapTextureID r =
-              Graphics::CubeMapFromReflectionType(reflection_);
           cmd_buffer_->PutCubeMapTexture(
-              g_base->assets->BuiltinCubeMapTexture(r));
+              Graphics::CubeMapFromReflectionType(reflection_));
         }
       } else {
         ConfigForShading(ShadingType::kObjectReflect);
@@ -100,10 +96,8 @@ void ObjectComponent::WriteConfig() {
                                reflection_scale_r_, reflection_scale_g_,
                                reflection_scale_b_);
         cmd_buffer_->PutTexture(texture_);
-        BuiltinCubeMapTextureID r =
-            Graphics::CubeMapFromReflectionType(reflection_);
         cmd_buffer_->PutCubeMapTexture(
-            g_base->assets->BuiltinCubeMapTexture(r));
+            Graphics::CubeMapFromReflectionType(reflection_));
       }
     } else {
       // With add.
@@ -122,10 +116,8 @@ void ObjectComponent::WriteConfig() {
                 colorize_color2_g_, colorize_color2_b_);
             cmd_buffer_->PutTexture(texture_);
             cmd_buffer_->PutTexture(colorize_texture_);
-            BuiltinCubeMapTextureID r =
-                Graphics::CubeMapFromReflectionType(reflection_);
             cmd_buffer_->PutCubeMapTexture(
-                g_base->assets->BuiltinCubeMapTexture(r));
+                Graphics::CubeMapFromReflectionType(reflection_));
           } else {
             ConfigForShading(ShadingType::kObjectReflectLightShadowColorized);
             cmd_buffer_->PutInt(static_cast<int>(light_shadow_));
@@ -135,10 +127,8 @@ void ObjectComponent::WriteConfig() {
                                    colorize_color_g_, colorize_color_b_);
             cmd_buffer_->PutTexture(texture_);
             cmd_buffer_->PutTexture(colorize_texture_);
-            BuiltinCubeMapTextureID r =
-                Graphics::CubeMapFromReflectionType(reflection_);
             cmd_buffer_->PutCubeMapTexture(
-                g_base->assets->BuiltinCubeMapTexture(r));
+                Graphics::CubeMapFromReflectionType(reflection_));
           }
         } else {
           if (double_sided_) {
@@ -149,10 +139,8 @@ void ObjectComponent::WriteConfig() {
                                    reflection_scale_r_, reflection_scale_g_,
                                    reflection_scale_b_);
             cmd_buffer_->PutTexture(texture_);
-            BuiltinCubeMapTextureID r =
-                Graphics::CubeMapFromReflectionType(reflection_);
             cmd_buffer_->PutCubeMapTexture(
-                g_base->assets->BuiltinCubeMapTexture(r));
+                Graphics::CubeMapFromReflectionType(reflection_));
           } else {
             ConfigForShading(ShadingType::kObjectReflectLightShadow);
             cmd_buffer_->PutInt(static_cast<int>(light_shadow_));
@@ -161,10 +149,8 @@ void ObjectComponent::WriteConfig() {
                                    reflection_scale_r_, reflection_scale_g_,
                                    reflection_scale_b_);
             cmd_buffer_->PutTexture(texture_);
-            BuiltinCubeMapTextureID r =
-                Graphics::CubeMapFromReflectionType(reflection_);
             cmd_buffer_->PutCubeMapTexture(
-                g_base->assets->BuiltinCubeMapTexture(r));
+                Graphics::CubeMapFromReflectionType(reflection_));
           }
         }
       } else {
@@ -183,10 +169,8 @@ void ObjectComponent::WriteConfig() {
                 colorize_color2_b_);
             cmd_buffer_->PutTexture(texture_);
             cmd_buffer_->PutTexture(colorize_texture_);
-            BuiltinCubeMapTextureID r =
-                Graphics::CubeMapFromReflectionType(reflection_);
             cmd_buffer_->PutCubeMapTexture(
-                g_base->assets->BuiltinCubeMapTexture(r));
+                Graphics::CubeMapFromReflectionType(reflection_));
           } else {
             ConfigForShading(
                 ShadingType::kObjectReflectLightShadowAddColorized);
@@ -198,10 +182,8 @@ void ObjectComponent::WriteConfig() {
                                    colorize_color_g_, colorize_color_b_);
             cmd_buffer_->PutTexture(texture_);
             cmd_buffer_->PutTexture(colorize_texture_);
-            BuiltinCubeMapTextureID r =
-                Graphics::CubeMapFromReflectionType(reflection_);
             cmd_buffer_->PutCubeMapTexture(
-                g_base->assets->BuiltinCubeMapTexture(r));
+                Graphics::CubeMapFromReflectionType(reflection_));
           }
         } else {
           ConfigForShading(ShadingType::kObjectReflectLightShadowAdd);
@@ -211,10 +193,8 @@ void ObjectComponent::WriteConfig() {
                                  reflection_scale_r_, reflection_scale_g_,
                                  reflection_scale_b_);
           cmd_buffer_->PutTexture(texture_);
-          BuiltinCubeMapTextureID r =
-              Graphics::CubeMapFromReflectionType(reflection_);
           cmd_buffer_->PutCubeMapTexture(
-              g_base->assets->BuiltinCubeMapTexture(r));
+              Graphics::CubeMapFromReflectionType(reflection_));
         }
       }
     }

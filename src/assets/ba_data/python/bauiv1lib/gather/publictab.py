@@ -15,6 +15,7 @@ from bauiv1lib.gather import GatherTab
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -1510,7 +1511,7 @@ class PublicGatherTab(GatherTab):
         if party.queue is not None:
             from bauiv1lib.partyqueue import PartyQueueWindow
 
-            _builtinassets.audio.swish.get().play()
+            _uiv1assets.audio.swish.get().play()
             PartyQueueWindow(party.queue, party.address, party.port)
         else:
             address = party.address

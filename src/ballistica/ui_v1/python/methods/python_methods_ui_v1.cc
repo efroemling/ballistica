@@ -67,16 +67,17 @@ static PyMethodDef PyGetSoundDef = {
 static auto PyApSoundGet(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
+  const char* apverid;
   const char* name;
-  static const char* kwlist[] = {"name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &name)) {
+  static const char* kwlist[] = {"apverid", "name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "ss", const_cast<char**>(kwlist), &apverid, &name)) {
     return nullptr;
   }
-  base::Assets::FailOnNonAssetPackagePath(name, "apsoundget");
   {
     base::Assets::AssetListLock lock;
-    Object::Ref<base::SoundAsset> sound = g_base->assets->GetSound(name);
+    Object::Ref<base::SoundAsset> sound =
+        g_base->assets->GetPackageSound(apverid, name);
     return PythonClassUISound::Create(sound.get());
   }
   Py_RETURN_NONE;
@@ -88,7 +89,7 @@ static PyMethodDef PyApSoundGetDef = {
     (PyCFunction)PyApSoundGet,     // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "apsoundget(name: str) -> bauiv1.Sound\n"
+    "apsoundget(apverid: str, name: str) -> bauiv1.Sound\n"
     "\n"
     "Load a ui sound from an asset-package (internal).\n"
     "\n"
@@ -135,16 +136,17 @@ static PyMethodDef PyGetTextureDef = {
 static auto PyApTextureGet(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
+  const char* apverid;
   const char* name;
-  static const char* kwlist[] = {"name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &name)) {
+  static const char* kwlist[] = {"apverid", "name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "ss", const_cast<char**>(kwlist), &apverid, &name)) {
     return nullptr;
   }
-  base::Assets::FailOnNonAssetPackagePath(name, "aptextureget");
   {
     base::Assets::AssetListLock lock;
-    return PythonClassUITexture::Create(g_base->assets->GetTexture(name));
+    return PythonClassUITexture::Create(
+        g_base->assets->GetPackageTexture(apverid, name));
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -155,7 +157,7 @@ static PyMethodDef PyApTextureGetDef = {
     (PyCFunction)PyApTextureGet,   // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "aptextureget(name: str) -> bauiv1.Texture\n"
+    "aptextureget(apverid: str, name: str) -> bauiv1.Texture\n"
     "\n"
     "Load a ui texture from an asset-package (internal).\n"
     "\n"
@@ -232,16 +234,17 @@ static PyMethodDef PyGetMeshDef = {
 static auto PyApMeshGet(PyObject* self, PyObject* args, PyObject* keywds)
     -> PyObject* {
   BA_PYTHON_TRY;
+  const char* apverid;
   const char* name;
-  static const char* kwlist[] = {"name", nullptr};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char**>(kwlist), &name)) {
+  static const char* kwlist[] = {"apverid", "name", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "ss", const_cast<char**>(kwlist), &apverid, &name)) {
     return nullptr;
   }
-  base::Assets::FailOnNonAssetPackagePath(name, "apmeshget");
   {
     base::Assets::AssetListLock lock;
-    return PythonClassUIMesh::Create(g_base->assets->GetMesh(name));
+    return PythonClassUIMesh::Create(
+        g_base->assets->GetPackageMesh(apverid, name));
   }
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
@@ -252,7 +255,7 @@ static PyMethodDef PyApMeshGetDef = {
     (PyCFunction)PyApMeshGet,      // method
     METH_VARARGS | METH_KEYWORDS,  // flags
 
-    "apmeshget(name: str) -> bauiv1.Mesh\n"
+    "apmeshget(apverid: str, name: str) -> bauiv1.Mesh\n"
     "\n"
     "Load a ui mesh from an asset-package (internal).\n"
     "\n"
@@ -3458,6 +3461,69 @@ static PyMethodDef PyReloadHooksDef = {
     "Call this if you replace things in a hooks module to get the\n"
     "native layer to see your changes.",
 };
+
+// --------------------------- set_ui_asset_set -------------------------------
+
+/// Pull a bauiv1.UIAssetSet apart into its native form.
+///
+/// The body is generated from the same spec as the dataclass and the
+/// struct (see tools/batools/ui_assets.py); hand-writing it would just
+/// relocate the drift problem it exists to prevent.
+static auto UIAssetSetFromPyArgs(PyObject* args, UIAssetSet* out) -> bool {
+#include "ballistica/ui_v1/generated/ui_asset_set_unpack.inc"
+}
+
+static auto PySetUIAssetSet(PyObject* self, PyObject* args) -> PyObject* {
+  BA_PYTHON_TRY;
+  UIAssetSet assets;
+  if (!UIAssetSetFromPyArgs(args, &assets)) {
+    return nullptr;
+  }
+  assert(assets.complete());
+  g_ui_v1->set_assets(assets);
+
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PySetUIAssetSetDef = {
+    "set_ui_asset_set_native",     // name
+    (PyCFunction)PySetUIAssetSet,  // method
+    METH_VARARGS,                  // flags
+
+    "set_ui_asset_set_native(*args: bauiv1.Texture | bauiv1.Mesh"
+    " | bauiv1.Sound) -> None\n"
+    "\n"
+    "(internal) Supply the assets the widget layer draws itself with.\n"
+    "\n"
+    "Do not call this directly -- bauiv1.set_ui_asset_set() is the\n"
+    "entry point. Args arrive positionally in spec order; both sides\n"
+    "are generated from src/codegen/bauiv1codegen/ui_assets.py, so\n"
+    "they cannot drift.",
+};
+
+// ------------------------- clear_ui_asset_set -------------------------------
+
+static auto PyClearUIAssetSet(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  g_ui_v1->clear_assets();
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyClearUIAssetSetDef = {
+    "clear_ui_asset_set_native",     // name
+    (PyCFunction)PyClearUIAssetSet,  // method
+    METH_NOARGS,                     // flags
+
+    "clear_ui_asset_set_native() -> None\n"
+    "\n"
+    "(internal) Drop any app-mode-supplied ui asset set.\n"
+    "\n"
+    "Called by UIV1AppSubsystem.reset() at each app-mode switch so an\n"
+    "incoming app-mode can never inherit the outgoing one's art.",
+};
+
 // -----------------------------------------------------------------------------
 
 auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
@@ -3492,6 +3558,8 @@ auto PythonMethodsUIV1::GetMethods() -> std::vector<PyMethodDef> {
       PyRootUIPauseUpdatesDef,
       PyRootUIResumeUpdatesDef,
       PyReloadHooksDef,
+      PySetUIAssetSetDef,
+      PyClearUIAssetSetDef,
   };
 }
 

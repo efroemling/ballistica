@@ -240,8 +240,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
     c.SetLightShadow(base::LightShadowType::kNone);
     c.SetReflection(base::ReflectionType::kSharp);
     c.SetReflectionScale(0.34f * o, 0.34f * o, 0.34f * o);
-    c.SetTexture(g_base->assets->BuiltinTexture(
-        base::BuiltinTextureID::kTexturesShield));
+    c.SetTexture(g_scene_v1->assets().shield.get());
     c.SetColor(col[0], col[1], col[2], 0.13f * o);
     Vector3f to_cam =
         Vector3f(cx - position_[0], cy - position_[1], cz - position_[2])
@@ -263,9 +262,8 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
       c.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360, 0,
                1, 0);
       c.Scale(r2, r2, r2);
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesShield),
-          base::kMeshDrawFlagNoReflection);
+      c.DrawMeshAsset(g_scene_v1->assets().shield_mesh.get(),
+                      base::kMeshDrawFlagNoReflection);
     }
     c.Submit();
 
@@ -279,8 +277,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
         c2.Rotate(Utils::precalc_rand_1(rot_count_ % kPrecalcRandsCount) * 360,
                   0, 1, 0);
         c2.Scale(r2, r2, r2);
-        c2.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesShield));
+        c2.DrawMeshAsset(g_scene_v1->assets().shield_mesh.get());
       }
       c2.Submit();
     }
@@ -295,8 +292,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
                   0, 1, 0);
         float sc = r2 * 1.1f;
         c2.Scale(sc, sc, sc);
-        c2.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesShield));
+        c2.DrawMeshAsset(g_scene_v1->assets().shield_mesh.get());
       }
       c2.Submit();
     }

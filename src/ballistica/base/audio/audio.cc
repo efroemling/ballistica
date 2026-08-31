@@ -194,6 +194,25 @@ auto Audio::SafePlayBuiltinSound(BuiltinSoundID sound_id)
   return PlaySound(g_base->assets->BuiltinSound(sound_id));
 }
 
+auto Audio::SafePlaySound(SoundAsset* sound) -> std::optional<uint32_t> {
+  // Save some time on headless.
+  if (g_core->HeadlessMode()) {
+    return {};
+  }
+  if (!g_base->InLogicThread()) {
+    g_core->logging->Log(LogName::kBaAudio, LogLevel::kError,
+                         "Audio::SafePlaySound called from non-logic thread.");
+    return {};
+  }
+  if (!g_base->assets->sys_assets_loaded()) {
+    g_core->logging->Log(
+        LogName::kBaAudio, LogLevel::kWarning,
+        "Audio::SafePlaySound called before sys assets loaded.");
+    return {};
+  }
+  return PlaySound(sound);
+}
+
 auto Audio::PlaySound(SoundAsset* sound, float volume)
     -> std::optional<uint32_t> {
   assert(g_core);

@@ -12,6 +12,7 @@ import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -367,7 +368,7 @@ class GamepadSettingsWindow(bui.MainWindow):
             pos=(self._width * 0.5, v),
             color=(0.4, 0.4, 0.6),
             button='buttonStart' + self._ext,
-            texture=_builtinassets.textures.start_button.get(),
+            texture=_uiv1assets.textures.start_button.get(),
             scale=0.7,
         )
 

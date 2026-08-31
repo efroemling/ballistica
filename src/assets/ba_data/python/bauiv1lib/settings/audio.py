@@ -8,6 +8,7 @@ import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     pass
@@ -118,7 +119,12 @@ class AudioSettingsWindow(bui.MainWindow):
         y = height * 0.5 + (100 if show_soundtracks else 70)
         y -= spacing * 1.0
 
-        swish = _builtinassets.audio.swish.get()
+        swish = _uiv1assets.audio.swish.get()
+
+        # Paces both how often blips can come and how long a drag waits
+        # for its first one; see the two arguments below.
+        swish_interval = 1.0 / 3.0
+
         self._sound_volume_slider = svs = ConfigSlider(
             parent=self._root_widget,
             idprefix=f'{self.main_window_id_prefix}|soundvolume',
@@ -137,7 +143,13 @@ class AudioSettingsWindow(bui.MainWindow):
             callback=lambda _v: swish.play(),
             # Slower than music's: each apply here is an audible blip, and
             # they run together if they come much faster than this.
-            drag_apply_interval=1.0 / 3.0,
+            drag_apply_interval=swish_interval,
+            # A quick flick from one level to another should be heard as
+            # the level it lands on -- not blipped where it started and
+            # again where it ended. Waiting this long before a drag's
+            # first blip means a flick shorter than it has only the one
+            # to play, at release.
+            drag_apply_delay=swish_interval,
         )
         y -= spacing
         self._music_volume_slider = ConfigSlider(

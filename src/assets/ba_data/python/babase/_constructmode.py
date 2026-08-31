@@ -26,7 +26,7 @@ from babase._assetsubsystem import (
 )
 
 if TYPE_CHECKING:
-    from babase import AppIntent, LangStr
+    from babase import AppIntent, AppModeConfig, LangStr
     from babase._assetsubsystem import AssetSubsystem
 
 
@@ -138,7 +138,9 @@ class ConstructAppMode(AppMode):
         raise RuntimeError('ConstructAppMode does not handle intents.')
 
     @override
-    def on_activate(self) -> None:
+    def on_activate(self, config: AppModeConfig) -> None:
+        del config  # Unused.
+
         # Bring-up runs as an async task on the logic thread's event loop;
         # the hand-off to the real app-mode happens once it completes.
         # (Server-mode start and other stdin commands wait safely until the

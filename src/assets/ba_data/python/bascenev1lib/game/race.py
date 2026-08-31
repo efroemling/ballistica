@@ -12,7 +12,6 @@ from dataclasses import dataclass
 
 import bascenev1 as bs
 from bascenev1 import _classicassets
-from bascenev1 import _builtinassets
 
 from bascenev1lib.actor.bomb import Bomb
 from bascenev1lib.actor.playerspaz import PlayerSpaz
@@ -158,7 +157,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
         self._swipsound = _classicassets.audio.swip.get()
         self._last_team_time: float | None = None
         self._front_race_region: int | None = None
-        self._nub_tex = _builtinassets.textures.nub.get()
+        self._nub_tex = _classicassets.textures.nub.get()
         self._beep_1_sound = _classicassets.audio.race_beep1.get()
         self._beep_2_sound = _classicassets.audio.race_beep2.get()
         self.race_region_material: bs.Material | None = None
@@ -514,7 +513,7 @@ class RaceGame(bs.TeamGameActivity[Player, Team]):
             lnub = bs.newnode(
                 'image',
                 attrs={
-                    'texture': _builtinassets.textures.nub.get(),
+                    'texture': _classicassets.textures.nub.get(),
                     'opacity': 1.0,
                     'absolute_scale': True,
                     'position': (-75 + i * 50, light_y),

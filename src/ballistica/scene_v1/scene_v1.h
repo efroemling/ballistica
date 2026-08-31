@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "ballistica/scene_v1/generated/scene_asset_set.h"
 #include "ballistica/shared/foundation/feature_set_native_component.h"
 
 // Common header that most everything using our feature-set should include.
@@ -607,6 +608,28 @@ class SceneV1FeatureSet : public FeatureSetNativeComponent {
   // random name for it.
   auto GetRandomName(const std::string& full_name) -> std::string;
 
+  /// The assets our node layer draws itself with, supplied by the
+  /// active app-mode (see bascenev1.set_scene_asset_set). Nodes only
+  /// exist within sessions, which only exist under an activated
+  /// app-mode, so drawing code can rely on every member being
+  /// present. Asserts in debug builds if that ordering ever breaks.
+  auto assets() -> const SceneV1AssetSet& {
+    assert(scene_assets_.complete());
+    return scene_assets_;
+  }
+
+  /// Do we currently hold a complete asset set?
+  auto have_assets() const -> bool { return scene_assets_.complete(); }
+
+  /// Supply the art for as long as the current app-mode is active.
+  /// The Python layer wipes it via clear_assets() at each app-mode
+  /// switch (SceneV1AppSubsystem.reset()), so an incoming app-mode
+  /// can never inherit the outgoing one's art.
+  void set_assets(const SceneV1AssetSet& assets) { scene_assets_ = assets; }
+
+  /// Drop any app-mode-supplied art. Called at app-mode switches.
+  void clear_assets() { scene_assets_ = SceneV1AssetSet(); }
+
   const auto& node_types_by_id() const { return node_types_by_id_; }
   const auto& node_message_types() const { return node_message_types_; }
   const auto& node_message_formats() const { return node_message_formats_; }
@@ -625,6 +648,7 @@ class SceneV1FeatureSet : public FeatureSetNativeComponent {
                              const std::string& format);
 
   SceneV1FeatureSet();
+  SceneV1AssetSet scene_assets_;
   std::unordered_map<std::string, NodeType*> node_types_;
   std::unordered_map<int, NodeType*> node_types_by_id_;
   std::unordered_map<std::string, NodeMessageType> node_message_types_;

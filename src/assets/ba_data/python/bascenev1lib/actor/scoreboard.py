@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 
 import bascenev1 as bs
 from bascenev1 import _classicassets
-from bascenev1 import _builtinassets
 
 if TYPE_CHECKING:
     from typing import Any, Sequence
@@ -35,7 +34,7 @@ class _Entry:
         self._bar_width = 2.0 * self._scale
         self._bar_height = 32.0 * self._scale
         self._bar_tex = self._backing_tex = _classicassets.textures.bar.get()
-        self._cover_tex = _builtinassets.textures.ui_atlas.get()
+        self._cover_tex = _classicassets.textures.ui_atlas.get()
         self._mesh = _classicassets.meshes.meter_transparent.get()
         self._pos: Sequence[float] | None = None
         self._flash_timer: bs.Timer | None = None

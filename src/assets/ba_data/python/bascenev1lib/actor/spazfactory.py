@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 import bascenev1 as bs
 
 from bascenev1 import _classicassets
-from bascenev1 import _builtinassets
 
 from bascenev1lib.actor import spazappearance
 from bascenev1lib.gameutils import SharedObjects
@@ -115,7 +114,7 @@ class SpazFactory:
         )
         self.single_player_death_sound = _classicassets.audio.player_death.get()
         self.punch_sound_weak = _classicassets.audio.punch_weak01.get()
-        self.punch_sound = _builtinassets.audio.punch01.get()
+        self.punch_sound = _classicassets.audio.punch01.get()
         self.punch_sound_strong = (
             _classicassets.audio.punch_strong01.get(),
             _classicassets.audio.punch_strong02.get(),

@@ -9,6 +9,7 @@ import bascenev1 as bs
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from bauiv1lib.playlist.editcontroller import PlaylistEditController
@@ -389,7 +390,7 @@ class PlaylistEditWindow(bui.MainWindow):
         self.main_window_back()
 
     def _save_press_with_sound(self) -> None:
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
         self._save_press()
 
     def _select(self, index: int) -> None:

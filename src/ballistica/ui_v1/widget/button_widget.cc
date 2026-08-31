@@ -321,8 +321,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       // Custom button texture.
       if (texture_.exists()) {
         if (!custom_mesh.exists()) {
-          mesh =
-              g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1);
+          mesh = g_ui_v1->assets().image1x1.get();
         } else {
           mesh = custom_mesh.get();
         }
@@ -356,8 +355,8 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
       } else {
         // Standard button texture.
-        base::BuiltinMeshID mesh_id;
-        base::BuiltinTextureID tex_id;
+        base::MeshAsset* mesh_asset;
+        base::TextureAsset* tex_asset;
 
         // Regular style means pick based on our aspect ratio.
         if (style_ == Style::kRegular) {
@@ -374,10 +373,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
         switch (style_) {
           case Style::kBack: {
-            tex_id = base::BuiltinTextureID::kTexturesUiAtlas;
-            mesh_id = draw_transparent
-                          ? base::BuiltinMeshID::kMeshesButtonBackTransparent
-                          : base::BuiltinMeshID::kMeshesButtonBackOpaque;
+            tex_asset = g_ui_v1->assets().ui_atlas.get();
+            mesh_asset = draw_transparent
+                             ? g_ui_v1->assets().button_back_transparent.get()
+                             : g_ui_v1->assets().button_back_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.523f;
               bg_scale_center_y = 0.46f;
@@ -393,11 +392,11 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
           case Style::kBackSmall: {
-            tex_id = base::BuiltinTextureID::kTexturesUiAtlas;
-            mesh_id =
+            tex_asset = g_ui_v1->assets().ui_atlas.get();
+            mesh_asset =
                 draw_transparent
-                    ? base::BuiltinMeshID::kMeshesButtonBackSmallTransparent
-                    : base::BuiltinMeshID::kMeshesButtonBackSmallOpaque;
+                    ? g_ui_v1->assets().button_back_small_transparent.get()
+                    : g_ui_v1->assets().button_back_small_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.624f;
               bg_scale_center_y = 0.488f;
@@ -413,10 +412,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
           case Style::kTab: {
-            tex_id = base::BuiltinTextureID::kTexturesUiAtlas2;
-            mesh_id = draw_transparent
-                          ? base::BuiltinMeshID::kMeshesButtonTabTransparent
-                          : base::BuiltinMeshID::kMeshesButtonTabOpaque;
+            tex_asset = g_ui_v1->assets().ui_atlas2.get();
+            mesh_asset = draw_transparent
+                             ? g_ui_v1->assets().button_tab_transparent.get()
+                             : g_ui_v1->assets().button_tab_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.5f;
               bg_scale_center_y = 0.5f;
@@ -432,10 +431,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
           case Style::kSquare: {
-            tex_id = base::BuiltinTextureID::kTexturesButtonSquare;
-            mesh_id = draw_transparent
-                          ? base::BuiltinMeshID::kMeshesButtonSquareTransparent
-                          : base::BuiltinMeshID::kMeshesButtonSquareOpaque;
+            tex_asset = g_ui_v1->assets().button_square.get();
+            mesh_asset = draw_transparent
+                             ? g_ui_v1->assets().button_square_transparent.get()
+                             : g_ui_v1->assets().button_square_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.521f;
               bg_scale_center_y = 0.495f;
@@ -452,8 +451,8 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
           case Style::kSquareWide: {
-            tex_id = base::BuiltinTextureID::kTexturesButtonSquareWide;
-            mesh_id = base::BuiltinMeshID::kMeshesImage1x1;
+            tex_asset = g_ui_v1->assets().button_square_wide.get();
+            mesh_asset = g_ui_v1->assets().image1x1.get();
             do_draw = draw_transparent;
 
             bg_scale_center_x = 0.505f;
@@ -465,10 +464,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
           case Style::kLarger: {
-            tex_id = base::BuiltinTextureID::kTexturesUiAtlas;
-            mesh_id = draw_transparent
-                          ? base::BuiltinMeshID::kMeshesButtonLargerTransparent
-                          : base::BuiltinMeshID::kMeshesButtonLargerOpaque;
+            tex_asset = g_ui_v1->assets().ui_atlas.get();
+            mesh_asset = draw_transparent
+                             ? g_ui_v1->assets().button_larger_transparent.get()
+                             : g_ui_v1->assets().button_larger_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.506f;
               bg_scale_center_y = 0.47f;
@@ -484,10 +483,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
           case Style::kLarge: {
-            tex_id = base::BuiltinTextureID::kTexturesUiAtlas;
-            mesh_id = draw_transparent
-                          ? base::BuiltinMeshID::kMeshesButtonLargeTransparent
-                          : base::BuiltinMeshID::kMeshesButtonLargeOpaque;
+            tex_asset = g_ui_v1->assets().ui_atlas.get();
+            mesh_asset = draw_transparent
+                             ? g_ui_v1->assets().button_large_transparent.get()
+                             : g_ui_v1->assets().button_large_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.503f;
               bg_scale_center_y = 0.452f;
@@ -503,10 +502,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
           case Style::kMedium: {
-            tex_id = base::BuiltinTextureID::kTexturesUiAtlas;
-            mesh_id = draw_transparent
-                          ? base::BuiltinMeshID::kMeshesButtonMediumTransparent
-                          : base::BuiltinMeshID::kMeshesButtonMediumOpaque;
+            tex_asset = g_ui_v1->assets().ui_atlas.get();
+            mesh_asset = draw_transparent
+                             ? g_ui_v1->assets().button_medium_transparent.get()
+                             : g_ui_v1->assets().button_medium_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.5f;
               bg_scale_center_y = 0.48f;
@@ -525,10 +524,10 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
           default: {
             assert(style_ == Style::kSmall);
-            tex_id = base::BuiltinTextureID::kTexturesUiAtlas;
-            mesh_id = draw_transparent
-                          ? base::BuiltinMeshID::kMeshesButtonSmallTransparent
-                          : base::BuiltinMeshID::kMeshesButtonSmallOpaque;
+            tex_asset = g_ui_v1->assets().ui_atlas.get();
+            mesh_asset = draw_transparent
+                             ? g_ui_v1->assets().button_small_transparent.get()
+                             : g_ui_v1->assets().button_small_opaque.get();
             if (better_bg_fit_) {
               bg_scale_center_x = 0.5f;
               bg_scale_center_y = 0.49f;
@@ -544,8 +543,8 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
             break;
           }
         }
-        c.SetTexture(g_base->assets->BuiltinTexture(tex_id));
-        mesh = g_base->assets->BuiltinMesh(mesh_id);
+        c.SetTexture(tex_asset);
+        mesh = mesh_asset;
       }
       if (do_draw) {
         if (do_draw_better_fit) {
@@ -574,19 +573,16 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
         if (icon_type_ == IconType::kStart) {
           c.SetColor(1.4f * mult * (color_red_), 1.4f * mult * (color_green_),
                      1.4f * mult * (color_blue_), 1.0f);
-          c.SetTexture(g_base->assets->BuiltinTexture(
-              base::BuiltinTextureID::kTexturesStartButton));
+          c.SetTexture(g_ui_v1->assets().start_button.get());
         } else if (icon_type_ == IconType::kCancel) {
           if (remote_icons) {
             c.SetColor(1.0f * mult * (1.0f), 1.0f * mult * (1.0f),
                        1.0f * mult * (1.0f), 1.0f);
-            c.SetTexture(g_base->assets->BuiltinTexture(
-                base::BuiltinTextureID::kTexturesBackIcon));
+            c.SetTexture(g_ui_v1->assets().back_icon.get());
           } else {
             c.SetColor(1.5f * mult * (color_red_), 1.5f * mult * (color_green_),
                        1.5f * mult * (color_blue_), 1.0f);
-            c.SetTexture(g_base->assets->BuiltinTexture(
-                base::BuiltinTextureID::kTexturesBombButton));
+            c.SetTexture(g_ui_v1->assets().bomb_button.get());
           }
         } else if (icon_.exists()) {
           // Premultiply rgb by alpha for a premultiplied icon texture so a
@@ -610,8 +606,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
           }
         } else {
           c.SetColor(1, 1, 1);
-          c.SetTexture(g_base->assets->BuiltinTexture(
-              base::BuiltinTextureID::kTexturesCircle));
+          c.SetTexture(g_ui_v1->assets().circle.get());
         }
         if (do_draw_icon) {
           auto xf = c.ScopedTransform();
@@ -619,8 +614,7 @@ void ButtonWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
                           - (string_width * string_scale) * 0.5f - 5.0f,
                       (b + t) * 0.5f + extra_offs_y, 0.001f);
           c.Scale(34.0f * icon_scale_, 34.f * icon_scale_, 1.0f);
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              base::BuiltinMeshID::kMeshesImage1x1));
+          c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
         }
       }
       c.Submit();
@@ -818,11 +812,11 @@ void ButtonWidget::DoActivate(bool is_repeat) {
   if (sound_enabled_) {
     int r = rand() % 3;  // NOLINT
     if (r == 0) {
-      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioSwish);
+      g_base->audio->PlaySound(g_ui_v1->assets().swish.get());
     } else if (r == 1) {
-      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioSwish2);
+      g_base->audio->PlaySound(g_ui_v1->assets().swish2.get());
     } else {
-      g_base->audio->SafePlayBuiltinSound(base::BuiltinSoundID::kAudioSwish3);
+      g_base->audio->PlaySound(g_ui_v1->assets().swish3.get());
     }
   }
   if (auto* call = on_activate_call_.get()) {

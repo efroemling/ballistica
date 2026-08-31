@@ -27,6 +27,7 @@ from bacommon.docui import (
 )
 import bauiv1 as bui
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 from bauiv1lib.docui import _bgrunner, _cache
 from bauiv1lib.docui._types import DocUILocalAction
@@ -695,7 +696,7 @@ class DocUIController:
                 )
             else:
                 if action.default_sound:
-                    _builtinassets.audio.swish.get().play()
+                    _uiv1assets.audio.swish.get().play()
                 window.main_window_replace(
                     lambda: self.create_window(
                         action.request,
@@ -724,7 +725,7 @@ class DocUIController:
                 if action.close_window:
                     # Always play close-window swish, even if we don't have
                     # a source button.
-                    _builtinassets.audio.swish.get().play()
+                    _uiv1assets.audio.swish.get().play()
                 else:
                     # Only play click sound if this is coming from a button.
                     if widget is not None:

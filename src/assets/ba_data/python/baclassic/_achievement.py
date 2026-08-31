@@ -15,9 +15,9 @@ import babase
 import bascenev1
 from bascenev1 import _classicassets
 from bascenev1 import _builtinassets
-import bauiv1
 
 if TYPE_CHECKING:
+    import bauiv1
     from typing import Any, Sequence
 
     import baclassic
@@ -71,11 +71,6 @@ ACH_LEVEL_NAMES = {
 }
 
 
-def _tex(name: str) -> str:
-    """Qualified _classicassets ref for an achievement icon name."""
-    return f'{_classicassets.__asset_package__}:textures/{name}'
-
-
 class AchievementSubsystem:
     """Subsystem for achievement handling.
 
@@ -98,56 +93,56 @@ class AchievementSubsystem:
         self.achievements += [
             Achievement(
                 'In Control',
-                _tex('achievement_in_control'),
+                _classicassets.textures.achievement_in_control,
                 (1, 1, 1),
                 '',
                 award=5,
             ),
             Achievement(
                 'Sharing is Caring',
-                _tex('achievement_sharing_is_caring'),
+                _classicassets.textures.achievement_sharing_is_caring,
                 (1, 1, 1),
                 '',
                 award=15,
             ),
             Achievement(
                 'Dual Wielding',
-                _tex('achievement_dual_wielding'),
+                _classicassets.textures.achievement_dual_wielding,
                 (1, 1, 1),
                 '',
                 award=10,
             ),
             Achievement(
                 'Free Loader',
-                _tex('achievement_free_loader'),
+                _classicassets.textures.achievement_free_loader,
                 (1, 1, 1),
                 '',
                 award=10,
             ),
             Achievement(
                 'Team Player',
-                _tex('achievement_team_player'),
+                _classicassets.textures.achievement_team_player,
                 (1, 1, 1),
                 '',
                 award=20,
             ),
             Achievement(
                 'Onslaught Training Victory',
-                _tex('achievement_onslaught'),
+                _classicassets.textures.achievement_onslaught,
                 (1, 1, 1),
                 'Default:Onslaught Training',
                 award=5,
             ),
             Achievement(
                 'Off You Go Then',
-                _tex('achievement_off_you_go'),
+                _classicassets.textures.achievement_off_you_go,
                 (1, 1.1, 1.3),
                 'Default:Onslaught Training',
                 award=5,
             ),
             Achievement(
                 'Boxer',
-                _tex('achievement_boxer'),
+                _classicassets.textures.achievement_boxer,
                 (1, 0.6, 0.6),
                 'Default:Onslaught Training',
                 award=10,
@@ -155,21 +150,21 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Rookie Onslaught Victory',
-                _tex('achievement_onslaught'),
+                _classicassets.textures.achievement_onslaught,
                 (0.5, 1.4, 0.6),
                 'Default:Rookie Onslaught',
                 award=10,
             ),
             Achievement(
                 'Mine Games',
-                _tex('achievement_mine'),
+                _classicassets.textures.achievement_mine,
                 (1, 1, 1.4),
                 'Default:Rookie Onslaught',
                 award=10,
             ),
             Achievement(
                 'Flawless Victory',
-                _tex('achievement_flawless_victory'),
+                _classicassets.textures.achievement_flawless_victory,
                 (1, 1, 1),
                 'Default:Rookie Onslaught',
                 award=15,
@@ -177,21 +172,21 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Rookie Football Victory',
-                _tex('achievement_football_victory'),
+                _classicassets.textures.achievement_football_victory,
                 (1.0, 1, 0.6),
                 'Default:Rookie Football',
                 award=10,
             ),
             Achievement(
                 'Super Punch',
-                _tex('achievement_super_punch'),
+                _classicassets.textures.achievement_super_punch,
                 (1, 1, 1.8),
                 'Default:Rookie Football',
                 award=10,
             ),
             Achievement(
                 'Rookie Football Shutout',
-                _tex('achievement_football_shutout'),
+                _classicassets.textures.achievement_football_shutout,
                 (1, 1, 1),
                 'Default:Rookie Football',
                 award=15,
@@ -199,21 +194,21 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Pro Onslaught Victory',
-                _tex('achievement_onslaught'),
+                _classicassets.textures.achievement_onslaught,
                 (0.3, 1, 2.0),
                 'Default:Pro Onslaught',
                 award=15,
             ),
             Achievement(
                 'Boom Goes the Dynamite',
-                _tex('achievement_tnt'),
+                _classicassets.textures.achievement_tnt,
                 (1.4, 1.2, 0.8),
                 'Default:Pro Onslaught',
                 award=15,
             ),
             Achievement(
                 'Pro Boxer',
-                _tex('achievement_boxer'),
+                _classicassets.textures.achievement_boxer,
                 (2, 2, 0),
                 'Default:Pro Onslaught',
                 award=20,
@@ -221,21 +216,21 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Pro Football Victory',
-                _tex('achievement_football_victory'),
+                _classicassets.textures.achievement_football_victory,
                 (1.3, 1.3, 2.0),
                 'Default:Pro Football',
                 award=15,
             ),
             Achievement(
                 'Super Mega Punch',
-                _tex('achievement_super_punch'),
+                _classicassets.textures.achievement_super_punch,
                 (2, 1, 0.6),
                 'Default:Pro Football',
                 award=15,
             ),
             Achievement(
                 'Pro Football Shutout',
-                _tex('achievement_football_shutout'),
+                _classicassets.textures.achievement_football_shutout,
                 (0.7, 0.7, 2.0),
                 'Default:Pro Football',
                 award=20,
@@ -243,14 +238,14 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Pro Runaround Victory',
-                _tex('achievement_runaround'),
+                _classicassets.textures.achievement_runaround,
                 (1, 1, 1),
                 'Default:Pro Runaround',
                 award=15,
             ),
             Achievement(
                 'Precision Bombing',
-                _tex('achievement_cross_hair'),
+                _classicassets.textures.achievement_cross_hair,
                 (1, 1, 1.3),
                 'Default:Pro Runaround',
                 award=20,
@@ -258,7 +253,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'The Wall',
-                _tex('achievement_wall'),
+                _classicassets.textures.achievement_wall,
                 (1, 0.7, 0.7),
                 'Default:Pro Runaround',
                 award=25,
@@ -266,14 +261,14 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Uber Onslaught Victory',
-                _tex('achievement_onslaught'),
+                _classicassets.textures.achievement_onslaught,
                 (2, 2, 1),
                 'Default:Uber Onslaught',
                 award=30,
             ),
             Achievement(
                 'Gold Miner',
-                _tex('achievement_mine'),
+                _classicassets.textures.achievement_mine,
                 (2, 1.6, 0.2),
                 'Default:Uber Onslaught',
                 award=30,
@@ -281,7 +276,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'TNT Terror',
-                _tex('achievement_tnt'),
+                _classicassets.textures.achievement_tnt,
                 (2, 1.8, 0.3),
                 'Default:Uber Onslaught',
                 award=30,
@@ -289,14 +284,14 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Uber Football Victory',
-                _tex('achievement_football_victory'),
+                _classicassets.textures.achievement_football_victory,
                 (1.8, 1.4, 0.3),
                 'Default:Uber Football',
                 award=30,
             ),
             Achievement(
                 'Got the Moves',
-                _tex('achievement_got_the_moves'),
+                _classicassets.textures.achievement_got_the_moves,
                 (2, 1, 0),
                 'Default:Uber Football',
                 award=30,
@@ -304,7 +299,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Uber Football Shutout',
-                _tex('achievement_football_shutout'),
+                _classicassets.textures.achievement_football_shutout,
                 (2, 2, 0),
                 'Default:Uber Football',
                 award=40,
@@ -312,14 +307,14 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Uber Runaround Victory',
-                _tex('achievement_runaround'),
+                _classicassets.textures.achievement_runaround,
                 (1.5, 1.2, 0.2),
                 'Default:Uber Runaround',
                 award=30,
             ),
             Achievement(
                 'The Great Wall',
-                _tex('achievement_wall'),
+                _classicassets.textures.achievement_wall,
                 (2, 1.7, 0.4),
                 'Default:Uber Runaround',
                 award=40,
@@ -327,7 +322,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Stayin\' Alive',
-                _tex('achievement_stayin_alive'),
+                _classicassets.textures.achievement_stayin_alive,
                 (2, 2, 1),
                 'Default:Uber Runaround',
                 award=40,
@@ -335,7 +330,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Last Stand Master',
-                _tex('achievement_medal_small'),
+                _classicassets.textures.achievement_medal_small,
                 (2, 1.5, 0.3),
                 'Default:The Last Stand',
                 award=20,
@@ -343,7 +338,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Last Stand Wizard',
-                _tex('achievement_medal_medium'),
+                _classicassets.textures.achievement_medal_medium,
                 (2, 1.5, 0.3),
                 'Default:The Last Stand',
                 award=40,
@@ -351,7 +346,7 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Last Stand God',
-                _tex('achievement_medal_large'),
+                _classicassets.textures.achievement_medal_large,
                 (2, 1.5, 0.3),
                 'Default:The Last Stand',
                 award=60,
@@ -359,42 +354,42 @@ class AchievementSubsystem:
             ),
             Achievement(
                 'Onslaught Master',
-                _tex('achievement_medal_small'),
+                _classicassets.textures.achievement_medal_small,
                 (0.7, 1, 0.7),
                 'Challenges:Infinite Onslaught',
                 award=5,
             ),
             Achievement(
                 'Onslaught Wizard',
-                _tex('achievement_medal_medium'),
+                _classicassets.textures.achievement_medal_medium,
                 (0.7, 1.0, 0.7),
                 'Challenges:Infinite Onslaught',
                 award=15,
             ),
             Achievement(
                 'Onslaught God',
-                _tex('achievement_medal_large'),
+                _classicassets.textures.achievement_medal_large,
                 (0.7, 1.0, 0.7),
                 'Challenges:Infinite Onslaught',
                 award=30,
             ),
             Achievement(
                 'Runaround Master',
-                _tex('achievement_medal_small'),
+                _classicassets.textures.achievement_medal_small,
                 (1.0, 1.0, 1.2),
                 'Challenges:Infinite Runaround',
                 award=5,
             ),
             Achievement(
                 'Runaround Wizard',
-                _tex('achievement_medal_medium'),
+                _classicassets.textures.achievement_medal_medium,
                 (1.0, 1.0, 1.2),
                 'Challenges:Infinite Runaround',
                 award=15,
             ),
             Achievement(
                 'Runaround God',
-                _tex('achievement_medal_large'),
+                _classicassets.textures.achievement_medal_large,
                 (1.0, 1.0, 1.2),
                 'Challenges:Infinite Runaround',
                 award=30,
@@ -543,7 +538,7 @@ class Achievement:
     def __init__(
         self,
         name: str,
-        icon_name: str,
+        icon: bascenev1.TextureHandle,
         icon_color: tuple[float, float, float],
         level_name: str,
         *,
@@ -551,7 +546,7 @@ class Achievement:
         hard_mode_only: bool = False,
     ):
         self._name = name
-        self._icon_name = icon_name
+        self._icon = icon
         assert len(icon_color) == 3
         self._icon_color = icon_color + (1.0,)
         self._level_name = level_name
@@ -571,15 +566,23 @@ class Achievement:
 
     def get_icon_ui_texture(self, complete: bool) -> bauiv1.Texture:
         """Return the icon texture to display for this achievement"""
-        return bauiv1.aptextureget(
-            self._icon_name if complete else _tex('achievement_empty')
+        return (
+            (
+                self._icon
+                if complete
+                else _classicassets.textures.achievement_empty
+            )
+            .ui()
+            .get()
         )
 
     def get_icon_texture(self, complete: bool) -> bascenev1.Texture:
         """Return the icon texture to display for this achievement"""
-        return bascenev1.aptextureget(
-            self._icon_name if complete else _tex('achievement_empty')
-        )
+        return (
+            self._icon
+            if complete
+            else _classicassets.textures.achievement_empty
+        ).get()
 
     def get_icon_color(self, complete: bool) -> Sequence[float]:
         """Return the color tint for this Achievement's icon."""
@@ -1031,12 +1034,8 @@ class Achievement:
                     # Provide magical extended dict version of texture
                     # that Image actor supports.
                     texture={
-                        'texture': bascenev1.aptextureget(
-                            chestdisplayinfo.texclosed
-                        ),
-                        'tint_texture': bascenev1.aptextureget(
-                            chestdisplayinfo.texclosedtint
-                        ),
+                        'texture': chestdisplayinfo.texclosed.get(),
+                        'tint_texture': chestdisplayinfo.texclosedtint.get(),
                         'tint_color': chestdisplayinfo.tint,
                         'tint2_color': chestdisplayinfo.tint2,
                         'mask_texture': None,
@@ -1152,11 +1151,9 @@ class Achievement:
                             # Provide magical extended dict version of texture
                             # that Image actor supports.
                             texture={
-                                'texture': bascenev1.aptextureget(
-                                    chestdisplayinfo.texclosed
-                                ),
-                                'tint_texture': bascenev1.aptextureget(
-                                    chestdisplayinfo.texclosedtint
+                                'texture': chestdisplayinfo.texclosed.get(),
+                                'tint_texture': (
+                                    chestdisplayinfo.texclosedtint.get()
                                 ),
                                 'tint_color': chestdisplayinfo.tint,
                                 'tint2_color': chestdisplayinfo.tint2,
@@ -1356,7 +1353,7 @@ class Achievement:
         assert obj.node
         obj.node.host_only = True
         obj = Image(
-            _builtinassets.textures.light.get(),
+            _classicassets.textures.light.get(),
             position=(-180, 60 + y_offs),
             front=True,
             attach=Image.Attach.BOTTOM_CENTER,

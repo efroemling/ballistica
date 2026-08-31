@@ -110,26 +110,28 @@ void LocatorNode::SetSize(const std::vector<float>& vals) {
 }
 
 void LocatorNode::Draw(base::FrameDef* frame_def) {
-  base::BuiltinMeshID mesh;
+  base::MeshAsset* mesh;
   if (shape_ == Shape::kBox) {
-    mesh = base::BuiltinMeshID::kMeshesLocatorBox;
+    mesh = g_scene_v1->assets().locator_box.get();
   } else if (shape_ == Shape::kCircle) {
-    mesh = base::BuiltinMeshID::kMeshesLocatorCircle;
+    mesh = g_scene_v1->assets().locator_circle.get();
   } else if (shape_ == Shape::kCircleOutline) {
-    mesh = base::BuiltinMeshID::kMeshesLocatorCircleOutline;
+    mesh = g_scene_v1->assets().locator_circle_outline.get();
   } else {
-    mesh = base::BuiltinMeshID::kMeshesLocator;
+    mesh = g_scene_v1->assets().locator.get();
   }
 
-  base::BuiltinTextureID texture;
+  // (The plain circle stays a builtin; base shares it.)
+  base::TextureAsset* texture;
   if (shape_ == Shape::kCircle) {
-    texture = additive_ ? base::BuiltinTextureID::kTexturesCircleNoAlpha
-                        : base::BuiltinTextureID::kTexturesCircle;
+    texture = additive_ ? g_scene_v1->assets().circle_no_alpha.get()
+                        : g_base->assets->BuiltinTexture(
+                              base::BuiltinTextureID::kTexturesCircle);
   } else if (shape_ == Shape::kCircleOutline) {
-    texture = additive_ ? base::BuiltinTextureID::kTexturesCircleOutlineNoAlpha
-                        : base::BuiltinTextureID::kTexturesCircleOutline;
+    texture = additive_ ? g_scene_v1->assets().circle_outline_no_alpha.get()
+                        : g_scene_v1->assets().circle_outline.get();
   } else {
-    texture = base::BuiltinTextureID::kTexturesRgbStripes;
+    texture = g_scene_v1->assets().rgb_stripes.get();
   }
 
   bool transparent = false;
@@ -143,7 +145,7 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
     if (transparent) {
       c.SetTransparent(true);
     }
-    auto* tex = g_base->assets->BuiltinTexture(texture);
+    auto* tex = texture;
     // For a premultiplied texture drawn transparent with a faded straight
     // color, premultiply rgb by alpha ourselves (see
     // docs/design/premultiplied-alpha.md). Opaque draws ignore alpha, so
@@ -155,7 +157,7 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
       auto xf = c.ScopedTransform();
       c.Translate(position_[0], position_[1], position_[2]);
       c.Scale(size_[0], size_[1], size_[2]);
-      c.DrawMeshAsset(g_base->assets->BuiltinMesh(mesh));
+      c.DrawMeshAsset(mesh);
     }
     c.Submit();
   }
@@ -169,7 +171,7 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
       if (additive_) {
         c.SetPremultiplied(true);
       }
-      auto* tex = g_base->assets->BuiltinTexture(texture);
+      auto* tex = texture;
       if (additive_) {
         c.SetColor(color_[0] * opacity_, color_[1] * opacity_,
                    color_[2] * opacity_, 0.0f);
@@ -185,7 +187,7 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(position_[0], position_[1], position_[2]);
         c.Scale(size_[0], size_[1], size_[2]);
-        c.DrawMeshAsset(g_base->assets->BuiltinMesh(mesh));
+        c.DrawMeshAsset(mesh);
       }
       c.Submit();
     } else {
@@ -197,7 +199,7 @@ void LocatorNode::Draw(base::FrameDef* frame_def) {
         auto xf = c.ScopedTransform();
         c.Translate(position_[0], position_[1], position_[2]);
         c.Scale(size_[0], size_[1], size_[2]);
-        c.DrawMeshAsset(g_base->assets->BuiltinMesh(mesh));
+        c.DrawMeshAsset(mesh);
       }
       c.Submit();
     }

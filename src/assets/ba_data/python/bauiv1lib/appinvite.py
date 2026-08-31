@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from typing import Any
@@ -52,7 +53,7 @@ class ShowFriendCodeWindow(bui.Window):
         )
         self._data = copy.deepcopy(data)
         _builtinassets.audio.cash_register.get().play()
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
 
         self._cancel_button = bui.buttonwidget(
             parent=self._root_widget,

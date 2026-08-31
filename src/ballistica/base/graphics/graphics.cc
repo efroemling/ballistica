@@ -994,8 +994,7 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
         c.Translate(0, 7, -3.3f);
         c.Scale(10, 10, 10);
         c.Rotate(a, 0, 0, 1);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove));
+        c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
       }
       c.Submit();
     }
@@ -1003,8 +1002,7 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
     // Beauty.
     if (explicit_bool(false)) {
       ObjectComponent c(frame_def->beauty_pass());
-      c.SetTexture(g_base->assets->BuiltinTexture(
-          BuiltinTextureID::kTexturesBoxingGlovesColor));
+      c.SetTexture(g_base->assets->base_assets().boxing_gloves_color.get());
       c.SetReflection(ReflectionType::kSoft);
       c.SetReflectionScale(0.4f, 0.4f, 0.4f);
       {
@@ -1012,8 +1010,7 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
         c.Translate(0.0f, 3.7f, -3.3f);
         c.Scale(10.0f, 10.0f, 10.0f);
         c.Rotate(a, 0.0f, 0.0f, 1.0f);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove));
+        c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
       }
       c.Submit();
     }
@@ -1028,8 +1025,7 @@ void Graphics::DrawBoxingGlovesTest(FrameDef* frame_def) {
         c.Translate(0.0f, 3.7f, -3.3f);
         c.Scale(10.0f, 10.0f, 10.0f);
         c.Rotate(a, 0.0f, 0.0f, 1.0f);
-        c.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesBoxingGlove));
+        c.DrawMeshAsset(g_base->assets->base_assets().boxing_glove.get());
       }
       c.Submit();
     }
@@ -1269,8 +1265,7 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
     shadow_blotch_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
         blotch_verts_.size(), &blotch_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(
-        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesLight));
+    c.SetTexture(g_base->assets->base_assets().light.get());
     c.DrawMesh(shadow_blotch_mesh_.get());
     c.Submit();
   }
@@ -1283,8 +1278,7 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
     shadow_blotch_soft_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
         blotch_soft_verts_.size(), &blotch_soft_verts_[0]));
     SpriteComponent c(frame_def->light_shadow_pass());
-    c.SetTexture(
-        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesLightSoft));
+    c.SetTexture(g_base->assets->base_assets().light_soft.get());
     c.DrawMesh(shadow_blotch_soft_mesh_.get());
     c.Submit();
   }
@@ -1297,8 +1291,7 @@ void Graphics::DrawBlotches(FrameDef* frame_def) {
     shadow_blotch_soft_obj_mesh_->SetData(Object::New<MeshBuffer<VertexSprite>>(
         blotch_soft_obj_verts_.size(), &blotch_soft_obj_verts_[0]));
     SpriteComponent c(frame_def->light_pass());
-    c.SetTexture(
-        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesLightSoft));
+    c.SetTexture(g_base->assets->base_assets().light_soft.get());
     c.DrawMesh(shadow_blotch_soft_obj_mesh_.get());
     c.Submit();
   }
@@ -2011,20 +2004,21 @@ void Graphics::UpdateScreen_() {
 }
 
 auto Graphics::CubeMapFromReflectionType(ReflectionType reflection_type)
-    -> BuiltinCubeMapTextureID {
+    -> TextureAsset* {
+  const auto& assets = g_base->assets->base_assets();
   switch (reflection_type) {
     case ReflectionType::kChar:
-      return BuiltinCubeMapTextureID::kTexturesReflectionChar;
+      return assets.reflection_char.get();
     case ReflectionType::kPowerup:
-      return BuiltinCubeMapTextureID::kTexturesReflectionPowerup;
+      return assets.reflection_powerup.get();
     case ReflectionType::kSoft:
-      return BuiltinCubeMapTextureID::kTexturesReflectionSoft;
+      return assets.reflection_soft.get();
     case ReflectionType::kSharp:
-      return BuiltinCubeMapTextureID::kTexturesReflectionSharp;
+      return assets.reflection_sharp.get();
     case ReflectionType::kSharper:
-      return BuiltinCubeMapTextureID::kTexturesReflectionSharper;
+      return assets.reflection_sharper.get();
     case ReflectionType::kSharpest:
-      return BuiltinCubeMapTextureID::kTexturesReflectionSharpest;
+      return assets.reflection_sharpest.get();
     default:
       throw Exception();
   }

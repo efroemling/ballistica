@@ -596,10 +596,15 @@ def check_asset_name_compat(self: ProjectUpdater) -> None:
             ' is likely stale.'
         )
 
-    wrapper_dir = projroot / 'src/assets/ba_data/python/bascenev1'
+    pydir = projroot / 'src/assets/ba_data/python'
+    # Keyed by the compat table's package key. Flavor matters only in
+    # that the wrapper must exist: ui chrome is ui_v1-only so it has no
+    # bascenev1 flavor, while the other two do.
     wrapper_for_key = {
-        'builtinassets': wrapper_dir / '_builtinassets.py',
-        'classicassets': wrapper_dir / '_classicassets.py',
+        'builtinassets': pydir / 'bascenev1/_builtinassets.py',
+        'classicassets': pydir / 'bascenev1/_classicassets.py',
+        'bauiv1assets': pydir / 'bauiv1/_uiv1assets.py',
+        'scenev1assets': pydir / 'bascenev1/_scenev1assets.py',
     }
     paths_for_key = {
         key: _wrapper_logical_paths(path)

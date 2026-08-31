@@ -157,6 +157,9 @@ from _bauiv1 import (
     widget_by_id,
 )
 from bauiv1._assetref import (
+    texture_from_ref,
+    mesh_from_ref,
+    sound_from_ref,
     TextureHandle,
     MeshHandle,
     SoundHandle,
@@ -167,6 +170,7 @@ from bauiv1._uitypes import (
     RootUIUpdatePause,
     UIOpenState,
 )
+from bauiv1._generated.ui_asset_set import UIAssetSet, set_ui_asset_set
 from bauiv1._appsubsystem import UIV1AppSubsystem
 from bauiv1._window import (
     Window,
@@ -177,6 +181,9 @@ from bauiv1._window import (
 )
 
 __all__ = [
+    'sound_from_ref',
+    'mesh_from_ref',
+    'texture_from_ref',
     'accountlog',
     'AccountV2Handle',
     'add_clean_frame_callback',
@@ -288,6 +295,8 @@ __all__ = [
     'quit',
     'QuitType',
     'reload_hooks',
+    'set_ui_asset_set',
+    'UIAssetSet',
     'request_main_ui',
     'request_permission',
     'root_ui_pause_updates',

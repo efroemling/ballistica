@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, override, assert_never, final
 from efro.dataclassio import dataclass_from_dict
 import babase
 import bauiv1
+from bauiv1 import _uiv1assets
 from bauiv1 import _commonassets, _builtinassets
 from bauiv1 import _classicassets as uiclassicassets
 import bascenev1
@@ -906,7 +907,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
         # Play explicit swish sound so it occurs due to keypresses/etc.
         # This means we have to disable it for any button or else we get
         # double.
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
 
         # If it exists, dismiss it; otherwise make a new one.
         party_window = (
@@ -928,7 +929,7 @@ class ClassicAppSubsystem(babase.AppSubsystem):
             # need to make sure to disable swish sounds for any buttons
             # that lead us here.
             if babase.app.env.gui:
-                _builtinassets.audio.swish.get().play()
+                _uiv1assets.audio.swish.get().play()
 
             # Pause gameplay.
             self.pause()

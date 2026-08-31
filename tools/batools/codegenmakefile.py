@@ -30,6 +30,10 @@ PROJ_SRC_DIR = '..'
 # we'd build by hand.
 OUT_DIR_ROOT_CPP = '$(PROJ_SRC_DIR)/ballistica'
 OUT_DIR_BASE_PYTHON = '$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated'
+OUT_DIR_UI_V1_PYTHON = '$(PROJ_SRC_DIR)/assets/ba_data/python/bauiv1/_generated'
+OUT_DIR_SCENE_V1_PYTHON = (
+    '$(PROJ_SRC_DIR)/assets/ba_data/python/bascenev1/_generated'
+)
 
 
 @dataclass
@@ -115,6 +119,14 @@ class CodegenMakefileGenerator:
         ):
             self._add_init_module_target(targets, moduledir=OUT_DIR_BASE_PYTHON)
             self._add_base_enums_module_target(targets)
+
+        # Ui-v1 feature set bits.
+        if os.path.exists(
+            f'{self._projroot}/pconfig/featuresets/featureset_ui_v1.py'
+        ):
+            self._add_ui_asset_set_targets(targets)
+            self._add_scene_asset_set_targets(targets)
+            self._add_base_asset_set_targets(targets)
 
         our_lines_public = (
             _empty_line_if(bool(targets))
@@ -345,6 +357,106 @@ class CodegenMakefileGenerator:
                             ),
                         )
                     )
+
+    def _add_base_asset_set_targets(self, targets: list[Target]) -> None:
+        """Targets for the base asset-set spec.
+
+        The base sibling of _add_scene_asset_set_targets; also emits
+        the placeholder-fill include unique to this set.
+        """
+        spec = 'babasecodegen/base_assets.py'
+        targets.append(
+            Target(
+                src=[spec, '$(TOOLS_DIR)/batools/base_assets.py'],
+                dst=os.path.join(OUT_DIR_BASE_PYTHON, 'base_asset_set.py'),
+                cmd='$(PCOMMAND) gen_base_asset_set_py $@',
+                mkdir=True,
+            )
+        )
+        for name in (
+            'base_asset_set.h',
+            'base_asset_set_unpack.inc',
+            'base_asset_set_placeholders.inc',
+        ):
+            targets.append(
+                Target(
+                    src=[spec, '$(TOOLS_DIR)/batools/base_assets.py'],
+                    dst=os.path.join(
+                        OUT_DIR_ROOT_CPP, 'base', 'generated', name
+                    ),
+                    cmd='$(PCOMMAND) gen_base_asset_set_cpp $@',
+                    mkdir=True,
+                )
+            )
+        # (No _add_init_module_target here: the enums targets already
+        # register the __init__ for this dir.)
+
+    def _add_scene_asset_set_targets(self, targets: list[Target]) -> None:
+        """Targets for the scene_v1 asset-set spec.
+
+        The scene sibling of _add_ui_asset_set_targets; same
+        one-spec-three-outputs reasoning.
+        """
+        spec = 'bascenev1codegen/scene_assets.py'
+        targets.append(
+            Target(
+                src=[spec, '$(TOOLS_DIR)/batools/scene_assets.py'],
+                dst=os.path.join(OUT_DIR_SCENE_V1_PYTHON, 'scene_asset_set.py'),
+                cmd='$(PCOMMAND) gen_scene_asset_set_py $@',
+                mkdir=True,
+            )
+        )
+        for name in (
+            'scene_asset_set.h',
+            'scene_asset_set_unpack.inc',
+        ):
+            targets.append(
+                Target(
+                    src=[spec, '$(TOOLS_DIR)/batools/scene_assets.py'],
+                    dst=os.path.join(
+                        OUT_DIR_ROOT_CPP, 'scene_v1', 'generated', name
+                    ),
+                    cmd='$(PCOMMAND) gen_scene_asset_set_cpp $@',
+                    mkdir=True,
+                )
+            )
+        self._add_init_module_target(targets, moduledir=OUT_DIR_SCENE_V1_PYTHON)
+
+    def _add_ui_asset_set_targets(self, targets: list[Target]) -> None:
+        """Targets for the ui_v1 asset-set spec.
+
+        One spec drives the Python dataclass an app-mode fills in, the
+        native struct it lands in, and the unpacker between them --
+        which is what makes a renamed or added slot a build error on
+        both sides rather than silent drift.
+
+        Public (not internal): ui_v1 is a public feature-set, so public
+        builds need these generated to compile.
+        """
+        spec = 'bauiv1codegen/ui_assets.py'
+        targets.append(
+            Target(
+                src=[spec, '$(TOOLS_DIR)/batools/ui_assets.py'],
+                dst=os.path.join(OUT_DIR_UI_V1_PYTHON, 'ui_asset_set.py'),
+                cmd='$(PCOMMAND) gen_ui_asset_set_py $@',
+                mkdir=True,
+            )
+        )
+        for name in (
+            'ui_asset_set.h',
+            'ui_asset_set_unpack.inc',
+        ):
+            targets.append(
+                Target(
+                    src=[spec, '$(TOOLS_DIR)/batools/ui_assets.py'],
+                    dst=os.path.join(
+                        OUT_DIR_ROOT_CPP, 'ui_v1', 'generated', name
+                    ),
+                    cmd='$(PCOMMAND) gen_ui_asset_set_cpp $@',
+                    mkdir=True,
+                )
+            )
+        self._add_init_module_target(targets, moduledir=OUT_DIR_UI_V1_PYTHON)
 
     def _add_pyembed_targets(self, targets: list[Target]) -> None:
         entries: list[tuple[str, str]] = []

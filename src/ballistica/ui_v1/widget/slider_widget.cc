@@ -285,8 +285,7 @@ void SliderWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
 
   EnsureMeshes_();
 
-  auto* nub_tex =
-      g_base->assets->BuiltinTexture(base::BuiltinTextureID::kTexturesNub);
+  auto* nub_tex = g_ui_v1->assets().nub.get();
 
   // Selection glow (depth 0.05, behind everything). The ninepatch
   // 'uniform' glow TextWidget uses for its selection highlight -- shaped
@@ -296,8 +295,7 @@ void SliderWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
     // Same pulse TextWidget's highlight runs on.
     float m =
         0.5f + std::abs(sinf(static_cast<float>(real_time) * 0.006467f) * 0.4f);
-    auto* tex = g_base->assets->BuiltinTexture(
-        base::BuiltinTextureID::kTexturesShadowSharp);
+    auto* tex = g_ui_v1->assets().shadow_sharp.get();
 
     // Premultiply rgb by alpha for premultiplied textures so the glow
     // composites 'over' under premult blend instead of adding
@@ -401,8 +399,7 @@ void SliderWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.Translate(NubCenterX_() + 3.0f * extra_offs_x,
                   height_ * 0.5f + 3.0f * extra_offs_y, 0.5f);
       c.Scale(nub_size, nub_size, 0.5f);
-      c.DrawMeshAsset(
-          g_base->assets->BuiltinMesh(base::BuiltinMeshID::kMeshesImage1x1));
+      c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
     }
     c.Submit();
   }

@@ -13,6 +13,7 @@ from bacommon.langstr import LangStrSpecValue
 import bauiv1 as bui
 from bascenev1lib.actor import spazappearance
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 from bauiv1 import _classicassets
 
 from bauiv1lib.docui import DocUIController
@@ -300,7 +301,7 @@ class InventoryUIController(DocUIController):
                             position=(0, 15),
                             size=(140, 140),
                             mask_texture=(
-                                _builtinassets.textures.character_icon_mask
+                                _classicassets.textures.character_icon_mask
                             ),
                             tint_texture=spazappearance.texture_spec(
                                 appearance.icon_mask_texture
@@ -330,7 +331,7 @@ class InventoryUIController(DocUIController):
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.edit import EditProfileWindow
 
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
 
         plus = bui.app.plus
         assert plus is not None
@@ -358,7 +359,7 @@ class InventoryUIController(DocUIController):
         # pylint: disable=cyclic-import
         from bauiv1lib.profile.edit import EditProfileWindow
 
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
 
         profile = action.args.get('profile')
         assert isinstance(profile, str)

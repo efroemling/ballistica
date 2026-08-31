@@ -221,6 +221,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/babase/_gc.py \
   $(BUILD_DIR)/ba_data/python/babase/_general.py \
   $(BUILD_DIR)/ba_data/python/babase/_generated/__init__.py \
+  $(BUILD_DIR)/ba_data/python/babase/_generated/base_asset_set.py \
   $(BUILD_DIR)/ba_data/python/babase/_generated/enums.py \
   $(BUILD_DIR)/ba_data/python/babase/_hooks.py \
   $(BUILD_DIR)/ba_data/python/babase/_language.py \
@@ -245,6 +246,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_analytics.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_appmode.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_appsubsystem.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_baseassetdefaults.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_benchmark.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_chest.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_clienteffect.py \
@@ -258,6 +260,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/baclassic/_store.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_tips.py \
   $(BUILD_DIR)/ba_data/python/baclassic/_tournament.py \
+  $(BUILD_DIR)/ba_data/python/baclassic/_uiassetdefaults.py \
   $(BUILD_DIR)/ba_data/python/baclassic/macmusicapp.py \
   $(BUILD_DIR)/ba_data/python/baclassic/osmusic.py \
   $(BUILD_DIR)/ba_data/python/baenv.py \
@@ -272,6 +275,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activity.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_activitytypes.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_actor.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_appsubsystem.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_assetref.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_builtinassets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_campaign.py \
@@ -287,6 +291,8 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_gameactivity.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_gameresults.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_gameutils.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_generated/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_generated/scene_asset_set.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_level.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_lobby.py \
@@ -301,6 +307,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1/_powerup.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_profile.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_replay.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1/_scenev1assets.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_score.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_session.py \
   $(BUILD_DIR)/ba_data/python/bascenev1/_settings.py \
@@ -391,9 +398,12 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bauiv1/_classicassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_commonassets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_docuiv2testassets.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_generated/__init__.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_generated/ui_asset_set.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_hooks.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_keyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_uitypes.py \
+  $(BUILD_DIR)/ba_data/python/bauiv1/_uiv1assets.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/_window.py \
   $(BUILD_DIR)/ba_data/python/bauiv1/onscreenkeyboard.py \
   $(BUILD_DIR)/ba_data/python/bauiv1lib/__init__.py \

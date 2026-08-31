@@ -36,7 +36,12 @@ class AssetSoundtrackEntry:
 
 def _audioref(name: str) -> str:
     """Qualified asset-package ref for a _classicassets audio asset."""
-    return f'{_classicassets.__asset_package__}:audio/{name}'
+    # LEGACY: builds a qualified path by hand, which nothing should
+    # do -- the parts are private now precisely to flag it. Kept
+    # only until this file's callers hold handles instead; see
+    # docs/followups.md "hand-built asset paths".
+    # pylint: disable-next=protected-access
+    return f'{_classicassets._ASSET_PACKAGE}:audio/{name}'
 
 
 # What gets played by default for our different music types:
@@ -390,7 +395,7 @@ class MusicSubsystem:
             #     },
             # )
             bascenev1.set_internal_music(
-                babase.apsimplesoundget(entry.assetname),
+                babase.simple_sound_from_ref(entry.assetname),
                 volume=entry.volume * 5.0,
                 loop=entry.loop,
             )

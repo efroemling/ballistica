@@ -189,6 +189,13 @@ class UIV1AppSubsystem(babase.AppSubsystem):
         self._main_window = empty_weakref(MainWindow)
         self._main_window_widget = None
 
+        # Wipe any app-mode-supplied ui asset set (see
+        # bauiv1.set_ui_asset_set). We run at every app-mode switch, so
+        # this is what guarantees an incoming mode can never inherit
+        # the outgoing one's art; the incoming mode supplies its own as
+        # it activates or gets a disabled ui and a logged error.
+        _bauiv1.clear_ui_asset_set_native()
+
     @property
     def uiscale(self) -> babase.UIScale:
         """Current ui scale for the app."""

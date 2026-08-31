@@ -489,7 +489,9 @@ def collect_apverids(page: dui2.Page, acc: set[str]) -> None:
         # resolves through ``Response.packages``, which the caller
         # already seeded ``acc`` from. Nothing to collect.
         if not isinstance(ref, int):
-            acc.add(ref.apverid)
+            # Reading identity, not building a path.
+            # pylint: disable-next=protected-access
+            acc.add(ref._apverid)
 
     walk_page(page, langstr=_lstr, assetref=_ref)
 

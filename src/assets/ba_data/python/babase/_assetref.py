@@ -31,7 +31,12 @@ from typing import TYPE_CHECKING
 import _babase
 
 from babase._asset_packages import check_asset_package_load
-from bacommon.assetspec import SoundSpec as _SoundSpec
+from bacommon.assetspec import (
+    SoundSpec as _SoundSpec,
+    TextureSpec as _TextureSpec,
+    MeshSpec as _MeshSpec,
+    CubeMapTextureSpec as _CubeMapTextureSpec,
+)
 
 if TYPE_CHECKING:
     import babase
@@ -51,8 +56,42 @@ class SimpleSoundHandle(_SoundSpec):
 
     def get(self) -> 'babase.SimpleSound':
         """Resolve and return the live engine sound for this reference."""
-        check_asset_package_load(self.apverid, self.name)
-        return _babase.apsimplesoundget(f'{self.apverid}:{self.name}')
+        check_asset_package_load(self._apverid, self._name)
+        return _babase.apsimplesoundget(self._apverid, self._name)
+
+
+class TextureHandle(_TextureSpec):
+    """A texture reference, as the babase wrapper flavor exposes it.
+
+    Deliberately has no ``get()``: babase has no Python texture-loading
+    api. The handle exists to be *passed along* -- most notably into
+    the base asset set (:func:`babase.set_base_asset_set`), whose
+    native side reads the reference and loads the engine asset itself.
+    """
+
+    __slots__ = ()
+
+
+class MeshHandle(_MeshSpec):
+    """A mesh reference, as the babase wrapper flavor exposes it.
+
+    Like :class:`TextureHandle`, has no ``get()``: babase has no
+    Python mesh-loading api; the reference is consumed native-side
+    (base asset set slots).
+    """
+
+    __slots__ = ()
+
+
+class CubeMapTextureHandle(_CubeMapTextureSpec):
+    """A cube-map texture reference (babase wrapper flavor).
+
+    Like :class:`TextureHandle`, has no ``get()`` -- cube maps never
+    surface as loaded Python objects; the reference is consumed
+    native-side (base asset set slots, engine reflections).
+    """
+
+    __slots__ = ()
 
 
 #: A node in a wrapper's kind-code tree: each key is one path segment; a
@@ -79,7 +118,12 @@ class AssetGroup:
         self._node = node
         self._prefix = prefix
 
-    def __getattr__(self, name: str) -> 'AssetGroup | SimpleSoundHandle':
+    def __getattr__(
+        self, name: str
+    ) -> (
+        'AssetGroup | SimpleSoundHandle | TextureHandle'
+        ' | MeshHandle | CubeMapTextureHandle'
+    ):
         try:
             child = self._node[name]
         except KeyError:
@@ -90,10 +134,18 @@ class AssetGroup:
         return _make(self._apverid, path, child)
 
 
-def _make(apverid: str, path: str, kind: str) -> SimpleSoundHandle:
-    """Build a single leaf reference by its single-char kind code."""
+def _make(
+    apverid: str, path: str, kind: str
+) -> 'SimpleSoundHandle | TextureHandle | MeshHandle | CubeMapTextureHandle':
+    """Build a single leaf reference by its kind code."""
     if kind == 's':
         return SimpleSoundHandle(apverid, path)
+    if kind == 't':
+        return TextureHandle(apverid, path)
+    if kind == 'm':
+        return MeshHandle(apverid, path)
+    if kind == 'ct':
+        return CubeMapTextureHandle(apverid, path)
     raise ValueError(f'Invalid asset-ref kind {kind!r} for {apverid}:{path}.')
 
 
@@ -129,3 +181,34 @@ def getsimplesound(name: str) -> 'babase.SimpleSound':
     from babase import _builtinassets
 
     return _builtinassets.audio.blank.get()
+
+
+def _split_ref(ref: str) -> tuple[str, str]:
+    """Split a qualified ``<apverid>:<name>`` ref into its two parts.
+
+    **Boundary use only.** Asset identity inside the app is a typed
+    handle from a generated wrapper module; nothing here builds or
+    accepts a path string. But refs do still arrive from *outside* as
+    strings -- server-sent content, saved app-config, the scene wire,
+    stored player profiles -- and something has to turn those into
+    assets. That conversion happens here, in one named place, rather
+    than ambiently.
+
+    New code should hold a handle and call its ``get()`` instead.
+    """
+    apverid, sep, name = ref.partition(':')
+    if not sep:
+        raise ValueError(
+            f"Not a qualified asset-package ref: '{ref}'. Legacy bare"
+            f' names load through the legacy get* calls instead.'
+        )
+    return apverid, name
+
+
+def simple_sound_from_ref(ref: str) -> 'babase.SimpleSound':
+    """Load a simplesound from a qualified ref string.
+
+    See ``_split_ref()`` -- boundary use only.
+    """
+    apverid, assetname = _split_ref(ref)
+    return _babase.apsimplesoundget(apverid, assetname)

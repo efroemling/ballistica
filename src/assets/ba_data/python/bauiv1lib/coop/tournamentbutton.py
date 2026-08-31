@@ -8,6 +8,7 @@ import copy
 import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -430,7 +431,7 @@ class TournamentButton:
         ):
             _builtinassets.audio.error.get().play()
             return
-        _builtinassets.audio.swish.get().play()
+        _uiv1assets.audio.swish.get().play()
         AccountViewerWindow(
             account_id=self.leader[2][0].get('a', None),
             profile_id=self.leader[2][0].get('p', None),

@@ -199,9 +199,7 @@ def _run_effects(
             bauiv1.apptimer(
                 delay,
                 strict_partial(
-                    bauiv1.apsoundget(
-                        f'{effect.sound.apverid}:{effect.sound.name}'
-                    ).play,
+                    bauiv1.SoundHandle.from_spec(effect.sound).get().play,
                     volume=effect.volume,
                 ),
             )

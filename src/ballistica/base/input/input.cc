@@ -171,7 +171,8 @@ void Input::AnnounceConnects_() {
                                 ->Evaluate());
     }
     if (g_base->assets->sys_assets_loaded()) {
-      g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioGunCocking);
+      g_base->audio->SafePlaySound(
+          g_base->assets->base_assets().gun_cocking.get());
     }
   }
   newly_connected_controllers_.clear();
@@ -191,7 +192,7 @@ void Input::AnnounceDisconnects_() {
                               ->Evaluate());
   }
   if (g_base->assets->sys_assets_loaded()) {
-    g_base->audio->SafePlayBuiltinSound(BuiltinSoundID::kAudioCorkPop);
+    g_base->audio->SafePlaySound(g_base->assets->base_assets().cork_pop.get());
   }
 
   newly_disconnected_controllers_.clear();

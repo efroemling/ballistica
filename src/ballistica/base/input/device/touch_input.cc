@@ -441,8 +441,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
       if (movement_control_type_ == MovementControlType::kSwipe) sc2 *= 0.6f;
 
       if (movement_control_type_ == MovementControlType::kSwipe) {
-        c.SetTexture(g_base->assets->BuiltinTexture(
-            BuiltinTextureID::kTexturesTouchArrows));
+        c.SetTexture(g_base->assets->base_assets().touch_arrows.get());
         if (editing_) {
           float val = 1.5f + sinf(static_cast<float>(real_time) * 0.02f);
           c.SetColor(val, val, 1.0f, 1.0f);
@@ -499,8 +498,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
     if (!buttons_touch_ && action_control_type_ == ActionControlType::kSwipe
         && !swipe_controls_hidden_) {
       float sc2{sc_actions * 0.6f};
-      c.SetTexture(g_base->assets->BuiltinTexture(
-          BuiltinTextureID::kTexturesTouchArrowsActions));
+      c.SetTexture(g_base->assets->base_assets().touch_arrows_actions.get());
       if (editing_) {
         float val = 1.5f + sinf(static_cast<float>(real_time) * 0.02f);
         c.SetColor(val, val, 1.0f, 1.0f);
@@ -559,8 +557,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
       base_fade = 0.25f;
     } else {
       base_fade = 0.8f;
-      auto* tex = g_base->assets->BuiltinTexture(
-          BuiltinTextureID::kTexturesActionButtons);
+      auto* tex = g_base->assets->base_assets().action_buttons.get();
       premult_tex = tex->premultiplied();
       c.SetTexture(tex);
     }
@@ -662,8 +659,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              BuiltinMeshID::kMeshesActionButtonRight));
+          c.DrawMeshAsset(
+              g_base->assets->base_assets().action_button_right.get());
         }
       }
 
@@ -691,8 +688,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              BuiltinMeshID::kMeshesActionButtonLeft));
+          c.DrawMeshAsset(
+              g_base->assets->base_assets().action_button_left.get());
         }
       }
 
@@ -719,8 +716,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              BuiltinMeshID::kMeshesActionButtonBottom));
+          c.DrawMeshAsset(
+              g_base->assets->base_assets().action_button_bottom.get());
         }
       }
 
@@ -749,8 +746,8 @@ void TouchInput::Draw(FrameDef* frame_def) {
           } else {
             c.Scale(b_width, b_width);
           }
-          c.DrawMeshAsset(g_base->assets->BuiltinMesh(
-              BuiltinMeshID::kMeshesActionButtonTop));
+          c.DrawMeshAsset(
+              g_base->assets->base_assets().action_button_top.get());
         }
       }
 
@@ -806,8 +803,7 @@ void TouchInput::Draw(FrameDef* frame_def) {
     SimpleComponent c2(draw_in_world ? frame_def->overlay_3d_pass()
                                      : frame_def->GetOverlayFlatPass());
     c2.SetTransparent(true);
-    auto* tex =
-        g_base->assets->BuiltinTexture(BuiltinTextureID::kTexturesArrow);
+    auto* tex = g_base->assets->base_assets().arrow.get();
     float a{0.45f};
     float cmul = tex->premultiplied() ? a : 1.0f;
     if (buttons_touch_) {
@@ -866,16 +862,14 @@ void TouchInput::Draw(FrameDef* frame_def) {
         auto xf = c2.ScopedTransform();
         c2.Translate(0.0f, dist * -0.5f, 0.0f);
         c2.Scale(0.15f, dist, 0.2f);
-        c2.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesArrowBack));
+        c2.DrawMeshAsset(g_base->assets->base_assets().arrow_back.get());
       }
 
       {
         auto xf = c2.ScopedTransform();
         c2.Translate(0.0f, dist * -1.0f - 0.15f, 0.0f);
         c2.Scale(0.45f, 0.3f, 0.3f);
-        c2.DrawMeshAsset(
-            g_base->assets->BuiltinMesh(BuiltinMeshID::kMeshesArrowFront));
+        c2.DrawMeshAsset(g_base->assets->base_assets().arrow_front.get());
       }
     }
     c2.Submit();

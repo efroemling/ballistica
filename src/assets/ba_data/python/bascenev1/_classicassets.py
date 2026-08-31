@@ -1,19 +1,17 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.260826`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.260831d`` (bascenev1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.baclassicassets.260826
+# ba_meta require asset-package a-0.baclassicassets.260831d
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
-
-__asset_package__ = 'a-0.baclassicassets.260826'
 
 from typing import TYPE_CHECKING
 
@@ -21,9 +19,12 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
+_ASSET_PACKAGE = 'a-0.baclassicassets.260831d'
+
 if TYPE_CHECKING:
     from bascenev1._assetref import (
         CollisionMeshHandle,
+        CubeMapTextureHandle,
         MeshHandle,
         SoundHandle,
         TextureHandle,
@@ -130,6 +131,7 @@ if TYPE_CHECKING:
         cash_register2: SoundHandle
         char_select_music: SoundHandle
         cheer: SoundHandle
+        cork_pop: SoundHandle
         cork_pop2: SoundHandle
         cowboy1: SoundHandle
         cowboy2: SoundHandle
@@ -150,6 +152,7 @@ if TYPE_CHECKING:
         cyborg_hit2: SoundHandle
         cymbal: SoundHandle
         debris_fall: SoundHandle
+        deek: SoundHandle
         deek2: SoundHandle
         ding_small: SoundHandle
         ding_small_high: SoundHandle
@@ -313,6 +316,7 @@ if TYPE_CHECKING:
         player_left: SoundHandle
         pop01: SoundHandle
         powerup01: SoundHandle
+        punch01: SoundHandle
         punch_strong01: SoundHandle
         punch_strong02: SoundHandle
         punch_swish: SoundHandle
@@ -387,6 +391,7 @@ if TYPE_CHECKING:
         survival_music: SoundHandle
         swip: SoundHandle
         swip2: SoundHandle
+        swish: SoundHandle
         techno_hit01: SoundHandle
         tick: SoundHandle
         ticking: SoundHandle
@@ -462,6 +467,10 @@ if TYPE_CHECKING:
         """
 
         achievement_outline: MeshHandle
+        action_button_bottom: MeshHandle
+        action_button_left: MeshHandle
+        action_button_right: MeshHandle
+        action_button_top: MeshHandle
         action_hero_fore_arm: MeshHandle
         action_hero_hand: MeshHandle
         action_hero_head: MeshHandle
@@ -504,6 +513,8 @@ if TYPE_CHECKING:
         always_land_level_collide: CollisionMeshHandle
         always_land_vrfill_mound: MeshHandle
         angry_computer_transparent: MeshHandle
+        arrow_back: MeshHandle
+        arrow_front: MeshHandle
         assassin_fore_arm: MeshHandle
         assassin_hand: MeshHandle
         assassin_head: MeshHandle
@@ -537,6 +548,7 @@ if TYPE_CHECKING:
         bones_torso: MeshHandle
         bones_upper_arm: MeshHandle
         bones_upper_leg: MeshHandle
+        boxing_glove: MeshHandle
         bridgit_level_bottom: MeshHandle
         bridgit_level_collide: CollisionMeshHandle
         bridgit_level_railing_collide: CollisionMeshHandle
@@ -580,6 +592,7 @@ if TYPE_CHECKING:
         cyborg_torso: MeshHandle
         cyborg_upper_arm: MeshHandle
         cyborg_upper_leg: MeshHandle
+        cylinder: MeshHandle
         doom_shroom_bg: MeshHandle
         doom_shroom_level: MeshHandle
         doom_shroom_level_collide: CollisionMeshHandle
@@ -587,6 +600,7 @@ if TYPE_CHECKING:
         doom_shroom_stem_collide: CollisionMeshHandle
         doom_shroom_vrfill: MeshHandle
         egg: MeshHandle
+        flag_stand: MeshHandle
         football_stadium: MeshHandle
         football_stadium_collide: CollisionMeshHandle
         football_stadium_vrfill: MeshHandle
@@ -615,7 +629,10 @@ if TYPE_CHECKING:
         hockey_stadium_inner: MeshHandle
         hockey_stadium_outer: MeshHandle
         hockey_stadium_stands: MeshHandle
+        image16x1: MeshHandle
+        image2x1: MeshHandle
         image2x1_vertical: MeshHandle
+        image4x1: MeshHandle
         impact_bomb: MeshHandle
         jack_fore_arm: MeshHandle
         jack_hand: MeshHandle
@@ -761,6 +778,9 @@ if TYPE_CHECKING:
         santa_upper_arm: MeshHandle
         santa_upper_leg: MeshHandle
         scroll_widget_short: MeshHandle
+        shrapnel1: MeshHandle
+        shrapnel_board: MeshHandle
+        shrapnel_slime: MeshHandle
         step_right_up_level: MeshHandle
         step_right_up_level_bottom: MeshHandle
         step_right_up_level_collide: CollisionMeshHandle
@@ -11509,6 +11529,7 @@ if TYPE_CHECKING:
         achievement_tnt: TextureHandle
         achievement_wall: TextureHandle
         achievements_icon: TextureHandle
+        action_buttons: TextureHandle
         action_hero_color: TextureHandle
         action_hero_color_mask: TextureHandle
         action_hero_icon: TextureHandle
@@ -11531,6 +11552,7 @@ if TYPE_CHECKING:
         always_land_level_color: TextureHandle
         always_land_preview: TextureHandle
         analog_stick: TextureHandle
+        arrow: TextureHandle
         assassin_color: TextureHandle
         assassin_color_mask: TextureHandle
         assassin_icon: TextureHandle
@@ -11551,6 +11573,7 @@ if TYPE_CHECKING:
         bones_color_mask: TextureHandle
         bones_icon: TextureHandle
         bones_icon_color_mask: TextureHandle
+        boxing_gloves_color: TextureHandle
         bridgit_level_color: TextureHandle
         bridgit_preview: TextureHandle
         bunny_color: TextureHandle
@@ -11566,6 +11589,7 @@ if TYPE_CHECKING:
         ch_title_char3: TextureHandle
         ch_title_char4: TextureHandle
         ch_title_char5: TextureHandle
+        character_icon_mask: TextureHandle
         chest_icon: TextureHandle
         chest_icon_empty: TextureHandle
         chest_icon_multi: TextureHandle
@@ -11608,6 +11632,7 @@ if TYPE_CHECKING:
         empty: TextureHandle
         file: TextureHandle
         flag_color: TextureHandle
+        flag_pole_color: TextureHandle
         folder: TextureHandle
         football_stadium: TextureHandle
         football_stadium_preview: TextureHandle
@@ -11616,6 +11641,7 @@ if TYPE_CHECKING:
         frosty_color_mask: TextureHandle
         frosty_icon: TextureHandle
         frosty_icon_color_mask: TextureHandle
+        fuse: TextureHandle
         game_center_icon: TextureHandle
         github_logo: TextureHandle
         gladiator_color: TextureHandle
@@ -11657,6 +11683,9 @@ if TYPE_CHECKING:
         leaderboards_icon: TextureHandle
         left_button: TextureHandle
         level_icon: TextureHandle
+        light: TextureHandle
+        light_sharp: TextureHandle
+        light_soft: TextureHandle
         lock: TextureHandle
         log_icon: TextureHandle
         logo: TextureHandle
@@ -11687,6 +11716,7 @@ if TYPE_CHECKING:
         ninja_color_mask: TextureHandle
         ninja_icon: TextureHandle
         ninja_icon_color_mask: TextureHandle
+        nub: TextureHandle
         null: TextureHandle
         old_lady_color: TextureHandle
         old_lady_color_mask: TextureHandle
@@ -11696,6 +11726,7 @@ if TYPE_CHECKING:
         opera_singer_color_mask: TextureHandle
         opera_singer_icon: TextureHandle
         opera_singer_icon_color_mask: TextureHandle
+        ouya_abutton: TextureHandle
         ouya_icon: TextureHandle
         ouya_obutton: TextureHandle
         ouya_ubutton: TextureHandle
@@ -11726,6 +11757,12 @@ if TYPE_CHECKING:
         rampage_bgcolor2: TextureHandle
         rampage_level_color: TextureHandle
         rampage_preview: TextureHandle
+        reflection_char: CubeMapTextureHandle
+        reflection_powerup: CubeMapTextureHandle
+        reflection_sharp: CubeMapTextureHandle
+        reflection_sharper: CubeMapTextureHandle
+        reflection_sharpest: CubeMapTextureHandle
+        reflection_soft: CubeMapTextureHandle
         replay_icon: TextureHandle
         right_button: TextureHandle
         robot_color: TextureHandle
@@ -11739,7 +11776,11 @@ if TYPE_CHECKING:
         santa_icon: TextureHandle
         santa_icon_color_mask: TextureHandle
         settings_icon: TextureHandle
+        shadow_soft: TextureHandle
+        shrapnel1_color: TextureHandle
         slash: TextureHandle
+        smoke: TextureHandle
+        sparks: TextureHandle
         star: TextureHandle
         step_right_up_level_color: TextureHandle
         step_right_up_preview: TextureHandle
@@ -11767,11 +11808,14 @@ if TYPE_CHECKING:
         tokens2: TextureHandle
         tokens3: TextureHandle
         tokens4: TextureHandle
+        touch_arrows: TextureHandle
+        touch_arrows_actions: TextureHandle
         tower_dlevel_color: TextureHandle
         tower_dpreview: TextureHandle
         trees_color: TextureHandle
         trophy: TextureHandle
         tv: TextureHandle
+        ui_atlas: TextureHandle
         up_button: TextureHandle
         vr_fill_mound: TextureHandle
         warrior_color: TextureHandle
@@ -11798,14 +11842,15 @@ if TYPE_CHECKING:
         zoe_icon: TextureHandle
         zoe_icon_color_mask: TextureHandle
 
-    #: The ``audio`` group - 412 assets (``achievement``, ``action_hero1``,
-    #: ``action_hero2``, ``action_hero3``, ``action_hero4``, and 407 more). Full
+    #: The ``audio`` group - 416 assets (``achievement``, ``action_hero1``,
+    #: ``action_hero2``, ``action_hero3``, ``action_hero4``, and 411 more). Full
     #: list in source.
     audio: AudioGroup
 
-    #: The ``meshes`` group - 390 assets (``achievement_outline``,
-    #: ``action_hero_fore_arm``, ``action_hero_hand``, ``action_hero_head``,
-    #: ``action_hero_lower_leg``, and 385 more). Full list in source.
+    #: The ``meshes`` group - 405 assets (``achievement_outline``,
+    #: ``action_button_bottom``, ``action_button_left``,
+    #: ``action_button_right``, ``action_button_top``, and 400 more). Full list
+    #: in source.
     meshes: MeshesGroup
 
     #: The ``strings`` group - 1162 strings (``account``, ``achievements``,
@@ -11813,9 +11858,9 @@ if TYPE_CHECKING:
     #: source.
     strings: StringsGroup
 
-    #: The ``textures`` group - 313 assets (``achievement_boxer``,
+    #: The ``textures`` group - 337 assets (``achievement_boxer``,
     #: ``achievement_cross_hair``, ``achievement_dual_wielding``,
-    #: ``achievement_empty``, ``achievement_flawless_victory``, and 308 more).
+    #: ``achievement_empty``, ``achievement_flawless_victory``, and 332 more).
     #: Full list in source.
     textures: TexturesGroup
 
@@ -11912,6 +11957,7 @@ _TREE = {
         'cash_register2': 's',
         'char_select_music': 's',
         'cheer': 's',
+        'cork_pop': 's',
         'cork_pop2': 's',
         'cowboy1': 's',
         'cowboy2': 's',
@@ -11932,6 +11978,7 @@ _TREE = {
         'cyborg_hit2': 's',
         'cymbal': 's',
         'debris_fall': 's',
+        'deek': 's',
         'deek2': 's',
         'ding_small': 's',
         'ding_small_high': 's',
@@ -12095,6 +12142,7 @@ _TREE = {
         'player_left': 's',
         'pop01': 's',
         'powerup01': 's',
+        'punch01': 's',
         'punch_strong01': 's',
         'punch_strong02': 's',
         'punch_swish': 's',
@@ -12169,6 +12217,7 @@ _TREE = {
         'survival_music': 's',
         'swip': 's',
         'swip2': 's',
+        'swish': 's',
         'techno_hit01': 's',
         'tick': 's',
         'ticking': 's',
@@ -12236,6 +12285,10 @@ _TREE = {
     },
     'meshes': {
         'achievement_outline': 'm',
+        'action_button_bottom': 'm',
+        'action_button_left': 'm',
+        'action_button_right': 'm',
+        'action_button_top': 'm',
         'action_hero_fore_arm': 'm',
         'action_hero_hand': 'm',
         'action_hero_head': 'm',
@@ -12278,6 +12331,8 @@ _TREE = {
         'always_land_level_collide': 'c',
         'always_land_vrfill_mound': 'm',
         'angry_computer_transparent': 'm',
+        'arrow_back': 'm',
+        'arrow_front': 'm',
         'assassin_fore_arm': 'm',
         'assassin_hand': 'm',
         'assassin_head': 'm',
@@ -12311,6 +12366,7 @@ _TREE = {
         'bones_torso': 'm',
         'bones_upper_arm': 'm',
         'bones_upper_leg': 'm',
+        'boxing_glove': 'm',
         'bridgit_level_bottom': 'm',
         'bridgit_level_collide': 'c',
         'bridgit_level_railing_collide': 'c',
@@ -12354,6 +12410,7 @@ _TREE = {
         'cyborg_torso': 'm',
         'cyborg_upper_arm': 'm',
         'cyborg_upper_leg': 'm',
+        'cylinder': 'm',
         'doom_shroom_bg': 'm',
         'doom_shroom_level': 'm',
         'doom_shroom_level_collide': 'c',
@@ -12361,6 +12418,7 @@ _TREE = {
         'doom_shroom_stem_collide': 'c',
         'doom_shroom_vrfill': 'm',
         'egg': 'm',
+        'flag_stand': 'm',
         'football_stadium': 'm',
         'football_stadium_collide': 'c',
         'football_stadium_vrfill': 'm',
@@ -12389,7 +12447,10 @@ _TREE = {
         'hockey_stadium_inner': 'm',
         'hockey_stadium_outer': 'm',
         'hockey_stadium_stands': 'm',
+        'image16x1': 'm',
+        'image2x1': 'm',
         'image2x1_vertical': 'm',
+        'image4x1': 'm',
         'impact_bomb': 'm',
         'jack_fore_arm': 'm',
         'jack_hand': 'm',
@@ -12535,6 +12596,9 @@ _TREE = {
         'santa_upper_arm': 'm',
         'santa_upper_leg': 'm',
         'scroll_widget_short': 'm',
+        'shrapnel1': 'm',
+        'shrapnel_board': 'm',
+        'shrapnel_slime': 'm',
         'step_right_up_level': 'm',
         'step_right_up_level_bottom': 'm',
         'step_right_up_level_collide': 'c',
@@ -14013,6 +14077,7 @@ _TREE = {
         'achievement_tnt': 't',
         'achievement_wall': 't',
         'achievements_icon': 't',
+        'action_buttons': 't',
         'action_hero_color': 't',
         'action_hero_color_mask': 't',
         'action_hero_icon': 't',
@@ -14035,6 +14100,7 @@ _TREE = {
         'always_land_level_color': 't',
         'always_land_preview': 't',
         'analog_stick': 't',
+        'arrow': 't',
         'assassin_color': 't',
         'assassin_color_mask': 't',
         'assassin_icon': 't',
@@ -14055,6 +14121,7 @@ _TREE = {
         'bones_color_mask': 't',
         'bones_icon': 't',
         'bones_icon_color_mask': 't',
+        'boxing_gloves_color': 't',
         'bridgit_level_color': 't',
         'bridgit_preview': 't',
         'bunny_color': 't',
@@ -14070,6 +14137,7 @@ _TREE = {
         'ch_title_char3': 't',
         'ch_title_char4': 't',
         'ch_title_char5': 't',
+        'character_icon_mask': 't',
         'chest_icon': 't',
         'chest_icon_empty': 't',
         'chest_icon_multi': 't',
@@ -14112,6 +14180,7 @@ _TREE = {
         'empty': 't',
         'file': 't',
         'flag_color': 't',
+        'flag_pole_color': 't',
         'folder': 't',
         'football_stadium': 't',
         'football_stadium_preview': 't',
@@ -14120,6 +14189,7 @@ _TREE = {
         'frosty_color_mask': 't',
         'frosty_icon': 't',
         'frosty_icon_color_mask': 't',
+        'fuse': 't',
         'game_center_icon': 't',
         'github_logo': 't',
         'gladiator_color': 't',
@@ -14161,6 +14231,9 @@ _TREE = {
         'leaderboards_icon': 't',
         'left_button': 't',
         'level_icon': 't',
+        'light': 't',
+        'light_sharp': 't',
+        'light_soft': 't',
         'lock': 't',
         'log_icon': 't',
         'logo': 't',
@@ -14191,6 +14264,7 @@ _TREE = {
         'ninja_color_mask': 't',
         'ninja_icon': 't',
         'ninja_icon_color_mask': 't',
+        'nub': 't',
         'null': 't',
         'old_lady_color': 't',
         'old_lady_color_mask': 't',
@@ -14200,6 +14274,7 @@ _TREE = {
         'opera_singer_color_mask': 't',
         'opera_singer_icon': 't',
         'opera_singer_icon_color_mask': 't',
+        'ouya_abutton': 't',
         'ouya_icon': 't',
         'ouya_obutton': 't',
         'ouya_ubutton': 't',
@@ -14230,6 +14305,12 @@ _TREE = {
         'rampage_bgcolor2': 't',
         'rampage_level_color': 't',
         'rampage_preview': 't',
+        'reflection_char': 'ct',
+        'reflection_powerup': 'ct',
+        'reflection_sharp': 'ct',
+        'reflection_sharper': 'ct',
+        'reflection_sharpest': 'ct',
+        'reflection_soft': 'ct',
         'replay_icon': 't',
         'right_button': 't',
         'robot_color': 't',
@@ -14243,7 +14324,11 @@ _TREE = {
         'santa_icon': 't',
         'santa_icon_color_mask': 't',
         'settings_icon': 't',
+        'shadow_soft': 't',
+        'shrapnel1_color': 't',
         'slash': 't',
+        'smoke': 't',
+        'sparks': 't',
         'star': 't',
         'step_right_up_level_color': 't',
         'step_right_up_preview': 't',
@@ -14271,11 +14356,14 @@ _TREE = {
         'tokens2': 't',
         'tokens3': 't',
         'tokens4': 't',
+        'touch_arrows': 't',
+        'touch_arrows_actions': 't',
         'tower_dlevel_color': 't',
         'tower_dpreview': 't',
         'trees_color': 't',
         'trophy': 't',
         'tv': 't',
+        'ui_atlas': 't',
         'up_button': 't',
         'vr_fill_mound': 't',
         'warrior_color': 't',
@@ -14306,7 +14394,7 @@ _TREE = {
 
 
 if not TYPE_CHECKING:
-    audio = AssetGroup(__asset_package__, _TREE['audio'], 'audio')
-    meshes = AssetGroup(__asset_package__, _TREE['meshes'], 'meshes')
-    strings = LangStrDir(__asset_package__, _TREE['strings'], 'strings')
-    textures = AssetGroup(__asset_package__, _TREE['textures'], 'textures')
+    audio = AssetGroup(_ASSET_PACKAGE, _TREE['audio'], 'audio')
+    meshes = AssetGroup(_ASSET_PACKAGE, _TREE['meshes'], 'meshes')
+    strings = LangStrDir(_ASSET_PACKAGE, _TREE['strings'], 'strings')
+    textures = AssetGroup(_ASSET_PACKAGE, _TREE['textures'], 'textures')

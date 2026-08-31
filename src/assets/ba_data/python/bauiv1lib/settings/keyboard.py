@@ -9,6 +9,7 @@ import bauiv1 as bui
 from bauiv1 import _commonassets, _classicassets
 
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 import bascenev1 as bs
 
 if TYPE_CHECKING:
@@ -217,7 +218,7 @@ class ConfigKeyboardWindow(bui.MainWindow):
                 pos=(self._width * 0.5, v + 0.1 * dist),
                 color=(0.4, 0.4, 0.6),
                 button='buttonStart',
-                texture=_builtinassets.textures.start_button.get(),
+                texture=_uiv1assets.textures.start_button.get(),
                 scale=0.8,
             )
 

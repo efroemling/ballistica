@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260819`` (babase).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260831f`` (babase).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,13 +9,11 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260819
+# ba_meta require asset-package a-0.babuiltinassets.260831f
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
 # pylint: disable=too-few-public-methods, disallowed-name
-
-__asset_package__ = 'a-0.babuiltinassets.260819'
 
 from typing import TYPE_CHECKING
 
@@ -23,9 +21,16 @@ from babase._assetref import AssetGroup
 
 from babase._language import LangStrDir
 
+_ASSET_PACKAGE = 'a-0.babuiltinassets.260831f'
+
 if TYPE_CHECKING:
     import datetime
-    from babase._assetref import SimpleSoundHandle
+    from babase._assetref import (
+        CubeMapTextureHandle,
+        MeshHandle,
+        SimpleSoundHandle,
+        TextureHandle,
+    )
     from babase import LangStr
 
     class AudioGroup:
@@ -42,22 +47,26 @@ if TYPE_CHECKING:
         blip: SimpleSoundHandle
         cash_register: SimpleSoundHandle
         click01: SimpleSoundHandle
-        cork_pop: SimpleSoundHandle
-        deek: SimpleSoundHandle
         ding: SimpleSoundHandle
         error: SimpleSoundHandle
         gun_cocking: SimpleSoundHandle
         powerdown01: SimpleSoundHandle
-        punch01: SimpleSoundHandle
-        score_increase: SimpleSoundHandle
-        sparkle01: SimpleSoundHandle
-        sparkle02: SimpleSoundHandle
-        sparkle03: SimpleSoundHandle
-        swish: SimpleSoundHandle
-        swish2: SimpleSoundHandle
-        swish3: SimpleSoundHandle
         tap: SimpleSoundHandle
-        ticking_crazy: SimpleSoundHandle
+
+    class MeshesGroup:
+        """
+        ::
+
+            Meshes needed during engine bootstrap and early UI.
+
+            See source for the full asset list.
+        """
+
+        box: MeshHandle
+        image1x1: MeshHandle
+        overlay_guide: MeshHandle
+        vr_fade: MeshHandle
+        vr_overlay: MeshHandle
 
     class StringsAccountGroup:
         """
@@ -1418,13 +1427,58 @@ if TYPE_CHECKING:
         ui: StringsUiGroup
         workspace: StringsWorkspaceGroup
 
-    #: The ``audio`` group - 20 assets (``blank``, ``blip``, ``cash_register``,
-    #: ``click01``, ``cork_pop``, and 15 more). Full list in source.
+    class TexturesGroup:
+        """
+        ::
+
+            Textures needed during engine bootstrap and early UI, including the
+            reflection cube-maps.
+
+            See source for the full asset list.
+        """
+
+        black: TextureHandle
+        black_cube: CubeMapTextureHandle
+        circle: TextureHandle
+        circle_shadow: TextureHandle
+        cursor: TextureHandle
+        font_big: TextureHandle
+        font_extras: TextureHandle
+        font_extras2: TextureHandle
+        font_extras3: TextureHandle
+        font_extras4: TextureHandle
+        font_extras5: TextureHandle
+        font_small0: TextureHandle
+        font_small1: TextureHandle
+        font_small2: TextureHandle
+        font_small3: TextureHandle
+        font_small4: TextureHandle
+        font_small5: TextureHandle
+        font_small6: TextureHandle
+        font_small7: TextureHandle
+        shadow: TextureHandle
+        shadow_sharp: TextureHandle
+        soft_rect: TextureHandle
+        soft_rect2: TextureHandle
+        soft_rect_vertical: TextureHandle
+        white: TextureHandle
+
+    #: The ``audio`` group - 9 assets (``blank``, ``blip``, ``cash_register``,
+    #: ``click01``, ``ding``, and 4 more). Full list in source.
     audio: AudioGroup
+
+    #: The ``meshes`` group - 5 assets (``box``, ``image1x1``,
+    #: ``overlay_guide``, ``vr_fade``, ``vr_overlay``). Full list in source.
+    meshes: MeshesGroup
 
     #: The ``strings`` group - 127 strings (``account``, ``assets``, ``audio``,
     #: ``input``, ``net``, and 122 more). Full list in source.
     strings: StringsGroup
+
+    #: The ``textures`` group - 25 assets (``black``, ``black_cube``,
+    #: ``circle``, ``circle_shadow``, ``cursor``, and 20 more). Full list in
+    #: source.
+    textures: TexturesGroup
 
 _TREE = {
     'audio': {
@@ -1432,22 +1486,18 @@ _TREE = {
         'blip': 's',
         'cash_register': 's',
         'click01': 's',
-        'cork_pop': 's',
-        'deek': 's',
         'ding': 's',
         'error': 's',
         'gun_cocking': 's',
         'powerdown01': 's',
-        'punch01': 's',
-        'score_increase': 's',
-        'sparkle01': 's',
-        'sparkle02': 's',
-        'sparkle03': 's',
-        'swish': 's',
-        'swish2': 's',
-        'swish3': 's',
         'tap': 's',
-        'ticking_crazy': 's',
+    },
+    'meshes': {
+        'box': 'm',
+        'image1x1': 'm',
+        'overlay_guide': 'm',
+        'vr_fade': 'm',
+        'vr_overlay': 'm',
     },
     'strings': {
         'account': {
@@ -1599,15 +1649,44 @@ _TREE = {
             'sync_reuse': ('workspace',),
         },
     },
+    'textures': {
+        'black': 't',
+        'black_cube': 'ct',
+        'circle': 't',
+        'circle_shadow': 't',
+        'cursor': 't',
+        'font_big': 't',
+        'font_extras': 't',
+        'font_extras2': 't',
+        'font_extras3': 't',
+        'font_extras4': 't',
+        'font_extras5': 't',
+        'font_small0': 't',
+        'font_small1': 't',
+        'font_small2': 't',
+        'font_small3': 't',
+        'font_small4': 't',
+        'font_small5': 't',
+        'font_small6': 't',
+        'font_small7': 't',
+        'shadow': 't',
+        'shadow_sharp': 't',
+        'soft_rect': 't',
+        'soft_rect2': 't',
+        'soft_rect_vertical': 't',
+        'white': 't',
+    },
 }
 _DISPLAY_KINDS = {'strings/time/duration_value': {'t': 'millis'}}
 
 
 if not TYPE_CHECKING:
-    audio = AssetGroup(__asset_package__, _TREE['audio'], 'audio')
+    audio = AssetGroup(_ASSET_PACKAGE, _TREE['audio'], 'audio')
+    meshes = AssetGroup(_ASSET_PACKAGE, _TREE['meshes'], 'meshes')
     strings = LangStrDir(
-        __asset_package__,
+        _ASSET_PACKAGE,
         _TREE['strings'],
         'strings',
         display_kinds=_DISPLAY_KINDS,
     )
+    textures = AssetGroup(_ASSET_PACKAGE, _TREE['textures'], 'textures')

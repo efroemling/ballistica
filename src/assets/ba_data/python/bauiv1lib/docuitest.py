@@ -9,6 +9,7 @@ from efro.error import CleanError
 from bacommon.langstr import LangStrSpecValue
 import bauiv1 as bui
 from bauiv1 import _builtinassets
+from bauiv1 import _uiv1assets
 from bauiv1 import _classicassets
 
 from bauiv1lib.docui import DocUIWindow, DocUIController
@@ -19,16 +20,6 @@ if TYPE_CHECKING:
     from bacommon.langstr import LangStrSpec
 
     from bauiv1lib.docui import DocUILocalAction
-
-
-def _btex(name: str) -> str:
-    """Qualified ref for a texture in the builtin asset-package."""
-    return f'{_builtinassets.__asset_package__}:textures/{name}'
-
-
-def _stex(name: str) -> str:
-    """Qualified _classicassets texture ref."""
-    return f'{_classicassets.__asset_package__}:textures/{name}'
 
 
 def show_test_doc_ui_v2_window() -> None:
@@ -167,7 +158,7 @@ def _test_v2_page_root(
                             debug=debug,
                         ),
                         dui2.Image(
-                            texture=_builtinassets.textures.nub,
+                            texture=_uiv1assets.textures.nub,
                             position=(0, -58 + 20),
                             size=(60, 60),
                         ),
@@ -385,7 +376,7 @@ def _test_v2_page_root(
                         # Testing custom button images and opacity.
                         dui2.Button(
                             label=strs.nav.test_three.spec,
-                            texture=_builtinassets.textures.button_square_wide,
+                            texture=_uiv1assets.textures.button_square_wide,
                             padding_left=10.0,
                             padding_right=10.0,
                             color=(1, 1, 1, 0.3),
@@ -442,7 +433,7 @@ def _test_v2_page_root(
                                     tint_color=(1, 0, 0),
                                     tint2_color=(0, 1, 0),
                                     mask_texture=(
-                                        _builtinassets.textures
+                                        _classicassets.textures
                                     ).character_icon_mask,
                                 ),
                             ],
