@@ -1,7 +1,7 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.babuiltinassets.260831f`` (babase).
+"""Asset-package wrapper for ``a-0.babuiltinassets.260831h`` (babase).
 
 Bare minimum assets always bundled with the engine.
 
@@ -9,7 +9,7 @@ These are loaded at launch and always available in the C++ layer.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.babuiltinassets.260831f
+# ba_meta require asset-package a-0.babuiltinassets.260831h
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -21,7 +21,7 @@ from babase._assetref import AssetGroup
 
 from babase._language import LangStrDir
 
-_ASSET_PACKAGE = 'a-0.babuiltinassets.260831f'
+_ASSET_PACKAGE = 'a-0.babuiltinassets.260831h'
 
 if TYPE_CHECKING:
     import datetime
@@ -202,6 +202,18 @@ if TYPE_CHECKING:
 
                 English: "{detail} Fix the file in the source Workspace and try
                 again."
+            """
+
+        def corrupt_file(self, *, email: str | LangStr) -> LangStr:
+            """
+            ::
+
+                Error screen-message shown when a corrupt game data file (e.g.
+                an unreadable audio file) is detected; the placeholder is the
+                support email address.
+
+                English: "Corrupt file(s) detected. Please try re-installing, or
+                email {email}"
             """
 
         def downloading_assets(self, *, count: int) -> LangStr:
@@ -1471,8 +1483,8 @@ if TYPE_CHECKING:
     #: ``overlay_guide``, ``vr_fade``, ``vr_overlay``). Full list in source.
     meshes: MeshesGroup
 
-    #: The ``strings`` group - 127 strings (``account``, ``assets``, ``audio``,
-    #: ``input``, ``net``, and 122 more). Full list in source.
+    #: The ``strings`` group - 128 strings (``account``, ``assets``, ``audio``,
+    #: ``input``, ``net``, and 123 more). Full list in source.
     strings: StringsGroup
 
     #: The ``textures`` group - 25 assets (``black``, ``black_cube``,
@@ -1515,6 +1527,7 @@ _TREE = {
             'building_assets_no_count': (),
             'client_too_old': (),
             'content_error_guidance': ('detail',),
+            'corrupt_file': ('email',),
             'downloading_assets': ('count',),
             'load_error': (),
             'preparing_build': (),

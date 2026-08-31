@@ -10,7 +10,7 @@
 // ``pconfig/projectconfig.json`` changes) from that pin's asset
 // listing. Rerun ``make assetpins-latest`` to regenerate.
 //
-// Generated from: "a-0.babuiltinassets.260831f"
+// Generated from: "a-0.babuiltinassets.260831h"
 
 #include <memory>
 
@@ -121,6 +121,15 @@ class BuiltinStrings {
     ///
     /// English: "{detail} Fix the file in the source Workspace and try again."
     static auto ContentErrorGuidance(LangStr::Sub detail)
+        -> std::shared_ptr<const LangStr>;
+
+    /// Error screen-message shown when a corrupt game data file (e.g. an
+    /// unreadable audio file) is detected; the placeholder is the support email
+    /// address.
+    ///
+    /// English: "Corrupt file(s) detected. Please try re-installing, or email
+    /// {email}"
+    static auto CorruptFile(LangStr::Sub email)
         -> std::shared_ptr<const LangStr>;
 
     /// Progress-dialog line shown while asset files download; updates live as

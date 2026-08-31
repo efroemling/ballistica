@@ -83,9 +83,9 @@ def print_corrupt_file_error() -> None:
         _babase.apptimer(
             2.0,
             lambda: _babase.screenmessage(
-                _babase.app.lang.get_resource(
-                    'internal.corruptFileText'
-                ).replace('${EMAIL}', 'support@froemling.net'),
+                _builtinassets.strings.assets.corrupt_file(
+                    email='support@froemling.net'
+                ),
                 color=(1, 0, 0),
             ),
         )

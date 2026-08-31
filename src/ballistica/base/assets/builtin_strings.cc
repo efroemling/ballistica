@@ -89,6 +89,12 @@ auto BuiltinStrings::Assets::ContentErrorGuidance(LangStr::Sub detail)
                        {{"detail", std::move(detail)}});
 }
 
+auto BuiltinStrings::Assets::CorruptFile(LangStr::Sub email)
+    -> std::shared_ptr<const LangStr> {
+  return MakeResource_("strings/assets/corrupt_file",
+                       {{"email", std::move(email)}});
+}
+
 auto BuiltinStrings::Assets::DownloadingAssets(int64_t count)
     -> std::shared_ptr<const LangStr> {
   return MakeResource_("strings/assets/downloading_assets", {{"count", count}});

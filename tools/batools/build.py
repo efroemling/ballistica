@@ -167,20 +167,6 @@ def lazybuild(target: str, category: LazyBuildCategory, command: str) -> None:
             # whenever that changes. Takes care of orphaned files if a
             # featureset is removed/etc.
             manifest_file=f'.cache/lazybuild/manifest_{category.value}',
-            # Codegen's OUTPUT dirs; lazybuild otherwise keys only on
-            # input mtimes and would happily skip when its outputs are
-            # gone but the stamp remains -- staging then quietly ships a
-            # dist without the generated modules and the app dies at
-            # boot importing them. That bit at four separate venues on
-            # 2026-08-31 (cloudshell check workspace, pubsync-public
-            # clone, two jenkins agent workspaces). Same reasoning as
-            # the asset_bundle entry below; point at the dirs rather
-            # than enumerating each generated file so new codegen
-            # outputs are covered with no updates here.
-            srcpaths_exist=[
-                'src/ballistica/base/generated',
-                'src/assets/ba_data/python/babase/_generated',
-            ],
             command_fullclean='make codegen-clean',
         ).run()
 

@@ -1,13 +1,13 @@
 # Released under the MIT License. See LICENSE for details.
 #
 # Auto-generated; do not edit by hand.
-"""Asset-package wrapper for ``a-0.baclassicassets.260831d`` (bascenev1).
+"""Asset-package wrapper for ``a-0.baclassicassets.260831e`` (bascenev1).
 
 All assets for classic bombsquad.
 """
 
 # ba_meta require api 9
-# ba_meta require asset-package a-0.baclassicassets.260831d
+# ba_meta require asset-package a-0.baclassicassets.260831e
 
 # pylint: disable=useless-suppression
 # pylint: disable=too-many-lines
@@ -19,7 +19,7 @@ from bascenev1._assetref import AssetGroup
 
 from babase import LangStrDir
 
-_ASSET_PACKAGE = 'a-0.baclassicassets.260831d'
+_ASSET_PACKAGE = 'a-0.baclassicassets.260831e'
 
 if TYPE_CHECKING:
     from bascenev1._assetref import (

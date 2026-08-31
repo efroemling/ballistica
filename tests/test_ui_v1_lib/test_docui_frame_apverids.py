@@ -2,10 +2,12 @@
 #
 """Testing that a frame's asset packages get collected for resolve.
 
-Lives with ui_v1 rather than bacommon because the walkers under test are
-the client's (``bauiv1lib.docui``). A featureset owns ``tests/test_<its
-name>``, so a spinoff that omits ui_v1 drops these along with the code
-they cover -- which a bacommon-placed test would not have done.
+Lives with ui_v1_lib rather than bacommon because the walkers under
+test are the client's (``bauiv1lib.docui``, owned by the ui_v1_lib
+feature set). A featureset owns ``tests/test_<its name>``, so a spinoff
+that omits ui_v1_lib drops these along with the code they cover --
+which a bacommon-placed (or ui_v1-placed; that broke the ui_v1-only
+spinoff test) home would not have done.
 
 A frame carries a depiction the client did not author, so its children
 can reference *any* asset-package -- that is the whole point of frames,

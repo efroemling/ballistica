@@ -412,7 +412,9 @@ def check_sync_states(self: ProjectUpdater) -> None:
         return
 
     # Make sure none of our sync targets have been mucked with since
-    # their last sync.
+    # their last sync. Note that cwd matters here: efrosync no-ops
+    # anywhere but a canonical synced-repo root, and our own process
+    # cwd is '/' (see the update_project pcommand).
     if (
         subprocess.run(
             [
@@ -421,6 +423,7 @@ def check_sync_states(self: ProjectUpdater) -> None:
                 '--check',
             ],
             check=False,
+            cwd=self.projroot,
         ).returncode
         != 0
     ):

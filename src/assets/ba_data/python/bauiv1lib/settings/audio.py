@@ -121,9 +121,14 @@ class AudioSettingsWindow(bui.MainWindow):
 
         swish = _uiv1assets.audio.swish.get()
 
-        # Paces both how often blips can come and how long a drag waits
-        # for its first one; see the two arguments below.
-        swish_interval = 1.0 / 3.0
+        # How often blips can come while dragging, and how long a drag
+        # waits for its first one; see the two arguments below. Note that
+        # a wait this close to the interval is no longer confined to a
+        # drag's start -- mid-drag it holds each blip a drag-step past
+        # the interval as well. A step is a frame, so the cadence is this
+        # interval in all but name.
+        swish_interval = 0.5
+        swish_delay = 0.5
 
         self._sound_volume_slider = svs = ConfigSlider(
             parent=self._root_widget,
@@ -148,8 +153,10 @@ class AudioSettingsWindow(bui.MainWindow):
             # the level it lands on -- not blipped where it started and
             # again where it ended. Waiting this long before a drag's
             # first blip means a flick shorter than it has only the one
-            # to play, at release.
-            drag_apply_delay=swish_interval,
+            # to play, at release. The length chosen is the balance being
+            # struck: long enough to swallow a flick, short enough that a
+            # deliberate drag still answers promptly.
+            drag_apply_delay=swish_delay,
         )
         y -= spacing
         self._music_volume_slider = ConfigSlider(

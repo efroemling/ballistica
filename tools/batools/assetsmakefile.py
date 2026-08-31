@@ -6,6 +6,7 @@ import json
 import os
 from typing import TYPE_CHECKING
 
+from efro.error import CleanError
 from efrotools.pyver import PYVER
 
 if TYPE_CHECKING:
@@ -13,6 +14,72 @@ if TYPE_CHECKING:
 
 ASSETS_SRC = 'src/assets'
 BUILD_DIR = 'build/assets'
+
+_PY_GENERATED_ROOT_PARENT = f'{ASSETS_SRC}/ba_data/python'
+
+
+def _is_generated_python_dir(rel_root: str) -> bool:
+    """Is a project-relative dir a per-package ``_generated`` dir?"""
+    if not rel_root.startswith(_PY_GENERATED_ROOT_PARENT + '/'):
+        return False
+    tail = rel_root.removeprefix(_PY_GENERATED_ROOT_PARENT + '/')
+    parts = tail.split('/')
+    return len(parts) >= 2 and parts[1] == '_generated'
+
+
+def _check_codegen_coverage(
+    projroot: str, codegen_manifests: dict[str, str]
+) -> None:
+    """Cross-check codegen manifests against convention and disk.
+
+    Two failure modes bit us on 2026-08-31, both silent until a
+    downstream flavor broke:
+
+    - A codegen dst under ba_data/python but outside a ``_generated``
+      dir gets dropped by our manifest filter, so it never stages.
+    - A file sitting in a ``_generated`` dir that no manifest declares
+      stages on trees where it happens to exist and silently vanishes
+      on fresh ones (spinoff dsts, CI checkouts).
+
+    Fail loudly on both here, where update/update-check always runs.
+    """
+    declared: set[str] = set()
+    for manifest in codegen_manifests.values():
+        declared.update(json.loads(manifest))
+
+    # Manifest entries under ba_data/python must follow the
+    # per-package _generated dir convention (docs/design/codegen.md).
+    for target in sorted(declared):
+        if target.startswith(
+            _PY_GENERATED_ROOT_PARENT + '/'
+        ) and not _is_generated_python_dir(os.path.dirname(target)):
+            raise CleanError(
+                f"Codegen target '{target}' is under ba_data/python but"
+                " not in a per-package '_generated' dir; it would be"
+                ' silently dropped from asset staging. See'
+                ' docs/design/codegen.md.'
+            )
+
+    # And everything actually on disk in those dirs must be declared
+    # by some manifest.
+    walkroot = os.path.join(projroot, _PY_GENERATED_ROOT_PARENT)
+    for root, dnames, fnames in os.walk(walkroot):
+        dnames[:] = [d for d in dnames if d != '__pycache__']
+        rel_root = root.removeprefix(projroot + '/')
+        if not _is_generated_python_dir(rel_root):
+            continue
+        for fname in fnames:
+            if fname == '.DS_Store':
+                continue
+            relpath = f'{rel_root}/{fname}'
+            if relpath not in declared:
+                raise CleanError(
+                    f"File '{relpath}' lives in a codegen '_generated'"
+                    ' dir but no codegen manifest declares it; it would'
+                    ' silently vanish from asset staging on fresh trees.'
+                    ' Register it with the codegen system or move it'
+                    ' out. See docs/design/codegen.md.'
+                )
 
 
 def _get_targets(
@@ -75,15 +142,7 @@ def _get_py_targets(
     # dsts, CI checkouts) where the files are not on disk. This used
     # to name only babase's dir; scene/ui set modules then vanished
     # from any list generated on a fresh tree (2026-08-31).
-    py_generated_root_parent = f'{ASSETS_SRC}/ba_data/python'
-
-    def _is_generated_python_dir(rel_root: str) -> bool:
-        if not rel_root.startswith(py_generated_root_parent + '/'):
-            return False
-        tail = rel_root.removeprefix(py_generated_root_parent + '/')
-        parts = tail.split('/')
-        return len(parts) >= 2 and parts[1] == '_generated'
-
+    # (_check_codegen_coverage() enforces the convention both ways.)
     def _do_get_targets(
         proot: str, fnames: list[str], is_explicit: bool = False
     ) -> None:
@@ -517,6 +576,8 @@ def generate_assets_makefile(
 
     public = getprojectconfig(Path(projroot))['public']
     assert isinstance(public, bool)
+
+    _check_codegen_coverage(projroot, codegen_manifests)
 
     original = existing_data
     lines = original.splitlines()

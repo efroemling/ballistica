@@ -29,6 +29,28 @@ PROJ_SRC_DIR = '..'
 # vars ourself but it's nice to build a makefile that feels like one
 # we'd build by hand.
 OUT_DIR_ROOT_CPP = '$(PROJ_SRC_DIR)/ballistica'
+
+#: The asset-set codegen groups, keyed by the feature-set that OWNS
+#: each set's outputs. Registration gates are *derived* from these
+#: keys (present featureset -> targets registered), and every
+#: registered dst is validated against the owner's generated dirs --
+#: so a set can't be registered under the wrong featureset
+#: conditional. (The 2026-08-31 bug: all three groups sat under a
+#: hand-written ui_v1 gate, so core+base spinoffs never generated
+#: babase's asset set and failed to import babase; only public CI's
+#: spinoff test caught it.)
+ASSET_SET_GROUPS: dict[str, str] = {
+    'base': '_add_base_asset_set_targets',
+    'scene_v1': '_add_scene_asset_set_targets',
+    'ui_v1': '_add_ui_asset_set_targets',
+}
+
+
+def _featureset_python_package(fsname: str) -> str:
+    """A feature set's python package name (base -> babase etc.)."""
+    return 'ba' + fsname.replace('_', '')
+
+
 OUT_DIR_BASE_PYTHON = '$(PROJ_SRC_DIR)/assets/ba_data/python/babase/_generated'
 OUT_DIR_UI_V1_PYTHON = '$(PROJ_SRC_DIR)/assets/ba_data/python/bauiv1/_generated'
 OUT_DIR_SCENE_V1_PYTHON = (
@@ -119,23 +141,11 @@ class CodegenMakefileGenerator:
         ):
             self._add_init_module_target(targets, moduledir=OUT_DIR_BASE_PYTHON)
             self._add_base_enums_module_target(targets)
-            # babase imports its asset set unconditionally, so this
-            # belongs with base -- NOT under the ui_v1 gate below (a
-            # core+base spinoff then fails to import babase; caught by
-            # public CI's spinoff_test 2026-08-31).
-            self._add_base_asset_set_targets(targets)
 
-        # Scene-v1 feature set bits.
-        if os.path.exists(
-            f'{self._projroot}/pconfig/featuresets/featureset_scene_v1.py'
-        ):
-            self._add_scene_asset_set_targets(targets)
-
-        # Ui-v1 feature set bits.
-        if os.path.exists(
-            f'{self._projroot}/pconfig/featuresets/featureset_ui_v1.py'
-        ):
-            self._add_ui_asset_set_targets(targets)
+        # Asset-set groups: gates derived from each group's owning
+        # feature set, and every dst validated against that owner's
+        # generated dirs (see ASSET_SET_GROUPS).
+        self._add_asset_set_groups(targets)
 
         our_lines_public = (
             _empty_line_if(bool(targets))
@@ -366,6 +376,44 @@ class CodegenMakefileGenerator:
                             ),
                         )
                     )
+
+    def _add_asset_set_groups(self, targets: list[Target]) -> None:
+        """Register asset-set codegen for each present owning fs.
+
+        Gates come from ASSET_SET_GROUPS keys and each group's newly
+        added dsts get validated against its owner's generated dirs.
+        """
+        for fsname, addername in ASSET_SET_GROUPS.items():
+            if not os.path.exists(
+                f'{self._projroot}/pconfig/featuresets/featureset_{fsname}.py'
+            ):
+                continue
+            count_before = len(targets)
+            getattr(self, addername)(targets)
+            self._check_asset_set_dsts(fsname, targets[count_before:])
+
+    def _check_asset_set_dsts(self, fsname: str, added: list[Target]) -> None:
+        """Validate an asset-set group's dsts against its owning fs.
+
+        Python outputs must land in the owner's ``_generated`` dir and
+        C++ outputs in its ``generated`` dir. Anything else either
+        belongs to a different feature set (a wrong ASSET_SET_GROUPS
+        pairing) or falls outside the generated-dir convention -- in
+        both cases the assets-staging machinery would silently
+        mis-handle it on some project flavor, so fail loudly here.
+        """
+        pkg = _featureset_python_package(fsname)
+        py_prefix = f'$(PROJ_SRC_DIR)/assets/ba_data/python/{pkg}/_generated/'
+        cpp_prefix = f'{OUT_DIR_ROOT_CPP}/{fsname}/generated/'
+        for target in added:
+            if not target.dst.startswith((py_prefix, cpp_prefix)):
+                raise RuntimeError(
+                    f"Asset-set target '{target.dst}' for feature set"
+                    f" '{fsname}' is outside that set's generated dirs"
+                    f' ({py_prefix} / {cpp_prefix}); check'
+                    ' ASSET_SET_GROUPS ownership and the'
+                    ' generated-dir convention (docs/design/codegen.md).'
+                )
 
     def _add_base_asset_set_targets(self, targets: list[Target]) -> None:
         """Targets for the base asset-set spec.
