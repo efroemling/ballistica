@@ -358,6 +358,7 @@ SCRIPT_TARGETS_PY_PUBLIC = \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/game/targetpractice.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/game/thelaststand.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/gameutils.py \
+  $(BUILD_DIR)/ba_data/python/bascenev1lib/instantreplay.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/mainmenu.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/__init__.py \
   $(BUILD_DIR)/ba_data/python/bascenev1lib/mapdata/big_g.py \

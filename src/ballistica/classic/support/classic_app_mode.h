@@ -131,6 +131,27 @@ class ClassicAppMode : public base::AppMode {
   // while one is up.
   auto InReplay() const -> bool;
 
+  /// Freeze the live session and cut to a playback of the last
+  /// `duration_millisecs` of it at `speed` (0.4 for slow motion). The
+  /// live session is suspended rather than destroyed, so gameplay
+  /// resumes exactly where it stopped once the clip ends or is skipped.
+  /// Returns false if there's nothing to replay (no live host session,
+  /// recording disabled, or not enough recorded yet).
+  ///
+  /// Refuses (returning false) if called from within a session update,
+  /// since standing up a session there would disturb the loop we'd be
+  /// standing in; the Python entry point defers for exactly this reason.
+  auto StartInstantReplay(millisecs_t duration_millisecs, float speed) -> bool;
+
+  /// Hand the screen back to the suspended live session. Called when the
+  /// clip runs out or the viewer skips it; harmless if no clip is up.
+  void EndInstantReplay();
+
+  /// Whether an instant replay is currently on screen.
+  auto InInstantReplay() const -> bool {
+    return instant_replay_session_.exists();
+  }
+
   // Used to know which globals is in control currently/etc.
   auto GetForegroundScene() const -> scene_v1::Scene* {
     assert(g_base->InLogicThread());
@@ -323,6 +344,16 @@ class ClassicAppMode : public base::AppMode {
   auto GetGameRosterMessage_() -> std::vector<uint8_t>;
   void Reset_();
   void PruneSessions_();
+
+  /// Send one side of an instant-replay cut to every client new enough
+  /// to understand it: the marker, a session reset, then `messages`.
+  /// Older peers get nothing and simply see the stream pause.
+  void BroadcastInstantReplayCut_(
+      const std::vector<uint8_t>& marker,
+      const std::vector<std::vector<uint8_t> >& messages);
+
+  /// Clients new enough for instant-replay markers, or empty.
+  auto InstantReplayClients_() -> std::vector<scene_v1::ConnectionToClient*>;
   void HandleQuitOnIdle_();
 
   struct ScanResultsEntryPriv_;
@@ -368,6 +399,20 @@ class ClassicAppMode : public base::AppMode {
   std::vector<Object::Ref<scene_v1::Session> > sessions_;
   Object::WeakRef<scene_v1::Scene> foreground_scene_;
   Object::WeakRef<scene_v1::Session> foreground_session_;
+
+  // The instant-replay clip currently on screen, and the live session
+  // sitting frozen behind it. Both are entries in sessions_; weak refs
+  // are safe because the clip is foreground (so never reaped) and the
+  // live one is suspended (which also exempts it from reaping).
+  Object::WeakRef<scene_v1::ClientSessionInstantReplay> instant_replay_session_;
+  Object::WeakRef<scene_v1::Session> instant_replay_suspended_session_;
+
+  // The live scene the clip displaced. Only activity transitions
+  // normally set the foreground scene, so without putting this back
+  // ourselves the live scene never reclaims it -- and since Scene::Step
+  // only drives bg-dynamics for the foreground scene, its sparks,
+  // debris and smoke would stay dead for the rest of the round.
+  Object::WeakRef<scene_v1::Scene> instant_replay_suspended_scene_;
 
   bool chat_muted_{};
   bool in_update_{};

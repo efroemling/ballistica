@@ -128,6 +128,36 @@ namespace ballistica::base {
 #define BA_MESSAGE_JMESSAGE 20
 #define BA_MESSAGE_CLIENT_PLAYER_PROFILES_JSON 21
 
+// A full-state keyframe (protocol 44+). Carries everything needed to
+// reconstruct complete session state at a point in time, so a stream can
+// be entered somewhere other than its beginning. Written into replay
+// files on an interval and held in memory for instant replays; never
+// sent over a connection as-is (a joining or resyncing client receives
+// the same payload as ordinary messages instead).
+//
+// Payload after the type byte:
+//   uint32 base_time
+//   uint32 sub_message_count
+//   per sub-message: uint32 length + that many bytes
+// where each sub-message is itself a complete message (a
+// BA_MESSAGE_SESSION_COMMANDS baseline followed by zero or more
+// BA_MESSAGE_SESSION_DYNAMICS_CORRECTION messages).
+#define BA_MESSAGE_SESSION_KEYFRAME 22
+
+// Host is cutting to an instant replay (protocol 44+). What follows is a
+// session reset plus a keyframe and the clip's worth of commands, so the
+// client's own session simply plays the clip the way it plays anything
+// else. A matching _END arrives with another reset + a fresh live
+// keyframe to put the client back into the (frozen) match.
+//
+// Only sent to clients whose protocol is new enough to know these; older
+// ones just see the stream go quiet for the duration and get resynced by
+// the same closing keyframe.
+//
+// _BEGIN payload after the type byte: float playback speed.
+#define BA_MESSAGE_INSTANT_REPLAY_BEGIN 23
+#define BA_MESSAGE_INSTANT_REPLAY_END 24
+
 #define BA_JMESSAGE_SCREEN_MESSAGE 0
 
 // A post-handshake join rejection carrying a reason CODE (its "r" entry;

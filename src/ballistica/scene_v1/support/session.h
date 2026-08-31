@@ -39,8 +39,17 @@ class Session : public SceneV1Context {
   void set_benchmark_type(base::BenchmarkType val) { benchmark_type_ = val; }
   virtual void DumpFullState(SessionStream* s);
 
+  /// A suspended session is frozen but kept alive: it is skipped by the
+  /// app-mode's update loop (so its scene time stops dead) and is exempt
+  /// from the usual "not foreground means reap it" rule. This is what
+  /// lets an instant replay take over the screen mid-match and hand it
+  /// back afterwards with the match exactly as it was.
+  auto suspended() const -> bool { return suspended_; }
+  void set_suspended(bool val) { suspended_ = val; }
+
  private:
   base::BenchmarkType benchmark_type_ = base::BenchmarkType::kNone;
+  bool suspended_{};
 };
 
 }  // namespace ballistica::scene_v1

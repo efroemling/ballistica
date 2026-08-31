@@ -53,6 +53,14 @@ class BGDynamics {
   BGDynamics();
 
   void Emit(const BGDynamicsEmission& def);
+
+  /// Wipe transient effects (debris chunks, smoke tendrils) and make
+  /// node-owned visuals hold off drawing until their owner repositions
+  /// them. Needed when what's on screen is replaced wholesale -- an
+  /// instant replay, for one -- since this system is global rather than
+  /// per-scene: without it, one scene's sparks and explosion debris
+  /// hang over the other's.
+  void Clear();
   void Step(const Vector3f& cam_pos, int step_millisecs);
 
   // can be called to inform the bg dynamics thread to kill off some

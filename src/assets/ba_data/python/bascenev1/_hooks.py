@@ -23,6 +23,20 @@ def launch_main_menu_session() -> None:
     _bascenev1.new_host_session(babase.app.classic.get_main_menu_session())
 
 
+def on_instant_replay_begin() -> None:
+    # Presentation lives in bascenev1lib (it needs bauiv1, which this
+    # package deliberately doesn't depend on).
+    from bascenev1lib.instantreplay import show_banner
+
+    show_banner()
+
+
+def on_instant_replay_end() -> None:
+    from bascenev1lib.instantreplay import hide_banner
+
+    hide_banner()
+
+
 def get_player_icon(sessionplayer: bascenev1.SessionPlayer) -> dict[str, Any]:
     info = sessionplayer.get_icon_info()
     return {

@@ -96,6 +96,12 @@ BaseFeatureSet::BaseFeatureSet()
   auto* envval = getenv("BA_SERVER_WRAPPER_MANAGED");
   server_wrapper_managed_ = (envval && strcmp(envval, "1") == 0);
 #if BA_ENABLE_AUTOMATION
+  // Automation subsystem; see base/automation/automation.h. Compiling
+  // it in is itself the gate (only developer builds pass
+  // -DENABLE_AUTOMATION=ON), so where it is present we simply stand
+  // it up; driving it still requires either in-process Python or the
+  // channel's own runtime opt-in.
+  automation = new Automation();
 #endif
 }
 

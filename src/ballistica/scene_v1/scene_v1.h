@@ -42,7 +42,7 @@ const int kProtocolVersionHostMin = 43;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 43;
+const int kProtocolVersionMax = 44;
 
 // The protocol version we actually host is now read as a setting; see
 // kSceneV1HostProtocol in ballistica/base/support/app_config.h.
@@ -157,6 +157,25 @@ const int kProtocolVersionMax = 43;
 //     are fenced off by the version bump (disposable dev/alpha builds
 //     only; 42 never reached a stable release).
 //
+// 44: Keyframes in the stream. A new BA_MESSAGE_SESSION_KEYFRAME record
+//     carries a complete state snapshot (the same baseline + dynamics
+//     corrections a joining client is sent) and is written into replay
+//     files on an interval, so playback can enter the stream somewhere
+//     other than its start. No node/attr/command changes: a 44 stream is
+//     a 43 stream with these records interleaved.
+//
+//     The bump exists because those records are unskippable by an older
+//     reader -- it has no way to know a type-22 message is safe to step
+//     over -- so 44 files are fenced off by the header version check in
+//     ClientSessionReplay::OnReset rather than being misread. Replays
+//     recorded here therefore do not open on pre-44 builds; older
+//     replays still play fine, and fall back to deriving their own seek
+//     snapshots during playback the way they always have.
+//
+//     Nothing new goes over the wire: connections still receive the
+//     snapshot as ordinary messages, exactly as mid-game joins always
+//     have, so the hosting floor does not move for this.
+//
 //     STANDING RULE, amended: appending an attr to a node type's table
 //     keeps existing indices stable ONLY for types nothing derives
 //     from. When adding an attr to a type with subclasses (currently
@@ -237,6 +256,8 @@ class Session;
 class SceneSound;
 class SceneTexture;
 class ReplayWriter;
+class InstantReplayRecorder;
+class ClientSessionInstantReplay;
 typedef Node* NodeCreateFunc(Scene* sg);
 
 /// Specifies the type of time for various operations to target/use.
@@ -509,6 +530,13 @@ enum NodeAttributeFlag {
 // forms).
 const int kProtocolVersionLangStrWire = 39;
 
+// First protocol whose streams may contain BA_MESSAGE_SESSION_KEYFRAME
+// records. A file gets stamped at least this even when we host a lower
+// protocol, since the records are what a reader must be new enough to
+// skip -- the rest of the stream's semantics are the hosted protocol's,
+// and every protocol from here on is a superset in that regard.
+const int kProtocolVersionKeyframes = 44;
+
 // (protocol 39+) First byte of the payload carried by
 // lang-str-flagged string slots (the text node's `text` attr and the
 // screen-message session commands). Control chars, so untagged legacy
@@ -542,6 +570,15 @@ inline constexpr char kLangStrWireTagLangStr = '\x03';     // LangStr json
 // (kProtocolVersionHostMin exceeds it), so every connected client did the
 // package-universe prep at join.
 inline constexpr int kScreenMessageLangStrOnlyMinBuild = 22962;
+
+// Minimum peer build for the instant-replay begin/end messages (see
+// BA_MESSAGE_INSTANT_REPLAY_BEGIN). Build-number gating rather than
+// protocol for the same reason as above: these are transient
+// message-layer traffic, never stored in a stream, and the clip itself
+// rides as ordinary session messages any client already understands.
+// Older peers simply see the stream pause for the length of the clip
+// and are resynced by the keyframe that follows it.
+inline constexpr int kInstantReplayMinBuild = 23006;
 
 // Which asset-package bucket kind a scene asset type's wire indices
 // derive from (see the kAdd*Indexed commands). Collision meshes live

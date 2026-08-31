@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/assets/asset_name_compat.h"
@@ -12,6 +13,7 @@
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/networking/networking.h"
+#include "ballistica/base/support/app_config.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging.h"
@@ -28,10 +30,30 @@
 #include "ballistica/scene_v1/node/node_attribute.h"
 #include "ballistica/scene_v1/node/node_type.h"
 #include "ballistica/scene_v1/support/host_session.h"
+#include "ballistica/scene_v1/support/instant_replay_recorder.h"
 #include "ballistica/scene_v1/support/replay_writer.h"
 #include "ballistica/scene_v1/support/scene.h"
 
 namespace ballistica::scene_v1 {
+
+// How much stream time passes between keyframes written into a replay
+// file. These exist so playback can enter the stream somewhere other than
+// its start (seeking, and someday starting mid-file); they are pure
+// overhead for linear playback, so the cadence is coarse.
+const millisecs_t kReplayKeyframeIntervalMillisecs = 10000;
+
+// How much stream time passes between keyframes kept in memory for
+// instant replay. Finer than the file cadence, because a clip can only
+// start at a keyframe: this is the granularity of "the last few seconds".
+// These never touch disk.
+const millisecs_t kInstantReplayKeyframeIntervalMillisecs = 2000;
+
+// How much stream time an instant replay can look back over, and the
+// memory ceiling for holding it. Keyframes are the bulk of it; a handful
+// of seconds' worth is small, but a pathological session (huge scenes,
+// tiny time steps) shouldn't be able to grow this without bound.
+const millisecs_t kInstantReplayWindowMillisecs = 6000;
+const size_t kInstantReplayMaxBytes = 32 * 1024 * 1024;
 
 SessionStream::SessionStream(HostSession* host_session, bool save_replay)
     : app_mode_{classic::ClassicAppMode::GetActiveOrThrow()},
@@ -44,10 +66,15 @@ SessionStream::SessionStream(HostSession* host_session, bool save_replay)
                            " shouldn't happen.");
     }
     // We're recording our own host-session's stream, so the replay's
-    // protocol is our hosted protocol.
+    // protocol is our hosted protocol -- except that we interleave
+    // keyframe records, which a reader has to be new enough to skip. So
+    // the file gets stamped at least the keyframe protocol even when we
+    // host below it; the stream's actual semantics are still the hosted
+    // protocol's, which any newer reader handles.
     assert(g_base->assets_server);
 
-    replay_writer_ = new ReplayWriter(app_mode_->host_protocol_version());
+    replay_writer_ = new ReplayWriter(std::max(
+        app_mode_->host_protocol_version(), kProtocolVersionKeyframes));
     writing_replay_ = true;
     g_scene_v1->replay_open = true;
   }
@@ -57,12 +84,27 @@ SessionStream::SessionStream(HostSession* host_session, bool save_replay)
   if (host_session_) {
     auto* appmode = classic::ClassicAppMode::GetActiveOrThrow();
     appmode->connections()->RegisterClientController(this);
+
+    // Keep a rolling window of recent stream for instant replays. Only
+    // for real gameplay streams: `save_replay` is exactly that test
+    // (false for the main menu and for headless), and a menu has
+    // nothing worth replaying -- without this we'd be building
+    // keyframes behind the main menu forever.
+    if (save_replay
+        && g_base->app_config->Resolve(
+            base::AppConfig::BoolID::kInstantReplay)) {
+      instant_replay_recorder_ = new InstantReplayRecorder(
+          kInstantReplayWindowMillisecs, kInstantReplayMaxBytes);
+    }
   }
 }
 
 SessionStream::~SessionStream() {
   // Ship our last commands (if it matters..)
   Flush();
+
+  delete instant_replay_recorder_;
+  instant_replay_recorder_ = nullptr;
 
   if (writing_replay_) {
     // Sanity check: We should only ever be writing one replay at once.
@@ -146,6 +188,15 @@ auto SessionStream::GetOutMessage() const -> std::vector<uint8_t> {
                          "SceneStream shutting down with non-empty outCommand");
   }
   return out_message_;
+}
+
+auto SessionStream::TakeOutMessage() -> std::vector<uint8_t> {
+  assert(!host_session_);  // Temp streams only; see header.
+  if (!out_command_.empty()) {
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "SceneStream shutting down with non-empty outCommand");
+  }
+  return std::move(out_message_);
 }
 
 template <typename T>
@@ -390,6 +441,9 @@ void SessionStream::ShipSessionCommandsMessage() {
   if (writing_replay_) {
     AddMessageToReplay(out_message_);
   }
+  if (instant_replay_recorder_ != nullptr) {
+    instant_replay_recorder_->AddMessage(out_message_);
+  }
   out_message_.clear();
   last_send_time_ = g_core->AppTimeMillisecs();
 }
@@ -404,6 +458,7 @@ void SessionStream::AddMessageToReplay(const std::vector<uint8_t>& message) {
       case BA_MESSAGE_SESSION_RESET:
       case BA_MESSAGE_SESSION_COMMANDS:
       case BA_MESSAGE_SESSION_DYNAMICS_CORRECTION:
+      case BA_MESSAGE_SESSION_KEYFRAME:
         break;
       default:
         throw Exception("unexpected message going to replay: "
@@ -413,6 +468,115 @@ void SessionStream::AddMessageToReplay(const std::vector<uint8_t>& message) {
 
   assert(replay_writer_);
   replay_writer_->PushAddMessageToReplayCall(message);
+}
+
+auto SessionStream::BuildKeyframe(
+    std::vector<std::vector<uint8_t> >* corrections) -> std::vector<uint8_t> {
+  assert(host_session_);
+
+  // First thing, we need to flush all pending session-commands. The
+  // host-session's current state is the result of having already run these
+  // commands locally, so if we leave them on the list while 'restoring'
+  // someone to our state they'll get essentially double-applied, which is
+  // bad. (ie: a delete-node command will get called but the node will
+  // already be gone)
+  Flush();
+
+  // We create a temporary output stream just for the purpose of building a
+  // giant session-commands message to reconstruct everything in our
+  // host-session in its current form.
+  SessionStream out(nullptr, false);
+  host_session_->DumpFullState(&out);
+
+  // Dynamics state rides along separately; without it everything lands in
+  // place but rigid bodies are back at their creation state.
+  if (corrections != nullptr) {
+    host_session_->GetCorrectionMessages(false, corrections);
+  }
+  return out.TakeOutMessage();
+}
+
+auto SessionStream::PackKeyframeRecord_(
+    millisecs_t base_time, const std::vector<uint8_t>& baseline,
+    const std::vector<std::vector<uint8_t> >& corrections)
+    -> std::vector<uint8_t> {
+  std::vector<uint8_t> out;
+  size_t total{9 + baseline.size()};
+  for (auto&& correction : corrections) {
+    total += 4 + correction.size();
+  }
+  out.reserve(total);
+  auto write_u32 = [&out](uint32_t val) {
+    auto offset = out.size();
+    out.resize(offset + 4);
+    memcpy(&(out[offset]), &val, 4);
+  };
+  auto write_sub = [&out, &write_u32](const std::vector<uint8_t>& sub) {
+    write_u32(static_cast<uint32_t>(sub.size()));
+    out.insert(out.end(), sub.begin(), sub.end());
+  };
+
+  out.push_back(BA_MESSAGE_SESSION_KEYFRAME);
+  write_u32(static_cast<uint32_t>(base_time));
+  write_u32(static_cast<uint32_t>(1 + corrections.size()));
+  write_sub(baseline);
+  for (auto&& correction : corrections) {
+    write_sub(correction);
+  }
+  return out;
+}
+
+void SessionStream::MaybeEmitKeyframe_() {
+  // Only meaningful for a live host-session stream.
+  if (host_session_ == nullptr) {
+    return;
+  }
+
+  // Two consumers on two cadences: instant replay wants keyframes often
+  // (a clip can only start at one), the file wants them rarely (they are
+  // dead weight for linear playback). Each tracks when it was last fed;
+  // when both are due at once they share a single build.
+  bool want_recorder =
+      instant_replay_recorder_ != nullptr
+      && time_ >= last_instant_replay_keyframe_time_
+                      + kInstantReplayKeyframeIntervalMillisecs;
+  bool want_replay =
+      writing_replay_
+      && time_ >= last_replay_keyframe_time_ + kReplayKeyframeIntervalMillisecs;
+  if (!want_recorder && !want_replay) {
+    return;
+  }
+
+  // Stamp before building. Building flushes, which can advance us, and a
+  // build that yields nothing must still not re-run on every SetTime.
+  if (want_recorder) {
+    last_instant_replay_keyframe_time_ = time_;
+  }
+  if (want_replay) {
+    last_replay_keyframe_time_ = time_;
+  }
+
+  std::vector<std::vector<uint8_t> > corrections;
+  std::vector<uint8_t> baseline = BuildKeyframe(&corrections);
+  if (baseline.empty()) {
+    return;
+  }
+
+  // File first, so the recorder can take ownership of the buffers.
+  if (want_replay) {
+    auto record = PackKeyframeRecord_(time_, baseline, corrections);
+    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug,
+                         [this, &record] {
+                           return "SessionStream: wrote keyframe at base-time "
+                                  + std::to_string(time_) + "ms ("
+                                  + std::to_string(record.size()) + " bytes).";
+                         });
+    AddMessageToReplay(record);
+  }
+  if (want_recorder) {
+    instant_replay_recorder_->AddKeyframe(time_, std::move(baseline),
+                                          std::move(corrections));
+  }
 }
 
 void SessionStream::SendPhysicsCorrection(bool blend) {
@@ -429,6 +593,9 @@ void SessionStream::SendPhysicsCorrection(bool blend) {
     }
     if (writing_replay_) {
       AddMessageToReplay(message);
+    }
+    if (instant_replay_recorder_ != nullptr) {
+      instant_replay_recorder_->AddMessage(message);
     }
   }
 }
@@ -565,6 +732,11 @@ void SessionStream::SetTime(millisecs_t t) {
   WriteCommandInt64(SessionCommand::kBaseTimeStep, diff);
   time_ = t;
   EndCommand(true);
+
+  // Time just moved, so this is the moment to consider cutting a keyframe;
+  // doing it here also guarantees we're between commands rather than
+  // mid-one.
+  MaybeEmitKeyframe_();
 }
 
 void SessionStream::AddScene(Scene* s) {
@@ -1378,27 +1550,17 @@ void SessionStream::OnClientConnected(ConnectionToClient* c) {
   }
 
   {
-    // First thing, we need to flush all pending session-commands to clients.
-    // The host-session's current state is the result of having already run
-    // these commands locally, so if we leave them on the list while 'restoring'
-    // the new client to our state they'll get essentially double-applied, which
-    // is bad. (ie: a delete-node command will get called but the node will
-    // already be gone)
+    // Flush pending session-commands before the new client joins our list,
+    // so it receives our snapshot rather than our snapshot plus commands
+    // already folded into it. (BuildKeyframe flushes too, but by then the
+    // client is on the list, so this earlier one is the one that matters.)
     Flush();
 
     connections_to_clients_.push_back(c);
 
-    // We create a temporary output stream just for the purpose of building
-    // a giant session-commands message to reconstruct everything in our
-    // host-session in its current form.
-    SessionStream out(nullptr, false);
-
-    // Ask the host-session that we came from to dump it's complete state.
-    host_session_->DumpFullState(&out);
-
-    // Grab the message that's been built up.
-    // If its not empty, send it to the client.
-    std::vector<uint8_t> out_message = out.GetOutMessage();
+    // Bring the client up to our current state: the same keyframe an
+    // instant replay or a seekable replay file is built from.
+    std::vector<uint8_t> out_message = BuildKeyframe(nullptr);
     if (!out_message.empty()) {
       c->SendReliableMessage(out_message);
     }

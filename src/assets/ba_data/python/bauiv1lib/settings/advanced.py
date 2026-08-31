@@ -605,6 +605,18 @@ class AdvancedSettingsWindow(bui.MainWindow):
             maxwidth=430,
         )
 
+        v -= 42
+        self._instant_replay_check_box = ConfigCheckBox(
+            parent=self._subcontainer,
+            check_box_id=f'{self.main_window_id_prefix}|instantreplay',
+            position=(50, v),
+            size=(self._sub_width - 100, 30),
+            configkey='Instant Replay',
+            displayname=bui.Lstr(value='Instant Replay'),
+            scale=1.0,
+            maxwidth=430,
+        )
+
         self._disable_gyro_check_box: ConfigCheckBox | None = None
         if self._show_disable_gyro:
             v -= 42

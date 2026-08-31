@@ -996,6 +996,30 @@ void BGDynamicsServer::PushEmitCall(const BGDynamicsEmission& def) {
   event_loop()->PushCall([this, def] { Emit(def); });
 }
 
+void BGDynamicsServer::PushClearCall() {
+  event_loop()->PushCall([this] {
+    // Transient stuff (debris chunks, smoke tendrils) is ours to drop.
+    Clear();
+
+    // Node-owned visuals are not: their owners are still alive and will
+    // remove them in their own time. Instead we forget that they were
+    // ever positioned, which stops them drawing until whoever owns one
+    // pushes a fresh transform. A frozen scene's bomb fuse therefore
+    // stops hanging over whatever replaced it, and reappears by itself
+    // once that scene starts stepping again.
+    //
+    // Clearing the client-side flag from this thread is deliberate and
+    // safe enough: the logic thread only ever sets it true (in
+    // BGDynamicsFuse::SetTransform), so the worst a collision can cost
+    // is one frame of a fuse.
+    for (auto&& fuse : fuses_) {
+      fuse->have_transform_client_ = false;
+      fuse->have_transform_worker_ = false;
+      fuse->initial_position_set_ = false;
+    }
+  });
+}
+
 void BGDynamicsServer::Emit(const BGDynamicsEmission& def) {
   assert(g_base->InBGDynamicsThread());
 

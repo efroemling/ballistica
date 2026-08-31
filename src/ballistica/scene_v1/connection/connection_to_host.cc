@@ -24,6 +24,7 @@
 #include "ballistica/core/logging/logging.h"
 #include "ballistica/core/logging/logging_macros.h"
 #include "ballistica/core/python/core_python.h"
+#include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/client_session_net.h"
 #include "ballistica/scene_v1/support/scene_v1_input_device_delegate.h"
 #include "ballistica/shared/generic/json_facade.h"
@@ -805,6 +806,38 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
       if (client_session_.exists()) {
         client_session_->HandleSessionMessage(buffer);
       }
+      break;
+    }
+
+    case BA_MESSAGE_INSTANT_REPLAY_BEGIN: {
+      // The host is about to feed us a clip instead of live play. Pin
+      // our playback rate to theirs and raise the banner; the clip
+      // itself arrives as ordinary session messages.
+      float speed{1.0f};
+      if (buffer.size() >= 1 + sizeof(float)) {
+        memcpy(&speed, &(buffer[1]), sizeof(float));
+      }
+      if (!(speed > 0.0f)) {
+        speed = 1.0f;
+      }
+      if (auto* net_session =
+              dynamic_cast<ClientSessionNet*>(client_session_.get())) {
+        net_session->SetInstantReplayMode(true, speed);
+      }
+      g_scene_v1->python->objs()
+          .Get(SceneV1Python::ObjID::kInstantReplayBeginCall)
+          .Call();
+      break;
+    }
+
+    case BA_MESSAGE_INSTANT_REPLAY_END: {
+      if (auto* net_session =
+              dynamic_cast<ClientSessionNet*>(client_session_.get())) {
+        net_session->SetInstantReplayMode(false);
+      }
+      g_scene_v1->python->objs()
+          .Get(SceneV1Python::ObjID::kInstantReplayEndCall)
+          .Call();
       break;
     }
 

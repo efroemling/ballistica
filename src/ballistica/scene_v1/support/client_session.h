@@ -99,6 +99,11 @@ class ClientSession : public Session {
     commands_.emplace_back(1, static_cast<uint8_t>(SessionCommand::kEndOfFile));
   }
   virtual void OnReset(bool rewind);
+
+  /// Called when the command stream runs out. The default loops back to
+  /// the start, which is what a replay file wants; a finite clip
+  /// overrides this to stop instead.
+  virtual void OnEndOfStream() { Reset(true); }
   virtual void FetchMessages() {}
   virtual void Error(const std::string& description);
   void End();

@@ -45,6 +45,11 @@ void BGDynamics::Emit(const BGDynamicsEmission& e) {
   g_base->bg_dynamics_server->PushEmitCall(e);
 }
 
+void BGDynamics::Clear() {
+  assert(g_base->InLogicThread());
+  g_base->bg_dynamics_server->PushClearCall();
+}
+
 void BGDynamics::Step(const Vector3f& cam_pos, int step_millisecs) {
   assert(g_base->InLogicThread());
 

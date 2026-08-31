@@ -11,6 +11,7 @@
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/screen_messages.h"
 #include "ballistica/base/input/input.h"
+#include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_lang_str.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
@@ -434,6 +435,100 @@ static PyMethodDef PyIsInReplayDef = {
     METH_VARARGS | METH_KEYWORDS,  // flags
 
     "is_in_replay() -> bool\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- play_instant_replay -----------------------------
+
+static auto PyPlayInstantReplay(PyObject* self, PyObject* args,
+                                PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  double duration{4.0};
+  double speed{0.4};
+  static const char* kwlist[] = {"duration", "speed", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "|dd", const_cast<char**>(kwlist), &duration, &speed)) {
+    return nullptr;
+  }
+  if (duration <= 0.0) {
+    throw Exception("duration must be greater than zero.", PyExcType::kValue);
+  }
+  if (speed <= 0.0) {
+    throw Exception("speed must be greater than zero.", PyExcType::kValue);
+  }
+
+  auto duration_millisecs{static_cast<millisecs_t>(duration * 1000.0)};
+  auto speed_f{static_cast<float>(speed)};
+
+  // Fire-and-forget: the usual caller is game code reacting to something
+  // that just happened, which means we're inside a session update and
+  // can't touch the session list yet. Doing the deferral here keeps that
+  // detail out of every caller.
+  g_base->logic->event_loop()->PushCall([duration_millisecs, speed_f] {
+    if (auto* appmode = classic::ClassicAppMode::GetActive()) {
+      appmode->StartInstantReplay(duration_millisecs, speed_f);
+    }
+  });
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyPlayInstantReplayDef = {
+    "play_instant_replay",             // name
+    (PyCFunction)PyPlayInstantReplay,  // method
+    METH_VARARGS | METH_KEYWORDS,      // flags
+
+    "play_instant_replay(duration: float = 4.0, speed: float = 0.4)"
+    " -> None\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- stop_instant_replay -----------------------------
+
+static auto PyStopInstantReplay(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_base->logic->event_loop()->PushCall([] {
+    if (auto* appmode = classic::ClassicAppMode::GetActive()) {
+      appmode->EndInstantReplay();
+    }
+  });
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyStopInstantReplayDef = {
+    "stop_instant_replay",             // name
+    (PyCFunction)PyStopInstantReplay,  // method
+    METH_NOARGS,                       // flags
+
+    "stop_instant_replay() -> None\n"
+    "\n"
+    ":meta private:",
+};
+
+// ------------------------ is_in_instant_replay -------------------------------
+
+static auto PyIsInInstantReplay(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* appmode = classic::ClassicAppMode::GetActive();
+  if (appmode && appmode->InInstantReplay()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyIsInInstantReplayDef = {
+    "is_in_instant_replay",            // name
+    (PyCFunction)PyIsInInstantReplay,  // method
+    METH_NOARGS,                       // flags
+
+    "is_in_instant_replay() -> bool\n"
     "\n"
     ":meta private:",
 };
@@ -1831,6 +1926,9 @@ auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
       PyRegisterActivityDef,
       PyRegisterSessionDef,
       PyIsInReplayDef,
+      PyPlayInstantReplayDef,
+      PyStopInstantReplayDef,
+      PyIsInInstantReplayDef,
       PyBroadcastMessageDef,
       PyGetRandomNamesDef,
       PyResetRandomPlayerNamesDef,

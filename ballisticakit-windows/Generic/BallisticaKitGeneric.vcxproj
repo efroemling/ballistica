@@ -668,6 +668,8 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\client_input_device_delegate.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\client_session.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\client_session.h" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\client_session_instant_replay.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\client_session_instant_replay.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\client_session_net.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\client_session_net.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\client_session_replay.cc" />
@@ -678,6 +680,8 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\host_session.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\huffman.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\huffman.h" />
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\instant_replay_recorder.cc" />
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\instant_replay_recorder.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\player.cc" />
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\player.h" />
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\player_spec.cc" />

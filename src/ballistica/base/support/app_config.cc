@@ -253,6 +253,11 @@ void AppConfig::SetupEntries_() {
       BoolEntry("Enable Remote App", true);
   bool_entries_[BoolID::kDisableCameraShake] =
       BoolEntry("Disable Camera Shake", false);
+
+  // Gates the rolling instant-replay window a host session keeps in
+  // memory. Off means the keyframes behind it are never generated, so
+  // the feature costs literally nothing when unwanted.
+  bool_entries_[BoolID::kInstantReplay] = BoolEntry("Instant Replay", true);
   bool_entries_[BoolID::kDisableCameraGyro] =
       BoolEntry("Disable Camera Gyro", false);
   bool_entries_[BoolID::kShowDemosWhenIdle] =

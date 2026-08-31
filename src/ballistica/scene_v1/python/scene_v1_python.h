@@ -104,6 +104,8 @@ class SceneV1Python {
     kSceneV1SessionClass,
     kLaunchMainMenuSessionCall,
     kGetPlayerIconCall,
+    kInstantReplayBeginCall,
+    kInstantReplayEndCall,
     kFilterChatMessageCall,
     kHandleLocalChatMessageCall,
     kHostInfoClass,

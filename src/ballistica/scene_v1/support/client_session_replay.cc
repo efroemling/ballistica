@@ -351,26 +351,17 @@ void ClientSessionReplay::FetchMessages() {
   // If we have no messages left, read from the file until we get some.
   while (commands().empty()) {
     // Before we read next message, let's save our current state
-    // if we didn't that for too long.
-    if (!spool_failed_
+    // if we didn't that for too long. Files carrying their own keyframes
+    // (protocol 44+) hand us these for free, so we only rebuild state
+    // ourselves for older files.
+    if (!have_file_keyframes_ && !spool_failed_
         && base_time() >= (states_.empty() ? 0 : states_.back().base_time_)
                               + kReplayStateDumpIntervalMillisecs) {
       SessionStream out(nullptr, false);
       DumpFullState(&out);
       std::vector<std::vector<uint8_t>> correction_messages;
       GetCorrectionMessages(false, &correction_messages);
-
-      // The snapshot payload goes to our disk spool; we keep only a
-      // small index entry in memory (long replays accumulate thousands
-      // of these and the payloads are large).
-      int64_t spool_position =
-          WriteSnapshotToSpool_(out.GetOutMessage(), correction_messages);
-      if (spool_position >= 0) {
-        current_state_.base_time_ = base_time();
-        current_state_.spool_position_ = spool_position;
-        current_state_.file_position_ = ftell(file_);
-        states_.push_back(current_state_);
-      }
+      IndexSnapshot_(base_time(), out.GetOutMessage(), correction_messages);
     }
 
     std::vector<uint8_t> buffer;
@@ -444,6 +435,33 @@ void ClientSessionReplay::FetchMessages() {
     }
     std::vector<uint8_t> data_decompressed =
         g_scene_v1->huffman->decompress(buffer);
+
+    // Keyframe records (protocol 44+) are seek fodder, not playback
+    // content: applying one on top of the state it describes would
+    // duplicate everything in the scene. Index it and read on.
+    if (!data_decompressed.empty()
+        && data_decompressed[0] == BA_MESSAGE_SESSION_KEYFRAME) {
+      have_file_keyframes_ = true;
+      millisecs_t keyframe_base_time;
+      std::vector<uint8_t> keyframe_message;
+      std::vector<std::vector<uint8_t>> keyframe_corrections;
+      if (!UnpackKeyframeRecord_(data_decompressed, &keyframe_base_time,
+                                 &keyframe_message, &keyframe_corrections)) {
+        Error("invalid keyframe record");
+        return;
+      }
+      // Park the payload in the same spool our own snapshots would have
+      // used; the difference is we didn't have to rebuild it.
+      IndexSnapshot_(keyframe_base_time, keyframe_message,
+                     keyframe_corrections);
+      g_core->logging->Log(
+          LogName::kBaNetworking, LogLevel::kDebug, [keyframe_base_time] {
+            return "ClientSessionReplay: indexed file keyframe at base-time "
+                   + std::to_string(keyframe_base_time) + "ms.";
+          });
+      continue;
+    }
+
     HandleSessionMessage(data_decompressed);
 
     // Also send it to all client-connections we're attached to.
@@ -571,6 +589,63 @@ void ClientSessionReplay::SeekTo(millisecs_t to_base_time) {
       RestoreFromCurrentState();
     }
   }
+}
+
+void ClientSessionReplay::IndexSnapshot_(
+    millisecs_t base_time, const std::vector<uint8_t>& message,
+    const std::vector<std::vector<uint8_t>>& correction_messages) {
+  if (spool_failed_) {
+    return;
+  }
+  int64_t spool_position = WriteSnapshotToSpool_(message, correction_messages);
+  if (spool_position < 0) {
+    return;
+  }
+  current_state_.base_time_ = base_time;
+  current_state_.spool_position_ = spool_position;
+  current_state_.file_position_ = ftell(file_);
+  states_.push_back(current_state_);
+}
+
+auto ClientSessionReplay::UnpackKeyframeRecord_(
+    const std::vector<uint8_t>& record, millisecs_t* base_time,
+    std::vector<uint8_t>* message,
+    std::vector<std::vector<uint8_t>>* correction_messages) -> bool {
+  // Layout is documented alongside BA_MESSAGE_SESSION_KEYFRAME in
+  // base/networking/networking.h.
+  size_t offset{1};
+  auto read_u32 = [&record, &offset](uint32_t* out) -> bool {
+    if (offset + 4 > record.size()) {
+      return false;
+    }
+    memcpy(out, &(record[offset]), 4);
+    offset += 4;
+    return true;
+  };
+
+  uint32_t base_time_raw;
+  uint32_t sub_count;
+  if (!read_u32(&base_time_raw) || !read_u32(&sub_count) || sub_count < 1) {
+    return false;
+  }
+  *base_time = static_cast<millisecs_t>(base_time_raw);
+
+  for (uint32_t i = 0; i < sub_count; i++) {
+    uint32_t sub_size;
+    if (!read_u32(&sub_size) || offset + sub_size > record.size()) {
+      return false;
+    }
+    std::vector<uint8_t> sub(
+        record.begin() + static_cast<ptrdiff_t>(offset),
+        record.begin() + static_cast<ptrdiff_t>(offset + sub_size));
+    offset += sub_size;
+    if (i == 0) {
+      *message = std::move(sub);
+    } else {
+      correction_messages->push_back(std::move(sub));
+    }
+  }
+  return true;
 }
 
 void ClientSessionReplay::RestoreFromCurrentState() {

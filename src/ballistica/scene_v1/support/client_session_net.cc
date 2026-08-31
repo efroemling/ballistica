@@ -80,7 +80,19 @@ void ClientSessionNet::Update(int time_advance_millisecs, double time_advance) {
   ClientSession::Update(time_advance_millisecs, time_advance);
 
   // And update our timing to try and ensure we don't run out of buffer.
-  UpdateBuffering();
+  // (except during an instant replay, where our rate is dictated rather
+  // than derived; see SetInstantReplayMode)
+  if (!instant_replay_mode_) {
+    UpdateBuffering();
+  }
+}
+
+void ClientSessionNet::SetInstantReplayMode(bool enabled, float speed) {
+  instant_replay_mode_ = enabled;
+
+  // On the way out this is just a placeholder: UpdateBuffering takes the
+  // wheel again on the next step and re-derives it immediately.
+  set_consume_rate(enabled ? speed : 1.0f);
 }
 
 auto ClientSessionNet::GetBucketNum() -> int {

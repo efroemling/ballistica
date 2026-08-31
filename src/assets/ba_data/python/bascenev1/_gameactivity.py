@@ -729,6 +729,7 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
         if isinstance(msg, PlayerDiedMessage):
             # pylint: disable=cyclic-import
             from bascenev1lib.actor.spaz import Spaz
+            from bascenev1lib import instantreplay
 
             player = msg.getplayer(self.playertype)
             killer = msg.getkillerplayer(self.playertype)
@@ -753,6 +754,16 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
                         importance=importance,
                         showpoints=self.show_kill_points,
                     )
+
+                # Offer up a kill-cam. Declines quietly for ordinary
+                # kills, during the cooldown, or when switched off.
+                instantreplay.maybe_play_kill_cam(self, importance)
+
+            # Co-op never gets that far (bots aren't players, so there's
+            # no cross-team killer); there the player's own death is the
+            # moment worth replaying.
+            instantreplay.maybe_play_death_cam(self, msg.killed)
+
         else:
             return super().handlemessage(msg)
         return None
