@@ -119,14 +119,23 @@ class CodegenMakefileGenerator:
         ):
             self._add_init_module_target(targets, moduledir=OUT_DIR_BASE_PYTHON)
             self._add_base_enums_module_target(targets)
+            # babase imports its asset set unconditionally, so this
+            # belongs with base -- NOT under the ui_v1 gate below (a
+            # core+base spinoff then fails to import babase; caught by
+            # public CI's spinoff_test 2026-08-31).
+            self._add_base_asset_set_targets(targets)
+
+        # Scene-v1 feature set bits.
+        if os.path.exists(
+            f'{self._projroot}/pconfig/featuresets/featureset_scene_v1.py'
+        ):
+            self._add_scene_asset_set_targets(targets)
 
         # Ui-v1 feature set bits.
         if os.path.exists(
             f'{self._projroot}/pconfig/featuresets/featureset_ui_v1.py'
         ):
             self._add_ui_asset_set_targets(targets)
-            self._add_scene_asset_set_targets(targets)
-            self._add_base_asset_set_targets(targets)
 
         our_lines_public = (
             _empty_line_if(bool(targets))

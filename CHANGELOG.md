@@ -1,4 +1,4 @@
-### 1.8.0 (build 23008, api 9, 2026-08-31)
+### 1.8.0 (build 23009, api 9, 2026-08-31)
 - Fully implemented asset packages (more on this soon)
 - The asset-package wrapper modules bundled with the engine are now all
   private: `babase.builtinassets`, `bascenev1.builtinassets`, and
