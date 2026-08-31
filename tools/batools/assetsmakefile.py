@@ -67,7 +67,22 @@ def _get_py_targets(
     # pylint: disable=too-many-positional-arguments
     # pylint: disable=too-many-branches
 
-    py_generated_root = f'{ASSETS_SRC}/ba_data/python/babase/_generated'
+    # Codegen-produced python lives in per-featureset ``_generated``
+    # dirs (the docs/design/codegen.md convention). These are skipped
+    # in the physical walk and added from the codegen manifests
+    # instead, so the generated makefile is identical whether or not a
+    # codegen build has run yet -- critical for fresh trees (spinoff
+    # dsts, CI checkouts) where the files are not on disk. This used
+    # to name only babase's dir; scene/ui set modules then vanished
+    # from any list generated on a fresh tree (2026-08-31).
+    py_generated_root_parent = f'{ASSETS_SRC}/ba_data/python'
+
+    def _is_generated_python_dir(rel_root: str) -> bool:
+        if not rel_root.startswith(py_generated_root_parent + '/'):
+            return False
+        tail = rel_root.removeprefix(py_generated_root_parent + '/')
+        parts = tail.split('/')
+        return len(parts) >= 2 and parts[1] == '_generated'
 
     def _do_get_targets(
         proot: str, fnames: list[str], is_explicit: bool = False
@@ -185,11 +200,7 @@ def _get_py_targets(
     ):
         # Skip any generated files; we'll add those from the codegen manifest.
         # (dont want our results to require a codegen build beforehand)
-        if physical_root == os.path.join(
-            projroot, py_generated_root
-        ) or physical_root.startswith(
-            os.path.join(projroot, py_generated_root) + '/'
-        ):
+        if _is_generated_python_dir(physical_root.removeprefix(projroot + '/')):
             continue
 
         _do_get_targets(
@@ -211,7 +222,8 @@ def _get_py_targets(
     codegen_targets = [
         t
         for t in codegen_targets
-        if t.startswith(src + '/') and t.startswith(py_generated_root + '/')
+        if t.startswith(src + '/')
+        and _is_generated_python_dir(os.path.dirname(t))
     ]
 
     for target in codegen_targets:
