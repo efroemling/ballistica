@@ -27,8 +27,7 @@ class ShieldNodeType : public NodeType {
   BA_FLOAT_ATTR(radius, radius, set_radius);
   BA_FLOAT_ATTR(hurt, hurt, SetHurt);
   BA_FLOAT_ARRAY_ATTR(color, color, SetColor);
-  BA_BOOL_ATTR(always_show_health_bar, always_show_health_bar,
-               set_always_show_health_bar);
+  BA_INT_ATTR(show_health_bar, show_health_bar, set_show_health_bar);
 #undef BA_NODE_TYPE_CLASS
 
   ShieldNodeType()
@@ -37,7 +36,7 @@ class ShieldNodeType : public NodeType {
         radius(this),
         hurt(this),
         color(this),
-        always_show_health_bar(this) {}
+        show_health_bar(this) {}
 };
 static NodeType* node_type{};
 
@@ -145,7 +144,9 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
     millisecs_t since_last_hurt_change =
         scene()->time() - last_hurt_change_time_;
 
-    if (since_last_hurt_change < fade_time || always_show_health_bar_) {
+    if (health_bar_mode_ != HealthBarMode::kDisabled
+        && (since_last_hurt_change < fade_time
+            || health_bar_mode_ == HealthBarMode::kAlways)) {
       base::SimpleComponent c(frame_def->overlay_3d_pass());
       c.SetTransparent(true);
       c.SetPremultiplied(true);
@@ -154,7 +155,7 @@ void ShieldNode::Draw(base::FrameDef* frame_def) {
         float o = 1.0f
                   - static_cast<float>(since_last_hurt_change)
                         / static_cast<float>(fade_time);
-        if (always_show_health_bar_) {
+        if (health_bar_mode_ == HealthBarMode::kAlways) {
           o = std::max(o, 0.5f);
         }
         o *= o;

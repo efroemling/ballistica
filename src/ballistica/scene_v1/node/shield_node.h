@@ -25,16 +25,20 @@ class ShieldNode : public Node {
   void SetHurt(float val);
   auto color() const -> std::vector<float> { return color_; }
   void SetColor(const std::vector<float>& vals);
-  auto always_show_health_bar() const -> bool {
-    return always_show_health_bar_;
+  // show_health_bar: 0 = disabled, 1 = briefly (default), 2 = always
+  auto show_health_bar() const -> int {
+    return static_cast<int>(health_bar_mode_);
   }
-  void set_always_show_health_bar(bool val) { always_show_health_bar_ = val; }
+  void set_show_health_bar(int val) {
+    health_bar_mode_ = static_cast<HealthBarMode>(val);
+  }
 
  private:
+  enum class HealthBarMode { kDisabled = 0, kBriefly = 1, kAlways = 2 };
 #if !BA_HEADLESS_BUILD
   base::BGDynamicsShadow shadow_;
 #endif  // BA_HEADLESS_BUILD
-  bool always_show_health_bar_ = false;
+  HealthBarMode health_bar_mode_ = HealthBarMode::kBriefly;
   float hurt_smoothed_ = 1.0f;
   millisecs_t last_hurt_change_time_ = 0;
   float d_r_scale_ = 0.0f;
