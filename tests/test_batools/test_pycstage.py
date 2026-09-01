@@ -79,6 +79,38 @@ def test_stamp_forces_regen(tmp_path: Path) -> None:
     assert results.up_to_date == 0
 
 
+def test_optimize_level_stamped(tmp_path: Path) -> None:
+    """Flipping optimize levels regenerates; matching level no-ops.
+
+    The level must land in the bytecode itself (assert stripping is
+    compile-time), so verify via marshal semantics: an ``assert`` in
+    the source survives at level 0 and vanishes at level 1.
+    """
+    root = tmp_path / 'payload'
+    root.mkdir(parents=True)
+    # The condition must not be a constant — the compiler folds
+    # always-true asserts away at every level.
+    (root / 'asserty.py').write_text(
+        'def check(flag):\n    assert flag, "kept"\n'
+    )
+
+    results = update_pycs(str(root), optimize=0)
+    assert results.compiled == 1
+    pyc0 = (root / 'asserty.pyc').read_bytes()
+    assert b'kept' in pyc0
+
+    # Same level again: everything up to date.
+    results = update_pycs(str(root), optimize=0)
+    assert results.compiled == 0
+    assert results.up_to_date == 1
+
+    # Level flip: full regen, asserts stripped from the bytecode.
+    results = update_pycs(str(root), optimize=1)
+    assert results.compiled == 1
+    pyc1 = (root / 'asserty.pyc').read_bytes()
+    assert b'kept' not in pyc1
+
+
 def test_compile_error_reported(tmp_path: Path) -> None:
     """Broken source is reported and leaves the stamp uncertified."""
     root = tmp_path / 'payload'

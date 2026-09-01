@@ -162,7 +162,14 @@ class BuildStager:
                     f' be silently ignored by the bundled interpreter.'
                     f' Stage with Python {PYVER}.'
                 )
-            pycresults = update_pycs(self.dst)
+            # Match the level the device interpreter runs at
+            # (core_python.cc: 0 for debug builds, 1 for release) —
+            # assert stripping and __debug__ folding are compile-time,
+            # and zipimport loads these pycs regardless of the runtime
+            # -O flag, so a mismatch silently ships the wrong
+            # semantics.
+            assert self.debug is not None
+            pycresults = update_pycs(self.dst, optimize=0 if self.debug else 1)
             if pycresults.errors:
                 errstr = '\n'.join(pycresults.errors)
                 raise RuntimeError(

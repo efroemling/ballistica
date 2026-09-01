@@ -51,11 +51,16 @@ class PycUpdateResults:
     errors: list[str] = field(default_factory=list)
 
 
-def _stamp_value() -> str:
-    return f'{_STAMP_VERSION} {importlib.util.MAGIC_NUMBER.hex()}\n'
+def _stamp_value(optimize: int) -> str:
+    return (
+        f'{_STAMP_VERSION} {importlib.util.MAGIC_NUMBER.hex()}'
+        f' opt{optimize}\n'
+    )
 
 
-def _compile_batch(root: str, jobs: list[tuple[str, int]]) -> list[str]:
+def _compile_batch(
+    root: str, jobs: list[tuple[str, int]], optimize: int
+) -> list[str]:
     """Compile a batch of relative .py paths under root.
 
     Returns error descriptions (empty on success). Runs in worker
@@ -74,6 +79,7 @@ def _compile_batch(root: str, jobs: list[tuple[str, int]]) -> list[str]:
                 cfile=pycpath,
                 dfile=relpath,
                 doraise=True,
+                optimize=optimize,
                 invalidation_mode=py_compile.PycInvalidationMode.UNCHECKED_HASH,
             )
             # Pin the pyc's mtime to the source's exactly; our
@@ -84,7 +90,9 @@ def _compile_batch(root: str, jobs: list[tuple[str, int]]) -> list[str]:
     return errors
 
 
-def update_pycs(root: str, force: bool = False) -> PycUpdateResults:
+def update_pycs(
+    root: str, force: bool = False, optimize: int = 0
+) -> PycUpdateResults:
     """Create/update/prune side-by-side pycs under a staged tree.
 
     Walks ``root``; every ``.py`` gets an adjacent unchecked-hash
@@ -92,14 +100,21 @@ def update_pycs(root: str, force: bool = False) -> PycUpdateResults:
     source's), and orphaned ``.pyc`` files (source gone) are removed.
     Compile errors are collected in the returned results rather than
     raised; callers treat a non-empty ``errors`` as a build failure.
+
+    ``optimize`` is the compile-time optimization level and must match
+    the level the consuming interpreter *runs* at (assert stripping
+    and ``__debug__`` folding happen at compile time, and the legacy
+    side-by-side pyc layout has no per-level file names, so a mismatch
+    silently ships the wrong semantics). It rides the tree's stamp, so
+    flipping levels on an existing staged tree regenerates everything.
     """
     results = PycUpdateResults()
 
-    # Interpreter/format change? Regenerate everything.
+    # Interpreter/format/optimize-level change? Regenerate everything.
     stamp_path = os.path.join(root, STAMP_FILENAME)
     try:
         with open(stamp_path, encoding='utf-8') as infile:
-            stamp_current = infile.read() == _stamp_value()
+            stamp_current = infile.read() == _stamp_value(optimize)
     except OSError:
         stamp_current = False
     if not stamp_current:
@@ -143,7 +158,7 @@ def update_pycs(root: str, force: bool = False) -> PycUpdateResults:
 
     if stale:
         if len(stale) < _MIN_FILES_FOR_POOL:
-            results.errors += _compile_batch(root, stale)
+            results.errors += _compile_batch(root, stale, optimize)
         else:
             chunks = [
                 stale[i : i + _POOL_CHUNK_SIZE]
@@ -152,17 +167,20 @@ def update_pycs(root: str, force: bool = False) -> PycUpdateResults:
             try:
                 with ProcessPoolExecutor() as pool:
                     for errs in pool.map(
-                        _compile_batch, [root] * len(chunks), chunks
+                        _compile_batch,
+                        [root] * len(chunks),
+                        chunks,
+                        [optimize] * len(chunks),
                     ):
                         results.errors += errs
             except PermissionError, NotImplementedError, OSError:
                 # Restricted environments (sandboxes) can't spawn
                 # process pools; fall back to in-process compiles.
-                results.errors += _compile_batch(root, stale)
+                results.errors += _compile_batch(root, stale, optimize)
         results.compiled = len(stale) - len(results.errors)
 
     # Only certify the tree once it fully succeeded.
     if not results.errors:
         with open(stamp_path, 'w', encoding='utf-8') as outfile:
-            outfile.write(_stamp_value())
+            outfile.write(_stamp_value(optimize))
     return results
