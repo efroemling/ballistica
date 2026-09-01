@@ -206,6 +206,7 @@ ctx.filter_file_names = {
     'cd.yaml',
     'deploy_docs.yaml',
     'release.yaml',
+    'dependabot.yml',
     'LICENSE',
     'cloudtool',
     'bacloud',
