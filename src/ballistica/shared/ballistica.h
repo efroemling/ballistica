@@ -491,6 +491,12 @@ extern const int kEngineApiVersion;
 
 const int kDefaultPort = 43210;
 
+// Suffix given to bundled CAS asset blobs packed inside an archive
+// (the Android apk) so suffix-matched packaging rules can store them
+// uncompressed for zero-copy span serving. Kept in sync with the
+// build side (bundled_blob_suffix in batools staging).
+inline constexpr const char* kBundledCasBlobSuffix = ".bablob";
+
 // Magic numbers at the start of our file types.
 // Python source of truth for cob compilation is
 // tools/bacommontools/meshcompile.py; keep the cob values in sync

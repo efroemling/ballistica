@@ -886,8 +886,29 @@ void Graphics::BuildAndPushFrameDef() {
   } else {
     // Ok, we're drawing a real frame.
 
-    frame_def->set_needs_clear(!g_base->app_mode()->DoesWorldFillScreen());
-    DrawWorld(frame_def);
+    // When the UI fully covers the screen opaquely (common in menus at
+    // small ui-scale) we can skip drawing the world/scene entirely.
+    // Important to sample this once, strictly before any drawing.
+    bool ui_covers_screen = g_base->ui->UICoversScreenOpaquely();
+    if (ui_covers_screen != ui_covered_screen_last_frame_) {
+      ui_covered_screen_last_frame_ = ui_covers_screen;
+      g_core->logging->Log(
+          LogName::kBaGraphics, LogLevel::kDebug,
+          ui_covers_screen
+              ? "UI now covers screen opaquely; skipping world draws."
+              : "UI no longer covers screen opaquely; resuming world draws.");
+    }
+
+    if (ui_covers_screen) {
+      // The UI should cover any stale/undefined buffer contents behind
+      // it, but clear anyway: it's near-free on mobile tilers, and if
+      // our coverage calc is ever wrong it keeps the resulting artifact
+      // an obvious solid color rather than confusing garbage.
+      frame_def->set_needs_clear(true);
+    } else {
+      frame_def->set_needs_clear(!g_base->app_mode()->DoesWorldFillScreen());
+      DrawWorld(frame_def);
+    }
 
     DrawUI(frame_def);
 

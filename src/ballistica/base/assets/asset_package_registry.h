@@ -162,6 +162,19 @@ class AssetPackageRegistry {
   /// bundled blobs are never copied into the writable root.
   auto CasBlobPath(const std::string& hash) const -> std::string;
 
+  /// The bundle-root half of :meth:`CasBlobPath` (no writable-cache
+  /// probe) — where a shipped blob lives. With a bundled-archive
+  /// override configured (Android apk serving) this is a path into
+  /// the archive, resolvable via ``AssetBlob::FromFile``, not a
+  /// plain filesystem path.
+  auto BundledCasBlobPath(const std::string& hash) const -> std::string;
+
+  /// Configure bundled blobs to resolve into a mounted archive:
+  /// paths become ``<root>/<aa>/<rest><suffix>``. Set once during
+  /// bootstrap, before any loads.
+  void SetBundledCasOverride(const std::string& root,
+                             const std::string& suffix);
+
   /// Note that construct-mode has finished resolving every asset-package
   /// the meta-scan requires. Called (via
   /// ``_babase.mark_construct_assets_complete()``) from the same
@@ -218,6 +231,11 @@ class AssetPackageRegistry {
   // rather than mutex-guarded because it is read on the hot load path
   // from both the logic and asset-server threads; the write happens once.
   std::atomic<bool> construct_complete_{false};
+
+  // Bundled-archive override (see SetBundledCasOverride); written
+  // once at bootstrap before any loads, read-only after.
+  std::string bundled_cas_root_override_;
+  std::string bundled_cas_suffix_;
 
   // Log-once latch for the non-developer-build path of
   // :meth:`CheckPreConstructAccess`.

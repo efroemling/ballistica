@@ -183,10 +183,14 @@ void CoreFeatureSet::ApplyBaEnvConfig() {
       && *ba_env_app_python_dir_ != standard_app_python_dir;
 
   // As a sanity check, die if the data dir we were given doesn't contain a
-  // 'ba_data' dir.
-  auto fullpath = ba_env_data_dir_ + BA_DIRSLASH + "ba_data";
-  if (!platform->FilePathExists(fullpath)) {
-    FatalError("ba_data directory not found at '" + fullpath + "'.");
+  // 'ba_data' dir — except on platforms serving bundled assets directly
+  // out of an archive (the apk on Android), where ba_data legitimately
+  // has no on-disk presence.
+  if (!platform->GetBundledAssetsArchiveInfo().has_value()) {
+    auto fullpath = ba_env_data_dir_ + BA_DIRSLASH + "ba_data";
+    if (!platform->FilePathExists(fullpath)) {
+      FatalError("ba_data directory not found at '" + fullpath + "'.");
+    }
   }
 }
 

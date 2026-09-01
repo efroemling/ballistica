@@ -98,6 +98,7 @@ class UIV1FeatureSet : public FeatureSetNativeComponent,
 
   void DoShowURL(const std::string& url) override;
   auto IsMainUIVisible() -> bool override;
+  auto UICoversScreenOpaquely() -> bool override;
   auto BackPressWouldNavigate() -> bool override;
   auto IsPartyIconVisible() -> bool override;
   void ActivatePartyIcon() override;

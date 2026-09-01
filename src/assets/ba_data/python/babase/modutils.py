@@ -108,6 +108,46 @@ def show_user_scripts() -> None:
         _babase.screenmessage(get_human_readable_user_scripts_path())
 
 
+def _split_archive_path(path: str) -> tuple[str, str]:
+    """Split a path into an archive into (archive_file, inner_prefix)."""
+    prefix_parts: list[str] = []
+    cur = path
+    while cur and not os.path.isfile(cur):
+        parent, tail = os.path.split(cur)
+        if parent == cur:
+            break
+        prefix_parts.insert(0, tail)
+        cur = parent
+    if not cur or not os.path.isfile(cur):
+        raise RuntimeError(f"No archive found along path '{path}'.")
+    return cur, '/'.join(prefix_parts)
+
+
+def _extract_archive_scripts(srcpath: str, dstpath: str) -> None:
+    """Extract Python sources living inside an archive to a real dir.
+
+    Used for app-script dirs served directly out of an archive (e.g.
+    the Android apk). Skips ``.pyc`` entries; the copy is for humans
+    to read and edit, and the filesystem importer ignores adjacent
+    pycs anyway.
+    """
+    import shutil
+    import zipfile
+
+    archive, prefix = _split_archive_path(srcpath)
+    with zipfile.ZipFile(archive) as zfile:
+        for member in zfile.namelist():
+            if not member.startswith(prefix + '/') or member.endswith('/'):
+                continue
+            if member.endswith('.pyc') or '__pycache__' in member:
+                continue
+            relpath = member[len(prefix) + 1 :]
+            dstfile = os.path.join(dstpath, relpath)
+            os.makedirs(os.path.dirname(dstfile), exist_ok=True)
+            with zfile.open(member) as src, open(dstfile, 'wb') as dst:
+                shutil.copyfileobj(src, dst)
+
+
 def create_user_system_scripts() -> None:
     """Set up a copy of Ballistica app scripts under user scripts dir.
 
@@ -153,7 +193,14 @@ def create_user_system_scripts() -> None:
         return ('__pycache__',)
 
     print(f'COPYING "{env.python_directory_app}" -> "{pathtmp}".')
-    shutil.copytree(env.python_directory_app, pathtmp, ignore=_ignore_filter)
+    if os.path.isdir(env.python_directory_app):
+        shutil.copytree(
+            env.python_directory_app, pathtmp, ignore=_ignore_filter
+        )
+    else:
+        # App scripts served directly out of an archive (e.g. the
+        # Android apk); extract them instead.
+        _extract_archive_scripts(env.python_directory_app, pathtmp)
 
     print(f'MOVING "{pathtmp}" -> "{path}".')
     shutil.move(pathtmp, path)

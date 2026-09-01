@@ -25,9 +25,7 @@ uint32_t g_glyph_page_start_index_map[8] = {0,   258, 416,  546,
 // The number of glyphs on each page.
 uint32_t g_glyph_page_glyph_counts[8] = {258, 158, 130, 152, 283, 157, 138, 4};
 
-// Our dynamically-loaded glyph structs for each page.
-TextGraphics::Glyph* g_glyph_pages[8] = {nullptr, nullptr, nullptr, nullptr,
-                                         nullptr, nullptr, nullptr, nullptr};
+// (The glyph structs themselves live in font_glyph_pages_data.h.)
 
 // The page index for each glyph.
 uint8_t g_glyph_map[kGlyphCount] = {

@@ -100,7 +100,6 @@ android:
 	@$(PCOMMAND) clean_orphaned_assets
 
 MAKE_SCRIPTS = 1
-MAKE_FONTS = 1
 MAKE_DATA = 1
 
 ASSET_TARGETS_COMMON_GUI =
@@ -119,11 +118,9 @@ ASSET_TARGETS_ANDROID =
 # until 2026-06-12; those asset kinds now live in the asset-package
 # workspaces (decision #26), so the rules are retired.)
 
-# FontData.
-ifeq ($(MAKE_FONTS),1)
-ASSET_TARGETS_COMMON_GUI += $(FONT_TARGETS)
-ASSET_TARGETS_COMMON_SERVER += $(FONT_TARGETS)
-endif
+# (FontData targets lived here until 2026-08-31; the fontSmall glyph
+# .fdata files are now baked into the binary as inline data — see
+# src/ballistica/base/graphics/text/font_glyph_pages_data.h.)
 
 # Data.
 ifeq ($(MAKE_DATA),1)
@@ -3346,16 +3343,6 @@ $(SCRIPT_TARGETS_PY_PRIVATE_WIN_ARM64) : ../../.efrocachemap
 	@cd ../.. && $(PCOMMANDBATCHFROMROOT) efrocache_get src/assets/$@
 
 
-FONT_TARGETS = \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall0.fdata \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall1.fdata \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall2.fdata \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall3.fdata \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall4.fdata \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall5.fdata \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall6.fdata \
-  $(BUILD_DIR)/ba_data/fonts/fontSmall7.fdata
-
 PEM_TARGETS = \
   $(BUILD_DIR)/ba_data/python-site-packages/certifi/cacert.pem
 
@@ -3596,10 +3583,6 @@ data: $(DATA_TARGETS)
 
 data-clean:
 	rm -rf $(BUILD_DIR)/ba_data/data
-
-fonts: $(FONT_TARGETS)
-fonts-clean:
-	rm -rf $(BUILD_DIR)/ba_data/fonts
 
 # Script targets needed per-platform (may overlap)
 SCRIPT_TARGETS_CMAKE =

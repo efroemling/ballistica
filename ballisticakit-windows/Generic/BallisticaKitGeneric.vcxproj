@@ -216,6 +216,10 @@
     <ClInclude Include="..\..\src\ballistica\base\app_platform\windows\app_platform_windows.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\asset.cc" />
     <ClInclude Include="..\..\src\ballistica\base\assets\asset.h" />
+    <ClCompile Include="..\..\src\ballistica\base\assets\asset_archive.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\assets\asset_archive.h" />
+    <ClCompile Include="..\..\src\ballistica\base\assets\asset_blob.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\assets\asset_blob.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\asset_name_compat.cc" />
     <ClInclude Include="..\..\src\ballistica\base\assets\asset_name_compat.h" />
     <ClCompile Include="..\..\src\ballistica\base\assets\asset_package_registry.cc" />
@@ -250,6 +254,8 @@
     <ClInclude Include="..\..\src\ballistica\base\audio\audio_source.h" />
     <ClCompile Include="..\..\src\ballistica\base\audio\audio_streamer.cc" />
     <ClInclude Include="..\..\src\ballistica\base\audio\audio_streamer.h" />
+    <ClCompile Include="..\..\src\ballistica\base\audio\ogg_blob_source.cc" />
+    <ClInclude Include="..\..\src\ballistica\base\audio\ogg_blob_source.h" />
     <ClCompile Include="..\..\src\ballistica\base\audio\ogg_stream.cc" />
     <ClInclude Include="..\..\src\ballistica\base\audio\ogg_stream.h" />
     <ClCompile Include="..\..\src\ballistica\base\automation\automation.cc" />
@@ -376,6 +382,7 @@
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\render_command_buffer.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\support\screen_messages.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\support\screen_messages.h" />
+    <ClInclude Include="..\..\src\ballistica\base\graphics\text\font_glyph_pages_data.h" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\text\font_page_map_data.h" />
     <ClCompile Include="..\..\src\ballistica\base\graphics\text\text_graphics.cc" />
     <ClInclude Include="..\..\src\ballistica\base\graphics\text\text_graphics.h" />

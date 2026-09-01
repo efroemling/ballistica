@@ -540,6 +540,43 @@ auto PlatformWindows::FOpen(const char* path, const char* mode) -> FILE* {
   return _wfopen(UTF8Decode(path).c_str(), UTF8Decode(mode).c_str());
 }
 
+auto PlatformWindows::MapFileReadOnly(const std::string& path, size_t* size_out)
+    -> const void* {
+  assert(size_out);
+  HANDLE file =
+      CreateFileW(UTF8Decode(path).c_str(), GENERIC_READ, FILE_SHARE_READ,
+                  nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+  if (file == INVALID_HANDLE_VALUE) {
+    return nullptr;
+  }
+  LARGE_INTEGER fsize{};
+  if (!GetFileSizeEx(file, &fsize) || fsize.QuadPart <= 0
+      || static_cast<uint64_t>(fsize.QuadPart) > SIZE_MAX) {
+    CloseHandle(file);
+    return nullptr;
+  }
+  HANDLE mapping =
+      CreateFileMappingW(file, nullptr, PAGE_READONLY, 0, 0, nullptr);
+  // The view (once we have one) keeps the underlying objects alive;
+  // handles can be closed eagerly.
+  CloseHandle(file);
+  if (!mapping) {
+    return nullptr;
+  }
+  const void* base = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
+  CloseHandle(mapping);
+  if (!base) {
+    return nullptr;
+  }
+  *size_out = static_cast<size_t>(fsize.QuadPart);
+  return base;
+}
+
+void PlatformWindows::UnmapFile(const void* base, size_t size) {
+  (void)size;  // Windows tracks view sizes itself.
+  UnmapViewOfFile(base);
+}
+
 void PlatformWindows::DoMakeDir(const std::string& dir, bool quiet) {
   std::wstring stemp = UTF8Decode(dir);
   int result = CreateDirectoryW(stemp.c_str(), 0);

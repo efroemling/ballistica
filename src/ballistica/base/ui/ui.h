@@ -62,6 +62,16 @@ class UI {
   /// allowing exiting or tweaking settings.
   auto IsMainUIVisible() const -> bool;
 
+  /// Return whether the UI currently covers the entire visible screen
+  /// (the virtual outer rect) with opaque drawing - i.e. a
+  /// fully-transitioned-in opaque-backed window spanning the whole screen, as
+  /// is common in menus at small ui-scale. Consumers may use a true result to
+  /// skip rendering anything behind the UI. Deliberately conservative (false
+  /// negatives are common; true guarantees coverage), always false in
+  /// VR mode (where UI floats in 3d space and never occludes), and can
+  /// be force-disabled via the BA_DISABLE_UI_COVER_OPT=1 env var.
+  auto UICoversScreenOpaquely() const -> bool;
+
   /// Thread-safe snapshot of whether a back/menu press would navigate
   /// within the game rather than doing nothing at the top level,
   /// refreshed each display step. Exists for platforms that must decide

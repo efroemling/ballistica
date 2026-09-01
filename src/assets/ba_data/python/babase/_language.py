@@ -380,18 +380,19 @@ def get_legacy_langdata() -> dict[str, Any]:
     # first that carries it rather than hard-coding the package name.
     result: dict[str, Any] = {}
     for apverid in loaded_asset_package_apverids():
-        path = _babase.get_asset_package_constant_blob_path(
+        # (Contents come back directly rather than a path; bundled
+        # blobs may live inside an archive such as the Android apk.)
+        text = _babase.get_asset_package_constant_blob_text(
             apverid, 'legacylangdata'
         )
-        if path is None:
+        if text is None:
             continue
         try:
-            with open(path, encoding='utf-8') as infile:
-                result = json.loads(infile.read())
+            result = json.loads(text)
         except Exception:
             # Don't cache a transient read failure; a later call (after a
             # successful resolve) can still succeed.
-            applog.exception('Error reading legacy langdata from %s.', path)
+            applog.exception('Error reading legacy langdata from %s.', apverid)
             return {}
         break
 

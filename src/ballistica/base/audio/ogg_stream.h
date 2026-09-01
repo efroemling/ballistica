@@ -15,6 +15,9 @@
 
 #include <string>
 
+#include "ballistica/base/assets/asset_blob.h"
+#include "ballistica/base/audio/ogg_blob_source.h"
+
 namespace ballistica::base {
 
 #if BA_ENABLE_AUDIO
@@ -31,6 +34,10 @@ class OggStream : public AudioStreamer {
 
  private:
   auto GetErrorString(int code) -> std::string;
+  // The full file data being streamed (typically a whole-file map;
+  // decode faults pages in as needed). Must outlive ogg_file_.
+  AssetBlob blob_;
+  OggBlobSource blob_source_{};
   OggVorbis_File ogg_file_{};
   bool have_ogg_file_;
   vorbis_info* vorbis_info_;

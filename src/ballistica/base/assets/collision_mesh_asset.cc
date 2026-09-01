@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <string>
 
+#include "ballistica/base/assets/asset_blob.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/platform/platform.h"
@@ -53,15 +54,16 @@ auto CollisionMeshAsset::GetName() const -> std::string {
 void CollisionMeshAsset::DoPreload() {
   assert(!file_name_.empty());
 
-  FILE* f = g_core->platform->FOpen(file_name_full_.c_str(), "rb");
+  auto blob = AssetBlob::FromFile(file_name_full_);
   uint32_t i_vals[2];
-  if (!f) {
+  if (!blob.exists()) {
     throw Exception("Can't open collision mesh file: '" + file_name_full_
                     + "'");
   }
+  AssetBlobReader reader(blob);
 
   uint32_t version;
-  if (fread(&version, sizeof(version), 1, f) != 1) {
+  if (!reader.ReadInto(&version, sizeof(version))) {
     throw Exception("Error reading file header for '" + file_name_full_ + "'");
   }
 
@@ -79,7 +81,7 @@ void CollisionMeshAsset::DoPreload() {
   bool legacy_format = (version == kCobFileID);
 
   // Read the vertex count and face count.
-  if (fread(i_vals, sizeof(i_vals), 1, f) != 1) {
+  if (!reader.ReadInto(i_vals, sizeof(i_vals))) {
     throw Exception("Read failed for " + file_name_full_);
   }
 
@@ -92,21 +94,19 @@ void CollisionMeshAsset::DoPreload() {
   // Need 3 indices per face.
   indices_.resize(tri_count * 3);
 
-  if (fread(&(vertices_[0]), vertices_.size() * sizeof(dReal), 1, f) != 1) {
+  if (!reader.ReadInto(vertices_.data(), vertices_.size() * sizeof(dReal))) {
     throw Exception("Read failed for " + file_name_full_);
   }
-  if (fread(&(indices_[0]), indices_.size() * sizeof(uint32_t), 1, f) != 1) {
+  if (!reader.ReadInto(indices_.data(), indices_.size() * sizeof(uint32_t))) {
     throw Exception("Read failed for " + file_name_full_);
   }
   if (legacy_format) {
     // Need 3 floats per face-normal.
     normals_.resize(tri_count * 3);
-    if (fread(&(normals_[0]), normals_.size() * sizeof(dReal), 1, f) != 1) {
+    if (!reader.ReadInto(normals_.data(), normals_.size() * sizeof(dReal))) {
       throw Exception("Read failed for " + file_name_full_);
     }
   }
-
-  fclose(f);
 
   tri_mesh_data_ = dGeomTriMeshDataCreate();
   BA_PRECONDITION(tri_mesh_data_);

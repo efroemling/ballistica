@@ -250,8 +250,29 @@ auto AssetPackageRegistry::CasBlobPath(const std::string& hash) const
   // genuinely absent from both this yields a sensible not-found when the
   // caller tries to open it. (Bundled blobs thus never get copied into
   // the writable root.)
+  return BundledCasBlobPath(hash);
+}
+
+auto AssetPackageRegistry::BundledCasBlobPath(const std::string& hash) const
+    -> std::string {
+  if (hash.size() < 2) {
+    return "";
+  }
+  if (!bundled_cas_root_override_.empty()) {
+    // Archive entries always use forward slashes.
+    return bundled_cas_root_override_ + "/" + hash.substr(0, 2) + "/"
+           + hash.substr(2) + bundled_cas_suffix_;
+  }
+  std::string shard =
+      hash.substr(0, 2) + std::string(BA_DIRSLASH) + hash.substr(2);
   return g_core->GetDataDirectory() + BA_DIRSLASH + "ba_data" + BA_DIRSLASH
          + "assets" + BA_DIRSLASH + shard;
+}
+
+void AssetPackageRegistry::SetBundledCasOverride(const std::string& root,
+                                                 const std::string& suffix) {
+  bundled_cas_root_override_ = root;
+  bundled_cas_suffix_ = suffix;
 }
 
 void AssetPackageRegistry::SetConstructComplete() {

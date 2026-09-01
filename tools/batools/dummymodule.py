@@ -322,6 +322,8 @@ def _writefuncs(
                 returnstr = 'return (0.0, 0.0, 0.0)'
             elif returns == 'str | None':
                 returnstr = "return ''"
+            elif returns == 'bytes | None':
+                returnstr = "return b''"
             elif returns == 'int | None':
                 returnstr = 'return 0'
             elif returns == 'float | None':

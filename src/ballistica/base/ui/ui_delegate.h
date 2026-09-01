@@ -39,6 +39,12 @@ class UIDelegateInterface {
 
   virtual auto IsMainUIVisible() -> bool = 0;
 
+  /// Return whether UI elements currently cover the entire visible
+  /// screen (the virtual outer rect) opaquely; used to skip rendering the world
+  /// behind the UI. Must be conservative: return true only when full
+  /// coverage is guaranteed.
+  virtual auto UICoversScreenOpaquely() -> bool = 0;
+
   /// Would a back/menu press right now do something in-game (navigate
   /// out of a window, close a popup, bring up the in-game menu) rather
   /// than being a no-op at the top level? Platforms where the OS acts

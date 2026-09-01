@@ -10,7 +10,8 @@ from efro.terminal import Clr
 from efro.util import extract_arg, extract_flag
 from efrotools.util import is_wsl_windows_build_path
 from efrotools.pyver import PYVER, PYVERNODOT
-from batools._androidpayload import write_payload_file
+from batools._bundlestage import sync_asset_bundle
+from batools._pycstage import update_pycs
 
 
 def stage_build(projroot: str, args: list[str] | None = None) -> None:
@@ -39,7 +40,6 @@ class BuildStager:
         self.include_shell_executable = False
         self.include_scripts = True
         self.include_python = True
-        self.include_fonts = True
         self.include_json = True
         self.include_pylib = False
         # Name of the asset-bundle profile to stage (see
@@ -51,8 +51,15 @@ class BuildStager:
         self.include_binary_executable = False
         self.executable_name: str | None = None
         self.pylib_src_path: str | None = None
-        self.include_payload_file = False
-        self.is_payload_full = False
+        # Android-only: generate side-by-side .pyc files for staged
+        # Python (for zipimport directly from the apk) and protect
+        # them from our rsync delete passes.
+        self.include_payload_pycs = False
+        # Suffix for staged bundle blob names; Android uses '.bablob'
+        # so blobs pack uncompressed in the apk (suffix-matched gradle
+        # noCompress) and get served as spans from the apk mapping.
+        # COUPLED to kUseAssetsFromApk in platform_android.cc.
+        self.bundled_blob_suffix = ''
         self.debug: bool | None = None
         self.builddir: str | None = None
         self.dist_mode: bool = False
@@ -110,7 +117,13 @@ class BuildStager:
         self._sync_ba_data_legacy()
 
         if self.asset_bundle_profile is not None:
-            self._sync_asset_bundle()
+            assert self.dst is not None
+            sync_asset_bundle(
+                self.projroot,
+                self.dst,
+                self.asset_bundle_profile,
+                blob_suffix=self.bundled_blob_suffix,
+            )
 
         if self.include_binary_executable:
             self._sync_binary_executable()
@@ -121,11 +134,49 @@ class BuildStager:
         if self.include_shell_executable:
             self._sync_shell_executable()
 
-        # On Android we need to build a payload file so it knows what to
-        # pull out of the apk.
-        if self.include_payload_file:
+        # On Android, generate side-by-side .pyc files for all staged
+        # Python; zipimport reads these when importing directly out of
+        # the apk (see docs/initiatives/android-apk-direct-ba-data.md).
+        # Must run before payload-file generation so they're included
+        # in its manifest.
+        if self.include_payload_pycs:
             assert self.dst is not None
-            write_payload_file(self.dst, self.is_payload_full)
+            # Transitional cleanup: drop the legacy extraction payload
+            # manifest if this staged tree still carries one from
+            # before the extract-to-disk phase was retired (nothing
+            # reads it anymore; safe to remove once this has run).
+            legacy_payload = os.path.join(self.dst, 'payload_info')
+            if os.path.isfile(legacy_payload):
+                os.unlink(legacy_payload)
+            # Guard against staging pycs the device interpreter would
+            # silently *ignore*: pyc magic is feature-release-specific,
+            # so the interpreter running this stage must match the
+            # project's bundled Python version (a mismatch wouldn't
+            # error at runtime — zipimport just quietly falls back to
+            # compiling source on every launch).
+            hostver = '.'.join(str(v) for v in sys.version_info[:2])
+            if hostver != PYVER:
+                raise RuntimeError(
+                    f'Staging under Python {hostver} but the project'
+                    f' bundles Python {PYVER}; staged .pyc files would'
+                    f' be silently ignored by the bundled interpreter.'
+                    f' Stage with Python {PYVER}.'
+                )
+            pycresults = update_pycs(self.dst)
+            if pycresults.errors:
+                errstr = '\n'.join(pycresults.errors)
+                raise RuntimeError(
+                    f'{len(pycresults.errors)} error(s)'
+                    f' staging .pyc files:\n{errstr}'
+                )
+            print(
+                f'{Clr.BLU}Staged .pycs for {self.dst}:'
+                f' {Clr.BLD}{pycresults.compiled}{Clr.RST}{Clr.BLU} compiled,'
+                f' {Clr.BLD}{pycresults.pruned}{Clr.RST}{Clr.BLU} pruned,'
+                f' {Clr.BLD}{pycresults.up_to_date}{Clr.RST}{Clr.BLU}'
+                f' up to date.{Clr.RST}',
+                flush=True,
+            )
 
     def _parse_args(self, args: list[str]) -> None:
         """Parse args and apply to ourself."""
@@ -242,14 +293,15 @@ class BuildStager:
             self.wsl_chmod_workaround = True
 
     def _parse_android_args(self) -> None:
-        # Android pulls its assets out of the apk at runtime via the
-        # payload manifest; we always stage the full asset set (the
-        # per-asset-type 'partial apk' selection has been retired).
+        # Android serves everything staged here directly out of the
+        # apk at runtime (Python via zipimport, bundled asset blobs as
+        # spans from a memory-map); nothing is extracted to disk. See
+        # docs/initiatives/android-apk-direct-ba-data.md.
         self.dst = 'assets/ballistica_files'
         self.pylib_src_path = 'pylib-android'
-        self.include_payload_file = True
-        self.is_payload_full = True
         self.include_pylib = True
+        self.include_payload_pycs = True
+        self.bundled_blob_suffix = '.bablob'
 
     def _parse_win_args(self, platform: str, args: list[str]) -> None:
         """Parse sub-args in the windows platform string."""
@@ -434,6 +486,15 @@ class BuildStager:
             '--delete',
             '--delete-excluded',
             '--prune-empty-dirs',
+        ]
+        if self.include_payload_pycs:
+            # Shield our generated side-by-side .pyc files from the
+            # deletion pass (a plain exclude wouldn't survive
+            # --delete-excluded; a protect rule does). Android-only;
+            # other platforms don't stage pycs and keep current
+            # behavior.
+            cmd += ['--filter', 'P *.pyc']
+        cmd += [
             '--include',
             '*.py',
             '--include',
@@ -468,12 +529,17 @@ class BuildStager:
             cmd.append('--delete-excluded')
         else:
             # Shouldn't be trying to do sparse stuff in server builds.
-            if self.serverdst is not None:
-                assert self.include_json
-            else:
-                assert self.include_fonts and self.include_json
+            assert self.include_json
             # Keep rsync from deleting the other stuff we're overlaying.
             cmd += ['--exclude', '/python-dylib']
+
+        if self.include_payload_pycs:
+            # Shield our generated side-by-side .pyc files from the
+            # deletion pass (a plain exclude wouldn't survive
+            # --delete-excluded; a protect rule does). Android-only;
+            # other platforms don't stage pycs and keep current
+            # behavior.
+            cmd += ['--filter', 'P *.pyc']
 
         if self.include_scripts:
             cmd += [
@@ -486,9 +552,6 @@ class BuildStager:
                 '--include',
                 '*.zstddict',
             ]
-
-        if self.include_fonts:
-            cmd += ['--include', '*.fdata']
 
         if self.include_json:
             cmd += ['--include', '*.json']
@@ -504,242 +567,6 @@ class BuildStager:
         ]
         self._purge_pycache_dirs(f'{self.dst}/ba_data/')
         subprocess.run(cmd, check=True)
-
-    def _collect_bundle_hashes(self, bundle_manifest_path: str) -> set[str]:
-        """Walk the top-level bundle and return every transitively
-        referenced CAS hash (bucket-manifest blobs plus the data
-        blobs those manifests reference)."""
-        import json
-
-        with open(bundle_manifest_path, encoding='utf-8') as infile:
-            bundle = json.loads(infile.read())
-
-        flavor_manifest_maps = [
-            e['flavor_manifests']
-            for e in bundle['asset_package_versions'].values()
-        ]
-
-        hashes: set[str] = set()
-        for flavor_manifests in flavor_manifest_maps:
-            for manifest_hash in flavor_manifests.values():
-                hashes.add(manifest_hash)
-                blob_path = (
-                    f'{self.projroot}/.cache/assetdata/'
-                    f'{manifest_hash[:2]}/{manifest_hash[2:]}'
-                )
-                with open(blob_path, encoding='utf-8') as infile:
-                    flavor_manifest = json.loads(infile.read())
-                # Each entry is a part-keyed component map (decision #16);
-                # flatten over parts to collect every data-blob hash.
-                hashes.update(
-                    comp['h']
-                    for info in flavor_manifest['e'].values()
-                    for comp in info.values()
-                )
-        return hashes
-
-    def _verify_builtin_apverid_bundled(
-        self, bundle_manifest_path: str
-    ) -> None:
-        """Fail loudly if the compiled-in builtin apverid isn't bundled.
-
-        ``base.h``'s autogenerated ``kBuiltinAssetsApverid`` is the
-        asset-package version the binary's ``LoadBuiltinTexture`` calls
-        ask for at startup. If the asset-id splice drifts from the staged
-        bundle — a half-applied ``assetpins update``, a lazybuild-skipped
-        codegen, a hand-edited pin — every builtin load asks for an
-        unbundled package and the binary crashes on launch under a flood
-        of ``Asset not found in package`` errors. Catching it here, the
-        last step before the artifact is runnable, turns that confusing
-        runtime crash into one actionable build-time message.
-
-        Compares apverid strings only (not the full splice): that's the
-        field that drifts, and it's robust without a resolved manifest or
-        a matching clang-format. Skips quietly if base.h has no splice.
-        """
-        import re
-        import json
-
-        from efro.error import CleanError
-
-        base_h_path = f'{self.projroot}/src/ballistica/base/base.h'
-        if not os.path.exists(base_h_path):
-            return
-        with open(base_h_path, encoding='utf-8') as infile:
-            match = re.search(
-                r'kBuiltinAssetsApverid\s*=\s*"([^"]+)"', infile.read()
-            )
-        if match is None:
-            return
-        builtin_apverid = match.group(1)
-
-        with open(bundle_manifest_path, encoding='utf-8') as infile:
-            bundled = set(json.load(infile).get('asset_package_versions', {}))
-
-        if builtin_apverid not in bundled:
-            raise CleanError(
-                f"Builtin-asset splice is stale: base.h kBuiltinAssetsApverid"
-                f" is '{builtin_apverid}', but the staged"
-                f" '{self.asset_bundle_profile}' bundle contains"
-                f' {sorted(bundled)}. The compiled-in builtin package is not'
-                f' in the bundle, so this build would crash on launch. Re-sync'
-                f' the splice with `tools/pcommand assetpins update'
-                f' babuiltinassets <ver>` (now self-healing) or `tools/pcommand'
-                f' gen_builtin_asset_ids`, then rebuild.'
-            )
-
-    def _sync_asset_bundle(self) -> None:
-        """Stage the build's asset bundle into ba_data/.
-
-        Reads ``.cache/asset_bundle/<profile>/manifest.json``
-        for whichever bundle profile (e.g. ``gui-minimal`` /
-        ``headless-minimal``) this build was configured for, walks
-        it to collect every transitively-referenced CAS blob
-        (bucket-manifests plus the data blobs those manifests
-        reference), and mirrors
-        the resulting set into ``<staged>/ba_data/assets/``.
-        Already-correct blobs (right hash already at the right
-        path) are left alone, missing ones are copied in, and
-        anything else under ``assets/`` — stale orphans from
-        prior builds, cruft like ``.DS_Store`` — is pruned.
-        Also copies the top-level ``manifest.json`` itself to
-        ``<staged>/ba_data/manifest.json``.
-        """
-        import shutil
-        import concurrent.futures
-
-        assert self.dst is not None
-        assert self.asset_bundle_profile is not None
-
-        bundle_manifest_path = (
-            f'{self.projroot}/.cache/asset_bundle/'
-            f'{self.asset_bundle_profile}/manifest.json'
-        )
-        if not os.path.exists(bundle_manifest_path):
-            bundle_root = f'{self.projroot}/.cache/asset_bundle'
-            siblings = (
-                sorted(
-                    e
-                    for e in os.listdir(bundle_root)
-                    if os.path.isdir(os.path.join(bundle_root, e))
-                )
-                if os.path.isdir(bundle_root)
-                else []
-            )
-            if siblings:
-                # Our profile is missing but *other* profiles are present:
-                # this is a corrupt/partial asset cache, not an asset-target
-                # wiring bug. lazybuild guards the assets sub-build on the
-                # existence of the shared .cache/asset_bundle dir (so a full
-                # `rm -rf .cache/asset_bundle` re-triggers it), but a sibling
-                # profile's presence satisfies that dir-level check -- so with
-                # a stale lazybuild marker a single missing profile gets
-                # skipped rather than rebuilt. Clearing the whole dir restores
-                # the guard's ability to fire.
-                raise RuntimeError(
-                    f"Asset bundle manifest for profile"
-                    f" '{self.asset_bundle_profile}' was not found at"
-                    f' {bundle_manifest_path}, but other profiles are present'
-                    f' ({', '.join(siblings)}). This is a corrupt/partial'
-                    f' asset cache (a single bundle profile is missing while'
-                    f' siblings remain), so lazybuild -- which guards the'
-                    f' assets sub-build on the existence of the shared'
-                    f' .cache/asset_bundle dir -- saw the dir present (via a'
-                    f' sibling) and skipped the rebuild. Clear the asset'
-                    f' bundle cache and rebuild:\n'
-                    f'    rm -rf .cache/asset_bundle\n'
-                    f' (with the dir fully gone, lazybuild re-triggers the'
-                    f' assets build and regenerates every profile).'
-                )
-            raise RuntimeError(
-                f"Asset bundle manifest for profile"
-                f" '{self.asset_bundle_profile}' was not found at"
-                f' {bundle_manifest_path}. The'
-                f' asset-build phase should have produced it (the manifest'
-                f' rides the COMMON_GUI / COMMON_SERVER target lists in'
-                f' src/assets/Makefile). This almost always means this build'
-                f' stages a different bundle variant than its asset'
-                f' prerequisite builds -- e.g. a server staging path'
-                f' (-cmakeserver / -winserver) sourcing a gui assets target.'
-                f' Point the build at the assets target that builds the'
-                f' matching variant: gui staging needs a gui assets target'
-                f' (assets-cmake / assets-windows), server staging needs a'
-                f' server assets target (assets-server /'
-                f' assets-windows-server).'
-            )
-
-        # Last-chance consistency gate before this bundle becomes a
-        # runnable artifact: the compiled-in builtin apverid must be one
-        # of the packages we're staging (see the method docstring).
-        self._verify_builtin_apverid_bundled(bundle_manifest_path)
-
-        wanted_hashes = self._collect_bundle_hashes(bundle_manifest_path)
-        wanted: set[tuple[str, str]] = {(h[:2], h[2:]) for h in wanted_hashes}
-        wanted_prefixes: set[str] = {p for p, _ in wanted}
-
-        # Scan the existing staged tree once. CAS naming means
-        # "file at the right path = right content", so anything
-        # already present that matches a wanted entry needs no
-        # work; anything present that doesn't is an orphan to
-        # prune (covers both stale hashes from prior builds and
-        # cruft files like .DS_Store — no special-case needed).
-        assets_root = f'{self.dst}/ba_data/assets'
-        existing: set[tuple[str, str]] = set()
-        existing_prefixes: set[str] = set()
-        if os.path.isdir(assets_root):
-            for entry in os.scandir(assets_root):
-                if entry.is_dir(follow_symlinks=False):
-                    existing_prefixes.add(entry.name)
-                    for sub in os.scandir(entry.path):
-                        if sub.is_file(follow_symlinks=False):
-                            existing.add((entry.name, sub.name))
-                elif entry.is_file(follow_symlinks=False):
-                    # Stray file at assets/ root (.DS_Store, etc.);
-                    # the wanted set lives only under prefix dirs.
-                    os.unlink(entry.path)
-
-        to_copy = wanted - existing
-        to_delete = existing - wanted
-
-        # Pre-create any prefix dirs we'll be writing into.
-        for prefix in wanted_prefixes:
-            os.makedirs(f'{assets_root}/{prefix}', exist_ok=True)
-
-        def _copy_one(item: tuple[str, str]) -> None:
-            prefix, rest = item
-            src = f'{self.projroot}/.cache/assetdata/{prefix}/{rest}'
-            dst = f'{assets_root}/{prefix}/{rest}'
-            shutil.copyfile(src, dst)
-            shutil.copystat(src, dst)
-
-        def _delete_one(item: tuple[str, str]) -> None:
-            prefix, rest = item
-            os.unlink(f'{assets_root}/{prefix}/{rest}')
-
-        # Parallel I/O for the two bulk passes. The pool exits
-        # eagerly on exception so a copy/delete failure surfaces
-        # rather than getting swallowed.
-        if to_copy or to_delete:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=16) as pool:
-                for _ in pool.map(_copy_one, to_copy):
-                    pass
-                for _ in pool.map(_delete_one, to_delete):
-                    pass
-
-        # Drop now-empty prefix dirs (existing − wanted). Silently
-        # skip non-empty ones — those carry leftover non-CAS junk
-        # we'd rather not touch.
-        for prefix in existing_prefixes - wanted_prefixes:
-            try:
-                os.rmdir(f'{assets_root}/{prefix}')
-            except OSError:
-                pass
-
-        # And the top-level pointer.
-        bundle_dst = f'{self.dst}/ba_data/manifest.json'
-        os.makedirs(os.path.dirname(bundle_dst), exist_ok=True)
-        shutil.copyfile(bundle_manifest_path, bundle_dst)
-        shutil.copystat(bundle_manifest_path, bundle_dst)
 
     def _sync_shell_executable(self) -> None:
         if self.executable_name is None:

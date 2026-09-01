@@ -57,11 +57,17 @@ def is_browser_likely_available() -> bool:
     platform = app.classic.platform
     hastouchscreen = _babase.hastouchscreen()
 
-    # If we're on a vr device or an android device with no touchscreen,
-    # assume no browser.
-    # FIXME: Might not be the case anymore; should make this definable
-    #  at the platform level.
-    if app.env.vr or (platform == 'android' and not hastouchscreen):
+    # If we're on a TV, a vr device, or an android device with no
+    # touchscreen, assume no browser. The TV case is a platform-level
+    # signal (see Platform::IsRunningOnTV) and covers both tvOS -- where
+    # there is no browser at all to hand a url off to -- and Android TV.
+    # FIXME: The remaining two are still guesses; should make this
+    #  definable at the platform level too.
+    if (
+        app.env.tv
+        or app.env.vr
+        or (platform == 'android' and not hastouchscreen)
+    ):
         return False
 
     # Anywhere else assume we've got one.

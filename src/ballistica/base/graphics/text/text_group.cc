@@ -325,7 +325,7 @@ auto TextGroup::GetCaratPts(const std::string& text_in,
               // certain chars onto it instead of switching back to glyph
               // mode. (to reduce the number of times we switch back and
               // forth)
-              if (TextGraphics::Glyph* g =
+              if (const TextGraphics::Glyph* g =
                       g_base->text_graphics->GetGlyph(val, big_)) {
                 line_length += char_width * g->advance;
               } else {

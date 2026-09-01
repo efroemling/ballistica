@@ -11,6 +11,7 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_platform/app_platform.h"
+#include "ballistica/base/assets/asset_blob.h"
 #include "ballistica/base/assets/asset_name_compat.h"
 #include "ballistica/base/assets/asset_package_registry.h"
 #include "ballistica/base/assets/assets.h"
@@ -1514,9 +1515,9 @@ static PyMethodDef PyMarkConstructAssetsCompleteDef = {
     "``babase._asset_packages.mark_construct_complete()`` so the native\n"
     "and Python gates open together."};
 
-// ---------------- get_asset_package_constant_blob_path -----------------------
+// ---------------- get_asset_package_constant_blob_text -----------------------
 
-static auto PyGetAssetPackageConstantBlobPath(PyObject* self, PyObject* args,
+static auto PyGetAssetPackageConstantBlobText(PyObject* self, PyObject* args,
                                               PyObject* keywds) -> PyObject* {
   BA_PYTHON_TRY;
   const char* apverid;
@@ -1537,25 +1538,130 @@ static auto PyGetAssetPackageConstantBlobPath(PyObject* self, PyObject* args,
   if (hash.empty()) {
     Py_RETURN_NONE;
   }
-  return PyUnicode_FromString(registry->CasBlobPath(hash).c_str());
+  // Read via AssetBlob so bundled blobs served out of an archive
+  // (the apk on Android) work; the path may not be a plain file.
+  auto blob = AssetBlob::FromFile(registry->CasBlobPath(hash));
+  if (!blob.exists()) {
+    Py_RETURN_NONE;
+  }
+  return PyUnicode_FromStringAndSize(reinterpret_cast<const char*>(blob.data()),
+                                     static_cast<Py_ssize_t>(blob.size()));
   BA_PYTHON_CATCH;
 }
 
-static PyMethodDef PyGetAssetPackageConstantBlobPathDef = {
-    "get_asset_package_constant_blob_path",          // name
-    (PyCFunction)PyGetAssetPackageConstantBlobPath,  // method
+static PyMethodDef PyGetAssetPackageConstantBlobTextDef = {
+    "get_asset_package_constant_blob_text",          // name
+    (PyCFunction)PyGetAssetPackageConstantBlobText,  // method
     METH_VARARGS | METH_KEYWORDS,                    // flags
 
-    "get_asset_package_constant_blob_path(apverid: str,\n"
+    "get_asset_package_constant_blob_text(apverid: str,\n"
     "                                     logical_path: str) -> str | None\n"
     "\n"
     "(internal) Resolve a flavor-invariant ``constant``-bucket logical\n"
-    "path in a registered asset-package to its on-disk CAS blob path.\n"
-    "Returns the path, or ``None`` if the package isn't registered, has\n"
-    "no constant bucket, or doesn't carry that logical path. The blob is\n"
-    "the JSON (``j.json``) component. The returned path is where the\n"
-    "blob should live (writable CAS root, else bundle root); a caller\n"
-    "must still handle a genuine ``open()`` failure."};
+    "path in a registered asset-package and return its CAS blob's\n"
+    "contents as text. Returns ``None`` if the package isn't registered,\n"
+    "has no constant bucket, doesn't carry that logical path, or the\n"
+    "blob is unreadable. The blob is the JSON (``j.json``) component.\n"
+    "Contents (not a path) are returned since bundled blobs may live\n"
+    "inside an archive rather than as plain files."};
+
+// ---------------- bundled_cas_blob_size --------------------------------------
+
+static auto PyBundledCasBlobSize(PyObject* self, PyObject* args,
+                                 PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* filehash;
+  static const char* kwlist[] = {"filehash", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &filehash)) {
+    return nullptr;
+  }
+  auto* registry = g_base->assets->package_registry();
+  auto blob = AssetBlob::FromFile(registry->BundledCasBlobPath(filehash));
+  if (!blob.exists()) {
+    Py_RETURN_NONE;
+  }
+  return PyLong_FromSize_t(blob.size());
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyBundledCasBlobSizeDef = {
+    "bundled_cas_blob_size",            // name
+    (PyCFunction)PyBundledCasBlobSize,  // method
+    METH_VARARGS | METH_KEYWORDS,       // flags
+
+    "bundled_cas_blob_size(filehash: str) -> int | None\n"
+    "\n"
+    "(internal) Size of a CAS blob in the *bundle* (shipped assets),\n"
+    "or None if the bundle doesn't carry it. Backed by the platform's\n"
+    "bundle store - plain files on most platforms, spans out of the\n"
+    "apk archive on Android - so use this rather than probing bundle\n"
+    "paths on disk. Cheap (a map/index lookup; no data read)."};
+
+// ---------------- bundled_cas_blob_bytes -------------------------------------
+
+static auto PyBundledCasBlobBytes(PyObject* self, PyObject* args,
+                                  PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  const char* filehash;
+  static const char* kwlist[] = {"filehash", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char**>(kwlist), &filehash)) {
+    return nullptr;
+  }
+  auto* registry = g_base->assets->package_registry();
+  auto blob = AssetBlob::FromFile(registry->BundledCasBlobPath(filehash));
+  if (!blob.exists()) {
+    Py_RETURN_NONE;
+  }
+  return PyBytes_FromStringAndSize(reinterpret_cast<const char*>(blob.data()),
+                                   static_cast<Py_ssize_t>(blob.size()));
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyBundledCasBlobBytesDef = {
+    "bundled_cas_blob_bytes",            // name
+    (PyCFunction)PyBundledCasBlobBytes,  // method
+    METH_VARARGS | METH_KEYWORDS,        // flags
+
+    "bundled_cas_blob_bytes(filehash: str) -> bytes | None\n"
+    "\n"
+    "(internal) Contents of a CAS blob from the *bundle* (shipped\n"
+    "assets), or None if the bundle doesn't carry it. See\n"
+    ":meth:`bundled_cas_blob_size` for why this exists (bundled blobs\n"
+    "may live inside an archive rather than as plain files)."};
+
+// ---------------- bundled_asset_manifest_text --------------------------------
+
+static auto PyBundledAssetManifestText(PyObject* self, PyObject* args,
+                                       PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  auto blob =
+      AssetBlob::FromFile(g_base->assets->bundled_asset_manifest_path());
+  if (!blob.exists()) {
+    Py_RETURN_NONE;
+  }
+  return PyUnicode_FromStringAndSize(reinterpret_cast<const char*>(blob.data()),
+                                     static_cast<Py_ssize_t>(blob.size()));
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyBundledAssetManifestTextDef = {
+    "bundled_asset_manifest_text",            // name
+    (PyCFunction)PyBundledAssetManifestText,  // method
+    METH_VARARGS | METH_KEYWORDS,             // flags
+
+    "bundled_asset_manifest_text() -> str | None\n"
+    "\n"
+    "(internal) Contents of the bundle's asset-package manifest\n"
+    "(``ba_data/manifest.json``), or None if this build ships none.\n"
+    "Served natively since the manifest may live inside an archive\n"
+    "(the apk on Android) rather than as a plain file."};
 
 // ---------------- get_asset_package_bucket_paths -----------------------------
 
@@ -1848,7 +1954,10 @@ auto PythonMethodsBase2::GetMethods() -> std::vector<PyMethodDef> {
       PyRegisterAssetPackageBucketDef,
       PyRegisterAssetPackageBucketsDef,
       PyMarkConstructAssetsCompleteDef,
-      PyGetAssetPackageConstantBlobPathDef,
+      PyGetAssetPackageConstantBlobTextDef,
+      PyBundledCasBlobSizeDef,
+      PyBundledCasBlobBytesDef,
+      PyBundledAssetManifestTextDef,
       PyGetAssetPackageBucketPathsDef,
       PyGetAssetPackageStringCountDef,
       PySetAssetNameCompatVersionsDef,

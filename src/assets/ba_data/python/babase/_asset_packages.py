@@ -14,7 +14,6 @@ GIL-free in C++.
 
 import json
 import logging
-import os
 from typing import TYPE_CHECKING
 
 import _babase
@@ -234,17 +233,16 @@ def load_bundled_asset_packages() -> None:
     logged at debug level -- headless/server builds and tests may run without
     one.
     """
-    data_dir = _babase.app.env.data_directory
-    bundle_path = os.path.join(data_dir, 'ba_data', 'manifest.json')
-    if not os.path.isfile(bundle_path):
+    # Served natively; the manifest may live inside an archive (the
+    # apk on Android) rather than as a plain file.
+    manifest_text = _babase.bundled_asset_manifest_text()
+    if manifest_text is None:
         _lifecyclelog.debug(
-            'No bundled asset-package manifest at %s; skipping CAS init.',
-            bundle_path,
+            'No bundled asset-package manifest present; skipping CAS init.',
         )
         return
 
-    with open(bundle_path, encoding='utf-8') as infile:
-        bundle = json.load(infile)
+    bundle = json.loads(manifest_text)
 
     # The bundled packages are builtin by definition. Record them (so
     # _is_builtin and ref-construction see them) before resolving, then let

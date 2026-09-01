@@ -130,7 +130,7 @@ class AdvancedSettingsWindow(bui.MainWindow):
         if self._show_always_use_internal_keyboard:
             self._sub_height += 62
 
-        self._show_disable_gyro = app.classic.platform in {'ios', 'android'}
+        self._show_disable_gyro = bui.hasgyro()
         if self._show_disable_gyro:
             self._sub_height += 42
 

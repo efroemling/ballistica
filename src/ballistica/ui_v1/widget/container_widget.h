@@ -182,6 +182,8 @@ class ContainerWidget : public Widget {
 
   auto IsTransitioningOut() const -> bool override;
 
+  auto CoversScreenOpaquely() const -> bool override;
+
  protected:
   void set_single_depth_root(bool s) { single_depth_root_ = s; }
 
@@ -205,6 +207,12 @@ class ContainerWidget : public Widget {
   void set_height(float val) { height_ = val; }
 
  private:
+  // Calc the widget-local bounds of the hand-calibrated known-opaque
+  // sub-rect of our window backing (see CoversScreenOpaquely());
+  // returns false for backing setups with no such calibration.
+  auto GetCalibratedOpaqueRegion_(float* l, float* b, float* r, float* t) const
+      -> bool;
+
   // Given a container and a point, returns a selectable widget in the
   // downward direction or nullptr.
   auto GetClosestDownWidget(float x, float y, Widget* ignoreWidget) -> Widget*;

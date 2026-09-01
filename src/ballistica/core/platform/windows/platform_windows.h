@@ -38,6 +38,9 @@ class PlatformWindows : public Platform {
   auto DoAbsPath(const std::string& path, std::string* outpath)
       -> bool override;
   auto FOpen(const char* path, const char* mode) -> FILE* override;
+  auto MapFileReadOnly(const std::string& path, size_t* size_out) -> const
+      void* override;
+  void UnmapFile(const void* base, size_t size) override;
   auto GetErrnoString() -> std::string override;
   auto GetSocketErrorString() -> std::string override;
   auto GetSocketError() -> int override;

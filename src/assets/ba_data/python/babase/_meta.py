@@ -2,9 +2,8 @@
 #
 """Functionality related to dynamic discoverability of classes."""
 
-import time
 import logging
-from threading import Thread
+from threading import Thread, Event
 from functools import partial
 from typing import TYPE_CHECKING
 
@@ -43,6 +42,9 @@ class MetadataSubsystem:
 
         # Results populated once scan is complete.
         self.scanresults: ScanResults | None = None
+
+        # Set (after scanresults is in place) when the scan completes.
+        self._scan_results_ready = Event()
 
         self._scan_complete_cb: Callable[[], None] | None = None
 
@@ -157,14 +159,10 @@ class MetadataSubsystem:
 
             # Now wait a bit for the scan to complete. Eventually error
             # though if it doesn't.
-            starttime = time.time()
-            while self.scanresults is None:
-                time.sleep(0.05)
-                if time.time() - starttime > 10.0:
-                    raise TimeoutError(
-                        'timeout waiting for meta scan to complete.'
-                    )
+            if not self._scan_results_ready.wait(timeout=10.0):
+                raise TimeoutError('timeout waiting for meta scan to complete.')
 
+        assert self.scanresults is not None
         return self.scanresults
 
     def _run_scan_in_bg(self) -> None:
@@ -178,8 +176,11 @@ class MetadataSubsystem:
             logging.exception('metascan: Error running scan in bg.')
             results = ScanResults(announce_errors_occurred=True)
 
-        # Place results and tell the logic thread they're ready.
+        # Place results and tell the logic thread they're ready. Note
+        # that scanresults must be fully in place before we set the
+        # event; waiters read it as soon as they wake.
         self.scanresults = results
+        self._scan_results_ready.set()
         lifecyclelog.debug('meta-scan bg thread done')
         _babase.pushcall(self._handle_scan_results, from_other_thread=True)
 

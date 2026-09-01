@@ -50,6 +50,17 @@ class Platform {
   /// fopen() supporting UTF8 strings.
   virtual auto FOpen(const char* path, const char* mode) -> FILE*;
 
+  /// Memory-map a file read-only in its entirety. On success returns
+  /// the mapped base address and stores the file's size in *size_out;
+  /// returns nullptr on failure (missing/empty file, etc.). Mapped
+  /// pages are file-backed and clean (evictable/re-faultable), unlike
+  /// heap buffers filled via reads. Release with UnmapFile().
+  virtual auto MapFileReadOnly(const std::string& path, size_t* size_out)
+      -> const void*;
+
+  /// Release a mapping made by MapFileReadOnly().
+  virtual void UnmapFile(const void* base, size_t size);
+
   /// rename() supporting UTF8 strings. For cross-platform consistency, this
   /// should also remove any file that exists at the target location first.
   virtual auto Rename(const char* oldname, const char* newname) -> int;
@@ -113,6 +124,38 @@ class Platform {
   /// be passed to pyenv as a starting point, and whatever pyenv gives us
   /// back will be our actual value.
   auto GetCacheDirectoryMonolithicDefault() -> std::optional<std::string>;
+
+  /// Optional overrides for the Python directories used in monolithic
+  /// builds (app scripts, site-packages, bundled stdlib). Default nullopt
+  /// means the standard data-dir-relative locations get used; platforms
+  /// can override to relocate Python wholesale — e.g. Android serving it
+  /// directly out of the apk via zipimport.
+  virtual auto GetAppPythonDirectoryMonolithicOverride()
+      -> std::optional<std::string>;
+  virtual auto GetSitePythonDirectoryMonolithicOverride()
+      -> std::optional<std::string>;
+  virtual auto GetPylibDirectoryMonolithicOverride()
+      -> std::optional<std::string>;
+
+  /// Info for serving bundled asset blobs directly out of an archive
+  /// (the apk on Android).
+  struct BundledAssetsArchiveInfo {
+    /// Filesystem path of the archive itself.
+    std::string archive_path;
+    /// Entry-path dir within the archive holding the CAS blobs.
+    std::string blobs_entry_dir;
+    /// Suffix the build appends to blob names in the archive (so
+    /// they can be packed uncompressed via suffix-matched rules).
+    std::string blob_suffix;
+    /// Entry path of the bundle's asset-package manifest.json.
+    std::string manifest_entry;
+  };
+
+  /// When set, bundled CAS blobs are read as spans out of the given
+  /// archive (which gets memory-mapped at bootstrap) instead of from
+  /// files under the data dir. Default is unset.
+  virtual auto GetBundledAssetsArchiveInfo()
+      -> std::optional<BundledAssetsArchiveInfo>;
 
   /// Return the directory where game replay files live.
   auto GetReplaysDir() -> std::string;

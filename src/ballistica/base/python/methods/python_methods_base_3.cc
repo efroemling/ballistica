@@ -272,6 +272,37 @@ static PyMethodDef PyHasTouchScreenDef = {
     ":meta private:",
 };
 
+// -------------------------------- hasgyro ------------------------------------
+
+static auto PyHasGyro(PyObject* self, PyObject* args, PyObject* keywds)
+    -> PyObject* {
+  BA_PYTHON_TRY;
+  static const char* kwlist[] = {nullptr};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "",
+                                   const_cast<char**>(kwlist))) {
+    return nullptr;
+  }
+  if (g_base->platform->HasGyro()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyHasGyroDef = {
+    "hasgyro",                     // name
+    (PyCFunction)PyHasGyro,        // method
+    METH_VARARGS | METH_KEYWORDS,  // flags
+
+    "hasgyro() -> bool\n"
+    "\n"
+    "Return whether gyroscope hardware is present on the current device.\n"
+    "\n"
+    "Prefer this over testing platform names when gating gyro-related\n"
+    "functionality; plenty of phones and tablets ship without the sensor,\n"
+    "and TV devices never have one.",
+};
+
 // ------------------------- clipboard_is_supported ----------------------------
 
 static auto PyClipboardIsSupported(PyObject* self) -> PyObject* {
@@ -2762,6 +2793,7 @@ auto PythonMoethodsBase3::GetMethods() -> std::vector<PyMethodDef> {
       PyGetSimpleSoundDef,
       PyApSimpleSoundGetDef,
       PyHasTouchScreenDef,
+      PyHasGyroDef,
       PyNativeStackTraceDef,
       PySupportsOpenDirExternallyDef,
       PyOpenDirExternallyDef,

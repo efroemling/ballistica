@@ -18,6 +18,7 @@
 
 #if !BA_PLATFORM_WINDOWS
 #include <dirent.h>
+#include <sys/mman.h>
 #endif
 #include <fcntl.h>
 
@@ -312,6 +313,45 @@ auto Platform::FilePathExists(const std::string& name) -> bool {
   return (Stat(name.c_str(), &buffer) == 0);
 }
 
+auto Platform::MapFileReadOnly(const std::string& path, size_t* size_out)
+    -> const void* {
+  assert(size_out);
+// This default implementation covers non-windows platforms.
+#if BA_PLATFORM_WINDOWS
+  throw Exception();
+#else
+  int fd = open(path.c_str(), O_RDONLY);
+  if (fd < 0) {
+    return nullptr;
+  }
+  struct BA_STAT stats {};
+  if (fstat(fd, &stats) != 0 || stats.st_size <= 0) {
+    // (mmap of a zero-length file fails anyway; report empty files
+    // as unmappable and let callers fall back to plain reads.)
+    close(fd);
+    return nullptr;
+  }
+  auto size = static_cast<size_t>(stats.st_size);
+  void* base = mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0);
+  // The mapping (if we got one) keeps the file alive from here.
+  close(fd);
+  if (base == MAP_FAILED) {
+    return nullptr;
+  }
+  *size_out = size;
+  return base;
+#endif
+}
+
+void Platform::UnmapFile(const void* base, size_t size) {
+// This default implementation covers non-windows platforms.
+#if BA_PLATFORM_WINDOWS
+  throw Exception();
+#else
+  munmap(const_cast<void*>(base), size);
+#endif
+}
+
 auto Platform::GetSocketErrorString() -> std::string {
   // On default platforms we just look at errno.
   return GetErrnoString();
@@ -545,6 +585,26 @@ void Platform::BlockingFatalErrorDialog(const std::string& message) {
 auto Platform::DoGetDataDirectoryMonolithicDefault() -> std::string {
   // By default, look for ba_data and whatnot where we are now.
   return ".";
+}
+
+auto Platform::GetAppPythonDirectoryMonolithicOverride()
+    -> std::optional<std::string> {
+  return {};
+}
+
+auto Platform::GetSitePythonDirectoryMonolithicOverride()
+    -> std::optional<std::string> {
+  return {};
+}
+
+auto Platform::GetPylibDirectoryMonolithicOverride()
+    -> std::optional<std::string> {
+  return {};
+}
+
+auto Platform::GetBundledAssetsArchiveInfo()
+    -> std::optional<BundledAssetsArchiveInfo> {
+  return {};
 }
 
 void Platform::SetEnv(const std::string& name, const std::string& value) {

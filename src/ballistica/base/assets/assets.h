@@ -254,6 +254,13 @@ class Assets {
     return &package_registry_;
   }
 
+  /// Where the bundle's asset-package manifest.json lives. May be a
+  /// path into an archive (the apk on Android); read it via
+  /// AssetBlob, never plain file IO.
+  auto bundled_asset_manifest_path() const -> const std::string& {
+    return bundled_manifest_path_;
+  }
+
   /// The texture *profile* name this build should request for
   /// asset-package resolves (the ``<profile>`` in a
   /// ``textures/<profile>_<quality>`` bucket coord). This is the native
@@ -414,6 +421,7 @@ class Assets {
   std::vector<std::string> asset_paths_;
   std::unordered_map<std::string, std::string> packages_;
   AssetPackageRegistry package_registry_;
+  std::string bundled_manifest_path_;
 
   // For use by AssetListLock; don't manually acquire.
   std::mutex asset_lists_mutex_;

@@ -4,11 +4,13 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstring>
 #include <list>
 #include <string>
 #include <vector>
 
 #include "ballistica/base/app_adapter/app_adapter.h"
+#include "ballistica/base/assets/asset_blob.h"
 #include "ballistica/base/assets/assets.h"
 #include "ballistica/base/assets/texture_asset_preload_data.h"
 #include "ballistica/base/assets/texture_asset_renderer_data.h"
@@ -35,25 +37,45 @@ static constexpr bool kForceUncompressedDDS = false;
 
 TextureAsset::TextureAsset() = default;
 
-/// Derive the loader container hint from a resolved asset path. CAS
-/// blobs resolve to bare content-hash file names with no extension
-/// (all texture flavors are KTX2 containers), while every legacy
-/// on-disk path — including the headless ``.nop`` dummy — carries an
-/// extension for the loader's path-suffix sniff. Keying on the
-/// *resolved* path shape (rather than whether the *requested* name
-/// was a qualified ``<apverid>:<name>`` ref) matters because bare
-/// legacy names can still resolve to CAS blobs: a missing texture
-/// falls back to the builtin package's ``textures/white``, and that
-/// fallback must load rather than fail the asset (which is fatal if
-/// the render path later touches it).
-static auto DeriveContainerHint(const std::string& path) -> std::string {
+/// Whether a resolved asset path names an asset-package CAS blob. CAS
+/// blobs resolve to content-hash file names — bare (the writable
+/// cache) or carrying the bundled transport suffix (archive-served
+/// builds; see kBundledCasBlobSuffix) — never a content extension,
+/// while every legacy on-disk path — including the headless ``.nop``
+/// dummy — carries an extension for the loader's path-suffix sniff.
+/// Keying on the *resolved* path shape (rather than whether the
+/// *requested* name was a qualified ``<apverid>:<name>`` ref) matters
+/// because bare legacy names can still resolve to CAS blobs: a
+/// missing texture falls back to the builtin package's
+/// ``textures/white``, and that fallback must load rather than fail
+/// the asset (which is fatal if the render path later touches it).
+/// The blob's actual container format is decided at preload from its
+/// content magic bytes, never from its name.
+static auto IsCasBlobPath(const std::string& path) -> bool {
+  if (path.ends_with(kBundledCasBlobSuffix)) {
+    return true;
+  }
   auto slash_pos = path.find_last_of("/\\");
   auto dot_pos =
       path.find('.', slash_pos == std::string::npos ? 0 : slash_pos + 1);
-  if (dot_pos == std::string::npos) {
-    return ".ktx2";
+  return dot_pos == std::string::npos;
+}
+
+/// Open a CAS texture blob and verify a container we can parse.
+/// Dispatching on content magic (not file name) means future
+/// container formats slot in here as new cases with no naming/path
+/// coupling anywhere.
+static auto OpenCasTextureBlob(const std::string& path) -> AssetBlob {
+  auto blob = AssetBlob::FromFile(path);
+  if (!blob.exists()) {
+    throw Exception("Can't open texture blob: '" + path + "'.");
   }
-  return {};
+  unsigned char magic[sizeof(kKTX2Magic)];
+  if (!blob.ReadAt(0, magic, sizeof(magic))
+      || memcmp(magic, kKTX2Magic, sizeof(magic)) != 0) {
+    throw Exception("Unrecognized CAS texture container in '" + path + "'.");
+  }
+  return blob;
 }
 
 TextureAsset::TextureAsset(const std::string& file_in, TextureType type_in,
@@ -63,7 +85,7 @@ TextureAsset::TextureAsset(const std::string& file_in, TextureType type_in,
       type_ == TextureType::kCubeMap ? Assets::FileType::kCubeMapTexture
                                      : Assets::FileType::kTexture,
       file_in);
-  container_ = DeriveContainerHint(file_name_full_);
+  is_cas_blob_ = IsCasBlobPath(file_name_full_);
   valid_ = true;
 }
 
@@ -125,8 +147,8 @@ auto TextureAsset::ReResolveSource() -> bool {
     return false;
   }
   file_name_full_ = new_full;
-  // Re-derive the container hint exactly as the constructor does.
-  container_ = DeriveContainerHint(file_name_full_);
+  // Re-derive exactly as the constructor does.
+  is_cas_blob_ = IsCasBlobPath(file_name_full_);
   return true;
 }
 
@@ -254,24 +276,22 @@ void TextureAsset::DoPreload() {
       int file_name_size = static_cast<int>(file_name_full_.size());
       BA_PRECONDITION(file_name_size > 4);
 
-      // Dispatch on explicit ``container_`` when set (CAS-resolved
-      // assets), else fall back to the legacy path-suffix sniff.
+      // CAS blobs dispatch on content magic; legacy on-disk assets
+      // fall back to the path-suffix sniff below.
       auto matches = [this, file_name_size](const char* suffix) -> bool {
-        if (!container_.empty()) {
-          return container_ == suffix;
-        }
         auto slen = static_cast<int>(strlen(suffix));
         return file_name_size > slen
                && !strcmp(file_name_full_.c_str() + file_name_size - slen,
                           suffix);
       };
 
-      // Uncompressed RGBA8 + mipmaps (KTX 2.0, ``.ktx2`` files).
-      // Used by the asset-package CAS pipeline for FALLBACK_V1.
-      if (matches(".ktx2")) {
-        // Asset-package textures load full mips from the flavor; they do
-        // not consult the legacy texture-quality knob (see LoadKTX2).
-        LoadKTX2(file_name_full_, preload_datas_[0].buffers,
+      if (is_cas_blob_) {
+        // All current texture flavors are KTX2 containers
+        // (OpenCasTextureBlob verified the magic); asset-package
+        // textures load full mips from the flavor and do not consult
+        // the legacy texture-quality knob (see LoadKTX2).
+        auto blob = OpenCasTextureBlob(file_name_full_);
+        LoadKTX2(blob, file_name_full_, preload_datas_[0].buffers,
                  preload_datas_[0].widths, preload_datas_[0].heights,
                  preload_datas_[0].formats, preload_datas_[0].sizes,
                  &preload_datas_[0].base_level,
@@ -372,7 +392,7 @@ void TextureAsset::DoPreload() {
       std::string name;
       int file_name_size = static_cast<int>(file_name_full_.size());
       BA_PRECONDITION(file_name_size > 4);
-      if (!container_.empty() && container_ == ".ktx2") {
+      if (is_cas_blob_) {
         // Asset-package CAS cube map: one faceCount=6 KTX2 holds all
         // six faces (decision #24); fill the same six per-face preload
         // slots the legacy path does.
@@ -385,7 +405,8 @@ void TextureAsset::DoPreload() {
               &preload_datas_[d].premultiplied, &preload_datas_[d].wrap_h,
               &preload_datas_[d].wrap_v};
         }
-        LoadKTX2CubeMap(file_name_full_, faces);
+        auto blob = OpenCasTextureBlob(file_name_full_);
+        LoadKTX2CubeMap(blob, file_name_full_, faces);
       } else if (file_name_full_.find('#') == std::string::npos
                  && !strcmp(file_name_full_.c_str() + file_name_size - 4,
                             ".nop")) {

@@ -10,11 +10,13 @@
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/graphics/component/empty_component.h"
 #include "ballistica/base/graphics/component/simple_component.h"
+#include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/logic/logic.h"
 #include "ballistica/base/python/support/python_context_call.h"
 #include "ballistica/base/ui/ui.h"
 #include "ballistica/base/ui/widget_message.h"
 #include "ballistica/core/logging/logging_macros.h"
+#include "ballistica/core/platform/platform.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/generic/utils.h"
 #include "ballistica/shared/math/random.h"
@@ -1144,6 +1146,40 @@ void ContainerWidget::Draw(base::RenderPass* pass, bool draw_transparent) {
       c.Submit();
     }
   }
+
+  // Debug overlay for calibrating CoversScreenOpaquely(): draw our
+  // hand-calibrated known-opaque backing rect; it must always sit
+  // comfortably inside the backing's visually-solid area. Green means
+  // we currently qualify as covering the screen; red means we don't.
+  if (draw_transparent) {
+    static const bool debug_opaque_rect = [] {
+      auto val = g_core->platform->GetEnv("BA_DEBUG_UI_OPAQUE_RECT");
+      return val.has_value() && *val == "1";
+    }();
+    if (debug_opaque_rect) {
+      float dl, db, dr, dt;
+      if (GetCalibratedOpaqueRegion_(&dl, &db, &dr, &dt)) {
+        bool covers = CoversScreenOpaquely();
+        base::SimpleComponent c(pass);
+        c.SetTransparent(true);
+        if (covers) {
+          c.SetColor(0.0f, 0.5f, 0.0f, 0.5f);
+        } else {
+          c.SetColor(0.5f, 0.0f, 0.0f, 0.5f);
+        }
+        {
+          auto xf = c.ScopedTransform();
+          // Track any in-progress transition offset so the rect stays
+          // glued to the backing while settling.
+          c.Translate(l + (dl + dr) * 0.5f, b + (db + dt) * 0.5f, 0.9f);
+          c.Scale((dr - dl) * transition_scale_, (dt - db) * transition_scale_,
+                  1.0f);
+          c.DrawMeshAsset(g_ui_v1->assets().image1x1.get());
+        }
+        c.Submit();
+      }
+    }
+  }
 }
 
 void ContainerWidget::TransformPointToChild(float* x, float* y,
@@ -2163,6 +2199,116 @@ void ContainerWidget::OnLanguageChange() {
 
 auto ContainerWidget::IsTransitioningOut() const -> bool {
   return transitioning_out_;
+}
+
+auto ContainerWidget::GetCalibratedOpaqueRegion_(float* l, float* b, float* r,
+                                                 float* t) const -> bool {
+  // Only our standard window backings are calibrated, and only when
+  // drawn fully opaque.
+  if (!background_ || alpha_ != 1.0f) {
+    return false;
+  }
+  float w = width_;
+  float h = height_;
+  if (w <= 0.0f || h <= 0.0f) {
+    return false;
+  }
+
+  // Mirror the backing-selection and border math from our bg drawing in
+  // Draw(), then apply a per-backing calibrated rect known to be
+  // comfortably interior to that backing's opaque pixels. Rects are in
+  // unit coords over the full backing quad (+-0.5 is the quad edge).
+  // They were measured by rasterizing each backing's opaque+transparent
+  // meshes with the master texture's alpha channel and finding the
+  // largest fully-opaque (alpha=255) axis rect, then shrinking each
+  // edge by ~0.01 for safety (residual transition offsets, resampling
+  // and texture-compression fringe). Measured maxima: vmed x
+  // [-0.404, 0.325] y [-0.371, 0.411]; vsmall x [-0.356, 0.301] y
+  // [-0.215, 0.335]. Eyeball-check with the BA_DEBUG_UI_OPAQUE_RECT
+  // env var, which draws these rects over each backing. Backing setups
+  // not calibrated here simply never qualify.
+  float l_border, r_border, b_border, t_border;
+  float unit_l, unit_r, unit_b, unit_t;
+  if (h > w * 0.6f) {
+    // window_hsmall_vmed.
+    l_border = w * 0.07f;
+    r_border = w * 0.19f;
+    b_border = h * 0.1f;
+    t_border = h * 0.07f;
+    unit_l = -0.395f;
+    unit_r = 0.315f;
+    unit_b = -0.36f;
+    unit_t = 0.40f;
+  } else {
+    // window_hsmall_vsmall.
+    l_border = w * 0.12f;
+    r_border = w * 0.19f;
+    b_border = h * 0.45f;
+    t_border = h * 0.23f;
+    unit_l = -0.345f;
+    unit_r = 0.29f;
+    unit_b = -0.205f;
+    unit_t = 0.325f;
+  }
+  float bg_width = w + l_border + r_border;
+  float bg_height = h + b_border + t_border;
+  float bg_center_x = -l_border + bg_width * 0.5f;
+  float bg_center_y = -b_border + bg_height * 0.5f;
+  *l = bg_center_x + unit_l * bg_width;
+  *r = bg_center_x + unit_r * bg_width;
+  *b = bg_center_y + unit_b * bg_height;
+  *t = bg_center_y + unit_t * bg_height;
+  return true;
+}
+
+auto ContainerWidget::CoversScreenOpaquely() const -> bool {
+  assert(g_base->InLogicThread());
+
+  if (!visible_in_container()) {
+    return false;
+  }
+
+  // Require transitions fully settled; a moving/scaling window exposes
+  // what's behind it. Note that completed transitions legitimately
+  // leave tiny (sub-0.05-unit) residual offsets - the final springy
+  // dynamics update runs after the done-zeroing and then freezes - so
+  // we can't demand exact zeroes here; we allow a small epsilon and
+  // fold the residuals into the coverage transform below exactly.
+  constexpr float kSettleEpsilon{0.5f};
+  if (transitioning_ || transitioning_out_ || transition_scale_ != 1.0f
+      || std::abs(transition_offset_x_smoothed_) >= kSettleEpsilon
+      || std::abs(transition_offset_y_smoothed_) >= kSettleEpsilon
+      || std::abs(transition_scale_offset_x_) >= kSettleEpsilon
+      || std::abs(transition_scale_offset_y_) >= kSettleEpsilon) {
+    return false;
+  }
+
+  float l, b, r, t;
+  if (!GetCalibratedOpaqueRegion_(&l, &b, &r, &t)) {
+    return false;
+  }
+
+  // Fold in any (tiny; see above) residual transition offsets so our
+  // math matches where the backing actually draws.
+  float residual_x = transition_offset_x_smoothed_ + transition_scale_offset_x_;
+  float residual_y = transition_offset_y_smoothed_ + transition_scale_offset_y_;
+  l += residual_x;
+  r += residual_x;
+  b += residual_y;
+  t += residual_y;
+
+  // Transform our opaque region to screen space (widget transforms are
+  // scale+translate only, so two corners suffice) and require it to
+  // span the full virtual outer rect - the entire visible screen
+  // expressed in virtual coords, which exceeds 0..virtual-res when the
+  // virtual bounds are inset (and is what full-screen-cover geometry
+  // must span; see its comment in graphics.h). Using the real rect
+  // rather than reported_virtual_outer_rect() - this is rendering
+  // machinery, not UI layout.
+  WidgetPointToScreen(&l, &b);
+  WidgetPointToScreen(&r, &t);
+  const Rect& outer = g_base->graphics->virtual_outer_rect();
+  return (l <= outer.l && r >= outer.r && b <= outer.b && t >= outer.t);
 }
 
 }  // namespace ballistica::ui_v1

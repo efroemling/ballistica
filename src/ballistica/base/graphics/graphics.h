@@ -721,6 +721,7 @@ class Graphics {
   bool tv_border_{};
   bool floor_reflection_{};
   bool building_frame_def_{};
+  bool ui_covered_screen_last_frame_{};
   bool shadow_ortho_{};
   bool fetched_overlay_node_z_depth_{};
   bool set_fade_start_on_next_draw_{};

@@ -79,6 +79,23 @@ bool UIV1FeatureSet::IsMainUIVisible() {
           || (overlay_root && overlay_root->HasChildren()));
 }
 
+bool UIV1FeatureSet::UICoversScreenOpaquely() {
+  // A single fully-covering opaque window anywhere in our two window
+  // stacks covers everything, so simply OR over their direct children
+  // (this is only a handful of cheap virtual calls; no caching needed).
+  for (auto* stack : {screen_root_widget(), overlay_root_widget()}) {
+    if (stack == nullptr) {
+      continue;
+    }
+    for (auto&& widget : stack->widgets()) {
+      if (widget->CoversScreenOpaquely()) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 bool UIV1FeatureSet::BackPressWouldNavigate() {
   auto* root = root_widget();
   return root != nullptr && root->BackPressWouldNavigate();

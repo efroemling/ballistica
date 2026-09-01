@@ -210,6 +210,13 @@ class Widget : public Object {
   /// Is this widget in the process of transitioning out before dying?
   virtual auto IsTransitioningOut() const -> bool;
 
+  /// Return whether this widget currently covers the entire visible
+  /// screen (the virtual outer rect) with fully opaque drawing. Used to skip
+  /// rendering the world/scene behind the UI. Implementations must be
+  /// conservative: a false negative merely misses an optimization while
+  /// a false positive visibly breaks rendering.
+  virtual auto CoversScreenOpaquely() const -> bool { return false; }
+
   // Extra buffer added around widgets when they are centered-on.
   void set_show_buffer_top(float b) { show_buffer_top_ = b; }
   void set_show_buffer_bottom(float b) { show_buffer_bottom_ = b; }

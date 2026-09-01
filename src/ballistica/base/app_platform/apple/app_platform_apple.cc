@@ -67,6 +67,16 @@ void AppPlatformApple::DoOpenURL(const std::string& url) {
 #endif  // BA_XCODE_BUILD
 }
 
+auto AppPlatformApple::DoHasGyro() -> bool {
+#if BA_XCODE_BUILD && !BA_PLATFORM_MACOS
+  return BallisticaKit::UIKitFromCpp::haveGyro();
+#else
+  // Macs have no gyro, and non-xcode apple builds have no Swift bridge to
+  // ask through.
+  return AppPlatform::DoHasGyro();
+#endif
+}
+
 auto AppPlatformApple::OverlayWebBrowserIsSupported() -> bool {
 #if BA_XCODE_BUILD
 #if BA_PLATFORM_MACOS

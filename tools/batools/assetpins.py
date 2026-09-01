@@ -1360,6 +1360,8 @@ def _compute_wrapper_write(
     a fresh version pointing at ``new_apverid``. We never hand-edit a
     wrapper. Returns ``(path, content)``; nothing is written here.
     """
+    from bacommon.metascan import get_source_api_requirement
+
     assert pin.wrapper_type is not None
     content = _fetch_wrapper(projroot, new_apverid, pin.wrapper_type)
     # The server stamps wrappers with its notion of the current
@@ -1369,9 +1371,9 @@ def _compute_wrapper_write(
     # needs a bump before wrappers can be refreshed — this is the
     # cross-repo tripwire for api version bumps.
     ourapi = get_current_api_version(str(projroot))
-    apimatch = re.search(r'# ba_meta require api (\d+)', content)
-    if apimatch is None or int(apimatch.group(1)) != ourapi:
-        found = 'no api line' if apimatch is None else apimatch.group(1)
+    wrapperapi = get_source_api_requirement(content)
+    if wrapperapi is None or wrapperapi != ourapi:
+        found = 'no single valid api line' if wrapperapi is None else wrapperapi
         raise CleanError(
             f'Fetched wrapper for {new_apverid} declares client api'
             f' {found} but this project is on api {ourapi}; bump'

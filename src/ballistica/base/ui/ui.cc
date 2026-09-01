@@ -282,6 +282,30 @@ auto UI::IsMainUIVisible() const -> bool {
   return false;
 }
 
+auto UI::UICoversScreenOpaquely() const -> bool {
+  assert(g_base->InLogicThread());
+
+  // Never true in VR; the UI floats in 3d space there and never
+  // occludes the world.
+  if (g_core->vr_mode()) {
+    return false;
+  }
+
+  // Kill-switch escape hatch in case this ever misbehaves in the wild.
+  // Deliberately re-read each query (it's once per frame): being
+  // toggleable at runtime (os.environ from Python) lets tests compare
+  // on/off states within a single run, free of cross-launch variance.
+  auto val = g_core->platform->GetEnv("BA_DISABLE_UI_COVER_OPT");
+  if (val.has_value() && *val == "1") {
+    return false;
+  }
+
+  if (auto* ui_delegate = delegate()) {
+    return ui_delegate->UICoversScreenOpaquely();
+  }
+  return false;
+}
+
 auto UI::IsPartyIconVisible() -> bool {
   assert(g_base->InLogicThread());
   if (auto* ui_delegate = delegate()) {

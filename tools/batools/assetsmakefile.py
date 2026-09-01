@@ -665,13 +665,6 @@ def generate_assets_makefile(
             ),
             _get_targets(
                 projroot,
-                'FONT_TARGETS',
-                '.fdata',
-                '.fdata',
-                all_targets_private,
-            ),
-            _get_targets(
-                projroot,
                 'PEM_TARGETS',
                 '.pem',
                 '.pem',

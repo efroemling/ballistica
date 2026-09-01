@@ -15,6 +15,7 @@
 
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/base.h"
+#include "ballistica/base/graphics/text/font_glyph_pages_data.h"
 #include "ballistica/base/graphics/text/font_page_map_data.h"
 #include "ballistica/core/core.h"
 #include "ballistica/core/logging/logging_macros.h"
@@ -1146,26 +1147,6 @@ auto TextGraphics::GetBigCharIndex(int c) -> int {
   return index;
 }
 
-void TextGraphics::LoadGlyphPage(uint32_t index) {
-  std::scoped_lock lock(glyph_load_mutex_);
-
-  // Its possible someone else coulda loaded it since we last checked.
-  if (g_glyph_pages[index] == nullptr) {
-    char buffer[256];
-    snprintf(buffer, sizeof(buffer), "%s%sba_data%sfonts%sfontSmall%d.fdata",
-             g_core->GetDataDirectory().c_str(), BA_DIRSLASH, BA_DIRSLASH,
-             BA_DIRSLASH, index);
-    FILE* f = g_core->platform->FOpen(buffer, "rb");
-    BA_PRECONDITION(f);
-    BA_PRECONDITION(sizeof(TextGraphics::Glyph[2]) == sizeof(float[18]));
-    uint32_t total_size = sizeof(Glyph) * g_glyph_page_glyph_counts[index];
-    g_glyph_pages[index] = static_cast<Glyph*>(malloc(total_size));
-    BA_PRECONDITION(g_glyph_pages[index]);
-    BA_PRECONDITION(fread(g_glyph_pages[index], total_size, 1, f) == 1);
-    fclose(f);
-  }
-}
-
 void TextGraphics::GetFontPageCharRange(int page, uint32_t* first_char,
                                         uint32_t* last_char) {
   // Our special pages:
@@ -1342,7 +1323,8 @@ auto TextGraphics::HasOSChars(const std::string& text) -> bool {
   return false;
 }
 
-auto TextGraphics::GetGlyph(uint32_t val, bool big) -> TextGraphics::Glyph* {
+auto TextGraphics::GetGlyph(uint32_t val, bool big)
+    -> const TextGraphics::Glyph* {
   if (big) {
     int index = GetBigGlyphIndex(val);
     if (index == -1) index = 37;  // default to '?'
@@ -1357,9 +1339,6 @@ auto TextGraphics::GetGlyph(uint32_t val, bool big) -> TextGraphics::Glyph* {
     uint32_t page = g_glyph_map[val];
     uint32_t start_index = g_glyph_page_start_index_map[page];
     uint32_t local_index = val - start_index;
-    if (g_glyph_pages[page] == nullptr) {
-      LoadGlyphPage(page);
-    }
     return &g_glyph_pages[page][local_index];
   }
 }
@@ -1638,7 +1617,7 @@ auto TextGraphics::StringWidthInternal_(const char* text, bool big,
       // (to reduce the number of times we switch back and forth)
       if (TextGraphics::IsOSDrawableAscii(val) && !os_span.empty()) {
         os_span.push_back(val);
-      } else if (Glyph* g = GetGlyph(val, big)) {
+      } else if (const Glyph* g = GetGlyph(val, big)) {
         // If we *had* been building a span, add its length.
         if (!os_span.empty()) {
           tally_span();
@@ -1713,7 +1692,7 @@ void TextGraphics::BreakUpString(const char* text, float width,
       if (TextGraphics::IsOSDrawableAscii(val) && explicit_bool(false)) {
         // I think I disabled this for consistency?...
         // FIXME FIXME FIXME - handle this along with stuff below..
-      } else if (Glyph* g = GetGlyph(val, false)) {
+      } else if (const Glyph* g = GetGlyph(val, false)) {
         line_length += char_width * g->advance;
       } else {
         // FIXME FIXME FIXME - need to clump non-glyph characters into

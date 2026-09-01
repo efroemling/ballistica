@@ -94,7 +94,7 @@ class TextGraphics {
   static auto GetBigCharIndex(int c) -> int;
 
   // Returns a glyph or nullptr if it is unavailable.
-  auto GetGlyph(uint32_t value, bool big) -> Glyph*;
+  auto GetGlyph(uint32_t value, bool big) -> const Glyph*;
   static auto HaveBigChars(const std::string& string) -> bool;
   static auto HaveChars(const std::string& string) -> bool;
 
@@ -208,8 +208,6 @@ class TextGraphics {
     // Position in text_span_bounds_cache_lru_.
     std::list<std::string>::iterator lru_iterator;
   };
-  void LoadGlyphPage(uint32_t index);
-
   // Guards the two span-bounds cache containers below (plus the
   // in-flight background-measure set). Measurement is callable from
   // any thread (logic-thread UI measuring, background warm-ups,
@@ -240,7 +238,6 @@ class TextGraphics {
 
   // Keys ordered by last use; front = least-recently-used.
   std::list<std::string> text_span_bounds_cache_lru_;
-  std::mutex glyph_load_mutex_;
   Glyph
       glyphs_extras_[kFontExtrasRows * kFontExtrasColumns * kFontExtrasPages]{};
   Glyph glyphs_big_[64]{};

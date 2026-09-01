@@ -908,10 +908,14 @@ class AssetSubsystem(AppSubsystem):
         """Writable CAS root where downloaded blobs land."""
         return os.path.join(_babase.app.env.cache_directory, 'assets')
 
-    @property
-    def _bundle_assets_root(self) -> str:
-        """Bundle CAS root holding shipped blobs."""
-        return os.path.join(_babase.app.env.data_directory, 'ba_data', 'assets')
+    def _bundled_blob_size(self, filehash: str) -> int | None:
+        """Size of a blob in the bundle (shipped assets), or None.
+
+        Backed natively so it works however the platform serves its
+        bundle - plain files on most platforms, spans out of the apk
+        archive on Android. Never probe bundle paths on disk directly.
+        """
+        return _babase.bundled_cas_blob_size(filehash)
 
     @property
     def _manifest_path(self) -> str:
@@ -927,28 +931,39 @@ class AssetSubsystem(AppSubsystem):
         """Path a CAS blob would occupy in the writable root."""
         return assetcas.cas_blob_path(self._writable_assets_root, filehash)
 
-    def _locate_blob(
-        self, filehash: str, *, hide_bundle: bool = False
-    ) -> str | None:
-        """Path of a CAS blob if present (writable then bundle), else None.
+    def _blob_exists(self, filehash: str, *, hide_bundle: bool = False) -> bool:
+        """Is a CAS blob present (writable cache, then bundle)?
 
-        Existence probe used by GC's mark phase to read flavor-manifest
-        blobs and to honor "a live flavor-manifest absent on disk → drop
-        the ref". Unlike :meth:`_present` this needs no expected size.
+        Existence probe used by GC's mark phase and resolve scans.
+        Unlike :meth:`_present` this needs no expected size.
 
         ``hide_bundle`` opts a caller into the debug bundle-hiding mode
         (see :meth:`_present`); it defaults off so GC always sees the
-        real on-disk truth. GC deletes files, and a GC that believed
-        bundled blobs were missing would drop live refs.
+        real truth. GC deletes files, and a GC that believed bundled
+        blobs were missing would drop live refs.
         """
-        roots = [self._writable_assets_root]
-        if not (hide_bundle and self._bundle_hidden):
-            roots.append(self._bundle_assets_root)
-        for root in roots:
-            path = os.path.join(root, filehash[:2], filehash[2:])
-            if os.path.isfile(path):
-                return path
-        return None
+        if os.path.isfile(self._writable_blob_path(filehash)):
+            return True
+        if hide_bundle and self._bundle_hidden:
+            return False
+        return self._bundled_blob_size(filehash) is not None
+
+    def _read_blob(
+        self, filehash: str, *, hide_bundle: bool = False
+    ) -> bytes | None:
+        """Contents of a CAS blob (writable cache, then bundle), or None.
+
+        The bundle half is served natively (bundled blobs may live
+        inside an archive such as the apk); see :meth:`_blob_exists`
+        for the ``hide_bundle`` semantics.
+        """
+        path = self._writable_blob_path(filehash)
+        if os.path.isfile(path):
+            with open(path, 'rb') as infile:
+                return infile.read()
+        if hide_bundle and self._bundle_hidden:
+            return None
+        return _babase.bundled_cas_blob_bytes(filehash)
 
     # ---------------------------------------------------------------------
     # Dimensions, bucket coords, fallback policy.
@@ -1467,7 +1482,7 @@ class AssetSubsystem(AppSubsystem):
         )
         if fm_hash is None:
             fm_hash = self._read_bundle_manifest().get(apverid, {}).get(coord)
-        if fm_hash is None or self._locate_blob(fm_hash) is None:
+        if fm_hash is None or not self._blob_exists(fm_hash):
             return {}, {}, {}
 
         # The blob lives at logical path 'language' part 'j.json' (the
@@ -1476,11 +1491,10 @@ class AssetSubsystem(AppSubsystem):
         blob_hash = parts.get('j.json') if parts else None
         if blob_hash is None:
             return {}, {}, {}
-        path = self._locate_blob(blob_hash)
-        if path is None:
+        data = self._read_blob(blob_hash)
+        if data is None:
             return {}, {}, {}
-        with open(path, 'rb') as infile:
-            text = infile.read().decode()
+        text = data.decode()
         return (
             parse_language_blob(text),
             parse_language_param_kinds(text),
@@ -2096,17 +2110,18 @@ class AssetSubsystem(AppSubsystem):
         return coords
 
     def _read_bundle_manifest(self) -> dict[str, dict[str, str]]:
-        """Parse the bundled ``ba_data/manifest.json`` → apverid→coords→hash."""
-        path = os.path.join(
-            _babase.app.env.data_directory, 'ba_data', 'manifest.json'
-        )
-        try:
-            with open(path, encoding='utf-8') as infile:
-                manifest = json.load(infile)
-        except FileNotFoundError:
+        """Parse the bundled ``ba_data/manifest.json`` → apverid→coords→hash.
+
+        Served natively (the manifest may live inside an archive such
+        as the apk); absence means the build ships no bundled CAS.
+        """
+        text = _babase.bundled_asset_manifest_text()
+        if text is None:
             return {}
+        try:
+            manifest = json.loads(text)
         except Exception as exc:
-            logger.exception('Error reading bundle manifest %s.', path)
+            logger.exception('Error parsing bundle manifest.')
             strip_exception_tracebacks(exc)
             return {}
         return {
@@ -2116,12 +2131,11 @@ class AssetSubsystem(AppSubsystem):
 
     def _coord_complete(self, fm_hash: str) -> bool:
         """Is this flavor fully present? (fm blob + all its data blobs)."""
-        fm_path = self._locate_blob(fm_hash, hide_bundle=True)
-        if fm_path is None:
+        fm_data = self._read_blob(fm_hash, hide_bundle=True)
+        if fm_data is None:
             return False
         try:
-            with open(fm_path, 'rb') as infile:
-                parsed = json.loads(infile.read())
+            parsed = json.loads(fm_data)
         except Exception as exc:
             logger.exception('Error reading flavor-manifest %s.', fm_hash)
             strip_exception_tracebacks(exc)
@@ -2138,10 +2152,9 @@ class AssetSubsystem(AppSubsystem):
         Caller must have confirmed the flavor is complete (see
         :meth:`_coord_complete`).
         """
-        fm_path = self._locate_blob(fm_hash)
-        assert fm_path is not None
-        with open(fm_path, 'rb') as infile:
-            parsed = json.loads(infile.read())
+        fm_data = self._read_blob(fm_hash)
+        assert fm_data is not None
+        parsed = json.loads(fm_data)
         # logical_path -> {part -> data-hash}. A null asset is {}.
         return {
             p: {part: comp['h'] for part, comp in info.items()}
@@ -2636,15 +2649,16 @@ class AssetSubsystem(AppSubsystem):
         """Is this CAS blob already present at the expected size?
 
         Probes the writable cache root and (unless bundle reuse is
-        disabled for the resolve in flight) the bundle root.
+        disabled for the resolve in flight) the bundle store.
         Present-but-wrong-size counts as absent so it gets
-        refetched/overwritten. The free ``st_size`` check is a cheap catch
+        refetched/overwritten. The free size check is a cheap catch
         for external truncation/tampering, not a content proof.
         """
-        roots = [self._writable_assets_root]
-        if not self._bundle_hidden:
-            roots.append(self._bundle_assets_root)
-        return assetcas.blob_present(roots, filehash, size)
+        if assetcas.blob_present([self._writable_assets_root], filehash, size):
+            return True
+        if self._bundle_hidden:
+            return False
+        return self._bundled_blob_size(filehash) == size
 
     def _acquire_data_blob(
         self,
@@ -2934,7 +2948,7 @@ class AssetSubsystem(AppSubsystem):
                     or manifest.flavor_manifest_last_used.get(fm_hash, 0.0)
                     >= cutoff
                 )
-                if not fm_survives or self._locate_blob(fm_hash) is None:
+                if not fm_survives or not self._blob_exists(fm_hash):
                     continue
                 new_coords[coord] = fm_hash
                 live_fm.add(fm_hash)
@@ -2952,12 +2966,11 @@ class AssetSubsystem(AppSubsystem):
         """
         live: set[str] = set(live_fm)
         for fm_hash in live_fm:
-            fm_path = self._locate_blob(fm_hash)
-            if fm_path is None:
+            fm_data = self._read_blob(fm_hash)
+            if fm_data is None:
                 continue
             try:
-                with open(fm_path, 'rb') as infile:
-                    parsed = json.loads(infile.read())
+                parsed = json.loads(fm_data)
                 for info in parsed['e'].values():
                     for comp in info.values():
                         live.add(comp['h'])

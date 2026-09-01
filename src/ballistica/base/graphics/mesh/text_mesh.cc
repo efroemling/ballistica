@@ -198,7 +198,7 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
               // (to reduce the number of times we switch back and forth)
               if (TextGraphics::IsOSDrawableAscii(val) && !os_span_l.empty()) {
                 os_span_l.push_back(val);
-              } else if (TextGraphics::Glyph* g =
+              } else if (const TextGraphics::Glyph* g =
                              g_base->text_graphics->GetGlyph(val, big)) {
                 // Flipping back to glyphs; if we had been building an os_span,
                 // tally it.
@@ -271,7 +271,7 @@ void TextMesh::SetText(const std::string& text_in, HAlign alignment_h,
         // (to reduce the number of times we switch back and forth)
         if (TextGraphics::IsOSDrawableAscii(char_val) && !os_span.empty()) {
           os_span.push_back(char_val);
-        } else if (TextGraphics::Glyph* glyph =
+        } else if (const TextGraphics::Glyph* glyph =
                        g_base->text_graphics->GetGlyph(char_val, big)) {
           // If we had been building up an OS-text span,
           // commit it since we're flipping to glyphs now.

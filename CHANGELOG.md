@@ -1,4 +1,4 @@
-### 1.8.0 (build 23011, api 9, 2026-08-31)
+### 1.8.0 (build 23012, api 9, 2026-09-01)
 - Fully implemented asset packages (more on this soon)
 - The asset-package wrapper modules bundled with the engine are now all
   private: `babase.builtinassets`, `bascenev1.builtinassets`, and
@@ -136,6 +136,9 @@
 - Assets for bauiv1 and bascenev2 are now fed in through Python - this means it
   will be possible to replace them with custom assets using mods; no need to
   hack system scripts.
+- Android builds now access their bundled Python files and assets directly from
+  their APK, which speeds up booting and eliminates the 'finishing
+  install..please wait' dialog at launch.
 
 ### 1.7.63 (build 22870, api 9, 2026-06-08)
 - Fixed mouse-wheel zooming in manual camera mode.

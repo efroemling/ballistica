@@ -159,6 +159,67 @@ Verification requires **both** `make ios-build` **and** `make tvos-build`.
 `BA_XCODE_BUILD`-gated C++ (e.g. `from_swift.cc`) only build under Xcode —
 so a cmake-green change can still break either Apple target.
 
+## Overlay web browser (iOS only)
+
+`babase.overlay_web_browser_open_url()` brings up an in-app browser --
+what the v2 account sign-in flow uses so a player never leaves the app.
+On iOS this is `UIKitOverlayWebBrowser` (an `SFSafariViewController`),
+not a bare `WKWebView`: Safari's view controller brings its own chrome,
+is what identity providers expect to see, and shares Safari's cookie
+jar, so a player already signed in there is not asked again. The cost is
+that it cannot be styled.
+
+**tvOS has no overlay browser at all** -- SafariServices does not exist
+there -- so `isSupported()` returns false and the sign-in flow falls
+back to the qr-code/link UI. Per the `#if os(iOS)` rule above, the file
+compiles into both targets and guards the SafariServices bits.
+
+Two contracts worth knowing before touching this:
+
+- **`OverlayWebBrowserIsSupported()` carries no main-thread contract**,
+  unlike `DoOverlayWebBrowserOpenURL`/`Close`. It is called from the
+  *logic* thread, so its Swift entry point must be `nonisolated`; a
+  `MainActor.assumeIsolated` there traps in
+  `dispatch_assert_queue_fail`. This is easy to get wrong because the
+  neighboring open/close entry points genuinely do need the hop.
+- **The engine expects exactly one close per open** and logs an error
+  otherwise. Both ways out (the user's Done button and a programmatic
+  close) can fire, so reporting is a one-shot; a failed open must still
+  report a close, or the engine's already-set open flag wedges every
+  later attempt.
+
+## Platform identity on iOS vs tvOS
+
+Two separate platform signals reach Python, and they disagreed until
+2026-08-31:
+
+| | `app.env.platform` | `app.classic.platform` | `app.env.tv` |
+|---|---|---|---|
+| iOS | `AppPlatform.IOS` | `'ios'` | `False` |
+| tvOS | `AppPlatform.TVOS` | `'tvos'` | `True` |
+
+`app.env.platform` (a `bacommon.app.AppPlatform`) comes from
+`BA_PLATFORM` in the buildconfig headers and has always distinguished
+the two. `app.classic.platform` is the *legacy* string from
+`Platform::GetLegacyPlatformName()` -- note its older vocabulary
+(`'mac'`, not `'macos'`) -- and originally returned `'ios'` for the
+whole shared `BA_PLATFORM_IOS_TVOS` branch, so tvOS inherited every
+iOS-keyed behavior. Splitting the branch fixed that. Prefer
+`app.env.platform` in new code; the legacy string is never transmitted
+anywhere -- its only consumer is the env dict -- so it is safe to
+correct.
+
+Better still, prefer a *capability* query over either platform signal
+when one exists. Advanced Settings used to gate its gyro toggle on
+`platform in {'ios', 'android'}`, which offered the option on Apple TV
+(no gyro, and no CoreMotion to read one with) while withholding it from
+nothing -- plenty of Android phones and tablets ship without the sensor
+too. It now asks `babase.hasgyro()`, which reports actual hardware:
+`CMMotionManager.isGyroAvailable` on iOS, and
+`PackageManager.hasSystemFeature(FEATURE_SENSOR_GYROSCOPE)` on Android.
+See `AppPlatform::HasGyro()`; the base `DoHasGyro()` returns false, so
+platforms with no gyro plumbing need no code at all.
+
 ## Verify Release, not just Debug
 
 Xcode Debug and Release configurations can genuinely diverge, and Swift

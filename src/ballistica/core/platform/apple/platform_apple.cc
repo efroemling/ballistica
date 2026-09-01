@@ -540,8 +540,10 @@ auto PlatformApple::MacMusicAppGetPlaylists() -> std::list<std::string> {
 auto PlatformApple::GetLegacyPlatformName() -> std::string {
 #if BA_PLATFORM_MACOS
   return "mac";
-#elif BA_PLATFORM_IOS_TVOS
+#elif BA_PLATFORM_IOS
   return "ios";
+#elif BA_PLATFORM_TVOS
+  return "tvos";
 #else
 #error FIXME
 #endif

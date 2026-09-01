@@ -31,6 +31,7 @@ class AppPlatformApple : public AppPlatform {
   auto HaveStringEditor() -> bool override;
 
  protected:
+  auto DoHasGyro() -> bool override;
   void DoInvokeStringEditor(const std::string& title, const std::string& value,
                             std::optional<int> max_chars, bool is_password,
                             const std::string& kind) override;

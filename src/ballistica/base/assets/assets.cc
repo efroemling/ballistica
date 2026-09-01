@@ -18,6 +18,8 @@
 
 #include "ballistica/base/app_adapter/app_adapter.h"
 #include "ballistica/base/app_mode/app_mode.h"
+#include "ballistica/base/assets/asset_archive.h"
+#include "ballistica/base/assets/asset_blob.h"
 #include "ballistica/base/assets/asset_name_compat.h"
 #include "ballistica/base/assets/assets_server.h"
 #include "ballistica/base/assets/collision_mesh_asset.h"
@@ -65,6 +67,26 @@ Assets::Assets() {
                             + "ba_data");
   for (bool& have_pending_load : have_pending_loads_) {
     have_pending_load = false;
+  }
+
+  // On platforms serving bundled asset blobs directly out of an
+  // archive (the apk on Android), map + index it now and route the
+  // registry's bundle paths into it. Bundled blobs are a hard
+  // prerequisite for running, so failure to map is fatal.
+  bundled_manifest_path_ = g_core->GetDataDirectory() + BA_DIRSLASH + "ba_data"
+                           + BA_DIRSLASH + "manifest.json";
+  if (auto archive_info = g_core->platform->GetBundledAssetsArchiveInfo()) {
+    auto archive = AssetArchive::Open(archive_info->archive_path);
+    if (!archive) {
+      FatalError("Unable to map bundled asset archive at '"
+                 + archive_info->archive_path + "'.");
+    }
+    AssetBlob::MountArchive(std::move(archive));
+    package_registry_.SetBundledCasOverride(
+        archive_info->archive_path + "/" + archive_info->blobs_entry_dir,
+        archive_info->blob_suffix);
+    bundled_manifest_path_ =
+        archive_info->archive_path + "/" + archive_info->manifest_entry;
   }
 
   InitSpecialChars();
@@ -1625,21 +1647,25 @@ auto Assets::LoadBundledFallbackTextureRGBA(const std::string& name)
   std::string apverid = name.substr(0, colon_pos);
   std::string logical_path = name.substr(colon_pos + 1);
 
-  // Bundled CAS layout — mirrors AssetPackageRegistry::CasBlobPath minus
-  // the writable-root probe (bundled manifests reference bundled blobs).
+  // Bundle-root blob paths (no writable probe; bundled manifests
+  // reference bundled blobs). With apk-archive serving these are
+  // archive paths, so all reads below go through AssetBlob.
   std::string ba_data_root =
       g_core->GetDataDirectory() + BA_DIRSLASH + "ba_data";
-  auto blob_path = [&ba_data_root](std::string_view hash) {
-    return ba_data_root + BA_DIRSLASH + "assets" + BA_DIRSLASH
-           + std::string(hash.substr(0, 2)) + BA_DIRSLASH
-           + std::string(hash.substr(2));
+  const auto& registry = *g_base->assets->package_registry();
+  auto blob_to_string = [&registry](std::string_view hash) -> std::string {
+    auto blob =
+        AssetBlob::FromFile(registry.BundledCasBlobPath(std::string(hash)));
+    return blob.exists() ? blob.ToString() : std::string();
   };
 
   try {
     // Top-level bundle manifest -> this package's fallback-flavor
     // textures bucket-manifest hash.
-    auto bundle_doc = JsonDoc::Parse(
-        Utils::FileToString(ba_data_root + BA_DIRSLASH + "manifest.json"));
+    auto manifest_blob =
+        AssetBlob::FromFile(g_base->assets->bundled_asset_manifest_path());
+    auto bundle_doc =
+        JsonDoc::Parse(manifest_blob.exists() ? manifest_blob.ToString() : "");
     if (!bundle_doc) {
       warn("bundle manifest parse failed");
       return {};
@@ -1661,8 +1687,7 @@ auto Assets::LoadBundledFallbackTextureRGBA(const std::string& name)
 
     // Bucket manifest -> the asset's texture-data blob (part role 't';
     // fallback_v1 always ships ``t.ktx2``).
-    auto bucket_doc =
-        JsonDoc::Parse(Utils::FileToString(blob_path(bucket_hash)));
+    auto bucket_doc = JsonDoc::Parse(blob_to_string(bucket_hash));
     if (!bucket_doc) {
       warn("bucket manifest parse failed");
       return {};
@@ -1693,7 +1718,13 @@ auto Assets::LoadBundledFallbackTextureRGBA(const std::string& name)
     // wrapping is read and discarded here.
     TextureWrapping wrap_h{};
     TextureWrapping wrap_v{};
-    LoadKTX2(blob_path(*data_hash), buffers, widths, heights, formats, sizes,
+    auto blob_path = registry.BundledCasBlobPath(std::string(*data_hash));
+    auto ktx2_blob = AssetBlob::FromFile(blob_path);
+    if (!ktx2_blob.exists()) {
+      warn("can't open bundled fallback texture blob");
+      return {};
+    }
+    LoadKTX2(ktx2_blob, blob_path, buffers, widths, heights, formats, sizes,
              &base_level, &premultiplied, &wrap_h, &wrap_v);
 
     BundledTextureRGBAData out;
@@ -2127,7 +2158,8 @@ void Assets::ReloadLanguage(const std::vector<std::string>& apverids,
       continue;
     }
     auto path = package_registry_.CasBlobPath(hash);
-    auto doc = JsonDoc::Parse(Utils::FileToString(path));
+    auto blob = AssetBlob::FromFile(path);
+    auto doc = JsonDoc::Parse(blob.exists() ? blob.ToString() : "");
     if (!doc.has_value() || !doc->root().is_object()) {
       g_core->logging->Log(LogName::kBaAssets, LogLevel::kError,
                            "ReloadLanguage: invalid language blob at " + path);

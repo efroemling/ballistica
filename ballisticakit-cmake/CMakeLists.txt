@@ -343,6 +343,10 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/app_platform/windows/app_platform_windows.h
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/asset.h
+  ${BA_SRC_ROOT}/ballistica/base/assets/asset_archive.cc
+  ${BA_SRC_ROOT}/ballistica/base/assets/asset_archive.h
+  ${BA_SRC_ROOT}/ballistica/base/assets/asset_blob.cc
+  ${BA_SRC_ROOT}/ballistica/base/assets/asset_blob.h
   ${BA_SRC_ROOT}/ballistica/base/assets/asset_name_compat.cc
   ${BA_SRC_ROOT}/ballistica/base/assets/asset_name_compat.h
   ${BA_SRC_ROOT}/ballistica/base/assets/asset_package_registry.cc
@@ -377,6 +381,8 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/audio/audio_source.h
   ${BA_SRC_ROOT}/ballistica/base/audio/audio_streamer.cc
   ${BA_SRC_ROOT}/ballistica/base/audio/audio_streamer.h
+  ${BA_SRC_ROOT}/ballistica/base/audio/ogg_blob_source.cc
+  ${BA_SRC_ROOT}/ballistica/base/audio/ogg_blob_source.h
   ${BA_SRC_ROOT}/ballistica/base/audio/ogg_stream.cc
   ${BA_SRC_ROOT}/ballistica/base/audio/ogg_stream.h
   ${BA_SRC_ROOT}/ballistica/base/automation/automation.cc
@@ -503,6 +509,7 @@ set(BALLISTICA_SOURCES
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/render_command_buffer.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/screen_messages.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/support/screen_messages.h
+  ${BA_SRC_ROOT}/ballistica/base/graphics/text/font_glyph_pages_data.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/text/font_page_map_data.h
   ${BA_SRC_ROOT}/ballistica/base/graphics/text/text_graphics.cc
   ${BA_SRC_ROOT}/ballistica/base/graphics/text/text_graphics.h

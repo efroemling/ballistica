@@ -204,8 +204,10 @@ void CorePython::InitPython() {
       PyWideStringList_Append(&config.module_search_paths,
                               Py_DecodeLocale("DLLs", nullptr));
     } else {
-      auto pylibpath = g_core->platform->GetDataDirectoryMonolithicDefault()
-                       + BA_DIRSLASH + "pylib";
+      auto pylibpath =
+          g_core->platform->GetPylibDirectoryMonolithicOverride().value_or(
+              g_core->platform->GetDataDirectoryMonolithicDefault()
+              + BA_DIRSLASH + "pylib");
       PyWideStringList_Append(&config.module_search_paths,
                               Py_DecodeLocale(pylibpath.c_str(), nullptr));
     }
@@ -670,14 +672,23 @@ void CorePython::MonolithicModeBaEnvImport() {
   // allow us to find our baenv module which will do the rest of the work
   // (adding our full set of paths, etc).
   // data-dir is the one monolithic-default value that MUST be defined
-  // so we base it on this.
-  auto default_py_dir = std::string("ba_data") + BA_DIRSLASH + "python";
-  auto data_dir_mono_default =
-      g_core->platform->GetDataDirectoryMonolithicDefault();
+  // so we base it on this (unless the platform overrides the app python
+  // dir wholesale; e.g. Android serving it from the apk, in which case
+  // baenv itself gets imported via zipimport).
+  std::string default_py_dir;
+  auto py_dir_override =
+      g_core->platform->GetAppPythonDirectoryMonolithicOverride();
+  if (py_dir_override.has_value()) {
+    default_py_dir = *py_dir_override;
+  } else {
+    default_py_dir = std::string("ba_data") + BA_DIRSLASH + "python";
+    auto data_dir_mono_default =
+        g_core->platform->GetDataDirectoryMonolithicDefault();
 
-  // Keep path clean if data-dir val is ".".
-  if (data_dir_mono_default != ".") {
-    default_py_dir = data_dir_mono_default + BA_DIRSLASH + default_py_dir;
+    // Keep path clean if data-dir val is ".".
+    if (data_dir_mono_default != ".") {
+      default_py_dir = data_dir_mono_default + BA_DIRSLASH + default_py_dir;
+    }
   }
 
   auto args = PythonRef::Stolen(Py_BuildValue("(s)", default_py_dir.c_str()));
@@ -694,6 +705,10 @@ void CorePython::MonolithicModeBaEnvConfigure() {
       g_core->platform->GetUserPythonDirectoryMonolithicDefault();
   std::optional<std::string> cache_dir =
       g_core->platform->GetCacheDirectoryMonolithicDefault();
+  std::optional<std::string> app_python_dir =
+      g_core->platform->GetAppPythonDirectoryMonolithicOverride();
+  std::optional<std::string> site_python_dir =
+      g_core->platform->GetSitePythonDirectoryMonolithicOverride();
 
   // Pass launch_time as a float when we have a positive value (captured
   // at main() entry); otherwise pass None so baenv falls back to its own
@@ -710,6 +725,8 @@ void CorePython::MonolithicModeBaEnvConfigure() {
       "sO"  // data_dir
       "sO"  // cache_dir
       "sO"  // user_python_dir
+      "sO"  // app_python_dir
+      "sO"  // site_python_dir
       "sO"  // contains_python_dist
       "sO"  // strict_threads_atexit
       "sO"  // setup_pycache_prefix
@@ -723,6 +740,10 @@ void CorePython::MonolithicModeBaEnvConfigure() {
         cache_dir ? *PythonRef::FromString(*cache_dir) : Py_None,
       "user_python_dir",
         user_python_dir ? *PythonRef::FromString(*user_python_dir) : Py_None,
+      "app_python_dir",
+        app_python_dir ? *PythonRef::FromString(*app_python_dir) : Py_None,
+      "site_python_dir",
+        site_python_dir ? *PythonRef::FromString(*site_python_dir) : Py_None,
       "contains_python_dist",
         g_buildconfig.contains_python_dist() ? Py_True : Py_False,
       "strict_threads_atexit",

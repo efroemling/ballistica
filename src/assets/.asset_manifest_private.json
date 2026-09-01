@@ -1,12 +1,4 @@
 [
- "ba_data/fonts/fontSmall0.fdata",
- "ba_data/fonts/fontSmall1.fdata",
- "ba_data/fonts/fontSmall2.fdata",
- "ba_data/fonts/fontSmall3.fdata",
- "ba_data/fonts/fontSmall4.fdata",
- "ba_data/fonts/fontSmall5.fdata",
- "ba_data/fonts/fontSmall6.fdata",
- "ba_data/fonts/fontSmall7.fdata",
  "ba_data/python-site-packages/certifi/__init__.py",
  "ba_data/python-site-packages/certifi/__main__.py",
  "ba_data/python-site-packages/certifi/cacert.pem",
