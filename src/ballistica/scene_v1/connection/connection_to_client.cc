@@ -785,9 +785,9 @@ void ConnectionToClient::HandleMessagePacket(
                     1, 0, 0);
               } else if (kick_vote_in_progress
                          && (!strcmp(b2.data(), "1")
-                             || !strcmp(b2.data(), "2"))) {
+                             || !strcmp(b2.data(), "0"))) {
                 // Special case - if there's a kick vote going on, take
-                // '1' or '2' to be votes.
+                // '1' or '0' to be votes.
                 // TODO(ericf): Disable this based on build-numbers once
                 // we've
                 //  got GUI voting working.
