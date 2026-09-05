@@ -873,15 +873,18 @@ void ConnectionToClient::HandleMessagePacket(
     }
 
     case BA_MESSAGE_INSTANT_REPLAY_SKIP_VOTE: {
-      // This client wants the clip gone. Count it for every player they
-      // brought; the clip ends once the whole room has asked.
+      // This client wants the clip gone. The payload names which of
+      // their devices pressed, so one press is one vote even when they
+      // have several controllers -- same as a local press.
+      if (buffer.size() != 2) {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                    "Ignoring invalid instant-replay-skip-vote packet");
+        break;
+      }
       if (auto* appmode = classic::ClassicAppMode::GetActive()) {
-        for (auto&& entry : client_input_devices_) {
-          if (entry.second == nullptr) {
-            continue;
-          }
-          if (auto* delegate = dynamic_cast<ClientInputDeviceDelegate*>(
-                  &entry.second->delegate())) {
+        if (auto* cid = GetClientInputDevice(buffer[1])) {
+          if (auto* delegate =
+                  dynamic_cast<ClientInputDeviceDelegate*>(&cid->delegate())) {
             appmode->AddInstantReplaySkipVote(delegate->GetPlayer());
           }
         }

@@ -10,6 +10,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ballistica/base/app_mode/app_mode.h"
@@ -361,8 +362,10 @@ class ClassicAppMode : public base::AppMode {
   /// Send one side of an instant-replay cut to every client new enough
   /// to understand it: the marker, a session reset, then `messages`.
   /// Older peers get nothing and simply see the stream pause.
-  /// Push the current tally to our own ui and to every client watching.
-  void ReportInstantReplaySkipVotes_();
+  /// Push the current tally to our own ui and to every client watching,
+  /// returning it as (votes, players) so callers don't re-walk the
+  /// roster to learn the same thing.
+  auto ReportInstantReplaySkipVotes_() -> std::pair<size_t, size_t>;
 
   void BroadcastInstantReplayCut_(
       const std::vector<uint8_t>& marker,
@@ -422,7 +425,7 @@ class ClassicAppMode : public base::AppMode {
   // live one is suspended (which also exempts it from reaping).
   Object::WeakRef<scene_v1::ClientSessionInstantReplay> instant_replay_session_;
   std::set<int> instant_replay_skip_votes_;
-  Object::WeakRef<scene_v1::Session> instant_replay_suspended_session_;
+  Object::WeakRef<scene_v1::HostSession> instant_replay_suspended_session_;
 
   // The live scene the clip displaced. Only activity transitions
   // normally set the foreground scene, so without putting this back

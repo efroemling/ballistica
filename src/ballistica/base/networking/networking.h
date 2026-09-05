@@ -149,9 +149,10 @@ namespace ballistica::base {
 #define BA_MESSAGE_INSTANT_REPLAY_SKIP_VOTES 24
 
 // One client asking to skip the clip on screen. Client -> host; the host
-// tallies it against that client's players and ends the clip once
-// everyone has asked. Carries no payload -- the connection identifies
-// the voter.
+// tallies it against that player and ends the clip once everyone has
+// asked. Payload after the type byte: uint8 client-local input-device
+// index, the same index remote player input rides under, so one press
+// counts as one vote even when a client has several controllers.
 #define BA_MESSAGE_INSTANT_REPLAY_SKIP_VOTE 25
 
 #define BA_JMESSAGE_SCREEN_MESSAGE 0

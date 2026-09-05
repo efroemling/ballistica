@@ -815,7 +815,8 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
       // itself arrives as ordinary session messages.
       float speed{1.0f};
       if (buffer.size() >= 1 + sizeof(float)) {
-        memcpy(&speed, &(buffer[1]), sizeof(float));
+        auto* ptr = reinterpret_cast<const char*>(&(buffer[1]));
+        speed = Utils::ExtractFloat32(&ptr);
       }
       if (!(speed > 0.0f)) {
         speed = 1.0f;
@@ -843,7 +844,6 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
               dynamic_cast<ClientSessionNet*>(client_session_.get())) {
         net_session->SetInstantReplayMode(false);
       }
-      g_scene_v1->python->SetInstantReplaySkipVotes(0, 0);
       g_scene_v1->python->objs()
           .Get(SceneV1Python::ObjID::kInstantReplayEndCall)
           .Call();

@@ -870,12 +870,19 @@ auto ClassicAppMode::InReplay() const -> bool {
 }
 
 base::ContextRef ClassicAppMode::GetForegroundContext() {
-  scene_v1::Session* s = GetForegroundSession();
+  // The live host session wins over what's merely on screen. A clip's
+  // own context has no host session or activity behind it, so without
+  // this everything asking "which game is in charge" -- the dev console,
+  // get_foreground_host_session/activity, printnodes -- would go blind
+  // for the length of every replay.
+  scene_v1::Session* s = GetLiveHostSession();
+  if (s == nullptr) {
+    s = GetForegroundSession();
+  }
   if (s) {
     return s->GetForegroundContext();
-  } else {
-    return {};
   }
+  return {};
 }
 
 void ClassicAppMode::UpdateGameRoster() {
@@ -1397,8 +1404,7 @@ auto ClassicAppMode::GetLiveHostSession() -> scene_v1::HostSession* {
 
   // While a clip is up the live session is off-screen but still the one
   // hosting; joins, rosters and names all belong to it.
-  if (auto* suspended = dynamic_cast<scene_v1::HostSession*>(
-          instant_replay_suspended_session_.get())) {
+  if (auto* suspended = instant_replay_suspended_session_.get()) {
     return suspended;
   }
   return dynamic_cast<scene_v1::HostSession*>(GetForegroundSession());
@@ -1430,32 +1436,23 @@ void ClassicAppMode::AddInstantReplaySkipVote(scene_v1::Player* player) {
   }
 
   instant_replay_skip_votes_.insert(player->id());
-  ReportInstantReplaySkipVotes_();
 
-  // Players who left mid-clip shouldn't be able to stall the vote, and a
-  // vote from someone already gone shouldn't count twice; comparing
-  // against the live roster handles both.
-  size_t needed{};
-  size_t have{};
-  for (auto&& p : live->players()) {
-    if (!p.exists()) {
-      continue;
-    }
-    needed++;
-    if (instant_replay_skip_votes_.count(p->id())) {
-      have++;
-    }
-  }
-  if (needed > 0 && have >= needed) {
+  auto tally = ReportInstantReplaySkipVotes_();
+  if (tally.second > 0 && tally.first >= tally.second) {
     end_clip();
   }
 }
 
-void ClassicAppMode::ReportInstantReplaySkipVotes_() {
+auto ClassicAppMode::ReportInstantReplaySkipVotes_()
+    -> std::pair<size_t, size_t> {
   auto* live = GetLiveHostSession();
   if (live == nullptr) {
-    return;
+    return {0, 0};
   }
+
+  // Players who left mid-clip shouldn't be able to stall the vote, and a
+  // vote from someone already gone shouldn't count twice; tallying
+  // against the live roster each time handles both.
   size_t total{};
   size_t count{};
   for (auto&& p : live->players()) {
@@ -1481,6 +1478,7 @@ void ClassicAppMode::ReportInstantReplaySkipVotes_() {
   for (auto&& connection : InstantReplayClients_()) {
     connection->SendReliableMessage(msg);
   }
+  return {count, total};
 }
 
 auto ClassicAppMode::StartInstantReplay(millisecs_t duration_millisecs,
@@ -1567,7 +1565,10 @@ auto ClassicAppMode::StartInstantReplay(millisecs_t duration_millisecs,
   // is never duplicated just to survive being moved into it.
   std::vector<uint8_t> begin_msg(1 + sizeof(float));
   begin_msg[0] = BA_MESSAGE_INSTANT_REPLAY_BEGIN;
-  memcpy(&(begin_msg[1]), &speed, sizeof(float));
+  {
+    auto* ptr = reinterpret_cast<char*>(&(begin_msg[1]));
+    Utils::EmbedFloat32(&ptr, speed);
+  }
   BroadcastInstantReplayCut_(begin_msg, instant_replay_session_->messages());
 
   // Let the ui put the banner up over the clip.
@@ -1618,8 +1619,7 @@ void ClassicAppMode::EndInstantReplay() {
   // sequence a joining client gets. Building that keyframe is a full
   // state dump, so don't when there's nobody to send it to (the usual
   // case for a local game).
-  auto* host_session =
-      dynamic_cast<scene_v1::HostSession*>(foreground_session_.get());
+  auto* host_session = GetLiveHostSession();
   auto* stream =
       host_session != nullptr ? host_session->GetSceneStream() : nullptr;
   if (stream != nullptr && !InstantReplayClients_().empty()) {

@@ -30,7 +30,7 @@ void InstantReplayRecorder::AddKeyframe(
   Prune_();
 }
 
-void InstantReplayRecorder::AddMessage(const std::vector<uint8_t>& message) {
+void InstantReplayRecorder::AddMessage(std::vector<uint8_t> message) {
   if (segments_.empty()) {
     // Nothing to hang this off of yet; a delta with no keyframe in front
     // of it can never be replayed.
@@ -38,7 +38,7 @@ void InstantReplayRecorder::AddMessage(const std::vector<uint8_t>& message) {
   }
   segments_.back().bytes += message.size();
   total_bytes_ += message.size();
-  segments_.back().deltas.push_back(message);
+  segments_.back().deltas.push_back(std::move(message));
   Prune_();
 }
 

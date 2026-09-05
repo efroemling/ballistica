@@ -431,7 +431,7 @@ void SessionStream::ShipSessionCommandsMessage() {
     AddMessageToReplay(out_message_);
   }
   if (instant_replay_recorder_ != nullptr) {
-    instant_replay_recorder_->AddMessage(out_message_);
+    instant_replay_recorder_->AddMessage(std::move(out_message_));
   }
   out_message_.clear();
   last_send_time_ = g_core->AppTimeMillisecs();
@@ -524,7 +524,7 @@ void SessionStream::SendPhysicsCorrection(bool blend) {
       AddMessageToReplay(message);
     }
     if (instant_replay_recorder_ != nullptr) {
-      instant_replay_recorder_->AddMessage(message);
+      instant_replay_recorder_->AddMessage(std::move(message));
     }
   }
 }

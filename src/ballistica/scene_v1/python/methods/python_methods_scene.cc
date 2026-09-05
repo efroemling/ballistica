@@ -517,10 +517,12 @@ static auto PyVoteSkipInstantReplay(PyObject* self) -> PyObject* {
     // (an on-screen clip makes the overlay stack 'main ui', which claims
     // the owning device's keys), so the voter is whoever owns the ui.
     scene_v1::Player* player{};
+    int device_index{-1};
     if (auto* device = g_base->ui->GetMainUIInputDevice()) {
       if (auto* delegate =
               dynamic_cast<SceneV1InputDeviceDelegate*>(&device->delegate())) {
         player = delegate->GetPlayer();
+        device_index = device->index();
       }
     }
     if (appmode->InInstantReplay()) {
@@ -536,9 +538,13 @@ static auto PyVoteSkipInstantReplay(PyObject* self) -> PyObject* {
             appmode->GetForegroundSession())) {
       if (session->instant_replay_mode()) {
         if (auto* connection = appmode->connections()->connection_to_host()) {
-          if (connection->build_number() >= kInstantReplayMinBuild) {
-            std::vector<uint8_t> msg(1);
+          if (connection->build_number() >= kInstantReplayMinBuild
+              && device_index >= 0) {
+            // Name the device so the host credits one player, matching
+            // what a local press does.
+            std::vector<uint8_t> msg(2);
             msg[0] = BA_MESSAGE_INSTANT_REPLAY_SKIP_VOTE;
+            msg[1] = static_cast_check_fit<uint8_t>(device_index);
             connection->SendReliableMessage(msg);
           }
         }

@@ -34,10 +34,11 @@ class InstantReplayRecorder {
   void AddKeyframe(millisecs_t base_time, std::vector<uint8_t> baseline,
                    std::vector<std::vector<uint8_t> > corrections);
 
-  /// Append a delta message to the current segment. Messages arriving
-  /// before the first keyframe are dropped, since nothing could replay
-  /// them.
-  void AddMessage(const std::vector<uint8_t>& message);
+  /// Append a delta message to the current segment. Takes ownership;
+  /// callers are done with the buffer by the time they hand it over.
+  /// Messages arriving before the first keyframe are dropped, since
+  /// nothing could replay them.
+  void AddMessage(std::vector<uint8_t> message);
 
   /// Build a playable message sequence covering (at most) the last
   /// `duration_millisecs` of stream time: a keyframe old enough to cover
