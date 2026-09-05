@@ -93,6 +93,12 @@ class SessionStream : public Object, public ClientControllerInterface {
   void OnClientDisconnected(ConnectionToClient* c) override;
   auto GetOutMessage() const -> std::vector<uint8_t>;
 
+  /// Same as GetOutMessage but hands over the buffer rather than
+  /// copying it. Only valid on a temp dump stream that is about to be
+  /// discarded; a keyframe is large enough that the copy is worth
+  /// avoiding.
+  auto TakeOutMessage() -> std::vector<uint8_t>;
+
   /// Declare the session's full asset-package table (index -> apverid)
   /// up front. Emitted at the start of the live stream (so replays open
   /// with it) and at the top of baseline dumps (so every joining client
@@ -100,6 +106,22 @@ class SessionStream : public Object, public ClientControllerInterface {
   /// stream: subsequent asset adds emit compact indexed refs against it
   /// (kAdd*Indexed) for package-housed assets.
   void DeclareAssetPackages(const std::vector<std::string>& table);
+
+  /// Build a keyframe: a complete snapshot of our host-session's current
+  /// state, as the same messages a joining client would be sent. Returns
+  /// the baseline (a BA_MESSAGE_SESSION_COMMANDS blob); any dynamics
+  /// corrections that go with it are appended to `corrections` (pass
+  /// nullptr to skip gathering those). Flushes pending commands first,
+  /// since our state already reflects them and re-sending them on top of
+  /// the snapshot would double-apply them.
+  auto BuildKeyframe(std::vector<std::vector<uint8_t>>* corrections)
+      -> std::vector<uint8_t>;
+
+  /// Our rolling instant-replay window, or nullptr if we're not keeping
+  /// one (disabled by config, or we're not a live host stream).
+  auto instant_replay_recorder() const -> InstantReplayRecorder* {
+    return instant_replay_recorder_;
+  }
 
  private:
   // Make sure various components are part of our stream.
@@ -115,6 +137,12 @@ class SessionStream : public Object, public ClientControllerInterface {
   void Flush();
   void AddMessageToReplay(const std::vector<uint8_t>& message);
   void Fail();
+
+  /// Cut a keyframe into our instant-replay window if enough stream time
+  /// has passed since the last one. Driven from SetTime, so the cadence
+  /// follows game time rather than wall time and a paused or slow
+  /// session doesn't accumulate them.
+  void MaybeEmitKeyframe_();
 
   /// Try emitting a compact indexed add (kAdd*Indexed) for an asset:
   /// maps possibly-legacy names into package space, then derives
@@ -178,6 +206,8 @@ class SessionStream : public Object, public ClientControllerInterface {
   std::vector<ConnectionToClient*> connections_to_clients_ignored_;
   classic::ClassicAppMode* app_mode_;
   bool writing_replay_{};
+  millisecs_t last_instant_replay_keyframe_time_{};
+  InstantReplayRecorder* instant_replay_recorder_{};
   millisecs_t last_physics_correction_time_{};
   millisecs_t last_send_time_{};
   millisecs_t time_{};

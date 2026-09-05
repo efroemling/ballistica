@@ -10,17 +10,22 @@
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/screen_messages.h"
+#include "ballistica/base/input/device/input_device.h"
 #include "ballistica/base/input/input.h"
+#include "ballistica/base/logic/logic.h"
+#include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_lang_str.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/base/support/plus_soft.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
+#include "ballistica/scene_v1/connection/connection_to_host.h"
 #include "ballistica/scene_v1/dynamics/collision.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
@@ -29,6 +34,7 @@
 #include "ballistica/scene_v1/python/class/python_class_session_data.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/scene_v1.h"
+#include "ballistica/scene_v1/support/client_session_net.h"
 #include "ballistica/scene_v1/support/client_session_replay.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
@@ -434,6 +440,160 @@ static PyMethodDef PyIsInReplayDef = {
     METH_VARARGS | METH_KEYWORDS,  // flags
 
     "is_in_replay() -> bool\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- play_instant_replay -----------------------------
+
+static auto PyPlayInstantReplay(PyObject* self, PyObject* args,
+                                PyObject* keywds) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  double duration{4.0};
+  double speed{0.4};
+  static const char* kwlist[] = {"duration", "speed", nullptr};
+  if (!PyArg_ParseTupleAndKeywords(
+          args, keywds, "|dd", const_cast<char**>(kwlist), &duration, &speed)) {
+    return nullptr;
+  }
+  if (duration <= 0.0) {
+    throw Exception("duration must be greater than zero.", PyExcType::kValue);
+  }
+  if (speed <= 0.0) {
+    throw Exception("speed must be greater than zero.", PyExcType::kValue);
+  }
+
+  auto duration_millisecs{static_cast<millisecs_t>(duration * 1000.0)};
+  auto speed_f{static_cast<float>(speed)};
+
+  // Fire-and-forget: the usual caller is game code reacting to something
+  // that just happened, which means we're inside a session update and
+  // can't touch the session list yet. Doing the deferral here keeps that
+  // detail out of every caller.
+  g_base->logic->event_loop()->PushCall([duration_millisecs, speed_f] {
+    if (auto* appmode = classic::ClassicAppMode::GetActive()) {
+      appmode->StartInstantReplay(duration_millisecs, speed_f);
+    }
+  });
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyPlayInstantReplayDef = {
+    "play_instant_replay",             // name
+    (PyCFunction)PyPlayInstantReplay,  // method
+    METH_VARARGS | METH_KEYWORDS,      // flags
+
+    "play_instant_replay(duration: float = 4.0, speed: float = 0.4)"
+    " -> None\n"
+    "\n"
+    ":meta private:",
+};
+
+// --------------------------- stop_instant_replay -----------------------------
+
+static auto PyStopInstantReplay(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_base->logic->event_loop()->PushCall([] {
+    if (auto* appmode = classic::ClassicAppMode::GetActive()) {
+      appmode->EndInstantReplay();
+    }
+  });
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static auto PyVoteSkipInstantReplay(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_base->logic->event_loop()->PushCall([] {
+    auto* appmode = classic::ClassicAppMode::GetActive();
+    if (appmode == nullptr) {
+      return;
+    }
+    // The press reached us through the ui rather than the input layer
+    // (an on-screen clip makes the overlay stack 'main ui', which claims
+    // the owning device's keys), so the voter is whoever owns the ui.
+    scene_v1::Player* player{};
+    int device_index{-1};
+    if (auto* device = g_base->ui->GetMainUIInputDevice()) {
+      if (auto* delegate =
+              dynamic_cast<SceneV1InputDeviceDelegate*>(&device->delegate())) {
+        player = delegate->GetPlayer();
+        device_index = device->index();
+      }
+    }
+    if (appmode->InInstantReplay()) {
+      appmode->AddInstantReplaySkipVote(player);
+      return;
+    }
+
+    // Not our clip: we're a client watching the host's. Our own banner
+    // swallowed the press (it makes the overlay stack 'main ui'), so
+    // nothing reached the input layer to ride the wire as player input.
+    // Send the vote explicitly instead.
+    if (auto* session = dynamic_cast<scene_v1::ClientSessionNet*>(
+            appmode->GetForegroundSession())) {
+      if (session->instant_replay_mode()) {
+        if (auto* connection = appmode->connections()->connection_to_host()) {
+          if (connection->build_number() >= kInstantReplayMinBuild
+              && device_index >= 0) {
+            // Name the device so the host credits one player, matching
+            // what a local press does.
+            std::vector<uint8_t> msg(2);
+            msg[0] = BA_MESSAGE_INSTANT_REPLAY_SKIP_VOTE;
+            msg[1] = static_cast_check_fit<uint8_t>(device_index);
+            connection->SendReliableMessage(msg);
+          }
+        }
+      }
+    }
+  });
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyVoteSkipInstantReplayDef = {
+    "vote_skip_instant_replay",            // name
+    (PyCFunction)PyVoteSkipInstantReplay,  // method
+    METH_NOARGS,                           // flags
+
+    "vote_skip_instant_replay() -> None\n"
+    "\n"
+    ":meta private:",
+};
+
+static PyMethodDef PyStopInstantReplayDef = {
+    "stop_instant_replay",             // name
+    (PyCFunction)PyStopInstantReplay,  // method
+    METH_NOARGS,                       // flags
+
+    "stop_instant_replay() -> None\n"
+    "\n"
+    ":meta private:",
+};
+
+// ------------------------ is_in_instant_replay -------------------------------
+
+static auto PyIsInInstantReplay(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  auto* appmode = classic::ClassicAppMode::GetActive();
+  if (appmode && appmode->InInstantReplay()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyIsInInstantReplayDef = {
+    "is_in_instant_replay",            // name
+    (PyCFunction)PyIsInInstantReplay,  // method
+    METH_NOARGS,                       // flags
+
+    "is_in_instant_replay() -> bool\n"
     "\n"
     ":meta private:",
 };
@@ -1831,6 +1991,10 @@ auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
       PyRegisterActivityDef,
       PyRegisterSessionDef,
       PyIsInReplayDef,
+      PyPlayInstantReplayDef,
+      PyStopInstantReplayDef,
+      PyVoteSkipInstantReplayDef,
+      PyIsInInstantReplayDef,
       PyBroadcastMessageDef,
       PyGetRandomNamesDef,
       PyResetRandomPlayerNamesDef,

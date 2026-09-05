@@ -1453,6 +1453,12 @@
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\client_session.h">
       <Filter>ballistica\scene_v1\support</Filter>
     </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\client_session_instant_replay.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\client_session_instant_replay.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\client_session_net.cc">
       <Filter>ballistica\scene_v1\support</Filter>
     </ClCompile>
@@ -1481,6 +1487,12 @@
       <Filter>ballistica\scene_v1\support</Filter>
     </ClCompile>
     <ClInclude Include="..\..\src\ballistica\scene_v1\support\huffman.h">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\src\ballistica\scene_v1\support\instant_replay_recorder.cc">
+      <Filter>ballistica\scene_v1\support</Filter>
+    </ClCompile>
+    <ClInclude Include="..\..\src\ballistica\scene_v1\support\instant_replay_recorder.h">
       <Filter>ballistica\scene_v1\support</Filter>
     </ClInclude>
     <ClCompile Include="..\..\src\ballistica\scene_v1\support\player.cc">

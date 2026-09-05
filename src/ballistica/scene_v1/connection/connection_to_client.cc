@@ -873,6 +873,26 @@ void ConnectionToClient::HandleMessagePacket(
       break;
     }
 
+    case BA_MESSAGE_INSTANT_REPLAY_SKIP_VOTE: {
+      // This client wants the clip gone. The payload names which of
+      // their devices pressed, so one press is one vote even when they
+      // have several controllers -- same as a local press.
+      if (buffer.size() != 2) {
+        BA_LOG_ONCE(LogName::kBaNetworking, LogLevel::kWarning,
+                    "Ignoring invalid instant-replay-skip-vote packet");
+        break;
+      }
+      if (auto* appmode = classic::ClassicAppMode::GetActive()) {
+        if (auto* cid = GetClientInputDevice(buffer[1])) {
+          if (auto* delegate =
+                  dynamic_cast<ClientInputDeviceDelegate*>(&cid->delegate())) {
+            appmode->AddInstantReplaySkipVote(delegate->GetPlayer());
+          }
+        }
+      }
+      break;
+    }
+
     case BA_MESSAGE_REMOVE_REMOTE_PLAYER: {
       last_remove_player_time_ = g_core->AppTimeMillisecs();
       if (buffer.size() != 2) {
@@ -920,8 +940,10 @@ void ConnectionToClient::HandleMessagePacket(
                     "msg.");
         break;
       }
-      if (auto* hs =
-              dynamic_cast<HostSession*>(appmode->GetForegroundSession())) {
+      // Deliberately the live host-session rather than the foreground
+      // one: while an instant replay is on screen the foreground is the
+      // clip, and a join arriving mid-clip would otherwise be dropped.
+      if (auto* hs = appmode->GetLiveHostSession()) {
         if (!cid->AttachedToPlayer()) {
           // (A v1-auth join-delay lived here -- stall the player
           // request until the client's master-server info arrived; it
@@ -967,7 +989,7 @@ auto ConnectionToClient::GetCombinedSpec() -> PlayerSpec {
 
   // Look for players coming from this client-connection. If we find any,
   // make a spec out of their name(s).
-  if (auto* hs = dynamic_cast<HostSession*>(appmode->GetForegroundSession())) {
+  if (auto* hs = appmode->GetLiveHostSession()) {
     std::string p_name_combined;
     for (auto&& p : hs->players()) {
       auto* delegate = p->input_device_delegate();

@@ -128,6 +128,33 @@ namespace ballistica::base {
 #define BA_MESSAGE_JMESSAGE 20
 #define BA_MESSAGE_CLIENT_PLAYER_PROFILES_JSON 21
 
+// Host is cutting to an instant replay. What follows is a session reset
+// plus a full-state snapshot and the clip's worth of commands, so the
+// client's own session simply plays the clip the way it plays anything
+// else. A matching _END arrives with another reset + a fresh live
+// snapshot to put the client back into the (frozen) match.
+//
+// Only sent to clients whose build is new enough to know these (see
+// kInstantReplayMinBuild); older ones just see the stream go quiet for
+// the duration and get resynced by the same closing snapshot.
+//
+// _BEGIN payload after the type byte: float playback speed.
+#define BA_MESSAGE_INSTANT_REPLAY_BEGIN 22
+#define BA_MESSAGE_INSTANT_REPLAY_END 23
+
+// Running skip-vote tally for the clip on screen, so every viewer sees
+// the same "n/m" the host does. Payload after the type byte: uint8 vote
+// count, uint8 player total. Host -> client only, and only while a clip
+// is up.
+#define BA_MESSAGE_INSTANT_REPLAY_SKIP_VOTES 24
+
+// One client asking to skip the clip on screen. Client -> host; the host
+// tallies it against that player and ends the clip once everyone has
+// asked. Payload after the type byte: uint8 client-local input-device
+// index, the same index remote player input rides under, so one press
+// counts as one vote even when a client has several controllers.
+#define BA_MESSAGE_INSTANT_REPLAY_SKIP_VOTE 25
+
 #define BA_JMESSAGE_SCREEN_MESSAGE 0
 
 // A post-handshake join rejection carrying a reason CODE (its "r" entry;

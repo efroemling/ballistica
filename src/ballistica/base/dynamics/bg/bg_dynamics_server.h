@@ -101,6 +101,10 @@ class BGDynamicsServer {
                           const Matrix44f& transform);
   void PushRemoveTerrainCall(CollisionMeshAsset* collision_mesh);
   void PushEmitCall(const BGDynamicsEmission& def);
+
+  /// Drop transient effects and reset node-owned visuals to
+  /// not-yet-positioned; see BGDynamics::Clear().
+  void PushClearCall();
   auto spark_particles() const -> ParticleSet* {
     return spark_particles_.get();
   }

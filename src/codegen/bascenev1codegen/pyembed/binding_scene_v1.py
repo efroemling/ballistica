@@ -15,6 +15,9 @@ import _bascenev1
 values = [
     _hooks.launch_main_menu_session,  # kLaunchMainMenuSessionCall
     _hooks.get_player_icon,  # kGetPlayerIconCall
+    _hooks.on_instant_replay_begin,  # kInstantReplayBeginCall
+    _hooks.on_instant_replay_end,  # kInstantReplayEndCall
+    _hooks.on_instant_replay_skip_votes,  # kInstantReplaySkipVotesCall
     _hooks.filter_chat_message,  # kFilterChatMessageCall
     _hooks.local_chat_message,  # kHandleLocalChatMessageCall
     _bascenev1.client_info_query_response,  # kClientInfoQueryResponseCall

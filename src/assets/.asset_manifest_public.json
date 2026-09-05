@@ -240,6 +240,7 @@
  "ba_data/python/bascenev1lib/game/targetpractice.py",
  "ba_data/python/bascenev1lib/game/thelaststand.py",
  "ba_data/python/bascenev1lib/gameutils.py",
+ "ba_data/python/bascenev1lib/instantreplay.py",
  "ba_data/python/bascenev1lib/mainmenu.py",
  "ba_data/python/bascenev1lib/mapdata/__init__.py",
  "ba_data/python/bascenev1lib/mapdata/big_g.py",

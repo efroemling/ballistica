@@ -460,6 +460,14 @@ void TextNode::Draw(base::FrameDef* frame_def) {
     return;
   }
 
+  // Still cold: the measure is running in the background, so sit this
+  // frame out rather than drawing against a stale width (both draw
+  // paths below assert on this, and every layout decision they make
+  // depends on it). We'll draw as soon as the measure lands.
+  if (text_width_dirty_) {
+    return;
+  }
+
   bool vr_2d_text = (g_core->vr_mode() && !in_world_);
 
   // in vr mode we use the fixed overlay position if our scene is set for

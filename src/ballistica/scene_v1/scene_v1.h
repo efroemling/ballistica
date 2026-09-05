@@ -238,6 +238,8 @@ class Session;
 class SceneSound;
 class SceneTexture;
 class ReplayWriter;
+class InstantReplayRecorder;
+class ClientSessionInstantReplay;
 typedef Node* NodeCreateFunc(Scene* sg);
 
 /// Specifies the type of time for various operations to target/use.
@@ -543,6 +545,15 @@ inline constexpr char kLangStrWireTagLangStr = '\x03';     // LangStr json
 // (kProtocolVersionHostMin exceeds it), so every connected client did the
 // package-universe prep at join.
 inline constexpr int kScreenMessageLangStrOnlyMinBuild = 22962;
+
+// Minimum peer build for the instant-replay begin/end messages (see
+// BA_MESSAGE_INSTANT_REPLAY_BEGIN). Build-number gating rather than
+// protocol for the same reason as above: these are transient
+// message-layer traffic, never stored in a stream, and the clip itself
+// rides as ordinary session messages any client already understands.
+// Older peers simply see the stream pause for the length of the clip
+// and are resynced by the keyframe that follows it.
+inline constexpr int kInstantReplayMinBuild = 23006;
 
 // Which asset-package bucket kind a scene asset type's wire indices
 // derive from (see the kAdd*Indexed commands). Collision meshes live

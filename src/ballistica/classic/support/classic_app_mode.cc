@@ -11,6 +11,7 @@
 #include "ballistica/base/assets/builtin_strings.h"
 #include "ballistica/base/audio/audio.h"
 #include "ballistica/base/audio/audio_source.h"
+#include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/frame_def.h"
 #include "ballistica/base/input/input.h"
@@ -32,10 +33,14 @@
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/support/client_input_device.h"
 #include "ballistica/scene_v1/support/client_input_device_delegate.h"
+#include "ballistica/scene_v1/support/client_session_instant_replay.h"
 #include "ballistica/scene_v1/support/client_session_net.h"
 #include "ballistica/scene_v1/support/client_session_replay.h"
 #include "ballistica/scene_v1/support/host_session.h"
+#include "ballistica/scene_v1/support/instant_replay_recorder.h"
+#include "ballistica/scene_v1/support/player.h"
 #include "ballistica/scene_v1/support/scene.h"
+#include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/foundation/event_loop.h"
 #include "ballistica/shared/foundation/macros.h"
 #include "ballistica/shared/generic/json_facade.h"
@@ -168,6 +173,12 @@ void ClassicAppMode::Reset_() {
   if (!result.exists()) {
     throw Exception("Error calling kOnEngineWillResetCall.");
   }
+
+  // Take down any instant replay properly first: its banner would
+  // otherwise outlive the session it was covering, and the suspended
+  // session behind it would be exempt from the prune below. No-ops when
+  // no clip is up.
+  EndInstantReplay();
 
   // Tear down any existing session.
   foreground_session_.Clear();
@@ -699,6 +710,9 @@ auto ClassicAppMode::GetHeadlessNextDisplayTimeStep() -> microsecs_t {
     if (!i.exists()) {
       continue;
     }
+    if (i->suspended()) {
+      continue;
+    }
     auto this_time_to_next = i->TimeToNextEvent();
     if (this_time_to_next.has_value()) {
       if (!min_time_to_next.has_value()) {
@@ -775,12 +789,26 @@ void ClassicAppMode::StepDisplayTime() {
     if (!i.exists()) {
       continue;
     }
+    // A suspended session is frozen in place; not stepping it is exactly
+    // what freezes it (scene time, timers, dynamics and all).
+    if (i->suspended()) {
+      continue;
+    }
     // Pass our old int milliseconds time vals for legacy purposes
     // along with the newer exact ones for anyone who wants to use them.
     // (ideally at some point we can pass neither of these and anyone who
     // needs this can just use g_logic->display_time() directly).
     i->Update(static_cast<int>(legacy_display_time_millisecs_inc),
               g_base->logic->display_time_increment());
+  }
+
+  // If an instant replay just ran out (or was skipped), hand the screen
+  // back now that we're clear of the session loop -- doing it from
+  // inside would mean destroying a session mid-update.
+  if (auto* replay = instant_replay_session_.get()) {
+    if (replay->complete()) {
+      EndInstantReplay();
+    }
   }
 
   // Go ahead and prune dead ones.
@@ -842,12 +870,19 @@ auto ClassicAppMode::InReplay() const -> bool {
 }
 
 base::ContextRef ClassicAppMode::GetForegroundContext() {
-  scene_v1::Session* s = GetForegroundSession();
+  // The live host session wins over what's merely on screen. A clip's
+  // own context has no host session or activity behind it, so without
+  // this everything asking "which game is in charge" -- the dev console,
+  // get_foreground_host_session/activity, printnodes -- would go blind
+  // for the length of every replay.
+  scene_v1::Session* s = GetLiveHostSession();
+  if (s == nullptr) {
+    s = GetForegroundSession();
+  }
   if (s) {
     return s->GetForegroundContext();
-  } else {
-    return {};
   }
+  return {};
 }
 
 void ClassicAppMode::UpdateGameRoster() {
@@ -864,7 +899,7 @@ void ClassicAppMode::UpdateGameRoster() {
 
   bool include_self = (connections()->GetConnectedClientCount() > 0);
 
-  if (auto* hs = dynamic_cast<scene_v1::HostSession*>(GetForegroundSession())) {
+  if (auto* hs = GetLiveHostSession()) {
     // Add our host-y self.
     if (include_self) {
       GameRosterEntry entry;
@@ -1340,6 +1375,272 @@ void ClassicAppMode::LaunchReplaySession(const std::string& file_name) {
   }
 }
 
+auto ClassicAppMode::InstantReplayClients_()
+    -> std::vector<scene_v1::ConnectionToClient*> {
+  std::vector<scene_v1::ConnectionToClient*> out;
+  for (auto&& connection : connections()->GetConnectionsToClients()) {
+    if (connection->build_number() >= scene_v1::kInstantReplayMinBuild) {
+      out.push_back(connection);
+    }
+  }
+  return out;
+}
+
+void ClassicAppMode::BroadcastInstantReplayCut_(
+    const std::vector<uint8_t>& marker,
+    const std::vector<std::vector<uint8_t>>& messages) {
+  std::vector<uint8_t> reset_msg(1, BA_MESSAGE_SESSION_RESET);
+  for (auto&& connection : InstantReplayClients_()) {
+    connection->SendReliableMessage(marker);
+    connection->SendReliableMessage(reset_msg);
+    for (auto&& message : messages) {
+      connection->SendReliableMessage(message);
+    }
+  }
+}
+
+auto ClassicAppMode::GetLiveHostSession() -> scene_v1::HostSession* {
+  assert(g_base->InLogicThread());
+
+  // While a clip is up the live session is off-screen but still the one
+  // hosting; joins, rosters and names all belong to it.
+  if (auto* suspended = instant_replay_suspended_session_.get()) {
+    return suspended;
+  }
+  return dynamic_cast<scene_v1::HostSession*>(GetForegroundSession());
+}
+
+void ClassicAppMode::AddInstantReplaySkipVote(scene_v1::Player* player) {
+  assert(g_base->InLogicThread());
+
+  if (!InInstantReplay()) {
+    return;
+  }
+
+  auto end_clip = [] {
+    // Deferred: a vote can arrive from inside input handling or a
+    // session update, and tearing the clip down there would pull the rug
+    // out from under the caller.
+    g_base->logic->event_loop()->PushCall([] {
+      if (auto* appmode = ClassicAppMode::GetActive()) {
+        appmode->EndInstantReplay();
+      }
+    });
+  };
+
+  auto* live = GetLiveHostSession();
+  if (live == nullptr || player == nullptr) {
+    // Nobody to tally against; treat the press as a plain skip.
+    end_clip();
+    return;
+  }
+
+  instant_replay_skip_votes_.insert(player->id());
+
+  auto tally = ReportInstantReplaySkipVotes_();
+  if (tally.second > 0 && tally.first >= tally.second) {
+    end_clip();
+  }
+}
+
+auto ClassicAppMode::ReportInstantReplaySkipVotes_()
+    -> std::pair<size_t, size_t> {
+  auto* live = GetLiveHostSession();
+  if (live == nullptr) {
+    return {0, 0};
+  }
+
+  // Players who left mid-clip shouldn't be able to stall the vote, and a
+  // vote from someone already gone shouldn't count twice; tallying
+  // against the live roster each time handles both.
+  size_t total{};
+  size_t count{};
+  for (auto&& p : live->players()) {
+    if (!p.exists()) {
+      continue;
+    }
+    total++;
+    if (instant_replay_skip_votes_.count(p->id())) {
+      count++;
+    }
+  }
+
+  // Our own banner.
+  g_scene_v1->python->SetInstantReplaySkipVotes(static_cast<int>(count),
+                                                static_cast<int>(total));
+
+  // And everyone watching over the wire, so the tally reads the same
+  // everywhere.
+  std::vector<uint8_t> msg(3);
+  msg[0] = BA_MESSAGE_INSTANT_REPLAY_SKIP_VOTES;
+  msg[1] = static_cast_check_fit<uint8_t>(std::min<size_t>(count, 255));
+  msg[2] = static_cast_check_fit<uint8_t>(std::min<size_t>(total, 255));
+  for (auto&& connection : InstantReplayClients_()) {
+    connection->SendReliableMessage(msg);
+  }
+  return {count, total};
+}
+
+auto ClassicAppMode::StartInstantReplay(millisecs_t duration_millisecs,
+                                        float speed) -> bool {
+  assert(g_base->InLogicThread());
+
+  // Creating/destroying sessions mid-update would pull the rug out from
+  // under the loop we'd be standing in. Callers reaching us from game
+  // code go through a pushed call for exactly this reason.
+  if (in_update_) {
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         "StartInstantReplay called from within a session"
+                         " update; use babase.pushcall().");
+    return false;
+  }
+
+  if (InInstantReplay()) {
+    return false;
+  }
+
+  // Only a live host session has a rolling window to replay from.
+  auto* host_session =
+      dynamic_cast<scene_v1::HostSession*>(foreground_session_.get());
+  if (host_session == nullptr) {
+    return false;
+  }
+  auto* stream = host_session->GetSceneStream();
+  if (stream == nullptr) {
+    return false;
+  }
+  auto* recorder = stream->instant_replay_recorder();
+  if (recorder == nullptr) {
+    return false;
+  }
+  auto messages = recorder->BuildWindow(duration_millisecs);
+  if (messages.empty()) {
+    return false;
+  }
+
+  auto covered = recorder->available_millisecs();
+  instant_replay_skip_votes_.clear();
+
+  // Background dynamics are global rather than per-scene, so the live
+  // scene's sparks and debris would otherwise hang over the clip (and
+  // its bomb fuses would sit frozen mid-air, since a suspended scene
+  // stops repositioning them). Wipe the slate for the clip.
+  g_base->bg_dynamics->Clear();
+
+  // Freeze the live session before anything else, so it can't take a
+  // step while we're standing up the clip.
+  host_session->set_suspended(true);
+  instant_replay_suspended_session_ = host_session;
+  instant_replay_suspended_scene_ = foreground_scene_;
+
+  base::ScopedSetContext ssc(nullptr);
+  try {
+    auto s(Object::New<scene_v1::ClientSessionInstantReplay>(
+        std::move(messages), speed, host_protocol_version()));
+    sessions_.push_back(Object::Ref<scene_v1::Session>(s.get()));
+
+    // Session's constructor makes itself foreground.
+    assert(foreground_session_.get() == s.get());
+    instant_replay_session_ = s;
+  } catch (const std::exception& e) {
+    // Put things back exactly as they were; a failed clip must never
+    // cost the player their match.
+    host_session->set_suspended(false);
+    instant_replay_suspended_session_.Clear();
+    SetForegroundSession(host_session);
+    g_core->logging->Log(LogName::kBa, LogLevel::kError,
+                         std::string("InstantReplay failed: ") + e.what());
+    return false;
+  }
+
+  g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug, [covered] {
+    return "ClassicAppMode: instant replay started (" + std::to_string(covered)
+           + "ms of window available).";
+  });
+
+  // Send the same clip to anyone watching over the wire. A client is
+  // just a session applying whatever arrives, so a reset plus the clip's
+  // own keyframe and commands makes it show exactly what we're showing.
+  // We broadcast the session's copy rather than our own, so the window
+  // is never duplicated just to survive being moved into it.
+  std::vector<uint8_t> begin_msg(1 + sizeof(float));
+  begin_msg[0] = BA_MESSAGE_INSTANT_REPLAY_BEGIN;
+  {
+    auto* ptr = reinterpret_cast<char*>(&(begin_msg[1]));
+    Utils::EmbedFloat32(&ptr, speed);
+  }
+  BroadcastInstantReplayCut_(begin_msg, instant_replay_session_->messages());
+
+  // Let the ui put the banner up over the clip.
+  g_scene_v1->python->objs()
+      .Get(scene_v1::SceneV1Python::ObjID::kInstantReplayBeginCall)
+      .Call();
+
+  return true;
+}
+
+void ClassicAppMode::EndInstantReplay() {
+  assert(g_base->InLogicThread());
+
+  if (!instant_replay_session_.exists()
+      && !instant_replay_suspended_session_.exists()) {
+    return;
+  }
+
+  // Same on the way out, so the clip's explosion debris doesn't rain
+  // down on the live match it hands back to.
+  g_base->bg_dynamics->Clear();
+
+  // Wake the live session and give it the screen back. Do this before
+  // dropping the clip, so we're never left with no foreground session.
+  if (auto* live = instant_replay_suspended_session_.get()) {
+    live->set_suspended(false);
+    SetForegroundSession(live);
+  }
+  instant_replay_suspended_session_.Clear();
+
+  // Give the live scene the foreground back too. Nothing else will:
+  // that only happens on activity transitions, so otherwise the clip's
+  // scene keeps it until the next round -- taking bg-dynamics stepping
+  // and the globals-node's camera/tint/music with it.
+  if (auto* live_scene = instant_replay_suspended_scene_.get()) {
+    SetForegroundScene(live_scene);
+  }
+  instant_replay_suspended_scene_.Clear();
+
+  // The clip is now neither foreground nor suspended, so the next prune
+  // reaps it.
+  instant_replay_session_.Clear();
+  instant_replay_skip_votes_.clear();
+
+  // Put remote viewers back into the live match. They've been showing a
+  // clip built from a different point in the stream, so a reset plus a
+  // fresh keyframe is what makes their scene ours again -- the same
+  // sequence a joining client gets. Building that keyframe is a full
+  // state dump, so don't when there's nobody to send it to (the usual
+  // case for a local game).
+  auto* host_session = GetLiveHostSession();
+  auto* stream =
+      host_session != nullptr ? host_session->GetSceneStream() : nullptr;
+  if (stream != nullptr && !InstantReplayClients_().empty()) {
+    std::vector<std::vector<uint8_t>> messages;
+    std::vector<std::vector<uint8_t>> corrections;
+    std::vector<uint8_t> baseline = stream->BuildKeyframe(&corrections);
+    if (!baseline.empty()) {
+      messages.push_back(std::move(baseline));
+    }
+    for (auto&& correction : corrections) {
+      messages.push_back(std::move(correction));
+    }
+    std::vector<uint8_t> end_msg(1, BA_MESSAGE_INSTANT_REPLAY_END);
+    BroadcastInstantReplayCut_(end_msg, messages);
+  }
+
+  g_scene_v1->python->objs()
+      .Get(scene_v1::SceneV1Python::ObjID::kInstantReplayEndCall)
+      .Call();
+}
+
 void ClassicAppMode::LaunchClientSession() {
   if (in_update_) {
     throw Exception(
@@ -1455,8 +1756,7 @@ void ClassicAppMode::LocalDisplayChatMessage(
 
 void ClassicAppMode::ApplyAppConfig() {
   // Kick-idle-players setting (hmm is this still relevant?).
-  auto* host_session =
-      dynamic_cast<scene_v1::HostSession*>(foreground_session_.get());
+  auto* host_session = GetLiveHostSession();
   kick_idle_players_ =
       g_base->app_config->Resolve(base::AppConfig::BoolID::kKickIdlePlayers);
   if (host_session) {
@@ -1486,7 +1786,11 @@ void ClassicAppMode::PruneSessions_() {
   for (auto&& i : sessions_) {
     if (i.exists()) {
       // If this session is no longer foreground and is ready to die, kill it.
-      if (i.exists() && i.get() != foreground_session_.get()) {
+      // A suspended session is the exception: it has deliberately handed
+      // the screen to something else (an instant replay) and is waiting
+      // to get it back.
+      if (i.exists() && i.get() != foreground_session_.get()
+          && !i->suspended()) {
         try {
           i.Clear();
         } catch (const std::exception& e) {
