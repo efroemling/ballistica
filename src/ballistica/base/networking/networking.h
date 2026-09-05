@@ -142,6 +142,18 @@ namespace ballistica::base {
 #define BA_MESSAGE_INSTANT_REPLAY_BEGIN 22
 #define BA_MESSAGE_INSTANT_REPLAY_END 23
 
+// Running skip-vote tally for the clip on screen, so every viewer sees
+// the same "n/m" the host does. Payload after the type byte: uint8 vote
+// count, uint8 player total. Host -> client only, and only while a clip
+// is up.
+#define BA_MESSAGE_INSTANT_REPLAY_SKIP_VOTES 24
+
+// One client asking to skip the clip on screen. Client -> host; the host
+// tallies it against that client's players and ends the clip once
+// everyone has asked. Carries no payload -- the connection identifies
+// the voter.
+#define BA_MESSAGE_INSTANT_REPLAY_SKIP_VOTE 25
+
 #define BA_JMESSAGE_SCREEN_MESSAGE 0
 
 // A post-handshake join rejection carrying a reason CODE (its "r" entry;

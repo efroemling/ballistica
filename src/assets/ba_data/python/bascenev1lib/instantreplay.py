@@ -126,6 +126,13 @@ def _maybe_play(activity: bs.Activity, *, rate_limit: bool = True) -> None:
 # ------------------------------ presentation --------------------------------
 
 _g_banner: Any = None
+_g_vote_text: Any = None
+
+
+def _skip() -> None:
+    # A vote, not an immediate skip: the engine ends the clip once every
+    # player has asked, the same way the tutorial's skip works.
+    bs.vote_skip_instant_replay()
 
 
 def show_banner() -> None:
@@ -137,6 +144,7 @@ def show_banner() -> None:
     global _g_banner  # pylint: disable=global-statement
 
     import bauiv1 as bui
+    from bauiv1 import _classicassets
 
     if _g_banner is not None:
         return
@@ -146,6 +154,12 @@ def show_banner() -> None:
     # Cover the whole virtual screen so we can place things against real
     # screen edges; the container itself draws nothing.
     width, height = babase.get_virtual_screen_size()
+    # Selectable with both callbacks wired so any press dismisses the
+    # clip: while we're up, the overlay stack counts as 'main ui' (see
+    # UIV1FeatureSet::IsMainUIVisible), so the ui-owning device's keys
+    # arrive here as widget messages rather than reaching the input
+    # delegate. jump/punch/pick-up/start arrive as activate and bomb as
+    # cancel, so covering both is what makes "press anything" true.
     _g_banner = bui.containerwidget(
         parent=parent,
         size=(width, height),
@@ -153,6 +167,9 @@ def show_banner() -> None:
         transition='in_right',
         position=(0, 0),
         selectable=True,
+        root_selectable=True,
+        on_activate_call=_skip,
+        on_cancel_call=_skip,
     )
     bui.textwidget(
         parent=_g_banner,
@@ -166,20 +183,65 @@ def show_banner() -> None:
         shadow=1.0,
         flatness=1.0,
     )
-    bui.buttonwidget(
+
+    # Vote tally, sitting just above the prompt exactly as the
+    # tutorial stacks its own. Empty until somebody votes.
+    global _g_vote_text  # pylint: disable=global-statement
+    _g_vote_text = bui.textwidget(
         parent=_g_banner,
-        position=(width * 0.5 - 75, height - 165),
-        size=(150, 40),
-        label=babase.Lstr(value='Skip'),
-        text_scale=0.8,
-        on_activate_call=_skip,
-        autoselect=True,
+        position=(width * 0.5 - 300, 90),
+        size=(600, 40),
+        text='',
+        h_align='center',
+        v_align='center',
+        color=(1.0, 1.0, 1.0, 0.9),
+        scale=1.4,
+        shadow=0.5,
+        flatness=0.0,
+    )
+
+    # Skip prompt, styled after the tutorial's: bottom-centered, quiet,
+    # and driven by any press rather than a button.
+    bui.textwidget(
+        parent=_g_banner,
+        position=(width * 0.5 - 300, 50),
+        size=(600, 40),
+        text=_classicassets.strings.tutorial.to_skip_press_anything,
+        h_align='center',
+        v_align='center',
+        color=(1.0, 1.0, 1.0, 0.7),
+        scale=1.1,
+        shadow=0.5,
+        flatness=0.0,
+    )
+
+
+def set_skip_votes(count: int, total: int) -> None:
+    """Show how many viewers have asked to skip, tutorial-style.
+
+    Driven from the host's tally (locally and over the wire), so every
+    viewer sees the same numbers.
+    """
+    import bauiv1 as bui
+    from bauiv1 import _classicassets
+
+    if _g_vote_text is None:
+        return
+    bui.textwidget(
+        edit=_g_vote_text,
+        text=(
+            _classicassets.strings.tutorial.skip_vote_count(
+                count=str(count), total=str(total)
+            )
+            if count > 0
+            else ''
+        ),
     )
 
 
 def hide_banner() -> None:
     """Take the banner back down."""
-    global _g_banner  # pylint: disable=global-statement
+    global _g_banner, _g_vote_text  # pylint: disable=global-statement
 
     import bauiv1 as bui
 
@@ -187,7 +249,4 @@ def hide_banner() -> None:
         return
     bui.containerwidget(edit=_g_banner, transition='out_right')
     _g_banner = None
-
-
-def _skip() -> None:
-    bs.stop_instant_replay()
+    _g_vote_text = None

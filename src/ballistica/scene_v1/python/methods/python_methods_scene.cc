@@ -10,18 +10,22 @@
 #include "ballistica/base/dynamics/bg/bg_dynamics.h"
 #include "ballistica/base/graphics/graphics.h"
 #include "ballistica/base/graphics/support/screen_messages.h"
+#include "ballistica/base/input/device/input_device.h"
 #include "ballistica/base/input/input.h"
 #include "ballistica/base/logic/logic.h"
+#include "ballistica/base/networking/networking.h"
 #include "ballistica/base/python/base_python.h"
 #include "ballistica/base/python/class/python_class_lang_str.h"
 #include "ballistica/base/python/class/python_class_simple_sound.h"
 #include "ballistica/base/python/support/python_context_call_runnable.h"
 #include "ballistica/base/support/plus_soft.h"
+#include "ballistica/base/ui/ui.h"
 #include "ballistica/classic/support/classic_app_mode.h"
 #include "ballistica/core/python/core_python.h"
 #include "ballistica/scene_v1/assets/scene_texture.h"
 #include "ballistica/scene_v1/connection/connection_set.h"
 #include "ballistica/scene_v1/connection/connection_to_client.h"
+#include "ballistica/scene_v1/connection/connection_to_host.h"
 #include "ballistica/scene_v1/dynamics/collision.h"
 #include "ballistica/scene_v1/dynamics/dynamics.h"
 #include "ballistica/scene_v1/node/node_attribute.h"
@@ -30,6 +34,7 @@
 #include "ballistica/scene_v1/python/class/python_class_session_data.h"
 #include "ballistica/scene_v1/python/scene_v1_python.h"
 #include "ballistica/scene_v1/scene_v1.h"
+#include "ballistica/scene_v1/support/client_session_net.h"
 #include "ballistica/scene_v1/support/client_session_replay.h"
 #include "ballistica/scene_v1/support/host_activity.h"
 #include "ballistica/scene_v1/support/host_session.h"
@@ -499,6 +504,60 @@ static auto PyStopInstantReplay(PyObject* self) -> PyObject* {
   Py_RETURN_NONE;
   BA_PYTHON_CATCH;
 }
+
+static auto PyVoteSkipInstantReplay(PyObject* self) -> PyObject* {
+  BA_PYTHON_TRY;
+  BA_PRECONDITION(g_base->InLogicThread());
+  g_base->logic->event_loop()->PushCall([] {
+    auto* appmode = classic::ClassicAppMode::GetActive();
+    if (appmode == nullptr) {
+      return;
+    }
+    // The press reached us through the ui rather than the input layer
+    // (an on-screen clip makes the overlay stack 'main ui', which claims
+    // the owning device's keys), so the voter is whoever owns the ui.
+    scene_v1::Player* player{};
+    if (auto* device = g_base->ui->GetMainUIInputDevice()) {
+      if (auto* delegate =
+              dynamic_cast<SceneV1InputDeviceDelegate*>(&device->delegate())) {
+        player = delegate->GetPlayer();
+      }
+    }
+    if (appmode->InInstantReplay()) {
+      appmode->AddInstantReplaySkipVote(player);
+      return;
+    }
+
+    // Not our clip: we're a client watching the host's. Our own banner
+    // swallowed the press (it makes the overlay stack 'main ui'), so
+    // nothing reached the input layer to ride the wire as player input.
+    // Send the vote explicitly instead.
+    if (auto* session = dynamic_cast<scene_v1::ClientSessionNet*>(
+            appmode->GetForegroundSession())) {
+      if (session->instant_replay_mode()) {
+        if (auto* connection = appmode->connections()->connection_to_host()) {
+          if (connection->build_number() >= kInstantReplayMinBuild) {
+            std::vector<uint8_t> msg(1);
+            msg[0] = BA_MESSAGE_INSTANT_REPLAY_SKIP_VOTE;
+            connection->SendReliableMessage(msg);
+          }
+        }
+      }
+    }
+  });
+  Py_RETURN_NONE;
+  BA_PYTHON_CATCH;
+}
+
+static PyMethodDef PyVoteSkipInstantReplayDef = {
+    "vote_skip_instant_replay",            // name
+    (PyCFunction)PyVoteSkipInstantReplay,  // method
+    METH_NOARGS,                           // flags
+
+    "vote_skip_instant_replay() -> None\n"
+    "\n"
+    ":meta private:",
+};
 
 static PyMethodDef PyStopInstantReplayDef = {
     "stop_instant_replay",             // name
@@ -1928,6 +1987,7 @@ auto PythonMethodsScene::GetMethods() -> std::vector<PyMethodDef> {
       PyIsInReplayDef,
       PyPlayInstantReplayDef,
       PyStopInstantReplayDef,
+      PyVoteSkipInstantReplayDef,
       PyIsInInstantReplayDef,
       PyBroadcastMessageDef,
       PyGetRandomNamesDef,

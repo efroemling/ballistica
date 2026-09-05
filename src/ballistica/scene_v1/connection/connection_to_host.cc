@@ -830,11 +830,20 @@ void ConnectionToHost::HandleMessagePacket(const std::vector<uint8_t>& buffer) {
       break;
     }
 
+    case BA_MESSAGE_INSTANT_REPLAY_SKIP_VOTES: {
+      // Host's running tally, so our banner reads the same as theirs.
+      if (buffer.size() >= 3) {
+        g_scene_v1->python->SetInstantReplaySkipVotes(buffer[1], buffer[2]);
+      }
+      break;
+    }
+
     case BA_MESSAGE_INSTANT_REPLAY_END: {
       if (auto* net_session =
               dynamic_cast<ClientSessionNet*>(client_session_.get())) {
         net_session->SetInstantReplayMode(false);
       }
+      g_scene_v1->python->SetInstantReplaySkipVotes(0, 0);
       g_scene_v1->python->objs()
           .Get(SceneV1Python::ObjID::kInstantReplayEndCall)
           .Call();

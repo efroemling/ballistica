@@ -38,6 +38,7 @@
 #include "ballistica/scene_v1/support/client_session_replay.h"
 #include "ballistica/scene_v1/support/host_session.h"
 #include "ballistica/scene_v1/support/instant_replay_recorder.h"
+#include "ballistica/scene_v1/support/player.h"
 #include "ballistica/scene_v1/support/scene.h"
 #include "ballistica/scene_v1/support/session_stream.h"
 #include "ballistica/shared/foundation/event_loop.h"
@@ -891,7 +892,7 @@ void ClassicAppMode::UpdateGameRoster() {
 
   bool include_self = (connections()->GetConnectedClientCount() > 0);
 
-  if (auto* hs = dynamic_cast<scene_v1::HostSession*>(GetForegroundSession())) {
+  if (auto* hs = GetLiveHostSession()) {
     // Add our host-y self.
     if (include_self) {
       GameRosterEntry entry;
@@ -1391,6 +1392,97 @@ void ClassicAppMode::BroadcastInstantReplayCut_(
   }
 }
 
+auto ClassicAppMode::GetLiveHostSession() -> scene_v1::HostSession* {
+  assert(g_base->InLogicThread());
+
+  // While a clip is up the live session is off-screen but still the one
+  // hosting; joins, rosters and names all belong to it.
+  if (auto* suspended = dynamic_cast<scene_v1::HostSession*>(
+          instant_replay_suspended_session_.get())) {
+    return suspended;
+  }
+  return dynamic_cast<scene_v1::HostSession*>(GetForegroundSession());
+}
+
+void ClassicAppMode::AddInstantReplaySkipVote(scene_v1::Player* player) {
+  assert(g_base->InLogicThread());
+
+  if (!InInstantReplay()) {
+    return;
+  }
+
+  auto end_clip = [] {
+    // Deferred: a vote can arrive from inside input handling or a
+    // session update, and tearing the clip down there would pull the rug
+    // out from under the caller.
+    g_base->logic->event_loop()->PushCall([] {
+      if (auto* appmode = ClassicAppMode::GetActive()) {
+        appmode->EndInstantReplay();
+      }
+    });
+  };
+
+  auto* live = GetLiveHostSession();
+  if (live == nullptr || player == nullptr) {
+    // Nobody to tally against; treat the press as a plain skip.
+    end_clip();
+    return;
+  }
+
+  instant_replay_skip_votes_.insert(player->id());
+  ReportInstantReplaySkipVotes_();
+
+  // Players who left mid-clip shouldn't be able to stall the vote, and a
+  // vote from someone already gone shouldn't count twice; comparing
+  // against the live roster handles both.
+  size_t needed{};
+  size_t have{};
+  for (auto&& p : live->players()) {
+    if (!p.exists()) {
+      continue;
+    }
+    needed++;
+    if (instant_replay_skip_votes_.count(p->id())) {
+      have++;
+    }
+  }
+  if (needed > 0 && have >= needed) {
+    end_clip();
+  }
+}
+
+void ClassicAppMode::ReportInstantReplaySkipVotes_() {
+  auto* live = GetLiveHostSession();
+  if (live == nullptr) {
+    return;
+  }
+  size_t total{};
+  size_t count{};
+  for (auto&& p : live->players()) {
+    if (!p.exists()) {
+      continue;
+    }
+    total++;
+    if (instant_replay_skip_votes_.count(p->id())) {
+      count++;
+    }
+  }
+
+  // Our own banner.
+  g_scene_v1->python->SetInstantReplaySkipVotes(static_cast<int>(count),
+                                                static_cast<int>(total));
+
+  // And everyone watching over the wire, so the tally reads the same
+  // everywhere.
+  std::vector<uint8_t> msg(3);
+  msg[0] = BA_MESSAGE_INSTANT_REPLAY_SKIP_VOTES;
+  msg[1] = static_cast_check_fit<uint8_t>(std::min<size_t>(count, 255));
+  msg[2] = static_cast_check_fit<uint8_t>(std::min<size_t>(total, 255));
+  for (auto&& connection : InstantReplayClients_()) {
+    connection->SendReliableMessage(msg);
+  }
+}
+
 auto ClassicAppMode::StartInstantReplay(millisecs_t duration_millisecs,
                                         float speed) -> bool {
   assert(g_base->InLogicThread());
@@ -1429,6 +1521,7 @@ auto ClassicAppMode::StartInstantReplay(millisecs_t duration_millisecs,
   }
 
   auto covered = recorder->available_millisecs();
+  instant_replay_skip_votes_.clear();
 
   // Background dynamics are global rather than per-scene, so the live
   // scene's sparks and debris would otherwise hang over the clip (and
@@ -1517,6 +1610,7 @@ void ClassicAppMode::EndInstantReplay() {
   // The clip is now neither foreground nor suspended, so the next prune
   // reaps it.
   instant_replay_session_.Clear();
+  instant_replay_skip_votes_.clear();
 
   // Put remote viewers back into the live match. They've been showing a
   // clip built from a different point in the stream, so a reset plus a
@@ -1662,8 +1756,7 @@ void ClassicAppMode::LocalDisplayChatMessage(
 
 void ClassicAppMode::ApplyAppConfig() {
   // Kick-idle-players setting (hmm is this still relevant?).
-  auto* host_session =
-      dynamic_cast<scene_v1::HostSession*>(foreground_session_.get());
+  auto* host_session = GetLiveHostSession();
   kick_idle_players_ =
       g_base->app_config->Resolve(base::AppConfig::BoolID::kKickIdlePlayers);
   if (host_session) {

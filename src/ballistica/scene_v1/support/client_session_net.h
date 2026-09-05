@@ -28,6 +28,11 @@ class ClientSessionNet : public ClientSession {
   /// a finite clip, so "catching up" is exactly the wrong instinct (and
   /// its 0.5 floor would forbid slow motion anyway).
   void SetInstantReplayMode(bool enabled, float speed = 1.0f);
+
+  /// Whether the host is currently feeding us a clip rather than live
+  /// play. Used to decide whether a skip press is ours to act on or
+  /// belongs to the host's vote.
+  auto instant_replay_mode() const -> bool { return instant_replay_mode_; }
   void OnReset(bool rewind) override;
   void OnBaseTimeStepAdded(int step) override;
 

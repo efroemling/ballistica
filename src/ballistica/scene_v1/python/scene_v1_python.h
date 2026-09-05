@@ -87,6 +87,9 @@ class SceneV1Python {
   /// Pass a chat message along to the python UI layer for handling..
   void HandleLocalChatMessage(const std::string& message);
 
+  /// Push the current instant-replay skip tally to the ui layer.
+  void SetInstantReplaySkipVotes(int count, int total);
+
   void ReloadHooks();
 
   /// Specific Python objects we hold in objs_.
@@ -106,6 +109,7 @@ class SceneV1Python {
     kGetPlayerIconCall,
     kInstantReplayBeginCall,
     kInstantReplayEndCall,
+    kInstantReplaySkipVotesCall,
     kFilterChatMessageCall,
     kHandleLocalChatMessageCall,
     kHostInfoClass,

@@ -125,8 +125,7 @@ void ConnectionSet::SendChatMessage(const std::string& message,
       // for players coming from this client-connection; if we find any, make a
       // spec out of their name(s).
       std::string p_name_combined;
-      if (auto* hs =
-              dynamic_cast<HostSession*>(appmode->GetForegroundSession())) {
+      if (auto* hs = appmode->GetLiveHostSession()) {
         for (auto&& p : hs->players()) {
           auto* delegate = p->input_device_delegate();
           if (p->accepted() && p->name_is_real() && delegate != nullptr

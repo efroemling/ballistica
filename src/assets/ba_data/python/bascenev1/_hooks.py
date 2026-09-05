@@ -37,6 +37,12 @@ def on_instant_replay_end() -> None:
     hide_banner()
 
 
+def on_instant_replay_skip_votes(count: int, total: int) -> None:
+    from bascenev1lib.instantreplay import set_skip_votes
+
+    set_skip_votes(count, total)
+
+
 def get_player_icon(sessionplayer: bascenev1.SessionPlayer) -> dict[str, Any]:
     info = sessionplayer.get_icon_info()
     return {

@@ -152,6 +152,19 @@ class ClassicAppMode : public base::AppMode {
     return instant_replay_session_.exists();
   }
 
+  /// The host-session we are running, even while an instant replay has
+  /// the screen. Anything asking "what game am I hosting" wants this;
+  /// GetForegroundSession answers "what is on screen", which during a
+  /// clip is the clip itself. Null when we aren't hosting.
+  auto GetLiveHostSession() -> scene_v1::HostSession*;
+
+  /// Register one viewer's wish to skip the clip on screen. Like the
+  /// tutorial's skip, it takes everyone: the clip ends once every player
+  /// in the live session has asked. `player` may be null for a viewer
+  /// with no player of their own (a spectating host); there is no roster
+  /// slot to count them against, so they skip on their own.
+  void AddInstantReplaySkipVote(scene_v1::Player* player);
+
   // Used to know which globals is in control currently/etc.
   auto GetForegroundScene() const -> scene_v1::Scene* {
     assert(g_base->InLogicThread());
@@ -348,6 +361,9 @@ class ClassicAppMode : public base::AppMode {
   /// Send one side of an instant-replay cut to every client new enough
   /// to understand it: the marker, a session reset, then `messages`.
   /// Older peers get nothing and simply see the stream pause.
+  /// Push the current tally to our own ui and to every client watching.
+  void ReportInstantReplaySkipVotes_();
+
   void BroadcastInstantReplayCut_(
       const std::vector<uint8_t>& marker,
       const std::vector<std::vector<uint8_t> >& messages);
@@ -405,6 +421,7 @@ class ClassicAppMode : public base::AppMode {
   // are safe because the clip is foreground (so never reaped) and the
   // live one is suspended (which also exempts it from reaping).
   Object::WeakRef<scene_v1::ClientSessionInstantReplay> instant_replay_session_;
+  std::set<int> instant_replay_skip_votes_;
   Object::WeakRef<scene_v1::Session> instant_replay_suspended_session_;
 
   // The live scene the clip displaced. Only activity transitions
