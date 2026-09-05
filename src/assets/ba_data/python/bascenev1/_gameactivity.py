@@ -757,12 +757,9 @@ class GameActivity[PlayerT: bascenev1.Player, TeamT: bascenev1.Team](
 
                 # Offer up a kill-cam. Declines quietly for ordinary
                 # kills, during the cooldown, or when switched off.
+                # (the co-op/solo death-cam counterpart hooks into
+                # PlayerSpaz instead, since games may not chain here)
                 instantreplay.maybe_play_kill_cam(self, importance)
-
-            # Co-op never gets that far (bots aren't players, so there's
-            # no cross-team killer); there the player's own death is the
-            # moment worth replaying.
-            instantreplay.maybe_play_death_cam(self, msg.killed)
 
         else:
             return super().handlemessage(msg)

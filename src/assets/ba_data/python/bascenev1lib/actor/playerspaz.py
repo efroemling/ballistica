@@ -428,6 +428,9 @@ class PlayerSpaz(Spaz):
 
                 # Only report if both the player and the activity still exist.
                 if killed and activity is not None and player:
+                    # pylint: disable=cyclic-import
+                    from bascenev1lib import instantreplay
+
                     activity.handlemessage(
                         bs.PlayerDiedMessage(
                             player, killed, killerplayer, msg.how
@@ -435,6 +438,15 @@ class PlayerSpaz(Spaz):
                     )
 
                     _send_player_feedback(player, 'death')
+
+                    # Offer up a death-cam. This lives here rather than
+                    # alongside the kill-cam in GameActivity.handlemessage
+                    # because a game is free to intercept
+                    # PlayerDiedMessage and never chain to super (the
+                    # last stand does exactly that), which leaves that
+                    # hook unreachable. Every player death passes
+                    # through here.
+                    instantreplay.maybe_play_death_cam(activity, killed)
 
             super().handlemessage(msg)  # Augment standard behavior.
 

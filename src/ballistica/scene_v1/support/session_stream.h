@@ -138,17 +138,11 @@ class SessionStream : public Object, public ClientControllerInterface {
   void AddMessageToReplay(const std::vector<uint8_t>& message);
   void Fail();
 
-  /// Cut a keyframe if enough stream time has passed since the last one.
-  /// Driven from SetTime, so the cadence follows game time rather than
-  /// wall time and a paused or slow session doesn't accumulate them.
+  /// Cut a keyframe into our instant-replay window if enough stream time
+  /// has passed since the last one. Driven from SetTime, so the cadence
+  /// follows game time rather than wall time and a paused or slow
+  /// session doesn't accumulate them.
   void MaybeEmitKeyframe_();
-
-  /// Wrap a baseline + its corrections into a BA_MESSAGE_SESSION_KEYFRAME
-  /// record (see base/networking/networking.h for the layout).
-  static auto PackKeyframeRecord_(
-      millisecs_t base_time, const std::vector<uint8_t>& baseline,
-      const std::vector<std::vector<uint8_t>>& corrections)
-      -> std::vector<uint8_t>;
 
   /// Try emitting a compact indexed add (kAdd*Indexed) for an asset:
   /// maps possibly-legacy names into package space, then derives
@@ -213,7 +207,6 @@ class SessionStream : public Object, public ClientControllerInterface {
   classic::ClassicAppMode* app_mode_;
   bool writing_replay_{};
   millisecs_t last_instant_replay_keyframe_time_{};
-  millisecs_t last_replay_keyframe_time_{};
   InstantReplayRecorder* instant_replay_recorder_{};
   millisecs_t last_physics_correction_time_{};
   millisecs_t last_send_time_{};

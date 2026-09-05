@@ -28,11 +28,13 @@ KILL_CAM_SPEED = 0.4
 MIN_IMPORTANCE = 2
 
 # Wall-clock seconds between kill-cams. Without this an eight-player
-# free-for-all would spend more time in replays than in the game.
+# free-for-all would spend more time in replays than in the game. Applies
+# to the kill-cam only; a death-cam fires on every death it's offered.
 COOLDOWN_SECONDS = 25.0
 
 # Don't interrupt the opening moments of a round; there's nothing worth
-# replaying yet and the engine's window isn't full.
+# replaying yet and the engine's window isn't full. Kill-cam only, same
+# as the cooldown.
 MIN_ROUND_AGE_SECONDS = 8.0
 
 _g_last_kill_cam_time: float | None = None
@@ -52,25 +54,43 @@ def maybe_play_kill_cam(activity: bs.Activity, importance: int) -> None:
 
 
 def maybe_play_death_cam(activity: bs.Activity, killed: bool) -> None:
-    """Show a death-cam when a player goes down in co-op.
+    """Show a death-cam when a player goes down with nobody to blame.
 
-    Co-op never reaches the kill-cam rule: what kills you there is a bot
-    or a hazard, not another player, so there is no cross-team killer to
-    key off. The moment worth replaying is your own death instead.
+    Co-op and solo games never reach the kill-cam rule: what kills you
+    there is a bot or a hazard, not another player, so there is no
+    cross-team killer to key off. The moment worth replaying is your own
+    death instead.
+
+    Every such death gets one: unlike the kill-cam there's no cooldown
+    or round-age floor here, since a death is already the rare event the
+    kill-cam's rate limiting exists to find.
     """
-    # Deliberately co-op only. In a versus game the kill-cam already
-    # covers the interesting deaths, and firing on both would mean two
-    # replays competing over the same moment.
     if not killed:
         # Left the game, or the round ended out from under them.
         return
-    if not isinstance(activity.session, bs.CoopSession):
+
+    # Deliberately not for multi-human versus games: there the kill-cam
+    # already covers the interesting deaths, and firing on both would
+    # mean two replays competing over the same moment. A lone human in a
+    # ffa/teams game can't trip the kill-cam anyway (that needs a killer
+    # on another team), so widening to solo play adds no overlap.
+    session = activity.session
+    if (
+        not isinstance(session, bs.CoopSession)
+        and len(session.sessionplayers) > 1
+    ):
         return
-    _maybe_play(activity)
+    _maybe_play(activity, rate_limit=False)
 
 
-def _maybe_play(activity: bs.Activity) -> None:
-    """Shared gating for both cams: config, cooldown, round age."""
+def _maybe_play(activity: bs.Activity, *, rate_limit: bool = True) -> None:
+    """Shared gating for both cams: config, cooldown, round age.
+
+    `rate_limit` covers the two throttles that exist to keep kill-cams
+    from swamping a busy match (the cooldown and the round-age floor).
+    The death-cam turns it off; the config switch and the round-ended
+    check always apply.
+    """
     global _g_last_kill_cam_time  # pylint: disable=global-statement
 
     if not babase.app.config.resolve('Instant Replay'):
@@ -83,17 +103,20 @@ def _maybe_play(activity: bs.Activity) -> None:
 
     now = babase.apptime()
     if (
-        _g_last_kill_cam_time is not None
+        rate_limit
+        and _g_last_kill_cam_time is not None
         and now - _g_last_kill_cam_time < COOLDOWN_SECONDS
     ):
         return
 
-    # Nothing worth replaying in the opening moments, and the engine's
-    # window isn't full yet either.
+    # We need a scene context to read round age or to play at all. The
+    # age floor itself is throttling: nothing worth replaying in the
+    # opening moments, and the engine's window isn't full yet either.
     try:
-        if bs.time() < MIN_ROUND_AGE_SECONDS:
-            return
+        round_age = bs.time()
     except bs.ContextError:
+        return
+    if rate_limit and round_age < MIN_ROUND_AGE_SECONDS:
         return
 
     _g_last_kill_cam_time = now

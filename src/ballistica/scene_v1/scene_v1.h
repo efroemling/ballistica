@@ -42,7 +42,7 @@ const int kProtocolVersionHostMin = 43;
 const int kProtocolVersionClientMin = 24;
 
 // Newest protocol version we can act as a client OR host for.
-const int kProtocolVersionMax = 44;
+const int kProtocolVersionMax = 43;
 
 // The protocol version we actually host is now read as a setting; see
 // kSceneV1HostProtocol in ballistica/base/support/app_config.h.
@@ -156,25 +156,6 @@ const int kProtocolVersionMax = 44;
 //     fuse_length=22 with rotate=23. Builds speaking broken-42 tables
 //     are fenced off by the version bump (disposable dev/alpha builds
 //     only; 42 never reached a stable release).
-//
-// 44: Keyframes in the stream. A new BA_MESSAGE_SESSION_KEYFRAME record
-//     carries a complete state snapshot (the same baseline + dynamics
-//     corrections a joining client is sent) and is written into replay
-//     files on an interval, so playback can enter the stream somewhere
-//     other than its start. No node/attr/command changes: a 44 stream is
-//     a 43 stream with these records interleaved.
-//
-//     The bump exists because those records are unskippable by an older
-//     reader -- it has no way to know a type-22 message is safe to step
-//     over -- so 44 files are fenced off by the header version check in
-//     ClientSessionReplay::OnReset rather than being misread. Replays
-//     recorded here therefore do not open on pre-44 builds; older
-//     replays still play fine, and fall back to deriving their own seek
-//     snapshots during playback the way they always have.
-//
-//     Nothing new goes over the wire: connections still receive the
-//     snapshot as ordinary messages, exactly as mid-game joins always
-//     have, so the hosting floor does not move for this.
 //
 //     STANDING RULE, amended: appending an attr to a node type's table
 //     keeps existing indices stable ONLY for types nothing derives
@@ -529,13 +510,6 @@ enum NodeAttributeFlag {
 // payloads (streams below this use the legacy raw-or-resource-json
 // forms).
 const int kProtocolVersionLangStrWire = 39;
-
-// First protocol whose streams may contain BA_MESSAGE_SESSION_KEYFRAME
-// records. A file gets stamped at least this even when we host a lower
-// protocol, since the records are what a reader must be new enough to
-// skip -- the rest of the stream's semantics are the hosted protocol's,
-// and every protocol from here on is a superset in that regard.
-const int kProtocolVersionKeyframes = 44;
 
 // (protocol 39+) First byte of the payload carried by
 // lang-str-flagged string slots (the text node's `text` attr and the

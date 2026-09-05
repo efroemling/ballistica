@@ -69,21 +69,6 @@ class ClientSessionReplay : public ClientSession,
       std::vector<std::vector<uint8_t>>* correction_messages) -> bool;
   void CloseAndRemoveSpool_();
 
-  /// Spool a snapshot and add it to the seek index. The one way an
-  /// IntermediateState gets built, whether the snapshot came off the
-  /// file as a keyframe or we derived it ourselves.
-  void IndexSnapshot_(
-      millisecs_t base_time, const std::vector<uint8_t>& message,
-      const std::vector<std::vector<uint8_t>>& correction_messages);
-
-  /// Unpack a BA_MESSAGE_SESSION_KEYFRAME record (protocol 44+) into its
-  /// baseline message and correction messages. Returns false if the
-  /// record is malformed.
-  static auto UnpackKeyframeRecord_(
-      const std::vector<uint8_t>& record, millisecs_t* base_time,
-      std::vector<uint8_t>* message,
-      std::vector<std::vector<uint8_t>>* correction_messages) -> bool;
-
   // List of passed states which we can rewind to.
   std::vector<IntermediateState> states_;
   IntermediateState current_state_;
@@ -92,11 +77,6 @@ class ClientSessionReplay : public ClientSession,
   std::string spool_path_;
   int64_t spool_size_{};
   bool spool_failed_{};
-
-  // Set once we've seen a keyframe record in the file. Such a file
-  // supplies its own seek states, so we stop deriving our own (which
-  // means no DumpFullState work during playback at all).
-  bool have_file_keyframes_{};
 
   bool is_fast_forwarding_{};
   millisecs_t fast_forward_base_time_{};

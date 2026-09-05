@@ -36,16 +36,10 @@
 
 namespace ballistica::scene_v1 {
 
-// How much stream time passes between keyframes written into a replay
-// file. These exist so playback can enter the stream somewhere other than
-// its start (seeking, and someday starting mid-file); they are pure
-// overhead for linear playback, so the cadence is coarse.
-const millisecs_t kReplayKeyframeIntervalMillisecs = 10000;
-
 // How much stream time passes between keyframes kept in memory for
-// instant replay. Finer than the file cadence, because a clip can only
-// start at a keyframe: this is the granularity of "the last few seconds".
-// These never touch disk.
+// instant replay. A clip can only start at a keyframe, so this is the
+// granularity of "the last few seconds". These never touch disk; replay
+// files carry no keyframes, so their format is unchanged.
 const millisecs_t kInstantReplayKeyframeIntervalMillisecs = 2000;
 
 // How much stream time an instant replay can look back over, and the
@@ -66,15 +60,10 @@ SessionStream::SessionStream(HostSession* host_session, bool save_replay)
                            " shouldn't happen.");
     }
     // We're recording our own host-session's stream, so the replay's
-    // protocol is our hosted protocol -- except that we interleave
-    // keyframe records, which a reader has to be new enough to skip. So
-    // the file gets stamped at least the keyframe protocol even when we
-    // host below it; the stream's actual semantics are still the hosted
-    // protocol's, which any newer reader handles.
+    // protocol is our hosted protocol.
     assert(g_base->assets_server);
 
-    replay_writer_ = new ReplayWriter(std::max(
-        app_mode_->host_protocol_version(), kProtocolVersionKeyframes));
+    replay_writer_ = new ReplayWriter(app_mode_->host_protocol_version());
     writing_replay_ = true;
     g_scene_v1->replay_open = true;
   }
@@ -458,7 +447,6 @@ void SessionStream::AddMessageToReplay(const std::vector<uint8_t>& message) {
       case BA_MESSAGE_SESSION_RESET:
       case BA_MESSAGE_SESSION_COMMANDS:
       case BA_MESSAGE_SESSION_DYNAMICS_CORRECTION:
-      case BA_MESSAGE_SESSION_KEYFRAME:
         break;
       default:
         throw Exception("unexpected message going to replay: "
@@ -496,87 +484,28 @@ auto SessionStream::BuildKeyframe(
   return out.TakeOutMessage();
 }
 
-auto SessionStream::PackKeyframeRecord_(
-    millisecs_t base_time, const std::vector<uint8_t>& baseline,
-    const std::vector<std::vector<uint8_t> >& corrections)
-    -> std::vector<uint8_t> {
-  std::vector<uint8_t> out;
-  size_t total{9 + baseline.size()};
-  for (auto&& correction : corrections) {
-    total += 4 + correction.size();
-  }
-  out.reserve(total);
-  auto write_u32 = [&out](uint32_t val) {
-    auto offset = out.size();
-    out.resize(offset + 4);
-    memcpy(&(out[offset]), &val, 4);
-  };
-  auto write_sub = [&out, &write_u32](const std::vector<uint8_t>& sub) {
-    write_u32(static_cast<uint32_t>(sub.size()));
-    out.insert(out.end(), sub.begin(), sub.end());
-  };
-
-  out.push_back(BA_MESSAGE_SESSION_KEYFRAME);
-  write_u32(static_cast<uint32_t>(base_time));
-  write_u32(static_cast<uint32_t>(1 + corrections.size()));
-  write_sub(baseline);
-  for (auto&& correction : corrections) {
-    write_sub(correction);
-  }
-  return out;
-}
-
 void SessionStream::MaybeEmitKeyframe_() {
-  // Only meaningful for a live host-session stream.
-  if (host_session_ == nullptr) {
+  // Only meaningful for a live host-session stream that's keeping a
+  // window.
+  if (host_session_ == nullptr || instant_replay_recorder_ == nullptr) {
     return;
   }
-
-  // Two consumers on two cadences: instant replay wants keyframes often
-  // (a clip can only start at one), the file wants them rarely (they are
-  // dead weight for linear playback). Each tracks when it was last fed;
-  // when both are due at once they share a single build.
-  bool want_recorder =
-      instant_replay_recorder_ != nullptr
-      && time_ >= last_instant_replay_keyframe_time_
-                      + kInstantReplayKeyframeIntervalMillisecs;
-  bool want_replay =
-      writing_replay_
-      && time_ >= last_replay_keyframe_time_ + kReplayKeyframeIntervalMillisecs;
-  if (!want_recorder && !want_replay) {
+  if (time_ < last_instant_replay_keyframe_time_
+                  + kInstantReplayKeyframeIntervalMillisecs) {
     return;
   }
 
   // Stamp before building. Building flushes, which can advance us, and a
   // build that yields nothing must still not re-run on every SetTime.
-  if (want_recorder) {
-    last_instant_replay_keyframe_time_ = time_;
-  }
-  if (want_replay) {
-    last_replay_keyframe_time_ = time_;
-  }
+  last_instant_replay_keyframe_time_ = time_;
 
   std::vector<std::vector<uint8_t> > corrections;
   std::vector<uint8_t> baseline = BuildKeyframe(&corrections);
   if (baseline.empty()) {
     return;
   }
-
-  // File first, so the recorder can take ownership of the buffers.
-  if (want_replay) {
-    auto record = PackKeyframeRecord_(time_, baseline, corrections);
-    g_core->logging->Log(LogName::kBaNetworking, LogLevel::kDebug,
-                         [this, &record] {
-                           return "SessionStream: wrote keyframe at base-time "
-                                  + std::to_string(time_) + "ms ("
-                                  + std::to_string(record.size()) + " bytes).";
-                         });
-    AddMessageToReplay(record);
-  }
-  if (want_recorder) {
-    instant_replay_recorder_->AddKeyframe(time_, std::move(baseline),
-                                          std::move(corrections));
-  }
+  instant_replay_recorder_->AddKeyframe(time_, std::move(baseline),
+                                        std::move(corrections));
 }
 
 void SessionStream::SendPhysicsCorrection(bool blend) {
@@ -1559,7 +1488,7 @@ void SessionStream::OnClientConnected(ConnectionToClient* c) {
     connections_to_clients_.push_back(c);
 
     // Bring the client up to our current state: the same keyframe an
-    // instant replay or a seekable replay file is built from.
+    // instant replay clip is built from.
     std::vector<uint8_t> out_message = BuildKeyframe(nullptr);
     if (!out_message.empty()) {
       c->SendReliableMessage(out_message);
